@@ -8,15 +8,17 @@ import { cleanupStage } from './import-pipeline.ts';
 import { basicPackage, makePng, passJson, zipOf } from './package/fixtures.ts';
 import { getImport, getVersion } from './repo.ts';
 import { syncBakedTemplates } from './sync.ts';
-import { bakedFrom, importZip, sourceOf } from './testing.ts';
+import { bakedFrom, fakeAssets, importZip, sourceOf } from './testing.ts';
 
 let env: AppEnv;
 let clock: ManualClock;
 let orgId: string;
 let userId: string;
 
+const assets = fakeAssets();
+
 beforeAll(async () => {
-  env = await makeEnv();
+  env = await makeEnv({ ASSETS: assets });
   clock = new ManualClock(Date.now());
   const f = fixtures(env, clock);
   orgId = (await makeOrg(f)).id;
@@ -217,7 +219,7 @@ describe('TemplateImport pipeline', () => {
         display: { title: 'x' },
       });
       expect((await rejected(basicPackage({ 'wallet.template.json': manifest }))).codes).toContain(
-        'SCHEMA_KEYWORD',
+        'SCHEMA_PATTERN',
       );
     });
 
@@ -253,6 +255,7 @@ describe('TemplateImport pipeline', () => {
       name: 'Taken',
       org: { slug: org.slug, name: org.name },
     });
+    for (const [k, v] of baked.files) assets.files.set(k, v);
     await syncBakedTemplates(
       createServiceContext(env, { clock }),
       sourceOf([baked], 'pipeline-hash'),

@@ -10,6 +10,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  UnavailableError,
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -28,6 +29,7 @@ import {
   getVersion,
   insertWorkflowRun,
   setStatus,
+  setWorkflowRun,
   type TemplateRow,
 } from './repo.ts';
 import { detail, loadTemplate } from './service.ts';
@@ -144,6 +146,7 @@ export async function activateVersion(
   clearTemplateCache(ctx.env, id);
 
   let workflowId: string | null = null;
+  let rebuildFailed = false;
   if (body.rebuildPasses) {
     workflowId = `br-${ctx.ids.id()}`;
     await insertWorkflowRun(ctx.env.DB, {
@@ -153,21 +156,38 @@ export async function activateVersion(
       targetId: id,
       now: ctx.clock.now(),
     });
-    await ctx.env.BULK_REISSUE.create({
-      id: workflowId,
-      params: {
-        templateId: id,
-        version: version.version,
+    try {
+      await ctx.env.BULK_REISSUE.create({
+        id: workflowId,
+        params: {
+          templateId: id,
+          version: version.version,
+          orgId: row.orgId,
+          cause: 'template_upgrade',
+        },
+      });
+    } catch (error) {
+      ctx.log.error('templates.workflow_start_failed', {
         orgId: row.orgId,
-        cause: 'template_upgrade',
-      },
-    });
+        error: error instanceof Error ? error.name : 'unknown',
+      });
+      await setWorkflowRun(ctx.env.DB, workflowId, 'errored', ctx.clock.now(), {
+        errorCode: 'WORKFLOW_START',
+      });
+      workflowId = null;
+      rebuildFailed = true;
+    }
   }
   await audit(ctx, auth, row, 'template.activate', {
     version: version.version,
     previous: row.activeVersion,
     rebuild: workflowId,
   });
+  if (rebuildFailed)
+    throw new UnavailableError(
+      'The version is active, but the pass rebuild did not start. Start it again.',
+      'WORKFLOW_START',
+    );
   return detail(ctx, auth, id);
 }
 

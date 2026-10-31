@@ -22,6 +22,7 @@ const auth = fakeAuth(ORIGIN);
 const workflows: { id: string; params: unknown }[] = [];
 const imports: { id: string; params: unknown }[] = [];
 let failImportStart = false;
+let failBulkStart = false;
 
 let env: AppEnv;
 let clock: ManualClock;
@@ -95,6 +96,7 @@ beforeAll(async () => {
     ASSETS: assets,
     BULK_REISSUE: {
       create: async (o: { id: string; params: unknown }) => {
+        if (failBulkStart) throw new Error('workflow down');
         workflows.push(o);
         return { id: o.id };
       },
@@ -587,6 +589,23 @@ describe('activate', () => {
     expect(run).toEqual({ kind: 'bulk_reissue', target_id: t.id, status: 'queued' });
   });
 
+  it('marks the run errored and answers 503 when the rebuild cannot start', async () => {
+    failBulkStart = true;
+    try {
+      const res = await post(`/${t.id}/activate`, { version: t.version, rebuildPasses: true });
+      expect(res.status).toBe(503);
+      expect(await res.json()).toMatchObject({ code: 'WORKFLOW_START' });
+    } finally {
+      failBulkStart = false;
+    }
+    const run = await first<{ status: string; error_code: string }>(
+      env.DB,
+      "SELECT status, error_code FROM workflow_runs WHERE kind = 'bulk_reissue' AND target_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1",
+      [t.id],
+    );
+    expect(run).toEqual({ status: 'errored', error_code: 'WORKFLOW_START' });
+  });
+
   it('rejects unknown versions, baked templates and archived templates', async () => {
     expect((await post(`/${t.id}/activate`, { version: 'nope' })).status).toBe(404);
     const baked = await post('/baked:henrys-blue/activate', { version: 'x' });
@@ -636,7 +655,7 @@ describe('manifest', () => {
     expect(res.status).toBe(422);
     const problem = (await res.json()) as { code: string; issues: { code: string }[] };
     expect(problem.code).toBe('MANIFEST_INVALID');
-    expect(problem.issues.map((i) => i.code)).toContain('SCHEMA_KEYWORD');
+    expect(problem.issues.map((i) => i.code)).toContain('SCHEMA_PATTERN');
     const detail = (await (await call(`/${t.id}`)).json()) as { versions: unknown[] };
     expect(detail.versions).toHaveLength(1);
   });

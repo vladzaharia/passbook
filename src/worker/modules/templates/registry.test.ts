@@ -20,6 +20,10 @@ let assets: ReturnType<typeof fakeAssets>;
 
 const count = async (sql: string) => (await first<{ n: number }>(env.DB, sql))?.n ?? 0;
 const ctx = () => createServiceContext(env, { clock });
+const serve = (fixture: BakedFixture) => {
+  for (const [k, v] of fixture.files) assets.files.set(k, v);
+  return fixture;
+};
 
 beforeAll(async () => {
   clock = new ManualClock(Date.now());
@@ -61,10 +65,12 @@ describe('syncBakedTemplates', () => {
   });
 
   it('creates a baked org that does not exist yet', async () => {
-    const fresh = await bakedFrom('newco-card', basicPackage(), {
-      name: 'Newco',
-      org: { slug: 'newco', name: 'Newco' },
-    });
+    const fresh = serve(
+      await bakedFrom('newco-card', basicPackage(), {
+        name: 'Newco',
+        org: { slug: 'newco', name: 'Newco' },
+      }),
+    );
     await syncBakedTemplates(ctx(), sourceOf([fresh], 'h-new'));
     expect(await count("SELECT COUNT(*) AS n FROM orgs WHERE slug = 'newco'")).toBe(1);
     const t = await first<{ org_id: string }>(
@@ -98,19 +104,57 @@ describe('syncBakedTemplates', () => {
     ).toBe(1);
   });
 
-  it('runs once per isolate per hash', async () => {
+  it('runs once per isolate per hash and caches only settled syncs', async () => {
     const source = sourceOf([platform], 'h-once');
-    const a = syncBakedTemplates(ctx(), source);
-    const b = syncBakedTemplates(ctx(), source);
-    expect(a).toBe(b);
-    await a;
+    await syncBakedTemplates(ctx(), source);
+    const spy = {
+      ...env,
+      DB: {
+        prepare: () => {
+          throw new Error('should not query');
+        },
+      } as unknown as D1Database,
+    } as AppEnv;
+    await expect(
+      syncBakedTemplates(createServiceContext(spy, { clock }), source),
+    ).resolves.toBeUndefined();
+  });
+
+  it('keeps a replaced baked version buildable from R2 after its static files are gone', async () => {
+    const oldV = serve(
+      await bakedFrom('redeploy', basicPackage(), {
+        name: 'Redeploy',
+      }),
+    );
+    await syncBakedTemplates(ctx(), sourceOf([oldV], 'h-redeploy-1'));
+    const newV = serve(
+      await bakedFrom('redeploy', basicPackage({ 'logo.png': makePng(90, 30) }), {
+        name: 'Redeploy',
+      }),
+    );
+    await syncBakedTemplates(ctx(), sourceOf([newV], 'h-redeploy-2'));
+    for (const path of oldV.files.keys()) assets.files.delete(path);
+
+    clearTemplateCache(env);
+    const reg = createTemplateRegistry(env, {
+      source: sourceOf([newV], 'h-redeploy-2'),
+      ctx: ctx(),
+    });
+    const old = await reg.resolve('baked:redeploy', oldV.template.version);
+    expect(old.assets.every((a) => a.source.kind === 'r2')).toBe(true);
+    const bytes = new Uint8Array(
+      await new Response(await reg.openAsset(old, 'icon.png')).arrayBuffer(),
+    );
+    expect(bytes).toEqual(basicPackage().get('icon.png'));
   });
 
   it('applies a changed build without touching existing org names, and keeps old versions', async () => {
     await syncBakedTemplates(ctx(), sourceOf([platform], 'h2'));
-    const next = await bakedFrom('starter', basicPackage({ 'logo.png': makePng(80, 30) }), {
-      name: 'Starter v2',
-    });
+    const next = serve(
+      await bakedFrom('starter', basicPackage({ 'logo.png': makePng(80, 30) }), {
+        name: 'Starter v2',
+      }),
+    );
     clock.advance(1000);
     await syncBakedTemplates(ctx(), sourceOf([next], 'h3'));
     const row = await first<{ name: string; active_version: string }>(

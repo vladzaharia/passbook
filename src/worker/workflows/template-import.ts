@@ -23,7 +23,10 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
     step: WorkflowStep,
   ): Promise<void> {
     const p = event.payload;
-    const ctx = createServiceContext(this.env, { base: { workflow: 'template-import' } });
+    const ctx = createServiceContext(this.env, {
+      ctx: this.ctx,
+      base: { workflow: 'template-import' },
+    });
     try {
       await step.do('start', () => startImport(ctx, p));
       const stages = [
@@ -55,6 +58,14 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
         [{ severity: 'error', code: 'IMPORT_FAILED', message: 'The import failed. Try again.' }],
         'IMPORT_FAILED',
       );
+      try {
+        await step.do('cleanup-failed', () => cleanupStage(ctx, p));
+      } catch (cleanupError) {
+        ctx.log.error('templates.cleanup_failed', {
+          orgId: p.orgId,
+          error: cleanupError instanceof Error ? cleanupError.name : 'unknown',
+        });
+      }
       throw error;
     }
   }

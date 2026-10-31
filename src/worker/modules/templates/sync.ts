@@ -1,8 +1,8 @@
 import { BAKED_BUILD_HASH, bakedTemplates } from '../../../generated/baked-templates.ts';
-import type { PassJson } from '../../../passkit/types.ts';
+import type { AssetEntry, PassJson } from '../../../passkit/types.ts';
 import { first, placeholders, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { BakedTemplate } from './baked-types.ts';
+import type { BakedAsset, BakedTemplate } from './baked-types.ts';
 import { insertVersionStmt } from './repo.ts';
 
 const SETTING_KEY = 'templates.baked_hash';
@@ -14,11 +14,51 @@ export interface SyncSource {
 
 export const generatedSource: SyncSource = { templates: bakedTemplates, hash: BAKED_BUILD_HASH };
 
-const done = new Map<string, Promise<void>>();
+// Settled results only: an in-flight promise is bound to the first request's I/O and can hang.
+const done = new Set<string>();
 
 /** Test hook: forget which build hashes this isolate already synced. */
 export function resetBakedSync(): void {
   done.clear();
+}
+
+export function bakedR2Key(slug: string, version: string, name: string): string {
+  return `templates/baked/${slug}/${version}/${name}`;
+}
+
+async function copyAsset(ctx: ServiceContext, t: BakedTemplate, asset: BakedAsset): Promise<void> {
+  const key = bakedR2Key(t.slug, t.version, asset.name);
+  if (await ctx.env.BUCKET.head(key)) return;
+  const response = await ctx.env.ASSETS.fetch(
+    new Request(new URL(asset.source.path, ctx.env.PUBLIC_BASE_URL)),
+  );
+  const html = response.headers.get('content-type')?.startsWith('text/html');
+  if (!response.ok || html) {
+    ctx.log.error('templates.baked_asset_missing', { templateId: t.id, asset: asset.name });
+    throw new Error(`Baked asset missing: ${t.slug}/${asset.name}`);
+  }
+  await ctx.env.BUCKET.put(key, await response.arrayBuffer());
+}
+
+/** Content-addressed copies keep old baked versions buildable after a deploy replaces the static files. */
+async function persistAssets(ctx: ServiceContext, source: SyncSource): Promise<boolean> {
+  // Deployed Workers always have ASSETS; only bare dev and test runtimes lack it.
+  if (!ctx.env.ASSETS) {
+    ctx.log.warn('templates.baked_assets_not_persisted', {});
+    return false;
+  }
+  const jobs = source.templates.flatMap((t) => t.assets.map((a) => ({ t, a })));
+  for (let i = 0; i < jobs.length; i += 8)
+    await Promise.all(jobs.slice(i, i + 8).map(({ t, a }) => copyAsset(ctx, t, a)));
+  return true;
+}
+
+function r2Assets(t: BakedTemplate, persisted: boolean): AssetEntry[] {
+  if (!persisted) return t.assets;
+  return t.assets.map((a) => ({
+    ...a,
+    source: { kind: 'r2' as const, key: bakedR2Key(t.slug, t.version, a.name) },
+  }));
 }
 
 async function sync(ctx: ServiceContext, source: SyncSource): Promise<void> {
@@ -30,6 +70,7 @@ async function sync(ctx: ServiceContext, source: SyncSource): Promise<void> {
   );
   if (stored && JSON.parse(stored.value) === source.hash) return;
 
+  const persisted = await persistAssets(ctx, source);
   const now = ctx.clock.now();
   const statements: D1PreparedStatement[] = [];
   const orgs = new Map<string, string>();
@@ -69,7 +110,7 @@ async function sync(ctx: ServiceContext, source: SyncSource): Promise<void> {
         version: t.version,
         manifest: t.manifest,
         passJson: t.passJson as PassJson,
-        assets: t.assets,
+        assets: r2Assets(t, persisted),
         report: t.report,
         createdBy: null,
         createdAt: now,
@@ -97,18 +138,13 @@ async function sync(ctx: ServiceContext, source: SyncSource): Promise<void> {
 
 /**
  * Upserts baked orgs, templates and versions so foreign keys and listings work. Idempotent: skipped
- * when the stored build hash matches, and run at most once per isolate per hash.
+ * when the stored build hash matches, and remembered per isolate once it has settled.
  */
-export function syncBakedTemplates(
+export async function syncBakedTemplates(
   ctx: ServiceContext,
   source: SyncSource = generatedSource,
 ): Promise<void> {
-  const key = `${source.hash}`;
-  let promise = done.get(key);
-  if (!promise) {
-    promise = sync(ctx, source);
-    done.set(key, promise);
-    promise.catch(() => done.delete(key));
-  }
-  return promise;
+  if (done.has(source.hash)) return;
+  await sync(ctx, source);
+  done.add(source.hash);
 }
