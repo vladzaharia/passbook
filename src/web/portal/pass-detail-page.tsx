@@ -1,0 +1,183 @@
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { Download, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { isApiError } from '../lib/errors.ts';
+import { PassCard } from '../pass-card/index.tsx';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  CopyButton,
+  ErrorState,
+  KeyValue,
+  PageHeader,
+  Skeleton,
+  StatusPill,
+} from '../ui/index.ts';
+import { myPassQuery } from './api.ts';
+import { formatWhen, passName, toView } from './pass-view.ts';
+import { RefreshButton } from './refresh-button.tsx';
+import { AddToWalletButton, publicUrlOf, RemovePassButton } from './wallet-actions.tsx';
+
+const CRUMBS = [{ label: 'My passes', to: '/' }];
+
+function fieldRows(passJson: Record<string, unknown>) {
+  const styles = ['generic', 'storeCard', 'coupon', 'eventTicket', 'boardingPass', 'posterGeneric'];
+  const style = styles.find((s) => passJson[s] && typeof passJson[s] === 'object');
+  if (!style) return [];
+  const block = passJson[style] as Record<string, unknown>;
+  const rows: { label: string; value: string }[] = [];
+  for (const group of ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields']) {
+    const list = block[group];
+    if (!Array.isArray(list)) continue;
+    for (const f of list) {
+      if (!f || typeof f !== 'object') continue;
+      const { label, key, value } = f as Record<string, unknown>;
+      if (value === undefined || value === null || typeof value === 'object') continue;
+      rows.push({ label: String(label ?? key ?? ''), value: String(value) });
+    }
+  }
+  return rows;
+}
+
+export function PassDetailPage({ passId }: { passId: string }) {
+  const query = useQuery(myPassQuery(passId));
+  const navigate = useNavigate();
+  const [face, setFace] = useState<'front' | 'back'>('front');
+
+  if (query.isPending) {
+    return (
+      <>
+        <PageHeader title="Pass" breadcrumbs={[...CRUMBS, { label: 'Pass' }]} />
+        <Skeleton className="h-72" />
+      </>
+    );
+  }
+  if (query.isError) {
+    return (
+      <>
+        <PageHeader title="Pass" breadcrumbs={[...CRUMBS, { label: 'Pass' }]} />
+        <ErrorState
+          error={query.error}
+          title={
+            isApiError(query.error) && query.error.isNotFound ? 'Pass not found' : 'Could not load'
+          }
+          onRetry={
+            isApiError(query.error) && query.error.isNotFound
+              ? undefined
+              : () => void query.refetch()
+          }
+        />
+      </>
+    );
+  }
+
+  const pass = query.data;
+  const name = passName(pass);
+  const view = toView(pass);
+  const voided = pass.status === 'voided';
+  const publicUrl = publicUrlOf(pass.downloadUrl);
+  const rows = fieldRows(pass.passJson);
+
+  return (
+    <>
+      <PageHeader
+        title={name}
+        description={pass.orgName}
+        breadcrumbs={[...CRUMBS, { label: name }]}
+        actions={
+          voided ? (
+            <StatusPill status="voided" />
+          ) : (
+            <>
+              <AddToWalletButton downloadUrl={pass.downloadUrl} />
+              <RefreshButton passId={pass.id} pass={pass} />
+            </>
+          )
+        }
+      />
+      {view.expired && !voided ? (
+        <p
+          role="status"
+          className="mb-4 rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm"
+        >
+          This pass has expired.
+        </p>
+      ) : null}
+      {voided ? (
+        <p
+          role="status"
+          className="mb-4 rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm"
+        >
+          This pass was voided.
+        </p>
+      ) : null}
+      <div className="grid gap-4 md:grid-cols-[minmax(0,22rem)_1fr]">
+        <div className="flex flex-col gap-3">
+          <PassCard view={view} face={face} />
+          <Button
+            variant="outline"
+            size="sm"
+            aria-pressed={face === 'back'}
+            onClick={() => setFace(face === 'front' ? 'back' : 'front')}
+          >
+            {face === 'front' ? 'Show back' : 'Show front'}
+          </Button>
+        </div>
+        <div className="flex flex-col gap-4">
+          {rows.length ? (
+            <Card>
+              <CardHeader title="Details" />
+              <CardBody>
+                <KeyValue items={rows} />
+              </CardBody>
+            </Card>
+          ) : null}
+          <Card>
+            <CardHeader title="Pass" />
+            <CardBody className="flex flex-col gap-3">
+              <KeyValue
+                items={[
+                  { label: 'Updated', value: formatWhen(pass.modifiedAt) },
+                  {
+                    label: 'Last refreshed',
+                    value: pass.lastRefreshedAt ? formatWhen(pass.lastRefreshedAt) : null,
+                  },
+                ]}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                {voided ? null : (
+                  <Button asChild variant="outline" size="sm" iconStart={<Download aria-hidden />}>
+                    <a href={pass.downloadUrl} download>
+                      Download .pkpass
+                    </a>
+                  </Button>
+                )}
+                {publicUrl ? (
+                  <>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      iconStart={<ExternalLink aria-hidden />}
+                    >
+                      <a href={publicUrl}>Public page</a>
+                    </Button>
+                    <CopyButton value={publicUrl} label="Copy public link" />
+                  </>
+                ) : null}
+                <RemovePassButton
+                  passId={pass.id}
+                  passTitle={name}
+                  onRemoved={() => void navigate({ to: '/' })}
+                />
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
