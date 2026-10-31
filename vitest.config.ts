@@ -27,6 +27,10 @@ export default defineConfig({
                 bindings: {
                   TEST_MIGRATIONS: migrations,
                   KEK_V1: 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDc=',
+                  // Pinned so a developer's .dev.vars cannot change test outcomes.
+                  PUBLIC_BASE_URL: 'https://wallet.plrs.im',
+                  OIDC_ISSUER: 'https://id.plrs.im',
+                  OIDC_CLIENT_ID: 'wallet-placeholder-client-id',
                   OIDC_CLIENT_SECRET: 'test-oidc-secret',
                   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
                   SIGNER_PLATFORM_CERTIFICATE: 'replaced-in-tests',
