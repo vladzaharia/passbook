@@ -22,7 +22,7 @@ export function lifetimeFor(roles: readonly Role[]): SessionLifetime {
     : { idleMs: 30 * DAY, absoluteMs: 90 * DAY, touchEveryMs: 5 * MINUTE };
 }
 
-export const hashSessionCookie = (cookieValue: string) => sha256Hex(`session:${cookieValue}`);
+export const hashSessionCookie = (cookieValue: string) => sha256Hex(cookieValue);
 
 export interface NewSession {
   cookieValue: string;

@@ -5,14 +5,14 @@ import { API_SCOPES, type ApiKeyAuth, type ApiScope } from '../../platform/auth.
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
-import { randomBytes, safeEqual, sha256Hex, toHex } from '../../platform/ids.ts';
+import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import * as repo from './repo.ts';
 
 export type ApiKeyDto = z.infer<typeof ApiKeySchema>;
-const KEY_SHAPE = /^wlt_([0-9a-f]{8})_([A-Za-z0-9_-]{43})$/;
+const KEY_SHAPE = /^wlt_([A-Za-z0-9_-]{8})_([A-Za-z0-9_-]{43})$/;
 const TOUCH_EVERY_MS = 5 * 60 * 1000;
 
 function toDto(row: repo.ApiKeyRow): ApiKeyDto {
@@ -58,7 +58,7 @@ export async function createApiKey(
   if (orgId && !(await repo.orgExists(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
-  const prefix = toHex(randomBytes(4));
+  const prefix = ctx.ids.token(6);
   const secret = `wlt_${prefix}_${ctx.ids.token(32)}`;
   const row: repo.ApiKeyRow = {
     id: ctx.ids.id(),
