@@ -27,6 +27,7 @@ export const PassSummarySchema = z.object({
   status: PassStatusSchema,
   version: z.number().int(),
   connectionId: IdSchema.nullable(),
+  externalRef: z.string().nullable().optional(),
   syncErrorCode: z.string().nullable(),
   holderEmail: z.string().nullable(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']),
@@ -92,7 +93,10 @@ export const CreatePassSchema = z.object({
   input: z.record(z.string(), JsonSchema),
   holderEmail: z.string().max(254).optional(),
   externalId: z.string().max(200).optional(),
-  serial: z.string().max(100).optional(),
+  serial: z
+    .string()
+    .regex(/^[A-Za-z0-9._~-]{1,100}$/, 'Use letters, digits and . _ ~ - only.')
+    .optional(),
   connectionId: IdSchema.optional(),
   externalRef: z.string().max(500).optional(),
   sendEmail: z.boolean().optional(),
@@ -103,6 +107,20 @@ export const UpdatePassSchema = z.object({
   externalId: z.string().max(200).nullable().optional(),
   resetToConnection: z.array(z.string()).optional(),
 });
+/**
+ * Binds an existing pass to an upstream ref, or unbinds it (both null). `resetFieldSources`
+ * (default true) marks every field as connection-owned; false keeps existing sources.
+ */
+export const BindPassConnectionSchema = z
+  .object({
+    connectionId: IdSchema.nullable(),
+    externalRef: z.string().min(1).max(500).nullable(),
+    resetFieldSources: z.boolean().optional(),
+  })
+  .refine((v) => (v.connectionId === null) === (v.externalRef === null), {
+    message: 'Set both connectionId and externalRef, or neither.',
+    path: ['externalRef'],
+  });
 export const PassAssetSchema = z.object({
   name: z.string(),
   sha1: z.string(),
@@ -138,5 +156,9 @@ export const BulkReissueSchema = z.object({
   templateId: IdSchema,
   version: z.string().optional(),
   orgId: IdSchema.optional(),
+  /** `resign` rebuilds under each pass's current template version, without pushes. */
+  cause: z.enum(['template_upgrade', 'resign']).default('template_upgrade'),
+  /** Limits the run to passes signed by one identity. */
+  identityId: IdSchema.optional(),
 });
 export const BulkReissueResponseSchema = z.object({ workflowInstanceId: z.string() });

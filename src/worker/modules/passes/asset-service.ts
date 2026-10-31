@@ -1,10 +1,18 @@
+import { crc32 } from '../../../passkit/index.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { validateAsset } from './assets.ts';
 import { publishPass } from './publish.ts';
-import { type AssetRow, getPass, listAssets, removeAsset, upsertAsset } from './repo.ts';
+import {
+  type AssetRow,
+  assetKeyInUse,
+  getPass,
+  listAssets,
+  removeAsset,
+  upsertAsset,
+} from './repo.ts';
 import type { Actor } from './service.ts';
 
 const toDto = (a: AssetRow) => ({
@@ -51,6 +59,11 @@ async function rebuildOrRestore(
   }
 }
 
+/** Slots with identical bytes used to share one object; delete only when no row points at it. */
+async function deleteIfUnreferenced(ctx: ServiceContext, r2Key: string): Promise<void> {
+  if (!(await assetKeyInUse(ctx.env.DB, r2Key))) await ctx.env.BUCKET.delete(r2Key);
+}
+
 export async function putPassAsset(
   ctx: ServiceContext,
   actor: Actor,
@@ -62,7 +75,7 @@ export async function putPassAsset(
   const pass = await requirePass(ctx, passId, scope);
   const info = validateAsset(name, bytes);
   const sha1 = await sha1Hex(bytes);
-  const r2Key = `pass-assets/${passId}/${sha1}.png`;
+  const r2Key = `pass-assets/${passId}/${name}/${sha1}.png`;
   await ctx.env.BUCKET.put(r2Key, bytes, { httpMetadata: { contentType: 'image/png' } });
   const row: AssetRow = {
     name,
@@ -71,16 +84,17 @@ export async function putPassAsset(
     size: bytes.length,
     width: info.width,
     height: info.height,
+    crc32: crc32(bytes),
     createdAt: ctx.clock.now(),
   };
   const previous = await upsertAsset(ctx.env.DB, passId, row);
   try {
     await rebuildOrRestore(ctx, actor, passId, scope, name, previous);
   } catch (error) {
-    if (previous?.r2Key !== r2Key) await ctx.env.BUCKET.delete(r2Key);
+    await deleteIfUnreferenced(ctx, r2Key);
     throw error;
   }
-  if (previous && previous.r2Key !== r2Key) await ctx.env.BUCKET.delete(previous.r2Key);
+  if (previous && previous.r2Key !== r2Key) await deleteIfUnreferenced(ctx, previous.r2Key);
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,
@@ -105,7 +119,7 @@ export async function deletePassAsset(
   if (!previous || !(await removeAsset(ctx.env.DB, passId, name)))
     throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
   await rebuildOrRestore(ctx, actor, passId, scope, name, previous);
-  await ctx.env.BUCKET.delete(previous.r2Key);
+  await deleteIfUnreferenced(ctx, previous.r2Key);
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,

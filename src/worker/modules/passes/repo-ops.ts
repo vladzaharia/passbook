@@ -1,5 +1,5 @@
 import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
-import type { Pass } from './repo.ts';
+import { mapPass, type Pass } from './repo.ts';
 import { listAssets } from './repo-history.ts';
 
 export interface DeletedPass {
@@ -56,14 +56,16 @@ export async function claimIdempotencyKey(
   orgId: string,
   key: string,
   requestHash: string,
+  resourceId: string,
   now: number,
 ): Promise<boolean> {
   return (
     (
       await run(
         db,
-        `INSERT OR IGNORE INTO idempotency_keys (org_id, key, request_hash, created_at) VALUES (?, ?, ?, ?)`,
-        [orgId, key, requestHash, now],
+        `INSERT OR IGNORE INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [orgId, key, requestHash, resourceId, now],
       )
     ).changes === 1
   );
@@ -103,6 +105,7 @@ export async function passesForReissue(
   q: {
     templateId: string;
     orgId: string | null;
+    identityId?: string | null;
     afterId: string | null;
     limit: number;
     skipVersion: string | null;
@@ -110,9 +113,20 @@ export async function passesForReissue(
 ): Promise<{ id: string }[]> {
   return all<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE template_id = ? AND (? IS NULL OR org_id = ?) AND id > ?
+    `SELECT id FROM passes WHERE template_id = ? AND (? IS NULL OR org_id = ?)
+       AND (? IS NULL OR identity_id = ?) AND id > ? AND deleted_at IS NULL
        AND (? IS NULL OR template_version != ?) ORDER BY id LIMIT ?`,
-    [q.templateId, q.orgId, q.orgId, q.afterId ?? '', q.skipVersion, q.skipVersion, q.limit],
+    [
+      q.templateId,
+      q.orgId,
+      q.orgId,
+      q.identityId ?? null,
+      q.identityId ?? null,
+      q.afterId ?? '',
+      q.skipVersion,
+      q.skipVersion,
+      q.limit,
+    ],
   );
 }
 
@@ -146,4 +160,30 @@ export async function setWorkflowStatus(
     `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ? WHERE instance_id = ?`,
     [status, status === 'running' ? null : now, errorCode, instanceId],
   );
+}
+
+/**
+ * Hides the pass from every list and lookup but the device protocol, and unlinks it from its
+ * owner and connection. The retention job removes it later.
+ */
+export async function softDeletePass(db: D1Database, id: string, now: number): Promise<void> {
+  await run(
+    db,
+    `UPDATE passes SET deleted_at = ?, owner_user_id = NULL, connection_id = NULL, external_ref = NULL,
+       next_sync_at = NULL WHERE id = ?`,
+    [now, id],
+  );
+}
+
+export async function expiredDeletedPasses(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<Pass[]> {
+  const rows = await all<Parameters<typeof mapPass>[0]>(
+    db,
+    'SELECT * FROM passes WHERE deleted_at IS NOT NULL AND deleted_at < ? LIMIT ?',
+    [before, limit],
+  );
+  return rows.map(mapPass);
 }

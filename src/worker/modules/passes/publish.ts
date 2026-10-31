@@ -87,20 +87,30 @@ export async function publishPass(
       status: next.status,
     });
     const passJson = JSON.stringify(artifact.passJson);
+    // A template upgrade that leaves pass.json and every asset unchanged is not a new pass:
+    // devices must not be pushed (catalog 22). Legacy rows without a hash compare pass.json.
+    const sameContent =
+      current.contentHash !== null
+        ? current.contentHash === artifact.contentHash
+        : next.templateVersion === current.templateVersion &&
+          (await currentPassJson(db, current.id)) === passJson;
     const identical =
       !options.force &&
-      next.templateVersion === current.templateVersion &&
       next.status === current.status &&
       sameJson(next.personalization, current.personalization) &&
-      (await currentPassJson(db, current.id)) === passJson;
+      sameContent;
     if (identical) {
       const metaChanged =
         !sameJson(next.fieldSources, current.fieldSources) ||
-        next.externalId !== current.externalId;
+        next.externalId !== current.externalId ||
+        next.templateVersion !== current.templateVersion ||
+        current.contentHash === null;
       if (!metaChanged) return { pass: current, changed: false };
       const written = await casMeta(db, current.id, current.version, {
         fieldSources: next.fieldSources,
         externalId: next.externalId,
+        templateVersion: next.templateVersion,
+        contentHash: artifact.contentHash,
       });
       if (written === null) {
         if (options.expectedVersion !== undefined) throw new PreconditionFailedError();
@@ -131,6 +141,7 @@ export async function publishPass(
         objectKey,
         objectSha256: artifact.sha256,
         objectSize: artifact.bytes.length,
+        contentHash: artifact.contentHash,
         cause: options.cause,
         actorType: options.actor.type,
         actorId: options.actor.id,

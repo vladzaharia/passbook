@@ -23,6 +23,7 @@ export interface NewPassRow {
   objectKey: string;
   objectSha256: string;
   objectSize: number;
+  contentHash: string;
   now: number;
   createdBy: string | null;
   passJson: string;
@@ -36,9 +37,9 @@ export async function insertPass(db: D1Database, row: NewPassRow): Promise<void>
     db,
     `INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
        web_service_url, personalization, field_sources, display_title, display_subtitle, external_id, holder_email,
-       connection_id, external_ref, object_key, object_sha256, object_size, modified_at, created_by, created_at,
+       connection_id, external_ref, object_key, object_sha256, object_size, content_hash, modified_at, created_by, created_at,
        pending_cause, pending_actor_type, pending_actor_id, pending_pass_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'create', ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'create', ?, ?, ?)`,
     [
       row.id,
       row.orgId,
@@ -60,6 +61,7 @@ export async function insertPass(db: D1Database, row: NewPassRow): Promise<void>
       row.objectKey,
       row.objectSha256,
       row.objectSize,
+      row.contentHash,
       row.now,
       row.createdBy,
       row.now,
@@ -85,6 +87,7 @@ export interface PublishWrite {
   objectKey: string;
   objectSha256: string;
   objectSize: number;
+  contentHash: string;
   cause: PassCause;
   actorType: string | null;
   actorId: string | null;
@@ -101,7 +104,7 @@ export async function casPublish(db: D1Database, w: PublishWrite): Promise<numbe
     db,
     `UPDATE passes SET template_version = ?, personalization = ?, field_sources = ?, display_title = ?,
        display_subtitle = ?, external_id = ?, status = ?, object_key = ?, object_sha256 = ?, object_size = ?,
-       modified_at = ?, modified_collision = ?, version = version + 1, sync_error_code = NULL,
+       content_hash = ?, modified_at = ?, modified_collision = ?, version = version + 1, sync_error_code = NULL,
        pending_cause = ?, pending_actor_type = ?, pending_actor_id = ?, pending_pass_json = ?
      WHERE id = ? AND version = ? RETURNING version`,
     [
@@ -115,6 +118,7 @@ export async function casPublish(db: D1Database, w: PublishWrite): Promise<numbe
       w.objectKey,
       w.objectSha256,
       w.objectSize,
+      w.contentHash,
       w.now,
       sameSecond ? 1 : 0,
       w.cause,
@@ -133,13 +137,40 @@ export async function casMeta(
   db: D1Database,
   id: string,
   expectedVersion: number,
-  set: { fieldSources: FieldSources; externalId: string | null },
+  set: {
+    fieldSources: FieldSources;
+    externalId: string | null;
+    templateVersion: string;
+    contentHash: string;
+  },
 ): Promise<number | null> {
   const row = await first<{ version: number }>(
     db,
-    `UPDATE passes SET field_sources = ?, external_id = ?, version = version + 1
+    `UPDATE passes SET field_sources = ?, external_id = ?, template_version = ?, content_hash = ?,
+       version = version + 1
      WHERE id = ? AND version = ? RETURNING version`,
-    [JSON.stringify(set.fieldSources), set.externalId, id, expectedVersion],
+    [
+      JSON.stringify(set.fieldSources),
+      set.externalId,
+      set.templateVersion,
+      set.contentHash,
+      id,
+      expectedVersion,
+    ],
   );
   return row?.version ?? null;
+}
+
+/** Binds or unbinds a connection ref. Throws the raw UNIQUE error when another pass holds the ref. */
+export async function setBinding(
+  db: D1Database,
+  id: string,
+  binding: { connectionId: string | null; externalRef: string | null; fieldSources: FieldSources },
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE passes SET connection_id = ?, external_ref = ?, field_sources = ?, sync_error_code = NULL
+     WHERE id = ?`,
+    [binding.connectionId, binding.externalRef, JSON.stringify(binding.fieldSources), id],
+  );
 }

@@ -2,7 +2,7 @@ import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { dispatchSafely } from '../delivery/service.ts';
-import { resolveTemplate } from './builder.ts';
+import { isNotFound, resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import { publishPass } from './publish.ts';
 import { insertWorkflowRun, passesForReissue } from './repo.ts';
@@ -14,6 +14,7 @@ export interface ReissueParams {
   templateId: string;
   version: string;
   orgId: string | null;
+  identityId?: string | null;
   cause: 'template_upgrade' | 'resign';
 }
 
@@ -36,6 +37,7 @@ export async function reissuePage(
   const rows = await passesForReissue(ctx.env.DB, {
     templateId: params.templateId,
     orgId: params.orgId,
+    identityId: params.identityId ?? null,
     afterId: cursor,
     limit: REISSUE_PAGE,
     skipVersion: params.cause === 'template_upgrade' ? params.version : null,
@@ -49,7 +51,8 @@ export async function reissuePage(
         actor: { type: 'system', id: null },
         force: params.cause === 'resign',
         dispatch: false,
-        mutate: () => ({ templateVersion: params.version }),
+        // A re-sign keeps each pass on its current template version.
+        mutate: () => (params.cause === 'resign' ? {} : { templateVersion: params.version }),
       });
       if (published.changed) result.changed++;
       else result.unchanged++;
@@ -72,6 +75,7 @@ async function resolveUnscoped(ctx: ServiceContext, id: string, version?: string
   try {
     return await depsOf(ctx.env).registry.resolve(id, version);
   } catch (error) {
+    if (!isNotFound(error)) throw error;
     ctx.log.warn('bulk_reissue.template_unresolved', { templateId: id, error });
     throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
   }
@@ -80,7 +84,13 @@ async function resolveUnscoped(ctx: ServiceContext, id: string, version?: string
 export async function startBulkReissue(
   ctx: ServiceContext,
   actor: Actor,
-  body: { templateId: string; version?: string | undefined; orgId?: string | undefined },
+  body: {
+    templateId: string;
+    version?: string | undefined;
+    orgId?: string | undefined;
+    cause?: ReissueParams['cause'] | undefined;
+    identityId?: string | undefined;
+  },
 ): Promise<string> {
   const template = body.orgId
     ? await resolveTemplate(ctx, body.orgId, body.templateId, body.version)
@@ -97,7 +107,8 @@ export async function startBulkReissue(
     templateId: template.id,
     version: template.version,
     orgId: body.orgId ?? null,
-    cause: 'template_upgrade',
+    identityId: body.identityId ?? null,
+    cause: body.cause ?? 'template_upgrade',
   };
   await ctx.env.BULK_REISSUE.create({ id: instanceId, params });
   await recordAudit(ctx, {
@@ -107,7 +118,7 @@ export async function startBulkReissue(
     action: 'pass.bulk_reissue',
     targetType: 'template',
     targetId: template.id,
-    detail: { version: template.version, instanceId },
+    detail: { version: template.version, instanceId, cause: params.cause },
   });
   return instanceId;
 }

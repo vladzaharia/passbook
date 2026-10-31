@@ -1,4 +1,4 @@
-import { all, first, placeholders, run } from '../../platform/db.ts';
+import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
 
 export interface HolderPass {
   id: string;
@@ -37,10 +37,29 @@ export async function getHolderPass(
 ): Promise<HolderPass | null> {
   const row = await first<HolderDbRow>(
     db,
-    `${SELECT_HOLDER} WHERE p.id = ? AND (? IS NULL OR p.org_id = ?)`,
+    `${SELECT_HOLDER} WHERE p.id = ? AND (? IS NULL OR p.org_id = ?) AND p.deleted_at IS NULL`,
     [passId, orgScope, orgScope],
   );
   return row ? mapHolder(row) : null;
+}
+
+/** Missing or out-of-scope ids are absent from the result. */
+export async function getHolderPasses(
+  db: D1Database,
+  passIds: string[],
+  orgScope: string | null,
+): Promise<Map<string, HolderPass>> {
+  const out = new Map<string, HolderPass>();
+  for (const ids of chunk([...new Set(passIds)], 90)) {
+    const rows = await all<HolderDbRow>(
+      db,
+      `${SELECT_HOLDER} WHERE p.id IN (${placeholders(ids.length)}) AND p.deleted_at IS NULL
+         AND (? IS NULL OR p.org_id = ?)`,
+      [...ids, orgScope, orgScope],
+    );
+    for (const row of rows) out.set(row.id, mapHolder(row));
+  }
+  return out;
 }
 
 export interface HolderFilter {
@@ -55,7 +74,7 @@ export async function listHolderPasses(
   db: D1Database,
   filter: HolderFilter,
 ): Promise<{ items: HolderPass[]; nextCursor: string | null }> {
-  const where: string[] = [];
+  const where: string[] = ['p.deleted_at IS NULL'];
   const params: (string | number)[] = [];
   if (filter.orgId) {
     where.push('p.org_id = ?');
@@ -76,7 +95,7 @@ export async function listHolderPasses(
   }
   const rows = await all<HolderDbRow>(
     db,
-    `${SELECT_HOLDER} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY p.id DESC LIMIT ?`,
+    `${SELECT_HOLDER} WHERE ${where.join(' AND ')} ORDER BY p.id DESC LIMIT ?`,
     [...params, filter.limit + 1],
   );
   const page = rows.slice(0, filter.limit).map(mapHolder);
@@ -90,23 +109,27 @@ export async function blockedUsers(
 ): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>();
   if (passIds.length === 0) return out;
-  const rows = await all<{ pass_id: string; user_id: string }>(
-    db,
-    `SELECT pass_id, user_id FROM pass_attach_blocks WHERE pass_id IN (${placeholders(passIds.length)})`,
-    passIds,
-  );
-  for (const r of rows) out.set(r.pass_id, [...(out.get(r.pass_id) ?? []), r.user_id]);
+  // D1 allows 100 bound parameters per statement.
+  for (const ids of chunk(passIds)) {
+    const rows = await all<{ pass_id: string; user_id: string }>(
+      db,
+      `SELECT pass_id, user_id FROM pass_attach_blocks WHERE pass_id IN (${placeholders(ids.length)})`,
+      ids,
+    );
+    for (const r of rows) out.set(r.pass_id, [...(out.get(r.pass_id) ?? []), r.user_id]);
+  }
   return out;
 }
 
-/** Active users that verified `email`: a user_emails row, or an identity with email_verified. */
+/**
+ * Active users that verified `email` through a user_emails row. An OIDC email_verified claim is
+ * not proof here: with oidc.trustEmail off, sign-in leaves the address out of user_emails.
+ */
 export async function verifiedCandidates(db: D1Database, email: string): Promise<string[]> {
   const rows = await all<{ id: string }>(
     db,
-    `SELECT u.id FROM users u WHERE u.status = 'active' AND (
-       EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id AND e.email = ?1)
-       OR EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = u.id AND a.email_verified = 1
-                  AND lower(a.email_claim) = ?1))`,
+    `SELECT u.id FROM users u WHERE u.status = 'active'
+       AND EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id AND e.email = ?1)`,
     [email],
   );
   return rows.map((r) => r.id);
@@ -119,10 +142,8 @@ export async function userVerifiedEmail(
 ): Promise<boolean> {
   const row = await first<{ ok: number }>(
     db,
-    `SELECT 1 AS ok FROM users u WHERE u.id = ?1 AND u.status = 'active' AND (
-       EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id AND e.email = ?2)
-       OR EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = u.id AND a.email_verified = 1
-                  AND lower(a.email_claim) = ?2))`,
+    `SELECT 1 AS ok FROM users u WHERE u.id = ?1 AND u.status = 'active'
+       AND EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id AND e.email = ?2)`,
     [userId, email],
   );
   return row !== null;

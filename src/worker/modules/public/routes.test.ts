@@ -161,11 +161,10 @@ describe('GET /p/:token/assets/:name', () => {
   it('prefers the per-pass override and keeps it private to that pass', async () => {
     const mine = await kit.pass();
     const other = await kit.pass();
-    const png = new Uint8Array(ICON_PNG);
-    png[40] = 99;
+    const png = ICON_PNG;
     await putPassAsset(kit.ctx, actor, mine.id, 'icon.png', png, null);
     const override = await get(`/p/${mine.downloadToken}/assets/icon.png`);
-    expect(new Uint8Array(await override.arrayBuffer())[40]).toBe(99);
+    expect(new Uint8Array(await override.arrayBuffer())).toEqual(png);
     const untouched = await get(`/p/${other.downloadToken}/assets/icon.png`);
     expect(new Uint8Array(await untouched.arrayBuffer())).toEqual(TINY_PNG);
   });

@@ -1,4 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -13,8 +14,6 @@ import { type Mutation, publishPass } from './publish.ts';
 import {
   claimRefresh,
   connectionGeneration,
-  deleteObjects,
-  deletePassRows,
   type FieldSources,
   findByConnectionRef,
   getPass,
@@ -22,6 +21,7 @@ import {
   pendingPushId,
   setDownloadToken,
   setSyncError,
+  softDeletePass,
 } from './repo.ts';
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
@@ -135,7 +135,10 @@ export const voidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: s
 export const unvoidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: string | null) =>
   setStatus(ctx, actor, id, 'active', scope);
 
-/** Voids first so devices learn about it, then removes rows and stored objects. */
+/**
+ * Voids and pushes, then soft-deletes. The voided pass stays available to registered devices
+ * until the retention job removes it.
+ */
 export async function deletePass(
   ctx: ServiceContext,
   actor: Actor,
@@ -163,8 +166,7 @@ export async function deletePass(
       }
     }
   }
-  const removed = await deletePassRows(ctx.env.DB, pass);
-  await deleteObjects(ctx.env.BUCKET, removed.objectKeys);
+  await softDeletePass(ctx.env.DB, pass.id, ctx.clock.now());
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,
@@ -290,11 +292,15 @@ export async function applyConnectionRecord(
     },
   });
   if (result.pass.syncErrorCode) await setSyncError(db, pass.id, null);
-  if (input.holderEmail && !result.pass.ownerUserId) {
+  const email = input.holderEmail ? strictEmail(input.holderEmail) : null;
+  if (input.holderEmail && !email)
+    ctx.log.warn('pass.holder_email_invalid', { passId: pass.id, code: 'EMAIL_INVALID' });
+  // Unchanged emails would cost an audit row and hook A on every sync.
+  if (email && !result.pass.ownerUserId && email !== result.pass.holderEmail) {
     await assignHolder(
       ctx,
       { type: 'connection', id: input.connectionId },
-      { passId: pass.id, email: input.holderEmail },
+      { passId: pass.id, email },
       null,
     );
   }
@@ -323,18 +329,31 @@ export async function createPassFromConnection(
     input.externalRef,
   );
   if (existing) return { passId: existing };
-  const pass = await createPassRow(ctx, {
-    orgId: input.orgId,
-    templateId: input.templateId,
-    input: input.fields,
-    holderEmail: input.holderEmail ?? null,
-    connectionId: input.connectionId,
-    externalRef: input.externalRef,
-    sendEmail: input.sendEmail,
-    source: 'connection',
-    actor: { type: 'connection', id: input.connectionId },
-  });
-  return { passId: pass.id };
+  try {
+    const pass = await createPassRow(ctx, {
+      orgId: input.orgId,
+      templateId: input.templateId,
+      input: input.fields,
+      holderEmail: input.holderEmail ?? null,
+      connectionId: input.connectionId,
+      externalRef: input.externalRef,
+      sendEmail: input.sendEmail,
+      source: 'connection',
+      actor: { type: 'connection', id: input.connectionId },
+    });
+    return { passId: pass.id };
+  } catch (error) {
+    // A concurrent sync won the unique (connection, ref) index: use its pass, send no email.
+    if (!(error instanceof ConflictError) || error.code !== 'PASS_REF_TAKEN') throw error;
+    const winner = await findByConnectionRef(
+      ctx.env.DB,
+      input.orgId,
+      input.connectionId,
+      input.externalRef,
+    );
+    if (!winner) throw error;
+    return { passId: winner };
+  }
 }
 
 /** Upstream record missing: `flag` sets sync_error_code RECORD_MISSING; `void` voids the pass. */

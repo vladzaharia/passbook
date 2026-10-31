@@ -17,8 +17,12 @@ export async function runBulkReissue(
   instanceId: string,
   params: BulkReissueParams,
   step: StepLike,
+  exec?: ExecutionContext,
 ): Promise<{ changed: number; unchanged: number; failed: number }> {
-  const ctx = createServiceContext(env, { base: { workflow: 'bulk-reissue', instanceId } });
+  const ctx = createServiceContext(env, {
+    ...(exec ? { ctx: exec } : {}),
+    base: { workflow: 'bulk-reissue', instanceId },
+  });
   await step.do('start', () => setWorkflowStatus(env.DB, instanceId, 'running', ctx.clock.now()));
   const totals = { changed: 0, unchanged: 0, failed: 0 };
   try {
@@ -55,6 +59,6 @@ export async function runBulkReissue(
 
 export class BulkReissue extends WorkflowEntrypoint<AppEnv, BulkReissueParams> {
   override async run(event: WorkflowEvent<BulkReissueParams>, step: WorkflowStep): Promise<void> {
-    await runBulkReissue(this.env, event.instanceId, event.payload, step);
+    await runBulkReissue(this.env, event.instanceId, event.payload, step, this.ctx);
   }
 }

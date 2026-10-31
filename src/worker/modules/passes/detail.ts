@@ -34,6 +34,7 @@ export function toSummary(pass: Pass) {
     status: pass.status,
     version: pass.version,
     connectionId: pass.connectionId,
+    externalRef: pass.externalRef,
     syncErrorCode: pass.syncErrorCode,
     holderEmail: pass.holderEmail,
     holderState: holderStateOf(pass),
@@ -193,5 +194,7 @@ export async function diffVersions(
     getVersion(ctx.env.DB, id, to),
   ]);
   if (!a || !b) throw new NotFoundError('Version not found.', 'VERSION_NOT_FOUND');
+  if (a.purged || b.purged)
+    throw new AppError('VERSION_PURGED', 410, 'This version is no longer stored.');
   return { changes: diffValues(a.personalization, b.personalization) };
 }

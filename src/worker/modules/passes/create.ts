@@ -39,6 +39,8 @@ export interface CreateParams {
   sendEmail?: boolean;
   source: 'manual' | 'connection';
   actor: Actor;
+  /** Preassigned pass id; idempotent creates reserve it with the key. */
+  passId?: string;
 }
 
 export function stableStringify(value: unknown): string {
@@ -71,7 +73,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
   const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 
-  const id = ctx.ids.id();
+  const id = p.passId ?? ctx.ids.id();
   const serial = p.serial ?? ctx.ids.id();
   const authToken = ctx.ids.token();
   const webServiceUrl = `${baseUrl(ctx.env)}/wallet`;
@@ -104,7 +106,10 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       downloadToken: ctx.ids.token(),
       webServiceUrl,
       personalization: p.input,
-      fieldSources: Object.fromEntries(Object.keys(p.input).map((k) => [k, p.source])),
+      // A bound pass takes its fields from the connection until an admin edits them.
+      fieldSources: Object.fromEntries(
+        Object.keys(p.input).map((k) => [k, p.connectionId ? 'connection' : p.source]),
+      ),
       displayTitle: artifact.title,
       displaySubtitle: artifact.subtitle,
       externalId: p.externalId ?? null,
@@ -114,6 +119,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       objectKey,
       objectSha256: artifact.sha256,
       objectSize: artifact.bytes.length,
+      contentHash: artifact.contentHash,
       now: ctx.clock.now(),
       createdBy: p.actor.type === 'user' ? p.actor.id : null,
       passJson: JSON.stringify(artifact.passJson),
@@ -122,11 +128,11 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     });
   } catch (error) {
     await ctx.env.BUCKET.delete(objectKey);
-    if (
-      error instanceof Error &&
-      /UNIQUE constraint failed: passes\.(identity_id|download_token)/.test(error.message)
-    )
+    const message = error instanceof Error ? error.message : '';
+    if (/UNIQUE constraint failed: passes\.(identity_id|download_token)/.test(message))
       throw new ConflictError('That serial is already in use.', 'SERIAL_TAKEN');
+    if (/UNIQUE constraint failed: .*passes\.external_ref/.test(message))
+      throw new ConflictError('That connection ref already has a pass.', 'PASS_REF_TAKEN');
     throw error;
   }
   const pass = await getPass(db, id);
@@ -164,7 +170,8 @@ export async function createPassIdempotent(
   if (!key) return detailOf(ctx, await createPassRow(ctx, p));
   const db = ctx.env.DB;
   const hash = await sha256Hex(stableStringify({ ...p, actor: undefined }));
-  const claimed = await claimIdempotencyKey(db, p.orgId, key, hash, ctx.clock.now());
+  const passId = ctx.ids.id();
+  const claimed = await claimIdempotencyKey(db, p.orgId, key, hash, passId, ctx.clock.now());
   if (!claimed) {
     const existing = await getIdempotencyKey(db, p.orgId, key);
     if (!existing || existing.requestHash !== hash)
@@ -181,11 +188,10 @@ export async function createPassIdempotent(
     return detailOf(ctx, pass);
   }
   try {
-    const pass = await createPassRow(ctx, p);
-    await finishIdempotencyKey(db, p.orgId, key, pass.id);
-    return detailOf(ctx, pass);
+    return detailOf(ctx, await createPassRow(ctx, { ...p, passId }));
   } catch (error) {
-    await finishIdempotencyKey(db, p.orgId, key, null);
+    // Once the row is committed the key keeps pointing at it, so a retry replays that pass.
+    if (!(await getPass(db, passId))) await finishIdempotencyKey(db, p.orgId, key, null);
     throw error;
   }
 }

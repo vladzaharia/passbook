@@ -10,6 +10,7 @@ import {
   blockedUserIds,
   blockedUsers,
   getHolderPass,
+  getHolderPasses,
   type HolderPass,
   isOwner,
   listHolderPasses,
@@ -86,18 +87,15 @@ export async function runAttachHookA(
   return attached;
 }
 
-export async function assignHolder(
+async function assignOne(
   ctx: ServiceContext,
   actor: Actor,
   input: { passId: string; email: string },
-  scope: string | null,
-) {
+  pass: HolderPass,
+): Promise<void> {
   const email = emailOf(input.email);
-  const pass = await load(ctx, input.passId, scope);
-  if (pass.ownerUserId) {
-    if (pass.holderEmail === email) return view(ctx, pass.id, scope);
-    throw new ConflictError('The pass is owned. Use reassign.', 'HOLDER_OWNED');
-  }
+  if (pass.holderEmail === email) return;
+  if (pass.ownerUserId) throw new ConflictError('The pass is owned. Use reassign.', 'HOLDER_OWNED');
   if (!(await setEmailIfUnowned(ctx.env.DB, pass.id, email)))
     throw new ConflictError('The pass was claimed meanwhile. Reload.', 'HOLDER_CHANGED');
   await recordAudit(ctx, {
@@ -107,10 +105,19 @@ export async function assignHolder(
     action: 'holder.assign',
     targetType: 'pass',
     targetId: pass.id,
-    detail: { changed: pass.holderEmail !== email },
+    detail: { changed: true },
   });
   await runAttachHookA(ctx, pass.id, actor);
-  return view(ctx, pass.id, scope);
+}
+
+export async function assignHolder(
+  ctx: ServiceContext,
+  actor: Actor,
+  input: { passId: string; email: string },
+  scope: string | null,
+) {
+  await assignOne(ctx, actor, input, await load(ctx, input.passId, scope));
+  return view(ctx, input.passId, scope);
 }
 
 export async function assignHoldersBulk(
@@ -119,9 +126,30 @@ export async function assignHoldersBulk(
   items: { passId: string; email: string }[],
   scope: string | null,
 ) {
-  const out = [];
-  for (const item of items) out.push(await assignHolder(ctx, actor, item, scope));
-  return out;
+  // Scope and validate everything first: a foreign pass must not leave earlier items applied.
+  const passes = await getHolderPasses(
+    ctx.env.DB,
+    items.map((i) => i.passId),
+    scope,
+  );
+  for (const item of items) {
+    emailOf(item.email);
+    if (!passes.has(item.passId)) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  }
+  for (const item of items) {
+    const pass = (await getHolderPass(ctx.env.DB, item.passId, scope)) ?? passes.get(item.passId);
+    if (pass) await assignOne(ctx, actor, item, pass);
+  }
+  const after = await getHolderPasses(
+    ctx.env.DB,
+    items.map((i) => i.passId),
+    scope,
+  );
+  const blocks = await blockedUsers(ctx.env.DB, [...after.keys()]);
+  return items.flatMap((item) => {
+    const pass = after.get(item.passId);
+    return pass ? [toHolder(pass, blocks.get(pass.id) ?? [])] : [];
+  });
 }
 
 /** Explicit admin move of an owned pass: clears the owner, sets the email, then runs hook A. */

@@ -51,9 +51,7 @@ describe('hook A: a pass gets a holder email', () => {
     expect(await owner(pass.id)).toBeNull();
   });
 
-  it('stays waiting when two accounts verified the address', async () => {
-    const e = email();
-    await makeUser(kit.fx, { primaryEmail: e });
+  async function claimOnly(e: string) {
     const other = await makeUser(kit.fx, { verified: false });
     await run(
       kit.env.DB,
@@ -61,8 +59,22 @@ describe('hook A: a pass gets a holder email', () => {
        VALUES ('oidc', ?, ?, ?, 1, 1)`,
       [`sub-${other.id}`, other.id, e],
     );
+    return other;
+  }
+
+  it('ignores an OIDC email claim that is not in user_emails (trustEmail off)', async () => {
+    const e = email();
+    await claimOnly(e);
     const pass = await kit.pass({ holderEmail: e });
     expect(await owner(pass.id)).toBeNull();
+  });
+
+  it('attaches to the account in user_emails even when another identity claims the address', async () => {
+    const e = email();
+    const verified = await makeUser(kit.fx, { primaryEmail: e });
+    await claimOnly(e);
+    const pass = await kit.pass({ holderEmail: e });
+    expect(await owner(pass.id)).toBe(verified.id);
   });
 
   it('does nothing for a pass without an email', async () => {

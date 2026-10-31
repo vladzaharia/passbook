@@ -3,8 +3,15 @@ import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import { createPassIdempotent } from './create.ts';
 import { overrideDeps } from './deps.ts';
+import { dailyPasses } from './jobs.ts';
 import { publishPass } from './publish.ts';
-import { getPass } from './repo.ts';
+import {
+  countRegistrations,
+  getPass,
+  getPassByDownloadToken,
+  getPassBySerial,
+  listPasses,
+} from './repo.ts';
 import {
   deletePass,
   listPassSummaries,
@@ -368,7 +375,7 @@ describe('void, links, delete', () => {
     expect(publicUrl).toContain(after?.downloadToken ?? 'x');
   });
 
-  it('deletes rows and every stored object, and pushes the void first', async () => {
+  it('soft-deletes, keeps serving the voided pass, and hard-deletes after the grace period', async () => {
     const pass = await kit.pass();
     const device = 'dev-delete-1';
     await run(
@@ -383,8 +390,26 @@ describe('void, links, delete', () => {
     );
     await deletePass(kit.ctx, actor, pass.id, null);
     expect(await getPass(kit.env.DB, pass.id)).toBeNull();
-    expect((await kit.env.BUCKET.list({ prefix: `passes/${pass.id}/` })).objects).toHaveLength(0);
+    expect(await getPassByDownloadToken(kit.env.DB, pass.downloadToken)).toBeNull();
+    expect(
+      (await listPasses(kit.env.DB, { orgId: pass.orgId, limit: 200 })).items.some(
+        (p) => p.id === pass.id,
+      ),
+    ).toBe(false);
+    // The device protocol still resolves the voided pass and its registration.
+    const served = await getPassBySerial(kit.env.DB, pass.identityId, pass.serial);
+    expect(served?.status).toBe('voided');
+    expect(await countRegistrations(kit.env.DB, pass.id)).toBe(1);
     expect(kit.apns.sent.some((s) => s.token === 'a'.repeat(64))).toBe(true);
+    await dailyPasses(kit.ctx);
+    expect(await getPassBySerial(kit.env.DB, pass.identityId, pass.serial)).not.toBeNull();
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [
+      kit.clock.now() - 8 * 86_400_000,
+      pass.id,
+    ]);
+    await dailyPasses(kit.ctx);
+    expect(await getPassBySerial(kit.env.DB, pass.identityId, pass.serial)).toBeNull();
+    expect((await kit.env.BUCKET.list({ prefix: `passes/${pass.id}/` })).objects).toHaveLength(0);
     const leftover = await first<{ n: number }>(
       kit.env.DB,
       'SELECT count(*) AS n FROM devices WHERE device_id = ?',
