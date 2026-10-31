@@ -1,6 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../ui/route-placeholder.tsx';
+import { AccountPage } from '../portal/account-page.tsx';
 
-export const Route = createFileRoute('/account')({
-  component: () => <RoutePlaceholder title="Account" />,
-});
+export const Route = createFileRoute('/account')({ component: AccountPage });

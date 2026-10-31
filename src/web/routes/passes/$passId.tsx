@@ -1,11 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../ui/route-placeholder.tsx';
+import { PassDetailPage } from '../../portal/pass-detail-page.tsx';
 
 export const Route = createFileRoute('/passes/$passId')({
-  component: () => (
-    <RoutePlaceholder
-      title="Pass"
-      breadcrumbs={[{ label: 'My passes', to: '/' }, { label: 'Pass' }]}
-    />
-  ),
+  component: function PassRoute() {
+    const { passId } = Route.useParams();
+    return <PassDetailPage passId={passId} />;
+  },
 });

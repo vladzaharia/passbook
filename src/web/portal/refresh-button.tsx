@@ -1,0 +1,76 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Button, type ButtonProps, toast } from '../ui/index.ts';
+import { myPassesKey, requestRefresh } from './api.ts';
+import { type RefreshFields, refreshPhase } from './refresh.ts';
+
+function useNow(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+  return active ? now : Date.now();
+}
+
+export function RefreshButton({
+  passId,
+  pass,
+  size = 'md',
+  variant = 'outline',
+}: {
+  passId: string;
+  pass: RefreshFields;
+  size?: ButtonProps['size'];
+  variant?: ButtonProps['variant'];
+}) {
+  const client = useQueryClient();
+  const [localRequestedAt, setLocal] = useState<number | null>(null);
+  const [active, setActive] = useState(false);
+  const now = useNow(active);
+  const { phase, secondsLeft } = refreshPhase(pass, now, localRequestedAt);
+  const prev = useRef(phase);
+
+  const mutation = useMutation({
+    mutationFn: () => requestRefresh(passId),
+    onSuccess: (res) => {
+      setLocal(res.requestedAt);
+      setActive(true);
+      void client.invalidateQueries({ queryKey: myPassesKey });
+    },
+    onError: (error) => toast.error(error, 'Refresh failed'),
+  });
+
+  useEffect(() => {
+    // Keep ticking only while there is something to count down.
+    setActive(phase !== 'idle');
+    const requested = Math.max(pass.refreshRequestedAt ?? 0, localRequestedAt ?? 0);
+    const done = (pass.lastRefreshedAt ?? 0) >= requested;
+    if (prev.current === 'pending' && phase !== 'pending' && done) toast.success('Pass updated');
+    prev.current = phase;
+  }, [phase, pass.lastRefreshedAt, pass.refreshRequestedAt, localRequestedAt]);
+
+  const label =
+    phase === 'pending'
+      ? 'Refreshing'
+      : phase === 'cooldown'
+        ? `Refresh in ${secondsLeft}s`
+        : 'Refresh';
+
+  return (
+    <Button
+      variant={variant}
+      size={size}
+      iconStart={<RefreshCw aria-hidden />}
+      loading={phase === 'pending' || mutation.isPending}
+      disabled={phase === 'cooldown'}
+      onClick={() => mutation.mutate()}
+      title={phase === 'pending' ? 'Wallet may take a minute to update' : undefined}
+    >
+      {label}
+    </Button>
+  );
+}
