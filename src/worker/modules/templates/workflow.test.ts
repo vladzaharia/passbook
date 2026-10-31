@@ -77,6 +77,8 @@ describe('TemplateImport workflow', () => {
       },
     } as unknown as WorkflowStep;
     await expect(workflow().run(event(p), step)).rejects.toThrow('boom');
+    expect(await env.BUCKET.head(p.objectKey)).toBeNull();
+    expect((await env.BUCKET.list({ prefix: `uploads/${p.uploadId}/` })).objects).toHaveLength(0);
     const run = await first<{ status: string; error_code: string }>(
       env.DB,
       'SELECT status, error_code FROM workflow_runs WHERE instance_id = ?',
