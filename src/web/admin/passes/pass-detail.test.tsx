@@ -406,6 +406,9 @@ describe('pass detail: header actions', () => {
       }),
     });
     await user.click(await screen.findByRole('button', { name: 'Void' }));
+    expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/void')).toBe(false);
+    const ask = await screen.findByRole('alertdialog');
+    await user.click(within(ask).getByRole('button', { name: 'Void' }));
     await waitFor(() =>
       expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/void')).toBe(true),
     );
@@ -424,7 +427,7 @@ describe('pass detail: header actions', () => {
     expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
   });
 
-  it('shows an error state when the pass is missing', async () => {
+  it('shows not found with a way back, and no retry', async () => {
     await renderApp('/admin/passes/p1', {
       session: 'admin',
       handlers: {
@@ -432,6 +435,30 @@ describe('pass detail: header actions', () => {
         '/api/v1/passes/p1': () => problem(404, 'not_found', 'Pass not found.'),
       },
     });
-    expect(await screen.findByRole('alert')).toHaveTextContent('Pass not found.');
+    expect(await screen.findByText('Pass not found')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to passes' })).toHaveAttribute(
+      'href',
+      '/admin/passes',
+    );
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('shows an error with retry for server failures', async () => {
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': () => json({ items: [], nextCursor: null }),
+        '/api/v1/passes/p1': () => problem(500, 'internal', 'Boom.'),
+      },
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Server error');
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('offers the .pkpass download from the detail header', async () => {
+    await renderApp('/admin/passes/p1', { session: 'admin', handlers: handlers(newServer()) });
+    const link = await screen.findByRole('link', { name: 'Download .pkpass' });
+    expect(link).toHaveAttribute('href', '/p/tok/pass.pkpass');
+    expect(link).toHaveAttribute('download');
   });
 });

@@ -23,6 +23,13 @@ export interface PassFilters {
   holderState?: 'unassigned' | 'waiting' | 'owned' | undefined;
 }
 
+/** Body of PUT /passes/{id}/connection; null ids unbind. */
+export interface BindConnectionBody {
+  connectionId: string | null;
+  externalRef: string | null;
+  resetFieldSources?: boolean;
+}
+
 export const passKeys = {
   all: ['admin', 'passes'] as const,
   list: (f: PassFilters) => ['admin', 'passes', 'list', f] as const,
@@ -118,10 +125,21 @@ export function usePassActions(id: string) {
       onSuccess: refresh,
     }),
     resendEmail: useMutation({
-      mutationFn: (input: { to?: string; key: string }) =>
-        api.post(`/api/v1/passes/${id}/resend-email`, OkSchema, input.to ? { to: input.to } : {}, {
-          headers: { 'idempotency-key': input.key },
-        }),
+      mutationFn: (input: { to?: string; attach?: boolean; key: string }) =>
+        api.post(
+          `/api/v1/passes/${id}/resend-email`,
+          OkSchema,
+          {
+            ...(input.to ? { to: input.to } : {}),
+            ...(input.attach ? { attach: true } : {}),
+          },
+          { headers: { 'idempotency-key': input.key } },
+        ),
+      onSuccess: refresh,
+    }),
+    bindConnection: useMutation({
+      mutationFn: (body: BindConnectionBody) =>
+        api.put(`/api/v1/passes/${id}/connection`, PassDetailSchema, body),
       onSuccess: refresh,
     }),
     remove: useMutation({

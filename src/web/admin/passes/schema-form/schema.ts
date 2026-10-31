@@ -23,6 +23,8 @@ export interface FieldDef {
   widget: Widget;
   type: 'string' | 'number' | 'integer' | 'boolean';
   required: boolean;
+  /** Server-applied default, if the schema declares one. */
+  hasDefault: boolean;
   options?: { value: string; label: string }[] | undefined;
   schema: Record<string, unknown>;
 }
@@ -107,6 +109,7 @@ export function describeSchema(schema: unknown): FieldGroup[] {
       widget: widgetOf(def, type),
       type,
       required: required.has(key),
+      hasDefault: 'default' in def && def.default !== undefined,
       options: optionsOf(def),
       schema: def,
     });
@@ -213,4 +216,25 @@ function sortedEntries(v: FormValues): [string, unknown][] {
 
 export function sameValues(a: FormValues, b: FormValues): boolean {
   return JSON.stringify(sortedEntries(a)) === JSON.stringify(sortedEntries(b));
+}
+
+/** Schema defaults the server would apply, to seed a new-pass form. */
+export function defaultValues(schema: unknown): FormValues {
+  const out: FormValues = {};
+  for (const field of flatFields(describeSchema(schema))) {
+    if (field.hasDefault) out[field.key] = field.schema.default;
+  }
+  return out;
+}
+
+/** Input keys that feed `pointer` through a plain `{{key}}` binding. */
+export function keysBoundTo(manifest: unknown, pointer: string): Set<string> {
+  const out = new Set<string>();
+  const bindings = isObject(manifest) && Array.isArray(manifest.bindings) ? manifest.bindings : [];
+  for (const b of bindings) {
+    if (!isObject(b) || !isObject(b.to) || b.to.pointer !== pointer) continue;
+    const m = typeof b.value === 'string' ? /^\{\{\s*([\w.-]+)\s*\}\}$/.exec(b.value) : null;
+    if (m?.[1]) out.add(m[1]);
+  }
+  return out;
 }

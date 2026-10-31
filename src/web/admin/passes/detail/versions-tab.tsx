@@ -66,17 +66,20 @@ export function VersionsTab({
                   </span>
                   {v.purged ? <Badge className="ml-2">Purged</Badge> : null}
                 </div>
-                <Button
-                  size="sm"
-                  variant={selected === v.version ? 'secondary' : 'outline'}
-                  disabled={v.purged}
-                  aria-label={`Render v${v.version}`}
-                  onClick={() => onSelect(v.version === pass.version ? undefined : v.version)}
-                >
-                  {selected === v.version || (selected === undefined && v.version === pass.version)
-                    ? 'Showing'
-                    : 'Render'}
-                </Button>
+                {selected === v.version ||
+                (selected === undefined && v.version === pass.version) ? (
+                  <Badge tone="info">Showing</Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={v.purged}
+                    aria-label={`Render v${v.version}`}
+                    onClick={() => onSelect(v.version === pass.version ? undefined : v.version)}
+                  >
+                    Render
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

@@ -22,6 +22,12 @@ import { ValidationReport } from './validation-report.tsx';
 const MAX_BYTES = 15 * 1024 * 1024;
 const crumbs = [{ label: 'Templates', to: '/admin/templates' }, { label: 'Upload' }];
 
+function importMessage(error: string | null | undefined): string {
+  if (!error) return 'The import did not finish.';
+  if (error === 'IMPORT_INVALID') return 'The package has errors. Fix them and upload again.';
+  return /^[A-Z][A-Z0-9_]+$/.test(error) ? 'The import failed. Try again.' : error;
+}
+
 function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void }) {
   const status = useImportStatus(uploadId);
   if (status.isError) {
@@ -52,7 +58,7 @@ function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void
         <CardHeader title="Import failed" />
         <CardBody className="grid gap-3">
           <p role="alert" className="text-sm text-danger">
-            {s.error ?? 'The import did not finish.'}
+            {importMessage(s.error)}
           </p>
           {s.report ? <ValidationReport report={s.report} /> : null}
           <div>
@@ -110,7 +116,7 @@ export function TemplateUploadPage() {
             {(c) => (
               <Select
                 {...c}
-                value={orgId}
+                value={orgId ?? ''}
                 onValueChange={setOrgId}
                 options={(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name }))}
               />

@@ -1,10 +1,12 @@
 export {
   cleanValues,
+  defaultValues,
   describeSchema,
   type FieldDef,
   type FieldGroup,
   type FormValues,
   flatFields,
+  keysBoundTo,
   pickDeclared,
   sameValues,
   validateValues,

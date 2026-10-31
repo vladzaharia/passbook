@@ -11,6 +11,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CheckboxField,
   DataTable,
   EmptyState,
   ErrorState,
@@ -46,15 +47,18 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
     staleTime: 0,
   });
   const [to, setTo] = useState('');
+  const [attach, setAttach] = useState(false);
   const [error, setError] = useState<string>();
   // One key per click intent: a retry of the same click cannot send twice.
   const key = useRef(newKey());
 
   async function resend(address?: string) {
+    const withAttachment = attach;
     setError(undefined);
     try {
       await actions.resendEmail.mutateAsync({
         ...(address ? { to: address } : {}),
+        ...(withAttachment ? { attach: true } : {}),
         key: key.current,
       });
       key.current = newKey();
@@ -177,6 +181,11 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
               />
             )}
           </FormField>
+          <CheckboxField
+            label="Attach .pkpass"
+            checked={attach}
+            onCheckedChange={(c) => setAttach(c === true)}
+          />
           <div>
             <Button
               loading={actions.resendEmail.isPending}

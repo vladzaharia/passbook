@@ -15,6 +15,7 @@ import { passKeys } from '../api.ts';
 import {
   cleanValues,
   type FormValues,
+  keysBoundTo,
   pickDeclared,
   SchemaForm,
   sameValues,
@@ -40,7 +41,15 @@ export function changedKeys(base: FormValues, draft: FormValues): FormValues {
   return out;
 }
 
-export function FieldsTab({ pass, schema }: { pass: Pass; schema: unknown }) {
+export function FieldsTab({
+  pass,
+  schema,
+  manifest,
+}: {
+  pass: Pass;
+  schema: unknown;
+  manifest?: unknown;
+}) {
   const qc = useQueryClient();
   const snapshot = (p: Pass): Baseline => ({
     version: p.version,
@@ -52,6 +61,9 @@ export function FieldsTab({ pass, schema }: { pass: Pass; schema: unknown }) {
   const [rejected, setRejected] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>();
+
+  // Void state is pass.status; a /voided input would contradict the header.
+  const hiddenKeys = useMemo(() => keysBoundTo(manifest, '/voided'), [manifest]);
 
   const dirty = !sameValues(draft, baseline.values);
   const stale = pass.version !== baseline.version;
@@ -164,6 +176,7 @@ export function FieldsTab({ pass, schema }: { pass: Pass; schema: unknown }) {
         value={draft}
         onChange={setDraft}
         disabled={saving}
+        hiddenKeys={hiddenKeys}
         showAllErrors={showErrors}
         serverErrors={serverErrors}
         fieldSources={pass.fieldSources}
