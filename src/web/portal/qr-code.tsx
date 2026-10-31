@@ -9,7 +9,7 @@ export function QrCode({ value, label }: { value: string; label: string }) {
     let live = true;
     setSrc(undefined);
     setFailed(false);
-    import('bwip-js')
+    import('bwip-js/generic')
       .then((mod) => {
         const bwip = (mod.default ?? mod) as unknown as { toSVG(opts: object): string };
         const svg = bwip.toSVG({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });

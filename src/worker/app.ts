@@ -1,7 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import type { MiddlewareHandler } from 'hono';
 import { apiKeysRoutes } from './modules/api-keys/routes.ts';
 import { appleRoutes } from './modules/apple/routes.ts';
 import { auditRoutes } from './modules/audit/routes.ts';
+import { limitBody } from './modules/auth/body-limit.ts';
 import { authRoutes, sessionRoutes } from './modules/auth/routes.ts';
 import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/connections/routes.ts';
 import { deliveryRoutes } from './modules/delivery/routes.ts';
@@ -22,6 +24,13 @@ import { type AppBindings, requestContext } from './platform/context.ts';
 import { handleError, notFoundHandler } from './platform/errors.ts';
 import { securityHeaders } from './platform/security-headers.ts';
 
+const DEFAULT_BODY_BYTES = 256 * 1024;
+const UPLOAD_PATH = /^\/api\/v1\/(templates\/uploads|passes\/[^/]+\/assets\/[^/]+)$/;
+const sized = limitBody(DEFAULT_BODY_BYTES);
+/** Routes with their own larger caps (template archive, image assets) opt out. */
+const defaultBodyLimit: MiddlewareHandler = (c, next) =>
+  UPLOAD_PATH.test(new URL(c.req.url).pathname) ? next() : sized(c, next);
+
 export interface AppOptions {
   /** Session and API-key stores. Production wiring lives in stores.ts; tests pass fakes. */
   stores?: AuthStores;
@@ -33,8 +42,20 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   const app = new OpenAPIHono<AppBindings>();
   app.use('*', requestContext({ stores: options.stores ?? denyAllStores, clock: options.clock }));
   app.use('*', securityHeaders);
+  app.use('/api/v1/*', defaultBodyLimit);
+  app.use('/hooks/*', limitBody(DEFAULT_BODY_BYTES));
   app.onError(handleError);
   app.notFound(notFoundHandler);
+
+  // A missing chunk must not come back as the SPA fallback page (cached immutable under that URL).
+  app.get('/assets/*', async (c) => {
+    const res = await c.env.ASSETS.fetch(c.req.raw);
+    const html = (res.headers.get('content-type') ?? '').startsWith('text/html');
+    if (res.status === 404 || html) {
+      return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
+    }
+    return res;
+  });
 
   app.get('/health', (c) => c.json({ ok: true }));
 

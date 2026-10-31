@@ -34,6 +34,27 @@ describe('app shell', () => {
     );
   });
 
+  it('caps api and hook bodies at 256 KB', async () => {
+    const big = JSON.stringify({ pad: 'x'.repeat(300 * 1024) });
+    const post = (path: string) =>
+      call(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: big });
+    expect((await post('/api/v1/holders/assign')).status).toBe(413);
+    expect((await post('/hooks/anything/x')).status).toBe(413);
+  });
+
+  it('answers a missing asset with an uncached 404', async () => {
+    const ASSETS = {
+      fetch: async () => new Response('<html>', { headers: { 'content-type': 'text/html' } }),
+    };
+    const res = await app.request(
+      `${ORIGIN}/assets/missing-chunk.js`,
+      {},
+      { ...env, ASSETS } as unknown as AppEnv,
+    );
+    expect(res.status).toBe(404);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
+
   it('returns problem+json for unknown routes', async () => {
     const res = await call('/nope');
     expect(res.status).toBe(404);

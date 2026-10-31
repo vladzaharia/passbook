@@ -56,7 +56,10 @@ const e2eConfig =
 
 export default defineConfig({
   publicDir: 'public',
+  environments: { wallet: { build: { minify: true } } },
   server: {
+    port: 5173,
+    strictPort: true,
     // Files that change while the app runs (agent worktrees, local email/D1 state, test output)
     // must not trigger full page reloads mid-session.
     watch: {
