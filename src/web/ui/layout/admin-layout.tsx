@@ -34,12 +34,14 @@ export function AdminLayout() {
             variant="outline"
             size="sm"
             className="mr-auto shrink-0 justify-start gap-2 text-fg-muted sm:w-64"
-            aria-label="Search"
             iconStart={<Search aria-hidden />}
             onClick={() => setPaletteOpen(true)}
           >
-            <span className="hidden truncate sm:inline">Search</span>
-            <kbd className="ml-auto hidden rounded-sm border border-border px-1.5 font-mono text-xs sm:inline">
+            <span className="sr-only sm:not-sr-only sm:truncate">Search</span>
+            <kbd
+              aria-hidden="true"
+              className="ml-auto hidden rounded-sm border border-border px-1.5 font-mono text-xs sm:inline"
+            >
               ⌘K
             </kbd>
           </Button>

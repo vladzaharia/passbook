@@ -33,8 +33,15 @@ export function Select({
   id,
   name,
   disabled,
-  ...aria
+  ...rest
 }: SelectProps) {
+  // An accessible name must contain the visible value (WCAG 2.5.3 label in name).
+  const { 'aria-label': label, ...other } = rest;
+  const current = options.find((o) => o.value === value)?.label ?? (value ? '' : placeholder);
+  const aria = {
+    ...other,
+    ...(label ? { 'aria-label': current ? `${label}: ${current}` : label } : {}),
+  };
   return (
     <SelectPrimitive.Root
       value={value}

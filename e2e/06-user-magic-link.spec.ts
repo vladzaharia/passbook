@@ -55,7 +55,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
     .getByRole('alertdialog', { name: 'Remove from my passes?' })
     .getByRole('button', { name: 'Remove' })
     .click();
-  await expect(page.getByText('No passes yet')).toBeVisible();
+  await expect(page.getByText('No passes', { exact: true })).toBeVisible();
 
   // Sign out, then sign in again with the 6-digit code from the same browser.
   await page.context().clearCookies();
@@ -69,7 +69,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await page.waitForURL((u) => u.pathname === '/');
   // The removed pass does not come back.
-  await expect(page.getByText('No passes yet')).toBeVisible();
+  await expect(page.getByText('No passes', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: holder, exact: true })).toHaveCount(0);
   await admin.dispose();
 });

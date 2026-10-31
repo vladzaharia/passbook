@@ -86,6 +86,7 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    cloudflare(e2eConfig),
+    // Local dev never opens remote binding sessions (ANALYTICS_SQL is remote-only; charts use D1 locally).
+    cloudflare({ ...e2eConfig, remoteBindings: false }),
   ],
 });

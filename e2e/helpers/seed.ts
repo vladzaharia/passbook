@@ -9,6 +9,8 @@ export interface Seed {
 
 /** One fresh org per run keeps specs independent of whatever the persisted local D1 already holds. */
 export async function createSeed(api: Api): Promise<Seed> {
+  // Listing templates syncs the baked ones (and Henry's org) into a fresh database.
+  await api.get('/api/v1/templates');
   const slug = uid('e2e').toLowerCase();
   const org = await api.send('POST', '/api/v1/orgs', { slug, name: `E2E Org ${slug}` });
   const seed: Seed = { org: { id: org.id, slug, name: org.name } };

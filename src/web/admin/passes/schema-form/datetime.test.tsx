@@ -71,7 +71,7 @@ describe('SchemaForm datetime widget', () => {
     const user = userEvent.setup();
     const onValue = vi.fn();
     render(<Harness onValue={onValue} />);
-    await user.click(screen.getByRole('combobox', { name: 'Time zone' }));
+    await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
     await user.click(await screen.findByRole('option', { name: 'America/Los_Angeles' }));
     fireEvent.change(screen.getByLabelText('Expires'), { target: { value: '2027-01-31T23:59' } });
     expect(onValue).toHaveBeenLastCalledWith({ expires: '2027-02-01T07:59:00.000Z' });
@@ -80,10 +80,10 @@ describe('SchemaForm datetime widget', () => {
   it('shows a stored offset value back in the selected zone', async () => {
     const user = userEvent.setup();
     render(<Harness onValue={vi.fn()} initial={{ expires: '2027-02-01T07:59:00.000Z' }} />);
-    await user.click(screen.getByRole('combobox', { name: 'Time zone' }));
+    await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
     await user.click(await screen.findByRole('option', { name: 'America/Los_Angeles' }));
     expect(screen.getByLabelText('Expires')).toHaveValue('2027-01-31T23:59');
-    await user.click(screen.getByRole('combobox', { name: 'Time zone' }));
+    await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
     await user.click(await screen.findByRole('option', { name: 'UTC' }));
     expect(screen.getByLabelText('Expires')).toHaveValue('2027-02-01T07:59');
   });

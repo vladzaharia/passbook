@@ -204,7 +204,7 @@ describe('admin layout', () => {
           }),
       },
     });
-    const filter = await screen.findByRole('combobox', { name: 'Organization filter' });
+    const filter = await screen.findByRole('combobox', { name: /^Organization filter/ });
     expect(filter).toHaveTextContent('All orgs');
     await user.click(filter);
     await user.click(await screen.findByRole('option', { name: 'Henrys' }));
