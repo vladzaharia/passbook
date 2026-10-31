@@ -1,4 +1,4 @@
-import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
+import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
 
 // Passes (sync bookkeeping only; content changes go through passes/service.ts)
 
@@ -50,6 +50,28 @@ export async function getPassByRef(
     [orgId, connectionId, ref],
   );
   return r ? toPass(r) : null;
+}
+
+/** Active passes linked to `refs`, keyed by ref. */
+export async function listPassesByRefs(
+  db: D1Database,
+  orgId: string,
+  connectionId: string,
+  refs: string[],
+): Promise<Map<string, SyncPass>> {
+  const out = new Map<string, SyncPass>();
+  for (const part of chunk([...new Set(refs)], 80)) {
+    const rows = await all<SyncPassSql>(
+      db,
+      `SELECT ${PASS_COLUMNS} FROM passes
+       WHERE org_id = ? AND connection_id = ? AND status = 'active'
+         AND external_ref IN (${placeholders(part.length)})`,
+      [orgId, connectionId, ...part],
+    );
+    for (const r of rows)
+      if (r.external_ref && !out.has(r.external_ref)) out.set(r.external_ref, toPass(r));
+  }
+  return out;
 }
 
 export async function getPassById(db: D1Database, passId: string): Promise<SyncPass | null> {

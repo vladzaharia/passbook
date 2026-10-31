@@ -46,6 +46,7 @@ const FENCED = [
   'defaultTemplateId',
   'holderEmailField',
   'autoCreate',
+  'autoEmail',
   'onMissing',
 ] as const;
 

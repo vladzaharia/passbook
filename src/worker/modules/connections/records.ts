@@ -1,14 +1,26 @@
+import { PassBuildError } from '../../../passkit/build.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { getPointer } from '../../connectors/lib/pointer.ts';
 import type { RecordResult, UpstreamRecord } from '../../connectors/types.ts';
+import { AppError, ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps } from './deps.ts';
 import { applyMapping } from './mapping.ts';
-import type { ConnectionRow } from './repo.ts';
-import { getPassByRef, markPassSyncError, markPassSynced } from './repo-passes.ts';
+import { type ConnectionRow, getGeneration } from './repo.ts';
+import { getPassByRef, markPassSyncError, markPassSynced, type SyncPass } from './repo-passes.ts';
 
-export type Outcome = 'changed' | 'unchanged' | 'created' | 'missing' | 'unlinked' | 'invalid';
+export type Outcome =
+  | 'changed'
+  | 'unchanged'
+  | 'created'
+  | 'missing'
+  | 'unlinked'
+  | 'invalid'
+  /** Lost a publish race; the pass is untouched and stays due. */
+  | 'deferred'
+  /** The connection changed mid-step; nothing was written. */
+  | 'fenced';
 
 export interface Totals {
   seen: number;
@@ -57,9 +69,27 @@ function holderEmailOf(
     : null;
 }
 
+const MAX_SAMPLES = 5;
+const SAMPLE_MAX = 300;
+
 function errorCode(error: unknown): string {
   const code = (error as { code?: unknown } | null)?.code;
   return typeof code === 'string' && /^[A-Z][A-Z_]{1,39}$/.test(code) ? code : 'RECORD_ERROR';
+}
+
+/** `ref: CODE path message; ...` for one failed record. */
+export function describeFailure(ref: string, error: unknown): string {
+  const issues: { path?: string | undefined; message: string }[] =
+    error instanceof PassBuildError
+      ? error.report.issues
+      : error instanceof ValidationError
+        ? (error.issues ?? [])
+        : [];
+  const detail = issues
+    .slice(0, 3)
+    .map((i) => `${i.path ? `${i.path} ` : ''}${i.message}`)
+    .join('; ');
+  return `${ref}: ${errorCode(error)}${detail ? ` ${detail}` : ''}`.slice(0, SAMPLE_MAX);
 }
 
 /**
@@ -71,13 +101,25 @@ export async function applyIncoming(
   conn: ConnectionRow,
   ref: string,
   incoming: Incoming,
-  options: { generation: number; cause: 'connection' | 'user_refresh'; intervalMs: number },
+  options: {
+    generation: number;
+    cause: 'connection' | 'user_refresh';
+    intervalMs: number;
+    /** Passes prefetched for this batch, keyed by ref (null = none linked). */
+    passes?: Map<string, SyncPass | null>;
+    /** Collects the first failing records for the run's error detail. */
+    samples?: string[];
+  },
 ): Promise<Outcome> {
   const deps = getDeps();
   const db = sctx.env.DB;
   const now = sctx.clock.now();
   const nextSyncAt = now + options.intervalMs;
-  const pass = await getPassByRef(db, conn.orgId, conn.id, ref);
+  const pass = options.passes?.has(ref)
+    ? (options.passes.get(ref) ?? null)
+    : await getPassByRef(db, conn.orgId, conn.id, ref);
+  const fenced = async (): Promise<boolean> =>
+    (await getGeneration(db, conn.id)) !== options.generation;
 
   if (incoming.kind === 'unchanged') {
     if (pass) await markPassSynced(db, { passId: pass.id, connectionId: conn.id, now, nextSyncAt });
@@ -89,15 +131,20 @@ export async function applyIncoming(
       await markPassSynced(db, { passId: pass.id, connectionId: conn.id, now, nextSyncAt });
       return 'unchanged';
     }
+    if (await fenced()) return 'fenced';
     await deps.markPassMissing(sctx, pass.id, conn.onMissing);
     return 'missing';
   }
 
   const fields = applyMapping(conn.mapping, incoming.record);
   const holderEmail = holderEmailOf(conn, incoming);
-  const fail = async (code: string): Promise<Outcome> => {
+  const fail = async (error: unknown): Promise<Outcome> => {
+    const code = errorCode(error);
     if (pass) {
       await markPassSyncError(db, { passId: pass.id, connectionId: conn.id, code, nextSyncAt });
+    }
+    if (options.samples && options.samples.length < MAX_SAMPLES) {
+      options.samples.push(describeFailure(ref, error));
     }
     sctx.log.warn('connection.record_invalid', { connectionId: conn.id, code });
     return 'invalid';
@@ -124,6 +171,7 @@ export async function applyIncoming(
     }
     if (!conn.autoCreate || !conn.defaultTemplateId) return 'unlinked';
     await deps.validateFields(sctx, { id: conn.defaultTemplateId, version: null }, fields);
+    if (await fenced()) return 'fenced';
     await deps.createPassFromConnection(sctx, {
       orgId: conn.orgId,
       templateId: conn.defaultTemplateId,
@@ -135,6 +183,18 @@ export async function applyIncoming(
     });
     return 'created';
   } catch (error) {
-    return fail(errorCode(error));
+    if (error instanceof ConflictError && error.code === 'HOLDER_OWNED') {
+      // The publish went through; only the holder assignment lost to an owner.
+      if (pass)
+        await markPassSynced(db, { passId: pass.id, connectionId: conn.id, now, nextSyncAt });
+      return pass ? 'changed' : 'created';
+    }
+    if (error instanceof ConflictError && error.code === 'PASS_CONFLICT') {
+      sctx.log.info('connection.record_deferred', { connectionId: conn.id });
+      return 'deferred';
+    }
+    // Only deterministic record problems flag the pass; anything else retries the step or job.
+    if (error instanceof PassBuildError || error instanceof AppError) return fail(error);
+    throw error;
   }
 }

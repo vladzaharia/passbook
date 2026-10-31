@@ -92,6 +92,7 @@ export interface RunRow {
   recordsSeen: number | null;
   passesChanged: number | null;
   errorCode: string | null;
+  errorDetail: string | null;
   httpStatus: number | null;
   durationMs: number | null;
 }
@@ -106,13 +107,18 @@ export async function insertRun(
     passId?: string | null;
     startedAt: number;
   },
-): Promise<void> {
-  await run(
+): Promise<boolean> {
+  const res = await run(
     db,
     `INSERT OR IGNORE INTO connection_runs (id, connection_id, trigger, actor_id, pass_id, started_at, outcome)
      VALUES (?, ?, ?, ?, ?, ?, 'running')`,
     [r.id, r.connectionId, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt],
   );
+  return res.changes === 1;
+}
+
+export async function deleteRun(db: D1Database, id: string): Promise<void> {
+  await run(db, "DELETE FROM connection_runs WHERE id = ? AND outcome = 'running'", [id]);
 }
 
 export async function finishRun(
@@ -161,12 +167,15 @@ export async function listRuns(
     records_seen: number | null;
     passes_changed: number | null;
     error_code: string | null;
+    error_detail: string | null;
     http_status: number | null;
     duration_ms: number | null;
   }>(
     db,
-    `SELECT id, trigger, started_at, finished_at, outcome, records_seen, passes_changed, error_code, http_status, duration_ms
-     FROM connection_runs WHERE connection_id = ? ${q.cursor ? 'AND id < ?' : ''} ORDER BY id DESC LIMIT ?`,
+    `SELECT id, trigger, started_at, finished_at, outcome, records_seen, passes_changed, error_code, error_detail, http_status, duration_ms
+     FROM connection_runs WHERE connection_id = ?
+       ${q.cursor ? 'AND (started_at, id) < (SELECT started_at, id FROM connection_runs WHERE id = ?)' : ''}
+     ORDER BY started_at DESC, id DESC LIMIT ?`,
     q.cursor ? [connectionId, q.cursor, q.limit] : [connectionId, q.limit],
   );
   return rows.map((r) => ({
@@ -178,6 +187,7 @@ export async function listRuns(
     recordsSeen: r.records_seen,
     passesChanged: r.passes_changed,
     errorCode: r.error_code,
+    errorDetail: r.error_detail,
     httpStatus: r.http_status,
     durationMs: r.duration_ms,
   }));
@@ -188,7 +198,7 @@ export async function runStats(db: D1Database, connectionId: string) {
     db,
     `SELECT outcome, duration_ms FROM connection_runs
      WHERE connection_id = ? AND outcome != 'running' AND trigger IN ('schedule', 'webhook', 'admin')
-     ORDER BY id DESC LIMIT 100`,
+     ORDER BY started_at DESC, id DESC LIMIT 100`,
     [connectionId],
   );
   const passCount = await first<{ n: number }>(
@@ -206,7 +216,7 @@ export async function recentRunIds(
 ): Promise<string[]> {
   const rows = await all<{ id: string }>(
     db,
-    'SELECT id FROM connection_runs WHERE connection_id = ? ORDER BY id DESC LIMIT ?',
+    'SELECT id FROM connection_runs WHERE connection_id = ? ORDER BY started_at DESC, id DESC LIMIT ?',
     [connectionId, limit],
   );
   return rows.map((r) => r.id);

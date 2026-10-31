@@ -112,6 +112,36 @@ describe('connections', () => {
     expect((await call('GET', `/api/v1/connections/${id}`)).status).toBe(404);
   });
 
+  it('PATCH edits config, secrets, rate limit and concurrency; config and secrets bump generation', async () => {
+    const created = await create();
+    const id = created.json.id as string;
+    const rate = await call('PATCH', `/api/v1/connections/${id}`, {
+      requestsPerMinute: 30,
+      maxConcurrency: 2,
+    });
+    expect(rate.json).toMatchObject({ requestsPerMinute: 30, maxConcurrency: 2 });
+    const gen = async () =>
+      (
+        await first<{ generation: number }>(
+          kit.env.DB,
+          'SELECT generation FROM connections WHERE id = ?',
+          [id],
+        )
+      )?.generation;
+    expect(await gen()).toBe(1);
+    const config = await call('PATCH', `/api/v1/connections/${id}`, {
+      config: { baseUrl: 'https://api.example.com/v2' },
+    });
+    expect(config.json.config).toMatchObject({ baseUrl: 'https://api.example.com/v2' });
+    expect(await gen()).toBe(2);
+    const secrets = await call('PATCH', `/api/v1/connections/${id}`, {
+      secrets: { token: 'rotated-token-value-1' },
+    });
+    expect(secrets.status).toBe(200);
+    expect(secrets.text).not.toContain('rotated-token');
+    expect(await gen()).toBe(3);
+  });
+
   it('shows a generated webhook secret once, on create and on rotation only', async () => {
     const created = await create({
       connectorType: 'webhook-push',
@@ -213,7 +243,14 @@ describe('ConnectionSync workflow class', () => {
       } as never,
       step as never,
     );
-    expect(names).toEqual(['start', 'limits', 'page-0', 'finish']);
+    expect(names).toEqual([
+      'start',
+      'limits',
+      'page-0',
+      'page-0-apply-0',
+      'page-0-cursor',
+      'finish',
+    ]);
     const run = await first<{ outcome: string }>(
       kit.env.DB,
       'SELECT outcome FROM connection_runs WHERE id = ?',

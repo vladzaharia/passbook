@@ -7,6 +7,7 @@ import {
   UnavailableError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { getDeps } from './deps.ts';
 import { closeRun } from './health.ts';
 import { emptyTotals } from './records.ts';
@@ -20,7 +21,7 @@ import {
 } from './repo-passes.ts';
 import { insertRun } from './repo-runs.ts';
 import { classify, prepare } from './runtime.ts';
-import { applyChanges } from './sync.ts';
+import { applyChanges, MAX_RECORDS_PER_STEP } from './sync.ts';
 
 /**
  * Verifies the signature, dedupes on the event id and queues the work. A duplicate delivery is
@@ -36,6 +37,7 @@ export async function receiveWebhook(
   if (!conn?.enabled || (conn.mode !== 'webhook' && conn.mode !== 'hybrid')) {
     throw new NotFoundError('Not found.');
   }
+  if (!(await isOrgActive(sctx, conn.orgId))) throw new NotFoundError('Not found.');
   let verified: {
     eventId: string;
     refs: string[];
@@ -73,12 +75,15 @@ export async function receiveWebhook(
     }));
   try {
     await insertInbox(sctx.env.DB, conn.id, verified.eventId, items, now);
-    await getDeps().enqueueJob(sctx, {
-      kind: 'connection.webhook',
-      connectionId: conn.id,
-      eventId: verified.eventId,
-      refs: verified.refs,
-    });
+    // Small jobs keep each queue invocation within its D1 and CPU budget.
+    for (let i = 0; i < verified.refs.length || i === 0; i += MAX_RECORDS_PER_STEP) {
+      await getDeps().enqueueJob(sctx, {
+        kind: 'connection.webhook',
+        connectionId: conn.id,
+        eventId: verified.eventId,
+        refs: verified.refs.slice(i, i + MAX_RECORDS_PER_STEP),
+      });
+    }
   } catch (error) {
     // Let the sender's retry through instead of losing the event.
     await deleteWebhookEvent(sctx.env.DB, conn.id, verified.eventId);
@@ -94,6 +99,10 @@ export async function processWebhook(
 ): Promise<void> {
   const conn = await getConnection(sctx.env.DB, job.connectionId);
   if (!conn?.enabled) return;
+  if (!(await isOrgActive(sctx, conn.orgId))) {
+    sctx.log.info('connection.webhook_org_inactive', { connectionId: conn.id });
+    return;
+  }
   const runId = sctx.ids.id();
   const startedAt = sctx.clock.now();
   await insertRun(sctx.env.DB, { id: runId, connectionId: conn.id, trigger: 'webhook', startedAt });
@@ -106,7 +115,7 @@ export async function processWebhook(
       sctx,
       conn.id,
       { ...base, totals: emptyTotals(), failure: classify(error) },
-      { countsForBreaker: true },
+      { countsForBreaker: true, reschedule: false },
     );
     return;
   }
@@ -119,6 +128,15 @@ export async function processWebhook(
       record: (item?.record ?? undefined) as UpstreamRecord | undefined,
     };
   });
-  const { totals, failure } = await applyChanges(sctx, conn, prep, changes);
-  await closeRun(sctx, conn.id, { ...base, totals, failure }, { countsForBreaker: true });
+  const { totals, failure, samples } = await applyChanges(sctx, conn, prep, changes);
+  await closeRun(
+    sctx,
+    conn.id,
+    { ...base, totals, failure, errorDetail: samples.length ? samples.join('\n') : null },
+    { countsForBreaker: true, reschedule: false },
+  );
+  // A transient upstream failure retries the job; the inbox rows are kept until retention.
+  if (failure && failure.code !== 'AUTH' && failure.code !== 'CONFIG') {
+    throw new UnavailableError('Webhook processing failed.', `WEBHOOK_${failure.code}`);
+  }
 }

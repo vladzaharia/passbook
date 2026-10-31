@@ -100,6 +100,8 @@ export const ConnectionRunSchema = z.object({
   recordsSeen: z.number().int().nullable(),
   passesChanged: z.number().int().nullable(),
   errorCode: z.string().nullable(),
+  /** First failing records of the run: `ref: CODE path message`, one per line. */
+  errorDetail: z.string().nullable().optional(),
   httpStatus: z.number().int().nullable(),
   durationMs: z.number().int().nullable(),
 });
