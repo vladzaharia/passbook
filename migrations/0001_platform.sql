@@ -6,7 +6,7 @@
 
 CREATE TABLE orgs (
   id TEXT PRIMARY KEY,
-  slug TEXT NOT NULL UNIQUE CHECK (slug GLOB '[a-z0-9]*' AND length(slug) BETWEEN 2 AND 64),
+  slug TEXT NOT NULL UNIQUE CHECK (slug GLOB '[a-z0-9]*' AND slug NOT GLOB '*[^a-z0-9-]*' AND length(slug) BETWEEN 2 AND 64),
   name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'deleted')),
   default_identity_id TEXT REFERENCES signing_identities (id) ON DELETE SET NULL,
@@ -75,7 +75,9 @@ CREATE TABLE magic_links (
   created_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL,
   consumed_at INTEGER,
-  attempt_count INTEGER NOT NULL DEFAULT 0
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  -- Pocket ID identity awaiting email proof (oidc.trustEmail off); linked when the link is consumed.
+  pending_identity TEXT CHECK (pending_identity IS NULL OR json_valid(pending_identity))
 );
 CREATE INDEX magic_links_email ON magic_links (email, created_at);
 CREATE INDEX magic_links_expiry ON magic_links (expires_at);
@@ -284,6 +286,8 @@ CREATE TABLE passes (
   object_key TEXT NOT NULL,
   object_sha256 TEXT,
   object_size INTEGER,
+  content_hash TEXT,
+  deleted_at INTEGER,
   modified_at INTEGER NOT NULL,
   modified_collision INTEGER NOT NULL DEFAULT 0,
   connection_id TEXT REFERENCES connections (id) ON DELETE SET NULL,
@@ -314,6 +318,9 @@ CREATE INDEX passes_sync_due ON passes (next_sync_at) WHERE next_sync_at IS NOT 
 CREATE INDEX passes_revision ON passes (identity_id, revision);
 CREATE INDEX passes_holder_email ON passes (holder_email) WHERE holder_email IS NOT NULL;
 CREATE INDEX passes_owner ON passes (owner_user_id) WHERE owner_user_id IS NOT NULL;
+CREATE INDEX passes_deleted ON passes (deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE UNIQUE INDEX passes_connection_ref_unique ON passes (org_id, connection_id, external_ref)
+  WHERE connection_id IS NOT NULL AND external_ref IS NOT NULL;
 
 CREATE TABLE pass_versions (
   pass_id TEXT NOT NULL REFERENCES passes (id) ON DELETE CASCADE,
@@ -331,6 +338,7 @@ CREATE TABLE pass_versions (
   purged_at INTEGER,
   PRIMARY KEY (pass_id, version)
 );
+CREATE INDEX pass_versions_unpurged ON pass_versions (pass_id, version) WHERE purged_at IS NULL;
 
 CREATE TABLE pass_attach_blocks (
   pass_id TEXT NOT NULL REFERENCES passes (id) ON DELETE CASCADE,
@@ -348,6 +356,7 @@ CREATE TABLE pass_assets (
   size INTEGER NOT NULL,
   width INTEGER,
   height INTEGER,
+  crc32 INTEGER,
   created_at INTEGER NOT NULL,
   PRIMARY KEY (pass_id, name)
 );
@@ -524,8 +533,10 @@ BEGIN
             NEW.personalization, NEW.pending_pass_json, NEW.pending_cause,
             NEW.pending_actor_type, NEW.pending_actor_id, NEW.modified_at);
   INSERT OR IGNORE INTO outbox (id, org_id, kind, pass_id, coalesce_key, state, available_at, created_at)
-    VALUES ('push:' || NEW.id || ':' || NEW.version, NEW.org_id, 'push', NEW.id,
-            'push:' || NEW.id, 'pending', 0, NEW.modified_at);
+    SELECT 'push:' || NEW.id || ':' || NEW.version, NEW.org_id, 'push', NEW.id,
+           'push:' || NEW.id, 'pending', 0, NEW.modified_at
+    -- A forced re-sign publishes a new object but does not push.
+    WHERE NEW.pending_cause != 'resign';
 END;
 
 -- Template import progress.
@@ -569,3 +580,16 @@ CREATE INDEX pass_versions_created ON pass_versions (created_at);
 CREATE INDEX registrations_created ON registrations (created_at);
 CREATE INDEX outbox_kind_created ON outbox (kind, created_at);
 CREATE INDEX connection_runs_started ON connection_runs (started_at);
+
+-- Wallet personalization (rewards enrollment): holder info sent by Wallet, encrypted per row.
+-- A row marks the pass as personalized: the pass is then built without personalization.json.
+CREATE TABLE pass_personalizations (
+  pass_id TEXT PRIMARY KEY REFERENCES passes (id) ON DELETE CASCADE,
+  token_sha256 TEXT NOT NULL,
+  kek_version INTEGER NOT NULL,
+  iv BLOB NOT NULL,
+  wrapped_dek BLOB NOT NULL,
+  ciphertext BLOB NOT NULL,
+  created_at INTEGER NOT NULL,
+  published_at INTEGER
+);
