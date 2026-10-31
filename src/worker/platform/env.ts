@@ -4,6 +4,8 @@ export interface AppEnv extends Env {
   APNS?: Fetcher;
   /** Optional ceiling on the daily magic-link volume. */
   MAGIC_LINK_DAILY_CAP?: string;
+  /** Optional chain override; defaults to the bundled WWDR G4. */
+  SIGNER_PLATFORM_INTERMEDIATE?: string;
   KEK_V2?: string;
   KEK_V3?: string;
 }
