@@ -75,7 +75,7 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
 - **Certificate renewal** (yearly, Apple): get a new Pass Type ID certificate, then
   - platform: `npm run credentials`, update the two `SIGNER_PLATFORM_*` secrets, re-run
     `npm run identity:add -- --apply`, deploy;
-  - other identities: admin console, Identities, Rotate (`POST /api/v1/identities/{id}/rotate`).
+  - other identities: admin console, Identities, Rotate certificate (admin session only; `POST /api/v1/identities/{id}/rotate`). Re-sign all passes is on the same page.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data.
