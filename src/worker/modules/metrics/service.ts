@@ -69,7 +69,9 @@ async function d1Series(ctx: ServiceContext, w: repo.Window, scope: repo.Scope):
 function aeSeries(events: EventRow[]): Rows {
   const out: Rows = {};
   const add = (key: SeriesKey, row: EventRow) => {
-    (out[key] ??= []).push({ t: row.t, n: row.n });
+    const list = out[key] ?? [];
+    list.push({ t: row.t, n: row.n });
+    out[key] = list;
   };
   for (const row of events) {
     const failed = row.outcome !== 'ok';

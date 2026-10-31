@@ -156,7 +156,12 @@ describe('metrics from D1', () => {
 
 describe('metrics from Analytics Engine', () => {
   const binding = (rows: unknown, calls: string[] = []) =>
-    ({ query: async (sql: string) => (calls.push(sql), rows) }) as unknown;
+    ({
+      query: async (sql: string) => {
+        calls.push(sql);
+        return rows;
+      },
+    }) as unknown;
 
   it('uses the SQL binding when present and says so', async () => {
     const { clock, f } = setup();
