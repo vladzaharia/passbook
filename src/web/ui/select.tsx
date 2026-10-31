@@ -44,11 +44,15 @@ export function Select({
     >
       <SelectPrimitive.Trigger
         id={id}
-        className={cn(CONTROL, 'flex h-9 items-center justify-between gap-2 text-left', className)}
+        className={cn(
+          CONTROL,
+          'flex h-9 items-center justify-between gap-2 whitespace-nowrap text-left',
+          className,
+        )}
         {...aria}
       >
-        <SelectPrimitive.Value placeholder={placeholder} />
-        <SelectPrimitive.Icon>
+        <SelectPrimitive.Value placeholder={placeholder} className="block min-w-0 truncate" />
+        <SelectPrimitive.Icon className="shrink-0">
           <ChevronDown aria-hidden className="size-4 text-fg-muted" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>

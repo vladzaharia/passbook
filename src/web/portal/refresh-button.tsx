@@ -35,8 +35,10 @@ export function RefreshButton({
   const prev = useRef(phase);
 
   const mutation = useMutation({
-    mutationFn: () => requestRefresh(passId),
-    onSuccess: (res) => {
+    mutationFn: async () => ({ clickedAt: Date.now(), res: await requestRefresh(passId) }),
+    onSuccess: ({ clickedAt, res }) => {
+      // The server coalesces clicks inside its cooldown and echoes the earlier request.
+      if (res.requestedAt < clickedAt - 5000) toast.info('Refresh already requested.');
       setLocal(res.requestedAt);
       setActive(true);
       void client.invalidateQueries({ queryKey: myPassesKey });

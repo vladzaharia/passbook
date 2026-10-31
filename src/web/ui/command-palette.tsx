@@ -37,6 +37,8 @@ export function CommandPalette({
   onQueryChange,
   placeholder = 'Search',
 }: CommandPaletteProps) {
+  // cmdk does not count forceMount items, so it would show "No results" above them.
+  const hasRemote = groups.some((g) => g.items.some((i) => i.remote));
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -58,9 +60,11 @@ export function CommandPalette({
               />
             </div>
             <Command.List className="max-h-80 overflow-auto p-1">
-              <Command.Empty className="px-3 py-6 text-center text-sm text-fg-muted">
-                No results
-              </Command.Empty>
+              {hasRemote ? null : (
+                <Command.Empty className="px-3 py-6 text-center text-sm text-fg-muted">
+                  No results
+                </Command.Empty>
+              )}
               {groups.map((group) =>
                 group.items.length === 0 ? null : (
                   <Command.Group

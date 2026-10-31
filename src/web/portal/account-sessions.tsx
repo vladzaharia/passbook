@@ -11,7 +11,7 @@ import {
   SkeletonRows,
   toast,
 } from '../ui/index.ts';
-import { mySessionsKey, mySessionsQuery, revokeSession } from './api.ts';
+import { mySessionsKey, mySessionsQuery, revokeAllSessions, revokeSession } from './api.ts';
 import { formatWhen } from './pass-view.ts';
 
 /** Short device label from a user agent; the raw string is not useful in a list. */
@@ -53,7 +53,6 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
     },
     onError: (e) => toast.error(e, 'Revoke failed'),
   });
-  const others = query.data?.items.filter((s) => !s.current) ?? [];
 
   return (
     <Card>
@@ -110,8 +109,7 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
         confirmLabel="Sign out"
         destructive
         onConfirm={async () => {
-          // No bulk endpoint; revoke the others, then end this one.
-          for (const s of others) await revokeSession(s.id);
+          await revokeAllSessions();
           onSignedOutEverywhere();
         }}
       />

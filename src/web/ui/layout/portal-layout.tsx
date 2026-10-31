@@ -13,9 +13,11 @@ export function PortalLayout() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-border bg-surface-raised">
-        <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-4 px-4">
-          <Wordmark />
-          <nav aria-label="Main" className="mr-auto flex gap-1">
+        <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-2 px-4 sm:gap-4">
+          <div className="hidden sm:block">
+            <Wordmark />
+          </div>
+          <nav aria-label="Main" className="mr-auto flex min-w-0 gap-1 overflow-x-auto">
             {PORTAL_NAV.map((item) => {
               const active = isActivePath(pathname, item.to);
               return (
@@ -38,7 +40,7 @@ export function PortalLayout() {
             {hasAdmin(session) ? (
               <Link
                 to={'/admin' as never}
-                className="inline-flex min-h-8 items-center rounded-md px-3 text-sm text-fg-muted hover:text-fg-strong"
+                className="inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm text-fg-muted hover:text-fg-strong"
               >
                 Admin
               </Link>

@@ -34,7 +34,7 @@ describe('my passes', () => {
 
   it('shows the empty state', async () => {
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list() } });
-    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
+    expect(await screen.findByText('No passes')).toBeInTheDocument();
     expect(screen.getByText('Passes sent to your sign-in email appear here.')).toBeInTheDocument();
   });
 
@@ -126,9 +126,22 @@ describe('refresh', () => {
     expect(cooling).toBeDisabled();
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(21_000);
+      await vi.advanceTimersByTimeAsync(31_000);
     });
     expect(await screen.findByRole('button', { name: 'Refresh' })).toBeEnabled();
+  });
+
+  it('tells the user when the server coalesced the refresh', async () => {
+    const user = userEvent.setup();
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () => list(passFixture()),
+        '/api/v1/me/passes/p1/refresh': () =>
+          json({ accepted: true, requestedAt: Date.now() - 25_000 }, 202),
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Refresh' }));
+    expect(await screen.findByText('Refresh already requested.')).toBeInTheDocument();
   });
 
   it('surfaces a rate-limit failure and stays usable', async () => {
@@ -174,7 +187,7 @@ describe('remove', () => {
     const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText('Remove from my passes?')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
-    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
+    expect(await screen.findByText('No passes')).toBeInTheDocument();
   });
 
   it('cancel does nothing; failure keeps the dialog open', async () => {

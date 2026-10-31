@@ -27,7 +27,7 @@ export function KeyValue({
           <dd
             className={cn('min-w-0 break-words text-fg-strong', item.mono && 'font-mono text-xs')}
           >
-            {item.value ?? <span className="text-fg-subtle">None</span>}
+            {item.value ?? <span className="text-fg-subtle">—</span>}
           </dd>
         </div>
       ))}

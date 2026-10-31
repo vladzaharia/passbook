@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTheme } from '../lib/theme.tsx';
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
@@ -43,10 +44,11 @@ export interface TurnstileProps {
 
 export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: TurnstileProps) {
   const host = useRef<HTMLDivElement>(null);
+  const { resolved } = useTheme();
   const callbacks = useRef({ onToken, onError });
   callbacks.current = { onToken, onError };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey remounts the widget on purpose.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey remounts the widget on purpose; a theme change re-renders it.
   useEffect(() => {
     let widgetId: string | undefined;
     let api: TurnstileApi | undefined;
@@ -58,7 +60,7 @@ export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: Turnstile
         api = t;
         widgetId = t.render(host.current, {
           sitekey: siteKey,
-          theme: 'auto',
+          theme: resolved,
           callback: (token: string) => callbacks.current.onToken(token),
           'expired-callback': () => callbacks.current.onToken(null),
           'error-callback': () => {
@@ -72,7 +74,7 @@ export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: Turnstile
       live = false;
       if (api && widgetId) api.remove(widgetId);
     };
-  }, [siteKey, resetKey]);
+  }, [siteKey, resetKey, resolved]);
 
   return <div ref={host} data-testid="turnstile" className="min-h-[65px]" />;
 }

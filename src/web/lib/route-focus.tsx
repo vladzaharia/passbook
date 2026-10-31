@@ -5,12 +5,16 @@ export const MAIN_ID = 'main';
 
 /** Moves focus to the page h1 (or main) after navigation and announces the page. */
 export function RouteAnnouncer() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // The resolved location only changes once the new route's chunk and loaders are done.
+  const pathname = useRouterState({
+    select: (s) => (s.status === 'idle' ? s.resolvedLocation?.pathname : undefined),
+  });
   const first = useRef(true);
   const [message, setMessage] = useState('');
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read
   useEffect(() => {
+    if (pathname === undefined) return;
     if (first.current) {
       first.current = false;
       return;

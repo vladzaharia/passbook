@@ -168,15 +168,15 @@ describe('account page', () => {
     expect(revoked).toBe(true);
   });
 
-  it('signs out everywhere: revokes others, then signs out', async () => {
+  it('signs out everywhere with one revoke-all call, then signs out', async () => {
     const user = userEvent.setup();
     const revoked: string[] = [];
     await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
         '/api/v1/me/sessions': () => json(sessions()),
-        '/api/v1/me/sessions/s2': () => {
-          revoked.push('s2');
+        '/api/v1/me/sessions/revoke-all': () => {
+          revoked.push('all');
           return json({ ok: true });
         },
       },
@@ -186,7 +186,7 @@ describe('account page', () => {
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Sign out' }),
     );
     await waitFor(() => expect(signOut).toHaveBeenCalledWith('csrf-test'));
-    expect(revoked).toEqual(['s2']);
+    expect(revoked).toEqual(['all']);
   });
 
   it('does not sign out when a revoke fails', async () => {
@@ -195,7 +195,7 @@ describe('account page', () => {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
         '/api/v1/me/sessions': () => json(sessions()),
-        '/api/v1/me/sessions/s2': () => problem(500, 'server_error', 'x'),
+        '/api/v1/me/sessions/revoke-all': () => problem(500, 'server_error', 'x'),
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Sign out everywhere' }));

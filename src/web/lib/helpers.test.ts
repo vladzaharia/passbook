@@ -16,6 +16,12 @@ describe('safeNext', () => {
       expect(safeNext(value as string | undefined)).toBe('/');
     },
   );
+  it.each(['/\t/evil.com', '/\n/evil.com', '/\r/evil.com', '/%2e/x', '/a/../b', '/a b'])(
+    'rejects control characters and dot segments in %j',
+    (value) => {
+      expect(safeNext(value)).toBe('/');
+    },
+  );
   it('encodes the login href', () => {
     expect(loginHref('/admin?a=1&b=2')).toBe('/login?next=%2Fadmin%3Fa%3D1%26b%3D2');
     expect(loginHref('//evil.com')).toBe('/login?next=%2F');
