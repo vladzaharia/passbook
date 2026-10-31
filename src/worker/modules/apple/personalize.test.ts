@@ -5,6 +5,7 @@ import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
+import { publishPass } from '../passes/publish.ts';
 import { getPass, type Pass } from '../passes/repo.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 
@@ -124,6 +125,19 @@ describe('personalize', () => {
     const object = await kit.env.BUCKET.get(after?.objectKey ?? '');
     const bytes = new TextDecoder('latin1').decode(await object?.arrayBuffer());
     expect(bytes).not.toContain('personalization.json');
+    // Later publishes (admin edit, upgrade, reissue) must keep personalization.json out.
+    await publishPass(kit.ctx, {
+      passId: pass.id,
+      cause: 'admin',
+      actor: { type: 'system', id: null },
+      force: true,
+    });
+    const later = await getPass(kit.env.DB, pass.id);
+    expect(later?.version).toBe(pass.version + 2);
+    const laterObject = await kit.env.BUCKET.get(later?.objectKey ?? '');
+    expect(new TextDecoder('latin1').decode(await laterObject?.arrayBuffer())).not.toContain(
+      'personalization.json',
+    );
     const audit = await all<{ detail: string }>(
       kit.env.DB,
       "SELECT detail FROM audit_log WHERE action = 'pass.personalized' AND target_id = ?",

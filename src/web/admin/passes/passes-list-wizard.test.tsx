@@ -21,7 +21,7 @@ function baseHandlers(extra: Record<string, FetchHandler> = {}): Record<string, 
     '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
     '/api/v1/templates/tpl1': () => json(templateDetail()),
     '/api/v1/templates/tpl1/preview': () =>
-      json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a' }),
+      json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] }),
     '/api/v1/connections': empty,
     ...extra,
   };

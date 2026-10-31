@@ -109,7 +109,7 @@ describe('refresh', () => {
         '/api/v1/me/passes/p1/refresh': () => {
           posts++;
           state = 'pending';
-          return json({ accepted: true, requestedAt }, 202);
+          return json({ accepted: true, requestedAt, cooldownSeconds: 30 }, 202);
         },
       },
     });

@@ -123,6 +123,8 @@ export function passDetail(over: Record<string, unknown> = {}) {
     fieldSources: { name: 'manual', level: 'manual' },
     passJson: SAMPLE_PASS_JSON,
     assetBaseUrl: '/p/tok/assets',
+    assetNames: ['icon.png'],
+    blockedUsers: [],
     downloadUrl: '/p/tok/pass.pkpass',
     publicUrl: '/p/tok',
     registrations: 2,

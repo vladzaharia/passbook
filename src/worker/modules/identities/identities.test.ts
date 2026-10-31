@@ -288,6 +288,8 @@ describe('db identity resolver', () => {
       'UPDATE credentials SET ciphertext = zeroblob(64) WHERE id = (SELECT credential_id FROM signing_identities WHERE id = ?)',
       [dto.id],
     );
+    // Upload already checked the identity, which cached the readable key.
+    clearIdentityKeyCache();
     await expect(createIdentityResolver(appEnv).byId(dto.id)).rejects.toMatchObject({
       code: 'IDENTITY_KEY_UNREADABLE',
     });

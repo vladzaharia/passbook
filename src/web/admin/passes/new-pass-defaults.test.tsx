@@ -34,7 +34,12 @@ describe('new pass details step', () => {
             const body = JSON.parse(String(init?.body)) as { input?: unknown };
             if (body.input) previewPosts.push(body);
           }
-          return json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a' });
+          return json({
+            passJson: SAMPLE_PASS_JSON,
+            warnings: [],
+            assetBaseUrl: '/a',
+            assetNames: [],
+          });
         },
         '/api/v1/connections': () => json({ items: [], nextCursor: null }),
       },

@@ -39,7 +39,7 @@ describe('requestRefresh', () => {
       { kind: 'pass.refresh', passId: pass.id, trigger: 'user', actorId: 'u1' },
     ]);
     const b = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'u1' });
-    expect(b).toEqual({ requestedAt: a.requestedAt, coalesced: true });
+    expect(b).toEqual({ requestedAt: a.requestedAt, coalesced: true, cooldownSeconds: 30 });
     expect(jobs()).toHaveLength(1);
     kit.clock.advance(31_000);
     const c = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'admin-1' });
