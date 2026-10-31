@@ -29,6 +29,7 @@ const config = z.object({
     .url()
     .max(500)
     .refine((v) => {
+      if (!URL.canParse(v)) return true;
       const u = new URL(v);
       return !u.search && !u.hash && !u.username && !u.password;
     }, 'No query, fragment or credentials.'),
