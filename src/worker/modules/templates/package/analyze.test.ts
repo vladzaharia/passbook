@@ -251,20 +251,37 @@ describe('uploaded manifests', () => {
     expect(codes).not.toContain('warning:MANIFEST_GENERATED');
   });
 
-  it('rejects pattern and reference keywords but allows x- annotations', async () => {
+  it('rejects unsafe patterns and reference keywords but allows x- annotations', async () => {
     const props = (p: Record<string, unknown>) => ({
       inputs: { type: 'object', properties: { name: { type: 'string', ...p } } },
     });
-    expect((await run(props({ pattern: '(a+)+$' }))).codes).toContain('error:SCHEMA_KEYWORD');
+    expect((await run(props({ pattern: '(a+)+$', maxLength: 10 }))).codes).toContain(
+      'error:SCHEMA_PATTERN',
+    );
+    expect((await run(props({ pattern: '^[A-Z]+$' }))).codes).toContain('error:SCHEMA_PATTERN');
+    expect((await run(props({ pattern: '^[A-Za-z]+$', maxLength: 10 }))).ok).toBe(true);
     expect((await run(props({ $ref: '#/x' }))).codes).toContain('error:SCHEMA_KEYWORD');
     expect((await run(props({ 'x-label': 'Name', maxLength: 10 }))).ok).toBe(true);
     const nested = {
       type: 'object',
       properties: {
-        a: { type: 'object', properties: { pattern: { type: 'string', pattern: 'x' } } },
+        a: { type: 'object', properties: { pattern: { type: 'string', pattern: 'x+' } } },
       },
     };
-    expect((await run({ inputs: nested })).codes).toContain('error:SCHEMA_KEYWORD');
+    expect((await run({ inputs: nested })).codes).toContain('error:SCHEMA_PATTERN');
+  });
+
+  it('allows dependentRequired and rejects a malformed one', async () => {
+    const schema = (dependentRequired: unknown) => ({
+      inputs: {
+        type: 'object',
+        properties: { name: { type: 'string' }, b: { type: 'string' } },
+        dependentRequired,
+      },
+      sample: { name: 'x', b: 'y' },
+    });
+    expect((await run(schema({ name: ['b'] }))).ok).toBe(true);
+    expect((await run(schema({ name: 'b' }))).codes).toContain('error:SCHEMA_SHAPE');
   });
 
   it('rejects structurally wrong manifests', async () => {
@@ -300,6 +317,27 @@ describe('uploaded manifests', () => {
     expect(pointer.codes).toContain('error:BINDING_POINTER');
     const allowed = await run({ bindings: [{ to: { pointer: '/logoText' }, value: 'x' }] });
     expect(allowed.ok).toBe(true);
+    for (const pointer of [
+      '/relevantDates/0/startDate',
+      '/semantics/eventName',
+      '/semantics/balance/amount',
+      '/locations/0/latitude',
+      '/boardingPass/transitType',
+      '/preferredStyleSchemes',
+    ])
+      expect(
+        (await run({ bindings: [{ to: { pointer }, value: 'x' }] })).codes,
+        pointer,
+      ).not.toContain('error:BINDING_POINTER');
+    for (const pointer of [
+      '/serialNumber',
+      '/webServiceURL',
+      '/barcodes/0/message',
+      '/generic/headerFields',
+    ])
+      expect((await run({ bindings: [{ to: { pointer }, value: 'x' }] })).codes, pointer).toContain(
+        'error:BINDING_POINTER',
+      );
   });
 
   it('checks behaviors against the registry and their config schema', async () => {

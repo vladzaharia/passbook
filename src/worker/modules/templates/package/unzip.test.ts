@@ -101,20 +101,16 @@ describe('extractArchive', () => {
     expect(reject(zip)).toBe('COMPRESSION_RATIO');
   });
 
-  it('does not inflate past a lying header', () => {
-    const zip = zipOf({ 'a.png': new Uint8Array(2 * 1024 * 1024) });
+  it('rejects an entry that inflates past a lying header', () => {
+    const zip = zipOf({ 'a.png': new Uint8Array(40 * 1024 * 1024) });
     const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
     for (let i = 0; i < zip.length - 4; i++) {
       if (view.getUint32(i, true) === 0x02014b50) view.setUint32(i + 24, 1000, true);
       if (view.getUint32(i, true) === 0x04034b50) view.setUint32(i + 22, 1000, true);
     }
-    // Either rejected or truncated to the declared size; never 2 MB.
-    try {
-      const { files } = extractArchive(zip);
-      expect(files.get('a.png')?.length ?? 0).toBeLessThanOrEqual(1000);
-    } catch (error) {
-      expect(error).toBeInstanceOf(ImportError);
-    }
+    const started = performance.now();
+    expect(reject(zip)).toBe('ZIP_INVALID');
+    expect(performance.now() - started).toBeLessThan(500);
   });
 });
 

@@ -1,4 +1,4 @@
-import { unzipSync } from 'fflate';
+import { Unzip, UnzipInflate, UnzipPassThrough, unzipSync } from 'fflate';
 import { cleanPath, detectPrefix, PathError } from './names.ts';
 
 export const LIMITS = {
@@ -60,6 +60,63 @@ function listEntries(zip: Uint8Array): Declared[] {
   return declared;
 }
 
+/** Compressed bytes fed per step; bounds one step's output to about 1000x this. */
+const FEED = 4096;
+
+/**
+ * Inflates the kept entries with streaming limits. A header that understates the real size is
+ * caught as soon as the output passes the declared size, before the rest is decoded.
+ */
+function inflateKept(zip: Uint8Array, keep: Map<string, Declared>): Map<string, Uint8Array> {
+  const chunks = new Map<string, Uint8Array[]>();
+  const sizes = new Map<string, number>();
+  let failure: ImportError | null = null;
+  const unzipper = new Unzip((file) => {
+    const entry = keep.get(file.name);
+    if (!entry || failure) return;
+    const parts: Uint8Array[] = [];
+    chunks.set(file.name, parts);
+    sizes.set(file.name, 0);
+    file.ondata = (err, chunk) => {
+      if (failure) return;
+      if (err) {
+        failure = new ImportError('ZIP_INVALID', `Could not read ${file.name}.`);
+        file.terminate();
+        return;
+      }
+      const size = (sizes.get(file.name) ?? 0) + chunk.length;
+      sizes.set(file.name, size);
+      if (size > entry.originalSize) {
+        failure = new ImportError('ZIP_INVALID', `${file.name} does not match its declared size.`);
+        file.terminate();
+        return;
+      }
+      parts.push(chunk);
+    };
+    file.start();
+  });
+  unzipper.register(UnzipInflate);
+  unzipper.register(UnzipPassThrough);
+  try {
+    for (let i = 0; i < zip.length && !failure; i += FEED)
+      unzipper.push(zip.subarray(i, Math.min(i + FEED, zip.length)), i + FEED >= zip.length);
+  } catch {
+    throw failure ?? new ImportError('ZIP_INVALID', 'The archive is damaged or unsupported.');
+  }
+  if (failure) throw failure;
+  const out = new Map<string, Uint8Array>();
+  for (const [name, parts] of chunks) {
+    const bytes = new Uint8Array(sizes.get(name) ?? 0);
+    let at = 0;
+    for (const part of parts) {
+      bytes.set(part, at);
+      at += part.length;
+    }
+    out.set(name, bytes);
+  }
+  return out;
+}
+
 export interface Extracted {
   files: Map<string, Uint8Array>;
   /** Archive paths dropped as junk or directories. */
@@ -68,7 +125,7 @@ export interface Extracted {
 
 /**
  * Unzips with limits. Sizes and paths are checked from the central directory before anything is
- * inflated; fflate allocates the declared size, so a lying header cannot grow the output.
+ * inflated; inflation is streamed and aborted once an entry passes its declared size.
  */
 export function extractArchive(zip: Uint8Array): Extracted {
   if (zip.length > LIMITS.archiveBytes)
@@ -113,15 +170,10 @@ export function extractArchive(zip: Uint8Array): Extracted {
       throw new ImportError('TOO_MANY_ENTRIES', 'The archive has more than 100 files.');
   }
 
-  let raw: Record<string, Uint8Array>;
-  try {
-    raw = unzipSync(zip, { filter: (file) => keep.has(file.name) });
-  } catch {
-    throw new ImportError('ZIP_INVALID', 'The archive is damaged or unsupported.');
-  }
+  const raw = inflateKept(zip, keep);
   const files = new Map<string, Uint8Array>();
   for (const [name, entry] of keep) {
-    const bytes = raw[name];
+    const bytes = raw.get(name);
     if (!bytes) throw new ImportError('ZIP_INVALID', `Could not read ${name}.`);
     if (bytes.length !== entry.originalSize)
       throw new ImportError('ZIP_INVALID', `${name} does not match its declared size.`);

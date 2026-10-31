@@ -1,5 +1,6 @@
 import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
+import { isAllowedPointer, parsePointer } from '../../../../passkit/template/pointer.ts';
 import type {
   Json,
   PassField,
@@ -7,6 +8,7 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../../../../passkit/types.ts';
+import { isSafePattern, needsInputBound, PATTERN_INPUT_MAX } from './safe-regex.ts';
 import { stylesOf } from './slots.ts';
 
 const GROUPS = [
@@ -21,7 +23,10 @@ const GROUPS = [
 
 export const MAX_MANIFEST_BYTES = 64 * 1024;
 
-/** Schema keywords uploaded manifests may use. No `pattern` (ReDoS) and no references. */
+/**
+ * Schema keywords uploaded manifests may use. `pattern` is checked separately (safe regex and a
+ * bounded maxLength); no references.
+ */
 const ALLOWED_KEYWORDS = new Set([
   'type',
   'properties',
@@ -48,7 +53,23 @@ const ALLOWED_KEYWORDS = new Set([
   'oneOf',
   'anyOf',
   'allOf',
+  'not',
+  'dependentRequired',
+  'pattern',
   '$schema',
+]);
+
+/** Pass.json roots whose contents are per-pass data. Server-owned keys stay denied by the engine. */
+const DATA_ROOTS = new Set([
+  'relevantDates',
+  'semantics',
+  'locations',
+  'beacons',
+  'userInfo',
+  'nfc',
+  'upcomingPassInformation',
+  'preferredStyleSchemes',
+  'maxDistance',
 ]);
 
 const POINTERS = new Set([
@@ -64,6 +85,14 @@ const POINTERS = new Set([
   '/groupingIdentifier',
   '/eventLogoText',
 ]);
+
+function pointerAllowed(pointer: unknown): boolean {
+  if (typeof pointer !== 'string') return false;
+  if (POINTERS.has(pointer)) return true;
+  if (isAllowedPointer(pointer) !== null) return false;
+  const root = parsePointer(pointer)?.[0] ?? '';
+  return DATA_ROOTS.has(root) || /^\/[A-Za-z]+\/transitType$/.test(pointer);
+}
 
 export function fieldsOf(pass: PassJson): PassField[] {
   const out: PassField[] = [];
@@ -145,10 +174,43 @@ function checkSchemaNode(
       });
       continue;
     }
-    if (key === 'properties' && value && typeof value === 'object') {
+    if (key === 'pattern') {
+      const bound = (node as Record<string, unknown>).maxLength;
+      const bounded = typeof bound === 'number' && bound <= PATTERN_INPUT_MAX;
+      if (typeof value !== 'string' || !isSafePattern(value))
+        push({
+          severity: 'error',
+          code: 'SCHEMA_PATTERN',
+          message: 'Pattern is too complex. Use simple character classes and bounded repeats.',
+          path: `${path}.pattern`,
+        });
+      else if (!bounded && needsInputBound(value))
+        push({
+          severity: 'error',
+          code: 'SCHEMA_PATTERN',
+          message: `A pattern needs maxLength of at most ${PATTERN_INPUT_MAX}.`,
+          path: `${path}.pattern`,
+        });
+    } else if (key === 'dependentRequired') {
+      const ok =
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        Object.keys(value).length <= 50 &&
+        Object.values(value).every(
+          (v) => Array.isArray(v) && v.length <= 50 && v.every((x) => typeof x === 'string'),
+        );
+      if (!ok)
+        push({
+          severity: 'error',
+          code: 'SCHEMA_SHAPE',
+          message: 'dependentRequired must map names to lists of names.',
+          path: `${path}.dependentRequired`,
+        });
+    } else if (key === 'properties' && value && typeof value === 'object') {
       for (const [name, child] of Object.entries(value))
         checkSchemaNode(child, `${path}.properties.${name}`, depth + 1, count, push);
-    } else if (key === 'items' || key === 'additionalProperties') {
+    } else if (key === 'items' || key === 'additionalProperties' || key === 'not') {
       checkSchemaNode(value, `${path}.${key}`, depth + 1, count, push);
     } else if ((key === 'oneOf' || key === 'anyOf' || key === 'allOf') && Array.isArray(value)) {
       for (const [i, child] of value.entries())
@@ -254,7 +316,7 @@ export function validateManifest(
       if (typeof to.barcode === 'number' ? to.barcode >= count : to.barcode !== '*' || count === 0)
         warn('BINDING_TARGET', 'No matching barcode in pass.json.', `${path}.to`);
     } else if ('pointer' in to) {
-      if (options.uploaded && !POINTERS.has(to.pointer as string))
+      if (options.uploaded && !pointerAllowed(to.pointer))
         error('BINDING_POINTER', `Pointer ${String(to.pointer)} is not allowed.`, `${path}.to`);
     } else error('BINDING_SHAPE', 'Unknown binding target.', `${path}.to`);
   }
