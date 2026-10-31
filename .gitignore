@@ -14,3 +14,6 @@ artifacts/
 *.key
 *-key.pem
 .DS_Store
+
+# Public Apple WWDR intermediate (overrides a global *.pem ignore)
+!certificates/*.pem
