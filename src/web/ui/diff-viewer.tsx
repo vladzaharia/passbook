@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { diffLines } from '../lib/diff.ts';
 import { cn } from '../lib/cn.ts';
+import { diffLines } from '../lib/diff.ts';
 
 export interface DiffViewerProps {
   before: string;
@@ -16,11 +16,14 @@ export function DiffViewer({ before, after, className }: DiffViewerProps) {
   const changed = lines.some((l) => l.kind !== 'same');
   if (!changed) return <p className="text-sm text-fg-muted">No changes</p>;
   return (
-    <pre
+    <section
       // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region
       tabIndex={0}
       aria-label="Diff"
-      className={cn('max-h-96 overflow-auto rounded-md border border-border bg-surface-sunken py-2 font-mono text-xs', className)}
+      className={cn(
+        'max-h-96 overflow-auto rounded-md border border-border bg-surface-sunken py-2 font-mono text-xs',
+        className,
+      )}
     >
       {lines.map((line, i) => (
         <div
@@ -38,6 +41,6 @@ export function DiffViewer({ before, after, className }: DiffViewerProps) {
           {line.text}
         </div>
       ))}
-    </pre>
+    </section>
   );
 }

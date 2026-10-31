@@ -1,5 +1,5 @@
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SessionResponseSchema, type SessionResponse } from '@/shared/contracts/session.ts';
+import { type SessionResponse, SessionResponseSchema } from '@/shared/contracts/session.ts';
 import { api } from './api.ts';
 
 export type AuthedSession = Extract<SessionResponse, { authenticated: true }>;

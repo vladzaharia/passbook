@@ -1,5 +1,3 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -9,6 +7,8 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -123,7 +123,7 @@ describe('Sheet', () => {
           <Button>Menu</Button>
         </SheetTrigger>
         <SheetContent side="left" title="Navigation">
-          <a href="#a">Link</a>
+          <a href="#a">Open settings</a>
         </SheetContent>
       </Sheet>,
     );
@@ -260,14 +260,18 @@ describe('useUnsavedChangesGuard', () => {
       return (
         <div>
           <h1>Form</h1>
-          <Link to="/other">Leave</Link>
+          <Link to={'/other' as never}>Leave</Link>
           <UnsavedChangesDialog blocker={guard} />
         </div>
       );
     }
     const root = createRootRoute({ component: Outlet });
     const form = createRoute({ getParentRoute: () => root, path: '/', component: Form });
-    const other = createRoute({ getParentRoute: () => root, path: '/other', component: () => <h1>Other</h1> });
+    const other = createRoute({
+      getParentRoute: () => root,
+      path: '/other',
+      component: () => <h1>Other</h1>,
+    });
     const router = createRouter({
       routeTree: root.addChildren([form, other]),
       history: createMemoryHistory({ initialEntries: ['/'] }),
@@ -280,7 +284,9 @@ describe('useUnsavedChangesGuard', () => {
     const user = userEvent.setup();
     const router = setup(true);
     await user.click(await screen.findByRole('link', { name: 'Leave' }));
-    expect(await screen.findByRole('alertdialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('alertdialog', { name: 'Discard unsaved changes?' }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Keep editing' }));
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(router.state.location.pathname).toBe('/');

@@ -1,15 +1,19 @@
-import { Link, type ErrorComponentProps } from '@tanstack/react-router';
+import { type ErrorComponentProps, Link } from '@tanstack/react-router';
 import { Ban, FileQuestion } from 'lucide-react';
 import { isApiError } from '../../lib/errors.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
-import { ThemeToggle } from './theme-toggle.tsx';
-import { Wordmark } from './wordmark.tsx';
 import { buttonVariants } from '../button.tsx';
 import { EmptyState } from '../empty-state.tsx';
 import { ErrorState } from '../error-state.tsx';
 import { PageHeader } from '../page-header.tsx';
+import { ThemeToggle } from './theme-toggle.tsx';
+import { Wordmark } from './wordmark.tsx';
 
-const HOME = <Link to="/" className={buttonVariants({ variant: 'outline' })}>Home</Link>;
+const HOME = (
+  <Link to="/" className={buttonVariants({ variant: 'outline' })}>
+    Home
+  </Link>
+);
 
 export function ForbiddenPage() {
   return (

@@ -6,7 +6,7 @@ export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>
     <div
       aria-hidden
       className={cn(
-        'animate-[wallet-pulse_1s_ease-in-out_infinite_alternate] rounded-md bg-hover',
+        'animate-[wallet-pulse_1s_ease-in-out_infinite_alternate] rounded-md bg-state-hover-tint',
         className,
       )}
       {...props}

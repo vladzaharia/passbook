@@ -1,7 +1,7 @@
 import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router';
 import { isAdminPath, isPublicPath, requireSession } from '../lib/guards.ts';
-import type { RouterContext } from '../lib/router-context.ts';
 import { RouteAnnouncer, SkipLink } from '../lib/route-focus.tsx';
+import type { RouterContext } from '../lib/router-context.ts';
 import { BareLayout } from '../ui/layout/bare-layout.tsx';
 import { StandaloneError } from '../ui/layout/error-pages.tsx';
 import { PortalLayout } from '../ui/layout/portal-layout.tsx';
@@ -13,7 +13,13 @@ function RootComponent() {
     <>
       <SkipLink />
       <RouteAnnouncer />
-      {isAdminPath(pathname) ? <Outlet /> : isPublicPath(pathname) ? <BareLayout /> : <PortalLayout />}
+      {isAdminPath(pathname) ? (
+        <Outlet />
+      ) : isPublicPath(pathname) ? (
+        <BareLayout />
+      ) : (
+        <PortalLayout />
+      )}
     </>
   );
 }

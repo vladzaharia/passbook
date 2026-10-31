@@ -12,7 +12,13 @@ export interface ErrorStateProps {
   className?: string;
 }
 
-export function ErrorState({ error, title = 'Could not load', onRetry, action, className }: ErrorStateProps) {
+export function ErrorState({
+  error,
+  title = 'Could not load',
+  onRetry,
+  action,
+  className,
+}: ErrorStateProps) {
   const requestId = isApiError(error) ? error.requestId : undefined;
   return (
     <div

@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
+import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { createAppRouter } from '../router.tsx';
@@ -71,7 +71,10 @@ export function json(body: unknown, status = 200): Response {
   });
 }
 
-export type FetchHandler = (url: URL, init: RequestInit | undefined) => Response | Promise<Response>;
+export type FetchHandler = (
+  url: URL,
+  init: RequestInit | undefined,
+) => Response | Promise<Response>;
 
 /** Stubs global fetch. Unlisted paths answer 404 problem+json. */
 export function stubFetch(handlers: Record<string, FetchHandler>) {

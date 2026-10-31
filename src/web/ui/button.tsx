@@ -1,6 +1,6 @@
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import type { ButtonHTMLAttributes, MouseEvent, Ref, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode, Ref } from 'react';
 import { cn } from '../lib/cn.ts';
 import { Spinner } from './spinner.tsx';
 
@@ -17,11 +17,12 @@ export const buttonVariants = cva(
       variant: {
         primary:
           'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),white_12%)]',
-        secondary: 'bg-hover text-fg-strong hover:not-disabled:not-aria-disabled:bg-surface-sunken',
+        secondary:
+          'bg-state-hover-tint text-fg-strong hover:not-disabled:not-aria-disabled:bg-surface-sunken',
         outline:
-          'border border-border-strong bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-hover hover:not-disabled:not-aria-disabled:text-fg-strong',
+          'border border-border-strong bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong',
         ghost:
-          'bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-hover hover:not-disabled:not-aria-disabled:text-fg-strong',
+          'bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong',
         danger:
           'bg-danger text-danger-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-danger),white_12%)]',
         link: 'h-auto min-h-6 min-w-0 px-0 text-accent-fg underline-offset-4 hover:underline',

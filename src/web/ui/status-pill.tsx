@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { statusOf, TONE_ICON, type StatusKey, type Tone } from '../lib/status.ts';
+import { type StatusKey, statusOf, TONE_ICON, type Tone } from '../lib/status.ts';
 import { Badge } from './badge.tsx';
 
 export interface StatusPillProps {

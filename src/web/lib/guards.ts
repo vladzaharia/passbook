@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { redirect } from '@tanstack/react-router';
-import { safeNext } from './redirect.ts';
 import { ApiError } from './errors.ts';
+import { safeNext } from './redirect.ts';
 import { type AuthedSession, isAdmin, sessionQuery } from './session.ts';
 
 export const ADMIN_PREFIX = '/admin';

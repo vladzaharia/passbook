@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { LogOut, User } from 'lucide-react';
-import { useSession, signOut } from '../../lib/session.ts';
+import { signOut, useSession } from '../../lib/session.ts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +21,13 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
-          <span className="block max-w-56 truncate">{authed.user.name ?? authed.user.primaryEmail}</span>
+          <span className="block max-w-56 truncate">
+            {authed.user.name ?? authed.user.primaryEmail}
+          </span>
           {authed.user.name ? (
-            <span className="block max-w-56 truncate text-fg-subtle">{authed.user.primaryEmail}</span>
+            <span className="block max-w-56 truncate text-fg-subtle">
+              {authed.user.primaryEmail}
+            </span>
           ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

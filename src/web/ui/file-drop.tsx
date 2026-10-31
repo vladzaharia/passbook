@@ -61,6 +61,7 @@ export function FileDrop({
 
   return (
     <div className={className}>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: drag target only; the file input inside is the keyboard path */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -76,7 +77,10 @@ export function FileDrop({
         )}
       >
         <Upload aria-hidden className="size-6" />
-        <label htmlFor={id} className="cursor-pointer font-medium text-fg-strong after:absolute after:inset-0">
+        <label
+          htmlFor={id}
+          className="cursor-pointer font-medium text-fg-strong after:absolute after:inset-0"
+        >
           {label}
         </label>
         <input

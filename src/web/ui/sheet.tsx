@@ -45,7 +45,7 @@ export function SheetContent({
           </DialogPrimitive.Title>
           <DialogPrimitive.Close
             aria-label="Close"
-            className="inline-flex size-8 items-center justify-center rounded-md text-fg-muted hover:bg-hover hover:text-fg-strong"
+            className="inline-flex size-8 items-center justify-center rounded-md text-fg-muted hover:bg-state-hover-tint hover:text-fg-strong"
           >
             <X aria-hidden className="size-4" />
           </DialogPrimitive.Close>

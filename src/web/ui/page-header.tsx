@@ -16,7 +16,7 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
         {items.map((item, i) => {
           const last = i === items.length - 1;
           return (
-            <li key={`${item.label}-${i}`} className="flex items-center gap-1">
+            <li key={item.to ?? item.label} className="flex items-center gap-1">
               {item.to && !last ? (
                 <Link
                   to={item.to as never}
@@ -45,7 +45,13 @@ export interface PageHeaderProps {
 }
 
 /** The page h1. Route changes move focus here (see lib/route-focus.tsx). */
-export function PageHeader({ title, description, breadcrumbs, actions, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  breadcrumbs,
+  actions,
+  className,
+}: PageHeaderProps) {
   useEffect(() => {
     document.title = `${title} · Wallet`;
   }, [title]);

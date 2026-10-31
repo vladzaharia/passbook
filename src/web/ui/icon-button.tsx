@@ -12,9 +12,10 @@ const iconButtonVariants = cva(
   {
     variants: {
       variant: {
-        ghost: 'text-fg-muted hover:not-disabled:bg-hover hover:not-disabled:text-fg-strong',
+        ghost:
+          'text-fg-muted hover:not-disabled:bg-state-hover-tint hover:not-disabled:text-fg-strong',
         outline:
-          'border border-border-strong text-fg hover:not-disabled:bg-hover hover:not-disabled:text-fg-strong',
+          'border border-border-strong text-fg hover:not-disabled:bg-state-hover-tint hover:not-disabled:text-fg-strong',
       },
       size: { sm: 'size-8', md: 'size-9' },
     },

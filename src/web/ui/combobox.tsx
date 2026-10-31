@@ -75,11 +75,14 @@ export function Combobox({
                     onValueChange(o.value);
                     setOpen(false);
                   }}
-                  className="flex min-h-8 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm text-fg data-[disabled=true]:opacity-50 data-[selected=true]:bg-hover data-[selected=true]:text-fg-strong"
+                  className="flex min-h-8 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm text-fg data-[disabled=true]:opacity-50 data-[selected=true]:bg-state-hover-tint data-[selected=true]:text-fg-strong"
                 >
                   <Check
                     aria-hidden
-                    className={cn('size-4 text-accent-fg', o.value === value ? 'opacity-100' : 'opacity-0')}
+                    className={cn(
+                      'size-4 text-accent-fg',
+                      o.value === value ? 'opacity-100' : 'opacity-0',
+                    )}
                   />
                   {o.label}
                 </Command.Item>

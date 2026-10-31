@@ -9,6 +9,7 @@ export function RouteAnnouncer() {
   const first = useRef(true);
   const [message, setMessage] = useState('');
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read
   useEffect(() => {
     if (first.current) {
       first.current = false;

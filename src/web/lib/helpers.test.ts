@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { diffLines } from './diff.ts';
-import { isActivePath } from './nav.ts';
-import { loginHref, safeNext } from './redirect.ts';
-import { shouldRetry } from './query-client.ts';
 import { ApiError } from './errors.ts';
+import { isActivePath } from './nav.ts';
+import { shouldRetry } from './query-client.ts';
+import { loginHref, safeNext } from './redirect.ts';
 import { compactSearch, sortingFromParam, sortingToParam } from './url-state.ts';
 
 describe('safeNext', () => {

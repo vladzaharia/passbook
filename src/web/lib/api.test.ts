@@ -5,7 +5,10 @@ import { ApiError, errorMessage, problemToError } from './errors.ts';
 
 const Item = z.object({ id: z.string() });
 
-function client(response: Response | (() => Response | Promise<Response>), csrf: string | null = 'tok') {
+function client(
+  response: Response | (() => Response | Promise<Response>),
+  csrf: string | null = 'tok',
+) {
   const fetch = vi.fn(async () => (typeof response === 'function' ? response() : response.clone()));
   const onUnauthorized = vi.fn();
   const api = createApiClient({
@@ -86,15 +89,30 @@ describe('api client', () => {
 
   it('calls onUnauthorized on 401 and still throws', async () => {
     const { api, onUnauthorized } = client(
-      problemResponse(401, { type: 't', title: 'x', status: 401, code: 'unauthenticated', detail: 'Sign in.' }),
+      problemResponse(401, {
+        type: 't',
+        title: 'x',
+        status: 401,
+        code: 'unauthenticated',
+        detail: 'Sign in.',
+      }),
     );
-    await expect(api.get('/x', Item)).rejects.toMatchObject({ status: 401, code: 'unauthenticated' });
+    await expect(api.get('/x', Item)).rejects.toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+    });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
 
   it('does not call onUnauthorized on 403', async () => {
     const { api, onUnauthorized } = client(
-      problemResponse(403, { type: 't', title: 'x', status: 403, code: 'forbidden', detail: 'No.' }),
+      problemResponse(403, {
+        type: 't',
+        title: 'x',
+        status: 403,
+        code: 'forbidden',
+        detail: 'No.',
+      }),
     );
     const error = (await api.get('/x', Item).catch((e: unknown) => e)) as ApiError;
     expect(error.isForbidden).toBe(true);
@@ -158,9 +176,9 @@ describe('api client', () => {
 
 describe('buildUrl', () => {
   it('skips empty values and appends to an existing query', () => {
-    expect(buildUrl('/a', { q: 'x y', n: 2, none: undefined, nul: null, empty: '', f: false })).toBe(
-      '/a?q=x+y&n=2&f=false',
-    );
+    expect(
+      buildUrl('/a', { q: 'x y', n: 2, none: undefined, nul: null, empty: '', f: false }),
+    ).toBe('/a?q=x+y&n=2&f=false');
     expect(buildUrl('/a?x=1', { y: 2 })).toBe('/a?x=1&y=2');
     expect(buildUrl('/a')).toBe('/a');
   });
@@ -178,6 +196,8 @@ describe('problemToError', () => {
 describe('errorMessage', () => {
   it('never leaks unknown errors', () => {
     expect(errorMessage(new Error('secret stack'))).toBe('Something went wrong. Try again.');
-    expect(errorMessage(new ApiError({ status: 403, code: 'forbidden' }))).toBe('You do not have access.');
+    expect(errorMessage(new ApiError({ status: 403, code: 'forbidden' }))).toBe(
+      'You do not have access.',
+    );
   });
 });

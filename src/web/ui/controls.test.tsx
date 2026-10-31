@@ -163,7 +163,13 @@ describe('Combobox', () => {
 
   it('shows the empty text when nothing matches', async () => {
     const user = userEvent.setup();
-    render(<Combobox aria-label="Org" options={[{ value: '1', label: 'Henrys' }]} onValueChange={() => {}} />);
+    render(
+      <Combobox
+        aria-label="Org"
+        options={[{ value: '1', label: 'Henrys' }]}
+        onValueChange={() => {}}
+      />,
+    );
     await user.click(screen.getByRole('combobox'));
     await user.keyboard('zzz');
     expect(await screen.findByText('No results')).toBeInTheDocument();
@@ -221,15 +227,21 @@ describe('Checkbox, Switch, RadioGroup', () => {
 });
 
 describe('forms with zod', () => {
-  const schema = z.object({ name: z.string().min(1, 'Name is required'), age: z.coerce.number().min(18, 'Too young') });
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    age: z.coerce.number().min(18, 'Too young'),
+  });
 
-  function Harness({ onValid, serverError }: { onValid: (v: unknown) => void; serverError?: ApiError }) {
+  function Harness({
+    onValid,
+    serverError,
+  }: {
+    onValid: (v: unknown) => void;
+    serverError?: ApiError;
+  }) {
     const form = useZodForm(schema, { name: '', age: 20 });
     return (
-      <form
-        onSubmit={form.handleSubmit(onValid, () => {})}
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit(onValid, () => {})} noValidate>
         <RhfField control={form.control} name="name" label="Name">
           {(field, p) => <Input {...field} {...p} />}
         </RhfField>
@@ -277,7 +289,9 @@ describe('forms with zod', () => {
 
   it('applyApiErrors returns false for non-API errors', () => {
     const setError = vi.fn();
-    expect(applyApiErrors({ setError, getValues: () => ({}) }, new Error('x'))).toBe(false);
+    expect(applyApiErrors({ setError, getValues: (() => ({})) as never }, new Error('x'))).toBe(
+      false,
+    );
     expect(setError).not.toHaveBeenCalled();
   });
 });

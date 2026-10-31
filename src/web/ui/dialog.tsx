@@ -7,9 +7,13 @@ export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
-export const OVERLAY = 'fixed inset-0 z-40 bg-black/60 data-[state=open]:animate-[wallet-fade_150ms_ease-out]';
+export const OVERLAY =
+  'fixed inset-0 z-40 bg-black/60 data-[state=open]:animate-[wallet-fade_150ms_ease-out]';
 
-export function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrimitive.Overlay>) {
+export function DialogOverlay({
+  className,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Overlay>) {
   return <DialogPrimitive.Overlay className={cn(OVERLAY, className)} {...props} />;
 }
 
@@ -63,14 +67,16 @@ export function DialogContent({
           </div>
           <DialogPrimitive.Close
             aria-label="Close"
-            className="-mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-fg-muted hover:bg-hover hover:text-fg-strong"
+            className="-mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-fg-muted hover:bg-state-hover-tint hover:text-fg-strong"
           >
             <X aria-hidden className="size-4" />
           </DialogPrimitive.Close>
         </div>
         <div className="min-h-0 flex-1 overflow-auto px-5 py-4">{children}</div>
         {footer ? (
-          <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-3">{footer}</div>
+          <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-3">
+            {footer}
+          </div>
         ) : null}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>

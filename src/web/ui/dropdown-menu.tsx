@@ -27,7 +27,7 @@ export function DropdownMenuContent({
 }
 
 const ITEM =
-  'flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-fg outline-hidden data-disabled:opacity-50 data-highlighted:bg-hover data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:text-fg-muted';
+  'flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-fg outline-hidden data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:text-fg-muted';
 
 export function DropdownMenuItem({
   className,
@@ -56,7 +56,9 @@ export function DropdownMenuRadioItem({
 }
 
 export function DropdownMenuLabel({ className, ...props }: ComponentProps<typeof Primitive.Label>) {
-  return <Primitive.Label className={cn('px-2 py-1.5 text-xs text-fg-muted', className)} {...props} />;
+  return (
+    <Primitive.Label className={cn('px-2 py-1.5 text-xs text-fg-muted', className)} {...props} />
+  );
 }
 
 export function DropdownMenuSeparator({

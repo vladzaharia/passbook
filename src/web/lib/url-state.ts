@@ -9,7 +9,9 @@ export function sortingToParam(sorting: SortingState): string | undefined {
 
 export function sortingFromParam(param: string | undefined | null): SortingState {
   if (!param) return [];
-  return param.startsWith('-') ? [{ id: param.slice(1), desc: true }] : [{ id: param, desc: false }];
+  return param.startsWith('-')
+    ? [{ id: param.slice(1), desc: true }]
+    : [{ id: param, desc: false }];
 }
 
 /** Drops empty values so URLs stay clean when a filter is cleared. */

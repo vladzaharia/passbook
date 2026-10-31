@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { PassListSchema } from '@/shared/contracts/passes.ts';
 import { OrgListSchema } from '@/shared/contracts/orgs.ts';
+import { PassListSchema } from '@/shared/contracts/passes.ts';
 import { api } from './api.ts';
 
 const MIN_QUERY = 2;
@@ -23,7 +23,8 @@ export function useRecentPassSearch(q: string, orgId?: string) {
 export function useOrgOptions(enabled = true) {
   return useQuery({
     queryKey: ['orgs', 'options'],
-    queryFn: ({ signal }) => api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200 }, signal }),
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200 }, signal }),
     enabled,
     staleTime: 60_000,
   });

@@ -76,7 +76,11 @@ export function createApiClient(deps: ApiClientDeps) {
       });
     } catch (cause) {
       if (opts.signal?.aborted) throw cause;
-      throw new ApiError({ status: 0, code: 'network', detail: 'Network error. Check your connection.' });
+      throw new ApiError({
+        status: 0,
+        code: 'network',
+        detail: 'Network error. Check your connection.',
+      });
     }
     const data = await readBody(res);
     if (!res.ok) {

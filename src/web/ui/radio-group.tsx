@@ -33,7 +33,9 @@ export function RadioGroup({
   return (
     <fieldset className={cn('min-w-0', className)}>
       <legend className="mb-1.5 text-sm font-medium text-fg-strong">{legend}</legend>
-      <div className={cn('flex gap-2', orientation === 'vertical' ? 'flex-col' : 'flex-wrap gap-x-5')}>
+      <div
+        className={cn('flex gap-2', orientation === 'vertical' ? 'flex-col' : 'flex-wrap gap-x-5')}
+      >
         {options.map((o) => {
           const id = `${group}-${o.value}`;
           return (

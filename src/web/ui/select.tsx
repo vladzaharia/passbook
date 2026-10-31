@@ -36,7 +36,12 @@ export function Select({
   ...aria
 }: SelectProps) {
   return (
-    <SelectPrimitive.Root value={value} onValueChange={onValueChange} name={name} disabled={disabled}>
+    <SelectPrimitive.Root
+      value={value}
+      onValueChange={onValueChange}
+      name={name}
+      disabled={disabled}
+    >
       <SelectPrimitive.Trigger
         id={id}
         className={cn(CONTROL, 'flex h-9 items-center justify-between gap-2 text-left', className)}
@@ -59,7 +64,7 @@ export function Select({
                 key={o.value}
                 value={o.value}
                 disabled={o.disabled}
-                className="relative flex min-h-8 cursor-pointer select-none items-center rounded-sm py-1.5 pr-3 pl-8 text-sm text-fg outline-hidden data-disabled:opacity-50 data-highlighted:bg-hover data-highlighted:text-fg-strong"
+                className="relative flex min-h-8 cursor-pointer select-none items-center rounded-sm py-1.5 pr-3 pl-8 text-sm text-fg outline-hidden data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong"
               >
                 <SelectPrimitive.ItemIndicator className="absolute left-2">
                   <Check aria-hidden className="size-4 text-accent-fg" />

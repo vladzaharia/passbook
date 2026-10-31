@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRouter, type RouterHistory } from '@tanstack/react-router';
-import { NotFoundPage, RouteError } from './ui/layout/error-pages.tsx';
 import { routeTree } from './routeTree.gen.ts';
+import { NotFoundPage, RouteError } from './ui/layout/error-pages.tsx';
 
 export function createAppRouter(options: { queryClient: QueryClient; history?: RouterHistory }) {
   return createRouter({

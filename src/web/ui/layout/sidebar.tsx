@@ -13,12 +13,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             key={item.to}
             to={item.to as never}
             onClick={onNavigate}
+            activeOptions={{ exact: item.to === '/admin' }}
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex min-h-9 items-center gap-2.5 rounded-md px-3 text-sm transition-colors',
               active
                 ? 'bg-state-selected-fill text-fg-strong'
-                : 'text-fg-muted hover:bg-hover hover:text-fg-strong',
+                : 'text-fg-muted hover:bg-state-hover-tint hover:text-fg-strong',
             )}
           >
             <item.icon aria-hidden className={cn('size-4', active && 'text-accent-fg')} />

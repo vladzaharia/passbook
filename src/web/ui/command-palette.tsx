@@ -79,11 +79,13 @@ export function CommandPalette({
                           onOpenChange(false);
                           item.onSelect();
                         }}
-                        className="flex min-h-9 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm text-fg data-[selected=true]:bg-hover data-[selected=true]:text-fg-strong [&_svg]:size-4 [&_svg]:text-fg-muted"
+                        className="flex min-h-9 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm text-fg data-[selected=true]:bg-state-hover-tint data-[selected=true]:text-fg-strong [&_svg]:size-4 [&_svg]:text-fg-muted"
                       >
                         {item.icon ? <item.icon aria-hidden /> : null}
                         <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                        {item.hint ? <span className="text-xs text-fg-subtle">{item.hint}</span> : null}
+                        {item.hint ? (
+                          <span className="text-xs text-fg-subtle">{item.hint}</span>
+                        ) : null}
                       </Command.Item>
                     ))}
                   </Command.Group>

@@ -15,11 +15,18 @@ export function KeyValue({
   className?: string;
 }) {
   return (
-    <dl className={cn('grid grid-cols-[minmax(7rem,max-content)_1fr] gap-x-6 gap-y-2 text-sm', className)}>
+    <dl
+      className={cn(
+        'grid grid-cols-[minmax(7rem,max-content)_1fr] gap-x-6 gap-y-2 text-sm',
+        className,
+      )}
+    >
       {items.map((item) => (
         <div key={item.label} className="contents">
           <dt className="text-fg-muted">{item.label}</dt>
-          <dd className={cn('min-w-0 break-words text-fg-strong', item.mono && 'font-mono text-xs')}>
+          <dd
+            className={cn('min-w-0 break-words text-fg-strong', item.mono && 'font-mono text-xs')}
+          >
             {item.value ?? <span className="text-fg-subtle">None</span>}
           </dd>
         </div>

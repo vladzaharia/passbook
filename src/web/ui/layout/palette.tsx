@@ -7,7 +7,13 @@ import { useRecentPassSearch } from '../../lib/search.ts';
 import { type CommandGroup, CommandPalette } from '../command-palette.tsx';
 
 /** Opens with Cmd/Ctrl+K. Navigation entries are local; passes come from the API. */
-export function AdminPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export function AdminPalette({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const navigate = useNavigate();
   const { orgId } = useOrgFilter();
   const [query, setQuery] = useState('');
@@ -52,5 +58,14 @@ export function AdminPalette({ open, onOpenChange }: { open: boolean; onOpenChan
     },
   ];
 
-  return <CommandPalette open={open} onOpenChange={onOpenChange} groups={groups} query={query} onQueryChange={setQuery} placeholder="Search pages and passes" />;
+  return (
+    <CommandPalette
+      open={open}
+      onOpenChange={onOpenChange}
+      groups={groups}
+      query={query}
+      onQueryChange={setQuery}
+      placeholder="Search pages and passes"
+    />
+  );
 }

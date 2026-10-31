@@ -57,8 +57,9 @@ export function DataTable<T>({
     data: data as T[],
     columns: columns as ColumnDef<T>[],
     getRowId: getRowId ? (row) => getRowId(row) : undefined,
-    state: sorting ? { sorting } : undefined,
-    onSortingChange,
+    // Undefined options would override TanStack's internal state handling, so spread conditionally.
+    ...(sorting ? { state: { sorting } } : {}),
+    ...(onSortingChange ? { onSortingChange } : {}),
     manualSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
@@ -78,15 +79,16 @@ export function DataTable<T>({
   const virtual = virtualHeight ? virtualizer.getVirtualItems() : null;
   const visible = virtual ? virtual.map((v) => rows[v.index]!) : rows;
   const padTop = virtual?.length ? virtual[0]!.start : 0;
-  const padBottom = virtual?.length ? virtualizer.getTotalSize() - virtual[virtual.length - 1]!.end : 0;
+  const padBottom = virtual?.length
+    ? virtualizer.getTotalSize() - virtual[virtual.length - 1]!.end
+    : 0;
   const span = table.getVisibleLeafColumns().length;
 
   return (
-    <div
+    <section
       ref={scrollRef}
       // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region
       tabIndex={0}
-      role="region"
       aria-label={caption}
       style={virtualHeight ? { maxHeight: virtualHeight } : undefined}
       className={cn('overflow-auto rounded-lg border border-border', className)}
@@ -103,7 +105,9 @@ export function DataTable<T>({
                   <th
                     key={header.id}
                     scope="col"
-                    aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : undefined}
+                    aria-sort={
+                      dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : undefined
+                    }
                     className="h-10 px-3 font-medium whitespace-nowrap text-fg-muted"
                   >
                     {header.isPlaceholder ? null : sortable ? (
@@ -135,7 +139,7 @@ export function DataTable<T>({
               key={row.id}
               style={virtualHeight ? { height: rowHeight } : undefined}
               className={cn(
-                'border-b border-border last:border-b-0 hover:bg-hover',
+                'border-b border-border last:border-b-0 hover:bg-state-hover-tint',
                 onRowClick && 'cursor-pointer',
               )}
               onClick={onRowClick ? () => onRowClick(row.original) : undefined}
@@ -154,6 +158,6 @@ export function DataTable<T>({
           ) : null}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }

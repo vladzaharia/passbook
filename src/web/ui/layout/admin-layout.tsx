@@ -1,10 +1,10 @@
 import { Outlet } from '@tanstack/react-router';
 import { Menu, Search } from 'lucide-react';
 import { useState } from 'react';
+import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { Button } from '../button.tsx';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
-import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { OrgFilter } from './org-filter.tsx';
 import { AdminPalette } from './palette.tsx';
 import { SidebarNav } from './sidebar.tsx';
@@ -46,7 +46,11 @@ export function AdminLayout() {
           <ThemeToggle />
           <UserMenu />
         </header>
-        <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+        <main
+          id={MAIN_ID}
+          tabIndex={-1}
+          className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6"
+        >
           <Outlet />
         </main>
       </div>

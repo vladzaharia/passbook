@@ -76,7 +76,12 @@ export function ConfirmDialog({
             </p>
           ) : null}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <Button ref={cancelRef} variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+            <Button
+              ref={cancelRef}
+              variant="outline"
+              disabled={busy}
+              onClick={() => onOpenChange(false)}
+            >
               {cancelLabel}
             </Button>
             <Button variant={destructive ? 'danger' : 'primary'} loading={busy} onClick={confirm}>

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { ApiError } from './errors.ts';
 import { isAdminPath, isPublicPath, requireAdmin, requireSession } from './guards.ts';
 import { sessionQuery } from './session.ts';
-import { sessionFixture, type SessionKind } from './test-utils.tsx';
+import { type SessionKind, sessionFixture } from './test-utils.tsx';
 
 function clientWith(kind: SessionKind) {
   const client = new QueryClient();
@@ -19,7 +19,9 @@ describe('requireSession', () => {
   });
 
   it('redirects to /login with next when signed out', async () => {
-    const error = await requireSession(clientWith('anon'), '/passes/1?x=2').catch((e: unknown) => e);
+    const error = await requireSession(clientWith('anon'), '/passes/1?x=2').catch(
+      (e: unknown) => e,
+    );
     expect(isRedirect(error)).toBe(true);
     expect((error as { options: { to: string; search: unknown } }).options).toMatchObject({
       to: '/login',

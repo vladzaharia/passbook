@@ -28,7 +28,11 @@ export function FormField({ label, help, error, required, className, children }:
     <div className={cn('flex flex-col gap-1.5', className)}>
       <Label htmlFor={id}>
         {label}
-        {required ? <span aria-hidden className="ml-0.5 text-danger">*</span> : null}
+        {required ? (
+          <span aria-hidden className="ml-0.5 text-danger">
+            *
+          </span>
+        ) : null}
       </Label>
       {children({
         id,

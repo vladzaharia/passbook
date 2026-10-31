@@ -8,7 +8,7 @@
   --pk-focus: #5eead4;
   --pk-state-ring: #5eead4;
   --pk-state-selected-fill: #0a2326;
-  --pk-state-hover-tint: #0b1a20;
+  --pk-state-hover-tint: rgb(255 255 255 / 0.07);
   --pk-state-checked-fill: #2dd4bf;
   --pk-state-checked-on: #04201c;
   --pk-state-checked-edge: #2dd4bf;
@@ -24,7 +24,7 @@
     --pk-focus: #0f766e;
     --pk-state-ring: #0f766e;
     --pk-state-selected-fill: #d5f1ed;
-    --pk-state-hover-tint: #e6f5f3;
+    --pk-state-hover-tint: rgb(6 9 18 / 0.06);
     --pk-state-checked-fill: #0f766e;
     --pk-state-checked-on: #ffffff;
     --pk-state-checked-edge: #0f766e;
@@ -40,13 +40,9 @@
   --pk-focus: #0f766e;
   --pk-state-ring: #0f766e;
   --pk-state-selected-fill: #d5f1ed;
-  --pk-state-hover-tint: #e6f5f3;
+  --pk-state-hover-tint: rgb(6 9 18 / 0.06);
   --pk-state-checked-fill: #0f766e;
   --pk-state-checked-on: #ffffff;
   --pk-state-checked-edge: #0f766e;
   --pk-state-context-edge: #0f766e;
-}
-
-@theme inline {
-  --color-hover: color-mix(in oklab, var(--pk-text-strong) 8%, transparent);
 }

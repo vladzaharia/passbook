@@ -1,7 +1,7 @@
 import { useBlocker } from '@tanstack/react-router';
 import { useEffect } from 'react';
-import { Button } from './button.tsx';
 import { ConfirmDialog } from './alert-dialog.tsx';
+import { Button } from './button.tsx';
 
 export interface SaveBarProps {
   dirty: boolean;
@@ -15,8 +15,7 @@ export interface SaveBarProps {
 export function SaveBar({ dirty, saving, onSave, onDiscard, saveLabel = 'Save' }: SaveBarProps) {
   if (!dirty) return null;
   return (
-    <div
-      role="region"
+    <section
       aria-label="Unsaved changes"
       className="fixed inset-x-0 bottom-0 z-30 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-overlay px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-elevation-3"
     >
@@ -29,7 +28,7 @@ export function SaveBar({ dirty, saving, onSave, onDiscard, saveLabel = 'Save' }
           {saveLabel}
         </Button>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -48,7 +47,11 @@ export function useUnsavedChangesGuard(dirty: boolean) {
 }
 
 /** Render once next to the form: `<UnsavedChangesDialog blocker={guard} />`. */
-export function UnsavedChangesDialog({ blocker }: { blocker: ReturnType<typeof useUnsavedChangesGuard> }) {
+export function UnsavedChangesDialog({
+  blocker,
+}: {
+  blocker: ReturnType<typeof useUnsavedChangesGuard>;
+}) {
   return (
     <ConfirmDialog
       open={blocker.status === 'blocked'}

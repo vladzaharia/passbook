@@ -29,7 +29,12 @@ export const ADMIN_NAV: readonly NavItem[] = [
   { label: 'Connections', to: '/admin/connections', icon: Cable },
   { label: 'Users', to: '/admin/users', icon: Users },
   { label: 'Organizations', to: '/admin/orgs', icon: Building2, keywords: ['tenants'] },
-  { label: 'Apple identities', to: '/admin/identities', icon: Fingerprint, keywords: ['certificates'] },
+  {
+    label: 'Apple identities',
+    to: '/admin/identities',
+    icon: Fingerprint,
+    keywords: ['certificates'],
+  },
   { label: 'API keys', to: '/admin/api-keys', icon: KeyRound },
   { label: 'Status', to: '/admin/status', icon: Activity, keywords: ['health'] },
   { label: 'Settings', to: '/admin/settings', icon: Settings },
