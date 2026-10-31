@@ -172,7 +172,7 @@ export const venueLocations: BehaviorPlugin<VenueLocationsConfig> = {
       ) as Record<string, Json> | undefined;
       if (action) {
         if (typeof place === 'string' && place) action.placeIdentifier = place;
-        else pass.featuredActions = actions.filter((a) => a !== action);
+        else pass.featuredActions = actions.filter((a) => a !== action) as typeof pass.featuredActions;
       }
     }
 

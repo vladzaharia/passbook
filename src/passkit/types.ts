@@ -24,6 +24,19 @@ export const PASS_STYLES: readonly PassStyle[] = [
   'boardingPass',
 ];
 
+export type FieldProp =
+  | 'value'
+  | 'attributedValue'
+  | 'label'
+  | 'changeMessage'
+  | 'currencyCode'
+  | 'numberStyle'
+  | 'dateStyle'
+  | 'timeStyle'
+  | 'textAlignment'
+  | 'isRelative'
+  | 'ignoresTimeZone';
+
 export type ImageSlot =
   | 'icon'
   | 'logo'
@@ -83,9 +96,10 @@ export interface AssetEntry {
 export type Expr = string | { const: Json };
 
 export type Target =
-  | { field: string | string[]; prop?: 'value' | 'attributedValue' | 'label' | 'changeMessage' }
+  | { field: string | string[]; prop?: FieldProp }
   | { action: string; prop: 'url' | 'placeIdentifier' }
   | { barcode: number | '*'; prop: 'message' | 'altText' }
+  | { image: string }
   | { pointer: string };
 
 export type Condition =
@@ -121,6 +135,10 @@ export interface TemplateManifest {
   display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[] };
   behaviors?: { use: string; version: number; config: Json }[];
   requires?: { styles?: PassStyle[]; nfc?: boolean };
+  /** Baked templates belong to an org by slug; starters have none. */
+  org?: { slug: string; name: string };
+  /** Files used for web previews only. They never enter the signed bundle. */
+  previewOnlyAssets?: string[];
 }
 
 export type Personalization = Record<string, Json>;

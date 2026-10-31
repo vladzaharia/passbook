@@ -13,15 +13,6 @@ import type {
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 
-declare module '../types.ts' {
-  interface TemplateManifest {
-    /** Baked templates belong to an org by slug; starters have none. */
-    org?: { slug: string; name: string };
-    /** Files used for web previews only. They never enter the signed bundle. */
-    previewOnlyAssets?: string[];
-  }
-}
-
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
 export interface ImageTarget {
   image: string;

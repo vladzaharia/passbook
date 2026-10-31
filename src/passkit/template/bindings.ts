@@ -77,7 +77,9 @@ function applyAction(ctx: Context, binding: Binding, to: { action: string; prop:
     | undefined;
   if (!action) return;
   const drop = () => {
-    ctx.pass.featuredActions = actions.filter((a) => a !== action);
+    ctx.pass.featuredActions = actions.filter(
+      (a) => a !== action,
+    ) as typeof ctx.pass.featuredActions;
   };
   if (binding.remove && testCondition(binding.remove, ctx.scope)) {
     drop();

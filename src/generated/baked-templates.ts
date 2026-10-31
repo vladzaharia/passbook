@@ -2,215 +2,373 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "5c858620868872291124ab48e6fe2996cc37ec24";
+export const BAKED_BUILD_HASH = "9f60215b1a4affac1b30b122917cca1a299b0391";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "ce3ef1d4f966fac7",
-    "name": "henrys-blue",
-    "description": null,
-    "org": null,
+    "version": "47252fbc29bb6505",
+    "name": "Henry’s · Blue Entrance",
+    "description": "Member card with lock-screen suggestions at the member’s clubs.",
+    "org": {
+      "slug": "henrys",
+      "name": "Henry’s Gymnasium"
+    },
     "styles": [
       "generic",
       "posterGeneric"
     ],
     "manifest": {
       "schema": 1,
-      "name": "henrys-blue",
+      "name": "Henry’s · Blue Entrance",
+      "description": "Member card with lock-screen suggestions at the member’s clubs.",
+      "org": {
+        "slug": "henrys",
+        "name": "Henry’s Gymnasium"
+      },
       "inputs": {
         "type": "object",
+        "required": [
+          "memberName",
+          "memberId",
+          "membership"
+        ],
+        "additionalProperties": false,
         "properties": {
-          "status": {
-            "type": "string",
-            "x-label": "STATUS",
-            "x-order": 0
-          },
           "memberName": {
             "type": "string",
-            "x-label": "MEMBER",
-            "x-order": 1
-          },
-          "membership": {
-            "type": "string",
-            "x-label": "MEMBERSHIP",
-            "x-order": 2
-          },
-          "homeClub": {
-            "type": "string",
-            "x-label": "HOME CLUB",
-            "x-order": 3
+            "minLength": 1,
+            "maxLength": 80,
+            "x-label": "Member name",
+            "x-group": "Member",
+            "x-order": 10,
+            "x-search": true
           },
           "memberId": {
             "type": "string",
-            "x-label": "MEMBER NUMBER",
-            "x-order": 4
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Z0-9 .$/+%-]+$",
+            "x-label": "Member number",
+            "x-help": "Key tag number. A-Z 0-9 space - . $ / + %",
+            "x-group": "Member",
+            "x-order": 20,
+            "x-search": true
+          },
+          "membership": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "x-label": "Membership",
+            "x-group": "Member",
+            "x-order": 30,
+            "x-search": true
+          },
+          "homeClub": {
+            "type": "string",
+            "enum": [
+              "capitol-hill",
+              "queen-anne"
+            ],
+            "default": "capitol-hill",
+            "x-label": "Home club",
+            "x-group": "Access",
+            "x-order": 40,
+            "x-widget": "select",
+            "x-enumLabels": {
+              "capitol-hill": "Capitol Hill",
+              "queen-anne": "Queen Anne"
+            }
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "home",
+              "all"
+            ],
+            "default": "home",
+            "x-label": "Access",
+            "x-group": "Access",
+            "x-order": 50,
+            "x-widget": "select",
+            "x-enumLabels": {
+              "home": "Home club",
+              "all": "All clubs"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Suspended",
+              "Expired",
+              "Cancelled"
+            ],
+            "default": "Active",
+            "x-label": "Status",
+            "x-group": "Status",
+            "x-order": 60,
+            "x-widget": "select"
           },
           "message": {
             "type": "string",
-            "x-label": "FROM HENRY’S",
-            "x-order": 5
+            "maxLength": 256,
+            "default": "Welcome to Henry’s.",
+            "x-label": "Message",
+            "x-help": "Shown on the back. Changes notify the member.",
+            "x-group": "Status",
+            "x-order": 70,
+            "x-widget": "textarea"
           },
-          "portal": {
+          "expirationDate": {
             "type": "string",
-            "x-label": "MANAGE YOUR MEMBERSHIP",
-            "x-order": 6
+            "format": "date-time",
+            "x-label": "Expires",
+            "x-group": "Status",
+            "x-order": 80,
+            "x-widget": "datetime"
           },
-          "directions-capitol-hill": {
-            "type": "string",
-            "x-label": "CAPITOL HILL",
-            "x-order": 7
+          "voided": {
+            "type": "boolean",
+            "default": false,
+            "x-label": "Void pass",
+            "x-group": "Status",
+            "x-order": 90,
+            "x-widget": "switch"
           },
-          "directions-queen-anne": {
+          "memberPortalURL": {
             "type": "string",
-            "x-label": "QUEEN ANNE",
-            "x-order": 8
-          },
-          "phone": {
-            "type": "string",
-            "x-label": "CONTACT THE GYM",
-            "x-order": 9
-          },
-          "support": {
-            "type": "string",
-            "x-label": "MEMBER SUPPORT",
-            "x-order": 10
-          },
-          "website": {
-            "type": "string",
-            "x-label": "HENRY’S GYMNASIUM",
-            "x-order": 11
-          },
-          "terms": {
-            "type": "string",
-            "x-label": "ABOUT THIS PASS",
-            "x-order": 12
-          },
-          "issuer": {
-            "type": "string",
-            "x-label": "PASS SERVICE",
-            "x-order": 13
+            "format": "uri",
+            "maxLength": 300,
+            "pattern": "^https://",
+            "default": "https://henrysgymnasium.thememberspot.com/signin",
+            "x-label": "Portal link",
+            "x-group": "Links",
+            "x-order": 100,
+            "x-widget": "url"
           }
         }
       },
       "sample": {
-        "status": "Active",
         "memberName": "Alex Morgan",
-        "membership": "All-Inclusive Wellness",
-        "homeClub": "Capitol Hill",
         "memberId": "DEMO0001",
-        "message": "Welcome to Henry’s.",
-        "portal": "https://henrysgymnasium.thememberspot.com/signin",
-        "directions-capitol-hill": "1617 Boylston Ave, Seattle, WA",
-        "directions-queen-anne": "14 Mercer St, Seattle, WA 98109",
-        "phone": "(206) 644-7797",
-        "support": "epicexperience@henrysgymnasium.com",
-        "website": "https://henrysgymnasium.com/",
-        "terms": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership.",
-        "issuer": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
+        "membership": "All-Inclusive Wellness",
+        "homeClub": "capitol-hill",
+        "access": "home",
+        "status": "Active",
+        "message": "Welcome to Henry’s."
+      },
+      "lookups": {
+        "clubs": {
+          "capitol-hill": {
+            "name": "Capitol Hill",
+            "label": "CAPITOL HILL",
+            "street": "1617 Boylston Ave",
+            "address": "1617 Boylston Ave, Seattle, WA 98122",
+            "lat": 47.615835,
+            "lng": -122.323555,
+            "place": "I23C636C7300F20FD",
+            "phone": "(206) 644-7797",
+            "tel": "+12066447797"
+          },
+          "queen-anne": {
+            "name": "Queen Anne",
+            "label": "QUEEN ANNE",
+            "street": "14 Mercer St",
+            "address": "14 Mercer St, Seattle, WA 98109",
+            "lat": 47.624765,
+            "lng": -122.356206,
+            "place": "I1F4F79088B704BE",
+            "phone": "(206) 644-0969",
+            "tel": "+12066440969"
+          }
+        }
       },
       "bindings": [
         {
           "to": {
-            "field": "status"
-          },
-          "value": "{{status}}"
-        },
-        {
-          "to": {
-            "field": "memberName"
+            "field": [
+              "memberName",
+              "memberName-poster"
+            ]
           },
           "value": "{{memberName}}"
         },
         {
           "to": {
-            "field": "membership"
-          },
-          "value": "{{membership}}"
-        },
-        {
-          "to": {
-            "field": "homeClub"
-          },
-          "value": "{{homeClub}}"
-        },
-        {
-          "to": {
-            "field": "memberId"
+            "field": [
+              "memberId",
+              "memberId-poster"
+            ]
           },
           "value": "{{memberId}}"
         },
         {
           "to": {
-            "field": "message"
+            "field": [
+              "membership",
+              "membership-poster"
+            ]
           },
-          "value": "{{message}}"
+          "value": "{{membership}}"
         },
         {
           "to": {
-            "field": "portal"
+            "field": [
+              "homeClub",
+              "homeClub-poster"
+            ]
           },
-          "value": "{{portal}}"
+          "value": "{{lookups.clubs[homeClub].name}}"
         },
         {
           "to": {
-            "field": "directions-capitol-hill"
+            "field": [
+              "status",
+              "status-poster"
+            ]
           },
-          "value": "{{directions-capitol-hill}}"
+          "value": "{{status}}"
         },
         {
           "to": {
-            "field": "directions-queen-anne"
+            "field": [
+              "message",
+              "message-poster"
+            ]
           },
-          "value": "{{directions-queen-anne}}"
+          "value": "{{message}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
-            "field": "phone"
+            "field": [
+              "portal",
+              "portal-poster"
+            ]
           },
-          "value": "{{phone}}"
+          "value": "{{memberPortalURL}}"
         },
         {
           "to": {
-            "field": "support"
+            "field": [
+              "portal",
+              "portal-poster"
+            ],
+            "prop": "attributedValue"
           },
-          "value": "{{support}}"
+          "value": "<a href=\"{{memberPortalURL|html}}\">Member portal</a>"
         },
         {
           "to": {
-            "field": "website"
+            "field": [
+              "phone",
+              "phone-poster"
+            ]
           },
-          "value": "{{website}}"
+          "value": "{{lookups.clubs[homeClub].phone}}"
         },
         {
           "to": {
-            "field": "terms"
+            "field": [
+              "phone",
+              "phone-poster"
+            ],
+            "prop": "attributedValue"
           },
-          "value": "{{terms}}"
+          "value": "<a href=\"tel:{{lookups.clubs[homeClub].tel}}\">{{lookups.clubs[homeClub].phone}}</a>"
         },
         {
           "to": {
-            "field": "issuer"
+            "barcode": "*",
+            "prop": "message"
           },
-          "value": "{{issuer}}"
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "action": "member-portal",
+            "prop": "url"
+          },
+          "value": "{{memberPortalURL}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{expirationDate}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/voided"
+          },
+          "value": "{{voided}}"
         }
       ],
       "display": {
-        "title": "{{status}}"
-      }
+        "title": "{{memberName}}",
+        "subtitle": "{{membership}} · {{lookups.clubs[homeClub].name}}",
+        "status": "{{status}}",
+        "search": [
+          "memberName",
+          "memberId",
+          "membership"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "venue-locations",
+          "version": 1,
+          "config": {
+            "venues": "clubs",
+            "homeInput": "homeClub",
+            "accessInput": "access",
+            "allValue": "all",
+            "relevantText": "{{venue.name}} club · {{venue.street}}",
+            "placeAction": {
+              "identifier": "home-club"
+            },
+            "directions": {
+              "after": "portal",
+              "key": "directions-{{venue.id}}",
+              "label": "{{venue.label}}",
+              "value": "{{venue.address}}",
+              "linkText": "Directions to {{venue.name}}",
+              "url": "https://maps.apple.com/?daddr={{venue.lat}},{{venue.lng}}",
+              "keySuffix": {
+                "posterGeneric": "-poster"
+              }
+            }
+          }
+        }
+      ],
+      "previewOnlyAssets": [
+        "background.png",
+        "background@2x.png",
+        "background@3x.png"
+      ]
     },
     "passJson": {
       "formatVersion": 1,
-      "passTypeIdentifier": "pass.com.henrysgymnasium.member",
-      "teamIdentifier": "48H7CLBV8Y",
-      "organizationName": "Henry’s Gymnasium",
       "description": "Henry’s Gymnasium membership",
+      "organizationName": "Henry’s Gymnasium",
       "backgroundColor": "rgb(6,12,27)",
       "foregroundColor": "rgb(255,249,242)",
       "labelColor": "rgb(210,180,157)",
+      "preferredStyleSchemes": [
+        "posterGeneric",
+        "generic"
+      ],
       "sharingProhibited": true,
-      "suppressHeaderDarkening": false,
       "voided": false,
       "barcodes": [
         {
@@ -226,22 +384,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "altText": "DEMO0001"
         }
       ],
-      "locations": [
-        {
-          "latitude": 47.615835,
-          "longitude": -122.323555,
-          "relevantText": "Your Henry’s Gymnasium membership — Capitol Hill"
-        }
-      ],
-      "maxDistance": 150,
       "featuredActions": [
         {
-          "identifier": "membership",
+          "identifier": "member-portal",
           "type": "membershipBenefits",
           "url": "https://henrysgymnasium.thememberspot.com/signin"
         },
         {
-          "identifier": "home-gym-directions",
+          "identifier": "home-club",
           "type": "place",
           "placeIdentifier": "I23C636C7300F20FD"
         }
@@ -249,117 +399,108 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "posterGeneric": {
         "headerFields": [
           {
-            "key": "memberId",
+            "key": "memberId-poster",
             "label": "MEMBER",
             "value": "DEMO0001"
           }
         ],
         "primaryFields": [
           {
-            "key": "memberName",
-            "label": "MEMBER NAME",
+            "key": "memberName-poster",
             "value": "Alex Morgan"
           },
           {
-            "key": "homeClub",
+            "key": "homeClub-poster",
             "label": "HOME CLUB",
-            "value": "Capitol Hill"
+            "value": "Capitol Hill",
+            "changeMessage": "Your home club is now %@."
           }
         ],
         "footerFields": [
           {
-            "key": "membership",
-            "label": "MEMBERSHIP",
-            "value": "All-Inclusive Wellness"
+            "key": "membership-poster",
+            "value": "All-Inclusive Wellness",
+            "changeMessage": "Your membership is now %@."
           }
         ],
         "backFields": [
           {
-            "key": "memberId",
-            "label": "MEMBER NUMBER",
-            "value": "DEMO0001"
-          },
-          {
-            "key": "status",
+            "key": "status-poster",
             "label": "MEMBERSHIP STATUS",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
-            "key": "message",
+            "key": "message-poster",
             "label": "FROM HENRY’S",
             "value": "Welcome to Henry’s.",
             "changeMessage": "%@"
           },
           {
-            "key": "portal",
+            "key": "portal-poster",
             "label": "MANAGE YOUR MEMBERSHIP",
-            "value": "https://henrysgymnasium.thememberspot.com/signin"
+            "value": "https://henrysgymnasium.thememberspot.com/signin",
+            "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
           },
           {
-            "key": "directions-capitol-hill",
-            "label": "CAPITOL HILL",
-            "value": "1617 Boylston Ave, Seattle, WA",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>"
-          },
-          {
-            "key": "directions-queen-anne",
-            "label": "QUEEN ANNE",
-            "value": "14 Mercer St, Seattle, WA 98109",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>"
-          },
-          {
-            "key": "phone",
+            "key": "phone-poster",
             "label": "CONTACT THE GYM",
-            "value": "(206) 644-7797"
+            "value": "(206) 644-7797",
+            "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
-            "key": "support",
+            "key": "support-poster",
             "label": "MEMBER SUPPORT",
-            "value": "epicexperience@henrysgymnasium.com"
+            "value": "epicexperience@henrysgymnasium.com",
+            "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
-            "key": "website",
+            "key": "website-poster",
             "label": "HENRY’S GYMNASIUM",
-            "value": "https://henrysgymnasium.com/"
+            "value": "https://henrysgymnasium.com/",
+            "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
-            "key": "terms",
+            "key": "terms-poster",
             "label": "ABOUT THIS PASS",
-            "value": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership."
+            "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
-            "key": "issuer",
+            "key": "issuer-poster",
             "label": "PASS SERVICE",
-            "value": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
+            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
         ]
       },
       "generic": {
+        "headerFields": [
+          {
+            "key": "status",
+            "label": "STATUS",
+            "value": "Active",
+            "changeMessage": "Your membership status is now %@."
+          }
+        ],
         "primaryFields": [
           {
             "key": "memberName",
             "label": "MEMBER",
             "value": "Alex Morgan"
-          }
-        ],
-        "headerFields": [
-          {
-            "key": "status",
-            "label": "STATUS",
-            "value": "Active"
           }
         ],
         "secondaryFields": [
           {
             "key": "membership",
             "label": "MEMBERSHIP",
-            "value": "All-Inclusive Wellness"
+            "value": "All-Inclusive Wellness",
+            "changeMessage": "Your membership is now %@."
           },
           {
             "key": "homeClub",
             "label": "HOME CLUB",
-            "value": "Capitol Hill"
+            "value": "Capitol Hill",
+            "changeMessage": "Your home club is now %@."
           }
         ],
         "auxiliaryFields": [
@@ -371,17 +512,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         ],
         "backFields": [
           {
-            "key": "memberId",
-            "label": "MEMBER NUMBER",
-            "value": "DEMO0001"
-          },
-          {
-            "key": "status",
-            "label": "MEMBERSHIP STATUS",
-            "value": "Active",
-            "changeMessage": "Your membership status is now %@."
-          },
-          {
             "key": "message",
             "label": "FROM HENRY’S",
             "value": "Welcome to Henry’s.",
@@ -390,44 +520,37 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "portal",
             "label": "MANAGE YOUR MEMBERSHIP",
-            "value": "https://henrysgymnasium.thememberspot.com/signin"
-          },
-          {
-            "key": "directions-capitol-hill",
-            "label": "CAPITOL HILL",
-            "value": "1617 Boylston Ave, Seattle, WA",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>"
-          },
-          {
-            "key": "directions-queen-anne",
-            "label": "QUEEN ANNE",
-            "value": "14 Mercer St, Seattle, WA 98109",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>"
+            "value": "https://henrysgymnasium.thememberspot.com/signin",
+            "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
           },
           {
             "key": "phone",
             "label": "CONTACT THE GYM",
-            "value": "(206) 644-7797"
+            "value": "(206) 644-7797",
+            "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support",
             "label": "MEMBER SUPPORT",
-            "value": "epicexperience@henrysgymnasium.com"
+            "value": "epicexperience@henrysgymnasium.com",
+            "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website",
             "label": "HENRY’S GYMNASIUM",
-            "value": "https://henrysgymnasium.com/"
+            "value": "https://henrysgymnasium.com/",
+            "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms",
             "label": "ABOUT THIS PASS",
-            "value": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership."
+            "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer",
             "label": "PASS SERVICE",
-            "value": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
+            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
         ]
       }
@@ -444,7 +567,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 448,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/artwork.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/artwork.png"
         }
       },
       {
@@ -458,7 +581,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/artwork@2x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/artwork@2x.png"
         }
       },
       {
@@ -472,7 +595,20 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/artwork@3x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/artwork@3x.png"
+        }
+      },
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 743,
+        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df",
+        "crc32": 3740293075,
+        "source": {
+          "kind": "static",
+          "path": "/templates/henrys-blue/47252fbc29bb6505/en.lproj/pass.strings"
         }
       },
       {
@@ -486,7 +622,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 38,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/icon.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/icon.png"
         }
       },
       {
@@ -500,7 +636,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/icon@2x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/icon@2x.png"
         }
       },
       {
@@ -514,7 +650,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/icon@3x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/icon@3x.png"
         }
       },
       {
@@ -528,7 +664,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 50,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/logo.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/logo.png"
         }
       },
       {
@@ -542,7 +678,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/logo@2x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/logo@2x.png"
         }
       },
       {
@@ -556,7 +692,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/logo@3x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/logo@3x.png"
         }
       },
       {
@@ -570,7 +706,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/primaryLogo.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/primaryLogo.png"
         }
       },
       {
@@ -584,7 +720,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/primaryLogo@2x.png"
         }
       },
       {
@@ -598,7 +734,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/ce3ef1d4f966fac7/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/47252fbc29bb6505/primaryLogo@3x.png"
         }
       }
     ],
@@ -607,29 +743,24 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background.png",
         "size": 251755,
         "sha1": "34bfc2afe3fd4f18000fc995876acdbaa93884e3",
-        "path": "/templates/henrys-blue/ce3ef1d4f966fac7/background.png"
+        "path": "/templates/henrys-blue/47252fbc29bb6505/background.png"
       },
       {
         "name": "background@2x.png",
         "size": 918416,
         "sha1": "c640fd774ecc8bcd668e4f30be7bf05a399f4e12",
-        "path": "/templates/henrys-blue/ce3ef1d4f966fac7/background@2x.png"
+        "path": "/templates/henrys-blue/47252fbc29bb6505/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 1801267,
         "sha1": "5705fb99adcec587d343319973f9f2416febd87f",
-        "path": "/templates/henrys-blue/ce3ef1d4f966fac7/background@3x.png"
+        "path": "/templates/henrys-blue/47252fbc29bb6505/background@3x.png"
       }
     ],
     "report": {
       "ok": true,
       "issues": [
-        {
-          "severity": "warning",
-          "code": "MANIFEST_GENERATED",
-          "message": "No wallet.template.json; generated from field keys."
-        },
         {
           "severity": "warning",
           "code": "SLOT_UNUSED",
@@ -654,325 +785,482 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "cd88e1e681601afc",
-    "name": "henrys-copper",
-    "description": null,
-    "org": null,
+    "version": "8b24de98111db717",
+    "name": "Henry’s · Copper Gym",
+    "description": "Member card with lock-screen suggestions at the member’s clubs.",
+    "org": {
+      "slug": "henrys",
+      "name": "Henry’s Gymnasium"
+    },
     "styles": [
       "generic",
       "posterGeneric"
     ],
     "manifest": {
       "schema": 1,
-      "name": "henrys-copper",
+      "name": "Henry’s · Copper Gym",
+      "description": "Member card with lock-screen suggestions at the member’s clubs.",
+      "org": {
+        "slug": "henrys",
+        "name": "Henry’s Gymnasium"
+      },
       "inputs": {
         "type": "object",
+        "required": [
+          "memberName",
+          "memberId",
+          "membership"
+        ],
+        "additionalProperties": false,
         "properties": {
-          "status": {
-            "type": "string",
-            "x-label": "STATUS",
-            "x-order": 0
-          },
           "memberName": {
             "type": "string",
-            "x-label": "MEMBER",
-            "x-order": 1
-          },
-          "membership": {
-            "type": "string",
-            "x-label": "MEMBERSHIP",
-            "x-order": 2
-          },
-          "homeClub": {
-            "type": "string",
-            "x-label": "HOME CLUB",
-            "x-order": 3
+            "minLength": 1,
+            "maxLength": 80,
+            "x-label": "Member name",
+            "x-group": "Member",
+            "x-order": 10,
+            "x-search": true
           },
           "memberId": {
             "type": "string",
-            "x-label": "MEMBER NUMBER",
-            "x-order": 4
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Z0-9 .$/+%-]+$",
+            "x-label": "Member number",
+            "x-help": "Key tag number. A-Z 0-9 space - . $ / + %",
+            "x-group": "Member",
+            "x-order": 20,
+            "x-search": true
+          },
+          "membership": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "x-label": "Membership",
+            "x-group": "Member",
+            "x-order": 30,
+            "x-search": true
+          },
+          "homeClub": {
+            "type": "string",
+            "enum": [
+              "capitol-hill",
+              "queen-anne"
+            ],
+            "default": "capitol-hill",
+            "x-label": "Home club",
+            "x-group": "Access",
+            "x-order": 40,
+            "x-widget": "select",
+            "x-enumLabels": {
+              "capitol-hill": "Capitol Hill",
+              "queen-anne": "Queen Anne"
+            }
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "home",
+              "all"
+            ],
+            "default": "home",
+            "x-label": "Access",
+            "x-group": "Access",
+            "x-order": 50,
+            "x-widget": "select",
+            "x-enumLabels": {
+              "home": "Home club",
+              "all": "All clubs"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Suspended",
+              "Expired",
+              "Cancelled"
+            ],
+            "default": "Active",
+            "x-label": "Status",
+            "x-group": "Status",
+            "x-order": 60,
+            "x-widget": "select"
           },
           "message": {
             "type": "string",
-            "x-label": "FROM HENRY’S",
-            "x-order": 5
+            "maxLength": 256,
+            "default": "Welcome to Henry’s.",
+            "x-label": "Message",
+            "x-help": "Shown on the back. Changes notify the member.",
+            "x-group": "Status",
+            "x-order": 70,
+            "x-widget": "textarea"
           },
-          "portal": {
+          "expirationDate": {
             "type": "string",
-            "x-label": "MANAGE YOUR MEMBERSHIP",
-            "x-order": 6
+            "format": "date-time",
+            "x-label": "Expires",
+            "x-group": "Status",
+            "x-order": 80,
+            "x-widget": "datetime"
           },
-          "directions-capitol-hill": {
-            "type": "string",
-            "x-label": "CAPITOL HILL",
-            "x-order": 7
+          "voided": {
+            "type": "boolean",
+            "default": false,
+            "x-label": "Void pass",
+            "x-group": "Status",
+            "x-order": 90,
+            "x-widget": "switch"
           },
-          "directions-queen-anne": {
+          "memberPortalURL": {
             "type": "string",
-            "x-label": "QUEEN ANNE",
-            "x-order": 8
-          },
-          "phone": {
-            "type": "string",
-            "x-label": "CONTACT THE GYM",
-            "x-order": 9
-          },
-          "support": {
-            "type": "string",
-            "x-label": "MEMBER SUPPORT",
-            "x-order": 10
-          },
-          "website": {
-            "type": "string",
-            "x-label": "HENRY’S GYMNASIUM",
-            "x-order": 11
-          },
-          "terms": {
-            "type": "string",
-            "x-label": "ABOUT THIS PASS",
-            "x-order": 12
-          },
-          "issuer": {
-            "type": "string",
-            "x-label": "PASS SERVICE",
-            "x-order": 13
+            "format": "uri",
+            "maxLength": 300,
+            "pattern": "^https://",
+            "default": "https://henrysgymnasium.thememberspot.com/signin",
+            "x-label": "Portal link",
+            "x-group": "Links",
+            "x-order": 100,
+            "x-widget": "url"
           }
         }
       },
       "sample": {
-        "status": "Active",
         "memberName": "Alex Morgan",
-        "membership": "All-Inclusive Wellness",
-        "homeClub": "Capitol Hill",
         "memberId": "DEMO0001",
-        "message": "Welcome to Henry’s.",
-        "portal": "https://henrysgymnasium.thememberspot.com/signin",
-        "directions-capitol-hill": "1617 Boylston Ave, Seattle, WA",
-        "directions-queen-anne": "14 Mercer St, Seattle, WA 98109",
-        "phone": "(206) 644-7797",
-        "support": "epicexperience@henrysgymnasium.com",
-        "website": "https://henrysgymnasium.com/",
-        "terms": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership.",
-        "issuer": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
+        "membership": "All-Inclusive Wellness",
+        "homeClub": "capitol-hill",
+        "access": "home",
+        "status": "Active",
+        "message": "Welcome to Henry’s."
+      },
+      "lookups": {
+        "clubs": {
+          "capitol-hill": {
+            "name": "Capitol Hill",
+            "label": "CAPITOL HILL",
+            "street": "1617 Boylston Ave",
+            "address": "1617 Boylston Ave, Seattle, WA 98122",
+            "lat": 47.615835,
+            "lng": -122.323555,
+            "place": "I23C636C7300F20FD",
+            "phone": "(206) 644-7797",
+            "tel": "+12066447797"
+          },
+          "queen-anne": {
+            "name": "Queen Anne",
+            "label": "QUEEN ANNE",
+            "street": "14 Mercer St",
+            "address": "14 Mercer St, Seattle, WA 98109",
+            "lat": 47.624765,
+            "lng": -122.356206,
+            "place": "I1F4F79088B704BE",
+            "phone": "(206) 644-0969",
+            "tel": "+12066440969"
+          }
+        }
       },
       "bindings": [
         {
           "to": {
-            "field": "status"
-          },
-          "value": "{{status}}"
-        },
-        {
-          "to": {
-            "field": "memberName"
+            "field": [
+              "memberName",
+              "memberName-poster"
+            ]
           },
           "value": "{{memberName}}"
         },
         {
           "to": {
-            "field": "membership"
-          },
-          "value": "{{membership}}"
-        },
-        {
-          "to": {
-            "field": "homeClub"
-          },
-          "value": "{{homeClub}}"
-        },
-        {
-          "to": {
-            "field": "memberId"
+            "field": [
+              "memberId",
+              "memberId-poster"
+            ]
           },
           "value": "{{memberId}}"
         },
         {
           "to": {
-            "field": "message"
+            "field": [
+              "membership",
+              "membership-poster"
+            ]
           },
-          "value": "{{message}}"
+          "value": "{{membership}}"
         },
         {
           "to": {
-            "field": "portal"
+            "field": [
+              "homeClub",
+              "homeClub-poster"
+            ]
           },
-          "value": "{{portal}}"
+          "value": "{{lookups.clubs[homeClub].name}}"
         },
         {
           "to": {
-            "field": "directions-capitol-hill"
+            "field": [
+              "status",
+              "status-poster"
+            ]
           },
-          "value": "{{directions-capitol-hill}}"
+          "value": "{{status}}"
         },
         {
           "to": {
-            "field": "directions-queen-anne"
+            "field": [
+              "message",
+              "message-poster"
+            ]
           },
-          "value": "{{directions-queen-anne}}"
+          "value": "{{message}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
-            "field": "phone"
+            "field": [
+              "portal",
+              "portal-poster"
+            ]
           },
-          "value": "{{phone}}"
+          "value": "{{memberPortalURL}}"
         },
         {
           "to": {
-            "field": "support"
+            "field": [
+              "portal",
+              "portal-poster"
+            ],
+            "prop": "attributedValue"
           },
-          "value": "{{support}}"
+          "value": "<a href=\"{{memberPortalURL|html}}\">Member portal</a>"
         },
         {
           "to": {
-            "field": "website"
+            "field": [
+              "phone",
+              "phone-poster"
+            ]
           },
-          "value": "{{website}}"
+          "value": "{{lookups.clubs[homeClub].phone}}"
         },
         {
           "to": {
-            "field": "terms"
+            "field": [
+              "phone",
+              "phone-poster"
+            ],
+            "prop": "attributedValue"
           },
-          "value": "{{terms}}"
+          "value": "<a href=\"tel:{{lookups.clubs[homeClub].tel}}\">{{lookups.clubs[homeClub].phone}}</a>"
         },
         {
           "to": {
-            "field": "issuer"
+            "barcode": "*",
+            "prop": "message"
           },
-          "value": "{{issuer}}"
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "action": "member-portal",
+            "prop": "url"
+          },
+          "value": "{{memberPortalURL}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{expirationDate}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/voided"
+          },
+          "value": "{{voided}}"
         }
       ],
       "display": {
-        "title": "{{status}}"
-      }
-    },
-    "passJson": {
-      "backgroundColor": "rgb(23,19,21)",
-      "barcodes": [
+        "title": "{{memberName}}",
+        "subtitle": "{{membership}} · {{lookups.clubs[homeClub].name}}",
+        "status": "{{status}}",
+        "search": [
+          "memberName",
+          "memberId",
+          "membership"
+        ]
+      },
+      "behaviors": [
         {
-          "_id": "D3C127A2-971A-41BF-B857-8817CBD3C676",
-          "altText": "DEMO0001",
-          "format": "PKBarcodeFormatCode39",
-          "message": "DEMO0001",
-          "messageEncoding": "iso-8859-1"
-        },
-        {
-          "_id": "56DC03DD-F086-4141-A46D-B4C2E3FDADEE",
-          "altText": "DEMO0001",
-          "format": "PKBarcodeFormatCode128",
-          "message": "DEMO0001",
-          "messageEncoding": "iso-8859-1"
+          "use": "venue-locations",
+          "version": 1,
+          "config": {
+            "venues": "clubs",
+            "homeInput": "homeClub",
+            "accessInput": "access",
+            "allValue": "all",
+            "relevantText": "{{venue.name}} club · {{venue.street}}",
+            "placeAction": {
+              "identifier": "home-club"
+            },
+            "directions": {
+              "after": "portal",
+              "key": "directions-{{venue.id}}",
+              "label": "{{venue.label}}",
+              "value": "{{venue.address}}",
+              "linkText": "Directions to {{venue.name}}",
+              "url": "https://maps.apple.com/?daddr={{venue.lat}},{{venue.lng}}",
+              "keySuffix": {
+                "posterGeneric": "-poster"
+              }
+            }
+          }
         }
       ],
+      "previewOnlyAssets": [
+        "background.png",
+        "background@2x.png",
+        "background@3x.png"
+      ]
+    },
+    "passJson": {
+      "formatVersion": 1,
       "description": "Henry’s Gymnasium membership",
+      "organizationName": "Henry’s Gymnasium",
+      "backgroundColor": "rgb(23,19,21)",
+      "foregroundColor": "rgb(255,249,242)",
+      "labelColor": "rgb(210,180,157)",
+      "preferredStyleSchemes": [
+        "posterGeneric",
+        "generic"
+      ],
+      "sharingProhibited": true,
+      "voided": false,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatCode39",
+          "message": "DEMO0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "DEMO0001"
+        },
+        {
+          "format": "PKBarcodeFormatCode128",
+          "message": "DEMO0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "DEMO0001"
+        }
+      ],
       "featuredActions": [
         {
-          "_id": "D730860B-DBDC-45F8-B49F-7FB93AD89FBD",
-          "identifier": "membership",
+          "identifier": "member-portal",
           "type": "membershipBenefits",
           "url": "https://henrysgymnasium.thememberspot.com/signin"
         },
         {
-          "_id": "3FE1D6D6-E056-43F7-8793-CC554C591DC8",
-          "identifier": "home-gym-directions",
-          "placeIdentifier": "I23C636C7300F20FD",
-          "type": "place"
+          "identifier": "home-club",
+          "type": "place",
+          "placeIdentifier": "I23C636C7300F20FD"
         }
       ],
-      "foregroundColor": "rgb(255,249,242)",
-      "formatVersion": 1,
-      "generic": {
-        "auxiliaryFields": [
-          {
-            "_id": "C36B0E0F-350C-433B-801A-9B3DBD8C35A8",
-            "key": "memberId",
-            "label": "MEMBER NUMBER",
-            "value": "DEMO0001"
-          }
-        ],
-        "backFields": [
-          {
-            "_id": "D0E701EB-04B9-4B1B-AF21-C4DB2CDAD2FD",
-            "key": "memberId",
-            "label": "MEMBER NUMBER",
-            "value": "DEMO0001"
-          },
-          {
-            "_id": "F6425344-8C3B-45E3-B55A-F1ECD0A3A3F1",
-            "changeMessage": "Your membership status is now %@.",
-            "key": "status",
-            "label": "MEMBERSHIP STATUS",
-            "value": "Active"
-          },
-          {
-            "_id": "B8C23391-27BA-497D-A747-2B6ED1C4BE2C",
-            "changeMessage": "%@",
-            "key": "message",
-            "label": "FROM HENRY’S",
-            "value": "Welcome to Henry’s."
-          },
-          {
-            "_id": "DE68EF13-F7DB-4F55-BA0A-7A8B63BD38A3",
-            "key": "portal",
-            "label": "MANAGE YOUR MEMBERSHIP",
-            "value": "https://henrysgymnasium.thememberspot.com/signin"
-          },
-          {
-            "_id": "093BA2CD-BC1B-4487-878A-D67DE0271CC9",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>",
-            "key": "directions-capitol-hill",
-            "label": "CAPITOL HILL",
-            "value": "1617 Boylston Ave, Seattle, WA"
-          },
-          {
-            "_id": "A3F4CE49-3AA5-40D1-8253-27BEC0B31A9F",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>",
-            "key": "directions-queen-anne",
-            "label": "QUEEN ANNE",
-            "value": "14 Mercer St, Seattle, WA 98109"
-          },
-          {
-            "_id": "F4310E3A-8AC2-4D70-AE2A-B0361D45ED0D",
-            "key": "phone",
-            "label": "CONTACT THE GYM",
-            "value": "(206) 644-7797"
-          },
-          {
-            "_id": "5BA73663-DFE9-4088-85A4-50F507649864",
-            "key": "support",
-            "label": "MEMBER SUPPORT",
-            "value": "epicexperience@henrysgymnasium.com"
-          },
-          {
-            "_id": "0F96D920-C3DA-444E-A3A2-5A8187179284",
-            "key": "website",
-            "label": "HENRY’S GYMNASIUM",
-            "value": "https://henrysgymnasium.com/"
-          },
-          {
-            "_id": "7E6F173F-5A1B-4375-947A-CD38671486D0",
-            "key": "terms",
-            "label": "ABOUT THIS PASS",
-            "value": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership."
-          },
-          {
-            "_id": "1A6DA89E-2E34-4383-AEB3-C63306322E2F",
-            "key": "issuer",
-            "label": "PASS SERVICE",
-            "value": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
-          }
-        ],
+      "posterGeneric": {
         "headerFields": [
           {
-            "_id": "943A5163-2D18-438A-A928-D4AD5213DBD7",
-            "key": "status",
-            "label": "STATUS",
-            "value": "Active"
+            "key": "memberId-poster",
+            "label": "MEMBER",
+            "value": "DEMO0001"
           }
         ],
         "primaryFields": [
           {
-            "_id": "9061F31D-2073-4060-BDD9-D13FDD589FA9",
+            "key": "memberName-poster",
+            "value": "Alex Morgan"
+          },
+          {
+            "key": "homeClub-poster",
+            "label": "HOME CLUB",
+            "value": "Capitol Hill",
+            "changeMessage": "Your home club is now %@."
+          }
+        ],
+        "footerFields": [
+          {
+            "key": "membership-poster",
+            "value": "All-Inclusive Wellness",
+            "changeMessage": "Your membership is now %@."
+          }
+        ],
+        "backFields": [
+          {
+            "key": "status-poster",
+            "label": "MEMBERSHIP STATUS",
+            "value": "Active",
+            "changeMessage": "Your membership status is now %@."
+          },
+          {
+            "key": "message-poster",
+            "label": "FROM HENRY’S",
+            "value": "Welcome to Henry’s.",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "portal-poster",
+            "label": "MANAGE YOUR MEMBERSHIP",
+            "value": "https://henrysgymnasium.thememberspot.com/signin",
+            "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
+          },
+          {
+            "key": "phone-poster",
+            "label": "CONTACT THE GYM",
+            "value": "(206) 644-7797",
+            "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
+          },
+          {
+            "key": "support-poster",
+            "label": "MEMBER SUPPORT",
+            "value": "epicexperience@henrysgymnasium.com",
+            "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
+          },
+          {
+            "key": "website-poster",
+            "label": "HENRY’S GYMNASIUM",
+            "value": "https://henrysgymnasium.com/",
+            "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
+          },
+          {
+            "key": "terms-poster",
+            "label": "ABOUT THIS PASS",
+            "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
+          },
+          {
+            "key": "issuer-poster",
+            "label": "PASS SERVICE",
+            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+          }
+        ]
+      },
+      "generic": {
+        "headerFields": [
+          {
+            "key": "status",
+            "label": "STATUS",
+            "value": "Active",
+            "changeMessage": "Your membership status is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
             "key": "memberName",
             "label": "MEMBER",
             "value": "Alex Morgan"
@@ -980,138 +1268,69 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         ],
         "secondaryFields": [
           {
-            "_id": "8C23D37C-CCA4-43ED-A6C5-4F95AFFDC2E6",
             "key": "membership",
             "label": "MEMBERSHIP",
-            "value": "All-Inclusive Wellness"
+            "value": "All-Inclusive Wellness",
+            "changeMessage": "Your membership is now %@."
           },
           {
-            "_id": "17968809-EC10-4843-BBAC-519B6E8C6543",
             "key": "homeClub",
             "label": "HOME CLUB",
-            "value": "Capitol Hill"
+            "value": "Capitol Hill",
+            "changeMessage": "Your home club is now %@."
           }
-        ]
-      },
-      "labelColor": "rgb(210,180,157)",
-      "locations": [
-        {
-          "latitude": 47.615835,
-          "longitude": -122.323555,
-          "relevantText": "Your Henry’s Gymnasium membership — Capitol Hill"
-        }
-      ],
-      "maxDistance": 150,
-      "organizationName": "Henry’s Gymnasium",
-      "passTypeIdentifier": "pass.com.henrysgymnasium.member",
-      "posterGeneric": {
-        "backFields": [
+        ],
+        "auxiliaryFields": [
           {
-            "_id": "5D1E56AD-0E28-4080-BCC6-84168F3B457F",
             "key": "memberId",
             "label": "MEMBER NUMBER",
             "value": "DEMO0001"
-          },
+          }
+        ],
+        "backFields": [
           {
-            "_id": "6E9725AD-B8C4-4DCD-8392-E2DF070D3A52",
-            "changeMessage": "Your membership status is now %@.",
-            "key": "status",
-            "label": "MEMBERSHIP STATUS",
-            "value": "Active"
-          },
-          {
-            "_id": "35914C73-42CF-4993-99FF-A7C9F0E99CBC",
-            "changeMessage": "%@",
             "key": "message",
             "label": "FROM HENRY’S",
-            "value": "Welcome to Henry’s."
+            "value": "Welcome to Henry’s.",
+            "changeMessage": "%@"
           },
           {
-            "_id": "BD20C991-FFCF-42BA-BC94-8F4710631281",
             "key": "portal",
             "label": "MANAGE YOUR MEMBERSHIP",
-            "value": "https://henrysgymnasium.thememberspot.com/signin"
+            "value": "https://henrysgymnasium.thememberspot.com/signin",
+            "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
           },
           {
-            "_id": "90D49403-4F67-4518-85F7-2B121A99EAE0",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>",
-            "key": "directions-capitol-hill",
-            "label": "CAPITOL HILL",
-            "value": "1617 Boylston Ave, Seattle, WA"
-          },
-          {
-            "_id": "A88082C9-8E34-48B4-AE28-816E92B6EFE2",
-            "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>",
-            "key": "directions-queen-anne",
-            "label": "QUEEN ANNE",
-            "value": "14 Mercer St, Seattle, WA 98109"
-          },
-          {
-            "_id": "FB852E15-5248-4D18-A22E-2B02DEBC0660",
             "key": "phone",
             "label": "CONTACT THE GYM",
-            "value": "(206) 644-7797"
+            "value": "(206) 644-7797",
+            "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
-            "_id": "D18C4002-339D-4D99-BFEB-2F477687725C",
             "key": "support",
             "label": "MEMBER SUPPORT",
-            "value": "epicexperience@henrysgymnasium.com"
+            "value": "epicexperience@henrysgymnasium.com",
+            "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
-            "_id": "F8F3D635-5043-471E-A7D5-F26692B11D72",
             "key": "website",
             "label": "HENRY’S GYMNASIUM",
-            "value": "https://henrysgymnasium.com/"
+            "value": "https://henrysgymnasium.com/",
+            "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
-            "_id": "780D0250-F50C-4A0E-9A66-6A506A4E29A1",
             "key": "terms",
             "label": "ABOUT THIS PASS",
-            "value": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership."
+            "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
-            "_id": "34A5E943-48D1-48CD-ADEF-0BCC26CDE3F5",
             "key": "issuer",
             "label": "PASS SERVICE",
-            "value": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
-          }
-        ],
-        "footerFields": [
-          {
-            "_id": "CA3CC51F-4B06-47F0-88D8-B306F8B1C982",
-            "key": "membership",
-            "label": "MEMBERSHIP",
-            "value": "All-Inclusive Wellness"
-          }
-        ],
-        "headerFields": [
-          {
-            "_id": "4B5072C1-8A78-4C17-9BC2-E63F7E431C0E",
-            "key": "memberId",
-            "label": "MEMBER",
-            "value": "DEMO0001"
-          }
-        ],
-        "primaryFields": [
-          {
-            "_id": "CD2601B0-6F69-4C05-B105-D13C26F74AAA",
-            "key": "memberName",
-            "label": "MEMBER NAME",
-            "value": "Alex Morgan"
-          },
-          {
-            "_id": "AD736AF6-931F-456F-86C2-C4EF71CAB1AF",
-            "key": "homeClub",
-            "label": "HOME CLUB",
-            "value": "Capitol Hill"
+            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
         ]
-      },
-      "sharingProhibited": true,
-      "suppressHeaderDarkening": false,
-      "teamIdentifier": "48H7CLBV8Y",
-      "voided": false
+      }
     },
     "assets": [
       {
@@ -1125,7 +1344,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 448,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/artwork.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/artwork.png"
         }
       },
       {
@@ -1139,7 +1358,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/artwork@2x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/artwork@2x.png"
         }
       },
       {
@@ -1153,7 +1372,20 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/artwork@3x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/artwork@3x.png"
+        }
+      },
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 743,
+        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df",
+        "crc32": 3740293075,
+        "source": {
+          "kind": "static",
+          "path": "/templates/henrys-copper/8b24de98111db717/en.lproj/pass.strings"
         }
       },
       {
@@ -1167,7 +1399,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 38,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/icon.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/icon.png"
         }
       },
       {
@@ -1181,7 +1413,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/icon@2x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/icon@2x.png"
         }
       },
       {
@@ -1195,7 +1427,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/icon@3x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/icon@3x.png"
         }
       },
       {
@@ -1209,7 +1441,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 50,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/logo.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/logo.png"
         }
       },
       {
@@ -1223,7 +1455,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/logo@2x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/logo@2x.png"
         }
       },
       {
@@ -1237,7 +1469,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/logo@3x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/logo@3x.png"
         }
       },
       {
@@ -1251,7 +1483,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/primaryLogo.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/primaryLogo.png"
         }
       },
       {
@@ -1265,7 +1497,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/primaryLogo@2x.png"
         }
       },
       {
@@ -1279,7 +1511,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/cd88e1e681601afc/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/8b24de98111db717/primaryLogo@3x.png"
         }
       }
     ],
@@ -1288,29 +1520,24 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background.png",
         "size": 240421,
         "sha1": "22c4ee23014e0fdda5d04c52632c47d832f7a76f",
-        "path": "/templates/henrys-copper/cd88e1e681601afc/background.png"
+        "path": "/templates/henrys-copper/8b24de98111db717/background.png"
       },
       {
         "name": "background@2x.png",
         "size": 891278,
         "sha1": "51eadbb22200826d98d061f2d025552e2de5514a",
-        "path": "/templates/henrys-copper/cd88e1e681601afc/background@2x.png"
+        "path": "/templates/henrys-copper/8b24de98111db717/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 1748262,
         "sha1": "0dc5d6c3253d84fd9a3910a06619ecf899a7a5c8",
-        "path": "/templates/henrys-copper/cd88e1e681601afc/background@3x.png"
+        "path": "/templates/henrys-copper/8b24de98111db717/background@3x.png"
       }
     ],
     "report": {
       "ok": true,
       "issues": [
-        {
-          "severity": "warning",
-          "code": "MANIFEST_GENERATED",
-          "message": "No wallet.template.json; generated from field keys."
-        },
         {
           "severity": "warning",
           "code": "SLOT_UNUSED",
@@ -1330,6 +1557,3326 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "path": "background@3x.png"
         }
       ]
+    }
+  },
+  {
+    "id": "baked:starter-boarding-pass",
+    "slug": "starter-boarding-pass",
+    "version": "c19eaf331df675d8",
+    "name": "Wallet · Boarding pass",
+    "description": "Air boarding pass with the semantic layout and a classic fallback.",
+    "org": null,
+    "styles": [
+      "boardingPass"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Wallet · Boarding pass",
+      "description": "Air boarding pass with the semantic layout and a classic fallback.",
+      "inputs": {
+        "type": "object",
+        "required": [
+          "passengerGiven",
+          "passengerFamily",
+          "airlineCode",
+          "flightNumber",
+          "origin",
+          "originCity",
+          "originTimeZone",
+          "destination",
+          "destinationCity",
+          "destinationTimeZone",
+          "boardsAt",
+          "departsAt",
+          "arrivesAt",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "passengerGiven": {
+            "type": "string",
+            "x-label": "First name",
+            "x-group": "Passenger",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "passengerFamily": {
+            "type": "string",
+            "x-label": "Last name",
+            "x-group": "Passenger",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 40,
+            "x-search": true
+          },
+          "airlineCode": {
+            "type": "string",
+            "x-label": "Airline",
+            "x-group": "Flight",
+            "x-order": 30,
+            "minLength": 2,
+            "maxLength": 3,
+            "x-search": true
+          },
+          "flightNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999,
+            "x-label": "Flight number",
+            "x-group": "Flight",
+            "x-order": 40
+          },
+          "origin": {
+            "type": "string",
+            "x-label": "From",
+            "x-group": "Route",
+            "x-order": 50,
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$",
+            "x-help": "IATA code"
+          },
+          "originCity": {
+            "type": "string",
+            "x-label": "From city",
+            "x-group": "Route",
+            "x-order": 60,
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "originTimeZone": {
+            "type": "string",
+            "x-label": "From time zone",
+            "x-group": "Route",
+            "x-order": 70,
+            "minLength": 1,
+            "maxLength": 40,
+            "x-help": "IANA name"
+          },
+          "destination": {
+            "type": "string",
+            "x-label": "To",
+            "x-group": "Route",
+            "x-order": 80,
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$",
+            "x-help": "IATA code"
+          },
+          "destinationCity": {
+            "type": "string",
+            "x-label": "To city",
+            "x-group": "Route",
+            "x-order": 90,
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "destinationTimeZone": {
+            "type": "string",
+            "x-label": "To time zone",
+            "x-group": "Route",
+            "x-order": 100,
+            "minLength": 1,
+            "maxLength": 40,
+            "x-help": "IANA name"
+          },
+          "boardsAt": {
+            "type": "string",
+            "x-label": "Boarding",
+            "x-group": "Times",
+            "x-order": 110,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "departsAt": {
+            "type": "string",
+            "x-label": "Departure",
+            "x-group": "Times",
+            "x-order": 120,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "arrivesAt": {
+            "type": "string",
+            "x-label": "Arrival",
+            "x-group": "Times",
+            "x-order": 130,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "gate": {
+            "type": "string",
+            "x-label": "Gate",
+            "x-group": "Seat",
+            "x-order": 140,
+            "maxLength": 8
+          },
+          "seat": {
+            "type": "string",
+            "x-label": "Seat",
+            "x-group": "Seat",
+            "x-order": 150,
+            "maxLength": 8
+          },
+          "transitType": {
+            "type": "string",
+            "x-label": "Transit",
+            "x-group": "Flight",
+            "x-order": 35,
+            "enum": [
+              "air",
+              "train",
+              "bus",
+              "boat",
+              "generic"
+            ],
+            "default": "air",
+            "x-widget": "select"
+          },
+          "ticketId": {
+            "type": "string",
+            "x-label": "Barcode",
+            "x-group": "Seat",
+            "x-order": 160,
+            "minLength": 1,
+            "maxLength": 120,
+            "x-search": true
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 170,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          }
+        }
+      },
+      "sample": {
+        "passengerGiven": "Alex",
+        "passengerFamily": "Morgan",
+        "airlineCode": "WA",
+        "flightNumber": 100,
+        "origin": "SFO",
+        "originCity": "San Francisco",
+        "originTimeZone": "America/Los_Angeles",
+        "destination": "JFK",
+        "destinationCity": "New York",
+        "destinationTimeZone": "America/New_York",
+        "boardsAt": "2030-06-01T07:15:00Z",
+        "departsAt": "2030-06-01T08:00:00Z",
+        "arrivesAt": "2030-06-01T14:30:00Z",
+        "gate": "B12",
+        "seat": "14A",
+        "ticketId": "BOARD-0001"
+      },
+      "lookups": {
+        "transit": {
+          "air": {
+            "type": "PKTransitTypeAir"
+          },
+          "train": {
+            "type": "PKTransitTypeTrain"
+          },
+          "bus": {
+            "type": "PKTransitTypeBus"
+          },
+          "boat": {
+            "type": "PKTransitTypeBoat"
+          },
+          "generic": {
+            "type": "PKTransitTypeGeneric"
+          }
+        }
+      },
+      "bindings": [
+        {
+          "to": {
+            "pointer": "/boardingPass/transitType"
+          },
+          "value": "{{lookups.transit[transitType].type}}"
+        },
+        {
+          "to": {
+            "field": "flight"
+          },
+          "value": "{{airlineCode}}{{flightNumber}}"
+        },
+        {
+          "to": {
+            "field": "gate"
+          },
+          "value": "{{gate}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "origin"
+          },
+          "value": "{{origin}}"
+        },
+        {
+          "to": {
+            "field": "origin",
+            "prop": "label"
+          },
+          "value": "{{originCity}}"
+        },
+        {
+          "to": {
+            "field": "destination"
+          },
+          "value": "{{destination}}"
+        },
+        {
+          "to": {
+            "field": "destination",
+            "prop": "label"
+          },
+          "value": "{{destinationCity}}"
+        },
+        {
+          "to": {
+            "field": "passenger"
+          },
+          "value": "{{passengerGiven}} {{passengerFamily}}"
+        },
+        {
+          "to": {
+            "field": "departs"
+          },
+          "value": "{{departsAt}}"
+        },
+        {
+          "to": {
+            "field": "boardsAt"
+          },
+          "value": "{{boardsAt}}"
+        },
+        {
+          "to": {
+            "field": "seat"
+          },
+          "value": "{{seat}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{ticketId}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{ticketId}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/airlineCode"
+          },
+          "value": "{{airlineCode}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/flightNumber"
+          },
+          "value": "{{flightNumber}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/departureAirportCode"
+          },
+          "value": "{{origin}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/departureCityName"
+          },
+          "value": "{{originCity}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/departureLocationTimeZone"
+          },
+          "value": "{{originTimeZone}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/destinationAirportCode"
+          },
+          "value": "{{destination}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/destinationCityName"
+          },
+          "value": "{{destinationCity}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/destinationLocationTimeZone"
+          },
+          "value": "{{destinationTimeZone}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/originalBoardingDate"
+          },
+          "value": "{{boardsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/originalDepartureDate"
+          },
+          "value": "{{departsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/originalArrivalDate"
+          },
+          "value": "{{arrivesAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/passengerName/givenName"
+          },
+          "value": "{{passengerGiven}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/passengerName/familyName"
+          },
+          "value": "{{passengerFamily}}"
+        },
+        {
+          "to": {
+            "pointer": "/relevantDate"
+          },
+          "value": "{{departsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{arrivesAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/preferredStyleSchemes"
+          },
+          "remove": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
+        }
+      ],
+      "display": {
+        "title": "{{passengerGiven}} {{passengerFamily}}",
+        "subtitle": "{{origin}} to {{destination}}",
+        "status": "{{airlineCode}}{{flightNumber}}",
+        "search": [
+          "passengerFamily",
+          "airlineCode",
+          "ticketId"
+        ]
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Wallet boarding pass",
+      "organizationName": "Wallet",
+      "backgroundColor": "rgb(31,41,55)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(199,210,254)",
+      "logoText": "Wallet Air",
+      "preferredStyleSchemes": [
+        "semanticBoardingPass",
+        "boardingPass"
+      ],
+      "sharingProhibited": true,
+      "relevantDate": "2030-06-01T08:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatPDF417",
+          "message": "BOARD-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "BOARD-0001"
+        }
+      ],
+      "semantics": {
+        "airlineCode": "WA",
+        "flightNumber": 100,
+        "departureAirportCode": "SFO",
+        "departureCityName": "San Francisco",
+        "departureLocationTimeZone": "America/Los_Angeles",
+        "destinationAirportCode": "JFK",
+        "destinationCityName": "New York",
+        "destinationLocationTimeZone": "America/New_York",
+        "originalBoardingDate": "2030-06-01T07:15:00Z",
+        "originalDepartureDate": "2030-06-01T08:00:00Z",
+        "originalArrivalDate": "2030-06-01T14:30:00Z",
+        "passengerName": {
+          "givenName": "Alex",
+          "familyName": "Morgan"
+        }
+      },
+      "boardingPass": {
+        "transitType": "PKTransitTypeAir",
+        "headerFields": [
+          {
+            "key": "flight",
+            "label": "FLIGHT",
+            "value": "WA100"
+          },
+          {
+            "key": "gate",
+            "label": "GATE",
+            "value": "B12",
+            "changeMessage": "Your gate is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "origin",
+            "label": "SAN FRANCISCO",
+            "value": "SFO"
+          },
+          {
+            "key": "destination",
+            "label": "NEW YORK",
+            "value": "JFK"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "passenger",
+            "label": "PASSENGER",
+            "value": "Alex Morgan"
+          },
+          {
+            "key": "departs",
+            "label": "DEPARTS",
+            "value": "2030-06-01T08:00:00Z",
+            "dateStyle": "PKDateStyleShort",
+            "timeStyle": "PKDateStyleShort",
+            "changeMessage": "Departure is now %@."
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "boardsAt",
+            "label": "BOARDS",
+            "value": "2030-06-01T07:15:00Z",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort"
+          },
+          {
+            "key": "seat",
+            "label": "SEAT",
+            "value": "14A"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "terms",
+            "label": "TERMS",
+            "value": "Be at the gate 30 minutes before departure."
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "footer.png",
+        "slot": "footer",
+        "scale": 1,
+        "size": 1507,
+        "sha1": "e4d0869ff945f5903ed40e0d78f9dd4c47b93063",
+        "crc32": 262480245,
+        "width": 286,
+        "height": 15,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/footer.png"
+        }
+      },
+      {
+        "name": "footer@2x.png",
+        "slot": "footer",
+        "scale": 2,
+        "size": 4144,
+        "sha1": "dd7099d5d79e107b06979f38747f171f66109805",
+        "crc32": 71665507,
+        "width": 572,
+        "height": 30,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/footer@2x.png"
+        }
+      },
+      {
+        "name": "footer@3x.png",
+        "slot": "footer",
+        "scale": 3,
+        "size": 7435,
+        "sha1": "478ab0454ab9c5a11ff4e1d8f534a167d45bc3ad",
+        "crc32": 4105186576,
+        "width": 858,
+        "height": 45,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/footer@3x.png"
+        }
+      },
+      {
+        "name": "icon.png",
+        "slot": "icon",
+        "scale": 1,
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
+        "crc32": 3733731073,
+        "width": 38,
+        "height": 38,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/icon.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
+        "crc32": 455672748,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
+        "crc32": 518592558,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo.png",
+        "slot": "logo",
+        "scale": 1,
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
+        "crc32": 841788281,
+        "width": 160,
+        "height": 50,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/logo.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
+        "crc32": 3522322584,
+        "width": 320,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
+        "crc32": 2412963703,
+        "width": 480,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/c19eaf331df675d8/logo@3x.png"
+        }
+      }
+    ],
+    "extras": [
+      {
+        "name": "primaryLogo.png",
+        "size": 671,
+        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56",
+        "path": "/templates/starter-boarding-pass/c19eaf331df675d8/primaryLogo.png"
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "size": 1215,
+        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537",
+        "path": "/templates/starter-boarding-pass/c19eaf331df675d8/primaryLogo@2x.png"
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "size": 1819,
+        "sha1": "a651d032c33059074ec29e94009d0e083f82777a",
+        "path": "/templates/starter-boarding-pass/c19eaf331df675d8/primaryLogo@3x.png"
+      }
+    ],
+    "report": {
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SLOT_UNUSED",
+          "message": "primaryLogo is not used by boardingPass; left out of the pass.",
+          "path": "primaryLogo.png"
+        },
+        {
+          "severity": "warning",
+          "code": "SLOT_UNUSED",
+          "message": "primaryLogo is not used by boardingPass; left out of the pass.",
+          "path": "primaryLogo@2x.png"
+        },
+        {
+          "severity": "warning",
+          "code": "SLOT_UNUSED",
+          "message": "primaryLogo is not used by boardingPass; left out of the pass.",
+          "path": "primaryLogo@3x.png"
+        }
+      ]
+    }
+  },
+  {
+    "id": "baked:starter-coupon",
+    "slug": "starter-coupon",
+    "version": "e8c36007c70d7a6b",
+    "name": "Wallet · Coupon",
+    "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
+    "org": null,
+    "styles": [
+      "coupon"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Wallet · Coupon",
+      "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
+      "inputs": {
+        "type": "object",
+        "required": [
+          "offer",
+          "code",
+          "expirationDate"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "offer": {
+            "type": "string",
+            "x-label": "Offer",
+            "x-group": "Offer",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 60,
+            "x-search": true
+          },
+          "code": {
+            "type": "string",
+            "x-label": "Code",
+            "x-group": "Offer",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "validFor": {
+            "type": "string",
+            "x-label": "Valid for",
+            "x-group": "Offer",
+            "x-order": 30,
+            "maxLength": 60,
+            "default": "One purchase"
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 40,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 50,
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-widget": "url",
+            "default": "https://example.com/"
+          },
+          "expirationDate": {
+            "type": "string",
+            "x-label": "Expires",
+            "x-group": "Offer",
+            "x-order": 60,
+            "format": "date-time",
+            "x-widget": "datetime"
+          }
+        }
+      },
+      "sample": {
+        "offer": "20% off",
+        "code": "SAVE-0001",
+        "validFor": "One purchase",
+        "expirationDate": "2030-01-01T00:00:00Z"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "offer"
+          },
+          "value": "{{offer}}"
+        },
+        {
+          "to": {
+            "field": "code"
+          },
+          "value": "{{code}}"
+        },
+        {
+          "to": {
+            "field": "terms"
+          },
+          "value": "{{validFor}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "expires"
+          },
+          "value": "{{expirationDate}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{code}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{code}}"
+        },
+        {
+          "to": {
+            "action": "offers",
+            "prop": "url"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{expirationDate}}"
+        }
+      ],
+      "display": {
+        "title": "{{offer}}",
+        "subtitle": "{{code}}",
+        "search": [
+          "offer",
+          "code"
+        ]
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Wallet coupon",
+      "organizationName": "Wallet",
+      "backgroundColor": "rgb(31,41,55)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(199,210,254)",
+      "logoText": "Wallet",
+      "expirationDate": "2030-01-01T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatPDF417",
+          "message": "SAVE-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "SAVE-0001"
+        }
+      ],
+      "locations": [
+        {
+          "latitude": 37.3349,
+          "longitude": -122.009,
+          "relevantText": "Store nearby"
+        }
+      ],
+      "featuredActions": [
+        {
+          "identifier": "offers",
+          "type": "viewOffersRewards",
+          "url": "https://example.com/"
+        }
+      ],
+      "coupon": {
+        "headerFields": [
+          {
+            "key": "expires",
+            "label": "EXPIRES",
+            "value": "2030-01-01T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "ignoresTimeZone": true
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "offer",
+            "label": "OFFER",
+            "value": "20% off"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "terms",
+            "label": "VALID FOR",
+            "value": "One purchase"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "code",
+            "label": "CODE",
+            "value": "SAVE-0001"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "site",
+            "label": "SITE",
+            "value": "https://example.com/",
+            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+          },
+          {
+            "key": "fine",
+            "label": "TERMS",
+            "value": "One use per customer. Not combinable with other offers."
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "icon.png",
+        "slot": "icon",
+        "scale": 1,
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
+        "crc32": 3733731073,
+        "width": 38,
+        "height": 38,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/icon.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
+        "crc32": 455672748,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
+        "crc32": 518592558,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo.png",
+        "slot": "logo",
+        "scale": 1,
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
+        "crc32": 841788281,
+        "width": 160,
+        "height": 50,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/logo.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
+        "crc32": 3522322584,
+        "width": 320,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
+        "crc32": 2412963703,
+        "width": 480,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/logo@3x.png"
+        }
+      },
+      {
+        "name": "strip.png",
+        "slot": "strip",
+        "scale": 1,
+        "size": 7495,
+        "sha1": "2fde15194c19388c28bbb26a789ac27391a3c630",
+        "crc32": 3634009603,
+        "width": 375,
+        "height": 144,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/strip.png"
+        }
+      },
+      {
+        "name": "strip@2x.png",
+        "slot": "strip",
+        "scale": 2,
+        "size": 19651,
+        "sha1": "26103abe258d6c3ba28c6ffbbe7f4cec665f8139",
+        "crc32": 149132663,
+        "width": 750,
+        "height": 288,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/strip@2x.png"
+        }
+      },
+      {
+        "name": "strip@3x.png",
+        "slot": "strip",
+        "scale": 3,
+        "size": 34319,
+        "sha1": "cb51a640108370bff704b76ad3b56cd80117f8f1",
+        "crc32": 3985521370,
+        "width": 1125,
+        "height": 432,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/e8c36007c70d7a6b/strip@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-event-ticket",
+    "slug": "starter-event-ticket",
+    "version": "6e2bea291018fa81",
+    "name": "Wallet · Event ticket",
+    "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
+    "org": null,
+    "styles": [
+      "eventTicket"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Wallet · Event ticket",
+      "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
+      "inputs": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "x-label": "Event",
+            "x-group": "Event",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "venueName": {
+            "type": "string",
+            "x-label": "Venue",
+            "x-group": "Event",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "x-label": "City",
+            "x-group": "Event",
+            "x-order": 30,
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "x-label": "Room",
+            "x-group": "Event",
+            "x-order": 40,
+            "minLength": 1,
+            "maxLength": 60,
+            "default": "Main hall"
+          },
+          "startsAt": {
+            "type": "string",
+            "x-label": "Starts",
+            "x-group": "Event",
+            "x-order": 50,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "endsAt": {
+            "type": "string",
+            "x-label": "Ends",
+            "x-group": "Event",
+            "x-order": 60,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "venueLat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "x-label": "Venue latitude",
+            "x-group": "Event",
+            "x-order": 70
+          },
+          "venueLng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "x-label": "Venue longitude",
+            "x-group": "Event",
+            "x-order": 80
+          },
+          "attendee": {
+            "type": "string",
+            "x-label": "Attendee",
+            "x-group": "Ticket",
+            "x-order": 90,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "admission": {
+            "type": "string",
+            "x-label": "Admission",
+            "x-group": "Ticket",
+            "x-order": 100,
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "x-label": "Seat",
+            "x-group": "Ticket",
+            "x-order": 110,
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "x-label": "Ticket ID",
+            "x-group": "Ticket",
+            "x-order": 120,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 130,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "x-label": "Event page",
+            "x-group": "Links",
+            "x-order": 140,
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-widget": "url",
+            "default": "https://example.com/"
+          }
+        }
+      },
+      "sample": {
+        "eventName": "Sample Event",
+        "venueName": "Sample Hall",
+        "venueRegion": "Cupertino, CA",
+        "startsAt": "2030-06-01T19:00:00Z",
+        "endsAt": "2030-06-01T22:00:00Z",
+        "venueLat": 37.3349,
+        "venueLng": -122.009,
+        "attendee": "Alex Morgan",
+        "ticketId": "TICKET-0001"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "event"
+          },
+          "value": "{{eventName}}"
+        },
+        {
+          "to": {
+            "field": "venue"
+          },
+          "value": "{{venueName}}"
+        },
+        {
+          "to": {
+            "field": "room"
+          },
+          "value": "{{venueRoom}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "date"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "field": "attendee"
+          },
+          "value": "{{attendee}}"
+        },
+        {
+          "to": {
+            "field": "admission"
+          },
+          "value": "{{admission}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "seat"
+          },
+          "value": "{{seat}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{ticketId}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{ticketId}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/eventName"
+          },
+          "value": "{{eventName}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueName"
+          },
+          "value": "{{venueName}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueRegionName"
+          },
+          "value": "{{venueRegion}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueRoom"
+          },
+          "value": "{{venueRoom}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/semantics/eventStartDate"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/eventEndDate"
+          },
+          "value": "{{endsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueLocation/latitude"
+          },
+          "value": "{{venueLat}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueLocation/longitude"
+          },
+          "value": "{{venueLng}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueLocation"
+          },
+          "remove": {
+            "any": [
+              {
+                "input": "venueLat",
+                "empty": true
+              },
+              {
+                "input": "venueLng",
+                "empty": true
+              }
+            ]
+          }
+        },
+        {
+          "to": {
+            "pointer": "/semantics/admissionLevel"
+          },
+          "value": "{{admission}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/semantics/attendeeName"
+          },
+          "value": "{{attendee}}"
+        },
+        {
+          "to": {
+            "pointer": "/relevantDate"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/relevantDates/0/startDate"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/relevantDates/0/endDate"
+          },
+          "value": "{{endsAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{endsAt}}"
+        }
+      ],
+      "display": {
+        "title": "{{eventName}}",
+        "subtitle": "{{attendee}}",
+        "status": "{{venueName}}",
+        "search": [
+          "eventName",
+          "attendee",
+          "ticketId"
+        ]
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Wallet event ticket",
+      "organizationName": "Wallet",
+      "backgroundColor": "rgb(31,41,55)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(199,210,254)",
+      "logoText": "Wallet",
+      "eventLogoText": "Wallet",
+      "preferredStyleSchemes": [
+        "posterEventTicket",
+        "eventTicket"
+      ],
+      "sharingProhibited": true,
+      "relevantDate": "2030-06-01T19:00:00Z",
+      "relevantDates": [
+        {
+          "startDate": "2030-06-01T19:00:00Z",
+          "endDate": "2030-06-01T22:00:00Z"
+        }
+      ],
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "TICKET-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "TICKET-0001"
+        }
+      ],
+      "locations": [
+        {
+          "latitude": 37.3349,
+          "longitude": -122.009,
+          "relevantText": "Venue nearby"
+        }
+      ],
+      "semantics": {
+        "eventType": "PKEventTypeGeneric",
+        "eventName": "Sample Event",
+        "venueName": "Sample Hall",
+        "venueRegionName": "Cupertino, CA",
+        "venueRoom": "Main hall",
+        "eventStartDate": "2030-06-01T19:00:00Z",
+        "eventEndDate": "2030-06-01T22:00:00Z",
+        "venueLocation": {
+          "latitude": 37.3349,
+          "longitude": -122.009
+        },
+        "admissionLevel": "General",
+        "attendeeName": "Alex Morgan"
+      },
+      "eventTicket": {
+        "headerFields": [
+          {
+            "key": "date",
+            "label": "DATE",
+            "value": "2030-06-01T19:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "timeStyle": "PKDateStyleShort",
+            "changeMessage": "The event time is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "event",
+            "label": "EVENT",
+            "value": "Sample Event"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "venue",
+            "label": "VENUE",
+            "value": "Sample Hall"
+          },
+          {
+            "key": "room",
+            "label": "ROOM",
+            "value": "Main hall"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "attendee",
+            "label": "NAME",
+            "value": "Alex Morgan",
+            "row": 0
+          },
+          {
+            "key": "admission",
+            "label": "ADMISSION",
+            "value": "General",
+            "row": 0
+          },
+          {
+            "key": "seat",
+            "label": "SEAT",
+            "value": "Open",
+            "row": 1
+          }
+        ],
+        "additionalInfoFields": [
+          {
+            "key": "doors",
+            "label": "DOORS",
+            "value": "18:00"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "site",
+            "label": "EVENT PAGE",
+            "value": "https://example.com/",
+            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+          },
+          {
+            "key": "terms",
+            "label": "TERMS",
+            "value": "No re-entry. Ticket is non-transferable."
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "artwork.png",
+        "slot": "artwork",
+        "scale": 1,
+        "size": 19719,
+        "sha1": "b0cd94338477865342679a61d912b3d23cf5b9d0",
+        "crc32": 1983906831,
+        "width": 358,
+        "height": 448,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/artwork.png"
+        }
+      },
+      {
+        "name": "artwork@2x.png",
+        "slot": "artwork",
+        "scale": 2,
+        "size": 59174,
+        "sha1": "1ba8f1ab6acf6cefc7a8f55249b2081828cbc120",
+        "crc32": 2738231418,
+        "width": 716,
+        "height": 896,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/artwork@2x.png"
+        }
+      },
+      {
+        "name": "artwork@3x.png",
+        "slot": "artwork",
+        "scale": 3,
+        "size": 108841,
+        "sha1": "76bc63ff178a4095b22f3521c832b156b219eb12",
+        "crc32": 3408101081,
+        "width": 1074,
+        "height": 1344,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/artwork@3x.png"
+        }
+      },
+      {
+        "name": "icon.png",
+        "slot": "icon",
+        "scale": 1,
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
+        "crc32": 3733731073,
+        "width": 38,
+        "height": 38,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/icon.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
+        "crc32": 455672748,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
+        "crc32": 518592558,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo.png",
+        "slot": "logo",
+        "scale": 1,
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
+        "crc32": 841788281,
+        "width": 160,
+        "height": 50,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/logo.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
+        "crc32": 3522322584,
+        "width": 320,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
+        "crc32": 2412963703,
+        "width": 480,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/logo@3x.png"
+        }
+      },
+      {
+        "name": "primaryLogo.png",
+        "slot": "primaryLogo",
+        "scale": 1,
+        "size": 671,
+        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56",
+        "crc32": 137740279,
+        "width": 126,
+        "height": 30,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/primaryLogo.png"
+        }
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "slot": "primaryLogo",
+        "scale": 2,
+        "size": 1215,
+        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537",
+        "crc32": 153301125,
+        "width": 252,
+        "height": 60,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/primaryLogo@2x.png"
+        }
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "slot": "primaryLogo",
+        "scale": 3,
+        "size": 1819,
+        "sha1": "a651d032c33059074ec29e94009d0e083f82777a",
+        "crc32": 3799191222,
+        "width": 378,
+        "height": 90,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/primaryLogo@3x.png"
+        }
+      },
+      {
+        "name": "secondaryLogo.png",
+        "slot": "secondaryLogo",
+        "scale": 1,
+        "size": 263,
+        "sha1": "207150b70373b3d4d44d5b011fb83e5668baed8e",
+        "crc32": 3980999504,
+        "width": 135,
+        "height": 12,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/secondaryLogo.png"
+        }
+      },
+      {
+        "name": "secondaryLogo@2x.png",
+        "slot": "secondaryLogo",
+        "scale": 2,
+        "size": 536,
+        "sha1": "d8285417756fa4b8d8fd484aab528cdfa9324981",
+        "crc32": 1662452169,
+        "width": 270,
+        "height": 24,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/secondaryLogo@2x.png"
+        }
+      },
+      {
+        "name": "secondaryLogo@3x.png",
+        "slot": "secondaryLogo",
+        "scale": 3,
+        "size": 867,
+        "sha1": "505df1fa1572323840bc5f997dc429548fb32900",
+        "crc32": 1248593427,
+        "width": 405,
+        "height": 36,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/secondaryLogo@3x.png"
+        }
+      },
+      {
+        "name": "strip.png",
+        "slot": "strip",
+        "scale": 1,
+        "size": 5765,
+        "sha1": "73b09714a03f6a9d17a75db3827360a0d8b90550",
+        "crc32": 3616354966,
+        "width": 375,
+        "height": 98,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/strip.png"
+        }
+      },
+      {
+        "name": "strip@2x.png",
+        "slot": "strip",
+        "scale": 2,
+        "size": 15083,
+        "sha1": "a0106bb74cec7ad38dc391d14886c92d35f87757",
+        "crc32": 2813847410,
+        "width": 750,
+        "height": 196,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/strip@2x.png"
+        }
+      },
+      {
+        "name": "strip@3x.png",
+        "slot": "strip",
+        "scale": 3,
+        "size": 27387,
+        "sha1": "19ec408d3b11eba2ae468f9f5e44370d99f8d54d",
+        "crc32": 1952511711,
+        "width": 1125,
+        "height": 294,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6e2bea291018fa81/strip@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-generic",
+    "slug": "starter-generic",
+    "version": "4ae4590a8695533a",
+    "name": "Wallet · Generic",
+    "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+    "org": null,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Wallet · Generic",
+      "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+      "inputs": {
+        "type": "object",
+        "required": [
+          "holder",
+          "memberId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "holder": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Holder",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "memberId": {
+            "type": "string",
+            "x-label": "ID",
+            "x-group": "Holder",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "tier": {
+            "type": "string",
+            "x-label": "Tier",
+            "x-group": "Holder",
+            "x-order": 30,
+            "enum": [
+              "Standard",
+              "Plus",
+              "Pro"
+            ],
+            "default": "Standard",
+            "x-widget": "select"
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "x-label": "Points",
+            "x-group": "Holder",
+            "x-order": 40
+          },
+          "since": {
+            "type": "string",
+            "x-label": "Since",
+            "x-group": "Holder",
+            "x-order": 50,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 60,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 70,
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-widget": "url",
+            "default": "https://example.com/"
+          },
+          "wifiSsid": {
+            "type": "string",
+            "x-label": "Wi-Fi network",
+            "x-group": "Wi-Fi",
+            "x-order": 80,
+            "maxLength": 32
+          },
+          "wifiPassword": {
+            "type": "string",
+            "x-label": "Wi-Fi password",
+            "x-group": "Wi-Fi",
+            "x-order": 90,
+            "maxLength": 63
+          },
+          "expirationDate": {
+            "type": "string",
+            "x-label": "Expires",
+            "x-group": "Status",
+            "x-order": 100,
+            "format": "date-time",
+            "x-widget": "datetime"
+          }
+        },
+        "dependentRequired": {
+          "wifiSsid": [
+            "wifiPassword"
+          ],
+          "wifiPassword": [
+            "wifiSsid"
+          ]
+        }
+      },
+      "sample": {
+        "holder": "Alex Morgan",
+        "memberId": "ID-0001",
+        "tier": "Plus",
+        "points": 1200,
+        "since": "2026-01-01T00:00:00Z",
+        "wifiSsid": "Guest",
+        "wifiPassword": "change-me"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{holder}}"
+        },
+        {
+          "to": {
+            "field": "memberId"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "field": "tier"
+          },
+          "value": "{{tier}}"
+        },
+        {
+          "to": {
+            "field": "points"
+          },
+          "value": "{{points}}"
+        },
+        {
+          "to": {
+            "field": "since"
+          },
+          "value": "{{since}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "action": "portal",
+            "prop": "url"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/wifiAccess/0/ssid"
+          },
+          "value": "{{wifiSsid}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/wifiAccess/0/password"
+          },
+          "value": "{{wifiPassword}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics"
+          },
+          "remove": {
+            "input": "wifiSsid",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{expirationDate}}",
+          "omitIfEmpty": true
+        }
+      ],
+      "display": {
+        "title": "{{holder}}",
+        "subtitle": "{{tier}}",
+        "status": "{{tier}}",
+        "search": [
+          "holder",
+          "memberId"
+        ]
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Wallet generic pass",
+      "organizationName": "Wallet",
+      "backgroundColor": "rgb(31,41,55)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(199,210,254)",
+      "logoText": "Wallet",
+      "sharingProhibited": true,
+      "expirationDate": "2030-01-01T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "ID-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "ID-0001"
+        }
+      ],
+      "locations": [
+        {
+          "latitude": 37.3349,
+          "longitude": -122.009,
+          "relevantText": "Main office"
+        }
+      ],
+      "semantics": {
+        "wifiAccess": [
+          {
+            "ssid": "Guest",
+            "password": "change-me"
+          }
+        ]
+      },
+      "featuredActions": [
+        {
+          "identifier": "support",
+          "type": "call",
+          "url": "tel:+15555550100"
+        },
+        {
+          "identifier": "portal",
+          "type": "viewOffersRewards",
+          "url": "https://example.com/"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "tier",
+            "label": "TIER",
+            "value": "Standard",
+            "changeMessage": "Your tier is now %@."
+          },
+          {
+            "key": "points",
+            "label": "POINTS",
+            "value": 0,
+            "numberStyle": "PKNumberStyleDecimal"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "NAME",
+            "value": "Alex Morgan"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "memberId",
+            "label": "ID",
+            "value": "ID-0001"
+          },
+          {
+            "key": "since",
+            "label": "SINCE",
+            "value": "2026-01-01T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "ignoresTimeZone": true
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "site",
+            "label": "SITE",
+            "value": "https://example.com/",
+            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "phone",
+            "label": "CONTACT",
+            "value": "+1 555 555 0100",
+            "dataDetectorTypes": [
+              "PKDataDetectorTypePhoneNumber"
+            ]
+          },
+          {
+            "key": "terms",
+            "label": "TERMS",
+            "value": "Present the barcode when asked."
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "icon.png",
+        "slot": "icon",
+        "scale": 1,
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
+        "crc32": 3733731073,
+        "width": 38,
+        "height": 38,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/icon.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
+        "crc32": 455672748,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
+        "crc32": 518592558,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo.png",
+        "slot": "logo",
+        "scale": 1,
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
+        "crc32": 841788281,
+        "width": 160,
+        "height": 50,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/logo.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
+        "crc32": 3522322584,
+        "width": 320,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
+        "crc32": 2412963703,
+        "width": 480,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail.png",
+        "slot": "thumbnail",
+        "scale": 1,
+        "size": 2831,
+        "sha1": "74e34fa5f1a047c52f231fc7812543a8dde2e3ce",
+        "crc32": 474201231,
+        "width": 90,
+        "height": 90,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/thumbnail.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 5727,
+        "sha1": "eccc1b0dfc7b234e8194a120a7500ba546b8a9e1",
+        "crc32": 532502609,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 10058,
+        "sha1": "a557846cb2e2368f114f96fa5fadb0647a83dcf5",
+        "crc32": 2360524443,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-generic/4ae4590a8695533a/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-poster-generic",
+    "slug": "starter-poster-generic",
+    "version": "981fcc243a2986fe",
+    "name": "Wallet · Poster",
+    "description": "Membership card in the poster style, with a generic fallback.",
+    "org": null,
+    "styles": [
+      "generic",
+      "posterGeneric"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Wallet · Poster",
+      "description": "Membership card in the poster style, with a generic fallback.",
+      "inputs": {
+        "type": "object",
+        "required": [
+          "holder",
+          "memberId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "holder": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Holder",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "memberId": {
+            "type": "string",
+            "x-label": "ID",
+            "x-group": "Holder",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "tier": {
+            "type": "string",
+            "x-label": "Tier",
+            "x-group": "Holder",
+            "x-order": 30,
+            "enum": [
+              "Standard",
+              "Plus",
+              "Pro"
+            ],
+            "default": "Standard",
+            "x-widget": "select"
+          },
+          "plan": {
+            "type": "string",
+            "x-label": "Plan",
+            "x-group": "Holder",
+            "x-order": 40,
+            "maxLength": 40,
+            "default": "Annual"
+          },
+          "since": {
+            "type": "string",
+            "x-label": "Since",
+            "x-group": "Holder",
+            "x-order": 50,
+            "format": "date-time",
+            "x-widget": "datetime"
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 60,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 70,
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-widget": "url",
+            "default": "https://example.com/"
+          }
+        }
+      },
+      "sample": {
+        "holder": "Alex Morgan",
+        "memberId": "ID-0001",
+        "tier": "Plus",
+        "plan": "Annual",
+        "since": "2026-01-01T00:00:00Z"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": [
+              "holder-poster",
+              "holder"
+            ]
+          },
+          "value": "{{holder}}"
+        },
+        {
+          "to": {
+            "field": [
+              "memberId-poster",
+              "memberId"
+            ]
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "field": [
+              "tier-poster",
+              "tier"
+            ]
+          },
+          "value": "{{tier}}"
+        },
+        {
+          "to": {
+            "field": [
+              "plan-poster"
+            ]
+          },
+          "value": "{{plan}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": [
+              "since-poster",
+              "since"
+            ]
+          },
+          "value": "{{since}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": [
+              "note-poster",
+              "note"
+            ]
+          },
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": [
+              "note-poster",
+              "note"
+            ]
+          },
+          "value": "{{note}}"
+        },
+        {
+          "to": {
+            "field": [
+              "site-poster",
+              "site"
+            ]
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "field": [
+              "site-poster",
+              "site"
+            ],
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "action": "portal",
+            "prop": "url"
+          },
+          "value": "{{website}}"
+        }
+      ],
+      "display": {
+        "title": "{{holder}}",
+        "subtitle": "{{tier}}",
+        "status": "{{tier}}",
+        "search": [
+          "holder",
+          "memberId"
+        ]
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Wallet poster pass",
+      "organizationName": "Wallet",
+      "backgroundColor": "rgb(31,41,55)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(199,210,254)",
+      "logoText": "Wallet",
+      "preferredStyleSchemes": [
+        "posterGeneric",
+        "generic"
+      ],
+      "sharingProhibited": true,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "ID-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "ID-0001"
+        }
+      ],
+      "locations": [
+        {
+          "latitude": 37.3349,
+          "longitude": -122.009,
+          "relevantText": "Main office"
+        }
+      ],
+      "featuredActions": [
+        {
+          "identifier": "portal",
+          "type": "membershipBenefits",
+          "url": "https://example.com/"
+        },
+        {
+          "identifier": "support",
+          "type": "call",
+          "url": "tel:+15555550100"
+        }
+      ],
+      "posterGeneric": {
+        "headerFields": [
+          {
+            "key": "memberId-poster",
+            "label": "ID",
+            "value": "ID-0001"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder-poster",
+            "value": "Alex Morgan"
+          },
+          {
+            "key": "tier-poster",
+            "label": "TIER",
+            "value": "Plus",
+            "changeMessage": "Your tier is now %@."
+          }
+        ],
+        "footerFields": [
+          {
+            "key": "since-poster",
+            "label": "SINCE",
+            "value": "2026-01-01T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "ignoresTimeZone": true
+          }
+        ],
+        "additionalInfoFields": [
+          {
+            "key": "plan-poster",
+            "label": "PLAN",
+            "value": "Annual"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note-poster",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "site-poster",
+            "label": "SITE",
+            "value": "https://example.com/",
+            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+          },
+          {
+            "key": "terms-poster",
+            "label": "TERMS",
+            "value": "Present the barcode when asked."
+          }
+        ]
+      },
+      "generic": {
+        "headerFields": [
+          {
+            "key": "tier",
+            "label": "TIER",
+            "value": "Plus",
+            "changeMessage": "Your tier is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "NAME",
+            "value": "Alex Morgan"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "memberId",
+            "label": "ID",
+            "value": "ID-0001"
+          },
+          {
+            "key": "since",
+            "label": "SINCE",
+            "value": "2026-01-01T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "ignoresTimeZone": true
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "site",
+            "label": "SITE",
+            "value": "https://example.com/",
+            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+          },
+          {
+            "key": "terms",
+            "label": "TERMS",
+            "value": "Present the barcode when asked."
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "artwork.png",
+        "slot": "artwork",
+        "scale": 1,
+        "size": 19719,
+        "sha1": "b0cd94338477865342679a61d912b3d23cf5b9d0",
+        "crc32": 1983906831,
+        "width": 358,
+        "height": 448,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/artwork.png"
+        }
+      },
+      {
+        "name": "artwork@2x.png",
+        "slot": "artwork",
+        "scale": 2,
+        "size": 59174,
+        "sha1": "1ba8f1ab6acf6cefc7a8f55249b2081828cbc120",
+        "crc32": 2738231418,
+        "width": 716,
+        "height": 896,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/artwork@2x.png"
+        }
+      },
+      {
+        "name": "artwork@3x.png",
+        "slot": "artwork",
+        "scale": 3,
+        "size": 108841,
+        "sha1": "76bc63ff178a4095b22f3521c832b156b219eb12",
+        "crc32": 3408101081,
+        "width": 1074,
+        "height": 1344,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/artwork@3x.png"
+        }
+      },
+      {
+        "name": "icon.png",
+        "slot": "icon",
+        "scale": 1,
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
+        "crc32": 3733731073,
+        "width": 38,
+        "height": 38,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/icon.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
+        "crc32": 455672748,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
+        "crc32": 518592558,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo.png",
+        "slot": "logo",
+        "scale": 1,
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
+        "crc32": 841788281,
+        "width": 160,
+        "height": 50,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/logo.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
+        "crc32": 3522322584,
+        "width": 320,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
+        "crc32": 2412963703,
+        "width": 480,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/logo@3x.png"
+        }
+      },
+      {
+        "name": "primaryLogo.png",
+        "slot": "primaryLogo",
+        "scale": 1,
+        "size": 671,
+        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56",
+        "crc32": 137740279,
+        "width": 126,
+        "height": 30,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/primaryLogo.png"
+        }
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "slot": "primaryLogo",
+        "scale": 2,
+        "size": 1215,
+        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537",
+        "crc32": 153301125,
+        "width": 252,
+        "height": 60,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/primaryLogo@2x.png"
+        }
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "slot": "primaryLogo",
+        "scale": 3,
+        "size": 1819,
+        "sha1": "a651d032c33059074ec29e94009d0e083f82777a",
+        "crc32": 3799191222,
+        "width": 378,
+        "height": 90,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/981fcc243a2986fe/primaryLogo@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-store-card",
+    "slug": "starter-store-card",
+    "version": "5ca79a8f4ac4ff52",
+    "name": "Wallet · Store card",
+    "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
+    "org": null,
+    "styles": [
+      "storeCard"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Wallet · Store card",
+      "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
+      "inputs": {
+        "type": "object",
+        "required": [
+          "holder",
+          "cardNumber"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "holder": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Holder",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "cardNumber": {
+            "type": "string",
+            "x-label": "Card number",
+            "x-group": "Holder",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "tier": {
+            "type": "string",
+            "x-label": "Tier",
+            "x-group": "Holder",
+            "x-order": 30,
+            "enum": [
+              "Standard",
+              "Gold"
+            ],
+            "default": "Standard",
+            "x-widget": "select"
+          },
+          "balance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "default": 0,
+            "x-label": "Balance",
+            "x-group": "Balance",
+            "x-order": 40
+          },
+          "currency": {
+            "type": "string",
+            "x-label": "Currency",
+            "x-group": "Balance",
+            "x-order": 50,
+            "enum": [
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "default": "USD",
+            "x-widget": "select"
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 60,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 70,
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-widget": "url",
+            "default": "https://example.com/"
+          }
+        }
+      },
+      "sample": {
+        "holder": "Alex Morgan",
+        "cardNumber": "CARD-0001",
+        "tier": "Gold",
+        "balance": 25,
+        "currency": "USD"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{holder}}"
+        },
+        {
+          "to": {
+            "field": "cardNumber"
+          },
+          "value": "{{cardNumber}}"
+        },
+        {
+          "to": {
+            "field": "tier"
+          },
+          "value": "{{tier}}"
+        },
+        {
+          "to": {
+            "field": "balance"
+          },
+          "value": "{{balance}}"
+        },
+        {
+          "to": {
+            "field": "balance",
+            "prop": "currencyCode"
+          },
+          "value": "{{currency}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{cardNumber}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{cardNumber}}"
+        },
+        {
+          "to": {
+            "action": "top-up",
+            "prop": "url"
+          },
+          "value": "{{website}}"
+        },
+        {
+          "to": {
+            "action": "shop",
+            "prop": "url"
+          },
+          "value": "{{website}}shop"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/balance/amount"
+          },
+          "value": "{{balance|str}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/balance/currencyCode"
+          },
+          "value": "{{currency}}"
+        }
+      ],
+      "display": {
+        "title": "{{holder}}",
+        "subtitle": "{{tier}} · {{cardNumber}}",
+        "status": "{{tier}}",
+        "search": [
+          "holder",
+          "cardNumber"
+        ]
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Wallet store card",
+      "organizationName": "Wallet",
+      "backgroundColor": "rgb(31,41,55)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(199,210,254)",
+      "logoText": "Wallet",
+      "sharingProhibited": true,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "CARD-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "CARD-0001"
+        }
+      ],
+      "locations": [
+        {
+          "latitude": 37.3349,
+          "longitude": -122.009,
+          "relevantText": "Store nearby"
+        }
+      ],
+      "semantics": {
+        "balance": {
+          "amount": "25.00",
+          "currencyCode": "USD"
+        }
+      },
+      "featuredActions": [
+        {
+          "identifier": "top-up",
+          "type": "addToBalance",
+          "url": "https://example.com/"
+        },
+        {
+          "identifier": "shop",
+          "type": "shop",
+          "url": "https://example.com/shop"
+        }
+      ],
+      "storeCard": {
+        "headerFields": [
+          {
+            "key": "tier",
+            "label": "TIER",
+            "value": "Standard",
+            "changeMessage": "Your tier is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "balance",
+            "label": "BALANCE",
+            "value": 25,
+            "currencyCode": "USD",
+            "changeMessage": "Your balance is now %@."
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "holder",
+            "label": "NAME",
+            "value": "Alex Morgan"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "cardNumber",
+            "label": "CARD",
+            "value": "CARD-0001"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "note",
+            "label": "NOTE",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "site",
+            "label": "SITE",
+            "value": "https://example.com/",
+            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+          },
+          {
+            "key": "terms",
+            "label": "TERMS",
+            "value": "Balance is not redeemable for cash."
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "icon.png",
+        "slot": "icon",
+        "scale": 1,
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
+        "crc32": 3733731073,
+        "width": 38,
+        "height": 38,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/icon.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
+        "crc32": 455672748,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
+        "crc32": 518592558,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo.png",
+        "slot": "logo",
+        "scale": 1,
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
+        "crc32": 841788281,
+        "width": 160,
+        "height": 50,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/logo.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
+        "crc32": 3522322584,
+        "width": 320,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
+        "crc32": 2412963703,
+        "width": 480,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/logo@3x.png"
+        }
+      },
+      {
+        "name": "strip.png",
+        "slot": "strip",
+        "scale": 1,
+        "size": 7495,
+        "sha1": "2fde15194c19388c28bbb26a789ac27391a3c630",
+        "crc32": 3634009603,
+        "width": 375,
+        "height": 144,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/strip.png"
+        }
+      },
+      {
+        "name": "strip@2x.png",
+        "slot": "strip",
+        "scale": 2,
+        "size": 19651,
+        "sha1": "26103abe258d6c3ba28c6ffbbe7f4cec665f8139",
+        "crc32": 149132663,
+        "width": 750,
+        "height": 288,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/strip@2x.png"
+        }
+      },
+      {
+        "name": "strip@3x.png",
+        "slot": "strip",
+        "scale": 3,
+        "size": 34319,
+        "sha1": "cb51a640108370bff704b76ad3b56cd80117f8f1",
+        "crc32": 3985521370,
+        "width": 1125,
+        "height": 432,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-store-card/5ca79a8f4ac4ff52/strip@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
     }
   }
 ];

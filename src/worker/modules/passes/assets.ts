@@ -5,15 +5,17 @@ export const MAX_ASSET_BYTES = 1_000_000;
 
 /** Largest @1x size per slot; @2x and @3x scale it. Icons must be square. */
 const SLOT_LIMITS: Record<ImageSlot, { w: number; h: number; square?: boolean }> = {
-  icon: { w: 29, h: 29, square: true },
+  icon: { w: 38, h: 38, square: true },
   logo: { w: 160, h: 50 },
   primaryLogo: { w: 160, h: 80 },
   secondaryLogo: { w: 160, h: 80 },
   strip: { w: 375, h: 144 },
   thumbnail: { w: 90, h: 90 },
   artwork: { w: 540, h: 720 },
-  background: { w: 180, h: 220 },
+  background: { w: 345, h: 505 },
   footer: { w: 286, h: 15 },
+  personalizationLogo: { w: 150, h: 40 },
+  venueMap: { w: 375, h: 375 },
 };
 
 export interface ParsedAssetName {
