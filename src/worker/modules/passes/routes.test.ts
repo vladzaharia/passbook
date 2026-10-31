@@ -4,7 +4,7 @@ import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/inde
 import { createApp } from '../../app.ts';
 import { all, first } from '../../platform/db.ts';
 import { getPass, type Pass } from './repo.ts';
-import { type Kit, setupKit, TINY_PNG } from './test-kit.ts';
+import { type Kit, setupKit, ICON_PNG } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);
@@ -215,13 +215,13 @@ describe('per-pass images', () => {
 
   it('uploads, lists, republishes and removes an override', async () => {
     const created = (await (await create(fake.admin())).json()) as { id: string };
-    const res = await put(created.id, 'icon.png', TINY_PNG);
+    const res = await put(created.id, 'icon.png', ICON_PNG);
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
       name: 'icon.png',
-      width: 1,
-      height: 1,
-      size: TINY_PNG.length,
+      width: 38,
+      height: 38,
+      size: ICON_PNG.length,
     });
     const row = await getPass(kit.env.DB, created.id);
     expect(row?.version).toBe(2);
@@ -251,12 +251,12 @@ describe('per-pass images', () => {
   it('rejects files that are not valid pass images', async () => {
     const created = (await (await create(fake.admin())).json()) as { id: string };
     expect((await put(created.id, 'icon.png', new Uint8Array([1, 2, 3]))).status).toBe(422);
-    expect((await put(created.id, 'nothing.png', TINY_PNG)).status).toBe(422);
-    expect((await put(created.id, 'icon.gif', TINY_PNG)).status).toBe(422);
+    expect((await put(created.id, 'nothing.png', ICON_PNG)).status).toBe(422);
+    expect((await put(created.id, 'icon.gif', ICON_PNG)).status).toBe(422);
     const big = new Uint8Array(1_000_001);
-    big.set(TINY_PNG);
+    big.set(ICON_PNG);
     expect((await put(created.id, 'icon.png', big)).status).toBe(413);
-    const wide = new Uint8Array(TINY_PNG);
+    const wide = new Uint8Array(ICON_PNG);
     new DataView(wide.buffer).setUint32(16, 500);
     expect((await put(created.id, 'icon.png', wide)).status).toBe(422);
     expect((await getPass(kit.env.DB, created.id))?.version).toBe(1);
@@ -379,7 +379,7 @@ describe('tenant isolation', () => {
     const upload = await api(`/passes/${foreign.id}/assets/icon.png`, {
       method: 'PUT',
       headers: { ...keyA, 'content-type': 'image/png' },
-      body: TINY_PNG,
+      body: ICON_PNG,
     });
     expect(upload.status).toBe(404);
     expect((await create(keyA, { orgId: orgB.id })).status).toBe(403);

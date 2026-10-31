@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCard } from '../../web/pass-card/index.tsx';
+import cardCss from '../../web/pass-card/pass-card.css?raw';
 
 export interface PassPageProps {
   view: PassView;
@@ -46,7 +47,7 @@ export function PassPage(props: PassPageProps) {
         <meta name="robots" content="noindex, nofollow, noarchive" />
         <meta name="referrer" content="no-referrer" />
         <title>{props.title}</title>
-        <style nonce={props.nonce}>{CSS}</style>
+        <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + CSS }} />
       </head>
       <body>
         <main>

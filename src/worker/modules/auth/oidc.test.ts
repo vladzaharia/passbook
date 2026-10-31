@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtures, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type Jar, type TestHarness } from './test-support.ts';
@@ -147,9 +148,11 @@ describe('oidc sign-in', () => {
         h.env.DB,
         "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'false', 0)",
       );
+      clearSettingsCache(h.env.DB);
     });
     afterEach(async () => {
       await run(h.env.DB, "DELETE FROM settings WHERE key = 'oidc.trustEmail'");
+      clearSettingsCache(h.env.DB);
     });
 
     it('refuses to link to an existing email owner', async () => {

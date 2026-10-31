@@ -110,7 +110,7 @@ describe('status components', () => {
       detail: 'Queue metrics unavailable.',
     });
     clearStatusCache(env.DB);
-    const t = await status({ JOBS: queue(0) });
+    const t = await status({ JOBS: queue(0), JOBS_DLQ: undefined } as unknown as Partial<AppEnv>);
     expect(find(t, 'queue')).toMatchObject({ state: 'verified', data: { dlq: null } });
     expect(find(t, 'queue')?.detail).toContain('Dead-letter depth unavailable');
   });

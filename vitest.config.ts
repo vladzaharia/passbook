@@ -26,7 +26,7 @@ export default defineConfig({
                 // Tests never read .dev.vars or real secrets: fixtures are generated at setup.
                 bindings: {
                   TEST_MIGRATIONS: migrations,
-                  KEK_V1: 'dGVzdC1rZWstdGVzdC1rZWstdGVzdC1rZWstdGVzdC0xMjM=',
+                  KEK_V1: 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDc=',
                   OIDC_CLIENT_SECRET: 'test-oidc-secret',
                   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
                   SIGNER_PLATFORM_CERTIFICATE: 'replaced-in-tests',

@@ -7,6 +7,7 @@ import {
   makeUser,
 } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import { fakeLimiter, harness, type Jar, type SentMail, type TestHarness } from './test-support.ts';
 
 let h: TestHarness;
@@ -148,6 +149,7 @@ describe('request', () => {
       h.env.DB,
       "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'auth.magicLinkEnabled', 'false', 0)",
     );
+    clearSettingsCache(h.env.DB);
     try {
       expect((await requestLink(await knownEmail())).status).toBe(503);
       const info = (await h.call('/api/v1/session')).json() as Promise<{
@@ -156,6 +158,7 @@ describe('request', () => {
       expect((await info).magicLinkEnabled).toBe(false);
     } finally {
       await run(h.env.DB, "DELETE FROM settings WHERE key = 'auth.magicLinkEnabled'");
+      clearSettingsCache(h.env.DB);
     }
   });
 

@@ -11,6 +11,7 @@ import {
   type OrgRow,
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -28,6 +29,9 @@ export const TINY_PNG = new Uint8Array([
   0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 255, 255, 63, 0, 5, 254, 2,
   254, 167, 53, 129, 132, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
 ]);
+
+/** A valid 38x38 PNG, the icon size. Per-pass overrides are size-checked. */
+export const ICON_PNG = makePng(38, 38);
 
 export interface FakeWorkflow {
   created: { id: string; params: unknown }[];

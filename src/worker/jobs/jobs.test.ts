@@ -50,7 +50,15 @@ describe('job router', () => {
   it('acks invalid messages and retries failing handlers with backoff', async () => {
     const bad = message({ kind: 'nope' });
     const stub = message({ kind: 'push.deliver', outboxId: 'o1' }, 3);
-    await handleQueue(batch(JOBS_QUEUE, [bad, stub]), env as AppEnv, createExecutionContext());
+    const original = JOB_HANDLERS['push.deliver'];
+    JOB_HANDLERS['push.deliver'] = async () => {
+      throw new Error('boom');
+    };
+    try {
+      await handleQueue(batch(JOBS_QUEUE, [bad, stub]), env as AppEnv, createExecutionContext());
+    } finally {
+      JOB_HANDLERS['push.deliver'] = original;
+    }
     expect(bad.acked).toBe(true);
     expect(stub.acked).toBe(false);
     expect(stub.retried).toEqual({ delaySeconds: 120 });

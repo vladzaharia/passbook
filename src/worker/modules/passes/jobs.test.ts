@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import { getVersionDetail } from './detail.ts';
 import { dailyPasses, handlePassPurgeVersions, handlePassReissue } from './jobs.ts';
 import { getPass } from './repo.ts';
@@ -71,6 +72,7 @@ describe('version retention', () => {
       kit.env.DB,
       "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'retention.passVersionsKeep', '1', 1)",
     );
+    clearSettingsCache(kit.env.DB);
     const pass = await passWithVersions(5);
     const short = await passWithVersions(2);
     await dailyPasses(kit.ctx);
@@ -79,6 +81,7 @@ describe('version retention', () => {
     );
     expect((await rows(short.id)).every((r) => r.purged_at === null)).toBe(true);
     await run(kit.env.DB, "DELETE FROM settings WHERE key = 'retention.passVersionsKeep'");
+    clearSettingsCache(kit.env.DB);
   });
 
   it('purges a single pass on demand and is idempotent', async () => {

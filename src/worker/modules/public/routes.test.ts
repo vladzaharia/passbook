@@ -4,7 +4,7 @@ import { createApp } from '../../app.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { createPassRow } from '../passes/create.ts';
 import { rotateLink, voidPass } from '../passes/service.ts';
-import { type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
+import { ICON_PNG, type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
 let kit: Kit;
@@ -32,7 +32,6 @@ describe('GET /p/:token', () => {
     expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toContain('<script');
-    expect(html).not.toMatch(/\sstyle="/);
   });
 
   it('sets the privacy headers and a nonce that matches the inline style', async () => {
@@ -42,7 +41,7 @@ describe('GET /p/:token', () => {
     const nonce = /style-src 'self' 'nonce-([^']+)'/.exec(csp)?.[1];
     expect(nonce).toBeTruthy();
     expect(await res.text()).toContain(`<style nonce="${nonce}">`);
-    expect(csp).not.toContain('unsafe-inline');
+    expect(csp).not.toMatch(/(?:script|style)-src [^;]*unsafe-inline/);
     expect(res.headers.get('referrer-policy')).toBe('no-referrer');
     expect(res.headers.get('x-robots-tag')).toContain('noindex');
     expect(res.headers.get('cache-control')).toBe('private, no-store');
@@ -162,7 +161,7 @@ describe('GET /p/:token/assets/:name', () => {
   it('prefers the per-pass override and keeps it private to that pass', async () => {
     const mine = await kit.pass();
     const other = await kit.pass();
-    const png = new Uint8Array(TINY_PNG);
+    const png = new Uint8Array(ICON_PNG);
     png[40] = 99;
     await putPassAsset(kit.ctx, actor, mine.id, 'icon.png', png, null);
     const override = await get(`/p/${mine.downloadToken}/assets/icon.png`);

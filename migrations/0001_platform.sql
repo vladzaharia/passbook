@@ -160,6 +160,7 @@ CREATE TABLE templates (
   origin TEXT NOT NULL CHECK (origin IN ('baked', 'uploaded')),
   active_version TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived', 'deleted')),
+  styles TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(styles)),
   created_by TEXT REFERENCES users (id) ON DELETE SET NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
@@ -205,6 +206,8 @@ CREATE TABLE connections (
   on_missing TEXT NOT NULL DEFAULT 'flag' CHECK (on_missing IN ('keep', 'flag', 'void')),
   mode TEXT NOT NULL DEFAULT 'poll' CHECK (mode IN ('poll', 'webhook', 'hybrid', 'manual', 'snapshot')),
   interval_seconds INTEGER CHECK (interval_seconds IS NULL OR interval_seconds >= 60),
+  max_concurrency INTEGER CHECK (max_concurrency IS NULL OR max_concurrency BETWEEN 1 AND 20),
+  requests_per_minute INTEGER CHECK (requests_per_minute IS NULL OR requests_per_minute BETWEEN 1 AND 6000),
   enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
   generation INTEGER NOT NULL DEFAULT 1,
   health TEXT NOT NULL DEFAULT 'unknown'
@@ -524,3 +527,45 @@ BEGIN
     VALUES ('push:' || NEW.id || ':' || NEW.version, NEW.org_id, 'push', NEW.id,
             'push:' || NEW.id, 'pending', 0, NEW.modified_at);
 END;
+
+-- Template import progress.
+CREATE TABLE template_imports (
+  upload_id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  name TEXT,
+  object_key TEXT NOT NULL,
+  step TEXT,
+  template_id TEXT,
+  version TEXT,
+  report TEXT CHECK (report IS NULL OR json_valid(report)),
+  error TEXT,
+  created_by TEXT REFERENCES users (id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX template_imports_org ON template_imports (org_id, created_at DESC);
+CREATE INDEX template_imports_created_by ON template_imports (created_by);
+
+-- Keyset pagination of the admin pass list (newest first, optionally per org).
+CREATE INDEX passes_org_id ON passes (org_id, id DESC);
+
+-- Records delivered inside a signed webhook body; the queue message carries only refs.
+
+-- Records delivered inside a signed webhook body. The queue message carries only refs; the job reads these.
+CREATE TABLE connection_inbox (
+  connection_id TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  ref TEXT NOT NULL,
+  record TEXT CHECK (record IS NULL OR json_valid(record)),
+  deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1)),
+  received_at INTEGER NOT NULL,
+  PRIMARY KEY (connection_id, event_id, ref),
+  FOREIGN KEY (connection_id, event_id) REFERENCES webhook_events (connection_id, event_id) ON DELETE CASCADE
+);
+CREATE INDEX connection_inbox_received ON connection_inbox (received_at);
+
+-- Range indexes for the D1 metrics fallback (admin overview).
+CREATE INDEX pass_versions_created ON pass_versions (created_at);
+CREATE INDEX registrations_created ON registrations (created_at);
+CREATE INDEX outbox_kind_created ON outbox (kind, created_at);
+CREATE INDEX connection_runs_started ON connection_runs (started_at);

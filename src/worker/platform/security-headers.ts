@@ -7,6 +7,8 @@ export function contentSecurityPolicy(nonce?: string): string {
     "default-src 'none'",
     `script-src 'self'${n}`,
     `style-src 'self'${n}`,
+    // SSR pass cards set arbitrary pass colors through style attributes. Never scripts.
+    ...(nonce ? ["style-src-attr 'unsafe-inline'"] : []),
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self'",

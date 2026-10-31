@@ -182,7 +182,7 @@ describe('tenant scoping', () => {
       (await call(`/${templateId}/versions/${version}/assets/icon.png`, {}, other)).status,
     ).toBe(403);
     expect((await call(`?orgId=${org.id}`, {}, other)).status).toBe(403);
-    expect((await call('/baked:henrys-blue', {}, other)).status).toBe(200);
+    expect((await call('/baked:starter-generic', {}, other)).status).toBe(200);
   });
 
   it('platform keys and admins may filter by any org', async () => {

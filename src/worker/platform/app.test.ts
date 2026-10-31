@@ -17,7 +17,7 @@ describe('app shell', () => {
     expect(await res.json()).toEqual({ ok: true });
     const csp = res.headers.get('content-security-policy') ?? '';
     expect(csp).toContain("script-src 'self' 'nonce-");
-    expect(csp).not.toContain('unsafe-inline');
+    expect(csp).not.toMatch(/(?:script|style)-src [^;]*unsafe-inline/);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(res.headers.get('strict-transport-security')).toContain('includeSubDomains');
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
@@ -26,7 +26,7 @@ describe('app shell', () => {
   });
 
   it('uses no-referrer and no-store on auth and api paths', async () => {
-    const res = await call('/auth/oidc/start');
+    const res = await call('/auth/magic');
     expect(res.headers.get('referrer-policy')).toBe('no-referrer');
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect((await call('/p/abcdefghijklmnopqrstuv')).headers.get('referrer-policy')).toBe(
@@ -72,15 +72,13 @@ describe('auth ports', () => {
     expect(res.status).toBe(403);
   });
 
-  it('lets an admin reach a stub, which answers 501 NOT_IMPLEMENTED', async () => {
+  it('lets an admin reach admin routes', async () => {
     const res = await call('/api/v1/users', { headers: auth.admin() });
-    expect(res.status).toBe(501);
-    expect(res.headers.get('content-type')).toBe('application/problem+json');
-    expect(await res.json()).toMatchObject({ code: 'NOT_IMPLEMENTED', status: 501 });
+    expect(res.status).toBe(200);
   });
 
   it('lets a user session reach /me', async () => {
-    expect((await call('/api/v1/me/emails', { headers: auth.user() })).status).toBe(501);
+    expect((await call('/api/v1/me/emails', { headers: auth.user() })).status).toBe(200);
   });
 
   it('validates input before the handler (422 problem+json)', async () => {
@@ -98,14 +96,14 @@ describe('auth ports', () => {
 
 describe('csrf', () => {
   const post = (headers: Record<string, string>) =>
-    call('/api/v1/api-keys', {
+    call('/api/v1/orgs', {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...headers },
-      body: JSON.stringify({ name: 'k', scopes: ['passes:read'] }),
+      body: JSON.stringify({ slug: 'Bad Slug' }),
     });
 
   it('accepts same-origin requests with the session token', async () => {
-    expect((await post(auth.admin())).status).toBe(501);
+    expect((await post(auth.admin())).status).toBe(422);
   });
 
   it('rejects a missing or wrong token', async () => {
@@ -124,7 +122,7 @@ describe('csrf', () => {
   it('falls back to the Origin header when Sec-Fetch-Site is absent', async () => {
     const headers = auth.admin();
     const { 'sec-fetch-site': _s, ...rest } = headers;
-    expect((await post({ ...rest, origin: ORIGIN })).status).toBe(501);
+    expect((await post({ ...rest, origin: ORIGIN })).status).toBe(422);
     expect(await (await post({ ...rest, origin: 'https://evil.test' })).json()).toMatchObject({
       code: 'CSRF_ORIGIN',
     });
@@ -143,7 +141,7 @@ describe('csrf', () => {
       headers: { ...auth.apiKey({ scopes: ['passes:write'] }), 'content-type': 'application/json' },
       body: JSON.stringify({ orgId: 'o', templateId: 't', input: {} }),
     });
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(404);
   });
 
   it('protects the unauthenticated magic-link request by origin only', async () => {
@@ -159,14 +157,14 @@ describe('csrf', () => {
       headers: { 'content-type': 'application/json', 'sec-fetch-site': 'same-origin' },
       body,
     });
-    expect(ok.status).toBe(501);
+    expect(ok.status).toBe(202);
   });
 });
 
 describe('api keys', () => {
   it('enforces scopes by method', async () => {
     const readOnly = auth.apiKey({ scopes: ['passes:read'] });
-    expect((await call('/api/v1/passes/p1', { headers: readOnly })).status).toBe(501);
+    expect((await call('/api/v1/passes/p1', { headers: readOnly })).status).toBe(404);
     const write = await call('/api/v1/passes/p1', {
       method: 'PATCH',
       headers: { ...readOnly, 'content-type': 'application/json' },
@@ -188,7 +186,7 @@ describe('api keys', () => {
     expect(
       (await call('/api/v1/templates', { headers: auth.apiKey({ scopes: ['templates:read'] }) }))
         .status,
-    ).toBe(501);
+    ).toBe(200);
     const res = await call('/api/v1/templates/t1', {
       method: 'DELETE',
       headers: auth.apiKey({ scopes: ['templates:read'] }),

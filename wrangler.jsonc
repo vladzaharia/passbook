@@ -50,7 +50,10 @@
   "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "wallet-passes" }],
 
   "queues": {
-    "producers": [{ "binding": "JOBS", "queue": "wallet-jobs" }],
+    "producers": [
+      { "binding": "JOBS", "queue": "wallet-jobs" },
+      { "binding": "JOBS_DLQ", "queue": "wallet-jobs-dlq" }
+    ],
     "consumers": [
       {
         "queue": "wallet-jobs",
