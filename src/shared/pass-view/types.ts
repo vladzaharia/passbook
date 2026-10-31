@@ -1,0 +1,105 @@
+import type { ImageSlot, PassStyle } from '../../passkit/types.ts';
+
+/** `ios27` honours posterGeneric and poster event tickets; `legacy` is iOS 26 and earlier. */
+export type PassTarget = 'ios27' | 'legacy';
+
+export interface Segment {
+  text: string;
+  href?: string;
+}
+
+export type FieldAlign = 'left' | 'center' | 'right' | 'natural';
+
+export interface FieldView {
+  key: string;
+  label?: string;
+  /** Plain formatted value, also the fallback when `segments` is empty. */
+  text: string;
+  segments: Segment[];
+  align: FieldAlign;
+  /** ISO value when the field is a date, for `<time dateTime>`. */
+  dateTime?: string;
+}
+
+export interface BarcodeView {
+  format: string;
+  /** bwip-js symbology id. */
+  bcid: string;
+  message: string;
+  altText?: string;
+  square: boolean;
+}
+
+export interface ImageView {
+  slot: ImageSlot;
+  src: string;
+  srcset?: string;
+}
+
+export interface ActionView {
+  identifier: string;
+  type: string;
+  label: string;
+  href?: string;
+}
+
+export interface TransitView {
+  kind: 'air' | 'boat' | 'bus' | 'train' | 'generic';
+  label: string;
+}
+
+export interface ColorsView {
+  background: string;
+  foreground: string;
+  label: string;
+  strip?: string;
+  footerBackground?: string;
+  /** Background is dark: use light chrome on top. */
+  dark: boolean;
+}
+
+export interface LayoutView {
+  target: PassTarget;
+  style: PassStyle;
+  /** Poster event ticket (eventTicket drawn with the poster layout). */
+  poster: boolean;
+  /** The pass has no style this target can draw; fields were taken from posterGeneric. */
+  degraded: boolean;
+  header: FieldView[];
+  primary: FieldView[];
+  secondary: FieldView[];
+  /** Auxiliary fields by row; one row except eventTicket with `row: 1`. */
+  auxiliary: FieldView[][];
+  footer: FieldView[];
+  back: FieldView[];
+  additionalInfo: FieldView[];
+  /** Front fields past the style's display limit; Wallet lists them in details. */
+  overflow: FieldView[];
+  barcode?: BarcodeView;
+  actions: ActionView[];
+  transit?: TransitView;
+}
+
+export interface PassView {
+  style: PassStyle;
+  target: PassTarget;
+  layout: LayoutView;
+  layouts: Record<PassTarget, LayoutView>;
+  /** True when the two layouts differ, i.e. a UI toggle is meaningful. */
+  hasAlternate: boolean;
+  organizationName: string;
+  description: string;
+  logoText?: string;
+  eventLogoText?: string;
+  colors: ColorsView;
+  images: Partial<Record<ImageSlot, ImageView>>;
+  voided: boolean;
+  expired: boolean;
+  invalid: 'voided' | 'expired' | null;
+  suppressHeaderDarkening: boolean;
+  locations: { latitude: number; longitude: number; relevantText?: string }[];
+  relevantDate?: string;
+  locale: string;
+  /** Stable codes for values that could not be formatted as declared. */
+  warnings: string[];
+}
