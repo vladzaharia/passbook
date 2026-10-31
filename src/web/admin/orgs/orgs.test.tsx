@@ -44,12 +44,12 @@ describe('org form helpers', () => {
   });
   it('keeps support contacts and drops cleared branding fields', () => {
     const org = summary() as never;
-    const d = { ...orgToDraft(org), accent: '', logoAsset: 'logo.png', identity: 'i9' };
+    const d = { ...orgToDraft(org), accent: '', identity: 'i9' };
     expect(orgPatch(d, org)).toEqual({
       name: 'Acme Gym',
       status: 'active',
       defaultIdentityId: 'i9',
-      branding: { supportEmail: 'help@acme.test', logoAsset: 'logo.png' },
+      branding: { supportEmail: 'help@acme.test' },
     });
     expect(orgPatch({ ...d, identity: 'default' }, org).defaultIdentityId).toBeNull();
   });
@@ -150,6 +150,9 @@ describe('org detail', () => {
     const counts = screen.getByRole('list', { name: 'Counts' });
     expect(within(counts).getByText('12')).toBeInTheDocument();
     expect(screen.getByLabelText('Accent colour')).toHaveValue('#0f766e');
+    expect(screen.queryByLabelText(/Logo/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View connections' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View API keys' })).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 

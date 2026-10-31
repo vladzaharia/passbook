@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import type { z } from 'zod';
 import { ApiKeyListSchema, type ApiKeySchema } from '@/shared/contracts/api-keys.ts';
 import { api } from '@/web/lib/api.ts';
+import { useOrgFilter } from '@/web/lib/org-filter.tsx';
 import {
   Badge,
   Button,
@@ -32,6 +33,7 @@ export function keyState(key: ApiKey, now: number): 'revoked' | 'expired' | 'act
 export function ApiKeysPage() {
   const client = useQueryClient();
   const orgName = useOrgNames();
+  const { orgId } = useOrgFilter();
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey>();
   const list = useQuery({
@@ -61,7 +63,7 @@ export function ApiKeysPage() {
       ) : (
         <DataTable
           caption="API keys"
-          data={list.data.items}
+          data={list.data.items.filter((k) => !orgId || k.orgId === orgId)}
           getRowId={(k) => k.id}
           empty={
             <EmptyState

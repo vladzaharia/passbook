@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { keyState } from './api-keys-page.tsx';
@@ -43,6 +43,27 @@ describe('api keys page', () => {
     expect(screen.getAllByText('wlt_abc123', { exact: false })[0]).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Revoke/ })).toHaveLength(1);
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('honours the org filter', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (k === 'wallet-org-filter' ? 'o1' : null),
+      setItem: () => {},
+      removeItem: () => {},
+    });
+    try {
+      await renderApp('/admin/api-keys', {
+        session: 'admin',
+        handlers: {
+          '/api/v1/api-keys': () =>
+            json({ items: [key({ orgId: 'o1' }), key({ id: 'k2', name: 'Other', orgId: 'o2' })] }),
+        },
+      });
+      expect(await screen.findByRole('cell', { name: 'CI key' })).toBeInTheDocument();
+      expect(screen.queryByRole('cell', { name: 'Other' })).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('shows empty and error states', async () => {
