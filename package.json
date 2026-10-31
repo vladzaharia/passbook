@@ -69,6 +69,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.5.15",
     "@cloudflare/vite-plugin": "1.64.0",
     "@cloudflare/vitest-pool-workers": "0.23.0",
