@@ -3,7 +3,6 @@ import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import {
   dailyConnections,
-  handleConnectionSync,
   handlePassRefresh,
   RUN_RETENTION_MS,
   reconcileConnections,
@@ -172,29 +171,6 @@ describe('pass.refresh', () => {
       [p.id],
     );
     expect(r?.outcome).toBe('error');
-  });
-});
-
-describe('connection.sync job', () => {
-  it('starts a workflow for the current generation and ignores stale or disabled ones', async () => {
-    const dto = await createDemo(kit);
-    const { sctx, created } = withWorkflow(kit);
-    await handleConnectionSync(
-      { kind: 'connection.sync', connectionId: dto.id, generation: 1, trigger: 'webhook' },
-      sctx,
-    );
-    expect(created).toHaveLength(1);
-    expect(created[0]?.params).toMatchObject({ connectionId: dto.id, trigger: 'webhook' });
-    await handleConnectionSync(
-      { kind: 'connection.sync', connectionId: dto.id, generation: 9, trigger: 'webhook' },
-      sctx,
-    );
-    await service.update(kit.sctx, kit.actor, dto.id, { enabled: false });
-    await handleConnectionSync(
-      { kind: 'connection.sync', connectionId: dto.id, generation: 1, trigger: 'admin' },
-      sctx,
-    );
-    expect(created).toHaveLength(1);
   });
 });
 

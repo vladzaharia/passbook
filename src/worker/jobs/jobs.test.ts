@@ -65,6 +65,43 @@ describe('job router', () => {
     expect(stub.retried).toEqual({ delaySeconds: 120 });
   });
 
+  it('defers the rest of a batch once the D1 query budget is spent', async () => {
+    const original = JOB_HANDLERS['push.deliver'];
+    const ran: string[] = [];
+    JOB_HANDLERS['push.deliver'] = async (job, ctx) => {
+      ran.push(job.outboxId);
+      await ctx.env.DB.prepare('SELECT 1').bind().first();
+      await ctx.env.DB.batch([ctx.env.DB.prepare('SELECT 2').bind()]);
+      await ctx.env.DB.prepare('SELECT 3').first();
+    };
+    const messages = ['a', 'b', 'c'].map((outboxId) => message({ kind: 'push.deliver', outboxId }));
+    try {
+      // Three queries per job, budget of four: the first two run, the third waits.
+      await handleQueue(batch(JOBS_QUEUE, messages), env as AppEnv, createExecutionContext(), 4);
+    } finally {
+      JOB_HANDLERS['push.deliver'] = original;
+    }
+    expect(ran).toEqual(['a', 'b']);
+    expect(messages.map((m) => m.acked)).toEqual([true, true, false]);
+    expect(messages[2]?.retried).toEqual({ delaySeconds: 5 });
+  });
+
+  it('always runs the first message even over budget', async () => {
+    const original = JOB_HANDLERS['push.deliver'];
+    const ran: string[] = [];
+    JOB_HANDLERS['push.deliver'] = async (job) => {
+      ran.push(job.outboxId);
+    };
+    const messages = ['a', 'b'].map((outboxId) => message({ kind: 'push.deliver', outboxId }));
+    try {
+      await handleQueue(batch(JOBS_QUEUE, messages), env as AppEnv, createExecutionContext(), 0);
+    } finally {
+      JOB_HANDLERS['push.deliver'] = original;
+    }
+    expect(ran).toEqual(['a']);
+    expect(messages[1]?.retried).toEqual({ delaySeconds: 5 });
+  });
+
   it('acks dead letters', async () => {
     const dead = message({ kind: 'push.deliver', outboxId: 'o1' });
     await handleQueue(batch(DLQ_QUEUE, [dead]), env as AppEnv, createExecutionContext());

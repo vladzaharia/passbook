@@ -4,9 +4,9 @@ import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { deletePassAsset, putPassAsset } from './asset-service.ts';
+import { reissuePage } from './bulk.ts';
 import { createPassIdempotent } from './create.ts';
 import { overrideDeps } from './deps.ts';
-import { handlePassReissue } from './jobs.ts';
 import { publishPass } from './publish.ts';
 import { getPass } from './repo.ts';
 import {
@@ -280,19 +280,21 @@ describe('registry failures', () => {
     });
   const restore = () => overrideDeps(kit.env, { registry: kit.registry });
 
-  it('retries a reissue job instead of dropping it as TEMPLATE_NOT_FOUND', async () => {
+  it('retries a reissue page instead of dropping it as TEMPLATE_NOT_FOUND', async () => {
     const pass = await kit.pass();
     failing();
     try {
       await expect(
-        handlePassReissue(
+        reissuePage(
+          kit.ctx,
           {
-            kind: 'pass.reissue',
-            passId: pass.id,
-            templateVersion: 'v1',
+            templateId: kit.template.id,
+            version: 'v1',
+            orgId: kit.org.id,
+            identityId: pass.identityId,
             cause: 'template_upgrade',
           },
-          kit.ctx,
+          null,
         ),
       ).rejects.toThrow('D1_ERROR');
     } finally {

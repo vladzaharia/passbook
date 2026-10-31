@@ -2,6 +2,7 @@ import { handleDeadLetter } from '../modules/delivery/jobs.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { AppError } from '../platform/errors.ts';
 import { createServiceContext } from '../platform/service-context.ts';
+import { countQueries, QUEUE_QUERY_BUDGET, type QueryCounter } from './query-budget.ts';
 import { JOB_HANDLERS } from './registry.ts';
 import { type Job, JobSchema } from './types.ts';
 
@@ -21,6 +22,9 @@ async function dispatch(job: Job, env: AppEnv, ctx: ExecutionContext): Promise<v
   await handler(job, createServiceContext(env, { ctx, base: { job: job.kind } }));
 }
 
+/** Deferred messages come back after this many seconds, in a fresh invocation with a fresh budget. */
+const DEFER_SECONDS = 5;
+
 /**
  * Queue consumer. Handlers throw on transient errors (retried with backoff); invalid messages
  * are acknowledged and logged. The DLQ consumer finalizes exhausted jobs.
@@ -29,6 +33,7 @@ export async function handleQueue(
   batch: MessageBatch<unknown>,
   env: AppEnv,
   ctx: ExecutionContext,
+  queryBudget = QUEUE_QUERY_BUDGET,
 ): Promise<void> {
   const base = createServiceContext(env, { ctx });
   if (batch.queue === DLQ_QUEUE) {
@@ -44,6 +49,11 @@ export async function handleQueue(
     }
     return;
   }
+  // One invocation shares D1's per-invocation query limit across the whole batch. Once the budget
+  // is spent the remainder is retried in a new invocation; the first message always runs.
+  const counter: QueryCounter = { used: 0 };
+  const counted: AppEnv = { ...env, DB: countQueries(env.DB, counter) };
+  let ran = 0;
   for (const message of batch.messages) {
     const parsed = JobSchema.safeParse(message.body);
     if (!parsed.success) {
@@ -51,8 +61,14 @@ export async function handleQueue(
       message.ack();
       continue;
     }
+    if (ran > 0 && counter.used >= queryBudget) {
+      base.log.info('queue.budget_deferred', { job: parsed.data.kind, used: counter.used });
+      message.retry({ delaySeconds: DEFER_SECONDS });
+      continue;
+    }
+    ran++;
     try {
-      await dispatch(parsed.data, env, ctx);
+      await dispatch(parsed.data, counted, ctx);
       message.ack();
     } catch (error) {
       base.log.warn('queue.job_failed', {

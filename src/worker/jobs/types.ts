@@ -11,25 +11,11 @@ export const JobSchema = z.discriminatedUnion('kind', [
     actorId: z.string().nullable(),
   }),
   z.object({
-    kind: z.literal('connection.sync'),
-    connectionId: z.string(),
-    generation: z.number().int(),
-    trigger: z.enum(['schedule', 'webhook', 'admin']),
-  }),
-  z.object({
     kind: z.literal('connection.webhook'),
     connectionId: z.string(),
     eventId: z.string(),
     refs: z.array(z.string()),
   }),
-  z.object({
-    kind: z.literal('pass.reissue'),
-    passId: z.string(),
-    templateVersion: z.string(),
-    cause: z.enum(['template_upgrade', 'resign']),
-  }),
-  z.object({ kind: z.literal('pass.purge-versions'), passId: z.string() }),
-  z.object({ kind: z.literal('identity.check'), identityId: z.string() }),
 ]);
 
 export type Job = z.infer<typeof JobSchema>;

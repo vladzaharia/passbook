@@ -8,8 +8,8 @@ import { resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import {
   countRegistrations,
-  getOwnerLabel,
   currentPassJson,
+  getOwnerLabel,
   getPass,
   getVersion,
   listAssets,

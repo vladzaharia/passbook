@@ -10,7 +10,6 @@ import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { checkIdentityById, runDailyIdentityChecks } from './check.ts';
 import { clearIdentityKeyCache } from './db-resolver.ts';
-import { handleIdentityCheck } from './jobs.ts';
 import { LEGACY_P12, P12_PASSWORD } from './p12-fixtures.ts';
 import { ensurePlatformIdentity } from './repo.ts';
 import { createIdentityResolver } from './resolver.ts';
@@ -395,12 +394,5 @@ describe('identity checks', () => {
       [`identity_check.${dto.id}`],
     );
     expect(JSON.parse(check?.value ?? '{}')).toMatchObject({ ok: true });
-  });
-
-  it('ignores unknown ids in the job', async () => {
-    const ctx = createServiceContext(appEnv);
-    await expect(
-      handleIdentityCheck({ kind: 'identity.check', identityId: 'gone' }, ctx),
-    ).resolves.toBeUndefined();
   });
 });

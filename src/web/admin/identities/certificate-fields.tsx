@@ -1,4 +1,4 @@
-import { FormField, FileDrop, Input, RadioGroup, Textarea } from '@/web/ui/index.ts';
+import { FileDrop, FormField, Input, RadioGroup, Textarea } from '@/web/ui/index.ts';
 import { MAX_P12_BYTES, type UploadDraft, type UploadMode } from './upload-input.ts';
 
 /** Format switch plus the .p12 or PEM inputs, shared by upload and rotate. */

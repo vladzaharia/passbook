@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { diffVersions, getVersionDetail } from './detail.ts';
-import { dailyPasses, handlePassPurgeVersions, handlePassReissue } from './jobs.ts';
+import { dailyPasses } from './jobs.ts';
 import { getPass } from './repo.ts';
 import { updatePass } from './service.ts';
 import { type Kit, setupKit } from './test-kit.ts';
@@ -58,7 +58,7 @@ describe('version retention', () => {
 
   it('drops personalization from purged versions and refuses to diff them', async () => {
     const pass = await passWithVersions(8);
-    await handlePassPurgeVersions({ kind: 'pass.purge-versions', passId: pass.id }, kit.ctx);
+    await dailyPasses(kit.ctx);
     const purged = await all<{ personalization: string }>(
       kit.env.DB,
       'SELECT personalization FROM pass_versions WHERE pass_id = ? AND purged_at IS NOT NULL',
@@ -97,10 +97,10 @@ describe('version retention', () => {
     clearSettingsCache(kit.env.DB);
   });
 
-  it('purges a single pass on demand and is idempotent', async () => {
+  it('purges idempotently', async () => {
     const pass = await passWithVersions(7);
-    await handlePassPurgeVersions({ kind: 'pass.purge-versions', passId: pass.id }, kit.ctx);
-    await handlePassPurgeVersions({ kind: 'pass.purge-versions', passId: pass.id }, kit.ctx);
+    await dailyPasses(kit.ctx);
+    await dailyPasses(kit.ctx);
     expect((await rows(pass.id)).filter((r) => r.purged_at === null)).toHaveLength(4);
   });
 
@@ -118,35 +118,5 @@ describe('version retention', () => {
     expect(
       await first(kit.env.DB, "SELECT 1 FROM idempotency_keys WHERE key = 'new-key'"),
     ).not.toBeNull();
-  });
-});
-
-describe('pass.reissue', () => {
-  it('re-signs with force for a resign and publishes with that cause', async () => {
-    const pass = await kit.pass();
-    await handlePassReissue(
-      {
-        kind: 'pass.reissue',
-        passId: pass.id,
-        templateVersion: pass.templateVersion,
-        cause: 'resign',
-      },
-      kit.ctx,
-    );
-    const after = await getPass(kit.env.DB, pass.id);
-    expect(after?.version).toBe(2);
-    const cause = await first<{ cause: string }>(
-      kit.env.DB,
-      'SELECT cause FROM pass_versions WHERE pass_id = ? AND version = 2',
-      [pass.id],
-    );
-    expect(cause?.cause).toBe('resign');
-  });
-
-  it('skips a pass that no longer exists instead of retrying forever', async () => {
-    await handlePassReissue(
-      { kind: 'pass.reissue', passId: 'missing', templateVersion: 'v1', cause: 'template_upgrade' },
-      kit.ctx,
-    );
   });
 });

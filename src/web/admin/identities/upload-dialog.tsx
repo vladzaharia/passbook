@@ -11,8 +11,8 @@ import {
   Select,
 } from '@/web/ui/index.ts';
 import { useOrgList } from '../orgs/queries.ts';
-import { useUploadIdentity } from './queries.ts';
 import { CertificateFields } from './certificate-fields.tsx';
+import { useUploadIdentity } from './queries.ts';
 import {
   buildUploadBody,
   EMPTY_DRAFT as EMPTY,

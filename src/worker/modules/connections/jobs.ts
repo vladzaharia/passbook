@@ -9,7 +9,7 @@ import { getPassById, setLastRefreshed } from './repo-passes.ts';
 import { finishRun, insertRun } from './repo-runs.ts';
 import { deleteOldRuns, deleteOldWebhookEvents, deleteOldWorkflowRuns } from './repo-sync.ts';
 import { classify, prepare } from './runtime.ts';
-import { reconcileConnections as schedule, startSync } from './schedule.ts';
+import { reconcileConnections as schedule } from './schedule.ts';
 import { processWebhook } from './webhooks.ts';
 
 const DAY_MS = 86_400_000;
@@ -97,21 +97,6 @@ export async function handlePassRefresh(
     await getDeps().enqueuePush(ctx, pass.id, 'refresh');
     await setLastRefreshed(ctx.env.DB, pass.id, ctx.clock.now());
   }
-}
-
-/** Starts a ConnectionSync for this trigger unless the connection changed since it was queued. */
-export async function handleConnectionSync(
-  job: JobOf<'connection.sync'>,
-  ctx: ServiceContext,
-): Promise<void> {
-  const conn = await getConnection(ctx.env.DB, job.connectionId);
-  if (!conn?.enabled || !(await isOrgActive(ctx, conn.orgId))) return;
-  if (conn.generation !== job.generation) {
-    ctx.log.info('connection.sync_stale', { connectionId: conn.id });
-    return;
-  }
-  const bucket = Math.floor(ctx.clock.now() / 30_000);
-  await startSync(ctx, conn, job.trigger, `sync-${conn.id}-${job.trigger}-${bucket}`);
 }
 
 export async function handleConnectionWebhook(

@@ -241,7 +241,10 @@ describe('dead letters', () => {
   });
 
   it('ignores job kinds it does not own', async () => {
-    await handleDeadLetter({ kind: 'pass.purge-versions', passId: 'x' }, kit.ctx);
+    await handleDeadLetter(
+      { kind: 'connection.webhook', connectionId: 'c', eventId: 'e', refs: [] },
+      kit.ctx,
+    );
   });
 });
 
