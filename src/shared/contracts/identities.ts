@@ -9,6 +9,8 @@ export const IdentitySchema = z.object({
   teamIdentifier: z.string(),
   source: z.enum(['env', 'db']),
   certSha256: z.string().nullable(),
+  certSubject: z.string().nullable(),
+  certSerial: z.string().nullable(),
   notBefore: TimestampSchema.nullable(),
   notAfter: TimestampSchema.nullable(),
   daysRemaining: z.number().int().nullable(),
