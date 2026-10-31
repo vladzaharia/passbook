@@ -1,6 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { SettingsPage } from '../../../admin/settings/settings-page.tsx';
 
-export const Route = createFileRoute('/admin/settings/')({
-  component: () => <RoutePlaceholder title="Settings" />,
-});
+export const Route = createFileRoute('/admin/settings/')({ component: SettingsPage });
