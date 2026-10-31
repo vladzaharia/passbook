@@ -63,7 +63,31 @@
         "x-order": 60,
         "format": "date-time",
         "x-widget": "datetime"
+      },
+      "storeLat": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "x-label": "Store latitude",
+        "x-group": "Location",
+        "x-order": 200
+      },
+      "storeLng": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "x-label": "Store longitude",
+        "x-group": "Location",
+        "x-order": 201
       }
+    },
+    "dependentRequired": {
+      "storeLat": [
+        "storeLng"
+      ],
+      "storeLng": [
+        "storeLat"
+      ]
     }
   },
   "sample": {
@@ -147,6 +171,35 @@
         "pointer": "/expirationDate"
       },
       "value": "{{expirationDate}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/latitude"
+      },
+      "value": "{{storeLat}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/longitude"
+      },
+      "value": "{{storeLng}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations"
+      },
+      "remove": {
+        "any": [
+          {
+            "input": "storeLat",
+            "empty": true
+          },
+          {
+            "input": "storeLng",
+            "empty": true
+          }
+        ]
+      }
     }
   ],
   "display": {

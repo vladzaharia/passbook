@@ -12,11 +12,9 @@
     "eventTicket"
   ],
   "sharingProhibited": true,
-  "relevantDate": "2030-06-01T19:00:00Z",
   "relevantDates": [
     {
-      "startDate": "2030-06-01T19:00:00Z",
-      "endDate": "2030-06-01T22:00:00Z"
+      "date": "2030-06-01T19:00:00Z"
     }
   ],
   "barcodes": [
@@ -29,8 +27,8 @@
   ],
   "locations": [
     {
-      "latitude": 37.3349,
-      "longitude": -122.009,
+      "latitude": 0,
+      "longitude": 0,
       "relevantText": "Venue nearby"
     }
   ],

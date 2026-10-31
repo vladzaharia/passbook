@@ -5,9 +5,9 @@ import type { SignedPass } from './sign/index.ts';
 import { sha1Hex, signPass } from './sign/index.ts';
 import { bindPass } from './template/bindings.ts';
 import { applyDefaults, checkInput } from './template/manifest.ts';
-import { unmetRequirements } from './template/requires.ts';
 import { classifyAsset, pngSize, slotOf } from './template/package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './template/registry.ts';
+import { unmetRequirements } from './template/requires.ts';
 import type {
   PassIdentity,
   PassJson,

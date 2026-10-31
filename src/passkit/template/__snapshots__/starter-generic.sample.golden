@@ -12,11 +12,6 @@
   "description": "Wallet generic pass",
   "featuredActions": [
     {
-      "identifier": "support",
-      "type": "call",
-      "url": "tel:+15555550100"
-    },
-    {
       "identifier": "portal",
       "type": "viewOffersRewards",
       "url": "https://example.com/"
@@ -34,14 +29,6 @@
       }
     ],
     "backFields": [
-      {
-        "dataDetectorTypes": [
-          "PKDataDetectorTypePhoneNumber"
-        ],
-        "key": "phone",
-        "label": "CONTACT",
-        "value": "+1 555 555 0100"
-      },
       {
         "key": "terms",
         "label": "TERMS",
@@ -86,13 +73,6 @@
     ]
   },
   "labelColor": "rgb(199,210,254)",
-  "locations": [
-    {
-      "latitude": 37.3349,
-      "longitude": -122.009,
-      "relevantText": "Main office"
-    }
-  ],
   "logoText": "Wallet",
   "organizationName": "Wallet",
   "passTypeIdentifier": "pass.im.plrs.wallet",

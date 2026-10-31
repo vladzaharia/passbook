@@ -1,7 +1,7 @@
 // Test helper: loads templates/<slug> as a ResolvedTemplate with a registry that serves its files.
 import { join } from 'node:path';
-import { createBehaviorRegistry } from '../behaviors/registry.ts';
 import expiryFromInput from '../behaviors/expiry-from-input/index.ts';
+import { createBehaviorRegistry } from '../behaviors/registry.ts';
 import venueLocations from '../behaviors/venue-locations/index.ts';
 import { buildPass } from '../build.ts';
 import { FIXTURE_IDENTITY } from '../testing/fixture-identity.ts';

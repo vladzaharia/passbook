@@ -15,11 +15,6 @@
       "identifier": "portal",
       "type": "membershipBenefits",
       "url": "https://example.com/"
-    },
-    {
-      "identifier": "support",
-      "type": "call",
-      "url": "tel:+15555550100"
     }
   ],
   "foregroundColor": "rgb(255,255,255)",
@@ -70,13 +65,6 @@
     ]
   },
   "labelColor": "rgb(199,210,254)",
-  "locations": [
-    {
-      "latitude": 37.3349,
-      "longitude": -122.009,
-      "relevantText": "Main office"
-    }
-  ],
   "logoText": "Wallet",
   "organizationName": "Wallet",
   "passTypeIdentifier": "pass.im.plrs.wallet",

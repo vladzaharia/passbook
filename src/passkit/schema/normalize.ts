@@ -59,7 +59,14 @@ function upperIsoIn(target: Record<string, unknown>, keys?: string[]): void {
     if (target[key] !== undefined) target[key] = upperIso(target[key]);
 }
 
-const STYLE_KEYS = ['generic', 'posterGeneric', 'storeCard', 'coupon', 'eventTicket', 'boardingPass'];
+const STYLE_KEYS = [
+  'generic',
+  'posterGeneric',
+  'storeCard',
+  'coupon',
+  'eventTicket',
+  'boardingPass',
+];
 
 function normalizeDates(pass: Record<string, unknown>): void {
   upperIsoIn(pass, ['expirationDate', 'relevantDate']);

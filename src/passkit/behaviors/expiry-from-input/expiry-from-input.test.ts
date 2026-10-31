@@ -44,8 +44,9 @@ describe('expiry-from-input', () => {
     const past = { ends: '2029-01-01T00:00:00Z' };
     expect(run(past, { input: 'ends' }).voided).toBeUndefined();
     expect(run(past, { input: 'ends', voidWhenPast: true }).voided).toBe(true);
-    expect(run({ ends: '2031-01-01T00:00:00Z' }, { input: 'ends', voidWhenPast: true }).voided)
-      .toBeUndefined();
+    expect(
+      run({ ends: '2031-01-01T00:00:00Z' }, { input: 'ends', voidWhenPast: true }).voided,
+    ).toBeUndefined();
   });
 
   it('throws on an invalid date', () => {

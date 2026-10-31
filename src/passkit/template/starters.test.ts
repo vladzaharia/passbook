@@ -182,9 +182,74 @@ describe('starter-generic', () => {
     expect(dated.expirationDate).toBe('2031-01-01T00:00:00Z');
   });
 
-  it('declares two featured actions', async () => {
-    const pass = (await build('starter-generic', material)).passJson;
-    expect(pass.featuredActions).toHaveLength(2);
+  it('ships the call action and phone field only with a phone', async () => {
+    const { template } = await loadBaked('starter-generic');
+    const sample = template.manifest.sample;
+    const plain = (await build('starter-generic', material, sample)).passJson;
+    expect(plain.featuredActions?.map((a) => a.identifier)).toEqual(['portal']);
+    expect(keys(plain, 'generic')).not.toContain('phone');
+    const withPhone = (
+      await build('starter-generic', material, { ...sample, phone: '+14155550100' })
+    ).passJson;
+    expect(withPhone.featuredActions?.find((a) => a.identifier === 'support')?.url).toBe(
+      'tel:+14155550100',
+    );
+    expect(keys(withPhone, 'generic')).toContain('phone');
+    expect(JSON.stringify(withPhone)).not.toContain('555 555 0100');
+  });
+
+  it('rejects a malformed phone', async () => {
+    const { template } = await loadBaked('starter-generic');
+    const error = await build('starter-generic', material, {
+      ...template.manifest.sample,
+      phone: '555-0100',
+    }).catch((e: unknown) => e);
+    expect((error as PassBuildError).code).toBe('INVALID_INPUT');
+  });
+});
+
+describe('relevance locations', () => {
+  const LOCATED: [string, string, string][] = [
+    ['starter-coupon', 'storeLat', 'storeLng'],
+    ['starter-store-card', 'storeLat', 'storeLng'],
+    ['starter-generic', 'officeLat', 'officeLng'],
+    ['starter-poster-generic', 'officeLat', 'officeLng'],
+    ['starter-event-ticket', 'venueLat', 'venueLng'],
+  ];
+
+  it.each(LOCATED)('%s has no location unless coordinates are given', async (slug, lat, lng) => {
+    const { template } = await loadBaked(slug);
+    const { [lat]: _a, [lng]: _b, ...rest } = template.manifest.sample;
+    const bare = (await build(slug, material, rest)).passJson;
+    expect(bare.locations).toBeUndefined();
+    const placed = (await build(slug, material, { ...rest, [lat]: 40.75, [lng]: -73.99 })).passJson;
+    expect(placed.locations).toEqual([
+      expect.objectContaining({ latitude: 40.75, longitude: -73.99 }),
+    ]);
+  });
+
+  it('requires both coordinates', async () => {
+    const error = await build('starter-coupon', material, {
+      offer: 'x',
+      code: 'y',
+      expirationDate: '2031-01-01T00:00:00Z',
+      storeLat: 1,
+    }).catch((e: unknown) => e);
+    expect((error as PassBuildError).code).toBe('INVALID_INPUT');
+  });
+});
+
+describe('starter-store-card shop link', () => {
+  it('uses the shop link as given and drops the action without one', async () => {
+    const base = { holder: 'A', cardNumber: 'C', website: 'https://acme.test' };
+    const none = (await build('starter-store-card', material, base)).passJson;
+    expect(none.featuredActions?.map((a) => a.identifier)).toEqual(['top-up']);
+    const shop = (
+      await build('starter-store-card', material, { ...base, shopURL: 'https://shop.acme.test/x' })
+    ).passJson;
+    expect(shop.featuredActions?.find((a) => a.identifier === 'shop')?.url).toBe(
+      'https://shop.acme.test/x',
+    );
   });
 });
 
@@ -229,7 +294,7 @@ describe('starter-event-ticket', () => {
       ]),
     );
     expect(pass.relevantDates).toEqual([
-      { startDate: '2030-06-01T19:00:00Z', endDate: '2030-06-01T22:00:00Z' },
+      { date: '2030-06-01T19:00:00Z', relevantDate: '2030-06-01T19:00:00Z' },
     ]);
     expect(pass.relevantDate).toBe('2030-06-01T19:00:00Z');
   });
@@ -245,9 +310,38 @@ describe('starter-event-ticket', () => {
     const pass = (await build('starter-event-ticket', material, input)).passJson;
     expect((pass.semantics as Record<string, unknown>).venueLocation).toBeUndefined();
     expect(pass.relevantDates).toEqual([
-      { startDate: '2031-01-01T10:00:00Z', endDate: '2031-01-01T12:00:00Z' },
+      { date: '2031-01-01T10:00:00Z', relevantDate: '2031-01-01T10:00:00Z' },
     ]);
     expect(pass.expirationDate).toBe('2031-01-01T12:00:00Z');
+    expect(pass.locations).toBeUndefined();
+  });
+
+  it('builds events longer than 24 hours and expires at the end', async () => {
+    const { template } = await loadBaked('starter-event-ticket');
+    const built = await build('starter-event-ticket', material, {
+      ...template.manifest.sample,
+      startsAt: '2030-06-01T10:00:00Z',
+      endsAt: '2030-06-03T22:00:00Z',
+    });
+    expect(built.passJson.relevantDates?.[0]).toMatchObject({ date: '2030-06-01T10:00:00Z' });
+    expect(built.passJson.expirationDate).toBe('2030-06-03T22:00:00Z');
+    expect(built.report.issues.filter((i) => i.code === 'RELEVANT_DATE_RANGE')).toEqual([]);
+  });
+
+  it('adds guide links only when given', async () => {
+    const { template } = await loadBaked('starter-event-ticket');
+    const sample = template.manifest.sample;
+    const plain = (await build('starter-event-ticket', material, sample)).passJson;
+    expect(plain.directionsInformationURL).toBeUndefined();
+    const linked = (
+      await build('starter-event-ticket', material, {
+        ...sample,
+        directionsURL: 'https://venue.test/map',
+        parkingURL: 'https://venue.test/park',
+      })
+    ).passJson;
+    expect(linked.directionsInformationURL).toBe('https://venue.test/map');
+    expect(linked.parkingInformationURL).toBe('https://venue.test/park');
   });
 });
 
@@ -284,6 +378,57 @@ describe('starter-boarding-pass', () => {
     ).passJson;
     expect(pass.boardingPass?.transitType).toBe('PKTransitTypeTrain');
     expect(pass.preferredStyleSchemes).toBeUndefined();
+  });
+
+  it('keeps airline semantics off other transit types', async () => {
+    const { template } = await loadBaked('starter-boarding-pass');
+    const sample = template.manifest.sample;
+    const train = (
+      await build('starter-boarding-pass', material, { ...sample, transitType: 'train' })
+    ).passJson;
+    const semantics = train.semantics as Record<string, unknown>;
+    for (const key of [
+      'airlineCode',
+      'flightNumber',
+      'departureAirportCode',
+      'destinationAirportCode',
+    ])
+      expect(semantics[key], key).toBeUndefined();
+    expect(semantics).toMatchObject({
+      departureStationName: 'San Francisco',
+      destinationStationName: 'New York',
+      vehicleNumber: 'WA100',
+    });
+    expect(train.logoText).toBe('Wallet');
+    expect(train.boardingPass?.headerFields?.[0]?.label).toBe('TRAIN');
+    const air = (await build('starter-boarding-pass', material, sample)).passJson;
+    expect((air.semantics as Record<string, unknown>).airlineCode).toBe('WA');
+    expect(air.logoText).toBe('Wallet Air');
+  });
+
+  it('sets relevance, gate, seats and links from input', async () => {
+    const { template } = await loadBaked('starter-boarding-pass');
+    const pass = (
+      await build('starter-boarding-pass', material, {
+        ...template.manifest.sample,
+        boardingGroup: '3',
+        managementURL: 'https://air.test/manage',
+      })
+    ).passJson;
+    expect(pass.relevantDates).toEqual([
+      { date: '2030-06-01T08:00:00Z', relevantDate: '2030-06-01T08:00:00Z' },
+    ]);
+    expect(pass.semantics).toMatchObject({
+      departureGate: 'B12',
+      boardingGroup: '3',
+      seats: [{ seatNumber: '14A' }],
+    });
+    expect(pass.managementURL).toBe('https://air.test/manage');
+    const { seat: _s, gate: _g, ...rest } = template.manifest.sample;
+    const bare = (await build('starter-boarding-pass', material, rest)).passJson;
+    expect((bare.semantics as Record<string, unknown>).seats).toBeUndefined();
+    expect((bare.semantics as Record<string, unknown>).departureGate).toBeUndefined();
+    expect(bare.managementURL).toBeUndefined();
   });
 
   it('rejects malformed airport codes', async () => {

@@ -67,13 +67,6 @@
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
   "labelColor": "rgb(199,210,254)",
-  "locations": [
-    {
-      "latitude": 37.3349,
-      "longitude": -122.009,
-      "relevantText": "Store nearby"
-    }
-  ],
   "logoText": "Wallet",
   "organizationName": "Wallet",
   "passTypeIdentifier": "pass.im.plrs.wallet",

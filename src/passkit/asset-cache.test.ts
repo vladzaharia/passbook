@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ASSET_CACHE_MAX_BYTES, cachedAssetBytes, clearAssetCache } from './asset-cache.ts';
 import { buildPass } from './build.ts';
 import { bakedBehaviors, freezeNow, loadBaked } from './template/baked-fixtures.ts';
-import { FIXTURE_IDENTITY, createFixtureIdentity } from './testing/fixture-identity.ts';
+import { createFixtureIdentity, FIXTURE_IDENTITY } from './testing/fixture-identity.ts';
 
 beforeEach(() => clearAssetCache());
 

@@ -8,7 +8,11 @@ let total = 0;
  * Entries are content-addressed (`sha1` is part of the key), so a hit is always the right bytes.
  * Entries without a digest are never cached.
  */
-function keyOf(templateId: string, version: string, entry: { name: string; sha1?: string | undefined }) {
+function keyOf(
+  templateId: string,
+  version: string,
+  entry: { name: string; sha1?: string | undefined },
+) {
   return entry.sha1 ? `${templateId}@${version}/${entry.name}#${entry.sha1}` : null;
 }
 

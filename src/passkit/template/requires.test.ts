@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { PassBuildError, planPass } from '../build.ts';
 import { FIXTURE_IDENTITY } from '../testing/fixture-identity.ts';
 import type { PassJson, TemplateManifest } from '../types.ts';
+import { InMemoryTemplateRegistry } from './in-memory-registry.ts';
 import { validateManifest } from './manifest.ts';
 import { unmetRequirements } from './requires.ts';
-import { InMemoryTemplateRegistry } from './in-memory-registry.ts';
 
 const manifest = (requires: unknown): TemplateManifest =>
   ({
@@ -50,7 +50,12 @@ describe('requires', () => {
 
   it('refuses to build when the identity lacks a required NFC entitlement', () => {
     const registry = new InMemoryTemplateRegistry();
-    const template = registry.add({ id: 'n', manifest: manifest({ nfc: true }), passJson, assets: {} });
+    const template = registry.add({
+      id: 'n',
+      manifest: manifest({ nfc: true }),
+      passJson,
+      assets: {},
+    });
     const args = {
       template,
       registry,

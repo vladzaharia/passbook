@@ -41,7 +41,7 @@
       },
       "airlineCode": {
         "type": "string",
-        "x-label": "Airline",
+        "x-label": "Carrier code",
         "x-group": "Flight",
         "x-order": 30,
         "minLength": 2,
@@ -52,13 +52,13 @@
         "type": "integer",
         "minimum": 1,
         "maximum": 9999,
-        "x-label": "Flight number",
+        "x-label": "Service number",
         "x-group": "Flight",
         "x-order": 40
       },
       "origin": {
         "type": "string",
-        "x-label": "From",
+        "x-label": "Origin code",
         "x-group": "Route",
         "x-order": 50,
         "minLength": 3,
@@ -85,7 +85,7 @@
       },
       "destination": {
         "type": "string",
-        "x-label": "To",
+        "x-label": "Destination code",
         "x-group": "Route",
         "x-order": 80,
         "minLength": 3,
@@ -179,6 +179,33 @@
         "x-order": 170,
         "maxLength": 256,
         "x-widget": "textarea"
+      },
+      "boardingGroup": {
+        "type": "string",
+        "maxLength": 8,
+        "x-label": "Boarding group",
+        "x-group": "Seat",
+        "x-order": 155
+      },
+      "managementURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Manage booking link",
+        "x-group": "Links",
+        "x-order": 170,
+        "x-widget": "url"
+      },
+      "changeSeatURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Change seat link",
+        "x-group": "Links",
+        "x-order": 180,
+        "x-widget": "url"
       }
     }
   },
@@ -203,19 +230,24 @@
   "lookups": {
     "transit": {
       "air": {
-        "type": "PKTransitTypeAir"
+        "type": "PKTransitTypeAir",
+        "label": "FLIGHT"
       },
       "train": {
-        "type": "PKTransitTypeTrain"
+        "type": "PKTransitTypeTrain",
+        "label": "TRAIN"
       },
       "bus": {
-        "type": "PKTransitTypeBus"
+        "type": "PKTransitTypeBus",
+        "label": "BUS"
       },
       "boat": {
-        "type": "PKTransitTypeBoat"
+        "type": "PKTransitTypeBoat",
+        "label": "SERVICE"
       },
       "generic": {
-        "type": "PKTransitTypeGeneric"
+        "type": "PKTransitTypeGeneric",
+        "label": "SERVICE"
       }
     }
   },
@@ -318,19 +350,37 @@
       "to": {
         "pointer": "/semantics/airlineCode"
       },
-      "value": "{{airlineCode}}"
+      "value": "{{airlineCode}}",
+      "remove": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
     },
     {
       "to": {
         "pointer": "/semantics/flightNumber"
       },
-      "value": "{{flightNumber}}"
+      "value": "{{flightNumber}}",
+      "remove": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
     },
     {
       "to": {
         "pointer": "/semantics/departureAirportCode"
       },
-      "value": "{{origin}}"
+      "value": "{{origin}}",
+      "remove": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
     },
     {
       "to": {
@@ -348,7 +398,13 @@
       "to": {
         "pointer": "/semantics/destinationAirportCode"
       },
-      "value": "{{destination}}"
+      "value": "{{destination}}",
+      "remove": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
     },
     {
       "to": {
@@ -394,12 +450,6 @@
     },
     {
       "to": {
-        "pointer": "/relevantDate"
-      },
-      "value": "{{departsAt}}"
-    },
-    {
-      "to": {
         "pointer": "/expirationDate"
       },
       "value": "{{arrivesAt}}"
@@ -414,6 +464,122 @@
           "eq": "air"
         }
       }
+    },
+    {
+      "to": {
+        "field": "flight",
+        "prop": "label"
+      },
+      "value": "{{lookups.transit[transitType].label}}"
+    },
+    {
+      "to": {
+        "pointer": "/relevantDates/0/date"
+      },
+      "value": "{{departsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/logoText"
+      },
+      "value": "Wallet",
+      "when": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/departureStationName"
+      },
+      "value": "{{originCity}}",
+      "when": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/destinationStationName"
+      },
+      "value": "{{destinationCity}}",
+      "when": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/transitProvider"
+      },
+      "value": "{{airlineCode}}",
+      "when": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/vehicleNumber"
+      },
+      "value": "{{airlineCode}}{{flightNumber}}",
+      "when": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/departureGate"
+      },
+      "value": "{{gate}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/boardingGroup"
+      },
+      "value": "{{boardingGroup}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/seats/0/seatNumber"
+      },
+      "value": "{{seat}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/seats"
+      },
+      "remove": {
+        "input": "seat",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "pointer": "/managementURL"
+      },
+      "value": "{{managementURL}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/changeSeatURL"
+      },
+      "value": "{{changeSeatURL}}",
+      "omitIfEmpty": true
     }
   ],
   "display": {

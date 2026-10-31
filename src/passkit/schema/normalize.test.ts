@@ -60,7 +60,9 @@ describe('normalizePass', () => {
     const out = normalizePass(
       base({
         expirationDate: '2027-01-31t23:59:00z',
-        relevantDates: [{ startDate: '2027-01-31t10:00:00z', endDate: '2027-01-31t11:00:00+01:00' }],
+        relevantDates: [
+          { startDate: '2027-01-31t10:00:00z', endDate: '2027-01-31t11:00:00+01:00' },
+        ],
         semantics: { eventStartDate: '2027-01-31t10:00:00z', eventName: 'tz' },
       }),
     );
