@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { first } from '../../platform/db.ts';
 import { reissuePage, startBulkReissue } from './bulk.ts';
 import { getPass } from './repo.ts';
 import { type Kit, setupKit } from './test-kit.ts';
@@ -54,6 +55,34 @@ describe('bulk re-sign', () => {
       identityId: 'id-1',
     });
     expect(kit.workflow.created[0]?.params).toMatchObject({ cause: 'resign', identityId: 'id-1' });
+  });
+
+  it('re-signs an identity across templates and audits it against the identity', async () => {
+    const pass = await kit.pass();
+    const result = await reissuePage(
+      kit.ctx,
+      {
+        templateId: null,
+        version: null,
+        orgId: null,
+        identityId: pass.identityId,
+        cause: 'resign',
+      },
+      null,
+    );
+    expect(result.failed).toBe(0);
+    expect(result.changed).toBeGreaterThanOrEqual(1);
+    kit.workflow.created.length = 0;
+    await startBulkReissue(kit.ctx, actor, { cause: 'resign', identityId: pass.identityId });
+    expect(kit.workflow.created[0]?.params).toMatchObject({
+      templateId: null,
+      identityId: pass.identityId,
+    });
+    const audit = await first<{ target_type: string; target_id: string }>(
+      kit.env.DB,
+      "SELECT target_type, target_id FROM audit_log WHERE action = 'pass.bulk_reissue' ORDER BY id DESC LIMIT 1",
+    );
+    expect(audit).toEqual({ target_type: 'identity', target_id: pass.identityId });
   });
 
   it('defaults to a template upgrade', async () => {

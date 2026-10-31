@@ -12,9 +12,18 @@ export interface UploadDraft {
   p12Password: string;
 }
 
-export function validateUpload(d: UploadDraft): Record<string, string> {
+export const EMPTY_DRAFT: UploadDraft = {
+  mode: 'p12',
+  label: '',
+  certificatePem: '',
+  privateKeyPem: '',
+  p12: undefined,
+  p12Password: '',
+};
+
+export function validateUpload(d: UploadDraft, needLabel = true): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!d.label.trim()) errors.label = 'Required.';
+  if (needLabel && !d.label.trim()) errors.label = 'Required.';
   if (d.mode === 'pem') {
     const cert = d.certificatePem.trim();
     const key = d.privateKeyPem.trim();
@@ -59,4 +68,15 @@ export async function buildUploadBody(d: UploadDraft, orgId: string | null, nfcE
     pkcs12Base64: await toBase64(d.p12 as File),
     pkcs12Password: d.p12Password,
   };
+}
+
+/** Body for POST /identities/{id}/rotate: the same material, no label. */
+export async function buildRotateBody(d: UploadDraft) {
+  const {
+    label: _label,
+    orgId: _orgId,
+    nfcEnabled: _nfc,
+    ...material
+  } = await buildUploadBody(d, null, false);
+  return material;
 }

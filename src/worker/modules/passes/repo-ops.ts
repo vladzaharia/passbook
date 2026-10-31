@@ -103,7 +103,7 @@ export async function finishIdempotencyKey(
 export async function passesForReissue(
   db: D1Database,
   q: {
-    templateId: string;
+    templateId: string | null;
     orgId: string | null;
     identityId?: string | null;
     afterId: string | null;
@@ -113,10 +113,11 @@ export async function passesForReissue(
 ): Promise<{ id: string }[]> {
   return all<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE template_id = ? AND (? IS NULL OR org_id = ?)
+    `SELECT id FROM passes WHERE (? IS NULL OR template_id = ?) AND (? IS NULL OR org_id = ?)
        AND (? IS NULL OR identity_id = ?) AND id > ? AND deleted_at IS NULL
        AND (? IS NULL OR template_version != ?) ORDER BY id LIMIT ?`,
     [
+      q.templateId,
       q.templateId,
       q.orgId,
       q.orgId,

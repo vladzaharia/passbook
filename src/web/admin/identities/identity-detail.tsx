@@ -26,7 +26,13 @@ import {
 import { useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
-import { useDeleteIdentity, useIdentity, useUpdateIdentity } from './queries.ts';
+import {
+  useDeleteIdentity,
+  useIdentity,
+  useResignIdentityPasses,
+  useUpdateIdentity,
+} from './queries.ts';
+import { RotateIdentityDialog } from './rotate-dialog.tsx';
 
 type Identity = z.infer<typeof IdentitySchema>;
 
@@ -165,7 +171,10 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const remove = useDeleteIdentity(identityId);
   const orgName = useOrgNames();
   const navigate = useNavigate();
+  const resign = useResignIdentityPasses(identityId);
   const [confirm, setConfirm] = useState(false);
+  const [confirmResign, setConfirmResign] = useState(false);
+  const [rotating, setRotating] = useState(false);
   const crumbs = [
     { label: 'Apple identities', to: '/admin/identities' },
     { label: query.data?.label ?? 'Identity' },
@@ -200,11 +209,21 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         title={identity.label}
         breadcrumbs={crumbs}
         actions={
-          identity.source === 'db' ? (
-            <Button variant="danger" onClick={() => setConfirm(true)}>
-              Delete
+          <>
+            <Button variant="outline" onClick={() => setConfirmResign(true)}>
+              Re-sign all passes
             </Button>
-          ) : null
+            {identity.source === 'db' ? (
+              <>
+                <Button variant="outline" onClick={() => setRotating(true)}>
+                  Rotate certificate
+                </Button>
+                <Button variant="danger" onClick={() => setConfirm(true)}>
+                  Delete
+                </Button>
+              </>
+            ) : null}
+          </>
         }
       />
       <div className="flex max-w-3xl flex-col gap-6">
@@ -239,6 +258,18 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           identity={identity}
         />
       </div>
+      <RotateIdentityDialog identityId={identityId} open={rotating} onOpenChange={setRotating} />
+      <ConfirmDialog
+        open={confirmResign}
+        onOpenChange={setConfirmResign}
+        title="Re-sign all passes?"
+        description={`Rebuilds every pass signed by ${identity.label} with the current certificate. Devices pick up the new signature on their next refresh.`}
+        confirmLabel="Re-sign"
+        onConfirm={async () => {
+          await resign.mutateAsync();
+          toast.success('Re-sign started');
+        }}
+      />
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}

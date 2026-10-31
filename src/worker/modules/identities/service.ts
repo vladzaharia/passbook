@@ -221,7 +221,10 @@ export async function deleteIdentity(ctx: ServiceContext, actor: Actor, id: stri
   if (row.source === 'env' || id === PLATFORM_IDENTITY_ID)
     throw new ConflictError('The platform identity cannot be deleted.', 'IDENTITY_PROTECTED');
   if (await identityInUse(ctx.env.DB, id))
-    throw new ConflictError('Passes use this identity. Reissue them first.', 'IDENTITY_IN_USE');
+    throw new ConflictError(
+      'Passes still use this identity. Delete them first, or rotate its certificate to renew it.',
+      'IDENTITY_IN_USE',
+    );
   await deleteIdentityRows(ctx.env.DB, id, row.credential_id);
   await recordAudit(ctx, {
     ...auditActor(actor),

@@ -337,6 +337,11 @@ describe('refresh, email and bulk reissue', () => {
     expect(
       (await api('/passes/bulk-reissue', json(fake.admin(), { templateId: 'nope' }))).status,
     ).toBe(404);
+    expect((await api('/passes/bulk-reissue', json(fake.admin(), {}))).status).toBe(422);
+    expect(
+      (await api('/passes/bulk-reissue', json(fake.admin(), { cause: 'resign', identityId: 'i1' })))
+        .status,
+    ).toBe(202);
   });
 });
 

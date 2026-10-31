@@ -12,8 +12,8 @@ import type { Actor } from './service.ts';
 export const REISSUE_PAGE = 100;
 
 export interface ReissueParams {
-  templateId: string;
-  version: string;
+  templateId: string | null;
+  version: string | null;
   orgId: string | null;
   identityId?: string | null;
   cause: 'template_upgrade' | 'resign';
@@ -53,7 +53,8 @@ export async function reissuePage(
         force: params.cause === 'resign',
         dispatch: false,
         // A re-sign keeps each pass on its current template version.
-        mutate: () => (params.cause === 'resign' ? {} : { templateVersion: params.version }),
+        mutate: () =>
+          params.cause === 'resign' || !params.version ? {} : { templateVersion: params.version },
       });
       if (published.changed) result.changed++;
       else result.unchanged++;
@@ -86,27 +87,30 @@ export async function startBulkReissue(
   ctx: ServiceContext,
   actor: Actor,
   body: {
-    templateId: string;
+    templateId?: string | undefined;
     version?: string | undefined;
     orgId?: string | undefined;
     cause?: ReissueParams['cause'] | undefined;
     identityId?: string | undefined;
   },
 ): Promise<string> {
-  const template = body.orgId
-    ? await resolveTemplate(ctx, body.orgId, body.templateId, body.version)
-    : await resolveUnscoped(ctx, body.templateId, body.version);
+  const template = body.templateId
+    ? body.orgId
+      ? await resolveTemplate(ctx, body.orgId, body.templateId, body.version)
+      : await resolveUnscoped(ctx, body.templateId, body.version)
+    : null;
+  const targetId = template?.id ?? body.identityId ?? '';
   const instanceId = `bulk-${ctx.ids.id()}`;
   await insertWorkflowRun(ctx.env.DB, {
     instanceId,
     kind: 'bulk_reissue',
     orgId: body.orgId ?? null,
-    targetId: template.id,
+    targetId,
     now: ctx.clock.now(),
   });
   const params: ReissueParams = {
-    templateId: template.id,
-    version: template.version,
+    templateId: template?.id ?? null,
+    version: template?.version ?? null,
     orgId: body.orgId ?? null,
     identityId: body.identityId ?? null,
     cause: body.cause ?? 'template_upgrade',
@@ -128,9 +132,14 @@ export async function startBulkReissue(
     actorType: actor.type,
     actorId: actor.id,
     action: 'pass.bulk_reissue',
-    targetType: 'template',
-    targetId: template.id,
-    detail: { version: template.version, instanceId, cause: params.cause },
+    targetType: template ? 'template' : 'identity',
+    targetId,
+    detail: {
+      version: template?.version ?? null,
+      instanceId,
+      cause: params.cause,
+      identityId: body.identityId ?? null,
+    },
   });
   return instanceId;
 }

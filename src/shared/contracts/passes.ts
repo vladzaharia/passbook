@@ -159,13 +159,19 @@ export const DiffQuerySchema = z.object({
   from: z.coerce.number().int(),
   to: z.coerce.number().int(),
 });
-export const BulkReissueSchema = z.object({
-  templateId: IdSchema,
-  version: z.string().optional(),
-  orgId: IdSchema.optional(),
-  /** `resign` rebuilds under each pass's current template version, without pushes. */
-  cause: z.enum(['template_upgrade', 'resign']).default('template_upgrade'),
-  /** Limits the run to passes signed by one identity. */
-  identityId: IdSchema.optional(),
-});
+export const BulkReissueSchema = z
+  .object({
+    /** Required for an upgrade; a re-sign may omit it to cover every template of the identity. */
+    templateId: IdSchema.optional(),
+    version: z.string().optional(),
+    orgId: IdSchema.optional(),
+    /** `resign` rebuilds under each pass's current template version, without pushes. */
+    cause: z.enum(['template_upgrade', 'resign']).default('template_upgrade'),
+    /** Limits the run to passes signed by one identity. */
+    identityId: IdSchema.optional(),
+  })
+  .refine((b) => b.templateId || (b.cause === 'resign' && b.identityId), {
+    message: 'templateId is required unless re-signing an identity.',
+    path: ['templateId'],
+  });
 export const BulkReissueResponseSchema = z.object({ workflowInstanceId: z.string() });

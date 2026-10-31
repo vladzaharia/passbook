@@ -268,6 +268,62 @@ describe('identity detail', () => {
     await waitFor(() => expect(deleted).toBe(true));
   });
 
+  it('re-signs all passes of the identity after confirmation', async () => {
+    let body: unknown;
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1': () => json(identity()),
+        '/api/v1/passes/bulk-reissue': (_u, init) => {
+          body = JSON.parse(String(init?.body));
+          return json({ workflowInstanceId: 'bulk-1' });
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Re-sign all passes' }));
+    expect(body).toBeUndefined();
+    await ui.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Re-sign' }),
+    );
+    await waitFor(() => expect(body).toEqual({ cause: 'resign', identityId: 'i1' }));
+  });
+
+  it('rotates the certificate from PEM input', async () => {
+    let body: unknown;
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1': () => json(identity()),
+        '/api/v1/identities/i1/rotate': (_u, init) => {
+          body = JSON.parse(String(init?.body));
+          return json(identity());
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Rotate certificate' }));
+    const dialog = await screen.findByRole('dialog');
+    await ui.click(within(dialog).getByRole('button', { name: 'Replace certificate' }));
+    expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
+    await ui.type(
+      within(dialog).getByLabelText('Certificate (PEM)'),
+      '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----',
+    );
+    await ui.type(
+      within(dialog).getByLabelText('Private key (PEM)'),
+      '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+    );
+    await ui.click(within(dialog).getByRole('button', { name: 'Replace certificate' }));
+    await waitFor(() =>
+      expect(body).toEqual({
+        certificatePem: '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----',
+        privateKeyPem: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+      }),
+    );
+  });
+
   it('shows not found', async () => {
     await renderApp('/admin/identities/zzz', { session: 'admin' });
     expect(await screen.findByText('Identity not found')).toBeInTheDocument();
