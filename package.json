@@ -23,6 +23,7 @@
     "coverage": "vitest run --project unit --project web --coverage --coverage.reportsDirectory=coverage/node && vitest run --project worker --coverage --coverage.provider=istanbul --coverage.reportsDirectory=coverage/worker",
     "test:e2e": "playwright test",
     "db:local": "wrangler d1 migrations apply wallet-platform --local",
+    "breakglass": "node tools/breakglass.ts",
     "credentials": "node tools/credentials.ts",
     "identity:add": "node tools/identity-add.ts",
     "predeploy": "node tools/deploy.ts --check",

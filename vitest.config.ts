@@ -35,6 +35,7 @@ export default defineConfig({
                   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
                   SIGNER_PLATFORM_CERTIFICATE: 'replaced-in-tests',
                   SIGNER_PLATFORM_PRIVATE_KEY: 'replaced-in-tests',
+                  BREAKGLASS_TOKEN_SHA256: '',
                 },
               },
             };

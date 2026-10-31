@@ -39,7 +39,7 @@ export const UserDetailSchema = UserSchema.extend({
   sessions: z.array(
     z.object({
       id: IdSchema,
-      amr: z.enum(['oidc', 'magic_link']),
+      amr: z.enum(['oidc', 'magic_link', 'breakglass']),
       roles: z.array(RoleSchema),
       createdAt: TimestampSchema,
       lastSeenAt: TimestampSchema,

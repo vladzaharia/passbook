@@ -1,3 +1,4 @@
+import type { Amr } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -5,7 +6,7 @@ type Db = D1Database;
 export interface SessionRow {
   id_hash: string;
   user_id: string;
-  amr: 'oidc' | 'magic_link';
+  amr: Amr;
   roles: string;
   csrf_secret: string;
   created_at: number;
@@ -31,7 +32,7 @@ export async function insertSession(
   s: {
     idHash: string;
     userId: string;
-    amr: 'oidc' | 'magic_link';
+    amr: Amr;
     roles: string[];
     csrfSecret: string;
     now: number;

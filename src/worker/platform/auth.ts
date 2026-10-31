@@ -6,6 +6,7 @@ import { csrfGuard } from './csrf.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
 export type Role = 'admin' | 'user';
+export type Amr = 'oidc' | 'magic_link' | 'breakglass';
 export const API_SCOPES = [
   'passes:read',
   'passes:write',
@@ -22,7 +23,7 @@ export interface SessionAuth {
   sessionId: string;
   roles: Role[];
   csrfSecret: string;
-  amr: 'oidc' | 'magic_link';
+  amr: Amr;
 }
 
 export interface ApiKeyAuth {

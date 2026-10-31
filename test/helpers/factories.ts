@@ -215,7 +215,11 @@ export interface SessionFixture {
 /** Inserts a real session row (hash of the cookie value) for tests that run the real auth store. */
 export async function makeSession(
   f: Fixtures,
-  options: { userId: string; roles?: ('admin' | 'user')[]; amr?: 'oidc' | 'magic_link' },
+  options: {
+    userId: string;
+    roles?: ('admin' | 'user')[];
+    amr?: 'oidc' | 'magic_link' | 'breakglass';
+  },
 ): Promise<SessionFixture> {
   const cookieValue = f.ids.token();
   const csrf = f.ids.token();

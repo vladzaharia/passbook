@@ -1,6 +1,6 @@
 // Playwright webServer: mock Pocket ID + local D1 + vite dev on 5173.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
@@ -25,6 +25,8 @@ writeDevVars(varsFile, {
   SIGNER_PLATFORM_CERTIFICATE: fixture.certificate,
   SIGNER_PLATFORM_PRIVATE_KEY: fixture.privateKey,
   SIGNER_PLATFORM_INTERMEDIATE: fixture.intermediate,
+  // Token used by e2e/11-breakglass.spec.ts.
+  BREAKGLASS_TOKEN_SHA256: createHash('sha256').update('wbg_e2e-breakglass-token').digest('hex'),
 });
 
 const env = {

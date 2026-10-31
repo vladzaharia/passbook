@@ -7,6 +7,7 @@ import {
 import { sameOriginOnly } from '../../platform/csrf.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { limitBody } from './body-limit.ts';
+import { breakglassForm, breakglassSignIn } from './breakglass-handlers.ts';
 import { confirmMagic, consumeMagic, requestMagic } from './magic-handlers.ts';
 import { callbackOidc, startOidc } from './oidc-handlers.ts';
 import { getSession, logout } from './session-handlers.ts';
@@ -16,6 +17,8 @@ export const authRoutes = createRouter();
 authRoutes.use('/magic/*', sameOriginOnly);
 authRoutes.use('/logout', sameOriginOnly);
 authRoutes.use('/magic/*', limitBody(16 * 1024));
+authRoutes.use('/breakglass', sameOriginOnly);
+authRoutes.use('/breakglass', limitBody(4 * 1024));
 register(
   authRoutes,
   'auth',
@@ -65,6 +68,19 @@ register(
   'auth',
   { method: 'post', path: '/logout', summary: 'Sign out', status: 302 },
   logout,
+);
+
+register(
+  authRoutes,
+  'auth',
+  { method: 'get', path: '/breakglass', summary: 'Break-glass admin sign-in form (HTML)' },
+  breakglassForm,
+);
+register(
+  authRoutes,
+  'auth',
+  { method: 'post', path: '/breakglass', summary: 'Break-glass admin sign-in', status: 302 },
+  breakglassSignIn,
 );
 
 /** /api/v1/session */

@@ -1,6 +1,6 @@
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
-import type { Role } from '../../platform/auth.ts';
+import type { Amr, Role } from '../../platform/auth.ts';
 import { envString } from '../../platform/env.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -61,7 +61,7 @@ async function startSession(
   ctx: ServiceContext,
   userId: string,
   roles: Role[],
-  amr: 'oidc' | 'magic_link',
+  amr: Amr,
   name: string | null,
   sign: SignInContext,
 ): Promise<SignInResult> {
@@ -231,4 +231,39 @@ export async function verifyEmailForUser(
     targetId: userId,
   });
   await attachWaitingPassesForEmail(ctx, userId, email);
+}
+
+export const BREAKGLASS_PROVIDER = 'breakglass';
+const BREAKGLASS_EMAIL = 'breakglass@wallet.invalid';
+
+/**
+ * Admin sign-in that does not depend on Pocket ID. The token itself is checked by the handler;
+ * this only resolves the dedicated user, refusing it when an admin has disabled it.
+ */
+export async function signInBreakglass(
+  ctx: ServiceContext,
+  sign: SignInContext,
+): Promise<SignInResult> {
+  const linked = await repo.findIdentity(ctx.env.DB, BREAKGLASS_PROVIDER, BREAKGLASS_PROVIDER);
+  let userId = linked?.user_id;
+  if (!userId) {
+    const user =
+      (await repo.findUserByPrimaryEmail(ctx.env.DB, BREAKGLASS_EMAIL)) ??
+      (await createUser(ctx, BREAKGLASS_EMAIL, 'Break-glass admin'));
+    await repo.insertIdentity(ctx.env.DB, {
+      provider: BREAKGLASS_PROVIDER,
+      subject: BREAKGLASS_PROVIDER,
+      userId: user.id,
+      emailClaim: null,
+      emailVerified: false,
+      groups: [],
+      now: ctx.clock.now(),
+    });
+    userId = user.id;
+  }
+  const user = await repo.getUser(ctx.env.DB, userId);
+  if (!user || user.status !== 'active') {
+    throw new ForbiddenError('Break-glass sign-in is disabled.', 'BREAKGLASS_DISABLED');
+  }
+  return startSession(ctx, user.id, ['admin', 'user'], 'breakglass', user.name, sign);
 }

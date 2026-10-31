@@ -41,6 +41,8 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    - `OIDC_CLIENT_SECRET`, `TURNSTILE_SECRET`.
    - `SIGNER_PLATFORM_CERTIFICATE` and `SIGNER_PLATFORM_PRIVATE_KEY`: contents of
      `.secrets/platform-certificate.pem` and `.secrets/platform-key.pem`.
+   - `BREAKGLASS_TOKEN_SHA256`: run `npm run breakglass`, then paste the printed command. See
+     [Break-glass admin](#break-glass-admin).
    - Optional: `SIGNER_PLATFORM_INTERMEDIATE` (defaults to the bundled WWDR G4),
      `MAGIC_LINK_DAILY_CAP`, `KEK_V2` (rotation).
 6. **Provision** (owner only): `node tools/provision.ts` prints the wrangler commands;
@@ -58,7 +60,8 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    `npm run deploy -- --apply`. That refuses on placeholders, records a D1 Time Travel bookmark in
    `.wrangler/d1-bookmarks.log`, applies remote migrations, runs `wrangler deploy`.
    Queues, workflows and rate-limit namespaces are created by the deploy.
-10. **First admin**: sign in through Pocket ID as a `wallet-admins` member. Check Status: every
+10. **First admin**: sign in through Pocket ID as a `wallet-admins` member (or break-glass if
+    Pocket ID is down). Check Status: every
     component should be verified or configured.
 11. **Device acceptance test** (a real iPhone)
     - Create an org, a template and a pass from the admin console; email it to yourself.
@@ -66,6 +69,19 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
     - Update a field. The pass updates on the phone within a minute (push).
     - Near a venue the pass appears on the lock screen. The barcode scans.
     - Void the pass; the phone shows it as voided.
+
+## Break-glass admin
+
+Admin sign-in for when Pocket ID is down.
+
+- `npm run breakglass` writes a new token to `.secrets/breakglass-token` (never printed) and its
+  SHA-256 to `.dev.vars`, and prints the `wrangler secret put` command for production. The Worker
+  only stores the hash. `--rotate` replaces an existing token; update the secret and deploy.
+- Sign in at `/auth/breakglass` with the token. You get an admin session as "Break-glass admin":
+  30 min idle, 4 h max. Every sign-in is in the audit log; failures are logged and rate limited.
+- Turn it off: disable the "Break-glass admin" user in Users, or set the secret to `off`
+  (anything that is not a 64-character hex hash makes the route 404).
+- Keep the token offline (password manager). Rotate it after any use you did not expect.
 
 ## Day two
 

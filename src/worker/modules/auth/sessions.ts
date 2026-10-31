@@ -1,4 +1,4 @@
-import type { Role, SessionAuth, SessionStore } from '../../platform/auth.ts';
+import type { Amr, Role, SessionAuth, SessionStore } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -16,7 +16,9 @@ export interface SessionLifetime {
   touchEveryMs: number;
 }
 
-export function lifetimeFor(roles: readonly Role[]): SessionLifetime {
+export function lifetimeFor(roles: readonly Role[], amr?: Amr): SessionLifetime {
+  if (amr === 'breakglass')
+    return { idleMs: 30 * MINUTE, absoluteMs: 4 * HOUR, touchEveryMs: MINUTE };
   return roles.includes('admin')
     ? { idleMs: HOUR, absoluteMs: 12 * HOUR, touchEveryMs: MINUTE }
     : { idleMs: 30 * DAY, absoluteMs: 90 * DAY, touchEveryMs: 5 * MINUTE };
@@ -37,13 +39,13 @@ export async function createSession(
   input: {
     userId: string;
     roles: Role[];
-    amr: 'oidc' | 'magic_link';
+    amr: Amr;
     ipPrefix: string | null;
     userAgent: string | null;
   },
 ): Promise<NewSession> {
   const now = ctx.clock.now();
-  const life = lifetimeFor(input.roles);
+  const life = lifetimeFor(input.roles, input.amr);
   const cookieValue = ctx.ids.token(32);
   const idHash = await hashSessionCookie(cookieValue);
   const csrfSecret = ctx.ids.token(32);
@@ -90,7 +92,7 @@ export async function resolveSession(
   if (now >= row.expires_at || now >= row.idle_expires_at) return null;
   const roles = parseRoles(row.roles);
   if (roles.length === 0) return null;
-  const life = lifetimeFor(roles);
+  const life = lifetimeFor(roles, row.amr);
   if (now - row.last_seen_at >= life.touchEveryMs) {
     await repo.touchSession(env.DB, idHash, now, life.idleMs);
   }

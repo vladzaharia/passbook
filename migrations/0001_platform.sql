@@ -50,7 +50,7 @@ CREATE INDEX auth_identities_user ON auth_identities (user_id);
 CREATE TABLE sessions (
   id_hash TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  amr TEXT NOT NULL CHECK (amr IN ('oidc', 'magic_link')),
+  amr TEXT NOT NULL CHECK (amr IN ('oidc', 'magic_link', 'breakglass')),
   roles TEXT NOT NULL DEFAULT '["user"]' CHECK (json_valid(roles)),
   csrf_secret TEXT NOT NULL,
   created_at INTEGER NOT NULL,

@@ -13,7 +13,7 @@ export const SessionResponseSchema = z.discriminatedUnion('authenticated', [
     user: SessionUserSchema,
     roles: z.array(RoleSchema),
     csrfToken: z.string(),
-    amr: z.enum(['oidc', 'magic_link']),
+    amr: z.enum(['oidc', 'magic_link', 'breakglass']),
     expiresAt: TimestampSchema,
   }),
   z.object({

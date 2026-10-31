@@ -13,7 +13,9 @@ const STYLE = `:root{color-scheme:light dark;--bg:#fff;--fg:#111;--mut:#666;--li
 body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
 main{width:100%;max-width:360px}h1{font-size:20px;margin:0 0 8px}p{margin:0 0 16px;color:var(--mut)}
 button,a.btn{display:inline-block;font:inherit;padding:10px 18px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);cursor:pointer;text-decoration:none}
-a{color:var(--fg)}`;
+a{color:var(--fg)}
+input{box-sizing:border-box;width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+label{display:block;margin:0 0 4px}`;
 
 function layout(nonce: string, title: string, body: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style nonce="${nonce}">${STYLE}</style></head><body><main>${body}</main></body></html>`;
@@ -95,3 +97,18 @@ export const SIGN_IN_ERRORS: Record<string, { title: string; message: string; st
       status: 403,
     },
   };
+
+export function breakglassPage(nonce: string, input: { error?: string; next?: string }): string {
+  const error = input.error ? `<p role="alert">${escapeHtml(input.error)}</p>` : '';
+  const next = input.next
+    ? `<input type="hidden" name="next" value="${escapeHtml(input.next)}">`
+    : '';
+  return layout(
+    nonce,
+    'Break-glass sign-in',
+    `<h1>Break-glass sign-in</h1>${error}
+<form method="post" action="/auth/breakglass"><label for="t">Token</label>
+<p><input id="t" name="token" type="password" autocomplete="off" required></p>${next}
+<button type="submit">Sign in</button></form>`,
+  );
+}
