@@ -5,13 +5,18 @@ import { first, run } from '../../platform/db.ts';
 export async function insertWorkflowRun(
   db: D1Database,
   w: { instanceId: string; orgId: string; connectionId: string; startedAt: number },
-): Promise<void> {
-  await run(
+): Promise<boolean> {
+  const r = await run(
     db,
     `INSERT OR IGNORE INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
      VALUES (?, 'connection_sync', ?, ?, 'queued', ?)`,
     [w.instanceId, w.orgId, w.connectionId, w.startedAt],
   );
+  return r.changes === 1;
+}
+
+export async function deleteWorkflowRun(db: D1Database, instanceId: string): Promise<void> {
+  await run(db, 'DELETE FROM workflow_runs WHERE instance_id = ?', [instanceId]);
 }
 
 export async function setWorkflowStatus(
@@ -54,6 +59,14 @@ export async function deleteOldRuns(db: D1Database, before: number, keep: number
     [keep],
   );
   return old.changes + excess.changes;
+}
+
+export async function deleteOldWorkflowRuns(db: D1Database, before: number): Promise<number> {
+  return (
+    await run(db, "DELETE FROM workflow_runs WHERE kind = 'connection_sync' AND started_at < ?", [
+      before,
+    ])
+  ).changes;
 }
 
 export async function deleteOldWebhookEvents(db: D1Database, before: number): Promise<number> {

@@ -151,9 +151,18 @@ export function inlineStep(): StepLike & { names: string[]; sleeps: number[] } {
 export type { Json };
 
 /** A service context whose CONNECTION_SYNC binding records instead of starting workflows. */
-export function withWorkflow(kit: Kit, create?: (options: unknown) => Promise<void>) {
+export function withWorkflow(
+  kit: Kit,
+  create?: (options: unknown) => Promise<void>,
+  /** What `get(id).status()` reports; unset makes `get` throw, like an unknown instance. */
+  status?: () => string,
+) {
   const created: { id: string; params: Record<string, unknown> }[] = [];
   const binding = {
+    get: async () => {
+      if (!status) throw new Error('instance.not_found');
+      return { status: async () => ({ status: status() }) };
+    },
     create: async (options: { id: string; params: Record<string, unknown> }) => {
       if (create) await create(options);
       created.push(options);

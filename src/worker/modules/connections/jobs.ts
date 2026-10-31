@@ -1,12 +1,13 @@
 import type { JobOf } from '../../jobs/types.ts';
 import { run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { getDeps } from './deps.ts';
 import { applyIncoming, fromResult } from './records.ts';
 import { getConnection } from './repo.ts';
 import { getPassById, setLastRefreshed } from './repo-passes.ts';
 import { finishRun, insertRun } from './repo-runs.ts';
-import { deleteOldRuns, deleteOldWebhookEvents } from './repo-sync.ts';
+import { deleteOldRuns, deleteOldWebhookEvents, deleteOldWorkflowRuns } from './repo-sync.ts';
 import { classify, prepare } from './runtime.ts';
 import { reconcileConnections as schedule, startSync } from './schedule.ts';
 import { processWebhook } from './webhooks.ts';
@@ -25,6 +26,7 @@ async function refreshFromConnection(
   const conn = pass.connectionId ? await getConnection(db, pass.connectionId) : null;
   // A pass can only be refreshed through a connection of its own org.
   if (!conn || conn.orgId !== pass.orgId || !pass.externalRef) return;
+  if (!(await isOrgActive(sctx, conn.orgId))) return;
   const runId = sctx.ids.id();
   const startedAt = sctx.clock.now();
   await insertRun(db, {
@@ -103,7 +105,7 @@ export async function handleConnectionSync(
   ctx: ServiceContext,
 ): Promise<void> {
   const conn = await getConnection(ctx.env.DB, job.connectionId);
-  if (!conn?.enabled) return;
+  if (!conn?.enabled || !(await isOrgActive(ctx, conn.orgId))) return;
   if (conn.generation !== job.generation) {
     ctx.log.info('connection.sync_stale', { connectionId: conn.id });
     return;
@@ -123,7 +125,8 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
   const runs = await deleteOldRuns(ctx.env.DB, now - RUN_RETENTION_MS, RUNS_KEPT_PER_CONNECTION);
   const events = await deleteOldWebhookEvents(ctx.env.DB, now - WEBHOOK_RETENTION_MS);
-  ctx.log.info('connections.retention', { runs, events });
+  const workflows = await deleteOldWorkflowRuns(ctx.env.DB, now - RUN_RETENTION_MS);
+  ctx.log.info('connections.retention', { runs, events, workflows });
 }
 
 /**

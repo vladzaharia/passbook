@@ -9,6 +9,7 @@ import type { Actor } from '../../platform/context.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { toDto } from './dto.ts';
 import { patchConnection, summary } from './repo.ts';
 import { finishRun, insertRun, listRuns } from './repo-runs.ts';
@@ -83,6 +84,9 @@ export async function syncNow(
 ): Promise<z.infer<typeof SyncNowResponseSchema>> {
   const conn = await requireConnection(sctx, id);
   if (!conn.enabled) throw new ConflictError('The connection is disabled.', 'CONNECTION_DISABLED');
+  if (!(await isOrgActive(sctx, conn.orgId))) {
+    throw new ConflictError('The organization is not active.', 'ORG_INACTIVE');
+  }
   const instanceId = adminInstanceId(id, sctx.clock.now());
   const started = await startSync(sctx, conn, 'admin', instanceId, actor.id);
   await recordAudit(sctx, {

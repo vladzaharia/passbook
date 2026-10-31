@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
+import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { setDeps } from './deps.ts';
 import { breakerDelayMs } from './health.ts';
 import { getConnection } from './repo.ts';
@@ -99,7 +100,7 @@ describe('sync happy path (listChanges)', () => {
     const dto = await createDemo(kit, { config: { count: 25 } });
     const step = inlineStep();
     const { run: r, conn } = await sync(dto.id, {}, step);
-    expect(step.names.filter((s) => s.startsWith('page-'))).toEqual(['page-0', 'page-1', 'page-2']);
+    expect(step.names.filter((s) => /^page-\d+$/.test(s))).toEqual(['page-0', 'page-1', 'page-2']);
     expect(r?.records_seen).toBe(25);
     expect(conn?.cursor).toBe('0:25');
     const again = await sync(dto.id);
@@ -163,13 +164,59 @@ describe('mapping and validation', () => {
     await linkedPass(kit, dto.id, 'm-002');
     setDeps({
       applyConnectionRecord: async (_c, input) => {
-        if (input.passId === p1.id) throw Object.assign(new Error('boom'), { code: 'PASS_BUSY' });
+        if (input.passId === p1.id) throw new NotFoundError('gone', 'PASS_BUSY');
         return { changed: true, version: 2 };
       },
     });
     const { run: r } = await sync(dto.id);
     expect(r).toMatchObject({ records_seen: 2, passes_changed: 1, error_code: 'RECORD_ERRORS' });
     expect((await passRow(p1.id))?.sync_error_code).toBe('PASS_BUSY');
+  });
+
+  it('records the first failing records in the run detail', async () => {
+    const dto = await createDemo(kit, {
+      config: { count: 2 },
+      mapping: {
+        memberName: { from: '', transform: { kind: 'constant', options: { value: '' } } },
+      },
+    });
+    await linkedPass(kit, dto.id, 'm-001');
+    await linkedPass(kit, dto.id, 'm-002');
+    const { runId } = await sync(dto.id);
+    const row = await first<{ error_detail: string | null }>(
+      kit.env.DB,
+      'SELECT error_detail FROM connection_runs WHERE id = ?',
+      [runId],
+    );
+    expect(row?.error_detail).toContain('m-001: INVALID_INPUT');
+    expect(row?.error_detail?.split('\n')).toHaveLength(2);
+  });
+
+  it('never flags a pass for a lost publish race', async () => {
+    const dto = await createDemo(kit, { config: { count: 1 } });
+    const p = await linkedPass(kit, dto.id, 'm-001');
+    setDeps({
+      applyConnectionRecord: async () => {
+        throw new ConflictError('race', 'PASS_CONFLICT');
+      },
+    });
+    const { run: r } = await sync(dto.id);
+    expect(r?.error_code).toBeNull();
+    const row = await passRow(p.id);
+    expect(row).toMatchObject({ sync_error_code: null, sync_failures: 0, next_sync_at: null });
+  });
+
+  it('does not flag a pass for internal errors', async () => {
+    const dto = await createDemo(kit, { config: { count: 1 } });
+    const p = await linkedPass(kit, dto.id, 'm-001');
+    setDeps({
+      applyConnectionRecord: async () => {
+        throw new Error('D1 down');
+      },
+    });
+    const { run: r } = await sync(dto.id);
+    expect(r).toMatchObject({ outcome: 'error', error_code: 'INTERNAL' });
+    expect(await passRow(p.id)).toMatchObject({ sync_error_code: null, sync_failures: 0 });
   });
 });
 

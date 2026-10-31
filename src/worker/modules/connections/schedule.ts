@@ -2,8 +2,13 @@ import { connectors } from '../../connectors/registry.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { schedules } from './health.ts';
 import { type ConnectionRow, listDueConnections, patchConnection } from './repo.ts';
-import { insertRun } from './repo-runs.ts';
-import { insertWorkflowRun, workflowStartedAt } from './repo-sync.ts';
+import { deleteRun, insertRun } from './repo-runs.ts';
+import {
+  deleteWorkflowRun,
+  insertWorkflowRun,
+  setWorkflowStatus,
+  workflowStartedAt,
+} from './repo-sync.ts';
 
 const DUE_BATCH = 100;
 /** A scheduled instance still unfinished after this long is treated as lost. */
@@ -23,7 +28,7 @@ export function adminInstanceId(connectionId: string, now: number): string {
   return `sync-${connectionId}-admin-${Math.floor(now / ADMIN_BUCKET_MS)}`;
 }
 
-/** Creates the workflow instance (an existing id counts as started) plus its tracking rows. */
+/** Records the tracking rows, then creates the workflow instance (an existing id counts as started). */
 export async function startSync(
   sctx: ServiceContext,
   conn: ConnectionRow,
@@ -31,29 +36,43 @@ export async function startSync(
   instanceId: string,
   actorId: string | null = null,
 ): Promise<{ runId: string; workflowInstanceId: string }> {
-  try {
-    await sctx.env.CONNECTION_SYNC.create({
-      id: instanceId,
-      params: { connectionId: conn.id, generation: conn.generation, trigger, runId: instanceId },
-    });
-  } catch (error) {
-    if (!alreadyExists(error)) throw error;
-  }
   const now = sctx.clock.now();
-  await insertWorkflowRun(sctx.env.DB, {
+  const freshWorkflow = await insertWorkflowRun(sctx.env.DB, {
     instanceId,
     orgId: conn.orgId,
     connectionId: conn.id,
     startedAt: now,
   });
-  await insertRun(sctx.env.DB, {
+  const freshRun = await insertRun(sctx.env.DB, {
     id: instanceId,
     connectionId: conn.id,
     trigger,
     actorId,
     startedAt: now,
   });
+  try {
+    await sctx.env.CONNECTION_SYNC.create({
+      id: instanceId,
+      params: { connectionId: conn.id, generation: conn.generation, trigger, runId: instanceId },
+    });
+  } catch (error) {
+    if (!alreadyExists(error)) {
+      if (freshWorkflow) await deleteWorkflowRun(sctx.env.DB, instanceId);
+      if (freshRun) await deleteRun(sctx.env.DB, instanceId);
+      throw error;
+    }
+  }
   return { runId: instanceId, workflowInstanceId: instanceId };
+}
+
+/** True when the Workflow instance is gone or ended without closing its run. */
+async function instanceLost(sctx: ServiceContext, instanceId: string): Promise<boolean> {
+  try {
+    const { status } = await (await sctx.env.CONNECTION_SYNC.get(instanceId)).status();
+    return status === 'errored' || status === 'terminated' || status === 'unknown';
+  } catch {
+    return true;
+  }
 }
 
 /** Cron hook: starts a sync for every due connection whose breaker is closed. */
@@ -65,8 +84,9 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
     const instanceId = scheduledInstanceId(conn);
     try {
       const startedBefore = await workflowStartedAt(sctx.env.DB, instanceId);
-      await startSync(sctx, conn, 'schedule', instanceId);
       if (startedBefore !== null && now - startedBefore > STUCK_MS) {
+        // Long runs are legitimate; only a dead instance is replaced.
+        if (!(await instanceLost(sctx, instanceId))) continue;
         const seconds =
           conn.intervalSeconds ??
           connectors.get(conn.connectorType)?.defaults.intervalSeconds ??
@@ -82,8 +102,11 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
           },
           conn.generation,
         );
+        await setWorkflowStatus(sctx.env.DB, instanceId, 'errored', now, 'RUN_LOST');
         sctx.log.warn('connection.run_lost', { connectionId: conn.id });
+        continue;
       }
+      await startSync(sctx, conn, 'schedule', instanceId);
     } catch (error) {
       sctx.log.error('connection.schedule_failed', { connectionId: conn.id, error });
     }

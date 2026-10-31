@@ -278,10 +278,11 @@ export async function getGeneration(db: D1Database, id: string): Promise<number 
 export async function listDueConnections(db: D1Database, now: number, limit: number) {
   const rows = await all<ConnectionSql>(
     db,
-    `SELECT * FROM connections
-     WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= ?
-       AND (breaker_open_until IS NULL OR breaker_open_until <= ?)
-     ORDER BY next_run_at LIMIT ?`,
+    `SELECT c.* FROM connections c JOIN orgs o ON o.id = c.org_id
+     WHERE c.enabled = 1 AND o.status = 'active'
+       AND c.next_run_at IS NOT NULL AND c.next_run_at <= ?
+       AND (c.breaker_open_until IS NULL OR c.breaker_open_until <= ?)
+     ORDER BY c.next_run_at LIMIT ?`,
     [now, now, limit],
   );
   return rows.map(toRow);

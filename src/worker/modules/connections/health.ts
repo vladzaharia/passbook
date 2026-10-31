@@ -29,6 +29,8 @@ export interface RunOutcome {
   failure: Failure | null;
   stale: boolean;
   startedAt: number;
+  /** First failing records, one per line. */
+  errorDetail?: string | null;
 }
 
 /**
@@ -39,7 +41,7 @@ export async function closeRun(
   sctx: ServiceContext,
   connectionId: string,
   outcome: RunOutcome,
-  options: { countsForBreaker: boolean },
+  options: { countsForBreaker: boolean; reschedule?: boolean },
 ): Promise<void> {
   const db = sctx.env.DB;
   const now = sctx.clock.now();
@@ -56,7 +58,7 @@ export async function closeRun(
     errorCode: outcome.stale
       ? 'STALE_GENERATION'
       : (failure?.code ?? (totals.errors > 0 ? 'RECORD_ERRORS' : null)),
-    errorDetail: null,
+    errorDetail: outcome.errorDetail ?? null,
     httpStatus: failure?.httpStatus ?? null,
   });
   if (outcome.instanceId) await setWorkflowStatus(db, outcome.instanceId, 'complete', now);
@@ -67,6 +69,7 @@ export async function closeRun(
     value: now - outcome.startedAt,
   });
 
+  const reschedule = options.reschedule ?? true;
   const intervalMs = conn
     ? (conn.intervalSeconds ??
         connectors.get(conn.connectorType)?.defaults.intervalSeconds ??
@@ -90,7 +93,9 @@ export async function closeRun(
         lastRunAt: now,
         lastErrorCode: failure.code,
         lastErrorAt: now,
-        nextRunAt: schedules(conn) ? Math.max(retryAt, breakerOpenUntil ?? 0) : null,
+        ...(reschedule
+          ? { nextRunAt: schedules(conn) ? Math.max(retryAt, breakerOpenUntil ?? 0) : null }
+          : {}),
         updatedAt: now,
       },
       outcome.generation,
@@ -120,7 +125,7 @@ export async function closeRun(
       lastRunAt: now,
       lastSuccessAt: now,
       ...(partial ? { lastErrorCode: 'RECORD_ERRORS', lastErrorAt: now } : { lastErrorCode: null }),
-      nextRunAt: schedules(conn) ? now + intervalMs : null,
+      ...(reschedule ? { nextRunAt: schedules(conn) ? now + intervalMs : null } : {}),
       updatedAt: now,
     },
     outcome.generation,

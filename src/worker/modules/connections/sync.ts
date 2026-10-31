@@ -1,5 +1,6 @@
 import type { UpstreamRecord } from '../../connectors/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { getDeps } from './deps.ts';
 import {
   addOutcome,
@@ -10,8 +11,9 @@ import {
   type Totals,
 } from './records.ts';
 import { type ConnectionRow, getConnection, patchConnection } from './repo.ts';
-import { listDuePassRefs } from './repo-passes.ts';
+import { listDuePassRefs, listPassesByRefs, type SyncPass } from './repo-passes.ts';
 import { insertRun } from './repo-runs.ts';
+import { setWorkflowStatus } from './repo-sync.ts';
 import { classify, type Failure, type Prepared, paceMs, prepare } from './runtime.ts';
 
 export const MAX_PASSES_PER_RUN = 500;
@@ -24,6 +26,8 @@ export interface StepResult extends Totals {
   stale: boolean;
   cursor: string | null;
   hasMore: boolean;
+  /** First failing records (ref, code, validator message). */
+  samples: string[];
 }
 
 const stopped = (failure: Failure | null, stale: boolean, cursor: string | null): StepResult => ({
@@ -32,7 +36,11 @@ const stopped = (failure: Failure | null, stale: boolean, cursor: string | null)
   stale,
   cursor,
   hasMore: false,
+  samples: [],
 });
+
+/** Records applied per workflow step or webhook job; bounds D1 queries and CPU per invocation. */
+export const MAX_RECORDS_PER_STEP = 20;
 
 async function tryPrepare(sctx: ServiceContext, conn: ConnectionRow): Promise<Prepared | Failure> {
   try {
@@ -54,7 +62,11 @@ async function live(
 
 export type StartResult =
   | { ok: true; useList: boolean; cursor: string | null; startedAt: number }
-  | { ok: false; reason: 'GONE' | 'STALE_GENERATION' | Failure['code']; startedAt: number };
+  | {
+      ok: false;
+      reason: 'GONE' | 'STALE_GENERATION' | 'ORG_INACTIVE' | Failure['code'];
+      startedAt: number;
+    };
 
 export async function startRun(
   sctx: ServiceContext,
@@ -63,11 +75,13 @@ export async function startRun(
     runId: string;
     trigger: 'schedule' | 'webhook' | 'admin';
     generation: number;
+    instanceId?: string;
   },
 ): Promise<StartResult> {
   const startedAt = sctx.clock.now();
   const conn = await getConnection(sctx.env.DB, p.connectionId);
   if (!conn) return { ok: false, reason: 'GONE', startedAt };
+  if (p.instanceId) await setWorkflowStatus(sctx.env.DB, p.instanceId, 'running', startedAt);
   await insertRun(sctx.env.DB, {
     id: p.runId,
     connectionId: conn.id,
@@ -77,6 +91,8 @@ export async function startRun(
   if (!conn.enabled || conn.generation !== p.generation) {
     return { ok: false, reason: 'STALE_GENERATION', startedAt };
   }
+  if (!(await isOrgActive(sctx, conn.orgId)))
+    return { ok: false, reason: 'ORG_INACTIVE', startedAt };
   const prep = await tryPrepare(sctx, conn);
   if ('code' in prep) return { ok: false, reason: prep.code, startedAt };
   return {
@@ -108,6 +124,23 @@ async function inBatches<T>(
   }
 }
 
+interface ApplyExtra {
+  passes: Map<string, SyncPass | null>;
+  samples: string[];
+}
+
+const MAX_SAMPLES = 5;
+
+/** One query per 90 refs instead of one per record. */
+async function prefetchPasses(
+  sctx: ServiceContext,
+  conn: ConnectionRow,
+  refs: string[],
+): Promise<Map<string, SyncPass | null>> {
+  const found = await listPassesByRefs(sctx.env.DB, conn.orgId, conn.id, refs);
+  return new Map(refs.map((ref) => [ref, found.get(ref) ?? null]));
+}
+
 async function fetchAndApply(
   sctx: ServiceContext,
   conn: ConnectionRow,
@@ -116,27 +149,33 @@ async function fetchAndApply(
   cause: 'connection' | 'user_refresh',
   totals: Totals,
   failures: { first: Failure | null },
+  extra: ApplyExtra,
 ): Promise<void> {
+  let result: Awaited<ReturnType<typeof prep.def.fetchRecord>>;
   try {
-    const result = await prep.def.fetchRecord(prep.cc, ref);
-    addOutcome(
-      totals,
-      await applyIncoming(sctx, conn, ref, fromResult(result), {
-        generation: conn.generation,
-        cause,
-        intervalMs: prep.intervalMs,
-      }),
-    );
+    result = await prep.def.fetchRecord(prep.cc, ref);
   } catch (error) {
     const failure = classify(error);
     // INVALID_PAYLOAD is about one record; everything else is about the connection.
     if (failure.code === 'INVALID_PAYLOAD') {
       totals.seen += 1;
       totals.errors += 1;
+      if (extra.samples.length < MAX_SAMPLES) extra.samples.push(`${ref}: INVALID_PAYLOAD`);
     } else {
       failures.first ??= failure;
     }
+    return;
   }
+  // Seam failures other than record problems propagate so the step or job retries.
+  addOutcome(
+    totals,
+    await applyIncoming(sctx, conn, ref, fromResult(result), {
+      generation: conn.generation,
+      cause,
+      intervalMs: prep.intervalMs,
+      ...extra,
+    }),
+  );
 }
 
 /** Embedded records and deletions are applied directly; bare refs are fetched. */
@@ -145,13 +184,22 @@ export async function applyChanges(
   conn: ConnectionRow,
   prep: Prepared,
   changes: Change[],
-): Promise<{ totals: Totals; failure: Failure | null }> {
+): Promise<{ totals: Totals; failure: Failure | null; samples: string[] }> {
   const totals = emptyTotals();
   const failures: { first: Failure | null } = { first: null };
+  const extra: ApplyExtra = {
+    passes: await prefetchPasses(
+      sctx,
+      conn,
+      changes.map((c) => c.ref),
+    ),
+    samples: [],
+  };
   const options = {
     generation: conn.generation,
     cause: 'connection' as const,
     intervalMs: prep.intervalMs,
+    ...extra,
   };
   await inBatches(
     changes,
@@ -166,47 +214,64 @@ export async function applyChanges(
         const incoming: Incoming = { kind: 'record', record: change.record };
         addOutcome(totals, await applyIncoming(sctx, conn, change.ref, incoming, options));
       } else {
-        await fetchAndApply(sctx, conn, prep, change.ref, 'connection', totals, failures);
+        await fetchAndApply(sctx, conn, prep, change.ref, 'connection', totals, failures, extra);
       }
     },
     (c) => !c.deleted && !c.record,
   );
-  return { totals, failure: failures.first };
+  return { totals, failure: failures.first, samples: extra.samples };
 }
 
-/** One page of listChanges. */
-export async function runListPage(
+export type PageFetch =
+  | { ok: true; changes: Change[]; cursor: string | null; hasMore: boolean }
+  | { ok: false; result: StepResult };
+
+/** The listChanges request for one page. Applying and the cursor move are separate steps. */
+export async function fetchListPage(
   sctx: ServiceContext,
   p: { connectionId: string; generation: number; cursor: string | null },
+): Promise<PageFetch> {
+  const conn = await live(sctx, p.connectionId, p.generation);
+  if (!conn) return { ok: false, result: stopped(null, true, p.cursor) };
+  const prep = await tryPrepare(sctx, conn);
+  if ('code' in prep) return { ok: false, result: stopped(prep, false, p.cursor) };
+  if (!prep.def.listChanges) {
+    const failure: Failure = { code: 'CONFIG', httpStatus: null, retryAfterMs: null };
+    return { ok: false, result: stopped(failure, false, p.cursor) };
+  }
+  try {
+    const page = await prep.def.listChanges(prep.cc, p.cursor);
+    return { ok: true, changes: page.changes, cursor: page.cursor, hasMore: page.hasMore };
+  } catch (error) {
+    return { ok: false, result: stopped(classify(error), false, p.cursor) };
+  }
+}
+
+/** Applies one slice of a page. */
+export async function applySlice(
+  sctx: ServiceContext,
+  p: { connectionId: string; generation: number; changes: Change[] },
 ): Promise<StepResult> {
   const conn = await live(sctx, p.connectionId, p.generation);
-  if (!conn) return stopped(null, true, p.cursor);
+  if (!conn) return stopped(null, true, null);
   const prep = await tryPrepare(sctx, conn);
-  if ('code' in prep) return stopped(prep, false, p.cursor);
-  if (!prep.def.listChanges)
-    return stopped({ code: 'CONFIG', httpStatus: null, retryAfterMs: null }, false, p.cursor);
-  let page: Awaited<ReturnType<NonNullable<typeof prep.def.listChanges>>>;
-  try {
-    page = await prep.def.listChanges(prep.cc, p.cursor);
-  } catch (error) {
-    return stopped(classify(error), false, p.cursor);
-  }
-  const { totals, failure } = await applyChanges(sctx, conn, prep, page.changes);
-  if (failure) return { ...totals, failure, stale: false, cursor: p.cursor, hasMore: false };
-  // The cursor only advances when the whole page was handled; a stale run leaves it alone.
+  if ('code' in prep) return stopped(prep, false, null);
+  const { totals, failure, samples } = await applyChanges(sctx, conn, prep, p.changes);
+  return { ...totals, failure, stale: false, cursor: null, hasMore: false, samples };
+}
+
+/** The cursor only advances once the whole page was handled; a stale run leaves it alone. */
+export async function advanceCursor(
+  sctx: ServiceContext,
+  p: { connectionId: string; generation: number; cursor: string | null },
+): Promise<{ stale: boolean }> {
   const advanced = await patchConnection(
     sctx.env.DB,
-    conn.id,
-    { cursor: page.cursor },
+    p.connectionId,
+    { cursor: p.cursor },
     p.generation,
   );
-  return {
-    ...totals,
-    failure: null,
-    stale: advanced === 0,
-    cursor: page.cursor,
-    hasMore: page.hasMore && advanced > 0,
-  };
+  return { stale: advanced === 0 };
 }
 
 /** Refs of linked passes due for a refresh (connectors without listChanges). */
@@ -230,8 +295,21 @@ export async function runRefs(
   if ('code' in prep) return stopped(prep, false, null);
   const totals = emptyTotals();
   const failures: { first: Failure | null } = { first: null };
+  const extra: ApplyExtra = {
+    passes: await prefetchPasses(sctx, conn, p.refs),
+    samples: [],
+  };
   await Promise.all(
-    p.refs.map((ref) => fetchAndApply(sctx, conn, prep, ref, 'connection', totals, failures)),
+    p.refs.map((ref) =>
+      fetchAndApply(sctx, conn, prep, ref, 'connection', totals, failures, extra),
+    ),
   );
-  return { ...totals, failure: failures.first, stale: false, cursor: null, hasMore: false };
+  return {
+    ...totals,
+    failure: failures.first,
+    stale: false,
+    cursor: null,
+    hasMore: false,
+    samples: extra.samples,
+  };
 }

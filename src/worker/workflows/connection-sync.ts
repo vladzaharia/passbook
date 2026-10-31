@@ -17,7 +17,10 @@ export class ConnectionSync extends WorkflowEntrypoint<AppEnv, ConnectionSyncPar
     event: WorkflowEvent<ConnectionSyncParams>,
     step: WorkflowStep,
   ): Promise<void> {
-    const sctx = createServiceContext(this.env, { base: { workflow: 'connection-sync' } });
+    const sctx = createServiceContext(this.env, {
+      ctx: this.ctx,
+      base: { workflow: 'connection-sync' },
+    });
     const adapter: StepLike = {
       do: (name, fn) => step.do(name, fn as never) as Promise<never>,
       sleep: (name, ms) => step.sleep(name, ms),
