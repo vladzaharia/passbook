@@ -12,6 +12,11 @@ export function useSettings(scope: string) {
   });
 }
 
+/** Issuer URL of the sign-in provider, once settings have loaded. */
+export function useIdpUrl(): string | undefined {
+  return useSettings('platform').data?.oidc.issuer;
+}
+
 export function useSaveSettings(scope: string) {
   const client = useQueryClient();
   return useMutation({

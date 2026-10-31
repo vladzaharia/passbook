@@ -62,6 +62,21 @@ describe('settings page', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('links to the configured issuer', async () => {
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/settings': () =>
+          json({
+            ...entries(),
+            oidc: { issuer: 'https://id.staging.test', adminGroup: null, userGroup: null },
+          }),
+      },
+    });
+    const link = await screen.findByRole('link', { name: 'Polaris ID' });
+    expect(link).toHaveAttribute('href', 'https://id.staging.test');
+  });
+
   it('saves only the changed value and clears the dirty bar', async () => {
     let body: unknown;
     await renderApp('/admin/settings', {

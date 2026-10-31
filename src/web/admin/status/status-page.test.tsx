@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { dataItems } from './data-items.ts';
 import { sortBySeverity } from './queries.ts';
 
 const comp = (id: string, label: string, state: string, detail: string | null = null) => ({
@@ -52,6 +53,31 @@ describe('status page', () => {
     expect(screen.getByText('Queue backlog 900')).toBeInTheDocument();
     expect(await screen.findByText('No workflow runs')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('maps data keys to labels and hides null values', () => {
+    const items = dataItems(
+      { orgId: 'o1', bindingPresent: false, lastRunAt: null, daysRemaining: 12 },
+      (id) => (id === 'o1' ? 'Acme' : ''),
+    );
+    expect(items).toEqual([
+      { label: 'Organization', value: 'Acme' },
+      { label: 'Binding present', value: 'No' },
+      { label: 'Days remaining', value: '12' },
+    ]);
+  });
+
+  it('shows the check time once, not on every card', async () => {
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': () => json(status),
+        '/api/v1/status/workflows': () => json({ items: [] }),
+      },
+    });
+    await screen.findByRole('list', { name: 'Components' });
+    expect(screen.getAllByText(/Checked/)).toHaveLength(1);
+    expect(screen.queryByText(/^Build /)).not.toBeInTheDocument();
   });
 
   it('shows an error with retry', async () => {
