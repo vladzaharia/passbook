@@ -1,1 +1,48 @@
-export {};
+import { all, first, run } from '../../platform/db.ts';
+
+type Db = D1Database;
+
+export { emailsOf, getUser } from '../auth/repo.ts';
+export { getSession, listLiveSessions } from '../auth/sessions-repo.ts';
+
+export interface MyPassRow {
+  id: string;
+  display_title: string | null;
+  display_subtitle: string | null;
+  status: 'active' | 'voided';
+  modified_at: number;
+  last_refreshed_at: number | null;
+  refresh_requested_at: number | null;
+  download_token: string;
+  template_name: string;
+  org_name: string;
+  pass_json: string | null;
+}
+
+// pass_versions keeps the built pass.json for recent versions; it is what the card renders.
+const SELECT = `
+  SELECT p.id, p.display_title, p.display_subtitle, p.status, p.modified_at, p.last_refreshed_at,
+         p.refresh_requested_at, p.download_token, t.name AS template_name, o.name AS org_name,
+         COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json
+  FROM passes p
+  JOIN templates t ON t.id = p.template_id
+  JOIN orgs o ON o.id = p.org_id
+  LEFT JOIN pass_versions pv ON pv.pass_id = p.id AND pv.version = p.version`;
+
+export const listMyPasses = (db: Db, userId: string, cursor: string | undefined, limit: number) =>
+  all<MyPassRow>(
+    db,
+    `${SELECT} WHERE p.owner_user_id = ? ${cursor ? 'AND p.id < ?' : ''} ORDER BY p.id DESC LIMIT ?`,
+    cursor ? [userId, cursor, limit + 1] : [userId, limit + 1],
+  );
+
+export const getMyPass = (db: Db, userId: string, passId: string) =>
+  first<MyPassRow>(db, `${SELECT} WHERE p.owner_user_id = ? AND p.id = ?`, [userId, passId]);
+
+export async function removeEmail(db: Db, userId: string, email: string): Promise<boolean> {
+  const { changes } = await run(db, 'DELETE FROM user_emails WHERE user_id = ? AND email = ?', [
+    userId,
+    email,
+  ]);
+  return changes > 0;
+}

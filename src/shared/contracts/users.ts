@@ -48,7 +48,18 @@ export const UserDetailSchema = UserSchema.extend({
       userAgent: z.string().nullable(),
     }),
   ),
+  /** First 100 owned passes; `passCount` is the total. */
   passIds: z.array(IdSchema),
+  passCount: z.number().int().nonnegative(),
+  recentAudit: z.array(
+    z.object({
+      id: z.number().int(),
+      at: TimestampSchema,
+      action: z.string(),
+      actorType: z.string(),
+      actorId: z.string().nullable(),
+    }),
+  ),
 });
 export const UpdateUserSchema = z.object({ status: z.enum(['active', 'disabled']) });
 export const AddUserEmailSchema = z.object({ email: z.string().max(254) });
