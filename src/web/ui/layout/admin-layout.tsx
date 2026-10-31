@@ -38,10 +38,7 @@ export function AdminLayout() {
             onClick={() => setPaletteOpen(true)}
           >
             <span className="sr-only sm:not-sr-only sm:truncate">Search</span>
-            <kbd
-              aria-hidden="true"
-              className="ml-auto hidden rounded-sm border border-border px-1.5 font-mono text-xs sm:inline"
-            >
+            <kbd className="ml-auto hidden rounded-sm border border-border px-1.5 font-mono text-xs sm:inline">
               ⌘K
             </kbd>
           </Button>
