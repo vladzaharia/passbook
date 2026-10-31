@@ -64,6 +64,63 @@ beforeAll(async () => {
 });
 beforeEach(() => clearIdentityKeyCache());
 
+describe('identity rotation', () => {
+  it('swaps cert and key for the same pass type ID, drops the old credential and audits', async () => {
+    const f = await acme();
+    const dto = (await (await upload(f)).json()) as Dto;
+    const before = await first<{ credential_id: string }>(
+      env.DB,
+      'SELECT credential_id FROM signing_identities WHERE id = ?',
+      [dto.id],
+    );
+    const renewed = await createFixtureIdentity(f.identity, { days: 5 });
+    appEnv = await envFor(renewed);
+    const res = await call('POST', `/${dto.id}/rotate`, {
+      certificatePem: renewed.certificate,
+      privateKeyPem: renewed.privateKey,
+    });
+    expect(res.status).toBe(200);
+    const next = (await res.json()) as Dto;
+    expect(next.certSha256).not.toBe(dto.certSha256);
+    expect(next.daysRemaining).toBe(4);
+    expect(
+      await first(env.DB, 'SELECT 1 AS x FROM credentials WHERE id = ?', [before?.credential_id]),
+    ).toBeNull();
+    const row = await first<{ rotated_at: number | null }>(
+      env.DB,
+      'SELECT c.rotated_at FROM credentials c JOIN signing_identities s ON s.credential_id = c.id WHERE s.id = ?',
+      [dto.id],
+    );
+    expect(row?.rotated_at).toBeGreaterThan(0);
+    const audit = await first(
+      env.DB,
+      "SELECT 1 AS x FROM audit_log WHERE action = 'identity.rotate' AND target_id = ?",
+      [dto.id],
+    );
+    expect(audit).not.toBeNull();
+    const resolved = await createIdentityResolver(appEnv).byId(dto.id);
+    expect(resolved.material.privateKey).toContain(renewed.privateKey.slice(0, 40));
+  });
+
+  it('refuses another pass type ID and the platform identity', async () => {
+    const f = await acme();
+    const dto = (await (await upload(f)).json()) as Dto;
+    const other = await acme();
+    appEnv = await envFor(other);
+    const wrong = await call('POST', `/${dto.id}/rotate`, {
+      certificatePem: other.certificate,
+      privateKeyPem: other.privateKey,
+    });
+    expect(wrong.status).toBe(422);
+    expect(((await wrong.json()) as { code: string }).code).toBe('IDENTITY_MISMATCH');
+    const platform = await call('POST', '/platform/rotate', {
+      certificatePem: other.certificate,
+      privateKeyPem: other.privateKey,
+    });
+    expect([404, 409]).toContain(platform.status);
+  });
+});
+
 describe('identity upload', () => {
   it('stores the key encrypted, keeps it out of responses and audit, and lists details', async () => {
     const f = await acme();

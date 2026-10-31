@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type {
   IdentityDto,
+  RotateIdentitySchema,
   UpdateIdentitySchema,
   UploadIdentitySchema,
 } from '../../../shared/contracts/identities.ts';
@@ -10,7 +11,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
-import { apnsBindingPresent } from './db-resolver.ts';
+import { apnsBindingPresent, clearIdentityKeyCache } from './db-resolver.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
 import { readPkcs12 } from './pkcs12.ts';
 import {
@@ -22,11 +23,13 @@ import {
   insertIdentity,
   listIdentityRows,
   orgExists,
+  rotateIdentityRows,
   updateIdentityRow,
 } from './repo.ts';
 
 type Upload = z.infer<typeof UploadIdentitySchema>;
 type Patch = z.infer<typeof UpdateIdentitySchema>;
+type Rotation = z.infer<typeof RotateIdentitySchema>;
 
 const DAY_MS = 86_400_000;
 const BINDING_NAME = /^[A-Z][A-Z0-9_]{0,63}$/;
@@ -85,7 +88,7 @@ export async function getIdentity(ctx: ServiceContext, id: string): Promise<Iden
 }
 
 async function materialOf(
-  input: Upload,
+  input: Upload | Rotation,
 ): Promise<{ certificatePem: string; privateKeyPem: string }> {
   if (input.pkcs12Base64) {
     const p12 = await readPkcs12(input.pkcs12Base64, input.pkcs12Password ?? '');
@@ -226,4 +229,74 @@ export async function deleteIdentity(ctx: ServiceContext, actor: Actor, id: stri
     targetId: id,
     detail: { label: row.label, passTypeIdentifier: row.pass_type_identifier },
   });
+}
+
+/** Yearly renewal: new certificate and key for the same pass type ID; existing passes keep working. */
+export async function rotateIdentity(
+  ctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  input: Rotation,
+): Promise<IdentityDto> {
+  const row = await requireRow(ctx, id);
+  if (row.source === 'env' || id === PLATFORM_IDENTITY_ID)
+    throw new ConflictError(
+      'The platform certificate rotates through deployment secrets.',
+      'IDENTITY_PROTECTED',
+    );
+  if (input.pkcs12Base64 && (input.certificatePem || input.privateKeyPem))
+    throw invalid('Send either PEM files or a PKCS#12 file, not both.', 'IDENTITY_INPUT');
+  const checked = await validateIdentityMaterial({
+    ...(await materialOf(input)),
+    intermediatePem: intermediatePem(ctx.env),
+    now: ctx.clock.now(),
+  });
+  const { details } = checked;
+  if (
+    details.passTypeIdentifier !== row.pass_type_identifier ||
+    (details.teamIdentifier ?? '') !== row.team_identifier
+  )
+    throw invalid(
+      `The certificate is for ${details.passTypeIdentifier ?? 'another pass type'}, not ${row.pass_type_identifier}.`,
+      'IDENTITY_MISMATCH',
+    );
+  const credentialId = ctx.ids.id();
+  const envelope = await encryptSecret(
+    await loadKekRing(ctx.env),
+    checked.privateKeyPem,
+    credentialAad(credentialId, row.org_id, 'pass_signer'),
+  );
+  await rotateIdentityRows(ctx.env.DB, {
+    identityId: id,
+    oldCredentialId: row.credential_id,
+    credential: {
+      id: credentialId,
+      orgId: row.org_id,
+      kekVersion: envelope.kekVersion,
+      iv: envelope.iv,
+      wrappedDek: envelope.wrappedDek,
+      ciphertext: envelope.ciphertext,
+      fingerprint: details.sha256,
+    },
+    certPem: checked.certificatePem,
+    certSha256: details.sha256,
+    notBefore: details.notBefore,
+    notAfter: details.notAfter,
+    now: ctx.clock.now(),
+  });
+  clearIdentityKeyCache();
+  await recordAudit(ctx, {
+    ...auditActor(actor),
+    orgId: row.org_id,
+    action: 'identity.rotate',
+    targetType: 'identity',
+    targetId: id,
+    detail: {
+      passTypeIdentifier: row.pass_type_identifier,
+      from: row.cert_sha256,
+      to: details.sha256,
+      notAfter: details.notAfter,
+    },
+  });
+  return getIdentity(ctx, id);
 }

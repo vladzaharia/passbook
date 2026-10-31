@@ -5,6 +5,7 @@ import {
   IdentitySchema,
   IdParamSchema,
   OkSchema,
+  RotateIdentitySchema,
   UpdateIdentitySchema,
   UploadIdentitySchema,
 } from '../../../shared/contracts/index.ts';
@@ -17,6 +18,7 @@ import {
   deleteIdentity,
   getIdentity,
   listIdentities,
+  rotateIdentity,
   updateIdentity,
   uploadIdentity,
 } from './service.ts';
@@ -101,4 +103,25 @@ register(
     await deleteIdentity(serviceContext(c), requestActor(c), idOf(c));
     return c.json({ ok: true });
   },
+);
+register(
+  identitiesRoutes,
+  'identities',
+  {
+    method: 'post',
+    path: '/{id}/rotate',
+    summary: 'Replace the certificate and key of an Apple identity',
+    params: IdParamSchema,
+    body: RotateIdentitySchema,
+    response: IdentitySchema,
+  },
+  async (c: Ctx) =>
+    c.json(
+      await rotateIdentity(
+        serviceContext(c),
+        requestActor(c),
+        idOf(c),
+        valid<z.infer<typeof RotateIdentitySchema>>(c, 'json'),
+      ),
+    ),
 );

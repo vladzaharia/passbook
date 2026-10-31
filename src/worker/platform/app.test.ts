@@ -152,12 +152,22 @@ describe('csrf', () => {
       body,
     });
     expect(await bad.json()).toMatchObject({ code: 'CSRF_ORIGIN' });
-    const ok = await call('/auth/magic/request', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'sec-fetch-site': 'same-origin' },
-      body,
-    });
-    expect(ok.status).toBe(202);
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.hostname !== 'challenges.cloudflare.com') throw new Error(`Unexpected fetch ${url}`);
+      return Response.json({ success: true });
+    }) as typeof fetch;
+    try {
+      const ok = await call('/auth/magic/request', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'sec-fetch-site': 'same-origin' },
+        body,
+      });
+      expect(ok.status).toBe(202);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 });
 

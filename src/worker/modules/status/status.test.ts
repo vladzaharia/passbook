@@ -103,6 +103,20 @@ describe('status components', () => {
     expect(find(s, 'queue')).toMatchObject({ state: 'degraded', data: { backlog: 2000, dlq: 3 } });
   });
 
+  it('does not count rejected template uploads as workflow failures', async () => {
+    const now = Date.now();
+    await run(
+      env.DB,
+      "INSERT INTO workflow_runs (instance_id, kind, status, started_at, error_code) VALUES ('r1', 'template_import', 'errored', ?, 'IMPORT_INVALID')",
+      [now],
+    );
+    const s = await status({}, okFetch, new ManualClock(now));
+    expect(find(s, 'workflows')).toMatchObject({
+      state: 'verified',
+      data: { errored: 0, total: 1 },
+    });
+  });
+
   it('says so when queue metrics or the DLQ binding are unavailable', async () => {
     const s = await status({ JOBS: {} as Queue });
     expect(find(s, 'queue')).toMatchObject({

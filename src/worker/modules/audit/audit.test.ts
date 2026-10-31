@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
+import { fakeAuth, fixtures, makeEnv, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -140,6 +140,39 @@ describe('audit api', () => {
     expect((await get('?cursor=abc')).status).toBe(422);
     expect((await get('', fake.user())).status).toBe(403);
     expect((await get('', {})).status).toBe(401);
+  });
+});
+
+describe('audit labels', () => {
+  it('names actors and targets, null when gone or unknown', async () => {
+    const f = fixtures(appEnv, new ManualClock(Date.now()));
+    const org = await makeOrg(f, { name: 'Acme Gym' });
+    const user = await makeUser(f);
+    await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Fatima Zahra', user.id]);
+    const ctx = createServiceContext(appEnv);
+    await recordAudit(ctx, {
+      orgId: org.id,
+      actorType: 'user',
+      actorId: user.id,
+      action: 'org.update',
+      targetType: 'org',
+      targetId: org.id,
+    });
+    await recordAudit(ctx, {
+      actorType: 'user',
+      actorId: 'deleted-user',
+      action: 'pass.void',
+      targetType: 'pass',
+      targetId: 'gone',
+    });
+    await recordAudit(ctx, { actorType: 'system', action: 'cron.run' });
+    const page = (await (await get('')).json()) as {
+      items: { action: string; actorLabel: string | null; targetLabel: string | null }[];
+    };
+    const by = (a: string) => page.items.find((i) => i.action === a);
+    expect(by('org.update')).toMatchObject({ actorLabel: 'Fatima Zahra', targetLabel: 'Acme Gym' });
+    expect(by('pass.void')).toMatchObject({ actorLabel: null, targetLabel: null });
+    expect(by('cron.run')).toMatchObject({ actorLabel: null, targetLabel: null });
   });
 });
 

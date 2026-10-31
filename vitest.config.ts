@@ -43,7 +43,7 @@ export default defineConfig({
         test: {
           name: 'worker',
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
-          setupFiles: ['./test/setup/apply-migrations.ts'],
+          setupFiles: ['./test/setup/block-network.ts', './test/setup/apply-migrations.ts'],
         },
       },
       {
@@ -57,6 +57,12 @@ export default defineConfig({
         },
       },
     ],
-    coverage: { provider: 'v8', include: ['src/**'], exclude: ['src/generated/**', '**/*.test.*'] },
+    // v8 coverage aborts inside workerd (node:inspector), so `npm run coverage` runs the worker
+    // project with istanbul and the rest with v8.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/generated/**', '**/*.test.*'],
+    },
   },
 });

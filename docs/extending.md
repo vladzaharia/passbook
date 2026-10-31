@@ -1,54 +1,100 @@
-# Templates and update sources
+# Extending
 
-Templates and source adapters are trusted, version-controlled code. The service accepts only the personalization schema declared by a registered template. It does not expose an asset uploader, certificate uploader, arbitrary pass JSON editor, or arbitrary remote URL fetch endpoint.
+Everything below is a folder plus `npm run gen`. Registries in `src/generated/*` are generated;
+never edit them or a shared index.
 
-## Add a template
+## Add a template package
 
-1. Add `templates/your-template.pkpasstemplate/` with `pass.json`, icon/logo/artwork files, optional localized `.strings` files, and optional Pass Designer `tooling.json`.
-2. Run `npm run assets`. The build indexes PNGs and localization files into `src/generated/your-template-assets.ts` and copies them into the static asset deployment. `tooling.json` is never shipped inside a signed pass.
-3. Create a `PassTemplate` module under `src/templates/` and register it in `index.ts`. Import the native JSON and generated asset map. Declare the template ID, integer version, name, signing identity, APNs binding name, and input schema.
-4. Map inputs by Wallet field key (`fieldKeys`) or JSON Pointer (`paths`). A `customize(pass, input)` hook handles relationships such as home gym → native Maps action and eligible locations.
-5. Add separate PEM secrets `SIGNER_<IDENTITY>_CERTIFICATE` and `SIGNER_<IDENTITY>_PRIVATE_KEY`, plus a matching mTLS binding for APNs. Identity names are uppercased and hyphens become underscores. WWDR G4 is bundled; set `SIGNER_<IDENTITY>_INTERMEDIATE` if the certificate uses a different intermediate. Multiple artwork themes can share one identity/binding. A different Pass Type ID needs its own certificate and binding.
-6. Increase `version` whenever art, fixed text, mappings, or behavior changes. Existing passes are immutable until rebuilt; PATCH their personalization with `{}` or run their configured source refresh to regenerate and notify them.
+A template is a folder with a native `pass.json`, images and a `wallet.template.json` manifest.
 
-Do not change a deployed pass's serial number, pass type, team, or authentication token to update it. Server-owned identity fields cannot be mapped through input JSON pointers. URLs are validated; member values are escaped in HTML. Asset file names are validated before signing.
+    templates/my-card/
+      pass.json                 Apple pass.json with placeholder values
+      wallet.template.json      inputs, bindings, display (below)
+      icon.png icon@2x.png icon@3x.png   required; logo, strip, thumbnail, ... as the style needs
+      en.lproj/pass.strings     optional
+      tooling.json              optional Pass Designer file, never signed into a pass
 
-The core generator is template-independent. Henry’s' home-club behavior and both themes live in `src/templates/`. The current studio and email presentation use a logo/icon convention, and the studio's illustrated preview is specific to Henry’s; additional brands can add their own preview renderer while using the same schema-driven editor and API.
-
-## Add an API adapter
-
-Implement `UpdateSource` in `src/sources/`, then register it in `src/sources/index.ts`. `refresh` receives a trusted server-side environment, the external record reference, current scalar personalization, and an injectable `fetch`. It returns only the changed or authoritative personalization fields. It can call any API protocol you implement; HTTP JSON is supplied as a convenience adapter.
-
-```ts
-const source = httpJsonSource({
-  id: 'club-system',
-  intervalSeconds: 900,
-  request({ env, reference }) {
-    return new Request(
-      'https://api.example.com/members/' + encodeURIComponent(reference),
-      { headers: { Authorization: `Bearer ${env.CLUB_API_TOKEN}` } }
-    );
-  },
-  map(data) {
-    // Validate the upstream payload before mapping it to your template's schema.
-    const member = parseClubMember(data);
-    return { memberName: member.name, membership: member.plan };
-  }
-});
-```
-
-`parseClubMember` represents your own runtime validator. Add custom environment fields and upload secrets with Wrangler. Keep base URLs and authentication in server configuration; do not accept them from pass holders. The HTTP helper enforces HTTPS, refuses redirects, applies a 15-second timeout, and limits response bodies to 256 KiB. Final template validation also runs on every mapped update.
-
-The included `membership-api` adapter calls `{MEMBERSHIP_API_BASE_URL}/members/{encodedReference}` with a bearer token. Its explicit example contract is:
+Minimal `wallet.template.json`:
 
 ```json
-{ "name": "Alex Morgan", "membership": "All-Inclusive Wellness", "active": true, "keyTag": "000123" }
+{
+  "schema": 1,
+  "name": "My card",
+  "inputs": {
+    "type": "object",
+    "required": ["holder"],
+    "properties": {
+      "holder": { "type": "string", "x-label": "Name", "minLength": 1, "maxLength": 80 }
+    }
+  },
+  "sample": { "holder": "Alex Morgan" },
+  "bindings": [
+    { "to": { "field": "holder" }, "value": "{{holder}}" },
+    { "to": { "barcode": "*", "prop": "message" }, "value": "{{holder}}" }
+  ],
+  "display": { "title": "{{holder}}", "search": ["holder"] }
+}
 ```
 
-It polls every 15 minutes; Cron dispatches due work each minute. `keyTag` is optional and must be a string. This is an example integration contract, not a claim that Henry’s exposes this endpoint. Configure the real membership system's API and mapping before assigning that source to real passes.
+- `inputs` is JSON Schema. `x-label`, `x-group`, `x-order`, `x-widget`, `x-search` drive the forms.
+- `bindings` write input values into `pass.json` by field key, barcode, action or JSON pointer.
+  Values are `{{input}}` expressions; `omitIfEmpty` and `remove` drop empty parts.
+- `behaviors` (optional): `[{ "use": "venue-locations", "version": 1, "config": { … } }]`.
+- Start from a copy of `templates/starter-generic`. See `templates/henrys-blue` for lookups
+  and behaviors.
 
-Refresh failures preserve the current signed pass and record `SOURCE_REFRESH_FAILED`. Changed values create a new signed version and a transactional push job; identical values produce no push. A webhook can invoke the authenticated `/sync` endpoint for faster refresh. If a provider requires its own webhook signature, implement a narrow verification route that then queues the same sync job.
+Build and check:
 
-## Delivery adapters
+    npm run gen        # validates the package, bakes it into src/generated and public/templates
+    npm run check
 
-`src/jobs.ts` separates outbox dispatch from pass generation. `src/email.ts` assembles the Cloudflare Email Sending payload. APNs selects the mTLS binding named by each template's `apnsBinding`. The queue consumer and scheduled handler share the same durable ledger, so temporary Queue or provider failures can be retried without losing a published version.
+Baked templates are read-only in the admin console; clone one to edit it.
+
+**Upload instead of bake.** Admins can upload the same folder as a zip (up to 15 MB) from
+Templates. Extra limits for uploads: `pass.json` and the manifest are at most 64 KiB each, PNGs at
+most 4096 px per side, no `pattern` or `$ref` in the input schema, and only behaviors that exist in
+the registry. The import report lists every issue by path.
+
+## Add a behavior
+
+A behavior is trusted code that edits a pass after bindings run (for example adding locations).
+
+1. `src/passkit/behaviors/<id>/index.ts` with `export default` of a `BehaviorPlugin`:
+
+   ```ts
+   const plugin: BehaviorPlugin<Config> = {
+     id: 'my-behavior',
+     version: 1,
+     configSchema: { type: 'object', additionalProperties: false, properties: { … } },
+     apply(pass, input, config, ctx) { /* mutate pass */ },
+   };
+   export default plugin;
+   ```
+
+2. Tests beside it (`index.test.ts`). `venue-locations` is the model.
+3. `npm run gen`. Templates reference it with `behaviors: [{ "use": "my-behavior", … }]`.
+
+Bump `version` when `configSchema` changes in a way that breaks stored configs.
+
+## Add a connector
+
+A connector pulls records from an upstream system and maps them to pass inputs.
+
+1. `src/worker/connectors/<type>/index.ts` with `export default` of a `ConnectorDefinition`
+   (`src/worker/connectors/types.ts`):
+   - `type`, `version`, `displayName`
+   - `capabilities`: `poll`, `delta`, `webhook`, `import`, `snapshot`
+   - `configSchema` (zod, non-secret; also drives the admin form), optional `secretSchema`
+     (write-only, never returned)
+   - `outputFields`: the fields templates can bind to
+   - `defaults`: `intervalSeconds`, `maxConcurrency`, `requestsPerMinute`, `timeoutMs`
+   - `urls(config)`: every URL it will fetch, checked against the SSRF rules when saved
+   - `fetchRecord(ctx, ref)`: required; returns `ok`, `not_modified` or `not_found`
+   - optional `test`, `listChanges` (cursor paging), `verifyWebhook`, `importRecords`
+2. Network only through `ctx.fetch` (HTTPS, public hosts, no redirects, size and time caps).
+   Never read the Worker env or log secrets.
+3. Failures: throw `ConnectorError('AUTH' | 'FORBIDDEN' | 'RATE_LIMITED' | 'UPSTREAM' | 'TIMEOUT' |
+   'INVALID_PAYLOAD' | 'CONFIG')`. `AUTH` and `TIMEOUT` mark the connection unhealthy and never
+   change passes.
+4. Tests beside it. `demo` (deterministic fake upstream) and `http-json` are the models.
+5. `npm run gen`, then create a connection in the admin console and bind passes to it.

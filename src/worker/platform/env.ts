@@ -1,6 +1,9 @@
 /** Worker environment. `Env` comes from `wrangler types`; this adds bindings that are optional at runtime. */
-export interface AppEnv extends Env {
-  /** Absent until the platform certificate is uploaded; treated as "push unavailable". */
+export interface AppEnv extends Omit<Env, 'APNS'> {
+  /**
+   * Absent until the platform certificate is uploaded; treated as "push unavailable".
+   * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
+   */
   APNS?: Fetcher;
   /** Optional ceiling on the daily magic-link volume. */
   MAGIC_LINK_DAILY_CAP?: string;

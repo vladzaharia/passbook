@@ -1,6 +1,7 @@
-import { createExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { makeEnv } from '../../../test/helpers/index.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled, MINUTE_CRON } from './cron.ts';
 import { DLQ_QUEUE, handleQueue, JOBS_QUEUE, retryDelaySeconds } from './queue.ts';
@@ -72,20 +73,51 @@ describe('job router', () => {
 });
 
 describe('cron dispatcher', () => {
-  it('has hooks for both schedules and tolerates them all', async () => {
+  const controller = (cron: string) =>
+    ({
+      cron,
+      scheduledTime: Date.now(),
+      type: 'scheduled',
+      noRetry() {},
+    }) as unknown as ScheduledController;
+
+  it('runs every hook of both schedules without a logged failure', async () => {
     expect(CRON_HOOKS[MINUTE_CRON]?.length).toBeGreaterThan(0);
     expect(CRON_HOOKS[DAILY_CRON]?.length).toBeGreaterThan(0);
-    for (const cron of [MINUTE_CRON, DAILY_CRON, 'unknown']) {
-      await handleScheduled(
-        {
-          cron,
-          scheduledTime: Date.now(),
-          type: 'scheduled',
-          noRetry() {},
-        } as unknown as ScheduledController,
-        env as AppEnv,
-        createExecutionContext(),
+    const appEnv = await makeEnv();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      for (const cron of [MINUTE_CRON, DAILY_CRON, 'unknown']) {
+        const ctx = createExecutionContext();
+        await handleScheduled(controller(cron), appEnv, ctx);
+        await waitOnExecutionContext(ctx);
+      }
+      const logged = error.mock.calls.map((call) => String(call[0]));
+      expect(logged.filter((l) => /cron\.(hook|record)_failed/.test(l))).toEqual([]);
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it('logs a failing hook instead of throwing', async () => {
+    const hooks = CRON_HOOKS[MINUTE_CRON] ?? [];
+    const original = hooks[0];
+    if (!original) throw new Error('no minute hook');
+    hooks[0] = {
+      name: original.name,
+      run: async () => {
+        throw new Error('boom');
+      },
+    };
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await handleScheduled(controller(MINUTE_CRON), env as AppEnv, createExecutionContext());
+      expect(error.mock.calls.some((call) => String(call[0]).includes('cron.hook_failed'))).toBe(
+        true,
       );
+    } finally {
+      hooks[0] = original;
+      error.mockRestore();
     }
   });
 });

@@ -7,9 +7,13 @@ export const AuditEntrySchema = z.object({
   orgId: IdSchema.nullable(),
   actorType: z.enum(['user', 'api_key', 'system', 'connection', 'device']),
   actorId: z.string().nullable(),
+  /** Display name for the actor (user name or email, key name); null when unknown or deleted. */
+  actorLabel: z.string().nullable().default(null),
   action: z.string(),
   targetType: z.string().nullable(),
   targetId: z.string().nullable(),
+  /** Display name for the target (pass title, org or template name); null when unknown or deleted. */
+  targetLabel: z.string().nullable().default(null),
   requestId: z.string().nullable(),
   detail: JsonSchema.nullable(),
 });
