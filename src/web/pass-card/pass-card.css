@@ -57,6 +57,8 @@
   align-items: center;
   gap: calc(var(--u) * 8);
   min-width: 0;
+  flex: 0 1 auto;
+  max-width: 55%;
 }
 .pc-logo-img {
   height: calc(var(--u) * 34);
@@ -65,6 +67,8 @@
   object-fit: contain;
 }
 .pc-logo-text {
+  flex: 0 1 auto;
+  min-width: calc(var(--u) * 24);
   font-size: calc(var(--u) * 15);
   font-weight: 600;
   overflow: hidden;
@@ -79,6 +83,7 @@
   justify-content: space-between;
 }
 .pc-header {
+  min-width: 0;
   justify-content: flex-end;
   flex-wrap: nowrap;
   gap: calc(var(--u) * 12);
@@ -100,6 +105,9 @@
 .pc-field[data-align="left"] {
   text-align: left;
   align-items: flex-start;
+}
+.pc-header .pc-field {
+  white-space: nowrap;
 }
 .pc-label {
   font-size: calc(var(--u) * 10);
@@ -173,6 +181,10 @@
   background: #fff;
   color: #000;
   max-width: 100%;
+}
+.pc-barcode-pending {
+  background: rgb(127 127 127 / 0.15);
+  width: calc(var(--u) * 110);
 }
 .pc-barcode-svg {
   display: block;
@@ -251,9 +263,17 @@
 /* posterGeneric and poster event ticket */
 .pc-root[data-style="posterGeneric"] .pc-card,
 .pc-root[data-poster] .pc-card {
-  aspect-ratio: 358 / 600;
   padding: 0;
   gap: 0;
+}
+.pc-root[data-style="posterGeneric"][data-face="front"] .pc-card,
+.pc-root[data-poster][data-face="front"] .pc-card {
+  aspect-ratio: auto;
+  min-height: calc(var(--u) * 536);
+}
+.pc-root[data-style="posterGeneric"][data-face="back"] .pc-card,
+.pc-root[data-poster][data-face="back"] .pc-card {
+  aspect-ratio: 358 / 600;
 }
 .pc-art {
   position: relative;
@@ -331,6 +351,12 @@
   padding: var(--pc-pad);
   height: calc(100% + var(--pc-pad) * 2);
 }
+/* Poster cards have no card padding to cancel. */
+.pc-root[data-style="posterGeneric"] .pc-back-body,
+.pc-root[data-poster] .pc-back-body {
+  margin: 0;
+  height: 100%;
+}
 .pc-back-head .pc-title {
   font-size: calc(var(--u) * 20);
 }
@@ -349,7 +375,7 @@
 .pc-actions li {
   flex: 1;
 }
-.pc-card a.pc-action {
+.pc-card .pc-action {
   display: block;
   padding: calc(var(--u) * 10);
   border-radius: calc(var(--u) * 10);

@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { run } from '../../platform/db.ts';
+import { fakeLimiter } from '../auth/test-support.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { createPassRow } from '../passes/create.ts';
 import { rotateLink, voidPass } from '../passes/service.ts';
@@ -88,13 +90,72 @@ describe('GET /p/:token', () => {
     expect(html).toContain('This pass has expired.');
   });
 
+  it('formats dates in the visitor zone from request.cf, UTC otherwise', async () => {
+    const { resolved } = makeTemplate({ id: `tpl-tz-${kit.fx.ids.token(4)}` });
+    kit.registry.add({
+      id: resolved.id,
+      version: 'v1',
+      manifest: resolved.manifest,
+      passJson: {
+        ...resolved.passJson,
+        generic: {
+          ...(resolved.passJson.generic as object),
+          secondaryFields: [
+            {
+              key: 'when',
+              label: 'When',
+              value: '2030-06-01T08:00:00Z',
+              dateStyle: 'PKDateStyleNone',
+              timeStyle: 'PKDateStyleShort',
+            },
+          ],
+        },
+      },
+      assets: { 'icon.png': TINY_PNG },
+    });
+    await persistTemplate(kit.fx, resolved);
+    const pass = await createPassRow(kit.ctx, {
+      orgId: kit.org.id,
+      templateId: resolved.id,
+      input: { memberName: 'Zed' },
+      source: 'manual',
+      actor,
+    });
+    const url = `${ORIGIN}/p/${pass.downloadToken}`;
+    const la = new Request(url, { cf: { timezone: 'America/Los_Angeles' } } as RequestInit);
+    expect(await (await app.request(la, {}, kit.env)).text()).toMatch(/1:00\sAM/);
+    const bad = new Request(url, { cf: { timezone: 'Not/AZone' } } as RequestInit);
+    expect(await (await app.request(bad, {}, kit.env)).text()).toMatch(/8:00\sAM/);
+    expect(await (await get(`/p/${pass.downloadToken}`)).text()).toMatch(/8:00\sAM/);
+  });
+
+  it('has a heading, and its only inline styles are pass colour variables', async () => {
+    const pass = await kit.pass();
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(html).toMatch(/<h1 class="sr">[^<]+<\/h1>/);
+    const styles = [...html.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1] ?? '');
+    expect(styles.length).toBeGreaterThan(0);
+    for (const v of styles)
+      expect(v).toMatch(/^(--pc-[a-z]+:rgb\(\d{1,3}, \d{1,3}, \d{1,3}\);?)+$/);
+  });
+
+  it('allows unsafe-inline only for style attributes', async () => {
+    const pass = await kit.pass();
+    const csp =
+      (await get(`/p/${pass.downloadToken}`)).headers.get('content-security-policy') ?? '';
+    const withInline = csp.split(';').filter((d) => d.includes('unsafe-inline'));
+    for (const d of withInline) expect(d.trim()).toMatch(/^style-src-attr /);
+  });
+
   it('answers 404 for unknown, malformed and rotated tokens', async () => {
     const pass = await kit.pass();
     expect((await get('/p/short')).status).toBe(404);
     expect((await get(`/p/${'x'.repeat(43)}`)).status).toBe(404);
     const res = await get(`/p/${'y'.repeat(43)}`);
     expect(res.headers.get('content-type')).toContain('text/html');
-    expect(await res.text()).toContain('This link is not valid.');
+    const body = await res.text();
+    expect(body).toContain('This link has expired.');
+    expect(body).toContain('href="/login"');
     await rotateLink(kit.ctx, actor, pass.id, null);
     expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
     expect((await get(`/p/${pass.downloadToken}/pass.pkpass`)).status).toBe(404);
@@ -174,5 +235,39 @@ describe('GET /p/:token/assets/:name', () => {
     const pass = await kit.pass();
     for (const name of ['pass.json', 'missing.png', '..%2Fpass.png', 'icon.svg'])
       expect((await get(`/p/${pass.downloadToken}/assets/${name}`)).status).toBe(404);
+  });
+});
+
+describe('org suspension', () => {
+  it('stops the page, download and images while the org is suspended', async () => {
+    const pass = await kit.pass();
+    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(200);
+    await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
+    try {
+      for (const path of ['', '/pass.pkpass', '/assets/icon.png'])
+        expect((await get(`/p/${pass.downloadToken}${path}`)).status).toBe(404);
+    } finally {
+      await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
+    }
+    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(200);
+  });
+});
+
+describe('rate limit', () => {
+  it('limits /p per client IP and answers problem+json', async () => {
+    const pass = await kit.pass();
+    const env = { ...kit.env, RL_PUBLIC: fakeLimiter(1) as unknown as RateLimit };
+    const hit = (ip: string) =>
+      app.request(
+        `${ORIGIN}/p/${pass.downloadToken}`,
+        { headers: { 'cf-connecting-ip': ip } },
+        env,
+      );
+    expect((await hit('1.1.1.1')).status).toBe(200);
+    const limited = await hit('1.1.1.1');
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('content-type')).toContain('application/problem+json');
+    expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
+    expect((await hit('2.2.2.2')).status).toBe(200);
   });
 });

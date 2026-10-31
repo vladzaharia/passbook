@@ -111,14 +111,13 @@ function BoardingPass({ view, layout }: Props) {
 
 /** The first primary field without a label is the bold title. */
 function Poster({ view, layout }: Props) {
-  const art = view.images.artwork ?? view.images.background;
   const [title, ...rest] = layout.primary;
   const heading = title && !title.label ? title : undefined;
   const fields = heading ? rest : layout.primary;
   return (
     <>
       <div className="pc-art" data-darken={!view.suppressHeaderDarkening || undefined}>
-        <Img image={art} className="pc-art-img" />
+        <Img image={view.images.artwork} fallback={view.images.background} className="pc-art-img" />
         <div className="pc-art-top">
           <LogoLine view={view} poster={layout.poster} slot="primaryLogo" />
           <FieldRow fields={layout.header} className="pc-header" />

@@ -2,17 +2,13 @@ import { useMemo, useState } from 'react';
 import type { PassJson } from '@/passkit/types.ts';
 import { normalize } from '@/shared/pass-view/index.ts';
 import { cn } from '../../lib/cn.ts';
+import { assetUrlMap } from '../../pass-card/assets.ts';
 import { PassCard } from '../../pass-card/index.tsx';
 import { Button } from '../../ui/index.ts';
 
-/** Maps any asset file name to `<base>/<name>`; the renderer asks for names it needs. */
-export function assetMap(assetBaseUrl: string): Record<string, string> {
-  const base = assetBaseUrl.replace(/\/+$/, '');
-  return new Proxy({} as Record<string, string>, {
-    get: (_t, name) =>
-      typeof name === 'string' ? `${base}/${encodeURIComponent(name)}` : undefined,
-    has: () => true,
-  });
+/** Asset names to URLs under the base; all candidates when the API sends no list. */
+export function assetMap(assetBaseUrl: string, names?: readonly string[]): Record<string, string> {
+  return assetUrlMap(assetBaseUrl, names);
 }
 
 export type IosTarget = '27' | 'legacy';
@@ -27,6 +23,8 @@ export function forTarget(passJson: Record<string, unknown>, target: IosTarget) 
 export interface PassPreviewProps {
   passJson: Record<string, unknown>;
   assetBaseUrl: string;
+  /** Image files the pass has, from the API; omit to guess. */
+  assetNames?: readonly string[];
   face?: 'front' | 'back';
   target?: IosTarget;
   className?: string;
@@ -35,6 +33,7 @@ export interface PassPreviewProps {
 export function PassPreview({
   passJson,
   assetBaseUrl,
+  assetNames,
   face = 'front',
   target = '27',
   className,
@@ -42,13 +41,13 @@ export function PassPreview({
   const view = useMemo(() => {
     try {
       return normalize(forTarget(passJson, target) as unknown as PassJson, {
-        assets: assetMap(assetBaseUrl),
+        assets: assetMap(assetBaseUrl, assetNames),
       });
     } catch {
       // A malformed pass.json must not take the page down; the card shows the fallback below.
       return null;
     }
-  }, [passJson, assetBaseUrl, target]);
+  }, [passJson, assetBaseUrl, assetNames, target]);
   if (!view) {
     return (
       <p role="alert" className="text-sm text-danger">
@@ -63,17 +62,25 @@ export function PassPreview({
 export function PassPreviewPanel({
   passJson,
   assetBaseUrl,
+  assetNames,
   className,
 }: {
   passJson: Record<string, unknown>;
   assetBaseUrl: string;
+  assetNames?: readonly string[];
   className?: string;
 }) {
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [target, setTarget] = useState<IosTarget>('27');
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <PassPreview passJson={passJson} assetBaseUrl={assetBaseUrl} face={face} target={target} />
+      <PassPreview
+        passJson={passJson}
+        assetBaseUrl={assetBaseUrl}
+        {...(assetNames ? { assetNames } : {})}
+        face={face}
+        target={target}
+      />
       <div className="flex flex-wrap justify-center gap-4">
         <Toggle
           label="Side"

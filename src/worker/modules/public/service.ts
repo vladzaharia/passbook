@@ -1,6 +1,7 @@
 import type { PassJson } from '../../../passkit/types.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -16,7 +17,7 @@ const notFound = () => new NotFoundError('This link is not valid.', 'LINK_NOT_FO
 export async function passForToken(ctx: ServiceContext, token: string): Promise<Pass> {
   if (!TOKEN.test(token)) throw notFound();
   const pass = await getPassByDownloadToken(ctx.env.DB, token);
-  if (!pass) throw notFound();
+  if (!pass || !(await isOrgActive(ctx, pass.orgId))) throw notFound();
   return pass;
 }
 

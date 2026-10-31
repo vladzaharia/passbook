@@ -1,5 +1,6 @@
-import bwip from 'bwip-js/generic';
+import { useEffect, useMemo, useState } from 'react';
 import type { BarcodeView } from '../../shared/pass-view/index.ts';
+import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from './barcode-engine.ts';
 
 const LINEAR = new Set(['code128', 'code39', 'ean13', 'interleaved2of5', 'rationalizedCodabar']);
 
@@ -28,9 +29,12 @@ function parse(svg: string): Parsed | undefined {
   return paths.length ? { viewBox: vb[1] as string, paths } : undefined;
 }
 
-export function drawBarcode(b: BarcodeView): Parsed | undefined {
+export function drawBarcode(
+  toSvg: ToSvg,
+  b: Pick<BarcodeView, 'bcid' | 'message'>,
+): Parsed | undefined {
   try {
-    const svg = bwip.toSVG({
+    const svg = toSvg({
       bcid: b.bcid,
       text: b.message,
       paddingwidth: 0,
@@ -56,7 +60,25 @@ const NAMES: Record<string, string> = {
 };
 
 export function BarcodeSvg({ barcode }: { barcode: BarcodeView }) {
-  const drawn = drawBarcode(barcode);
+  const [engine, setEngine] = useState<ToSvg | undefined>(getBarcodeEngine);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (engine) return;
+    let live = true;
+    loadBarcodeEngine().then(
+      (e) => live && setEngine(() => e),
+      () => live && setFailed(true),
+    );
+    return () => {
+      live = false;
+    };
+  }, [engine]);
+  const { bcid, message } = barcode;
+  const drawn = useMemo(
+    () => (engine ? drawBarcode(engine, { bcid, message }) : undefined),
+    [engine, bcid, message],
+  );
+  const loading = !engine && !failed;
   const name = NAMES[barcode.bcid] ?? barcode.bcid;
   return (
     <figure className="pc-barcode" data-square={barcode.square} data-format={barcode.bcid}>
@@ -82,6 +104,8 @@ export function BarcodeSvg({ barcode }: { barcode: BarcodeView }) {
             />
           ))}
         </svg>
+      ) : loading ? (
+        <div className="pc-barcode-svg pc-barcode-pending" aria-busy="true" />
       ) : (
         <p className="pc-barcode-error" role="img" aria-label={`${name} barcode unavailable`}>
           {name} barcode unavailable

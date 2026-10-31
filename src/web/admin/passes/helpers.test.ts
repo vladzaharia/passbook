@@ -60,9 +60,14 @@ describe('pass preview helpers', () => {
     expect(forTarget(json, '27')).toBe(json);
     expect(forTarget(json, 'legacy')).toEqual({ generic: {} });
   });
-  it('assetMap resolves any name under the base URL', () => {
+  it('assetMap enumerates real names, or every image slot when none are given', () => {
     const map = assetMap('/p/tok/assets/');
     expect(map['logo@2x.png']).toBe('/p/tok/assets/logo%402x.png');
-    expect('anything' in map).toBe(true);
+    expect(Object.keys(map)).toContain('artwork.png');
+    expect(Object.keys(map)).not.toContain('anything');
+    expect(assetMap('/a', ['strip.png', 'en.lproj/logo.png'])).toEqual({
+      'strip.png': '/a/strip.png',
+      'en.lproj/logo.png': '/a/en.lproj%2Flogo.png',
+    });
   });
 });

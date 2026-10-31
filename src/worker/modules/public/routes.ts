@@ -26,6 +26,18 @@ const langOf = (header: string | undefined): string => {
   return tag && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(tag) ? tag : 'en';
 };
 
+/** Visitor zone from Cloudflare, if it is a zone Intl knows. */
+function zoneOf(c: C): string | undefined {
+  const tz = (c.req.raw as { cf?: { timezone?: unknown } }).cf?.timezone;
+  if (typeof tz !== 'string' || !tz) return undefined;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz });
+    return tz;
+  } catch {
+    return undefined;
+  }
+}
+
 type Token = { token: string };
 
 register(
@@ -48,6 +60,7 @@ register(
         assets: model.assets,
         locale: lang,
         now: new Date(svcCtx.clock.now()),
+        timeZone: zoneOf(c) ?? 'UTC',
       });
       const base = baseUrl(c.env);
       const downloadHref = `/p/${pass.downloadToken}/pass.pkpass`;
