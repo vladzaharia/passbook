@@ -43,14 +43,13 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
      `.secrets/platform-certificate.pem` and `.secrets/platform-key.pem`.
    - Optional: `SIGNER_PLATFORM_INTERMEDIATE` (defaults to the bundled WWDR G4),
      `MAGIC_LINK_DAILY_CAP`, `KEK_V2` (rotation).
-6. **Fresh D1**
-   - `npx wrangler d1 create wallet-platform`, paste `database_id` into `wrangler.jsonc`.
-   - `npm run deploy -- --apply` (step 9) applies all migrations to the empty database.
-7. **R2 lifecycle**: `uploads/` objects expire after one day.
-
-       npx wrangler r2 bucket create wallet-passes
-       npx wrangler r2 bucket lifecycle add wallet-passes expire-uploads uploads/ --expire-days 1
-
+6. **Provision** (owner only): `node tools/provision.ts` prints the wrangler commands;
+   `--apply` runs them. It creates the D1 database `wallet-platform` (id written to
+   `wrangler.jsonc`), the queues and the R2 bucket, adds the R2 lifecycle rule (`uploads/` expires
+   after one day) and deletes the legacy secrets `ADMIN_TOKEN`, `SIGNER_HENRYS_CERTIFICATE` and
+   `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step probes first; a rerun skips what
+   exists. `npm run deploy -- --apply` (step 9) then applies all migrations.
+7. **R2 lifecycle**: done by step 6.
 8. **Analytics Engine**: needs the Workers Analytics Engine entitlement on the account. The
    `EVENTS` dataset `wallet_events` is created by the first write. Charts query it through the
    `ANALYTICS_SQL` binding (no API token); if the query fails they fall back to D1 and the
