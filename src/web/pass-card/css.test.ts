@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('./pass-card.css', import.meta.url), 'utf8');
+const css = readFileSync('src/web/pass-card/pass-card.css', 'utf8');
 const rule = (selector: string) =>
   css.match(new RegExp(`${selector.replace(/[[\]"().]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
 
