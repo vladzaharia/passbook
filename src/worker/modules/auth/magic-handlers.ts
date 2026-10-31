@@ -31,22 +31,25 @@ import {
 } from './magic-service.ts';
 import { nextOrHome, safeNext } from './next.ts';
 import { confirmPage, messagePage, SIGN_IN_ERRORS } from './pages.ts';
+import { resolveSession } from './sessions.ts';
 import { verifyTurnstile } from './turnstile.ts';
 
 /** POST /auth/magic/request. The body never depends on whether the address is known. */
 export async function requestMagic(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
-  const input = MagicLinkRequestSchema.parse(await c.req.json());
   const ip = clientIp(c);
   await enforceRateLimit(c.env, 'RL_MAGIC_LINK', `ip:${ip}`);
+  if (!(await getPlatformSettings(ctx))['auth.magicLinkEnabled']) {
+    throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
+  }
+  const input = MagicLinkRequestSchema.parse(await c.req.json());
   if (!(await verifyTurnstile(c.env, input.turnstileToken, ip))) {
     ctx.log.warn('auth.turnstile_failed', {});
     throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
   }
-  if (!(await getPlatformSettings(ctx))['auth.magicLinkEnabled']) {
-    throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
-  }
-  const binding = ctx.ids.token(32);
+  // Stable per browser: a stranger's or repeated request must not orphan an earlier link.
+  const existing = readCookie(c, MAGIC_COOKIE);
+  const binding = existing && existing.length >= 32 ? existing : ctx.ids.token(32);
   setBindingCookie(c, MAGIC_COOKIE, binding, MAGIC_TTL_MS / 1000);
   const email = strictEmail(input.email);
   if (email) {
@@ -98,14 +101,17 @@ async function runConsume(c: Context<AppBindings>, body: unknown): Promise<Magic
   if (!parsed.success) throw new ValidationError('Invalid request.');
   await enforceRateLimit(c.env, 'RL_LOGIN', `magic:${clientIp(c)}`);
   const ctx = serviceContext(c);
+  const previousCookie = readCookie(c, SESSION_COOKIE);
+  const session = previousCookie ? await resolveSession(c.env, ctx.clock, previousCookie) : null;
   const sign = {
     ipPrefix: ipPrefix(clientIp(c)),
     userAgent: c.req.header('user-agent') ?? null,
-    previousCookie: readCookie(c, SESSION_COOKIE),
+    previousCookie,
+    sessionUserId: session?.userId ?? null,
   };
   const data = parsed.data;
   return 'token' in data
-    ? consumeMagicToken(ctx, data.token, sign)
+    ? consumeMagicToken(ctx, data.token, sign, readCookie(c, MAGIC_COOKIE))
     : consumeMagicCode(
         ctx,
         { email: data.email, code: data.code, bindingCookie: readCookie(c, MAGIC_COOKIE) },

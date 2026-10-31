@@ -9,11 +9,13 @@ import { serviceContext } from '../../platform/service-context.ts';
 import {
   clearCookie,
   ipPrefix,
+  MAGIC_COOKIE,
   OIDC_COOKIE,
   readCookie,
   setBindingCookie,
   setSessionCookie,
 } from './cookies.ts';
+import { MAGIC_TTL_MS } from './magic-service.ts';
 import { nextOrHome, safeNext } from './next.ts';
 import {
   authorizationUrl,
@@ -140,6 +142,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
   const groups = Array.isArray(claims.groups)
     ? claims.groups.filter((g): g is string => typeof g === 'string')
     : [];
+  const proofBinding = ctx.ids.token(32);
   try {
     const result = await signInOidc(
       ctx,
@@ -154,6 +157,8 @@ export async function callbackOidc(c: Context<AppBindings>) {
         ipPrefix: ipPrefix(clientIp(c)),
         userAgent: c.req.header('user-agent') ?? null,
         previousCookie: readCookie(c, SESSION_COOKIE),
+        bindingHash: await sha256Hex(proofBinding),
+        next: flow.redirect_path,
       },
     );
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);
@@ -162,6 +167,9 @@ export async function callbackOidc(c: Context<AppBindings>) {
     const known = cause instanceof AppError ? SIGN_IN_ERRORS[cause.code] : undefined;
     if (!known) throw cause;
     ctx.log.info('auth.oidc_refused', { code: (cause as AppError).code });
+    if ((cause as AppError).code === 'EMAIL_PROOF_SENT') {
+      setBindingCookie(c, MAGIC_COOKIE, proofBinding, MAGIC_TTL_MS / 1000);
+    }
     return errorPage(c, known.title, known.message, known.status);
   }
 }

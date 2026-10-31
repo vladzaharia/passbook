@@ -1,8 +1,11 @@
 import type { Context } from 'hono';
 import { z } from 'zod';
+import { PKPASSES_CONTENT_TYPE } from '../../../passkit/index.ts';
 import {
   AddEmailRequestSchema,
   IdParamSchema,
+  MY_PASSES_BUNDLE_PARTS_HEADER,
+  MyBundleQuerySchema,
   MyEmailListSchema,
   MyPassListSchema,
   MyPassSchema,
@@ -16,6 +19,7 @@ import { currentUserId, requireSession } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { limitBody } from '../auth/body-limit.ts';
 import { clearSessionCookie } from '../auth/cookies.ts';
 import {
   addMyEmail,
@@ -23,6 +27,7 @@ import {
   listMyEmails,
   listMyPasses,
   listMySessions,
+  myPassesBundle,
   refreshMyPass,
   removeMyEmail,
   removeMyPass,
@@ -36,6 +41,7 @@ const sessionId = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.session
 
 export const meRoutes = createRouter();
 guard(meRoutes, requireSession);
+meRoutes.use('*', limitBody(64 * 1024));
 
 register(
   meRoutes,
@@ -51,6 +57,29 @@ register(
     c.json(
       await listMyPasses(serviceContext(c), currentUserId(c), PageQuerySchema.parse(c.req.query())),
     ),
+);
+register(
+  meRoutes,
+  'me',
+  {
+    method: 'get',
+    path: '/passes.pkpasses',
+    summary: 'All my active passes as .pkpasses bundles (10 per part)',
+    query: MyBundleQuerySchema,
+  },
+  async (c: C) => {
+    const { part } = MyBundleQuerySchema.parse(c.req.query());
+    const bundle = await myPassesBundle(serviceContext(c), currentUserId(c), part);
+    return new Response(bundle.body, {
+      headers: {
+        'content-type': PKPASSES_CONTENT_TYPE,
+        'content-disposition': `attachment; filename="passes-${part}.pkpasses"`,
+        'cache-control': 'private, no-store',
+        'x-content-type-options': 'nosniff',
+        [MY_PASSES_BUNDLE_PARTS_HEADER]: String(bundle.parts),
+      },
+    });
+  },
 );
 register(
   meRoutes,

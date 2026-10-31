@@ -6,6 +6,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { sameOriginOnly } from '../../platform/csrf.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { limitBody } from './body-limit.ts';
 import { confirmMagic, consumeMagic, requestMagic } from './magic-handlers.ts';
 import { callbackOidc, startOidc } from './oidc-handlers.ts';
 import { getSession, logout } from './session-handlers.ts';
@@ -14,6 +15,7 @@ import { getSession, logout } from './session-handlers.ts';
 export const authRoutes = createRouter();
 authRoutes.use('/magic/*', sameOriginOnly);
 authRoutes.use('/logout', sameOriginOnly);
+authRoutes.use('/magic/*', limitBody(16 * 1024));
 register(
   authRoutes,
   'auth',

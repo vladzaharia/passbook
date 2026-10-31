@@ -14,6 +14,7 @@ import { currentUserId, requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { limitBody } from '../auth/body-limit.ts';
 import {
   addVerifiedEmail,
   getUserDetail,
@@ -28,6 +29,7 @@ const id = (c: C) => c.req.param('id') ?? '';
 
 export const usersRoutes = createRouter();
 guard(usersRoutes, requireAdmin);
+usersRoutes.use('*', limitBody(64 * 1024));
 
 register(
   usersRoutes,

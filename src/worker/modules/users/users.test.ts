@@ -207,6 +207,25 @@ describe('emails', () => {
     expect(again.status).toBe(201);
   });
 
+  it('attaches passes waiting for an added email', async () => {
+    const a = await admin();
+    const user = await makeUser(f());
+    const email = `wait-${tag()}@example.test`;
+    const org = await makeOrg(f());
+    const pass = await makePass(f(), {
+      orgId: org.id,
+      template: makeTemplate().resolved,
+      holderEmail: email,
+    });
+    await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email });
+    const row = await first<{ owner_user_id: string | null }>(
+      h.env.DB,
+      'SELECT owner_user_id FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    expect(row?.owner_user_id).toBe(user.id);
+  });
+
   it('refuses invalid addresses and addresses owned by another user', async () => {
     const a = await admin();
     const user = await makeUser(f());

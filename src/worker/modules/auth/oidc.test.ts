@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fixtures, makeUser } from '../../../../test/helpers/index.ts';
+import {
+  fixtures,
+  makeOrg,
+  makePass,
+  makeTemplate,
+  makeUser,
+} from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { oidcSignIn } from './test-oidc.ts';
-import { harness, ISSUER, type Jar, type TestHarness } from './test-support.ts';
+import { fakeLimiter, harness, ISSUER, type Jar, type TestHarness } from './test-support.ts';
 
 let h: TestHarness;
 let n = 0;
@@ -142,6 +148,48 @@ describe('oidc sign-in', () => {
     expect(row?.user_id).toBe(owner.id);
   });
 
+  it('attaches passes waiting for the sign-in email and writes auth.sign_in', async () => {
+    h.restore();
+    const points: { blobs: string[] }[] = [];
+    h = await harness({
+      EVENTS: { writeDataPoint: (p: { blobs: string[] }) => points.push(p) } as never,
+    });
+    const f1 = fixtures(h.env);
+    const org = await makeOrg(f1);
+    const user = person(['wallet-users']);
+    const pass = await makePass(f1, {
+      orgId: org.id,
+      template: makeTemplate().resolved,
+      holderEmail: user.email,
+    });
+    const jar: Jar = new Map();
+    await oidcSignIn(h, jar, user);
+    const me = (await session(jar)) as { user: { id: string } };
+    const row = await first<{ owner_user_id: string | null }>(
+      h.env.DB,
+      'SELECT owner_user_id FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    expect(row?.owner_user_id).toBe(me.user.id);
+    const signIns = points.filter((p) => p.blobs[0] === 'auth.sign_in');
+    expect(signIns).toHaveLength(1);
+    expect(signIns[0]?.blobs[4]).toBe('oidc');
+  });
+
+  it('limits start and callback per IP with RL_LOGIN', async () => {
+    h.restore();
+    const limiter = fakeLimiter(1);
+    h = await harness({ RL_LOGIN: limiter as unknown as RateLimit });
+    const ip = (value: string) => ({ headers: { 'cf-connecting-ip': value } });
+    expect((await h.call('/auth/oidc/start', ip('1.1.1.1'))).status).toBe(302);
+    const limited = await h.call('/auth/oidc/start', ip('1.1.1.1'));
+    expect(limited.status).toBe(429);
+    expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
+    expect((await h.call('/auth/oidc/callback', ip('1.1.1.1'))).status).toBe(429);
+    expect((await h.call('/auth/oidc/start', ip('2.2.2.2'))).status).toBe(302);
+    expect([...limiter.calls.keys()]).toContain('oidc:1.1.1.1');
+  });
+
   describe('oidc.trustEmail off', () => {
     beforeEach(async () => {
       await run(
@@ -155,16 +203,40 @@ describe('oidc sign-in', () => {
       clearSettingsCache(h.env.DB);
     });
 
-    it('refuses to link to an existing email owner', async () => {
+    it('proves an existing email owner by mail before linking', async () => {
       const f = fixtures(h.env);
       const existing = await makeUser(f);
-      const { res } = await oidcSignIn(
-        h,
-        new Map(),
-        person(['wallet-users'], { email: existing.primaryEmail }),
-      );
+      const jar: Jar = new Map();
+      const user = person(['wallet-users'], { email: existing.primaryEmail });
+      const { res } = await oidcSignIn(h, jar, user);
       expect(res.status).toBe(403);
-      expect(await res.text()).toContain('Email in use');
+      expect(await res.text()).toContain('Check your email');
+      expect(h.mail).toHaveLength(1);
+      expect(h.mail[0]?.to).toBe(existing.primaryEmail);
+      expect(
+        await first(h.env.DB, 'SELECT 1 FROM auth_identities WHERE subject = ?', [user.sub]),
+      ).toBeNull();
+      expect(jar.has('__Host-wallet_sid')).toBe(false);
+      const token = /t=([\w-]+)/.exec(h.mail[0]?.text ?? '')?.[1] ?? '';
+      const consume = (cookies: Jar) =>
+        h.call('/auth/magic/consume', {
+          method: 'POST',
+          body: new URLSearchParams({ token }),
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          cookies,
+        });
+      expect((await consume(new Map())).status).toBe(400);
+      expect((await consume(jar)).status).toBe(303);
+      const row = await first<{ user_id: string }>(
+        h.env.DB,
+        'SELECT user_id FROM auth_identities WHERE subject = ?',
+        [user.sub],
+      );
+      expect(row?.user_id).toBe(existing.id);
+      h.mail.length = 0;
+      const again = await oidcSignIn(h, new Map(), user);
+      expect(again.res.status).toBe(302);
+      expect(h.mail).toHaveLength(0);
     });
 
     it('creates the user without a verified email', async () => {

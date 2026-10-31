@@ -21,14 +21,19 @@ function layout(nonce: string, title: string, body: string): string {
 
 export function confirmPage(
   nonce: string,
-  input: { token: string; email: string; purpose: 'sign_in' | 'verify_email' },
+  input: {
+    token: string;
+    email: string;
+    purpose: 'sign_in' | 'verify_email';
+    requester?: string | null;
+  },
 ): string {
   const verify = input.purpose === 'verify_email';
   return layout(
     nonce,
     verify ? 'Confirm email' : 'Sign in',
     `<h1>${verify ? 'Confirm email' : 'Sign in'}</h1>
-<p>${escapeHtml(input.email)}</p>
+<p>${escapeHtml(input.email)}</p>${verify && input.requester ? `<p>Adds this address to the account of ${escapeHtml(input.requester)}.</p>` : ''}
 <form method="post" action="/auth/magic/consume"><input type="hidden" name="token" value="${escapeHtml(input.token)}"><button type="submit">${verify ? 'Confirm' : 'Sign in'}</button></form>`,
   );
 }
@@ -67,6 +72,16 @@ export const SIGN_IN_ERRORS: Record<string, { title: string; message: string; st
     EMAIL_CONFLICT: {
       title: 'Email in use',
       message: 'This email belongs to another account. Sign in with an email link first.',
+      status: 403,
+    },
+    EMAIL_PROOF_SENT: {
+      title: 'Check your email',
+      message: 'This email belongs to an existing account. Open the link we sent, in this browser.',
+      status: 403,
+    },
+    SESSION_REQUIRED: {
+      title: 'Sign in first',
+      message: 'Open this link in the browser signed in to the account that asked for it.',
       status: 403,
     },
     LINK_INVALID: {

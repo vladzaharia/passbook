@@ -1,5 +1,6 @@
 import type { z } from 'zod';
-import type { MyPassSchema } from '../../../shared/contracts/index.ts';
+import { PackageLimitError, packagePasses } from '../../../passkit/index.ts';
+import { MY_PASSES_BUNDLE_SIZE, type MyPassSchema } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
@@ -11,8 +12,7 @@ import {
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { issueMagicLink } from '../auth/magic-service.ts';
-import { findUserByEmail, findUserByPrimaryEmail } from '../auth/repo.ts';
+import { processVerifyRequest } from '../auth/magic-service.ts';
 import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
 import { removePassFromUser } from '../holders/service.ts';
 import { requestRefresh } from '../passes/service.ts';
@@ -31,9 +31,10 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
   if (!raw) return {};
   try {
     const parsed: unknown = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {};
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    // Server-owned: the Apple device token must never reach the client.
+    const { authenticationToken: _token, ...safe } = parsed as Record<string, unknown>;
+    return safe;
   } catch {
     return {};
   }
@@ -128,26 +129,17 @@ export async function listMyEmails(ctx: ServiceContext, userId: string) {
   };
 }
 
-/** Sends a verification link. Silent when the address already belongs to someone else. */
+/**
+ * Asks for a verification link. The answer never depends on the address, and the lookup and send
+ * run after it, so neither the body nor the latency reveals who is registered.
+ */
 export async function addMyEmail(ctx: ServiceContext, userId: string, rawEmail: string) {
   const email = strictEmail(rawEmail);
   if (!email) throw new ValidationError('Enter a valid email address.', [], 'INVALID_EMAIL');
   if (!(await checkRateLimit(ctx.env, 'RL_MAGIC_LINK', `verify:${userId}`))) {
     throw new RateLimitedError();
   }
-  const owner =
-    (await findUserByEmail(ctx.env.DB, email)) ?? (await findUserByPrimaryEmail(ctx.env.DB, email));
-  if (owner && owner.id !== userId) {
-    ctx.log.info('me.email_add_taken', { userId });
-    return { ok: true as const };
-  }
-  await issueMagicLink(ctx, {
-    email,
-    purpose: 'verify_email',
-    userId,
-    bindingHash: null,
-    next: '/account',
-  });
+  ctx.waitUntil(processVerifyRequest(ctx, { userId, email }));
   return { ok: true as const };
 }
 
@@ -210,4 +202,42 @@ export async function revokeAllMySessions(ctx: ServiceContext, userId: string) {
     detail: { count },
   });
   return { ok: true as const };
+}
+
+const BUNDLE_NOT_FOUND = () => new NotFoundError('No passes to bundle.', 'BUNDLE_EMPTY');
+
+/** Signed .pkpass objects of my active passes, `MY_PASSES_BUNDLE_SIZE` per part. */
+export async function myPassesBundle(ctx: ServiceContext, userId: string, part: number) {
+  const total = await repo.countBundlePasses(ctx.env.DB, userId);
+  const parts = Math.ceil(total / MY_PASSES_BUNDLE_SIZE);
+  if (part > parts) throw BUNDLE_NOT_FOUND();
+  const rows = await repo.listBundlePasses(
+    ctx.env.DB,
+    userId,
+    MY_PASSES_BUNDLE_SIZE,
+    (part - 1) * MY_PASSES_BUNDLE_SIZE,
+  );
+  if (rows.length === 0) throw BUNDLE_NOT_FOUND();
+  try {
+    const body = packagePasses(
+      rows.map((row) => ({
+        name: row.id,
+        ...(row.object_size ? { size: row.object_size } : {}),
+        bytes: async () => {
+          const object = await ctx.env.BUCKET.get(row.object_key);
+          if (!object) throw new NotFoundError('A pass file is missing.', 'PASS_FILE_MISSING');
+          return new Uint8Array(await object.arrayBuffer());
+        },
+      })),
+    );
+    return { body, parts };
+  } catch (error) {
+    if (error instanceof PackageLimitError) {
+      throw new ConflictError(
+        'The bundle is too large. Add passes one by one.',
+        'BUNDLE_TOO_LARGE',
+      );
+    }
+    throw error;
+  }
 }
