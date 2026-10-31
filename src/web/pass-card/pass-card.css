@@ -58,21 +58,19 @@
   gap: calc(var(--u) * 8);
   min-width: 0;
   flex: 0 1 auto;
-  max-width: 55%;
 }
 .pc-logo-img {
   height: calc(var(--u) * 34);
   max-width: calc(var(--u) * 140);
   width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
   object-fit: contain;
 }
 .pc-logo-text {
-  flex: 0 1 auto;
-  min-width: calc(var(--u) * 24);
+  flex: 0 0 auto;
   font-size: calc(var(--u) * 15);
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -83,7 +81,7 @@
   justify-content: space-between;
 }
 .pc-header {
-  min-width: 0;
+  flex: 0 0 auto;
   justify-content: flex-end;
   flex-wrap: nowrap;
   gap: calc(var(--u) * 12);
