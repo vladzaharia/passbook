@@ -58,6 +58,11 @@ export const TemplateVersionSchema = z.object({
   active: z.boolean(),
 });
 
+export const TemplateVersionDetailSchema = TemplateVersionSchema.extend({
+  manifest: JsonSchema,
+  passJson: z.record(z.string(), z.unknown()),
+});
+
 export const TemplateDetailSchema = TemplateSummarySchema.extend({
   /** JSON Schema (with x-label, x-group, x-order, x-widget, x-enumLabels) for the active version. */
   inputSchema: JsonSchema,
@@ -66,10 +71,13 @@ export const TemplateDetailSchema = TemplateSummarySchema.extend({
   versions: z.array(TemplateVersionSchema),
 });
 
+const BoolQuery = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');
+
 export const TemplateListQuerySchema = z.object({
   orgId: IdSchema.optional(),
-  includeArchived: z.coerce.boolean().optional(),
+  includeArchived: BoolQuery.optional(),
   origin: z.enum(['baked', 'uploaded']).optional(),
+  status: z.enum(['active', 'archived']).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
@@ -92,6 +100,23 @@ export const ImportStatusSchema = z.object({
   report: ValidationReportSchema.nullable(),
   error: z.string().nullable(),
 });
+
+export const TemplateVersionParamSchema = z.object({
+  id: IdSchema,
+  version: z.string().min(1).max(64),
+});
+export const TemplateAssetParamSchema = TemplateVersionParamSchema.extend({
+  name: z.string().min(1).max(200),
+});
+export const DeleteTemplateResponseSchema = z.object({
+  ok: z.literal(true),
+  outcome: z.enum(['deleted', 'archived']),
+});
+
+/** Id of the baked template built from templates/<slug>/. */
+export function bakedTemplateId(slug: string): string {
+  return `baked:${slug}`;
+}
 
 export const ActivateVersionSchema = z.object({
   version: z.string(),

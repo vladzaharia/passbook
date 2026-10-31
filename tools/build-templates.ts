@@ -1,7 +1,13 @@
 // Codegen for src/generated/*. Run via `npm run gen`; CI fails if the output drifts.
-import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import {
+  type BehaviorRegistry,
+  createBehaviorRegistry,
+} from '../src/passkit/behaviors/registry.ts';
+import type { BehaviorPlugin } from '../src/passkit/types.ts';
+import { collectBaked, renderBakedModule } from './lib/baked-templates.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const out = join(root, 'src/generated');
@@ -21,58 +27,27 @@ function dirs(path: string): string[] {
     .sort();
 }
 
-function walk(dir: string, base = dir): string[] {
-  return readdirSync(dir)
-    .sort()
-    .flatMap((name) => {
-      const path = join(dir, name);
-      return statSync(path).isDirectory() ? walk(path, base) : [relative(base, path)];
-    })
-    .filter((name) => !name.endsWith('.DS_Store'));
-}
-
 function wwdr(): void {
   const pem = readFileSync(join(root, 'certificates/AppleWWDRCAG4.pem'), 'utf8').trim();
   write('wwdr-g4.ts', `${HEADER}export default ${JSON.stringify(`${pem}\n`)};\n`);
 }
 
-interface BakedFile {
-  name: string;
-  size: number;
-  sha1: string;
-}
-
-function bakedTemplates(): void {
-  const templatesDir = join(root, 'templates');
-  const all = createHash('sha1');
-  const entries = dirs(templatesDir).map((slug) => {
-    const dir = join(templatesDir, slug);
-    const files: BakedFile[] = walk(dir).map((name) => {
-      const bytes = readFileSync(join(dir, name));
-      const sha1 = createHash('sha1').update(bytes).digest('hex');
-      all.update(`${slug}/${name}:${sha1}\n`);
-      return { name, size: bytes.length, sha1 };
-    });
-    return { slug, files };
+async function bakedTemplates(): Promise<void> {
+  const behaviors = await loadBehaviors();
+  const templates = await collectBaked({
+    templatesDir: join(root, 'templates'),
+    publicDir: join(root, 'public'),
+    behaviors,
+    log: (line) => console.warn(line),
   });
-  write(
-    'baked-templates.ts',
-    `${HEADER}export interface BakedTemplateFile {
-  name: string;
-  size: number;
-  sha1: string;
-}
-export interface BakedTemplateEntry {
-  slug: string;
-  files: readonly BakedTemplateFile[];
+  write('baked-templates.ts', renderBakedModule(templates, HEADER));
 }
 
-/** Content hash of every template package; syncBakedTemplates() runs when it changes. */
-export const BAKED_BUILD_HASH = ${JSON.stringify(all.digest('hex'))};
-
-export const bakedTemplates: readonly BakedTemplateEntry[] = ${JSON.stringify(entries, null, 2)};
-`,
-  );
+async function loadBehaviors(): Promise<BehaviorRegistry> {
+  const generated = (await import(pathToFileURL(join(out, 'behaviors.ts')).href)) as {
+    behaviorPlugins: BehaviorPlugin[];
+  };
+  return createBehaviorRegistry(generated.behaviorPlugins);
 }
 
 function registry(options: {
@@ -99,7 +74,6 @@ export const ${options.exportName}: readonly ${options.typeName}[] = [${idents.j
 }
 
 wwdr();
-bakedTemplates();
 registry({
   file: 'connectors.ts',
   scanDir: 'src/worker/connectors',
@@ -116,3 +90,4 @@ registry({
   typeName: 'BehaviorPlugin',
   exportName: 'behaviorPlugins',
 });
+await bakedTemplates();

@@ -1,21 +1,57 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
+import {
+  analyzeStage,
+  cleanupStage,
+  dryRunStage,
+  extractStage,
+  failImport,
+  type ImportParams,
+  persistStage,
+  startImport,
+} from '../modules/templates/import-pipeline.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { NotImplementedError } from '../platform/errors.ts';
+import { createServiceContext } from '../platform/service-context.ts';
 
-export interface TemplateImportParams {
-  uploadId: string;
-  orgId: string;
-  /** R2 key of the uploaded archive (uploads/...). */
-  objectKey: string;
-  createdBy: string | null;
-}
+export type TemplateImportParams = ImportParams;
 
-/** Unzip with limits, validate, derive images, dry-run build, persist version. Owner: templates module. */
+const RETRY = { retries: { limit: 2, delay: '5 seconds', backoff: 'exponential' } } as const;
+
+/** Unzip with limits, validate, derive images, dry-run build, persist version. */
 export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportParams> {
   override async run(
-    _event: WorkflowEvent<TemplateImportParams>,
-    _step: WorkflowStep,
+    event: WorkflowEvent<TemplateImportParams>,
+    step: WorkflowStep,
   ): Promise<void> {
-    throw new NotImplementedError('TemplateImport is not implemented yet.');
+    const p = event.payload;
+    const ctx = createServiceContext(this.env, { base: { workflow: 'template-import' } });
+    try {
+      await step.do('start', () => startImport(ctx, p));
+      const stages = [
+        ['extract', extractStage],
+        ['analyze', (c: typeof ctx, x: typeof p) => analyzeStage(c, x)],
+        ['dry-run', dryRunStage],
+      ] as const;
+      for (const [name, fn] of stages) {
+        const result = await step.do(name, RETRY, () => fn(ctx, p));
+        if (!result.ok) {
+          await step.do('cleanup', () => cleanupStage(ctx, p));
+          return;
+        }
+      }
+      await step.do('persist', RETRY, () => persistStage(ctx, p));
+      await step.do('cleanup', () => cleanupStage(ctx, p));
+    } catch (error) {
+      ctx.log.error('templates.import_failed', {
+        orgId: p.orgId,
+        error: error instanceof Error ? error.name : 'unknown',
+      });
+      await failImport(
+        ctx,
+        p,
+        [{ severity: 'error', code: 'IMPORT_FAILED', message: 'The import failed. Try again.' }],
+        'IMPORT_FAILED',
+      );
+      throw error;
+    }
   }
 }

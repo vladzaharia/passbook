@@ -1,21 +1,33 @@
-import { z } from 'zod';
+import type { Context } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
+import type { z } from 'zod';
+import type { TemplateManifest } from '../../../passkit/types.ts';
 import {
   ActivateVersionSchema,
   CloneTemplateSchema,
+  DeleteTemplateResponseSchema,
   IdParamSchema,
   ImportStatusSchema,
-  OkSchema,
   PreviewRequestSchema,
   PreviewResponseSchema,
+  TemplateAssetParamSchema,
   TemplateDetailSchema,
   TemplateListQuerySchema,
   TemplateListSchema,
+  TemplateVersionDetailSchema,
+  TemplateVersionParamSchema,
   UpdateManifestSchema,
   UploadTemplateQuerySchema,
   UploadTemplateResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, requireAdmin, requireApiKeyOrAdmin } from '../../platform/auth.ts';
-import { createRouter, stub } from '../../platform/openapi.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
+import { serviceContext } from '../../platform/service-context.ts';
+import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
+import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
+import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 
 export const templatesRoutes = createRouter();
 // Reads accept an API key (templates:read); writes are admin only.
@@ -27,79 +39,251 @@ templatesRoutes.use('*', async (c, next) =>
       )
     : requireAdmin(c, next),
 );
+templatesRoutes.use(
+  '/uploads',
+  bodyLimit({
+    maxSize: UPLOAD_BODY_LIMIT,
+    onError: () => {
+      throw new PayloadTooLargeError('The archive is larger than 15 MB.', 'ARCHIVE_TOO_LARGE');
+    },
+  }),
+);
 
-stub(templatesRoutes, 'templates', {
-  method: 'get',
-  path: '/',
-  summary: 'List templates',
-  query: TemplateListQuerySchema,
-  response: TemplateListSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'post',
-  path: '/uploads',
-  summary: 'Upload a template archive (zip or multipart, up to 15 MB)',
-  query: UploadTemplateQuerySchema,
-  status: 202,
-  response: UploadTemplateResponseSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'get',
-  path: '/uploads/{id}',
-  summary: 'Template import status',
-  params: IdParamSchema,
-  response: ImportStatusSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'get',
-  path: '/{id}',
-  summary: 'Get a template',
-  params: IdParamSchema,
-  response: TemplateDetailSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'delete',
-  path: '/{id}',
-  summary: 'Delete or archive an uploaded template (baked: 403 TEMPLATE_BAKED)',
-  params: IdParamSchema,
-  response: OkSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'post',
-  path: '/{id}/clone',
-  summary: 'Clone into an uploaded copy',
-  params: IdParamSchema,
-  body: CloneTemplateSchema,
-  status: 201,
-  response: TemplateDetailSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'post',
-  path: '/{id}/activate',
-  summary: 'Activate a version',
-  params: IdParamSchema,
-  body: ActivateVersionSchema,
-  response: TemplateDetailSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'put',
-  path: '/{id}/manifest',
-  summary: 'Replace the manifest (creates a version)',
-  params: IdParamSchema,
-  body: UpdateManifestSchema,
-  response: TemplateDetailSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'post',
-  path: '/{id}/preview',
-  summary: 'Render pass.json for input',
-  params: IdParamSchema,
-  body: PreviewRequestSchema,
-  response: PreviewResponseSchema,
-});
-stub(templatesRoutes, 'templates', {
-  method: 'get',
-  path: '/{id}/versions/{version}/assets/{name}',
-  summary: 'Template asset bytes',
-  params: IdParamSchema.extend({ version: z.string(), name: z.string() }),
-});
+type C = Context<AppBindings>;
+const valid = <T>(c: C, target: 'query' | 'param' | 'json'): T =>
+  (c.req as unknown as { valid(target: string): unknown }).valid(target) as T;
+
+async function archiveBytes(c: C): Promise<Uint8Array> {
+  const type = c.req.header('content-type') ?? '';
+  if (!type.startsWith('multipart/form-data')) return new Uint8Array(await c.req.arrayBuffer());
+  const form = await c.req.formData();
+  const file = form.get('file') ?? [...form.values()].find((v) => typeof v !== 'string');
+  if (!file || typeof file === 'string')
+    throw new BadRequestError('Attach the archive as the file field.', 'NO_FILE');
+  return new Uint8Array(await file.arrayBuffer());
+}
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'get',
+    path: '/',
+    summary: 'List templates',
+    query: TemplateListQuerySchema,
+    response: TemplateListSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await list(
+        serviceContext(c),
+        c.var.auth,
+        valid<z.infer<typeof TemplateListQuerySchema>>(c, 'query'),
+      ),
+    ),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'post',
+    path: '/uploads',
+    summary: 'Upload a template archive (zip or multipart, up to 15 MB)',
+    query: UploadTemplateQuerySchema,
+    status: 202,
+    response: UploadTemplateResponseSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await acceptUpload(
+        serviceContext(c),
+        c.var.auth,
+        valid<z.infer<typeof UploadTemplateQuerySchema>>(c, 'query'),
+        await archiveBytes(c),
+      ),
+      202,
+    ),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'get',
+    path: '/uploads/{id}',
+    summary: 'Template import status',
+    params: IdParamSchema,
+    response: ImportStatusSchema,
+  },
+  async (c: C) =>
+    c.json(await importStatus(serviceContext(c), c.var.auth, valid<{ id: string }>(c, 'param').id)),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'get',
+    path: '/{id}',
+    summary: 'Get a template',
+    params: IdParamSchema,
+    response: TemplateDetailSchema,
+  },
+  async (c: C) =>
+    c.json(await detail(serviceContext(c), c.var.auth, valid<{ id: string }>(c, 'param').id)),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'delete',
+    path: '/{id}',
+    summary: 'Delete or archive an uploaded template (baked: 403 TEMPLATE_BAKED)',
+    params: IdParamSchema,
+    response: DeleteTemplateResponseSchema,
+  },
+  async (c: C) => {
+    const outcome = await removeTemplate(
+      serviceContext(c),
+      c.var.auth,
+      valid<{ id: string }>(c, 'param').id,
+    );
+    return c.json({ ok: true as const, outcome });
+  },
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'post',
+    path: '/{id}/clone',
+    summary: 'Clone into an uploaded copy',
+    params: IdParamSchema,
+    body: CloneTemplateSchema,
+    status: 201,
+    response: TemplateDetailSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await cloneTemplate(
+        serviceContext(c),
+        c.var.auth,
+        valid<{ id: string }>(c, 'param').id,
+        valid<z.infer<typeof CloneTemplateSchema>>(c, 'json'),
+      ),
+      201,
+    ),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'post',
+    path: '/{id}/activate',
+    summary: 'Activate a version',
+    params: IdParamSchema,
+    body: ActivateVersionSchema,
+    response: TemplateDetailSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await activateVersion(
+        serviceContext(c),
+        c.var.auth,
+        valid<{ id: string }>(c, 'param').id,
+        valid<z.infer<typeof ActivateVersionSchema>>(c, 'json'),
+      ),
+    ),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'put',
+    path: '/{id}/manifest',
+    summary: 'Replace the manifest (creates a version)',
+    params: IdParamSchema,
+    body: UpdateManifestSchema,
+    response: TemplateDetailSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await replaceManifest(
+        serviceContext(c),
+        c.var.auth,
+        valid<{ id: string }>(c, 'param').id,
+        valid<{ manifest: TemplateManifest }>(c, 'json').manifest,
+      ),
+    ),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'post',
+    path: '/{id}/preview',
+    summary: 'Render pass.json for input',
+    params: IdParamSchema,
+    body: PreviewRequestSchema,
+    response: PreviewResponseSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await preview(
+        serviceContext(c),
+        c.var.auth,
+        valid<{ id: string }>(c, 'param').id,
+        valid<z.infer<typeof PreviewRequestSchema>>(c, 'json'),
+      ),
+    ),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'get',
+    path: '/{id}/versions/{version}',
+    summary: 'Template version with its validation report',
+    params: TemplateVersionParamSchema,
+    response: TemplateVersionDetailSchema,
+  },
+  async (c: C) => {
+    const p = valid<{ id: string; version: string }>(c, 'param');
+    return c.json(await versionDetail(serviceContext(c), c.var.auth, p.id, p.version));
+  },
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'get',
+    path: '/{id}/versions/{version}/assets/{name}',
+    summary: 'Template asset bytes',
+    params: TemplateAssetParamSchema,
+  },
+  async (c: C) => {
+    const p = valid<{ id: string; version: string; name: string }>(c, 'param');
+    const asset = await openVersionAsset(serviceContext(c), c.var.auth, p.id, p.version, p.name);
+    const etag = asset.sha1 ? `"${asset.sha1}"` : null;
+    // Versions are content hashes, so a given URL never changes.
+    const headers: Record<string, string> = {
+      'cache-control': 'private, max-age=31536000, immutable',
+      'content-type': asset.contentType,
+      'x-content-type-options': 'nosniff',
+      ...(etag ? { etag } : {}),
+    };
+    if (etag && c.req.header('if-none-match') === etag) {
+      await asset.stream.cancel();
+      return new Response(null, { status: 304, headers });
+    }
+    return new Response(asset.stream, { headers });
+  },
+);
