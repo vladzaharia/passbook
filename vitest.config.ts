@@ -54,6 +54,9 @@ export default defineConfig({
           include: ['src/web/**/*.test.{ts,tsx}'],
           setupFiles: ['./vitest.setup.web.ts'],
           css: false,
+          // Same reason: lazy route imports are slow while the worker project saturates the CPU.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
         },
       },
     ],

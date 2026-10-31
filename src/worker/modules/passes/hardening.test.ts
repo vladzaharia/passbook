@@ -289,7 +289,7 @@ describe('registry failures', () => {
           kit.ctx,
           {
             templateId: kit.template.id,
-            version: 'v1',
+            version: 'next-version',
             orgId: kit.org.id,
             identityId: pass.identityId,
             cause: 'template_upgrade',
