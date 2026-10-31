@@ -1,11 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { CreateConnectionWizard } from '../../../admin/connections/create-wizard.tsx';
 
 export const Route = createFileRoute('/admin/connections/new')({
-  component: () => (
-    <RoutePlaceholder
-      title="New connection"
-      breadcrumbs={[{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }]}
-    />
-  ),
+  component: CreateConnectionWizard,
 });

@@ -1,11 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { NewPassPage } from '../../../admin/passes/new-pass-page.tsx';
 
 export const Route = createFileRoute('/admin/passes/new')({
-  component: () => (
-    <RoutePlaceholder
-      title="New pass"
-      breadcrumbs={[{ label: 'Passes', to: '/admin/passes' }, { label: 'New' }]}
-    />
-  ),
+  component: NewPassPage,
 });

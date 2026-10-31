@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { ConnectionDetailPage } from '../../../admin/connections/detail-page.tsx';
+
+function ConnectionRoute() {
+  const { connectionId } = Route.useParams();
+  return <ConnectionDetailPage connectionId={connectionId} />;
+}
 
 export const Route = createFileRoute('/admin/connections/$connectionId')({
-  component: () => (
-    <RoutePlaceholder
-      title="Connection"
-      breadcrumbs={[{ label: 'Connections', to: '/admin/connections' }, { label: 'Connection' }]}
-    />
-  ),
+  component: ConnectionRoute,
 });

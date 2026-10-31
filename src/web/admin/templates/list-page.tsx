@@ -1,0 +1,177 @@
+import { Link } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
+import { FileStack, Lock, Upload } from 'lucide-react';
+import { useMemo } from 'react';
+import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
+import { useOrgFilter } from '../../lib/org-filter.tsx';
+import { useOrgOptions } from '../../lib/search.ts';
+import {
+  Badge,
+  Button,
+  CheckboxField,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Select,
+  StatusPill,
+} from '../../ui/index.ts';
+import { useTemplates } from './api.ts';
+
+export interface TemplateListSearch {
+  origin?: 'baked' | 'uploaded' | undefined;
+  orgId?: string | undefined;
+  archived?: boolean | undefined;
+}
+
+const ALL = 'all';
+
+export function TemplatesListPage({
+  search,
+  onSearch,
+}: {
+  search: TemplateListSearch;
+  onSearch: (patch: Partial<TemplateListSearch>) => void;
+}) {
+  const { orgId: globalOrg } = useOrgFilter();
+  const orgId = search.orgId ?? globalOrg;
+  const orgs = useOrgOptions();
+  const list = useTemplates({ orgId, origin: search.origin, includeArchived: search.archived });
+  const orgNames = useMemo(
+    () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
+    [orgs.data],
+  );
+
+  const columns = useMemo<ColumnDef<TemplateSummaryDto, never>[]>(
+    () => [
+      {
+        id: 'name',
+        header: 'Template',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <Link
+              to={`/admin/templates/${row.original.id}` as never}
+              className="font-medium text-accent-fg hover:underline"
+            >
+              {row.original.name}
+            </Link>
+            {row.original.description ? (
+              <p className="truncate text-xs text-fg-muted">{row.original.description}</p>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: 'origin',
+        header: 'Origin',
+        enableSorting: false,
+        cell: ({ row }) =>
+          row.original.origin === 'baked' ? (
+            <Badge tone="accent">
+              <Lock aria-hidden />
+              Baked
+            </Badge>
+          ) : (
+            <Badge>Uploaded</Badge>
+          ),
+      },
+      {
+        id: 'org',
+        header: 'Org',
+        enableSorting: false,
+        cell: ({ row }) =>
+          row.original.orgId
+            ? (orgNames.get(row.original.orgId) ?? row.original.orgId)
+            : 'Platform',
+      },
+      {
+        id: 'styles',
+        header: 'Styles',
+        enableSorting: false,
+        cell: ({ row }) => row.original.styles.join(', '),
+      },
+      {
+        id: 'version',
+        header: 'Active',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.activeVersion?.slice(0, 8) ?? ''}</span>
+        ),
+      },
+      {
+        id: 'passes',
+        header: 'Passes',
+        enableSorting: false,
+        cell: ({ row }) => row.original.passCount,
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <StatusPill
+            status={row.original.status}
+            tone={row.original.status === 'active' ? 'success' : 'neutral'}
+          />
+        ),
+      },
+    ],
+    [orgNames],
+  );
+
+  return (
+    <>
+      <PageHeader
+        title="Templates"
+        actions={
+          <Button asChild iconStart={<Upload aria-hidden />}>
+            <Link to="/admin/templates/upload">Upload template</Link>
+          </Button>
+        }
+      />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Select
+          aria-label="Origin"
+          className="w-40"
+          value={search.origin ?? ALL}
+          onValueChange={(v) =>
+            onSearch({ origin: v === ALL ? undefined : (v as 'baked' | 'uploaded') })
+          }
+          options={[
+            { value: ALL, label: 'Origin: all' },
+            { value: 'baked', label: 'Baked' },
+            { value: 'uploaded', label: 'Uploaded' },
+          ]}
+        />
+        <Select
+          aria-label="Org"
+          className="w-44"
+          value={orgId ?? ALL}
+          onValueChange={(v) => onSearch({ orgId: v === ALL ? undefined : v })}
+          options={[
+            { value: ALL, label: 'Org: all' },
+            ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
+          ]}
+        />
+        <CheckboxField
+          label="Show archived"
+          checked={search.archived === true}
+          onCheckedChange={(c) => onSearch({ archived: c === true ? true : undefined })}
+        />
+      </div>
+      {list.isError ? (
+        <ErrorState error={list.error} onRetry={() => void list.refetch()} />
+      ) : (
+        <DataTable
+          caption="Templates"
+          columns={columns}
+          data={list.data?.items ?? []}
+          getRowId={(r) => r.id}
+          loading={list.isPending}
+          empty={<EmptyState icon={FileStack} title="No templates" />}
+        />
+      )}
+    </>
+  );
+}
