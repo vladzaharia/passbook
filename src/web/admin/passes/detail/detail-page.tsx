@@ -50,7 +50,10 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
       replace: true,
     });
 
-  const crumbs = [{ label: 'Passes', to: '/admin/passes' }, { label: pass.data ? (pass.data.title ?? pass.data.serial) : 'Pass' }];
+  const crumbs = [
+    { label: 'Passes', to: '/admin/passes' },
+    { label: pass.data ? (pass.data.title ?? pass.data.serial) : 'Pass' },
+  ];
   if (pass.isError) {
     const missing = isApiError(pass.error) && pass.error.isNotFound;
     return (

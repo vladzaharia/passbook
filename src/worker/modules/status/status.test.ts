@@ -6,7 +6,7 @@ import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
-import { clearOidcCache } from './checks.ts';
+import { clearOidcCache, failuresLine } from './checks.ts';
 import { clearStatusCache, getStatus, recordCronRun } from './service.ts';
 
 const fake = fakeAuth();
@@ -227,5 +227,13 @@ describe('status api', () => {
     );
     const body = (await (await get('/workflows')).json()) as { items: { instanceId: string }[] };
     expect(body.items.map((i) => i.instanceId)).toEqual(['b', 'a']);
+  });
+});
+
+describe('failuresLine', () => {
+  it('pluralizes and is empty at zero', () => {
+    expect(failuresLine(0)).toBeNull();
+    expect(failuresLine(1)).toBe('1 consecutive failure.');
+    expect(failuresLine(5)).toBe('5 consecutive failures.');
   });
 });

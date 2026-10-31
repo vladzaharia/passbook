@@ -136,7 +136,10 @@ describe('user detail', () => {
     expect(screen.getByText('ada@work.example')).toBeInTheDocument();
     expect(screen.getByText('wallet-users')).toBeInTheDocument();
     expect(screen.getByText('Safari')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Gold card' })).toHaveAttribute('href', '/admin/passes/p1');
+    expect(screen.getByRole('link', { name: 'Gold card' })).toHaveAttribute(
+      'href',
+      '/admin/passes/p1',
+    );
     expect((await axe(container)).violations).toEqual([]);
   });
 

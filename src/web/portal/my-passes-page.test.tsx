@@ -32,6 +32,38 @@ describe('my passes', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('offers a bundle link only with two or more active passes, in chunks of 10', async () => {
+    await renderApp('/', {
+      handlers: { '/api/v1/me/passes': () => list(passFixture()) },
+    });
+    await screen.findByRole('heading', { name: 'Gym membership', level: 2 });
+    expect(screen.queryByRole('link', { name: /Add all/ })).toBeNull();
+  });
+
+  it('links the bundle for two passes', async () => {
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () => list(passFixture(), passFixture({ id: 'p2' })),
+      },
+    });
+    expect(await screen.findByRole('link', { name: 'Add all to Apple Wallet' })).toHaveAttribute(
+      'href',
+      '/api/v1/me/passes.pkpasses?part=1',
+    );
+  });
+
+  it('splits eleven passes into two bundle links', async () => {
+    const many = Array.from({ length: 11 }, (_, i) => passFixture({ id: `p${i}` }));
+    await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(...many) } });
+    expect(
+      await screen.findByRole('link', { name: 'Add passes 1-10 to Apple Wallet' }),
+    ).toHaveAttribute('href', '/api/v1/me/passes.pkpasses?part=1');
+    expect(screen.getByRole('link', { name: 'Add pass 11 to Apple Wallet' })).toHaveAttribute(
+      'href',
+      '/api/v1/me/passes.pkpasses?part=2',
+    );
+  });
+
   it('shows the empty state', async () => {
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list() } });
     expect(await screen.findByText('No passes')).toBeInTheDocument();

@@ -247,11 +247,16 @@ export async function checkConnections(ctx: ServiceContext): Promise<Draft[]> {
         kind: 'connection',
         label: c.name,
         state: c.health === 'failing' ? 'failing' : 'degraded',
-        detail: `${c.consecutive_failures} consecutive failures.`,
+        detail: failuresLine(c.consecutive_failures),
         data: { orgId: c.org_id, health: c.health },
       }),
     ),
   ];
+}
+
+export function failuresLine(n: number): string | null {
+  if (n <= 0) return null;
+  return `${n} consecutive ${n === 1 ? 'failure' : 'failures'}.`;
 }
 
 export async function checkCron(ctx: ServiceContext): Promise<Draft[]> {

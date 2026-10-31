@@ -1,7 +1,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { WalletCards } from 'lucide-react';
+import { Wallet, WalletCards } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { PassCard } from '../pass-card/index.tsx';
 import {
   Button,
@@ -56,6 +57,29 @@ function PassTile({ pass }: { pass: MyPass }) {
   );
 }
 
+/** One link per bundle of 10 active passes; Apple Wallet takes a .pkpasses file as one add. */
+function AddAllLinks({ count }: { count: number }) {
+  if (count < 2) return null;
+  const parts = Math.ceil(count / MY_PASSES_BUNDLE_SIZE);
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      {Array.from({ length: parts }, (_, i) => {
+        const from = i * MY_PASSES_BUNDLE_SIZE + 1;
+        const to = Math.min(count, from + MY_PASSES_BUNDLE_SIZE - 1);
+        return (
+          <Button key={from} asChild variant="outline" size="sm" iconStart={<Wallet aria-hidden />}>
+            <a href={`${MY_PASSES_BUNDLE_PATH}?part=${i + 1}`}>
+              {parts === 1
+                ? 'Add all to Apple Wallet'
+                : `Add pass${from === to ? ` ${from}` : `es ${from}-${to}`} to Apple Wallet`}
+            </a>
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function MyPassesPage() {
   const query = useInfiniteQuery(myPassesQuery);
   const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
@@ -81,6 +105,7 @@ export function MyPassesPage() {
   } else {
     body = (
       <>
+        <AddAllLinks count={passes.filter((p) => p.status !== 'voided').length} />
         <ul className="grid gap-4 sm:grid-cols-2">
           {passes.map((pass) => (
             <li key={pass.id}>
