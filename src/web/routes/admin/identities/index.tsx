@@ -1,6 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { IdentitiesPage } from '../../../admin/identities/identities-page.tsx';
 
-export const Route = createFileRoute('/admin/identities/')({
-  component: () => <RoutePlaceholder title="Apple identities" />,
-});
+export const Route = createFileRoute('/admin/identities/')({ component: IdentitiesPage });
