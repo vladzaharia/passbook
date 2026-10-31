@@ -2,10 +2,8 @@ import type { EventName } from '../../platform/analytics.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import type { Scope, Window } from './repo.ts';
 
-/** Analytics SQL binding (`analytics` in wrangler >= 4.145). Not in the generated Env yet. */
-export interface AnalyticsSqlBinding {
-  query(sql: string): Promise<unknown>;
-}
+/** Dataset name as bound by `analytics_engine_datasets` in wrangler.jsonc. */
+const DATASET = 'events.analyticsEngine.wallet_events';
 
 export interface EventRow {
   event: EventName;
@@ -14,48 +12,49 @@ export interface EventRow {
   n: number;
 }
 
-const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
-
-export function analyticsSql(env: AppEnv): AnalyticsSqlBinding | null {
-  const binding = (env as unknown as { ANALYTICS_SQL?: Partial<AnalyticsSqlBinding> })
-    .ANALYTICS_SQL;
-  return typeof binding?.query === 'function' ? (binding as AnalyticsSqlBinding) : null;
+/** Analytics SQL binding (`analytics` in wrangler.jsonc). Absent in tests and local dev. */
+export function analyticsSql(env: AppEnv): AnalyticsSQLBinding | null {
+  const binding = (env as Partial<Pick<Env, 'ANALYTICS_SQL'>>).ANALYTICS_SQL;
+  return typeof binding?.query === 'function' ? binding : null;
 }
 
-/** Ids are interpolated into SQL (no bind support), so only plain id characters pass. */
-function literal(value: string): string {
-  if (!SAFE_ID.test(value)) throw new Error('Unsafe id in analytics query');
-  return `'${value}'`;
-}
-
-export function eventsQuery(w: Window, scope: Scope, now: number): string {
-  const bucketSeconds = Math.floor(w.bucketMs / 1000);
-  const filters = [
-    `timestamp > toDateTime(${Math.floor(w.since / 1000)})`,
-    `timestamp <= toDateTime(${Math.floor(now / 1000)})`,
-    ...(scope.orgId ? [`blob2 = ${literal(scope.orgId)}`] : []),
-    ...(scope.templateId ? [`blob3 = ${literal(scope.templateId)}`] : []),
-  ];
-  return `SELECT blob1 AS event, blob5 AS outcome,
-    intDiv(toUInt32(timestamp), ${bucketSeconds}) * ${bucketSeconds} AS t, SUM(_sample_interval) AS n
-    FROM wallet_events WHERE ${filters.join(' AND ')} GROUP BY event, outcome, t`;
-}
-
-function rowsOf(result: unknown): Record<string, unknown>[] {
-  if (Array.isArray(result)) return result as Record<string, unknown>[];
-  const data = (result as { data?: unknown } | null)?.data;
-  if (Array.isArray(data)) return data as Record<string, unknown>[];
-  throw new Error('Unexpected analytics SQL response');
+/**
+ * The binding supplies account scope, applies sample weights to COUNT and takes bound params.
+ * Only the lower time bound is mandatory.
+ */
+export function eventsQuery(w: Window, scope: Scope, now: number): AnalyticsSQLQuery {
+  const bucketSeconds = Math.max(1, Math.floor(w.bucketMs / 1000));
+  const params: Record<string, string> = {
+    since: new Date(w.since).toISOString(),
+    until: new Date(now).toISOString(),
+  };
+  const filters = ['timestamp > $since', 'timestamp <= $until'];
+  if (scope.orgId) {
+    filters.push('blob2 = $orgId');
+    params.orgId = scope.orgId;
+  }
+  if (scope.templateId) {
+    filters.push('blob3 = $templateId');
+    params.templateId = scope.templateId;
+  }
+  return {
+    query: `SELECT blob1 AS event, blob5 AS outcome,
+      toUnixTimestamp(toStartOfInterval(timestamp, INTERVAL '${bucketSeconds}' SECOND)) AS t,
+      COUNT(*) AS n
+      FROM ${DATASET} WHERE ${filters.join(' AND ')} GROUP BY event, outcome, t`,
+    params,
+  };
 }
 
 export async function queryEvents(
-  binding: AnalyticsSqlBinding,
+  binding: AnalyticsSQLBinding,
   w: Window,
   scope: Scope,
   now: number,
 ): Promise<EventRow[]> {
-  const rows = rowsOf(await binding.query(eventsQuery(w, scope, now)));
-  return rows.map((r) => ({
+  const result = await binding.query(eventsQuery(w, scope, now));
+  if (!Array.isArray(result?.data)) throw new Error('Unexpected analytics SQL response');
+  return result.data.map((r) => ({
     event: String(r.event) as EventName,
     outcome: String(r.outcome),
     t: Number(r.t) * 1000,

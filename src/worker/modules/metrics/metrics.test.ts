@@ -155,10 +155,10 @@ describe('metrics from D1', () => {
 });
 
 describe('metrics from Analytics Engine', () => {
-  const binding = (rows: unknown, calls: string[] = []) =>
+  const binding = (rows: unknown, calls: AnalyticsSQLQuery[] = []) =>
     ({
-      query: async (sql: string) => {
-        calls.push(sql);
+      query: async (q: AnalyticsSQLQuery) => {
+        calls.push(q);
         return rows;
       },
     }) as unknown;
@@ -168,7 +168,7 @@ describe('metrics from Analytics Engine', () => {
     const { org } = await orgWithPasses(f, 1);
     const bucketMs = 6 * 3_600_000;
     const t = Math.floor(clock.now() / bucketMs) * bucketMs;
-    const calls: string[] = [];
+    const calls: AnalyticsSQLQuery[] = [];
     const rows = {
       data: [
         { event: 'pass.issued', outcome: 'ok', t: t / 1000, n: '7' },
@@ -195,8 +195,10 @@ describe('metrics from Analytics Engine', () => {
       signIns: 5,
       passes: 1,
     });
-    expect(calls[0]).toContain(`blob2 = '${org.id}'`);
-    expect(calls[0]).toContain('FROM wallet_events');
+    expect(calls[0]?.query).toContain('blob2 = $orgId');
+    expect(calls[0]?.params).toMatchObject({ orgId: org.id });
+    expect(calls[0]?.query).toContain('FROM events.analyticsEngine.wallet_events');
+    expect(calls[0]?.query).not.toContain('accountTag');
   });
 
   it('falls back to D1 when the binding fails or answers with junk', async () => {
@@ -220,12 +222,12 @@ describe('metrics from Analytics Engine', () => {
     }
   });
 
-  it('refuses ids that are not plain id characters', () => {
+  it('binds ids as params, never into the SQL text', () => {
     const w = { since: 0, bucketMs: 3_600_000 };
-    expect(() => eventsQuery(w, { orgId: "x' OR 1=1 --" }, 10_000)).toThrow(/Unsafe/);
-    expect(eventsQuery(w, { orgId: 'org-1', templateId: 'tpl_1' }, 10_000)).toContain(
-      "blob3 = 'tpl_1'",
-    );
+    const q = eventsQuery(w, { orgId: "x' OR 1=1 --", templateId: 'tpl_1' }, 10_000);
+    expect(q.query).not.toContain('OR 1=1');
+    expect(q.params).toMatchObject({ orgId: "x' OR 1=1 --", templateId: 'tpl_1' });
+    expect(q.query).toContain("INTERVAL '3600' SECOND");
   });
 });
 

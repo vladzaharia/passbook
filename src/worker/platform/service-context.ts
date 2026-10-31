@@ -29,7 +29,10 @@ export function serviceContext(c: Context<AppBindings>): ServiceContext {
       try {
         c.executionCtx.waitUntil(promise);
       } catch {
-        void promise.catch(() => {});
+        // No execution context (tests, scripts): run detached but report failures.
+        void promise.catch((error) =>
+          c.var.log.warn('waituntil.failed', { code: 'WAIT_UNTIL', error }),
+        );
       }
     },
   };
@@ -45,13 +48,18 @@ export function createServiceContext(
   } = {},
 ): ServiceContext {
   const clock = options.clock ?? systemClock;
+  const log = options.log ?? createLogger({ build: env.CF_VERSION?.id, ...options.base });
   return {
     env,
     clock,
     ids: createIds(clock),
-    log: options.log ?? createLogger({ build: env.CF_VERSION?.id, ...options.base }),
+    log,
     requestId: null,
     waitUntil: (promise) =>
-      options.ctx ? options.ctx.waitUntil(promise) : void promise.catch(() => {}),
+      options.ctx
+        ? options.ctx.waitUntil(promise)
+        : void promise.catch((error) =>
+            log.warn('waituntil.failed', { code: 'WAIT_UNTIL', error }),
+          ),
   };
 }

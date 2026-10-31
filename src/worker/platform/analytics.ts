@@ -1,4 +1,7 @@
 import type { AppEnv } from './env.ts';
+import { createLogger, type Logger } from './log.ts';
+
+const fallbackLog = createLogger({ component: 'analytics' });
 
 export type EventName =
   | 'pass.issued'
@@ -22,8 +25,15 @@ export interface AnalyticsEvent {
   value?: number;
 }
 
-/** Writes one data point; never throws and never blocks the request. */
-export function writeEvent(env: Pick<AppEnv, 'EVENTS'>, event: AnalyticsEvent): void {
+/**
+ * Writes one data point; never throws and never blocks the request. A failed write (for example
+ * past the 250 data point per invocation limit) logs `analytics.write_failed` with code AE_WRITE.
+ */
+export function writeEvent(
+  env: Pick<AppEnv, 'EVENTS'>,
+  event: AnalyticsEvent,
+  log: Logger = fallbackLog,
+): void {
   try {
     env.EVENTS?.writeDataPoint({
       indexes: [event.orgId ?? 'platform'],
@@ -36,7 +46,7 @@ export function writeEvent(env: Pick<AppEnv, 'EVENTS'>, event: AnalyticsEvent): 
       ],
       doubles: [event.value ?? 1],
     });
-  } catch {
-    // Metrics are best-effort.
+  } catch (error) {
+    log.warn('analytics.write_failed', { code: 'AE_WRITE', name: event.event, error });
   }
 }

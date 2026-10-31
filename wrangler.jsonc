@@ -100,6 +100,8 @@
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],
+  // Admin charts read wallet_events through this. Remote only; absent locally, charts fall back to D1.
+  "analytics": { "binding": "ANALYTICS_SQL", "remote": true },
   "version_metadata": { "binding": "CF_VERSION" },
 
   "triggers": { "crons": ["* * * * *", "17 3 * * *"] },
