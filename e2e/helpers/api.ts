@@ -3,10 +3,13 @@ import { type Role, stateFile } from './auth.ts';
 
 const BASE = 'http://localhost:5173';
 
+// biome-ignore lint/suspicious/noExplicitAny: loosely typed test-side API payloads
+type Json = any;
+
 export interface Api {
   ctx: APIRequestContext;
-  get<T = any>(path: string): Promise<T>;
-  send<T = any>(
+  get<T = Json>(path: string): Promise<T>;
+  send<T = Json>(
     method: string,
     path: string,
     body?: unknown,
