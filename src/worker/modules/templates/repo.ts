@@ -154,7 +154,7 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     `SELECT ${TEMPLATE_COLUMNS.split(', ')
       .map((c) => `t.${c}`)
       .join(', ')},
-       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id) AS pass_count
+       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL) AS pass_count
      FROM templates t WHERE ${where.join(' AND ')}
      ORDER BY t.created_at DESC, t.id DESC LIMIT ?`,
     [...params, f.limit],

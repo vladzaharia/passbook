@@ -10,6 +10,7 @@ import {
   errors as joseErrors,
   jwtVerify,
 } from 'jose';
+import { createLogger } from '../../platform/log.ts';
 import { randomBytes, sha256Base64Url, toBase64Url } from '../../platform/ids.ts';
 import { isIpLiteral } from '../../platform/safe-fetch.ts';
 
@@ -228,12 +229,15 @@ function interpret(rp: RelyingParty, doc: Record<string, unknown>): DiscoveredIs
   };
 }
 
+const cacheLog = createLogger();
+
 /** The Cache API is an optimisation; any failure falls back to the network. */
 async function cachedDocument(url: string): Promise<Record<string, unknown> | null> {
   try {
     const hit = await caches.default.match(url);
     return hit ? ((await hit.json()) as Record<string, unknown>) : null;
   } catch {
+    cacheLog.warn('oidc.cache_failed', { code: 'CACHE_READ' });
     return null;
   }
 }
@@ -247,7 +251,7 @@ async function storeDocument(url: string, doc: Record<string, unknown>): Promise
       }),
     );
   } catch {
-    // See cachedDocument.
+    cacheLog.warn('oidc.cache_failed', { code: 'CACHE_WRITE' });
   }
 }
 

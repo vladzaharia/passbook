@@ -1,4 +1,5 @@
 import { all, first, run } from '../../platform/db.ts';
+import { deleteInBatches } from '../delivery/batched.ts';
 
 type Db = D1Database;
 
@@ -154,18 +155,19 @@ const DAY = 24 * 60 * 60 * 1000;
 
 /** Daily retention. Returns rows removed per table. */
 export async function purgeExpired(db: Db, now: number): Promise<Record<string, number>> {
-  const del = async (sql: string, ...params: number[]) => (await run(db, sql, params)).changes;
+  const del = (table: string, where: string, ...params: number[]) =>
+    deleteInBatches(db, table, where, params);
   return {
-    magicLinks: await del('DELETE FROM magic_links WHERE expires_at < ?', now - DAY),
-    oidcFlows: await del('DELETE FROM oidc_flows WHERE expires_at < ?', now),
+    magicLinks: await del('magic_links', 'expires_at < ?', now - DAY),
+    oidcFlows: await del('oidc_flows', 'expires_at < ?', now),
     sessions: await del(
-      `DELETE FROM sessions WHERE expires_at < ? OR idle_expires_at < ?
-         OR (revoked_at IS NOT NULL AND revoked_at < ?)`,
+      'sessions',
+      'expires_at < ? OR idle_expires_at < ? OR (revoked_at IS NOT NULL AND revoked_at < ?)',
       now - DAY,
       now - DAY,
       now - 7 * DAY,
     ),
-    counters: await del('DELETE FROM counters WHERE window_start < ?', now - 2 * DAY),
+    counters: await del('counters', 'window_start < ?', now - 2 * DAY),
   };
 }
 

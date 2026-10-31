@@ -18,7 +18,7 @@ import {
 
 // Decrypted key PEMs per isolate, keyed by credential and certificate fingerprint.
 // signManifest keeps its own non-extractable CryptoKey cache on top of this.
-const keyCache = new Map<string, Promise<string>>();
+const keyCache = new Map<string, string>();
 
 export function clearIdentityKeyCache(): void {
   keyCache.clear();
@@ -34,35 +34,30 @@ export function apnsBindingPresent(env: AppEnv, binding: string | null): boolean
 export async function loadIdentityKey(env: AppEnv, row: IdentityRow): Promise<string> {
   if (!row.credential_id) throw notFound();
   const cacheKey = `${row.credential_id}:${row.cert_sha256}`;
-  let pending = keyCache.get(cacheKey);
-  if (!pending) {
-    const credentialId = row.credential_id;
-    pending = (async () => {
-      const blob = await getCredentialBlob(env.DB, credentialId);
-      if (!blob) throw notFound();
-      try {
-        return await decryptSecretText(
-          await loadKekRing(env),
-          {
-            kekVersion: blob.kek_version,
-            iv: new Uint8Array(blob.iv),
-            wrappedDek: new Uint8Array(blob.wrapped_dek),
-            ciphertext: new Uint8Array(blob.ciphertext),
-          },
-          credentialAad(credentialId, row.org_id, 'pass_signer'),
-        );
-      } catch (error) {
-        if (error instanceof AppError) throw error;
-        throw new UnavailableError(
-          'The signing key cannot be decrypted.',
-          'IDENTITY_KEY_UNREADABLE',
-        );
-      }
-    })();
-    keyCache.set(cacheKey, pending);
-    pending.catch(() => keyCache.delete(cacheKey));
+  const cached = keyCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+  const credentialId = row.credential_id;
+  const blob = await getCredentialBlob(env.DB, credentialId);
+  if (!blob) throw notFound();
+  let pem: string;
+  try {
+    pem = await decryptSecretText(
+      await loadKekRing(env),
+      {
+        kekVersion: blob.kek_version,
+        iv: new Uint8Array(blob.iv),
+        wrappedDek: new Uint8Array(blob.wrapped_dek),
+        ciphertext: new Uint8Array(blob.ciphertext),
+      },
+      credentialAad(credentialId, row.org_id, 'pass_signer'),
+    );
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new UnavailableError('The signing key cannot be decrypted.', 'IDENTITY_KEY_UNREADABLE');
   }
-  return pending;
+  // Settled values only: a promise created in one request cannot be awaited from another.
+  keyCache.set(cacheKey, pem);
+  return pem;
 }
 
 export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<ResolvedIdentity> {

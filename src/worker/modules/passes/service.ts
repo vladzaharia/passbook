@@ -210,6 +210,9 @@ export async function resendEmail(
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const to = input.to ?? pass.holderEmail;
   if (!to) throw new ValidationError('The pass has no holder email.', [], 'NO_RECIPIENT');
+  // API keys may not turn resend into a mail relay.
+  if (actor.type !== 'user' && to.toLowerCase() !== pass.holderEmail?.toLowerCase())
+    throw new ValidationError('Only the holder email can be used.', [], 'RECIPIENT_NOT_HOLDER');
   await enqueuePassEmail(ctx, { passId, to, attach: input.attach ?? false });
   await recordAudit(ctx, {
     orgId: pass.orgId,

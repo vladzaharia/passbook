@@ -46,11 +46,10 @@ describe('app shell', () => {
     const ASSETS = {
       fetch: async () => new Response('<html>', { headers: { 'content-type': 'text/html' } }),
     };
-    const res = await app.request(
-      `${ORIGIN}/assets/missing-chunk.js`,
-      {},
-      { ...env, ASSETS } as unknown as AppEnv,
-    );
+    const res = await app.request(`${ORIGIN}/assets/missing-chunk.js`, {}, {
+      ...env,
+      ASSETS,
+    } as unknown as AppEnv);
     expect(res.status).toBe(404);
     expect(res.headers.get('cache-control')).toBe('no-store');
   });

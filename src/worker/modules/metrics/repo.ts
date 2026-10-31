@@ -44,13 +44,13 @@ export async function passTotals(db: D1Database, scope: Scope): Promise<PassTota
     db,
     `SELECT count(*) AS passes, coalesce(sum(p.status = 'active'), 0) AS active,
             coalesce(sum(p.status = 'voided'), 0) AS voided, count(p.holder_email) AS holders
-     FROM passes p WHERE 1 = 1${w.sql}`,
+     FROM passes p WHERE p.deleted_at IS NULL${w.sql}`,
     w.params,
   );
   const devices = await first<{ n: number }>(
     db,
     scope.orgId || scope.templateId
-      ? `SELECT count(DISTINCT r.device_id) AS n FROM registrations r JOIN passes p ON p.id = r.pass_id WHERE 1 = 1${w.sql}`
+      ? `SELECT count(DISTINCT r.device_id) AS n FROM registrations r JOIN passes p ON p.id = r.pass_id WHERE p.deleted_at IS NULL${w.sql}`
       : 'SELECT count(*) AS n FROM devices',
     scope.orgId || scope.templateId ? w.params : [],
   );

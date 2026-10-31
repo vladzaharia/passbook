@@ -186,7 +186,7 @@ export async function attachWaiting(
   const rows = await all<{ id: string; org_id: string }>(
     db,
     `UPDATE passes SET owner_user_id = ?1
-     WHERE holder_email = ?2 AND owner_user_id IS NULL
+     WHERE holder_email = ?2 AND owner_user_id IS NULL AND deleted_at IS NULL
        AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = passes.id AND b.user_id = ?1)
      RETURNING id, org_id`,
     [userId, email],

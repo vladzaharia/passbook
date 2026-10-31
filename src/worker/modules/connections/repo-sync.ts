@@ -1,4 +1,5 @@
 import { first, run } from '../../platform/db.ts';
+import { deleteInBatches } from '../delivery/batched.ts';
 
 // Workflow runs
 
@@ -48,7 +49,7 @@ export async function workflowStartedAt(
 // Retention
 
 export async function deleteOldRuns(db: D1Database, before: number, keep: number): Promise<number> {
-  const old = await run(db, 'DELETE FROM connection_runs WHERE started_at < ?', [before]);
+  const old = { changes: await deleteInBatches(db, 'connection_runs', 'started_at < ?', [before]) };
   const excess = await run(
     db,
     `DELETE FROM connection_runs WHERE id IN (
@@ -71,5 +72,5 @@ export async function deleteOldWorkflowRuns(db: D1Database, before: number): Pro
 
 export async function deleteOldWebhookEvents(db: D1Database, before: number): Promise<number> {
   // connection_inbox rows go with their event (ON DELETE CASCADE).
-  return (await run(db, 'DELETE FROM webhook_events WHERE received_at < ?', [before])).changes;
+  return deleteInBatches(db, 'webhook_events', 'received_at < ?', [before]);
 }

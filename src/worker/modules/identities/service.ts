@@ -10,6 +10,7 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
+import { checkIdentityById } from './check.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
 import { apnsBindingPresent, clearIdentityKeyCache } from './db-resolver.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
@@ -174,6 +175,7 @@ export async function uploadIdentity(
       notAfter: details.notAfter,
     },
   });
+  await checkIdentityById(ctx, id);
   return getIdentity(ctx, id);
 }
 

@@ -2,7 +2,7 @@ import type { Personalization } from '../../../passkit/types.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -153,8 +153,15 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     templateId: template.id,
     identityId: identity.id,
   });
-  if (p.sendEmail && holderEmail)
-    await enqueuePassEmail(ctx, { passId: id, to: holderEmail, attach: false });
+  if (p.sendEmail && holderEmail) {
+    try {
+      await enqueuePassEmail(ctx, { passId: id, to: holderEmail, attach: false });
+    } catch (error) {
+      // The pass exists; a capped email is resent on request, not a failed create.
+      if (!(error instanceof AppError) || error.code !== 'EMAIL_RATE_LIMITED') throw error;
+      ctx.log.warn('passes.email_rate_limited', { orgId: p.orgId, passId: id });
+    }
+  }
   return (await getPass(db, id)) ?? pass;
 }
 

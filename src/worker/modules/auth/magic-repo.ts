@@ -23,7 +23,7 @@ export async function isKnownAddress(db: Db, email: string): Promise<boolean> {
   const row = await first<{ found: number }>(
     db,
     `SELECT 1 AS found WHERE EXISTS (SELECT 1 FROM user_emails WHERE email = ?)
-       OR EXISTS (SELECT 1 FROM passes WHERE holder_email = ?)`,
+       OR EXISTS (SELECT 1 FROM passes WHERE holder_email = ? AND deleted_at IS NULL)`,
     [email, email],
   );
   return row !== null;

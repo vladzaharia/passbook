@@ -1,7 +1,8 @@
-import { AppError, NotFoundError } from '../../platform/errors.ts';
+import { AppError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { dispatchSafely } from '../delivery/service.ts';
+import { setWorkflowRun } from '../templates/repo.ts';
 import { isNotFound, resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import { publishPass } from './publish.ts';
@@ -110,7 +111,18 @@ export async function startBulkReissue(
     identityId: body.identityId ?? null,
     cause: body.cause ?? 'template_upgrade',
   };
-  await ctx.env.BULK_REISSUE.create({ id: instanceId, params });
+  try {
+    await ctx.env.BULK_REISSUE.create({ id: instanceId, params });
+  } catch (error) {
+    ctx.log.error('passes.workflow_start_failed', {
+      orgId: body.orgId ?? null,
+      error: error instanceof Error ? error.name : 'unknown',
+    });
+    await setWorkflowRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), {
+      errorCode: 'WORKFLOW_START',
+    });
+    throw new UnavailableError('The rebuild did not start. Try again.', 'WORKFLOW_START');
+  }
   await recordAudit(ctx, {
     orgId: body.orgId ?? null,
     actorType: actor.type,
