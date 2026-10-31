@@ -1,4 +1,6 @@
+import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { deleteInBatches } from './batched.ts';
 
 export type OutboxState =
   | 'pending'
@@ -20,6 +22,7 @@ export interface OutboxRow {
   maxAttempts: number;
   lease: string | null;
   errorCode: string | null;
+  providerId: string | null;
   createdAt: number;
   finishedAt: number | null;
 }
@@ -35,6 +38,7 @@ interface OutboxDbRow {
   max_attempts: number;
   lease: string | null;
   error_code: string | null;
+  provider_id: string | null;
   created_at: number;
   finished_at: number | null;
 }
@@ -50,6 +54,7 @@ const mapOutbox = (r: OutboxDbRow): OutboxRow => ({
   maxAttempts: r.max_attempts,
   lease: r.lease,
   errorCode: r.error_code,
+  providerId: r.provider_id,
   createdAt: r.created_at,
   finishedAt: r.finished_at,
 });
@@ -196,6 +201,18 @@ export async function failOutbox(
   return row ? mapOutbox(row) : null;
 }
 
+/** Fails a row only when its attempts are used up; a row another consumer released stays. */
+export async function failExhausted(db: D1Database, id: string, now: number): Promise<boolean> {
+  const result = await run(
+    db,
+    `UPDATE outbox SET state = 'failed', lease = NULL, finished_at = ?, error_code = 'MAX_ATTEMPTS',
+       coalesce_key = NULL
+     WHERE id = ? AND state IN ('pending', 'enqueued') AND attempts >= max_attempts`,
+    [now, id],
+  );
+  return result.changes > 0;
+}
+
 /** Leases that expired while processing: retry, or fail when attempts are used up. */
 export async function reclaimStaleLeases(
   db: D1Database,
@@ -294,28 +311,24 @@ export async function savePushResults(
   );
 }
 
-/** Removes the registration and, when it was the device's last, the device itself. */
+/**
+ * A dead token belongs to the device, not the pass: remove the device and all its registrations
+ * for this identity. Wallet registers again with a fresh token.
+ */
 export async function dropRegistrations(
   db: D1Database,
-  passId: string,
   identityId: string,
   deviceIds: string[],
 ): Promise<void> {
   await batch(db, [
     ...deviceIds.map((id) =>
-      stmt(
-        db,
-        'DELETE FROM registrations WHERE pass_id = ? AND identity_id = ? AND device_id = ?',
-        [passId, identityId, id],
-      ),
+      stmt(db, 'DELETE FROM registrations WHERE identity_id = ? AND device_id = ?', [
+        identityId,
+        id,
+      ]),
     ),
     ...deviceIds.map((id) =>
-      stmt(
-        db,
-        `DELETE FROM devices WHERE device_id = ? AND identity_id = ?
-         AND NOT EXISTS (SELECT 1 FROM registrations r WHERE r.device_id = ? AND r.identity_id = ?)`,
-        [id, identityId, id, identityId],
-      ),
+      stmt(db, 'DELETE FROM devices WHERE device_id = ? AND identity_id = ?', [id, identityId]),
     ),
   ]);
 }
@@ -337,15 +350,62 @@ export async function deleteFinishedOutbox(
   sentBefore: number,
   failedBefore: number,
 ): Promise<number> {
-  const sent = await run(
+  const sent = await deleteInBatches(
     db,
-    `DELETE FROM outbox WHERE state IN ('sent', 'cancelled') AND finished_at < ?`,
+    'outbox',
+    `state IN ('sent', 'cancelled') AND finished_at < ?`,
     [sentBefore],
   );
-  const failed = await run(
+  const failed = await deleteInBatches(
     db,
-    `DELETE FROM outbox WHERE state IN ('failed', 'partial') AND finished_at < ?`,
+    'outbox',
+    `state IN ('failed', 'partial') AND finished_at < ?`,
     [failedBefore],
   );
-  return sent.changes + failed.changes;
+  return sent + failed;
+}
+
+/** Records the provider's message id before the row is finished, so a re-run never re-sends. */
+export async function setProviderId(
+  db: D1Database,
+  id: string,
+  lease: string,
+  providerId: string,
+): Promise<void> {
+  await run(db, 'UPDATE outbox SET provider_id = ? WHERE id = ? AND lease = ?', [
+    providerId,
+    id,
+    lease,
+  ]);
+}
+
+export interface OrgBranding {
+  accent?: string;
+  supportEmail?: string;
+  supportUrl?: string;
+}
+
+/** orgs.branding as written by the org form. Invalid JSON reads as empty. */
+export async function orgBranding(db: D1Database, orgId: string): Promise<OrgBranding> {
+  const row = await first<{ branding: string }>(db, 'SELECT branding FROM orgs WHERE id = ?', [
+    orgId,
+  ]);
+  if (!row) return {};
+  const parsed = OrgBrandingSchema.safeParse(JSON.parse(row.branding));
+  return parsed.success ? parsed.data : {};
+}
+
+/** Adds one to the counter for the window and returns the new value. */
+export async function bumpCounter(
+  db: D1Database,
+  key: string,
+  windowStart: number,
+): Promise<number> {
+  const row = await first<{ count: number }>(
+    db,
+    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, 1)
+     ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1 RETURNING count`,
+    [key, windowStart],
+  );
+  return row?.count ?? 1;
 }

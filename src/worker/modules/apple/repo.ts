@@ -1,4 +1,5 @@
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
+import { deleteInBatches } from '../delivery/batched.ts';
 
 export interface IdentityRef {
   id: string;
@@ -107,22 +108,26 @@ export async function serialsSince(
   return all<{ serial: string; revision: number }>(
     db,
     `SELECT p.serial, p.revision FROM registrations r JOIN passes p ON p.id = r.pass_id
+     JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
      WHERE r.device_id = ? AND r.identity_id = ? AND p.revision > ? ORDER BY p.revision LIMIT ?`,
     [deviceId, identityId, since, limit],
   );
 }
 
 /** Adds `lines` to the hourly window and returns the new total. */
+export const GLOBAL_LOG_KEY = 'apple.log';
+
 export async function bumpLogCounter(
   db: D1Database,
+  key: string,
   windowStart: number,
   lines: number,
 ): Promise<number> {
   const row = await first<{ count: number }>(
     db,
-    `INSERT INTO counters (key, window_start, count) VALUES ('apple.log', ?, ?)
+    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)
      ON CONFLICT (key, window_start) DO UPDATE SET count = count + excluded.count RETURNING count`,
-    [windowStart, lines],
+    [key, windowStart, lines],
   );
   return row?.count ?? lines;
 }
@@ -146,11 +151,15 @@ export async function insertLogs(
 }
 
 export async function purgeLogs(db: D1Database, before: number): Promise<number> {
-  const logs = await run(db, 'DELETE FROM wallet_logs WHERE at < ?', [before]);
-  await run(db, `DELETE FROM counters WHERE key = 'apple.log' AND window_start < ?`, [before]);
-  return logs.changes;
+  const logs = await deleteInBatches(db, 'wallet_logs', 'at < ?', [before]);
+  await run(
+    db,
+    `DELETE FROM counters WHERE (key = 'apple.log' OR key LIKE 'apple.log.ip:%') AND window_start < ?`,
+    [before],
+  );
+  return logs;
 }
 
 export async function purgeRevisions(db: D1Database, before: number): Promise<number> {
-  return (await run(db, 'DELETE FROM revisions WHERE at < ?', [before])).changes;
+  return deleteInBatches(db, 'revisions', 'at < ?', [before]);
 }

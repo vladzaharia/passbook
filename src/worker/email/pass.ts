@@ -2,6 +2,8 @@ export interface PassEmailInput {
   orgName: string;
   /** `#rrggbb`; falls back to a neutral dark. */
   accent?: string | null;
+  supportEmail?: string | null;
+  supportUrl?: string | null;
   lang?: string;
   downloadUrl: string;
   manageUrl: string;
@@ -26,7 +28,25 @@ const escapeHtml = (value: string) =>
 const safeColor = (value: string | null | undefined) =>
   value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#1f2937';
 
+const safeUrl = (value: string | null | undefined) =>
+  value && /^https?:\/\/[^\s"'<>]+$/i.test(value) ? value : null;
+const safeMail = (value: string | null | undefined) =>
+  value && /^[^\s@<>"']+@[^\s@<>"']+$/.test(value) ? value : null;
+
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
+  const supportEmail = safeMail(input.supportEmail);
+  const supportUrl = safeUrl(input.supportUrl);
+  const supportText = [supportEmail, supportUrl].filter(Boolean).join(' | ');
+  const supportHtml = [
+    supportEmail
+      ? `<a href="mailto:${escapeHtml(supportEmail)}" style="color:#71717a">${escapeHtml(supportEmail)}</a>`
+      : '',
+    supportUrl
+      ? `<a href="${escapeHtml(supportUrl)}" style="color:#71717a">${escapeHtml(supportUrl)}</a>`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' | ');
   const org = escapeHtml(input.orgName);
   const accent = safeColor(input.accent);
   const subject = `Your ${input.orgName} pass`;
@@ -38,6 +58,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     ...(input.attached ? ['', 'The pass is also attached.'] : []),
     '',
     'Keep this email private. Its links open your pass.',
+    ...(supportText ? [`Questions: ${supportText}`] : []),
   ].join('\n');
   const html = `<!doctype html>
 <html lang="${escapeHtml(input.lang ?? 'en')}">
@@ -58,6 +79,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
 <p style="margin:0 0 24px"><a href="${escapeHtml(input.manageUrl)}" style="color:${accent};font-size:15px">Manage pass</a></p>
 ${input.attached ? '<p style="margin:0 0 16px;font-size:14px;line-height:20px;color:#52525b">The pass is also attached.</p>' : ''}
 <p style="margin:0;font-size:12px;line-height:18px;color:#71717a">Keep this email private. Its links open your pass.</p>
+${supportHtml ? `<p style="margin:12px 0 0;font-size:12px;line-height:18px;color:#71717a">Questions: ${supportHtml}</p>` : ''}
 </td></tr>
 </table>
 </td></tr>

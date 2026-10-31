@@ -1,8 +1,10 @@
 import { strictEmail } from '../../../shared/email.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo.ts';
 import {
+  bumpCounter,
   insertOutbox,
   lostEnqueues,
   markDueEnqueued,
@@ -13,6 +15,11 @@ import {
 /** Workstream d owns this module. Keep the signatures. */
 
 const SEND_BATCH = 100;
+const HOUR = 3_600_000;
+const DAY = 86_400_000;
+/** Pass emails per recipient per hour, and per org per day. */
+export const EMAIL_RECIPIENT_HOURLY_CAP = 3;
+export const EMAIL_ORG_DAILY_CAP = 500;
 
 function message(row: { id: string; kind: 'push' | 'email' }) {
   return {
@@ -108,6 +115,18 @@ export async function enqueuePassEmail(
   if (!to) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   const pass = await getPass(ctx.env.DB, input.passId);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const now = ctx.clock.now();
+  const recipient = (await sha256Hex(`pass-email:${to.toLowerCase()}`)).slice(0, 32);
+  const perRecipient = await bumpCounter(
+    ctx.env.DB,
+    `pass-email:to:${recipient}`,
+    now - (now % HOUR),
+  );
+  const perOrg = await bumpCounter(ctx.env.DB, `pass-email:org:${pass.orgId}`, now - (now % DAY));
+  if (perRecipient > EMAIL_RECIPIENT_HOURLY_CAP || perOrg > EMAIL_ORG_DAILY_CAP)
+    throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
+      headers: { 'retry-after': '3600' },
+    });
   const outboxId = ctx.ids.id();
   await insertOutbox(ctx.env.DB, {
     id: outboxId,

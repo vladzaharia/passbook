@@ -2,6 +2,7 @@ import { retryDelaySeconds } from '../../jobs/queue.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPass } from '../passes/repo.ts';
 import type { ApnsResult } from './apns.ts';
@@ -11,9 +12,8 @@ import {
   deliveredDevices,
   devicesForPass,
   dropRegistrations,
-  failOutbox,
+  failExhausted,
   finishOutbox,
-  getOutbox,
   type OutboxRow,
   type PushResultRow,
   releaseOutbox,
@@ -62,11 +62,10 @@ export async function claimOrSettle(
   const lease = ctx.ids.token(8);
   const row = await claimOutbox(ctx.env.DB, outboxId, lease, ctx.clock.now(), LEASE_MS);
   if (row) return { row, lease };
-  const existing = await getOutbox(ctx.env.DB, outboxId);
-  if (existing && ['pending', 'enqueued'].includes(existing.state)) {
-    await failOutbox(ctx.env.DB, outboxId, ctx.clock.now(), 'MAX_ATTEMPTS');
+  // Another consumer may hold the row or have just released it for a retry: only an
+  // exhausted row is failed, in one guarded statement.
+  if (await failExhausted(ctx.env.DB, outboxId, ctx.clock.now()))
     ctx.log.warn('outbox.exhausted', { outboxId, code: 'MAX_ATTEMPTS' });
-  }
   return null;
 }
 
@@ -97,6 +96,10 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
   const pass = row.passId ? await getPass(db, row.passId) : null;
   if (!pass) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'PASS_GONE');
+    return;
+  }
+  if (!(await isOrgActive(ctx, pass.orgId))) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'ORG_INACTIVE');
     return;
   }
   const deps = depsOf(ctx.env);
@@ -155,7 +158,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     });
   }
   await savePushResults(db, row.id, saved, now);
-  if (gone.length) await dropRegistrations(db, pass.id, pass.identityId, gone);
+  if (gone.length) await dropRegistrations(db, pass.identityId, gone);
   if (count.cert > 0) await setApnsHealth(db, pass.identityId, 'failing');
   else if (count.ok > 0) await setApnsHealth(db, pass.identityId, 'healthy');
 
