@@ -9,7 +9,7 @@ function OidcCard() {
   const { oidc } = data;
   return (
     <Card>
-      <CardHeader title="Pocket ID" actions={<Badge>Read-only</Badge>} />
+      <CardHeader title="Polaris ID" actions={<Badge>Read-only</Badge>} />
       <CardBody>
         <KeyValue
           items={[
@@ -22,11 +22,11 @@ function OidcCard() {
           Managed in{' '}
           <a
             className="text-accent-fg underline"
-            href="https://id.plrs.im"
+            href={oidc.issuer}
             target="_blank"
             rel="noreferrer noopener"
           >
-            Pocket ID
+            Polaris ID
           </a>
           .
         </p>

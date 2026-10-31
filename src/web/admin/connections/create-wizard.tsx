@@ -306,6 +306,7 @@ export function CreateConnectionWizard() {
           orgId={orgId}
           value={life}
           onChange={setLife}
+          capabilities={connector.data?.capabilities}
           error={showErrors ? lifeError : undefined}
         />
       ) : null}

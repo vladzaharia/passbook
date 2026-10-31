@@ -15,6 +15,7 @@ import { useOrgList, useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { type AuditSearch, dayToMs, msToDay } from './audit-search.ts';
 import { EntryDrawer } from './entry-drawer.tsx';
+import { actorText, targetText } from './labels.ts';
 import { useAuditLog } from './queries.ts';
 
 const ALL = 'all';
@@ -151,6 +152,7 @@ export function AuditPage({
             loading={log.isPending}
             data={rows}
             getRowId={(r) => String(r.id)}
+            onRowClick={(r) => onSearch({ ...filters, entry: r.id })}
             empty={
               <EmptyState icon={ScrollText} title={filtered ? 'No entries match' : 'No entries'} />
             }
@@ -177,16 +179,12 @@ export function AuditPage({
               {
                 header: 'Actor',
                 id: 'actor',
-                cell: ({ row }) =>
-                  `${row.original.actorType}${row.original.actorId ? `: ${row.original.actorId}` : ''}`,
+                cell: ({ row }) => actorText(row.original),
               },
               {
                 header: 'Target',
                 id: 'target',
-                cell: ({ row }) =>
-                  row.original.targetType
-                    ? `${row.original.targetType}: ${row.original.targetId ?? ''}`
-                    : '',
+                cell: ({ row }) => targetText(row.original),
               },
               {
                 header: 'Org',

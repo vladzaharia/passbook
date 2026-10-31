@@ -12,7 +12,9 @@ import {
   SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
+import { useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { dataItems } from './data-items.ts';
 import { sortBySeverity, useStatus, useWorkflowRuns } from './queries.ts';
 
 const RUN_STATUS: Record<string, 'verified' | 'degraded' | 'failing' | 'configured'> = {
@@ -75,16 +77,26 @@ function Workflows() {
 
 export function StatusPage() {
   const status = useStatus();
+  const orgName = useOrgNames();
   const refresh = (
-    <Button
-      variant="outline"
-      iconStart={<RefreshCw aria-hidden />}
-      loading={status.isFetching && !status.isPending}
-      onClick={() => status.refetch()}
-    >
-      Refresh
-    </Button>
+    <div className="flex items-center gap-3">
+      {status.data ? (
+        <span className="text-xs text-fg-muted">
+          Checked {formatDateTime(Math.max(0, ...status.data.components.map((c) => c.checkedAt)))}
+        </span>
+      ) : null}
+      <Button
+        variant="outline"
+        iconStart={<RefreshCw aria-hidden />}
+        loading={status.isFetching && !status.isPending}
+        onClick={() => status.refetch()}
+      >
+        Refresh
+      </Button>
+    </div>
   );
+  const items = (data: Parameters<typeof dataItems>[0] | undefined) =>
+    data ? dataItems(data, orgName) : [];
   return (
     <>
       <PageHeader title="Status" actions={refresh} />
@@ -98,10 +110,6 @@ export function StatusPage() {
             <span className="flex items-center gap-2">
               Overall <StatusPill status={status.data.overall} />
             </span>
-            <span className="text-fg-muted">
-              Build {status.data.build.tag ?? status.data.build.id ?? 'unknown'}
-              {status.data.build.timestamp ? `, ${status.data.build.timestamp}` : ''}
-            </span>
           </div>
           {status.data.components.length === 0 ? (
             <EmptyState title="No components reported" />
@@ -113,22 +121,13 @@ export function StatusPage() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium text-fg-strong">{c.label}</p>
-                        <p className="text-xs text-fg-muted">
-                          {c.kind}, checked {formatDateTime(c.checkedAt)}
-                        </p>
+                        <p className="text-xs text-fg-muted">{c.kind}</p>
                       </div>
                       <StatusPill status={c.state} />
                     </div>
                     {c.detail ? <p className="mt-2 text-sm text-fg">{c.detail}</p> : null}
-                    {c.data && Object.keys(c.data).length > 0 ? (
-                      <KeyValue
-                        className="mt-3"
-                        items={Object.entries(c.data).map(([label, value]) => ({
-                          label,
-                          value: value === null ? null : String(value),
-                          mono: true,
-                        }))}
-                      />
+                    {items(c.data).length > 0 ? (
+                      <KeyValue className="mt-3" items={items(c.data)} />
                     ) : null}
                   </Card>
                 </li>

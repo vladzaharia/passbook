@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { dayToMs, msToDay, parseAuditSearch } from './audit-search.ts';
+import { actorText, targetText } from './labels.ts';
 import { describeDetail, REDACTED, redact } from './redact.ts';
 
 const entry = (id: number, over: Record<string, unknown> = {}) => ({
@@ -105,6 +106,15 @@ describe('audit page', () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('cursor=c1'))).toBe(true);
   });
 
+  it('opens the drawer when a row is clicked', async () => {
+    await renderApp('/admin/audit', {
+      session: 'admin',
+      handlers: { '/api/v1/audit': () => json({ items: [entry(1)], nextCursor: null }) },
+    });
+    await userEvent.setup().click(await screen.findByText('thing.updated.1'));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
   it('opens a drawer with a redacted diff', async () => {
     await renderApp('/admin/audit', {
       session: 'admin',
@@ -146,5 +156,16 @@ describe('audit page', () => {
       handlers: { '/api/v1/audit': () => problem(500, 'x', 'x') },
     });
     expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+  });
+});
+
+describe('labels', () => {
+  it('prefers labels and falls back to ids', () => {
+    const e = entry(1) as Parameters<typeof actorText>[0];
+    expect(actorText(e)).toBe('user: u1');
+    expect(targetText(e)).toBe('org: o1');
+    expect(actorText({ ...e, actorLabel: 'Ada' })).toBe('user: Ada');
+    expect(targetText({ ...e, targetLabel: 'Acme' })).toBe('org: Acme');
+    expect(targetText({ ...e, targetType: null, targetId: null })).toBe('');
   });
 });

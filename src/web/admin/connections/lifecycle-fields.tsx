@@ -11,6 +11,29 @@ export interface Lifecycle {
   onMissing: 'keep' | 'flag' | 'void';
 }
 
+export interface ModeCapabilities {
+  poll: boolean;
+  webhook: boolean;
+  snapshot: boolean;
+}
+
+/** Modes the connector can run; always includes the current one so the select is never blank. */
+export function modeOptions(
+  caps: ModeCapabilities | undefined,
+  current: Lifecycle['mode'],
+): { value: Lifecycle['mode']; label: string }[] {
+  const all: { value: Lifecycle['mode']; label: string; ok: boolean }[] = [
+    { value: 'poll', label: 'Poll', ok: !caps || caps.poll },
+    { value: 'webhook', label: 'Webhook', ok: !caps || caps.webhook },
+    { value: 'hybrid', label: 'Hybrid', ok: !caps || (caps.poll && caps.webhook) },
+    { value: 'manual', label: 'Manual', ok: true },
+    { value: 'snapshot', label: 'Snapshot', ok: Boolean(caps?.snapshot) },
+  ];
+  return all
+    .filter((o) => o.ok || o.value === current)
+    .map(({ value, label }) => ({ value, label }));
+}
+
 export const NO_TEMPLATE = '__none__';
 
 export function lifecycleToPatch(l: Lifecycle) {
@@ -42,7 +65,9 @@ export function LifecycleFields({
   onChange,
   disabled,
   error,
+  capabilities,
 }: {
+  capabilities?: ModeCapabilities | undefined;
   orgId: string;
   value: Lifecycle;
   onChange: (next: Lifecycle) => void;
@@ -61,13 +86,7 @@ export function LifecycleFields({
             disabled={disabled}
             value={value.mode}
             onValueChange={(v) => set('mode', v as Lifecycle['mode'])}
-            options={[
-              { value: 'poll', label: 'Poll' },
-              { value: 'webhook', label: 'Webhook' },
-              { value: 'hybrid', label: 'Hybrid' },
-              { value: 'manual', label: 'Manual' },
-              { value: 'snapshot', label: 'Snapshot' },
-            ]}
+            options={modeOptions(capabilities, value.mode)}
           />
         )}
       </FormField>

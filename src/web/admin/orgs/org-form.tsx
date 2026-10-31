@@ -21,13 +21,13 @@ type Org = z.infer<typeof OrgSummarySchema>;
 
 const DEFAULT_IDENTITY = 'default';
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const DEFAULT_ACCENT = '#0f766e';
 
 export interface OrgDraft {
   name: string;
   status: 'active' | 'suspended';
   identity: string;
   accent: string;
-  logoAsset: string;
 }
 
 export function orgToDraft(org: Org): OrgDraft {
@@ -36,7 +36,6 @@ export function orgToDraft(org: Org): OrgDraft {
     status: org.status === 'suspended' ? 'suspended' : 'active',
     identity: org.defaultIdentityId ?? DEFAULT_IDENTITY,
     accent: org.branding.accent ?? '',
-    logoAsset: org.branding.logoAsset ?? '',
   };
 }
 
@@ -44,7 +43,6 @@ export function validateOrg(d: OrgDraft): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!d.name.trim()) errors.name = 'Required.';
   if (d.accent && !HEX.test(d.accent)) errors.accent = 'Use a 6-digit hex like #0f766e.';
-  if (d.logoAsset.length > 200) errors.logoAsset = 'Max 200 characters.';
   return errors;
 }
 
@@ -53,8 +51,6 @@ export function orgPatch(d: OrgDraft, org: Org) {
   const branding: Record<string, string> = { ...org.branding };
   if (d.accent) branding.accent = d.accent;
   else delete branding.accent;
-  if (d.logoAsset.trim()) branding.logoAsset = d.logoAsset.trim();
-  else delete branding.logoAsset;
   return {
     name: d.name.trim(),
     status: d.status,
@@ -131,38 +127,24 @@ export function OrgForm({ org }: { org: Org }) {
               />
             )}
           </FormField>
-          <FormField label="Accent colour" error={errors.accent}>
+          <FormField label="Accent colour" error={errors.accent} help="Empty uses the default.">
             {(p) => (
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   aria-label="Accent colour picker"
-                  value={HEX.test(draft.accent) ? draft.accent : '#000000'}
+                  value={HEX.test(draft.accent) ? draft.accent : DEFAULT_ACCENT}
                   onChange={(e) => patch({ accent: e.target.value })}
                   className="size-9 shrink-0 cursor-pointer rounded-md border border-border-strong bg-transparent p-0.5"
                 />
                 <Input
                   {...p}
                   className="max-w-40 font-mono"
-                  placeholder="#0f766e"
+                  placeholder={DEFAULT_ACCENT}
                   value={draft.accent}
                   onChange={(e) => patch({ accent: e.target.value.trim() })}
                 />
               </div>
-            )}
-          </FormField>
-          <FormField
-            label="Logo asset"
-            error={errors.logoAsset}
-            help="Asset key of an uploaded image."
-          >
-            {(p) => (
-              <Input
-                {...p}
-                className="font-mono"
-                value={draft.logoAsset}
-                onChange={(e) => patch({ logoAsset: e.target.value })}
-              />
             )}
           </FormField>
         </form>

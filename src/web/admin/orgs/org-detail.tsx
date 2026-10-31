@@ -175,6 +175,26 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
               >
                 View templates
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setOrgId(org.id);
+                  void navigate({ to: '/admin/connections' });
+                }}
+              >
+                View connections
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setOrgId(org.id);
+                  void navigate({ to: '/admin/api-keys' });
+                }}
+              >
+                View API keys
+              </Button>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/admin/audit" search={{ orgId: org.id }}>
                   Audit log

@@ -19,6 +19,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { useIdpUrl } from '../settings/queries.ts';
 import { useUserMutations } from './queries.ts';
 
 export type UserDetail = z.infer<typeof UserDetailSchema>;
@@ -108,19 +109,22 @@ export function EmailsCard({ user }: { user: UserDetail }) {
 }
 
 export function IdentitiesCard({ user }: { user: UserDetail }) {
+  const idpUrl = useIdpUrl();
   return (
     <Card>
       <CardHeader
         title="Sign-in identities"
         actions={
-          <a
-            className="text-xs text-accent-fg underline"
-            href="https://id.plrs.im"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Manage groups in Pocket ID
-          </a>
+          idpUrl ? (
+            <a
+              className="text-xs text-accent-fg underline"
+              href={idpUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Manage groups in Polaris ID
+            </a>
+          ) : null
         }
       />
       <CardBody>

@@ -16,6 +16,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { useIdpUrl } from '../settings/queries.ts';
 import { useUser, useUserMutations } from './queries.ts';
 import { EmailsCard, IdentitiesCard, PassesCard, SessionsCard } from './user-sections.tsx';
 
@@ -23,6 +24,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
   const query = useUser(userId);
   const { setStatus } = useUserMutations(userId);
   const [confirm, setConfirm] = useState(false);
+  const idpUrl = useIdpUrl();
   const crumbs = [
     { label: 'Users', to: '/admin/users' },
     { label: query.data?.name ?? query.data?.primaryEmail ?? 'User' },
@@ -91,14 +93,16 @@ export function UserDetailPage({ userId }: { userId: string }) {
                       {user.lastRoles.map((r) => (
                         <Badge key={r}>{r}</Badge>
                       ))}
-                      <a
-                        className="ml-2 text-xs text-accent-fg underline"
-                        href="https://id.plrs.im"
-                        target="_blank"
-                        rel="noreferrer noopener"
-                      >
-                        Managed in Pocket ID
-                      </a>
+                      {idpUrl ? (
+                        <a
+                          className="ml-2 text-xs text-accent-fg underline"
+                          href={idpUrl}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          Managed in Polaris ID
+                        </a>
+                      ) : null}
                     </span>
                   ),
                 },

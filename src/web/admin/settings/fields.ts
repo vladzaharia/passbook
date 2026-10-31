@@ -20,7 +20,7 @@ const O = OrgSettingsSchema.shape;
 export const PLATFORM_FIELDS: readonly SettingField[] = [
   {
     key: 'oidc.trustEmail',
-    label: 'Trust Pocket ID emails',
+    label: 'Trust Polaris ID emails',
     kind: 'boolean',
     help: 'Off requires a magic-link proof when a new sign-in matches an existing email.',
     schema: P['oidc.trustEmail'],

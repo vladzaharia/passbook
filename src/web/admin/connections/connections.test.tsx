@@ -243,6 +243,67 @@ describe('connection detail', () => {
     });
   });
 
+  it('edits config, credentials and limits without sending untouched fields', async () => {
+    const user = userEvent.setup();
+    const state = { c: connectionDetail({ config: { baseUrl: 'https://old.example' } }) };
+    const patches: Record<string, unknown>[] = [];
+    await renderApp('/admin/connections/c1', {
+      session: 'admin',
+      handlers: detailHandlers(state, {
+        '/api/v1/connections/c1': (_u, init) => {
+          if (method(init) === 'PATCH') {
+            const body = JSON.parse(String(init?.body));
+            patches.push(body);
+            state.c = { ...state.c, ...body, secrets: undefined } as never;
+          }
+          return json(state.c);
+        },
+      }),
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Configuration' }));
+    const url = await screen.findByLabelText(/Base URL/);
+    expect(url).toHaveValue('https://old.example');
+    expect(screen.queryByLabelText(/Bearer token/)).not.toBeInTheDocument();
+    await user.clear(url);
+    await user.type(url, 'https://new.example');
+    await user.click(screen.getByRole('button', { name: 'Replace credentials' }));
+    await user.type(await screen.findByLabelText(/Bearer token/), 'tok-123');
+    await user.type(screen.getByLabelText('Requests per minute'), '120');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0]).toEqual({
+      config: { baseUrl: 'https://new.example' },
+      secrets: { token: 'tok-123' },
+      requestsPerMinute: 120,
+    });
+  });
+
+  it('hides the webhook tab and unsupported modes for poll-only connectors', async () => {
+    const user = userEvent.setup();
+    const state = { c: connectionDetail() };
+    await renderApp('/admin/connections/c1', {
+      session: 'admin',
+      handlers: detailHandlers(state, {
+        '/api/v1/connectors/http-json': () =>
+          json({
+            ...CONNECTOR,
+            capabilities: {
+              poll: true,
+              delta: true,
+              webhook: false,
+              import: false,
+              snapshot: false,
+            },
+          }),
+      }),
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Settings' }));
+    expect(screen.queryByRole('tab', { name: 'Webhook' })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('combobox', { name: 'Mode' }));
+    const options = (await screen.findAllByRole('option')).map((o) => o.textContent);
+    expect(options).toEqual(['Poll', 'Manual']);
+  });
+
   it('rotates the webhook secret and shows it once', async () => {
     const user = userEvent.setup();
     const state = { c: connectionDetail({ mode: 'webhook' }) };

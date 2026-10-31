@@ -16,6 +16,7 @@ import {
   StatusPill,
   Timeline,
 } from '@/web/ui/index.ts';
+import { targetText } from '../audit/labels.ts';
 import { useAuditLog } from '../audit/queries.ts';
 import { sortBySeverity, useStatus } from '../status/queries.ts';
 import { LineChart } from './chart.tsx';
@@ -76,7 +77,7 @@ function Health() {
           <ErrorState error={status.error} onRetry={() => status.refetch()} />
         ) : (
           <div className="flex flex-col gap-3">
-            <StatusPill status={status.data.overall} />
+            <StatusPill status={status.data.overall} className="self-start" />
             {(() => {
               const problems = sortBySeverity(status.data.components).filter(
                 (c) => c.state === 'failing' || c.state === 'degraded',
@@ -127,7 +128,7 @@ function Activity({ orgId }: { orgId: string | undefined }) {
               id: String(e.id),
               title: <code className="font-mono text-xs">{e.action}</code>,
               time: e.at,
-              description: e.targetType ? `${e.targetType} ${e.targetId ?? ''}` : undefined,
+              description: targetText(e) || undefined,
             }))}
           />
         )}
