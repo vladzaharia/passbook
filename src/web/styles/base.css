@@ -1,0 +1,61 @@
+@layer base {
+  html {
+    font-family: var(--pk-font-sans);
+    background: var(--pk-surface-page);
+    color: var(--pk-text-default);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--pk-surface-page);
+  }
+  :focus-visible {
+    outline: 2px solid var(--pk-focus);
+    outline-offset: 2px;
+  }
+  [tabindex="-1"]:focus {
+    outline: none;
+  }
+  button,
+  [role="button"],
+  summary {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes wallet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes wallet-pop {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wallet-pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+@keyframes wallet-slide-left {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes wallet-slide-right {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}

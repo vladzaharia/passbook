@@ -1,0 +1,52 @@
+/* Wallet accent (teal) replaces the Polaris core violet. Same token names, so kit utilities follow. */
+:root,
+[data-theme="dark"] {
+  --pk-accent: #2dd4bf;
+  --pk-accent-fg: #2dd4bf;
+  --pk-accent-on: #04201c;
+  --pk-accent-subtle: #0a2326;
+  --pk-focus: #5eead4;
+  --pk-state-ring: #5eead4;
+  --pk-state-selected-fill: #0a2326;
+  --pk-state-hover-tint: #0b1a20;
+  --pk-state-checked-fill: #2dd4bf;
+  --pk-state-checked-on: #04201c;
+  --pk-state-checked-edge: #2dd4bf;
+  --pk-state-context-edge: #2dd4bf;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --pk-accent: #0f766e;
+    --pk-accent-fg: #0f766e;
+    --pk-accent-on: #ffffff;
+    --pk-accent-subtle: #d5f1ed;
+    --pk-focus: #0f766e;
+    --pk-state-ring: #0f766e;
+    --pk-state-selected-fill: #d5f1ed;
+    --pk-state-hover-tint: #e6f5f3;
+    --pk-state-checked-fill: #0f766e;
+    --pk-state-checked-on: #ffffff;
+    --pk-state-checked-edge: #0f766e;
+    --pk-state-context-edge: #0f766e;
+  }
+}
+
+[data-theme="light"] {
+  --pk-accent: #0f766e;
+  --pk-accent-fg: #0f766e;
+  --pk-accent-on: #ffffff;
+  --pk-accent-subtle: #d5f1ed;
+  --pk-focus: #0f766e;
+  --pk-state-ring: #0f766e;
+  --pk-state-selected-fill: #d5f1ed;
+  --pk-state-hover-tint: #e6f5f3;
+  --pk-state-checked-fill: #0f766e;
+  --pk-state-checked-on: #ffffff;
+  --pk-state-checked-edge: #0f766e;
+  --pk-state-context-edge: #0f766e;
+}
+
+@theme inline {
+  --color-hover: color-mix(in oklab, var(--pk-text-strong) 8%, transparent);
+}
