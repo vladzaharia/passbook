@@ -70,6 +70,8 @@ export const ConnectionSchema = z.object({
   onMissing: z.enum(['keep', 'flag', 'void']),
   mode: ConnectionModeSchema,
   intervalSeconds: z.number().int().nullable(),
+  maxConcurrency: z.number().int().nullable(),
+  requestsPerMinute: z.number().int().nullable(),
   enabled: z.boolean(),
   health: ConnectionHealthSchema,
   consecutiveFailures: z.number().int(),
@@ -84,6 +86,10 @@ export const ConnectionSchema = z.object({
   updatedAt: TimestampSchema,
 });
 export type ConnectionDto = z.infer<typeof ConnectionSchema>;
+/** `webhookSecret` is present only in the response that generated it. */
+export const ConnectionCreatedSchema = ConnectionSchema.extend({
+  webhookSecret: z.string().optional(),
+});
 
 export const ConnectionRunSchema = z.object({
   id: IdSchema,
@@ -131,6 +137,8 @@ export const CreateConnectionSchema = z.object({
   onMissing: z.enum(['keep', 'flag', 'void']).optional(),
   mode: ConnectionModeSchema.optional(),
   intervalSeconds: z.number().int().min(60).optional(),
+  maxConcurrency: z.number().int().min(1).max(20).optional(),
+  requestsPerMinute: z.number().int().min(1).max(6000).optional(),
 });
 export const UpdateConnectionSchema = CreateConnectionSchema.omit({
   orgId: true,
@@ -148,3 +156,23 @@ export const TestConnectionResponseSchema = z.object({
 });
 export const SyncNowResponseSchema = z.object({ runId: IdSchema, workflowInstanceId: z.string() });
 export const WebhookAckSchema = z.object({ accepted: z.literal(true) });
+
+export const ConnectionRunsQuerySchema = z.object({
+  cursor: z.string().max(512).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(20),
+});
+export const ConnectionRunListSchema = pageOf(ConnectionRunSchema);
+export const ConnectionsSummarySchema = z.object({
+  total: z.number().int(),
+  byHealth: z.record(z.string(), z.number().int()),
+  attention: z.array(
+    z.object({
+      id: IdSchema,
+      orgId: IdSchema,
+      name: z.string(),
+      health: ConnectionHealthSchema,
+      lastErrorCode: z.string().nullable(),
+      lastErrorAt: TimestampSchema.nullable(),
+    }),
+  ),
+});
