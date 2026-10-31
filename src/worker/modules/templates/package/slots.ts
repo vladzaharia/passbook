@@ -18,7 +18,15 @@ export const SLOT_RULES: Record<SlotName, SlotRule> = {
   logo: { w: 160, h: 50, mode: 'max' },
   primaryLogo: { w: 126, h: 30, mode: 'max' },
   secondaryLogo: { w: 135, h: 12, mode: 'max' },
-  strip: { w: 375, h: 144, mode: 'exact', alt: [[375, 123], [375, 98]] },
+  strip: {
+    w: 375,
+    h: 144,
+    mode: 'exact',
+    alt: [
+      [375, 123],
+      [375, 98],
+    ],
+  },
   thumbnail: { w: 90, h: 90, mode: 'exact' },
   artwork: { w: 358, h: 448, mode: 'exact' },
   background: { w: 345, h: 505, mode: 'exact' },

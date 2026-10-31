@@ -4,7 +4,7 @@ import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/inde
 import { createApp } from '../../app.ts';
 import { all, first } from '../../platform/db.ts';
 import { getPass, type Pass } from './repo.ts';
-import { type Kit, setupKit, ICON_PNG } from './test-kit.ts';
+import { ICON_PNG, type Kit, setupKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);

@@ -45,6 +45,8 @@ const detail = (over: Record<string, unknown> = {}) => ({
     },
   ],
   passIds: ['p1'],
+  passCount: 1,
+  recentAudit: [],
   ...over,
 });
 

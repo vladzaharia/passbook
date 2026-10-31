@@ -15,6 +15,8 @@ const identity = (over: Record<string, unknown> = {}) => ({
   teamIdentifier: 'TEAM123',
   source: 'db',
   certSha256: 'ab12',
+  certSubject: 'Pass Type ID: pass.im.plrs.wallet',
+  certSerial: '01',
   notBefore: 1_600_000_000_000,
   notAfter: Date.now() + 100.5 * DAY,
   daysRemaining: 100,

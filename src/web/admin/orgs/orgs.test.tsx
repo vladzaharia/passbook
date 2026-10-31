@@ -16,6 +16,7 @@ const summary = (over: Record<string, unknown> = {}) => ({
   createdAt: 1_700_000_000_000,
   updatedAt: 1_700_000_000_000,
   counts: { passes: 12, templates: 2, connections: 1, apiKeys: 3 },
+  countsCapped: false,
   ...over,
 });
 

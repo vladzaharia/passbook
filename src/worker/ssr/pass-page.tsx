@@ -47,6 +47,7 @@ export function PassPage(props: PassPageProps) {
         <meta name="robots" content="noindex, nofollow, noarchive" />
         <meta name="referrer" content="no-referrer" />
         <title>{props.title}</title>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
         <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + CSS }} />
       </head>
       <body>

@@ -9,6 +9,7 @@ export const ORG = {
   createdAt: 1,
   updatedAt: 1,
   counts: { passes: 2, templates: 1, connections: 1, apiKeys: 0 },
+  countsCapped: false,
 };
 
 export const INPUT_SCHEMA = {
@@ -198,6 +199,8 @@ export function connection(over: Record<string, unknown> = {}) {
     onMissing: 'flag',
     mode: 'poll',
     intervalSeconds: 3600,
+    maxConcurrency: null,
+    requestsPerMinute: null,
     enabled: true,
     health: 'degraded',
     consecutiveFailures: 2,

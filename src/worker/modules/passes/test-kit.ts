@@ -11,7 +11,6 @@ import {
   type OrgRow,
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
-import { makePng } from '../templates/package/fixtures.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -19,6 +18,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { addRegistration } from '../apple/repo.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import { createPassRow } from './create.ts';
 import { overrideDeps } from './deps.ts';
 import type { Pass } from './repo.ts';

@@ -196,6 +196,7 @@ describe('admin layout', () => {
                 createdAt: 1,
                 updatedAt: 1,
                 counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
+                countsCapped: false,
               },
             ],
             nextCursor: null,

@@ -28,7 +28,7 @@ describe('pass detail', () => {
     expect(
       await screen.findByRole('heading', { name: 'Gym membership', level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Sam Smith')).toBeInTheDocument();
+    expect(screen.getAllByText('Sam Smith').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Download .pkpass' })).toHaveAttribute(
       'href',
