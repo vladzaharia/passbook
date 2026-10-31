@@ -63,16 +63,18 @@ Work on your own branch from the foundation commit, in your own directories, wit
 
 | | Workstream | Owns |
 | --- | --- | --- |
-| a | passkit engine | `src/passkit/**` (except template registry port shape) |
+| a1 | pass format | `src/passkit/{schema,sign,package}/**`, `src/passkit/validate*.ts`, `src/passkit/types.ts` |
+| a2 | template language + baked packages | `src/passkit/{template,behaviors}/**` (registry port shape frozen), `src/passkit/build*.ts`, `templates/**` |
 | b | pass-view + PassCard | `src/shared/pass-view/**`, `src/web/pass-card/**` |
-| c | templates | `src/worker/modules/templates/**`, `src/worker/workflows/template-import.ts`, `templates/**`, `tools/build-templates.ts` |
-| d | passes, holders, delivery, apple, public | `modules/{passes,holders,delivery,apple,public}/**`, `workflows/bulk-reissue.ts`, `src/worker/ssr/**`, retention hooks |
-| e | auth, users, api-keys, me | `modules/{auth,users,api-keys,me}/**`, `src/worker/stores.ts` |
+| c | templates module | `src/worker/modules/templates/**`, `src/worker/workflows/template-import.ts`, `tools/build-templates.ts` |
+| d | passes, holders, delivery, apple, public | `modules/{passes,holders,delivery,apple,public}/**`, `workflows/bulk-reissue.ts`, `src/worker/ssr/**`, `src/worker/email/pass*`, retention hooks |
+| e | auth, users, api-keys, me | `modules/{auth,users,api-keys,me}/**`, `src/worker/stores.ts`, `src/worker/email/sign-in*` |
 | f | connections | `modules/connections/**`, `src/worker/connectors/**`, `workflows/connection-sync.ts` |
 | g | orgs, identities, settings, audit, status, metrics | `modules/{orgs,identities,settings,audit,status,metrics}/**` |
-| h | admin shell + core pages | `src/web/{main.tsx,router.tsx,ui/**,lib/**,styles/**}`, `src/web/routes/admin/{index,status,settings,audit,users,orgs,identities,api-keys}**` |
+| h0 | web foundation | `src/web/{main.tsx,router.tsx,ui/**,lib/**,styles/**}`, `src/web/routes/__root.tsx`, layout routes, placeholder route files for every page |
+| h | admin core pages | `src/web/routes/admin/{index,status,settings,audit,users,orgs,identities,api-keys}**`, `src/web/admin/{overview,status,settings,audit,users,orgs,identities,api-keys}/**` |
 | i | admin passes, templates, connections pages | `src/web/routes/admin/{passes,templates,connections}**`, `src/web/admin/{passes,templates,connections}/**` |
-| j | portal, login, email templates | `src/web/routes/{index,login,account,passes}**`, `src/web/portal/**`, `src/worker/email/**` |
-| integration | schema, wiring, e2e | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
+| j | portal, login | `src/web/routes/{index,login,account,passes}**`, `src/web/portal/**` |
+| integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
 
 Foundation owns `src/worker/platform/**`, `src/shared/contracts/common.ts`, tooling configs and `AGENTS.md`; change them only for a bug and tell the integration agent.
