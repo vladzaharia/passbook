@@ -79,7 +79,6 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
   // Cell renderers are component types to TanStack Table: keep the array stable or rows remount.
   const retryRef = useRef(retry);
   retryRef.current = retry;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: retryRef is stable
   const columns = useMemo<ColumnDef<Entry, never>[]>(
     () => [
       { id: 'kind', header: 'Kind', enableSorting: false, cell: ({ row }) => row.original.kind },

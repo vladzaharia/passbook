@@ -100,7 +100,7 @@ describe('pass detail: save and conflicts', () => {
     let patches = 0;
     await renderApp('/admin/passes/p1', {
       session: 'admin',
-      handlers: patchAware(server, (init) => {
+      handlers: patchAware(server, () => {
         patches += 1;
         if (patches === 1) {
           // Someone else saved first.

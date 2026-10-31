@@ -271,9 +271,8 @@ describe('template upload', () => {
       '/admin/templates/tpl7',
     );
     expect(posted[0]?.url.searchParams.get('orgId')).toBe('org1');
-    expect((posted[0]?.init?.headers as Record<string, string>)['content-type']).toBe(
-      'application/zip',
-    );
+    const headers = (posted[0]?.init?.headers ?? {}) as Record<string, string>;
+    expect(headers['content-type']).toBe('application/zip');
     // Polling stops at the final state.
     const settled = polls;
     await new Promise((r) => setTimeout(r, 80));
