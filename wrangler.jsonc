@@ -1,86 +1,106 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "wallet",
-  "main": "src/index.ts",
-  "assets": {
-    "directory": "public",
-    "binding": "ASSETS",
-    "run_worker_first": true
-  },
+  "main": "src/worker/index.ts",
+  "account_id": "07a2eb0d4916b220da1f9c1387b5f6d8",
   "compatibility_date": "2026-07-30",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
-  "routes": [
-    {
-      "pattern": "wallet.plrs.im",
-      "custom_domain": true
-    }
-  ],
+  "upload_source_maps": true,
+  "routes": [{ "pattern": "wallet.plrs.im", "custom_domain": true }],
+
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/auth/*", "/wallet/*", "/p/*", "/hooks/*", "/health"]
+  },
+
   "vars": {
     "PUBLIC_BASE_URL": "https://wallet.plrs.im",
-    "EMAIL_FROM": "passes@plrs.im"
+    "EMAIL_FROM": "passes@plrs.im",
+    "OIDC_ISSUER": "https://id.plrs.im",
+    "OIDC_CLIENT_ID": "wallet-placeholder-client-id",
+    "OIDC_ADMIN_GROUP": "wallet-admins",
+    "OIDC_USER_GROUP": "wallet-users",
+    "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
+    "PLATFORM_TEAM_ID": "48H7CLBV8Y",
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
   },
+
+  "secrets": {
+    "required": [
+      "KEK_V1",
+      "OIDC_CLIENT_SECRET",
+      "TURNSTILE_SECRET",
+      "SIGNER_PLATFORM_CERTIFICATE",
+      "SIGNER_PLATFORM_PRIVATE_KEY"
+    ]
+  },
+
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "wallet",
-      "database_id": "6470925e-1300-4507-a830-af8b936bebc3",
+      "database_name": "wallet-platform",
+      // Placeholder until go-live (`wrangler d1 create wallet-platform`). Local dev and tests ignore it.
+      "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "BUCKET",
-      "bucket_name": "wallet-passes"
-    }
-  ],
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "wallet-passes" }],
+
   "queues": {
-    "producers": [
-      {
-        "binding": "JOBS",
-        "queue": "wallet-jobs"
-      }
-    ],
+    "producers": [{ "binding": "JOBS", "queue": "wallet-jobs" }],
     "consumers": [
       {
         "queue": "wallet-jobs",
-        "max_batch_size": 5,
-        "max_batch_timeout": 5,
-        "max_retries": 5,
+        "max_batch_size": 10,
+        "max_batch_timeout": 2,
+        "max_retries": 8,
+        "retry_delay": 30,
         "dead_letter_queue": "wallet-jobs-dlq"
-      }
+      },
+      { "queue": "wallet-jobs-dlq", "max_batch_size": 10, "max_retries": 2 }
     ]
   },
-  "send_email": [
+
+  "workflows": [
     {
-      "name": "EMAIL",
-      "allowed_sender_addresses": [
-        "passes@plrs.im"
-      ]
+      "name": "wallet-template-import",
+      "binding": "TEMPLATE_IMPORT",
+      "class_name": "TemplateImport"
+    },
+    { "name": "wallet-bulk-reissue", "binding": "BULK_REISSUE", "class_name": "BulkReissue" },
+    {
+      "name": "wallet-connection-sync",
+      "binding": "CONNECTION_SYNC",
+      "class_name": "ConnectionSync"
     }
   ],
-  "triggers": {
-    "crons": [
-      "* * * * *"
-    ]
-  },
-  "observability": {
-    "enabled": true,
-    "logs": {
-      "invocation_logs": false
-    }
-  },
-  "limits": {
-    "cpu_ms": 10000
-  },
-  "account_id": "07a2eb0d4916b220da1f9c1387b5f6d8",
-  "mtls_certificates": [
-    {
-      "binding": "APNS",
-      "certificate_id": "9d7b9372-b262-42c3-82db-e90c4c588e90"
-    }
-  ]
+
+  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["passes@plrs.im"] }],
+
+  // Enable at go-live after uploading the platform certificate. A missing binding means "push unavailable".
+  // Retired Henry's id, do not reuse: 9d7b9372-b262-42c3-82db-e90c4c588e90
+  // "mtls_certificates": [{ "binding": "APNS", "certificate_id": "<platform certificate id>" }],
+
+  "images": { "binding": "IMAGES" },
+
+  "ratelimits": [
+    { "name": "RL_LOGIN", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } },
+    { "name": "RL_MAGIC_LINK", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } },
+    { "name": "RL_PUBLIC", "namespace_id": "1003", "simple": { "limit": 120, "period": 60 } },
+    { "name": "RL_APPLE", "namespace_id": "1004", "simple": { "limit": 300, "period": 60 } },
+    { "name": "RL_API_KEY", "namespace_id": "1005", "simple": { "limit": 600, "period": 60 } },
+    { "name": "RL_WEBHOOK", "namespace_id": "1006", "simple": { "limit": 120, "period": 60 } },
+    { "name": "RL_REFRESH", "namespace_id": "1007", "simple": { "limit": 3, "period": 60 } }
+  ],
+
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],
+  "version_metadata": { "binding": "CF_VERSION" },
+
+  "triggers": { "crons": ["* * * * *", "17 3 * * *"] },
+
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } },
+  "limits": { "cpu_ms": 10000 }
 }

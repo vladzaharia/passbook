@@ -1,6 +1,20 @@
-ADMIN_TOKEN="replace-with-a-long-random-token"
-SIGNER_HENRYS_CERTIFICATE="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
-SIGNER_HENRYS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-# Optional API update source:
-# MEMBERSHIP_API_BASE_URL="https://membership.example.com/api/"
-# MEMBERSHIP_API_TOKEN="server-side-api-token"
+# Copy to .dev.vars (or run `npm run dev:vars` to generate development values). Never commit .dev.vars.
+
+# 32 random bytes, base64. Wraps stored credentials. Add KEK_V2 to rotate.
+KEK_V1="replace-with-base64-32-bytes"
+
+# Pocket ID client (production). Local development uses the mock provider: npm run dev:oidc.
+OIDC_ISSUER="https://id.plrs.im"
+OIDC_CLIENT_ID="replace-with-client-id"
+OIDC_CLIENT_SECRET="replace-with-client-secret"
+
+# Cloudflare Turnstile secret. The always-pass test secret is 1x0000000000000000000000000000000AA.
+TURNSTILE_SECRET="replace-with-turnstile-secret"
+
+# Platform Pass Type ID (pass.im.plrs.wallet). Import with: npm run credentials -- Pass.p12 platform
+SIGNER_PLATFORM_CERTIFICATE="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+SIGNER_PLATFORM_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+# Optional. Defaults to the bundled Apple WWDR G4.
+# SIGNER_PLATFORM_INTERMEDIATE="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+
+# Additional env-sourced identities follow SIGNER_<NAME>_CERTIFICATE / _PRIVATE_KEY.

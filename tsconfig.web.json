@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client", "@testing-library/jest-dom"]
+  },
+  "include": [
+    "src/web",
+    "src/shared",
+    "src/generated",
+    "src/passkit/schema",
+    "vitest.setup.web.ts"
+  ],
+  "exclude": ["src/**/*.worker.test.ts"]
+}
