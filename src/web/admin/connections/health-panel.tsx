@@ -13,6 +13,22 @@ type Run = z.infer<typeof ConnectionRunSchema>;
 
 const ms = (v: number | null) => (v === null ? null : `${Math.round(v)} ms`);
 
+/** Sampled record errors, one per line; collapsed until opened. */
+function SampledErrors({ detail }: { detail: string | null | undefined }) {
+  if (!detail) return null;
+  const lines = detail.split('\n');
+  return (
+    <details className="text-xs">
+      <summary className="cursor-pointer text-accent-fg">
+        {lines.length} sampled {lines.length === 1 ? 'error' : 'errors'}
+      </summary>
+      <pre className="mt-1 max-w-md whitespace-pre-wrap break-words font-mono text-fg-muted">
+        {detail}
+      </pre>
+    </details>
+  );
+}
+
 const columns: ColumnDef<Run, never>[] = [
   {
     id: 'started',
@@ -52,6 +68,12 @@ const columns: ColumnDef<Run, never>[] = [
       row.original.recordsSeen === null
         ? ''
         : `${row.original.recordsSeen} seen, ${row.original.passesChanged ?? 0} changed`,
+  },
+  {
+    id: 'errors',
+    header: 'Errors',
+    enableSorting: false,
+    cell: ({ row }) => <SampledErrors detail={row.original.errorDetail} />,
   },
   {
     id: 'duration',

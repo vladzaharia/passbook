@@ -107,6 +107,17 @@ describe('connection detail', () => {
     expect(within(table).getByText('10 seen, 2 changed')).toBeInTheDocument();
   });
 
+  it('expands sampled record errors on a failed run', async () => {
+    const user = userEvent.setup();
+    const state = { c: connectionDetail() };
+    await renderApp('/admin/connections/c1', { session: 'admin', handlers: detailHandlers(state) });
+    const table = await screen.findByRole('table', { name: 'Connection runs' });
+    expect(within(table).queryByText(/m-1: INVALID/)).not.toBeVisible();
+    await user.click(within(table).getByText('2 sampled errors'));
+    expect(within(table).getByText(/m-2: INVALID level not allowed/)).toBeVisible();
+    expect(within(table).getAllByText(/sampled error/)).toHaveLength(1);
+  });
+
   it('reports a passing and a failing test', async () => {
     const user = userEvent.setup();
     const state = { c: connectionDetail() };

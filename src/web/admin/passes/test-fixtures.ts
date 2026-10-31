@@ -234,6 +234,7 @@ export function connectionDetail(over: Record<string, unknown> = {}) {
         recordsSeen: null,
         passesChanged: null,
         errorCode: 'UPSTREAM_5XX',
+        errorDetail: 'm-1: INVALID name required\nm-2: INVALID level not allowed',
         httpStatus: 503,
         durationMs: 1000,
       },
