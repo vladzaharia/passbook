@@ -1,19 +1,63 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { NotImplementedError } from '../../platform/errors.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { getPlatformSettings } from '../settings/service.ts';
+import { publishPass } from './publish.ts';
+import { deleteIdempotencyBefore, deleteObjects, markPurged, versionsToPurge } from './repo.ts';
 
+const DAY = 86_400_000;
+const PURGE_BATCH = 500;
+const MAX_PURGE_ROUNDS = 20;
+
+/** Rebuilds one pass, e.g. after a template upgrade or a certificate change. */
 export async function handlePassReissue(
-  _job: JobOf<'pass.reissue'>,
-  _ctx: ServiceContext,
+  job: JobOf<'pass.reissue'>,
+  ctx: ServiceContext,
 ): Promise<void> {
-  throw new NotImplementedError('pass.reissue is not implemented yet.');
+  try {
+    await publishPass(ctx, {
+      passId: job.passId,
+      cause: job.cause,
+      actor: { type: 'system', id: null },
+      force: job.cause === 'resign',
+      mutate: () => ({ templateVersion: job.templateVersion }),
+    });
+  } catch (error) {
+    // A pass deleted or no longer valid for the new version is final; anything else retries.
+    if (error instanceof AppError && error.status < 500 && error.status !== 409) {
+      ctx.log.warn('pass.reissue_skipped', { passId: job.passId, code: error.code });
+      return;
+    }
+    throw error;
+  }
+}
+
+async function purge(ctx: ServiceContext, passId?: string): Promise<number> {
+  const settings = await getPlatformSettings(ctx);
+  const keep = settings['retention.passVersionsKeep'];
+  let total = 0;
+  for (let round = 0; round < MAX_PURGE_ROUNDS; round++) {
+    const rows = await versionsToPurge(ctx.env.DB, keep, PURGE_BATCH, passId);
+    if (rows.length === 0) break;
+    const keys = rows.flatMap((r) => (r.objectKey ? [r.objectKey] : []));
+    await deleteObjects(ctx.env.BUCKET, keys);
+    await markPurged(ctx.env.DB, rows, ctx.clock.now());
+    total += rows.length;
+    if (rows.length < PURGE_BATCH) break;
+  }
+  return total;
 }
 
 export async function handlePassPurgeVersions(
-  _job: JobOf<'pass.purge-versions'>,
-  _ctx: ServiceContext,
+  job: JobOf<'pass.purge-versions'>,
+  ctx: ServiceContext,
 ): Promise<void> {
-  throw new NotImplementedError('pass.purge-versions is not implemented yet.');
+  await purge(ctx, job.passId);
 }
 
-export async function dailyPasses(_ctx: ServiceContext): Promise<void> {}
+/** Keeps the current version plus the last N (setting), and drops idempotency keys after 7 days. */
+export async function dailyPasses(ctx: ServiceContext): Promise<void> {
+  const purged = await purge(ctx);
+  const keys = await deleteIdempotencyBefore(ctx.env.DB, ctx.clock.now() - 7 * DAY);
+  ctx.log.info('passes.retention', { purged, idempotencyKeys: keys });
+}
