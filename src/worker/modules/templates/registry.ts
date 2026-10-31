@@ -151,7 +151,9 @@ export class CompositeTemplateRegistry implements TemplateRegistry {
       const response = await this.#env.ASSETS.fetch(
         new Request(new URL(source.path, this.#env.PUBLIC_BASE_URL)),
       );
-      if (!response.ok || !response.body) throw missing();
+      // The SPA fallback answers unknown paths with index.html and a 200.
+      const html = response.headers.get('content-type')?.startsWith('text/html');
+      if (!response.ok || !response.body || html) throw missing();
       return response.body;
     }
     if (source.kind === 'r2') {

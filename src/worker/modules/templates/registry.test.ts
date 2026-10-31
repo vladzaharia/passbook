@@ -198,6 +198,18 @@ describe('CompositeTemplateRegistry', () => {
     assets.files.set(r.assets[0]?.source.kind === 'static' ? r.assets[0].source.path : '', bytes);
   });
 
+  it('treats the SPA fallback page as a missing static asset', async () => {
+    const spa = await makeEnv({
+      ASSETS: {
+        fetch: async () =>
+          new Response('<html></html>', { headers: { 'content-type': 'text/html' } }),
+      } as unknown as Fetcher,
+    });
+    const reg = createTemplateRegistry(spa, { source: sourceOf([platform], 'reg'), ctx: ctx() });
+    const r = await reg.resolve('baked:starter');
+    await expect(reg.openAsset(r, 'icon.png')).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
+  });
+
   it('serves baked extras that are not in the bundle', async () => {
     const withExtra = await bakedFrom('extra', basicPackage({ 'strip.png': makePng(375, 144) }), {
       name: 'Extra',
