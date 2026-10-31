@@ -84,6 +84,10 @@ const POINTERS = new Set([
   '/description',
   '/groupingIdentifier',
   '/eventLogoText',
+  '/directionsInformationURL',
+  '/parkingInformationURL',
+  '/managementURL',
+  '/changeSeatURL',
 ]);
 
 function pointerAllowed(pointer: unknown): boolean {
