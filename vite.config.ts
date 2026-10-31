@@ -19,6 +19,21 @@ function sonnerNoInlineCss(): Plugin {
   };
 }
 
+/**
+ * e2e only (tools/e2e-server.ts sets WALLET_E2E). wrangler exposes just the declared secrets from a
+ * vars file, so the throwaway-CA intermediate must be a declared (empty) var to be overridable.
+ * Production config never sees this: wrangler.jsonc is unchanged and deploys do not read this file.
+ */
+const e2eConfig =
+  process.env.WALLET_E2E === '1'
+    ? {
+        config: (c: { vars?: Record<string, unknown> }) => ({
+          vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '' },
+          env: { e2e: {} },
+        }),
+      }
+    : {};
+
 export default defineConfig({
   publicDir: 'public',
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
@@ -34,6 +49,6 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    cloudflare(),
+    cloudflare(e2eConfig),
   ],
 });

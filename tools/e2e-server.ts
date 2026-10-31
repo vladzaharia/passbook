@@ -1,13 +1,36 @@
 // Playwright webServer: mock Pocket ID + local D1 + vite dev on 5173.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
+import { writeDevVars } from './lib/dev-vars.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const children: ChildProcess[] = [];
 
+// Own vars file (picked up via CLOUDFLARE_ENV=e2e) so a developer's .dev.vars (other issuer, port,
+// client id) can never leak into the run. Regenerated every start; throwaway fixture keys only.
+const varsFile = resolve(root, '.dev.vars.e2e');
+rmSync(varsFile, { force: true });
+const fixture = await createFixtureIdentity();
+writeDevVars(varsFile, {
+  KEK_V1: randomBytes(32).toString('base64'),
+  OIDC_CLIENT_SECRET: 'e2e-secret',
+  OIDC_CLIENT_ID: 'wallet-e2e',
+  OIDC_ISSUER: 'http://localhost:5174',
+  PUBLIC_BASE_URL: 'http://localhost:5173',
+  // Cloudflare's always-pass Turnstile test secret (paired with the always-pass test site key).
+  TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
+  SIGNER_PLATFORM_CERTIFICATE: fixture.certificate,
+  SIGNER_PLATFORM_PRIVATE_KEY: fixture.privateKey,
+  SIGNER_PLATFORM_INTERMEDIATE: fixture.intermediate,
+});
+
 const env = {
   ...process.env,
-  CLOUDFLARE_INCLUDE_PROCESS_ENV: 'true',
+  CLOUDFLARE_ENV: 'e2e',
+  WALLET_E2E: '1',
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-e2e',
   OIDC_CLIENT_SECRET: 'e2e-secret',
@@ -16,7 +39,6 @@ const env = {
 };
 
 execFileSync('node', ['tools/build-templates.ts'], { cwd: root, stdio: 'inherit' });
-execFileSync('node', ['tools/dev-vars.ts'], { cwd: root, stdio: 'inherit' });
 execFileSync('npx', ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local'], {
   cwd: root,
   stdio: 'inherit',
