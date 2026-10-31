@@ -38,7 +38,11 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
           return;
         }
       }
-      await step.do('persist', RETRY, () => persistStage(ctx, p));
+      await step.do(
+        'persist',
+        RETRY,
+        async () => (await persistStage(ctx, p)) ?? { rejected: true },
+      );
       await step.do('cleanup', () => cleanupStage(ctx, p));
     } catch (error) {
       ctx.log.error('templates.import_failed', {

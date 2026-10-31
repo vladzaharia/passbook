@@ -2,6 +2,7 @@ import { behaviorPlugins } from '../../../generated/behaviors.ts';
 import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { AssetEntry, ValidationIssue, ValidationReport } from '../../../passkit/types.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dryRun } from './build-check.ts';
 import { imagesFromBinding } from './images-binding.ts';
@@ -179,12 +180,24 @@ export async function dryRunStage(ctx: ServiceContext, p: ImportParams): Promise
 export async function persistStage(
   ctx: ServiceContext,
   p: ImportParams,
-): Promise<{ templateId: string; version: string }> {
+): Promise<{ templateId: string; version: string } | null> {
   const saved = await getJson<Saved>(ctx, `${stage(p)}analysis.json`);
   const a = saved.analysis;
   const name = a.manifest.name;
   const slug = slugify(name);
-  const plan = await planTemplate(ctx, p.orgId, slug);
+  let plan: Awaited<ReturnType<typeof planTemplate>>;
+  try {
+    plan = await planTemplate(ctx, p.orgId, slug);
+  } catch (error) {
+    if (!(error instanceof ForbiddenError)) throw error;
+    await failImport(
+      ctx,
+      p,
+      [{ severity: 'error', code: error.code, message: error.message }],
+      error.code,
+    );
+    return null;
+  }
   const assets: AssetEntry[] = a.assets.map((x) => ({
     ...x,
     source: { kind: 'r2', key: r2Key(p.orgId, plan.templateId, a.version, x.name) },
