@@ -1,8 +1,8 @@
-import { screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { chartGeometry, niceMax } from './chart.tsx';
+import { chartGeometry, LineChart, niceMax } from './chart.tsx';
 import { daysUntil, formatRelative } from './format.ts';
 
 const series = (vals: number[]) =>
@@ -90,7 +90,21 @@ const ok = {
 
 describe('chart helpers', () => {
   it('rounds the axis maximum to 1, 2 or 5 steps', () => {
-    expect([0, 1, 3, 7, 12, 480, 1001].map(niceMax)).toEqual([1, 1, 5, 10, 20, 500, 2000]);
+    expect([0, 1, 3, 7, 12, 480, 1001].map(niceMax)).toEqual([2, 2, 5, 10, 20, 500, 2000]);
+  });
+  it('labels only whole-number ticks, without duplicates', () => {
+    const labels = (vals: number[]) => {
+      const { container, unmount } = render(
+        <LineChart title="T" points={series(vals)} range="7d" />,
+      );
+      const out = [...container.querySelectorAll('svg text')]
+        .map((t) => t.textContent ?? '')
+        .filter((t) => /^\d+$/.test(t));
+      unmount();
+      return out;
+    };
+    expect(labels([0, 0, 0])).toEqual(['0', '1', '2']);
+    expect(labels([1, 3, 5])).toEqual(['0', '5']);
   });
   it('maps points into the plot area', () => {
     const g = chartGeometry(series([0, 10]));

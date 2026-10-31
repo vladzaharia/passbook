@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
 import { DiffViewer, JsonViewer, KeyValue, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { actorText, targetText } from './labels.ts';
 import { describeDetail } from './redact.ts';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
@@ -26,12 +27,12 @@ export function EntryDrawer({
                 { label: 'Time', value: formatDateTime(entry.at) },
                 {
                   label: 'Actor',
-                  value: `${entry.actorType}${entry.actorId ? `: ${entry.actorId}` : ''}`,
+                  value: actorText(entry),
                   mono: true,
                 },
                 {
                   label: 'Target',
-                  value: entry.targetType ? `${entry.targetType}: ${entry.targetId ?? ''}` : null,
+                  value: targetText(entry) || null,
                   mono: true,
                 },
                 { label: 'Org', value: entry.orgId ? orgName(entry.orgId) : null },

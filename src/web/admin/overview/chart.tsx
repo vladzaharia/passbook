@@ -8,14 +8,14 @@ export interface Point {
 
 const W = 640;
 const H = 160;
-const PAD = { l: 40, r: 8, t: 8, b: 20 };
+const PAD = { l: 48, r: 8, t: 8, b: 20 };
 
 /** Rounds up to 1, 2, 5 x 10^n so gridline labels are readable. */
 export function niceMax(max: number): number {
-  if (max <= 0) return 1;
+  if (max <= 0) return 2;
   const pow = 10 ** Math.floor(Math.log10(max));
   const n = max / pow;
-  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
+  return Math.max(2, (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow);
 }
 
 export interface Geometry {
@@ -105,6 +105,7 @@ export function LineChart({ title, points, range }: ChartProps) {
         >
           {[0, 0.5, 1].map((f) => {
             const y = PAD.t + (H - PAD.t - PAD.b) * (1 - f);
+            const tick = geo.max * f;
             return (
               <g key={f}>
                 <line
@@ -115,14 +116,17 @@ export function LineChart({ title, points, range }: ChartProps) {
                   className="stroke-border"
                   strokeWidth={1}
                 />
-                <text
-                  x={PAD.l - 6}
-                  y={y + 4}
-                  textAnchor="end"
-                  className="fill-fg-muted text-[11px]"
-                >
-                  {formatCount(Math.round(geo.max * f))}
-                </text>
+                {Number.isInteger(tick) ? (
+                  <text
+                    x={PAD.l - 6}
+                    y={y + 5}
+                    textAnchor="end"
+                    fontSize={16}
+                    className="fill-fg-muted"
+                  >
+                    {formatCount(tick)}
+                  </text>
+                ) : null}
               </g>
             );
           })}
