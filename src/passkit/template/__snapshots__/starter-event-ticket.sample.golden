@@ -1,0 +1,123 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "TICKET-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "TICKET-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Wallet event ticket",
+  "eventLogoText": "Wallet",
+  "eventTicket": {
+    "additionalInfoFields": [
+      {
+        "key": "doors",
+        "label": "DOORS",
+        "value": "18:00"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "attendee",
+        "label": "NAME",
+        "row": 0,
+        "value": "Alex Morgan"
+      },
+      {
+        "key": "admission",
+        "label": "ADMISSION",
+        "row": 0,
+        "value": "General"
+      }
+    ],
+    "backFields": [
+      {
+        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
+        "key": "site",
+        "label": "EVENT PAGE",
+        "value": "https://example.com/"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "No re-entry. Ticket is non-transferable."
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "The event time is now %@.",
+        "dateStyle": "PKDateStyleMedium",
+        "key": "date",
+        "label": "DATE",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T19:00:00Z"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "event",
+        "label": "EVENT",
+        "value": "Sample Event"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "venue",
+        "label": "VENUE",
+        "value": "Sample Hall"
+      },
+      {
+        "key": "room",
+        "label": "ROOM",
+        "value": "Main hall"
+      }
+    ]
+  },
+  "expirationDate": "2030-06-01T22:00:00Z",
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "labelColor": "rgb(199,210,254)",
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Venue nearby"
+    }
+  ],
+  "logoText": "Wallet",
+  "organizationName": "Wallet",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "preferredStyleSchemes": [
+    "posterEventTicket",
+    "eventTicket"
+  ],
+  "relevantDate": "2030-06-01T19:00:00Z",
+  "relevantDates": [
+    {
+      "endDate": "2030-06-01T22:00:00Z",
+      "startDate": "2030-06-01T19:00:00Z"
+    }
+  ],
+  "semantics": {
+    "admissionLevel": "General",
+    "attendeeName": "Alex Morgan",
+    "eventEndDate": "2030-06-01T22:00:00Z",
+    "eventName": "Sample Event",
+    "eventStartDate": "2030-06-01T19:00:00Z",
+    "eventType": "PKEventTypeGeneric",
+    "venueLocation": {
+      "latitude": 37.3349,
+      "longitude": -122.009
+    },
+    "venueName": "Sample Hall",
+    "venueRegionName": "Cupertino, CA",
+    "venueRoom": "Main hall"
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

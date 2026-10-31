@@ -1,0 +1,234 @@
+{
+  "schema": 1,
+  "name": "Wallet · Generic",
+  "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+  "inputs": {
+    "type": "object",
+    "required": [
+      "holder",
+      "memberId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "holder": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Holder",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "ID",
+        "x-group": "Holder",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "tier": {
+        "type": "string",
+        "x-label": "Tier",
+        "x-group": "Holder",
+        "x-order": 30,
+        "enum": [
+          "Standard",
+          "Plus",
+          "Pro"
+        ],
+        "default": "Standard",
+        "x-widget": "select"
+      },
+      "points": {
+        "type": "integer",
+        "minimum": 0,
+        "default": 0,
+        "x-label": "Points",
+        "x-group": "Holder",
+        "x-order": 40
+      },
+      "since": {
+        "type": "string",
+        "x-label": "Since",
+        "x-group": "Holder",
+        "x-order": 50,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 60,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 70,
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-widget": "url",
+        "default": "https://example.com/"
+      },
+      "wifiSsid": {
+        "type": "string",
+        "x-label": "Wi-Fi network",
+        "x-group": "Wi-Fi",
+        "x-order": 80,
+        "maxLength": 32
+      },
+      "wifiPassword": {
+        "type": "string",
+        "x-label": "Wi-Fi password",
+        "x-group": "Wi-Fi",
+        "x-order": 90,
+        "maxLength": 63
+      },
+      "expirationDate": {
+        "type": "string",
+        "x-label": "Expires",
+        "x-group": "Status",
+        "x-order": 100,
+        "format": "date-time",
+        "x-widget": "datetime"
+      }
+    },
+    "dependentRequired": {
+      "wifiSsid": [
+        "wifiPassword"
+      ],
+      "wifiPassword": [
+        "wifiSsid"
+      ]
+    }
+  },
+  "sample": {
+    "holder": "Alex Morgan",
+    "memberId": "ID-0001",
+    "tier": "Plus",
+    "points": 1200,
+    "since": "2026-01-01T00:00:00Z",
+    "wifiSsid": "Guest",
+    "wifiPassword": "change-me"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{holder}}"
+    },
+    {
+      "to": {
+        "field": "memberId"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": "tier"
+      },
+      "value": "{{tier}}"
+    },
+    {
+      "to": {
+        "field": "points"
+      },
+      "value": "{{points}}"
+    },
+    {
+      "to": {
+        "field": "since"
+      },
+      "value": "{{since}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}"
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "action": "portal",
+        "prop": "url"
+      },
+      "value": "{{website}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/wifiAccess/0/ssid"
+      },
+      "value": "{{wifiSsid}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/wifiAccess/0/password"
+      },
+      "value": "{{wifiPassword}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics"
+      },
+      "remove": {
+        "input": "wifiSsid",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{expirationDate}}",
+      "omitIfEmpty": true
+    }
+  ],
+  "display": {
+    "title": "{{holder}}",
+    "subtitle": "{{tier}}",
+    "status": "{{tier}}",
+    "search": [
+      "holder",
+      "memberId"
+    ]
+  }
+}

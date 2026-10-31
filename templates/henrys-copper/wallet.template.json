@@ -1,0 +1,338 @@
+{
+  "schema": 1,
+  "name": "Henry’s · Copper Gym",
+  "description": "Member card with lock-screen suggestions at the member’s clubs.",
+  "org": {
+    "slug": "henrys",
+    "name": "Henry’s Gymnasium"
+  },
+  "inputs": {
+    "type": "object",
+    "required": [
+      "memberName",
+      "memberId",
+      "membership"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "memberName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80,
+        "x-label": "Member name",
+        "x-group": "Member",
+        "x-order": 10,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[A-Z0-9 .$/+%-]+$",
+        "x-label": "Member number",
+        "x-help": "Key tag number. A-Z 0-9 space - . $ / + %",
+        "x-group": "Member",
+        "x-order": 20,
+        "x-search": true
+      },
+      "membership": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80,
+        "x-label": "Membership",
+        "x-group": "Member",
+        "x-order": 30,
+        "x-search": true
+      },
+      "homeClub": {
+        "type": "string",
+        "enum": [
+          "capitol-hill",
+          "queen-anne"
+        ],
+        "default": "capitol-hill",
+        "x-label": "Home club",
+        "x-group": "Access",
+        "x-order": 40,
+        "x-widget": "select",
+        "x-enumLabels": {
+          "capitol-hill": "Capitol Hill",
+          "queen-anne": "Queen Anne"
+        }
+      },
+      "access": {
+        "type": "string",
+        "enum": [
+          "home",
+          "all"
+        ],
+        "default": "home",
+        "x-label": "Access",
+        "x-group": "Access",
+        "x-order": 50,
+        "x-widget": "select",
+        "x-enumLabels": {
+          "home": "Home club",
+          "all": "All clubs"
+        }
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "Active",
+          "Suspended",
+          "Expired",
+          "Cancelled"
+        ],
+        "default": "Active",
+        "x-label": "Status",
+        "x-group": "Status",
+        "x-order": 60,
+        "x-widget": "select"
+      },
+      "message": {
+        "type": "string",
+        "maxLength": 256,
+        "default": "Welcome to Henry’s.",
+        "x-label": "Message",
+        "x-help": "Shown on the back. Changes notify the member.",
+        "x-group": "Status",
+        "x-order": 70,
+        "x-widget": "textarea"
+      },
+      "expirationDate": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Expires",
+        "x-group": "Status",
+        "x-order": 80,
+        "x-widget": "datetime"
+      },
+      "voided": {
+        "type": "boolean",
+        "default": false,
+        "x-label": "Void pass",
+        "x-group": "Status",
+        "x-order": 90,
+        "x-widget": "switch"
+      },
+      "memberPortalURL": {
+        "type": "string",
+        "format": "uri",
+        "maxLength": 300,
+        "pattern": "^https://",
+        "default": "https://henrysgymnasium.thememberspot.com/signin",
+        "x-label": "Portal link",
+        "x-group": "Links",
+        "x-order": 100,
+        "x-widget": "url"
+      }
+    }
+  },
+  "sample": {
+    "memberName": "Alex Morgan",
+    "memberId": "DEMO0001",
+    "membership": "All-Inclusive Wellness",
+    "homeClub": "capitol-hill",
+    "access": "home",
+    "status": "Active",
+    "message": "Welcome to Henry’s."
+  },
+  "lookups": {
+    "clubs": {
+      "capitol-hill": {
+        "name": "Capitol Hill",
+        "label": "CAPITOL HILL",
+        "street": "1617 Boylston Ave",
+        "address": "1617 Boylston Ave, Seattle, WA 98122",
+        "lat": 47.615835,
+        "lng": -122.323555,
+        "place": "I23C636C7300F20FD",
+        "phone": "(206) 644-7797",
+        "tel": "+12066447797"
+      },
+      "queen-anne": {
+        "name": "Queen Anne",
+        "label": "QUEEN ANNE",
+        "street": "14 Mercer St",
+        "address": "14 Mercer St, Seattle, WA 98109",
+        "lat": 47.624765,
+        "lng": -122.356206,
+        "place": "I1F4F79088B704BE",
+        "phone": "(206) 644-0969",
+        "tel": "+12066440969"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": [
+          "memberName",
+          "memberName-poster"
+        ]
+      },
+      "value": "{{memberName}}"
+    },
+    {
+      "to": {
+        "field": [
+          "memberId",
+          "memberId-poster"
+        ]
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": [
+          "membership",
+          "membership-poster"
+        ]
+      },
+      "value": "{{membership}}"
+    },
+    {
+      "to": {
+        "field": [
+          "homeClub",
+          "homeClub-poster"
+        ]
+      },
+      "value": "{{lookups.clubs[homeClub].name}}"
+    },
+    {
+      "to": {
+        "field": [
+          "status",
+          "status-poster"
+        ]
+      },
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": [
+          "message",
+          "message-poster"
+        ]
+      },
+      "value": "{{message}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": [
+          "portal",
+          "portal-poster"
+        ]
+      },
+      "value": "{{memberPortalURL}}"
+    },
+    {
+      "to": {
+        "field": [
+          "portal",
+          "portal-poster"
+        ],
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{memberPortalURL|html}}\">Member portal</a>"
+    },
+    {
+      "to": {
+        "field": [
+          "phone",
+          "phone-poster"
+        ]
+      },
+      "value": "{{lookups.clubs[homeClub].phone}}"
+    },
+    {
+      "to": {
+        "field": [
+          "phone",
+          "phone-poster"
+        ],
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"tel:{{lookups.clubs[homeClub].tel}}\">{{lookups.clubs[homeClub].phone}}</a>"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "action": "member-portal",
+        "prop": "url"
+      },
+      "value": "{{memberPortalURL}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{expirationDate}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/voided"
+      },
+      "value": "{{voided}}"
+    }
+  ],
+  "display": {
+    "title": "{{memberName}}",
+    "subtitle": "{{membership}} · {{lookups.clubs[homeClub].name}}",
+    "status": "{{status}}",
+    "search": [
+      "memberName",
+      "memberId",
+      "membership"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "venue-locations",
+      "version": 1,
+      "config": {
+        "venues": "clubs",
+        "homeInput": "homeClub",
+        "accessInput": "access",
+        "allValue": "all",
+        "relevantText": "{{venue.name}} club · {{venue.street}}",
+        "placeAction": {
+          "identifier": "home-club"
+        },
+        "directions": {
+          "after": "portal",
+          "key": "directions-{{venue.id}}",
+          "label": "{{venue.label}}",
+          "value": "{{venue.address}}",
+          "linkText": "Directions to {{venue.name}}",
+          "url": "https://maps.apple.com/?daddr={{venue.lat}},{{venue.lng}}",
+          "keySuffix": {
+            "posterGeneric": "-poster"
+          }
+        }
+      }
+    }
+  ],
+  "previewOnlyAssets": [
+    "background.png",
+    "background@2x.png",
+    "background@3x.png"
+  ]
+}

@@ -1,0 +1,429 @@
+{
+  "schema": 1,
+  "name": "Wallet · Boarding pass",
+  "description": "Air boarding pass with the semantic layout and a classic fallback.",
+  "inputs": {
+    "type": "object",
+    "required": [
+      "passengerGiven",
+      "passengerFamily",
+      "airlineCode",
+      "flightNumber",
+      "origin",
+      "originCity",
+      "originTimeZone",
+      "destination",
+      "destinationCity",
+      "destinationTimeZone",
+      "boardsAt",
+      "departsAt",
+      "arrivesAt",
+      "ticketId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "passengerGiven": {
+        "type": "string",
+        "x-label": "First name",
+        "x-group": "Passenger",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "passengerFamily": {
+        "type": "string",
+        "x-label": "Last name",
+        "x-group": "Passenger",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 40,
+        "x-search": true
+      },
+      "airlineCode": {
+        "type": "string",
+        "x-label": "Airline",
+        "x-group": "Flight",
+        "x-order": 30,
+        "minLength": 2,
+        "maxLength": 3,
+        "x-search": true
+      },
+      "flightNumber": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 9999,
+        "x-label": "Flight number",
+        "x-group": "Flight",
+        "x-order": 40
+      },
+      "origin": {
+        "type": "string",
+        "x-label": "From",
+        "x-group": "Route",
+        "x-order": 50,
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[A-Z]{3}$",
+        "x-help": "IATA code"
+      },
+      "originCity": {
+        "type": "string",
+        "x-label": "From city",
+        "x-group": "Route",
+        "x-order": 60,
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "originTimeZone": {
+        "type": "string",
+        "x-label": "From time zone",
+        "x-group": "Route",
+        "x-order": 70,
+        "minLength": 1,
+        "maxLength": 40,
+        "x-help": "IANA name"
+      },
+      "destination": {
+        "type": "string",
+        "x-label": "To",
+        "x-group": "Route",
+        "x-order": 80,
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[A-Z]{3}$",
+        "x-help": "IATA code"
+      },
+      "destinationCity": {
+        "type": "string",
+        "x-label": "To city",
+        "x-group": "Route",
+        "x-order": 90,
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "destinationTimeZone": {
+        "type": "string",
+        "x-label": "To time zone",
+        "x-group": "Route",
+        "x-order": 100,
+        "minLength": 1,
+        "maxLength": 40,
+        "x-help": "IANA name"
+      },
+      "boardsAt": {
+        "type": "string",
+        "x-label": "Boarding",
+        "x-group": "Times",
+        "x-order": 110,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "departsAt": {
+        "type": "string",
+        "x-label": "Departure",
+        "x-group": "Times",
+        "x-order": 120,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "arrivesAt": {
+        "type": "string",
+        "x-label": "Arrival",
+        "x-group": "Times",
+        "x-order": 130,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "gate": {
+        "type": "string",
+        "x-label": "Gate",
+        "x-group": "Seat",
+        "x-order": 140,
+        "maxLength": 8
+      },
+      "seat": {
+        "type": "string",
+        "x-label": "Seat",
+        "x-group": "Seat",
+        "x-order": 150,
+        "maxLength": 8
+      },
+      "transitType": {
+        "type": "string",
+        "x-label": "Transit",
+        "x-group": "Flight",
+        "x-order": 35,
+        "enum": [
+          "air",
+          "train",
+          "bus",
+          "boat",
+          "generic"
+        ],
+        "default": "air",
+        "x-widget": "select"
+      },
+      "ticketId": {
+        "type": "string",
+        "x-label": "Barcode",
+        "x-group": "Seat",
+        "x-order": 160,
+        "minLength": 1,
+        "maxLength": 120,
+        "x-search": true
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 170,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "passengerGiven": "Alex",
+    "passengerFamily": "Morgan",
+    "airlineCode": "WA",
+    "flightNumber": 100,
+    "origin": "SFO",
+    "originCity": "San Francisco",
+    "originTimeZone": "America/Los_Angeles",
+    "destination": "JFK",
+    "destinationCity": "New York",
+    "destinationTimeZone": "America/New_York",
+    "boardsAt": "2030-06-01T07:15:00Z",
+    "departsAt": "2030-06-01T08:00:00Z",
+    "arrivesAt": "2030-06-01T14:30:00Z",
+    "gate": "B12",
+    "seat": "14A",
+    "ticketId": "BOARD-0001"
+  },
+  "lookups": {
+    "transit": {
+      "air": {
+        "type": "PKTransitTypeAir"
+      },
+      "train": {
+        "type": "PKTransitTypeTrain"
+      },
+      "bus": {
+        "type": "PKTransitTypeBus"
+      },
+      "boat": {
+        "type": "PKTransitTypeBoat"
+      },
+      "generic": {
+        "type": "PKTransitTypeGeneric"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": {
+        "pointer": "/boardingPass/transitType"
+      },
+      "value": "{{lookups.transit[transitType].type}}"
+    },
+    {
+      "to": {
+        "field": "flight"
+      },
+      "value": "{{airlineCode}}{{flightNumber}}"
+    },
+    {
+      "to": {
+        "field": "gate"
+      },
+      "value": "{{gate}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "origin"
+      },
+      "value": "{{origin}}"
+    },
+    {
+      "to": {
+        "field": "origin",
+        "prop": "label"
+      },
+      "value": "{{originCity}}"
+    },
+    {
+      "to": {
+        "field": "destination"
+      },
+      "value": "{{destination}}"
+    },
+    {
+      "to": {
+        "field": "destination",
+        "prop": "label"
+      },
+      "value": "{{destinationCity}}"
+    },
+    {
+      "to": {
+        "field": "passenger"
+      },
+      "value": "{{passengerGiven}} {{passengerFamily}}"
+    },
+    {
+      "to": {
+        "field": "departs"
+      },
+      "value": "{{departsAt}}"
+    },
+    {
+      "to": {
+        "field": "boardsAt"
+      },
+      "value": "{{boardsAt}}"
+    },
+    {
+      "to": {
+        "field": "seat"
+      },
+      "value": "{{seat}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{ticketId}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{ticketId}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/airlineCode"
+      },
+      "value": "{{airlineCode}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/flightNumber"
+      },
+      "value": "{{flightNumber}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/departureAirportCode"
+      },
+      "value": "{{origin}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/departureCityName"
+      },
+      "value": "{{originCity}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/departureLocationTimeZone"
+      },
+      "value": "{{originTimeZone}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/destinationAirportCode"
+      },
+      "value": "{{destination}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/destinationCityName"
+      },
+      "value": "{{destinationCity}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/destinationLocationTimeZone"
+      },
+      "value": "{{destinationTimeZone}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/originalBoardingDate"
+      },
+      "value": "{{boardsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/originalDepartureDate"
+      },
+      "value": "{{departsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/originalArrivalDate"
+      },
+      "value": "{{arrivesAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/passengerName/givenName"
+      },
+      "value": "{{passengerGiven}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/passengerName/familyName"
+      },
+      "value": "{{passengerFamily}}"
+    },
+    {
+      "to": {
+        "pointer": "/relevantDate"
+      },
+      "value": "{{departsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{arrivesAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/preferredStyleSchemes"
+      },
+      "remove": {
+        "not": {
+          "input": "transitType",
+          "eq": "air"
+        }
+      }
+    }
+  ],
+  "display": {
+    "title": "{{passengerGiven}} {{passengerFamily}}",
+    "subtitle": "{{origin}} to {{destination}}",
+    "status": "{{airlineCode}}{{flightNumber}}",
+    "search": [
+      "passengerFamily",
+      "airlineCode",
+      "ticketId"
+    ]
+  }
+}

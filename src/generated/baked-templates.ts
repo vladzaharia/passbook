@@ -10,9 +10,19 @@ export interface BakedTemplateEntry {
 }
 
 /** Content hash of every template package; syncBakedTemplates() runs when it changes. */
-export const BAKED_BUILD_HASH = "c87e8db4678d3c52455553bfa1063e4a7995b2d1";
+export const BAKED_BUILD_HASH = "ca42a5485ebdbf017905c928527b67b287a368fa";
 
 export const bakedTemplates: readonly BakedTemplateEntry[] = [
+  {
+    "slug": "_tools",
+    "files": [
+      {
+        "name": "generate-art.ts",
+        "size": 7361,
+        "sha1": "6471295aa1971697be0724f0d506b7dccdd57be0"
+      }
+    ]
+  },
   {
     "slug": "henrys-blue",
     "files": [
@@ -47,6 +57,11 @@ export const bakedTemplates: readonly BakedTemplateEntry[] = [
         "sha1": "5705fb99adcec587d343319973f9f2416febd87f"
       },
       {
+        "name": "en.lproj/pass.strings",
+        "size": 743,
+        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df"
+      },
+      {
         "name": "icon.png",
         "size": 2571,
         "sha1": "e226db7ee0f79ce3ef35389d6766597ef4dffaa0"
@@ -78,8 +93,8 @@ export const bakedTemplates: readonly BakedTemplateEntry[] = [
       },
       {
         "name": "pass.json",
-        "size": 6350,
-        "sha1": "8f19660fee7711526ed89196e201a74d5c723bb7"
+        "size": 5854,
+        "sha1": "013697b5314fe67ded20e40341f07dae3da54f6a"
       },
       {
         "name": "primaryLogo.png",
@@ -100,6 +115,11 @@ export const bakedTemplates: readonly BakedTemplateEntry[] = [
         "name": "tooling.json",
         "size": 79,
         "sha1": "12a68534c1598b462c7fd73ff211505e19f0bec0"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 7604,
+        "sha1": "b96fe446797e7d86a134c84ee56a8b9ac951c5e1"
       }
     ]
   },
@@ -137,6 +157,11 @@ export const bakedTemplates: readonly BakedTemplateEntry[] = [
         "sha1": "0dc5d6c3253d84fd9a3910a06619ecf899a7a5c8"
       },
       {
+        "name": "en.lproj/pass.strings",
+        "size": 743,
+        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df"
+      },
+      {
         "name": "icon.png",
         "size": 2571,
         "sha1": "e226db7ee0f79ce3ef35389d6766597ef4dffaa0"
@@ -168,8 +193,8 @@ export const bakedTemplates: readonly BakedTemplateEntry[] = [
       },
       {
         "name": "pass.json",
-        "size": 8484,
-        "sha1": "7df3f0c393f6d55027c254b594ac69cd207f83ab"
+        "size": 5855,
+        "sha1": "0f1d89d070401ec85fe9cc30c61ab5abcb6dcbcd"
       },
       {
         "name": "primaryLogo.png",
@@ -190,6 +215,446 @@ export const bakedTemplates: readonly BakedTemplateEntry[] = [
         "name": "tooling.json",
         "size": 80,
         "sha1": "5ed3e08c7aa5a113dfcaffe723f0ab61a3b647e4"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 7601,
+        "sha1": "5b469f9e0d67b4c32bc01c31a737a5944099799b"
+      }
+    ]
+  },
+  {
+    "slug": "starter-boarding-pass",
+    "files": [
+      {
+        "name": "footer.png",
+        "size": 1507,
+        "sha1": "e4d0869ff945f5903ed40e0d78f9dd4c47b93063"
+      },
+      {
+        "name": "footer@2x.png",
+        "size": 4144,
+        "sha1": "dd7099d5d79e107b06979f38747f171f66109805"
+      },
+      {
+        "name": "footer@3x.png",
+        "size": 7435,
+        "sha1": "478ab0454ab9c5a11ff4e1d8f534a167d45bc3ad"
+      },
+      {
+        "name": "icon.png",
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91"
+      },
+      {
+        "name": "icon@2x.png",
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7"
+      },
+      {
+        "name": "icon@3x.png",
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1"
+      },
+      {
+        "name": "logo.png",
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c"
+      },
+      {
+        "name": "logo@2x.png",
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937"
+      },
+      {
+        "name": "logo@3x.png",
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7"
+      },
+      {
+        "name": "pass.json",
+        "size": 2655,
+        "sha1": "dc003e8818760089966d1aeac2c7a38e991457d9"
+      },
+      {
+        "name": "primaryLogo.png",
+        "size": 671,
+        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56"
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "size": 1215,
+        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537"
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "size": 1819,
+        "sha1": "a651d032c33059074ec29e94009d0e083f82777a"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 9106,
+        "sha1": "c2f48eea057a8599b369c4ac206fb06cf5bf2f62"
+      }
+    ]
+  },
+  {
+    "slug": "starter-coupon",
+    "files": [
+      {
+        "name": "icon.png",
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91"
+      },
+      {
+        "name": "icon@2x.png",
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7"
+      },
+      {
+        "name": "icon@3x.png",
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1"
+      },
+      {
+        "name": "logo.png",
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c"
+      },
+      {
+        "name": "logo@2x.png",
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937"
+      },
+      {
+        "name": "logo@3x.png",
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7"
+      },
+      {
+        "name": "pass.json",
+        "size": 1795,
+        "sha1": "3fbbd3d6262b665866e862e013c9a13ab60ea98c"
+      },
+      {
+        "name": "strip.png",
+        "size": 7495,
+        "sha1": "2fde15194c19388c28bbb26a789ac27391a3c630"
+      },
+      {
+        "name": "strip@2x.png",
+        "size": 19651,
+        "sha1": "26103abe258d6c3ba28c6ffbbe7f4cec665f8139"
+      },
+      {
+        "name": "strip@3x.png",
+        "size": 34319,
+        "sha1": "cb51a640108370bff704b76ad3b56cd80117f8f1"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 3141,
+        "sha1": "42170bcff075c695d7622a8b129d1ba27e02001a"
+      }
+    ]
+  },
+  {
+    "slug": "starter-event-ticket",
+    "files": [
+      {
+        "name": "artwork.png",
+        "size": 19719,
+        "sha1": "b0cd94338477865342679a61d912b3d23cf5b9d0"
+      },
+      {
+        "name": "artwork@2x.png",
+        "size": 59174,
+        "sha1": "1ba8f1ab6acf6cefc7a8f55249b2081828cbc120"
+      },
+      {
+        "name": "artwork@3x.png",
+        "size": 108841,
+        "sha1": "76bc63ff178a4095b22f3521c832b156b219eb12"
+      },
+      {
+        "name": "icon.png",
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91"
+      },
+      {
+        "name": "icon@2x.png",
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7"
+      },
+      {
+        "name": "icon@3x.png",
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1"
+      },
+      {
+        "name": "logo.png",
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c"
+      },
+      {
+        "name": "logo@2x.png",
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937"
+      },
+      {
+        "name": "logo@3x.png",
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7"
+      },
+      {
+        "name": "pass.json",
+        "size": 2878,
+        "sha1": "a751a653502e27a60972069c6136619eecdb6b16"
+      },
+      {
+        "name": "primaryLogo.png",
+        "size": 671,
+        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56"
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "size": 1215,
+        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537"
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "size": 1819,
+        "sha1": "a651d032c33059074ec29e94009d0e083f82777a"
+      },
+      {
+        "name": "secondaryLogo.png",
+        "size": 263,
+        "sha1": "207150b70373b3d4d44d5b011fb83e5668baed8e"
+      },
+      {
+        "name": "secondaryLogo@2x.png",
+        "size": 536,
+        "sha1": "d8285417756fa4b8d8fd484aab528cdfa9324981"
+      },
+      {
+        "name": "secondaryLogo@3x.png",
+        "size": 867,
+        "sha1": "505df1fa1572323840bc5f997dc429548fb32900"
+      },
+      {
+        "name": "strip.png",
+        "size": 5765,
+        "sha1": "73b09714a03f6a9d17a75db3827360a0d8b90550"
+      },
+      {
+        "name": "strip@2x.png",
+        "size": 15083,
+        "sha1": "a0106bb74cec7ad38dc391d14886c92d35f87757"
+      },
+      {
+        "name": "strip@3x.png",
+        "size": 27387,
+        "sha1": "19ec408d3b11eba2ae468f9f5e44370d99f8d54d"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 7041,
+        "sha1": "6228e24b389aa1cfe8385bd1b70b918f6962ecfa"
+      }
+    ]
+  },
+  {
+    "slug": "starter-generic",
+    "files": [
+      {
+        "name": "icon.png",
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91"
+      },
+      {
+        "name": "icon@2x.png",
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7"
+      },
+      {
+        "name": "icon@3x.png",
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1"
+      },
+      {
+        "name": "logo.png",
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c"
+      },
+      {
+        "name": "logo@2x.png",
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937"
+      },
+      {
+        "name": "logo@3x.png",
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7"
+      },
+      {
+        "name": "pass.json",
+        "size": 2380,
+        "sha1": "ec0723df883e9ab4d03b227e5c828f0ca2873988"
+      },
+      {
+        "name": "thumbnail.png",
+        "size": 2831,
+        "sha1": "74e34fa5f1a047c52f231fc7812543a8dde2e3ce"
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "size": 5727,
+        "sha1": "eccc1b0dfc7b234e8194a120a7500ba546b8a9e1"
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "size": 10058,
+        "sha1": "a557846cb2e2368f114f96fa5fadb0647a83dcf5"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 4655,
+        "sha1": "2a850f02fa0f371d2133daae086089fcbde1c46c"
+      }
+    ]
+  },
+  {
+    "slug": "starter-poster-generic",
+    "files": [
+      {
+        "name": "artwork.png",
+        "size": 19719,
+        "sha1": "b0cd94338477865342679a61d912b3d23cf5b9d0"
+      },
+      {
+        "name": "artwork@2x.png",
+        "size": 59174,
+        "sha1": "1ba8f1ab6acf6cefc7a8f55249b2081828cbc120"
+      },
+      {
+        "name": "artwork@3x.png",
+        "size": 108841,
+        "sha1": "76bc63ff178a4095b22f3521c832b156b219eb12"
+      },
+      {
+        "name": "icon.png",
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91"
+      },
+      {
+        "name": "icon@2x.png",
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7"
+      },
+      {
+        "name": "icon@3x.png",
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1"
+      },
+      {
+        "name": "logo.png",
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c"
+      },
+      {
+        "name": "logo@2x.png",
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937"
+      },
+      {
+        "name": "logo@3x.png",
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7"
+      },
+      {
+        "name": "pass.json",
+        "size": 3150,
+        "sha1": "3bba714a8b577dda3a7b7a50e7092ede9ee09fd0"
+      },
+      {
+        "name": "primaryLogo.png",
+        "size": 671,
+        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56"
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "size": 1215,
+        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537"
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "size": 1819,
+        "sha1": "a651d032c33059074ec29e94009d0e083f82777a"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 3884,
+        "sha1": "41fc17a0772e74282cc0ffda4f53c3b52a503b24"
+      }
+    ]
+  },
+  {
+    "slug": "starter-store-card",
+    "files": [
+      {
+        "name": "icon.png",
+        "size": 1261,
+        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91"
+      },
+      {
+        "name": "icon@2x.png",
+        "size": 2569,
+        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7"
+      },
+      {
+        "name": "icon@3x.png",
+        "size": 3764,
+        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1"
+      },
+      {
+        "name": "logo.png",
+        "size": 960,
+        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c"
+      },
+      {
+        "name": "logo@2x.png",
+        "size": 1882,
+        "sha1": "3952700ab401e8ff518357640cc1d74073f41937"
+      },
+      {
+        "name": "logo@3x.png",
+        "size": 2916,
+        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7"
+      },
+      {
+        "name": "pass.json",
+        "size": 1997,
+        "sha1": "5d588bb0dffa041d586dc9fb3987ca614c2cde19"
+      },
+      {
+        "name": "strip.png",
+        "size": 7495,
+        "sha1": "2fde15194c19388c28bbb26a789ac27391a3c630"
+      },
+      {
+        "name": "strip@2x.png",
+        "size": 19651,
+        "sha1": "26103abe258d6c3ba28c6ffbbe7f4cec665f8139"
+      },
+      {
+        "name": "strip@3x.png",
+        "size": 34319,
+        "sha1": "cb51a640108370bff704b76ad3b56cd80117f8f1"
+      },
+      {
+        "name": "wallet.template.json",
+        "size": 3892,
+        "sha1": "0e71e2686913f2059b2577b254946eb701999d9e"
       }
     ]
   }

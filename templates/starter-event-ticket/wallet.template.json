@@ -1,0 +1,346 @@
+{
+  "schema": 1,
+  "name": "Wallet · Event ticket",
+  "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
+  "inputs": {
+    "type": "object",
+    "required": [
+      "eventName",
+      "venueName",
+      "venueRegion",
+      "startsAt",
+      "endsAt",
+      "attendee",
+      "ticketId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "eventName": {
+        "type": "string",
+        "x-label": "Event",
+        "x-group": "Event",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "venueName": {
+        "type": "string",
+        "x-label": "Venue",
+        "x-group": "Event",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "venueRegion": {
+        "type": "string",
+        "x-label": "City",
+        "x-group": "Event",
+        "x-order": 30,
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "venueRoom": {
+        "type": "string",
+        "x-label": "Room",
+        "x-group": "Event",
+        "x-order": 40,
+        "minLength": 1,
+        "maxLength": 60,
+        "default": "Main hall"
+      },
+      "startsAt": {
+        "type": "string",
+        "x-label": "Starts",
+        "x-group": "Event",
+        "x-order": 50,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "endsAt": {
+        "type": "string",
+        "x-label": "Ends",
+        "x-group": "Event",
+        "x-order": 60,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "venueLat": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "x-label": "Venue latitude",
+        "x-group": "Event",
+        "x-order": 70
+      },
+      "venueLng": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "x-label": "Venue longitude",
+        "x-group": "Event",
+        "x-order": 80
+      },
+      "attendee": {
+        "type": "string",
+        "x-label": "Attendee",
+        "x-group": "Ticket",
+        "x-order": 90,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "admission": {
+        "type": "string",
+        "x-label": "Admission",
+        "x-group": "Ticket",
+        "x-order": 100,
+        "maxLength": 40,
+        "default": "General"
+      },
+      "seat": {
+        "type": "string",
+        "x-label": "Seat",
+        "x-group": "Ticket",
+        "x-order": 110,
+        "maxLength": 40
+      },
+      "ticketId": {
+        "type": "string",
+        "x-label": "Ticket ID",
+        "x-group": "Ticket",
+        "x-order": 120,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 130,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "x-label": "Event page",
+        "x-group": "Links",
+        "x-order": 140,
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-widget": "url",
+        "default": "https://example.com/"
+      }
+    }
+  },
+  "sample": {
+    "eventName": "Sample Event",
+    "venueName": "Sample Hall",
+    "venueRegion": "Cupertino, CA",
+    "startsAt": "2030-06-01T19:00:00Z",
+    "endsAt": "2030-06-01T22:00:00Z",
+    "venueLat": 37.3349,
+    "venueLng": -122.009,
+    "attendee": "Alex Morgan",
+    "ticketId": "TICKET-0001"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "event"
+      },
+      "value": "{{eventName}}"
+    },
+    {
+      "to": {
+        "field": "venue"
+      },
+      "value": "{{venueName}}"
+    },
+    {
+      "to": {
+        "field": "room"
+      },
+      "value": "{{venueRoom}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "date"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "field": "attendee"
+      },
+      "value": "{{attendee}}"
+    },
+    {
+      "to": {
+        "field": "admission"
+      },
+      "value": "{{admission}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "seat"
+      },
+      "value": "{{seat}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}"
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{ticketId}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{ticketId}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/eventName"
+      },
+      "value": "{{eventName}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueName"
+      },
+      "value": "{{venueName}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueRegionName"
+      },
+      "value": "{{venueRegion}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueRoom"
+      },
+      "value": "{{venueRoom}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/eventStartDate"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/eventEndDate"
+      },
+      "value": "{{endsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueLocation/latitude"
+      },
+      "value": "{{venueLat}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueLocation/longitude"
+      },
+      "value": "{{venueLng}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueLocation"
+      },
+      "remove": {
+        "any": [
+          {
+            "input": "venueLat",
+            "empty": true
+          },
+          {
+            "input": "venueLng",
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/admissionLevel"
+      },
+      "value": "{{admission}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/attendeeName"
+      },
+      "value": "{{attendee}}"
+    },
+    {
+      "to": {
+        "pointer": "/relevantDate"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/relevantDates/0/startDate"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/relevantDates/0/endDate"
+      },
+      "value": "{{endsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{endsAt}}"
+    }
+  ],
+  "display": {
+    "title": "{{eventName}}",
+    "subtitle": "{{attendee}}",
+    "status": "{{venueName}}",
+    "search": [
+      "eventName",
+      "attendee",
+      "ticketId"
+    ]
+  }
+}

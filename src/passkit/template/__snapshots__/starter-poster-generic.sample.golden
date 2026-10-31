@@ -1,0 +1,140 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "ID-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "ID-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Wallet poster pass",
+  "featuredActions": [
+    {
+      "identifier": "portal",
+      "type": "membershipBenefits",
+      "url": "https://example.com/"
+    },
+    {
+      "identifier": "support",
+      "type": "call",
+      "url": "tel:+15555550100"
+    }
+  ],
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "generic": {
+    "backFields": [
+      {
+        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
+        "key": "site",
+        "label": "SITE",
+        "value": "https://example.com/"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Present the barcode when asked."
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Your tier is now %@.",
+        "key": "tier",
+        "label": "TIER",
+        "value": "Plus"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "NAME",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "memberId",
+        "label": "ID",
+        "value": "ID-0001"
+      },
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "since",
+        "label": "SINCE",
+        "value": "2026-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "labelColor": "rgb(199,210,254)",
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Main office"
+    }
+  ],
+  "logoText": "Wallet",
+  "organizationName": "Wallet",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "posterGeneric": {
+    "additionalInfoFields": [
+      {
+        "key": "plan-poster",
+        "label": "PLAN",
+        "value": "Annual"
+      }
+    ],
+    "backFields": [
+      {
+        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
+        "key": "site-poster",
+        "label": "SITE",
+        "value": "https://example.com/"
+      },
+      {
+        "key": "terms-poster",
+        "label": "TERMS",
+        "value": "Present the barcode when asked."
+      }
+    ],
+    "footerFields": [
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "since-poster",
+        "label": "SINCE",
+        "value": "2026-01-01T00:00:00Z"
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "memberId-poster",
+        "label": "ID",
+        "value": "ID-0001"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder-poster",
+        "value": "Alex Morgan"
+      },
+      {
+        "changeMessage": "Your tier is now %@.",
+        "key": "tier-poster",
+        "label": "TIER",
+        "value": "Plus"
+      }
+    ]
+  },
+  "preferredStyleSchemes": [
+    "posterGeneric",
+    "generic"
+  ],
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

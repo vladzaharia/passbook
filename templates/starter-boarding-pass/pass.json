@@ -1,0 +1,110 @@
+{
+  "formatVersion": 1,
+  "description": "Wallet boarding pass",
+  "organizationName": "Wallet",
+  "backgroundColor": "rgb(31,41,55)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Wallet Air",
+  "preferredStyleSchemes": [
+    "semanticBoardingPass",
+    "boardingPass"
+  ],
+  "sharingProhibited": true,
+  "relevantDate": "2030-06-01T08:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatPDF417",
+      "message": "BOARD-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "BOARD-0001"
+    }
+  ],
+  "semantics": {
+    "airlineCode": "WA",
+    "flightNumber": 100,
+    "departureAirportCode": "SFO",
+    "departureCityName": "San Francisco",
+    "departureLocationTimeZone": "America/Los_Angeles",
+    "destinationAirportCode": "JFK",
+    "destinationCityName": "New York",
+    "destinationLocationTimeZone": "America/New_York",
+    "originalBoardingDate": "2030-06-01T07:15:00Z",
+    "originalDepartureDate": "2030-06-01T08:00:00Z",
+    "originalArrivalDate": "2030-06-01T14:30:00Z",
+    "passengerName": {
+      "givenName": "Alex",
+      "familyName": "Morgan"
+    }
+  },
+  "boardingPass": {
+    "transitType": "PKTransitTypeAir",
+    "headerFields": [
+      {
+        "key": "flight",
+        "label": "FLIGHT",
+        "value": "WA100"
+      },
+      {
+        "key": "gate",
+        "label": "GATE",
+        "value": "B12",
+        "changeMessage": "Your gate is now %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "origin",
+        "label": "SAN FRANCISCO",
+        "value": "SFO"
+      },
+      {
+        "key": "destination",
+        "label": "NEW YORK",
+        "value": "JFK"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "passenger",
+        "label": "PASSENGER",
+        "value": "Alex Morgan"
+      },
+      {
+        "key": "departs",
+        "label": "DEPARTS",
+        "value": "2030-06-01T08:00:00Z",
+        "dateStyle": "PKDateStyleShort",
+        "timeStyle": "PKDateStyleShort",
+        "changeMessage": "Departure is now %@."
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "boardsAt",
+        "label": "BOARDS",
+        "value": "2030-06-01T07:15:00Z",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort"
+      },
+      {
+        "key": "seat",
+        "label": "SEAT",
+        "value": "14A"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "note",
+        "label": "NOTE",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Be at the gate 30 minutes before departure."
+      }
+    ]
+  }
+}

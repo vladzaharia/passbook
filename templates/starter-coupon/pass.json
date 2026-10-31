@@ -1,0 +1,83 @@
+{
+  "formatVersion": 1,
+  "description": "Wallet coupon",
+  "organizationName": "Wallet",
+  "backgroundColor": "rgb(31,41,55)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Wallet",
+  "expirationDate": "2030-01-01T00:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatPDF417",
+      "message": "SAVE-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "SAVE-0001"
+    }
+  ],
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Store nearby"
+    }
+  ],
+  "featuredActions": [
+    {
+      "identifier": "offers",
+      "type": "viewOffersRewards",
+      "url": "https://example.com/"
+    }
+  ],
+  "coupon": {
+    "headerFields": [
+      {
+        "key": "expires",
+        "label": "EXPIRES",
+        "value": "2030-01-01T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "offer",
+        "label": "OFFER",
+        "value": "20% off"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "terms",
+        "label": "VALID FOR",
+        "value": "One purchase"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "code",
+        "label": "CODE",
+        "value": "SAVE-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "note",
+        "label": "NOTE",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "site",
+        "label": "SITE",
+        "value": "https://example.com/",
+        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+      },
+      {
+        "key": "fine",
+        "label": "TERMS",
+        "value": "One use per customer. Not combinable with other offers."
+      }
+    ]
+  }
+}

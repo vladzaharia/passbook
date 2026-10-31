@@ -175,4 +175,160 @@ describe('buildPass', () => {
     }).catch((e: unknown) => e);
     expect((error as PassBuildError).code).toBe('BEHAVIOR');
   });
+
+  it('is deterministic for identical input and clock', async () => {
+    const now = new Date();
+    const run = () =>
+      buildPass({
+        template,
+        registry,
+        input: { name: 'Alex', club: 'a', url: 'https://x.example.com' },
+        server: server(material),
+        signing: material,
+        now,
+      });
+    const [a, b] = [await run(), await run()];
+    expect(a.contentHash).toBe(b.contentHash);
+    expect(a.signed.manifest).toEqual(b.signed.manifest);
+    expect(a.signed.files['pass.json']).toEqual(b.signed.files['pass.json']);
+  });
+
+  it('skips signing when unchanged unless forced', async () => {
+    const args = {
+      template,
+      registry,
+      input: { name: 'Alex', club: 'a', url: '' },
+      server: server(material),
+      signing: material,
+    };
+    const first = await buildPass(args);
+    const same = await buildPass({ ...args, previousHash: first.contentHash });
+    expect(same.changed).toBe(false);
+    expect('signed' in same).toBe(false);
+    const forced = await buildPass({ ...args, previousHash: first.contentHash, force: true });
+    expect(forced.changed).toBe(true);
+    const edited = await buildPass({
+      ...args,
+      input: { ...args.input, name: 'Blake' },
+      previousHash: first.contentHash,
+    });
+    expect(edited.changed).toBe(true);
+  });
+
+  it('leaves preview-only files out and applies per-pass overrides', async () => {
+    const icon = pngOf(38, 38);
+    const t = registry.add({
+      id: 'assets',
+      manifest: { ...manifest, previewOnlyAssets: ['background.png'] },
+      passJson,
+      assets: { 'icon.png': PNG, 'background.png': PNG, 'thumbnail.png': PNG },
+    });
+    const built = await buildPass({
+      template: t,
+      registry,
+      input: { name: 'A', club: 'a', url: '' },
+      server: server(material),
+      signing: material,
+      assetOverrides: {
+        'icon.png': { bytes: icon },
+        'thumbnail@2x.png': { bytes: pngOf(180, 180) },
+      },
+    });
+    const names = Object.keys(built.signed.files);
+    expect(names).not.toContain('background.png');
+    expect(names).toContain('thumbnail@2x.png');
+    expect(built.signed.files['icon.png']).toEqual(icon);
+  });
+
+  it('drops image slots named by an image binding', async () => {
+    const t = registry.add({
+      id: 'drop',
+      manifest: {
+        ...manifest,
+        bindings: [{ to: { image: 'thumbnail' }, remove: { input: 'club', eq: 'b' } }] as never,
+      },
+      passJson,
+      assets: { 'icon.png': PNG, 'thumbnail.png': PNG, 'thumbnail@2x.png': PNG },
+    });
+    const run = (club: string, assetOverrides = {}) =>
+      buildPass({
+        template: t,
+        registry,
+        input: { name: 'A', club },
+        server: server(material),
+        signing: material,
+        assetOverrides,
+      });
+    expect(Object.keys((await run('a')).signed.files)).toContain('thumbnail.png');
+    const dropped = Object.keys(
+      (await run('b', { 'thumbnail@3x.png': { bytes: pngOf(270, 270) } })).signed.files,
+    );
+    expect(dropped.filter((n) => n.startsWith('thumbnail'))).toEqual([]);
+  });
+
+  it('rejects overrides that are not PNG image slots', async () => {
+    const bad = (name: string, bytes: Uint8Array) =>
+      buildPass({
+        template,
+        registry,
+        input: { name: 'A', club: 'a', url: '' },
+        server: server(material),
+        signing: material,
+        assetOverrides: { [name]: { bytes } },
+      }).catch((e: unknown) => e);
+    expect(((await bad('notes.txt', PNG)) as PassBuildError).code).toBe('INVALID_INPUT');
+    expect(((await bad('thumbnail.png', new Uint8Array([1, 2, 3]))) as PassBuildError).code).toBe(
+      'INVALID_INPUT',
+    );
+  });
+
+  it('applies input defaults before validating and binding', async () => {
+    const t = registry.add({
+      id: 'defaults',
+      manifest: {
+        ...manifest,
+        inputs: {
+          type: 'object',
+          required: ['name', 'club'],
+          properties: { name: { type: 'string' }, club: { type: 'string', default: 'b' } },
+        },
+      },
+      passJson,
+      assets: { 'icon.png': PNG },
+    });
+    const built = await buildPass({
+      template: t,
+      registry,
+      input: { name: 'A' },
+      server: server(material),
+      signing: material,
+    });
+    expect(built.passJson.generic?.backFields?.map((f) => f.key)).not.toContain('only-a');
+  });
+
+  it('reports binding failures as TEMPLATE errors', async () => {
+    const t = registry.add({
+      id: 'badbind',
+      manifest: { ...manifest, bindings: [{ to: { field: 'name' }, value: '{{name' }] },
+      passJson,
+      assets: { 'icon.png': PNG },
+    });
+    const error = await buildPass({
+      template: t,
+      registry,
+      input: { name: 'A', club: 'a' },
+      server: server(material),
+      signing: material,
+    }).catch((e: unknown) => e);
+    expect((error as PassBuildError).code).toBe('TEMPLATE');
+  });
 });
+
+function pngOf(width: number, height: number): Uint8Array {
+  const bytes = new Uint8Array(33);
+  bytes.set([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}

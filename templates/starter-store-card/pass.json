@@ -1,0 +1,95 @@
+{
+  "formatVersion": 1,
+  "description": "Wallet store card",
+  "organizationName": "Wallet",
+  "backgroundColor": "rgb(31,41,55)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Wallet",
+  "sharingProhibited": true,
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "CARD-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "CARD-0001"
+    }
+  ],
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Store nearby"
+    }
+  ],
+  "semantics": {
+    "balance": {
+      "amount": "25.00",
+      "currencyCode": "USD"
+    }
+  },
+  "featuredActions": [
+    {
+      "identifier": "top-up",
+      "type": "addToBalance",
+      "url": "https://example.com/"
+    },
+    {
+      "identifier": "shop",
+      "type": "shop",
+      "url": "https://example.com/shop"
+    }
+  ],
+  "storeCard": {
+    "headerFields": [
+      {
+        "key": "tier",
+        "label": "TIER",
+        "value": "Standard",
+        "changeMessage": "Your tier is now %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "balance",
+        "label": "BALANCE",
+        "value": 25,
+        "currencyCode": "USD",
+        "changeMessage": "Your balance is now %@."
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "NAME",
+        "value": "Alex Morgan"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "cardNumber",
+        "label": "CARD",
+        "value": "CARD-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "note",
+        "label": "NOTE",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "site",
+        "label": "SITE",
+        "value": "https://example.com/",
+        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Balance is not redeemable for cash."
+      }
+    ]
+  }
+}

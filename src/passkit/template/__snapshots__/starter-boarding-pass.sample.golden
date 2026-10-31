@@ -1,0 +1,110 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "BOARD-0001",
+      "format": "PKBarcodeFormatPDF417",
+      "message": "BOARD-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "boardingPass": {
+    "auxiliaryFields": [
+      {
+        "dateStyle": "PKDateStyleNone",
+        "key": "boardsAt",
+        "label": "BOARDS",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T07:15:00Z"
+      },
+      {
+        "key": "seat",
+        "label": "SEAT",
+        "value": "14A"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Be at the gate 30 minutes before departure."
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "flight",
+        "label": "FLIGHT",
+        "value": "WA100"
+      },
+      {
+        "changeMessage": "Your gate is now %@.",
+        "key": "gate",
+        "label": "GATE",
+        "value": "B12"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "origin",
+        "label": "San Francisco",
+        "value": "SFO"
+      },
+      {
+        "key": "destination",
+        "label": "New York",
+        "value": "JFK"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "passenger",
+        "label": "PASSENGER",
+        "value": "Alex Morgan"
+      },
+      {
+        "changeMessage": "Departure is now %@.",
+        "dateStyle": "PKDateStyleShort",
+        "key": "departs",
+        "label": "DEPARTS",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T08:00:00Z"
+      }
+    ],
+    "transitType": "PKTransitTypeAir"
+  },
+  "description": "Wallet boarding pass",
+  "expirationDate": "2030-06-01T14:30:00Z",
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Wallet Air",
+  "organizationName": "Wallet",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "preferredStyleSchemes": [
+    "semanticBoardingPass",
+    "boardingPass"
+  ],
+  "relevantDate": "2030-06-01T08:00:00Z",
+  "semantics": {
+    "airlineCode": "WA",
+    "departureAirportCode": "SFO",
+    "departureCityName": "San Francisco",
+    "departureLocationTimeZone": "America/Los_Angeles",
+    "destinationAirportCode": "JFK",
+    "destinationCityName": "New York",
+    "destinationLocationTimeZone": "America/New_York",
+    "flightNumber": 100,
+    "originalArrivalDate": "2030-06-01T14:30:00Z",
+    "originalBoardingDate": "2030-06-01T07:15:00Z",
+    "originalDepartureDate": "2030-06-01T08:00:00Z",
+    "passengerName": {
+      "familyName": "Morgan",
+      "givenName": "Alex"
+    }
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}
