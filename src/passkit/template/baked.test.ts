@@ -1,5 +1,5 @@
 import { unzipSync } from 'fflate';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { packagePassBytes } from '../package/zip.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { Personalization, SigningMaterial } from '../types.ts';
@@ -12,12 +12,6 @@ import {
   stableJson,
 } from './baked-fixtures.ts';
 import { projectDisplay, validateManifest } from './manifest.ts';
-
-vi.mock('../validate.ts', async (importOriginal) =>
-  (await import('./validator-shim.ts')).shimValidator(
-    await importOriginal<typeof import('../validate.ts')>(),
-  ),
-);
 
 let material: SigningMaterial;
 beforeAll(async () => {

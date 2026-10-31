@@ -64,6 +64,7 @@
         "ignoresTimeZone": true,
         "key": "since",
         "label": "SINCE",
+        "timeStyle": "PKDateStyleNone",
         "value": "2026-01-01T00:00:00Z"
       }
     ]
@@ -106,6 +107,7 @@
         "ignoresTimeZone": true,
         "key": "since-poster",
         "label": "SINCE",
+        "timeStyle": "PKDateStyleNone",
         "value": "2026-01-01T00:00:00Z"
       }
     ],
@@ -129,10 +131,6 @@
       }
     ]
   },
-  "preferredStyleSchemes": [
-    "posterGeneric",
-    "generic"
-  ],
   "serialNumber": "SNAPSHOT-SERIAL",
   "sharingProhibited": true,
   "teamIdentifier": "48H7CLBV8Y",

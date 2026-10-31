@@ -1,14 +1,8 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassBuildError } from '../build.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { PassField, Personalization, SigningMaterial } from '../types.ts';
 import { buildBaked as build, freezeNow, loadBaked, stableJson } from './baked-fixtures.ts';
-
-vi.mock('../validate.ts', async (importOriginal) =>
-  (await import('./validator-shim.ts')).shimValidator(
-    await importOriginal<typeof import('../validate.ts')>(),
-  ),
-);
 
 let material: SigningMaterial;
 beforeAll(async () => {
@@ -118,7 +112,7 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
 
   it('uses posterGeneric with a generic fallback and Code 39 then Code 128', async () => {
     const pass = (await build(slug, material)).passJson;
-    expect(pass.preferredStyleSchemes).toEqual(['posterGeneric', 'generic']);
+    expect(pass.preferredStyleSchemes).toBeUndefined();
     expect(pass.sharingProhibited).toBe(true);
     expect(pass.barcodes?.map((b) => b.format)).toEqual([
       'PKBarcodeFormatCode39',

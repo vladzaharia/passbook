@@ -6,10 +6,6 @@
   "foregroundColor": "rgb(255,255,255)",
   "labelColor": "rgb(199,210,254)",
   "logoText": "Wallet",
-  "preferredStyleSchemes": [
-    "posterGeneric",
-    "generic"
-  ],
   "sharingProhibited": true,
   "barcodes": [
     {
@@ -64,6 +60,7 @@
         "label": "SINCE",
         "value": "2026-01-01T00:00:00Z",
         "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
         "ignoresTimeZone": true
       }
     ],
@@ -121,6 +118,7 @@
         "label": "SINCE",
         "value": "2026-01-01T00:00:00Z",
         "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
         "ignoresTimeZone": true
       }
     ],

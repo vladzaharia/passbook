@@ -1,15 +1,9 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassBuildError } from '../build.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { PassField, PassJson, Personalization, SigningMaterial } from '../types.ts';
 import { buildBaked as build, freezeNow, loadBaked } from './baked-fixtures.ts';
 import { pngSize } from './package.ts';
-
-vi.mock('../validate.ts', async (importOriginal) =>
-  (await import('./validator-shim.ts')).shimValidator(
-    await importOriginal<typeof import('../validate.ts')>(),
-  ),
-);
 
 let material: SigningMaterial;
 beforeAll(async () => {
@@ -126,7 +120,7 @@ describe('field coverage', () => {
         'backFields',
       ]),
     );
-    expect(poster.preferredStyleSchemes).toEqual(['posterGeneric', 'generic']);
+    expect(poster.preferredStyleSchemes).toBeUndefined();
     expect(groups(poster, 'generic').length).toBeGreaterThan(0);
   });
 

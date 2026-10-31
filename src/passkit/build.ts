@@ -1,4 +1,5 @@
 import type { BehaviorRegistry } from './behaviors/registry.ts';
+import { normalizePass } from './schema/normalize.ts';
 import type { SignedPass } from './sign/index.ts';
 import { sha1Hex, signPass } from './sign/index.ts';
 import { bindPass } from './template/bindings.ts';
@@ -85,15 +86,6 @@ function fail(code: PassBuildError['code'], message: string, path?: string): nev
   ]);
 }
 
-function stripDesignerIds(value: unknown): void {
-  if (Array.isArray(value)) value.forEach(stripDesignerIds);
-  else if (value && typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    delete record._id;
-    Object.values(record).forEach(stripDesignerIds);
-  }
-}
-
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object') {
@@ -132,6 +124,7 @@ interface ShippedAsset {
   width?: number;
   height?: number;
   sha1?: string;
+  crc32?: number;
   bytes?: Uint8Array;
 }
 
@@ -154,6 +147,7 @@ function shippedAssets(
       ...(entry.width ? { width: entry.width } : {}),
       ...(entry.height ? { height: entry.height } : {}),
       ...(entry.sha1 ? { sha1: entry.sha1 } : {}),
+      ...(entry.crc32 !== undefined ? { crc32: entry.crc32 } : {}),
     });
   }
   for (const [name, override] of Object.entries(overrides)) {
@@ -177,6 +171,33 @@ export interface PlannedPass {
   passJson: PassJson;
   report: ValidationReport;
   assets: ShippedAsset[];
+}
+
+/** Localization and personalization checks need file contents, so they run once bytes are read. */
+function checkPackageContents(
+  plan: PlannedPass,
+  bytes: Record<string, Uint8Array>,
+  identity: PassIdentity,
+): void {
+  const strings: Record<string, Uint8Array> = {};
+  for (const [name, data] of Object.entries(bytes))
+    if (name.endsWith('.strings')) strings[name] = data;
+  const raw = bytes['personalization.json'];
+  if (Object.keys(strings).length === 0 && !raw) return;
+  let personalization: unknown;
+  if (raw) {
+    try {
+      personalization = JSON.parse(new TextDecoder().decode(raw));
+    } catch {
+      fail('INVALID_PASS', 'personalization.json is not valid JSON.');
+    }
+  }
+  const report = validatePass(plan.passJson, plan.assets, identity, {
+    strings,
+    ...(raw ? { personalization } : {}),
+  });
+  if (!report.ok)
+    throw new PassBuildError('INVALID_PASS', 'The pass failed validation.', report.issues);
 }
 
 /** Everything up to and including validation. No I/O, no signing. */
@@ -207,7 +228,7 @@ export function planPass(args: BuildPassInput): PlannedPass {
     }
   }
 
-  stripDesignerIds(pass);
+  pass = normalizePass(pass);
   pass.formatVersion = 1;
   pass.passTypeIdentifier = server.identity.passTypeIdentifier;
   pass.teamIdentifier = server.identity.teamIdentifier;
@@ -237,11 +258,14 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass | Uncha
 
   const bytes: Record<string, Uint8Array> = {};
   const sha1: Record<string, string> = {};
+  const crc: Record<string, number> = {};
   for (const asset of plan.assets) {
     bytes[asset.name] =
       asset.bytes ?? (await readAll(await registry.openAsset(template, asset.name)));
     sha1[asset.name] = asset.sha1 ?? (await sha1Hex(bytes[asset.name] as Uint8Array));
+    if (asset.crc32 !== undefined) crc[asset.name] = asset.crc32;
   }
+  checkPackageContents(plan, bytes, args.server.identity);
   const contentHash = await sha256Hex(
     `${canonical(plan.passJson)}\n${Object.keys(sha1)
       .sort()
@@ -254,6 +278,7 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass | Uncha
   const signed = await signPass(plan.passJson, bytes, signing, {
     now: args.now,
     precomputedSha1: sha1,
+    precomputedCrc32: crc,
   });
   return { passJson: plan.passJson, report: plan.report, signed, contentHash, changed: true };
 }

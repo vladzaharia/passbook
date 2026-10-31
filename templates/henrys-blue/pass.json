@@ -5,10 +5,6 @@
   "backgroundColor": "rgb(6,12,27)",
   "foregroundColor": "rgb(255,249,242)",
   "labelColor": "rgb(210,180,157)",
-  "preferredStyleSchemes": [
-    "posterGeneric",
-    "generic"
-  ],
   "sharingProhibited": true,
   "voided": false,
   "barcodes": [

@@ -36,6 +36,7 @@
         "ignoresTimeZone": true,
         "key": "expires",
         "label": "EXPIRES",
+        "timeStyle": "PKDateStyleNone",
         "value": "2030-01-01T00:00:00Z"
       }
     ],
