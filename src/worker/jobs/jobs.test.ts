@@ -65,41 +65,49 @@ describe('job router', () => {
     expect(stub.retried).toEqual({ delaySeconds: 120 });
   });
 
-  it('defers the rest of a batch once the D1 query budget is spent', async () => {
-    const original = JOB_HANDLERS['push.deliver'];
+  it('defers the rest of a batch once the estimated D1 query budget is spent', async () => {
+    const original = JOB_HANDLERS['connection.webhook'];
     const ran: string[] = [];
-    JOB_HANDLERS['push.deliver'] = async (job, ctx) => {
-      ran.push(job.outboxId);
-      await ctx.env.DB.prepare('SELECT 1').bind().first();
-      await ctx.env.DB.batch([ctx.env.DB.prepare('SELECT 2').bind()]);
-      await ctx.env.DB.prepare('SELECT 3').first();
+    JOB_HANDLERS['connection.webhook'] = async (job) => {
+      ran.push(job.eventId);
     };
-    const messages = ['a', 'b', 'c'].map((outboxId) => message({ kind: 'push.deliver', outboxId }));
+    const full = (eventId: string) =>
+      message({
+        kind: 'connection.webhook',
+        connectionId: 'c1',
+        eventId,
+        refs: Array.from({ length: 20 }, (_, i) => `r${i}`),
+      });
+    // A full webhook job estimates 530 queries: one fits in the 800 budget, not two.
+    const messages = ['a', 'b', 'c'].map(full);
     try {
-      // Three queries per job, budget of four: the first two run, the third waits.
-      await handleQueue(batch(JOBS_QUEUE, messages), env as AppEnv, createExecutionContext(), 4);
+      await handleQueue(batch(JOBS_QUEUE, messages), env as AppEnv, createExecutionContext());
     } finally {
-      JOB_HANDLERS['push.deliver'] = original;
+      JOB_HANDLERS['connection.webhook'] = original;
     }
-    expect(ran).toEqual(['a', 'b']);
-    expect(messages.map((m) => m.acked)).toEqual([true, true, false]);
+    expect(ran).toEqual(['a']);
+    expect(messages.map((m) => m.acked)).toEqual([true, false, false]);
+    expect(messages[1]?.retried).toEqual({ delaySeconds: 5 });
     expect(messages[2]?.retried).toEqual({ delaySeconds: 5 });
   });
 
-  it('always runs the first message even over budget', async () => {
+  it('runs a whole batch of small jobs and always runs the first message', async () => {
     const original = JOB_HANDLERS['push.deliver'];
     const ran: string[] = [];
     JOB_HANDLERS['push.deliver'] = async (job) => {
       ran.push(job.outboxId);
     };
-    const messages = ['a', 'b'].map((outboxId) => message({ kind: 'push.deliver', outboxId }));
+    const small = ['a', 'b', 'c'].map((outboxId) => message({ kind: 'push.deliver', outboxId }));
+    const over = ['x', 'y'].map((outboxId) => message({ kind: 'push.deliver', outboxId }));
     try {
-      await handleQueue(batch(JOBS_QUEUE, messages), env as AppEnv, createExecutionContext(), 0);
+      await handleQueue(batch(JOBS_QUEUE, small), env as AppEnv, createExecutionContext());
+      await handleQueue(batch(JOBS_QUEUE, over), env as AppEnv, createExecutionContext(), 0);
     } finally {
       JOB_HANDLERS['push.deliver'] = original;
     }
-    expect(ran).toEqual(['a']);
-    expect(messages[1]?.retried).toEqual({ delaySeconds: 5 });
+    expect(ran).toEqual(['a', 'b', 'c', 'x']);
+    expect(small.every((m) => m.acked)).toBe(true);
+    expect(over[1]?.retried).toEqual({ delaySeconds: 5 });
   });
 
   it('acks dead letters', async () => {

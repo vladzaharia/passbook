@@ -2,7 +2,7 @@ import { handleDeadLetter } from '../modules/delivery/jobs.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { AppError } from '../platform/errors.ts';
 import { createServiceContext } from '../platform/service-context.ts';
-import { countQueries, QUEUE_QUERY_BUDGET, type QueryCounter } from './query-budget.ts';
+import { estimateQueries, QUEUE_QUERY_BUDGET } from './query-budget.ts';
 import { JOB_HANDLERS } from './registry.ts';
 import { type Job, JobSchema } from './types.ts';
 
@@ -49,10 +49,10 @@ export async function handleQueue(
     }
     return;
   }
-  // One invocation shares D1's per-invocation query limit across the whole batch. Once the budget
-  // is spent the remainder is retried in a new invocation; the first message always runs.
-  const counter: QueryCounter = { used: 0 };
-  const counted: AppEnv = { ...env, DB: countQueries(env.DB, counter) };
+  // One invocation shares D1's per-invocation query limit across the whole batch. Once the
+  // estimated spend reaches the budget the remainder is retried in a new invocation; the first
+  // message always runs.
+  let used = 0;
   let ran = 0;
   for (const message of batch.messages) {
     const parsed = JobSchema.safeParse(message.body);
@@ -61,14 +61,16 @@ export async function handleQueue(
       message.ack();
       continue;
     }
-    if (ran > 0 && counter.used >= queryBudget) {
-      base.log.info('queue.budget_deferred', { job: parsed.data.kind, used: counter.used });
+    const cost = estimateQueries(parsed.data);
+    if (ran > 0 && used + cost > queryBudget) {
+      base.log.info('queue.budget_deferred', { job: parsed.data.kind, used, cost });
       message.retry({ delaySeconds: DEFER_SECONDS });
       continue;
     }
     ran++;
+    used += cost;
     try {
-      await dispatch(parsed.data, counted, ctx);
+      await dispatch(parsed.data, env, ctx);
       message.ack();
     } catch (error) {
       base.log.warn('queue.job_failed', {

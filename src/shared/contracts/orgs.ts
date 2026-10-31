@@ -6,7 +6,6 @@ export const OrgBrandingSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
-  logoAsset: z.string().max(200).optional(),
   supportEmail: z.string().max(254).optional(),
   supportUrl: z.string().max(500).optional(),
 });

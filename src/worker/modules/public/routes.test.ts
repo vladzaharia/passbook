@@ -7,6 +7,7 @@ import { putPassAsset } from '../passes/asset-service.ts';
 import { createPassRow } from '../passes/create.ts';
 import { rotateLink, voidPass } from '../passes/service.ts';
 import { ICON_PNG, type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 
 const ORIGIN = 'https://wallet.test';
 let kit: Kit;
@@ -34,6 +35,30 @@ describe('GET /p/:token', () => {
     expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toContain('<script');
+  });
+
+  it('lists the org support contacts in the footer and drops unsafe ones', async () => {
+    const pass = await kit.pass();
+    const put = (key: string, value: string) =>
+      run(
+        kit.env.DB,
+        'INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, ?, ?, 1)',
+        [`org:${kit.org.id}`, key, JSON.stringify(value)],
+      );
+    await put('support.email', 'help@gym.test');
+    await put('support.url', 'https://gym.test/help');
+    clearSettingsCache(kit.env.DB);
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(html).toContain('<footer>');
+    expect(html).toContain('href="mailto:help@gym.test"');
+    expect(html).toContain('href="https://gym.test/help"');
+    await put('support.url', 'javascript:alert(1)');
+    clearSettingsCache(kit.env.DB);
+    const unsafe = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(unsafe).not.toContain('javascript:');
+    await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
+    clearSettingsCache(kit.env.DB);
+    expect(await (await get(`/p/${pass.downloadToken}`)).text()).not.toContain('<footer>');
   });
 
   it('sets the privacy headers and a nonce that matches the inline style', async () => {

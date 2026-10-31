@@ -1,3 +1,5 @@
+import { safeMail, safeUrl } from './safe.ts';
+
 export interface PassEmailInput {
   orgName: string;
   /** `#rrggbb`; falls back to a neutral dark. */
@@ -27,11 +29,6 @@ const escapeHtml = (value: string) =>
 
 const safeColor = (value: string | null | undefined) =>
   value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#1f2937';
-
-const safeUrl = (value: string | null | undefined) =>
-  value && /^https?:\/\/[^\s"'<>]+$/i.test(value) ? value : null;
-const safeMail = (value: string | null | undefined) =>
-  value && /^[^\s@<>"']+@[^\s@<>"']+$/.test(value) ? value : null;
 
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const supportEmail = safeMail(input.supportEmail);

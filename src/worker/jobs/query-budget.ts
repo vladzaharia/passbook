@@ -1,51 +1,22 @@
-/** D1 allows 1,000 queries per invocation (a batch counts as one); keep a margin for handlers. */
+import type { Job } from './types.ts';
+
+/** D1 allows 1,000 queries per invocation (a batch counts as one); keep a margin for the rest. */
 export const QUEUE_QUERY_BUDGET = 800;
 
-export interface QueryCounter {
-  used: number;
-}
-
-const COUNTED = new Set(['first', 'all', 'run', 'raw']);
+/** Upper-bound queries for one record applied from a connection (lookup, publish, outbox). */
+const QUERIES_PER_RECORD = 25;
 
 /**
- * Wraps a D1 binding so every query bumps `counter`. Statements are unwrapped again before
- * `batch`, which counts once like D1 does.
+ * Estimated D1 queries one job spends. A queue invocation runs a whole batch, so the consumer
+ * adds these up and defers the rest of the batch once the budget is gone.
  */
-export function countQueries(db: D1Database, counter: QueryCounter): D1Database {
-  const inner = new WeakMap<object, D1PreparedStatement>();
-  const wrap = (statement: D1PreparedStatement): D1PreparedStatement => {
-    const proxy: D1PreparedStatement = new Proxy(statement, {
-      get(target, prop) {
-        if (prop === 'bind')
-          return (...values: unknown[]) => wrap(target.bind(...(values as [unknown])));
-        const value = Reflect.get(target, prop, target);
-        if (typeof value !== 'function') return value;
-        if (typeof prop === 'string' && COUNTED.has(prop))
-          return (...args: unknown[]) => {
-            counter.used++;
-            return value.apply(target, args);
-          };
-        return value.bind(target);
-      },
-    });
-    inner.set(proxy, statement);
-    return proxy;
-  };
-  return new Proxy(db, {
-    get(target, prop) {
-      if (prop === 'prepare') return (sql: string) => wrap(target.prepare(sql));
-      if (prop === 'batch')
-        return (statements: D1PreparedStatement[]) => {
-          counter.used++;
-          return target.batch(statements.map((s) => inner.get(s) ?? s));
-        };
-      if (prop === 'exec')
-        return (sql: string) => {
-          counter.used++;
-          return target.exec(sql);
-        };
-      const value = Reflect.get(target, prop, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
+export function estimateQueries(job: Job): number {
+  switch (job.kind) {
+    case 'connection.webhook':
+      return 30 + QUERIES_PER_RECORD * job.refs.length;
+    case 'pass.refresh':
+      return 40;
+    default:
+      return 15;
+  }
 }

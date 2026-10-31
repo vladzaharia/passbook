@@ -1,11 +1,14 @@
 import type { PassJson } from '../../../passkit/types.ts';
+import { safeMail, safeUrl } from '../../email/safe.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { orgBranding } from '../delivery/repo.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import { currentPassJson, getPassByDownloadToken, listAssets, type Pass } from '../passes/repo.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { getPassAsset } from './repo.ts';
 
 const TOKEN = /^[A-Za-z0-9_-]{16,128}$/;
@@ -19,6 +22,26 @@ export async function passForToken(ctx: ServiceContext, token: string): Promise<
   const pass = await getPassByDownloadToken(ctx.env.DB, token);
   if (!pass || !(await isOrgActive(ctx, pass.orgId))) throw notFound();
   return pass;
+}
+
+export interface SupportContacts {
+  email: string | null;
+  url: string | null;
+}
+
+/** Org settings win over the legacy branding fields; unsafe values are dropped. */
+export async function supportContacts(
+  ctx: ServiceContext,
+  orgId: string,
+): Promise<SupportContacts> {
+  const [settings, branding] = await Promise.all([
+    getOrgSettings(ctx, orgId),
+    orgBranding(ctx.env.DB, orgId),
+  ]);
+  return {
+    email: safeMail(settings['support.email'] ?? branding.supportEmail),
+    url: safeUrl(settings['support.url'] ?? branding.supportUrl),
+  };
 }
 
 export interface PublicPageModel {

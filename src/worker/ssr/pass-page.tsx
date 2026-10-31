@@ -15,6 +15,8 @@ export interface PassPageProps {
   /** Data URI of a QR for the download URL; omitted for voided passes. */
   qrSrc: string | null;
   voided: boolean;
+  /** Org support contacts, already validated; omitted when the org has none. */
+  support?: { email: string | null; url: string | null };
 }
 
 // No quotes or child combinators: React escapes text in <style>.
@@ -35,6 +37,7 @@ details[open] summary{margin-bottom:.75rem}
 @media (hover:hover) and (pointer:fine) and (min-width:40rem){.handoff{display:block}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 a{color:inherit}
+footer{border-top:1px solid var(--line);padding-top:.75rem;color:var(--muted);font-size:.875rem}
 `;
 
 export function PassPage(props: PassPageProps) {
@@ -76,6 +79,16 @@ export function PassPage(props: PassPageProps) {
               <img src={props.qrSrc} alt="QR code for the pass download" />
               <p>Scan with your iPhone.</p>
             </section>
+          ) : null}
+          {props.support?.email || props.support?.url ? (
+            <footer>
+              Help:{' '}
+              {props.support.email ? (
+                <a href={`mailto:${props.support.email}`}>{props.support.email}</a>
+              ) : null}
+              {props.support.email && props.support.url ? ' | ' : null}
+              {props.support.url ? <a href={props.support.url}>{props.support.url}</a> : null}
+            </footer>
           ) : null}
         </main>
       </body>

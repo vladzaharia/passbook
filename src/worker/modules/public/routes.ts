@@ -9,7 +9,7 @@ import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { qrDataUri } from '../../ssr/qr.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc, valid } from '../passes/http.ts';
-import { openPublicAsset, pageModel, passForToken } from './service.ts';
+import { openPublicAsset, pageModel, passForToken, supportContacts } from './service.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
@@ -73,6 +73,7 @@ register(
         badgeSrc: '/apple/add-to-apple-wallet.svg',
         qrSrc: pass.status === 'active' ? qrDataUri(`${base}${downloadHref}`) : null,
         voided: pass.status === 'voided',
+        support: await supportContacts(svcCtx, pass.orgId),
       });
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
