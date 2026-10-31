@@ -10,12 +10,12 @@ import {
   ErrorState,
   KeyValue,
   Spinner,
-  StatusPill,
   Timeline,
   type TimelineItem,
   toast,
 } from '../../../ui/index.ts';
 import { useConnection } from '../../connections/api.ts';
+import { HealthPill } from '../../connections/health.tsx';
 import { usePassActions, usePassAudit } from '../api.ts';
 import { formatDate } from '../format.ts';
 
@@ -68,7 +68,7 @@ export function ConnectionTab({ pass }: { pass: Pass }) {
             },
             {
               label: 'Health',
-              value: <StatusPill status={healthKey(c.health)}>{c.health}</StatusPill>,
+              value: <HealthPill health={c.health} />,
             },
             { label: 'External ID', value: pass.externalId, mono: true },
             { label: 'Last refreshed', value: formatDate(pass.lastRefreshedAt) },
@@ -82,12 +82,6 @@ export function ConnectionTab({ pass }: { pass: Pass }) {
       </CardBody>
     </Card>
   );
-}
-
-function healthKey(h: string): string {
-  if (h === 'healthy') return 'verified';
-  if (h === 'degraded' || h === 'failing') return h;
-  return 'not_configured';
 }
 
 export function DevicesTab({ pass }: { pass: Pass }) {

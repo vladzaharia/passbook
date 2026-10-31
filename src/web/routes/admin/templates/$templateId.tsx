@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { TemplateDetailPage } from '../../../admin/templates/detail-page.tsx';
+
+function TemplateRoute() {
+  const { templateId } = Route.useParams();
+  return <TemplateDetailPage templateId={templateId} />;
+}
 
 export const Route = createFileRoute('/admin/templates/$templateId')({
-  component: () => (
-    <RoutePlaceholder
-      title="Template"
-      breadcrumbs={[{ label: 'Templates', to: '/admin/templates' }, { label: 'Template' }]}
-    />
-  ),
+  component: TemplateRoute,
 });
