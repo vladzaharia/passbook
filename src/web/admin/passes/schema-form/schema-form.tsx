@@ -10,7 +10,7 @@ import {
   Switch,
   Textarea,
 } from '../../../ui/index.ts';
-import { type FieldDef, type FormValues, describeSchema, validateValues } from './schema.ts';
+import { describeSchema, type FieldDef, type FormValues, validateValues } from './schema.ts';
 
 export type FieldSources = Record<string, 'manual' | 'connection'>;
 
@@ -100,7 +100,9 @@ function Control({ field, value, onValue, onBlur, control, disabled, maxImageByt
         />
       );
     case 'date':
-      return <Input {...common} type="date" value={text} onChange={(e) => onValue(e.target.value)} />;
+      return (
+        <Input {...common} type="date" value={text} onChange={(e) => onValue(e.target.value)} />
+      );
     case 'datetime':
       return (
         <Input
@@ -111,20 +113,15 @@ function Control({ field, value, onValue, onBlur, control, disabled, maxImageByt
         />
       );
     case 'image':
-      return (
-        <ImageInput
-          {...common}
-          text={text}
-          onValue={onValue}
-          maxBytes={maxImageBytes}
-        />
-      );
+      return <ImageInput {...common} text={text} onValue={onValue} maxBytes={maxImageBytes} />;
     case 'email':
       return (
         <Input {...common} type="email" value={text} onChange={(e) => onValue(e.target.value)} />
       );
     case 'url':
-      return <Input {...common} type="url" value={text} onChange={(e) => onValue(e.target.value)} />;
+      return (
+        <Input {...common} type="url" value={text} onChange={(e) => onValue(e.target.value)} />
+      );
     case 'password':
       return (
         <Input
@@ -215,7 +212,8 @@ export function SchemaForm({
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const errors = useMemo(() => validateValues(schema, value), [schema, value]);
 
-  if (groups.length === 0) return <p className="text-sm text-fg-muted">This template has no inputs.</p>;
+  if (groups.length === 0)
+    return <p className="text-sm text-fg-muted">This template has no inputs.</p>;
 
   const set = (key: string, v: unknown) => {
     const next = { ...value };
@@ -229,7 +227,7 @@ export function SchemaForm({
     <div className="flex flex-col gap-6" data-prefix={idPrefix}>
       {groups.map((group) => {
         const body: ReactNode = (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div key={group.name} className="grid gap-4 sm:grid-cols-2">
             {group.fields.map((field) => {
               const error =
                 serverErrors?.[field.key] ??

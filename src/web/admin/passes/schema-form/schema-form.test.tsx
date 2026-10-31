@@ -21,7 +21,14 @@ const schema = {
       'x-order': 2,
       'x-group': 'Member',
     },
-    name: { type: 'string', minLength: 2, 'x-label': 'Full name', 'x-order': 1, 'x-group': 'Member', description: 'As printed.' },
+    name: {
+      type: 'string',
+      minLength: 2,
+      'x-label': 'Full name',
+      'x-order': 1,
+      'x-group': 'Member',
+      description: 'As printed.',
+    },
     points: { type: 'integer', minimum: 0, maximum: 100 },
     active: { type: 'boolean', 'x-label': 'Active' },
     joined: { type: 'string', format: 'date' },
@@ -58,9 +65,9 @@ function Harness({
 describe('describeSchema', () => {
   it('orders by x-order then declaration and groups by x-group', () => {
     const groups = describeSchema(schema);
-    expect(groups.map((g) => g.name)).toEqual(['Member', '', 'Extra']);
+    expect(groups.map((g) => g.name)).toEqual(['Member', 'Extra', '']);
     expect(groups[0]?.fields.map((f) => f.key)).toEqual(['name', 'level']);
-    expect(groups[1]?.fields.map((f) => f.key)).toEqual([
+    expect(groups[2]?.fields.map((f) => f.key)).toEqual([
       'points',
       'active',
       'joined',

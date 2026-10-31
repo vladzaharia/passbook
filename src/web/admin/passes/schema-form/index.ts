@@ -1,4 +1,3 @@
-export { SchemaForm, type SchemaFormProps, type FieldSources } from './schema-form.tsx';
 export {
   cleanValues,
   describeSchema,
@@ -10,3 +9,4 @@ export {
   sameValues,
   validateValues,
 } from './schema.ts';
+export { type FieldSources, SchemaForm, type SchemaFormProps } from './schema-form.tsx';

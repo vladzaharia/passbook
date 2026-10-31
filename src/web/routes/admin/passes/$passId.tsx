@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { PassDetailPage } from '../../../admin/passes/detail/detail-page.tsx';
+import { passDetailSearchSchema } from '../../../admin/passes/search.ts';
+
+function PassRoute() {
+  const { passId } = Route.useParams();
+  const search = Route.useSearch();
+  return <PassDetailPage passId={passId} search={search} />;
+}
 
 export const Route = createFileRoute('/admin/passes/$passId')({
-  component: () => (
-    <RoutePlaceholder
-      title="Pass"
-      breadcrumbs={[{ label: 'Passes', to: '/admin/passes' }, { label: 'Pass' }]}
-    />
-  ),
+  validateSearch: passDetailSearchSchema,
+  component: PassRoute,
 });
