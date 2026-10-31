@@ -2,12 +2,12 @@ import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { rateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc, valid } from '../passes/http.ts';
+import { personalize } from './personalize.ts';
 import {
   authorizePass,
-  personalize,
   recordDeviceLogs,
   registerDevice,
   unregisterDevice,
@@ -118,14 +118,18 @@ register(
   {
     method: 'post',
     path: '/passes/{passTypeId}/{serial}/personalize',
-    summary: 'Pass personalization (NFC identities only)',
+    summary: 'Pass personalization (NFC identities only; no ApplePass header)',
     params: passParams,
   },
-  async (c: C) =>
-    personalize(svc(c), {
+  async (c: C) => {
+    const signed = await personalize(svc(c), {
       ...valid<z.infer<typeof passParams>>(c, 'param'),
-      authorization: c.req.header('authorization'),
-    }),
+      body: await c.req.json().catch(() => null),
+    });
+    return new Response(signed as BodyInit, {
+      headers: { 'content-type': 'application/octet-stream' },
+    });
+  },
 );
 
 register(
@@ -139,7 +143,7 @@ register(
     status: 200,
   },
   async (c: C) => {
-    await recordDeviceLogs(svc(c), valid<{ logs: string[] }>(c, 'json').logs);
+    await recordDeviceLogs(svc(c), valid<{ logs: string[] }>(c, 'json').logs, clientIp(c));
     return empty(200);
   },
 );
