@@ -1,11 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { IdentityDetailPage } from '../../../admin/identities/identity-detail.tsx';
 
 export const Route = createFileRoute('/admin/identities/$identityId')({
-  component: () => (
-    <RoutePlaceholder
-      title="Apple identity"
-      breadcrumbs={[{ label: 'Apple identities', to: '/admin/identities' }, { label: 'Identity' }]}
-    />
-  ),
+  component: function IdentityRoute() {
+    const { identityId } = Route.useParams();
+    return <IdentityDetailPage identityId={identityId} />;
+  },
 });
