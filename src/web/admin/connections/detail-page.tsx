@@ -27,6 +27,7 @@ import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { TypedConfirmDialog } from '../passes/typed-confirm.tsx';
 import { useTemplate } from '../templates/api.ts';
 import { useConnection, useConnectionActions, useConnector } from './api.ts';
+import { ConfigTab } from './config-tab.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import {
   type Lifecycle,
@@ -105,6 +106,7 @@ function MappingTab({ c }: { c: Detail }) {
 
 function SettingsTab({ c }: { c: Detail }) {
   const actions = useConnectionActions(c.id);
+  const connector = useConnector(c.connectorType);
   const initial = useMemo(() => lifecycleOf(c), [c]);
   const [name, setName] = useState(c.name);
   const [life, setLife] = useState<Lifecycle>(initial);
@@ -139,6 +141,7 @@ function SettingsTab({ c }: { c: Detail }) {
       </FormField>
       <LifecycleFields
         orgId={c.orgId}
+        capabilities={connector.data?.capabilities}
         value={life}
         onChange={setLife}
         disabled={actions.update.isPending}
@@ -165,6 +168,7 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
   const actions = useConnectionActions(connectionId);
   const [del, setDel] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string }>();
+  const connector = useConnector(connection.data?.connectorType);
   const crumbs = [
     { label: 'Connections', to: '/admin/connections' },
     { label: connection.data?.name ?? 'Connection' },
@@ -187,6 +191,10 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
     );
   }
   const c = connection.data;
+  // Until the connector loads, fall back to the mode.
+  const showWebhook = connector.data
+    ? connector.data.capabilities.webhook
+    : c.mode === 'webhook' || c.mode === 'hybrid';
 
   async function test() {
     setTestResult(undefined);
@@ -270,8 +278,9 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
         <TabsList aria-label="Connection sections">
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="mapping">Mapping</TabsTrigger>
+          <TabsTrigger value="config">Configuration</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="webhook">Webhook</TabsTrigger>
+          {showWebhook ? <TabsTrigger value="webhook">Webhook</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="health">
           <HealthPanel connection={c} />
@@ -284,16 +293,21 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
             </CardBody>
           </Card>
         </TabsContent>
+        <TabsContent value="config">
+          <ConfigTab c={c} />
+        </TabsContent>
         <TabsContent value="settings">
           <SettingsTab c={c} />
         </TabsContent>
-        <TabsContent value="webhook">
-          <WebhookPanel
-            url={c.webhookUrl}
-            hasSecret={c.hasWebhookSecret}
-            onRotate={(webhookSecret) => actions.update.mutateAsync({ webhookSecret })}
-          />
-        </TabsContent>
+        {showWebhook ? (
+          <TabsContent value="webhook">
+            <WebhookPanel
+              url={c.webhookUrl}
+              hasSecret={c.hasWebhookSecret}
+              onRotate={(webhookSecret) => actions.update.mutateAsync({ webhookSecret })}
+            />
+          </TabsContent>
+        ) : null}
       </Tabs>
       <TypedConfirmDialog
         open={del}
