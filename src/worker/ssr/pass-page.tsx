@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import '../../web/pass-card/sync-barcode.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCard } from '../../web/pass-card/index.tsx';
 import cardCss from '../../web/pass-card/pass-card.css?raw';
@@ -31,7 +32,9 @@ details[open] summary{margin-bottom:.75rem}
 .badge img{display:block;height:3rem;width:auto}
 .handoff{display:none;border-top:1px solid var(--line);padding-top:1rem;color:var(--muted)}
 .handoff img{display:block;width:9rem;height:9rem;background:#fff;border-radius:.5rem;margin-bottom:.5rem}
-@media (hover:hover) and (pointer:fine){.handoff{display:block}}
+@media (hover:hover) and (pointer:fine) and (min-width:40rem){.handoff{display:block}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+a{color:inherit}
 `;
 
 export function PassPage(props: PassPageProps) {
@@ -52,6 +55,7 @@ export function PassPage(props: PassPageProps) {
       </head>
       <body>
         <main>
+          <h1 className="sr">{props.title}</h1>
           {notice ? (
             <div className="banner" role="status">
               {notice}
@@ -91,7 +95,10 @@ export function NotFoundPage(props: { nonce: string }) {
       </head>
       <body>
         <main>
-          <p>This link is not valid.</p>
+          <h1 className="sr">Not found</h1>
+          <p>
+            This link has expired. <a href="/login">Sign in</a> to see your passes.
+          </p>
         </main>
       </body>
     </html>

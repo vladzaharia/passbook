@@ -6,6 +6,7 @@ import { axe } from 'vitest-axe';
 import type { PassJson } from '../../passkit/types.ts';
 import { assets, fixtures, generic, posterGeneric } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
+import './sync-barcode.ts';
 import { PassCard, PassCardFlip } from './index.tsx';
 
 const now = new Date('2026-10-31T12:00:00Z');

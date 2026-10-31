@@ -1,4 +1,5 @@
 import { Bus, BusFront, Plane, Ship, TrainFront } from 'lucide-react';
+import { useState } from 'react';
 import type { FieldView, ImageView, PassView, TransitView } from '../../shared/pass-view/index.ts';
 
 export function Rich({ field }: { field: FieldView }) {
@@ -47,24 +48,30 @@ export function FieldRow({ fields, className }: { fields: FieldView[]; className
   );
 }
 
+/** Hides itself if the file fails to load; `fallback` is tried next. */
 export function Img({
   image,
+  fallback,
   alt = '',
   className,
 }: {
   image: ImageView | undefined;
+  fallback?: ImageView | undefined;
   alt?: string;
   className?: string;
 }) {
-  if (!image) return null;
+  const [failed, setFailed] = useState<string[]>([]);
+  const shown = [image, fallback].find((i) => i && !failed.includes(i.src));
+  if (!shown) return null;
   return (
     <img
       className={className}
-      src={image.src}
-      {...(image.srcset ? { srcSet: image.srcset } : {})}
+      src={shown.src}
+      {...(shown.srcset ? { srcSet: shown.srcset } : {})}
       alt={alt}
       decoding="async"
       draggable={false}
+      onError={() => setFailed((f) => [...f, shown.src])}
     />
   );
 }

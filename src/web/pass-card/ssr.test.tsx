@@ -3,6 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { assets, fixtures } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
+import './sync-barcode.ts';
 import { PassCard } from './index.tsx';
 
 describe('SSR', () => {
