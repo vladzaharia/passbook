@@ -344,8 +344,8 @@ Constant-time token comparison; all tokens ≥ 256-bit from `crypto.getRandomVal
 - `unit` (node): passkit (golden `pass.json` per baked template and sample; validator cases per catalog key; CMS verified with OpenSSL; expression language; behaviors), pass-view normalize, email normalization, connectors' mapping.
 - `worker` (vitest-pool-workers): every route via `SELF.fetch`; Apple protocol suite (frozen); outbox/queue/DLQ/cron; CAS conflicts; tenant isolation suite; auth flows with a mock OIDC (jose-signed tokens, mocked discovery/JWKS fetch); magic link single use; CSRF; rate limits; webhook signatures; workflows via test helpers.
 - `web` (jsdom): components, forms, `<PassCard>` per style, axe checks.
-- `e2e` (Playwright, `vite dev`/`wrangler dev`, local D1 seeded by factories, mock OIDC server in `test/mock-oidc/`): admin sign-in, create pass, edit with conflict, upload template, delete uploaded template (baked delete refused), connection create + test + sync with `demo` connector, user magic-link sign-in → sees email-linked pass → force refresh, public link without sign-in, mobile layouts, dark/light screenshots.
-- `npm run check` = gen → biome ci → typecheck → test (all projects) → build (vite + wrangler dry-run). Must be green before any merge.
+- `e2e` — **follow-up, not a launch gate** (owner). Playwright, `vite dev`, local D1 seeded by factories, mock OIDC server: admin sign-in, create pass, edit with conflict, upload template, delete uploaded template (baked delete refused), connection create + test + sync with `demo` connector, user magic-link sign-in → sees email-linked pass → force refresh, public link without sign-in, mobile layouts, dark/light screenshots.
+- `npm run check` = gen → biome ci → typecheck → test (unit, worker, web) → build (vite + wrangler dry-run). Must be green before any merge. E2E is not part of it.
 
 ---
 
@@ -353,9 +353,11 @@ Constant-time token comparison; all tokens ≥ 256-bit from `crypto.getRandomVal
 
 1. **Foundation** (one agent, sequential): scaffold per §4, dependencies (latest stable, ≥ 2 weeks old, exact pins), Biome, tsconfigs, Vite + Cloudflare plugin, vitest projects, `wrangler.jsonc` with all bindings (§14) + `wrangler types`, `platform/` layer, full `0001` migration, shared contracts for every API area (§12), module stubs with mounted routers, SPA shell with router, design tokens, `ui/` primitives, `AGENTS.md`, CI workflow, removal of the old `src/`/`scripts/` (git history keeps them), test harness + factories + mock OIDC skeleton. Exit: `npm run check` green.
 2. **Parallel build** (one agent per workstream, each in its own git worktree/branch, owning only its directories): (a) passkit engine; (b) pass-view + PassCard renderer; (c) templates module + TemplateImport + baked packages (Henry's + starters) + codegen; (d) passes + holders + delivery + Apple web service + public page + BulkReissue + retention; (e) auth + users + sessions + api-keys + me; (f) connections + connectors + ConnectionSync + force refresh; (g) orgs + identities + settings + audit + status + metrics; (h) admin SPA shell + overview/status/settings/audit/users/orgs/identities/api-keys pages; (i) admin passes + templates + connections pages; (j) portal + login + email templates.
-3. **Integration** (one agent): merge branches in dependency order, resolve conflicts, wire registries, make `npm run check` and e2e green.
+3. **Integration** (one agent): merge branches in dependency order, resolve conflicts, wire registries, make `npm run check` green.
 4. **Review** (parallel reviewers by dimension: security, Apple/PassKit correctness, data/concurrency, Cloudflare best practices, frontend UX/a11y/design, test quality) → adversarial verification → fix agents → re-check.
 5. **Docs:** README, `docs/api.md` (from OpenAPI), `docs/operations.md` (go-live), `docs/extending.md` (templates, behaviors, connectors).
+
+**Follow-ups after launch:** Playwright e2e suite (§16), visual baselines for `<PassCard>`.
 
 ---
 
