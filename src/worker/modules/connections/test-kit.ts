@@ -139,7 +139,8 @@ export function inlineStep(): StepLike & { names: string[]; sleeps: number[] } {
     do: async (name, fn) => {
       names.push(name);
       // Workflow steps persist JSON; round-trip to catch non-serializable results.
-      return JSON.parse(JSON.stringify(await fn()));
+      const value = await fn();
+      return value === undefined ? value : JSON.parse(JSON.stringify(value));
     },
     sleep: async (_name, ms) => {
       sleeps.push(ms);
@@ -158,6 +159,9 @@ export function withWorkflow(kit: Kit, create?: (options: unknown) => Promise<vo
       created.push(options);
     },
   };
-  const sctx = { ...kit.sctx, env: { ...kit.env, CONNECTION_SYNC: binding } } as ServiceContext;
+  const sctx = {
+    ...kit.sctx,
+    env: { ...kit.env, CONNECTION_SYNC: binding },
+  } as unknown as ServiceContext;
   return { sctx, created };
 }

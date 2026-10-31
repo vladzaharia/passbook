@@ -133,6 +133,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
   secretSchema: secrets,
   outputFields: {},
   urls: (c) => [c.baseUrl],
+  hasList: (c) => c.list !== undefined,
   defaults: { intervalSeconds: 900, maxConcurrency: 4, requestsPerMinute: 60, timeoutMs: 15_000 },
 
   async test(ctx) {

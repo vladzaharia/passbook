@@ -57,6 +57,8 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   migrate?(oldVersion: number, config: unknown): C;
   /** Every URL the connector will fetch; checked against the SSRF rules at save time. */
   urls?(config: C): string[];
+  /** False when listChanges is not usable for this config; the core then fetches per pass. Default: true if listChanges exists. */
+  hasList?(config: C): boolean;
 
   test?(ctx: ConnectorContext<C, S>): Promise<{ ok: true; detail?: string }>;
   fetchRecord(ctx: ConnectorContext<C, S>, ref: string): Promise<RecordResult>;

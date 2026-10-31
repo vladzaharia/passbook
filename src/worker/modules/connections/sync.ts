@@ -79,7 +79,13 @@ export async function startRun(
   }
   const prep = await tryPrepare(sctx, conn);
   if ('code' in prep) return { ok: false, reason: prep.code, startedAt };
-  return { ok: true, useList: Boolean(prep.def.listChanges), cursor: conn.cursor, startedAt };
+  return {
+    ok: true,
+    useList:
+      Boolean(prep.def.listChanges) && (prep.def.hasList?.(prep.cc.connection.config) ?? true),
+    cursor: conn.cursor,
+    startedAt,
+  };
 }
 
 export type Change = { ref: string; record?: UpstreamRecord | undefined; deleted?: boolean };
