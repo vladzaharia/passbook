@@ -4,6 +4,8 @@ export interface SignInEmailInput {
   /** Present for sign_in only. */
   code?: string;
   expiresMinutes: number;
+  /** verify_email: the account that asked for this address. */
+  requester?: string;
 }
 
 export interface RenderedEmail {
@@ -25,8 +27,10 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
   const action = verify ? 'Confirm email' : 'Sign in';
   const expiry = `Expires in ${input.expiresMinutes} minutes. Ignore this email if you did not ask for it.`;
   const codeLine = input.code ? `Code: ${input.code}` : '';
+  const askedBy =
+    verify && input.requester ? `Adds this address to the account of ${input.requester}.` : '';
 
-  const text = [`${action}: ${input.link}`, codeLine, expiry].filter(Boolean).join('\n\n');
+  const text = [askedBy, `${action}: ${input.link}`, codeLine, expiry].filter(Boolean).join('\n\n');
 
   const link = escapeHtml(input.link);
   const html = `<!doctype html>
@@ -35,6 +39,7 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
 <table role="presentation" width="420" cellpadding="0" cellspacing="0" style="max-width:420px;background:#fff;border-radius:8px;padding:24px">
 <tr><td style="font-size:16px;line-height:24px">
+${askedBy ? `<p style="margin:0 0 16px">${escapeHtml(askedBy)}</p>` : ''}
 <p style="margin:0 0 16px"><a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px">${action}</a></p>
 ${input.code ? `<p style="margin:0 0 16px">Code: <strong style="font-size:20px;letter-spacing:3px">${escapeHtml(input.code)}</strong></p>` : ''}
 <p style="margin:0;font-size:13px;line-height:20px;color:#555">${expiry}</p>

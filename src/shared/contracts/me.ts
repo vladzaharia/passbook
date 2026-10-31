@@ -41,3 +41,12 @@ export const RefreshResponseSchema = z.object({
   accepted: z.literal(true),
   requestedAt: TimestampSchema,
 });
+
+/** GET /api/v1/me/passes.pkpasses?part=N: my active passes as .pkpasses bundles of up to 10. */
+export const MY_PASSES_BUNDLE_PATH = '/api/v1/me/passes.pkpasses';
+export const MY_PASSES_BUNDLE_SIZE = 10;
+/** Response header with the number of bundles (parts) available. */
+export const MY_PASSES_BUNDLE_PARTS_HEADER = 'x-bundle-parts';
+export const MyBundleQuerySchema = z.object({
+  part: z.coerce.number().int().min(1).max(1000).default(1),
+});

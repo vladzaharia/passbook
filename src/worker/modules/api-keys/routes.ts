@@ -10,12 +10,14 @@ import { currentUserId, requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { limitBody } from '../auth/body-limit.ts';
 import { createApiKey, listApiKeys, revokeApiKey } from './service.ts';
 
 type C = Context<AppBindings>;
 
 export const apiKeysRoutes = createRouter();
 guard(apiKeysRoutes, requireAdmin);
+apiKeysRoutes.use('*', limitBody(64 * 1024));
 register(
   apiKeysRoutes,
   'api-keys',

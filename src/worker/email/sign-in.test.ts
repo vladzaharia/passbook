@@ -36,4 +36,15 @@ describe('renderSignInEmail', () => {
     });
     expect(mail.html).not.toContain('<script>');
   });
+
+  it('names the requesting account for verification', () => {
+    const mail = renderSignInEmail({
+      purpose: 'verify_email',
+      link: 'https://wallet.test/auth/magic?t=abc',
+      expiresMinutes: 15,
+      requester: 'me@example.test',
+    });
+    expect(mail.text).toContain('account of me@example.test');
+    expect(mail.html).toContain('account of me@example.test');
+  });
 });

@@ -46,3 +46,26 @@ export async function removeEmail(db: Db, userId: string, email: string): Promis
   ]);
   return changes > 0;
 }
+
+export interface BundleRow {
+  id: string;
+  object_key: string;
+  object_size: number | null;
+}
+
+export const countBundlePasses = async (db: Db, userId: string) =>
+  (
+    await first<{ n: number }>(
+      db,
+      `SELECT COUNT(*) AS n FROM passes WHERE owner_user_id = ? AND status = 'active'`,
+      [userId],
+    )
+  )?.n ?? 0;
+
+export const listBundlePasses = (db: Db, userId: string, limit: number, offset: number) =>
+  all<BundleRow>(
+    db,
+    `SELECT id, object_key, object_size FROM passes
+     WHERE owner_user_id = ? AND status = 'active' ORDER BY id DESC LIMIT ? OFFSET ?`,
+    [userId, limit, offset],
+  );

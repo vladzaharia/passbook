@@ -49,6 +49,19 @@ const send = (method: string, path: string, headers: Record<string, string>, jso
   h.call(path, { method, headers, json });
 
 describe('passes', () => {
+  it('never returns the device authentication token', async () => {
+    const { session, own } = await setup();
+    const mine = await own();
+    await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
+      JSON.stringify({ description: 'Hi', authenticationToken: 'secret-device-token' }),
+      mine.id,
+    ]);
+    const list = await get('/api/v1/me/passes', session.headers);
+    const one = await get(`/api/v1/me/passes/${mine.id}`, session.headers);
+    expect(await list.text()).not.toContain('secret-device-token');
+    expect(await one.text()).not.toContain('secret-device-token');
+  });
+
   it('lists only my passes with what PassCard needs', async () => {
     const { session, own, f1, org, template, user } = await setup();
     const mine = await own();
@@ -309,5 +322,47 @@ describe('sessions', () => {
     const store = createSessionStore(h.env, h.clock);
     expect(await store.resolve(session.cookieValue)).toBeNull();
     expect(await store.resolve(second.cookieValue)).toBeNull();
+  });
+});
+
+describe('bundle', () => {
+  const entries = (bytes: Uint8Array) => {
+    const names: string[] = [];
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    for (let i = 0; i + 30 < bytes.length; i++) {
+      if (view.getUint32(i, true) !== 0x04034b50) continue;
+      const nameLen = view.getUint16(i + 26, true);
+      names.push(new TextDecoder().decode(bytes.subarray(i + 30, i + 30 + nameLen)));
+    }
+    return names;
+  };
+
+  it('bundles my active passes, ten per part', async () => {
+    const { session, own, user, f1, org, template } = await setup();
+    const ids: string[] = [];
+    for (let i = 0; i < 12; i++) ids.push((await own()).id);
+    const voided = await own();
+    await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided.id]);
+    const stranger = await makePass(f1, { orgId: org.id, template: template.resolved });
+    expect(stranger.id).toBeTruthy();
+    expect(user.id).toBeTruthy();
+
+    const first1 = await get('/api/v1/me/passes.pkpasses', session.headers);
+    expect(first1.status).toBe(200);
+    expect(first1.headers.get('content-type')).toBe('application/vnd.apple.pkpasses');
+    expect(first1.headers.get('x-bundle-parts')).toBe('2');
+    const names1 = entries(new Uint8Array(await first1.arrayBuffer()));
+    expect(names1).toHaveLength(10);
+    const second = await get('/api/v1/me/passes.pkpasses?part=2', session.headers);
+    const names2 = entries(new Uint8Array(await second.arrayBuffer()));
+    expect(names2).toHaveLength(2);
+    expect([...names1, ...names2].sort()).toEqual(ids.map((id) => `${id}.pkpass`).sort());
+    expect((await get('/api/v1/me/passes.pkpasses?part=3', session.headers)).status).toBe(404);
+  });
+
+  it('is 404 without passes and requires a session', async () => {
+    const { session } = await setup();
+    expect((await get('/api/v1/me/passes.pkpasses', session.headers)).status).toBe(404);
+    expect((await h.call('/api/v1/me/passes.pkpasses')).status).toBe(401);
   });
 });
