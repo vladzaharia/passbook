@@ -10,6 +10,7 @@ import {
   Switch,
   Textarea,
 } from '../../../ui/index.ts';
+import { DateTimeInput } from './datetime-input.tsx';
 import { describeSchema, type FieldDef, type FormValues, validateValues } from './schema.ts';
 
 export type FieldSources = Record<string, 'manual' | 'connection'>;
@@ -27,6 +28,8 @@ export interface SchemaFormProps {
   /** Adds a manual/connection badge per field. */
   fieldSources?: FieldSources | undefined;
   onResetField?: ((key: string) => void) | undefined;
+  /** Fields that are managed elsewhere and not rendered. */
+  hiddenKeys?: ReadonlySet<string> | undefined;
   /** Max bytes for image widgets (stored as data URIs). */
   maxImageBytes?: number;
 }
@@ -76,13 +79,13 @@ function Control({ field, value, onValue, onBlur, control, disabled, maxImageByt
           aria-describedby={control['aria-describedby'] as string | undefined}
           aria-invalid={control['aria-invalid'] === true}
           disabled={disabled}
-          value={text === '' ? (field.required ? undefined : NONE) : text}
+          value={text === '' ? (field.required || field.hasDefault ? undefined : NONE) : text}
           onValueChange={(v) => {
             onValue(v === NONE ? undefined : coerceOption(field, v));
             onBlur();
           }}
           options={[
-            ...(field.required ? [] : [{ value: NONE, label: 'None' }]),
+            ...(field.required || field.hasDefault ? [] : [{ value: NONE, label: 'None' }]),
             ...(field.options ?? []),
           ]}
         />
@@ -104,14 +107,7 @@ function Control({ field, value, onValue, onBlur, control, disabled, maxImageByt
         <Input {...common} type="date" value={text} onChange={(e) => onValue(e.target.value)} />
       );
     case 'datetime':
-      return (
-        <Input
-          {...common}
-          type="datetime-local"
-          value={text.slice(0, 16)}
-          onChange={(e) => onValue(e.target.value ? `${e.target.value}:00Z` : undefined)}
-        />
-      );
+      return <DateTimeInput {...common} value={text} onValue={onValue} />;
     case 'image':
       return <ImageInput {...common} text={text} onValue={onValue} maxBytes={maxImageBytes} />;
     case 'email':
@@ -206,9 +202,16 @@ export function SchemaForm({
   idPrefix,
   fieldSources,
   onResetField,
+  hiddenKeys,
   maxImageBytes = 256 * 1024,
 }: SchemaFormProps) {
-  const groups = useMemo(() => describeSchema(schema), [schema]);
+  const groups = useMemo(
+    () =>
+      describeSchema(schema)
+        .map((g) => ({ ...g, fields: g.fields.filter((f) => !hiddenKeys?.has(f.key)) }))
+        .filter((g) => g.fields.length > 0),
+    [schema, hiddenKeys],
+  );
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const errors = useMemo(() => validateValues(schema, value), [schema, value]);
 
