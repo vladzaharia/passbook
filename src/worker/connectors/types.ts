@@ -21,6 +21,9 @@ export interface ConnectorContext<C, S> {
   connection: { id: string; orgId: string; generation: number; config: C };
   /** Decrypted per run; never the Worker env. */
   secrets: S;
+  /** Decrypted shared secret for inbound webhooks; absent when none is set. */
+  webhookSecret?: string;
+  now(): number;
   /** HTTPS-only, public hosts, no redirects, timeout and size caps. */
   fetch: SafeFetch;
   signal: AbortSignal;
@@ -52,6 +55,8 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
     timeoutMs: number;
   };
   migrate?(oldVersion: number, config: unknown): C;
+  /** Every URL the connector will fetch; checked against the SSRF rules at save time. */
+  urls?(config: C): string[];
 
   test?(ctx: ConnectorContext<C, S>): Promise<{ ok: true; detail?: string }>;
   fetchRecord(ctx: ConnectorContext<C, S>, ref: string): Promise<RecordResult>;
@@ -67,7 +72,12 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   verifyWebhook?(
     ctx: ConnectorContext<C, S>,
     req: Request,
-  ): Promise<{ eventId: string; refs: string[]; records?: Record<string, UpstreamRecord> }>;
+  ): Promise<{
+    eventId: string;
+    refs: string[];
+    records?: Record<string, UpstreamRecord>;
+    deleted?: string[];
+  }>;
   importRecords?(
     ctx: ConnectorContext<C, S>,
     cursor: string | null,
