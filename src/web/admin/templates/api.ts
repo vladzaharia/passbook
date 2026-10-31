@@ -60,6 +60,11 @@ export function useTemplateActions(id: string) {
         api.post(`/api/v1/templates/${id}/activate`, TemplateDetailSchema, input),
       onSuccess: done,
     }),
+    replaceManifest: useMutation({
+      mutationFn: (manifest: Record<string, unknown>) =>
+        api.put(`/api/v1/templates/${id}/manifest`, TemplateDetailSchema, { manifest }),
+      onSuccess: done,
+    }),
     clone: useMutation({
       mutationFn: (input: { orgId: string; name?: string }) =>
         api.post(`/api/v1/templates/${id}/clone`, TemplateDetailSchema, input),

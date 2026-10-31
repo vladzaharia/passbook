@@ -193,7 +193,62 @@ describe('template detail', () => {
       },
     });
     await user.click(await screen.findByRole('tab', { name: 'Manifest' }));
-    expect(await screen.findByRole('region', { name: 'Manifest' })).toHaveTextContent('"inputs"');
+    const editor = await screen.findByRole('textbox', { name: 'Manifest JSON' });
+    expect((editor as HTMLTextAreaElement).value).toContain('"inputs"');
+  });
+
+  it('saves an edited manifest and shows server errors by path', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    await renderApp('/admin/templates/tpl1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/tpl1/preview': preview,
+        '/api/v1/templates/tpl1/manifest': (_u, init) => {
+          bodies.push(JSON.parse(String(init?.body)));
+          return bodies.length === 1
+            ? problem(422, 'MANIFEST_INVALID', 'The manifest is invalid.', [
+                { path: '/bindings/0/to', message: 'Unknown target.' },
+              ])
+            : json(templateDetail());
+        },
+      },
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Manifest' }));
+    const editor = await screen.findByRole('textbox', { name: 'Manifest JSON' });
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await user.click(editor);
+    await user.paste(' ');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('/bindings/0/to: Unknown target.')).toBeInTheDocument();
+    expect(bodies).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+  });
+
+  it('rejects malformed JSON before calling the server', async () => {
+    const user = userEvent.setup();
+    let calls = 0;
+    await renderApp('/admin/templates/tpl1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/tpl1/preview': preview,
+        '/api/v1/templates/tpl1/manifest': () => {
+          calls += 1;
+          return json(templateDetail());
+        },
+      },
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Manifest' }));
+    await user.click(await screen.findByRole('textbox', { name: 'Manifest JSON' }));
+    await user.paste('{');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid JSON');
+    expect(calls).toBe(0);
   });
 
   it('shows an error state for a missing template', async () => {
@@ -307,6 +362,33 @@ describe('template upload', () => {
     expect(screen.getByText('More than 100 entries.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('button', { name: 'Upload' })).toBeDisabled();
+  });
+
+  it('maps the IMPORT_INVALID code to a sentence', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/templates/upload', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates/uploads': () =>
+          json({ uploadId: 'up1', workflowInstanceId: 'wf1' }, 202),
+        '/api/v1/templates/uploads/up1': () =>
+          json({
+            uploadId: 'up1',
+            status: 'errored',
+            step: 'validate',
+            templateId: null,
+            version: null,
+            error: 'IMPORT_INVALID',
+            report: { ok: false, issues: [] },
+          }),
+      },
+    });
+    await fill(user);
+    expect(
+      await screen.findByText('The package has errors. Fix them and upload again.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('IMPORT_INVALID')).toBeNull();
   });
 
   it('shows the server error when the upload is rejected', async () => {

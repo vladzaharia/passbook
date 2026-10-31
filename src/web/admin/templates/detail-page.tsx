@@ -30,6 +30,7 @@ import {
 } from '../../ui/index.ts';
 import { PassPreviewPanel } from '../passes/pass-preview.tsx';
 import { useTemplate, useTemplateActions, useTemplatePreview } from './api.ts';
+import { ManifestEditor } from './manifest-editor.tsx';
 import { VersionsPanel } from './versions-panel.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -201,7 +202,11 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
           </Card>
         </TabsContent>
         <TabsContent value="manifest">
-          <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
+          {baked ? (
+            <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
+          ) : (
+            <ManifestEditor key={t.activeVersion ?? ''} template={t} />
+          )}
         </TabsContent>
         <TabsContent value="inputs">
           <div className="grid gap-4">
