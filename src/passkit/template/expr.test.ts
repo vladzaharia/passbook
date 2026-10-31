@@ -81,6 +81,11 @@ describe('expression errors and limits', () => {
     expect(evaluate('<a href="{{u|html}}">', s)).toBe('<a href="a&quot;b&lt;c&gt;&amp;">');
     expect(evaluate('?q={{u|url}}', s)).toBe('?q=a%22b%3Cc%3E%26');
   });
+  it('forces strings with the str filter', () => {
+    const s: ExprScope = { input: { n: 12.5 }, lookups: {} };
+    expect(evaluate('{{n}}', s)).toBe(12.5);
+    expect(evaluate('{{n|str}}', s)).toBe('12.5');
+  });
   it('lists references and statically checks', () => {
     expect(checkExpr('{{a')).toMatch(/Unclosed/);
     expect(checkExpr('ok')).toBeNull();

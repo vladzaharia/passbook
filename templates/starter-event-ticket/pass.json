@@ -1,0 +1,129 @@
+{
+  "formatVersion": 1,
+  "description": "Wallet event ticket",
+  "organizationName": "Wallet",
+  "backgroundColor": "rgb(31,41,55)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Wallet",
+  "eventLogoText": "Wallet",
+  "preferredStyleSchemes": [
+    "posterEventTicket",
+    "eventTicket"
+  ],
+  "sharingProhibited": true,
+  "relevantDate": "2030-06-01T19:00:00Z",
+  "relevantDates": [
+    {
+      "startDate": "2030-06-01T19:00:00Z",
+      "endDate": "2030-06-01T22:00:00Z"
+    }
+  ],
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "TICKET-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "TICKET-0001"
+    }
+  ],
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Venue nearby"
+    }
+  ],
+  "semantics": {
+    "eventType": "PKEventTypeGeneric",
+    "eventName": "Sample Event",
+    "venueName": "Sample Hall",
+    "venueRegionName": "Cupertino, CA",
+    "venueRoom": "Main hall",
+    "eventStartDate": "2030-06-01T19:00:00Z",
+    "eventEndDate": "2030-06-01T22:00:00Z",
+    "venueLocation": {
+      "latitude": 37.3349,
+      "longitude": -122.009
+    },
+    "admissionLevel": "General",
+    "attendeeName": "Alex Morgan"
+  },
+  "eventTicket": {
+    "headerFields": [
+      {
+        "key": "date",
+        "label": "DATE",
+        "value": "2030-06-01T19:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleShort",
+        "changeMessage": "The event time is now %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "event",
+        "label": "EVENT",
+        "value": "Sample Event"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "venue",
+        "label": "VENUE",
+        "value": "Sample Hall"
+      },
+      {
+        "key": "room",
+        "label": "ROOM",
+        "value": "Main hall"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "attendee",
+        "label": "NAME",
+        "value": "Alex Morgan",
+        "row": 0
+      },
+      {
+        "key": "admission",
+        "label": "ADMISSION",
+        "value": "General",
+        "row": 0
+      },
+      {
+        "key": "seat",
+        "label": "SEAT",
+        "value": "Open",
+        "row": 1
+      }
+    ],
+    "additionalInfoFields": [
+      {
+        "key": "doors",
+        "label": "DOORS",
+        "value": "18:00"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "note",
+        "label": "NOTE",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "site",
+        "label": "EVENT PAGE",
+        "value": "https://example.com/",
+        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "No re-entry. Ticket is non-transferable."
+      }
+    ]
+  }
+}

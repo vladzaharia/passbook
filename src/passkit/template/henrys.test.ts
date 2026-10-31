@@ -178,14 +178,15 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
   });
 
   it('rejects ids outside the Code 39 set, unknown clubs and unknown access', async () => {
-    for (const bad of [
+    const invalid: Personalization[] = [
       { memberId: 'abc' },
       { memberId: 'A*B' },
       { homeClub: 'Capitol Hill' },
       { access: 'All clubs' },
       { status: 'Paused' },
       { expirationDate: 'tomorrow' },
-    ]) {
+    ];
+    for (const bad of invalid) {
       const error = await build(slug, material, { ...member, ...bad }).catch((e: unknown) => e);
       expect((error as PassBuildError).code, JSON.stringify(bad)).toBe('INVALID_INPUT');
     }

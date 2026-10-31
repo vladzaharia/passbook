@@ -1,0 +1,110 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "ID-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "ID-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Wallet generic pass",
+  "featuredActions": [
+    {
+      "identifier": "support",
+      "type": "call",
+      "url": "tel:+15555550100"
+    },
+    {
+      "identifier": "portal",
+      "type": "viewOffersRewards",
+      "url": "https://example.com/"
+    }
+  ],
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
+        "key": "site",
+        "label": "SITE",
+        "value": "https://example.com/"
+      }
+    ],
+    "backFields": [
+      {
+        "dataDetectorTypes": [
+          "PKDataDetectorTypePhoneNumber"
+        ],
+        "key": "phone",
+        "label": "CONTACT",
+        "value": "+1 555 555 0100"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Present the barcode when asked."
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Your tier is now %@.",
+        "key": "tier",
+        "label": "TIER",
+        "value": "Plus"
+      },
+      {
+        "key": "points",
+        "label": "POINTS",
+        "numberStyle": "PKNumberStyleDecimal",
+        "value": 1200
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "NAME",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "memberId",
+        "label": "ID",
+        "value": "ID-0001"
+      },
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "since",
+        "label": "SINCE",
+        "value": "2026-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "labelColor": "rgb(199,210,254)",
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Main office"
+    }
+  ],
+  "logoText": "Wallet",
+  "organizationName": "Wallet",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "semantics": {
+    "wifiAccess": [
+      {
+        "password": "change-me",
+        "ssid": "Guest"
+      }
+    ]
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

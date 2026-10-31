@@ -1,0 +1,112 @@
+{
+  "formatVersion": 1,
+  "description": "Wallet generic pass",
+  "organizationName": "Wallet",
+  "backgroundColor": "rgb(31,41,55)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Wallet",
+  "sharingProhibited": true,
+  "expirationDate": "2030-01-01T00:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "ID-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "ID-0001"
+    }
+  ],
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Main office"
+    }
+  ],
+  "semantics": {
+    "wifiAccess": [
+      {
+        "ssid": "Guest",
+        "password": "change-me"
+      }
+    ]
+  },
+  "featuredActions": [
+    {
+      "identifier": "support",
+      "type": "call",
+      "url": "tel:+15555550100"
+    },
+    {
+      "identifier": "portal",
+      "type": "viewOffersRewards",
+      "url": "https://example.com/"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "tier",
+        "label": "TIER",
+        "value": "Standard",
+        "changeMessage": "Your tier is now %@."
+      },
+      {
+        "key": "points",
+        "label": "POINTS",
+        "value": 0,
+        "numberStyle": "PKNumberStyleDecimal"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "NAME",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "memberId",
+        "label": "ID",
+        "value": "ID-0001"
+      },
+      {
+        "key": "since",
+        "label": "SINCE",
+        "value": "2026-01-01T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "site",
+        "label": "SITE",
+        "value": "https://example.com/",
+        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "note",
+        "label": "NOTE",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "phone",
+        "label": "CONTACT",
+        "value": "+1 555 555 0100",
+        "dataDetectorTypes": [
+          "PKDataDetectorTypePhoneNumber"
+        ]
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Present the barcode when asked."
+      }
+    ]
+  }
+}

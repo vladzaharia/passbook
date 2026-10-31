@@ -1,0 +1,206 @@
+{
+  "schema": 1,
+  "name": "Wallet · Poster",
+  "description": "Membership card in the poster style, with a generic fallback.",
+  "inputs": {
+    "type": "object",
+    "required": [
+      "holder",
+      "memberId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "holder": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Holder",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "ID",
+        "x-group": "Holder",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "tier": {
+        "type": "string",
+        "x-label": "Tier",
+        "x-group": "Holder",
+        "x-order": 30,
+        "enum": [
+          "Standard",
+          "Plus",
+          "Pro"
+        ],
+        "default": "Standard",
+        "x-widget": "select"
+      },
+      "plan": {
+        "type": "string",
+        "x-label": "Plan",
+        "x-group": "Holder",
+        "x-order": 40,
+        "maxLength": 40,
+        "default": "Annual"
+      },
+      "since": {
+        "type": "string",
+        "x-label": "Since",
+        "x-group": "Holder",
+        "x-order": 50,
+        "format": "date-time",
+        "x-widget": "datetime"
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 60,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 70,
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-widget": "url",
+        "default": "https://example.com/"
+      }
+    }
+  },
+  "sample": {
+    "holder": "Alex Morgan",
+    "memberId": "ID-0001",
+    "tier": "Plus",
+    "plan": "Annual",
+    "since": "2026-01-01T00:00:00Z"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": [
+          "holder-poster",
+          "holder"
+        ]
+      },
+      "value": "{{holder}}"
+    },
+    {
+      "to": {
+        "field": [
+          "memberId-poster",
+          "memberId"
+        ]
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": [
+          "tier-poster",
+          "tier"
+        ]
+      },
+      "value": "{{tier}}"
+    },
+    {
+      "to": {
+        "field": [
+          "plan-poster"
+        ]
+      },
+      "value": "{{plan}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": [
+          "since-poster",
+          "since"
+        ]
+      },
+      "value": "{{since}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": [
+          "note-poster",
+          "note"
+        ]
+      },
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": [
+          "note-poster",
+          "note"
+        ]
+      },
+      "value": "{{note}}"
+    },
+    {
+      "to": {
+        "field": [
+          "site-poster",
+          "site"
+        ]
+      },
+      "value": "{{website}}"
+    },
+    {
+      "to": {
+        "field": [
+          "site-poster",
+          "site"
+        ],
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "action": "portal",
+        "prop": "url"
+      },
+      "value": "{{website}}"
+    }
+  ],
+  "display": {
+    "title": "{{holder}}",
+    "subtitle": "{{tier}}",
+    "status": "{{tier}}",
+    "search": [
+      "holder",
+      "memberId"
+    ]
+  }
+}

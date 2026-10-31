@@ -33,6 +33,8 @@ const FILTERS: Record<string, (value: string) => string> = {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;'),
   url: (value) => encodeURIComponent(value),
+  // Forces a string, e.g. for semantic amounts that must not be numbers.
+  str: (value) => value,
 };
 
 const BLOCKED = new Set(['__proto__', 'constructor', 'prototype']);

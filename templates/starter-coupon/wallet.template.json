@@ -1,0 +1,160 @@
+{
+  "schema": 1,
+  "name": "Wallet · Coupon",
+  "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
+  "inputs": {
+    "type": "object",
+    "required": [
+      "offer",
+      "code",
+      "expirationDate"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "offer": {
+        "type": "string",
+        "x-label": "Offer",
+        "x-group": "Offer",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 60,
+        "x-search": true
+      },
+      "code": {
+        "type": "string",
+        "x-label": "Code",
+        "x-group": "Offer",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "validFor": {
+        "type": "string",
+        "x-label": "Valid for",
+        "x-group": "Offer",
+        "x-order": 30,
+        "maxLength": 60,
+        "default": "One purchase"
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 40,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 50,
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-widget": "url",
+        "default": "https://example.com/"
+      },
+      "expirationDate": {
+        "type": "string",
+        "x-label": "Expires",
+        "x-group": "Offer",
+        "x-order": 60,
+        "format": "date-time",
+        "x-widget": "datetime"
+      }
+    }
+  },
+  "sample": {
+    "offer": "20% off",
+    "code": "SAVE-0001",
+    "validFor": "One purchase",
+    "expirationDate": "2030-01-01T00:00:00Z"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "offer"
+      },
+      "value": "{{offer}}"
+    },
+    {
+      "to": {
+        "field": "code"
+      },
+      "value": "{{code}}"
+    },
+    {
+      "to": {
+        "field": "terms"
+      },
+      "value": "{{validFor}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "expires"
+      },
+      "value": "{{expirationDate}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}"
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{code}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{code}}"
+    },
+    {
+      "to": {
+        "action": "offers",
+        "prop": "url"
+      },
+      "value": "{{website}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{expirationDate}}"
+    }
+  ],
+  "display": {
+    "title": "{{offer}}",
+    "subtitle": "{{code}}",
+    "search": [
+      "offer",
+      "code"
+    ]
+  }
+}

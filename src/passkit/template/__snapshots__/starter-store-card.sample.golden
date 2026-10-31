@@ -1,0 +1,94 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "CARD-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "CARD-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Wallet store card",
+  "featuredActions": [
+    {
+      "identifier": "top-up",
+      "type": "addToBalance",
+      "url": "https://example.com/"
+    },
+    {
+      "identifier": "shop",
+      "type": "shop",
+      "url": "https://example.com/shop"
+    }
+  ],
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "labelColor": "rgb(199,210,254)",
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Store nearby"
+    }
+  ],
+  "logoText": "Wallet",
+  "organizationName": "Wallet",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "semantics": {
+    "balance": {
+      "amount": "25",
+      "currencyCode": "USD"
+    }
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "storeCard": {
+    "auxiliaryFields": [
+      {
+        "key": "cardNumber",
+        "label": "CARD",
+        "value": "CARD-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
+        "key": "site",
+        "label": "SITE",
+        "value": "https://example.com/"
+      },
+      {
+        "key": "terms",
+        "label": "TERMS",
+        "value": "Balance is not redeemable for cash."
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Your tier is now %@.",
+        "key": "tier",
+        "label": "TIER",
+        "value": "Gold"
+      }
+    ],
+    "primaryFields": [
+      {
+        "changeMessage": "Your balance is now %@.",
+        "currencyCode": "USD",
+        "key": "balance",
+        "label": "BALANCE",
+        "value": 25
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "NAME",
+        "value": "Alex Morgan"
+      }
+    ]
+  },
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}
