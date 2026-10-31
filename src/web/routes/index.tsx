@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { RoutePlaceholder } from '../ui/route-placeholder.tsx';
 
 export const Route = createFileRoute('/')({
-  component: () => <h1 className="p-6 text-2xl font-semibold">Wallet</h1>,
+  component: () => <RoutePlaceholder title="My passes" />,
 });

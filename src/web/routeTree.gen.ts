@@ -10,33 +10,330 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as PassesPassIdRouteImport } from './routes/passes/$passId'
+import { Route as AdminApiKeysIndexRouteImport } from './routes/admin/api-keys/index'
+import { Route as AdminAuditIndexRouteImport } from './routes/admin/audit/index'
+import { Route as AdminConnectionsIndexRouteImport } from './routes/admin/connections/index'
+import { Route as AdminConnectionsConnectionIdRouteImport } from './routes/admin/connections/$connectionId'
+import { Route as AdminConnectionsNewRouteImport } from './routes/admin/connections/new'
+import { Route as AdminIdentitiesIndexRouteImport } from './routes/admin/identities/index'
+import { Route as AdminIdentitiesIdentityIdRouteImport } from './routes/admin/identities/$identityId'
+import { Route as AdminOrgsIndexRouteImport } from './routes/admin/orgs/index'
+import { Route as AdminOrgsOrgIdRouteImport } from './routes/admin/orgs/$orgId'
+import { Route as AdminPassesIndexRouteImport } from './routes/admin/passes/index'
+import { Route as AdminPassesPassIdRouteImport } from './routes/admin/passes/$passId'
+import { Route as AdminPassesNewRouteImport } from './routes/admin/passes/new'
+import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
+import { Route as AdminStatusIndexRouteImport } from './routes/admin/status/index'
+import { Route as AdminTemplatesIndexRouteImport } from './routes/admin/templates/index'
+import { Route as AdminTemplatesTemplateIdRouteImport } from './routes/admin/templates/$templateId'
+import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templates/upload'
+import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
+import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const PassesPassIdRoute = PassesPassIdRouteImport.update({
+  id: '/passes/$passId',
+  path: '/passes/$passId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminApiKeysIndexRoute = AdminApiKeysIndexRouteImport.update({
+  id: '/api-keys/',
+  path: '/api-keys/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAuditIndexRoute = AdminAuditIndexRouteImport.update({
+  id: '/audit/',
+  path: '/audit/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminConnectionsIndexRoute = AdminConnectionsIndexRouteImport.update({
+  id: '/connections/',
+  path: '/connections/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminConnectionsConnectionIdRoute =
+  AdminConnectionsConnectionIdRouteImport.update({
+    id: '/connections/$connectionId',
+    path: '/connections/$connectionId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminConnectionsNewRoute = AdminConnectionsNewRouteImport.update({
+  id: '/connections/new',
+  path: '/connections/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminIdentitiesIndexRoute = AdminIdentitiesIndexRouteImport.update({
+  id: '/identities/',
+  path: '/identities/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminIdentitiesIdentityIdRoute =
+  AdminIdentitiesIdentityIdRouteImport.update({
+    id: '/identities/$identityId',
+    path: '/identities/$identityId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminOrgsIndexRoute = AdminOrgsIndexRouteImport.update({
+  id: '/orgs/',
+  path: '/orgs/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminOrgsOrgIdRoute = AdminOrgsOrgIdRouteImport.update({
+  id: '/orgs/$orgId',
+  path: '/orgs/$orgId',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPassesIndexRoute = AdminPassesIndexRouteImport.update({
+  id: '/passes/',
+  path: '/passes/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPassesPassIdRoute = AdminPassesPassIdRouteImport.update({
+  id: '/passes/$passId',
+  path: '/passes/$passId',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPassesNewRoute = AdminPassesNewRouteImport.update({
+  id: '/passes/new',
+  path: '/passes/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminStatusIndexRoute = AdminStatusIndexRouteImport.update({
+  id: '/status/',
+  path: '/status/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminTemplatesIndexRoute = AdminTemplatesIndexRouteImport.update({
+  id: '/templates/',
+  path: '/templates/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminTemplatesTemplateIdRoute =
+  AdminTemplatesTemplateIdRouteImport.update({
+    id: '/templates/$templateId',
+    path: '/templates/$templateId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminTemplatesUploadRoute = AdminTemplatesUploadRouteImport.update({
+  id: '/templates/upload',
+  path: '/templates/upload',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
+  id: '/users/$userId',
+  path: '/users/$userId',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/account': typeof AccountRoute
+  '/login': typeof LoginRoute
+  '/passes/$passId': typeof PassesPassIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
+  '/admin/connections/new': typeof AdminConnectionsNewRoute
+  '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
+  '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
+  '/admin/passes/$passId': typeof AdminPassesPassIdRoute
+  '/admin/passes/new': typeof AdminPassesNewRoute
+  '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
+  '/admin/templates/upload': typeof AdminTemplatesUploadRoute
+  '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/api-keys/': typeof AdminApiKeysIndexRoute
+  '/admin/audit/': typeof AdminAuditIndexRoute
+  '/admin/connections/': typeof AdminConnectionsIndexRoute
+  '/admin/identities/': typeof AdminIdentitiesIndexRoute
+  '/admin/orgs/': typeof AdminOrgsIndexRoute
+  '/admin/passes/': typeof AdminPassesIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
+  '/admin/status/': typeof AdminStatusIndexRoute
+  '/admin/templates/': typeof AdminTemplatesIndexRoute
+  '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/login': typeof LoginRoute
+  '/passes/$passId': typeof PassesPassIdRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
+  '/admin/connections/new': typeof AdminConnectionsNewRoute
+  '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
+  '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
+  '/admin/passes/$passId': typeof AdminPassesPassIdRoute
+  '/admin/passes/new': typeof AdminPassesNewRoute
+  '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
+  '/admin/templates/upload': typeof AdminTemplatesUploadRoute
+  '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/api-keys': typeof AdminApiKeysIndexRoute
+  '/admin/audit': typeof AdminAuditIndexRoute
+  '/admin/connections': typeof AdminConnectionsIndexRoute
+  '/admin/identities': typeof AdminIdentitiesIndexRoute
+  '/admin/orgs': typeof AdminOrgsIndexRoute
+  '/admin/passes': typeof AdminPassesIndexRoute
+  '/admin/settings': typeof AdminSettingsIndexRoute
+  '/admin/status': typeof AdminStatusIndexRoute
+  '/admin/templates': typeof AdminTemplatesIndexRoute
+  '/admin/users': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/account': typeof AccountRoute
+  '/login': typeof LoginRoute
+  '/passes/$passId': typeof PassesPassIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
+  '/admin/connections/new': typeof AdminConnectionsNewRoute
+  '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
+  '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
+  '/admin/passes/$passId': typeof AdminPassesPassIdRoute
+  '/admin/passes/new': typeof AdminPassesNewRoute
+  '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
+  '/admin/templates/upload': typeof AdminTemplatesUploadRoute
+  '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/api-keys/': typeof AdminApiKeysIndexRoute
+  '/admin/audit/': typeof AdminAuditIndexRoute
+  '/admin/connections/': typeof AdminConnectionsIndexRoute
+  '/admin/identities/': typeof AdminIdentitiesIndexRoute
+  '/admin/orgs/': typeof AdminOrgsIndexRoute
+  '/admin/passes/': typeof AdminPassesIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
+  '/admin/status/': typeof AdminStatusIndexRoute
+  '/admin/templates/': typeof AdminTemplatesIndexRoute
+  '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/account'
+    | '/login'
+    | '/passes/$passId'
+    | '/admin/'
+    | '/admin/connections/$connectionId'
+    | '/admin/connections/new'
+    | '/admin/identities/$identityId'
+    | '/admin/orgs/$orgId'
+    | '/admin/passes/$passId'
+    | '/admin/passes/new'
+    | '/admin/templates/$templateId'
+    | '/admin/templates/upload'
+    | '/admin/users/$userId'
+    | '/admin/api-keys/'
+    | '/admin/audit/'
+    | '/admin/connections/'
+    | '/admin/identities/'
+    | '/admin/orgs/'
+    | '/admin/passes/'
+    | '/admin/settings/'
+    | '/admin/status/'
+    | '/admin/templates/'
+    | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/account'
+    | '/login'
+    | '/passes/$passId'
+    | '/admin'
+    | '/admin/connections/$connectionId'
+    | '/admin/connections/new'
+    | '/admin/identities/$identityId'
+    | '/admin/orgs/$orgId'
+    | '/admin/passes/$passId'
+    | '/admin/passes/new'
+    | '/admin/templates/$templateId'
+    | '/admin/templates/upload'
+    | '/admin/users/$userId'
+    | '/admin/api-keys'
+    | '/admin/audit'
+    | '/admin/connections'
+    | '/admin/identities'
+    | '/admin/orgs'
+    | '/admin/passes'
+    | '/admin/settings'
+    | '/admin/status'
+    | '/admin/templates'
+    | '/admin/users'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/account'
+    | '/login'
+    | '/passes/$passId'
+    | '/admin/'
+    | '/admin/connections/$connectionId'
+    | '/admin/connections/new'
+    | '/admin/identities/$identityId'
+    | '/admin/orgs/$orgId'
+    | '/admin/passes/$passId'
+    | '/admin/passes/new'
+    | '/admin/templates/$templateId'
+    | '/admin/templates/upload'
+    | '/admin/users/$userId'
+    | '/admin/api-keys/'
+    | '/admin/audit/'
+    | '/admin/connections/'
+    | '/admin/identities/'
+    | '/admin/orgs/'
+    | '/admin/passes/'
+    | '/admin/settings/'
+    | '/admin/status/'
+    | '/admin/templates/'
+    | '/admin/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  AccountRoute: typeof AccountRoute
+  LoginRoute: typeof LoginRoute
+  PassesPassIdRoute: typeof PassesPassIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +345,233 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/passes/$passId': {
+      id: '/passes/$passId'
+      path: '/passes/$passId'
+      fullPath: '/passes/$passId'
+      preLoaderRoute: typeof PassesPassIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/api-keys/': {
+      id: '/admin/api-keys/'
+      path: '/api-keys'
+      fullPath: '/admin/api-keys/'
+      preLoaderRoute: typeof AdminApiKeysIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/audit/': {
+      id: '/admin/audit/'
+      path: '/audit'
+      fullPath: '/admin/audit/'
+      preLoaderRoute: typeof AdminAuditIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/connections/': {
+      id: '/admin/connections/'
+      path: '/connections'
+      fullPath: '/admin/connections/'
+      preLoaderRoute: typeof AdminConnectionsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/connections/$connectionId': {
+      id: '/admin/connections/$connectionId'
+      path: '/connections/$connectionId'
+      fullPath: '/admin/connections/$connectionId'
+      preLoaderRoute: typeof AdminConnectionsConnectionIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/connections/new': {
+      id: '/admin/connections/new'
+      path: '/connections/new'
+      fullPath: '/admin/connections/new'
+      preLoaderRoute: typeof AdminConnectionsNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/identities/': {
+      id: '/admin/identities/'
+      path: '/identities'
+      fullPath: '/admin/identities/'
+      preLoaderRoute: typeof AdminIdentitiesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/identities/$identityId': {
+      id: '/admin/identities/$identityId'
+      path: '/identities/$identityId'
+      fullPath: '/admin/identities/$identityId'
+      preLoaderRoute: typeof AdminIdentitiesIdentityIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/orgs/': {
+      id: '/admin/orgs/'
+      path: '/orgs'
+      fullPath: '/admin/orgs/'
+      preLoaderRoute: typeof AdminOrgsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/orgs/$orgId': {
+      id: '/admin/orgs/$orgId'
+      path: '/orgs/$orgId'
+      fullPath: '/admin/orgs/$orgId'
+      preLoaderRoute: typeof AdminOrgsOrgIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/passes/': {
+      id: '/admin/passes/'
+      path: '/passes'
+      fullPath: '/admin/passes/'
+      preLoaderRoute: typeof AdminPassesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/passes/$passId': {
+      id: '/admin/passes/$passId'
+      path: '/passes/$passId'
+      fullPath: '/admin/passes/$passId'
+      preLoaderRoute: typeof AdminPassesPassIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/passes/new': {
+      id: '/admin/passes/new'
+      path: '/passes/new'
+      fullPath: '/admin/passes/new'
+      preLoaderRoute: typeof AdminPassesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/settings/': {
+      id: '/admin/settings/'
+      path: '/settings'
+      fullPath: '/admin/settings/'
+      preLoaderRoute: typeof AdminSettingsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/status/': {
+      id: '/admin/status/'
+      path: '/status'
+      fullPath: '/admin/status/'
+      preLoaderRoute: typeof AdminStatusIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/templates/': {
+      id: '/admin/templates/'
+      path: '/templates'
+      fullPath: '/admin/templates/'
+      preLoaderRoute: typeof AdminTemplatesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/templates/$templateId': {
+      id: '/admin/templates/$templateId'
+      path: '/templates/$templateId'
+      fullPath: '/admin/templates/$templateId'
+      preLoaderRoute: typeof AdminTemplatesTemplateIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/templates/upload': {
+      id: '/admin/templates/upload'
+      path: '/templates/upload'
+      fullPath: '/admin/templates/upload'
+      preLoaderRoute: typeof AdminTemplatesUploadRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/users/': {
+      id: '/admin/users/'
+      path: '/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AdminUsersIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/users/$userId': {
+      id: '/admin/users/$userId'
+      path: '/users/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AdminUsersUserIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
+interface AdminRouteRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminConnectionsConnectionIdRoute: typeof AdminConnectionsConnectionIdRoute
+  AdminConnectionsNewRoute: typeof AdminConnectionsNewRoute
+  AdminIdentitiesIdentityIdRoute: typeof AdminIdentitiesIdentityIdRoute
+  AdminOrgsOrgIdRoute: typeof AdminOrgsOrgIdRoute
+  AdminPassesPassIdRoute: typeof AdminPassesPassIdRoute
+  AdminPassesNewRoute: typeof AdminPassesNewRoute
+  AdminTemplatesTemplateIdRoute: typeof AdminTemplatesTemplateIdRoute
+  AdminTemplatesUploadRoute: typeof AdminTemplatesUploadRoute
+  AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
+  AdminApiKeysIndexRoute: typeof AdminApiKeysIndexRoute
+  AdminAuditIndexRoute: typeof AdminAuditIndexRoute
+  AdminConnectionsIndexRoute: typeof AdminConnectionsIndexRoute
+  AdminIdentitiesIndexRoute: typeof AdminIdentitiesIndexRoute
+  AdminOrgsIndexRoute: typeof AdminOrgsIndexRoute
+  AdminPassesIndexRoute: typeof AdminPassesIndexRoute
+  AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
+  AdminStatusIndexRoute: typeof AdminStatusIndexRoute
+  AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
+  AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+  AdminConnectionsConnectionIdRoute: AdminConnectionsConnectionIdRoute,
+  AdminConnectionsNewRoute: AdminConnectionsNewRoute,
+  AdminIdentitiesIdentityIdRoute: AdminIdentitiesIdentityIdRoute,
+  AdminOrgsOrgIdRoute: AdminOrgsOrgIdRoute,
+  AdminPassesPassIdRoute: AdminPassesPassIdRoute,
+  AdminPassesNewRoute: AdminPassesNewRoute,
+  AdminTemplatesTemplateIdRoute: AdminTemplatesTemplateIdRoute,
+  AdminTemplatesUploadRoute: AdminTemplatesUploadRoute,
+  AdminUsersUserIdRoute: AdminUsersUserIdRoute,
+  AdminApiKeysIndexRoute: AdminApiKeysIndexRoute,
+  AdminAuditIndexRoute: AdminAuditIndexRoute,
+  AdminConnectionsIndexRoute: AdminConnectionsIndexRoute,
+  AdminIdentitiesIndexRoute: AdminIdentitiesIndexRoute,
+  AdminOrgsIndexRoute: AdminOrgsIndexRoute,
+  AdminPassesIndexRoute: AdminPassesIndexRoute,
+  AdminSettingsIndexRoute: AdminSettingsIndexRoute,
+  AdminStatusIndexRoute: AdminStatusIndexRoute,
+  AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
+  AdminUsersIndexRoute: AdminUsersIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
+  AccountRoute: AccountRoute,
+  LoginRoute: LoginRoute,
+  PassesPassIdRoute: PassesPassIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
