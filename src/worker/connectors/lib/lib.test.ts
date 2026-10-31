@@ -106,4 +106,23 @@ describe('webhook signatures', () => {
     });
     expect(await verify(req)).toBe('INVALID_PAYLOAD');
   });
+
+  it('stops reading a chunked body at the cap', async () => {
+    let pulled = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        controller.enqueue(new Uint8Array(64 * 1024));
+        if (pulled > 1000) controller.close();
+      },
+    });
+    const req = new Request('https://x.test', {
+      method: 'POST',
+      body: stream,
+      duplex: 'half',
+      headers: { 'x-wallet-timestamp': String(ts), 'x-wallet-signature': `v1=${'0'.repeat(64)}` },
+    } as RequestInit);
+    expect(await verify(req)).toBe('INVALID_PAYLOAD');
+    expect(pulled).toBeLessThan(20);
+  });
 });
