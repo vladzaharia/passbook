@@ -12,7 +12,7 @@ import { validatePass } from '../../../passkit/validate.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
-import { createEnvIdentityResolver } from '../identities/resolver.ts';
+import { createIdentityResolver } from '../identities/resolver.ts';
 
 export const behaviors = createBehaviorRegistry([...behaviorPlugins]);
 
@@ -76,7 +76,7 @@ export async function dryRun(
 ): Promise<ValidationIssue[]> {
   const input = template.manifest.sample;
   try {
-    const identity = await createEnvIdentityResolver(env).platform();
+    const identity = await createIdentityResolver(env).platform();
     const registry: TemplateRegistry = {
       list: async () => [],
       resolve: async () => template,

@@ -4,7 +4,7 @@ import type { TemplateRegistry } from '../../../passkit/template/registry.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { type ApnsTransport, createMtlsApnsTransport } from '../delivery/apns.ts';
 import { createEmailBindingMailer, type Mailer } from '../delivery/mailer.ts';
-import { createEnvIdentityResolver, type IdentityResolver } from '../identities/resolver.ts';
+import { createIdentityResolver, type IdentityResolver } from '../identities/resolver.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 
 /** Collaborators behind ports. Tests replace them per env object with `overrideDeps`. */
@@ -25,7 +25,7 @@ export function depsOf(env: AppEnv): Deps {
   if (!base) {
     base = {
       registry: createTemplateRegistry(env),
-      identities: createEnvIdentityResolver(env),
+      identities: createIdentityResolver(env),
       apns: createMtlsApnsTransport(env),
       mailer: createEmailBindingMailer(env),
       behaviors: createBehaviorRegistry([...behaviorPlugins]),
