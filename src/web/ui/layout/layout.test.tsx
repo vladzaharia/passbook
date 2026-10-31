@@ -153,6 +153,7 @@ describe('admin layout', () => {
     await user.type(input, 'da');
     const option = await screen.findByRole('option', { name: /Ada Lovelace/ });
     expect(seen.at(-1)).toContain('q=ada');
+    expect(screen.queryByText('No results')).toBeNull();
     await user.click(option);
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p1'));
   });
@@ -204,7 +205,7 @@ describe('admin layout', () => {
       },
     });
     const filter = await screen.findByRole('combobox', { name: 'Organization filter' });
-    expect(filter).toHaveTextContent('All organizations');
+    expect(filter).toHaveTextContent('All orgs');
     await user.click(filter);
     await user.click(await screen.findByRole('option', { name: 'Henrys' }));
     expect(filter).toHaveTextContent('Henrys');

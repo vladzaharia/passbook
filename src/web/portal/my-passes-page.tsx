@@ -74,7 +74,7 @@ export function MyPassesPage() {
     body = (
       <EmptyState
         icon={WalletCards}
-        title="No passes yet"
+        title="No passes"
         description="Passes sent to your sign-in email appear here."
       />
     );

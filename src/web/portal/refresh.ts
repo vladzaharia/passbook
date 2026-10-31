@@ -1,4 +1,5 @@
-export const COOLDOWN_MS = 20_000;
+/** Matches the server default (refresh.userCooldownSeconds); an admin may change that setting. */
+export const COOLDOWN_MS = 30_000;
 /** Stop showing "pending" when the device never pulled the update. */
 export const PENDING_TIMEOUT_MS = 2 * 60_000;
 

@@ -10,6 +10,19 @@
     min-height: 100dvh;
     background: var(--pk-surface-page);
   }
+  /* Replaces the inline <style> elements Radix would inject (blocked by CSP). */
+  body[data-scroll-locked] {
+    overflow: hidden !important;
+    overscroll-behavior: contain;
+  }
+  [data-radix-select-viewport] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  [data-radix-select-viewport]::-webkit-scrollbar {
+    display: none;
+  }
   :focus-visible {
     outline: 2px solid var(--pk-focus);
     outline-offset: 2px;

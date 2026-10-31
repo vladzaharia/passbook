@@ -20,6 +20,26 @@ function sonnerNoInlineCss(): Plugin {
 }
 
 /**
+ * Radix injects inline <style> elements (scroll-lock via react-style-singleton, Select viewport
+ * scrollbar), which the strict CSP blocks. The equivalent rules ship in base.css.
+ */
+function radixNoInlineStyles(): Plugin {
+  return {
+    name: 'radix-no-inline-styles',
+    enforce: 'pre',
+    transform(code, id) {
+      if (/node_modules\/react-style-singleton\/dist\/es2015\/singleton\.js/.test(id)) {
+        return code.replace('function makeStyleTag() {', 'function makeStyleTag() { return null;');
+      }
+      if (/node_modules\/@radix-ui\/react-select\/dist\/index\.mjs/.test(id)) {
+        return code.replace(/__html: `\[data-radix-select-viewport\][^`]*`/, '__html: ""');
+      }
+      return null;
+    },
+  };
+}
+
+/**
  * e2e only (tools/e2e-server.ts sets WALLET_E2E). wrangler exposes just the declared secrets from a
  * vars file, so the throwaway-CA intermediate must be a declared (empty) var to be overridable.
  * Production config never sees this: wrangler.jsonc is unchanged and deploys do not read this file.
@@ -52,6 +72,7 @@ export default defineConfig({
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   plugins: [
     sonnerNoInlineCss(),
+    radixNoInlineStyles(),
     // File-based routes under src/web/routes; generates src/web/routeTree.gen.ts.
     tanstackRouter({
       target: 'react',

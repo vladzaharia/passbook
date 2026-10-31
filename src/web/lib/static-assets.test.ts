@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import indexHtml from '../../../index.html?raw';
 import headersFile from '../../../public/_headers?raw';
 import themeInit from '../../../public/theme-init.js?raw';
+import viteConfig from '../../../vite.config.ts?raw';
+import mainSource from '../main.tsx?raw';
 
 interface Rule {
   path: string;
@@ -41,25 +44,28 @@ describe('public/_headers', () => {
 
   it('sets a strict CSP for everything', () => {
     expect(directive(csp, 'default-src')).toBe("default-src 'none'");
-    expect(directive(csp, 'script-src')).toBe("script-src 'self'");
     expect(directive(csp, 'style-src')).toBe("style-src 'self'");
     expect(directive(csp, 'frame-ancestors')).toBe("frame-ancestors 'none'");
     expect(directive(csp, 'base-uri')).toBe("base-uri 'none'");
     expect(csp).not.toContain('unsafe-inline');
     expect(csp).not.toContain('unsafe-eval');
-    expect(csp).not.toContain('challenges.cloudflare.com');
   });
 
-  it('allows Turnstile only on /login, replacing the global CSP', () => {
-    const login = rule('/login');
-    expect(login?.unset).toContain('Content-Security-Policy');
-    const loginCsp = login?.set['Content-Security-Policy'] ?? '';
-    expect(directive(loginCsp, 'script-src')).toBe(
+  it('allows Turnstile on every SPA document (client-side navigation keeps the first CSP)', () => {
+    expect(directive(csp, 'script-src')).toBe(
       "script-src 'self' https://challenges.cloudflare.com",
     );
-    expect(directive(loginCsp, 'frame-src')).toBe('frame-src https://challenges.cloudflare.com');
-    expect(loginCsp).not.toContain('unsafe-inline');
-    expect(directive(loginCsp, 'frame-ancestors')).toBe("frame-ancestors 'none'");
+    expect(directive(csp, 'frame-src')).toBe('frame-src https://challenges.cloudflare.com');
+    expect(directive(csp, 'connect-src')).toBe(
+      "connect-src 'self' https://challenges.cloudflare.com",
+    );
+    expect(rule('/login')).toBeUndefined();
+  });
+
+  it('lets mail clients load the wallet badge cross-origin', () => {
+    const apple = rule('/apple/*');
+    expect(apple?.unset).toContain('Cross-Origin-Resource-Policy');
+    expect(apple?.set['Cross-Origin-Resource-Policy']).toBe('cross-origin');
   });
 
   it('sets the baseline security headers', () => {
@@ -74,6 +80,19 @@ describe('public/_headers', () => {
   it('caches hashed assets for a year and does not cache the HTML shell', () => {
     expect(rule('/assets/*')?.set['Cache-Control']).toBe('public, max-age=31536000, immutable');
     expect(rule('/*')?.set['Cache-Control']).toBeUndefined();
+  });
+});
+
+const baseCss = readFileSync('src/web/styles/base.css', 'utf8');
+
+describe('CSP-safe bundle', () => {
+  it('runs zod without eval', () => {
+    expect(mainSource).toContain('z.config({ jitless: true })');
+  });
+  it('replaces Radix inline styles with base.css rules', () => {
+    expect(viteConfig).toContain('radixNoInlineStyles()');
+    expect(baseCss).toContain('body[data-scroll-locked]');
+    expect(baseCss).toContain('[data-radix-select-viewport]');
   });
 });
 

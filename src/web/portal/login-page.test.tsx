@@ -77,6 +77,12 @@ describe('login page', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(text);
   });
 
+  it('does not follow a next that URL parsing turns into another origin', async () => {
+    await renderApp('/login?next=%2F%09%2Fevil.test', { session: 'user' });
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith('/'));
+    expect(goTo).not.toHaveBeenCalledWith(expect.stringContaining('evil'));
+  });
+
   it('sends a signed-in visitor on to next', async () => {
     await renderApp('/login?next=%2Faccount', { session: 'user' });
     await waitFor(() => expect(goTo).toHaveBeenCalledWith('/account'));

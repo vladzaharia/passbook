@@ -38,9 +38,7 @@ function CodeStep({ email, next, onBack }: { email: string; next: string; onBack
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold text-fg-strong">Check your email</h2>
-      <p className="text-sm text-fg-muted">
-        If {email} is known, we sent a sign-in link and code. Open the link or enter the code here.
-      </p>
+      <p className="text-sm text-fg-muted">If {email} has an account, we sent a link and a code.</p>
       <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
         <FormField label="6-digit code" error={error}>
           {(control) => (

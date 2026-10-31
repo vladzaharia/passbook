@@ -162,7 +162,7 @@ describe('LoadMore', () => {
     expect(screen.getByText('50 shown')).toBeInTheDocument();
     rerender(<LoadMore hasMore={false} shown={50} onLoadMore={onLoadMore} />);
     expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.getByText('50 shown (all)')).toBeInTheDocument();
+    expect(screen.getByText('50 total')).toBeInTheDocument();
   });
 
   it('disables while loading', () => {
@@ -210,7 +210,7 @@ describe('KeyValue, Timeline', () => {
       />,
     );
     expect(screen.getByText('Serial').tagName).toBe('DT');
-    expect(screen.getByText('None')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
