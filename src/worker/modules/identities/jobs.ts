@@ -1,12 +1,16 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { NotImplementedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { checkIdentityById, runDailyIdentityChecks } from './check.ts';
 
+/** Re-verifies one identity. A deleted identity is not an error: there is nothing to retry. */
 export async function handleIdentityCheck(
-  _job: JobOf<'identity.check'>,
-  _ctx: ServiceContext,
+  job: JobOf<'identity.check'>,
+  ctx: ServiceContext,
 ): Promise<void> {
-  throw new NotImplementedError('identity.check is not implemented yet.');
+  const result = await checkIdentityById(ctx, job.identityId);
+  if (!result) ctx.log.info('identity.check_skipped', { identityId: job.identityId });
 }
 
-export async function dailyIdentities(_ctx: ServiceContext): Promise<void> {}
+export async function dailyIdentities(ctx: ServiceContext): Promise<void> {
+  await runDailyIdentityChecks(ctx);
+}
