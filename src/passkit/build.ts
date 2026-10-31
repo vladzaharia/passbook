@@ -1,13 +1,11 @@
-import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from './behaviors/registry.ts';
 import type { SignedPass } from './sign/index.ts';
-import { signPass } from './sign/index.ts';
-import { type ExprScope, evaluate, isEmpty, testCondition } from './template/expr.ts';
+import { sha1Hex, signPass } from './sign/index.ts';
+import { bindPass } from './template/bindings.ts';
+import { applyDefaults, checkInput } from './template/manifest.ts';
+import { classifyAsset, pngSize, slotOf } from './template/package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './template/registry.ts';
 import type {
-  Binding,
-  Json,
-  PassField,
   PassIdentity,
   PassJson,
   Personalization,
@@ -25,6 +23,13 @@ export interface ServerFields {
   identity: PassIdentity;
 }
 
+/** A per-pass image. Replaces the template file of the same name. */
+export interface AssetOverride {
+  bytes: Uint8Array;
+  /** Known SHA-1 (hex); skips hashing. */
+  sha1?: string;
+}
+
 export interface BuildPassInput {
   template: ResolvedTemplate;
   registry: TemplateRegistry;
@@ -32,18 +37,34 @@ export interface BuildPassInput {
   server: ServerFields;
   signing: SigningMaterial;
   behaviors?: BehaviorRegistry;
+  /** Signing time and behavior clock. Identical input and `now` give identical output. */
   now?: Date;
+  /** Per-pass images by file name (`thumbnail@2x.png`). */
+  assetOverrides?: Record<string, AssetOverride>;
+  /** `contentHash` of the pass being replaced. A match skips signing unless `force` is set. */
+  previousHash?: string;
+  force?: boolean;
 }
 
 export interface BuiltPass {
   passJson: PassJson;
   report: ValidationReport;
   signed: SignedPass;
+  /** SHA-256 of pass.json content plus asset digests. Independent of signing time. */
+  contentHash: string;
+  changed: true;
+}
+
+export interface UnchangedPass {
+  passJson: PassJson;
+  report: ValidationReport;
+  contentHash: string;
+  changed: false;
 }
 
 /** Thrown for invalid input or a failed validation; `report` lists the problems. */
 export class PassBuildError extends Error {
-  readonly code: 'INVALID_INPUT' | 'INVALID_PASS' | 'BEHAVIOR';
+  readonly code: 'INVALID_INPUT' | 'INVALID_PASS' | 'BEHAVIOR' | 'TEMPLATE';
   readonly report: ValidationReport;
   constructor(code: PassBuildError['code'], message: string, issues: ValidationIssue[]) {
     super(message);
@@ -53,8 +74,15 @@ export class PassBuildError extends Error {
   }
 }
 
-function clone<T>(value: T): T {
-  return structuredClone(value);
+function fail(code: PassBuildError['code'], message: string, path?: string): never {
+  throw new PassBuildError(code, message, [
+    {
+      severity: 'error',
+      code: code === 'INVALID_INPUT' ? 'INPUT' : code,
+      message,
+      ...(path ? { path } : {}),
+    },
+  ]);
 }
 
 function stripDesignerIds(value: unknown): void {
@@ -66,149 +94,117 @@ function stripDesignerIds(value: unknown): void {
   }
 }
 
-function fieldsOf(pass: PassJson): PassField[] {
-  const out: PassField[] = [];
-  for (const style of [
-    'generic',
-    'posterGeneric',
-    'storeCard',
-    'coupon',
-    'eventTicket',
-    'boardingPass',
-  ] as const) {
-    const dict = pass[style];
-    if (!dict) continue;
-    for (const group of [
-      'headerFields',
-      'primaryFields',
-      'secondaryFields',
-      'auxiliaryFields',
-      'backFields',
-      'additionalInfoFields',
-    ] as const) {
-      const fields = dict[group];
-      if (Array.isArray(fields)) out.push(...fields);
-    }
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort()
+      .filter((k) => record[k] !== undefined)
+      .map((k) => `${JSON.stringify(k)}:${canonical(record[k])}`)
+      .join(',')}}`;
   }
-  return out;
+  return JSON.stringify(value) ?? 'null';
 }
 
-function removeFields(pass: PassJson, keys: string[]): void {
-  for (const style of [
-    'generic',
-    'posterGeneric',
-    'storeCard',
-    'coupon',
-    'eventTicket',
-    'boardingPass',
-  ] as const) {
-    const dict = pass[style];
-    if (!dict) continue;
-    for (const group of [
-      'headerFields',
-      'primaryFields',
-      'secondaryFields',
-      'auxiliaryFields',
-      'backFields',
-      'additionalInfoFields',
-    ] as const) {
-      const fields = dict[group];
-      if (Array.isArray(fields)) dict[group] = fields.filter((f) => !keys.includes(f.key));
-    }
-  }
-}
-
-function applyBinding(pass: PassJson, binding: Binding, scope: ExprScope): void {
-  if (binding.when && !testCondition(binding.when, scope)) return;
-  const to = binding.to;
-  if ('field' in to) {
-    const keys = Array.isArray(to.field) ? to.field : [to.field];
-    if (binding.remove && testCondition(binding.remove, scope)) {
-      removeFields(pass, keys);
-      return;
-    }
-    if (binding.value === undefined) return;
-    const value = evaluate(binding.value, scope);
-    if (binding.omitIfEmpty && isEmpty(value)) {
-      removeFields(pass, keys);
-      return;
-    }
-    const prop = to.prop ?? 'value';
-    for (const field of fieldsOf(pass))
-      if (keys.includes(field.key))
-        (field as Record<string, Json | undefined>)[prop] = value as Json;
-    return;
-  }
-  if (binding.remove && testCondition(binding.remove, scope)) return;
-  if (binding.value === undefined) return;
-  const value = evaluate(binding.value, scope);
-  if ('barcode' in to) {
-    pass.barcodes?.forEach((b, i) => {
-      if (to.barcode === '*' || to.barcode === i)
-        (b as unknown as Record<string, Json | undefined>)[to.prop] = value;
-    });
-  } else if ('action' in to) {
-    const action = pass.featuredActions?.find(
-      (a) => (a as { identifier?: string }).identifier === to.action,
-    );
-    if (action && typeof action === 'object' && !Array.isArray(action)) {
-      if (binding.omitIfEmpty && isEmpty(value))
-        pass.featuredActions = pass.featuredActions?.filter((a) => a !== action);
-      else (action as Record<string, Json | undefined>)[to.prop] = value;
-    }
-  }
-  // Pointer targets are added by the passkit agent with the allowlist.
-}
-
-/** Applies manifest bindings to a copy of the template's pass.json. */
-export function applyBindings(template: ResolvedTemplate, input: Personalization): PassJson {
-  const pass = clone(template.passJson);
-  const scope: ExprScope = { input, lookups: template.manifest.lookups ?? {} };
-  for (const binding of template.manifest.bindings) applyBinding(pass, binding, scope);
-  return pass;
-}
-
-export function validateInput(template: ResolvedTemplate, input: Personalization): void {
-  const validator = new Validator(template.manifest.inputs as never, '2020-12', false);
-  const result = validator.validate(input);
-  if (!result.valid) {
-    throw new PassBuildError(
-      'INVALID_INPUT',
-      'The pass input is invalid.',
-      result.errors.map((e) => ({
-        severity: 'error',
-        code: 'INPUT',
-        message: e.error,
-        path: e.instanceLocation,
-      })),
-    );
-  }
+async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-/**
- * resolve -> validate input -> bindings -> behaviors -> server fields -> validatePass -> sign.
- * Foundation scope: field/barcode/action bindings with interpolation and conditions.
- */
-export async function buildPass(args: BuildPassInput): Promise<BuiltPass> {
-  const { template, registry, input, server, signing } = args;
-  validateInput(template, input);
-  const pass = applyBindings(template, input);
+/** Applies manifest bindings to a copy of the template's pass.json. */
+export function applyBindings(template: ResolvedTemplate, input: Personalization): PassJson {
+  return bindPass(template, input).pass;
+}
 
+export function validateInput(template: ResolvedTemplate, input: Personalization): void {
+  const issues = checkInput(template.manifest, input);
+  if (issues.length > 0)
+    throw new PassBuildError('INVALID_INPUT', 'The pass input is invalid.', issues);
+}
+
+interface ShippedAsset {
+  name: string;
+  width?: number;
+  height?: number;
+  sha1?: string;
+  bytes?: Uint8Array;
+}
+
+/** Template files minus preview-only and dropped slots, with per-pass overrides applied. */
+function shippedAssets(
+  template: ResolvedTemplate,
+  dropped: string[],
+  overrides: Record<string, AssetOverride>,
+): ShippedAsset[] {
+  const previewOnly = new Set(template.manifest.previewOnlyAssets ?? []);
+  const isDropped = (name: string) => {
+    const slot = slotOf(name);
+    return slot !== null && dropped.includes(slot);
+  };
+  const out = new Map<string, ShippedAsset>();
+  for (const entry of template.assets) {
+    if (previewOnly.has(entry.name) || isDropped(entry.name)) continue;
+    out.set(entry.name, {
+      name: entry.name,
+      ...(entry.width ? { width: entry.width } : {}),
+      ...(entry.height ? { height: entry.height } : {}),
+      ...(entry.sha1 ? { sha1: entry.sha1 } : {}),
+    });
+  }
+  for (const [name, override] of Object.entries(overrides)) {
+    const kind = classifyAsset(name);
+    if (!kind || kind.slot === 'other' || kind.slot === 'strings')
+      fail('INVALID_INPUT', `${name} is not an image slot file.`, `assetOverrides/${name}`);
+    if (isDropped(name)) continue;
+    const size = pngSize(override.bytes);
+    if (!size) fail('INVALID_INPUT', `${name} is not a PNG.`, `assetOverrides/${name}`);
+    out.set(name, {
+      name,
+      ...size,
+      bytes: override.bytes,
+      ...(override.sha1 ? { sha1: override.sha1 } : {}),
+    });
+  }
+  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export interface PlannedPass {
+  passJson: PassJson;
+  report: ValidationReport;
+  assets: ShippedAsset[];
+}
+
+/** Everything up to and including validation. No I/O, no signing. */
+export function planPass(args: BuildPassInput): PlannedPass {
+  const { template, input, server } = args;
+  validateInput(template, input);
+  let pass: PassJson;
+  let dropped: string[];
+  try {
+    ({ pass, droppedImages: dropped } = bindPass(template, input));
+  } catch (error) {
+    if (error instanceof Error) fail('TEMPLATE', `Binding failed: ${error.message}`);
+    throw error;
+  }
+
+  const full = applyDefaults(template.manifest, input);
   for (const use of template.manifest.behaviors ?? []) {
     const plugin = args.behaviors?.get(use.use);
-    if (!plugin)
-      throw new PassBuildError('BEHAVIOR', `Unknown behavior ${use.use}.`, [
-        { severity: 'error', code: 'BEHAVIOR', message: `Unknown behavior ${use.use}.` },
-      ]);
-    plugin.apply(pass, input, use.config, {
-      now: args.now ?? new Date(),
-      identity: server.identity,
-      lookups: template.manifest.lookups ?? {},
-    });
+    if (!plugin) fail('BEHAVIOR', `Unknown behavior ${use.use}.`);
+    try {
+      plugin.apply(pass, full, use.config, {
+        now: args.now ?? new Date(),
+        identity: server.identity,
+        lookups: template.manifest.lookups ?? {},
+      });
+    } catch (error) {
+      fail('BEHAVIOR', `${use.use} failed: ${(error as Error).message}`);
+    }
   }
 
   stripDesignerIds(pass);
@@ -220,16 +216,44 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass> {
   pass.webServiceURL = server.webServiceURL;
   pass.organizationName = server.organizationName;
 
-  const report = validatePass(pass, template.assets, server.identity);
+  const assets = shippedAssets(template, dropped, args.assetOverrides ?? {});
+  const report = validatePass(pass, assets, server.identity);
   if (!report.ok)
     throw new PassBuildError('INVALID_PASS', 'The pass failed validation.', report.issues);
+  return { passJson: pass, report, assets };
+}
 
-  const assets: Record<string, Uint8Array> = {};
-  const precomputedSha1: Record<string, string> = {};
-  for (const entry of template.assets) {
-    assets[entry.name] = await readAll(await registry.openAsset(template, entry.name));
-    if (entry.sha1) precomputedSha1[entry.name] = entry.sha1;
+/**
+ * resolve -> validate input -> bindings -> behaviors -> server fields -> validatePass -> sign.
+ * With `previousHash` and no `force`, an unchanged pass returns without signing.
+ */
+export async function buildPass(
+  args: BuildPassInput & { previousHash: string },
+): Promise<BuiltPass | UnchangedPass>;
+export async function buildPass(args: BuildPassInput): Promise<BuiltPass>;
+export async function buildPass(args: BuildPassInput): Promise<BuiltPass | UnchangedPass> {
+  const { template, registry, signing } = args;
+  const plan = planPass(args);
+
+  const bytes: Record<string, Uint8Array> = {};
+  const sha1: Record<string, string> = {};
+  for (const asset of plan.assets) {
+    bytes[asset.name] =
+      asset.bytes ?? (await readAll(await registry.openAsset(template, asset.name)));
+    sha1[asset.name] = asset.sha1 ?? (await sha1Hex(bytes[asset.name] as Uint8Array));
   }
-  const signed = await signPass(pass, assets, signing, { now: args.now, precomputedSha1 });
-  return { passJson: pass, report, signed };
+  const contentHash = await sha256Hex(
+    `${canonical(plan.passJson)}\n${Object.keys(sha1)
+      .sort()
+      .map((name) => `${name}:${sha1[name]}`)
+      .join('\n')}`,
+  );
+  if (args.previousHash === contentHash && !args.force)
+    return { passJson: plan.passJson, report: plan.report, contentHash, changed: false };
+
+  const signed = await signPass(plan.passJson, bytes, signing, {
+    now: args.now,
+    precomputedSha1: sha1,
+  });
+  return { passJson: plan.passJson, report: plan.report, signed, contentHash, changed: true };
 }
