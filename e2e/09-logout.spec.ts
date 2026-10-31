@@ -7,7 +7,9 @@ import { stubTurnstile } from './helpers/turnstile.ts';
 
 async function expectSignedOut(page: import('@playwright/test').Page) {
   await expect
-    .poll(() => page.evaluate(async () => (await (await fetch('/api/v1/session')).json()).authenticated))
+    .poll(() =>
+      page.evaluate(async () => (await (await fetch('/api/v1/session')).json()).authenticated),
+    )
     .toBe(false);
 }
 

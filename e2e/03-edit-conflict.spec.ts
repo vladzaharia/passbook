@@ -30,7 +30,9 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
   );
   await a.getByRole('button', { name: 'Save', exact: true }).click();
   expect((await rejected).status()).toBe(412);
-  await expect(a.getByText('This pass changed since you opened it. Your edits are kept.')).toBeVisible();
+  await expect(
+    a.getByText('This pass changed since you opened it. Your edits are kept.'),
+  ).toBeVisible();
   await expect(a.getByLabel('Points')).toHaveValue('77');
 
   // Merge keeps A's edit on top of B's saved change, and the save then succeeds.

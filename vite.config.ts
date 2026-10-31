@@ -36,6 +36,19 @@ const e2eConfig =
 
 export default defineConfig({
   publicDir: 'public',
+  server: {
+    // Files that change while the app runs (agent worktrees, local email/D1 state, test output)
+    // must not trigger full page reloads mid-session.
+    watch: {
+      ignored: [
+        '**/.claude/**',
+        '**/.wrangler/**',
+        '**/test-results/**',
+        '**/playwright-report/**',
+        '**/e2e/.auth/**',
+      ],
+    },
+  },
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   plugins: [
     sonnerNoInlineCss(),

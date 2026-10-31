@@ -5,7 +5,11 @@ import type { Page } from '@playwright/test';
 export type Role = 'admin' | 'user' | 'nobody';
 
 /** Mock Pocket ID subjects (see test/mock-oidc/server.ts). */
-const SUBJECT: Record<Role, string> = { admin: 'e2e-admin', user: 'e2e-user', nobody: 'e2e-nobody' };
+const SUBJECT: Record<Role, string> = {
+  admin: 'e2e-admin',
+  user: 'e2e-user',
+  nobody: 'e2e-nobody',
+};
 
 export const stateFile = (role: Role) => `e2e/.auth/${role}.json`;
 

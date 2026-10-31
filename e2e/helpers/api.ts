@@ -6,7 +6,12 @@ const BASE = 'http://localhost:5173';
 export interface Api {
   ctx: APIRequestContext;
   get<T = any>(path: string): Promise<T>;
-  send<T = any>(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<T>;
+  send<T = any>(
+    method: string,
+    path: string,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<T>;
   dispose(): Promise<void>;
 }
 
@@ -15,7 +20,12 @@ export async function apiAs(role: Role): Promise<Api> {
   const ctx = await request.newContext({ baseURL: BASE, storageState: stateFile(role) });
   const session = await (await ctx.get('/api/v1/session')).json();
   const csrf = session.csrfToken as string;
-  const send = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => {
+  const send = async (
+    method: string,
+    path: string,
+    body?: unknown,
+    headers: Record<string, string> = {},
+  ) => {
     const res = await ctx.fetch(path, {
       method,
       headers: { Origin: BASE, 'X-CSRF-Token': csrf, ...headers },
@@ -33,7 +43,8 @@ export async function apiAs(role: Role): Promise<Api> {
   };
 }
 
-export const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+export const uid = (prefix: string) =>
+  `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 export async function firstOrg(api: Api): Promise<{ id: string; slug: string; name: string }> {
   const orgs = await api.get('/api/v1/orgs');
@@ -48,7 +59,13 @@ export const GENERIC = 'baked:starter-generic';
 export async function createPass(
   api: Api,
   orgId: string,
-  options: { holder?: string; memberId?: string; email?: string; templateId?: string; input?: Record<string, unknown> } = {},
+  options: {
+    holder?: string;
+    memberId?: string;
+    email?: string;
+    templateId?: string;
+    input?: Record<string, unknown>;
+  } = {},
 ) {
   const memberId = options.memberId ?? uid('ID').toUpperCase();
   return api.send(

@@ -57,10 +57,9 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.getByRole('button', { name: 'Sync now' }).click();
   const api = await apiAs('admin');
   await expect
-    .poll(
-      async () => (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items.length,
-      { timeout: 60_000 },
-    )
+    .poll(async () => (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items.length, {
+      timeout: 60_000,
+    })
     .toBe(3);
 
   // The run shows in the runs list and health reads healthy.

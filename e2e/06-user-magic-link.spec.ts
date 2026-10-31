@@ -51,7 +51,10 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
 
   // Remove from my passes.
   await tile.getByRole('button', { name: 'Remove' }).click();
-  await page.getByRole('alertdialog', { name: 'Remove from my passes?' }).getByRole('button', { name: 'Remove' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Remove from my passes?' })
+    .getByRole('button', { name: 'Remove' })
+    .click();
   await expect(page.getByText('No passes yet')).toBeVisible();
 
   // Sign out, then sign in again with the 6-digit code from the same browser.
