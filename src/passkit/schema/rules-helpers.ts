@@ -8,10 +8,8 @@ import type { PackageContents } from './validate-package.ts';
 // biome-ignore lint/suspicious/noExplicitAny: mutators edit arbitrary pass keys
 export type Loose = any;
 // biome-ignore lint/suspicious/noConfusingVoidType: most mutators return nothing
-export type Mutator = (
-  pass: Loose,
-  assets: ValidatableAsset[],
-) => ValidatableAsset[] | undefined | void;
+type MutatorResult = ValidatableAsset[] | undefined | void;
+export type Mutator = (pass: Loose, assets: ValidatableAsset[]) => MutatorResult;
 
 export function run(
   fixture: string,
