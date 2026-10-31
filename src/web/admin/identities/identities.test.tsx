@@ -222,6 +222,28 @@ describe('identity detail', () => {
     );
   });
 
+  it('omits the binding when saving an env identity', async () => {
+    let body: Record<string, unknown> | undefined;
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1': (_u, init) => {
+          if (init?.method === 'PATCH') {
+            body = JSON.parse(String(init.body));
+            return json(identity({ source: 'env', nfcEnabled: true }));
+          }
+          return json(identity({ source: 'env' }));
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    expect(screen.queryByLabelText('APNs binding')).not.toBeInTheDocument();
+    await ui.click(await screen.findByLabelText('NFC enabled'));
+    await ui.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(body).toBeDefined());
+    expect(body).toEqual({ label: 'Platform', nfcEnabled: true, isDefault: true });
+  });
+
   it('deletes after confirmation', async () => {
     let deleted = false;
     await renderApp('/admin/identities/i1', {

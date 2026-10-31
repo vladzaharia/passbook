@@ -46,7 +46,13 @@ function ApnsHelp({ identity }: { identity: Identity }) {
         </p>
         <CodeBlock code={MTLS_STEPS} label="APNs binding steps" maxHeight="max-h-40" />
         <p className="text-sm text-fg-muted">
-          Deploy, then set the binding name below (for example <code>APNS_ACME</code>).
+          {identity.source === 'env' ? (
+            <>Set APNS in wrangler.jsonc and deploy.</>
+          ) : (
+            <>
+              Deploy, then set the binding name below (for example <code>APNS_ACME</code>).
+            </>
+          )}
         </p>
       </CardBody>
     </Card>
@@ -74,7 +80,9 @@ function EditCard({ identity }: { identity: Identity }) {
         label: draft.label.trim(),
         nfcEnabled: draft.nfc,
         isDefault: draft.isDefault,
-        apnsBinding: draft.binding.trim() || null,
+        ...(identity.source === 'db' && draft.binding !== initial.binding
+          ? { apnsBinding: draft.binding.trim() || null }
+          : {}),
       });
       toast.success('Identity saved');
     } catch (cause) {
@@ -103,20 +111,28 @@ function EditCard({ identity }: { identity: Identity }) {
               />
             )}
           </FormField>
-          <FormField
-            label="APNs binding"
-            error={errors.apnsBinding}
-            help="Name of the mTLS binding in the Worker env."
-          >
-            {(p) => (
-              <Input
-                {...p}
-                className="font-mono"
-                value={draft.binding}
-                onChange={(e) => setDraft({ ...draft, binding: e.target.value })}
-              />
-            )}
-          </FormField>
+          {identity.source === 'db' ? (
+            <FormField
+              label="APNs binding"
+              error={errors.apnsBinding}
+              help="Name of the mTLS binding in the Worker env."
+            >
+              {(p) => (
+                <Input
+                  {...p}
+                  className="font-mono"
+                  value={draft.binding}
+                  onChange={(e) => setDraft({ ...draft, binding: e.target.value })}
+                />
+              )}
+            </FormField>
+          ) : (
+            <KeyValue
+              items={[
+                { label: 'APNs binding', value: identity.apnsBinding ?? 'Not set', mono: true },
+              ]}
+            />
+          )}
           <CheckboxField
             label="NFC enabled"
             checked={draft.nfc}
