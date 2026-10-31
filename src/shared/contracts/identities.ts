@@ -39,3 +39,10 @@ export const UpdateIdentitySchema = z.object({
   nfcEnabled: z.boolean().optional(),
   apnsBinding: z.string().max(64).nullable().optional(),
 });
+/** Replaces the certificate and key of an identity; pass type and team IDs must match. */
+export const RotateIdentitySchema = z.object({
+  certificatePem: z.string().min(1).max(20_000).optional(),
+  privateKeyPem: z.string().min(1).max(20_000).optional(),
+  pkcs12Base64: z.string().max(100_000).optional(),
+  pkcs12Password: z.string().max(200).optional(),
+});

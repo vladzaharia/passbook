@@ -221,3 +221,37 @@ export async function deleteIdentityRows(
     ...(credentialId ? [stmt(db, 'DELETE FROM credentials WHERE id = ?', [credentialId])] : []),
   ]);
 }
+
+export interface IdentityRotation {
+  identityId: string;
+  oldCredentialId: string | null;
+  credential: NewIdentity['credential'];
+  certPem: string;
+  certSha256: string;
+  notBefore: number;
+  notAfter: number;
+  now: number;
+}
+
+/** Swaps cert and key atomically: new credential, repoint, drop the old credential. */
+export async function rotateIdentityRows(db: D1Database, r: IdentityRotation): Promise<void> {
+  const c = r.credential;
+  await batch(db, [
+    stmt(
+      db,
+      `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, fingerprint, created_at, rotated_at)
+       VALUES (?, ?, 'pass_signer', ?, ?, ?, ?, ?, ?, ?)`,
+      [c.id, c.orgId, c.kekVersion, c.iv, c.wrappedDek, c.ciphertext, c.fingerprint, r.now, r.now],
+    ),
+    stmt(
+      db,
+      `UPDATE signing_identities
+         SET credential_id = ?, cert_pem = ?, cert_sha256 = ?, not_before = ?, not_after = ?, apns_health = 'unknown'
+       WHERE id = ?`,
+      [c.id, r.certPem, r.certSha256, r.notBefore, r.notAfter, r.identityId],
+    ),
+    ...(r.oldCredentialId
+      ? [stmt(db, 'DELETE FROM credentials WHERE id = ?', [r.oldCredentialId])]
+      : []),
+  ]);
+}

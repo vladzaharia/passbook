@@ -8,11 +8,14 @@ export interface WorkflowCount {
   n: number;
 }
 
-/** Counts per kind and status since a time; each branch is a range on workflow_runs_kind. */
+/**
+ * Counts per kind and status since a time; each branch is a range on workflow_runs_kind.
+ * Rejected template uploads (IMPORT_INVALID) are the uploader's error, not platform health.
+ */
 export function workflowCounts(db: D1Database, since: number): Promise<WorkflowCount[]> {
   const sql = KINDS.map(
     () =>
-      'SELECT kind, status, count(*) AS n FROM workflow_runs WHERE kind = ? AND started_at >= ? GROUP BY kind, status',
+      "SELECT kind, CASE WHEN error_code = 'IMPORT_INVALID' THEN 'rejected' ELSE status END AS status, count(*) AS n FROM workflow_runs WHERE kind = ? AND started_at >= ? GROUP BY kind, 2",
   ).join(' UNION ALL ');
   return all<WorkflowCount>(
     db,

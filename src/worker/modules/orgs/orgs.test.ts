@@ -4,6 +4,8 @@ import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/i
 import { createApp } from '../../app.ts';
 import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { isOrgActive } from './active.ts';
 
 const fake = fakeAuth();
 let appEnv: AppEnv;
@@ -131,5 +133,21 @@ describe('orgs api', () => {
       items: { id: string }[];
     };
     expect(page2.items.map((o) => o.id)).not.toContain(listed.items[0]?.id);
+  });
+});
+
+describe('isOrgActive', () => {
+  it('is true only while the org is active', async () => {
+    const f = fixtures(appEnv);
+    const org = await makeOrg(f);
+    const ctx = createServiceContext(appEnv);
+    expect(await isOrgActive(ctx, org.id)).toBe(true);
+    await call('PATCH', `/${org.id}`, { status: 'suspended' });
+    expect(await isOrgActive(ctx, org.id)).toBe(false);
+    await call('PATCH', `/${org.id}`, { status: 'active' });
+    expect(await isOrgActive(ctx, org.id)).toBe(true);
+    await call('DELETE', `/${org.id}`);
+    expect(await isOrgActive(ctx, org.id)).toBe(false);
+    expect(await isOrgActive(ctx, 'missing')).toBe(false);
   });
 });

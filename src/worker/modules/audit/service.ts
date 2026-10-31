@@ -5,7 +5,7 @@ import { run } from '../../platform/db.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { redactDetail } from './redact.ts';
-import { type AuditRow, listAuditRows } from './repo.ts';
+import { type AuditRow, labelKey, listAuditRows, loadLabels } from './repo.ts';
 
 export { diffFields, redact, redactDetail } from './redact.ts';
 
@@ -59,16 +59,21 @@ function decodeCursor(cursor: string | undefined): number | undefined {
   return id;
 }
 
-function toDto(row: AuditRow): Dto {
+function toDto(row: AuditRow, labels: Map<string, string>): Dto {
   return {
     id: row.id,
     at: row.at,
     orgId: row.org_id,
     actorType: row.actor_type,
     actorId: row.actor_id,
+    actorLabel: row.actor_id ? (labels.get(labelKey(row.actor_type, row.actor_id)) ?? null) : null,
     action: row.action,
     targetType: row.target_type,
     targetId: row.target_id,
+    targetLabel:
+      row.target_type && row.target_id
+        ? (labels.get(labelKey(row.target_type, row.target_id)) ?? null)
+        : null,
     requestId: row.request_id,
     detail: row.detail ? JSON.parse(row.detail) : null,
   };
@@ -94,8 +99,13 @@ export async function listAudit(
   );
   const page = rows.slice(0, query.limit);
   const last = page.at(-1);
+  const refs = page.flatMap((r) => [
+    ...(r.actor_id ? [{ type: r.actor_type, id: r.actor_id }] : []),
+    ...(r.target_type && r.target_id ? [{ type: r.target_type, id: r.target_id }] : []),
+  ]);
+  const labels = await loadLabels(ctx.env.DB, refs);
   return {
-    items: page.map(toDto),
+    items: page.map((r) => toDto(r, labels)),
     nextCursor: rows.length > query.limit && last ? String(last.id) : null,
   };
 }

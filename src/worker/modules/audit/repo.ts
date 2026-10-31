@@ -63,3 +63,41 @@ export async function deleteAuditBefore(
   );
   return changes;
 }
+
+/** Where a referenced entity's display name lives. */
+const LABEL_SOURCES: Record<string, { table: string; expr: string }> = {
+  user: { table: 'users', expr: 'COALESCE(name, primary_email)' },
+  pass: { table: 'passes', expr: 'display_title' },
+  org: { table: 'orgs', expr: 'name' },
+  template: { table: 'templates', expr: 'name' },
+  connection: { table: 'connections', expr: 'name' },
+  api_key: { table: 'api_keys', expr: 'name' },
+  identity: { table: 'signing_identities', expr: 'label' },
+};
+
+export const labelKey = (type: string, id: string) => `${type}:${id}`;
+
+/** One query per entity type; entities that no longer exist simply have no label. */
+export async function loadLabels(
+  db: D1Database,
+  refs: { type: string; id: string }[],
+): Promise<Map<string, string>> {
+  const byType = new Map<string, Set<string>>();
+  for (const ref of refs) {
+    if (!LABEL_SOURCES[ref.type]) continue;
+    byType.set(ref.type, (byType.get(ref.type) ?? new Set()).add(ref.id));
+  }
+  const labels = new Map<string, string>();
+  for (const [type, ids] of byType) {
+    const source = LABEL_SOURCES[type];
+    if (!source) continue;
+    const list = [...ids];
+    const rows = await all<{ id: string; label: string | null }>(
+      db,
+      `SELECT id, ${source.expr} AS label FROM ${source.table} WHERE id IN (${list.map(() => '?').join(',')})`,
+      list,
+    );
+    for (const row of rows) if (row.label) labels.set(labelKey(type, row.id), row.label);
+  }
+  return labels;
+}
