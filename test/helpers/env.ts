@@ -16,8 +16,10 @@ export function fixtureIdentity() {
 /** The test env with a freshly generated platform signing identity. */
 export async function makeEnv(overrides: Partial<AppEnv> = {}): Promise<AppEnv> {
   const id = await fixtureIdentity();
+  // The real APNs mTLS binding from wrangler.jsonc must never reach tests; pass APNS to opt in.
+  const { APNS: _apns, ...rest } = baseEnv as AppEnv;
   return {
-    ...baseEnv,
+    ...rest,
     SIGNER_PLATFORM_CERTIFICATE: id.certificate,
     SIGNER_PLATFORM_PRIVATE_KEY: id.privateKey,
     SIGNER_PLATFORM_INTERMEDIATE: id.intermediate,

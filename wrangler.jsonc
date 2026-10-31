@@ -33,7 +33,7 @@
     "OIDC_USER_GROUP": "wallet-users",
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
     "PLATFORM_TEAM_ID": "48H7CLBV8Y",
-    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFujM8ev6K0ns9wy"
   },
 
   "secrets": {
@@ -52,7 +52,7 @@
       "binding": "DB",
       "database_name": "wallet-platform",
       // Placeholder until go-live (`wrangler d1 create wallet-platform`). Local dev and tests ignore it.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "f572193f-bb7e-4e05-96b5-b202c1e69bab",
       "migrations_dir": "migrations"
     }
   ],
@@ -94,7 +94,6 @@
 
   // Enable at go-live after uploading the platform certificate. A missing binding means "push unavailable".
   // Retired Henry's id, do not reuse: 9d7b9372-b262-42c3-82db-e90c4c588e90
-  // "mtls_certificates": [{ "binding": "APNS", "certificate_id": "<platform certificate id>" }],
 
   "images": { "binding": "IMAGES" },
 
@@ -116,5 +115,13 @@
   "triggers": { "crons": ["* * * * *", "17 3 * * *"] },
 
   "observability": { "enabled": true, "logs": { "invocation_logs": false } },
-  "limits": { "cpu_ms": 10000 }
+  "limits": {
+    "cpu_ms": 10000
+  },
+  "mtls_certificates": [
+    {
+      "binding": "APNS",
+      "certificate_id": "21997dae-c46c-4519-a54c-73c43dd5255c"
+    }
+  ]
 }
