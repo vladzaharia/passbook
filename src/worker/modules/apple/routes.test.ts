@@ -315,24 +315,6 @@ describe('log', () => {
   });
 });
 
-describe('personalize', () => {
-  const personalize = (pass: Pass, headers: Record<string, string> = authHeader(pass)) =>
-    call(`/passes/${TYPE}/${pass.serial}/personalize`, { method: 'POST', headers, body: '{}' });
-
-  it('is 404 unless the identity is NFC enabled and the template personalizes', async () => {
-    const pass = await kit.pass();
-    expect((await personalize(pass, {})).status).toBe(401);
-    expect((await personalize(pass)).status).toBe(404);
-    await run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 1 WHERE id = ?', [
-      pass.identityId,
-    ]);
-    expect((await personalize(pass)).status).toBe(404);
-    await run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 0 WHERE id = ?', [
-      pass.identityId,
-    ]);
-  });
-});
-
 describe('retention', () => {
   it('drops device logs and revision markers older than 7 days', async () => {
     const day = 86_400_000;

@@ -1,19 +1,14 @@
 import { writeEvent } from '../../platform/analytics.ts';
-import {
-  AppError,
-  BadRequestError,
-  NotFoundError,
-  NotImplementedError,
-  UnauthenticatedError,
-} from '../../platform/errors.ts';
-import { safeEqual } from '../../platform/ids.ts';
+import { AppError, BadRequestError, UnauthenticatedError } from '../../platform/errors.ts';
+import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { resolveTemplate } from '../passes/builder.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { getPassBySerial, type Pass } from '../passes/repo.ts';
 import {
   addRegistration,
   bumpLogCounter,
+  GLOBAL_LOG_KEY,
   identityByPassType,
   insertLogs,
   registrationCount,
@@ -28,10 +23,12 @@ const MAX_SERIALS = 200;
 const MAX_LOG_LINES = 100;
 const MAX_LOG_LINE = 1000;
 const LOG_LINES_PER_HOUR = 5000;
+const LOG_LINES_PER_IP_HOUR = 300;
 const HOUR = 3_600_000;
 
 const DEVICE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
-const PUSH_TOKEN = /^(?:[0-9a-fA-F]{64}|[0-9a-fA-F]{128})$/;
+/** APNs device tokens vary in length; APNs rejects bad ones (BadDeviceToken cleans them up). */
+const PUSH_TOKEN = /^(?:[0-9a-fA-F]{2}){8,200}$/;
 /** Compared when the pass is unknown so the response time does not reveal which part was wrong. */
 const DUMMY_TOKEN = 'ApplePass 0000000000000000000000000000000000000000000';
 
@@ -51,7 +48,9 @@ export async function authorizePass(
   const pass = identity ? await getPassBySerial(ctx.env.DB, identity.id, serial) : null;
   const expected = pass ? `ApplePass ${pass.authToken}` : DUMMY_TOKEN;
   const ok = await safeEqual(authorization ?? '', expected);
-  if (!identity || !pass || !ok)
+  // A suspended or deleted org reads as an unknown pass.
+  const active = pass ? await isOrgActive(ctx, pass.orgId) : false;
+  if (!identity || !pass || !ok || !active)
     throw new UnauthenticatedError('Unauthorized.', 'APPLE_UNAUTHORIZED');
   return { pass, identity };
 }
@@ -161,35 +160,28 @@ export async function updatedSerials(
   return { serialNumbers: rows.map((r) => r.serial), lastUpdated: String(last.revision) };
 }
 
-/** Personalization needs an NFC-entitled identity and a template that ships personalization.json. */
-export async function personalize(
-  ctx: ServiceContext,
-  input: { passTypeId: string; serial: string; authorization: string | undefined },
-): Promise<never> {
-  const { pass, identity } = await authorizePass(
-    ctx,
-    input.passTypeId,
-    input.serial,
-    input.authorization,
-  );
-  if (!identity.nfcEnabled) throw new NotFoundError('Not found.', 'PERSONALIZATION_UNAVAILABLE');
-  const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-  if (!template.assets.some((a) => a.name === 'personalization.json'))
-    throw new NotFoundError('Not found.', 'PERSONALIZATION_UNAVAILABLE');
-  throw new NotImplementedError('Personalization is not supported yet.');
-}
-
 const clean = (line: string) =>
   Array.from(line, (ch) => (ch.charCodeAt(0) < 32 ? ' ' : ch)).join('');
 
-/** Stores redacted, truncated lines. Over the hourly budget the lines are dropped and 429 returned. */
-export async function recordDeviceLogs(ctx: ServiceContext, lines: string[]): Promise<number> {
+/**
+ * Stores redacted, truncated lines. Each client IP has its own hourly budget, with a global
+ * ceiling behind it; over either, the lines are dropped and 429 returned.
+ */
+export async function recordDeviceLogs(
+  ctx: ServiceContext,
+  lines: string[],
+  ip: string,
+): Promise<number> {
   const kept = lines
     .slice(0, MAX_LOG_LINES)
     .map((line) => redactString(clean(line)).slice(0, MAX_LOG_LINE));
   if (kept.length === 0) return 0;
   const now = ctx.clock.now();
-  const total = await bumpLogCounter(ctx.env.DB, Math.floor(now / HOUR) * HOUR, kept.length);
+  const window = Math.floor(now / HOUR) * HOUR;
+  const ipKey = `apple.log.ip:${(await sha256Hex(ip)).slice(0, 16)}`;
+  if ((await bumpLogCounter(ctx.env.DB, ipKey, window, kept.length)) > LOG_LINES_PER_IP_HOUR)
+    throw new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
+  const total = await bumpLogCounter(ctx.env.DB, GLOBAL_LOG_KEY, window, kept.length);
   if (total > LOG_LINES_PER_HOUR)
     throw new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
   await insertLogs(ctx.env.DB, kept, null, now);
