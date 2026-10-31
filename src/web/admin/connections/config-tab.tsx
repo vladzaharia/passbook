@@ -105,11 +105,11 @@ export function ConfigTab({ c }: { c: Detail }) {
         Object.entries(cleanValues(secrets)).map(([k, v]) => [k, String(v)]),
       );
     }
-    if (rpmValue !== num(c.requestsPerMinute) && rpmValue.trim()) {
-      patch.requestsPerMinute = Number(rpmValue);
+    if (rpmValue !== num(c.requestsPerMinute)) {
+      patch.requestsPerMinute = rpmValue.trim() ? Number(rpmValue) : null;
     }
-    if (concValue !== num(c.maxConcurrency) && concValue.trim()) {
-      patch.maxConcurrency = Number(concValue);
+    if (concValue !== num(c.maxConcurrency)) {
+      patch.maxConcurrency = concValue.trim() ? Number(concValue) : null;
     }
     try {
       await actions.update.mutateAsync(patch);

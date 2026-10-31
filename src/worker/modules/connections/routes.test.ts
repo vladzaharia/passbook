@@ -120,6 +120,11 @@ describe('connections', () => {
       maxConcurrency: 2,
     });
     expect(rate.json).toMatchObject({ requestsPerMinute: 30, maxConcurrency: 2 });
+    const cleared = await call('PATCH', `/api/v1/connections/${id}`, {
+      requestsPerMinute: null,
+      maxConcurrency: null,
+    });
+    expect(cleared.json).toMatchObject({ requestsPerMinute: null, maxConcurrency: null });
     const gen = async () =>
       (
         await first<{ generation: number }>(

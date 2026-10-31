@@ -159,6 +159,11 @@ export function usePassActions(id: string) {
         api.post('/api/v1/holders/assign', HolderSchema, { passId: id, email }),
       onSuccess: refresh,
     }),
+    clearBlock: useMutation({
+      mutationFn: (userId: string) =>
+        api.post('/api/v1/holders/clear-block', OkSchema, { passId: id, userId }),
+      onSuccess: refresh,
+    }),
     unassign: useMutation({
       mutationFn: () => api.post('/api/v1/holders/unassign', HolderSchema, { passId: id }),
       onSuccess: refresh,

@@ -149,6 +149,9 @@ export const UpdateConnectionSchema = CreateConnectionSchema.omit({
   .partial()
   .extend({
     enabled: z.boolean().optional(),
+    /** null restores the connector default. */
+    maxConcurrency: z.number().int().min(1).max(20).nullable().optional(),
+    requestsPerMinute: z.number().int().min(1).max(6000).nullable().optional(),
   });
 export const TestConnectionResponseSchema = z.object({
   ok: z.boolean(),

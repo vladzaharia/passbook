@@ -65,6 +65,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   assetBaseUrl: z.string(),
   /** Image files the pass can load: template files plus per-pass overrides. */
   assetNames: z.array(z.string()),
+  /** Users removed this pass from their account; hook B skips them until cleared. */
+  blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),
   publicUrl: z.string(),
   registrations: z.number().int(),

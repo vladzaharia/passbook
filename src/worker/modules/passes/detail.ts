@@ -12,6 +12,7 @@ import {
   getPass,
   getVersion,
   listAssets,
+  listBlockedUsers,
   listVersions,
   type Pass,
 } from './repo.ts';
@@ -116,11 +117,12 @@ function versionSummary(v: {
 
 export async function detailOf(ctx: ServiceContext, pass: Pass) {
   const db = ctx.env.DB;
-  const [json, registrations, versions, deliveries] = await Promise.all([
+  const [json, registrations, versions, deliveries, blockedUsers] = await Promise.all([
     currentPassJson(db, pass.id),
     countRegistrations(db, pass.id),
     listVersions(db, pass.id),
     listOutboxForPass(db, pass.id),
+    listBlockedUsers(db, pass.id),
   ]);
   const passJson = parseJson(json);
   return {
@@ -130,6 +132,7 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
     passJson,
     ...linksOf(ctx, pass),
     assetNames: await assetNamesOf(ctx, pass),
+    blockedUsers,
     registrations,
     lastRefreshedAt: pass.lastRefreshedAt,
     versions: versions.map(versionSummary),

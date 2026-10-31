@@ -224,6 +224,18 @@ export async function currentPassJson(db: D1Database, passId: string): Promise<s
   return row?.pass_json ?? null;
 }
 
+export async function listBlockedUsers(
+  db: D1Database,
+  passId: string,
+): Promise<{ id: string; name: string | null }[]> {
+  return all<{ id: string; name: string | null }>(
+    db,
+    `SELECT u.id, COALESCE(u.name, u.primary_email) AS name FROM pass_attach_blocks b
+     JOIN users u ON u.id = b.user_id WHERE b.pass_id = ? ORDER BY b.created_at`,
+    [passId],
+  );
+}
+
 export async function countRegistrations(db: D1Database, passId: string): Promise<number> {
   const row = await first<{ n: number }>(
     db,

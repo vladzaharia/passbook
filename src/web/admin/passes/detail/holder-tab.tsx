@@ -72,6 +72,33 @@ export function HolderTab({ pass }: { pass: Pass }) {
           />
         </CardBody>
       </Card>
+      {pass.blockedUsers.length > 0 ? (
+        <Card>
+          <CardHeader title="Blocked users" />
+          <CardBody>
+            <ul className="grid gap-2">
+              {pass.blockedUsers.map((u) => (
+                <li key={u.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate">{u.name ?? u.id}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={actions.clearBlock.isPending}
+                    onClick={() =>
+                      actions.clearBlock.mutate(u.id, {
+                        onSuccess: () => toast.success('Block cleared'),
+                        onError: (cause) => toast.error(cause, 'Could not clear block'),
+                      })
+                    }
+                  >
+                    Clear block
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        </Card>
+      ) : null}
       <FormField label="Holder email" error={error}>
         {(c) => (
           <div className="flex gap-2">
