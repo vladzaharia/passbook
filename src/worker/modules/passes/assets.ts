@@ -1,5 +1,6 @@
 import type { ImageSlot } from '../../../passkit/types.ts';
 import { ValidationError } from '../../platform/errors.ts';
+import { isPngInfo, parsePng } from '../templates/package/png.ts';
 
 export const MAX_ASSET_BYTES = 1_000_000;
 
@@ -37,17 +38,17 @@ export interface PngInfo {
   height: number;
 }
 
-const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+const COLOR_TYPES = [0, 2, 3, 4, 6];
+const BIT_DEPTHS = [1, 2, 4, 8, 16];
 
+/** Walks every chunk and CRC; requires IDAT and IEND. */
 export function readPng(bytes: Uint8Array): PngInfo {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const valid =
-    bytes.length >= 33 &&
-    SIGNATURE.every((b, i) => bytes[i] === b) &&
-    view.getUint32(8) === 13 &&
-    String.fromCharCode(...bytes.subarray(12, 16)) === 'IHDR';
-  if (!valid) throw new ValidationError('The image is not a PNG.', [], 'ASSET_NOT_PNG');
-  return { width: view.getUint32(16), height: view.getUint32(20) };
+  const parsed = parsePng(bytes);
+  if (!isPngInfo(parsed))
+    throw new ValidationError(`The image is not a valid PNG. ${parsed.error}`, [], 'ASSET_NOT_PNG');
+  if (!COLOR_TYPES.includes(parsed.colorType) || !BIT_DEPTHS.includes(parsed.bitDepth))
+    throw new ValidationError('The PNG color format is not supported.', [], 'ASSET_NOT_PNG');
+  return { width: parsed.width, height: parsed.height };
 }
 
 /** Checks the PNG against the slot rules for its name. */

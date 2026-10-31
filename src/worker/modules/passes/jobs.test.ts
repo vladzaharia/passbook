@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { clearSettingsCache } from '../settings/service.ts';
-import { getVersionDetail } from './detail.ts';
+import { diffVersions, getVersionDetail } from './detail.ts';
 import { dailyPasses, handlePassPurgeVersions, handlePassReissue } from './jobs.ts';
 import { getPass } from './repo.ts';
 import { updatePass } from './service.ts';
@@ -54,6 +54,19 @@ describe('version retention', () => {
     expect(await kit.env.BUCKET.head(current?.objectKey ?? '')).not.toBeNull();
     for (const row of after.filter((r) => r.purged_at === null))
       expect(await kit.env.BUCKET.head(row.object_key ?? '')).not.toBeNull();
+  });
+
+  it('drops personalization from purged versions and refuses to diff them', async () => {
+    const pass = await passWithVersions(8);
+    await handlePassPurgeVersions({ kind: 'pass.purge-versions', passId: pass.id }, kit.ctx);
+    const purged = await all<{ personalization: string }>(
+      kit.env.DB,
+      'SELECT personalization FROM pass_versions WHERE pass_id = ? AND purged_at IS NOT NULL',
+      [pass.id],
+    );
+    expect(purged.length).toBeGreaterThan(0);
+    expect(purged.every((r) => r.personalization === '{}')).toBe(true);
+    await expect(diffVersions(kit.ctx, pass.id, 1, 8, null)).rejects.toMatchObject({ status: 410 });
   });
 
   it('answers 410 for a purged version and renders a retained one', async () => {

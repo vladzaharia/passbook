@@ -364,6 +364,7 @@ describe('tenant isolation', () => {
     ['GET', '/passes/{id}/diff?from=1&to=1'],
     ['GET', '/passes/{id}/assets'],
     ['DELETE', '/passes/{id}/assets/icon.png'],
+    ['PUT', '/passes/{id}/connection', { connectionId: null, externalRef: null }],
   ];
 
   it.each(probes)(
@@ -397,6 +398,7 @@ describe('tenant isolation', () => {
       ['/holders/reassign', { passId: foreign.id, email: 'x@example.com' }],
       ['/holders/unassign', { passId: foreign.id }],
       ['/holders/clear-block', { passId: foreign.id, userId: 'u' }],
+      ['/holders/assign-bulk', { items: [{ passId: foreign.id, email: 'x@example.com' }] }],
     ] as const)
       expect((await api(path, json(keyA, body))).status, path).toBe(404);
     expect((await api(`/holders?orgId=${orgB.id}`, { headers: keyA })).status).toBe(403);

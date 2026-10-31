@@ -1,6 +1,7 @@
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import {
+  BindPassConnectionSchema,
   BulkReissueResponseSchema,
   BulkReissueSchema,
   CreatePassSchema,
@@ -26,6 +27,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { deletePassAsset, listPassAssets, putPassAsset } from './asset-service.ts';
 import { MAX_ASSET_BYTES } from './assets.ts';
 import { startBulkReissue } from './bulk.ts';
+import { bindPassConnection } from './connection-bind.ts';
 import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
 import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
@@ -177,6 +179,29 @@ register(
       scope: orgScopeOf(c),
       ...(expected !== undefined ? { ifMatch: expected } : {}),
     });
+    return c.json(detail, 200, { etag: `"${detail.version}"` });
+  },
+);
+
+register(
+  passesRoutes,
+  'passes',
+  {
+    method: 'put',
+    path: '/{id}/connection',
+    summary: 'Bind a pass to a connection ref, or unbind it',
+    params: IdParamSchema,
+    body: BindPassConnectionSchema,
+    response: PassDetailSchema,
+  },
+  async (c: C) => {
+    const detail = await bindPassConnection(
+      svc(c),
+      actorFor(c),
+      valid<Params>(c, 'param').id,
+      valid<z.infer<typeof BindPassConnectionSchema>>(c, 'json'),
+      orgScopeOf(c),
+    );
     return c.json(detail, 200, { etag: `"${detail.version}"` });
   },
 );

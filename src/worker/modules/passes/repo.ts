@@ -42,6 +42,8 @@ export interface Pass {
   syncErrorCode: string | null;
   refreshRequestedAt: number | null;
   lastRefreshedAt: number | null;
+  contentHash: string | null;
+  deletedAt: number | null;
   createdAt: number;
 }
 
@@ -75,6 +77,8 @@ interface PassDbRow {
   sync_error_code: string | null;
   refresh_requested_at: number | null;
   last_refreshed_at: number | null;
+  content_hash: string | null;
+  deleted_at: number | null;
   created_at: number;
 }
 
@@ -109,6 +113,8 @@ export function mapPass(row: PassDbRow): Pass {
     syncErrorCode: row.sync_error_code,
     refreshRequestedAt: row.refresh_requested_at,
     lastRefreshedAt: row.last_refreshed_at,
+    contentHash: row.content_hash,
+    deletedAt: row.deleted_at,
     createdAt: row.created_at,
   };
 }
@@ -121,17 +127,22 @@ export async function getPass(
 ): Promise<Pass | null> {
   const row = await first<PassDbRow>(
     db,
-    'SELECT * FROM passes WHERE id = ? AND (? IS NULL OR org_id = ?)',
+    'SELECT * FROM passes WHERE id = ? AND (? IS NULL OR org_id = ?) AND deleted_at IS NULL',
     [id, orgScope, orgScope],
   );
   return row ? mapPass(row) : null;
 }
 
 export async function getPassByDownloadToken(db: D1Database, token: string): Promise<Pass | null> {
-  const row = await first<PassDbRow>(db, 'SELECT * FROM passes WHERE download_token = ?', [token]);
+  const row = await first<PassDbRow>(
+    db,
+    'SELECT * FROM passes WHERE download_token = ? AND deleted_at IS NULL',
+    [token],
+  );
   return row ? mapPass(row) : null;
 }
 
+/** Includes soft-deleted passes: devices still receive the voided pass until the retention purge. */
 export async function getPassBySerial(
   db: D1Database,
   identityId: string,
@@ -168,7 +179,7 @@ export async function listPasses(
   db: D1Database,
   filter: PassListFilter,
 ): Promise<{ items: Pass[]; nextCursor: string | null }> {
-  const where: string[] = [];
+  const where: string[] = ['deleted_at IS NULL'];
   const params: (string | number)[] = [];
   const add = (sql: string, ...values: (string | number)[]) => {
     where.push(sql);
@@ -195,7 +206,7 @@ export async function listPasses(
   }
   const rows = await all<PassDbRow>(
     db,
-    `SELECT * FROM passes ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC LIMIT ?`,
+    `SELECT * FROM passes WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
     [...params, filter.limit + 1],
   );
   const page = rows.slice(0, filter.limit).map(mapPass);

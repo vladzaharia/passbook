@@ -1,5 +1,5 @@
 import { PassBuildError } from '../../../passkit/build.ts';
-import { buildPass, packagePassBytes, signPass } from '../../../passkit/index.ts';
+import { buildPass, crc32, packagePassBytes, signPass } from '../../../passkit/index.ts';
 import { evaluate } from '../../../passkit/template/expr.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
 import type { AssetEntry, PassJson, Personalization } from '../../../passkit/types.ts';
@@ -32,8 +32,13 @@ export interface Artifact {
   template: ResolvedTemplate;
   title: string | null;
   subtitle: string | null;
+  /** Pass.json plus asset digests; equal hashes mean identical content. */
+  contentHash: string;
   warnings: { severity: 'error' | 'warning'; code: string; message: string; path?: string }[];
 }
+
+export const isNotFound = (error: unknown): boolean =>
+  error instanceof NotFoundError || (error as { status?: number } | null)?.status === 404;
 
 export async function resolveTemplate(
   ctx: ServiceContext,
@@ -45,6 +50,8 @@ export async function resolveTemplate(
   try {
     template = await depsOf(ctx.env).registry.resolve(templateId, version);
   } catch (error) {
+    // Only a missing template is a 404; infrastructure errors must surface and retry.
+    if (!isNotFound(error)) throw error;
     ctx.log.warn('pass.template_unresolved', { orgId, templateId, error });
     throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
   }
@@ -54,28 +61,29 @@ export async function resolveTemplate(
   return template;
 }
 
-function withOverrides(
+async function withOverrides(
   template: ResolvedTemplate,
   registry: TemplateRegistry,
   bucket: R2Bucket,
   overrides: AssetRow[],
-): { template: ResolvedTemplate; registry: TemplateRegistry } {
+): Promise<{ template: ResolvedTemplate; registry: TemplateRegistry }> {
   if (overrides.length === 0) return { template, registry };
   const names = new Set(overrides.map((a) => a.name));
-  const entries: AssetEntry[] = overrides.map((a) => {
+  const entries: AssetEntry[] = [];
+  for (const a of overrides) {
     const { slot, scale } = parseAssetName(a.name);
-    return {
+    entries.push({
       name: a.name,
       slot,
       scale,
       size: a.size,
       sha1: a.sha1,
-      crc32: 0,
+      crc32: a.crc32 ?? (await legacyCrc(bucket, a)),
       ...(a.width ? { width: a.width } : {}),
       ...(a.height ? { height: a.height } : {}),
       source: { kind: 'r2', key: a.r2Key },
-    };
-  });
+    });
+  }
   const byName = new Map(overrides.map((a) => [a.name, a.r2Key]));
   return {
     template: {
@@ -94,6 +102,13 @@ function withOverrides(
       },
     },
   };
+}
+
+/** Rows uploaded before the crc32 column existed. */
+async function legacyCrc(bucket: R2Bucket, a: AssetRow): Promise<number> {
+  const object = await bucket.get(a.r2Key);
+  if (!object) throw new NotFoundError(`Image ${a.name} is missing.`, 'ASSET_NOT_FOUND');
+  return crc32(new Uint8Array(await object.arrayBuffer()));
 }
 
 export function displayOf(
@@ -120,7 +135,12 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
   const identity = await deps.identities.byId(req.identityId);
   const overrides = await listAssets(ctx.env.DB, req.passId);
-  const { template, registry } = withOverrides(resolved, deps.registry, ctx.env.BUCKET, overrides);
+  const { template, registry } = await withOverrides(
+    resolved,
+    deps.registry,
+    ctx.env.BUCKET,
+    overrides,
+  );
   const now = new Date(ctx.clock.now());
   try {
     const built = await buildPass({
@@ -158,6 +178,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       template: resolved,
       title: display.title,
       subtitle: display.subtitle,
+      contentHash: built.contentHash,
       warnings: built.report.issues.filter((i) => i.severity === 'warning'),
     };
   } catch (error) {

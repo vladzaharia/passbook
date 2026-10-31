@@ -1,3 +1,5 @@
+import { inflateSync } from 'fflate';
+import { expect } from 'vitest';
 import {
   createFakeApns,
   createFakeMailer,
@@ -11,10 +13,12 @@ import {
   type OrgRow,
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
+import { crc32 } from '../../../passkit/index.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { NotFoundError } from '../../platform/errors.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { addRegistration } from '../apple/repo.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
@@ -100,6 +104,26 @@ export async function setupKit(): Promise<Kit> {
   const { resolved, registry } = makeTemplate({ id: `tpl-${fx.ids.token(4)}` });
   const apns = createFakeApns();
   const mailer = createFakeMailer();
+  // The real registries throw NotFoundError for an unknown template; the fake throws a plain Error.
+  const resolveTemplate = registry.resolve.bind(registry);
+  registry.resolve = async (id, version) => {
+    let template: ResolvedTemplate;
+    try {
+      template = await resolveTemplate(id, version);
+    } catch {
+      throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
+    }
+    // The fake stores crc32 0 for every asset, which would put bad CRCs into every kit pass.
+    const assets = await Promise.all(
+      template.assets.map(async (a) => {
+        const bytes = new Uint8Array(
+          await new Response(await registry.openAsset(template, a.name)).arrayBuffer(),
+        );
+        return { ...a, crc32: crc32(bytes) };
+      }),
+    );
+    return { ...template, assets };
+  };
   overrideDeps(env, { registry, apns, mailer });
   await ensurePlatformIdentity(env, clock.now());
   const org = await makeOrg(fx, { name: 'Test Gym' });
@@ -144,4 +168,33 @@ export async function setupKit(): Promise<Kit> {
       });
     },
   };
+}
+
+/** Walks the central directory and checks every stored CRC-32 against the data. Returns the names. */
+export function expectValidZip(bytes: Uint8Array): string[] {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let eocd = bytes.length - 22;
+  while (eocd >= 0 && view.getUint32(eocd, true) !== 0x06054b50) eocd--;
+  expect(eocd, 'end of central directory').toBeGreaterThanOrEqual(0);
+  const count = view.getUint16(eocd + 10, true);
+  let at = view.getUint32(eocd + 16, true);
+  const names: string[] = [];
+  for (let i = 0; i < count; i++) {
+    expect(view.getUint32(at, true)).toBe(0x02014b50);
+    const method = view.getUint16(at + 10, true);
+    const crc = view.getUint32(at + 16, true);
+    const packed = view.getUint32(at + 20, true);
+    const nameLength = view.getUint16(at + 28, true);
+    const extraLength = view.getUint16(at + 30, true);
+    const commentLength = view.getUint16(at + 32, true);
+    const local = view.getUint32(at + 42, true);
+    const name = new TextDecoder().decode(bytes.subarray(at + 46, at + 46 + nameLength));
+    const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+    const raw = bytes.subarray(start, start + packed);
+    const data = method === 0 ? raw : inflateSync(raw);
+    expect(crc32(data) >>> 0, `CRC of ${name}`).toBe(crc);
+    names.push(name);
+    at += 46 + nameLength + extraLength + commentLength;
+  }
+  return names;
 }
