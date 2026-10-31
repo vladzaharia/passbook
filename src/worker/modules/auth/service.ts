@@ -150,7 +150,7 @@ export async function verifyEmailForUser(
   email: string,
 ): Promise<void> {
   const user = await repo.getUser(ctx.env.DB, userId);
-  if (!user || user.status !== 'active') {
+  if (user?.status !== 'active') {
     throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   }
   const { ownerId } = await repo.addUserEmail(

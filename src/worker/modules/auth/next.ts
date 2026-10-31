@@ -8,6 +8,10 @@ export function safeNext(raw: string | null | undefined): string | null {
     const code = raw.charCodeAt(i);
     if (code < 0x20 || code === 0x7f) return null;
   }
+  // URL parsing would resolve dot segments away, so inspect the raw path.
+  const rawPath = raw.split(/[?#]/, 1)[0] ?? '';
+  if (rawPath.split('/').some((seg) => /^(\.|\.\.|%2e|%2e%2e|\.%2e|%2e\.)$/i.test(seg)))
+    return null;
   let url: URL;
   try {
     url = new URL(raw, BASE);
@@ -15,7 +19,6 @@ export function safeNext(raw: string | null | undefined): string | null {
     return null;
   }
   if (url.origin !== BASE) return null;
-  if (/(^|\/)(\.\.|%2e%2e|%2e)(\/|$)/i.test(url.pathname)) return null;
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
