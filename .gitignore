@@ -1,0 +1,16 @@
+node_modules/
+.wrangler/
+.wrangler.deploy.json
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
+.secrets/
+dist/
+public/
+artifacts/
+*.p12
+*.p8
+*.key
+*-key.pem
+.DS_Store

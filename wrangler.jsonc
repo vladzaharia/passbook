@@ -1,0 +1,86 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wallet",
+  "main": "src/index.ts",
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "compatibility_date": "2026-07-30",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "wallet.plrs.im",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "PUBLIC_BASE_URL": "https://wallet.plrs.im",
+    "EMAIL_FROM": "passes@plrs.im"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wallet",
+      "database_id": "6470925e-1300-4507-a830-af8b936bebc3",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "wallet-passes"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "JOBS",
+        "queue": "wallet-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "wallet-jobs",
+        "max_batch_size": 5,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "dead_letter_queue": "wallet-jobs-dlq"
+      }
+    ]
+  },
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_sender_addresses": [
+        "passes@plrs.im"
+      ]
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "invocation_logs": false
+    }
+  },
+  "limits": {
+    "cpu_ms": 10000
+  },
+  "account_id": "07a2eb0d4916b220da1f9c1387b5f6d8",
+  "mtls_certificates": [
+    {
+      "binding": "APNS",
+      "certificate_id": "9d7b9372-b262-42c3-82db-e90c4c588e90"
+    }
+  ]
+}

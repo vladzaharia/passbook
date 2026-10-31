@@ -1,0 +1,118 @@
+{
+  "verifiedOn": "2026-10-30",
+  "organizationName": "Henry's Gymnasium",
+  "website": "https://henrysgymnasium.com/",
+  "memberPortal": "https://henrysgymnasium.thememberspot.com/signin",
+  "supportEmail": "epicexperience@henrysgymnasium.com",
+  "activeClubs": [
+    {
+      "id": "queen-anne",
+      "name": "Queen Anne / Belltown",
+      "address": "14 Mercer St, Seattle, WA 98109",
+      "phone": "+12066440969",
+      "hours": {
+        "timezone": "America/Los_Angeles",
+        "mondayFriday": {
+          "opens": "06:00",
+          "closes": "22:00"
+        },
+        "saturdaySunday": {
+          "opens": "08:00",
+          "closes": "18:00"
+        },
+        "scope": "Published club hours; the source does not distinguish staffed hours from member-access hours."
+      },
+      "latitude": 47.6247216,
+      "longitude": -122.3563224,
+      "website": "https://henrysgymnasium.com/clubs/queen-anne/",
+      "directions": "https://maps.apple.com/?daddr=47.6247216,-122.3563224",
+      "coordinateProvenance": {
+        "source": "https://henrysgymnasium.com/",
+        "method": "Destination !3d/!4d coordinates in the official site's Google Maps address link; not map viewport center."
+      },
+      "applePlaceIdentifier": "I1F4F79088B704BE",
+      "appleShareURL": "https://maps.apple/p/oU6H5zv.RjwJdC",
+      "applePlaceVerifiedOn": "2026-10-30",
+      "appleCoordinate": {
+        "latitude": 47.624765,
+        "longitude": -122.356206
+      },
+      "appleAddressNote": "Apple labels this same place 14 W Mercer St, 98119; the gym publishes 14 Mercer St, 98109. Native navigation uses the verified place ID."
+    },
+    {
+      "id": "capitol-hill",
+      "name": "Capitol Hill",
+      "address": "1617 Boylston St, Seattle, WA 98122",
+      "phone": "+12066447797",
+      "hours": {
+        "timezone": "America/Los_Angeles",
+        "mondayFriday": {
+          "opens": "06:00",
+          "closes": "22:00"
+        },
+        "saturdaySunday": {
+          "opens": "08:00",
+          "closes": "18:00"
+        },
+        "scope": "Published club hours; the source does not distinguish staffed hours from member-access hours."
+      },
+      "latitude": 47.6158383,
+      "longitude": -122.3237602,
+      "website": "https://henrysgymnasium.com/clubs/capitol-hill/",
+      "directions": "https://maps.apple.com/?daddr=47.6158383,-122.3237602",
+      "coordinateProvenance": {
+        "source": "https://henrysgymnasium.com/",
+        "method": "Destination !3d/!4d coordinates in the official site's Google Maps address link; not map viewport center."
+      },
+      "sourceNotes": "Club page says Boylston St; its linked Maps destination says Boylston Ave. Club page and footer use ZIP 98122; a membership-page section inconsistently says 98101.",
+      "applePlaceIdentifier": "I23C636C7300F20FD",
+      "appleShareURL": "https://maps.apple/p/8x6-WXEcd1wjie",
+      "applePlaceVerifiedOn": "2026-10-30",
+      "appleCoordinate": {
+        "latitude": 47.615835,
+        "longitude": -122.323555
+      }
+    }
+  ],
+  "announcedClubs": [
+    {
+      "id": "sanctuary",
+      "name": "Sanctuary",
+      "address": "1827 Yale Ave, Seattle, WA 98101",
+      "status": "Coming soon / presale",
+      "publishedOpeningTarget": "Late first quarter 2027",
+      "website": "https://henrysgymnasium.com/clubs/sanctuary/",
+      "includeInActiveLocationRelevance": false
+    }
+  ],
+  "links": {
+    "locations": "https://henrysgymnasium.com/clubs/",
+    "memberSupport": "https://henrysgymnasium.com/contact/",
+    "memberships": "https://henrysgymnasium.com/memberships/",
+    "personalTraining": "https://henrysgymnasium.com/training/",
+    "recovery": "https://henrysgymnasium.com/recovery/",
+    "bookTour": "https://henrysgymnasium.com/tour/",
+    "websiteTerms": "https://henrysgymnasium.com/terms-conditions/",
+    "websitePrivacy": "https://henrysgymnasium.com/privacy-policy/"
+  },
+  "templateDecisions": [
+    "Select each member's eligible clubs before issuance; published standard memberships specify the club of enrollment.",
+    "Website terms/privacy links are labeled as website policies; they are not represented as the membership contract or Wallet service policy.",
+    "The public training and recovery pages are information/consultation links, not verified signed-in appointment booking endpoints.",
+    "Neighborhood marketing pages are not counted as separate physical gyms.",
+    "No holiday schedule, real member status, expiration date, or NFC credential was inferred."
+  ],
+  "sourceUrls": [
+    "https://henrysgymnasium.com/",
+    "https://henrysgymnasium.com/clubs/queen-anne/",
+    "https://henrysgymnasium.com/clubs/capitol-hill/",
+    "https://henrysgymnasium.com/clubs/sanctuary/",
+    "https://henrysgymnasium.com/memberships/",
+    "https://henrysgymnasium.com/contact/",
+    "https://henrysgymnasium.com/clubs/",
+    "https://henrysgymnasium.com/training/",
+    "https://henrysgymnasium.com/recovery/",
+    "https://henrysgymnasium.com/terms-conditions/",
+    "https://henrysgymnasium.com/privacy-policy/"
+  ]
+}

@@ -1,0 +1,6 @@
+ADMIN_TOKEN="replace-with-a-long-random-token"
+SIGNER_HENRYS_CERTIFICATE="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+SIGNER_HENRYS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+# Optional API update source:
+# MEMBERSHIP_API_BASE_URL="https://membership.example.com/api/"
+# MEMBERSHIP_API_TOKEN="server-side-api-token"

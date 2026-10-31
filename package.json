@@ -1,0 +1,42 @@
+{
+  "name": "wallet-pass-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "npm run assets && node scripts/wrangler.mjs dev",
+    "typecheck": "tsc --noEmit && tsc --project tsconfig.admin.json",
+    "build": "npm run assets && node scripts/wrangler.mjs deploy --dry-run --outdir dist",
+    "test": "npm run assets && node --test --test-concurrency=1 tests/*.test.ts",
+    "check": "npm run typecheck && npm test && npm run test:runtime && npm run build",
+    "assets": "node scripts/build-assets.mjs",
+    "template": "node scripts/package-template.mjs",
+    "credentials": "node scripts/import-credentials.mjs",
+    "sample": "npm run assets && node scripts/sample.ts",
+    "db:local": "node scripts/wrangler.mjs d1 migrations apply wallet --local",
+    "db:remote": "node scripts/wrangler.mjs d1 migrations apply wallet --remote",
+    "deploy": "node scripts/deploy.mjs",
+    "test:runtime": "node scripts/test-runtime.ts",
+    "test:admin": "npm run assets && node scripts/test-admin.mjs",
+    "provision": "node scripts/provision.mjs",
+    "deploy:check": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "asn1js": "3.0.10",
+    "fflate": "0.8.3",
+    "hono": "4.13.13",
+    "pkijs": "3.4.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261005.1",
+    "@types/node": "24.19.2",
+    "esbuild": "0.27.7",
+    "miniflare": "4.20260730.0",
+    "sharp": "0.35.5",
+    "typescript": "5.9.3",
+    "wrangler": "4.116.0"
+  }
+}
