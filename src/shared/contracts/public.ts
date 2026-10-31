@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PublicTokenParamSchema = z.object({ token: z.string().min(16).max(128) });
+export const PublicTokenParamSchema = z.object({ token: z.string().min(1).max(256) });
 export const PublicAssetParamSchema = PublicTokenParamSchema.extend({ name: z.string().max(200) });
 
 /** /p/:token and the pass download are HTML / binary; this describes the JSON handoff for QR codes. */

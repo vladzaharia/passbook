@@ -1,25 +1,125 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
-import { createRouter, stub } from '../../platform/openapi.ts';
+import { normalize } from '../../../shared/pass-view/index.ts';
+import { writeEvent } from '../../platform/analytics.ts';
+import { baseUrl } from '../../platform/env.ts';
+import { AppError } from '../../platform/errors.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { rateLimit } from '../../platform/rate-limit.ts';
+import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
+import { qrDataUri } from '../../ssr/qr.ts';
+import { servePassFile } from '../passes/file.ts';
+import { type C, svc, valid } from '../passes/http.ts';
+import { openPublicAsset, pageModel, passForToken } from './service.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
 publicRoutes.use('*', rateLimit('RL_PUBLIC'));
-stub(publicRoutes, 'public', {
-  method: 'get',
-  path: '/{token}',
-  summary: 'Pass page (server-rendered HTML)',
-  params: PublicTokenParamSchema,
-});
-stub(publicRoutes, 'public', {
-  method: 'get',
-  path: '/{token}/pass.pkpass',
-  summary: 'Download the pass',
-  params: PublicTokenParamSchema,
-});
-stub(publicRoutes, 'public', {
-  method: 'get',
-  path: '/{token}/assets/{name}',
-  summary: 'Pass image',
-  params: PublicAssetParamSchema,
-});
+
+const PAGE_HEADERS = {
+  'content-type': 'text/html; charset=utf-8',
+  'cache-control': 'private, no-store',
+  'x-robots-tag': 'noindex, nofollow',
+};
+
+const langOf = (header: string | undefined): string => {
+  const tag = header?.split(',')[0]?.split(';')[0]?.trim();
+  return tag && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(tag) ? tag : 'en';
+};
+
+type Token = { token: string };
+
+register(
+  publicRoutes,
+  'public',
+  {
+    method: 'get',
+    path: '/{token}',
+    summary: 'Pass page (server-rendered HTML)',
+    params: PublicTokenParamSchema,
+  },
+  async (c: C) => {
+    const svcCtx = svc(c);
+    const nonce = c.var.nonce;
+    try {
+      const pass = await passForToken(svcCtx, valid<Token>(c, 'param').token);
+      const model = await pageModel(svcCtx, pass);
+      const lang = langOf(c.req.header('accept-language'));
+      const view = normalize(model.passJson, {
+        assets: model.assets,
+        locale: lang,
+        now: new Date(svcCtx.clock.now()),
+      });
+      const base = baseUrl(c.env);
+      const downloadHref = `/p/${pass.downloadToken}/pass.pkpass`;
+      const html = renderPassPage({
+        view,
+        nonce,
+        lang,
+        title: view.organizationName || 'Pass',
+        downloadHref,
+        badgeSrc: '/apple/add-to-apple-wallet.svg',
+        qrSrc: pass.status === 'active' ? qrDataUri(`${base}${downloadHref}`) : null,
+        voided: pass.status === 'voided',
+      });
+      return new Response(html, { headers: PAGE_HEADERS });
+    } catch (error) {
+      if (error instanceof AppError && error.status === 404)
+        return new Response(renderNotFoundPage(nonce), {
+          status: 404,
+          headers: PAGE_HEADERS,
+        });
+      throw error;
+    }
+  },
+);
+
+register(
+  publicRoutes,
+  'public',
+  {
+    method: 'get',
+    path: '/{token}/pass.pkpass',
+    summary: 'Download the pass',
+    params: PublicTokenParamSchema,
+  },
+  async (c: C) => {
+    const pass = await passForToken(svc(c), valid<Token>(c, 'param').token);
+    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    if (response.status === 200)
+      writeEvent(c.env, {
+        event: 'pass.downloaded',
+        orgId: pass.orgId,
+        templateId: pass.templateId,
+        identityId: pass.identityId,
+      });
+    return response;
+  },
+);
+
+register(
+  publicRoutes,
+  'public',
+  {
+    method: 'get',
+    path: '/{token}/assets/{name}',
+    summary: 'Pass image',
+    params: PublicAssetParamSchema,
+  },
+  async (c: C) => {
+    const p = valid<{ token: string; name: string }>(c, 'param');
+    const ctx = svc(c);
+    const pass = await passForToken(ctx, p.token);
+    const asset = await openPublicAsset(ctx, pass, p.name);
+    const headers = {
+      'content-type': 'image/png',
+      etag: asset.etag,
+      'cache-control': 'private, max-age=31536000, immutable',
+      'x-content-type-options': 'nosniff',
+    };
+    if (c.req.header('if-none-match') === asset.etag) {
+      await asset.body.cancel();
+      return new Response(null, { status: 304, headers });
+    }
+    return new Response(asset.body, { headers });
+  },
+);
