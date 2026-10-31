@@ -137,3 +137,25 @@ export const PreviewResponseSchema = z.object({
   warnings: z.array(ValidationIssueSchema),
   assetBaseUrl: z.string(),
 });
+
+/** One-sentence text for the `error` code of a failed import. */
+export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
+  IMPORT_INVALID: 'The package has errors. Fix them and upload again.',
+  IMPORT_FAILED: 'The import failed. Upload it again.',
+  UPLOAD_MISSING: 'The upload expired. Upload it again.',
+  WORKFLOW_START: 'Could not start the import. Try again.',
+  TEMPLATE_BAKED: 'That name belongs to a built-in template. Use another name.',
+  NOT_A_ZIP: 'The file is not a zip archive.',
+  ZIP_INVALID: 'The archive is damaged or unsupported.',
+  ZIP_COMPRESSION: 'The archive uses an unsupported compression.',
+  ARCHIVE_TOO_LARGE: 'The archive is too large. The limit is 15 MB.',
+  ENTRY_TOO_LARGE: 'A file in the archive is larger than 5 MB.',
+  COMPRESSION_RATIO: 'A file in the archive expands too much.',
+  TOO_MANY_ENTRIES: 'The archive has too many files.',
+  PATH_DUPLICATE: 'The archive has duplicate file names.',
+};
+
+export function importErrorMessage(code: string | null): string | null {
+  if (!code) return null;
+  return IMPORT_ERROR_MESSAGES[code] ?? 'The import failed. Check the report and upload again.';
+}
