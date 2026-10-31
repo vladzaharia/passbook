@@ -25,7 +25,7 @@ export function PortalLayout() {
                   activeOptions={{ exact: item.to === '/' }}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'inline-flex min-h-8 items-center rounded-md px-3 text-sm',
+                    'inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm',
                     active
                       ? 'bg-state-selected-fill text-fg-strong'
                       : 'text-fg-muted hover:text-fg-strong',

@@ -29,7 +29,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL((u) => u.pathname === '/');
-  await expect(page.getByRole('link', { name: `Open ${holder}` })).toBeVisible();
+  await expect(page.getByRole('link', { name: holder, exact: true })).toBeVisible();
 
   // Link is single use.
   await page.context().clearCookies();
@@ -70,6 +70,6 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   await page.waitForURL((u) => u.pathname === '/');
   // The removed pass does not come back.
   await expect(page.getByText('No passes yet')).toBeVisible();
-  await expect(page.getByRole('link', { name: `Open ${holder}` })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: holder, exact: true })).toHaveCount(0);
   await admin.dispose();
 });

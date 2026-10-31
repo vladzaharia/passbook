@@ -25,7 +25,7 @@ describe('my passes', () => {
       'href',
       '/p/abcdefghijklmnopqrst/pass.pkpass',
     );
-    expect(screen.getByRole('link', { name: 'Open Gym membership' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Gym membership' })).toHaveAttribute(
       'href',
       '/passes/p1',
     );

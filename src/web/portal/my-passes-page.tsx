@@ -25,17 +25,18 @@ function PassTile({ pass }: { pass: MyPass }) {
   const voided = pass.status === 'voided';
   return (
     <Card className="flex flex-col gap-3 p-4">
-      <Link
-        to="/passes/$passId"
-        params={{ passId: pass.id }}
-        aria-label={`Open ${name}`}
-        className="block rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-      >
-        <PassCard view={toView(pass)} face="front" />
-      </Link>
+      <PassCard view={toView(pass)} face="front" />
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="truncate text-sm font-semibold text-fg-strong">{name}</h2>
+          <h2 className="truncate text-sm font-semibold text-fg-strong">
+            <Link
+              to="/passes/$passId"
+              params={{ passId: pass.id }}
+              className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              {name}
+            </Link>
+          </h2>
           {voided ? <StatusPill status="voided" /> : null}
         </div>
         <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
