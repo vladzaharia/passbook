@@ -8,6 +8,10 @@ export function Toaster() {
     <Sonner
       theme={resolved}
       position="bottom-right"
+      // Keep toasts clear of the fixed SaveBar; an error toast sits there until dismissed and
+      // would otherwise cover Save/Discard.
+      offset={{ bottom: '5rem', right: '1rem' }}
+      mobileOffset={{ bottom: '5rem', left: '1rem', right: '1rem' }}
       closeButton
       toastOptions={{
         classNames: {

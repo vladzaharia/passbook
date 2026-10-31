@@ -41,3 +41,25 @@ export async function firstOrg(api: Api): Promise<{ id: string; slug: string; na
   expect(list.length).toBeGreaterThan(0);
   return list[0];
 }
+
+export const GENERIC = 'baked:starter-generic';
+
+/** Creates a pass through the real API (starter-generic by default). */
+export async function createPass(
+  api: Api,
+  orgId: string,
+  options: { holder?: string; memberId?: string; email?: string; templateId?: string; input?: Record<string, unknown> } = {},
+) {
+  const memberId = options.memberId ?? uid('ID').toUpperCase();
+  return api.send(
+    'POST',
+    '/api/v1/passes',
+    {
+      orgId,
+      templateId: options.templateId ?? GENERIC,
+      input: { holder: options.holder ?? `Holder ${memberId}`, memberId, ...(options.input ?? {}) },
+      ...(options.email ? { holderEmail: options.email } : {}),
+    },
+    { 'Idempotency-Key': uid('idem') },
+  );
+}
