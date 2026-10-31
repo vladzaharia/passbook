@@ -8,6 +8,8 @@ Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`.
 - `npm run format` fixes style. `npm run test:unit|worker|web` run one project. `npm run test:e2e` needs `npm run dev:vars` once.
 - `npm run dev` starts vite with the Worker and local D1 (`npm run db:local` first). `npm run dev:oidc` starts the mock Pocket ID.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
+- `npm run coverage` (v8 for unit and web, istanbul for worker). `npm run predeploy` and `npm run deploy` refuse placeholder ids; both are for the owner, never run `deploy -- --apply` or anything `--remote` from an agent. Operations: `docs/operations.md`.
+- Worker tests block unmocked `fetch` (`test/setup/block-network.ts`); stub `globalThis.fetch` in the test and restore it.
 
 ## Layering
 

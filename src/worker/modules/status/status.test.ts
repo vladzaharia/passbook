@@ -111,7 +111,10 @@ describe('status components', () => {
       [now],
     );
     const s = await status({}, okFetch, new ManualClock(now));
-    expect(find(s, 'workflows')).toMatchObject({ state: 'verified', data: { errored: 0, total: 1 } });
+    expect(find(s, 'workflows')).toMatchObject({
+      state: 'verified',
+      data: { errored: 0, total: 1 },
+    });
   });
 
   it('says so when queue metrics or the DLQ binding are unavailable', async () => {

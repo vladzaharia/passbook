@@ -1,0 +1,84 @@
+# Operations
+
+## Local dev
+
+    npm ci
+    npm run dev:vars   # fills missing .dev.vars: KEK, mock OIDC, fixture signer, PUBLIC_BASE_URL
+    npm run db:local   # apply migrations to the local D1
+    npm run dev:oidc   # mock Pocket ID on :5174
+    npm run dev        # http://localhost:5173
+
+- `dev:vars` never overwrites. An old `PUBLIC_BASE_URL` on another port must be edited by hand.
+- Local dev has no APNs binding and no Analytics SQL binding: push is "unavailable", charts read D1.
+- Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
+  `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
+- Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
+- `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
+
+## Go-live checklist
+
+Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.jsonc`.
+
+1. **Pocket ID** (`id.plrs.im`)
+   - Groups: `wallet-admins`, `wallet-users`.
+   - OIDC client "Wallet", PKCE on, groups claim included.
+   - Callback `https://wallet.plrs.im/auth/oidc/callback`. Post-logout redirect
+     `https://wallet.plrs.im/login`. For dev add `http://localhost:5173/auth/oidc/callback`.
+   - Put the client id in `vars.OIDC_CLIENT_ID`; keep the secret for step 5.
+2. **Apple certificate**
+   - Pass Type ID `pass.im.plrs.wallet`, team `48H7CLBV8Y`. Export the `.p12`.
+   - `P12_PASSWORD=… npm run credentials -- Pass.p12` (checks the chain, key match and dates).
+3. **APNs mTLS binding**
+   - `npm run identity:add` prints the plan (dry run). `npm run identity:add -- --apply` uploads
+     `.secrets/platform-*.pem` with `wrangler mtls-certificate upload` and adds
+     `mtls_certificates: APNS` to `wrangler.jsonc`. Then `npm run gen`.
+   - Without the binding the platform signs passes but cannot push updates.
+4. **Turnstile**: widget for `wallet.plrs.im`. Site key in `vars.TURNSTILE_SITE_KEY`, secret in step 5.
+   The always-pass test key is refused by `predeploy`.
+5. **Secrets** (`wrangler secret put <NAME>`, value on stdin)
+   - `KEK_V1`: `openssl rand -base64 32`. Back it up outside Cloudflare. Losing it loses every
+     stored credential.
+   - `OIDC_CLIENT_SECRET`, `TURNSTILE_SECRET`.
+   - `SIGNER_PLATFORM_CERTIFICATE` and `SIGNER_PLATFORM_PRIVATE_KEY`: contents of
+     `.secrets/platform-certificate.pem` and `.secrets/platform-key.pem`.
+   - Optional: `SIGNER_PLATFORM_INTERMEDIATE` (defaults to the bundled WWDR G4),
+     `MAGIC_LINK_DAILY_CAP`, `KEK_V2` (rotation).
+6. **Fresh D1**
+   - `npx wrangler d1 create wallet-platform`, paste `database_id` into `wrangler.jsonc`.
+   - `npm run deploy -- --apply` (step 9) applies all migrations to the empty database.
+7. **R2 lifecycle**: `uploads/` objects expire after one day.
+
+       npx wrangler r2 bucket create wallet-passes
+       npx wrangler r2 bucket lifecycle add wallet-passes expire-uploads uploads/ --expire-days 1
+
+8. **Analytics Engine**: needs the Workers Analytics Engine entitlement on the account. The
+   `EVENTS` dataset `wallet_events` is created by the first write. Charts query it through the
+   `ANALYTICS_SQL` binding (no API token); if the query fails they fall back to D1 and the
+   overview says which source it used.
+9. **Deploy**: `npm run check`, then `npm run deploy` (dry run, prints the plan), then
+   `npm run deploy -- --apply`. That refuses on placeholders, records a D1 Time Travel bookmark in
+   `.wrangler/d1-bookmarks.log`, applies remote migrations, runs `wrangler deploy`.
+   Queues, workflows and rate-limit namespaces are created by the deploy.
+10. **First admin**: sign in through Pocket ID as a `wallet-admins` member. Check Status: every
+    component should be verified or configured.
+11. **Device acceptance test** (a real iPhone)
+    - Create an org, a template and a pass from the admin console; email it to yourself.
+    - Add it to Wallet from the link.
+    - Update a field. The pass updates on the phone within a minute (push).
+    - Near a venue the pass appears on the lock screen. The barcode scans.
+    - Void the pass; the phone shows it as voided.
+
+## Day two
+
+- **Migrations**: `npm run deploy` handles them. Manual: `npx wrangler d1 time-travel info wallet-platform`,
+  note the bookmark, then `npx wrangler d1 migrations apply wallet-platform --remote`.
+  Restore: `npx wrangler d1 time-travel restore wallet-platform --bookmark <bookmark>`.
+- **Certificate renewal** (yearly, Apple): get a new Pass Type ID certificate, then
+  - platform: `npm run credentials`, update the two `SIGNER_PLATFORM_*` secrets, re-run
+    `npm run identity:add -- --apply`, deploy;
+  - other identities: admin console, Identities, Rotate (`POST /api/v1/identities/{id}/rotate`).
+    Passes keep working; the pass type ID must match.
+  Status warns 30 days before expiry.
+- **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data.
+- **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
+- **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.

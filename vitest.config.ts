@@ -61,7 +61,7 @@ export default defineConfig({
     // project with istanbul and the rest with v8.
     coverage: {
       provider: 'v8',
-      include: ['src/**'],
+      include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/generated/**', '**/*.test.*'],
     },
   },
