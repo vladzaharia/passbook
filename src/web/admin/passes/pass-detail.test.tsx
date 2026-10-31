@@ -47,6 +47,7 @@ function handlers(
             orgId: 'org1',
             actorType: 'user',
             actorId: 'u1',
+            actorLabel: 'Ada Admin',
             action: 'pass.update',
             targetType: 'pass',
             targetId: 'p1',
@@ -258,6 +259,7 @@ describe('pass detail: tabs', () => {
     const server = newServer({
       holderState: 'owned',
       ownerUserId: 'u9',
+      ownerName: 'Olive Owner',
       holderEmail: 'a@example.com',
     });
     await renderApp('/admin/passes/p1?tab=holder', {
@@ -275,7 +277,7 @@ describe('pass detail: tabs', () => {
           }),
       }),
     });
-    expect(await screen.findByRole('link', { name: 'u9' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Olive Owner' })).toHaveAttribute(
       'href',
       '/admin/users/u9',
     );
@@ -360,6 +362,29 @@ describe('pass detail: tabs', () => {
       handlers: handlers(newServer()),
     });
     expect(await screen.findByText('pass.update')).toBeInTheDocument();
+    expect(screen.getByText('Ada Admin')).toBeInTheDocument();
+    expect(screen.queryByText(/u1/)).toBeNull();
+  });
+
+  it('names the owner and the pass instead of showing ids', async () => {
+    await renderApp('/admin/passes/p1?tab=holder', {
+      session: 'admin',
+      handlers: handlers(
+        newServer({
+          holderState: 'owned',
+          ownerUserId: 'u9',
+          ownerName: 'Olive Owner',
+          ownerEmail: 'olive@example.com',
+        }),
+      ),
+    });
+    const link = await screen.findByRole('link', { name: /Olive Owner/ });
+    expect(link).toHaveAttribute('href', '/admin/users/u9');
+    expect(link).toHaveTextContent('olive@example.com');
+    expect(screen.queryByText('u9')).toBeNull();
+    const crumb = screen.getByRole('navigation', { name: /breadcrumb/i });
+    expect(crumb).toHaveTextContent('Passes');
+    expect(crumb).not.toHaveTextContent('p1');
   });
 
   it('shows the device count', async () => {

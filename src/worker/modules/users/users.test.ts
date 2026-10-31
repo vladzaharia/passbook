@@ -130,7 +130,7 @@ describe('detail', () => {
       emails: { email: string }[];
       identities: { groups: string[]; provider: string }[];
       sessions: { revokedAt: number | null }[];
-      passIds: string[];
+      passes: { id: string; title: string }[];
       passCount: number;
       recentAudit: { action: string }[];
     };
@@ -138,7 +138,7 @@ describe('detail', () => {
     expect(body.identities[0]).toMatchObject({ provider: 'pocketid', groups: ['wallet-users'] });
     expect(body.sessions).toHaveLength(1);
     expect(body.sessions[0]?.revokedAt).not.toBeNull();
-    expect(body.passIds).toEqual([pass.id]);
+    expect(body.passes.map((p) => p.id)).toEqual([pass.id]);
     expect(body.passCount).toBe(1);
     expect(body.recentAudit.map((x) => x.action)).toContain('user.sessions_revoke');
   });

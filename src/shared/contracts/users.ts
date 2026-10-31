@@ -48,8 +48,8 @@ export const UserDetailSchema = UserSchema.extend({
       userAgent: z.string().nullable(),
     }),
   ),
-  /** First 100 owned passes; `passCount` is the total. */
-  passIds: z.array(IdSchema),
+  /** First 100 owned passes (title falls back to the serial); `passCount` is the total. */
+  passes: z.array(z.object({ id: IdSchema, title: z.string() })),
   passCount: z.number().int().nonnegative(),
   recentAudit: z.array(
     z.object({

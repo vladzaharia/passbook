@@ -41,7 +41,7 @@ export function ActivityTab({ passId, active }: { passId: string; active: boolea
     id: String(e.id),
     title: e.action,
     time: e.at,
-    description: `${e.actorType}${e.actorId ? ` ${e.actorId}` : ''}`,
+    description: e.actorLabel ?? e.actorType,
   }));
   return <Timeline items={items} />;
 }

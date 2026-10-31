@@ -71,7 +71,7 @@ export async function getUserDetail(ctx: ServiceContext, id: string): Promise<Us
     emailsOf(db, id),
     repo.identitiesOf(db, id),
     repo.listRecentSessions(db, id),
-    repo.ownedPassIds(db, id),
+    repo.ownedPasses(db, id),
     repo.ownedPassCount(db, id),
     repo.recentAudit(db, id),
   ]);
@@ -100,7 +100,7 @@ export async function getUserDetail(ctx: ServiceContext, id: string): Promise<Us
       revokedAt: s.revoked_at,
       userAgent: s.user_agent,
     })),
-    passIds: passes.map((p) => p.id),
+    passes,
     passCount,
     recentAudit: audit.map((a) => ({
       id: a.id,

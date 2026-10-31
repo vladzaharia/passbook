@@ -236,6 +236,18 @@ export async function listBlockedUsers(
   );
 }
 
+export async function getOwnerLabel(
+  db: D1Database,
+  userId: string,
+): Promise<{ name: string | null; email: string | null }> {
+  const row = await first<{ name: string | null; email: string | null }>(
+    db,
+    'SELECT name, primary_email AS email FROM users WHERE id = ?',
+    [userId],
+  );
+  return row ?? { name: null, email: null };
+}
+
 export async function countRegistrations(db: D1Database, passId: string): Promise<number> {
   const row = await first<{ n: number }>(
     db,

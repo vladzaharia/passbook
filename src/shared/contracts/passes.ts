@@ -58,6 +58,9 @@ export const DeliveryEntrySchema = z.object({
 });
 
 export const PassDetailSchema = PassSummarySchema.extend({
+  /** Owner's display name and email (null when unowned); the summary carries only the id. */
+  ownerName: z.string().nullable(),
+  ownerEmail: z.string().nullable(),
   personalization: z.record(z.string(), JsonSchema),
   fieldSources: z.record(z.string(), FieldSourceSchema),
   /** Signed pass.json of the current version, for rendering. */

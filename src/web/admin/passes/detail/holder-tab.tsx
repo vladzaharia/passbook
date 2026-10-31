@@ -64,7 +64,8 @@ export function HolderTab({ pass }: { pass: Pass }) {
                     to={`/admin/users/${pass.ownerUserId}` as never}
                     className="text-accent-fg hover:underline"
                   >
-                    {pass.ownerUserId}
+                    {pass.ownerName ?? pass.ownerEmail ?? 'Unnamed user'}
+                    {pass.ownerName && pass.ownerEmail ? ` (${pass.ownerEmail})` : ''}
                   </Link>
                 ) : null,
               },

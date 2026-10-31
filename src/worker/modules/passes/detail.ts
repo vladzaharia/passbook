@@ -8,6 +8,7 @@ import { resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import {
   countRegistrations,
+  getOwnerLabel,
   currentPassJson,
   getPass,
   getVersion,
@@ -117,16 +118,19 @@ function versionSummary(v: {
 
 export async function detailOf(ctx: ServiceContext, pass: Pass) {
   const db = ctx.env.DB;
-  const [json, registrations, versions, deliveries, blockedUsers] = await Promise.all([
+  const [json, registrations, versions, deliveries, blockedUsers, owner] = await Promise.all([
     currentPassJson(db, pass.id),
     countRegistrations(db, pass.id),
     listVersions(db, pass.id),
     listOutboxForPass(db, pass.id),
     listBlockedUsers(db, pass.id),
+    pass.ownerUserId ? getOwnerLabel(db, pass.ownerUserId) : null,
   ]);
   const passJson = parseJson(json);
   return {
     ...toSummary(pass),
+    ownerName: owner?.name ?? null,
+    ownerEmail: owner?.email ?? null,
     personalization: pass.personalization,
     fieldSources: pass.fieldSources,
     passJson,

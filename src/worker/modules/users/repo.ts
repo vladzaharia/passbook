@@ -57,10 +57,10 @@ export const identitiesOf = (db: Db, userId: string) =>
     [userId],
   );
 
-export const ownedPassIds = (db: Db, userId: string) =>
-  all<{ id: string }>(
+export const ownedPasses = (db: Db, userId: string) =>
+  all<{ id: string; title: string }>(
     db,
-    'SELECT id FROM passes WHERE owner_user_id = ? ORDER BY id DESC LIMIT 100',
+    'SELECT id, COALESCE(display_title, serial) AS title FROM passes WHERE owner_user_id = ? ORDER BY id DESC LIMIT 100',
     [userId],
   );
 

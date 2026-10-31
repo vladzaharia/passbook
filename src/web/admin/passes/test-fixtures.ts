@@ -119,6 +119,8 @@ export function passSummary(over: Record<string, unknown> = {}) {
 export function passDetail(over: Record<string, unknown> = {}) {
   return {
     ...passSummary(),
+    ownerName: null,
+    ownerEmail: null,
     personalization: { name: 'Sam Jones', level: 'copper' },
     fieldSources: { name: 'manual', level: 'manual' },
     passJson: SAMPLE_PASS_JSON,

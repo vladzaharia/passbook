@@ -245,20 +245,20 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
 export function PassesCard({ user }: { user: UserDetail }) {
   return (
     <Card>
-      <CardHeader title={`Passes (${user.passIds.length})`} />
+      <CardHeader title={`Passes (${user.passes.length})`} />
       <CardBody>
-        {user.passIds.length === 0 ? (
+        {user.passes.length === 0 ? (
           <p className="text-sm text-fg-muted">No passes.</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
-            {user.passIds.map((id) => (
+            {user.passes.map(({ id, title }) => (
               <li key={id}>
                 <Link
                   to="/admin/passes/$passId"
                   params={{ passId: id }}
-                  className="font-mono text-xs text-accent-fg underline"
+                  className="text-sm text-accent-fg underline"
                 >
-                  {id}
+                  {title}
                 </Link>
               </li>
             ))}
