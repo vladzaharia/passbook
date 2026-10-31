@@ -23,7 +23,13 @@ import { passKeys } from './api.ts';
 import { fingerprint, newKey } from './format.ts';
 import { OrgStep, TemplateStep } from './new-pass-steps.tsx';
 import { PassPreview } from './pass-preview.tsx';
-import { cleanValues, type FormValues, SchemaForm, validateValues } from './schema-form/index.ts';
+import {
+  cleanValues,
+  defaultValues,
+  type FormValues,
+  SchemaForm,
+  validateValues,
+} from './schema-form/index.ts';
 
 const STEPS = ['Organization', 'Template', 'Details', 'Holder', 'Create'] as const;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,9 +43,18 @@ function useDebounced<T>(value: T, ms: number): T {
   return v;
 }
 
-function LivePreview({ templateId, input }: { templateId: string; input: FormValues }) {
+function LivePreview({
+  templateId,
+  input,
+  schema,
+}: {
+  templateId: string;
+  input: FormValues;
+  schema: unknown;
+}) {
   const debounced = useDebounced(cleanValues(input), 300);
-  const preview = useDraftPreview(templateId, debounced);
+  const valid = Object.keys(validateValues(schema, debounced)).length === 0;
+  const preview = useDraftPreview(valid ? templateId : undefined, debounced);
   return (
     <Card className="lg:sticky lg:top-4 lg:self-start">
       <CardHeader
@@ -49,7 +64,7 @@ function LivePreview({ templateId, input }: { templateId: string; input: FormVal
       <CardBody>
         {preview.data ? (
           <PassPreview passJson={preview.data.passJson} assetBaseUrl={preview.data.assetBaseUrl} />
-        ) : preview.isError ? (
+        ) : preview.isError || !valid ? (
           <p className="text-sm text-fg-muted">Preview unavailable until the details are valid.</p>
         ) : (
           <Spinner />
@@ -83,6 +98,14 @@ export function NewPassPage() {
   const dirty =
     !createdId && (orgId !== undefined || Object.keys(input).length > 0 || email !== '');
   const guard = useUnsavedChangesGuard(dirty);
+
+  // Seed schema defaults once per template so the form shows what the server applies.
+  const seeded = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!templateId || !schema || seeded.current === templateId) return;
+    seeded.current = templateId;
+    setInput(defaultValues(schema));
+  }, [templateId, schema]);
 
   useEffect(() => {
     if (createdId) void navigate({ to: `/admin/passes/${createdId}` as never });
@@ -163,6 +186,7 @@ export function NewPassPage() {
           onSelect={(id) => {
             if (id !== orgId) {
               setTemplateId(undefined);
+              seeded.current = undefined;
               setInput({});
             }
             setOrgId(id);
@@ -174,7 +198,10 @@ export function NewPassPage() {
           orgId={orgId}
           templateId={templateId}
           onSelect={(id) => {
-            if (id !== templateId) setInput({});
+            if (id !== templateId) {
+              seeded.current = undefined;
+              setInput({});
+            }
             setTemplateId(id);
           }}
         />
@@ -193,7 +220,7 @@ export function NewPassPage() {
               showAllErrors={showErrors}
               serverErrors={fieldErrors}
             />
-            <LivePreview templateId={templateId} input={input} />
+            <LivePreview templateId={templateId} input={input} schema={template.data.inputSchema} />
           </div>
         )
       ) : null}

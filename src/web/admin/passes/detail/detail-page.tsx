@@ -1,9 +1,12 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import type { z } from 'zod';
+import { isApiError } from '../../../lib/errors.ts';
 import {
+  Button,
   Card,
   CardBody,
   CardHeader,
+  EmptyState,
   ErrorState,
   PageHeader,
   Select,
@@ -18,12 +21,13 @@ import { useTemplate } from '../../templates/api.ts';
 import { usePass, usePassVersion } from '../api.ts';
 import { PassPreviewPanel } from '../pass-preview.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
+import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
 import { FieldsTab } from './fields-tab.tsx';
 import { PassHeaderActions } from './header-actions.tsx';
 import { HolderTab } from './holder-tab.tsx';
 import { ImagesTab } from './images-tab.tsx';
-import { ActivityTab, ConnectionTab, DevicesTab } from './info-tabs.tsx';
+import { ActivityTab, DevicesTab } from './info-tabs.tsx';
 import { VersionsTab } from './versions-tab.tsx';
 
 type Search = z.infer<typeof passDetailSearchSchema>;
@@ -48,10 +52,22 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
 
   const crumbs = [{ label: 'Passes', to: '/admin/passes' }, { label: pass.data?.serial ?? 'Pass' }];
   if (pass.isError) {
+    const missing = isApiError(pass.error) && pass.error.isNotFound;
     return (
       <>
         <PageHeader title="Pass" breadcrumbs={crumbs} />
-        <ErrorState error={pass.error} onRetry={() => void pass.refetch()} />
+        {missing ? (
+          <EmptyState
+            title="Pass not found"
+            action={
+              <Button asChild>
+                <Link to="/admin/passes">Back to passes</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <ErrorState error={pass.error} onRetry={() => void pass.refetch()} />
+        )}
       </>
     );
   }
@@ -142,7 +158,12 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
             {template.isError ? (
               <ErrorState error={template.error} onRetry={() => void template.refetch()} />
             ) : template.data ? (
-              <FieldsTab key={p.id} pass={p} schema={template.data.inputSchema} />
+              <FieldsTab
+                key={p.id}
+                pass={p}
+                schema={template.data.inputSchema}
+                manifest={template.data.manifest}
+              />
             ) : (
               <Skeleton className="h-48 w-full" />
             )}
@@ -151,7 +172,7 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
             <HolderTab key={p.holderEmail ?? ''} pass={p} />
           </TabsContent>
           <TabsContent value="images">
-            <ImagesTab passId={p.id} />
+            <ImagesTab passId={p.id} passJson={p.passJson} />
           </TabsContent>
           <TabsContent value="delivery">
             <DeliveryTab pass={p} />

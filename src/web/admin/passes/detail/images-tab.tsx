@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { errorMessage } from '../../../lib/errors.ts';
 import {
   Card,
@@ -17,15 +17,55 @@ import {
 import { usePassActions, usePassAssets } from '../api.ts';
 import { assetName, checkPng, MAX_ASSET_BYTES } from '../png.ts';
 
-const SLOTS = ['icon', 'logo', 'thumbnail', 'strip', 'background', 'footer'] as const;
+const ALL_SLOTS = [
+  'icon',
+  'logo',
+  'primaryLogo',
+  'secondaryLogo',
+  'artwork',
+  'thumbnail',
+  'strip',
+  'background',
+  'footer',
+] as const;
 
-export function ImagesTab({ passId }: { passId: string }) {
+const STYLE_SLOTS: Record<string, readonly string[]> = {
+  posterGeneric: ['artwork', 'primaryLogo', 'secondaryLogo'],
+  posterEventTicket: ['artwork', 'primaryLogo', 'secondaryLogo'],
+  storeCard: ['strip', 'thumbnail'],
+  coupon: ['strip', 'thumbnail'],
+  eventTicket: ['strip', 'background', 'thumbnail', 'footer'],
+  generic: ['thumbnail'],
+  boardingPass: ['footer'],
+};
+
+/** Slots the pass style renders; icon and logo always apply. Unknown style: every slot. */
+export function slotsFor(passJson: Record<string, unknown>): string[] {
+  const schemes = Array.isArray(passJson.preferredStyleSchemes)
+    ? (passJson.preferredStyleSchemes as unknown[])
+    : [];
+  const style =
+    schemes.find((x): x is string => typeof x === 'string' && x in STYLE_SLOTS) ??
+    Object.keys(STYLE_SLOTS).find((k) => k in passJson);
+  if (!style) return [...ALL_SLOTS];
+  return [...(STYLE_SLOTS[style] ?? []), 'icon', 'logo'];
+}
+
+export function ImagesTab({
+  passId,
+  passJson = {},
+}: {
+  passId: string;
+  passJson?: Record<string, unknown>;
+}) {
+  const slots = useMemo(() => slotsFor(passJson), [passJson]);
   const assets = usePassAssets(passId);
   const actions = usePassActions(passId);
-  const [slot, setSlot] = useState<string>('thumbnail');
+  const [slot, setSlot] = useState<string | undefined>();
   const [scale, setScale] = useState<'1' | '2' | '3'>('2');
   const [error, setError] = useState<string>();
-  const name = assetName(slot, Number(scale) as 1 | 2 | 3);
+  const current = slot && slots.includes(slot) ? slot : (slots[0] ?? 'icon');
+  const name = assetName(current, Number(scale) as 1 | 2 | 3);
 
   async function upload(file: File) {
     setError(undefined);
@@ -88,9 +128,9 @@ export function ImagesTab({ passId }: { passId: string }) {
                 <Select
                   {...c}
                   className="w-44"
-                  value={slot}
+                  value={current}
                   onValueChange={setSlot}
-                  options={SLOTS.map((s) => ({ value: s, label: s }))}
+                  options={slots.map((s) => ({ value: s, label: s }))}
                 />
               )}
             </FormField>

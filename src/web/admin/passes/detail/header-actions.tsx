@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Ban, ExternalLink, KeyRound, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
+import { Ban, Download, ExternalLink, KeyRound, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
@@ -15,6 +15,7 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
   const navigate = useNavigate();
   const [rotate, setRotate] = useState(false);
   const [del, setDel] = useState(false);
+  const [voidAsk, setVoidAsk] = useState(false);
   const voided = pass.status === 'voided';
 
   async function run(fn: () => Promise<unknown>, done: string) {
@@ -41,10 +42,9 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
         iconStart={voided ? <RotateCcw aria-hidden /> : <Ban aria-hidden />}
         loading={actions.setVoided.isPending}
         onClick={() =>
-          run(
-            () => actions.setVoided.mutateAsync(!voided),
-            voided ? 'Pass unvoided' : 'Pass voided',
-          )
+          voided
+            ? run(() => actions.setVoided.mutateAsync(false), 'Pass unvoided')
+            : setVoidAsk(true)
         }
       >
         {voided ? 'Unvoid' : 'Void'}
@@ -64,10 +64,27 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
           Open public page
         </a>
       </Button>
+      <Button asChild variant="outline" iconStart={<Download aria-hidden />}>
+        <a href={pass.downloadUrl} download>
+          Download .pkpass
+        </a>
+      </Button>
       <Button variant="danger" iconStart={<Trash2 aria-hidden />} onClick={() => setDel(true)}>
         Delete
       </Button>
 
+      <ConfirmDialog
+        open={voidAsk}
+        onOpenChange={setVoidAsk}
+        title="Void pass?"
+        description="Wallet marks it void on the holder's device."
+        confirmLabel="Void"
+        destructive
+        onConfirm={async () => {
+          await actions.setVoided.mutateAsync(true);
+          toast.success('Pass voided');
+        }}
+      />
       <ConfirmDialog
         open={rotate}
         onOpenChange={setRotate}

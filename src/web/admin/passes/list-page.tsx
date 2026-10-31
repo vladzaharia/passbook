@@ -96,7 +96,7 @@ export function PassesListPage({
           <div className="min-w-0">
             <Link
               to={`/admin/passes/${row.original.id}` as never}
-              className="font-medium text-accent-fg hover:underline"
+              className="block truncate font-medium text-accent-fg hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               {row.original.title ?? row.original.serial}
@@ -104,6 +104,10 @@ export function PassesListPage({
             {row.original.subtitle ? (
               <p className="truncate text-xs text-fg-muted">{row.original.subtitle}</p>
             ) : null}
+            <div className="mt-1 flex flex-wrap items-center gap-2 md:hidden">
+              <StatusPill status={row.original.status} />
+              <StatusPill status={row.original.holderState} />
+            </div>
           </div>
         ),
       },
