@@ -12,6 +12,7 @@ import type {
 } from '../types.ts';
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
+import { validateRequires } from './requires.ts';
 
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
 export interface ImageTarget {
@@ -106,6 +107,7 @@ export function validateManifest(
     error('MANIFEST_INPUTS', 'inputs must be a JSON Schema object.', 'inputs');
     return issues;
   }
+  issues.push(...validateRequires(manifest, options.passJson));
   scanSchema(manifest.inputs, 'inputs', options, { nodes: 0 }, error);
   const properties = isRecord(manifest.inputs.properties) ? manifest.inputs.properties : {};
   const inputNames = new Set(Object.keys(properties));

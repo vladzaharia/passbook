@@ -86,10 +86,17 @@
     "boardingPass"
   ],
   "relevantDate": "2030-06-01T08:00:00Z",
+  "relevantDates": [
+    {
+      "date": "2030-06-01T08:00:00Z",
+      "relevantDate": "2030-06-01T08:00:00Z"
+    }
+  ],
   "semantics": {
     "airlineCode": "WA",
     "departureAirportCode": "SFO",
     "departureCityName": "San Francisco",
+    "departureGate": "B12",
     "departureLocationTimeZone": "America/Los_Angeles",
     "destinationAirportCode": "JFK",
     "destinationCityName": "New York",
@@ -101,7 +108,12 @@
     "passengerName": {
       "familyName": "Morgan",
       "givenName": "Alex"
-    }
+    },
+    "seats": [
+      {
+        "seatNumber": "14A"
+      }
+    ]
   },
   "serialNumber": "SNAPSHOT-SERIAL",
   "sharingProhibited": true,

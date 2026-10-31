@@ -97,8 +97,8 @@
   "relevantDate": "2030-06-01T19:00:00Z",
   "relevantDates": [
     {
-      "endDate": "2030-06-01T22:00:00Z",
-      "startDate": "2030-06-01T19:00:00Z"
+      "date": "2030-06-01T19:00:00Z",
+      "relevantDate": "2030-06-01T19:00:00Z"
     }
   ],
   "semantics": {

@@ -237,9 +237,32 @@ const TZ_ALIASES: Record<string, string> = {
   destinationLocationTimeZone: 'destinationAirportTimeZone',
 };
 
+const STYLE_KEYS = [
+  'generic',
+  'posterGeneric',
+  'storeCard',
+  'coupon',
+  'eventTicket',
+  'boardingPass',
+];
+
+/** Wallet reads semantics from the root and from any field; the root wins on conflict. */
+function collectSemantics(pass: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const style of STYLE_KEYS) {
+    const dict = pass[style];
+    if (!isObject(dict)) continue;
+    for (const fields of Object.values(dict))
+      if (Array.isArray(fields))
+        for (const field of fields)
+          if (isObject(field) && isObject(field.semantics)) Object.assign(out, field.semantics);
+  }
+  return isObject(pass.semantics) ? Object.assign(out, pass.semantics) : out;
+}
+
 /** Layout-driving tags. Wallet falls back to the legacy layout when they are missing, so these warn. */
 export function validateRequiredSemantics(ctx: ValidationContext): void {
-  const semantics: Record<string, unknown> = isObject(ctx.pass.semantics) ? ctx.pass.semantics : {};
+  const semantics = collectSemantics(ctx.pass as unknown as Record<string, unknown>);
   const missing = (keys: string[]) =>
     keys.filter((key) => {
       const alias = TZ_ALIASES[key];

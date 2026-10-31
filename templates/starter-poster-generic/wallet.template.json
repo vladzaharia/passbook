@@ -75,7 +75,39 @@
         "maxLength": 300,
         "x-widget": "url",
         "default": "https://example.com/"
+      },
+      "officeLat": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "x-label": "Office latitude",
+        "x-group": "Location",
+        "x-order": 200
+      },
+      "officeLng": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "x-label": "Office longitude",
+        "x-group": "Location",
+        "x-order": 201
+      },
+      "phone": {
+        "type": "string",
+        "pattern": "^\\+[0-9]{7,15}$",
+        "x-label": "Phone",
+        "x-group": "Links",
+        "x-order": 75,
+        "maxLength": 16
       }
+    },
+    "dependentRequired": {
+      "officeLat": [
+        "officeLng"
+      ],
+      "officeLng": [
+        "officeLat"
+      ]
     }
   },
   "sample": {
@@ -192,6 +224,46 @@
         "prop": "url"
       },
       "value": "{{website}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/latitude"
+      },
+      "value": "{{officeLat}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/longitude"
+      },
+      "value": "{{officeLng}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations"
+      },
+      "remove": {
+        "any": [
+          {
+            "input": "officeLat",
+            "empty": true
+          },
+          {
+            "input": "officeLng",
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "to": {
+        "action": "support",
+        "prop": "url"
+      },
+      "value": "tel:{{phone}}",
+      "remove": {
+        "input": "phone",
+        "empty": true
+      }
     }
   ],
   "display": {

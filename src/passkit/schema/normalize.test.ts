@@ -56,6 +56,25 @@ describe('normalizePass', () => {
     expect(out.semantics?.seats?.[0]?.seatSectionColor).toBe('rgb(0, 0, 255)');
   });
 
+  it('upper-cases RFC 3339 lowercase t and z in dates', () => {
+    const out = normalizePass(
+      base({
+        expirationDate: '2027-01-31t23:59:00z',
+        relevantDates: [
+          { startDate: '2027-01-31t10:00:00z', endDate: '2027-01-31t11:00:00+01:00' },
+        ],
+        semantics: { eventStartDate: '2027-01-31t10:00:00z', eventName: 'tz' },
+      }),
+    );
+    expect(out.expirationDate).toBe('2027-01-31T23:59:00Z');
+    expect(out.relevantDates?.[0]).toMatchObject({
+      startDate: '2027-01-31T10:00:00Z',
+      endDate: '2027-01-31T11:00:00+01:00',
+    });
+    expect(out.semantics?.eventStartDate).toBe('2027-01-31T10:00:00Z');
+    expect(out.semantics?.eventName).toBe('tz');
+  });
+
   it('writes both single-moment keys and the root relevantDate', () => {
     const out = normalizePass(
       base({

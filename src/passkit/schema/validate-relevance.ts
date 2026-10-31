@@ -145,9 +145,13 @@ export function validateRelevantDates(ctx: ValidationContext): void {
           }
           if (start !== undefined && end !== undefined) {
             if (end < start) error('RELEVANT_DATES', 'endDate is before startDate.', path);
-            // Wallet drops longer intervals ("Dropping relevancy interval").
+            // Wallet logs "Dropping relevancy interval" and keeps the pass.
             else if (end - start > MAX_RELEVANT_RANGE_MS)
-              error('RELEVANT_DATE_RANGE', 'A relevance interval can span at most 24 hours.', path);
+              warn(
+                'RELEVANT_DATE_RANGE',
+                'Wallet ignores relevance intervals longer than 24 hours. Use a single date.',
+                path,
+              );
           }
         } else if ((entry.date === undefined) !== (entry.relevantDate === undefined)) {
           warn(

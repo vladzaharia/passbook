@@ -11,7 +11,6 @@
     "boardingPass"
   ],
   "sharingProhibited": true,
-  "relevantDate": "2030-06-01T08:00:00Z",
   "barcodes": [
     {
       "format": "PKBarcodeFormatPDF417",
@@ -35,7 +34,12 @@
     "passengerName": {
       "givenName": "Alex",
       "familyName": "Morgan"
-    }
+    },
+    "seats": [
+      {
+        "seatNumber": "14A"
+      }
+    ]
   },
   "boardingPass": {
     "transitType": "PKTransitTypeAir",
@@ -106,5 +110,10 @@
         "value": "Be at the gate 30 minutes before departure."
       }
     ]
-  }
+  },
+  "relevantDates": [
+    {
+      "date": "2030-06-01T08:00:00Z"
+    }
+  ]
 }

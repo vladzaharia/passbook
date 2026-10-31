@@ -96,7 +96,15 @@ export function validateFeaturedActions(ctx: ValidationContext): void {
 export function validateNfc(ctx: ValidationContext): void {
   const { pass, identity, error, warn } = ctx;
   const nfc = pass.nfc;
-  if (nfc === undefined) return;
+  if (nfc === undefined) {
+    if (hasStyle(ctx, 'PET'))
+      warn(
+        'PET_NFC',
+        'Poster layout needs nfc before iOS 27. Without it iOS 18-26 shows the classic event ticket.',
+        'nfc',
+      );
+    return;
+  }
   if (!identity.nfcEnabled)
     error('NFC_NOT_ENTITLED', 'The signing identity is not NFC-enabled.', 'nfc');
   if (!isObject(nfc)) {

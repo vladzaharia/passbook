@@ -1,3 +1,4 @@
+import { cachedAssetBytes } from './asset-cache.ts';
 import type { BehaviorRegistry } from './behaviors/registry.ts';
 import { normalizePass } from './schema/normalize.ts';
 import type { SignedPass } from './sign/index.ts';
@@ -6,6 +7,7 @@ import { bindPass } from './template/bindings.ts';
 import { applyDefaults, checkInput } from './template/manifest.ts';
 import { classifyAsset, pngSize, slotOf } from './template/package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './template/registry.ts';
+import { unmetRequirements } from './template/requires.ts';
 import type {
   PassIdentity,
   PassJson,
@@ -204,6 +206,8 @@ function checkPackageContents(
 export function planPass(args: BuildPassInput): PlannedPass {
   const { template, input, server } = args;
   validateInput(template, input);
+  const unmet = unmetRequirements(template.manifest, server.identity);
+  if (unmet.length > 0) fail('TEMPLATE', unmet.join(' '), 'requires');
   let pass: PassJson;
   let dropped: string[];
   try {
@@ -261,7 +265,10 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass | Uncha
   const crc: Record<string, number> = {};
   for (const asset of plan.assets) {
     bytes[asset.name] =
-      asset.bytes ?? (await readAll(await registry.openAsset(template, asset.name)));
+      asset.bytes ??
+      (await cachedAssetBytes(template.id, template.version, asset, async () =>
+        readAll(await registry.openAsset(template, asset.name)),
+      ));
     sha1[asset.name] = asset.sha1 ?? (await sha1Hex(bytes[asset.name] as Uint8Array));
     if (asset.crc32 !== undefined) crc[asset.name] = asset.crc32;
   }

@@ -132,7 +132,35 @@
         "maxLength": 300,
         "x-widget": "url",
         "default": "https://example.com/"
+      },
+      "directionsURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Directions link",
+        "x-group": "Links",
+        "x-order": 150,
+        "x-widget": "url"
+      },
+      "parkingURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Parking link",
+        "x-group": "Links",
+        "x-order": 160,
+        "x-widget": "url"
       }
+    },
+    "dependentRequired": {
+      "venueLat": [
+        "venueLng"
+      ],
+      "venueLng": [
+        "venueLat"
+      ]
     }
   },
   "sample": {
@@ -310,27 +338,58 @@
     },
     {
       "to": {
-        "pointer": "/relevantDate"
-      },
-      "value": "{{startsAt}}"
-    },
-    {
-      "to": {
-        "pointer": "/relevantDates/0/startDate"
-      },
-      "value": "{{startsAt}}"
-    },
-    {
-      "to": {
-        "pointer": "/relevantDates/0/endDate"
-      },
-      "value": "{{endsAt}}"
-    },
-    {
-      "to": {
         "pointer": "/expirationDate"
       },
       "value": "{{endsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/relevantDates/0/date"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/latitude"
+      },
+      "value": "{{venueLat}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/longitude"
+      },
+      "value": "{{venueLng}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations"
+      },
+      "remove": {
+        "any": [
+          {
+            "input": "venueLat",
+            "empty": true
+          },
+          {
+            "input": "venueLng",
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "to": {
+        "pointer": "/directionsInformationURL"
+      },
+      "value": "{{directionsURL}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/parkingInformationURL"
+      },
+      "value": "{{parkingURL}}",
+      "omitIfEmpty": true
     }
   ],
   "display": {

@@ -80,7 +80,41 @@
         "maxLength": 300,
         "x-widget": "url",
         "default": "https://example.com/"
+      },
+      "storeLat": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "x-label": "Store latitude",
+        "x-group": "Location",
+        "x-order": 200
+      },
+      "storeLng": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "x-label": "Store longitude",
+        "x-group": "Location",
+        "x-order": 201
+      },
+      "shopURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Shop link",
+        "x-group": "Links",
+        "x-order": 75,
+        "x-widget": "url"
       }
+    },
+    "dependentRequired": {
+      "storeLat": [
+        "storeLng"
+      ],
+      "storeLng": [
+        "storeLat"
+      ]
     }
   },
   "sample": {
@@ -171,7 +205,8 @@
         "action": "shop",
         "prop": "url"
       },
-      "value": "{{website}}shop"
+      "value": "{{shopURL}}",
+      "omitIfEmpty": true
     },
     {
       "to": {
@@ -184,6 +219,35 @@
         "pointer": "/semantics/balance/currencyCode"
       },
       "value": "{{currency}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/latitude"
+      },
+      "value": "{{storeLat}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/longitude"
+      },
+      "value": "{{storeLng}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations"
+      },
+      "remove": {
+        "any": [
+          {
+            "input": "storeLat",
+            "empty": true
+          },
+          {
+            "input": "storeLng",
+            "empty": true
+          }
+        ]
+      }
     }
   ],
   "display": {
