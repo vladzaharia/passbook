@@ -1,15 +1,15 @@
 {
   "formatVersion": 1,
-  "passTypeIdentifier": "pass.com.henrysgymnasium.member",
-  "teamIdentifier": "48H7CLBV8Y",
-  "serialNumber": "PREVIEW-ONLY",
-  "organizationName": "Henry’s Gymnasium",
   "description": "Henry’s Gymnasium membership",
+  "organizationName": "Henry’s Gymnasium",
   "backgroundColor": "rgb(6,12,27)",
   "foregroundColor": "rgb(255,249,242)",
   "labelColor": "rgb(210,180,157)",
+  "preferredStyleSchemes": [
+    "posterGeneric",
+    "generic"
+  ],
   "sharingProhibited": true,
-  "suppressHeaderDarkening": false,
   "voided": false,
   "barcodes": [
     {
@@ -25,22 +25,14 @@
       "altText": "DEMO0001"
     }
   ],
-  "locations": [
-    {
-      "latitude": 47.615835,
-      "longitude": -122.323555,
-      "relevantText": "Your Henry’s Gymnasium membership — Capitol Hill"
-    }
-  ],
-  "maxDistance": 150,
   "featuredActions": [
     {
-      "identifier": "membership",
+      "identifier": "member-portal",
       "type": "membershipBenefits",
       "url": "https://henrysgymnasium.thememberspot.com/signin"
     },
     {
-      "identifier": "home-gym-directions",
+      "identifier": "home-club",
       "type": "place",
       "placeIdentifier": "I23C636C7300F20FD"
     }
@@ -48,117 +40,108 @@
   "posterGeneric": {
     "headerFields": [
       {
-        "key": "memberId",
+        "key": "memberId-poster",
         "label": "MEMBER",
         "value": "DEMO0001"
       }
     ],
     "primaryFields": [
       {
-        "key": "memberName",
-        "label": "MEMBER NAME",
+        "key": "memberName-poster",
         "value": "Alex Morgan"
       },
       {
-        "key": "homeClub",
+        "key": "homeClub-poster",
         "label": "HOME CLUB",
-        "value": "Capitol Hill"
+        "value": "Capitol Hill",
+        "changeMessage": "Your home club is now %@."
       }
     ],
     "footerFields": [
       {
-        "key": "membership",
-        "label": "MEMBERSHIP",
-        "value": "All-Inclusive Wellness"
+        "key": "membership-poster",
+        "value": "All-Inclusive Wellness",
+        "changeMessage": "Your membership is now %@."
       }
     ],
     "backFields": [
       {
-        "key": "memberId",
-        "label": "MEMBER NUMBER",
-        "value": "DEMO0001"
-      },
-      {
-        "key": "status",
+        "key": "status-poster",
         "label": "MEMBERSHIP STATUS",
         "value": "Active",
         "changeMessage": "Your membership status is now %@."
       },
       {
-        "key": "message",
+        "key": "message-poster",
         "label": "FROM HENRY’S",
         "value": "Welcome to Henry’s.",
         "changeMessage": "%@"
       },
       {
-        "key": "portal",
+        "key": "portal-poster",
         "label": "MANAGE YOUR MEMBERSHIP",
-        "value": "https://henrysgymnasium.thememberspot.com/signin"
+        "value": "https://henrysgymnasium.thememberspot.com/signin",
+        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
       },
       {
-        "key": "directions-capitol-hill",
-        "label": "CAPITOL HILL",
-        "value": "1617 Boylston Ave, Seattle, WA",
-        "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>"
-      },
-      {
-        "key": "directions-queen-anne",
-        "label": "QUEEN ANNE",
-        "value": "14 Mercer St, Seattle, WA 98109",
-        "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>"
-      },
-      {
-        "key": "phone",
+        "key": "phone-poster",
         "label": "CONTACT THE GYM",
-        "value": "(206) 644-7797"
+        "value": "(206) 644-7797",
+        "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
       },
       {
-        "key": "support",
+        "key": "support-poster",
         "label": "MEMBER SUPPORT",
-        "value": "epicexperience@henrysgymnasium.com"
+        "value": "epicexperience@henrysgymnasium.com",
+        "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
       },
       {
-        "key": "website",
+        "key": "website-poster",
         "label": "HENRY’S GYMNASIUM",
-        "value": "https://henrysgymnasium.com/"
+        "value": "https://henrysgymnasium.com/",
+        "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
       },
       {
-        "key": "terms",
+        "key": "terms-poster",
         "label": "ABOUT THIS PASS",
-        "value": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership."
+        "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
-        "key": "issuer",
+        "key": "issuer-poster",
         "label": "PASS SERVICE",
-        "value": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
+        "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
+        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
       }
     ]
   },
   "generic": {
+    "headerFields": [
+      {
+        "key": "status",
+        "label": "STATUS",
+        "value": "Active",
+        "changeMessage": "Your membership status is now %@."
+      }
+    ],
     "primaryFields": [
       {
         "key": "memberName",
         "label": "MEMBER",
         "value": "Alex Morgan"
-      }
-    ],
-    "headerFields": [
-      {
-        "key": "status",
-        "label": "STATUS",
-        "value": "Active"
       }
     ],
     "secondaryFields": [
       {
         "key": "membership",
         "label": "MEMBERSHIP",
-        "value": "All-Inclusive Wellness"
+        "value": "All-Inclusive Wellness",
+        "changeMessage": "Your membership is now %@."
       },
       {
         "key": "homeClub",
         "label": "HOME CLUB",
-        "value": "Capitol Hill"
+        "value": "Capitol Hill",
+        "changeMessage": "Your home club is now %@."
       }
     ],
     "auxiliaryFields": [
@@ -170,17 +153,6 @@
     ],
     "backFields": [
       {
-        "key": "memberId",
-        "label": "MEMBER NUMBER",
-        "value": "DEMO0001"
-      },
-      {
-        "key": "status",
-        "label": "MEMBERSHIP STATUS",
-        "value": "Active",
-        "changeMessage": "Your membership status is now %@."
-      },
-      {
         "key": "message",
         "label": "FROM HENRY’S",
         "value": "Welcome to Henry’s.",
@@ -189,44 +161,37 @@
       {
         "key": "portal",
         "label": "MANAGE YOUR MEMBERSHIP",
-        "value": "https://henrysgymnasium.thememberspot.com/signin"
-      },
-      {
-        "key": "directions-capitol-hill",
-        "label": "CAPITOL HILL",
-        "value": "1617 Boylston Ave, Seattle, WA",
-        "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>"
-      },
-      {
-        "key": "directions-queen-anne",
-        "label": "QUEEN ANNE",
-        "value": "14 Mercer St, Seattle, WA 98109",
-        "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>"
+        "value": "https://henrysgymnasium.thememberspot.com/signin",
+        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
       },
       {
         "key": "phone",
         "label": "CONTACT THE GYM",
-        "value": "(206) 644-7797"
+        "value": "(206) 644-7797",
+        "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
       },
       {
         "key": "support",
         "label": "MEMBER SUPPORT",
-        "value": "epicexperience@henrysgymnasium.com"
+        "value": "epicexperience@henrysgymnasium.com",
+        "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
       },
       {
         "key": "website",
         "label": "HENRY’S GYMNASIUM",
-        "value": "https://henrysgymnasium.com/"
+        "value": "https://henrysgymnasium.com/",
+        "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
       },
       {
         "key": "terms",
         "label": "ABOUT THIS PASS",
-        "value": "Present your membership barcode at check-in. Membership access is determined by the gym’s membership system. This pass does not itself grant or extend membership."
+        "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
         "key": "issuer",
         "label": "PASS SERVICE",
-        "value": "Wallet pass service operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
+        "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
+        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
       }
     ]
   }
