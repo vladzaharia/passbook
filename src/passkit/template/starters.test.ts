@@ -41,8 +41,11 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
   it('builds the sample with no validation issues', async () => {
     const built = await build(slug, material);
     // Two primary fields are valid on boarding passes; the foundation validator counts one.
+    // The event starter is barcode-only: poster layout needs NFC, which starters never carry.
     const issues = built.report.issues.filter(
-      (i) => !(i.code === 'FIELD_COUNT' && i.path === 'boardingPass.primaryFields'),
+      (i) =>
+        !(i.code === 'FIELD_COUNT' && i.path === 'boardingPass.primaryFields') &&
+        !(i.code === 'PET_NFC' && slug === 'starter-event-ticket'),
     );
     expect(issues).toEqual([]);
   });

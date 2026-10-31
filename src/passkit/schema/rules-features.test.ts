@@ -1,5 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import { NFC_KEY } from './fixtures.ts';
-import { checkRules, pet, poster, type Rule, sbp } from './rules-helpers.ts';
+import { checkRules, has, pet, poster, type Rule, run, sbp } from './rules-helpers.ts';
 
 const RULES: Rule[] = [
   // Featured actions
@@ -202,6 +203,15 @@ const RULES: Rule[] = [
     code: 'SEMANTICS_REQUIRED',
   },
   {
+    rule: 'PET without nfc',
+    fixture: pet,
+    mutate: (p) => {
+      delete p.nfc;
+    },
+    severity: 'warning',
+    code: 'PET_NFC',
+  },
+  {
     rule: 'PET sports semantics',
     fixture: pet,
     mutate: (p) => {
@@ -301,3 +311,14 @@ const RULES: Rule[] = [
 ];
 
 checkRules('rules-features', RULES);
+
+describe('semantics placement', () => {
+  it('counts field-level semantics toward the required layout tags', () => {
+    const report = run(pet, (p) => {
+      const room = p.semantics.venueRoom;
+      delete p.semantics.venueRoom;
+      p.eventTicket.primaryFields[0].semantics = { venueRoom: room };
+    });
+    expect(has(report, 'warning', 'SEMANTICS_REQUIRED')).toBe(false);
+  });
+});

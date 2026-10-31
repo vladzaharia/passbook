@@ -1,6 +1,7 @@
 // Test helper: loads templates/<slug> as a ResolvedTemplate with a registry that serves its files.
 import { join } from 'node:path';
 import { createBehaviorRegistry } from '../behaviors/registry.ts';
+import expiryFromInput from '../behaviors/expiry-from-input/index.ts';
 import venueLocations from '../behaviors/venue-locations/index.ts';
 import { buildPass } from '../build.ts';
 import { FIXTURE_IDENTITY } from '../testing/fixture-identity.ts';
@@ -11,7 +12,10 @@ import type { TemplatePackage } from './package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './registry.ts';
 
 export const TEMPLATES_ROOT = join(import.meta.dirname, '../../../templates');
-export const bakedBehaviors = createBehaviorRegistry([venueLocations as BehaviorPlugin]);
+export const bakedBehaviors = createBehaviorRegistry([
+  venueLocations as BehaviorPlugin,
+  expiryFromInput as BehaviorPlugin,
+]);
 
 export function bakedSlugs(): string[] {
   return listTemplateDirs(TEMPLATES_ROOT);

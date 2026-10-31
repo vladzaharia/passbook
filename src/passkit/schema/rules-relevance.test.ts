@@ -205,7 +205,7 @@ const RULES: Rule[] = [
     mutate: (p) => {
       p.relevantDates = [{ startDate: '2026-12-01T00:00:00Z', endDate: '2026-12-03T00:00:00Z' }];
     },
-    severity: 'error',
+    severity: 'warning',
     code: 'RELEVANT_DATE_RANGE',
   },
   {

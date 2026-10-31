@@ -47,6 +47,38 @@ function fixRemoteImages(entry: Record<string, unknown>): void {
   }
 }
 
+const LOWER_ISO = /^\d{4}-\d{2}-\d{2}[tT]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:[zZ]|[+-]\d{2}:\d{2})$/;
+
+/** RFC 3339 allows lowercase `t` and `z`; Wallet's parser wants ISO 8601 capitals. */
+export function upperIso(value: unknown): unknown {
+  return typeof value === 'string' && LOWER_ISO.test(value) ? value.toUpperCase() : value;
+}
+
+function upperIsoIn(target: Record<string, unknown>, keys?: string[]): void {
+  for (const key of keys ?? Object.keys(target))
+    if (target[key] !== undefined) target[key] = upperIso(target[key]);
+}
+
+const STYLE_KEYS = ['generic', 'posterGeneric', 'storeCard', 'coupon', 'eventTicket', 'boardingPass'];
+
+function normalizeDates(pass: Record<string, unknown>): void {
+  upperIsoIn(pass, ['expirationDate', 'relevantDate']);
+  if (Array.isArray(pass.relevantDates))
+    for (const entry of pass.relevantDates) if (isObject(entry)) upperIsoIn(entry);
+  if (isObject(pass.semantics)) upperIsoIn(pass.semantics);
+  for (const style of STYLE_KEYS) {
+    const dict = pass[style];
+    if (!isObject(dict)) continue;
+    for (const fields of Object.values(dict))
+      if (Array.isArray(fields))
+        for (const field of fields) {
+          if (!isObject(field)) continue;
+          upperIsoIn(field, ['value']);
+          if (isObject(field.semantics)) upperIsoIn(field.semantics);
+        }
+  }
+}
+
 /**
  * Prepares a pass for validation and signing: strips Pass Designer ids, converts hex colors,
  * and writes the compatibility duplicates Wallet versions disagree on. Returns a new object.
@@ -54,6 +86,7 @@ function fixRemoteImages(entry: Record<string, unknown>): void {
 export function normalizePass(input: PassJson): PassJson {
   const pass = stripDesignerIds(structuredClone(input)) as Record<string, unknown>;
 
+  normalizeDates(pass);
   for (const key of COLOR_KEYS) if (pass[key] !== undefined) pass[key] = hexToRgb(pass[key]);
   if (isObject(pass.semantics) && Array.isArray(pass.semantics.seats))
     for (const seat of pass.semantics.seats)

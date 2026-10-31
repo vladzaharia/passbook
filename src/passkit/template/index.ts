@@ -28,3 +28,4 @@ export {
   type TemplatePackage,
 } from './package.ts';
 export { isAllowedPointer } from './pointer.ts';
+export { unmetRequirements, validateRequires } from './requires.ts';
