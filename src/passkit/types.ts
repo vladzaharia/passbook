@@ -1,5 +1,10 @@
 /** Shared passkit types. No Cloudflare or Hono imports: this module runs in Node and in Workers. */
 
+import type { PassJson } from './schema/pass-types.ts';
+
+export type * from './schema/pass-types.ts';
+export type * from './schema/semantic-types.ts';
+
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
 export type PassStyle =
@@ -28,83 +33,9 @@ export type ImageSlot =
   | 'thumbnail'
   | 'artwork'
   | 'background'
-  | 'footer';
-
-export interface PassField {
-  key: string;
-  value: Json;
-  label?: string;
-  attributedValue?: Json;
-  changeMessage?: string;
-  dataDetectorTypes?: string[];
-  textAlignment?: string;
-  dateStyle?: string;
-  timeStyle?: string;
-  numberStyle?: string;
-  currencyCode?: string;
-  semantics?: Record<string, Json>;
-  row?: 0 | 1;
-  [key: string]: Json | undefined;
-}
-
-export interface PassFields {
-  headerFields?: PassField[];
-  primaryFields?: PassField[];
-  secondaryFields?: PassField[];
-  auxiliaryFields?: PassField[];
-  backFields?: PassField[];
-  additionalInfoFields?: PassField[];
-  transitType?: string;
-  [key: string]: Json | PassField[] | undefined;
-}
-
-export interface PassBarcode {
-  format: string;
-  message: string;
-  messageEncoding: string;
-  altText?: string;
-}
-
-export interface PassLocation {
-  latitude: number;
-  longitude: number;
-  altitude?: number;
-  relevantText?: string;
-  maxDistance?: number;
-}
-
-/** pass.json. Known keys are typed; anything else is allowed and produces a validator warning. */
-export interface PassJson {
-  formatVersion: 1;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  serialNumber: string;
-  organizationName: string;
-  description: string;
-  webServiceURL?: string;
-  authenticationToken?: string;
-  logoText?: string;
-  foregroundColor?: string;
-  backgroundColor?: string;
-  labelColor?: string;
-  barcodes?: PassBarcode[];
-  locations?: PassLocation[];
-  relevantDate?: string;
-  expirationDate?: string;
-  voided?: boolean;
-  sharingProhibited?: boolean;
-  suppressStripShine?: boolean;
-  userInfo?: Json;
-  featuredActions?: Json[];
-  semantics?: Record<string, Json>;
-  generic?: PassFields;
-  posterGeneric?: PassFields;
-  storeCard?: PassFields;
-  coupon?: PassFields;
-  eventTicket?: PassFields;
-  boardingPass?: PassFields;
-  [key: string]: unknown;
-}
+  | 'footer'
+  | 'personalizationLogo'
+  | 'venueMap';
 
 /** Information about the identity a pass is signed with, used by validatePass. */
 export interface PassIdentity {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NFC_KEY } from './schema/fixtures.ts';
 import type { PassIdentity, PassJson } from './types.ts';
 import { validatePass } from './validate.ts';
 
@@ -90,7 +91,10 @@ describe('validatePass', () => {
 
   it('accepts nfc for entitled identities and can treat warnings as errors', () => {
     expect(
-      validatePass(base({ nfc: { message: 'x' } }), icon, { ...identity, nfcEnabled: true }).ok,
+      validatePass(base({ nfc: { message: 'x', encryptionPublicKey: NFC_KEY } }), icon, {
+        ...identity,
+        nfcEnabled: true,
+      }).ok,
     ).toBe(true);
     expect(validatePass(base({ futureKey: 1 }), icon, identity, { strict: true }).ok).toBe(false);
   });

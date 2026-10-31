@@ -13,6 +13,8 @@ export interface SignedPass {
   files: Record<string, Uint8Array>;
   /** name -> SHA-1 hex, as written to manifest.json. */
   manifest: Record<string, string>;
+  /** CRC-32 of the files whose value was supplied; the packager computes the rest. */
+  crc32?: Record<string, number>;
 }
 
 export interface CertificateInfo {
@@ -67,6 +69,26 @@ function webCrypto(): pki.ICryptoEngine {
     crypto,
     subtle: crypto.subtle,
   }) as unknown as pki.ICryptoEngine;
+}
+
+const chainChecks = new Map<string, Promise<boolean>>();
+
+/** The RSA check of signer against WWDR is the same on every call; validity dates are not cached. */
+function chainIsValid(
+  material: SigningMaterial,
+  signer: pki.Certificate,
+  intermediate: pki.Certificate,
+  engine: pki.ICryptoEngine,
+): Promise<boolean> {
+  const key = `${material.certificate}\n${material.intermediate}`;
+  let result = chainChecks.get(key);
+  if (!result) {
+    if (chainChecks.size >= 16) chainChecks.clear();
+    result = signer.verify(intermediate, engine);
+    chainChecks.set(key, result);
+    result.catch(() => chainChecks.delete(key));
+  }
+  return result;
 }
 
 const signingKeys = new Map<string, Promise<CryptoKey>>();
@@ -140,7 +162,8 @@ export async function signManifest(
     throw new Error('Pass identity does not match signing certificate');
   }
   const engine = webCrypto();
-  if (!(await signer.verify(intermediate, engine))) throw new Error('Invalid certificate chain');
+  if (!(await chainIsValid(material, signer, intermediate, engine)))
+    throw new Error('Invalid certificate chain');
 
   const data = manifestBytes.buffer.slice(
     manifestBytes.byteOffset,
@@ -194,23 +217,38 @@ export async function signManifest(
 }
 
 const SAFE_NAME = /^(?:[A-Za-z0-9_-]+\.lproj\/)?[A-Za-z0-9_@.-]+\.(?:png|strings|json)$/;
+const RESERVED = new Set(['pass.json', 'manifest.json', 'signature']);
+const SHA1_HEX = /^[0-9a-f]{40}$/;
+
+export interface SignPassOptions {
+  now?: Date;
+  /** name -> SHA-1 hex recorded at upload; skips hashing those assets. */
+  precomputedSha1?: Record<string, string>;
+  /** name -> CRC-32 recorded at upload; carried through to the packager. */
+  precomputedCrc32?: Record<string, number>;
+}
 
 /**
  * Produces every file of a signed .pkpass. `pass` must already be validated (see validatePass).
- * `precomputedSha1` carries known asset hashes so large images are not re-hashed.
+ * Precomputed hashes are trusted: they must come from the stored asset, not from a request.
  */
 export async function signPass(
   pass: Record<string, unknown>,
   assets: Record<string, Uint8Array>,
   material: SigningMaterial,
-  options: { now?: Date; precomputedSha1?: Record<string, string> } = {},
+  options: SignPassOptions = {},
 ): Promise<SignedPass> {
   const files: Record<string, Uint8Array> = {};
+  const lower = new Set<string>();
   for (const [name, bytes] of Object.entries(assets)) {
-    if (!SAFE_NAME.test(name) || name.includes('..') || name === 'pass.json')
+    if (!SAFE_NAME.test(name) || name.includes('..') || RESERVED.has(name))
       throw new Error(`Unsafe asset path: ${name}`);
+    if (lower.has(name.toLowerCase())) throw new Error(`Duplicate asset path: ${name}`);
+    lower.add(name.toLowerCase());
     files[name] = bytes;
   }
+  for (const [name, sha1] of Object.entries(options.precomputedSha1 ?? {}))
+    if (!SHA1_HEX.test(sha1)) throw new Error(`Invalid precomputed SHA-1 for ${name}`);
   files['pass.json'] = encoder.encode(JSON.stringify(pass as Json));
   const { manifest, bytes } = await buildManifest(files, options.precomputedSha1);
   const passTypeIdentifier =
@@ -222,5 +260,9 @@ export async function signPass(
   });
   files['manifest.json'] = bytes;
   files.signature = signature;
-  return { files, manifest };
+  const crc32: Record<string, number> = {};
+  for (const [name, value] of Object.entries(options.precomputedCrc32 ?? {}))
+    if (name in assets && Number.isInteger(value) && value >= 0 && value <= 0xffffffff)
+      crc32[name] = value;
+  return { files, manifest, ...(Object.keys(crc32).length ? { crc32 } : {}) };
 }
