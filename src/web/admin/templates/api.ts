@@ -95,7 +95,8 @@ export function useDraftPreview(id: string | undefined, input: Record<string, un
   });
 }
 
-const POLL_MS = 1500;
+/** Mutable so tests can poll fast. */
+export const importPolling = { ms: 1500 };
 
 /** Polls until the workflow reaches a final state. */
 export function useImportStatus(uploadId: string | undefined) {
@@ -109,7 +110,9 @@ export function useImportStatus(uploadId: string | undefined) {
     refetchInterval: (query) => {
       const s = query.state.data?.status;
       if (s === 'complete' || s === 'errored' || s === 'terminated') return false;
-      return isApiError(query.state.error) && !query.state.error.isTransient ? false : POLL_MS;
+      return isApiError(query.state.error) && !query.state.error.isTransient
+        ? false
+        : importPolling.ms;
     },
   });
 }

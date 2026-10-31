@@ -66,6 +66,9 @@ function RowActions({ pass }: { pass: PassSummaryDto }) {
   );
 }
 
+/** Small lists render plainly; the window only pays off for long ones. */
+const VIRTUALIZE_ABOVE = 100;
+
 export function PassesListPage({
   search,
   onSearch,
@@ -181,7 +184,7 @@ export function PassesListPage({
             data={rows}
             getRowId={(r) => r.id}
             loading={list.isPending}
-            virtualHeight={640}
+            virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
             rowHeight={56}
             empty={
               <EmptyState

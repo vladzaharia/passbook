@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Mail, RefreshCw } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { DeliveryEntrySchema, type PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../../lib/api.ts';
@@ -76,44 +76,55 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
     }
   }
 
-  const columns: ColumnDef<Entry, never>[] = [
-    { id: 'kind', header: 'Kind', enableSorting: false, cell: ({ row }) => row.original.kind },
-    {
-      id: 'state',
-      header: 'State',
-      enableSorting: false,
-      cell: ({ row }) => <StatusPill status={row.original.state} tone={TONE[row.original.state]} />,
-    },
-    {
-      id: 'attempts',
-      header: 'Attempts',
-      enableSorting: false,
-      cell: ({ row }) => row.original.attempts,
-    },
-    {
-      id: 'error',
-      header: 'Error',
-      enableSorting: false,
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.errorCode ?? ''}</span>,
-    },
-    {
-      id: 'created',
-      header: 'Created',
-      enableSorting: false,
-      cell: ({ row }) => formatDate(row.original.createdAt),
-    },
-    {
-      id: 'retry',
-      header: () => <span className="sr-only">Retry</span>,
-      enableSorting: false,
-      cell: ({ row }) =>
-        row.original.state === 'failed' || row.original.state === 'partial' ? (
-          <Button size="sm" variant="outline" onClick={() => void retry(row.original)}>
-            Retry
-          </Button>
-        ) : null,
-    },
-  ];
+  // Cell renderers are component types to TanStack Table: keep the array stable or rows remount.
+  const retryRef = useRef(retry);
+  retryRef.current = retry;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryRef is stable
+  const columns = useMemo<ColumnDef<Entry, never>[]>(
+    () => [
+      { id: 'kind', header: 'Kind', enableSorting: false, cell: ({ row }) => row.original.kind },
+      {
+        id: 'state',
+        header: 'State',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <StatusPill status={row.original.state} tone={TONE[row.original.state]} />
+        ),
+      },
+      {
+        id: 'attempts',
+        header: 'Attempts',
+        enableSorting: false,
+        cell: ({ row }) => row.original.attempts,
+      },
+      {
+        id: 'error',
+        header: 'Error',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.errorCode ?? ''}</span>
+        ),
+      },
+      {
+        id: 'created',
+        header: 'Created',
+        enableSorting: false,
+        cell: ({ row }) => formatDate(row.original.createdAt),
+      },
+      {
+        id: 'retry',
+        header: () => <span className="sr-only">Retry</span>,
+        enableSorting: false,
+        cell: ({ row }) =>
+          row.original.state === 'failed' || row.original.state === 'partial' ? (
+            <Button size="sm" variant="outline" onClick={() => void retryRef.current(row.original)}>
+              Retry
+            </Button>
+          ) : null,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="grid gap-4">
