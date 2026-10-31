@@ -1,6 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { AuditPage } from '../../../admin/audit/audit-page.tsx';
+import { parseAuditSearch } from '../../../admin/audit/audit-search.ts';
 
 export const Route = createFileRoute('/admin/audit/')({
-  component: () => <RoutePlaceholder title="Audit log" />,
+  validateSearch: parseAuditSearch,
+  component: function AuditRoute() {
+    const search = Route.useSearch();
+    const navigate = Route.useNavigate();
+    return <AuditPage search={search} onSearch={(next) => void navigate({ search: next })} />;
+  },
 });

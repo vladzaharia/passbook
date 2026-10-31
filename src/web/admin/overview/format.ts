@@ -6,8 +6,8 @@ export function formatDateTime(ms: number | null | undefined): string {
   return ms == null ? 'Never' : DATE.format(ms);
 }
 
-export function formatDay(ms: number | null | undefined): string {
-  return ms == null ? 'None' : DAY.format(ms);
+export function formatDay(ms: number | null | undefined, empty = 'None'): string {
+  return ms == null ? empty : DAY.format(ms);
 }
 
 export function formatCount(n: number): string {

@@ -1,11 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RoutePlaceholder } from '../../../ui/route-placeholder.tsx';
+import { UserDetailPage } from '../../../admin/users/user-detail.tsx';
 
 export const Route = createFileRoute('/admin/users/$userId')({
-  component: () => (
-    <RoutePlaceholder
-      title="User"
-      breadcrumbs={[{ label: 'Users', to: '/admin/users' }, { label: 'User' }]}
-    />
-  ),
+  component: function UserRoute() {
+    const { userId } = Route.useParams();
+    return <UserDetailPage userId={userId} />;
+  },
 });
