@@ -13,6 +13,7 @@ export default defineConfig({
       target: 'react',
       autoCodeSplitting: true,
       routesDirectory: './src/web/routes',
+      routeFileIgnorePattern: '\\.test\\.',
       generatedRouteTree: './src/web/routeTree.gen.ts',
     }),
     react(),

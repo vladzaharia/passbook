@@ -1,0 +1,78 @@
+# Wallet platform: agent rules
+
+Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`. This file wins on conventions.
+
+## Commands
+
+- `npm run check` = gen, biome ci, typecheck, all tests, build (vite + `wrangler deploy --dry-run`). Must pass before you finish.
+- `npm run format` fixes style. `npm run test:unit|worker|web` run one project. `npm run test:e2e` needs `npm run dev:vars` once.
+- `npm run dev` starts vite with the Worker and local D1 (`npm run db:local` first). `npm run dev:oidc` starts the mock Pocket ID.
+- `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
+
+## Layering
+
+`routes.ts` (HTTP, zod validation, auth middleware) -> `service.ts` (rules; no Hono import) -> `repo.ts` (the only place SQL appears; typed row mappers). Tenant-scoped repo functions take `orgId`.
+
+- Domain code throws `AppError` subclasses (`platform/errors.ts`) with stable codes. Only `errors.ts` maps to HTTP (problem+json).
+- Inject time and ids: `ctx.clock.now()`, `ctx.ids.id()/token()`. No `Date.now()` or `crypto.randomUUID()` in services.
+- Services take a `ServiceContext` (`platform/service-context.ts`). Queue, cron and workflow code builds one with `createServiceContext(env)`.
+- Validate every input with zod schemas from `src/shared/contracts/<area>.ts`. Extend your own area file; do not edit others'.
+- Logs: `ctx.log.info('event.name', { orgId, code })`. Never log emails, tokens, personalization or capability URLs (the logger redacts by key, but do not rely on it).
+- No silent `catch`. Classify, log with a stable code, or rethrow.
+- Registries (behaviors, connectors, baked templates) come from `npm run gen`. Add a folder; never edit a shared index.
+- Files under ~300 lines, named exports, kebab-case, tests beside code (`*.test.ts`). No Henry's-specific code outside `templates/`.
+
+## Ports (build against these)
+
+| Port | File |
+| --- | --- |
+| Auth middleware, `AuthContext`, `SessionStore`, `ApiKeyStore` | `src/worker/platform/auth.ts` |
+| Errors, logger, clock, ids, crypto, db, safe-fetch, rate-limit, analytics | `src/worker/platform/*.ts` |
+| Router + stub helper | `src/worker/platform/openapi.ts` |
+| Pass engine (`buildPass`, `signPass`, `packagePass`, `validatePass`, types) | `src/passkit/index.ts` |
+| `TemplateRegistry`, `ResolvedTemplate`, in-memory registry | `src/passkit/template/` |
+| Identity resolver | `src/worker/modules/identities/resolver.ts` |
+| `ApnsTransport`, `Mailer` | `src/worker/modules/delivery/{apns,mailer}.ts` |
+| `ConnectorDefinition`, registry | `src/worker/connectors/{types,registry}.ts` |
+| Job kinds and handlers | `src/worker/jobs/{types,registry}.ts`; handlers in `modules/<m>/jobs.ts` |
+| Cron hooks | `src/worker/jobs/cron.ts` |
+| Workflows | `src/worker/workflows/*.ts` |
+| API contracts | `src/shared/contracts/*.ts` |
+| Test factories, fake auth, fakes, mock OIDC | `test/helpers/`, `test/mock-oidc/` |
+
+Replace a stub by implementing it in your module's `routes.ts` with `register(router, tag, spec, handler)` (same spec as the stub) and keep the `export const xRoutes` name. `app.ts` already mounts every module.
+
+Test routes before auth exists: `createApp({ stores: fakeAuth().stores })` and send `fake.admin()` / `fake.user()` / `fake.apiKey()` headers.
+
+## Data
+
+- Only the integration agent edits `migrations/0001_platform.sql`. If you need schema changes, add `migrations/00NN_<module>.sql` (next free number, prefixed with your module) and say so in your report.
+- IDs are UUIDv7 text, times are integer ms, emails go through `normalizeEmail`/`strictEmail` (`src/shared/email.ts`).
+- Secrets at rest use `platform/crypto.ts` envelope encryption. Session, magic-link and API-key tokens are stored hashed.
+- Worker tests get all migrations applied and a generated signing identity (`makeEnv()`). Tests never read `.dev.vars` or `.secrets/`.
+
+## Copy and docs
+
+Terse. UI: short plain labels, no marketing tone or filler, no explanatory paragraph where a label or empty state works. Errors: what happened and what to do, one sentence. Docs: task-oriented, no restating the obvious. Comments: only for a non-obvious why. Commits: one-line subject, body only when needed.
+
+## Git
+
+Work on your own branch from the foundation commit, in your own directories, with small Conventional Commits. Do not touch files outside your ownership; if a shared file needs a change, say so in your report. Run `npm run check` before finishing. Never commit secrets, never deploy, never use `--remote`.
+
+## Ownership
+
+| | Workstream | Owns |
+| --- | --- | --- |
+| a | passkit engine | `src/passkit/**` (except template registry port shape) |
+| b | pass-view + PassCard | `src/shared/pass-view/**`, `src/web/pass-card/**` |
+| c | templates | `src/worker/modules/templates/**`, `src/worker/workflows/template-import.ts`, `templates/**`, `tools/build-templates.ts` |
+| d | passes, holders, delivery, apple, public | `modules/{passes,holders,delivery,apple,public}/**`, `workflows/bulk-reissue.ts`, `src/worker/ssr/**`, retention hooks |
+| e | auth, users, api-keys, me | `modules/{auth,users,api-keys,me}/**`, `src/worker/stores.ts` |
+| f | connections | `modules/connections/**`, `src/worker/connectors/**`, `workflows/connection-sync.ts` |
+| g | orgs, identities, settings, audit, status, metrics | `modules/{orgs,identities,settings,audit,status,metrics}/**` |
+| h | admin shell + core pages | `src/web/{main.tsx,router.tsx,ui/**,lib/**,styles/**}`, `src/web/routes/admin/{index,status,settings,audit,users,orgs,identities,api-keys}**` |
+| i | admin passes, templates, connections pages | `src/web/routes/admin/{passes,templates,connections}**`, `src/web/admin/{passes,templates,connections}/**` |
+| j | portal, login, email templates | `src/web/routes/{index,login,account,passes}**`, `src/web/portal/**`, `src/worker/email/**` |
+| integration | schema, wiring, e2e | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
+
+Foundation owns `src/worker/platform/**`, `src/shared/contracts/common.ts`, tooling configs and `AGENTS.md`; change them only for a bug and tell the integration agent.
