@@ -24,6 +24,9 @@
     "test:e2e": "playwright test",
     "db:local": "wrangler d1 migrations apply wallet-platform --local",
     "credentials": "node tools/credentials.ts",
+    "identity:add": "node tools/identity-add.ts",
+    "predeploy": "node tools/deploy.ts --check",
+    "deploy": "node tools/deploy.ts",
     "check": "npm run gen && npm run ci:lint && npm run typecheck && npm run test && npm run build",
     "dev:oidc": "node test/mock-oidc/server.ts 5174"
   },

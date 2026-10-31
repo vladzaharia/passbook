@@ -24,7 +24,7 @@ describe('worker entrypoint', () => {
     const user = await makeUser(f);
     const session = await makeSession(f, { userId: user.id });
     const ok = await SELF.fetch('https://wallet.test/api/v1/session', {
-      headers: { cookie: session.headers.cookie },
+      headers: { cookie: session.headers.cookie ?? '' },
     });
     expect(ok.status).toBe(200);
     expect(await ok.json()).toMatchObject({ authenticated: true, user: { id: user.id } });

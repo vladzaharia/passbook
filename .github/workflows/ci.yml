@@ -1,7 +1,7 @@
 name: ci
 on:
   push:
-    branches: [main, platform]
+    branches: [main, platform, release]
   pull_request:
 
 concurrency:
@@ -43,3 +43,18 @@ jobs:
           path: |
             playwright-report
             test-results
+
+  predeploy:
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: wrangler.jsonc has no placeholder ids or keys
+        run: npm run predeploy
