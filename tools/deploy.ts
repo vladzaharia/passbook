@@ -15,6 +15,7 @@ const database = 'wallet-platform';
 
 const problems = predeployProblems(readJsonc(resolve(root, 'wrangler.jsonc')), {
   allowNoPush: args.has('--allow-no-push'),
+  allowNoOidc: args.has('--allow-no-oidc'),
 });
 if (problems.length > 0) {
   console.error(`Not deploying. Fix wrangler.jsonc:\n${problems.map((p) => `- ${p}`).join('\n')}`);

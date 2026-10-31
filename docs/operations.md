@@ -81,6 +81,9 @@ Admin sign-in for when Pocket ID is down.
   30 min idle, 4 h max. Every sign-in is in the audit log; failures are logged and rate limited.
 - Turn it off: disable the "Break-glass admin" user in Users, or set the secret to `off`
   (anything that is not a 64-character hex hash makes the route 404).
+- Deploying while Pocket ID is down: `npm run deploy -- --apply --allow-no-oidc` accepts the
+  placeholder `OIDC_CLIENT_ID`; set a throwaway `OIDC_CLIENT_SECRET` and sign in with break-glass.
+  Pocket ID sign-in shows an error until the real client id is set and deployed.
 - Keep the token offline (password manager). Rotate it after any use you did not expect.
 
 ## Day two

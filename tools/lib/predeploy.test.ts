@@ -31,6 +31,12 @@ describe('predeployProblems', () => {
     const { mtls_certificates: _m, ...noPush } = ready;
     expect(predeployProblems(noPush)).toHaveLength(1);
     expect(predeployProblems(noPush, { allowNoPush: true })).toEqual([]);
+  });
+
+  it('allows a placeholder OIDC client id only with allowNoOidc', () => {
+    const config = { vars: { OIDC_CLIENT_ID: 'wallet-placeholder-client-id' } };
+    expect(predeployProblems(config, { allowNoPush: true })).toHaveLength(1);
+    expect(predeployProblems(config, { allowNoPush: true, allowNoOidc: true })).toEqual([]);
     expect(
       predeployProblems({
         ...ready,

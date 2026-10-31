@@ -12,6 +12,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export interface PredeployOptions {
   /** Deploy without APNs push (no mtls_certificates binding named APNS). */
   allowNoPush?: boolean;
+  /** Deploy before Pocket ID has a client: OIDC_CLIENT_ID may stay a placeholder (break-glass only). */
+  allowNoOidc?: boolean;
 }
 
 /** Problems that make a production deploy wrong. Empty means the config is ready. */
@@ -28,7 +30,9 @@ export function predeployProblems(
   }
   for (const [key, value] of Object.entries(config.vars ?? {})) {
     if (typeof value !== 'string') continue;
-    if (PLACEHOLDER.test(value)) problems.push(`vars.${key} is a placeholder (${value}).`);
+    const oidcSkipped = key === 'OIDC_CLIENT_ID' && options.allowNoOidc;
+    if (PLACEHOLDER.test(value) && !oidcSkipped)
+      problems.push(`vars.${key} is a placeholder (${value}).`);
     if (key === 'TURNSTILE_SITE_KEY' && TURNSTILE_TEST_KEY.test(value))
       problems.push('vars.TURNSTILE_SITE_KEY is a Cloudflare test key.');
   }
