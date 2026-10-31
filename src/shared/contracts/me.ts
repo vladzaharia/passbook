@@ -14,6 +14,8 @@ export const MyPassSchema = z.object({
   downloadUrl: z.string(),
   passJson: z.record(z.string(), z.unknown()),
   assetBaseUrl: z.string(),
+  /** Image files the pass can load: template files plus per-pass overrides. */
+  assetNames: z.array(z.string()),
 });
 export const MyPassListSchema = pageOf(MyPassSchema);
 
@@ -40,6 +42,8 @@ export const RemovePassResponseSchema = z.object({ ok: z.literal(true) });
 export const RefreshResponseSchema = z.object({
   accepted: z.literal(true),
   requestedAt: TimestampSchema,
+  /** Seconds before the next refresh is accepted (settings refresh.userCooldownSeconds). */
+  cooldownSeconds: z.number().int(),
 });
 
 /** GET /api/v1/me/passes.pkpasses?part=N: my active passes as .pkpasses bundles of up to 10. */

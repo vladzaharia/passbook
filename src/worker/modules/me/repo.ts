@@ -7,6 +7,9 @@ export { getSession, listLiveSessions } from '../auth/sessions-repo.ts';
 
 export interface MyPassRow {
   id: string;
+  org_id: string;
+  template_id: string;
+  template_version: string;
   display_title: string | null;
   display_subtitle: string | null;
   status: 'active' | 'voided';
@@ -21,7 +24,7 @@ export interface MyPassRow {
 
 // pass_versions keeps the built pass.json for recent versions; it is what the card renders.
 const SELECT = `
-  SELECT p.id, p.display_title, p.display_subtitle, p.status, p.modified_at, p.last_refreshed_at,
+  SELECT p.id, p.org_id, p.template_id, p.template_version, p.display_title, p.display_subtitle, p.status, p.modified_at, p.last_refreshed_at,
          p.refresh_requested_at, p.download_token, t.name AS template_name, o.name AS org_name,
          COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json
   FROM passes p

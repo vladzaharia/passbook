@@ -131,7 +131,11 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
             ) : picked !== undefined && version.isPending ? (
               <Skeleton className="h-80 w-full" />
             ) : (
-              <PassPreviewPanel passJson={shown.passJson} assetBaseUrl={shown.assetBaseUrl} />
+              <PassPreviewPanel
+                passJson={shown.passJson}
+                assetBaseUrl={shown.assetBaseUrl}
+                assetNames={p.assetNames}
+              />
             )}
           </CardBody>
         </Card>

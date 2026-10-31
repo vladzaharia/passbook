@@ -137,7 +137,7 @@ describe('refresh', () => {
       handlers: {
         '/api/v1/me/passes': () => list(passFixture()),
         '/api/v1/me/passes/p1/refresh': () =>
-          json({ accepted: true, requestedAt: Date.now() - 25_000 }, 202),
+          json({ accepted: true, requestedAt: Date.now() - 25_000, cooldownSeconds: 30 }, 202),
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Refresh' }));

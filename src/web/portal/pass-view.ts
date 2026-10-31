@@ -13,7 +13,7 @@ export function assetUrls(base: string, names?: readonly string[]): Record<strin
 
 export function toView(pass: MyPass): PassView {
   return normalize(pass.passJson as unknown as PassJson, {
-    assets: assetUrls(pass.assetBaseUrl, (pass as { assetNames?: string[] }).assetNames),
+    assets: assetUrls(pass.assetBaseUrl, pass.assetNames),
   });
 }
 

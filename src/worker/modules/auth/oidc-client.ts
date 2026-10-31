@@ -10,8 +10,8 @@ import {
   errors as joseErrors,
   jwtVerify,
 } from 'jose';
-import { createLogger } from '../../platform/log.ts';
 import { randomBytes, sha256Base64Url, toBase64Url } from '../../platform/ids.ts';
+import { createLogger } from '../../platform/log.ts';
 import { isIpLiteral } from '../../platform/safe-fetch.ts';
 
 export const ALLOWED_ID_TOKEN_ALGS: readonly string[] = ['RS256', 'ES256', 'EdDSA'];

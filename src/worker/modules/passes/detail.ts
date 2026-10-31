@@ -11,6 +11,7 @@ import {
   currentPassJson,
   getPass,
   getVersion,
+  listAssets,
   listVersions,
   type Pass,
 } from './repo.ts';
@@ -42,6 +43,23 @@ export function toSummary(pass: Pass) {
     modifiedAt: pass.modifiedAt,
     createdAt: pass.createdAt,
   };
+}
+
+/** Image files a pass can load: template files plus per-pass overrides. */
+export async function assetNamesOf(
+  ctx: ServiceContext,
+  pass: Pick<Pass, 'id' | 'orgId' | 'templateId' | 'templateVersion'>,
+): Promise<string[]> {
+  const names = new Set<string>();
+  try {
+    const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
+    for (const a of template.assets) names.add(a.name);
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    ctx.log.warn('pass.asset_names_unavailable', { passId: pass.id, code: error.code });
+  }
+  for (const a of await listAssets(ctx.env.DB, pass.id)) names.add(a.name);
+  return [...names];
 }
 
 export function linksOf(ctx: ServiceContext, pass: Pass) {
@@ -111,6 +129,7 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
     fieldSources: pass.fieldSources,
     passJson,
     ...linksOf(ctx, pass),
+    assetNames: await assetNamesOf(ctx, pass),
     registrations,
     lastRefreshedAt: pass.lastRefreshedAt,
     versions: versions.map(versionSummary),

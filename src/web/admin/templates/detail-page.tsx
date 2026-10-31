@@ -192,6 +192,7 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
                 <PassPreviewPanel
                   passJson={preview.data.passJson}
                   assetBaseUrl={preview.data.assetBaseUrl}
+                  assetNames={preview.data.assetNames}
                 />
               ) : preview.isError ? (
                 <ErrorState error={preview.error} onRetry={() => void preview.refetch()} />

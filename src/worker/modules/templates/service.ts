@@ -199,6 +199,12 @@ export async function preview(
     return {
       passJson: result.passJson,
       warnings: result.issues,
+      assetNames: [
+        ...new Set([
+          ...template.assets.map((a) => a.name),
+          ...(template.manifest.previewOnlyAssets ?? []),
+        ]),
+      ],
       assetBaseUrl: `${baseUrl(ctx.env)}/api/v1/templates/${encodeURIComponent(id)}/versions/${template.version}/assets`,
     };
   } catch (error) {

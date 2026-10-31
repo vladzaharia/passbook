@@ -229,14 +229,15 @@ export async function requestRefresh(
   ctx: ServiceContext,
   passId: string,
   actor: Actor,
-): Promise<{ requestedAt: number; coalesced: boolean }> {
+): Promise<{ requestedAt: number; coalesced: boolean; cooldownSeconds: number }> {
   const pass = await getPass(ctx.env.DB, passId);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const now = ctx.clock.now();
   const settings = await getPlatformSettings(ctx);
-  const windowMs = settings['refresh.userCooldownSeconds'] * 1000;
+  const cooldownSeconds = settings['refresh.userCooldownSeconds'];
+  const windowMs = cooldownSeconds * 1000;
   if (!(await claimRefresh(ctx.env.DB, passId, now, windowMs)))
-    return { requestedAt: pass.refreshRequestedAt ?? now, coalesced: true };
+    return { requestedAt: pass.refreshRequestedAt ?? now, coalesced: true, cooldownSeconds };
   await ctx.env.JOBS.send({
     kind: 'pass.refresh',
     passId,
@@ -248,7 +249,7 @@ export async function requestRefresh(
     orgId: pass.orgId,
     templateId: pass.templateId,
   });
-  return { requestedAt: now, coalesced: false };
+  return { requestedAt: now, coalesced: false, cooldownSeconds };
 }
 
 export interface ConnectionRecordInput {

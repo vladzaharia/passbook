@@ -29,9 +29,10 @@ export function RefreshButton({
 }) {
   const client = useQueryClient();
   const [localRequestedAt, setLocal] = useState<number | null>(null);
+  const [cooldownMs, setCooldownMs] = useState<number | undefined>(undefined);
   const [active, setActive] = useState(false);
   const now = useNow(active);
-  const { phase, secondsLeft } = refreshPhase(pass, now, localRequestedAt);
+  const { phase, secondsLeft } = refreshPhase(pass, now, localRequestedAt, cooldownMs);
   const prev = useRef(phase);
 
   const mutation = useMutation({
@@ -40,6 +41,7 @@ export function RefreshButton({
       // The server coalesces clicks inside its cooldown and echoes the earlier request.
       if (res.requestedAt < clickedAt - 5000) toast.info('Refresh already requested.');
       setLocal(res.requestedAt);
+      setCooldownMs(res.cooldownSeconds * 1000);
       setActive(true);
       void client.invalidateQueries({ queryKey: myPassesKey });
     },

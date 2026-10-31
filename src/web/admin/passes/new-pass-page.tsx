@@ -63,7 +63,11 @@ function LivePreview({
       />
       <CardBody>
         {preview.data ? (
-          <PassPreview passJson={preview.data.passJson} assetBaseUrl={preview.data.assetBaseUrl} />
+          <PassPreview
+            passJson={preview.data.passJson}
+            assetBaseUrl={preview.data.assetBaseUrl}
+            assetNames={preview.data.assetNames}
+          />
         ) : preview.isError || !valid ? (
           <p className="text-sm text-fg-muted">Preview unavailable until the details are valid.</p>
         ) : (

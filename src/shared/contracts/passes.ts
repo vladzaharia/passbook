@@ -63,6 +63,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   /** Signed pass.json of the current version, for rendering. */
   passJson: z.record(z.string(), z.unknown()),
   assetBaseUrl: z.string(),
+  /** Image files the pass can load: template files plus per-pass overrides. */
+  assetNames: z.array(z.string()),
   downloadUrl: z.string(),
   publicUrl: z.string(),
   registrations: z.number().int(),

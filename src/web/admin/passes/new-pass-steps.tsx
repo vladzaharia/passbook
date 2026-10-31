@@ -69,6 +69,7 @@ function TemplateCard({
           <PassPreview
             passJson={preview.data.passJson}
             assetBaseUrl={preview.data.assetBaseUrl}
+            assetNames={preview.data.assetNames}
             className="max-w-48"
           />
         ) : preview.isPending ? (

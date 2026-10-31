@@ -148,7 +148,7 @@ describe('passes', () => {
     const deps: MeDeps = {
       requestRefresh: async (...args) => {
         calls.push(['refresh', args[1], args[2]]);
-        return { requestedAt: 42, coalesced: false };
+        return { requestedAt: 42, coalesced: false, cooldownSeconds: 30 };
       },
       removePassFromUser: async (...args) => {
         calls.push(['remove', args[1], args[2]]);
@@ -165,6 +165,7 @@ describe('passes', () => {
       expect(await refreshMyPass(ctx, user.id, mine.id, deps)).toEqual({
         accepted: true,
         requestedAt: 42,
+        cooldownSeconds: 30,
       });
       expect(calls).toEqual([['refresh', mine.id, { type: 'user', id: user.id }]]);
     });

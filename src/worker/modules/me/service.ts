@@ -15,6 +15,7 @@ import { recordAudit } from '../audit/service.ts';
 import { processVerifyRequest } from '../auth/magic-service.ts';
 import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
 import { removePassFromUser } from '../holders/service.ts';
+import { assetNamesOf } from '../passes/detail.ts';
 import { requestRefresh } from '../passes/service.ts';
 import * as repo from './repo.ts';
 
@@ -40,7 +41,7 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
   }
 }
 
-function toPass(ctx: ServiceContext, row: repo.MyPassRow): MyPassDto {
+async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassDto> {
   const base = `${baseUrl(ctx.env)}/p/${row.download_token}`;
   return {
     id: row.id,
@@ -55,6 +56,12 @@ function toPass(ctx: ServiceContext, row: repo.MyPassRow): MyPassDto {
     downloadUrl: `${base}/pass.pkpass`,
     passJson: parsePassJson(row.pass_json),
     assetBaseUrl: `${base}/assets/`,
+    assetNames: await assetNamesOf(ctx, {
+      id: row.id,
+      orgId: row.org_id,
+      templateId: row.template_id,
+      templateVersion: row.template_version,
+    }),
   };
 }
 
@@ -66,7 +73,7 @@ export async function listMyPasses(
   const rows = await repo.listMyPasses(ctx.env.DB, userId, query.cursor, query.limit);
   const page = rows.slice(0, query.limit);
   return {
-    items: page.map((row) => toPass(ctx, row)),
+    items: await Promise.all(page.map((row) => toPass(ctx, row))),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -78,7 +85,7 @@ async function ownedRow(ctx: ServiceContext, userId: string, passId: string) {
 }
 
 export async function getMyPass(ctx: ServiceContext, userId: string, passId: string) {
-  return toPass(ctx, await ownedRow(ctx, userId, passId));
+  return await toPass(ctx, await ownedRow(ctx, userId, passId));
 }
 
 export async function refreshMyPass(
@@ -92,8 +99,11 @@ export async function refreshMyPass(
   if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `refresh:${passId}`))) {
     throw new RateLimitedError();
   }
-  const { requestedAt } = await deps.requestRefresh(ctx, passId, { type: 'user', id: userId });
-  return { accepted: true as const, requestedAt };
+  const { requestedAt, cooldownSeconds } = await deps.requestRefresh(ctx, passId, {
+    type: 'user',
+    id: userId,
+  });
+  return { accepted: true as const, requestedAt, cooldownSeconds };
 }
 
 export async function removeMyPass(

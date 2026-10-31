@@ -136,6 +136,8 @@ export const PreviewResponseSchema = z.object({
   passJson: z.record(z.string(), z.unknown()),
   warnings: z.array(ValidationIssueSchema),
   assetBaseUrl: z.string(),
+  /** Image files the preview can load: package files plus preview-only extras. */
+  assetNames: z.array(z.string()),
 });
 
 /** One-sentence text for the `error` code of a failed import. */

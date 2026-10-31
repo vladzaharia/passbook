@@ -18,6 +18,7 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
       generic: { primaryFields: [{ key: 'name', label: 'Member', value: 'Sam Smith' }] },
     },
     assetBaseUrl: '/p/abcdefghijklmnopqrst/assets',
+    assetNames: ['icon.png'],
     ...over,
   };
 }

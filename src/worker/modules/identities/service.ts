@@ -10,8 +10,8 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
-import { checkIdentityById } from './check.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
+import { checkIdentityById } from './check.ts';
 import { apnsBindingPresent, clearIdentityKeyCache } from './db-resolver.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
 import { readPkcs12 } from './pkcs12.ts';

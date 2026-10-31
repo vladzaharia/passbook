@@ -25,10 +25,11 @@ export function refreshPhase(
   pass: RefreshFields,
   now: number,
   localRequestedAt?: number | null,
+  cooldownMs: number = COOLDOWN_MS,
 ): { phase: RefreshPhase; secondsLeft: number } {
   if (isPendingRefresh(pass, now, localRequestedAt)) return { phase: 'pending', secondsLeft: 0 };
   const requested = Math.max(pass.refreshRequestedAt ?? 0, localRequestedAt ?? 0);
-  const left = requested + COOLDOWN_MS - now;
+  const left = requested + cooldownMs - now;
   if (requested && left > 0) return { phase: 'cooldown', secondsLeft: Math.ceil(left / 1000) };
   return { phase: 'idle', secondsLeft: 0 };
 }
