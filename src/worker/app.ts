@@ -1,0 +1,69 @@
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { apiKeysRoutes } from './modules/api-keys/routes.ts';
+import { appleRoutes } from './modules/apple/routes.ts';
+import { auditRoutes } from './modules/audit/routes.ts';
+import { authRoutes, sessionRoutes } from './modules/auth/routes.ts';
+import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/connections/routes.ts';
+import { deliveryRoutes } from './modules/delivery/routes.ts';
+import { holdersRoutes } from './modules/holders/routes.ts';
+import { identitiesRoutes } from './modules/identities/routes.ts';
+import { meRoutes } from './modules/me/routes.ts';
+import { metricsRoutes } from './modules/metrics/routes.ts';
+import { orgsRoutes } from './modules/orgs/routes.ts';
+import { passesRoutes } from './modules/passes/routes.ts';
+import { publicRoutes } from './modules/public/routes.ts';
+import { settingsRoutes } from './modules/settings/routes.ts';
+import { statusRoutes } from './modules/status/routes.ts';
+import { templatesRoutes } from './modules/templates/routes.ts';
+import { usersRoutes } from './modules/users/routes.ts';
+import { type AuthStores, denyAllStores } from './platform/auth.ts';
+import type { Clock } from './platform/clock.ts';
+import { type AppBindings, requestContext } from './platform/context.ts';
+import { handleError, notFoundHandler } from './platform/errors.ts';
+import { securityHeaders } from './platform/security-headers.ts';
+
+export interface AppOptions {
+  /** Session and API-key stores. Production wiring lives in stores.ts; tests pass fakes. */
+  stores?: AuthStores;
+  clock?: Clock;
+}
+
+/** One line per module. Adding a module means adding a line here and nothing else shared. */
+export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
+  const app = new OpenAPIHono<AppBindings>();
+  app.use('*', requestContext({ stores: options.stores ?? denyAllStores, clock: options.clock }));
+  app.use('*', securityHeaders);
+  app.onError(handleError);
+  app.notFound(notFoundHandler);
+
+  app.get('/health', (c) => c.json({ ok: true }));
+
+  app.route('/auth', authRoutes);
+  app.route('/api/v1/session', sessionRoutes);
+  app.route('/api/v1/me', meRoutes);
+  app.route('/api/v1/orgs', orgsRoutes);
+  app.route('/api/v1/templates', templatesRoutes);
+  app.route('/api/v1/passes', passesRoutes);
+  app.route('/api/v1/holders', holdersRoutes);
+  app.route('/api/v1/delivery', deliveryRoutes);
+  app.route('/api/v1/connections', connectionsRoutes);
+  app.route('/api/v1/connectors', connectorsRoutes);
+  app.route('/api/v1/identities', identitiesRoutes);
+  app.route('/api/v1/users', usersRoutes);
+  app.route('/api/v1/api-keys', apiKeysRoutes);
+  app.route('/api/v1/settings', settingsRoutes);
+  app.route('/api/v1/audit', auditRoutes);
+  app.route('/api/v1/status', statusRoutes);
+  app.route('/api/v1/metrics', metricsRoutes);
+  app.route('/wallet/v1', appleRoutes);
+  app.route('/p', publicRoutes);
+  app.route('/hooks', hooksRoutes);
+
+  app.doc31('/api/v1/openapi.json', {
+    openapi: '3.1.0',
+    info: { title: 'Wallet API', version: '1.0.0' },
+    servers: [{ url: '/' }],
+  });
+
+  return app;
+}

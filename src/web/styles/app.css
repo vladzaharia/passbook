@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@import "@polaris-key/brand/fonts.css";
+@import "@polaris-key/brand/tokens.css";
+@import "@polaris-key/brand/theme.css";
+
+@layer base {
+  html {
+    font-family: "Rubik", system-ui, sans-serif;
+    background: var(--color-surface-page);
+    color: var(--color-fg);
+  }
+}

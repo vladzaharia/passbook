@@ -1,0 +1,114 @@
+import { z } from 'zod';
+import { IdSchema, JsonSchema, pageOf, TimestampSchema } from './common.ts';
+
+export const PassStyleSchema = z.enum([
+  'generic',
+  'posterGeneric',
+  'storeCard',
+  'coupon',
+  'eventTicket',
+  'boardingPass',
+]);
+
+export const AssetEntrySchema = z.object({
+  name: z.string(),
+  slot: z.string(),
+  scale: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  locale: z.string().optional(),
+  size: z.number().int(),
+  sha1: z.string(),
+  crc32: z.number().int(),
+  width: z.number().int().optional(),
+  height: z.number().int().optional(),
+});
+
+export const ValidationIssueSchema = z.object({
+  severity: z.enum(['error', 'warning']),
+  code: z.string(),
+  message: z.string(),
+  path: z.string().optional(),
+});
+export const ValidationReportSchema = z.object({
+  ok: z.boolean(),
+  issues: z.array(ValidationIssueSchema),
+});
+
+export const TemplateSummarySchema = z.object({
+  id: IdSchema,
+  orgId: IdSchema.nullable(),
+  slug: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  origin: z.enum(['baked', 'uploaded']),
+  status: z.enum(['active', 'archived', 'deleted']),
+  activeVersion: z.string().nullable(),
+  styles: z.array(PassStyleSchema),
+  passCount: z.number().int(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+});
+export type TemplateSummaryDto = z.infer<typeof TemplateSummarySchema>;
+
+export const TemplateVersionSchema = z.object({
+  version: z.string(),
+  createdAt: TimestampSchema,
+  createdBy: IdSchema.nullable(),
+  assets: z.array(AssetEntrySchema),
+  report: ValidationReportSchema,
+  active: z.boolean(),
+});
+
+export const TemplateDetailSchema = TemplateSummarySchema.extend({
+  /** JSON Schema (with x-label, x-group, x-order, x-widget, x-enumLabels) for the active version. */
+  inputSchema: JsonSchema,
+  sample: z.record(z.string(), JsonSchema),
+  manifest: JsonSchema,
+  versions: z.array(TemplateVersionSchema),
+});
+
+export const TemplateListQuerySchema = z.object({
+  orgId: IdSchema.optional(),
+  includeArchived: z.coerce.boolean().optional(),
+  origin: z.enum(['baked', 'uploaded']).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export const TemplateListSchema = pageOf(TemplateSummarySchema);
+
+export const UploadTemplateQuerySchema = z.object({
+  orgId: IdSchema,
+  name: z.string().max(120).optional(),
+});
+export const UploadTemplateResponseSchema = z.object({
+  uploadId: IdSchema,
+  workflowInstanceId: z.string(),
+});
+export const ImportStatusSchema = z.object({
+  uploadId: IdSchema,
+  status: z.enum(['queued', 'running', 'complete', 'errored', 'terminated']),
+  step: z.string().nullable(),
+  templateId: IdSchema.nullable(),
+  version: z.string().nullable(),
+  report: ValidationReportSchema.nullable(),
+  error: z.string().nullable(),
+});
+
+export const ActivateVersionSchema = z.object({
+  version: z.string(),
+  rebuildPasses: z.boolean().default(false),
+});
+export const CloneTemplateSchema = z.object({
+  orgId: IdSchema,
+  name: z.string().min(1).max(120).optional(),
+});
+export const UpdateManifestSchema = z.object({ manifest: JsonSchema });
+export const PreviewRequestSchema = z.object({
+  version: z.string().optional(),
+  input: z.record(z.string(), JsonSchema).optional(),
+  locale: z.string().max(35).optional(),
+});
+export const PreviewResponseSchema = z.object({
+  passJson: z.record(z.string(), z.unknown()),
+  warnings: z.array(ValidationIssueSchema),
+  assetBaseUrl: z.string(),
+});
