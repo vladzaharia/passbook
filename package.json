@@ -7,9 +7,9 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "node tools/dev-vars.ts && vite dev",
+    "dev": "node tools/build-templates.ts && node tools/dev-vars.ts && vite dev",
     "dev:vars": "node tools/dev-vars.ts",
-    "build": "vite build && wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "build": "node tools/build-templates.ts && vite build && wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "gen": "node tools/build-templates.ts && wrangler types --strict-vars=false",
     "gen:check": "npm run gen && git diff --exit-code -- src/generated worker-configuration.d.ts src/web/routeTree.gen.ts",
     "format": "biome format --write . && biome check --write .",

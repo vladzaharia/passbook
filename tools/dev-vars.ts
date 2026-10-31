@@ -14,6 +14,7 @@ const entries: Record<string, string> = {
   // Local mock provider (npm run dev:oidc), not the production issuer.
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-dev',
+  PUBLIC_BASE_URL: 'http://localhost:5300',
 };
 
 if (!have.has('SIGNER_PLATFORM_CERTIFICATE') || !have.has('SIGNER_PLATFORM_PRIVATE_KEY')) {

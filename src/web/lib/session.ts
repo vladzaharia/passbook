@@ -30,13 +30,19 @@ export function useInvalidateSession(): () => Promise<void> {
   return () => client.invalidateQueries({ queryKey: sessionQuery.queryKey });
 }
 
-/** The server answers with a redirect; the SPA ignores it and goes to /login. */
+/** The server answers {ok, redirect}; the redirect may go through the IdP's end-session endpoint. */
 export async function signOut(csrfToken?: string): Promise<void> {
-  await fetch('/auth/logout', {
-    method: 'POST',
-    credentials: 'same-origin',
-    redirect: 'manual',
-    headers: csrfToken ? { 'x-csrf-token': csrfToken } : {},
-  });
-  window.location.assign('/login');
+  let target = '/login';
+  try {
+    const res = await fetch('/auth/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { accept: 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
+    });
+    const body = (await res.json()) as { redirect?: unknown };
+    if (typeof body.redirect === 'string' && body.redirect) target = body.redirect;
+  } catch {
+    // Network or parse failure: the cookie may still be set; /login re-checks the session.
+  }
+  window.location.assign(target);
 }

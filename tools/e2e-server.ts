@@ -11,9 +11,11 @@ const env = {
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-e2e',
   OIDC_CLIENT_SECRET: 'e2e-secret',
+  PUBLIC_BASE_URL: 'http://localhost:5173',
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
 };
 
+execFileSync('node', ['tools/build-templates.ts'], { cwd: root, stdio: 'inherit' });
 execFileSync('node', ['tools/dev-vars.ts'], { cwd: root, stdio: 'inherit' });
 execFileSync('npx', ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local'], {
   cwd: root,

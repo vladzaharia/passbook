@@ -198,7 +198,7 @@ export async function checkOidc(ctx: ServiceContext, fetchImpl: typeof fetch): P
   try {
     const res = await fetchImpl(`${issuer}/.well-known/openid-configuration`, {
       signal: AbortSignal.timeout(3000),
-      redirect: 'error',
+      redirect: 'manual',
     });
     const body = res.ok ? ((await res.json()) as { issuer?: string }) : null;
     draft =
