@@ -66,7 +66,14 @@ async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: PassJson) 
   }
 }
 
-const parseJson = (raw: string | null): PassJson => (raw ? JSON.parse(raw) : {}) as PassJson;
+/** The stored pass.json carries the device auth token; it never leaves the server. */
+export function parseStoredPassJson(raw: string | null): PassJson {
+  const json = (raw ? JSON.parse(raw) : {}) as PassJson;
+  delete json.authenticationToken;
+  return json;
+}
+
+const parseJson = parseStoredPassJson;
 
 function versionSummary(v: {
   version: number;

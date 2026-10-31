@@ -56,8 +56,7 @@ export function stableStringify(value: unknown): string {
 export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promise<Pass> {
   const db = ctx.env.DB;
   const org = await getOrg(db, p.orgId);
-  if (!org || org.status !== 'active')
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const holderEmail = p.holderEmail ? strictEmail(p.holderEmail) : null;
   if (p.holderEmail && !holderEmail)
     throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');

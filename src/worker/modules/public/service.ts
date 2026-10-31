@@ -3,6 +3,7 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
+import { parseStoredPassJson } from '../passes/detail.ts';
 import { currentPassJson, getPassByDownloadToken, listAssets, type Pass } from '../passes/repo.ts';
 import { getPassAsset } from './repo.ts';
 
@@ -37,7 +38,7 @@ export async function pageModel(ctx: ServiceContext, pass: Pass): Promise<Public
   }
   for (const a of await listAssets(ctx.env.DB, pass.id))
     assets[a.name] = `${base}${a.name}?v=${a.sha1}`;
-  return { passJson: JSON.parse(raw) as PassJson, assets };
+  return { passJson: parseStoredPassJson(raw), assets };
 }
 
 export interface PublicAsset {
