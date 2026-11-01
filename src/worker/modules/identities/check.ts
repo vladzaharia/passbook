@@ -3,13 +3,13 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { resolveRow } from './db-resolver.ts';
+import { daysRemaining } from './expiry.ts';
 import {
   ensurePlatformIdentity,
   getIdentityRow,
   type IdentityRow,
   listIdentityRows,
 } from './repo.ts';
-import { daysRemaining } from './service.ts';
 
 export const EXPIRY_WARNING_DAYS = 30;
 

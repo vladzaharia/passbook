@@ -4,15 +4,8 @@ import { AppError } from '../platform/errors.ts';
 import { createServiceContext } from '../platform/service-context.ts';
 import { estimateQueries, QUEUE_QUERY_BUDGET } from './query-budget.ts';
 import { JOB_HANDLERS } from './registry.ts';
+import { DLQ_QUEUE, retryDelaySeconds } from './retry.ts';
 import { type Job, JobSchema } from './types.ts';
-
-export const JOBS_QUEUE = 'wallet-jobs';
-export const DLQ_QUEUE = 'wallet-jobs-dlq';
-
-/** Exponential backoff in seconds for the nth attempt (30 s, 1 min, 2 min, ... capped at 1 h). */
-export function retryDelaySeconds(attempts: number): number {
-  return Math.min(3600, 30 * 2 ** Math.max(0, attempts - 1));
-}
 
 async function dispatch(job: Job, env: AppEnv, ctx: ExecutionContext): Promise<void> {
   const handler = JOB_HANDLERS[job.kind] as (

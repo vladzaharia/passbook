@@ -1,6 +1,6 @@
 import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
-import { mapPass, type Pass } from './repo.ts';
 import { listAssets } from './repo-history.ts';
+import { mapPass, type Pass } from './repo-map.ts';
 
 export interface DeletedPass {
   objectKeys: string[];

@@ -29,9 +29,9 @@ import {
   type RelyingParty,
   redeemAuthorizationCode,
 } from './oidc-client.ts';
+import { signInOidc } from './oidc-sign-in.ts';
 import { messagePage, noAccessPage, SIGN_IN_ERRORS } from './pages.ts';
 import * as repo from './repo.ts';
-import { signInOidc } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
 

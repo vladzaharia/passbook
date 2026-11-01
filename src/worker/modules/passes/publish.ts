@@ -2,7 +2,7 @@ import type { PassJson, Personalization } from '../../../passkit/types.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError, NotFoundError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { withoutPersonalizationFiles } from '../apple/personalize.ts';
+import { withoutPersonalizationFiles } from '../apple/personalize-files.ts';
 import { isPersonalized } from '../apple/personalize-repo.ts';
 import { dispatchSafely } from '../delivery/service.ts';
 import { buildArtifact } from './builder.ts';

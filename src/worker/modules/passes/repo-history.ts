@@ -1,6 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
-import type { PassCause } from './repo.ts';
+import type { PassCause } from './repo-map.ts';
 
 export interface VersionRow {
   version: number;

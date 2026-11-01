@@ -2,16 +2,16 @@ import { z } from 'zod';
 import { signManifest } from '../../../passkit/sign/index.ts';
 import type { TemplateRegistry } from '../../../passkit/template/registry.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
-import type { AppEnv } from '../../platform/env.ts';
 import { BadRequestError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { resolveTemplate } from '../passes/builder.ts';
-import { depsOf, overrideDeps } from '../passes/deps.ts';
+import { depsOf } from '../passes/deps.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPassBySerial } from '../passes/repo.ts';
+import { withoutPersonalizationFiles } from './personalize-files.ts';
 import {
   getPersonalization,
   insertPersonalization,
@@ -51,33 +51,6 @@ const FIELD_KEYS: Record<string, (info: Info) => unknown> = {
 };
 
 const unavailable = () => new NotFoundError('Not found.', 'PERSONALIZATION_UNAVAILABLE');
-
-/** Personalization files are dropped from the personalized pass (catalog §16). */
-const isPersonalizationFile = (name: string) =>
-  /(^|\/)personalization(Logo(@[23]x)?\.png|\.json)$/.test(name);
-
-function withoutPersonalization(registry: TemplateRegistry): TemplateRegistry {
-  return {
-    list: (query) => registry.list(query),
-    async resolve(id, version) {
-      const template = await registry.resolve(id, version);
-      return { ...template, assets: template.assets.filter((a) => !isPersonalizationFile(a.name)) };
-    },
-    openAsset: (template, name) => registry.openAsset(template, name),
-  };
-}
-
-/**
- * A context whose pass builds omit personalization.json and the logo. Deps are keyed by env
- * object, so a derived env carries its own registry without touching the shared one.
- * Passes that are already personalized must be published through this context.
- */
-export function withoutPersonalizationFiles(ctx: ServiceContext): ServiceContext {
-  const env = Object.create(ctx.env) as AppEnv;
-  const base = depsOf(ctx.env);
-  overrideDeps(env, { ...base, registry: withoutPersonalization(base.registry) });
-  return { ...ctx, env };
-}
 
 async function requiredFields(
   registry: TemplateRegistry,

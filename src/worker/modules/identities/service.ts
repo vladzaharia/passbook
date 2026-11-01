@@ -14,6 +14,7 @@ import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
 import { checkIdentityById } from './check.ts';
 import { apnsBindingPresent, clearIdentityKeyCache } from './db-resolver.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
+import { daysRemaining } from './expiry.ts';
 import { readPkcs12 } from './pkcs12.ts';
 import {
   deleteIdentityRows,
@@ -33,13 +34,8 @@ type Upload = z.infer<typeof UploadIdentitySchema>;
 type Patch = z.infer<typeof UpdateIdentitySchema>;
 type Rotation = z.infer<typeof RotateIdentitySchema>;
 
-const DAY_MS = 86_400_000;
 /** Only APNS_* bindings: the name is looked up on env, so it must never reach DB, KEK_* or ASSETS. */
 const BINDING_NAME = /^APNS_[A-Z0-9_]{1,59}$/;
-
-export function daysRemaining(notAfter: number | null, now: number): number | null {
-  return notAfter === null ? null : Math.floor((notAfter - now) / DAY_MS);
-}
 
 /** Apple's reason code from a probe's audit detail; null when it passed or none was given. */
 function probeReason(detail: string | null): string | null {

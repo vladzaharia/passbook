@@ -1,5 +1,5 @@
 import { all, likeEscape } from '../../platform/db.ts';
-import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from './repo.ts';
+import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from './repo-map.ts';
 
 export interface PassListFilter {
   orgId?: string | null;

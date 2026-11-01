@@ -46,7 +46,7 @@
     "rules": {
       "preset": "recommended",
       "style": { "useImportType": "error", "noNonNullAssertion": "warn" },
-      "suspicious": { "noExplicitAny": "error", "noConsole": "error" },
+      "suspicious": { "noExplicitAny": "error", "noConsole": "error", "noImportCycles": "error" },
       "correctness": { "noUnusedImports": "error", "noUnusedVariables": "error" },
       "nursery": { "noFloatingPromises": "error", "noMisusedPromises": "error" }
     }

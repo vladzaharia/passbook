@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { renderPassEmail } from '../../email/pass.ts';
-import { handleQueue, retryDelaySeconds } from '../../jobs/queue.ts';
+import { handleQueue } from '../../jobs/queue.ts';
+import { retryDelaySeconds } from '../../jobs/retry.ts';
 import { first, run } from '../../platform/db.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { dailyDelivery, handleEmailSend, handlePushDeliver, sweepDelivery } from './jobs.ts';

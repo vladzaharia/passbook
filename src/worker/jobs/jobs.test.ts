@@ -4,8 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { makeEnv } from '../../../test/helpers/index.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled, MINUTE_CRON } from './cron.ts';
-import { DLQ_QUEUE, handleQueue, JOBS_QUEUE, retryDelaySeconds } from './queue.ts';
+import { handleQueue } from './queue.ts';
 import { JOB_HANDLERS } from './registry.ts';
+import { DLQ_QUEUE, JOBS_QUEUE, retryDelaySeconds } from './retry.ts';
 import { JobSchema } from './types.ts';
 
 interface FakeMessage {

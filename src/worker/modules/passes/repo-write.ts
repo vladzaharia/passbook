@@ -1,6 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { first, run } from '../../platform/db.ts';
-import type { FieldSources, PassCause, PassStatus } from './repo.ts';
+import type { FieldSources, PassCause, PassStatus } from './repo-map.ts';
 
 export interface NewPassRow {
   id: string;

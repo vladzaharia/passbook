@@ -1,4 +1,4 @@
-import { retryDelaySeconds } from '../../jobs/queue.ts';
+import { retryDelaySeconds } from '../../jobs/retry.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
