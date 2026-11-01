@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import type { z } from 'zod';
 import {
   ConnectionDetailSchema,
@@ -86,4 +87,14 @@ export function useConnectionActions(id: string) {
       onSuccess: done,
     }),
   };
+}
+
+/** type -> display name; falls back to the type until the list loads. */
+export function useConnectorNames(): (type: string) => string {
+  const list = useConnectors();
+  const items = list.data?.items;
+  return useMemo(() => {
+    const names = new Map((items ?? []).map((c) => [c.type, c.displayName]));
+    return (type: string) => names.get(type) ?? type;
+  }, [items]);
 }

@@ -1,5 +1,7 @@
-import { FormField, Input, Select, Switch } from '../../ui/index.ts';
+import { FormField, Input, Select } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
+import { MODE_LABEL } from './labels.ts';
+import { SwitchRow } from './switch-row.tsx';
 
 export interface Lifecycle {
   mode: 'poll' | 'webhook' | 'hybrid' | 'manual' | 'snapshot';
@@ -23,11 +25,11 @@ export function modeOptions(
   current: Lifecycle['mode'],
 ): { value: Lifecycle['mode']; label: string }[] {
   const all: { value: Lifecycle['mode']; label: string; ok: boolean }[] = [
-    { value: 'poll', label: 'Poll', ok: !caps || caps.poll },
-    { value: 'webhook', label: 'Webhook', ok: !caps || caps.webhook },
-    { value: 'hybrid', label: 'Hybrid', ok: !caps || (caps.poll && caps.webhook) },
-    { value: 'manual', label: 'Manual', ok: true },
-    { value: 'snapshot', label: 'Snapshot', ok: Boolean(caps?.snapshot) },
+    { value: 'poll', label: MODE_LABEL.poll, ok: !caps || caps.poll },
+    { value: 'webhook', label: MODE_LABEL.webhook, ok: !caps || caps.webhook },
+    { value: 'hybrid', label: MODE_LABEL.hybrid, ok: !caps || (caps.poll && caps.webhook) },
+    { value: 'manual', label: MODE_LABEL.manual, ok: true },
+    { value: 'snapshot', label: MODE_LABEL.snapshot, ok: Boolean(caps?.snapshot) },
   ];
   return all
     .filter((o) => o.ok || o.value === current)
@@ -94,6 +96,7 @@ export function LifecycleFields({
         {(c) => (
           <Input
             {...c}
+            className="w-28"
             type="number"
             inputMode="numeric"
             disabled={disabled}
@@ -126,26 +129,19 @@ export function LifecycleFields({
           />
         )}
       </FormField>
-      <FormField label="Create passes for new records">
-        {(c) => (
-          <Switch
-            id={c.id}
-            disabled={disabled}
-            checked={value.autoCreate}
-            onCheckedChange={(v) => set('autoCreate', v)}
-          />
-        )}
-      </FormField>
-      <FormField label="Email new passes" help="Off by default so a first sync cannot mass-email.">
-        {(c) => (
-          <Switch
-            id={c.id}
-            disabled={disabled}
-            checked={value.autoEmail}
-            onCheckedChange={(v) => set('autoEmail', v)}
-          />
-        )}
-      </FormField>
+      <SwitchRow
+        label="Create passes for new records"
+        disabled={disabled}
+        checked={value.autoCreate}
+        onCheckedChange={(v) => set('autoCreate', v)}
+      />
+      <SwitchRow
+        label="Email new passes"
+        help="Off by default so a first sync cannot mass-email."
+        disabled={disabled}
+        checked={value.autoEmail}
+        onCheckedChange={(v) => set('autoEmail', v)}
+      />
       <FormField label="When a record is missing">
         {(c) => (
           <Select

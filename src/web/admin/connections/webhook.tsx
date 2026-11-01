@@ -6,6 +6,7 @@ import {
   CardHeader,
   CodeBlock,
   ConfirmDialog,
+  CopyButton,
   KeyValue,
   toast,
 } from '../../ui/index.ts';
@@ -56,7 +57,15 @@ export function WebhookPanel({
       <CardBody className="grid gap-4">
         <KeyValue
           items={[
-            { label: 'URL', value: url, mono: true },
+            {
+              label: 'URL',
+              value: url ? (
+                <span className="flex items-start gap-1">
+                  <span className="min-w-0 break-all font-mono text-xs">{url}</span>
+                  <CopyButton value={url} label="Copy webhook URL" className="-mt-1.5 shrink-0" />
+                </span>
+              ) : null,
+            },
             { label: 'Secret', value: hasSecret ? 'Set' : 'Not set' },
           ]}
         />

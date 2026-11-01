@@ -160,8 +160,11 @@ describe('connection detail', () => {
     });
     await user.click(await screen.findByRole('button', { name: 'Sync now' }));
     await waitFor(() => expect(calls).toEqual(['sync']));
-    await user.click(screen.getByRole('button', { name: 'Disable' }));
-    expect(await screen.findByRole('button', { name: 'Enable' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Disable' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: 'Enable' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
     expect(screen.getByRole('button', { name: 'Sync now' })).toBeDisabled();
   });
 
@@ -363,7 +366,8 @@ describe('connection detail', () => {
         '/api/v1/connections': () => json({ items: [], nextCursor: null }),
       }),
     });
-    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     const dialog = await screen.findByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete connection' });
     expect(confirm).toBeDisabled();

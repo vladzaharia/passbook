@@ -40,7 +40,18 @@ const config = z.object({
   holderEmailPointer: pointer.optional(),
   auth: z
     .object({
-      type: z.enum(['none', 'bearer', 'basic', 'header']).default('none'),
+      type: z
+        .enum(['none', 'bearer', 'basic', 'header'])
+        .default('none')
+        .meta({
+          'x-label': 'Authentication',
+          'x-enumLabels': {
+            none: 'None',
+            bearer: 'Bearer token',
+            basic: 'Username and password',
+            header: 'Custom header',
+          },
+        }),
       headerName: z.string().refine(isAllowedHeaderName, 'Header not allowed.').optional(),
     })
     .default({ type: 'none' }),

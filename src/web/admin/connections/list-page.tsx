@@ -8,8 +8,10 @@ import { useOrgFilter } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import { Button, DataTable, EmptyState, ErrorState, PageHeader, Select } from '../../ui/index.ts';
 import { formatDate } from '../passes/format.ts';
-import { useConnections } from './api.ts';
+import { useConnections, useConnectorNames } from './api.ts';
+import { ErrorLine } from './error-line.tsx';
 import { HealthPill } from './health.tsx';
+import { HEALTH_FILTERS, modeLabel } from './labels.ts';
 
 type Connection = z.infer<typeof ConnectionSchema>;
 const ALL = 'all';
@@ -29,6 +31,7 @@ export function ConnectionsListPage({
   const { orgId: globalOrg } = useOrgFilter();
   const orgId = search.orgId ?? globalOrg;
   const orgs = useOrgOptions();
+  const connectorName = useConnectorNames();
   const list = useConnections({ orgId, health: search.health });
   const orgNames = useMemo(
     () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
@@ -54,7 +57,7 @@ export function ConnectionsListPage({
         meta: { stackHidden: true },
         header: 'Connector',
         enableSorting: false,
-        cell: ({ row }) => row.original.connectorType,
+        cell: ({ row }) => connectorName(row.original.connectorType),
       },
       {
         id: 'org',
@@ -62,17 +65,20 @@ export function ConnectionsListPage({
         enableSorting: false,
         cell: ({ row }) => orgNames.get(row.original.orgId) ?? row.original.orgId,
       },
-      { id: 'mode', header: 'Mode', enableSorting: false, cell: ({ row }) => row.original.mode },
+      {
+        id: 'mode',
+        header: 'Mode',
+        enableSorting: false,
+        cell: ({ row }) => modeLabel(row.original.mode),
+      },
       {
         id: 'health',
         header: 'Health',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col items-start gap-1">
             <HealthPill health={row.original.enabled ? row.original.health : 'disabled'} />
-            {row.original.lastErrorCode ? (
-              <span className="font-mono text-xs text-danger">{row.original.lastErrorCode}</span>
-            ) : null}
+            <ErrorLine code={row.original.lastErrorCode} />
           </div>
         ),
       },
@@ -94,7 +100,7 @@ export function ConnectionsListPage({
         ),
       },
     ],
-    [orgNames],
+    [orgNames, connectorName],
   );
 
   return (
@@ -107,10 +113,10 @@ export function ConnectionsListPage({
           </Button>
         }
       />
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <Select
           aria-label="Org"
-          className="w-44"
+          className="sm:w-44"
           value={orgId ?? ALL}
           onValueChange={(v) => onSearch({ orgId: v === ALL ? undefined : v })}
           options={[
@@ -120,17 +126,24 @@ export function ConnectionsListPage({
         />
         <Select
           aria-label="Health"
-          className="w-44"
+          className="sm:w-44"
           value={search.health ?? ALL}
           onValueChange={(v) => onSearch({ health: v === ALL ? undefined : v })}
           options={[
             { value: ALL, label: 'Health: all' },
-            ...['healthy', 'degraded', 'failing', 'paused', 'disabled', 'unknown'].map((h) => ({
-              value: h,
-              label: h,
-            })),
+            ...HEALTH_FILTERS.map(([value, label]) => ({ value, label })),
           ]}
         />
+        {orgId || search.health ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="max-sm:col-span-2"
+            onClick={() => onSearch({ orgId: undefined, health: undefined })}
+          >
+            Clear
+          </Button>
+        ) : null}
       </div>
       {list.isError ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
