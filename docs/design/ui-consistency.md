@@ -53,9 +53,9 @@ which copy the token values.
 
 | Page type | Width |
 | --- | --- |
-| List (table) | Full main width |
+| List (table), Settings | Full main width |
 | Detail with pass preview (pass, template) | Full; `20rem 1fr` at ≥1280, preview stacked above tabs below |
-| Detail or form (org, user, identity, connection tabs, settings, status) | `max-w-3xl` for every block on the page, tabs included |
+| Detail or form (org, user, identity, connection tabs, status) | `max-w-3xl` for every block on the page, tabs included |
 | Wizard (new pass, new connection, upload) | `max-w-3xl`, left aligned; template/org pickers may use full width |
 | Portal | `max-w-4xl` |
 | Login and SSR auth pages | `max-w-sm` card, centered |

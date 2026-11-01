@@ -46,7 +46,7 @@
   --wl-foil: linear-gradient(115deg, var(--wl-foil-1), var(--wl-foil-2) 55%, var(--wl-foil-3));
   /* Lit top edge on raised surfaces; dark only. */
   --wl-edge: inset 0 1px 0 rgb(255 255 255 / 0.05);
-  --wl-glow-accent: 0 6px 24px -8px color-mix(in oklab, var(--pk-accent) 70%, transparent);
+  --wl-glow-accent: 0 4px 16px -8px color-mix(in oklab, var(--pk-accent) 45%, transparent);
 }
 
 @media (prefers-color-scheme: light) {
@@ -55,7 +55,7 @@
     --wl-foil-2: var(--polaris-key-violet-light);
     --wl-foil-3: var(--polaris-key-gold-light);
     --wl-edge: inset 0 0 0 0 transparent;
-    --wl-glow-accent: 0 4px 14px -6px color-mix(in oklab, var(--pk-accent) 55%, transparent);
+    --wl-glow-accent: 0 3px 10px -6px color-mix(in oklab, var(--pk-accent) 35%, transparent);
   }
 }
 [data-theme="light"] {
@@ -63,7 +63,7 @@
   --wl-foil-2: var(--polaris-key-violet-light);
   --wl-foil-3: var(--polaris-key-gold-light);
   --wl-edge: inset 0 0 0 0 transparent;
-  --wl-glow-accent: 0 4px 14px -6px color-mix(in oklab, var(--pk-accent) 55%, transparent);
+  --wl-glow-accent: 0 3px 10px -6px color-mix(in oklab, var(--pk-accent) 35%, transparent);
 }
 
 @keyframes wl-rise {

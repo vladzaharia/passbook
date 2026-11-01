@@ -57,7 +57,7 @@ Two speeds:
 | `--wl-stagger` | 30 ms rows, 60 ms cards; cap 6 steps | Lists; last item starts by 180/360 ms |
 | `--wl-foil` | teal → Polaris violet → Polaris gold | Mint sweep, empty-state art, sign-in and email top edge |
 | `--wl-edge` | `inset 0 1px 0 rgb(255 255 255 / .05)`, dark only | Lit top edge on raised surfaces |
-| `--wl-glow-accent` | accent at 70%, 24 px blur (55%, 14 px light) | Primary button hover and focus |
+| `--wl-glow-accent` | accent at 45%, 16 px blur (35%, 10 px light) | Primary button hover and focus |
 
 ## What moves and when
 
@@ -111,7 +111,7 @@ Two speeds:
   a fill: mint sweep, empty-state art edge, the 2 px top edge of the sign-in card and the email
   header bar. Never on text, buttons or page backgrounds.
 - **Depth, dark.** Raised surfaces: `--wl-edge` lit top edge plus elevation-1. Overlays:
-  elevation-3 and a lit edge. Pass glow: radial gradient in the pass background colour at 50%.
+  elevation-3 and a lit edge. Pass glow: radial gradient in the pass background colour at 32% (20% light).
   Primary button: accent glow on hover and keyboard focus.
 - **Depth, light.** No lit edge; the pass glow reads as a tinted soft shadow; elevations unchanged.
 - **Typography.** Rubik only. Page titles `text-2xl font-semibold` with

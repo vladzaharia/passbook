@@ -41,8 +41,8 @@ function OidcSection() {
 export function SettingsPage() {
   return (
     <>
-      <PageHeader title="Settings" width="detail" />
-      <div className="flex max-w-3xl flex-col gap-8">
+      <PageHeader title="Settings" />
+      <div className="flex flex-col gap-8">
         <SettingsForm scope="platform" fields={PLATFORM_FIELDS} />
         <OidcSection />
       </div>
