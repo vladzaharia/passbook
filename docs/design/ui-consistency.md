@@ -371,7 +371,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Empty | `EmptyState art title action? description? variant? inline? heading?`; `FilteredEmpty entity onClear` |
 | Error | `ErrorState error? title? onRetry? retryLabel?` (Retry spins `RefreshCw`; a failed retry shakes) |
 | Lists | `DataTable … loading fetching filtered empty emptyFiltered toolbar footer` (rows carry `data-row-id`, new rows `data-new`); `FilterBar search filters onClear` (`DATE_RANGES`, `rangeStart`); `LoadMore … noun={['pass','passes']} scoped`; queries use `listQuery({...})` |
-| Rows | `ListRows` + `ListRow leading title pills meta trailing rowId isNew`; `RowActions label actions` |
+| Rows | `ListRows` + `ListRow leading title pills meta trailing rowId isNew` (the trailing control drops under the body below a 16rem list); `RowActions label actions` |
 | Account rows | `EmailList`, `SessionList`, `InlineAddField` (presentational; the page owns mutations) |
 | Layout | `TwoPane aside asideFrom='xl'\|'lg' stickyAside`; `FormGrid` + `FormSpan full`; `FieldGroup title onlyFieldLabel` |
 | Forms | `Form form onSubmit` (blocked submit: focus, scroll, one polite summary); `RhfField`; `NumberField unit`; `DateTimeField clearLabel defaultZone` |
@@ -382,11 +382,12 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
 | Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
-| Buttons | `Button busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `mutationButton(m)` spreads `loading`/`paused` |
+| Buttons | `Button busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused`; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
 | Badge | `AppleWalletBadge href label?`; `appleWalletBadgeHtml({ href, email? })` for SSR and email |
+| Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
-| Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner` |
+| Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
 | Org scope | `useOrgScope()` (`lib/org-filter.tsx`); `isOrgScoped(path)` hides the switcher |
 | Palette | `usePalette()?.open()` opens the admin palette (null outside the shell) |
 

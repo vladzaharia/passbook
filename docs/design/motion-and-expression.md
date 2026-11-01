@@ -135,11 +135,13 @@ System:
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
 - Reduced motion: the final frame, no beat.
 - Budget: ≤40 SVG nodes per art; all art ≤8 kB gzip. Files `src/web/ui/art/<name>.tsx` (named
-  exports, under 300 lines) and `src/web/ui/art/art.css`; the map in `src/web/ui/art/index.ts`.
+  exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
+  `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
 - API: `<EntityArt name size="lg"|"sm"|"xl" beat?>` or the named component (`PassesArt`…).
   `LayersArt compare` splits the top two sheets. `WalletArt state mood="flat" lift` (states
   `login`, `empty`, `lost`, `confirm`, `expired`, `no-access`, `break-glass`) renders through
-  `renderToStaticMarkup`; SSR pages inline `art.css?raw` (tokens fall back to the SSR names) and
+  `renderToStaticMarkup`; SSR pages inline `ART_CSS` (`art/css.ts`, every art sheet in cascade
+  order; tokens fall back to the SSR names) and
   pass `beat={false}` to stay static. Hover replay needs a `data-art-host` ancestor.
 - Parts animate from CSS variables on `[data-part]` (`--f` from, `--t` rest, `--d`, `--u`, `--e`,
   beat `--b`); `art.test.tsx` checks the timing budget from the stylesheet.
@@ -284,14 +286,14 @@ tilt, the sheet drag). No motion library.
 | --- | --- |
 | Tokens, route fade-through, list entrances, loading rail | `src/web/styles/motion.css` |
 | Overlays, controls, skeleton, ring, indicator, verbs, sparks | `src/web/styles/kit-motion.css` (split when it nears 300 lines) |
-| Entity art and the mascot | `src/web/ui/art/*.tsx`, `src/web/ui/art/art.css` |
+| Entity art and the mascot | `src/web/ui/art/*.tsx`, `src/web/ui/art/*.css`, `ART_CSS` for SSR |
 | Entity and action registries | `src/web/lib/entities.ts`, `src/web/lib/action-icons.ts` |
 | Hooks | `src/web/lib/motion.ts` |
 | Online state | `src/web/lib/online.ts` |
 | Pass stage (glow, rim, tilt, flip, deal, mint, dip, sync rail) | `src/web/pass-card/stage.{tsx,css}` |
 | Sliding indicator | `src/web/ui/active-indicator.tsx` |
 | Wizard, stepper | `src/web/ui/wizard.tsx` |
-| Route transition types, chunk-load errors | `src/web/router.tsx` |
+| Route transition types, chunk-load errors (offline chunks: `lib/offline-routes.ts`) | `src/web/router.tsx` |
 | Sign-in scene | `src/web/portal/login-*.tsx` on `src/web/ui/art/wallet.tsx` |
 | SSR scene, error pages | `src/worker/ssr/theme.ts`, `src/worker/ssr/error-page.tsx`, `src/worker/modules/auth/pages.ts` |
 | Public page tilt (fine pointers) | `public/pass-tilt.js` |
