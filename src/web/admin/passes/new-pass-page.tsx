@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
@@ -317,7 +318,11 @@ export function NewPassPage() {
             Next
           </Button>
         ) : (
-          <Button loading={create.isPending} onClick={() => create.mutate()}>
+          <Button
+            iconStart={<Plus aria-hidden />}
+            loading={create.isPending}
+            onClick={() => create.mutate()}
+          >
             Create pass
           </Button>
         )}

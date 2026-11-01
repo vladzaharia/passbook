@@ -177,7 +177,17 @@ export function TemplatesListPage({
           data={list.data?.items ?? []}
           getRowId={(r) => r.id}
           loading={list.isPending}
-          empty={<EmptyState icon={FileStack} title="No templates" />}
+          empty={
+            <EmptyState
+              icon={FileStack}
+              title="No templates"
+              action={
+                <Button asChild iconStart={<Upload aria-hidden />}>
+                  <Link to="/admin/templates/upload">Upload template</Link>
+                </Button>
+              }
+            />
+          }
         />
       )}
     </>

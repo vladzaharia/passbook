@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { errorMessage } from '../../lib/errors.ts';
 import { useOrgFilter } from '../../lib/org-filter.tsx';
@@ -153,6 +154,7 @@ export function TemplateUploadPage() {
             ) : null}
             <div>
               <Button
+                iconStart={<Upload aria-hidden />}
                 loading={upload.isPending}
                 disabled={!file}
                 onClick={async () => {

@@ -3,9 +3,6 @@ import type { z } from 'zod';
 import { isApiError } from '../../../lib/errors.ts';
 import {
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   EmptyState,
   ErrorState,
   PageHeader,
@@ -20,6 +17,7 @@ import {
 import { useTemplate } from '../../templates/api.ts';
 import { usePass, usePassVersion } from '../api.ts';
 import { PassPreviewPanel } from '../pass-preview.tsx';
+import { PreviewLayout } from '../preview-layout.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
@@ -106,42 +104,36 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
           ))}
         </ul>
       ) : null}
-      <div className="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
-        <Card className="max-w-sm min-w-0 xl:self-start">
-          <CardHeader
-            title="Preview"
-            actions={
-              <Select
-                aria-label="Version"
-                className="w-40"
-                value={String(picked ?? p.version)}
-                onValueChange={(v) =>
-                  setSearch({ v: Number(v) === p.version ? undefined : Number(v) })
-                }
-                options={[...p.versions]
-                  .sort((a, b) => b.version - a.version)
-                  .map((v) => ({
-                    value: String(v.version),
-                    label: `v${v.version}${v.version === p.version ? ' (current)' : ''}`,
-                    disabled: v.purged,
-                  }))}
-              />
-            }
+      <PreviewLayout
+        previewActions={
+          <Select
+            aria-label="Version"
+            className="w-40"
+            value={String(picked ?? p.version)}
+            onValueChange={(v) => setSearch({ v: Number(v) === p.version ? undefined : Number(v) })}
+            options={[...p.versions]
+              .sort((a, b) => b.version - a.version)
+              .map((v) => ({
+                value: String(v.version),
+                label: `v${v.version}${v.version === p.version ? ' (current)' : ''}`,
+                disabled: v.purged,
+              }))}
           />
-          <CardBody>
-            {picked !== undefined && version.isError ? (
-              <ErrorState error={version.error} title="Could not load version" />
-            ) : picked !== undefined && version.isPending ? (
-              <Skeleton className="h-80 w-full" />
-            ) : (
-              <PassPreviewPanel
-                passJson={shown.passJson}
-                assetBaseUrl={shown.assetBaseUrl}
-                assetNames={p.assetNames}
-              />
-            )}
-          </CardBody>
-        </Card>
+        }
+        preview={
+          picked !== undefined && version.isError ? (
+            <ErrorState error={version.error} title="Could not load version" />
+          ) : picked !== undefined && version.isPending ? (
+            <Skeleton className="h-80 w-full" />
+          ) : (
+            <PassPreviewPanel
+              passJson={shown.passJson}
+              assetBaseUrl={shown.assetBaseUrl}
+              assetNames={p.assetNames}
+            />
+          )
+        }
+      >
         <Tabs value={tab} onValueChange={(t) => setSearch({ tab: t as Tab })} className="min-w-0">
           <TabsList aria-label="Pass sections">
             {(
@@ -197,7 +189,7 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
             <ActivityTab passId={p.id} active={tab === 'activity'} />
           </TabsContent>
         </Tabs>
-      </div>
+      </PreviewLayout>
     </>
   );
 }
