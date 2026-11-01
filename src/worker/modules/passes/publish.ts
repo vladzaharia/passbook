@@ -1,4 +1,4 @@
-import type { Personalization } from '../../../passkit/types.ts';
+import type { PassJson, Personalization } from '../../../passkit/types.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError, NotFoundError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -42,6 +42,11 @@ export interface PublishOptions {
   dispatch?: boolean;
   /** Derives the desired state from the freshly read row; re-run on every retry. */
   mutate?: (current: Pass) => Mutation;
+  /**
+   * An editor's save: true messages holders about the fields it changes, false strips every
+   * changeMessage. Omit for syncs and upgrades (the template's messages stay).
+   */
+  notify?: boolean;
 }
 
 export interface PublishResult {
@@ -79,9 +84,19 @@ export async function publishPass(
     const buildCtx = (await isPersonalized(db, current.id))
       ? withoutPersonalizationFiles(ctx)
       : ctx;
+    const previous = options.notify === undefined ? null : await currentPassJson(db, current.id);
     const artifact = await buildArtifact(buildCtx, {
       orgId: current.orgId,
       orgName: org.name,
+      branding: org.branding,
+      ...(options.notify === undefined
+        ? {}
+        : {
+            changeMessages: {
+              previous: previous ? (JSON.parse(previous) as PassJson) : null,
+              notify: options.notify,
+            },
+          }),
       passId: current.id,
       serial: current.serial,
       authToken: current.authToken,

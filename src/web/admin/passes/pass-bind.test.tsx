@@ -2,12 +2,11 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { type FetchHandler, json, renderApp } from '../../lib/test-utils.tsx';
-import { slotsFor } from './detail/images-tab.tsx';
 import {
   connection,
+  connectionDetail,
   ORG,
   passDetail,
-  SAMPLE_PASS_JSON,
   templateDetail,
   templateSummary,
 } from './test-fixtures.ts';
@@ -44,18 +43,25 @@ describe('connection tab', () => {
           state.pass = passDetail({ connectionId: 'c1' });
           return json(state.pass);
         },
-        '/api/v1/connections/c1': () => json({ ...connection(), runs: [] }),
+        '/api/v1/connections/c1': () => json(connectionDetail()),
       }),
     });
-    await user.click(await screen.findByRole('button', { name: 'Bind' }));
-    expect(await screen.findByText('Choose a connection.')).toBeInTheDocument();
-    await user.click(screen.getByRole('combobox', { name: /Connection/ }));
+    // Unbound: the plugs art and one way in.
+    expect(await screen.findByText('Not bound to a connection')).toBeInTheDocument();
+    expect(document.querySelector('[data-art="plugs"]')).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Bind to a connection' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Bind to a connection' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bind' }));
+    expect(await within(dialog).findByText('Choose a connection.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('combobox', { name: /Connection/ }));
     await user.click(await screen.findByRole('option', { name: 'MemberSpot sync' }));
-    await user.click(screen.getByRole('button', { name: 'Bind' }));
-    expect(await screen.findByText('Enter the connection ref.')).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/Ref/), 'm-042');
-    await user.click(screen.getByRole('checkbox', { name: /take over all fields/ }));
-    await user.click(screen.getByRole('button', { name: 'Bind' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Bind' }));
+    expect(
+      await within(dialog).findByText('Enter the record id in the source.'),
+    ).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/Record id/), 'm-042');
+    await user.click(within(dialog).getByRole('checkbox', { name: /take over every field/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Bind' }));
     await waitFor(() =>
       expect(bodies).toEqual([
         { connectionId: 'c1', externalRef: 'm-042', resetFieldSources: true },
@@ -70,7 +76,7 @@ describe('connection tab', () => {
     await renderApp('/admin/passes/p1?tab=connection', {
       session: 'admin',
       handlers: handlers(state, {
-        '/api/v1/connections/c1': () => json({ ...connection(), runs: [] }),
+        '/api/v1/connections/c1': () => json(connectionDetail()),
         '/api/v1/passes/p1/connection': (_u, init) => {
           bodies.push(JSON.parse(String(init?.body)));
           state.pass = passDetail();
@@ -78,8 +84,13 @@ describe('connection tab', () => {
         },
       }),
     });
-    await user.click(await screen.findByRole('button', { name: 'Unbind' }));
+    // Bound: a summary with no inputs until Change; Unbind sits under More.
+    await screen.findByText('Health');
+    expect(screen.queryByRole('textbox')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'More connection actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Unbind' }));
     const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent('Fields stop syncing.');
     await user.click(within(dialog).getByRole('button', { name: 'Unbind' }));
     await waitFor(() => expect(bodies).toEqual([{ connectionId: null, externalRef: null }]));
   });
@@ -100,18 +111,9 @@ describe('delivery and images', () => {
       }),
     });
     await user.click(await screen.findByRole('checkbox', { name: 'Attach .pkpass' }));
-    await user.click(screen.getByRole('button', { name: 'Resend email' }));
+    // Never emailed: "Send email", sent to the holder by default.
+    await user.click(screen.getByRole('button', { name: 'Send email' }));
     await waitFor(() => expect(bodies).toEqual([{ attach: true }]));
-  });
-
-  it('lists the slots the style renders and defaults to the first', () => {
-    const poster = {
-      preferredStyleSchemes: ['posterGeneric', 'generic'],
-      generic: {},
-    };
-    expect(slotsFor(poster)).toEqual(['artwork', 'primaryLogo', 'secondaryLogo', 'icon', 'logo']);
-    expect(slotsFor(SAMPLE_PASS_JSON)).toEqual(['thumbnail', 'icon', 'logo']);
-    expect(slotsFor({})).toContain('artwork');
   });
 
   it('puts Showing in a badge, not a button', async () => {

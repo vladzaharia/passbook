@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../lib/test-utils.tsx';
 import { TooltipProvider } from '../../../ui/index.ts';
-import { isoToLocal, localToIso } from './datetime.ts';
+import { isoToLocal, localToIso, localToOffsetIso } from './datetime.ts';
 import { defaultValues, type FormValues, keysBoundTo } from './schema.ts';
 import { SchemaForm } from './schema-form.tsx';
 
@@ -20,6 +20,13 @@ describe('datetime conversion', () => {
     expect(isoToLocal('2027-02-01T07:59:00.000Z', 'America/Los_Angeles')).toBe('2027-01-31T23:59');
     expect(isoToLocal('2027-01-31T23:59:00-08:00', 'America/Los_Angeles')).toBe('2027-01-31T23:59');
     expect(isoToLocal('nope', 'UTC')).toBe('');
+  });
+
+  it('writes the zone offset for local times', () => {
+    expect(localToOffsetIso('2030-06-01T08:00', 'America/Los_Angeles')).toBe(
+      '2030-06-01T08:00:00-07:00',
+    );
+    expect(localToOffsetIso('2027-03-14T02:30', 'Asia/Kolkata')).toBe('2027-03-14T02:30:00+05:30');
   });
 
   it('round-trips across a DST change', () => {
@@ -67,26 +74,29 @@ describe('SchemaForm datetime widget', () => {
     vi.spyOn(Intl, 'supportedValuesOf').mockReturnValue(['America/Los_Angeles', 'Asia/Kolkata']);
   });
 
-  it('saves UTC from the chosen zone', async () => {
+  it('saves the local time with the zone offset, so the pass reads in local time', async () => {
     const user = userEvent.setup();
     const onValue = vi.fn();
     render(<Harness onValue={onValue} />);
     await user.click(screen.getByRole('checkbox', { name: 'No date' }));
     await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
-    await user.click(await screen.findByRole('option', { name: 'America/Los_Angeles' }));
+    await user.click(await screen.findByRole('option', { name: /Los Angeles/ }));
     fireEvent.change(screen.getByLabelText('Expires'), { target: { value: '2027-01-31T23:59' } });
-    expect(onValue).toHaveBeenLastCalledWith({ expires: '2027-02-01T07:59:00.000Z' });
+    expect(onValue).toHaveBeenLastCalledWith({ expires: '2027-01-31T23:59:00-08:00' });
+    expect(screen.getByText(/Jan 31, 2027, 11:59 PM, Los Angeles/)).toBeInTheDocument();
   });
 
-  it('shows a stored offset value back in the selected zone', async () => {
-    const user = userEvent.setup();
-    render(<Harness onValue={vi.fn()} initial={{ expires: '2027-02-01T07:59:00.000Z' }} />);
-    await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
-    await user.click(await screen.findByRole('option', { name: 'America/Los_Angeles' }));
+  it('shows a stored value in the zone its offset was written in', () => {
+    render(<Harness onValue={vi.fn()} initial={{ expires: '2027-01-31T23:59:00-08:00' }} />);
     expect(screen.getByLabelText('Expires')).toHaveValue('2027-01-31T23:59');
-    await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
-    await user.click(await screen.findByRole('option', { name: 'UTC' }));
-    expect(screen.getByLabelText('Expires')).toHaveValue('2027-02-01T07:59');
+  });
+
+  it('hides the date and zone while No date is checked', async () => {
+    const user = userEvent.setup();
+    render(<Harness onValue={vi.fn()} initial={{ expires: '2027-01-31T23:59:00-08:00' }} />);
+    await user.click(screen.getByRole('checkbox', { name: 'No date' }));
+    expect(screen.queryByLabelText('Expires')).toBeNull();
+    expect(screen.queryByRole('combobox', { name: /^Time zone/ })).toBeNull();
   });
 
   it('hides managed fields and offers no None for fields with a default', () => {

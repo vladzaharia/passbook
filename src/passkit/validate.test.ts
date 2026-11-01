@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NFC_KEY } from './schema/fixtures.ts';
+import { HIG_CODES } from './schema/validate-hig.ts';
 import type { PassIdentity, PassJson } from './types.ts';
 import { validatePass } from './validate.ts';
 
@@ -21,7 +22,9 @@ const codes = (pass: PassJson, assets = icon, id = identity) =>
 
 describe('validatePass', () => {
   it('accepts a minimal pass', () => {
-    expect(validatePass(base(), icon, identity)).toEqual({ ok: true, issues: [] });
+    const report = validatePass(base(), icon, identity);
+    expect(report.ok).toBe(true);
+    expect(report.issues.filter((i) => !HIG_CODES.has(i.code))).toEqual([]);
   });
 
   it.each([

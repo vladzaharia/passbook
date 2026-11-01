@@ -1,11 +1,11 @@
 {
   "formatVersion": 1,
-  "description": "Wallet coupon",
-  "organizationName": "Wallet",
+  "description": "Coupon",
+  "organizationName": "Organization",
   "backgroundColor": "rgb(31,41,55)",
   "foregroundColor": "rgb(255,255,255)",
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
+  "logoText": "Organization",
   "expirationDate": "2030-01-01T00:00:00Z",
   "barcodes": [
     {
@@ -26,14 +26,14 @@
     {
       "identifier": "offers",
       "type": "viewOffersRewards",
-      "url": "https://example.com/"
+      "url": ""
     }
   ],
   "coupon": {
     "headerFields": [
       {
         "key": "expires",
-        "label": "EXPIRES",
+        "label": "Expires",
         "value": "2030-01-01T00:00:00Z",
         "dateStyle": "PKDateStyleMedium",
         "timeStyle": "PKDateStyleNone",
@@ -43,41 +43,42 @@
     "primaryFields": [
       {
         "key": "offer",
-        "label": "OFFER",
+        "label": "Offer",
         "value": "20% off"
       }
     ],
     "secondaryFields": [
       {
         "key": "terms",
-        "label": "VALID FOR",
+        "label": "Valid for",
         "value": "One purchase"
-      }
-    ],
-    "auxiliaryFields": [
-      {
-        "key": "code",
-        "label": "CODE",
-        "value": "SAVE-0001"
       }
     ],
     "backFields": [
       {
         "key": "note",
-        "label": "NOTE",
-        "value": "",
-        "changeMessage": "%@"
+        "label": "Note",
+        "value": ""
       },
       {
         "key": "site",
-        "label": "SITE",
-        "value": "https://example.com/",
-        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+        "label": "Website",
+        "value": ""
       },
       {
         "key": "fine",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "One use per customer. Not combinable with other offers."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ]
   }

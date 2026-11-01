@@ -3,6 +3,7 @@ import type { PassJson } from '../types.ts';
 import { validatePass } from '../validate.ts';
 import { FIXTURES } from './fixtures.ts';
 import { type Mutator, pet, poster, run } from './rules-helpers.ts';
+import { HIG_CODES } from './validate-hig.ts';
 import type { PackageContents } from './validate-package.ts';
 
 describe('validatePass strict mode', () => {
@@ -18,7 +19,7 @@ describe('validatePass strict mode', () => {
 describe('validatePass accepts', () => {
   const ok = (fixture: string, mutate: Mutator, options?: PackageContents) => {
     const report = run(fixture, mutate, options);
-    expect(report.issues).toEqual([]);
+    expect(report.issues.filter((i) => !HIG_CODES.has(i.code))).toEqual([]);
   };
 
   it('a personalization.json for an NFC identity with a logo', () =>

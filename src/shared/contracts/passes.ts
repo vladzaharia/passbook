@@ -32,6 +32,8 @@ export const PassSummarySchema = z.object({
   holderEmail: z.string().nullable(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']),
   ownerUserId: IdSchema.nullable(),
+  /** Devices that have the pass in Wallet. */
+  deviceCount: z.number().int().default(0),
   modifiedAt: TimestampSchema,
   createdAt: TimestampSchema,
 });
@@ -48,13 +50,33 @@ export const PassVersionSchema = z.object({
 });
 
 export const DeliveryEntrySchema = z.object({
-  id: IdSchema,
+  /** Outbox ids carry their kind and reason (`push:<pass>:<reason>:<uuid>`), longer than an IdSchema. */
+  id: z.string().min(1).max(128),
   kind: z.enum(['push', 'email']),
   state: z.enum(['pending', 'enqueued', 'processing', 'sent', 'partial', 'failed', 'cancelled']),
   attempts: z.number().int(),
   errorCode: z.string().nullable(),
   createdAt: TimestampSchema,
   finishedAt: TimestampSchema.nullable(),
+});
+
+export const PassDeviceSchema = z.object({
+  /** Last six characters of the device library id; enough to tell devices apart. */
+  shortId: z.string(),
+  createdAt: TimestampSchema,
+  /** The newest push since the device registered. */
+  lastPush: z
+    .object({
+      state: DeliveryEntrySchema.shape.state,
+      at: TimestampSchema,
+    })
+    .nullable(),
+});
+
+export const PassVoidedSchema = z.object({
+  at: TimestampSchema,
+  actorType: z.string(),
+  actorLabel: z.string().nullable(),
 });
 
 export const PassDetailSchema = PassSummarySchema.extend({
@@ -73,11 +95,18 @@ export const PassDetailSchema = PassSummarySchema.extend({
   downloadUrl: z.string(),
   publicUrl: z.string(),
   registrations: z.number().int(),
+  devices: z.array(PassDeviceSchema).default([]),
   lastRefreshedAt: TimestampSchema.nullable(),
   versions: z.array(PassVersionSchema),
   deliveries: z.array(DeliveryEntrySchema),
+  /** Who voided the pass and when; null while active. */
+  voided: PassVoidedSchema.nullable().default(null),
+  /** Issues with this pass's own content (fields, images, branding). */
   warnings: z.array(ValidationIssueSchema),
+  /** Issues every pass of the template shares; the template page shows them. */
+  templateWarnings: z.array(ValidationIssueSchema).default([]),
 });
+export type PassDetailDto = z.infer<typeof PassDetailSchema>;
 
 export const PassListQuerySchema = z.object({
   orgId: IdSchema.optional(),
@@ -86,6 +115,11 @@ export const PassListQuerySchema = z.object({
   status: PassStatusSchema.optional(),
   holderEmail: z.string().max(254).optional(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']).optional(),
+  /** true: on at least one device; false: on none. */
+  onDevice: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
   q: z.string().max(200).optional(),
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -113,6 +147,8 @@ export const UpdatePassSchema = z.object({
   templateVersion: z.string().optional(),
   externalId: z.string().max(200).nullable().optional(),
   resetToConnection: z.array(z.string()).optional(),
+  /** Holders get a lock-screen message for the fields this save changes; off by default. */
+  notify: z.boolean().optional(),
 });
 /**
  * Binds an existing pass to an upstream ref, or unbinds it (both null). `resetFieldSources`
@@ -159,6 +195,20 @@ export const DiffQuerySchema = z.object({
   from: z.coerce.number().int(),
   to: z.coerce.number().int(),
 });
+export const BULK_PASS_LIMIT = 100;
+export const BulkPassActionSchema = z.object({
+  action: z.enum(['void', 'send_email']),
+  ids: z.array(IdSchema).min(1).max(BULK_PASS_LIMIT),
+  /** The caller's view: every id must belong to this org. */
+  orgId: IdSchema.optional(),
+});
+export const BulkPassActionResponseSchema = z.object({
+  /** Passes the action applied to (already voided ones count). */
+  done: z.number().int(),
+  /** Passes skipped, with the reason code (NO_RECIPIENT for send_email without a holder). */
+  skipped: z.array(z.object({ id: IdSchema, code: z.string() })),
+});
+
 export const BulkReissueSchema = z
   .object({
     /** Required for an upgrade; a re-sign may omit it to cover every template of the identity. */

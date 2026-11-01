@@ -1,53 +1,55 @@
-import type { z } from 'zod';
-import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
+import type { EntityChipProps } from '../../../ui/index.ts';
 import {
   Card,
   CardBody,
   EmptyState,
   ErrorState,
-  KeyValue,
+  Handoff,
   SkeletonTimeline,
   Timeline,
   type TimelineItem,
 } from '../../../ui/index.ts';
 import { usePassAudit } from '../api.ts';
-import { formatDate } from '../format.ts';
 
-type Pass = z.infer<typeof PassDetailSchema>;
+const ACTOR: Record<string, { kind: EntityChipProps['kind']; to?: (id: string) => string }> = {
+  user: { kind: 'user', to: (id) => `/admin/users/${id}` },
+  api_key: { kind: 'apiKey' },
+  connection: { kind: 'connection', to: (id) => `/admin/connections/${id}` },
+};
 
-export function DevicesTab({ pass }: { pass: Pass }) {
-  return (
-    <Card>
-      <CardBody>
-        <KeyValue
-          items={[
-            { label: 'Registered devices', value: String(pass.registrations) },
-            { label: 'Last refreshed', value: formatDate(pass.lastRefreshedAt) },
-          ]}
-        />
-      </CardBody>
-    </Card>
-  );
-}
-
+/** The pass's audit trail as a timeline: action glyphs, who did it as an entity chip. */
 export function ActivityTab({ passId, active }: { passId: string; active: boolean }) {
   const audit = usePassAudit(passId, active);
-  if (audit.isPending) return <SkeletonTimeline label="Loading activity" />;
-  if (audit.isError) {
-    return <ErrorState error={audit.error} onRetry={() => void audit.refetch()} />;
-  }
-  if (audit.data.items.length === 0) return <EmptyState art="activity" title="No activity" />;
-  const items: TimelineItem[] = audit.data.items.map((e) => ({
-    id: String(e.id),
-    action: e.action,
-    time: e.at,
-    actorLabel: e.actorLabel ?? e.actorType,
-  }));
+  if (audit.isError) return <ErrorState error={audit.error} onRetry={() => void audit.refetch()} />;
+  const items: TimelineItem[] = (audit.data?.items ?? []).map((e) => {
+    const actor = e.actorId ? ACTOR[e.actorType] : undefined;
+    return {
+      id: String(e.id),
+      action: e.action,
+      time: e.at,
+      ...(actor && e.actorId
+        ? {
+            actor: {
+              kind: actor.kind,
+              id: e.actorId,
+              name: e.actorLabel,
+              ...(actor.to ? { to: actor.to(e.actorId) } : {}),
+            },
+          }
+        : { actorLabel: e.actorLabel ?? (e.actorType === 'system' ? 'System' : e.actorType) }),
+    };
+  });
   return (
-    <Card>
-      <CardBody>
-        <Timeline items={items} />
-      </CardBody>
-    </Card>
+    <Handoff loading={audit.isPending} skeleton={<SkeletonTimeline label="Loading activity" />}>
+      <Card>
+        {items.length === 0 ? (
+          <EmptyState inline art="activity" title="No activity" />
+        ) : (
+          <CardBody>
+            <Timeline items={items} />
+          </CardBody>
+        )}
+      </Card>
+    </Handoff>
   );
 }

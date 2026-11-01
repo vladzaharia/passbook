@@ -10,21 +10,18 @@ export const passListSearchSchema = z.object({
   connectionId: opt(z.string()),
   status: opt(z.enum(['active', 'voided'])),
   holderState: opt(z.enum(['unassigned', 'waiting', 'owned'])),
+  onDevice: opt(z.enum(['true', 'false'])),
 });
 export type PassListSearch = z.infer<typeof passListSearchSchema>;
 
+export const newPassSearchSchema = z.object({
+  orgId: opt(z.string()),
+  templateId: opt(z.string()),
+});
+
 export const passDetailSearchSchema = z.object({
   tab: opt(
-    z.enum([
-      'fields',
-      'holder',
-      'images',
-      'delivery',
-      'versions',
-      'connection',
-      'devices',
-      'activity',
-    ]),
+    z.enum(['fields', 'holder', 'images', 'delivery', 'versions', 'connection', 'activity']),
   ),
   v: opt(z.coerce.number().int()),
 });

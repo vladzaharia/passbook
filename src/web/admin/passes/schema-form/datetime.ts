@@ -76,3 +76,31 @@ export function isoToLocal(iso: string, zone: string): string {
     return '';
   }
 }
+
+/** Minutes east of UTC that `zone` uses at `ms`. */
+export function zoneOffset(ms: number, zone: string): number {
+  return Math.round((wallAsUtc(ms, zone) - Math.floor(ms / 1000) * 1000) / 60_000);
+}
+
+const pad = (n: number) => String(Math.abs(n)).padStart(2, '0');
+
+/**
+ * `YYYY-MM-DDTHH:mm` read in `zone` as ISO with that zone's offset ("2030-06-01T08:00:00-07:00"),
+ * so Wallet shows the local time with ignoresTimeZone. Undefined when unparsable.
+ */
+export function localToOffsetIso(local: string, zone: string): string | undefined {
+  const utc = localToIso(local, zone);
+  if (!utc) return undefined;
+  const ms = Date.parse(utc);
+  const off = zoneOffset(ms, zone);
+  const wall = new Date(ms + off * 60_000).toISOString().slice(0, 19);
+  return `${wall}${off < 0 ? '-' : '+'}${pad(Math.trunc(off / 60))}:${pad(off % 60)}`;
+}
+
+const OFFSET = /([+-])(\d{2}):?(\d{2})$/;
+/** The offset (minutes) written in an ISO string, or undefined for Z or none. */
+export function writtenOffset(iso: string): number | undefined {
+  const m = OFFSET.exec(iso);
+  if (!m) return undefined;
+  return (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+}

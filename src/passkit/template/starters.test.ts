@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassBuildError } from '../build.ts';
+import { pixelIssues } from '../schema/image-pixels.ts';
+import { checkImageSize } from '../schema/image-rules.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { PassField, PassJson, Personalization, SigningMaterial } from '../types.ts';
 import { buildBaked as build, freezeNow, loadBaked } from './baked-fixtures.ts';
@@ -34,7 +36,10 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
     const { template } = await loadBaked(slug);
     expect(template.manifest.org).toBeUndefined();
     expect(JSON.stringify(template.passJson)).not.toMatch(/henry/i);
-    expect(template.passJson.organizationName).toBe('Wallet');
+    expect(template.passJson.organizationName).toBe('Organization');
+    // The Worker writes the org's name and kind; the package never names the platform.
+    for (const key of ['logoText', 'eventLogoText', 'description'] as const)
+      expect(String(template.passJson[key] ?? ''), key).not.toMatch(/wallet/i);
     expect(template.styles).toContain(style);
   });
 
@@ -42,45 +47,65 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
     const built = await build(slug, material);
     // Two primary fields are valid on boarding passes; the foundation validator counts one.
     // The event starter is barcode-only: poster layout needs NFC, which starters never carry.
+    // The Worker fills the Contact and Pass service back fields (modules/passes/contacts.ts).
     const issues = built.report.issues.filter(
       (i) =>
+        i.severity !== 'info' &&
+        i.code !== 'BACK_CONTACT' &&
         !(i.code === 'FIELD_COUNT' && i.path === 'boardingPass.primaryFields') &&
         !(i.code === 'PET_NFC' && slug === 'starter-event-ticket'),
     );
     expect(issues).toEqual([]);
   });
 
-  it('has an image of the right pixel size for every scale it ships', async () => {
+  it('ships every image at @2x and @3x, sized and trimmed by the HIG rules', async () => {
     const { pkg } = await loadBaked(slug);
-    const points: Record<string, [number, number]> = {
-      icon: [38, 38],
-      logo: [160, 50],
-      primaryLogo: [126, 30],
-      secondaryLogo: [135, 12],
-      thumbnail: [90, 90],
-      strip: slug === 'starter-event-ticket' ? [375, 98] : [375, 144],
-      artwork: [358, 448],
-      footer: [286, 15],
-    };
     const images = pkg.assets.filter((a) => a.slot !== 'strings' && a.slot !== 'other');
     expect(images.length).toBeGreaterThan(0);
     for (const a of images) {
-      const [w, h] = points[a.slot] as [number, number];
-      expect([a.width, a.height], a.name).toEqual([w * a.scale, h * a.scale]);
-      expect(pngSize(pkg.bytes[a.name] as Uint8Array)).toEqual({
-        width: a.width,
-        height: a.height,
+      expect(checkImageSize(a.name, a.slot, a.scale, a.width ?? 0, a.height ?? 0), a.name).toEqual({
+        level: 'ok',
       });
+      const bytes = pkg.bytes[a.name] as Uint8Array;
+      expect(pngSize(bytes)).toEqual({ width: a.width, height: a.height });
+      expect(pixelIssues(a.name, a.slot, bytes), a.name).toEqual([]);
     }
     for (const slot of new Set(images.map((a) => a.slot)))
-      expect(images.filter((a) => a.slot === slot).map((a) => a.scale)).toEqual([1, 2, 3]);
+      expect(images.filter((a) => a.slot === slot).map((a) => a.scale)).toEqual([2, 3]);
+  });
+
+  it('labels in sentence case and localizes every label', async () => {
+    const { pkg, template } = await loadBaked(slug);
+    const strings = new TextDecoder().decode(pkg.bytes['en.lproj/pass.strings']);
+    const labels = Object.values((template.passJson[style] as object) ?? {})
+      .flat()
+      .filter((f): f is PassField => typeof f === 'object' && f !== null && 'key' in f)
+      .flatMap((f) => (typeof f.label === 'string' ? [f.label] : []));
+    for (const label of labels) {
+      expect(label, label).not.toMatch(/^[^a-z]*[A-Z]{2}[^a-z]*$/);
+      expect(strings).toContain(`"${label}" = "${label}";`);
+    }
+  });
+
+  it('keeps change messages to time-critical fields and never repeats free text', async () => {
+    const { template } = await loadBaked(slug);
+    const text = JSON.stringify(template.passJson);
+    expect(text).not.toContain('"changeMessage":"%@"');
+    const keys = Object.values((template.passJson[style] as object) ?? {})
+      .flat()
+      .filter((f): f is PassField => typeof f === 'object' && f !== null && 'changeMessage' in f)
+      .map((f) => f.key.replace(/-poster$/, ''));
+    for (const key of keys)
+      expect(['gate', 'departs', 'date', 'time', 'status', 'balance', 'tier']).toContain(key);
   });
 
   it('uses only slots its style draws', async () => {
     const { pkg } = await loadBaked(slug);
     const used = new Set(pkg.assets.map((a) => a.slot));
     expect(used.has('icon')).toBe(true);
-    expect(used.has('background')).toBe(false);
+    // The classic event ticket draws background and thumbnail instead of a strip.
+    expect(used.has('background')).toBe(slug === 'starter-event-ticket');
+    if (slug === 'starter-event-ticket') expect(used.has('strip')).toBe(false);
   });
 
   it('removes an empty note and never leaks sample text into it', async () => {
@@ -105,13 +130,7 @@ describe('field coverage', () => {
   it('generic and poster use every group their style allows', async () => {
     const generic = (await build('starter-generic', material)).passJson;
     expect(groups(generic, 'generic')).toEqual(
-      expect.arrayContaining([
-        'headerFields',
-        'primaryFields',
-        'secondaryFields',
-        'auxiliaryFields',
-        'backFields',
-      ]),
+      expect.arrayContaining(['headerFields', 'primaryFields', 'secondaryFields', 'backFields']),
     );
     const poster = (await build('starter-poster-generic', material)).passJson;
     expect(groups(poster, 'posterGeneric')).toEqual(
@@ -186,7 +205,10 @@ describe('starter-generic', () => {
     const { template } = await loadBaked('starter-generic');
     const sample = template.manifest.sample;
     const plain = (await build('starter-generic', material, sample)).passJson;
-    expect(plain.featuredActions?.map((a) => a.identifier)).toEqual(['portal']);
+    // Without a website or phone the sample ships no actions and no site field.
+    expect(plain.featuredActions ?? []).toEqual([]);
+    expect(keys(plain, 'generic')).not.toContain('site');
+    expect(JSON.stringify(plain)).not.toContain('example.com');
     expect(keys(plain, 'generic')).not.toContain('phone');
     const withPhone = (
       await build('starter-generic', material, { ...sample, phone: '+14155550100' })
@@ -293,10 +315,17 @@ describe('starter-event-ticket', () => {
         'eventStartDate',
       ]),
     );
+    // From two hours before the start to the end, in local time with ignoresTimeZone.
     expect(pass.relevantDates).toEqual([
-      { date: '2030-06-01T19:00:00Z', relevantDate: '2030-06-01T19:00:00Z' },
+      { startDate: '2030-06-02T00:00:00Z', endDate: '2030-06-02T05:00:00Z' },
     ]);
-    expect(pass.relevantDate).toBe('2030-06-01T19:00:00Z');
+    expect(pass.relevantDate).toBe('2030-06-02T02:00:00Z');
+    const header = pass.eventTicket?.headerFields?.[0];
+    expect(header).toMatchObject({ value: '2030-06-01T19:00:00-07:00', ignoresTimeZone: true });
+    expect(pass.eventTicket?.secondaryFields?.[0]).toMatchObject({
+      key: 'time',
+      timeStyle: 'PKDateStyleShort',
+    });
   });
 
   it('drops the venue location when coordinates are missing and follows input times', async () => {
@@ -310,7 +339,7 @@ describe('starter-event-ticket', () => {
     const pass = (await build('starter-event-ticket', material, input)).passJson;
     expect((pass.semantics as Record<string, unknown>).venueLocation).toBeUndefined();
     expect(pass.relevantDates).toEqual([
-      { date: '2031-01-01T10:00:00Z', relevantDate: '2031-01-01T10:00:00Z' },
+      { startDate: '2031-01-01T08:00:00Z', endDate: '2031-01-01T12:00:00Z' },
     ]);
     expect(pass.expirationDate).toBe('2031-01-01T12:00:00Z');
     expect(pass.locations).toBeUndefined();
@@ -323,7 +352,10 @@ describe('starter-event-ticket', () => {
       startsAt: '2030-06-01T10:00:00Z',
       endsAt: '2030-06-03T22:00:00Z',
     });
-    expect(built.passJson.relevantDates?.[0]).toMatchObject({ date: '2030-06-01T10:00:00Z' });
+    expect(built.passJson.relevantDates?.[0]).toMatchObject({
+      startDate: '2030-06-01T08:00:00Z',
+      endDate: '2030-06-02T08:00:00Z',
+    });
     expect(built.passJson.expirationDate).toBe('2030-06-03T22:00:00Z');
     expect(built.report.issues.filter((i) => i.code === 'RELEVANT_DATE_RANGE')).toEqual([]);
   });
@@ -399,11 +431,10 @@ describe('starter-boarding-pass', () => {
       destinationStationName: 'New York',
       vehicleNumber: 'WA100',
     });
-    expect(train.logoText).toBe('Wallet');
-    expect(train.boardingPass?.headerFields?.[0]?.label).toBe('TRAIN');
+    expect(train.boardingPass?.headerFields?.[0]?.label).toBe('Train');
     const air = (await build('starter-boarding-pass', material, sample)).passJson;
     expect((air.semantics as Record<string, unknown>).airlineCode).toBe('WA');
-    expect(air.logoText).toBe('Wallet Air');
+    expect(air.logoText).toBe('Organization');
   });
 
   it('sets relevance, gate, seats and links from input', async () => {
@@ -415,9 +446,13 @@ describe('starter-boarding-pass', () => {
         managementURL: 'https://air.test/manage',
       })
     ).passJson;
+    // From an hour before boarding to arrival; departure reads in local time.
     expect(pass.relevantDates).toEqual([
-      { date: '2030-06-01T08:00:00Z', relevantDate: '2030-06-01T08:00:00Z' },
+      { startDate: '2030-06-01T13:15:00Z', endDate: '2030-06-01T20:30:00Z' },
     ]);
+    const departs = pass.boardingPass?.secondaryFields?.find((f) => f.key === 'departs');
+    expect(departs).toMatchObject({ ignoresTimeZone: true });
+    expect(String(departs?.value)).toMatch(/-07:00$/);
     expect(pass.semantics).toMatchObject({
       departureGate: 'B12',
       boardingGroup: '3',

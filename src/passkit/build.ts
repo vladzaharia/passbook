@@ -125,6 +125,7 @@ interface ShippedAsset {
   name: string;
   width?: number;
   height?: number;
+  size?: number;
   sha1?: string;
   crc32?: number;
   bytes?: Uint8Array;
@@ -146,6 +147,7 @@ function shippedAssets(
     if (previewOnly.has(entry.name) || isDropped(entry.name)) continue;
     out.set(entry.name, {
       name: entry.name,
+      ...(entry.size ? { size: entry.size } : {}),
       ...(entry.width ? { width: entry.width } : {}),
       ...(entry.height ? { height: entry.height } : {}),
       ...(entry.sha1 ? { sha1: entry.sha1 } : {}),
@@ -162,10 +164,16 @@ function shippedAssets(
     out.set(name, {
       name,
       ...size,
+      size: override.bytes.length,
       bytes: override.bytes,
       ...(override.sha1 ? { sha1: override.sha1 } : {}),
     });
   }
+  // Every device Wallet runs on is @2x or @3x: a @1x file is dead weight once a larger one ships.
+  const hasRetina = (name: string) =>
+    [2, 3].some((scale) => out.has(name.replace(/\.png$/, `@${scale}x.png`)));
+  for (const name of [...out.keys()])
+    if (/^(?:[^/]+\.lproj\/)?[A-Za-z]+\.png$/.test(name) && hasRetina(name)) out.delete(name);
   return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 

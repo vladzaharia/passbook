@@ -419,7 +419,6 @@ describe('CompositeTemplateRegistry', () => {
       now: new Date(clock.now()),
     });
     expect(Object.keys(built.signed.files).sort()).toEqual([
-      'icon.png',
       'icon@2x.png',
       'manifest.json',
       'pass.json',

@@ -150,7 +150,8 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
     ).passJson;
     expect(ended.expirationDate).toBe('2027-01-31T23:59:00-08:00');
     expect(ended.voided).toBe(true);
-    expect(ended.generic?.headerFields?.[0]?.value).toBe('Cancelled');
+    // The header carries the member number; status sits on the back.
+    expect(ended.generic?.backFields?.find((f) => f.key === 'status')?.value).toBe('Cancelled');
   });
 
   it('always links the member portal and has no portal input', async () => {
@@ -194,14 +195,14 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
 
   it('keeps background art out of the signed bundle but available for preview', async () => {
     const { template } = await loadBaked(slug);
-    expect(template.assets.map((a) => a.name)).toContain('background.png');
+    expect(template.assets.map((a) => a.name)).toContain('background@2x.png');
     const built = await build(slug, material);
     expect(Object.keys(built.signed.files).filter((n) => n.startsWith('background'))).toEqual([]);
     expect(Object.keys(built.signed.files)).toEqual(
       expect.arrayContaining([
         'artwork@3x.png',
-        'primaryLogo.png',
-        'logo.png',
+        'primaryLogo@2x.png',
+        'logo@2x.png',
         'en.lproj/pass.strings',
       ]),
     );
@@ -223,7 +224,7 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
       const a = pkg.assets.find((x) => x.name === n);
       return a ? [a.width, a.height] : null;
     };
-    expect(size('artwork.png')).toEqual([358, 448]);
+    expect(size('artwork@2x.png')).toEqual([716, 896]);
     expect(size('artwork@3x.png')).toEqual([1074, 1344]);
     expect(size('primaryLogo@2x.png')).toEqual([252, 60]);
     expect(size('icon@3x.png')).toEqual([114, 114]);

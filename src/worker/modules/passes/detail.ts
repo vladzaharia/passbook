@@ -1,20 +1,23 @@
 import { validatePass } from '../../../passkit/index.ts';
-import type { PassJson } from '../../../passkit/types.ts';
+import type { PassJson, ValidationIssue } from '../../../passkit/types.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listOutboxForPass } from '../delivery/repo.ts';
 import { replacedBy } from './assets.ts';
+import { brandingWarnings, readBranding } from './branding.ts';
 import { resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import {
-  countRegistrations,
   currentPassJson,
+  getOrg,
   getOwnerLabel,
   getPass,
   getVersion,
+  lastVoidEvent,
   listAssets,
   listBlockedUsers,
+  listPassDevices,
   listVersions,
   type Pass,
 } from './repo.ts';
@@ -43,6 +46,7 @@ export function toSummary(pass: Pass) {
     holderEmail: pass.holderEmail,
     holderState: holderStateOf(pass),
     ownerUserId: pass.ownerUserId,
+    deviceCount: pass.deviceCount,
     modifiedAt: pass.modifiedAt,
     createdAt: pass.createdAt,
   };
@@ -76,17 +80,37 @@ export function linksOf(ctx: ServiceContext, pass: Pass) {
   };
 }
 
+type Issue = ValidationIssue;
+const issueKey = (i: Issue) => `${i.code}\u0000${i.path ?? ''}`;
+
+/**
+ * Splits warnings: the template's own (its pass.json and images, shared by every pass) and this
+ * pass's (its values, overrides and the org's branding). The pass page shows only the second.
+ */
 async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: PassJson) {
   try {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
     const identity = await depsOf(ctx.env).identities.byId(pass.identityId);
-    return validatePass(passJson, template.assets, identity).issues.filter(
-      (i) => i.severity === 'warning',
+    const warn = (issues: Issue[]) => issues.filter((i) => i.severity !== 'error');
+    const shared = warn(validatePass(template.passJson, template.assets, identity).issues);
+    const known = new Set(shared.map(issueKey));
+    const own = warn(validatePass(passJson, template.assets, identity).issues).filter(
+      (i) => !known.has(issueKey(i)),
     );
+    const [org, overrides] = await Promise.all([
+      getOrg(ctx.env.DB, pass.orgId),
+      listAssets(ctx.env.DB, pass.id),
+    ]);
+    const branding = brandingWarnings(
+      pass.templateId,
+      readBranding(org?.branding),
+      overrides.map((a) => a.name),
+    );
+    return { pass: [...own, ...branding], template: shared };
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.warn('pass.warnings_unavailable', { passId: pass.id, code: error.code });
-    return [];
+    return { pass: [], template: [] };
   }
 }
 
@@ -121,15 +145,17 @@ function versionSummary(v: {
 
 export async function detailOf(ctx: ServiceContext, pass: Pass) {
   const db = ctx.env.DB;
-  const [json, registrations, versions, deliveries, blockedUsers, owner] = await Promise.all([
+  const [json, devices, versions, deliveries, blockedUsers, owner, voided] = await Promise.all([
     currentPassJson(db, pass.id),
-    countRegistrations(db, pass.id),
+    listPassDevices(db, pass.id),
     listVersions(db, pass.id),
     listOutboxForPass(db, pass.id),
     listBlockedUsers(db, pass.id),
     pass.ownerUserId ? getOwnerLabel(db, pass.ownerUserId) : null,
+    pass.status === 'voided' ? lastVoidEvent(db, pass.id) : null,
   ]);
   const passJson = parseJson(json);
+  const warnings = await warningsFor(ctx, pass, passJson);
   return {
     ...toSummary(pass),
     ownerName: owner?.name ?? null,
@@ -140,7 +166,8 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
     ...linksOf(ctx, pass),
     assetNames: await assetNamesOf(ctx, pass),
     blockedUsers,
-    registrations,
+    registrations: devices.length,
+    devices,
     lastRefreshedAt: pass.lastRefreshedAt,
     versions: versions.map(versionSummary),
     deliveries: deliveries.map((d) => ({
@@ -152,7 +179,12 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
       createdAt: d.createdAt,
       finishedAt: d.finishedAt,
     })),
-    warnings: await warningsFor(ctx, pass, passJson),
+    voided:
+      pass.status === 'voided'
+        ? (voided ?? { at: pass.modifiedAt, actorType: 'system', actorLabel: null })
+        : null,
+    warnings: warnings.pass,
+    templateWarnings: warnings.template,
   };
 }
 

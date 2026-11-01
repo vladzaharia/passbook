@@ -6,6 +6,7 @@ import {
   validateSharing,
 } from './schema/validate-features.ts';
 import { validateStyleDict } from './schema/validate-fields.ts';
+import { validateHig } from './schema/validate-hig.ts';
 import { type ValidatableAsset, validateImages } from './schema/validate-images.ts';
 import type { PackageContents } from './schema/validate-package.ts';
 import { validateLocalization, validatePersonalization } from './schema/validate-package.ts';
@@ -55,11 +56,14 @@ export function validatePass(
       ...(path ? { path } : {}),
     });
 
+  const info = (code: string, message: string, path?: string) =>
+    issues.push({ severity: 'info', code, message, ...(path ? { path } : {}) });
   const ctx: ValidationContext = {
     pass,
     identity,
     error,
     warn,
+    info,
     styles: resolveStyles(pass, error, warn),
   };
   validateTopLevel(ctx);
@@ -77,6 +81,7 @@ export function validatePass(
   validateUpcoming(ctx);
 
   const images = validateImages(ctx, assets);
+  validateHig(ctx, assets);
   validateLocalization(ctx, assets, options);
   validatePersonalization(ctx, assets, images, options);
 

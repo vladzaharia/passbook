@@ -26,12 +26,7 @@ const common = {
 export function images(...slots: string[]): ValidatableAsset[] {
   return slots.flatMap((slot) => {
     const rule = IMAGE_RULES[slot];
-    const [w, h] =
-      rule?.kind === 'exact'
-        ? (rule.sizes[0] as [number, number])
-        : rule?.kind === 'max'
-          ? [rule.width, rule.height]
-          : [90, 90];
+    const [w, h] = rule ? [rule.width[1], rule.height[1]] : [90, 90];
     return [1, 2, 3].map((scale) => ({
       name: `${slot}${scale === 1 ? '' : `@${scale}x`}.png`,
       width: w * scale,

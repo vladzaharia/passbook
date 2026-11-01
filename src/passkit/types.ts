@@ -65,7 +65,7 @@ export interface SigningMaterial {
 }
 
 export interface ValidationIssue {
-  severity: 'error' | 'warning';
+  severity: 'error' | 'warning' | 'info';
   code: string;
   message: string;
   path?: string;

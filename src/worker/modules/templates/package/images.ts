@@ -72,10 +72,15 @@ export async function checkImage(
       throw error;
     }
   }
-  const problem = checkSize(file.slot, file.scale, png.width, png.height);
+  const problem = checkSize(file.path, file.slot, file.scale, png.width, png.height);
   if (problem) {
-    push({ severity: 'error', code: 'IMAGE_SIZE', message: problem, path: file.path });
-    return null;
+    push({
+      severity: problem.level,
+      code: 'IMAGE_SIZE',
+      message: problem.message,
+      path: file.path,
+    });
+    if (problem.level === 'error') return null;
   }
   return { ...file, width: png.width, height: png.height };
 }
@@ -85,7 +90,10 @@ function pathFor(file: CheckedImage, scale: 1 | 2 | 3): string {
   return `${dir}${file.slot}${scale === 1 ? '' : `@${scale}x`}.png`;
 }
 
-/** Fills missing @1x/@2x from the @3x source. Returns the new files; warns when that is impossible. */
+/**
+ * Fills a missing @2x from the @3x source (signed packages carry @2x and @3x only, so @1x is never
+ * needed). Returns the new files; warns when that is impossible.
+ */
 export async function deriveScales(
   images: CheckedImage[],
   tools: ImageTools,
@@ -99,12 +107,12 @@ export async function deriveScales(
   const derived: CheckedImage[] = [];
   for (const group of groups.values()) {
     const source = group.find((g) => g.scale === 3);
-    for (const scale of [1, 2] as const) {
+    for (const scale of [2] as const) {
       if (group.some((g) => g.scale === scale)) continue;
       const first = group[0] as CheckedImage;
       const path = pathFor(first, scale);
       if (!source) {
-        if (first.slot === 'icon' || scale === 1)
+        if (first.slot === 'icon' && !group.some((g) => g.scale === 3))
           push({
             severity: 'warning',
             code: 'IMAGE_SCALE_MISSING',

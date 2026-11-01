@@ -28,6 +28,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
+import { registerLifecycle, registerUploadList } from './routes-more.ts';
 import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 
@@ -121,6 +122,8 @@ register(
   async (c: C) =>
     c.json(await importStatus(serviceContext(c), c.var.auth, valid<{ id: string }>(c, 'param').id)),
 );
+
+registerUploadList(templatesRoutes);
 
 register(
   templatesRoutes,
@@ -311,3 +314,5 @@ register(
     return new Response(asset.stream, { headers });
   },
 );
+
+registerLifecycle(templatesRoutes);

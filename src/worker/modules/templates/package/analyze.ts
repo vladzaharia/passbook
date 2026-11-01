@@ -1,4 +1,5 @@
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
+import { pixelIssues } from '../../../../passkit/schema/image-pixels.ts';
 import type {
   AssetEntry,
   PassJson,
@@ -174,15 +175,24 @@ export async function analyzePackage(
       push(i);
 
   const tools = options.images ?? {};
+  // Preview-only art (web previews) never ships: its size and slot are not the pass's concern.
+  const previewOnly = new Set(manifest?.previewOnlyAssets ?? []);
+  const quiet = (path: string) => (issue: ValidationIssue) => {
+    if (previewOnly.has(path) && issue.severity === 'warning') return;
+    push(issue);
+  };
   const checked: CheckedImage[] = [];
   for (const image of images) {
-    const result = await checkImage(image, tools, push);
+    const result = await checkImage(image, tools, quiet(image.path));
     if (result) checked.push(result);
   }
   const derived = await deriveScales(checked, tools, push);
   const all = [...checked, ...derived];
 
-  const used = usedSlots(passJson);
+  const used = usedSlots(
+    passJson,
+    all.some((i) => i.slot === 'artwork'),
+  );
   const extras: Analysis['extras'] = [];
   const kept: CheckedImage[] = [];
   for (const image of all) {
@@ -190,7 +200,7 @@ export async function analyzePackage(
       kept.push(image);
       continue;
     }
-    push({
+    quiet(image.path)({
       severity: 'warning',
       code: 'SLOT_UNUSED',
       message: `${image.slot} is not used by ${styles.join(', ') || 'any style'}; left out of the pass.`,
@@ -198,6 +208,10 @@ export async function analyzePackage(
     });
     extras.push({ name: image.path, size: image.bytes.length, sha1: await sha1Hex(image.bytes) });
   }
+
+  for (const image of kept)
+    for (const issue of pixelIssues(image.path, image.slot, image.bytes))
+      push({ severity: 'warning', ...issue, path: image.path });
 
   if (!kept.some((i) => i.slot === 'icon' && !i.locale))
     push({ severity: 'error', code: 'MISSING_ICON', message: 'icon.png is required.' });

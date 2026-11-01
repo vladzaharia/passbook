@@ -10,24 +10,21 @@
     }
   ],
   "coupon": {
-    "auxiliaryFields": [
-      {
-        "key": "code",
-        "label": "CODE",
-        "value": "SAVE-0001"
-      }
-    ],
     "backFields": [
       {
-        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
-        "key": "site",
-        "label": "SITE",
-        "value": "https://example.com/"
+        "key": "fine",
+        "label": "Terms",
+        "value": "One use per customer. Not combinable with other offers."
       },
       {
-        "key": "fine",
-        "label": "TERMS",
-        "value": "One use per customer. Not combinable with other offers."
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ],
     "headerFields": [
@@ -35,7 +32,7 @@
         "dateStyle": "PKDateStyleMedium",
         "ignoresTimeZone": true,
         "key": "expires",
-        "label": "EXPIRES",
+        "label": "Expires",
         "timeStyle": "PKDateStyleNone",
         "value": "2030-01-01T00:00:00Z"
       }
@@ -43,31 +40,25 @@
     "primaryFields": [
       {
         "key": "offer",
-        "label": "OFFER",
+        "label": "Offer",
         "value": "20% off"
       }
     ],
     "secondaryFields": [
       {
         "key": "terms",
-        "label": "VALID FOR",
+        "label": "Valid for",
         "value": "One purchase"
       }
     ]
   },
-  "description": "Wallet coupon",
+  "description": "Coupon",
   "expirationDate": "2030-01-01T00:00:00Z",
-  "featuredActions": [
-    {
-      "identifier": "offers",
-      "type": "viewOffersRewards",
-      "url": "https://example.com/"
-    }
-  ],
+  "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
+  "logoText": "Organization",
   "organizationName": "Wallet",
   "passTypeIdentifier": "pass.im.plrs.wallet",
   "serialNumber": "SNAPSHOT-SERIAL",

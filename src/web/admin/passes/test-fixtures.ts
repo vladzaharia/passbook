@@ -69,6 +69,7 @@ export function templateDetail(over: Record<string, unknown> = {}) {
           issues: [{ severity: 'warning', code: 'IMG_SCALE', message: 'Missing @3x icon.' }],
         },
         active: true,
+        passCount: 2,
       },
       {
         version: 'ffeeddccbbaa9988',
@@ -87,8 +88,10 @@ export function templateDetail(over: Record<string, unknown> = {}) {
           ],
         },
         active: false,
+        passCount: 0,
       },
     ],
+    passesOnOlderVersions: 0,
     ...over,
   };
 }
@@ -111,6 +114,7 @@ export function passSummary(over: Record<string, unknown> = {}) {
     holderEmail: 'sam@example.com',
     holderState: 'waiting',
     ownerUserId: null,
+    deviceCount: 2,
     modifiedAt: 1_700_000_000_000,
     createdAt: 1_700_000_000_000,
     ...over,
@@ -131,6 +135,14 @@ export function passDetail(over: Record<string, unknown> = {}) {
     downloadUrl: '/p/tok/pass.pkpass',
     publicUrl: '/p/tok',
     registrations: 2,
+    devices: [
+      {
+        shortId: 'a1b2c3',
+        createdAt: 1_700_000_000_000,
+        lastPush: { state: 'sent', at: 1_700_000_100_000 },
+      },
+      { shortId: 'd4e5f6', createdAt: 1_700_000_000_000, lastPush: null },
+    ],
     lastRefreshedAt: null,
     versions: [
       {
@@ -181,7 +193,9 @@ export function passDetail(over: Record<string, unknown> = {}) {
         finishedAt: 4,
       },
     ],
+    voided: null,
     warnings: [],
+    templateWarnings: [],
     ...over,
   };
 }

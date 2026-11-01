@@ -1,49 +1,97 @@
 import { useMemo, useState } from 'react';
-import { Input, Select } from '../../../ui/index.ts';
-import { browserZone, isoToLocal, localToIso, zoneList } from './datetime.ts';
+import { cn } from '../../../lib/cn.ts';
+import { localZone, zoneLabel, zoneOptions } from '../../../lib/timezones.ts';
+import {
+  CheckboxField,
+  CONTROL,
+  CONTROL_HEIGHT,
+  Combobox,
+  formatLocal,
+} from '../../../ui/index.ts';
+import { isoToLocal, localToOffsetIso, writtenOffset, zoneOffset } from './datetime.ts';
 
 interface Props {
   value: string;
   onValue: (v: string | undefined) => void;
   disabled?: boolean | undefined;
   onBlur: () => void;
+  /** Optional fields: "No date" or "Never expires" hides the controls and clears the value. */
+  clearLabel?: string | undefined;
   [key: string]: unknown;
 }
 
-/** Stores a UTC ISO instant; the admin reads and edits it in a chosen zone. */
-export function DateTimeInput({ value, onValue, disabled, onBlur, ...control }: Props) {
-  const [zone, setZone] = useState(browserZone);
-  const zones = useMemo(() => zoneList(zone), [zone]);
+/** The zone a stored value was written in: the browser's when its offset matches, else the first. */
+function zoneFor(iso: string): string {
+  const here = localZone();
+  const ms = Date.parse(iso);
+  const written = writtenOffset(iso);
+  if (Number.isNaN(ms) || written === undefined || zoneOffset(ms, here) === written) return here;
+  return zoneOptions().find((z) => zoneOffset(ms, z.value) === written)?.value ?? here;
+}
+
+/**
+ * A date and time in a named zone ("Los Angeles (PT)"). Stores ISO with that zone's offset, so
+ * the pass shows local time; the value is spelled out below.
+ */
+export function DateTimeInput({ value, onValue, disabled, onBlur, clearLabel, ...control }: Props) {
+  const [zone, setZone] = useState(() => (value ? zoneFor(value) : localZone()));
+  const zones = useMemo(() => zoneOptions(), []);
   const [draft, setDraft] = useState<string>();
-  const shown = draft ?? isoToLocal(value, zone);
+  const [none, setNone] = useState(value === '' && clearLabel !== undefined);
+  const shown = draft ?? (value ? isoToLocal(value, zone) : '');
+  const commit = (local: string, z: string) =>
+    onValue(local ? localToOffsetIso(local, z) : undefined);
   return (
-    <div className="flex flex-wrap gap-2">
-      <Input
-        {...control}
-        type="datetime-local"
-        disabled={disabled}
-        onBlur={() => {
-          setDraft(undefined);
-          onBlur();
-        }}
-        value={shown}
-        onChange={(e) => {
-          setDraft(e.target.value);
-          onValue(e.target.value ? localToIso(e.target.value, zone) : undefined);
-        }}
-        className="min-w-56 flex-1"
-      />
-      <Select
-        aria-label="Time zone"
-        className="w-52 max-w-full"
-        disabled={disabled}
-        value={zone}
-        onValueChange={(z) => {
-          setZone(z);
-          setDraft(undefined);
-        }}
-        options={zones.map((z) => ({ value: z, label: z }))}
-      />
+    <div className="flex flex-col gap-2">
+      {none ? null : (
+        <>
+          <div className="flex flex-col gap-2 md:flex-row">
+            <input
+              {...control}
+              type="datetime-local"
+              disabled={disabled}
+              value={shown}
+              onBlur={() => {
+                setDraft(undefined);
+                onBlur();
+              }}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                commit(e.target.value, zone);
+              }}
+              className={cn(CONTROL, CONTROL_HEIGHT, 'md:w-60')}
+            />
+            <Combobox
+              aria-label="Time zone"
+              searchPlaceholder="Find a city"
+              className="md:w-56"
+              disabled={disabled}
+              options={zones}
+              value={zone}
+              onValueChange={(z) => {
+                setZone(z);
+                if (shown) commit(shown, z);
+              }}
+            />
+          </div>
+          {shown ? (
+            <p className="text-xs text-fg-muted">
+              {formatLocal(shown)}, {zoneLabel(zone)}
+            </p>
+          ) : null}
+        </>
+      )}
+      {clearLabel ? (
+        <CheckboxField
+          label={clearLabel}
+          checked={none}
+          disabled={disabled}
+          onCheckedChange={(c) => {
+            setNone(c === true);
+            if (c === true) onValue(undefined);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

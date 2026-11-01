@@ -1,17 +1,11 @@
-import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import {
   BindPassConnectionSchema,
-  BulkReissueResponseSchema,
-  BulkReissueSchema,
   CreatePassSchema,
   DiffQuerySchema,
   IdParamSchema,
   OkSchema,
   PassActionResponseSchema,
-  PassAssetListSchema,
-  PassAssetParamSchema,
-  PassAssetSchema,
   PassDetailSchema,
   PassListQuerySchema,
   PassListSchema,
@@ -21,17 +15,16 @@ import {
   UpdatePassSchema,
 } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
-import { methodScope, requireAdmin, requireApiKeyOrAdmin } from '../../platform/auth.ts';
-import { BadRequestError, NotFoundError, PayloadTooLargeError } from '../../platform/errors.ts';
+import { methodScope, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { BadRequestError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { deletePassAsset, listPassAssets, putPassAsset } from './asset-service.ts';
-import { MAX_ASSET_BYTES } from './assets.ts';
-import { startBulkReissue } from './bulk.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
 import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
 import { getPass } from './repo.ts';
+import { registerAssetRoutes } from './routes-assets.ts';
+import { registerBulkRoutes } from './routes-bulk.ts';
 import {
   deletePass,
   listPassSummaries,
@@ -47,17 +40,6 @@ export const passesRoutes = createRouter();
 guard(
   passesRoutes,
   requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
-);
-
-passesRoutes.use('/bulk-reissue', requireAdmin);
-passesRoutes.use(
-  '/:id/assets/:name',
-  bodyLimit({
-    maxSize: MAX_ASSET_BYTES,
-    onError: () => {
-      throw new PayloadTooLargeError('The image must be 1 MB or smaller.', 'ASSET_SIZE');
-    },
-  }),
 );
 
 type Params = z.infer<typeof IdParamSchema>;
@@ -94,6 +76,7 @@ register(
         ...(q.status ? { status: q.status } : {}),
         ...(holderEmail ? { holderEmail } : {}),
         ...(q.holderState ? { holderState: q.holderState } : {}),
+        ...(q.onDevice !== undefined ? { onDevice: q.onDevice } : {}),
         ...(q.q ? { q: q.q } : {}),
         ...(q.cursor ? { cursor: q.cursor } : {}),
         limit: q.limit,
@@ -330,67 +313,5 @@ register(
   },
 );
 
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'get',
-    path: '/{id}/assets',
-    summary: 'Per-pass image overrides',
-    params: IdParamSchema,
-    response: PassAssetListSchema,
-  },
-  async (c: C) => c.json(await listPassAssets(svc(c), valid<Params>(c, 'param').id, orgScopeOf(c))),
-);
-
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'put',
-    path: '/{id}/assets/{name}',
-    summary: 'Upload an image override (PNG body)',
-    params: PassAssetParamSchema,
-    response: PassAssetSchema,
-  },
-  async (c: C) => {
-    const p = valid<z.infer<typeof PassAssetParamSchema>>(c, 'param');
-    const bytes = new Uint8Array(await c.req.arrayBuffer());
-    return c.json(await putPassAsset(svc(c), actorFor(c), p.id, p.name, bytes, orgScopeOf(c)));
-  },
-);
-
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'delete',
-    path: '/{id}/assets/{name}',
-    summary: 'Remove an image override',
-    params: PassAssetParamSchema,
-    response: OkSchema,
-  },
-  async (c: C) => {
-    const p = valid<z.infer<typeof PassAssetParamSchema>>(c, 'param');
-    await deletePassAsset(svc(c), actorFor(c), p.id, p.name, orgScopeOf(c));
-    return c.json({ ok: true });
-  },
-);
-
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'post',
-    path: '/bulk-reissue',
-    summary: 'Rebuild all passes of a template (admin)',
-    body: BulkReissueSchema,
-    status: 202,
-    response: BulkReissueResponseSchema,
-  },
-  async (c: C) => {
-    const body = valid<z.infer<typeof BulkReissueSchema>>(c, 'json');
-    const workflowInstanceId = await startBulkReissue(svc(c), actorFor(c), body);
-    return c.json({ workflowInstanceId }, 202);
-  },
-);
+registerAssetRoutes(passesRoutes);
+registerBulkRoutes(passesRoutes);

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { type FetchHandler, json, problem, renderApp } from '../../lib/test-utils.tsx';
+import { actionsFor } from './pass-actions.tsx';
 import {
   ORG,
   passDetail,
@@ -63,7 +64,7 @@ describe('passes list', () => {
       handlers: baseHandlers({
         '/api/v1/passes': (url) => {
           seen.push(url);
-          return json({ items: [], nextCursor: null });
+          return json({ items: [passSummary()], nextCursor: null });
         },
       }),
     });
@@ -107,7 +108,85 @@ describe('passes list', () => {
     });
     await user.click(await screen.findByRole('button', { name: 'Actions for Sam Jones' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Void' }));
+    // The row uses the header's guard: nothing is sent until the confirm.
+    const ask = await screen.findByRole('alertdialog', { name: 'Void pass?' });
+    expect(calls).toEqual([]);
+    await user.click(within(ask).getByRole('button', { name: 'Void' }));
     await waitFor(() => expect(calls).toEqual(['POST']));
+  });
+
+  it('offers the same actions in the row menu as in the detail header', async () => {
+    const user = userEvent.setup();
+    const pass = passDetail();
+    const expected = actionsFor(pass as Parameters<typeof actionsFor>[0]).map((a) => a.label);
+    const labels = async () =>
+      (await screen.findAllByRole('menuitem')).map((m) => m.textContent?.trim() ?? '');
+    // The detail header: the bar buttons plus More.
+    const detail = await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      handlers: baseHandlers({ '/api/v1/passes/p1': () => json(pass) }),
+    });
+    const bar = [
+      await screen.findByRole('button', { name: 'Update devices' }),
+      screen.getByRole('button', { name: 'Void' }),
+      screen.getByRole('link', { name: 'Open public page' }),
+    ].map((el) => el.textContent?.trim() ?? '');
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    const header = [...bar, ...(await labels())];
+    detail.unmount();
+    document.body.innerHTML = '';
+    // The row menu on the list.
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      handlers: baseHandlers({
+        '/api/v1/passes': () => json({ items: [passSummary()], nextCursor: null }),
+        '/api/v1/passes/p1': () => json(pass),
+      }),
+    });
+    await user.click(await screen.findByRole('button', { name: 'Actions for Sam Jones' }));
+    const row = await labels();
+    expect(new Set(row)).toEqual(new Set(expected));
+    expect(new Set(header)).toEqual(new Set(expected));
+  });
+
+  it('selects rows, voids them in bulk after a counted confirm and exports a CSV', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    const three = ['p1', 'p2', 'p3'].map((id, i) =>
+      passSummary({ id, title: `Pass ${i + 1}`, serial: `S-${i}` }),
+    );
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      handlers: baseHandlers({
+        '/api/v1/passes': () =>
+          json({ items: [...three, passSummary({ id: 'p4', title: 'Other' })], nextCursor: null }),
+        '/api/v1/passes/bulk': (_u, init) => {
+          bodies.push(JSON.parse(String(init?.body)));
+          return json({ done: 3, skipped: [] });
+        },
+      }),
+    });
+    for (const n of [1, 2, 3])
+      await user.click(await screen.findByRole('checkbox', { name: `Select Pass ${n}` }));
+    const bar = screen.getByRole('region', { name: 'Selection' });
+    expect(within(bar).getByText('3 selected')).toBeInTheDocument();
+    await user.click(within(bar).getByRole('button', { name: 'Void' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Void 3 passes?' });
+    await user.click(within(ask).getByRole('button', { name: 'Void' }));
+    await waitFor(() => expect(bodies).toEqual([{ action: 'void', ids: ['p1', 'p2', 'p3'] }]));
+  });
+
+  it('shows one primary and no search on a truly empty list', async () => {
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      handlers: baseHandlers({ '/api/v1/passes': empty }),
+    });
+    await screen.findByText('No passes yet');
+    expect(screen.queryByRole('searchbox')).toBeNull();
+    const creates = screen.getAllByRole('link', { name: 'New pass' });
+    expect(creates).toHaveLength(2);
+    // The header turns outline; the empty state holds the only primary.
+    expect(creates.filter((a) => a.className.includes('bg-accent'))).toHaveLength(1);
   });
 
   it('has no axe violations', async () => {
@@ -140,10 +219,9 @@ describe('new pass wizard', () => {
     });
   }
 
+  // One active org: the wizard skips the Organization step.
   async function toDetails(user: ReturnType<typeof userEvent.setup>) {
-    await user.click(await screen.findByRole('button', { name: /Henry's/ }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(await screen.findByRole('button', { name: /Copper card/ }));
+    await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByLabelText(/Member name/);
   }
@@ -155,15 +233,24 @@ describe('new pass wizard', () => {
       session: 'admin',
       handlers: wizardHandlers(() => json(passDetail({ id: 'p9' }), 201), posts),
     });
-    // Next stays disabled until an org is chosen.
-    expect(await screen.findByRole('button', { name: 'Next' })).toBeDisabled();
+    // Without a template, Next stays on the Template step.
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('heading', { name: 'Template' })).toBeInTheDocument();
     await toDetails(user);
     await user.type(screen.getByLabelText(/Member name/), 'Sam Jones');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.type(screen.getByLabelText('Holder email'), 'sam@example.com');
-    await user.click(screen.getByRole('switch', { name: 'Email the pass to the holder' }));
+    // A valid address checks the box by itself.
+    expect(
+      screen.getByRole('checkbox', { name: 'Email the pass to sam@example.com' }),
+    ).toBeChecked();
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Create pass' }));
+    // Review: an Edit link per row keeps the state.
+    await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+    expect(screen.getByLabelText(/Member name/)).toHaveValue('Sam Jones');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Create and send' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
     expect(posts).toHaveLength(1);
@@ -248,11 +335,18 @@ describe('new pass wizard', () => {
     await user.type(screen.getByLabelText(/Member name/), 'Sam');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.type(screen.getByLabelText('Holder email'), 'nope');
-    expect(screen.getByRole('switch', { name: 'Email the pass to the holder' })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'Email the pass' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('Enter a valid email.')).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('list', { name: 'Steps' })).getByText(/4\. Holder/),
-    ).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('heading', { name: 'Holder' })).toBeInTheDocument();
+  });
+
+  it('opens a deep link with an org and template on Details', async () => {
+    await renderApp('/admin/passes/new?orgId=org1&templateId=tpl1', {
+      session: 'admin',
+      handlers: wizardHandlers(() => json({}), []),
+    });
+    expect(await screen.findByRole('heading', { name: 'Details' })).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Member name/)).toBeInTheDocument();
   });
 });

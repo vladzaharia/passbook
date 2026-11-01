@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "6719319d2ccc3e6400e935f1553b89155eedf1fc";
+export const BAKED_BUILD_HASH = "6042fd1ec41afa4e3dc7ddd308e05b6a5aa9be51";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "0d03a72c4696fda4",
+    "version": "385ef0b7bc50c3f0",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -316,7 +316,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "previewOnlyAssets": [
-        "background.png",
         "background@2x.png",
         "background@3x.png"
       ]
@@ -393,8 +392,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "message-poster",
             "label": "FROM HENRY’S",
-            "value": "Welcome to Henry’s.",
-            "changeMessage": "%@"
+            "value": "Welcome to Henry’s."
           },
           {
             "key": "portal-poster",
@@ -436,10 +434,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "generic": {
         "headerFields": [
           {
-            "key": "status",
-            "label": "STATUS",
-            "value": "Active",
-            "changeMessage": "Your membership status is now %@."
+            "key": "memberId",
+            "label": "MEMBER",
+            "value": "DEMO0001"
           }
         ],
         "primaryFields": [
@@ -463,19 +460,18 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "changeMessage": "Your home club is now %@."
           }
         ],
-        "auxiliaryFields": [
-          {
-            "key": "memberId",
-            "label": "MEMBER NUMBER",
-            "value": "DEMO0001"
-          }
-        ],
+        "auxiliaryFields": [],
         "backFields": [
+          {
+            "key": "status",
+            "label": "MEMBERSHIP STATUS",
+            "value": "Active",
+            "changeMessage": "Your membership status is now %@."
+          },
           {
             "key": "message",
             "label": "FROM HENRY’S",
-            "value": "Welcome to Henry’s.",
-            "changeMessage": "%@"
+            "value": "Welcome to Henry’s."
           },
           {
             "key": "portal",
@@ -517,45 +513,31 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "assets": [
       {
-        "name": "artwork.png",
-        "slot": "artwork",
-        "scale": 1,
-        "size": 228484,
-        "sha1": "23dc7527bfead1936d122247461bbb7273516f8c",
-        "crc32": 4227445456,
-        "width": 358,
-        "height": 448,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/artwork.png"
-        }
-      },
-      {
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 836026,
-        "sha1": "a851ddf18da4e5ae95d677bf2b8f84fa6e39b46d",
-        "crc32": 2349323332,
+        "size": 78009,
+        "sha1": "10d2595123662bfe5347b3edfeeda5ce953e6e36",
+        "crc32": 722457333,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/artwork@2x.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 1733892,
-        "sha1": "c94e1b13b8caef66cd6d8df9b04e0d1404fbc93e",
-        "crc32": 2656591289,
+        "size": 141783,
+        "sha1": "58973679a58e32af8a5fbcce647cbfbb1c518fce",
+        "crc32": 2025619459,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/artwork@3x.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/artwork@3x.png"
         }
       },
       {
@@ -568,21 +550,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3740293075,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/en.lproj/pass.strings"
-        }
-      },
-      {
-        "name": "icon.png",
-        "slot": "icon",
-        "scale": 1,
-        "size": 2571,
-        "sha1": "e226db7ee0f79ce3ef35389d6766597ef4dffaa0",
-        "crc32": 3942680230,
-        "width": 38,
-        "height": 38,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/icon.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/en.lproj/pass.strings"
         }
       },
       {
@@ -596,7 +564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/icon@2x.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/icon@2x.png"
         }
       },
       {
@@ -610,21 +578,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 6573,
-        "sha1": "ffaf2224f89ed5577bfc43b7e379c814ef163121",
-        "crc32": 4098541999,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/logo.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/icon@3x.png"
         }
       },
       {
@@ -638,7 +592,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/logo@2x.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/logo@2x.png"
         }
       },
       {
@@ -652,21 +606,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/logo@3x.png"
-        }
-      },
-      {
-        "name": "primaryLogo.png",
-        "slot": "primaryLogo",
-        "scale": 1,
-        "size": 3663,
-        "sha1": "eef4dc1e886ce5cd11c75683a1a1499667091c32",
-        "crc32": 4179683555,
-        "width": 126,
-        "height": 30,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/primaryLogo.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/logo@3x.png"
         }
       },
       {
@@ -680,7 +620,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/primaryLogo@2x.png"
         }
       },
       {
@@ -694,58 +634,33 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/0d03a72c4696fda4/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/primaryLogo@3x.png"
         }
       }
     ],
     "extras": [
       {
-        "name": "background.png",
-        "size": 251755,
-        "sha1": "34bfc2afe3fd4f18000fc995876acdbaa93884e3",
-        "path": "/templates/henrys-blue/0d03a72c4696fda4/background.png"
-      },
-      {
         "name": "background@2x.png",
-        "size": 918416,
-        "sha1": "c640fd774ecc8bcd668e4f30be7bf05a399f4e12",
-        "path": "/templates/henrys-blue/0d03a72c4696fda4/background@2x.png"
+        "size": 86361,
+        "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
+        "path": "/templates/henrys-blue/385ef0b7bc50c3f0/background@2x.png"
       },
       {
         "name": "background@3x.png",
-        "size": 1801267,
-        "sha1": "5705fb99adcec587d343319973f9f2416febd87f",
-        "path": "/templates/henrys-blue/0d03a72c4696fda4/background@3x.png"
+        "size": 156846,
+        "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
+        "path": "/templates/henrys-blue/385ef0b7bc50c3f0/background@3x.png"
       }
     ],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "background is not used by generic, posterGeneric; left out of the pass.",
-          "path": "background.png"
-        },
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "background is not used by generic, posterGeneric; left out of the pass.",
-          "path": "background@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "background is not used by generic, posterGeneric; left out of the pass.",
-          "path": "background@3x.png"
-        }
-      ]
+      "issues": []
     }
   },
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "d64f57bf5b0556e6",
+    "version": "6f8dd6c8bcf78cdf",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -1053,7 +968,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "previewOnlyAssets": [
-        "background.png",
         "background@2x.png",
         "background@3x.png"
       ]
@@ -1130,8 +1044,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "message-poster",
             "label": "FROM HENRY’S",
-            "value": "Welcome to Henry’s.",
-            "changeMessage": "%@"
+            "value": "Welcome to Henry’s."
           },
           {
             "key": "portal-poster",
@@ -1173,10 +1086,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "generic": {
         "headerFields": [
           {
-            "key": "status",
-            "label": "STATUS",
-            "value": "Active",
-            "changeMessage": "Your membership status is now %@."
+            "key": "memberId",
+            "label": "MEMBER",
+            "value": "DEMO0001"
           }
         ],
         "primaryFields": [
@@ -1200,19 +1112,18 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "changeMessage": "Your home club is now %@."
           }
         ],
-        "auxiliaryFields": [
-          {
-            "key": "memberId",
-            "label": "MEMBER NUMBER",
-            "value": "DEMO0001"
-          }
-        ],
+        "auxiliaryFields": [],
         "backFields": [
+          {
+            "key": "status",
+            "label": "MEMBERSHIP STATUS",
+            "value": "Active",
+            "changeMessage": "Your membership status is now %@."
+          },
           {
             "key": "message",
             "label": "FROM HENRY’S",
-            "value": "Welcome to Henry’s.",
-            "changeMessage": "%@"
+            "value": "Welcome to Henry’s."
           },
           {
             "key": "portal",
@@ -1254,45 +1165,31 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "assets": [
       {
-        "name": "artwork.png",
-        "slot": "artwork",
-        "scale": 1,
-        "size": 220010,
-        "sha1": "193ddeb1458616b863aacd0bee5b4a460630853e",
-        "crc32": 313443246,
-        "width": 358,
-        "height": 448,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/artwork.png"
-        }
-      },
-      {
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 823601,
-        "sha1": "b465e37b4f59d644c3eaf44047a2449995f3ea1f",
-        "crc32": 1190078462,
+        "size": 83626,
+        "sha1": "ae70bb310a4fabaea5224dd7cdf4270a74dc0d08",
+        "crc32": 1450562833,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/artwork@2x.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 1718707,
-        "sha1": "905c168e2b4aa57f5b27ca04549bd98686384b29",
-        "crc32": 587156573,
+        "size": 152081,
+        "sha1": "b6f9d598ededbc3a0f774dc6c0453cfb0a5fcf09",
+        "crc32": 3931892784,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/artwork@3x.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/artwork@3x.png"
         }
       },
       {
@@ -1305,21 +1202,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3740293075,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/en.lproj/pass.strings"
-        }
-      },
-      {
-        "name": "icon.png",
-        "slot": "icon",
-        "scale": 1,
-        "size": 2571,
-        "sha1": "e226db7ee0f79ce3ef35389d6766597ef4dffaa0",
-        "crc32": 3942680230,
-        "width": 38,
-        "height": 38,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/icon.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/en.lproj/pass.strings"
         }
       },
       {
@@ -1333,7 +1216,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/icon@2x.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/icon@2x.png"
         }
       },
       {
@@ -1347,21 +1230,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 6573,
-        "sha1": "ffaf2224f89ed5577bfc43b7e379c814ef163121",
-        "crc32": 4098541999,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/logo.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/icon@3x.png"
         }
       },
       {
@@ -1375,7 +1244,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/logo@2x.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/logo@2x.png"
         }
       },
       {
@@ -1389,21 +1258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/logo@3x.png"
-        }
-      },
-      {
-        "name": "primaryLogo.png",
-        "slot": "primaryLogo",
-        "scale": 1,
-        "size": 3663,
-        "sha1": "eef4dc1e886ce5cd11c75683a1a1499667091c32",
-        "crc32": 4179683555,
-        "width": 126,
-        "height": 30,
-        "source": {
-          "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/primaryLogo.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/logo@3x.png"
         }
       },
       {
@@ -1417,7 +1272,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/primaryLogo@2x.png"
         }
       },
       {
@@ -1431,58 +1286,33 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/d64f57bf5b0556e6/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/primaryLogo@3x.png"
         }
       }
     ],
     "extras": [
       {
-        "name": "background.png",
-        "size": 240421,
-        "sha1": "22c4ee23014e0fdda5d04c52632c47d832f7a76f",
-        "path": "/templates/henrys-copper/d64f57bf5b0556e6/background.png"
-      },
-      {
         "name": "background@2x.png",
-        "size": 891278,
-        "sha1": "51eadbb22200826d98d061f2d025552e2de5514a",
-        "path": "/templates/henrys-copper/d64f57bf5b0556e6/background@2x.png"
+        "size": 89428,
+        "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
+        "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/background@2x.png"
       },
       {
         "name": "background@3x.png",
-        "size": 1748262,
-        "sha1": "0dc5d6c3253d84fd9a3910a06619ecf899a7a5c8",
-        "path": "/templates/henrys-copper/d64f57bf5b0556e6/background@3x.png"
+        "size": 161342,
+        "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
+        "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/background@3x.png"
       }
     ],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "background is not used by generic, posterGeneric; left out of the pass.",
-          "path": "background.png"
-        },
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "background is not used by generic, posterGeneric; left out of the pass.",
-          "path": "background@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "background is not used by generic, posterGeneric; left out of the pass.",
-          "path": "background@3x.png"
-        }
-      ]
+      "issues": []
     }
   },
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "6b48ad67403827af",
+    "version": "40b55e671440d8c4",
     "name": "Wallet · Boarding pass",
     "description": "Air boarding pass with the semantic layout and a classic fallback.",
     "org": null,
@@ -1711,9 +1541,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "destination": "JFK",
         "destinationCity": "New York",
         "destinationTimeZone": "America/New_York",
-        "boardsAt": "2030-06-01T07:15:00Z",
-        "departsAt": "2030-06-01T08:00:00Z",
-        "arrivesAt": "2030-06-01T14:30:00Z",
+        "boardsAt": "2030-06-01T07:15:00-07:00",
+        "departsAt": "2030-06-01T08:00:00-07:00",
+        "arrivesAt": "2030-06-01T16:30:00-04:00",
         "gate": "B12",
         "seat": "14A",
         "ticketId": "BOARD-0001"
@@ -1722,23 +1552,23 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "transit": {
           "air": {
             "type": "PKTransitTypeAir",
-            "label": "FLIGHT"
+            "label": "Flight"
           },
           "train": {
             "type": "PKTransitTypeTrain",
-            "label": "TRAIN"
+            "label": "Train"
           },
           "bus": {
             "type": "PKTransitTypeBus",
-            "label": "BUS"
+            "label": "Bus"
           },
           "boat": {
             "type": "PKTransitTypeBoat",
-            "label": "SERVICE"
+            "label": "Service"
           },
           "generic": {
             "type": "PKTransitTypeGeneric",
-            "label": "SERVICE"
+            "label": "Service"
           }
         }
       },
@@ -1965,24 +1795,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
-            "pointer": "/relevantDates/0/date"
-          },
-          "value": "{{departsAt}}"
-        },
-        {
-          "to": {
-            "pointer": "/logoText"
-          },
-          "value": "Wallet",
-          "when": {
-            "not": {
-              "input": "transitType",
-              "eq": "air"
-            }
-          }
-        },
-        {
-          "to": {
             "pointer": "/semantics/departureStationName"
           },
           "value": "{{originCity}}",
@@ -2082,16 +1894,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "airlineCode",
           "ticketId"
         ]
-      }
+      },
+      "behaviors": [
+        {
+          "use": "relevance-window",
+          "version": 1,
+          "config": {
+            "start": "boardsAt",
+            "end": "arrivesAt",
+            "leadMinutes": 60
+          }
+        }
+      ]
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Wallet boarding pass",
-      "organizationName": "Wallet",
+      "description": "Boarding pass",
+      "organizationName": "Organization",
       "backgroundColor": "rgb(31,41,55)",
       "foregroundColor": "rgb(255,255,255)",
       "labelColor": "rgb(199,210,254)",
-      "logoText": "Wallet Air",
+      "logoText": "Organization",
       "preferredStyleSchemes": [
         "semanticBoardingPass",
         "boardingPass"
@@ -2114,9 +1937,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "destinationAirportCode": "JFK",
         "destinationCityName": "New York",
         "destinationLocationTimeZone": "America/New_York",
-        "originalBoardingDate": "2030-06-01T07:15:00Z",
-        "originalDepartureDate": "2030-06-01T08:00:00Z",
-        "originalArrivalDate": "2030-06-01T14:30:00Z",
+        "originalBoardingDate": "2030-06-01T07:15:00-07:00",
+        "originalDepartureDate": "2030-06-01T08:00:00-07:00",
+        "originalArrivalDate": "2030-06-01T16:30:00-04:00",
         "passengerName": {
           "givenName": "Alex",
           "familyName": "Morgan"
@@ -2132,12 +1955,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "flight",
-            "label": "FLIGHT",
+            "label": "Flight",
             "value": "WA100"
           },
           {
             "key": "gate",
-            "label": "GATE",
+            "label": "Gate",
             "value": "B12",
             "changeMessage": "Your gate is now %@."
           }
@@ -2145,240 +1968,215 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "primaryFields": [
           {
             "key": "origin",
-            "label": "SAN FRANCISCO",
+            "label": "San Francisco",
             "value": "SFO"
           },
           {
             "key": "destination",
-            "label": "NEW YORK",
+            "label": "New York",
             "value": "JFK"
           }
         ],
         "secondaryFields": [
           {
             "key": "passenger",
-            "label": "PASSENGER",
+            "label": "Passenger",
             "value": "Alex Morgan"
           },
           {
             "key": "departs",
-            "label": "DEPARTS",
-            "value": "2030-06-01T08:00:00Z",
+            "label": "Departs",
+            "value": "2030-06-01T08:00:00-07:00",
             "dateStyle": "PKDateStyleShort",
             "timeStyle": "PKDateStyleShort",
-            "changeMessage": "Departure is now %@."
+            "changeMessage": "Departure is now %@.",
+            "ignoresTimeZone": true
           }
         ],
         "auxiliaryFields": [
           {
             "key": "boardsAt",
-            "label": "BOARDS",
-            "value": "2030-06-01T07:15:00Z",
+            "label": "Boards",
+            "value": "2030-06-01T07:15:00-07:00",
             "dateStyle": "PKDateStyleNone",
-            "timeStyle": "PKDateStyleShort"
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
           },
           {
             "key": "seat",
-            "label": "SEAT",
+            "label": "Seat",
             "value": "14A"
           }
         ],
         "backFields": [
           {
             "key": "note",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
           },
           {
             "key": "terms",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "Be at the gate 30 minutes before departure."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
           }
         ]
       },
       "relevantDates": [
         {
-          "date": "2030-06-01T08:00:00Z"
+          "startDate": "2030-06-01T13:15:00Z",
+          "endDate": "2030-06-01T20:30:00Z"
         }
-      ]
+      ],
+      "relevantDate": "2030-06-01T14:15:00Z",
+      "expirationDate": "2030-06-01T20:30:00Z"
     },
     "assets": [
       {
-        "name": "footer.png",
-        "slot": "footer",
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
         "scale": 1,
-        "size": 1507,
-        "sha1": "e4d0869ff945f5903ed40e0d78f9dd4c47b93063",
-        "crc32": 262480245,
-        "width": 286,
-        "height": 15,
+        "locale": "en",
+        "size": 433,
+        "sha1": "ac8426822f3c67e1b46071a496f24ffa3b8b2416",
+        "crc32": 2142727054,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/footer.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/en.lproj/pass.strings"
         }
       },
       {
         "name": "footer@2x.png",
         "slot": "footer",
         "scale": 2,
-        "size": 4144,
-        "sha1": "dd7099d5d79e107b06979f38747f171f66109805",
-        "crc32": 71665507,
-        "width": 572,
+        "size": 465,
+        "sha1": "392a2577c90ff097eb1307c028929e0719489c6f",
+        "crc32": 477819165,
+        "width": 536,
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/footer@2x.png"
         }
       },
       {
         "name": "footer@3x.png",
         "slot": "footer",
         "scale": 3,
-        "size": 7435,
-        "sha1": "478ab0454ab9c5a11ff4e1d8f534a167d45bc3ad",
-        "crc32": 4105186576,
-        "width": 858,
+        "size": 738,
+        "sha1": "062995f4018497ffce8124b606cd7c53ca795929",
+        "crc32": 134609604,
+        "width": 804,
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/footer@3x.png"
-        }
-      },
-      {
-        "name": "icon.png",
-        "slot": "icon",
-        "scale": 1,
-        "size": 1261,
-        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
-        "crc32": 3733731073,
-        "width": 38,
-        "height": 38,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/icon.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/footer@3x.png"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 2569,
-        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
-        "crc32": 455672748,
+        "size": 1071,
+        "sha1": "5989422a98e3efd6f9f4d92ac3a0609efe75149e",
+        "crc32": 1357529787,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 3764,
-        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
-        "crc32": 518592558,
+        "size": 1573,
+        "sha1": "cc89218297a4bdda02694a55c4ba998cb8f91c24",
+        "crc32": 2672977786,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 960,
-        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
-        "crc32": 841788281,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/logo.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1882,
-        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
-        "crc32": 3522322584,
-        "width": 320,
+        "size": 1064,
+        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
+        "crc32": 3776894497,
+        "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 2916,
-        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
-        "crc32": 2412963703,
-        "width": 480,
+        "size": 1722,
+        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
+        "crc32": 3930646469,
+        "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/6b48ad67403827af/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/logo@3x.png"
         }
-      }
-    ],
-    "extras": [
-      {
-        "name": "primaryLogo.png",
-        "size": 671,
-        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56",
-        "path": "/templates/starter-boarding-pass/6b48ad67403827af/primaryLogo.png"
       },
       {
         "name": "primaryLogo@2x.png",
-        "size": 1215,
-        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537",
-        "path": "/templates/starter-boarding-pass/6b48ad67403827af/primaryLogo@2x.png"
+        "slot": "primaryLogo",
+        "scale": 2,
+        "size": 740,
+        "sha1": "e10e82be8b54d98b53242c5295183fa6a773d82c",
+        "crc32": 260778372,
+        "width": 60,
+        "height": 60,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/primaryLogo@2x.png"
+        }
       },
       {
         "name": "primaryLogo@3x.png",
-        "size": 1819,
-        "sha1": "a651d032c33059074ec29e94009d0e083f82777a",
-        "path": "/templates/starter-boarding-pass/6b48ad67403827af/primaryLogo@3x.png"
+        "slot": "primaryLogo",
+        "scale": 3,
+        "size": 1155,
+        "sha1": "69ee3f8896061530d33392f73d0971244ee232de",
+        "crc32": 1379429626,
+        "width": 90,
+        "height": 90,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-boarding-pass/40b55e671440d8c4/primaryLogo@3x.png"
+        }
       }
     ],
+    "extras": [],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "primaryLogo is not used by boardingPass; left out of the pass.",
-          "path": "primaryLogo.png"
-        },
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "primaryLogo is not used by boardingPass; left out of the pass.",
-          "path": "primaryLogo@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "SLOT_UNUSED",
-          "message": "primaryLogo is not used by boardingPass; left out of the pass.",
-          "path": "primaryLogo@3x.png"
-        }
-      ]
+      "issues": []
     }
   },
   {
     "id": "baked:starter-coupon",
     "slug": "starter-coupon",
-    "version": "755353d98e908c37",
+    "version": "98a94d5939520548",
     "name": "Wallet · Coupon",
     "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
     "org": null,
@@ -2441,7 +2239,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "pattern": "^https://",
             "maxLength": 300,
             "x-widget": "url",
-            "default": "https://example.com/"
+            "x-placeholder": "https://"
           },
           "expirationDate": {
             "type": "string",
@@ -2492,12 +2290,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
-            "field": "code"
-          },
-          "value": "{{code}}"
-        },
-        {
-          "to": {
             "field": "terms"
           },
           "value": "{{validFor}}",
@@ -2523,14 +2315,16 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "site"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
             "field": "site",
             "prop": "attributedValue"
           },
-          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -2551,7 +2345,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "action": "offers",
             "prop": "url"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -2600,12 +2395,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Wallet coupon",
-      "organizationName": "Wallet",
+      "description": "Coupon",
+      "organizationName": "Organization",
       "backgroundColor": "rgb(31,41,55)",
       "foregroundColor": "rgb(255,255,255)",
       "labelColor": "rgb(199,210,254)",
-      "logoText": "Wallet",
+      "logoText": "Organization",
       "expirationDate": "2030-01-01T00:00:00Z",
       "barcodes": [
         {
@@ -2626,14 +2421,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "identifier": "offers",
           "type": "viewOffersRewards",
-          "url": "https://example.com/"
+          "url": ""
         }
       ],
       "coupon": {
         "headerFields": [
           {
             "key": "expires",
-            "label": "EXPIRES",
+            "label": "Expires",
             "value": "2030-01-01T00:00:00Z",
             "dateStyle": "PKDateStyleMedium",
             "timeStyle": "PKDateStyleNone",
@@ -2643,170 +2438,142 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "primaryFields": [
           {
             "key": "offer",
-            "label": "OFFER",
+            "label": "Offer",
             "value": "20% off"
           }
         ],
         "secondaryFields": [
           {
             "key": "terms",
-            "label": "VALID FOR",
+            "label": "Valid for",
             "value": "One purchase"
-          }
-        ],
-        "auxiliaryFields": [
-          {
-            "key": "code",
-            "label": "CODE",
-            "value": "SAVE-0001"
           }
         ],
         "backFields": [
           {
             "key": "note",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
           },
           {
             "key": "site",
-            "label": "SITE",
-            "value": "https://example.com/",
-            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+            "label": "Website",
+            "value": ""
           },
           {
             "key": "fine",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "One use per customer. Not combinable with other offers."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
           }
         ]
       }
     },
     "assets": [
       {
-        "name": "icon.png",
-        "slot": "icon",
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
         "scale": 1,
-        "size": 1261,
-        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
-        "crc32": 3733731073,
-        "width": 38,
-        "height": 38,
+        "locale": "en",
+        "size": 184,
+        "sha1": "e784bb5f5778fcf4bb106b400cd8ad029f6963b3",
+        "crc32": 1879204991,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/icon.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 2569,
-        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
-        "crc32": 455672748,
+        "size": 1062,
+        "sha1": "1d74cf18d875cf7bb1e301a3a47e8572ed25b238",
+        "crc32": 3760859733,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/icon@2x.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 3764,
-        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
-        "crc32": 518592558,
+        "size": 1556,
+        "sha1": "4f962f2ccc7b92b2a416e589ede9b068f5101442",
+        "crc32": 1644851849,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 960,
-        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
-        "crc32": 841788281,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/logo.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1882,
-        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
-        "crc32": 3522322584,
-        "width": 320,
+        "size": 1064,
+        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
+        "crc32": 3776894497,
+        "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/logo@2x.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 2916,
-        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
-        "crc32": 2412963703,
-        "width": 480,
+        "size": 1722,
+        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
+        "crc32": 3930646469,
+        "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/logo@3x.png"
-        }
-      },
-      {
-        "name": "strip.png",
-        "slot": "strip",
-        "scale": 1,
-        "size": 7495,
-        "sha1": "2fde15194c19388c28bbb26a789ac27391a3c630",
-        "crc32": 3634009603,
-        "width": 375,
-        "height": 144,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/strip.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/logo@3x.png"
         }
       },
       {
         "name": "strip@2x.png",
         "slot": "strip",
         "scale": 2,
-        "size": 19651,
-        "sha1": "26103abe258d6c3ba28c6ffbbe7f4cec665f8139",
-        "crc32": 149132663,
+        "size": 20009,
+        "sha1": "407493e37aa28cc6d4f13509b3daa9b555dbf90d",
+        "crc32": 346849481,
         "width": 750,
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/strip@2x.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/strip@2x.png"
         }
       },
       {
         "name": "strip@3x.png",
         "slot": "strip",
         "scale": 3,
-        "size": 34319,
-        "sha1": "cb51a640108370bff704b76ad3b56cd80117f8f1",
-        "crc32": 3985521370,
+        "size": 33616,
+        "sha1": "f1b3fdef00a374f34866c323c0deab0fcc89ea0d",
+        "crc32": 677332770,
         "width": 1125,
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/755353d98e908c37/strip@3x.png"
+          "path": "/templates/starter-coupon/98a94d5939520548/strip@3x.png"
         }
       }
     ],
@@ -2819,7 +2586,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "4aeae1205317a905",
+    "version": "6f8b81982866d901",
     "name": "Wallet · Event ticket",
     "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
     "org": null,
@@ -2875,7 +2642,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 40,
             "minLength": 1,
             "maxLength": 60,
-            "default": "Main hall"
+            "x-placeholder": "Main hall"
           },
           "startsAt": {
             "type": "string",
@@ -2959,7 +2726,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "pattern": "^https://",
             "maxLength": 300,
             "x-widget": "url",
-            "default": "https://example.com/"
+            "x-placeholder": "https://"
           },
           "directionsURL": {
             "type": "string",
@@ -2980,6 +2747,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Links",
             "x-order": 160,
             "x-widget": "url"
+          },
+          "doorsAt": {
+            "type": "string",
+            "x-label": "Doors",
+            "x-group": "When",
+            "x-order": 51,
+            "format": "date-time",
+            "x-widget": "datetime"
           }
         },
         "dependentRequired": {
@@ -2995,12 +2770,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "eventName": "Sample Event",
         "venueName": "Sample Hall",
         "venueRegion": "Cupertino, CA",
-        "startsAt": "2030-06-01T19:00:00Z",
-        "endsAt": "2030-06-01T22:00:00Z",
+        "startsAt": "2030-06-01T19:00:00-07:00",
+        "endsAt": "2030-06-01T22:00:00-07:00",
         "venueLat": 37.3349,
         "venueLng": -122.009,
         "attendee": "Alex Morgan",
-        "ticketId": "TICKET-0001"
+        "ticketId": "TICKET-0001",
+        "doorsAt": "2030-06-01T18:00:00-07:00",
+        "venueRoom": "Main hall"
       },
       "bindings": [
         {
@@ -3062,14 +2839,16 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "site"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
             "field": "site",
             "prop": "attributedValue"
           },
-          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -3172,12 +2951,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
-            "pointer": "/relevantDates/0/date"
-          },
-          "value": "{{startsAt}}"
-        },
-        {
-          "to": {
             "pointer": "/locations/0/latitude"
           },
           "value": "{{venueLat}}"
@@ -3218,6 +2991,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "value": "{{parkingURL}}",
           "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "time"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "field": "doors"
+          },
+          "value": "{{doorsAt}}",
+          "omitIfEmpty": true
         }
       ],
       "display": {
@@ -3229,17 +3015,28 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "attendee",
           "ticketId"
         ]
-      }
+      },
+      "behaviors": [
+        {
+          "use": "relevance-window",
+          "version": 1,
+          "config": {
+            "start": "startsAt",
+            "end": "endsAt",
+            "leadMinutes": 120
+          }
+        }
+      ]
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Wallet event ticket",
-      "organizationName": "Wallet",
+      "description": "Event ticket",
+      "organizationName": "Organization",
       "backgroundColor": "rgb(31,41,55)",
       "foregroundColor": "rgb(255,255,255)",
       "labelColor": "rgb(199,210,254)",
-      "logoText": "Wallet",
-      "eventLogoText": "Wallet",
+      "logoText": "Organization",
+      "eventLogoText": "Organization",
       "preferredStyleSchemes": [
         "posterEventTicket",
         "eventTicket"
@@ -3247,7 +3044,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "sharingProhibited": true,
       "relevantDates": [
         {
-          "date": "2030-06-01T19:00:00Z"
+          "startDate": "2030-06-02T00:00:00Z",
+          "endDate": "2030-06-02T05:00:00Z"
         }
       ],
       "barcodes": [
@@ -3271,8 +3069,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "venueName": "Sample Hall",
         "venueRegionName": "Cupertino, CA",
         "venueRoom": "Main hall",
-        "eventStartDate": "2030-06-01T19:00:00Z",
-        "eventEndDate": "2030-06-01T22:00:00Z",
+        "eventStartDate": "2030-06-01T19:00:00-07:00",
+        "eventEndDate": "2030-06-01T22:00:00-07:00",
         "venueLocation": {
           "latitude": 37.3349,
           "longitude": -122.009
@@ -3284,48 +3082,52 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "date",
-            "label": "DATE",
-            "value": "2030-06-01T19:00:00Z",
+            "label": "Date",
+            "value": "2030-06-01T19:00:00-07:00",
             "dateStyle": "PKDateStyleMedium",
-            "timeStyle": "PKDateStyleShort",
-            "changeMessage": "The event time is now %@."
+            "timeStyle": "PKDateStyleNone",
+            "changeMessage": "The event is now on %@.",
+            "ignoresTimeZone": true
           }
         ],
         "primaryFields": [
           {
             "key": "event",
-            "label": "EVENT",
+            "label": "Event",
             "value": "Sample Event"
           }
         ],
         "secondaryFields": [
           {
-            "key": "venue",
-            "label": "VENUE",
-            "value": "Sample Hall"
+            "key": "time",
+            "label": "Starts",
+            "value": "2030-06-01T19:00:00-07:00",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true,
+            "changeMessage": "The event now starts at %@."
           },
           {
-            "key": "room",
-            "label": "ROOM",
-            "value": "Main hall"
+            "key": "venue",
+            "label": "Venue",
+            "value": "Sample Hall"
           }
         ],
         "auxiliaryFields": [
           {
             "key": "attendee",
-            "label": "NAME",
+            "label": "Name",
             "value": "Alex Morgan",
             "row": 0
           },
           {
-            "key": "admission",
-            "label": "ADMISSION",
-            "value": "General",
-            "row": 0
+            "key": "room",
+            "label": "Room",
+            "value": "Main hall"
           },
           {
             "key": "seat",
-            "label": "SEAT",
+            "label": "Seat",
             "value": "Open",
             "row": 1
           }
@@ -3333,282 +3135,257 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "additionalInfoFields": [
           {
             "key": "doors",
-            "label": "DOORS",
-            "value": "18:00"
+            "label": "Doors",
+            "value": "2030-06-01T18:00:00-07:00",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          },
+          {
+            "key": "admission",
+            "label": "Admission",
+            "value": "General"
           }
         ],
         "backFields": [
           {
             "key": "note",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
           },
           {
             "key": "site",
-            "label": "EVENT PAGE",
-            "value": "https://example.com/",
-            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+            "label": "Website",
+            "value": ""
           },
           {
             "key": "terms",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "No re-entry. Ticket is non-transferable."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
           }
         ]
-      }
+      },
+      "relevantDate": "2030-06-02T02:00:00Z",
+      "expirationDate": "2030-06-01T22:00:00-07:00"
     },
     "assets": [
-      {
-        "name": "artwork.png",
-        "slot": "artwork",
-        "scale": 1,
-        "size": 19719,
-        "sha1": "b0cd94338477865342679a61d912b3d23cf5b9d0",
-        "crc32": 1983906831,
-        "width": 358,
-        "height": 448,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/artwork.png"
-        }
-      },
       {
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 59174,
-        "sha1": "1ba8f1ab6acf6cefc7a8f55249b2081828cbc120",
-        "crc32": 2738231418,
+        "size": 19711,
+        "sha1": "67a5cd8260e95fe542eb5ba0633fdaeaf9b4c939",
+        "crc32": 301892547,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 108841,
-        "sha1": "76bc63ff178a4095b22f3521c832b156b219eb12",
-        "crc32": 3408101081,
+        "size": 32791,
+        "sha1": "48b5772e207936afbb8389037f125880a98ba2ae",
+        "crc32": 1973081899,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/artwork@3x.png"
         }
       },
       {
-        "name": "icon.png",
-        "slot": "icon",
-        "scale": 1,
-        "size": 1261,
-        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
-        "crc32": 3733731073,
-        "width": 38,
-        "height": 38,
+        "name": "background@2x.png",
+        "slot": "background",
+        "scale": 2,
+        "size": 20486,
+        "sha1": "305bfdb57ef8763fcb68ba898a38beea3fb48c3a",
+        "crc32": 1425028295,
+        "width": 686,
+        "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/icon.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/background@2x.png"
+        }
+      },
+      {
+        "name": "background@3x.png",
+        "slot": "background",
+        "scale": 3,
+        "size": 41316,
+        "sha1": "463d67a3996aa90a0b10398a556fd0d19659be00",
+        "crc32": 3448502692,
+        "width": 1029,
+        "height": 1509,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/background@3x.png"
+        }
+      },
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 406,
+        "sha1": "f15ab68cba77b0f31fbf48c52b53fa5fab26a1b5",
+        "crc32": 4061939731,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 2569,
-        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
-        "crc32": 455672748,
+        "size": 1075,
+        "sha1": "2381a373088f1cf9266f52c165eedd6fc810b46d",
+        "crc32": 2256149970,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/icon@2x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 3764,
-        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
-        "crc32": 518592558,
+        "size": 1573,
+        "sha1": "5f7cc069798cdfe90dd3190f6556b6ccfb40b96b",
+        "crc32": 1730582506,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 960,
-        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
-        "crc32": 841788281,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/logo.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1882,
-        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
-        "crc32": 3522322584,
-        "width": 320,
+        "size": 1064,
+        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
+        "crc32": 3776894497,
+        "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/logo@2x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 2916,
-        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
-        "crc32": 2412963703,
-        "width": 480,
+        "size": 1722,
+        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
+        "crc32": 3930646469,
+        "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/logo@3x.png"
-        }
-      },
-      {
-        "name": "primaryLogo.png",
-        "slot": "primaryLogo",
-        "scale": 1,
-        "size": 671,
-        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56",
-        "crc32": 137740279,
-        "width": 126,
-        "height": 30,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/primaryLogo.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 1215,
-        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537",
-        "crc32": 153301125,
-        "width": 252,
+        "size": 740,
+        "sha1": "e10e82be8b54d98b53242c5295183fa6a773d82c",
+        "crc32": 260778372,
+        "width": 60,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 1819,
-        "sha1": "a651d032c33059074ec29e94009d0e083f82777a",
-        "crc32": 3799191222,
-        "width": 378,
+        "size": 1155,
+        "sha1": "69ee3f8896061530d33392f73d0971244ee232de",
+        "crc32": 1379429626,
+        "width": 90,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/primaryLogo@3x.png"
-        }
-      },
-      {
-        "name": "secondaryLogo.png",
-        "slot": "secondaryLogo",
-        "scale": 1,
-        "size": 263,
-        "sha1": "207150b70373b3d4d44d5b011fb83e5668baed8e",
-        "crc32": 3980999504,
-        "width": 135,
-        "height": 12,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/secondaryLogo.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/primaryLogo@3x.png"
         }
       },
       {
         "name": "secondaryLogo@2x.png",
         "slot": "secondaryLogo",
         "scale": 2,
-        "size": 536,
-        "sha1": "d8285417756fa4b8d8fd484aab528cdfa9324981",
-        "crc32": 1662452169,
-        "width": 270,
+        "size": 345,
+        "sha1": "0439d356714358eade855e2f3e3271d8b5c9482a",
+        "crc32": 2487579467,
+        "width": 24,
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/secondaryLogo@2x.png"
         }
       },
       {
         "name": "secondaryLogo@3x.png",
         "slot": "secondaryLogo",
         "scale": 3,
-        "size": 867,
-        "sha1": "505df1fa1572323840bc5f997dc429548fb32900",
-        "crc32": 1248593427,
-        "width": 405,
+        "size": 459,
+        "sha1": "96d10c663a967ef6660b818c5ad39d9f3417e691",
+        "crc32": 3350851213,
+        "width": 36,
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/secondaryLogo@3x.png"
         }
       },
       {
-        "name": "strip.png",
-        "slot": "strip",
-        "scale": 1,
-        "size": 5765,
-        "sha1": "73b09714a03f6a9d17a75db3827360a0d8b90550",
-        "crc32": 3616354966,
-        "width": 375,
-        "height": 98,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/strip.png"
-        }
-      },
-      {
-        "name": "strip@2x.png",
-        "slot": "strip",
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
         "scale": 2,
-        "size": 15083,
-        "sha1": "a0106bb74cec7ad38dc391d14886c92d35f87757",
-        "crc32": 2813847410,
-        "width": 750,
-        "height": 196,
+        "size": 1180,
+        "sha1": "2a0d1e4244e4ab3b8c983f623d22e2789f9645d0",
+        "crc32": 734197820,
+        "width": 180,
+        "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/strip@2x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/thumbnail@2x.png"
         }
       },
       {
-        "name": "strip@3x.png",
-        "slot": "strip",
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
         "scale": 3,
-        "size": 27387,
-        "sha1": "19ec408d3b11eba2ae468f9f5e44370d99f8d54d",
-        "crc32": 1952511711,
-        "width": 1125,
-        "height": 294,
+        "size": 1912,
+        "sha1": "d4d950ecb9f49093e62672be251e14b3ce683f9f",
+        "crc32": 1302643963,
+        "width": 270,
+        "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/4aeae1205317a905/strip@3x.png"
+          "path": "/templates/starter-event-ticket/6f8b81982866d901/thumbnail@3x.png"
         }
       }
     ],
@@ -3621,7 +3398,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "9d8e6c3f0dba366c",
+    "version": "86cab4441b432583",
     "name": "Wallet · Generic",
     "description": "Membership or ID card with a QR code, relevance and two featured actions.",
     "org": null,
@@ -3704,7 +3481,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "pattern": "^https://",
             "maxLength": 300,
             "x-widget": "url",
-            "default": "https://example.com/"
+            "x-placeholder": "https://"
           },
           "wifiSsid": {
             "type": "string",
@@ -3787,12 +3564,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
-            "field": "memberId"
-          },
-          "value": "{{memberId}}"
-        },
-        {
-          "to": {
             "field": "tier"
           },
           "value": "{{tier}}"
@@ -3824,14 +3595,16 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "site"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
             "field": "site",
             "prop": "attributedValue"
           },
-          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -3852,7 +3625,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "action": "portal",
             "prop": "url"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -3942,12 +3716,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Wallet generic pass",
-      "organizationName": "Wallet",
+      "description": "Membership card",
+      "organizationName": "Organization",
       "backgroundColor": "rgb(31,41,55)",
       "foregroundColor": "rgb(255,255,255)",
       "labelColor": "rgb(199,210,254)",
-      "logoText": "Wallet",
+      "logoText": "Organization",
       "sharingProhibited": true,
       "expirationDate": "2030-01-01T00:00:00Z",
       "barcodes": [
@@ -3977,25 +3751,25 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "identifier": "support",
           "type": "call",
-          "url": "tel:+15555550100"
+          "url": ""
         },
         {
           "identifier": "portal",
           "type": "viewOffersRewards",
-          "url": "https://example.com/"
+          "url": ""
         }
       ],
       "generic": {
         "headerFields": [
           {
             "key": "tier",
-            "label": "TIER",
+            "label": "Tier",
             "value": "Standard",
             "changeMessage": "Your tier is now %@."
           },
           {
             "key": "points",
-            "label": "POINTS",
+            "label": "Points",
             "value": 0,
             "numberStyle": "PKNumberStyleDecimal"
           }
@@ -4003,181 +3777,153 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "primaryFields": [
           {
             "key": "holder",
-            "label": "NAME",
+            "label": "Name",
             "value": "Alex Morgan"
           }
         ],
         "secondaryFields": [
           {
-            "key": "memberId",
-            "label": "ID",
-            "value": "ID-0001"
-          },
-          {
             "key": "since",
-            "label": "SINCE",
+            "label": "Since",
             "value": "2026-01-01T00:00:00Z",
             "dateStyle": "PKDateStyleMedium",
             "timeStyle": "PKDateStyleNone",
             "ignoresTimeZone": true
           }
         ],
-        "auxiliaryFields": [
-          {
-            "key": "site",
-            "label": "SITE",
-            "value": "https://example.com/",
-            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
-          }
-        ],
         "backFields": [
           {
             "key": "note",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
           },
           {
             "key": "phone",
-            "label": "CONTACT",
-            "value": "+1 555 555 0100",
+            "label": "Phone",
+            "value": "",
             "dataDetectorTypes": [
               "PKDataDetectorTypePhoneNumber"
             ]
           },
           {
             "key": "terms",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "Present the barcode when asked."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
           }
         ]
       }
     },
     "assets": [
       {
-        "name": "icon.png",
-        "slot": "icon",
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
         "scale": 1,
-        "size": 1261,
-        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
-        "crc32": 3733731073,
-        "width": 38,
-        "height": 38,
+        "locale": "en",
+        "size": 257,
+        "sha1": "9f8e342352feaccd6e787643ce3889830cf26018",
+        "crc32": 296311073,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/icon.png"
+          "path": "/templates/starter-generic/86cab4441b432583/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 2569,
-        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
-        "crc32": 455672748,
+        "size": 1071,
+        "sha1": "5989422a98e3efd6f9f4d92ac3a0609efe75149e",
+        "crc32": 1357529787,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/icon@2x.png"
+          "path": "/templates/starter-generic/86cab4441b432583/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 3764,
-        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
-        "crc32": 518592558,
+        "size": 1573,
+        "sha1": "cc89218297a4bdda02694a55c4ba998cb8f91c24",
+        "crc32": 2672977786,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 960,
-        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
-        "crc32": 841788281,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/logo.png"
+          "path": "/templates/starter-generic/86cab4441b432583/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1882,
-        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
-        "crc32": 3522322584,
-        "width": 320,
+        "size": 1064,
+        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
+        "crc32": 3776894497,
+        "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/logo@2x.png"
+          "path": "/templates/starter-generic/86cab4441b432583/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 2916,
-        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
-        "crc32": 2412963703,
-        "width": 480,
+        "size": 1722,
+        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
+        "crc32": 3930646469,
+        "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/logo@3x.png"
-        }
-      },
-      {
-        "name": "thumbnail.png",
-        "slot": "thumbnail",
-        "scale": 1,
-        "size": 2831,
-        "sha1": "74e34fa5f1a047c52f231fc7812543a8dde2e3ce",
-        "crc32": 474201231,
-        "width": 90,
-        "height": 90,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/thumbnail.png"
+          "path": "/templates/starter-generic/86cab4441b432583/logo@3x.png"
         }
       },
       {
         "name": "thumbnail@2x.png",
         "slot": "thumbnail",
         "scale": 2,
-        "size": 5727,
-        "sha1": "eccc1b0dfc7b234e8194a120a7500ba546b8a9e1",
-        "crc32": 532502609,
+        "size": 3282,
+        "sha1": "89c3b1bbae0cc0f73f492141aba8e1511caaeda3",
+        "crc32": 4168214601,
         "width": 180,
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/thumbnail@2x.png"
+          "path": "/templates/starter-generic/86cab4441b432583/thumbnail@2x.png"
         }
       },
       {
         "name": "thumbnail@3x.png",
         "slot": "thumbnail",
         "scale": 3,
-        "size": 10058,
-        "sha1": "a557846cb2e2368f114f96fa5fadb0647a83dcf5",
-        "crc32": 2360524443,
+        "size": 5123,
+        "sha1": "3e78c88309b28534cf6a8191f3d20ccdb60df667",
+        "crc32": 2593601087,
         "width": 270,
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9d8e6c3f0dba366c/thumbnail@3x.png"
+          "path": "/templates/starter-generic/86cab4441b432583/thumbnail@3x.png"
         }
       }
     ],
@@ -4190,7 +3936,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-poster-generic",
     "slug": "starter-poster-generic",
-    "version": "d73274e4c7221b6b",
+    "version": "108c618ec87be4ca",
     "name": "Wallet · Poster",
     "description": "Membership card in the poster style, with a generic fallback.",
     "org": null,
@@ -4274,7 +4020,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "pattern": "^https://",
             "maxLength": 300,
             "x-widget": "url",
-            "default": "https://example.com/"
+            "x-placeholder": "https://"
           },
           "officeLat": {
             "type": "number",
@@ -4326,15 +4072,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             ]
           },
           "value": "{{holder}}"
-        },
-        {
-          "to": {
-            "field": [
-              "memberId-poster",
-              "memberId"
-            ]
-          },
-          "value": "{{memberId}}"
         },
         {
           "to": {
@@ -4392,7 +4129,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
               "site"
             ]
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -4402,7 +4140,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             ],
             "prop": "attributedValue"
           },
-          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -4423,7 +4162,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "action": "portal",
             "prop": "url"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -4478,12 +4218,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Wallet poster pass",
-      "organizationName": "Wallet",
+      "description": "Membership card",
+      "organizationName": "Organization",
       "backgroundColor": "rgb(31,41,55)",
       "foregroundColor": "rgb(255,255,255)",
       "labelColor": "rgb(199,210,254)",
-      "logoText": "Wallet",
+      "logoText": "Organization",
       "sharingProhibited": true,
       "barcodes": [
         {
@@ -4504,38 +4244,33 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "identifier": "portal",
           "type": "membershipBenefits",
-          "url": "https://example.com/"
+          "url": ""
         },
         {
           "identifier": "support",
           "type": "call",
-          "url": "tel:+15555550100"
+          "url": ""
         }
       ],
       "posterGeneric": {
         "headerFields": [
           {
-            "key": "memberId-poster",
-            "label": "ID",
-            "value": "ID-0001"
+            "key": "tier-poster",
+            "label": "Tier",
+            "value": "Plus",
+            "changeMessage": "Your tier is now %@."
           }
         ],
         "primaryFields": [
           {
             "key": "holder-poster",
             "value": "Alex Morgan"
-          },
-          {
-            "key": "tier-poster",
-            "label": "TIER",
-            "value": "Plus",
-            "changeMessage": "Your tier is now %@."
           }
         ],
         "footerFields": [
           {
             "key": "since-poster",
-            "label": "SINCE",
+            "label": "Since",
             "value": "2026-01-01T00:00:00Z",
             "dateStyle": "PKDateStyleMedium",
             "timeStyle": "PKDateStyleNone",
@@ -4545,27 +4280,35 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "additionalInfoFields": [
           {
             "key": "plan-poster",
-            "label": "PLAN",
+            "label": "Plan",
             "value": "Annual"
           }
         ],
         "backFields": [
           {
             "key": "note-poster",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
           },
           {
             "key": "site-poster",
-            "label": "SITE",
-            "value": "https://example.com/",
-            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+            "label": "Website",
+            "value": ""
           },
           {
             "key": "terms-poster",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "Present the barcode when asked."
+          },
+          {
+            "key": "contact-poster",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service-poster",
+            "label": "Pass service",
+            "value": ""
           }
         ]
       },
@@ -4573,7 +4316,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "tier",
-            "label": "TIER",
+            "label": "Tier",
             "value": "Plus",
             "changeMessage": "Your tier is now %@."
           }
@@ -4581,19 +4324,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "primaryFields": [
           {
             "key": "holder",
-            "label": "NAME",
+            "label": "Name",
             "value": "Alex Morgan"
           }
         ],
         "secondaryFields": [
           {
-            "key": "memberId",
-            "label": "ID",
-            "value": "ID-0001"
-          },
-          {
             "key": "since",
-            "label": "SINCE",
+            "label": "Since",
             "value": "2026-01-01T00:00:00Z",
             "dateStyle": "PKDateStyleMedium",
             "timeStyle": "PKDateStyleNone",
@@ -4603,191 +4341,156 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "note",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
           },
           {
             "key": "site",
-            "label": "SITE",
-            "value": "https://example.com/",
-            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+            "label": "Website",
+            "value": ""
           },
           {
             "key": "terms",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "Present the barcode when asked."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
           }
         ]
       }
     },
     "assets": [
       {
-        "name": "artwork.png",
-        "slot": "artwork",
-        "scale": 1,
-        "size": 19719,
-        "sha1": "b0cd94338477865342679a61d912b3d23cf5b9d0",
-        "crc32": 1983906831,
-        "width": 358,
-        "height": 448,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/artwork.png"
-        }
-      },
-      {
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 59174,
-        "sha1": "1ba8f1ab6acf6cefc7a8f55249b2081828cbc120",
-        "crc32": 2738231418,
+        "size": 19471,
+        "sha1": "e28754a55c35b76127a1ff90bee76a74dd230b47",
+        "crc32": 2027310014,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/artwork@2x.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 108841,
-        "sha1": "76bc63ff178a4095b22f3521c832b156b219eb12",
-        "crc32": 3408101081,
+        "size": 32565,
+        "sha1": "892381de8b793517c5ed637fb6ca74b8006ed1a2",
+        "crc32": 1720983142,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/artwork@3x.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/artwork@3x.png"
         }
       },
       {
-        "name": "icon.png",
-        "slot": "icon",
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
         "scale": 1,
-        "size": 1261,
-        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
-        "crc32": 3733731073,
-        "width": 38,
-        "height": 38,
+        "locale": "en",
+        "size": 234,
+        "sha1": "bc19b2ffbb1d8638d3204cc1983914dc04682014",
+        "crc32": 2712717624,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/icon.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 2569,
-        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
-        "crc32": 455672748,
+        "size": 1075,
+        "sha1": "2381a373088f1cf9266f52c165eedd6fc810b46d",
+        "crc32": 2256149970,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/icon@2x.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 3764,
-        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
-        "crc32": 518592558,
+        "size": 1573,
+        "sha1": "5f7cc069798cdfe90dd3190f6556b6ccfb40b96b",
+        "crc32": 1730582506,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 960,
-        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
-        "crc32": 841788281,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/logo.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1882,
-        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
-        "crc32": 3522322584,
-        "width": 320,
+        "size": 1064,
+        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
+        "crc32": 3776894497,
+        "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/logo@2x.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 2916,
-        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
-        "crc32": 2412963703,
-        "width": 480,
+        "size": 1722,
+        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
+        "crc32": 3930646469,
+        "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/logo@3x.png"
-        }
-      },
-      {
-        "name": "primaryLogo.png",
-        "slot": "primaryLogo",
-        "scale": 1,
-        "size": 671,
-        "sha1": "c934fd2976ac754dfcb25acfd235d7b552eead56",
-        "crc32": 137740279,
-        "width": 126,
-        "height": 30,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/primaryLogo.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 1215,
-        "sha1": "d347cf2d7b1f2f5f4320356a9c05a02ed8d2c537",
-        "crc32": 153301125,
-        "width": 252,
+        "size": 740,
+        "sha1": "e10e82be8b54d98b53242c5295183fa6a773d82c",
+        "crc32": 260778372,
+        "width": 60,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/primaryLogo@2x.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 1819,
-        "sha1": "a651d032c33059074ec29e94009d0e083f82777a",
-        "crc32": 3799191222,
-        "width": 378,
+        "size": 1155,
+        "sha1": "69ee3f8896061530d33392f73d0971244ee232de",
+        "crc32": 1379429626,
+        "width": 90,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/d73274e4c7221b6b/primaryLogo@3x.png"
+          "path": "/templates/starter-poster-generic/108c618ec87be4ca/primaryLogo@3x.png"
         }
       }
     ],
@@ -4800,7 +4503,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-store-card",
     "slug": "starter-store-card",
-    "version": "44a952c5893e3c64",
+    "version": "0a14f0fbf5c18de7",
     "name": "Wallet · Store card",
     "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
     "org": null,
@@ -4888,7 +4591,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "pattern": "^https://",
             "maxLength": 300,
             "x-widget": "url",
-            "default": "https://example.com/"
+            "x-placeholder": "https://"
           },
           "storeLat": {
             "type": "number",
@@ -4942,12 +4645,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
-            "field": "cardNumber"
-          },
-          "value": "{{cardNumber}}"
-        },
-        {
-          "to": {
             "field": "tier"
           },
           "value": "{{tier}}"
@@ -4979,14 +4676,16 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "site"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
             "field": "site",
             "prop": "attributedValue"
           },
-          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -5007,7 +4706,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "action": "top-up",
             "prop": "url"
           },
-          "value": "{{website}}"
+          "value": "{{website}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -5071,12 +4771,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Wallet store card",
-      "organizationName": "Wallet",
+      "description": "Store card",
+      "organizationName": "Organization",
       "backgroundColor": "rgb(31,41,55)",
       "foregroundColor": "rgb(255,255,255)",
       "labelColor": "rgb(199,210,254)",
-      "logoText": "Wallet",
+      "logoText": "Organization",
       "sharingProhibited": true,
       "barcodes": [
         {
@@ -5103,19 +4803,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "identifier": "top-up",
           "type": "addToBalance",
-          "url": "https://example.com/"
+          "url": ""
         },
         {
           "identifier": "shop",
           "type": "shop",
-          "url": "https://example.com/shop"
+          "url": ""
         }
       ],
       "storeCard": {
         "headerFields": [
           {
             "key": "tier",
-            "label": "TIER",
+            "label": "Tier",
             "value": "Standard",
             "changeMessage": "Your tier is now %@."
           }
@@ -5123,7 +4823,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "primaryFields": [
           {
             "key": "balance",
-            "label": "BALANCE",
+            "label": "Balance",
             "value": 25,
             "currencyCode": "USD",
             "changeMessage": "Your balance is now %@."
@@ -5132,163 +4832,135 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "secondaryFields": [
           {
             "key": "holder",
-            "label": "NAME",
+            "label": "Name",
             "value": "Alex Morgan"
-          }
-        ],
-        "auxiliaryFields": [
-          {
-            "key": "cardNumber",
-            "label": "CARD",
-            "value": "CARD-0001"
           }
         ],
         "backFields": [
           {
             "key": "note",
-            "label": "NOTE",
-            "value": "",
-            "changeMessage": "%@"
+            "label": "Note",
+            "value": ""
           },
           {
             "key": "site",
-            "label": "SITE",
-            "value": "https://example.com/",
-            "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+            "label": "Website",
+            "value": ""
           },
           {
             "key": "terms",
-            "label": "TERMS",
+            "label": "Terms",
             "value": "Balance is not redeemable for cash."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
           }
         ]
       }
     },
     "assets": [
       {
-        "name": "icon.png",
-        "slot": "icon",
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
         "scale": 1,
-        "size": 1261,
-        "sha1": "562070a2fea7354ebdc4776f23153f7e3bfb7b91",
-        "crc32": 3733731073,
-        "width": 38,
-        "height": 38,
+        "locale": "en",
+        "size": 276,
+        "sha1": "6162e84920c41b311eb96aeeb1e66c690e082494",
+        "crc32": 878280692,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/icon.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 2569,
-        "sha1": "33a4ac2aad306c18cbc9c2ab4a8d2fe14b5231b7",
-        "crc32": 455672748,
+        "size": 1080,
+        "sha1": "cc75374c7b1aa0868eff595dcff9124cf45a28b6",
+        "crc32": 1585718174,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/icon@2x.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 3764,
-        "sha1": "a7df425637f863b67e5fdba3caf67af2ecd825c1",
-        "crc32": 518592558,
+        "size": 1572,
+        "sha1": "d0e379cc25aa18ce2b873f9a5684a7f9ec7e0ee8",
+        "crc32": 1590750032,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/icon@3x.png"
-        }
-      },
-      {
-        "name": "logo.png",
-        "slot": "logo",
-        "scale": 1,
-        "size": 960,
-        "sha1": "c76dbcb866a460ce4ef66380243d04e47c98408c",
-        "crc32": 841788281,
-        "width": 160,
-        "height": 50,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/logo.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1882,
-        "sha1": "3952700ab401e8ff518357640cc1d74073f41937",
-        "crc32": 3522322584,
-        "width": 320,
+        "size": 1064,
+        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
+        "crc32": 3776894497,
+        "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/logo@2x.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 2916,
-        "sha1": "8da63970943bcb769ddc446f1372d8fbbb9b4df7",
-        "crc32": 2412963703,
-        "width": 480,
+        "size": 1722,
+        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
+        "crc32": 3930646469,
+        "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/logo@3x.png"
-        }
-      },
-      {
-        "name": "strip.png",
-        "slot": "strip",
-        "scale": 1,
-        "size": 7495,
-        "sha1": "2fde15194c19388c28bbb26a789ac27391a3c630",
-        "crc32": 3634009603,
-        "width": 375,
-        "height": 144,
-        "source": {
-          "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/strip.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/logo@3x.png"
         }
       },
       {
         "name": "strip@2x.png",
         "slot": "strip",
         "scale": 2,
-        "size": 19651,
-        "sha1": "26103abe258d6c3ba28c6ffbbe7f4cec665f8139",
-        "crc32": 149132663,
+        "size": 9205,
+        "sha1": "2397ce7a997cb608cd46a395361a2cfbe0edd295",
+        "crc32": 1730786063,
         "width": 750,
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/strip@2x.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/strip@2x.png"
         }
       },
       {
         "name": "strip@3x.png",
         "slot": "strip",
         "scale": 3,
-        "size": 34319,
-        "sha1": "cb51a640108370bff704b76ad3b56cd80117f8f1",
-        "crc32": 3985521370,
+        "size": 17245,
+        "sha1": "f9666719c99e775adcc9c618a226bc6465ba8cdc",
+        "crc32": 1338747643,
         "width": 1125,
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/44a952c5893e3c64/strip@3x.png"
+          "path": "/templates/starter-store-card/0a14f0fbf5c18de7/strip@3x.png"
         }
       }
     ],

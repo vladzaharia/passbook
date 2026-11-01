@@ -2,6 +2,24 @@ import { PKPASS_CONTENT_TYPE } from '../../../passkit/index.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { Pass } from './repo.ts';
 
+const slug = (text: string) =>
+  text
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/['’]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+/** `<org-slug>-<title-slug>.pkpass` ("henrys-maya-chen.pkpass"); the serial stands in for a title. */
+export function passFileName(pass: Pick<Pass, 'orgSlug' | 'displayTitle' | 'serial'>): string {
+  const parts = [pass.orgSlug ?? '', slug(pass.displayTitle ?? '') || slug(pass.serial)].filter(
+    Boolean,
+  );
+  return `${parts.join('-') || 'pass'}.pkpass`;
+}
+
 const etagOf = (pass: Pass) => `"${pass.objectSha256 ?? `v${pass.version}`}"`;
 
 function matchesEtag(header: string, etag: string): boolean {
@@ -40,9 +58,6 @@ export async function servePassFile(
   const object = await bucket.get(pass.objectKey);
   if (!object) throw new NotFoundError('The pass file is missing.', 'PASS_FILE_MISSING');
   headers.set('content-length', String(object.size));
-  headers.set(
-    'content-disposition',
-    `attachment; filename="${pass.serial.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 80)}.pkpass"`,
-  );
+  headers.set('content-disposition', `attachment; filename="${passFileName(pass)}"`);
   return new Response(request.method === 'HEAD' ? null : object.body, { status: 200, headers });
 }

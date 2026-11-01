@@ -70,8 +70,7 @@
       {
         "key": "message-poster",
         "label": "FROM HENRY’S",
-        "value": "Welcome to Henry’s.",
-        "changeMessage": "%@"
+        "value": "Welcome to Henry’s."
       },
       {
         "key": "portal-poster",
@@ -113,10 +112,9 @@
   "generic": {
     "headerFields": [
       {
-        "key": "status",
-        "label": "STATUS",
-        "value": "Active",
-        "changeMessage": "Your membership status is now %@."
+        "key": "memberId",
+        "label": "MEMBER",
+        "value": "DEMO0001"
       }
     ],
     "primaryFields": [
@@ -140,19 +138,18 @@
         "changeMessage": "Your home club is now %@."
       }
     ],
-    "auxiliaryFields": [
-      {
-        "key": "memberId",
-        "label": "MEMBER NUMBER",
-        "value": "DEMO0001"
-      }
-    ],
+    "auxiliaryFields": [],
     "backFields": [
+      {
+        "key": "status",
+        "label": "MEMBERSHIP STATUS",
+        "value": "Active",
+        "changeMessage": "Your membership status is now %@."
+      },
       {
         "key": "message",
         "label": "FROM HENRY’S",
-        "value": "Welcome to Henry’s.",
-        "changeMessage": "%@"
+        "value": "Welcome to Henry’s."
       },
       {
         "key": "portal",

@@ -220,9 +220,9 @@
     "destination": "JFK",
     "destinationCity": "New York",
     "destinationTimeZone": "America/New_York",
-    "boardsAt": "2030-06-01T07:15:00Z",
-    "departsAt": "2030-06-01T08:00:00Z",
-    "arrivesAt": "2030-06-01T14:30:00Z",
+    "boardsAt": "2030-06-01T07:15:00-07:00",
+    "departsAt": "2030-06-01T08:00:00-07:00",
+    "arrivesAt": "2030-06-01T16:30:00-04:00",
     "gate": "B12",
     "seat": "14A",
     "ticketId": "BOARD-0001"
@@ -231,23 +231,23 @@
     "transit": {
       "air": {
         "type": "PKTransitTypeAir",
-        "label": "FLIGHT"
+        "label": "Flight"
       },
       "train": {
         "type": "PKTransitTypeTrain",
-        "label": "TRAIN"
+        "label": "Train"
       },
       "bus": {
         "type": "PKTransitTypeBus",
-        "label": "BUS"
+        "label": "Bus"
       },
       "boat": {
         "type": "PKTransitTypeBoat",
-        "label": "SERVICE"
+        "label": "Service"
       },
       "generic": {
         "type": "PKTransitTypeGeneric",
-        "label": "SERVICE"
+        "label": "Service"
       }
     }
   },
@@ -474,24 +474,6 @@
     },
     {
       "to": {
-        "pointer": "/relevantDates/0/date"
-      },
-      "value": "{{departsAt}}"
-    },
-    {
-      "to": {
-        "pointer": "/logoText"
-      },
-      "value": "Wallet",
-      "when": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
-    },
-    {
-      "to": {
         "pointer": "/semantics/departureStationName"
       },
       "value": "{{originCity}}",
@@ -591,5 +573,16 @@
       "airlineCode",
       "ticketId"
     ]
-  }
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "boardsAt",
+        "end": "arrivesAt",
+        "leadMinutes": 60
+      }
+    }
+  ]
 }

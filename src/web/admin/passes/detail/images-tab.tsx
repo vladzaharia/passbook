@@ -1,180 +1,216 @@
-import { Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { type DragEvent, useMemo, useRef, useState } from 'react';
+import type { PassDetailDto } from '@/shared/contracts/passes.ts';
+import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import {
+  Badge,
+  Button,
   Card,
   CardBody,
   CardHeader,
+  ConfirmDialog,
   EmptyState,
   ErrorState,
-  FileDrop,
-  FormField,
   IconButton,
-  PendingNote,
-  Select,
   SkeletonRows,
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions, usePassAssets } from '../api.ts';
-import { assetName, checkPng, MAX_ASSET_BYTES } from '../png.ts';
+import { checkPng, MAX_ASSET_BYTES } from '../png.ts';
+import { fitScale, requiredSize, SLOT_LABEL, usedSlots } from './image-slots.ts';
 
-const ALL_SLOTS = [
-  'icon',
-  'logo',
-  'primaryLogo',
-  'secondaryLogo',
-  'artwork',
-  'thumbnail',
-  'strip',
-  'background',
-  'footer',
-] as const;
+const KB = 1024;
+const SOFT_LIMIT = 200 * KB;
+const slotOf = (name: string) => /^([A-Za-z]+)(?:@([23])x)?\.png$/.exec(name);
 
-const STYLE_SLOTS: Record<string, readonly string[]> = {
-  posterGeneric: ['artwork', 'primaryLogo', 'secondaryLogo'],
-  posterEventTicket: ['artwork', 'primaryLogo', 'secondaryLogo'],
-  storeCard: ['strip', 'thumbnail'],
-  coupon: ['strip', 'thumbnail'],
-  eventTicket: ['strip', 'background', 'thumbnail', 'footer'],
-  generic: ['thumbnail'],
-  boardingPass: ['footer'],
-};
-
-/** Slots the pass style renders; icon and logo always apply. Unknown style: every slot. */
-export function slotsFor(passJson: Record<string, unknown>): string[] {
-  const schemes = Array.isArray(passJson.preferredStyleSchemes)
-    ? (passJson.preferredStyleSchemes as unknown[])
-    : [];
-  const style =
-    schemes.find((x): x is string => typeof x === 'string' && x in STYLE_SLOTS) ??
-    Object.keys(STYLE_SLOTS).find((k) => k in passJson);
-  if (!style) return [...ALL_SLOTS];
-  return [...(STYLE_SLOTS[style] ?? []), 'icon', 'logo'];
+interface Override {
+  name: string;
+  width: number | null;
+  height: number | null;
+  size: number;
 }
 
-export function ImagesTab({
-  passId,
-  passJson = {},
+function SlotTile({
+  slot,
+  pass,
+  overrides,
+  fresh,
+  onChanged,
 }: {
-  passId: string;
-  passJson?: Record<string, unknown>;
+  slot: string;
+  pass: PassDetailDto;
+  overrides: Override[];
+  fresh: boolean;
+  onChanged: () => void;
 }) {
-  const slots = useMemo(() => slotsFor(passJson), [passJson]);
-  const assets = usePassAssets(passId);
-  const actions = usePassActions(passId);
-  const [slot, setSlot] = useState<string | undefined>();
-  const [scale, setScale] = useState<'1' | '2' | '3'>('2');
+  const actions = usePassActions(pass.id);
+  const input = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
   const [error, setError] = useState<string>();
-  const current = slot && slots.includes(slot) ? slot : (slots[0] ?? 'icon');
-  const name = assetName(current, Number(scale) as 1 | 2 | 3);
+  const [heavy, setHeavy] = useState(false);
+  const [natural, setNatural] = useState<[number, number]>();
+  const [reset, setReset] = useState(false);
+  const shown = overrides.find((o) => o.name.includes('@2x')) ?? overrides[0];
+  const file =
+    shown?.name ??
+    pass.assetNames.find((n) => n === `${slot}@2x.png`) ??
+    pass.assetNames.find((n) => slotOf(n)?.[1] === slot);
+  const scale = Number(slotOf(file ?? '')?.[2] ?? 2) === 3 ? 3 : 2;
+  const size = shown?.width && shown.height ? [shown.width, shown.height] : natural;
+  const busy = actions.uploadAsset.isPending;
 
-  async function upload(file: File) {
+  async function take(f: File | undefined) {
+    if (!f) return;
     setError(undefined);
-    const check = await checkPng(file);
-    if (!check.ok) return setError(check.message);
+    const check = await checkPng(f);
+    if (!check.ok || !check.width || !check.height)
+      return setError(check.message ?? 'Not a PNG file.');
+    const fit = fitScale(slot, check.width, check.height);
+    if ('error' in fit) return setError(fit.error);
     try {
-      await actions.uploadAsset.mutateAsync({ name, file });
-      toast.success(`${name} uploaded`);
+      await actions.uploadAsset.mutateAsync({ name: `${slot}@${fit.scale}x.png`, file: f });
+      setHeavy(f.size > SOFT_LIMIT);
+      toast.success(`${SLOT_LABEL[slot] ?? slot} replaced`);
+      onChanged();
     } catch (cause) {
       setError(errorMessage(cause));
     }
   }
+  const drop = (e: DragEvent) => {
+    e.preventDefault();
+    setOver(false);
+    if (!busy) void take(e.dataTransfer.files[0]);
+  };
 
   return (
-    <div className="grid gap-4">
-      <Card>
-        <CardHeader title="Image overrides" />
-        <CardBody>
-          {assets.isPending ? (
-            <SkeletonRows rows={2} label="Loading images" />
-          ) : assets.isError ? (
-            <ErrorState error={assets.error} onRetry={() => void assets.refetch()} />
-          ) : assets.data.items.length === 0 ? (
-            <EmptyState
-              inline
-              art="frames"
-              title="No overrides"
-              description="The template images are used."
-            />
-          ) : (
-            <ul className="divide-y divide-border">
-              {assets.data.items.map((a) => (
-                <li key={a.name} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>
-                    <span className="font-mono text-xs text-fg-strong">{a.name}</span>
-                    <span className="ml-3 text-xs text-fg-muted">
-                      {a.width && a.height ? `${a.width}×${a.height} · ` : ''}
-                      {Math.ceil(a.size / 1024)} KB
-                    </span>
-                  </span>
-                  <IconButton
-                    label={`Remove ${a.name}`}
-                    icon={<Trash2 aria-hidden />}
-                    disabled={actions.removeAsset.isPending}
-                    onClick={() =>
-                      actions.removeAsset
-                        .mutateAsync(a.name)
-                        .then(() => toast.success(`${a.name} removed`))
-                        .catch((cause: unknown) => toast.error(cause))
-                    }
-                  />
-                </li>
+    <li
+      data-new={fresh ? '' : undefined}
+      data-over={over || undefined}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={drop}
+      className="wl-slot relative flex min-w-0 items-center gap-3 rounded-lg border border-border bg-surface-raised p-3"
+    >
+      <div className="wl-checker wl-slot-thumb flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border">
+        {file ? (
+          <img
+            src={`${pass.assetBaseUrl.replace(/\/?$/, '/')}${file}`}
+            alt=""
+            onLoad={(e) =>
+              setNatural([e.currentTarget.naturalWidth, e.currentTarget.naturalHeight])
+            }
+            className="max-h-full max-w-full object-contain"
+          />
+        ) : null}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="flex min-w-0 items-center gap-2 text-sm text-fg-strong">
+          <span className="truncate">{SLOT_LABEL[slot] ?? slot}</span>
+          {shown ? <Badge tone="accent">Custom</Badge> : null}
+        </p>
+        <p className="truncate text-xs text-fg-muted tabular-nums">
+          {size ? `@${scale}x: ${size[0]} × ${size[1]} px · ` : ''}needs {requiredSize(slot, 2)} at
+          @2x
+        </p>
+        {error ? (
+          <p role="alert" className="mt-1 text-xs text-danger">
+            {error}
+          </p>
+        ) : heavy ? (
+          <p className="mt-1 text-xs text-warning">Over 200 KB; a smaller file loads faster.</p>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <input
+          ref={input}
+          type="file"
+          accept=".png,image/png"
+          hidden
+          onChange={(e) => {
+            void take(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          iconStart={<ACTION_ICON.upload aria-hidden />}
+          loading={busy}
+          busy="bob"
+          disabled={pass.status === 'voided'}
+          aria-label={`Replace ${SLOT_LABEL[slot] ?? slot}`}
+          onClick={() => input.current?.click()}
+        >
+          <span className="max-sm:sr-only">Replace</span>
+        </Button>
+        {shown ? (
+          <IconButton
+            size="sm"
+            label={`Reset ${SLOT_LABEL[slot] ?? slot} to template`}
+            icon={<ACTION_ICON.delete aria-hidden />}
+            onClick={() => setReset(true)}
+          />
+        ) : null}
+      </div>
+      <ConfirmDialog
+        open={reset}
+        onOpenChange={setReset}
+        title={`Reset ${SLOT_LABEL[slot] ?? slot}?`}
+        description="The pass goes back to the template's image."
+        confirmLabel="Reset"
+        destructive
+        onConfirm={async () => {
+          for (const o of overrides) await actions.removeAsset.mutateAsync(o.name);
+          toast.success(`${SLOT_LABEL[slot] ?? slot} reset`);
+          onChanged();
+        }}
+      />
+    </li>
+  );
+}
+
+/** One tile per image slot: what the pass shows now, the size it needs, drop to replace. */
+export function ImagesTab({ pass }: { pass: PassDetailDto }) {
+  const slots = useMemo(
+    () => usedSlots(pass.passJson, pass.assetNames),
+    [pass.passJson, pass.assetNames],
+  );
+  const assets = usePassAssets(pass.id);
+  const [changed, setChanged] = useState<string>();
+  return (
+    <Card>
+      <CardHeader title="Images" />
+      <CardBody className="flex flex-col gap-3">
+        {assets.isPending ? (
+          <SkeletonRows rows={3} label="Loading images" />
+        ) : assets.isError ? (
+          <ErrorState error={assets.error} onRetry={() => void assets.refetch()} />
+        ) : slots.length === 0 ? (
+          <EmptyState inline art="frames" title="This template has no images to replace" />
+        ) : (
+          <>
+            <ul className="grid gap-3 2xl:grid-cols-2">
+              {slots.map((slot) => (
+                <SlotTile
+                  key={slot}
+                  slot={slot}
+                  pass={pass}
+                  overrides={assets.data.items.filter((a) => slotOf(a.name)?.[1] === slot)}
+                  fresh={changed === slot}
+                  onChanged={() => setChanged(slot)}
+                />
               ))}
             </ul>
-          )}
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Upload image" />
-        <CardBody className="grid gap-4">
-          <div className="flex flex-wrap gap-4">
-            <FormField label="Slot">
-              {(c) => (
-                <Select
-                  {...c}
-                  className="w-44"
-                  value={current}
-                  onValueChange={setSlot}
-                  options={slots.map((s) => ({ value: s, label: s }))}
-                />
-              )}
-            </FormField>
-            <FormField label="Scale">
-              {(c) => (
-                <Select
-                  {...c}
-                  className="w-28"
-                  value={scale}
-                  onValueChange={(v) => setScale(v as typeof scale)}
-                  options={[
-                    { value: '1', label: '1x' },
-                    { value: '2', label: '2x' },
-                    { value: '3', label: '3x' },
-                  ]}
-                />
-              )}
-            </FormField>
-          </div>
-          <FileDrop
-            accept=".png,image/png"
-            maxBytes={MAX_ASSET_BYTES}
-            label={`Choose PNG for ${name}`}
-            disabled={actions.uploadAsset.isPending}
-            onFiles={([file]) => file && void upload(file)}
-          />
-          {actions.uploadAsset.isPending ? <PendingNote label="Uploading" /> : null}
-          {error ? (
-            <p role="alert" className="text-sm text-danger">
-              {error}
+            <p className="text-xs text-fg-muted">
+              Drop a PNG on a slot, up to {MAX_ASSET_BYTES / 1_000_000} MB. Its size picks @2x or
+              @3x.
             </p>
-          ) : null}
-          <p className="text-xs text-fg-muted">
-            PNG, up to {MAX_ASSET_BYTES / 1024} KB. Saved as{' '}
-            <span className="font-mono">{name}</span>.
-          </p>
-        </CardBody>
-      </Card>
-    </div>
+          </>
+        )}
+      </CardBody>
+    </Card>
   );
 }

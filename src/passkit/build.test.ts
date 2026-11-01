@@ -259,7 +259,10 @@ describe('buildPass', () => {
         signing: material,
         assetOverrides,
       });
-    expect(Object.keys((await run('a')).signed.files)).toContain('thumbnail.png');
+    const kept = Object.keys((await run('a')).signed.files);
+    expect(kept).toContain('thumbnail@2x.png');
+    // @2x ships, so the @1x file stays out of the package.
+    expect(kept).not.toContain('thumbnail.png');
     const dropped = Object.keys(
       (await run('b', { 'thumbnail@3x.png': { bytes: pngOf(270, 270) } })).signed.files,
     );
