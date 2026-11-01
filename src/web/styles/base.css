@@ -94,3 +94,20 @@
     transform: none;
   }
 }
+
+/* Mouse and touch focus (including restored focus after an overlay closes) shows no ring on
+   buttons and controls; the first key press flips data-modality back and the ring returns.
+   Text fields keep their focus style. */
+:root[data-modality="pointer"]
+:is(
+  button,
+  a,
+  [role="button"],
+  [role="checkbox"],
+  [role="switch"],
+  [role="radio"],
+  [role="tab"],
+  [role="menuitem"]
+):focus-visible {
+  outline: none;
+}
