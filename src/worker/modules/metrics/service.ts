@@ -179,10 +179,11 @@ export async function getOverview(
       'ORG_NOT_FOUND',
     );
 
-  const [totals, loaded, recent] = await Promise.all([
+  const [totals, loaded, recent, setup] = await Promise.all([
     repo.passTotals(ctx.env.DB, scope),
     load(ctx, w, scope, now),
     repo.recentAudit(ctx.env.DB, scope, 10),
+    repo.setupCounts(ctx.env.DB, { orgId: query.orgId }),
   ]);
   const series = Object.fromEntries(
     SERIES_KEYS.map((k) => [k, fill(loaded.rows[k], start, end, range.bucketMs)]),
@@ -213,6 +214,7 @@ export async function getOverview(
       signIns: sum('signIns'),
     },
     series,
+    setup,
     recent: recent.map((r) => ({
       at: r.at,
       action: r.action,
