@@ -9,6 +9,7 @@ import { crc32 } from '../package/crc32.ts';
 import { packagePass, packagePassBytes } from '../package/zip.ts';
 import { FIXTURES } from '../schema/fixtures.ts';
 import { normalizePass } from '../schema/normalize.ts';
+import { HIG_CODES } from '../schema/validate-hig.ts';
 import { createFixtureIdentity, FIXTURE_IDENTITY } from '../testing/fixture-identity.ts';
 import type { SigningMaterial } from '../types.ts';
 import { validatePass } from '../validate.ts';
@@ -55,7 +56,10 @@ describe('golden passes sign and package', () => {
       passTypeIdentifier: identity.passTypeIdentifier,
       teamIdentifier: identity.teamIdentifier,
     });
-    expect(validatePass(pass, f.assets, identity).issues).toEqual([]);
+    // HIG lint has its own fixtures (rules-hig.test.ts); these check structure and signing.
+    expect(
+      validatePass(pass, f.assets, identity).issues.filter((i) => !HIG_CODES.has(i.code)),
+    ).toEqual([]);
 
     const assets = Object.fromEntries(f.assets.map((a) => [a.name, PNG]));
     const precomputedSha1 = Object.fromEntries(

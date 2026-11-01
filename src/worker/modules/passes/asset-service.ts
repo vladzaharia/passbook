@@ -3,7 +3,9 @@ import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { validateAsset } from './assets.ts';
+import { imagesFromBinding } from '../templates/images-binding.ts';
+import type { ImageTools } from '../templates/package/images.ts';
+import { parseAssetName, validateAsset } from './assets.ts';
 import { publishPass } from './publish.ts';
 import {
   type AssetRow,
@@ -64,20 +66,17 @@ async function deleteIfUnreferenced(ctx: ServiceContext, r2Key: string): Promise
   if (!(await assetKeyInUse(ctx.env.DB, r2Key))) await ctx.env.BUCKET.delete(r2Key);
 }
 
-export async function putPassAsset(
+async function storeRow(
   ctx: ServiceContext,
-  actor: Actor,
   passId: string,
   name: string,
   bytes: Uint8Array,
-  scope: string | null,
-) {
-  const pass = await requirePass(ctx, passId, scope);
+): Promise<AssetRow> {
   const info = validateAsset(name, bytes);
   const sha1 = await sha1Hex(bytes);
   const r2Key = `pass-assets/${passId}/${name}/${sha1}.png`;
   await ctx.env.BUCKET.put(r2Key, bytes, { httpMetadata: { contentType: 'image/png' } });
-  const row: AssetRow = {
+  return {
     name,
     r2Key,
     sha1,
@@ -87,14 +86,65 @@ export async function putPassAsset(
     crc32: crc32(bytes),
     createdAt: ctx.clock.now(),
   };
+}
+
+/**
+ * An @3x upload alone also stores @2x, scaled by the Images binding (signed packages ship @2x and
+ * @3x only). Without the binding the @3x stays alone and Wallet scales it.
+ */
+async function derived2x(
+  ctx: ServiceContext,
+  passId: string,
+  name: string,
+  bytes: Uint8Array,
+  tools: ImageTools,
+): Promise<AssetRow | null> {
+  const parsed = parseAssetName(name);
+  if (parsed.scale !== 3) return null;
+  const info = validateAsset(name, bytes);
+  const target = name.replace('@3x.png', '@2x.png');
+  const scaled = await tools.resize?.(
+    bytes,
+    Math.round((info.width * 2) / 3),
+    Math.round((info.height * 2) / 3),
+  );
+  if (!scaled) {
+    ctx.log.warn('pass.asset_derive_unavailable', { passId, code: 'IMAGE_SCALE_MISSING' });
+    return null;
+  }
+  return storeRow(ctx, passId, target, scaled);
+}
+
+export async function putPassAsset(
+  ctx: ServiceContext,
+  actor: Actor,
+  passId: string,
+  name: string,
+  bytes: Uint8Array,
+  scope: string | null,
+  tools: ImageTools = imagesFromBinding(ctx.env.IMAGES, ctx.log),
+) {
+  const pass = await requirePass(ctx, passId, scope);
+  const row = await storeRow(ctx, passId, name, bytes);
+  const extra = await derived2x(ctx, passId, name, bytes, tools);
   const previous = await upsertAsset(ctx.env.DB, passId, row);
+  const previousExtra = extra ? await upsertAsset(ctx.env.DB, passId, extra) : null;
   try {
     await rebuildOrRestore(ctx, actor, passId, scope, name, previous);
   } catch (error) {
-    await deleteIfUnreferenced(ctx, r2Key);
+    if (extra) {
+      if (previousExtra) await upsertAsset(ctx.env.DB, passId, previousExtra);
+      else await removeAsset(ctx.env.DB, passId, extra.name);
+      await deleteIfUnreferenced(ctx, extra.r2Key);
+    }
+    await deleteIfUnreferenced(ctx, row.r2Key);
     throw error;
   }
-  if (previous && previous.r2Key !== r2Key) await deleteIfUnreferenced(ctx, previous.r2Key);
+  for (const [old, now] of [
+    [previous, row],
+    [previousExtra, extra],
+  ] as const)
+    if (old && now && old.r2Key !== now.r2Key) await deleteIfUnreferenced(ctx, old.r2Key);
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,
@@ -102,7 +152,7 @@ export async function putPassAsset(
     action: 'pass.asset.put',
     targetType: 'pass',
     targetId: passId,
-    detail: { name },
+    detail: { name, ...(extra ? { derived: extra.name } : {}) },
   });
   return toDto(row);
 }

@@ -200,8 +200,8 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
     expect(Object.keys(built.signed.files)).toEqual(
       expect.arrayContaining([
         'artwork@3x.png',
-        'primaryLogo.png',
-        'logo.png',
+        'primaryLogo@2x.png',
+        'logo@2x.png',
         'en.lproj/pass.strings',
       ]),
     );

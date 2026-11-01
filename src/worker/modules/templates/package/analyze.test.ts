@@ -151,7 +151,7 @@ describe('analyzePackage', () => {
     expect(analysis.assets.map((a) => a.name)).not.toContain('background.png');
   });
 
-  it('derives missing scales from @3x through the image backend', async () => {
+  it('derives a missing @2x from @3x through the image backend', async () => {
     const calls: [number, number][] = [];
     const tools: ImageTools = {
       async resize(_bytes, w, h) {
@@ -165,12 +165,10 @@ describe('analyzePackage', () => {
       'icon@3x.png': makePng(114, 114),
     });
     const { analysis, codes } = await analyze(files, tools);
-    expect(calls).toEqual([
-      [38, 38],
-      [76, 76],
-    ]);
-    expect(analysis.assets.map((a) => a.name)).toEqual(['icon.png', 'icon@2x.png', 'icon@3x.png']);
-    expect(codes.filter((c) => c === 'warning:IMAGE_DERIVED')).toHaveLength(2);
+    // Signed packages ship @2x and @3x only, so no @1x is derived.
+    expect(calls).toEqual([[76, 76]]);
+    expect(analysis.assets.map((a) => a.name)).toEqual(['icon@2x.png', 'icon@3x.png']);
+    expect(codes.filter((c) => c === 'warning:IMAGE_DERIVED')).toHaveLength(1);
   });
 
   it('warns instead of failing when derivation is unavailable', async () => {

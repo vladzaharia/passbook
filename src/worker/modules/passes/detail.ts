@@ -1,5 +1,5 @@
 import { validatePass } from '../../../passkit/index.ts';
-import type { PassJson } from '../../../passkit/types.ts';
+import type { PassJson, ValidationIssue } from '../../../passkit/types.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -80,7 +80,7 @@ export function linksOf(ctx: ServiceContext, pass: Pass) {
   };
 }
 
-type Issue = { severity: 'error' | 'warning'; code: string; message: string; path?: string };
+type Issue = ValidationIssue;
 const issueKey = (i: Issue) => `${i.code}\u0000${i.path ?? ''}`;
 
 /**
@@ -91,7 +91,7 @@ async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: PassJson) 
   try {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
     const identity = await depsOf(ctx.env).identities.byId(pass.identityId);
-    const warn = (issues: Issue[]) => issues.filter((i) => i.severity === 'warning');
+    const warn = (issues: Issue[]) => issues.filter((i) => i.severity !== 'error');
     const shared = warn(validatePass(template.passJson, template.assets, identity).issues);
     const known = new Set(shared.map(issueKey));
     const own = warn(validatePass(passJson, template.assets, identity).issues).filter(

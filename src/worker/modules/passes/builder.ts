@@ -2,7 +2,12 @@ import { PassBuildError } from '../../../passkit/build.ts';
 import { buildPass, crc32, packagePassBytes, signPass } from '../../../passkit/index.ts';
 import { evaluate } from '../../../passkit/template/expr.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
-import type { AssetEntry, PassJson, Personalization } from '../../../passkit/types.ts';
+import type {
+  AssetEntry,
+  PassJson,
+  Personalization,
+  ValidationIssue,
+} from '../../../passkit/types.ts';
 import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -43,7 +48,7 @@ export interface Artifact {
   subtitle: string | null;
   /** Pass.json plus asset digests; equal hashes mean identical content. */
   contentHash: string;
-  warnings: { severity: 'error' | 'warning'; code: string; message: string; path?: string }[];
+  warnings: ValidationIssue[];
 }
 
 export const isNotFound = (error: unknown): boolean =>
@@ -205,7 +210,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       subtitle: display.subtitle,
       contentHash: built.contentHash,
       warnings: [
-        ...built.report.issues.filter((i) => i.severity === 'warning'),
+        ...built.report.issues.filter((i) => i.severity !== 'error'),
         ...brandingWarnings(
           req.templateId,
           branding,

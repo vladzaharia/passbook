@@ -1,83 +1,52 @@
+import type { StyleTag } from '../../../../passkit/schema/constants.ts';
+import { checkImageSize, slotsForStyles } from '../../../../passkit/schema/image-rules.ts';
 import type { ImageSlot, PassJson, PassStyle } from '../../../../passkit/types.ts';
 import { PASS_STYLES } from '../../../../passkit/types.ts';
 
 export type SlotName = ImageSlot | 'personalizationLogo';
 
-interface SlotRule {
-  w: number;
-  h: number;
-  /** exact: width and height must equal the size; max: neither may exceed it. */
-  mode: 'exact' | 'max' | 'any';
-  /** Extra accepted exact sizes (legacy styles), in points. */
-  alt?: [number, number][];
-}
-
-/** Points; multiply by scale. Source: Apple pass image table (audit A 5.4). */
-export const SLOT_RULES: Record<SlotName, SlotRule> = {
-  icon: { w: 38, h: 38, mode: 'exact' },
-  logo: { w: 160, h: 50, mode: 'max' },
-  primaryLogo: { w: 126, h: 30, mode: 'max' },
-  secondaryLogo: { w: 135, h: 12, mode: 'max' },
-  strip: {
-    w: 375,
-    h: 144,
-    mode: 'exact',
-    alt: [
-      [375, 123],
-      [375, 98],
-    ],
-  },
-  thumbnail: { w: 90, h: 90, mode: 'exact' },
-  artwork: { w: 358, h: 448, mode: 'exact' },
-  background: { w: 345, h: 505, mode: 'exact' },
-  footer: { w: 286, h: 15, mode: 'max' },
-  personalizationLogo: { w: 150, h: 40, mode: 'max' },
-  venueMap: { w: 0, h: 0, mode: 'any' },
-};
-
-export const SLOT_NAMES = Object.keys(SLOT_RULES) as SlotName[];
-
-const POSTER: SlotName[] = ['primaryLogo', 'secondaryLogo', 'artwork'];
-
-const STYLE_SLOTS: Record<PassStyle, SlotName[]> = {
-  generic: ['logo', 'thumbnail'],
-  posterGeneric: ['logo', ...POSTER],
-  storeCard: ['logo', 'strip'],
-  coupon: ['logo', 'strip'],
-  eventTicket: ['logo', 'strip', 'background', 'thumbnail'],
-  boardingPass: ['logo', 'footer'],
-};
+/** Every slot the package may carry; sizes live in the shared IMAGE_RULES table. */
+export const SLOT_NAMES: SlotName[] = [
+  'icon',
+  'logo',
+  'primaryLogo',
+  'secondaryLogo',
+  'strip',
+  'thumbnail',
+  'artwork',
+  'background',
+  'footer',
+  'personalizationLogo',
+  'venueMap',
+];
 
 export function stylesOf(pass: PassJson): PassStyle[] {
   return PASS_STYLES.filter((s) => typeof pass[s] === 'object' && pass[s] !== null);
 }
 
-/** Slots the pass can display. icon is always used; poster schemes add the poster slots. */
-export function usedSlots(pass: PassJson): Set<SlotName> {
-  const used = new Set<SlotName>(['icon', 'personalizationLogo']);
-  for (const style of stylesOf(pass)) for (const slot of STYLE_SLOTS[style]) used.add(slot);
+/** Style tags of a pass.json: its style dictionaries plus PET and SBP when their scheme is set. */
+export function styleTagsOf(pass: PassJson): Set<StyleTag> {
+  const tags = new Set<StyleTag>(stylesOf(pass));
   const schemes = Array.isArray(pass.preferredStyleSchemes) ? pass.preferredStyleSchemes : [];
-  if (schemes.some((s) => typeof s === 'string' && s.startsWith('poster')))
-    for (const slot of POSTER) used.add(slot);
-  return used;
+  if (schemes.includes('posterEventTicket') && tags.has('eventTicket')) tags.add('PET');
+  if (schemes.includes('semanticBoardingPass') && tags.has('boardingPass')) tags.add('SBP');
+  if (schemes.includes('posterGeneric')) tags.add('posterGeneric');
+  return tags;
 }
 
+/** Slots the pass can display (SLOT_STYLES); icon always, background as the validator decides. */
+export function usedSlots(pass: PassJson, hasArtwork = true): Set<SlotName> {
+  return slotsForStyles(styleTagsOf(pass), hasArtwork) as Set<SlotName>;
+}
+
+/** The IMAGE_RULES verdict for one file, or null when it fits. Legacy sizes come back as warnings. */
 export function checkSize(
+  name: string,
   slot: SlotName,
   scale: 1 | 2 | 3,
   width: number,
   height: number,
-): string | null {
-  const rule = SLOT_RULES[slot];
-  if (rule.mode === 'any') return null;
-  if (rule.alt?.some(([aw, ah]) => width === aw * scale && height === ah * scale)) return null;
-  const w = rule.w * scale;
-  const h = rule.h * scale;
-  if (rule.mode === 'exact')
-    return width === w && height === h
-      ? null
-      : `${slot} must be ${w}x${h}, got ${width}x${height}.`;
-  return width <= w && height <= h
-    ? null
-    : `${slot} must be at most ${w}x${h}, got ${width}x${height}.`;
+): { level: 'error' | 'warning'; message: string } | null {
+  const verdict = checkImageSize(name, slot, scale, width, height);
+  return verdict.level === 'ok' ? null : verdict;
 }

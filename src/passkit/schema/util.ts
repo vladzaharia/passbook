@@ -8,6 +8,8 @@ export interface ValidationContext {
   identity: PassIdentity;
   error: Report;
   warn: Report;
+  /** Advice that needs no action; falls back to warn where absent. */
+  info?: Report;
   /** Style dictionaries present plus PET / SBP when their scheme is active. */
   styles: ReadonlySet<StyleTag>;
 }

@@ -23,7 +23,7 @@ export const AssetEntrySchema = z.object({
 });
 
 export const ValidationIssueSchema = z.object({
-  severity: z.enum(['error', 'warning']),
+  severity: z.enum(['error', 'warning', 'info']),
   code: z.string(),
   message: z.string(),
   path: z.string().optional(),

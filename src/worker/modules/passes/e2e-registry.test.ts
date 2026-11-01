@@ -46,9 +46,10 @@ async function checkStored(passId: string) {
   const bytes = new Uint8Array((await object?.arrayBuffer()) ?? new ArrayBuffer(0));
   const names = expectValidZip(bytes);
   const files = unzipSync(bytes);
-  expect(names).toEqual(
-    expect.arrayContaining(['pass.json', 'manifest.json', 'signature', 'icon.png']),
-  );
+  expect(names).toEqual(expect.arrayContaining(['pass.json', 'manifest.json', 'signature']));
+  // Signed packages carry @2x and @3x; @1x only when nothing larger exists.
+  expect(names.some((n) => /^icon(@[23]x)?\.png$/.test(n))).toBe(true);
+  if (names.includes('icon@2x.png')) expect(names).not.toContain('icon.png');
   const manifest = JSON.parse(new TextDecoder().decode(files['manifest.json'])) as Record<
     string,
     string
