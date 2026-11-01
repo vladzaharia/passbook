@@ -41,9 +41,12 @@ export function myPassQuery(id: string) {
   });
 }
 
+export const fetchMyEmails = (signal?: AbortSignal) =>
+  api.get('/api/v1/me/emails', MyEmailListSchema, signal ? { signal } : {});
+
 export const myEmailsQuery = queryOptions({
   queryKey: myEmailsKey,
-  queryFn: ({ signal }) => api.get('/api/v1/me/emails', MyEmailListSchema, { signal }),
+  queryFn: ({ signal }) => fetchMyEmails(signal),
 });
 
 export const mySessionsQuery = queryOptions({
@@ -60,6 +63,9 @@ export const addEmail = (email: string) => api.post('/api/v1/me/emails', OkSchem
 
 export const removeEmail = (email: string) =>
   api.delete(`/api/v1/me/emails/${encodeURIComponent(email)}`);
+
+export const makePrimaryEmail = (email: string) =>
+  api.post(`/api/v1/me/emails/${encodeURIComponent(email)}/primary`, MyEmailListSchema);
 
 export const revokeAllSessions = () => api.action('POST', '/api/v1/me/sessions/revoke-all');
 

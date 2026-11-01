@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
+import { Skeleton } from '../ui/index.ts';
+import './portal.css';
 
-/** QR as a data: image (allowed by the CSP; inline SVG styles are not). */
+/**
+ * QR as a data: image (allowed by the CSP; inline SVG styles are not). A scan line sweeps the code
+ * once when it appears (900 ms); the placeholder is the kit skeleton.
+ */
 export function QrCode({ value, label }: { value: string; label: string }) {
   const [src, setSrc] = useState<string>();
   const [failed, setFailed] = useState(false);
@@ -21,8 +26,12 @@ export function QrCode({ value, label }: { value: string; label: string }) {
     };
   }, [value]);
 
-  if (failed) return <p className="text-sm text-danger">Could not draw the QR code.</p>;
-  if (!src)
-    return <div aria-hidden className="size-48 animate-pulse rounded-md bg-surface-sunken" />;
-  return <img src={src} alt={label} className="size-48 rounded-md bg-white p-2" />;
+  if (failed) return <p className="text-sm text-danger">Could not draw the QR code. Reload.</p>;
+  if (!src) return <Skeleton className="size-48 rounded-lg" />;
+  return (
+    <span className="wl-qr relative block size-48 overflow-hidden rounded-lg bg-white p-2">
+      <img src={src} alt={label} className="block size-full" />
+      <span aria-hidden className="wl-qr-scan" />
+    </span>
+  );
 }

@@ -1,5 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreHorizontal, QrCode as QrIcon, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  ExternalLink,
+  MoreHorizontal,
+  QrCode as QrIcon,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
   AppleWalletBadge,
@@ -36,7 +43,7 @@ export function AddToWalletButton({
   return <AppleWalletBadge href={downloadUrl} onClick={onPress} />;
 }
 
-function QrDialog({
+export function QrDialog({
   passTitle,
   url,
   open,
@@ -49,12 +56,25 @@ function QrDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent title="Scan with iPhone" description={passTitle} size="sm">
+      <DialogContent title="Scan with your iPhone" description={passTitle} size="sm">
         <div className="flex justify-center">
           {open ? <QrCode value={url} label={`QR code for ${passTitle}`} /> : null}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** "Show QR" as a button: the lead action where the device cannot add passes. */
+export function ShowQrButton({ passTitle, url }: { passTitle: string; url: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="outline" iconStart={<QrIcon aria-hidden />} onClick={() => setOpen(true)}>
+        Show QR
+      </Button>
+      <QrDialog passTitle={passTitle} url={url} open={open} setOpen={setOpen} />
+    </>
   );
 }
 
@@ -70,71 +90,79 @@ function useRemovePass(passId: string, onRemoved?: () => void) {
   });
 }
 
-export function RemovePassButton({
-  passId,
-  passTitle,
-  onRemoved,
-  size = 'sm',
-}: {
-  passId: string;
-  passTitle: string;
-  onRemoved?: () => void;
-  size?: 'sm' | 'md';
-}) {
-  const [open, setOpen] = useState(false);
-  const mutation = useRemovePass(passId, onRemoved);
-  return (
-    <>
-      <Button
-        variant="ghost"
-        size={size}
-        iconStart={<Trash2 aria-hidden />}
-        onClick={() => setOpen(true)}
-      >
-        Remove
-      </Button>
-      <ConfirmDialog
-        open={open}
-        onOpenChange={setOpen}
-        title="Remove from my passes?"
-        description={`${passTitle} will not come back unless an admin reassigns it.`}
-        confirmLabel="Remove"
-        destructive
-        onConfirm={() => mutation.mutateAsync()}
-      />
-    </>
-  );
+async function copyLink(url: string) {
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success('Link copied');
+  } catch (error) {
+    // Clipboard needs a secure context and permission: say so instead of failing silently.
+    toast.error(error, 'Could not copy the link');
+  }
 }
 
-/** Secondary tile actions: Show QR (when a public link exists) and Remove. */
+export interface PassMenuProps {
+  passId: string;
+  passTitle: string;
+  /** The public page: Show QR, and on the detail page Copy link and Open public page. */
+  publicUrl: string | null;
+  /** The .pkpass, offered again once the pass is in a Wallet (it left Add all). */
+  addAgainHref?: string | null;
+  /** Detail page: a labelled outline "More" with the link items. Tiles: a ghost icon. */
+  page?: boolean;
+  onRemoved?: () => void;
+}
+
+/** More: Show QR, Copy link and Open public page (detail), Add again, then Remove (danger). */
 export function PassMoreMenu({
   passId,
   passTitle,
-  qrUrl,
-}: {
-  passId: string;
-  passTitle: string;
-  qrUrl: string | null;
-}) {
+  publicUrl,
+  addAgainHref,
+  page = false,
+  onRemoved,
+}: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
-  const mutation = useRemovePass(passId);
+  const mutation = useRemovePass(passId, onRemoved);
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <IconButton
-            label="More actions"
-            icon={<MoreHorizontal aria-hidden />}
-            variant="ghost"
-            size="sm"
-            className="ml-auto"
-          />
+          {page ? (
+            <Button variant="outline" size="lg" iconStart={<MoreHorizontal aria-hidden />}>
+              <span className="max-sm:sr-only">More</span>
+            </Button>
+          ) : (
+            <IconButton
+              label="More actions"
+              icon={<MoreHorizontal aria-hidden />}
+              className="pointer-coarse:size-11"
+            />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {qrUrl ? (
+          {publicUrl ? (
             <DropdownMenuItem onSelect={() => setQrOpen(true)}>
               <QrIcon aria-hidden /> Show QR
+            </DropdownMenuItem>
+          ) : null}
+          {page && publicUrl ? (
+            <>
+              <DropdownMenuItem onSelect={() => void copyLink(publicUrl)}>
+                <Copy aria-hidden /> Copy link
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={publicUrl}>
+                  <ExternalLink aria-hidden /> Open public page
+                </a>
+              </DropdownMenuItem>
+            </>
+          ) : null}
+          {addAgainHref ? (
+            <DropdownMenuItem asChild>
+              <a href={addAgainHref}>
+                <Download aria-hidden /> Add again
+              </a>
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem destructive onSelect={() => setRemoveOpen(true)}>
@@ -142,8 +170,8 @@ export function PassMoreMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {qrUrl ? (
-        <QrDialog passTitle={passTitle} url={qrUrl} open={qrOpen} setOpen={setQrOpen} />
+      {publicUrl ? (
+        <QrDialog passTitle={passTitle} url={publicUrl} open={qrOpen} setOpen={setQrOpen} />
       ) : null}
       <ConfirmDialog
         open={removeOpen}

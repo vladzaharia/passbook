@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button, type ButtonProps, toast } from '../ui/index.ts';
+import { Button, type ButtonProps, IconButton, toast } from '../ui/index.ts';
 import { myPassesKey, requestRefresh } from './api.ts';
 import { type RefreshFields, refreshPhase } from './refresh.ts';
 
@@ -21,11 +21,14 @@ export function RefreshButton({
   pass,
   size = 'md',
   variant = 'outline',
+  compact = false,
 }: {
   passId: string;
   pass: RefreshFields;
   size?: ButtonProps['size'];
   variant?: ButtonProps['variant'];
+  /** Tiles: an outline icon button; the label (and countdown) is its name and tooltip. */
+  compact?: boolean;
 }) {
   const client = useQueryClient();
   const [localRequestedAt, setLocal] = useState<number | null>(null);
@@ -73,12 +76,33 @@ export function RefreshButton({
         ? `Refresh in ${secondsLeft}s`
         : 'Refresh';
 
+  const pending = phase === 'pending' || mutation.isPending;
+  if (compact) {
+    return (
+      <IconButton
+        label={label}
+        variant="outline"
+        className="pointer-coarse:size-11"
+        aria-busy={pending || undefined}
+        disabled={pending || phase === 'cooldown'}
+        icon={
+          justDone ? (
+            <Check aria-hidden className="wl-check" />
+          ) : (
+            <RefreshCw aria-hidden className={pending ? 'wl-spin wl-essential' : undefined} />
+          )
+        }
+        onClick={() => mutation.mutate()}
+      />
+    );
+  }
   return (
     <Button
       variant={variant}
       size={size}
       iconStart={justDone ? <Check aria-hidden className="wl-check" /> : <RefreshCw aria-hidden />}
-      loading={phase === 'pending' || mutation.isPending}
+      loading={pending}
+      busy="spin"
       disabled={phase === 'cooldown'}
       onClick={() => mutation.mutate()}
       title={phase === 'pending' ? 'Wallet may take a minute to update' : undefined}
