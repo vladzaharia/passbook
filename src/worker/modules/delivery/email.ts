@@ -1,10 +1,12 @@
 import { renderPassEmail } from '../../email/pass.ts';
+import { passSummary } from '../../email/pass-summary.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
-import { getOrg, getPass } from '../passes/repo.ts';
+import { parseStoredPassJson } from '../passes/detail.ts';
+import { currentPassJson, getOrg, getPass } from '../passes/repo.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { claimOrSettle, retryOrGiveUp } from './push.ts';
 import { finishOutbox, orgBranding, setProviderId } from './repo.ts';
@@ -36,11 +38,13 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   const attach = row.payload.attach === true;
   const org = await getOrg(db, pass.orgId);
   const base = baseUrl(ctx.env);
-  const [platform, orgSettings, branding] = await Promise.all([
+  const [platform, orgSettings, branding, rawPassJson] = await Promise.all([
     getPlatformSettings(ctx),
     getOrgSettings(ctx, pass.orgId),
     orgBranding(db, pass.orgId),
+    currentPassJson(db, pass.id),
   ]);
+  const passJson = parseStoredPassJson(rawPassJson);
   const email = renderPassEmail({
     orgName: org?.name ?? 'Wallet',
     // The org form writes orgs.branding; the settings keys are the fallback.
@@ -49,8 +53,12 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     supportUrl: orgSettings['support.url'] ?? branding.supportUrl,
     downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
     manageUrl: `${base}/p/${pass.downloadToken}`,
-    badgeUrl: `${base}/apple/add-to-apple-wallet.png`,
+    badgeUrl: `${base}/apple/badge/en/black@2x.png`,
     attached: attach,
+    passTitle:
+      pass.displayTitle ?? (typeof passJson.description === 'string' ? passJson.description : null),
+    summary: passSummary(passJson, { now: new Date(now) }),
+    senderName: platform['email.senderName'],
   });
   const event = (outcome: 'ok' | 'failed') =>
     writeEvent(ctx.env, {
@@ -79,7 +87,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       subject: email.subject,
       html: email.html,
       text: email.text,
-      fromName: platform['email.senderName'],
+      fromName: email.fromName ?? platform['email.senderName'],
       ...(attachments ? { attachments } : {}),
     }));
   } catch (error) {

@@ -39,7 +39,7 @@ describe('pass email', () => {
     expect(email.html).toContain('href="https://w.test/p/t/pass.pkpass"');
     expect(email.html).toContain('alt="Add to Apple Wallet"');
     expect(email.html).toContain('#112233');
-    expect(email.text).toContain('Manage pass: https://w.test/p/t');
+    expect(email.text).toContain('Open your pass: https://w.test/p/t');
     expect(email.text).toContain('attached');
   });
 
