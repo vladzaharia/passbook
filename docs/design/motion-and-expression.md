@@ -25,11 +25,11 @@ Two speeds:
 | All | Nothing moves; route changes cut; one teal on near-black; identical bordered boxes | Two-speed motion, lit edges, pass-coloured glow |
 | Pass card (everywhere) | Flat image in a box; Show back swaps instantly; public page uses a disclosure | One stage: glow, tilt, flip, deal, mint |
 | Overview | Eight identical KPI boxes, static | Larger tabular stats that count; status pulse |
-| Templates list | Text table for a visual product | Thumbnail of the pass in the first column |
+| Templates list | Text table for a visual product | 32 px still of the sample pass in the first column |
 | New-pass wizard | Review step has no preview; Create cuts to detail | Preview on review; card morphs into the detail page and mints |
 | Empty states | Dashed box, grey icon | Pass-stack illustration that fans open once |
 | Sign-in, SSR auth | Heading and box floating on an empty page | Card rises once; wordmark flips once; magic-link step flips the card |
-| Emails | Slate bar, plain title | Org accent bar with a 2px foil edge (static) |
+| Emails | Slate bar, plain title | 3 px foil line over the org bar (static, teal fallback) |
 
 ## Tokens
 
@@ -66,7 +66,7 @@ Two speeds:
 | Route change | Old main fades out 120 ms; new main fades in and rises 8 px; deeper path slides in 16 px from the right, shallower from the left | View Transitions through TanStack `defaultViewTransition` types. Path changes only: filters, sort, `?tab=`, `?v=` never animate. Sidebar and top bar never move |
 | Shared pass card | List tile morphs into the detail card and back | `transitionName="pass-<id>"` on both; unmatched cards leave with main. Portal and wizard only, never 50 table rows |
 | Nav and tab indicators | Pill slides to the new item, spring 480 ms | `ActiveIndicator` (transform only); same component for tabs |
-| Tab panel | New panel fades in 120 ms, 4 px rise; no exit | Radix `data-state=active` |
+| Tab panel | No motion: `?tab=` changes are instant; only the underline slides | — |
 | List first load | Rows fade and rise 8 px, 30 ms stagger, cap 6 | Only when data arrives after a skeleton (`useArrival`); refetch, filter and sort never animate; appended pages do |
 | Pass grids | Deal: rise 24 px, −2°, 0.96 scale, spring, 60 ms stagger | Portal My passes, template gallery and pickers |
 | Dialog, popover, menu, select | In: fade, 0.98 scale and 4 px from the trigger side, 200 ms; out: fade 120 ms | Radix `data-state` keyframes and `--radix-*-transform-origin` |
@@ -74,17 +74,17 @@ Two speeds:
 | Buttons | Press scale 0.98, 80 ms; hover colour 120 ms; dark primary gets the accent glow on hover | Loading keeps the button width |
 | Switch, checkbox | Thumb slides on spring 200 ms; check pops 0.6 → 1 | — |
 | Copy, saved | Icon swaps to a check with a bounce pop, back after 1.5 s | Same label |
-| Toasts | Rise 8 px, 200 ms; success icon pops | Sonner; copy unchanged |
-| Skeleton → content | Skeleton appears only after 150 ms (`pk-delay-skeleton`); content fades in 200 ms in the same box | No rise; no layout change |
-| Numbers | Count from the old value (first load from 0), 600 ms ease-out, tabular-nums | Screen readers get the final value only |
-| Status change | Pill crossfades 200 ms, then one ring pulse in its tone (scale 1 → 1.6, fade) | Only when the value changes on screen |
-| Save bar | Slides up on spring 260 ms; out 120 ms | — |
+| Toasts | Sonner's own slide; the icon pops | Copy unchanged |
+| Skeleton → content | Skeleton appears only after 150 ms (`pk-delay-skeleton`); lists, totals and grids that replace it rise in | No layout change |
+| Numbers | Count from the old value (first load from 0), 600 ms ease-out, tabular-nums | `CountUp`; tests and reduced motion show the value at once |
+| Status change | One ring pulse in the pill's tone (scale 1 → 1.6, fade, 640 ms) | `StatusPill`, only when the value changes on screen |
+| Save bar | Slides up on spring 260 ms | — |
 | Focus ring | Instant | Never animated |
 
 ## Signature moments
 
 1. **Pass stage** (`PassCardStage`, every pass on every surface). The pass lights the surface
-   under it in its own background colour. On fine pointers it tilts up to 7° towards the pointer
+   under it in its own background colour (a radial gradient, no blur filter). On fine pointers it tilts up to 7° towards the pointer
    with a soft highlight that follows it, and springs back on leave. Show back flips it in 3D
    (640 ms spring); the far face is `inert`. A single stage replaces the instant swap on admin,
    portal and the public page.
@@ -96,7 +96,7 @@ Two speeds:
 4. **Wizard finish.** The review step shows the live preview. Create morphs that card into the
    detail page preview (shared transition name), then it mints. No confetti.
 5. **Portal Add to Apple Wallet and Refresh.** Add dips the card 6 px towards the button
-   (240 ms) as the download starts; nothing claims success, since the page cannot know. Refresh:
+   (420 ms) as the download starts; nothing claims success, since the page cannot know. Refresh:
    the spinner becomes a check pop, the card mints, and the existing "Pass updated" toast shows.
 6. **Sliding pills.** The sidebar, portal nav and tabs share one sliding indicator.
 7. **Empty states.** One illustration: three blank pass silhouettes fanned −6°, 0°, 6°, the
@@ -111,14 +111,14 @@ Two speeds:
   a fill: mint sweep, empty-state art edge, the 2 px top edge of the sign-in card and the email
   header bar. Never on text, buttons or page backgrounds.
 - **Depth, dark.** Raised surfaces: `--wl-edge` lit top edge plus elevation-1. Overlays:
-  elevation-3 and a lit edge. Pass glow: pass background colour, 36 px blur, 40%. Primary button:
-  accent glow on hover and keyboard focus.
+  elevation-3 and a lit edge. Pass glow: radial gradient in the pass background colour at 50%.
+  Primary button: accent glow on hover and keyboard focus.
 - **Depth, light.** No lit edge; the pass glow reads as a tinted soft shadow; elevations unchanged.
 - **Typography.** Rubik only. Page titles `text-2xl font-semibold` with
   `tracking-[-0.015em]` (`pk-tracking-heading`); portal titles `text-3xl` at ≥640. Stat values
   `text-3xl font-semibold tabular-nums`. No marketing display scale in product (brand rule).
 - **Iconography.** Lucide everywhere; empty states use the pass-stack art around the icon.
-  Templates list gets a 40 px pass thumbnail in the first column.
+  Templates list gets a 32 px still of the sample pass in the first column.
 - **Pass art.** Never restyled. Only the stage around it (glow, tilt, highlight, flip, sheen) is
   ours; a still frame shows exactly the pass.
 
@@ -129,13 +129,12 @@ Two speeds:
   nothing. Spinners keep spinning (they carry state).
 - **Transform and opacity only.** Nothing animates size or position properties; nothing shifts
   layout. Entrances use `animation-fill-mode: backwards` so finished animations hold no layer.
-  `will-change` only on the stage while the pointer is on it.
+  No `will-change`, no blur filters on grids.
 - **Never block input or delay content.** Total stagger ≤ 360 ms; route transitions ≤ 260 ms and
   start after loaders finish; data never waits for motion; no animation on refetch.
 - **Focus and a11y.** Navigation still focuses the h1. The hidden pass face is `inert`. Motion
-  never carries meaning alone (status text and icon change too). Animated numbers are
-  `aria-hidden` with the value in `sr-only`. Check contrast in both themes: glow and edges must
-  not lower text contrast.
+  never carries meaning alone (status text and icon change too). Dialogs focus a field marked
+  `data-autofocus`. Check contrast in both themes: glow and edges must not lower text contrast.
 - **Pass fidelity.** See above. Faces keep their own size; the back fills the front's box and
   scrolls, as in Wallet.
 - **Copy.** Terse, unchanged. No new words for flair.
@@ -147,8 +146,9 @@ Two speeds:
 
 ## Library decision
 
-CSS, `@starting-style`, the View Transitions API, Radix `data-state` and three small hooks
-(`useArrival`, pointer tilt, count). No motion library.
+CSS, the View Transitions API, Radix `data-state` and a few small hooks (`useArrival`,
+`useCountUp`, `useChangeCount`, `useMintedOnArrival`, the stage's pointer tilt and replay). No
+motion library.
 
 - `motion` costs about 34 kB gzip for `motion` components, about 20 kB with `LazyMotion` +
   `domAnimation`, about 2.5 kB for the `animate` mini build. It earns that for velocity-based
@@ -160,7 +160,21 @@ CSS, `@starting-style`, the View Transitions API, Radix `data-state` and three s
   browsers navigate instantly. `linear()` and `@starting-style` fall back to no easing curve or no
   entrance.
 
-## Proposed ui-consistency.md wording
+## Where it lives
+
+| Piece | File |
+| --- | --- |
+| Tokens, route transitions, list entrances | `src/web/styles/motion.css` |
+| Overlays, controls, skeleton, ring, empty-state art, indicator | `src/web/styles/kit-motion.css` |
+| Hooks | `src/web/lib/motion.ts` |
+| Pass stage (glow, tilt, flip, deal, mint, dip) | `src/web/pass-card/stage.{tsx,css}` |
+| Sliding nav and tab indicator | `src/web/ui/active-indicator.tsx` |
+| Route transition types | `src/web/router.tsx` (`viewTransitionOption`) |
+| SSR rise, foil edge, wordmark flip | `src/worker/ssr/theme.ts` (`SSR_CARD_CSS`) |
+| Public page tilt (fine pointers) | `public/pass-tilt.js` |
+| e2e runs with reduced motion | `playwright.config.ts` |
+
+## ui-consistency.md wording (applied)
 
 Replace the motion bullet under "Icons, focus, motion" with:
 

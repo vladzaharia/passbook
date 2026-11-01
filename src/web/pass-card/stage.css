@@ -22,15 +22,14 @@
 .pc-stage[data-glow="off"]::before {
   display: none;
 }
+/* A gradient, not a blur filter: no extra paint cost on grids. */
 .pc-stage::before {
   content: "";
   position: absolute;
-  inset: 14% 10% -3%;
+  inset: 4% -8% -10%;
   z-index: -1;
-  border-radius: 40%;
-  background: var(--pc-glow, transparent);
-  filter: blur(36px);
-  opacity: 0.4;
+  background: radial-gradient(closest-side, var(--pc-glow, transparent), transparent);
+  opacity: 0.5;
   pointer-events: none;
 }
 
