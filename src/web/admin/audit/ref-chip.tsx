@@ -13,7 +13,11 @@ export function RefChip({ value, className }: { value: Ref; className?: string }
     return (
       // biome-ignore lint/a11y/noStaticElementInteractions: keeps the row's pointer shortcut off the link
       // biome-ignore lint/a11y/useKeyWithClickEvents: the link inside handles keys
-      <span onClick={stop} className={cn('inline-flex max-w-full min-w-0', className)}>
+      <span
+        onClick={stop}
+        title={value.name}
+        className={cn('inline-flex max-w-full min-w-0', className)}
+      >
         <EntityChip kind={value.kind} id={value.name} name={value.name} to={value.to} />
       </span>
     );
@@ -25,7 +29,12 @@ export function RefChip({ value, className }: { value: Ref; className?: string }
     </>
   );
   const classes = cn('inline-flex max-w-full min-w-0 items-center gap-1 align-bottom', className);
-  if (!value.to) return <span className={classes}>{body}</span>;
+  if (!value.to)
+    return (
+      <span title={value.name} className={classes}>
+        {body}
+      </span>
+    );
   return (
     <Link
       to={value.to as never}

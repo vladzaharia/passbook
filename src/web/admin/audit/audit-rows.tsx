@@ -18,16 +18,28 @@ export const TONE_TEXT: Record<Tone, string> = {
 };
 
 /** The Action cell: its glyph in its tone, the label as the button that opens the entry. */
-export function ActionButton({ entry, onOpen }: { entry: AuditEntry; onOpen: () => void }) {
+export function ActionButton({
+  entry,
+  onOpen,
+  className,
+}: {
+  entry: AuditEntry;
+  onOpen: () => void;
+  className?: string;
+}) {
   const a = actionOf(entry.action);
   return (
     <button
       type="button"
+      title={a.label}
       onClick={(e) => {
         e.stopPropagation();
         onOpen();
       }}
-      className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm text-left text-sm font-medium text-fg-strong hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className={cn(
+        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm text-left text-sm font-medium text-fg-strong hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+        className,
+      )}
     >
       <a.icon aria-hidden className={cn('size-4 shrink-0', TONE_TEXT[a.tone])} />
       <span className="truncate">{a.label}</span>

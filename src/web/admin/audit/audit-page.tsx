@@ -20,6 +20,9 @@ import { actorRef, targetRef } from './labels.ts';
 import { useAuditLog } from './queries.ts';
 import { RefChip } from './ref-chip.tsx';
 
+/** Below 1280 the cells cap their width so Action, Actor, Target and Time fit without scrolling. */
+const NARROW = 'max-xl:max-w-44';
+
 export function AuditPage({
   search,
   onSearch,
@@ -106,14 +109,18 @@ export function AuditPage({
               header: 'Action',
               id: 'action',
               cell: ({ row }) => (
-                <ActionButton entry={row.original} onOpen={() => open(row.original.id)} />
+                <ActionButton
+                  entry={row.original}
+                  onOpen={() => open(row.original.id)}
+                  className={NARROW}
+                />
               ),
             },
             {
               header: 'Actor',
               id: 'actor',
-              meta: { nowrap: true },
-              cell: ({ row }) => <RefChip value={actorRef(row.original)} />,
+              meta: { nowrap: true, hideBelow: 'lg' },
+              cell: ({ row }) => <RefChip value={actorRef(row.original)} className={NARROW} />,
             },
             {
               header: 'Target',
@@ -122,7 +129,7 @@ export function AuditPage({
               cell: ({ row }) => {
                 const target = targetRef(row.original);
                 return target ? (
-                  <RefChip value={target} />
+                  <RefChip value={target} className={NARROW} />
                 ) : (
                   <span className="text-fg-subtle">—</span>
                 );
