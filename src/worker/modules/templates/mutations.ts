@@ -28,6 +28,7 @@ import {
   getOrgName,
   getVersion,
   insertWorkflowRun,
+  listVersions,
   setStatus,
   setWorkflowRun,
   type TemplateRow,
@@ -40,7 +41,7 @@ function baked(row: TemplateRow): ForbiddenError | null {
     : null;
 }
 
-function audit(
+export function audit(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   row: { id: string; orgId: string | null },
@@ -266,6 +267,16 @@ async function deletePrefix(ctx: ServiceContext, prefix: string): Promise<void> 
   } while (cursor);
 }
 
+/** Assets stay under the org they were uploaded for, so reassigning must not change where to delete. */
+async function storageOrg(ctx: ServiceContext, row: TemplateRow): Promise<string | null> {
+  for (const v of await listVersions(ctx.env.DB, row.id))
+    for (const a of v.assets) {
+      const m = a.source.kind === 'r2' ? a.source.key.match(/^templates\/([^/]+)\//) : null;
+      if (m) return m[1] === 'platform' ? null : (m[1] ?? null);
+    }
+  return row.orgId;
+}
+
 /** Hard delete when no pass references any version; otherwise archive. */
 export async function removeTemplate(
   ctx: ServiceContext,
@@ -282,6 +293,7 @@ export async function removeTemplate(
     return 'archived' as const;
   };
   if ((await countPasses(ctx.env.DB, id)) > 0) return archive();
+  const prefix = r2Prefix(await storageOrg(ctx, row), id);
   try {
     await deleteTemplate(ctx.env.DB, id);
   } catch (error) {
@@ -290,7 +302,7 @@ export async function removeTemplate(
     throw error;
   }
   clearTemplateCache(ctx.env, id);
-  if (row.orgId) await deletePrefix(ctx, r2Prefix(row.orgId, id));
+  await deletePrefix(ctx, prefix);
   await audit(ctx, auth, row, 'template.delete', { slug: row.slug });
   return 'deleted';
 }

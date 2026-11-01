@@ -64,6 +64,25 @@ describe('syncBakedTemplates', () => {
     expect(name?.name).toBe('Acme');
   });
 
+  it('never overwrites an admin assignment on later syncs, NULL included', async () => {
+    await syncBakedTemplates(ctx(), sourceOf([platform, owned], 'h-assign-1'));
+    await env.DB.prepare("UPDATE templates SET org_id = NULL WHERE id = 'baked:acme-card'").run();
+    await env.DB.prepare('UPDATE templates SET org_id = ? WHERE id = ?')
+      .bind(org.id, 'baked:starter')
+      .run();
+    resetBakedSync();
+    await syncBakedTemplates(ctx(), sourceOf([platform, owned], 'h-assign-2'));
+    const rows = await all<{ id: string; org_id: string | null }>(
+      env.DB,
+      "SELECT id, org_id FROM templates WHERE id IN ('baked:acme-card', 'baked:starter') ORDER BY id",
+    );
+    expect(rows.map((r) => r.org_id)).toEqual([null, org.id]);
+    await env.DB.prepare('UPDATE templates SET org_id = ? WHERE id = ?')
+      .bind(org.id, 'baked:acme-card')
+      .run();
+    await env.DB.prepare("UPDATE templates SET org_id = NULL WHERE id = 'baked:starter'").run();
+  });
+
   it('creates a baked org that does not exist yet', async () => {
     const fresh = serve(
       await bakedFrom('newco-card', basicPackage(), {

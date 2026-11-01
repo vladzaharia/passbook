@@ -17,6 +17,7 @@ import {
   TemplateVersionDetailSchema,
   TemplateVersionParamSchema,
   UpdateManifestSchema,
+  UpdateTemplateSchema,
   UploadTemplateQuerySchema,
   UploadTemplateResponseSchema,
 } from '../../../shared/contracts/index.ts';
@@ -26,6 +27,7 @@ import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts'
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
+import { assignOrg } from './org-assignment.ts';
 import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 
@@ -132,6 +134,28 @@ register(
   },
   async (c: C) =>
     c.json(await detail(serviceContext(c), c.var.auth, valid<{ id: string }>(c, 'param').id)),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Assign a template to an organization, or to none (works for baked templates)',
+    params: IdParamSchema,
+    body: UpdateTemplateSchema,
+    response: TemplateDetailSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await assignOrg(
+        serviceContext(c),
+        c.var.auth,
+        valid<{ id: string }>(c, 'param').id,
+        valid<z.infer<typeof UpdateTemplateSchema>>(c, 'json').orgId,
+      ),
+    ),
 );
 
 register(

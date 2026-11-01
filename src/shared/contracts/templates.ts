@@ -36,6 +36,7 @@ export const ValidationReportSchema = z.object({
 export const TemplateSummarySchema = z.object({
   id: IdSchema,
   orgId: IdSchema.nullable(),
+  orgName: z.string().nullable(),
   slug: z.string(),
   name: z.string(),
   description: z.string().nullable(),
@@ -84,7 +85,7 @@ export const TemplateListQuerySchema = z.object({
 export const TemplateListSchema = pageOf(TemplateSummarySchema);
 
 export const UploadTemplateQuerySchema = z.object({
-  orgId: IdSchema,
+  orgId: IdSchema.optional(),
   name: z.string().max(120).optional(),
 });
 export const UploadTemplateResponseSchema = z.object({
@@ -126,6 +127,7 @@ export const CloneTemplateSchema = z.object({
   orgId: IdSchema,
   name: z.string().min(1).max(120).optional(),
 });
+export const UpdateTemplateSchema = z.object({ orgId: IdSchema.nullable() });
 export const UpdateManifestSchema = z.object({ manifest: JsonSchema });
 export const PreviewRequestSchema = z.object({
   version: z.string().optional(),

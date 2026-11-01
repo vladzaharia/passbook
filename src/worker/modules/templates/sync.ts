@@ -90,7 +90,7 @@ async function sync(ctx: ServiceContext, source: SyncSource): Promise<void> {
         db,
         `INSERT INTO templates (id, org_id, slug, name, description, origin, active_version, status, styles, created_at, updated_at)
          VALUES (?, (SELECT id FROM orgs WHERE slug = ?), ?, ?, ?, 'baked', ?, 'active', ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET org_id = excluded.org_id, name = excluded.name,
+         ON CONFLICT (id) DO UPDATE SET name = excluded.name,
            description = excluded.description, active_version = excluded.active_version,
            status = 'active', styles = excluded.styles, updated_at = excluded.updated_at`,
         [

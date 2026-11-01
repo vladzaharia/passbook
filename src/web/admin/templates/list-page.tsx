@@ -37,10 +37,6 @@ export function TemplatesListPage({
   const orgId = search.orgId ?? globalOrg;
   const orgs = useOrgOptions();
   const list = useTemplates({ orgId, origin: search.origin, includeArchived: search.archived });
-  const orgNames = useMemo(
-    () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
-    [orgs.data],
-  );
 
   const columns = useMemo<ColumnDef<TemplateSummaryDto, never>[]>(
     () => [
@@ -80,10 +76,7 @@ export function TemplatesListPage({
         id: 'org',
         header: 'Org',
         enableSorting: false,
-        cell: ({ row }) =>
-          row.original.orgId
-            ? (orgNames.get(row.original.orgId) ?? row.original.orgId)
-            : 'Platform',
+        cell: ({ row }) => row.original.orgName ?? 'None',
       },
       {
         id: 'styles',
@@ -117,7 +110,7 @@ export function TemplatesListPage({
         ),
       },
     ],
-    [orgNames],
+    [],
   );
 
   return (

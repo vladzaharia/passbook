@@ -36,10 +36,11 @@ type Summary = z.infer<typeof TemplateSummarySchema>;
 type Detail = z.infer<typeof TemplateDetailSchema>;
 type VersionDetail = z.infer<typeof TemplateVersionDetailSchema>;
 
-export function summaryOf(row: TemplateRow, passCount: number): Summary {
+export function summaryOf(row: TemplateRow, passCount: number, orgName: string | null): Summary {
   return {
     id: row.id,
     orgId: row.orgId,
+    orgName,
     slug: row.slug,
     name: row.name,
     description: row.description,
@@ -108,7 +109,7 @@ export async function list(
   const page = rows.slice(0, query.limit);
   const last = page.at(-1);
   return {
-    items: page.map((r) => summaryOf(r, r.passCount)),
+    items: page.map((r) => summaryOf(r, r.passCount, r.orgName)),
     nextCursor: rows.length > query.limit && last ? `${last.createdAt}:${last.id}` : null,
   };
 }
@@ -123,7 +124,11 @@ export async function detail(
   const active = versions.find((v) => v.version === row.activeVersion);
   if (!active) throw new NotFoundError('Template has no active version.', 'TEMPLATE_NOT_FOUND');
   return {
-    ...summaryOf(row, await countPasses(ctx.env.DB, id)),
+    ...summaryOf(
+      row,
+      await countPasses(ctx.env.DB, id),
+      row.orgId ? ((await getOrgName(ctx.env.DB, row.orgId))?.name ?? null) : null,
+    ),
     inputSchema: active.manifest.inputs as Json,
     sample: active.manifest.sample,
     manifest: active.manifest as unknown as Json,
@@ -225,7 +230,7 @@ export async function importStatus(
 ): Promise<z.infer<typeof ImportStatusSchema>> {
   const row = await getImport(ctx.env.DB, uploadId);
   if (!row) throw new NotFoundError('Upload not found.', 'UPLOAD_NOT_FOUND');
-  assertOrgAccess(auth, row.orgId);
+  if (row.orgId) assertOrgAccess(auth, row.orgId);
   return {
     uploadId,
     status: row.workflowStatus ?? 'queued',

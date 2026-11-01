@@ -26,6 +26,7 @@ describe('templates list', () => {
                 name: 'Starter',
                 origin: 'baked',
                 orgId: null,
+                orgName: null,
                 passCount: 0,
               }),
               templateSummary(),
@@ -39,7 +40,7 @@ describe('templates list', () => {
       'href',
       '/admin/templates/b1',
     );
-    expect(screen.getByText('Platform')).toBeInTheDocument();
+    expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.getAllByText('Baked').length).toBeGreaterThan(1);
     expect(seen[0]?.searchParams.get('origin')).toBe('baked');
   });
@@ -154,6 +155,43 @@ describe('template detail', () => {
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
     await user.click(within(dialog).getByRole('button', { name: 'Clone' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1', name: 'Copper card copy' }]));
+  });
+
+  it('assigns the organization and shows the conflict as the form error', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    let conflict = true;
+    await renderApp('/admin/templates/b1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates/b1': (_u, init) => {
+          if (method(init) === 'PATCH') {
+            bodies.push(JSON.parse(String(init?.body)));
+            if (conflict)
+              return problem(
+                409,
+                'TEMPLATE_USED_BY_OTHER_ORG',
+                'Passes of another organization use this template. Reissue or delete them first.',
+              );
+            return json(templateDetail({ id: 'b1', origin: 'baked', orgId: 'org1' }));
+          }
+          return json(templateDetail({ id: 'b1', origin: 'baked', orgId: null, orgName: null }));
+        },
+        '/api/v1/templates/b1/preview': preview,
+      },
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Inputs' }));
+    const select = await screen.findByRole('combobox', { name: 'Organization' });
+    expect(select).toHaveTextContent('None');
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await user.click(select);
+    await user.click(await screen.findByRole('option', { name: "Henry's" }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Passes of another organization/);
+    conflict = false;
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1' }, { orgId: 'org1' }]));
   });
 
   it('archives when passes use it and explains the rule', async () => {

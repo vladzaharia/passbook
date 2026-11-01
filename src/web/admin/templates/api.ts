@@ -65,6 +65,11 @@ export function useTemplateActions(id: string) {
         api.put(`/api/v1/templates/${id}/manifest`, TemplateDetailSchema, { manifest }),
       onSuccess: done,
     }),
+    assignOrg: useMutation({
+      mutationFn: (orgId: string | null) =>
+        api.patch(`/api/v1/templates/${id}`, TemplateDetailSchema, { orgId }),
+      onSuccess: done,
+    }),
     clone: useMutation({
       mutationFn: (input: { orgId: string; name?: string }) =>
         api.post(`/api/v1/templates/${id}/clone`, TemplateDetailSchema, input),
@@ -79,7 +84,7 @@ export function useTemplateActions(id: string) {
 
 export function useUploadTemplate() {
   return useMutation({
-    mutationFn: ({ file, orgId, name }: { file: File; orgId: string; name?: string }) =>
+    mutationFn: ({ file, orgId, name }: { file: File; orgId?: string; name?: string }) =>
       api.post(`/api/v1/templates/uploads`, UploadTemplateResponseSchema, file, {
         query: { orgId, name },
         headers: { 'content-type': 'application/zip' },
