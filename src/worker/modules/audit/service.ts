@@ -89,6 +89,7 @@ export async function listAudit(
       orgId: query.orgId,
       actorId: query.actorId,
       action: query.action,
+      excludeAction: query.excludeAction,
       targetType: query.targetType,
       targetId: query.targetId,
       from: query.from,

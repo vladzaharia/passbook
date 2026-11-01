@@ -1,4 +1,5 @@
 export interface AuditSearch {
+  /** Deep links from an org page; the top-bar scope applies otherwise. */
   orgId?: string | undefined;
   actorId?: string | undefined;
   action?: string | undefined;
@@ -16,7 +17,7 @@ const num = (v: unknown) => {
 };
 
 export function parseAuditSearch(raw: Record<string, unknown>): AuditSearch {
-  const out: AuditSearch = {
+  return {
     orgId: str(raw.orgId),
     actorId: str(raw.actorId),
     action: str(raw.action),
@@ -26,7 +27,33 @@ export function parseAuditSearch(raw: Record<string, unknown>): AuditSearch {
     to: num(raw.to),
     entry: num(raw.entry),
   };
-  return out;
+}
+
+/** Drops unset keys so links and the URL stay short. */
+export function compactAudit(search: AuditSearch): AuditSearch {
+  return Object.fromEntries(
+    Object.entries(search).filter(([, v]) => v !== undefined && v !== ''),
+  ) as AuditSearch;
+}
+
+export type AuditSubject =
+  | { target: string; id: string }
+  | { actor: 'user'; id: string }
+  | { org: string };
+
+/** Search for an entity's history: `<Link to="/admin/audit" search={auditSearchFor(...)}>`. */
+export function auditSearchFor(subject: AuditSubject): AuditSearch {
+  if ('target' in subject) return { targetType: subject.target, targetId: subject.id };
+  if ('actor' in subject) return { actorId: subject.id };
+  return { orgId: subject.org };
+}
+
+/** The same as a plain href, for menus and the palette. */
+export function auditHref(subject: AuditSubject): string {
+  const params = new URLSearchParams(
+    Object.entries(compactAudit(auditSearchFor(subject))).map(([k, v]) => [k, String(v)]),
+  );
+  return `/admin/audit?${params}`;
 }
 
 const DAY = 86_400_000;
@@ -44,4 +71,14 @@ export function msToDay(ms: number | undefined): string {
   const d = new Date(ms);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** "Date: any", "Oct 1 – Oct 31", "From Oct 1", "To Oct 31". */
+export function rangeLabel(from: number | undefined, to: number | undefined): string {
+  const day = (ms: number) =>
+    new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  if (from !== undefined && to !== undefined) return `${day(from)} – ${day(to)}`;
+  if (from !== undefined) return `From ${day(from)}`;
+  if (to !== undefined) return `To ${day(to)}`;
+  return 'any';
 }

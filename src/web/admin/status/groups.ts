@@ -25,6 +25,33 @@ export function groupComponents<T extends Pick<Component, 'kind'>>(components: r
   })).filter((g) => g.items.length > 0);
 }
 
+/**
+ * Two columns from row counts, groups kept in order: each goes to the shorter column. It depends on
+ * the data only, so opening a disclosure never moves a card to the other side.
+ */
+export function splitColumns<G extends { items: readonly unknown[] }>(groups: readonly G[]) {
+  const cols: [G[], G[]] = [[], []];
+  const rows = [0, 0];
+  for (const g of groups) {
+    const i = (rows[1] ?? 0) < (rows[0] ?? 0) ? 1 : 0;
+    cols[i]?.push(g);
+    rows[i] = (rows[i] ?? 0) + g.items.length + 1;
+  }
+  return cols;
+}
+
+/** "All connections" sums the connection rows; counting it too would report one failure twice. */
+export const isAggregate = (c: Pick<Component, 'id'>) => c.id === 'connections';
+export const leaves = <T extends Pick<Component, 'id'>>(components: readonly T[]) =>
+  components.filter((c) => !isAggregate(c));
+
+/** Leaves that need attention, worst first. */
+export function problems<T extends Pick<Component, 'id' | 'state'>>(components: readonly T[]) {
+  return leaves(components)
+    .filter((c) => c.state === 'failing' || c.state === 'degraded')
+    .sort((a, b) => (a.state === b.state ? 0 : a.state === 'failing' ? -1 : 1));
+}
+
 export function countStates(components: readonly Pick<Component, 'state'>[]) {
   const counts: Record<State, number> = {
     failing: 0,
@@ -37,13 +64,40 @@ export function countStates(components: readonly Pick<Component, 'state'>[]) {
   return counts;
 }
 
-export function headline(counts: Record<State, number>): string {
-  if (counts.failing > 0)
-    return `${counts.failing} ${counts.failing === 1 ? 'component' : 'components'} failing`;
-  if (counts.degraded > 0)
-    return `${counts.degraded} ${counts.degraded === 1 ? 'component' : 'components'} degraded`;
-  const rest = counts.not_configured + counts.configured;
-  return rest === 0 ? 'All systems verified' : 'No problems found';
+const NOUN: Record<Component['kind'], [string, string]> = {
+  database: ['database', 'databases'],
+  storage: ['storage bucket', 'storage buckets'],
+  queue: ['queue', 'queues'],
+  cron: ['scheduled job', 'scheduled jobs'],
+  build: ['build', 'builds'],
+  email: ['email sender', 'email senders'],
+  identity: ['Apple identity', 'Apple identities'],
+  oidc: ['sign-in provider', 'sign-in providers'],
+  connection: ['connection', 'connections'],
+  workflow: ['workflow', 'workflows'],
+};
+
+/** "1 connection failing", "2 components degraded", or "All good" when nothing needs attention. */
+export function headline(components: readonly Pick<Component, 'id' | 'kind' | 'state'>[]): string {
+  const bad = problems(components);
+  const worst = bad[0]?.state;
+  if (!worst) return 'All good';
+  const same = bad.filter((c) => c.state === worst);
+  const kinds = new Set(same.map((c) => c.kind));
+  const n = same.length;
+  const [one, many] =
+    kinds.size === 1 ? NOUN[same[0]?.kind ?? 'build'] : ['component', 'components'];
+  return `${n} ${n === 1 ? one : many} ${worst === 'failing' ? 'failing' : 'degraded'}`;
+}
+
+/** The page that owns a component, when there is one. */
+export function componentLink(c: Pick<Component, 'id' | 'kind'>): string | undefined {
+  const [, id] = /^[a-z]+:(.+)$/.exec(c.id) ?? [];
+  if (c.kind === 'connection') return id ? `/admin/connections/${id}` : '/admin/connections';
+  if (c.kind === 'identity')
+    return id && id !== 'platform' ? `/admin/identities/${id}` : '/admin/identities';
+  if (c.kind === 'oidc') return '/admin/settings';
+  return undefined;
 }
 
 const num = (v: unknown) => (typeof v === 'number' ? v : null);
@@ -73,4 +127,9 @@ export function summaryLine(c: Component): string | null {
     default:
       return null;
   }
+}
+
+/** The pill a component shows: a deployed cron with no run in a day reads "No recent run". */
+export function pillStatus(c: Component): string {
+  return c.data?.noRecentRun === true ? 'no_recent_run' : c.state;
 }

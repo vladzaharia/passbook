@@ -198,14 +198,15 @@ describe('status components', () => {
 
   it('tracks cron runs and flags overdue ones', async () => {
     const clock = new ManualClock(1_000_000_000);
+    const local = { PUBLIC_BASE_URL: 'http://localhost:5173' };
     const ctx = createServiceContext(base, { clock });
-    expect(find(await status({}, okFetch, clock), 'cron:daily')?.state).toBe('configured');
+    expect(find(await status(local, okFetch, clock), 'cron:daily')?.state).toBe('configured');
     await recordCronRun(ctx, 'daily');
     clearStatusCache(env.DB);
-    expect(find(await status({}, okFetch, clock), 'cron:daily')?.state).toBe('verified');
+    expect(find(await status(local, okFetch, clock), 'cron:daily')?.state).toBe('verified');
     clock.advance(27 * 3_600_000);
     clearStatusCache(env.DB);
-    expect(find(await status({}, okFetch, clock), 'cron:daily')?.state).toBe('degraded');
+    expect(find(await status(local, okFetch, clock), 'cron:daily')?.state).toBe('degraded');
   });
 });
 

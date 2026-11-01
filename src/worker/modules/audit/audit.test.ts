@@ -120,6 +120,9 @@ describe('audit api', () => {
       'identity.upload',
     ]);
     expect((await list('?action=%25')).items).toHaveLength(0);
+    expect(
+      (await list(`?orgId=${a.id}&excludeAction=identity.d`)).items.map((i) => i.action),
+    ).toEqual(['identity.upload']);
     expect((await list('?actorId=u2')).items).toHaveLength(1);
     expect((await list('?targetType=identity&targetId=i1')).items).toHaveLength(2);
     expect((await list('?from=1002000&to=1003000')).items.map((i) => i.action)).toEqual([

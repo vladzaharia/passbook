@@ -39,6 +39,8 @@ export const StatusResponseSchema = z.object({
   }),
   components: z.array(ComponentStatusSchema),
 });
+/** `fresh=1` skips the short status cache (Recheck). */
+export const StatusQuerySchema = z.object({ fresh: z.enum(['0', '1']).optional() });
 export const HealthResponseSchema = z.object({ ok: z.literal(true) });
 
 export const WorkflowRunSchema = z.object({

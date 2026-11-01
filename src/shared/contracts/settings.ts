@@ -30,7 +30,7 @@ export const SettingEntrySchema = z.object({
 export const SettingsListQuerySchema = z.object({ scope: SettingScopeSchema.default('platform') });
 export const SettingsListSchema = z.object({
   items: z.array(SettingEntrySchema),
-  /** Read-only: managed in Pocket ID. */
+  /** Read-only: managed in Polaris ID. */
   oidc: z.object({
     issuer: z.string(),
     adminGroup: z.string().nullable(),
@@ -41,3 +41,5 @@ export const UpdateSettingsSchema = z.object({
   scope: SettingScopeSchema.default('platform'),
   values: z.record(z.string(), JsonSchema),
 });
+/** What turning a sign-in method off would cost: active users who can only sign in by email. */
+export const SettingsImpactSchema = z.object({ emailOnlyUsers: z.number().int() });

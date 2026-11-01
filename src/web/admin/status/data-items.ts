@@ -1,3 +1,4 @@
+import { humanizeStatus, statusOf } from '@/web/lib/status.ts';
 import { formatDateTime } from '../overview/format.ts';
 
 const LABELS: Record<string, string> = {
@@ -23,6 +24,10 @@ const LABELS: Record<string, string> = {
   id: 'Build',
 };
 
+const SOURCES: Record<string, string> = { env: 'Environment', db: 'Uploaded' };
+/** Flags the row already shows (the "No recent run" pill). */
+const SKIP = new Set(['noRecentRun']);
+
 type Value = string | number | boolean | null;
 
 export interface DataItem {
@@ -32,19 +37,23 @@ export interface DataItem {
 
 export function dataItems(
   data: Record<string, Value>,
-  orgName: (id: string | null) => string,
+  orgName: (id: string | null) => string | undefined,
 ): DataItem[] {
   const items: DataItem[] = [];
   for (const [key, raw] of Object.entries(data)) {
-    if (raw === null) continue;
+    if (raw === null || SKIP.has(key)) continue;
     if (key === 'orgId') {
-      items.push({ label: 'Organization', value: orgName(String(raw)) });
+      items.push({ label: 'Organization', value: orgName(String(raw)) ?? '—' });
       continue;
     }
     let value: string;
     if (typeof raw === 'boolean') value = raw ? 'Yes' : 'No';
     else if (key === 'lastRunAt' && typeof raw === 'number') value = formatDateTime(raw);
     else if (key === 'oldestAgeSeconds' && typeof raw === 'number') value = `${raw} s`;
+    else if (key === 'source' && typeof raw === 'string')
+      value = SOURCES[raw] ?? humanizeStatus(raw);
+    else if ((key === 'health' || key === 'apnsHealth') && typeof raw === 'string')
+      value = statusOf(raw)?.label ?? humanizeStatus(raw);
     else value = String(raw);
     items.push({ label: LABELS[key] ?? key, value });
   }

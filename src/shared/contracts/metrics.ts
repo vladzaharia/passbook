@@ -48,6 +48,17 @@ export const MetricsOverviewSchema = z.object({
     syncRuns: series,
     signIns: series,
   }),
+  /** First-run checklist counts. Platform-wide whatever the scope: the checklist is for a new platform. */
+  setup: z.object({
+    orgs: z.number().int(),
+    /** Templates assigned to an organization. */
+    assignedTemplates: z.number().int(),
+    passes: z.number().int(),
+    /** Pass emails the outbox delivered. */
+    passEmailsSent: z.number().int(),
+    /** The newest pass, for "Send it to a holder". */
+    latestPassId: IdSchema.nullable(),
+  }),
   recent: z.array(
     z.object({
       at: z.number().int(),

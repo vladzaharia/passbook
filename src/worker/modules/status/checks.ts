@@ -5,7 +5,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { lastIdentityCheck } from '../identities/check.ts';
 import { apnsBindingPresent } from '../identities/db-resolver.ts';
 import type { IdentityRow } from '../identities/repo.ts';
-import { lastCronRun } from './cron.ts';
 import { connectionHealthCounts, unhealthyConnections, workflowCounts } from './repo.ts';
 
 export type Component = z.infer<typeof ComponentStatusSchema>;
@@ -13,7 +12,6 @@ type Draft = Omit<Component, 'checkedAt'>;
 type State = Component['state'];
 
 const MINUTE = 60_000;
-const HOUR = 3_600_000;
 const DAY = 86_400_000;
 
 export const SEVERITY: Record<State, number> = {
@@ -189,7 +187,7 @@ export function clearOidcCache(): void {
 
 export async function checkOidc(ctx: ServiceContext, fetchImpl: typeof fetch): Promise<Draft> {
   const issuer = ctx.env.OIDC_ISSUER?.replace(/\/+$/, '');
-  const base = { id: 'oidc', kind: 'oidc', label: 'Pocket ID' } as const;
+  const base = { id: 'oidc', kind: 'oidc', label: 'Polaris ID' } as const;
   if (!issuer) return { ...base, state: 'not_configured', detail: 'No issuer.' };
   const hit = oidcCache.get(issuer);
   const now = ctx.clock.now();
@@ -257,23 +255,6 @@ export async function checkConnections(ctx: ServiceContext): Promise<Draft[]> {
 export function failuresLine(n: number): string | null {
   if (n <= 0) return null;
   return `${n} consecutive ${n === 1 ? 'failure' : 'failures'}.`;
-}
-
-export async function checkCron(ctx: ServiceContext): Promise<Draft[]> {
-  const now = ctx.clock.now();
-  const one = async (name: 'minute' | 'daily', maxAge: number): Promise<Draft> => {
-    const at = await lastCronRun(ctx, name);
-    const stale = at !== null && now - at > maxAge;
-    return {
-      id: `cron:${name}`,
-      kind: 'cron',
-      label: name === 'minute' ? 'Cron (minute)' : 'Cron (daily)',
-      state: at === null ? 'configured' : stale ? 'degraded' : 'verified',
-      detail: at === null ? 'No run recorded.' : stale ? 'Last run is overdue.' : null,
-      data: { lastRunAt: at },
-    };
-  };
-  return [await one('minute', 5 * MINUTE), await one('daily', 26 * HOUR)];
 }
 
 export function checkBuild(ctx: ServiceContext): Draft {

@@ -164,7 +164,9 @@ export async function getOverview(
   const byKey = cache.get(ctx.env.DB) ?? new Map();
   cache.set(ctx.env.DB, byKey);
   const hit = byKey.get(key);
-  if (hit && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.value;
+  // A new platform skips the cache so the checklist ticks at once; its tables are tiny then.
+  const settled = hit && hit.value.setup.passEmailsSent > 0;
+  if (hit && settled && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.value;
 
   const scope: repo.Scope = { orgId: query.orgId, templateId: query.templateId };
   const range = RANGES[query.range];
@@ -179,10 +181,11 @@ export async function getOverview(
       'ORG_NOT_FOUND',
     );
 
-  const [totals, loaded, recent] = await Promise.all([
+  const [totals, loaded, recent, setup] = await Promise.all([
     repo.passTotals(ctx.env.DB, scope),
     load(ctx, w, scope, now),
     repo.recentAudit(ctx.env.DB, scope, 10),
+    repo.setupCounts(ctx.env.DB),
   ]);
   const series = Object.fromEntries(
     SERIES_KEYS.map((k) => [k, fill(loaded.rows[k], start, end, range.bucketMs)]),
@@ -213,6 +216,7 @@ export async function getOverview(
       signIns: sum('signIns'),
     },
     series,
+    setup,
     recent: recent.map((r) => ({
       at: r.at,
       action: r.action,

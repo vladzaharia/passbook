@@ -1,0 +1,69 @@
+/*
+ * Status motion (docs/design/motion-and-expression.md): disclosures open in 160 ms, "Checked"
+ * flashes for 900 ms after a recheck, and the summary icon pops when the overall state changes.
+ */
+@keyframes wl-disclose {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes wl-checked {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wl-disclose-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes wl-state-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+.wl-disclose {
+  animation: wl-disclose 160ms var(--wl-ease-out) backwards;
+}
+.wl-chevron {
+  transition: transform 160ms var(--wl-ease-move);
+}
+[aria-expanded="true"] > .wl-chevron {
+  transform: rotate(180deg);
+}
+
+.wl-checked {
+  position: relative;
+}
+.wl-checked::after {
+  content: "";
+  position: absolute;
+  inset: -2px -4px;
+  border-radius: 4px;
+  background: color-mix(in oklab, currentColor 18%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: wl-checked 900ms var(--wl-ease-out);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-state-pop {
+    animation: wl-state-pop 320ms var(--wl-ease-bounce) backwards;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-disclose {
+    animation: wl-disclose-fade 120ms linear backwards;
+  }
+  .wl-chevron {
+    transition: none;
+  }
+  .wl-checked::after {
+    animation: none;
+  }
+}

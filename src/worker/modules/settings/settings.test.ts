@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
+import { fakeAuth, fixtures, makeEnv, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, run } from '../../platform/db.ts';
@@ -114,6 +114,28 @@ describe('settings api', () => {
   it('requires an admin', async () => {
     expect((await call('GET', '', undefined, fake.user())).status).toBe(403);
     expect((await call('PUT', '', { values: {} }, fake.user())).status).toBe(403);
+  });
+});
+
+describe('settings impact', () => {
+  it('counts active users who can only sign in by email', async () => {
+    const before = ((await (await call('GET', '/impact')).json()) as { emailOnlyUsers: number })
+      .emailOnlyUsers;
+    const f = fixtures(appEnv);
+    await makeUser(f);
+    const linked = await makeUser(f);
+    await run(
+      env.DB,
+      "INSERT INTO auth_identities (provider, subject, user_id, created_at) VALUES ('oidc', ?, ?, 1)",
+      [`sub-${linked.id}`, linked.id],
+    );
+    const disabled = await makeUser(f);
+    await run(env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [disabled.id]);
+    await makeUser(f, { primaryEmail: `glass-${f.ids.id()}@wallet.invalid` });
+    const res = await call('GET', '/impact');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ emailOnlyUsers: before + 1 });
+    expect((await call('GET', '/impact', undefined, fake.user())).status).toBe(403);
   });
 });
 

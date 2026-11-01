@@ -160,3 +160,35 @@ export function recentAudit(db: D1Database, scope: Scope, limit: number) {
     [...(scope.orgId ? [scope.orgId] : []), limit],
   );
 }
+
+export interface SetupCounts {
+  orgs: number;
+  assignedTemplates: number;
+  passes: number;
+  passEmailsSent: number;
+  latestPassId: string | null;
+}
+
+/** Counts behind the first-run checklist. Platform-wide: the checklist is for a new platform. */
+export async function setupCounts(db: D1Database): Promise<SetupCounts> {
+  const row = await first<Omit<SetupCounts, 'latestPassId'>>(
+    db,
+    `SELECT
+       (SELECT count(*) FROM orgs WHERE status != 'deleted') AS orgs,
+       (SELECT count(*) FROM templates WHERE org_id IS NOT NULL AND status != 'deleted')
+         AS assignedTemplates,
+       (SELECT count(*) FROM passes WHERE deleted_at IS NULL) AS passes,
+       (SELECT count(*) FROM outbox WHERE kind = 'email' AND state = 'sent') AS passEmailsSent`,
+  );
+  const latest = await first<{ id: string }>(
+    db,
+    'SELECT id FROM passes WHERE deleted_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1',
+  );
+  return {
+    orgs: row?.orgs ?? 0,
+    assignedTemplates: row?.assignedTemplates ?? 0,
+    passes: row?.passes ?? 0,
+    passEmailsSent: row?.passEmailsSent ?? 0,
+    latestPassId: latest?.id ?? null,
+  };
+}

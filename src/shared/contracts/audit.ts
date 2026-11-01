@@ -21,6 +21,8 @@ export const AuditQuerySchema = z.object({
   orgId: IdSchema.optional(),
   actorId: z.string().optional(),
   action: z.string().max(100).optional(),
+  /** Leaves out actions with this prefix (the overview hides sign-ins with `auth.`). */
+  excludeAction: z.string().max(100).optional(),
   targetType: z.string().max(50).optional(),
   targetId: z.string().max(100).optional(),
   from: z.coerce.number().int().optional(),

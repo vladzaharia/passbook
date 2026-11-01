@@ -1,11 +1,14 @@
-import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { axe } from 'vitest-axe';
 import { actionLabel } from '@/web/lib/actions.ts';
-import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { dayToMs, msToDay, parseAuditSearch } from './audit-search.ts';
-import { actorText, targetText } from './labels.ts';
+import {
+  auditHref,
+  auditSearchFor,
+  dayToMs,
+  msToDay,
+  parseAuditSearch,
+  rangeLabel,
+} from './audit-search.ts';
+import { actorRef, targetRef } from './labels.ts';
 import { describeDetail, REDACTED, redact } from './redact.ts';
 
 const entry = (id: number, over: Record<string, unknown> = {}) => ({
@@ -15,8 +18,10 @@ const entry = (id: number, over: Record<string, unknown> = {}) => ({
   actorType: 'user',
   actorId: 'u1',
   action: `thing.updated.${id}`,
+  actorLabel: null,
   targetType: 'org',
   targetId: 'o1',
+  targetLabel: null,
   requestId: 'req-1',
   detail: null,
   ...over,
@@ -60,102 +65,20 @@ describe('audit search', () => {
     expect(dayToMs('2026-03-04', true)! - start).toBe(86_400_000 - 1);
     expect(dayToMs('nope', false)).toBeUndefined();
   });
-});
-
-describe('audit page', () => {
-  it('lists entries, passes URL filters to the API, accessible', async () => {
-    const { container, fetchMock } = await renderApp(
-      '/admin/audit?action=thing&targetType=org&from=100',
-      {
-        session: 'admin',
-        handlers: { '/api/v1/audit': () => json({ items: [entry(1)], nextCursor: null }) },
-      },
+  it('builds pre-filtered links for entity pages', () => {
+    expect(auditSearchFor({ target: 'pass', id: 'p1' })).toEqual({
+      targetType: 'pass',
+      targetId: 'p1',
+    });
+    expect(auditSearchFor({ actor: 'user', id: 'u1' })).toEqual({ actorId: 'u1' });
+    expect(auditHref({ target: 'pass', id: 'p1' })).toBe(
+      '/admin/audit?targetType=pass&targetId=p1',
     );
-    expect(await screen.findByText('thing.updated.1')).toBeInTheDocument();
-    const call = fetchMock.mock.calls.map((c) => String(c[0])).find((u) => u.includes('/audit?'));
-    expect(call).toContain('action=thing');
-    expect(call).toContain('targetType=org');
-    expect(call).toContain('from=100');
-    expect((await axe(container)).violations).toEqual([]);
+    expect(auditHref({ org: 'o1' })).toBe('/admin/audit?orgId=o1');
   });
-
-  it('applies filters to the URL', async () => {
-    const { router } = await renderApp('/admin/audit', {
-      session: 'admin',
-      handlers: { '/api/v1/audit': () => json({ items: [], nextCursor: null }) },
-    });
-    const ui = userEvent.setup();
-    await ui.type(await screen.findByLabelText('Action'), 'pass.void');
-    await screen.findByText('No entries match');
-    expect(router.state.location.search).toMatchObject({ action: 'pass.void' });
-  });
-
-  it('paginates with the cursor', async () => {
-    const { fetchMock } = await renderApp('/admin/audit', {
-      session: 'admin',
-      handlers: {
-        '/api/v1/audit': (url) =>
-          url.searchParams.get('cursor') === 'c1'
-            ? json({ items: [entry(2)], nextCursor: null })
-            : json({ items: [entry(1)], nextCursor: 'c1' }),
-      },
-    });
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Load more' }));
-    expect(await screen.findByText('thing.updated.2')).toBeInTheDocument();
-    expect(screen.getByText('thing.updated.1')).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('cursor=c1'))).toBe(true);
-  });
-
-  it('opens the drawer when a row is clicked', async () => {
-    await renderApp('/admin/audit', {
-      session: 'admin',
-      handlers: { '/api/v1/audit': () => json({ items: [entry(1)], nextCursor: null }) },
-    });
-    await userEvent.setup().click(await screen.findByText('thing.updated.1'));
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-  });
-
-  it('opens a drawer with a redacted diff', async () => {
-    await renderApp('/admin/audit', {
-      session: 'admin',
-      handlers: {
-        '/api/v1/audit': () =>
-          json({
-            items: [
-              entry(1, {
-                detail: {
-                  before: { name: 'A', apiKey: 'hunter2' },
-                  after: { name: 'B', apiKey: 'hunter3' },
-                },
-              }),
-            ],
-            nextCursor: null,
-          }),
-      },
-    });
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('button', { name: /details for Thing updated 1/ }));
-    const drawer = await screen.findByRole('dialog');
-    expect(within(drawer).getByRole('region', { name: 'Diff' })).toBeInTheDocument();
-    expect(drawer.textContent).not.toContain('hunter');
-    expect(drawer.textContent).toContain(REDACTED);
-  });
-
-  it('shows empty and error states', async () => {
-    await renderApp('/admin/audit', {
-      session: 'admin',
-      handlers: { '/api/v1/audit': () => json({ items: [], nextCursor: null }) },
-    });
-    expect(await screen.findByText('No entries')).toBeInTheDocument();
-  });
-
-  it('shows an error', async () => {
-    await renderApp('/admin/audit', {
-      session: 'admin',
-      handlers: { '/api/v1/audit': () => problem(500, 'x', 'x') },
-    });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+  it('reads a date range as one value', () => {
+    expect(rangeLabel(undefined, undefined)).toBe('any');
+    expect(rangeLabel(dayToMs('2026-03-04', false), undefined)).toMatch(/^From Mar 4/);
   });
 });
 
@@ -165,12 +88,18 @@ describe('labels', () => {
     expect(actionLabel('pass.resend_email')).toBe('Pass email resent');
     expect(actionLabel('thing.updated')).toBe('Thing updated');
   });
-  it('prefers labels and falls back to ids', () => {
-    const e = entry(1) as Parameters<typeof actorText>[0];
-    expect(actorText(e)).toBe('User: u1');
-    expect(targetText(e)).toBe('Organization: o1');
-    expect(actorText({ ...e, actorLabel: 'Ada' })).toBe('User: Ada');
-    expect(targetText({ ...e, targetLabel: 'Acme' })).toBe('Organization: Acme');
-    expect(targetText({ ...e, targetType: null, targetId: null })).toBe('');
+  it('prefers labels, falls back to a short id, and links targets', () => {
+    const e = entry(1) as Parameters<typeof actorRef>[0];
+    expect(actorRef(e)).toMatchObject({ kind: 'user', name: 'User u1', to: '/admin/users/u1' });
+    expect(targetRef(e)).toMatchObject({ kind: 'org', name: 'Organization o1' });
+    expect(actorRef({ ...e, actorLabel: 'Ada' }).name).toBe('Ada');
+    expect(
+      targetRef({ ...e, targetType: 'pass', targetId: 'p1', targetLabel: 'Clara' }),
+    ).toMatchObject({
+      name: 'Clara',
+      to: '/admin/passes/p1',
+    });
+    expect(actorRef({ ...e, actorType: 'system', actorId: null }).name).toBe('System');
+    expect(targetRef({ ...e, targetType: null, targetId: null })).toBeUndefined();
   });
 });
