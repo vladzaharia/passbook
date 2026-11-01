@@ -5,7 +5,6 @@ import {
   ConnectorError,
   type ConnectorErrorCode,
 } from '../../connectors/types.ts';
-import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';

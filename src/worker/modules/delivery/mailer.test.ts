@@ -7,7 +7,12 @@ describe('createEmailBindingMailer', () => {
     const sent: { subject: string; from: { name: string } }[] = [];
     const env = {
       EMAIL_FROM: 'passes@example.test',
-      EMAIL: { send: async (m: (typeof sent)[number]) => (sent.push(m), { messageId: 'm1' }) },
+      EMAIL: {
+        send: async (m: (typeof sent)[number]) => {
+          sent.push(m);
+          return { messageId: 'm1' };
+        },
+      },
     } as unknown as AppEnv;
     await createEmailBindingMailer(env).send({
       to: 'a@example.test',

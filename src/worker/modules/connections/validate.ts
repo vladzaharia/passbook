@@ -2,7 +2,6 @@ import type { ZodType, z } from 'zod';
 import { isPointer } from '../../connectors/lib/pointer.ts';
 import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
-import { baseUrl } from '../../platform/env.ts';
 import { type FieldIssue, ValidationError } from '../../platform/errors.ts';
 import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
