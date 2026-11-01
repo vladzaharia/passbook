@@ -64,6 +64,7 @@ export function TypedConfirmDialog({
           {(c) => (
             <Input
               {...c}
+              autoFocus
               autoComplete="off"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}

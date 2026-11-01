@@ -4,15 +4,7 @@ import type {
   ConnectionDetailSchema,
   ConnectionRunSchema,
 } from '@/shared/contracts/connections.ts';
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  DataTable,
-  EmptyState,
-  KeyValue,
-  StatusPill,
-} from '../../ui/index.ts';
+import { Card, CardBody, CardHeader, DataTable, KeyValue, StatusPill } from '../../ui/index.ts';
 import { formatDate } from '../passes/format.ts';
 import { ErrorLine } from './error-line.tsx';
 import { HealthPill } from './health.tsx';
@@ -186,7 +178,7 @@ export function HealthPanel({ connection: c }: { connection: Detail }) {
             columns={columns}
             data={c.runs.slice(0, 20)}
             getRowId={(r) => r.id}
-            empty={<EmptyState title="No runs yet" />}
+            empty={<p className="p-4 text-sm text-fg-muted">No runs yet.</p>}
           />
         </CardBody>
       </Card>

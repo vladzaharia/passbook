@@ -10,12 +10,14 @@ export const DropdownMenuRadioGroup = Primitive.RadioGroup;
 export function DropdownMenuContent({
   className,
   sideOffset = 4,
+  collisionPadding = 16,
   ...props
 }: ComponentProps<typeof Primitive.Content>) {
   return (
     <Primitive.Portal>
       <Primitive.Content
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
         className={cn(
           'z-50 min-w-44 rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
           className,

@@ -11,7 +11,7 @@ export function SecretOnce({ url, secret }: { url: string | null; secret: string
   return (
     <div
       role="status"
-      className="grid gap-3 rounded-lg border border-warning-border bg-warning-subtle p-4"
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 rounded-lg border border-warning-border bg-warning-subtle p-4"
     >
       <p className="text-sm font-medium text-fg-strong">
         Copy the webhook secret now. It is not shown again.
@@ -34,7 +34,7 @@ export function WebhookPanel({
   return (
     <Card className="max-w-3xl">
       <CardHeader title="Webhook" />
-      <CardBody className="grid gap-4">
+      <CardBody className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
         <KeyValue
           items={[
             {

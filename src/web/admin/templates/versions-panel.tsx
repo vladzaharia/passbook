@@ -10,6 +10,7 @@ import {
   CheckboxField,
   Dialog,
   DialogContent,
+  StatusPill,
   toast,
 } from '../../ui/index.ts';
 import { formatDate } from '../passes/format.ts';
@@ -99,9 +100,7 @@ export function VersionsPanel({ template }: { template: Template }) {
                     </span>
                     <span className="ml-3 text-xs text-fg-muted">{formatDate(v.createdAt)}</span>
                     {v.active ? (
-                      <Badge tone="success" className="ml-2">
-                        Active
-                      </Badge>
+                      <StatusPill status="active" tone="success" className="ml-2" />
                     ) : null}
                     {errors > 0 ? (
                       <Badge tone="danger" className="ml-2">
@@ -117,7 +116,7 @@ export function VersionsPanel({ template }: { template: Template }) {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      variant={report === v.version ? 'secondary' : 'outline'}
+                      variant="outline"
                       aria-label={`Report for ${v.version.slice(0, 12)}`}
                       onClick={() => setReport(v.version)}
                     >

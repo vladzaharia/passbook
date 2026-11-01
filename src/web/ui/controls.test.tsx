@@ -24,6 +24,17 @@ const noViolations = async (container: HTMLElement) => {
 };
 
 describe('Button', () => {
+  it('renders icons around an asChild child', () => {
+    render(
+      <Button asChild iconStart={<svg data-testid="ic" />}>
+        <a href="/x">Go</a>
+      </Button>,
+    );
+    const link = screen.getByRole('link', { name: 'Go' });
+    expect(link.firstElementChild).toBe(screen.getByTestId('ic'));
+    expect(link.textContent).toBe('Go');
+  });
+
   it('activates with Enter and Space', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
