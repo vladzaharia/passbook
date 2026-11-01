@@ -19,6 +19,9 @@
 }
 
 /* The pass lights the surface under it with its own background colour. */
+.pc-stage[data-glow="off"]::before {
+  display: none;
+}
 .pc-stage::before {
   content: "";
   position: absolute;
@@ -160,6 +163,9 @@
   .pc-stage[data-enter] > .pc-flip-label {
     animation: pc-rise 260ms cubic-bezier(0, 0, 0, 1) 240ms backwards;
   }
+  .pc-lift[data-dip] {
+    animation: pc-dip 420ms cubic-bezier(0.2, 0, 0, 1);
+  }
   .pc-lift[data-mint] {
     animation: pc-mint 640ms;
   }
@@ -183,6 +189,11 @@
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+@keyframes pc-dip {
+  35% {
+    transform: translateY(6px) scale(0.98);
   }
 }
 @keyframes pc-mint {

@@ -11,8 +11,12 @@ export interface PassStageProps extends Omit<PassCardProps, 'face'> {
   tilt?: boolean;
   /** Deal the card in on mount. */
   enter?: boolean;
+  /** Light from the pass colour under the card. Off for thumbnails and dense grids. */
+  glow?: boolean;
   /** Change this value (compared by identity) to play the mint sheen: created, refreshed. */
   mint?: unknown;
+  /** Change this value to dip the card towards Add to Apple Wallet. */
+  dip?: unknown;
   /** view-transition-name, so the card morphs between pages. */
   transitionName?: string;
   /** Script-free flip (SSR): a checkbox with this id flips the card through CSS. */
@@ -88,24 +92,24 @@ function usePointerTilt(ref: { current: unknown }, on: boolean) {
   }, [ref, on]);
 }
 
-/** Replays the mint sheen whenever `mint` changes after mount. */
-function useMint(ref: { current: unknown }, mint: unknown) {
+/** Replays a one-shot animation (data-<name> on the lift) whenever `value` changes after mount. */
+function useReplay(ref: { current: unknown }, name: 'mint' | 'dip', value: unknown) {
   // Compare values, not renders: StrictMode runs effects twice on mount.
-  const prev = useRef(mint);
+  const prev = useRef(value);
   useEffect(() => {
-    if (Object.is(prev.current, mint)) return;
-    prev.current = mint;
+    if (Object.is(prev.current, value)) return;
+    prev.current = value;
     const lift = el(ref);
     if (!lift) return;
-    delete lift.dataset.mint;
+    delete lift.dataset[name];
     void lift.offsetWidth; // restart the animation
-    lift.dataset.mint = '';
+    lift.dataset[name] = '';
     const done = (e: { target: unknown }) => {
-      if (e.target === lift) delete lift.dataset.mint;
+      if (e.target === lift) delete lift.dataset[name];
     };
     lift.addEventListener('animationend', done);
     return () => lift.removeEventListener('animationend', done);
-  }, [ref, mint]);
+  }, [ref, name, value]);
 }
 
 export function PassCardStage({
@@ -114,7 +118,9 @@ export function PassCardStage({
   flippable = false,
   tilt = true,
   enter = false,
+  glow = true,
   mint,
+  dip,
   transitionName,
   toggleId,
   toggleLabel = 'Show back',
@@ -124,7 +130,8 @@ export function PassCardStage({
   const stage = useRef<HTMLDivElement>(null);
   const lift = useRef<HTMLDivElement>(null);
   usePointerTilt(stage, tilt);
-  useMint(lift, mint);
+  useReplay(lift, 'mint', mint);
+  useReplay(lift, 'dip', dip);
   const both = flippable || Boolean(toggleId);
   const style = {
     '--pc-glow': view.colors.background,
@@ -148,6 +155,7 @@ export function PassCardStage({
       data-face={face}
       data-tilt={tilt || undefined}
       data-enter={enter || undefined}
+      data-glow={glow ? undefined : 'off'}
       data-single={both ? undefined : ''}
       style={style}
     >
