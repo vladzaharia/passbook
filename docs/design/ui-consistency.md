@@ -224,8 +224,30 @@ stack.
   tile: `Add to Apple Wallet` (primary), `Refresh` (outline), `More` (Show QR, Remove).
 - Portal details: format values by the pass field's date/number style; never ISO strings. Labels in
   sentence case.
-- Sign-in, magic-link confirm, link expired, no access, break-glass: one SSR shell matching `/login`
-  (wordmark header, `surface-page`, `max-w-sm` card, teal primary, 36px controls).
+- Sign-in, magic-link confirm, link expired, no access, break-glass: one "hosted" shell shared by
+  `/login` and the worker pages. See "Sign-in pages (owner reference)" below.
+
+## Sign-in pages (owner reference)
+
+The owner's model is Polaris Key's hosted sign-in: `docs/design/references/polaris-sign-in.png`.
+Source: `../polaris-key/docs/design/mockups/screens/identity/identity.{sign-in,device-code,device-code-states}.html`
+and the `.hosted*` rules in `../polaris-key/docs/design/mockups/kit/mockup.css` (search `.hosted {`).
+Same brand tokens; Wallet keeps its own wordmark and teal.
+
+| Part | Rule |
+| --- | --- |
+| Brand | Wordmark (mark + "Wallet") centred above the card, not inside it |
+| Card | One raised card, large radius, generous padding; body, then a footer split off by a divider |
+| Title | `h1` names the task ("Sign in", "Enter the code from your email"); at most one short lede |
+| Fields | Label above; full-width input. A sign-in code is a large mono field, centred and letter-spaced, grouped like `WDJB-MJHT` |
+| Errors | Danger border plus icon and one sentence: what happened and what to do |
+| Trust | At most one `hosted-note` (shield icon, muted) before the action where it prevents a mistake (e.g. "Only use a code from your own email") |
+| Action | Full-width primary with a trailing arrow ("Continue →"); alternatives below an "or" divider (e.g. "Continue with Polaris ID", outline) |
+| Footer | Lock icon plus one line on what signing in does |
+| Below | `Help · Privacy` links, centred |
+| Motion | Owner request R5: the login gets its own cute animation, layered on this structure, reduced-motion safe |
+
+The trust and footer lines are the only explanatory text allowed on these pages: one line each.
 - Public pass page: wordmark (or org name) header, pass centered (deals in, flips with a no-script
   `Show back` toggle, tilts on fine pointers through `/pass-tilt.js`), Add to Apple Wallet badge and
   QR centered under it, voided banner in `warning`.
