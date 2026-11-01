@@ -8,13 +8,14 @@ import { dailyPasses } from '../modules/passes/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { createServiceContext, type ServiceContext } from '../platform/service-context.ts';
+import { CRON_QUERY_BUDGET, countQueries } from './query-counter.ts';
 
 export type CronHook = (ctx: ServiceContext) => Promise<void>;
 
 export const MINUTE_CRON = '* * * * *';
 export const DAILY_CRON = '17 3 * * *';
 
-/** Hooks run in parallel and independently; one failing never blocks the others. */
+/** Hooks run independently; one failing never blocks the others. Daily hooks share a query budget. */
 export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   [MINUTE_CRON]: [
     { name: 'delivery.sweep', run: sweepDelivery },
@@ -39,22 +40,41 @@ export async function handleScheduled(
 ): Promise<void> {
   const hooks = CRON_HOOKS[controller.cron] ?? [];
   const base = createServiceContext(env, { ctx, base: { cron: controller.cron } });
-  const results = await Promise.allSettled(
-    hooks.map((hook) =>
-      hook.run(
-        createServiceContext(env, { ctx, base: { cron: controller.cron, hook: hook.name } }),
-      ),
-    ),
-  );
-  results.forEach((result, i) => {
-    if (result.status === 'rejected')
-      base.log.error('cron.hook_failed', { hook: hooks[i]?.name, error: result.reason });
-  });
+  const hookCtx = (env: AppEnv, hook: string) =>
+    createServiceContext(env, { ctx, base: { cron: controller.cron, hook } });
+  const failed = (hook: string, error: unknown) =>
+    base.log.error('cron.hook_failed', { hook, code: 'CRON_HOOK_FAILED', error });
+  if (controller.cron === DAILY_CRON) {
+    // Sequential under one query budget: a hook that would start past it is skipped until tomorrow.
+    const counter = countQueries(env);
+    for (const hook of hooks) {
+      if (counter.count() >= CRON_QUERY_BUDGET) {
+        base.log.warn('cron.budget_skipped', {
+          hook: hook.name,
+          code: 'CRON_BUDGET',
+          queries: counter.count(),
+        });
+        continue;
+      }
+      try {
+        await hook.run(hookCtx(counter.env, hook.name));
+      } catch (error) {
+        failed(hook.name, error);
+      }
+    }
+  } else {
+    const results = await Promise.allSettled(
+      hooks.map((hook) => hook.run(hookCtx(env, hook.name))),
+    );
+    results.forEach((result, i) => {
+      if (result.status === 'rejected') failed(hooks[i]?.name ?? 'unknown', result.reason);
+    });
+  }
   if (controller.cron === MINUTE_CRON) {
     try {
       await recordCronRun(base, 'minute');
     } catch (error) {
-      base.log.error('cron.record_failed', { error });
+      base.log.error('cron.record_failed', { code: 'CRON_RECORD_FAILED', error });
     }
   }
 }

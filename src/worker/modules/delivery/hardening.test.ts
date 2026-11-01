@@ -282,7 +282,7 @@ describe('APNs transport', () => {
     const [r] = await transport(async () => {
       throw new Error('boom');
     }).send(target, [A], 0);
-    expect(r).toEqual({ token: A, status: 0, reason: 'NetworkError' });
+    expect(r).toEqual({ token: A, status: 0, reason: 'NetworkError:Error' });
     expect(r && classifyApns(r)).toBe('transient');
   });
 

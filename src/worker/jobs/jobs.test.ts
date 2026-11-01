@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { makeEnv } from '../../../test/helpers/index.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled, MINUTE_CRON } from './cron.ts';
+import { CRON_QUERY_BUDGET } from './query-counter.ts';
 import { handleQueue } from './queue.ts';
 import { JOB_HANDLERS } from './registry.ts';
 import { DLQ_QUEUE, JOBS_QUEUE, retryDelaySeconds } from './retry.ts';
@@ -118,6 +119,34 @@ describe('job router', () => {
   });
 });
 
+describe('dead-letter consumer', () => {
+  const failing = async (attempts: number) => {
+    const dead = message({ kind: 'push.deliver', outboxId: 'o1' }, attempts);
+    const bad = { ...env, DB: undefined } as unknown as AppEnv;
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await handleQueue(batch(DLQ_QUEUE, [dead]), bad, createExecutionContext());
+      return { dead, logged: error.mock.calls.map((call) => String(call[0])) };
+    } finally {
+      error.mockRestore();
+    }
+  };
+
+  it('retries a failing message before the third attempt', async () => {
+    const { dead, logged } = await failing(2);
+    expect(dead.retried).toEqual({ delaySeconds: 300 });
+    expect(logged.some((l) => l.includes('queue.dlq_failed') && l.includes('code'))).toBe(true);
+  });
+
+  it('logs queue.dlq_dropped with a code and acks on the third attempt', async () => {
+    const { dead, logged } = await failing(3);
+    expect(dead.acked).toBe(true);
+    const line = logged.find((l) => l.includes('queue.dlq_dropped'));
+    expect(line).toContain('"code"');
+    expect(line).toContain('push.deliver');
+  });
+});
+
 describe('cron dispatcher', () => {
   const controller = (cron: string) =>
     ({
@@ -165,6 +194,31 @@ describe('cron dispatcher', () => {
     } finally {
       hooks[0] = original;
       error.mockRestore();
+    }
+  });
+
+  it('skips daily hooks once the query budget is spent', async () => {
+    const hooks = CRON_HOOKS[DAILY_CRON] ?? [];
+    const original = hooks.splice(0, hooks.length);
+    const ran: string[] = [];
+    hooks.push(
+      {
+        name: 'heavy',
+        run: async (ctx) => {
+          ran.push('heavy');
+          for (let i = 0; i < CRON_QUERY_BUDGET; i++) await ctx.env.DB.prepare('SELECT 1').first();
+        },
+      },
+      { name: 'late', run: async () => void ran.push('late') },
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await handleScheduled(controller(DAILY_CRON), env as AppEnv, createExecutionContext());
+      expect(ran).toEqual(['heavy']);
+      expect(warn.mock.calls.some((c) => String(c[0]).includes('cron.budget_skipped'))).toBe(true);
+    } finally {
+      hooks.splice(0, hooks.length, ...original);
+      warn.mockRestore();
     }
   });
 });

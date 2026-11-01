@@ -18,6 +18,9 @@ async function dispatch(job: Job, env: AppEnv, ctx: ExecutionContext): Promise<v
 /** Deferred messages come back after this many seconds, in a fresh invocation with a fresh budget. */
 const DEFER_SECONDS = 5;
 
+/** The DLQ consumer gives up on a message after this many attempts. */
+const DLQ_MAX_ATTEMPTS = 3;
+
 /**
  * Queue consumer. Handlers throw on transient errors (retried with backoff); invalid messages
  * are acknowledged and logged. The DLQ consumer finalizes exhausted jobs.
@@ -36,8 +39,19 @@ export async function handleQueue(
         if (parsed.success) await handleDeadLetter(parsed.data, base);
         message.ack();
       } catch (error) {
-        base.log.error('queue.dlq_failed', { error });
-        message.retry({ delaySeconds: 300 });
+        const code = error instanceof AppError ? error.code : 'DLQ_FAILED';
+        if (message.attempts >= DLQ_MAX_ATTEMPTS) {
+          base.log.error('queue.dlq_dropped', {
+            kind: parsed.success ? parsed.data.kind : 'invalid',
+            id: message.id,
+            code,
+            error,
+          });
+          message.ack();
+        } else {
+          base.log.error('queue.dlq_failed', { id: message.id, code, error });
+          message.retry({ delaySeconds: 300 });
+        }
       }
     }
     return;
@@ -50,7 +64,7 @@ export async function handleQueue(
   for (const message of batch.messages) {
     const parsed = JobSchema.safeParse(message.body);
     if (!parsed.success) {
-      base.log.error('queue.invalid_message', { id: message.id });
+      base.log.error('queue.invalid_message', { id: message.id, code: 'INVALID_MESSAGE' });
       message.ack();
       continue;
     }

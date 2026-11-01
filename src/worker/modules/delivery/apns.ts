@@ -53,17 +53,21 @@ export function createMtlsApnsTransport(env: AppEnv): ApnsTransport {
               },
             );
             const apnsId = response.headers.get('apns-id') ?? undefined;
-            const reason = response.ok
-              ? undefined
-              : ((await response.json().catch(() => ({}))) as { reason?: string }).reason;
+            let reason: string | undefined;
+            if (response.ok) await response.body?.cancel();
+            else reason = ((await response.json().catch(() => ({}))) as { reason?: string }).reason;
             return {
               token,
               status: response.status,
               ...(reason ? { reason } : {}),
               ...(apnsId ? { apnsId } : {}),
             };
-          } catch {
-            return { token, status: 0, reason: 'NetworkError' };
+          } catch (error) {
+            return {
+              token,
+              status: 0,
+              reason: `NetworkError:${error instanceof Error ? error.name : 'unknown'}`,
+            };
           }
         }),
       );
