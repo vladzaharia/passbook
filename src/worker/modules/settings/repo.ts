@@ -68,3 +68,17 @@ export async function writeSystemValue(
     [key, JSON.stringify(value), now],
   );
 }
+
+/**
+ * Active users with no OIDC identity, so email (magic link) is their only way in. Addresses on the
+ * reserved .invalid TLD (the break-glass account) receive no mail and are left out.
+ */
+export async function countEmailOnlyUsers(db: D1Database): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM users u
+     WHERE u.status = 'active' AND u.primary_email NOT LIKE '%.invalid'
+       AND NOT EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = u.id)`,
+  );
+  return row?.n ?? 0;
+}

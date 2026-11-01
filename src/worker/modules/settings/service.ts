@@ -5,7 +5,13 @@ import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
-import { orgExists, readScopeRows, type SettingRow, writeScope } from './repo.ts';
+import {
+  countEmailOnlyUsers,
+  orgExists,
+  readScopeRows,
+  type SettingRow,
+  writeScope,
+} from './repo.ts';
 
 export type PlatformSettings = z.infer<typeof PlatformSettingsSchema>;
 export type OrgSettings = z.infer<typeof OrgSettingsSchema>;
@@ -139,4 +145,9 @@ export async function updateSettings(
       detail: { changes },
     });
   return after;
+}
+
+/** What turning magic-link sign-in off would cost, for the confirm. */
+export async function settingsImpact(ctx: ServiceContext): Promise<{ emailOnlyUsers: number }> {
+  return { emailOnlyUsers: await countEmailOnlyUsers(ctx.env.DB) };
 }

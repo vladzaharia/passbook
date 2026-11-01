@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import {
+  SettingsImpactSchema,
   SettingsListQuerySchema,
   SettingsListSchema,
   UpdateSettingsSchema,
@@ -9,7 +10,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor, valid } from '../audit/http.ts';
-import { listSettings, updateSettings } from './service.ts';
+import { listSettings, settingsImpact, updateSettings } from './service.ts';
 
 export const settingsRoutes = createRouter();
 guard(settingsRoutes, requireAdmin);
@@ -53,4 +54,16 @@ register(
     const items = await updateSettings(serviceContext(c), requestActor(c), input);
     return c.json({ items, oidc: oidcInfo(c) });
   },
+);
+
+register(
+  settingsRoutes,
+  'settings',
+  {
+    method: 'get',
+    path: '/impact',
+    summary: 'Users who sign in by email only',
+    response: SettingsImpactSchema,
+  },
+  async (c: Context<AppBindings>) => c.json(await settingsImpact(serviceContext(c))),
 );
