@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { PassJson } from '@/passkit/types.ts';
 import { normalize } from '@/shared/pass-view/index.ts';
 import { cn } from '../../lib/cn.ts';
@@ -31,6 +31,10 @@ export interface PassPreviewProps {
   flippable?: boolean;
   /** Plays the mint sheen when this changes (by identity). */
   mint?: unknown;
+  /** Off for thumbnails: no pointer tilt, no glow. */
+  still?: boolean;
+  /** Shared view-transition name, so the card morphs between pages. */
+  transitionName?: string;
   className?: string;
 }
 
@@ -42,6 +46,8 @@ export function PassPreview({
   target = '27',
   flippable = false,
   mint,
+  still = false,
+  transitionName,
   className,
 }: PassPreviewProps) {
   const view = useMemo(() => {
@@ -67,6 +73,9 @@ export function PassPreview({
       face={face}
       flippable={flippable}
       mint={mint}
+      tilt={!still}
+      glow={!still}
+      {...(transitionName ? { transitionName } : {})}
       className={cn('mx-auto w-full max-w-xs', className)}
     />
   );
@@ -77,15 +86,27 @@ export function PassPreviewPanel({
   passJson,
   assetBaseUrl,
   assetNames,
+  transitionName,
+  mintOnArrival = false,
   className,
 }: {
   passJson: Record<string, unknown>;
   assetBaseUrl: string;
   assetNames?: readonly string[];
+  transitionName?: string;
+  /** Mint once after mount (a pass that was just created). */
+  mintOnArrival?: boolean;
   className?: string;
 }) {
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [target, setTarget] = useState<IosTarget>('27');
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    if (mintOnArrival) setArrived(true);
+  }, [mintOnArrival]);
+  // A new version (or a fresh pass) mints the card; the same JSON does not.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: both values are triggers
+  const mint = useMemo(() => ({}), [passJson, arrived]);
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       <PassPreview
@@ -95,7 +116,8 @@ export function PassPreviewPanel({
         face={face}
         target={target}
         flippable
-        mint={passJson}
+        mint={mint}
+        {...(transitionName ? { transitionName } : {})}
       />
       <div className="flex flex-wrap justify-center gap-4">
         <Toggle

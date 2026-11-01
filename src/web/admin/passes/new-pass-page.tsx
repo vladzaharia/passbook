@@ -6,6 +6,7 @@ import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
 import { cn } from '../../lib/cn.ts';
 import { isApiError } from '../../lib/errors.ts';
+import { markMinted } from '../../lib/motion.ts';
 import {
   Button,
   Card,
@@ -50,10 +51,13 @@ function LivePreview({
   templateId,
   input,
   schema,
+  transitionName,
 }: {
   templateId: string;
   input: FormValues;
   schema: unknown;
+  /** Set once the pass exists, so the card morphs into its detail page. */
+  transitionName?: string;
 }) {
   const debounced = useDebounced(cleanValues(input), 300);
   const valid = Object.keys(validateValues(schema, debounced)).length === 0;
@@ -70,6 +74,7 @@ function LivePreview({
             passJson={preview.data.passJson}
             assetBaseUrl={preview.data.assetBaseUrl}
             assetNames={preview.data.assetNames}
+            {...(transitionName ? { transitionName } : {})}
           />
         ) : preview.isError || !valid ? (
           <p className="text-sm text-fg-muted">Preview unavailable until the details are valid.</p>
@@ -140,6 +145,9 @@ export function NewPassPage() {
     },
     onSuccess: async (pass) => {
       await qc.invalidateQueries({ queryKey: passKeys.all });
+      // The detail page renders its card on the first frame, so the preview can morph into it.
+      qc.setQueryData(passKeys.detail(pass.id), pass);
+      markMinted(pass.id);
       setCreatedId(pass.id);
     },
   });
@@ -283,26 +291,36 @@ export function NewPassPage() {
         </div>
       ) : null}
       {step === 4 ? (
-        <div className="max-w-md">
-          <Card>
-            <CardHeader title="Review" />
-            <CardBody className="flex flex-col gap-1 text-sm">
-              <p>Template: {template.data?.name}</p>
-              <p>Holder: {email.trim() || 'Unassigned'}</p>
-              <p>Email on create: {payload.sendEmail ? 'Yes' : 'No'}</p>
-            </CardBody>
-          </Card>
-          {create.isError &&
-          !fieldErrors?.holderEmail &&
-          Object.keys(fieldErrors ?? {}).length === 0 ? (
-            <p role="alert" className="mt-3 text-sm text-danger">
-              {create.error.message}
-            </p>
-          ) : null}
-          {create.isError && Object.keys(fieldErrors ?? {}).length > 0 ? (
-            <p role="alert" className="mt-3 text-sm text-danger">
-              Fix the highlighted fields on Details or Holder.
-            </p>
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,28rem)_20rem]">
+          <div>
+            <Card>
+              <CardHeader title="Review" />
+              <CardBody className="flex flex-col gap-1 text-sm">
+                <p>Template: {template.data?.name}</p>
+                <p>Holder: {email.trim() || 'Unassigned'}</p>
+                <p>Email on create: {payload.sendEmail ? 'Yes' : 'No'}</p>
+              </CardBody>
+            </Card>
+            {create.isError &&
+            !fieldErrors?.holderEmail &&
+            Object.keys(fieldErrors ?? {}).length === 0 ? (
+              <p role="alert" className="mt-3 text-sm text-danger">
+                {create.error.message}
+              </p>
+            ) : null}
+            {create.isError && Object.keys(fieldErrors ?? {}).length > 0 ? (
+              <p role="alert" className="mt-3 text-sm text-danger">
+                Fix the highlighted fields on Details or Holder.
+              </p>
+            ) : null}
+          </div>
+          {templateId && template.data ? (
+            <LivePreview
+              templateId={templateId}
+              input={input}
+              schema={template.data.inputSchema}
+              {...(createdId ? { transitionName: `pass-${createdId}` } : {})}
+            />
           ) : null}
         </div>
       ) : null}

@@ -1,4 +1,6 @@
+import type { CSSProperties } from 'react';
 import { cn } from '../../lib/cn.ts';
+import { useArrival } from '../../lib/motion.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import { EmptyState, ErrorState, Spinner } from '../../ui/index.ts';
 import { useTemplatePreview, useTemplates } from '../templates/api.ts';
@@ -73,6 +75,7 @@ function TemplateCard({
             passJson={preview.data.passJson}
             assetBaseUrl={preview.data.assetBaseUrl}
             assetNames={preview.data.assetNames}
+            still
             className="max-w-48"
           />
         ) : preview.isPending ? (
@@ -99,6 +102,7 @@ export function TemplateStep({
   onSelect: (id: string) => void;
 }) {
   const templates = useTemplates({ orgId });
+  const arrived = useArrival(templates.isPending);
   if (templates.isPending) return <Spinner />;
   if (templates.isError) {
     return <ErrorState error={templates.error} onRetry={() => void templates.refetch()} />;
@@ -108,9 +112,9 @@ export function TemplateStep({
   const own = items.filter((t) => t.orgId === orgId);
   const rest = items.filter((t) => t.orgId !== orgId);
   const grid = (list: typeof items) => (
-    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {list.map((t) => (
-        <li key={t.id}>
+    <ul className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-3', arrived && 'wl-deal')}>
+      {list.map((t, i) => (
+        <li key={t.id} style={{ '--i': i } as CSSProperties}>
           <TemplateCard
             id={t.id}
             name={t.name}

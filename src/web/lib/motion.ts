@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /** True when the user asked for less motion. False outside the browser. */
 export function prefersReducedMotion(): boolean {
@@ -81,4 +81,16 @@ export function useCountUp(value: number, ms = 600): number {
     return () => cancelAnimationFrame(frame);
   }, [value, ms]);
   return shown;
+}
+
+const minted = new Set<string>();
+/** Marks a pass as just created so its detail page mints the card on arrival. */
+export const markMinted = (id: string) => void minted.add(id);
+/** True once for a pass marked by markMinted. */
+export function useMintedOnArrival(id: string): boolean {
+  const [fresh] = useState(() => minted.has(id));
+  useEffect(() => {
+    minted.delete(id);
+  }, [id]);
+  return fresh;
 }

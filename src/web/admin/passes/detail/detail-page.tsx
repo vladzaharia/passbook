@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { z } from 'zod';
 import { isApiError } from '../../../lib/errors.ts';
+import { useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Button,
   EmptyState,
@@ -34,6 +35,7 @@ type Tab = NonNullable<Search['tab']>;
 export function PassDetailPage({ passId, search }: { passId: string; search: Search }) {
   const navigate = useNavigate();
   const pass = usePass(passId);
+  const minted = useMintedOnArrival(passId);
   const template = useTemplate(pass.data?.templateId);
   const picked = search.v !== undefined && search.v !== pass.data?.version ? search.v : undefined;
   const version = usePassVersion(passId, picked);
@@ -130,6 +132,8 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
               passJson={shown.passJson}
               assetBaseUrl={shown.assetBaseUrl}
               assetNames={p.assetNames}
+              transitionName={`pass-${p.id}`}
+              mintOnArrival={minted}
             />
           )
         }
