@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
-  "description": "Wallet event ticket",
-  "organizationName": "Wallet",
+  "description": "Event ticket",
+  "organizationName": "Organization",
   "backgroundColor": "rgb(31,41,55)",
   "foregroundColor": "rgb(255,255,255)",
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
-  "eventLogoText": "Wallet",
+  "logoText": "Organization",
+  "eventLogoText": "Organization",
   "preferredStyleSchemes": [
     "posterEventTicket",
     "eventTicket"
@@ -14,7 +14,8 @@
   "sharingProhibited": true,
   "relevantDates": [
     {
-      "date": "2030-06-01T19:00:00Z"
+      "startDate": "2030-06-02T00:00:00Z",
+      "endDate": "2030-06-02T05:00:00Z"
     }
   ],
   "barcodes": [
@@ -38,8 +39,8 @@
     "venueName": "Sample Hall",
     "venueRegionName": "Cupertino, CA",
     "venueRoom": "Main hall",
-    "eventStartDate": "2030-06-01T19:00:00Z",
-    "eventEndDate": "2030-06-01T22:00:00Z",
+    "eventStartDate": "2030-06-01T19:00:00-07:00",
+    "eventEndDate": "2030-06-01T22:00:00-07:00",
     "venueLocation": {
       "latitude": 37.3349,
       "longitude": -122.009
@@ -51,48 +52,52 @@
     "headerFields": [
       {
         "key": "date",
-        "label": "DATE",
-        "value": "2030-06-01T19:00:00Z",
+        "label": "Date",
+        "value": "2030-06-01T19:00:00-07:00",
         "dateStyle": "PKDateStyleMedium",
-        "timeStyle": "PKDateStyleShort",
-        "changeMessage": "The event time is now %@."
+        "timeStyle": "PKDateStyleNone",
+        "changeMessage": "The event is now on %@.",
+        "ignoresTimeZone": true
       }
     ],
     "primaryFields": [
       {
         "key": "event",
-        "label": "EVENT",
+        "label": "Event",
         "value": "Sample Event"
       }
     ],
     "secondaryFields": [
       {
-        "key": "venue",
-        "label": "VENUE",
-        "value": "Sample Hall"
+        "key": "time",
+        "label": "Starts",
+        "value": "2030-06-01T19:00:00-07:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true,
+        "changeMessage": "The event now starts at %@."
       },
       {
-        "key": "room",
-        "label": "ROOM",
-        "value": "Main hall"
+        "key": "venue",
+        "label": "Venue",
+        "value": "Sample Hall"
       }
     ],
     "auxiliaryFields": [
       {
         "key": "attendee",
-        "label": "NAME",
+        "label": "Name",
         "value": "Alex Morgan",
         "row": 0
       },
       {
-        "key": "admission",
-        "label": "ADMISSION",
-        "value": "General",
-        "row": 0
+        "key": "room",
+        "label": "Room",
+        "value": "Main hall"
       },
       {
         "key": "seat",
-        "label": "SEAT",
+        "label": "Seat",
         "value": "Open",
         "row": 1
       }
@@ -100,28 +105,46 @@
     "additionalInfoFields": [
       {
         "key": "doors",
-        "label": "DOORS",
-        "value": "18:00"
+        "label": "Doors",
+        "value": "2030-06-01T18:00:00-07:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      },
+      {
+        "key": "admission",
+        "label": "Admission",
+        "value": "General"
       }
     ],
     "backFields": [
       {
         "key": "note",
-        "label": "NOTE",
-        "value": "",
-        "changeMessage": "%@"
+        "label": "Note",
+        "value": ""
       },
       {
         "key": "site",
-        "label": "EVENT PAGE",
-        "value": "https://example.com/",
-        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+        "label": "Website",
+        "value": ""
       },
       {
         "key": "terms",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "No re-entry. Ticket is non-transferable."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ]
-  }
+  },
+  "relevantDate": "2030-06-02T02:00:00Z",
+  "expirationDate": "2030-06-01T22:00:00-07:00"
 }

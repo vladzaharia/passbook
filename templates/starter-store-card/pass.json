@@ -1,11 +1,11 @@
 {
   "formatVersion": 1,
-  "description": "Wallet store card",
-  "organizationName": "Wallet",
+  "description": "Store card",
+  "organizationName": "Organization",
   "backgroundColor": "rgb(31,41,55)",
   "foregroundColor": "rgb(255,255,255)",
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
+  "logoText": "Organization",
   "sharingProhibited": true,
   "barcodes": [
     {
@@ -32,19 +32,19 @@
     {
       "identifier": "top-up",
       "type": "addToBalance",
-      "url": "https://example.com/"
+      "url": ""
     },
     {
       "identifier": "shop",
       "type": "shop",
-      "url": "https://example.com/shop"
+      "url": ""
     }
   ],
   "storeCard": {
     "headerFields": [
       {
         "key": "tier",
-        "label": "TIER",
+        "label": "Tier",
         "value": "Standard",
         "changeMessage": "Your tier is now %@."
       }
@@ -52,7 +52,7 @@
     "primaryFields": [
       {
         "key": "balance",
-        "label": "BALANCE",
+        "label": "Balance",
         "value": 25,
         "currencyCode": "USD",
         "changeMessage": "Your balance is now %@."
@@ -61,34 +61,35 @@
     "secondaryFields": [
       {
         "key": "holder",
-        "label": "NAME",
+        "label": "Name",
         "value": "Alex Morgan"
-      }
-    ],
-    "auxiliaryFields": [
-      {
-        "key": "cardNumber",
-        "label": "CARD",
-        "value": "CARD-0001"
       }
     ],
     "backFields": [
       {
         "key": "note",
-        "label": "NOTE",
-        "value": "",
-        "changeMessage": "%@"
+        "label": "Note",
+        "value": ""
       },
       {
         "key": "site",
-        "label": "SITE",
-        "value": "https://example.com/",
-        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+        "label": "Website",
+        "value": ""
       },
       {
         "key": "terms",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "Balance is not redeemable for cash."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ]
   }

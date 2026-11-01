@@ -47,7 +47,7 @@
         "x-order": 40,
         "minLength": 1,
         "maxLength": 60,
-        "default": "Main hall"
+        "x-placeholder": "Main hall"
       },
       "startsAt": {
         "type": "string",
@@ -131,7 +131,7 @@
         "pattern": "^https://",
         "maxLength": 300,
         "x-widget": "url",
-        "default": "https://example.com/"
+        "x-placeholder": "https://"
       },
       "directionsURL": {
         "type": "string",
@@ -152,6 +152,14 @@
         "x-group": "Links",
         "x-order": 160,
         "x-widget": "url"
+      },
+      "doorsAt": {
+        "type": "string",
+        "x-label": "Doors",
+        "x-group": "When",
+        "x-order": 51,
+        "format": "date-time",
+        "x-widget": "datetime"
       }
     },
     "dependentRequired": {
@@ -167,12 +175,14 @@
     "eventName": "Sample Event",
     "venueName": "Sample Hall",
     "venueRegion": "Cupertino, CA",
-    "startsAt": "2030-06-01T19:00:00Z",
-    "endsAt": "2030-06-01T22:00:00Z",
+    "startsAt": "2030-06-01T19:00:00-07:00",
+    "endsAt": "2030-06-01T22:00:00-07:00",
     "venueLat": 37.3349,
     "venueLng": -122.009,
     "attendee": "Alex Morgan",
-    "ticketId": "TICKET-0001"
+    "ticketId": "TICKET-0001",
+    "doorsAt": "2030-06-01T18:00:00-07:00",
+    "venueRoom": "Main hall"
   },
   "bindings": [
     {
@@ -234,14 +244,16 @@
       "to": {
         "field": "site"
       },
-      "value": "{{website}}"
+      "value": "{{website}}",
+      "omitIfEmpty": true
     },
     {
       "to": {
         "field": "site",
         "prop": "attributedValue"
       },
-      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
     },
     {
       "to": {
@@ -344,12 +356,6 @@
     },
     {
       "to": {
-        "pointer": "/relevantDates/0/date"
-      },
-      "value": "{{startsAt}}"
-    },
-    {
-      "to": {
         "pointer": "/locations/0/latitude"
       },
       "value": "{{venueLat}}"
@@ -390,6 +396,19 @@
       },
       "value": "{{parkingURL}}",
       "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "time"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "field": "doors"
+      },
+      "value": "{{doorsAt}}",
+      "omitIfEmpty": true
     }
   ],
   "display": {
@@ -401,5 +420,16 @@
       "attendee",
       "ticketId"
     ]
-  }
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "startsAt",
+        "end": "endsAt",
+        "leadMinutes": 120
+      }
+    }
+  ]
 }

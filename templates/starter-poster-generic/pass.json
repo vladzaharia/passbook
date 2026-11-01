@@ -1,11 +1,11 @@
 {
   "formatVersion": 1,
-  "description": "Wallet poster pass",
-  "organizationName": "Wallet",
+  "description": "Membership card",
+  "organizationName": "Organization",
   "backgroundColor": "rgb(31,41,55)",
   "foregroundColor": "rgb(255,255,255)",
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
+  "logoText": "Organization",
   "sharingProhibited": true,
   "barcodes": [
     {
@@ -26,38 +26,33 @@
     {
       "identifier": "portal",
       "type": "membershipBenefits",
-      "url": "https://example.com/"
+      "url": ""
     },
     {
       "identifier": "support",
       "type": "call",
-      "url": "tel:+15555550100"
+      "url": ""
     }
   ],
   "posterGeneric": {
     "headerFields": [
       {
-        "key": "memberId-poster",
-        "label": "ID",
-        "value": "ID-0001"
+        "key": "tier-poster",
+        "label": "Tier",
+        "value": "Plus",
+        "changeMessage": "Your tier is now %@."
       }
     ],
     "primaryFields": [
       {
         "key": "holder-poster",
         "value": "Alex Morgan"
-      },
-      {
-        "key": "tier-poster",
-        "label": "TIER",
-        "value": "Plus",
-        "changeMessage": "Your tier is now %@."
       }
     ],
     "footerFields": [
       {
         "key": "since-poster",
-        "label": "SINCE",
+        "label": "Since",
         "value": "2026-01-01T00:00:00Z",
         "dateStyle": "PKDateStyleMedium",
         "timeStyle": "PKDateStyleNone",
@@ -67,27 +62,35 @@
     "additionalInfoFields": [
       {
         "key": "plan-poster",
-        "label": "PLAN",
+        "label": "Plan",
         "value": "Annual"
       }
     ],
     "backFields": [
       {
         "key": "note-poster",
-        "label": "NOTE",
-        "value": "",
-        "changeMessage": "%@"
+        "label": "Note",
+        "value": ""
       },
       {
         "key": "site-poster",
-        "label": "SITE",
-        "value": "https://example.com/",
-        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+        "label": "Website",
+        "value": ""
       },
       {
         "key": "terms-poster",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "Present the barcode when asked."
+      },
+      {
+        "key": "contact-poster",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service-poster",
+        "label": "Pass service",
+        "value": ""
       }
     ]
   },
@@ -95,7 +98,7 @@
     "headerFields": [
       {
         "key": "tier",
-        "label": "TIER",
+        "label": "Tier",
         "value": "Plus",
         "changeMessage": "Your tier is now %@."
       }
@@ -103,19 +106,14 @@
     "primaryFields": [
       {
         "key": "holder",
-        "label": "NAME",
+        "label": "Name",
         "value": "Alex Morgan"
       }
     ],
     "secondaryFields": [
       {
-        "key": "memberId",
-        "label": "ID",
-        "value": "ID-0001"
-      },
-      {
         "key": "since",
-        "label": "SINCE",
+        "label": "Since",
         "value": "2026-01-01T00:00:00Z",
         "dateStyle": "PKDateStyleMedium",
         "timeStyle": "PKDateStyleNone",
@@ -125,20 +123,28 @@
     "backFields": [
       {
         "key": "note",
-        "label": "NOTE",
-        "value": "",
-        "changeMessage": "%@"
+        "label": "Note",
+        "value": ""
       },
       {
         "key": "site",
-        "label": "SITE",
-        "value": "https://example.com/",
-        "attributedValue": "<a href=\"https://example.com/\">example.com</a>"
+        "label": "Website",
+        "value": ""
       },
       {
         "key": "terms",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "Present the barcode when asked."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ]
   }

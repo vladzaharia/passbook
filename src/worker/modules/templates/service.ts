@@ -18,6 +18,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingWarnings, readBranding, tenantPassJson } from '../passes/branding.ts';
+import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
 import { getOrg as getPassOrg } from '../passes/repo.ts';
 import { previewPass } from './build-check.ts';
 import { createTemplateRegistry } from './registry.ts';
@@ -214,7 +215,13 @@ export async function preview(
   const org = tenant ?? (row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null);
   const branding = readBranding(tenant?.branding);
   const template = tenant
-    ? { ...resolved, passJson: tenantPassJson(resolved.passJson, tenant.name, branding) }
+    ? {
+        ...resolved,
+        passJson: withBackContacts(
+          tenantPassJson(resolved.passJson, tenant.name, branding),
+          await backContactsFor(ctx, tenant.id, tenant.branding),
+        ),
+      }
     : resolved;
   try {
     const result = previewPass(

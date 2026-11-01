@@ -9,18 +9,12 @@
       "messageEncoding": "iso-8859-1"
     }
   ],
-  "description": "Wallet store card",
-  "featuredActions": [
-    {
-      "identifier": "top-up",
-      "type": "addToBalance",
-      "url": "https://example.com/"
-    }
-  ],
+  "description": "Store card",
+  "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
+  "logoText": "Organization",
   "organizationName": "Wallet",
   "passTypeIdentifier": "pass.im.plrs.wallet",
   "semantics": {
@@ -32,31 +26,28 @@
   "serialNumber": "SNAPSHOT-SERIAL",
   "sharingProhibited": true,
   "storeCard": {
-    "auxiliaryFields": [
-      {
-        "key": "cardNumber",
-        "label": "CARD",
-        "value": "CARD-0001"
-      }
-    ],
     "backFields": [
       {
-        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
-        "key": "site",
-        "label": "SITE",
-        "value": "https://example.com/"
+        "key": "terms",
+        "label": "Terms",
+        "value": "Balance is not redeemable for cash."
       },
       {
-        "key": "terms",
-        "label": "TERMS",
-        "value": "Balance is not redeemable for cash."
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ],
     "headerFields": [
       {
         "changeMessage": "Your tier is now %@.",
         "key": "tier",
-        "label": "TIER",
+        "label": "Tier",
         "value": "Gold"
       }
     ],
@@ -65,14 +56,14 @@
         "changeMessage": "Your balance is now %@.",
         "currencyCode": "USD",
         "key": "balance",
-        "label": "BALANCE",
+        "label": "Balance",
         "value": 25
       }
     ],
     "secondaryFields": [
       {
         "key": "holder",
-        "label": "NAME",
+        "label": "Name",
         "value": "Alex Morgan"
       }
     ]

@@ -38,8 +38,10 @@ describe.each(bakedSlugs())('baked template %s', (slug) => {
     expect(built.report.issues.filter((i) => i.severity === 'error')).toEqual([]);
     const files = unzipSync(packagePassBytes(built.signed));
     expect(Object.keys(files)).toEqual(
-      expect.arrayContaining(['pass.json', 'manifest.json', 'signature', 'icon.png']),
+      expect.arrayContaining(['pass.json', 'manifest.json', 'signature', 'icon@2x.png']),
     );
+    // Wallet devices are all @2x or @3x.
+    expect(Object.keys(files).filter((n) => /^[A-Za-z]+\.png$/.test(n))).toEqual([]);
   });
 
   it('ships no designer ids, no wallet files and no hard-coded identity', async () => {

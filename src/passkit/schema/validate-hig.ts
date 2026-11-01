@@ -92,8 +92,9 @@ function checkPlaceholderUrls(ctx: ValidationContext): void {
       for (const match of value.matchAll(/https?:\/\/([^/\s"'<>:]+)/gi))
         if (match[1] && PLACEHOLDER_HOST.test(match[1]))
           ctx.warn('PLACEHOLDER_URL', `${match[1]} is a placeholder address.`, path);
-    } else if (Array.isArray(value)) value.forEach((v, i) => walk(v, `${path}[${i}]`));
-    else if (isObject(value))
+    } else if (Array.isArray(value)) {
+      for (const [i, v] of value.entries()) walk(v, `${path}[${i}]`);
+    } else if (isObject(value))
       for (const [k, v] of Object.entries(value))
         if (!SERVER_KEYS.has(k)) walk(v, path ? `${path}.${k}` : k);
   };

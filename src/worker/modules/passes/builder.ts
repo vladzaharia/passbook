@@ -14,6 +14,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
 import { brandingWarnings, readBranding, tenantPassJson } from './branding.ts';
 import { applyChangeMessages } from './change-messages.ts';
+import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
 
@@ -156,9 +157,16 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
   const identity = await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
-  const passOverrides = await listAssets(ctx.env.DB, req.passId);
+  const [passOverrides, contacts] = await Promise.all([
+    listAssets(ctx.env.DB, req.passId),
+    backContactsFor(ctx, req.orgId, req.branding),
+  ]);
+  const tenant = withBackContacts(
+    tenantPassJson(resolved.passJson, req.orgName, branding),
+    contacts,
+  );
   const { template, registry } = await withOverrides(
-    { ...resolved, passJson: tenantPassJson(resolved.passJson, req.orgName, branding) },
+    { ...resolved, passJson: tenant },
     deps.registry,
     ctx.env.BUCKET,
     brandedOverrides(passOverrides, branding.images),

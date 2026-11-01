@@ -9,42 +9,38 @@
       "messageEncoding": "iso-8859-1"
     }
   ],
-  "description": "Wallet generic pass",
-  "featuredActions": [
-    {
-      "identifier": "portal",
-      "type": "viewOffersRewards",
-      "url": "https://example.com/"
-    }
-  ],
+  "description": "Membership card",
+  "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
   "generic": {
-    "auxiliaryFields": [
-      {
-        "attributedValue": "<a href=\"https://example.com/\">https://example.com/</a>",
-        "key": "site",
-        "label": "SITE",
-        "value": "https://example.com/"
-      }
-    ],
     "backFields": [
       {
         "key": "terms",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "Present the barcode when asked."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ],
     "headerFields": [
       {
         "changeMessage": "Your tier is now %@.",
         "key": "tier",
-        "label": "TIER",
+        "label": "Tier",
         "value": "Plus"
       },
       {
         "key": "points",
-        "label": "POINTS",
+        "label": "Points",
         "numberStyle": "PKNumberStyleDecimal",
         "value": 1200
       }
@@ -52,28 +48,23 @@
     "primaryFields": [
       {
         "key": "holder",
-        "label": "NAME",
+        "label": "Name",
         "value": "Alex Morgan"
       }
     ],
     "secondaryFields": [
       {
-        "key": "memberId",
-        "label": "ID",
-        "value": "ID-0001"
-      },
-      {
         "dateStyle": "PKDateStyleMedium",
         "ignoresTimeZone": true,
         "key": "since",
-        "label": "SINCE",
+        "label": "Since",
         "timeStyle": "PKDateStyleNone",
         "value": "2026-01-01T00:00:00Z"
       }
     ]
   },
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet",
+  "logoText": "Organization",
   "organizationName": "Wallet",
   "passTypeIdentifier": "pass.im.plrs.wallet",
   "semantics": {

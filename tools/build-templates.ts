@@ -41,6 +41,15 @@ async function bakedTemplates(): Promise<void> {
     log: (line) => console.warn(line),
   });
   write('baked-templates.ts', renderBakedModule(templates, HEADER));
+  for (const t of templates) {
+    const kb = (n: number) => `${Math.round(n / 1024)} KB`;
+    const json = new TextEncoder().encode(JSON.stringify(t.passJson)).length;
+    const total = t.assets.reduce((n, a) => n + a.size, json);
+    const largest = t.assets.reduce((m, a) => (a.size > m.size ? a : m), { name: '-', size: 0 });
+    console.log(
+      `templates/${t.slug}: ${kb(total)} package, largest ${largest.name} ${kb(largest.size)}`,
+    );
+  }
 }
 
 async function loadBehaviors(): Promise<BehaviorRegistry> {

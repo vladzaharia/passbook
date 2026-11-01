@@ -79,7 +79,7 @@
         "pattern": "^https://",
         "maxLength": 300,
         "x-widget": "url",
-        "default": "https://example.com/"
+        "x-placeholder": "https://"
       },
       "storeLat": {
         "type": "number",
@@ -133,12 +133,6 @@
     },
     {
       "to": {
-        "field": "cardNumber"
-      },
-      "value": "{{cardNumber}}"
-    },
-    {
-      "to": {
         "field": "tier"
       },
       "value": "{{tier}}"
@@ -170,14 +164,16 @@
       "to": {
         "field": "site"
       },
-      "value": "{{website}}"
+      "value": "{{website}}",
+      "omitIfEmpty": true
     },
     {
       "to": {
         "field": "site",
         "prop": "attributedValue"
       },
-      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>"
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
     },
     {
       "to": {
@@ -198,7 +194,8 @@
         "action": "top-up",
         "prop": "url"
       },
-      "value": "{{website}}"
+      "value": "{{website}}",
+      "omitIfEmpty": true
     },
     {
       "to": {

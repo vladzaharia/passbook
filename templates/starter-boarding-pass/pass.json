@@ -1,11 +1,11 @@
 {
   "formatVersion": 1,
-  "description": "Wallet boarding pass",
-  "organizationName": "Wallet",
+  "description": "Boarding pass",
+  "organizationName": "Organization",
   "backgroundColor": "rgb(31,41,55)",
   "foregroundColor": "rgb(255,255,255)",
   "labelColor": "rgb(199,210,254)",
-  "logoText": "Wallet Air",
+  "logoText": "Organization",
   "preferredStyleSchemes": [
     "semanticBoardingPass",
     "boardingPass"
@@ -28,9 +28,9 @@
     "destinationAirportCode": "JFK",
     "destinationCityName": "New York",
     "destinationLocationTimeZone": "America/New_York",
-    "originalBoardingDate": "2030-06-01T07:15:00Z",
-    "originalDepartureDate": "2030-06-01T08:00:00Z",
-    "originalArrivalDate": "2030-06-01T14:30:00Z",
+    "originalBoardingDate": "2030-06-01T07:15:00-07:00",
+    "originalDepartureDate": "2030-06-01T08:00:00-07:00",
+    "originalArrivalDate": "2030-06-01T16:30:00-04:00",
     "passengerName": {
       "givenName": "Alex",
       "familyName": "Morgan"
@@ -46,12 +46,12 @@
     "headerFields": [
       {
         "key": "flight",
-        "label": "FLIGHT",
+        "label": "Flight",
         "value": "WA100"
       },
       {
         "key": "gate",
-        "label": "GATE",
+        "label": "Gate",
         "value": "B12",
         "changeMessage": "Your gate is now %@."
       }
@@ -59,61 +59,75 @@
     "primaryFields": [
       {
         "key": "origin",
-        "label": "SAN FRANCISCO",
+        "label": "San Francisco",
         "value": "SFO"
       },
       {
         "key": "destination",
-        "label": "NEW YORK",
+        "label": "New York",
         "value": "JFK"
       }
     ],
     "secondaryFields": [
       {
         "key": "passenger",
-        "label": "PASSENGER",
+        "label": "Passenger",
         "value": "Alex Morgan"
       },
       {
         "key": "departs",
-        "label": "DEPARTS",
-        "value": "2030-06-01T08:00:00Z",
+        "label": "Departs",
+        "value": "2030-06-01T08:00:00-07:00",
         "dateStyle": "PKDateStyleShort",
         "timeStyle": "PKDateStyleShort",
-        "changeMessage": "Departure is now %@."
+        "changeMessage": "Departure is now %@.",
+        "ignoresTimeZone": true
       }
     ],
     "auxiliaryFields": [
       {
         "key": "boardsAt",
-        "label": "BOARDS",
-        "value": "2030-06-01T07:15:00Z",
+        "label": "Boards",
+        "value": "2030-06-01T07:15:00-07:00",
         "dateStyle": "PKDateStyleNone",
-        "timeStyle": "PKDateStyleShort"
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
       },
       {
         "key": "seat",
-        "label": "SEAT",
+        "label": "Seat",
         "value": "14A"
       }
     ],
     "backFields": [
       {
         "key": "note",
-        "label": "NOTE",
-        "value": "",
-        "changeMessage": "%@"
+        "label": "Note",
+        "value": ""
       },
       {
         "key": "terms",
-        "label": "TERMS",
+        "label": "Terms",
         "value": "Be at the gate 30 minutes before departure."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
       }
     ]
   },
   "relevantDates": [
     {
-      "date": "2030-06-01T08:00:00Z"
+      "startDate": "2030-06-01T13:15:00Z",
+      "endDate": "2030-06-01T20:30:00Z"
     }
-  ]
+  ],
+  "relevantDate": "2030-06-01T14:15:00Z",
+  "expirationDate": "2030-06-01T20:30:00Z"
 }

@@ -31,16 +31,15 @@
   "foregroundColor": "rgb(255,249,242)",
   "formatVersion": 1,
   "generic": {
-    "auxiliaryFields": [
-      {
-        "key": "memberId",
-        "label": "MEMBER NUMBER",
-        "value": "DEMO0001"
-      }
-    ],
+    "auxiliaryFields": [],
     "backFields": [
       {
-        "changeMessage": "%@",
+        "changeMessage": "Your membership status is now %@.",
+        "key": "status",
+        "label": "MEMBERSHIP STATUS",
+        "value": "Active"
+      },
+      {
         "key": "message",
         "label": "FROM HENRY’S",
         "value": "Welcome to Henry’s."
@@ -89,10 +88,9 @@
     ],
     "headerFields": [
       {
-        "changeMessage": "Your membership status is now %@.",
-        "key": "status",
-        "label": "STATUS",
-        "value": "Active"
+        "key": "memberId",
+        "label": "MEMBER",
+        "value": "DEMO0001"
       }
     ],
     "primaryFields": [
@@ -136,7 +134,6 @@
         "value": "Active"
       },
       {
-        "changeMessage": "%@",
         "key": "message-poster",
         "label": "FROM HENRY’S",
         "value": "Welcome to Henry’s."
