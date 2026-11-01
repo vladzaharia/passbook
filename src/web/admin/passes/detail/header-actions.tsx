@@ -1,9 +1,28 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Ban, Download, ExternalLink, KeyRound, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
+import {
+  Ban,
+  Copy,
+  Download,
+  ExternalLink,
+  KeyRound,
+  MoreHorizontal,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
-import { Button, ConfirmDialog, CopyButton, toast } from '../../../ui/index.ts';
+import {
+  Button,
+  ConfirmDialog,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  toast,
+} from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
 import { absoluteUrl } from '../format.ts';
 import { TypedConfirmDialog } from '../typed-confirm.tsx';
@@ -24,6 +43,15 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
       toast.success(done);
     } catch (error) {
       toast.error(error);
+    }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(absoluteUrl(pass.publicUrl));
+      toast.success('Link copied');
+    } catch {
+      toast.error(new Error('Could not copy. Copy the link from the public page.'));
     }
   }
 
@@ -49,29 +77,46 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
       >
         {voided ? 'Unvoid' : 'Void'}
       </Button>
-      <Button
-        variant="outline"
-        iconStart={<KeyRound aria-hidden />}
-        onClick={() => setRotate(true)}
-      >
-        Rotate link
-      </Button>
-      <span className="inline-flex items-center gap-1 text-sm text-fg-muted">
-        <CopyButton value={absoluteUrl(pass.publicUrl)} label="Copy public link" />
-      </span>
       <Button asChild variant="outline" iconStart={<ExternalLink aria-hidden />}>
-        <a href={pass.publicUrl} target="_blank" rel="noopener noreferrer">
-          Open public page
+        <a
+          href={pass.publicUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open public page"
+        >
+          <span>
+            Open<span className="max-sm:sr-only"> public page</span>
+          </span>
         </a>
       </Button>
-      <Button asChild variant="outline" iconStart={<Download aria-hidden />}>
-        <a href={pass.downloadUrl} download>
-          Download .pkpass
-        </a>
-      </Button>
-      <Button variant="danger" iconStart={<Trash2 aria-hidden />} onClick={() => setDel(true)}>
-        Delete
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
+            <span className="max-sm:sr-only">More</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => void copyLink()}>
+            <Copy aria-hidden />
+            Copy public link
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <a href={pass.downloadUrl} download>
+              <Download aria-hidden />
+              Download .pkpass
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setRotate(true)}>
+            <KeyRound aria-hidden />
+            Rotate link
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem destructive onSelect={() => setDel(true)}>
+            <Trash2 aria-hidden />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <ConfirmDialog
         open={voidAsk}

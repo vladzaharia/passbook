@@ -11,7 +11,7 @@ import {
   type TimelineItem,
 } from '../../../ui/index.ts';
 import { usePassAudit } from '../api.ts';
-import { formatDate } from '../format.ts';
+import { actionLabel, formatDate } from '../format.ts';
 
 type Pass = z.infer<typeof PassDetailSchema>;
 
@@ -39,7 +39,7 @@ export function ActivityTab({ passId, active }: { passId: string; active: boolea
   if (audit.data.items.length === 0) return <EmptyState title="No activity" />;
   const items: TimelineItem[] = audit.data.items.map((e) => ({
     id: String(e.id),
-    title: e.action,
+    title: actionLabel(e.action),
     time: e.at,
     description: e.actorLabel ?? e.actorType,
   }));

@@ -104,6 +104,14 @@ export function PassesListPage({
             {row.original.subtitle ? (
               <p className="truncate text-xs text-fg-muted">{row.original.subtitle}</p>
             ) : null}
+            {row.original.holderEmail ? (
+              <p
+                className="truncate text-xs text-fg-muted md:hidden"
+                title={row.original.holderEmail}
+              >
+                {row.original.holderEmail}
+              </p>
+            ) : null}
             <div className="mt-1 flex flex-wrap items-center gap-2 md:hidden">
               <StatusPill status={row.original.status} />
               <StatusPill status={row.original.holderState} />
@@ -117,10 +125,15 @@ export function PassesListPage({
         header: 'Holder',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-col items-start gap-1">
             <StatusPill status={row.original.holderState} />
             {row.original.holderEmail ? (
-              <span className="text-xs text-fg-muted">{row.original.holderEmail}</span>
+              <span
+                className="max-w-64 truncate text-xs whitespace-nowrap text-fg-muted"
+                title={row.original.holderEmail}
+              >
+                {row.original.holderEmail}
+              </span>
             ) : null}
           </div>
         ),
@@ -143,18 +156,22 @@ export function PassesListPage({
       },
       {
         id: 'template',
-        meta: { hideBelow: 'lg' },
+        meta: { hideBelow: 'lg', nowrap: true },
         header: 'Template',
         enableSorting: false,
-        cell: ({ row }) => names.get(row.original.templateId) ?? row.original.templateId,
+        cell: ({ row }) => {
+          const name = names.get(row.original.templateId) ?? row.original.templateId;
+          return <span title={name}>{name}</span>;
+        },
       },
       {
         id: 'modified',
+        meta: { nowrap: true },
         header: 'Modified',
         enableSorting: false,
         cell: ({ row }) => (
           <span className="text-xs text-fg-muted">
-            v{row.original.version} · {formatDate(row.original.modifiedAt)}
+            {formatDate(row.original.modifiedAt)} (v{row.original.version})
           </span>
         ),
       },

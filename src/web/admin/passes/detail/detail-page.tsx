@@ -89,12 +89,12 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
     <>
       <PageHeader
         title={p.title ?? p.serial}
-        description={
-          <span className="inline-flex flex-wrap items-center gap-2">
+        meta={
+          <>
             <StatusPill status={p.status} />
             <StatusPill status={p.holderState} />
             <span>v{p.version}</span>
-          </span>
+          </>
         }
         breadcrumbs={crumbs}
         actions={<PassHeaderActions pass={p} />}
@@ -106,14 +106,14 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
           ))}
         </ul>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-        <Card className="lg:self-start">
+      <div className="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
+        <Card className="max-w-sm min-w-0 xl:self-start">
           <CardHeader
             title="Preview"
             actions={
               <Select
                 aria-label="Version"
-                className="w-28"
+                className="w-40"
                 value={String(picked ?? p.version)}
                 onValueChange={(v) =>
                   setSearch({ v: Number(v) === p.version ? undefined : Number(v) })
@@ -181,7 +181,7 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
           <TabsContent value="images">
             <ImagesTab passId={p.id} passJson={p.passJson} />
           </TabsContent>
-          <TabsContent value="delivery">
+          <TabsContent value="delivery" className="min-w-0">
             <DeliveryTab pass={p} />
           </TabsContent>
           <TabsContent value="versions">

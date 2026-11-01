@@ -274,7 +274,10 @@ export function SchemaForm({
                 serverErrors?.[field.key] ??
                 (showAllErrors || touched.has(field.key) ? errors[field.key] : undefined);
               const source = fieldSources?.[field.key];
-              const wide = field.widget === 'textarea' || field.widget === 'image';
+              const wide =
+                field.widget === 'textarea' ||
+                field.widget === 'image' ||
+                field.widget === 'datetime';
               return (
                 <FormField
                   key={field.key}
@@ -283,7 +286,7 @@ export function SchemaForm({
                     <span className="inline-flex flex-wrap items-center gap-2">
                       {field.label}
                       {source ? (
-                        <Badge tone={source === 'manual' ? 'warning' : 'info'}>
+                        <Badge tone={source === 'manual' ? 'neutral' : 'info'}>
                           {source === 'manual' ? 'Manual' : 'Connection'}
                         </Badge>
                       ) : null}

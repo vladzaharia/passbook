@@ -361,7 +361,7 @@ describe('pass detail: tabs', () => {
       session: 'admin',
       handlers: handlers(newServer()),
     });
-    expect(await screen.findByText('pass.update')).toBeInTheDocument();
+    expect(await screen.findByText('Pass updated')).toBeInTheDocument();
     expect(screen.getByText('Ada Admin')).toBeInTheDocument();
     expect(screen.queryByText(/u1/)).toBeNull();
   });
@@ -408,7 +408,8 @@ describe('pass detail: header actions', () => {
           method(init) === 'DELETE' ? json({ ok: true }) : json(server.pass),
       }),
     });
-    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     const dialog = await screen.findByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete pass' });
     expect(confirm).toBeDisabled();
@@ -437,7 +438,8 @@ describe('pass detail: header actions', () => {
     await waitFor(() =>
       expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/void')).toBe(true),
     );
-    await user.click(screen.getByRole('button', { name: 'Rotate link' }));
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Rotate link' }));
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Rotate' }));
     await waitFor(() =>
@@ -482,7 +484,8 @@ describe('pass detail: header actions', () => {
 
   it('offers the .pkpass download from the detail header', async () => {
     await renderApp('/admin/passes/p1', { session: 'admin', handlers: handlers(newServer()) });
-    const link = await screen.findByRole('link', { name: 'Download .pkpass' });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'More' }));
+    const link = await screen.findByRole('menuitem', { name: 'Download .pkpass' });
     expect(link).toHaveAttribute('href', '/p/tok/pass.pkpass');
     expect(link).toHaveAttribute('download');
   });
