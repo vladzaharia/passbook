@@ -45,7 +45,7 @@ function Sparkline({ points, warn }: { points: readonly Point[]; warn: boolean }
       aria-hidden
       viewBox="0 0 600 100"
       preserveAspectRatio="none"
-      className="h-8 w-full min-w-16 overflow-visible @min-[15rem]:w-28"
+      className="h-8 w-full min-w-16 overflow-visible sm:w-28"
     >
       <path d={g.area} className={warn ? 'fill-danger/12' : 'fill-accent/12'} />
       <path
@@ -69,7 +69,8 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
         to={kpi.to as never}
         search={kpi.search as never}
         className={cn(
-          '@container flex h-full flex-col gap-2.5 rounded-lg border border-border bg-surface-raised p-4',
+          // min-h-0 opts this block link out of base.css's touch padding for inline links.
+          'flex h-full min-h-0 flex-col gap-2.5 rounded-lg border border-border bg-surface-raised p-4',
           'shadow-[var(--wl-edge),var(--pk-elevation-1)] transition-[border-color] duration-(--wl-dur-hover)',
           'hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         )}
@@ -81,20 +82,29 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
           />
           <span className="min-w-0 truncate text-sm text-fg-muted">{kpi.label}</span>
           {kpi.ranged ? (
-            <span className="ml-auto shrink-0 text-xs text-fg-muted">
+            <span className="ml-auto hidden shrink-0 text-xs text-fg-muted sm:inline">
               <span className="sr-only">, </span>
               {RANGE_SHORT[range]}
             </span>
           ) : null}
         </span>
-        <span className="flex flex-col gap-2 @min-[15rem]:flex-row @min-[15rem]:items-end @min-[15rem]:justify-between">
-          <span
-            className={cn(
-              'text-3xl leading-none font-semibold tracking-[-0.02em] tabular-nums',
-              bad ? 'text-danger' : 'text-fg-strong',
-            )}
-          >
-            {formatCount(shown)}
+        <span className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <span className="flex items-baseline justify-between gap-2">
+            <span
+              className={cn(
+                'text-3xl leading-none font-semibold tracking-[-0.02em] tabular-nums',
+                bad ? 'text-danger' : 'text-fg-strong',
+              )}
+            >
+              {formatCount(shown)}
+            </span>
+            {/* Narrow tiles: the range sits by the value so the label keeps its room. */}
+            {kpi.ranged ? (
+              <span className="text-xs text-fg-muted sm:hidden">
+                <span className="sr-only">, </span>
+                {RANGE_SHORT[range]}
+              </span>
+            ) : null}
           </span>
           <Sparkline points={kpi.series} warn={bad} />
         </span>
