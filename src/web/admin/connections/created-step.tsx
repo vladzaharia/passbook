@@ -1,9 +1,15 @@
 import { ChevronRight } from 'lucide-react';
 import { Card, CardBody, CardHeader, CodeBlock, SecretReveal } from '../../ui/index.ts';
 
+/** The default body each connector reads: records pushed whole, or refs to fetch. */
+const BODY: Record<string, string> = {
+  'webhook-push': '{"id":"evt-1","records":[{"ref":"m-001","record":{"name":"Maya Chen"}}]}',
+};
+const REFS_BODY = '{"id":"evt-1","refs":["m-001"]}';
+
 /** A signed sample call: the signature is HMAC-SHA256 over "<timestamp>.<body>". */
-export function exampleRequest(url: string): string {
-  const body = '{"id":"evt-1","refs":["m-001"]}';
+export function exampleRequest(url: string, connectorType = ''): string {
+  const body = BODY[connectorType] ?? REFS_BODY;
   return [
     `body='${body}'`,
     'ts=$(date +%s)',
@@ -20,10 +26,12 @@ export function exampleRequest(url: string): string {
 export function CreatedStep({
   url,
   secret,
+  connectorType,
   onDone,
 }: {
   url: string | null;
   secret: string;
+  connectorType: string;
   onDone: () => void;
 }) {
   return (
@@ -38,6 +46,7 @@ export function CreatedStep({
                     label: 'Endpoint URL',
                     value: url,
                     copyLabel: 'Copy endpoint URL',
+                    sheen: false,
                   },
                 ]
               : []),
@@ -55,7 +64,7 @@ export function CreatedStep({
                 Example request
               </summary>
               <CodeBlock
-                code={exampleRequest(url)}
+                code={exampleRequest(url, connectorType)}
                 label="Example request"
                 maxHeight="max-h-56"
                 className="mt-2"

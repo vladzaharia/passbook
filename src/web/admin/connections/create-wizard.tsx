@@ -178,7 +178,12 @@ export function CreateConnectionWizard() {
     return (
       <>
         <PageHeader title="Connection created" breadcrumbs={crumbs} />
-        <CreatedStep url={created.url} secret={created.secret} onDone={() => open(created.id)} />
+        <CreatedStep
+          url={created.url}
+          secret={created.secret}
+          connectorType={type ?? ''}
+          onDone={() => open(created.id)}
+        />
       </>
     );
   }

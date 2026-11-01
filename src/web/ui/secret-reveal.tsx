@@ -15,6 +15,8 @@ export interface SecretField {
   secret?: boolean;
   /** The copy button's name when "Copy <label>" reads wrong: "Copy endpoint URL". */
   copyLabel?: string;
+  /** Catches the foil sheen (default true); one sheen per reveal reads best. */
+  sheen?: boolean;
 }
 
 /** "abcdefghij…uvwxyz" for long values; the full value is in the tooltip. */
@@ -23,7 +25,7 @@ export function middle(value: string, keep = 12): string {
 }
 
 /** A labelled value with Show and Copy in their own columns. */
-export function CopyField({ label, value, secret = true, copyLabel }: SecretField) {
+export function CopyField({ label, value, secret = true, copyLabel, sheen = true }: SecretField) {
   const id = useId();
   const [shown, setShown] = useState(!secret);
   const text = shown ? middle(value) : '•'.repeat(Math.min(24, Math.max(12, value.length)));
@@ -36,7 +38,10 @@ export function CopyField({ label, value, secret = true, copyLabel }: SecretFiel
         <Tooltip content={shown && text !== value ? value : undefined}>
           <output
             aria-labelledby={id}
-            className="wl-sheen-once relative block min-w-0 overflow-hidden truncate rounded-md border border-border bg-surface-sunken px-3 py-2 font-mono text-xs text-fg-strong"
+            className={cn(
+              'relative block min-w-0 overflow-hidden truncate rounded-md border border-border bg-surface-sunken px-3 py-2 font-mono text-xs text-fg-strong',
+              sheen && 'wl-sheen-once',
+            )}
           >
             {shown ? (
               text

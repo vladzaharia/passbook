@@ -44,6 +44,7 @@ const config = z.object({
     .default('/{ref}')
     .meta({
       'x-label': 'Record path',
+      'x-widget': 'text',
       'x-help': 'Added to the base URL. {ref} is the record ID.',
       'x-placeholder': '/members/{ref}',
       'x-order': 2,
@@ -92,6 +93,7 @@ const config = z.object({
     .object({
       path: path.meta({
         'x-label': 'List path',
+        'x-widget': 'text',
         'x-help': 'Returns changed records page by page.',
         'x-placeholder': '/members',
       }),

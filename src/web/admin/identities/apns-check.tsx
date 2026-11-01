@@ -57,6 +57,7 @@ export function ApnsRow({ identity }: { identity: Identity }) {
   const check = useCheckApns(identity.id);
   const [result, setResult] = useState<Result>();
   const [answer, setAnswer] = useState<{ n: number; ok: boolean }>();
+  const [ringing, setRinging] = useState(false);
   const seal = useRef<HTMLSpanElement>(null);
   const health: Health = result?.health ?? identity.apnsHealth;
   const reason = result ? result.reason : identity.apnsReason;
@@ -75,14 +76,19 @@ export function ApnsRow({ identity }: { identity: Identity }) {
 
   async function run() {
     let ok = false;
+    setRinging(true);
+    // The rings make at least one full pass, so a fast answer still reads as a check.
+    const minimum = new Promise((r) => setTimeout(r, 640));
     try {
-      const next = await check.mutateAsync();
+      const [next] = await Promise.all([check.mutateAsync(), minimum]);
       setResult(next);
       ok = next.health === 'healthy';
     } catch {
       // check.error renders under the row; the seal shakes like any failed check.
+      await minimum;
       setResult(undefined);
     }
+    setRinging(false);
     setAnswer((a) => ({ n: (a?.n ?? 0) + 1, ok }));
   }
 
@@ -92,7 +98,7 @@ export function ApnsRow({ identity }: { identity: Identity }) {
         <span
           ref={seal}
           aria-hidden
-          data-pending={check.isPending || undefined}
+          data-pending={ringing || undefined}
           className={cn(
             'wl-apns-seal inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface-sunken',
             health === 'healthy' ? 'text-success' : bad ? 'text-danger' : 'text-fg-muted',
@@ -114,12 +120,12 @@ export function ApnsRow({ identity }: { identity: Identity }) {
             variant="ghost"
             size="sm"
             className="ml-auto"
-            disabled={check.isPending}
-            aria-busy={check.isPending || undefined}
+            disabled={ringing}
+            aria-busy={ringing || undefined}
             iconStart={<ACTION_ICON.recheck aria-hidden />}
             onClick={() => void run()}
           >
-            {check.isPending ? 'Checking' : 'Check'}
+            {ringing ? 'Checking' : 'Check'}
           </Button>
         ) : null}
       </div>

@@ -91,7 +91,9 @@ export const WIZARD_HIDDEN = (flat: Obj | undefined, authType: string): Set<stri
   const hidden = new Set<string>();
   const props = flat && isObj(flat.properties) ? flat.properties : {};
   for (const [key, raw] of Object.entries(props)) {
+    // Webhook headers and list pointers keep their defaults; the Configuration tab edits them.
     if (key.startsWith('webhook.') || key === 'auth.type') hidden.add(key);
+    if (key.startsWith('list.') && key !== 'list.path') hidden.add(key);
     const tags = isObj(raw) && Array.isArray(raw['x-auth']) ? (raw['x-auth'] as string[]) : null;
     if (tags && !tags.includes(authType)) hidden.add(key);
   }

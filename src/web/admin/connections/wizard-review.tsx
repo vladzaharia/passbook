@@ -29,7 +29,7 @@ const ON_MISSING = { keep: 'Keep the pass', flag: 'Flag the pass', void: 'Void t
 
 function Line({ icon: Icon, children }: { icon: typeof Mail; children: ReactNode }) {
   return (
-    <span className="inline-flex min-w-0 items-center gap-2">
+    <span className="inline-flex min-w-0 items-center gap-2 align-top">
       <Icon aria-hidden className="size-4 shrink-0 text-fg-muted" />
       <span className="min-w-0 truncate">{children}</span>
     </span>

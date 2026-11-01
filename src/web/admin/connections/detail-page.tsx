@@ -169,17 +169,20 @@ export function ConnectionDetailPage({
                 items={[
                   {
                     label: 'Passes',
-                    value: (
-                      <Link
-                        to="/admin/passes"
-                        search={{ connectionId: c.id }}
-                        className="inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums hover:underline"
-                      >
-                        <ENTITY.pass.icon aria-hidden className="size-4" />
-                        {c.metrics.passCount.toLocaleString()}{' '}
-                        {c.metrics.passCount === 1 ? 'pass' : 'passes'}
-                      </Link>
-                    ),
+                    value:
+                      c.metrics.passCount === 0 ? (
+                        'None'
+                      ) : (
+                        <Link
+                          to="/admin/passes"
+                          search={{ connectionId: c.id }}
+                          className="inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums hover:underline"
+                        >
+                          <ENTITY.pass.icon aria-hidden className="size-4" />
+                          {c.metrics.passCount.toLocaleString()}{' '}
+                          {c.metrics.passCount === 1 ? 'pass' : 'passes'}
+                        </Link>
+                      ),
                   },
                   { label: 'Organization', value: orgName },
                   { label: 'Creates passes', value: c.autoCreate ? 'On' : 'Off' },

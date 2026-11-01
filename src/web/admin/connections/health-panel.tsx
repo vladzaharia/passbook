@@ -22,7 +22,7 @@ import {
   StatusPill,
   Tooltip,
 } from '../../ui/index.ts';
-import { clock, healthSentence, overdue } from './health-text.ts';
+import { healthSentence, overdue } from './health-text.ts';
 import { errorMessage } from './labels.ts';
 import './connections.css';
 
@@ -204,11 +204,6 @@ export function HealthPanel({
                 {c.lastErrorCode}
                 {c.lastErrorAt ? ` · ${formatDateTime(c.lastErrorAt)}` : ''}
               </span>
-            </Callout>
-          ) : null}
-          {late ? (
-            <Callout tone="warning">
-              The next run was due {clock(c.nextRunAt ?? now, now)} and has not started.
             </Callout>
           ) : null}
           {c.runs.length ? <RunStrip runs={c.runs} /> : null}
