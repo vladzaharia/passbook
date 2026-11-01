@@ -104,6 +104,7 @@ export function PassDetailPage({ passId }: { passId: string }) {
   return (
     <>
       <PageHeader
+        size="lg"
         title={name}
         description={pass.orgName}
         breadcrumbs={[...CRUMBS, { label: name }]}

@@ -71,6 +71,8 @@ export interface PageHeaderProps {
   actions?: ReactNode;
   /** Match the page body so actions sit next to the content they act on. */
   width?: PageWidth;
+  /** Customer pages use a larger title at >=640. */
+  size?: 'md' | 'lg';
   className?: string;
 }
 
@@ -82,6 +84,7 @@ export function PageHeader({
   meta,
   actions,
   width = 'full',
+  size = 'md',
   className,
 }: PageHeaderProps) {
   useEffect(() => {
@@ -92,7 +95,13 @@ export function PageHeader({
       {breadcrumbs?.length ? <Breadcrumbs items={breadcrumbs} /> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 tabIndex={-1} className="text-2xl font-semibold text-fg-strong">
+          <h1
+            tabIndex={-1}
+            className={cn(
+              'text-2xl font-semibold tracking-[-0.015em] text-fg-strong',
+              size === 'lg' && 'sm:text-3xl',
+            )}
+          >
             {title}
           </h1>
           {description ? <p className="mt-1 text-sm text-fg-muted">{description}</p> : null}

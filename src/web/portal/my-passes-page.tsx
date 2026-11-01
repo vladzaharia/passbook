@@ -140,7 +140,7 @@ export function MyPassesPage() {
 
   return (
     <>
-      <PageHeader title="My passes" />
+      <PageHeader title="My passes" size="lg" />
       {body}
     </>
   );
