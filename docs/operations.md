@@ -12,6 +12,8 @@
 - Local dev has no APNs binding and no Analytics SQL binding: push is "unavailable", charts read D1.
 - Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
   `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
+- Demo data: with `npm run dev` running, `node tools/seed-demo.ts` (token from `npm run breakglass`;
+  `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys.
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
 
