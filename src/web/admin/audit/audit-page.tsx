@@ -208,14 +208,14 @@ export function AuditPage({
                 header: 'Time',
                 id: 'at',
                 cell: ({ row }) => (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
+                    type="button"
+                    className="rounded-sm text-left whitespace-nowrap text-fg hover:underline"
                     onClick={() => onSearch({ ...filters, entry: row.original.id })}
                   >
                     {formatDateTime(row.original.at)}
                     <span className="sr-only"> details for {actionLabel(row.original.action)}</span>
-                  </Button>
+                  </button>
                 ),
               },
               {
@@ -242,7 +242,7 @@ export function AuditPage({
                 header: 'Org',
                 id: 'org',
                 meta: { hideBelow: 'xl' },
-                cell: ({ row }) => (row.original.orgId ? orgName(row.original.orgId) : ''),
+                cell: ({ row }) => (row.original.orgId ? orgName(row.original.orgId) : '—'),
               },
             ]}
           />

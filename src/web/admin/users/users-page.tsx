@@ -3,6 +3,7 @@ import { Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Badge,
+  Button,
   DataTable,
   EmptyState,
   ErrorState,
@@ -76,7 +77,7 @@ export function UsersPage({
             onSearch({ ...search, status: v === ALL ? undefined : (v as 'active' | 'disabled') })
           }
           options={[
-            { value: ALL, label: 'All statuses' },
+            { value: ALL, label: 'Status: all' },
             { value: 'active', label: 'Active' },
             { value: 'disabled', label: 'Disabled' },
           ]}
@@ -96,6 +97,13 @@ export function UsersPage({
                 icon={Users}
                 title={filtered ? 'No users match' : 'No users yet'}
                 description={filtered ? undefined : 'Users appear after their first sign-in.'}
+                action={
+                  filtered ? (
+                    <Button variant="outline" onClick={() => onSearch({})}>
+                      Clear filters
+                    </Button>
+                  ) : undefined
+                }
               />
             }
             columns={[
@@ -145,12 +153,13 @@ export function UsersPage({
               {
                 header: 'Last sign-in',
                 id: 'last',
+                meta: { nowrap: true },
                 cell: ({ row }) => formatDateTime(row.original.lastLoginAt),
               },
               {
                 header: 'Created',
                 id: 'created',
-                meta: { hideBelow: 'lg', stackHidden: true },
+                meta: { hideBelow: 'lg', stackHidden: true, nowrap: true },
                 cell: ({ row }) => formatDateTime(row.original.createdAt),
               },
             ]}

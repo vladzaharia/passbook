@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { errorMessage } from '../../../lib/errors.ts';
+import { humanizeStatus } from '../../../lib/status.ts';
 import {
   Button,
   Card,
@@ -55,7 +56,7 @@ function BindForm({ pass }: { pass: Pass }) {
   }
 
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <CardHeader title={pass.connectionId ? 'Rebind' : 'Bind to a connection'} />
       <CardBody className="grid gap-4">
         <FormField label="Connection" required>
@@ -116,12 +117,13 @@ function Bound({ pass }: { pass: Pass }) {
   const c = connection.data;
   const lastRun = c.runs[0];
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <CardHeader
         title="Connection"
         actions={
           <Button
             size="sm"
+            variant="outline"
             loading={actions.refreshFromSource.isPending}
             onClick={() =>
               actions.refreshFromSource
@@ -153,7 +155,9 @@ function Bound({ pass }: { pass: Pass }) {
             { label: 'Last refreshed', value: formatDate(pass.lastRefreshedAt) },
             {
               label: 'Last run',
-              value: lastRun ? `${lastRun.outcome} · ${formatDate(lastRun.startedAt)}` : null,
+              value: lastRun
+                ? `${humanizeStatus(lastRun.outcome)} · ${formatDate(lastRun.startedAt)}`
+                : null,
             },
             { label: 'Sync error', value: pass.syncErrorCode, mono: true },
           ]}

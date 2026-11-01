@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { DeliveryEntrySchema, type PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../../lib/api.ts';
 import { errorMessage } from '../../../lib/errors.ts';
+import { deliveryKindLabel } from '../../../lib/status.ts';
 import {
   Button,
   Card,
@@ -75,7 +76,12 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
   retryRef.current = retry;
   const columns = useMemo<ColumnDef<Entry, never>[]>(
     () => [
-      { id: 'kind', header: 'Kind', enableSorting: false, cell: ({ row }) => row.original.kind },
+      {
+        id: 'kind',
+        header: 'Kind',
+        enableSorting: false,
+        cell: ({ row }) => deliveryKindLabel(row.original.kind),
+      },
       {
         id: 'state',
         header: 'State',
@@ -93,7 +99,7 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
         header: 'Error',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-mono text-xs">{row.original.errorCode ?? ''}</span>
+          <span className="font-mono text-xs">{row.original.errorCode ?? '—'}</span>
         ),
       },
       {
@@ -151,7 +157,7 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
             />
           )}
           <p className="border-t border-border px-4 py-3 text-xs text-fg-muted">
-            Accepted means handed off, not received.
+            Sent means handed off, not received.
           </p>
         </div>
       </Card>

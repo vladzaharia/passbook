@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
+import { causeLabel } from '../../../lib/status.ts';
 import {
   Badge,
   Button,
@@ -63,7 +64,8 @@ export function VersionsTab({
                 <div className="text-sm">
                   <span className="font-medium text-fg-strong">v{v.version}</span>
                   <span className="ml-3 text-xs text-fg-muted">
-                    {v.cause} · template {v.templateVersion.slice(0, 8)} · {formatDate(v.createdAt)}
+                    {causeLabel(v.cause)} · template {v.templateVersion.slice(0, 8)} ·{' '}
+                    {formatDate(v.createdAt)}
                   </span>
                   {v.purged ? <Badge className="ml-2">Purged</Badge> : null}
                 </div>

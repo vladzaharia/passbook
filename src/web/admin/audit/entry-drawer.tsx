@@ -19,7 +19,7 @@ export function EntryDrawer({
   const view = describeDetail(entry?.detail);
   return (
     <Sheet open={entry !== undefined} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent title={entry ? actionLabel(entry.action) : 'Audit entry'} className="w-[32rem]">
+      <SheetContent title={entry ? actionLabel(entry.action) : 'Audit entry'} className="w-96">
         {entry ? (
           <div className="flex flex-col gap-5 overflow-y-auto p-4">
             <KeyValue

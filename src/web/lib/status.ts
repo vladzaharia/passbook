@@ -92,3 +92,19 @@ export function humanizeStatus(key: string): string {
   const text = key.replace(/[_-]+/g, ' ').trim().toLowerCase();
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+const CAUSE_LABEL: Record<string, string> = {
+  create: 'Created',
+  admin: 'Admin edit',
+  api: 'API',
+  connection: 'Connection sync',
+  user_refresh: 'Holder refresh',
+  template_upgrade: 'Template upgrade',
+  resign: 'Re-signed',
+};
+
+const DELIVERY_KIND_LABEL: Record<string, string> = { push: 'Push', email: 'Email' };
+
+export const causeLabel = (key: string): string => CAUSE_LABEL[key] ?? humanizeStatus(key);
+export const deliveryKindLabel = (key: string): string =>
+  DELIVERY_KIND_LABEL[key] ?? humanizeStatus(key);
