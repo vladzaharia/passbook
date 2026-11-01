@@ -11,7 +11,6 @@ import {
   type Component,
   checkBuild,
   checkConnections,
-  checkCron,
   checkDatabase,
   checkEmail,
   checkOidc,
@@ -22,6 +21,7 @@ import {
   SEVERITY,
   worst,
 } from './checks.ts';
+import { checkCron } from './cron-check.ts';
 import { recentWorkflowRuns } from './repo.ts';
 
 export { lastCronRun, recordCronRun } from './cron.ts';

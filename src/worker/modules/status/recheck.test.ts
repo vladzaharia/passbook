@@ -6,7 +6,8 @@ import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
-import { clearOidcCache, isDeployed } from './checks.ts';
+import { clearOidcCache } from './checks.ts';
+import { isDeployed } from './cron-check.ts';
 import { clearStatusCache, getStatus, recordCronRun } from './service.ts';
 
 const fake = fakeAuth();

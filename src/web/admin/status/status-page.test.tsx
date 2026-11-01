@@ -165,6 +165,27 @@ describe('status page', () => {
     expect(within(platform).getByText('Backlog')).toBeVisible();
   });
 
+  it('reads No recent run for a deployed cron that has not run in a day', async () => {
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': () =>
+          json({
+            ...status,
+            components: [
+              {
+                ...comp('cron:daily', 'Cron (daily)', 'degraded', 'No recent run.', 'cron'),
+                data: { lastRunAt: null, noRecentRun: true },
+              },
+            ],
+          }),
+        '/api/v1/status/workflows': noRuns,
+      },
+    });
+    const platform = await screen.findByRole('list', { name: 'Platform' });
+    expect(within(platform).getByText('No recent run')).toBeInTheDocument();
+  });
+
   it('shows an inline pulse when no components report', async () => {
     const { container } = await renderApp('/admin/status', {
       session: 'admin',
