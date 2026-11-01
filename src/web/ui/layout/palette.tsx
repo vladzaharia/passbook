@@ -43,6 +43,16 @@ const THEMES: { value: ThemePref; label: string }[] = [
  * Opens with Cmd/Ctrl+K. Pages and actions are local; passes and users search the server
  * (debounced 200 ms); templates, connections and orgs match one loaded page by name.
  */
+/** Extra match terms: "new" lists every create action, Upload template included. */
+const ACTION_KEYWORDS: Record<string, string[]> = {
+  'new-pass': ['create', 'add'],
+  'upload-template': ['new', 'create', 'add', 'import'],
+  'new-connection': ['create', 'add'],
+  'new-org': ['create', 'add', 'tenant'],
+  'new-key': ['create', 'add'],
+  'switch-org': ['organization', 'scope'],
+};
+
 export function AdminPalette({
   open,
   onOpenChange,
@@ -228,7 +238,7 @@ export function AdminPalette({
                   onSelect: () => setPref(t.value),
                 })),
               ],
-              (i) => (i.id.startsWith('theme') ? ['appearance', 'mode'] : ['create', 'add']),
+              (i) => ACTION_KEYWORDS[i.id] ?? (i.id.startsWith('theme') ? ['appearance'] : []),
             ),
           },
         ];

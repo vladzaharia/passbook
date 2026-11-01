@@ -2,7 +2,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Command } from 'cmdk';
 import type { LucideIcon } from 'lucide-react';
 import { Search } from 'lucide-react';
-import type { CSSProperties, ReactNode } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { ActiveIndicator } from './active-indicator.tsx';
 import { LensArt } from './art/lens.tsx';
 import { DialogOverlay } from './dialog.tsx';
@@ -87,6 +87,21 @@ export function CommandPalette({
 }: CommandPaletteProps) {
   const close = () => onOpenChange(false);
   const nothing = groups.every((g) => g.items.length === 0);
+  // The first result stays selected as results arrive (server groups land after local ones),
+  // until the person moves the selection themselves.
+  const ids = groups.flatMap((g) => g.items.map((i) => i.id));
+  const first = ids[0] ?? '';
+  const resultKey = ids.join('|');
+  const [selected, setSelected] = useState(first);
+  const moved = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new query resets the person's pick
+  useEffect(() => {
+    moved.current = false;
+  }, [query]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-pick only when the results change
+  useEffect(() => {
+    if (!moved.current) setSelected(first);
+  }, [resultKey]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -96,7 +111,21 @@ export function CommandPalette({
           className="wl-dialog fixed top-[12vh] left-1/2 z-50 flex max-h-[76vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-[var(--wl-edge),var(--pk-elevation-3)] max-sm:top-[calc(env(safe-area-inset-top)+0.75rem)]"
         >
           <DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>
-          <Command label={placeholder} loop shouldFilter={false} className="flex min-h-0 flex-col">
+          <Command
+            label={placeholder}
+            loop
+            shouldFilter={false}
+            value={selected}
+            onValueChange={setSelected}
+            onKeyDown={(e) => {
+              if (/^(ArrowUp|ArrowDown|Home|End|PageUp|PageDown)$/.test(e.key))
+                moved.current = true;
+            }}
+            onPointerMove={() => {
+              moved.current = true;
+            }}
+            className="flex min-h-0 flex-col"
+          >
             <div className="flex items-center gap-2 border-b border-border px-3">
               <Search aria-hidden className="size-4 text-fg-muted" />
               <Command.Input

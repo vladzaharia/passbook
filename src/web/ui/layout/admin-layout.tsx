@@ -15,12 +15,9 @@ import { SidebarNav } from './sidebar.tsx';
 import { UserMenu } from './user-menu.tsx';
 import { Wordmark } from './wordmark.tsx';
 
-/** "⌘K" on Apple platforms, "Ctrl K" elsewhere. */
-export function shortcutHint(
-  platform = typeof navigator === 'undefined' ? '' : navigator.platform,
-) {
-  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-  return /Mac|iPhone|iPad|iPod/i.test(platform || ua) ? '⌘K' : 'Ctrl K';
+/** "⌘K" on Apple platforms (iPadOS reports a Mac), "Ctrl K" elsewhere. */
+export function shortcutHint(ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  return /Mac|iPhone|iPad|iPod/i.test(ua) ? '⌘K' : 'Ctrl K';
 }
 
 export function AdminLayout() {
