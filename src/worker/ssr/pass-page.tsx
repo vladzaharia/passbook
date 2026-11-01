@@ -2,8 +2,9 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
-import { PassCard } from '../../web/pass-card/index.tsx';
+import { PassCardStage } from '../../web/pass-card/index.tsx';
 import cardCss from '../../web/pass-card/pass-card.css?raw';
+import stageCss from '../../web/pass-card/stage.css?raw';
 import { THEME_CSS, themeToggleHtml, wordmarkHtml } from './theme.ts';
 
 export interface PassPageProps {
@@ -35,6 +36,9 @@ main>.badge{display:block;width:auto;padding:.25rem}
 .handoff p{margin:0}
 @media (hover:hover) and (pointer:fine) and (min-width:40rem){.handoff{display:block}}
 footer{border-top:1px solid var(--line);padding-top:.75rem;color:var(--muted);font-size:.875rem;text-align:center;overflow-wrap:anywhere}
+main>.pc-stage{max-width:22rem}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:no-preference){main>.badge,main>.handoff,main>.banner{animation:rise 260ms cubic-bezier(0,0,0,1) 240ms backwards}}
 `;
 
 const HEADER = wordmarkHtml() + themeToggleHtml;
@@ -55,7 +59,7 @@ export function PassPage(props: PassPageProps) {
         <title>{props.title}</title>
         <script src="/theme-init.js" />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
-        <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + CSS }} />
+        <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + stageCss + CSS }} />
       </head>
       <body>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static wordmark markup, no user input */}
@@ -67,11 +71,7 @@ export function PassPage(props: PassPageProps) {
               {notice}
             </div>
           ) : null}
-          <PassCard view={view} face="front" />
-          <details>
-            <summary>Show back</summary>
-            <PassCard view={view} face="back" />
-          </details>
+          <PassCardStage view={view} tilt={false} enter toggleId="pc-flip" />
           {active ? (
             <a className="badge" href={props.downloadHref}>
               <img src={props.badgeSrc} alt="Add to Apple Wallet" />
