@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { IMAGE_RULES } from '../../../passkit/schema/validate-images.ts';
+import { checkImageSize } from '../../../passkit/schema/image-rules.ts';
 import type {
   BrandingSlotSchema,
   OrgBrandingSchema,
@@ -30,14 +30,6 @@ export const brandingKey = (orgId: string, slot: Slot, scale: 2 | 3) =>
 
 const decode = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
-function sizeError(slot: Slot, scale: 2 | 3, expected: string, w: number, h: number): never {
-  throw new ValidationError(
-    `${slot}@${scale}x.png is ${w}x${h}px; ${slot} should be ${expected}.`,
-    [{ path: `x${scale}`, message: `Use ${expected}.`, code: 'IMAGE_SIZE' }],
-    'IMAGE_SIZE',
-  );
-}
-
 /** Checks one PNG against the passkit image rules at its scale; returns its pixel size. */
 export function checkImage(slot: Slot, scale: 2 | 3, bytes: Uint8Array) {
   if (bytes.length > MAX_BRANDING_BYTES)
@@ -45,17 +37,13 @@ export function checkImage(slot: Slot, scale: 2 | 3, bytes: Uint8Array) {
   const info = parsePng(bytes);
   if (!isPngInfo(info)) throw new ValidationError(`${slot}: ${info.error}`, [], 'IMAGE_INVALID');
   const { width: w, height: h } = info;
-  const rule = IMAGE_RULES[slot];
-  if (rule?.kind === 'exact' && !rule.sizes.some(([a, b]) => w === a * scale && h === b * scale))
-    sizeError(
-      slot,
-      scale,
-      rule.sizes.map(([a, b]) => `${a * scale}x${b * scale}px`).join(' or '),
-      w,
-      h,
+  const verdict = checkImageSize(`${slot}@${scale}x.png`, slot, scale, w, h);
+  if (verdict.level === 'error')
+    throw new ValidationError(
+      verdict.message,
+      [{ path: `x${scale}`, message: `Use ${verdict.expected}.`, code: 'IMAGE_SIZE' }],
+      'IMAGE_SIZE',
     );
-  if (rule?.kind === 'max' && (w > rule.width * scale || h > rule.height * scale))
-    sizeError(slot, scale, `at most ${rule.width * scale}x${rule.height * scale}px`, w, h);
   return { w, h };
 }
 
