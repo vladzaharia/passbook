@@ -13,6 +13,23 @@ const user = (over: Record<string, unknown> = {}) => ({
   lastRoles: ['user'],
   createdAt: 1_700_000_000_000,
   lastLoginAt: 1_700_100_000_000,
+  passCount: 3,
+  signInMethods: ['oidc', 'magic_link'],
+  ...over,
+});
+
+const session = (over: Record<string, unknown> = {}) => ({
+  id: 'sess1',
+  amr: 'oidc',
+  roles: ['user'],
+  createdAt: 1_700_000_000_000,
+  lastSeenAt: 1_700_000_000_000,
+  expiresAt: 4_000_000_000_000,
+  revokedAt: null,
+  userAgent:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1',
+  current: false,
+  method: 'Polaris ID',
   ...over,
 });
 
@@ -24,7 +41,7 @@ const detail = (over: Record<string, unknown> = {}) => ({
   ],
   identities: [
     {
-      provider: 'pocket-id',
+      provider: 'pocketid',
       subject: 's1',
       emailClaim: 'ada@example.com',
       emailVerified: true,
@@ -32,25 +49,15 @@ const detail = (over: Record<string, unknown> = {}) => ({
       lastUsedAt: null,
     },
   ],
-  sessions: [
-    {
-      id: 'sess1',
-      amr: 'oidc',
-      roles: ['user'],
-      createdAt: 1_700_000_000_000,
-      lastSeenAt: 1_700_000_000_000,
-      expiresAt: 4_000_000_000_000,
-      revokedAt: null,
-      userAgent: 'Safari',
-    },
-  ],
-  passes: [
-    { id: 'p1', title: 'Gold card', templateName: 'Gold', orgName: 'Henrys', status: 'active' },
-  ],
+  sessions: [session()],
+  passes: [],
   passCount: 1,
   recentAudit: [],
   ...over,
 });
+
+const settings = () =>
+  json({ items: [], oidc: { issuer: 'https://id.example', adminGroup: null, userGroup: null } });
 
 describe('parseUsersSearch', () => {
   it('drops blanks and unknown statuses', () => {
@@ -66,7 +73,7 @@ describe('parseUsersSearch', () => {
 });
 
 describe('users list', () => {
-  it('lists users and is accessible', async () => {
+  it('lists users with avatar, passes link and sign-in methods, accessibly', async () => {
     const { container } = await renderApp('/admin/users', {
       session: 'admin',
       handlers: {
@@ -77,17 +84,27 @@ describe('users list', () => {
       'href',
       '/admin/users/u2',
     );
+    const passes = screen.getByRole('link', { name: /3 passes held by ada@example.com/ });
+    expect(passes.getAttribute('href')).toBe('/admin/passes?q=ada%40example.com');
+    expect(screen.getByText('Polaris ID, Email link')).toBeInTheDocument();
+    // Role chips are neutral, never accent or success.
+    const role = screen.getByText('User', { selector: 'span.rounded-full' });
+    expect(role.className).toContain('text-fg-muted');
+    expect(role.className).not.toMatch(/text-(accent|success)/);
+    expect(screen.getByText('1 user')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('passes the search term and status from the URL', async () => {
-    const { fetchMock } = await renderApp('/admin/users?q=ada&status=disabled', {
+  it('passes the search term and status from the URL; filtered empty shows people and lens', async () => {
+    const { fetchMock, container } = await renderApp('/admin/users?q=zzzz&status=disabled', {
       session: 'admin',
       handlers: { '/api/v1/users': () => json({ items: [], nextCursor: null }) },
     });
     expect(await screen.findByText('No users match')).toBeInTheDocument();
+    expect(container.querySelector('[data-art="people"]')).not.toBeNull();
+    expect(container.querySelector('[data-art="lens-overlay"]')).not.toBeNull();
     const call = fetchMock.mock.calls.map((c) => String(c[0])).find((u) => u.includes('/users?'));
-    expect(call).toContain('q=ada');
+    expect(call).toContain('q=zzzz');
     expect(call).toContain('status=disabled');
   });
 
@@ -109,7 +126,7 @@ describe('users list', () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('cursor=c1'))).toBe(true);
   });
 
-  it('shows the empty and error states', async () => {
+  it('shows the empty state', async () => {
     await renderApp('/admin/users', {
       session: 'admin',
       handlers: { '/api/v1/users': () => json({ items: [], nextCursor: null }) },
@@ -127,26 +144,64 @@ describe('users list', () => {
 });
 
 describe('user detail', () => {
-  it('shows emails, identities, sessions and passes without a11y violations', async () => {
+  it('shows emails, identities, sessions and the account aside without a11y violations', async () => {
     const { container } = await renderApp('/admin/users/u2', {
       session: 'admin',
-      handlers: { '/api/v1/users/u2': () => json(detail()) },
+      handlers: { '/api/v1/users/u2': () => json(detail()), '/api/v1/settings': settings },
     });
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Ada Lovelace' }),
     ).toBeInTheDocument();
     expect(screen.getByText('ada@work.example')).toBeInTheDocument();
     expect(screen.getByText('wallet-users')).toBeInTheDocument();
-    expect(screen.getByText('Safari')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Gold card' })).toHaveAttribute(
+    expect(screen.getByText('Safari on iOS')).toBeInTheDocument();
+    expect(screen.queryByText(/Mozilla/)).toBeNull();
+    expect(screen.getByRole('link', { name: /1 pass/ })).toHaveAttribute(
       'href',
-      '/admin/passes/p1',
+      '/admin/passes?q=ada%40example.com',
     );
-    expect(screen.getByText('Gold · Henrys')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('main')).getByRole('link', { name: 'Audit log' }),
+    ).toBeInTheDocument();
+    expect(await screen.findAllByRole('link', { name: /Manage in Polaris ID/ })).toHaveLength(1);
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('disables a user only after confirmation', async () => {
+  it('marks this device on your own page and hides Disable', async () => {
+    await renderApp('/admin/users/u1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users/u1': () =>
+          json(detail({ id: 'u1', sessions: [session({ current: true }), session({ id: 's2' })] })),
+      },
+    });
+    expect(await screen.findByText('This device')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Revoke Safari on iOS/ })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Disable' })).toBeNull();
+  });
+
+  it('revokes one session without touching the others', async () => {
+    const deleted: string[] = [];
+    await renderApp('/admin/users/u2', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users/u2': () => json(detail({ sessions: [session(), session({ id: 's2' })] })),
+        '/api/v1/users/u2/sessions/s2': (_u, init) => {
+          deleted.push(String(init?.method));
+          return json({ ok: true });
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    const buttons = await screen.findAllByRole('button', { name: /^Revoke Safari on iOS/ });
+    await ui.click(buttons[1] as HTMLElement);
+    await waitFor(() => expect(deleted).toEqual(['DELETE']));
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /^Revoke Safari on iOS/ })).toHaveLength(1),
+    );
+  });
+
+  it('disables a user only after a danger confirm', async () => {
     const patches: unknown[] = [];
     await renderApp('/admin/users/u2', {
       session: 'admin',
@@ -163,8 +218,11 @@ describe('user detail', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Disable' }));
     const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('They are signed out at their next request.')).toBeVisible();
     expect(patches).toEqual([]);
-    await ui.click(within(dialog).getByRole('button', { name: 'Disable' }));
+    const confirm = within(dialog).getByRole('button', { name: 'Disable' });
+    expect(confirm.className).toContain('bg-danger');
+    await ui.click(confirm);
     await waitFor(() => expect(patches).toEqual([{ status: 'disabled' }]));
   });
 
@@ -191,9 +249,43 @@ describe('user detail', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Revoke all' }));
     await ui.click(
-      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Revoke' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Revoke all' }),
     );
     await waitFor(() => expect(revoked).toBe(1));
+  });
+
+  it('makes a verified email primary after confirming', async () => {
+    const posts: string[] = [];
+    await renderApp('/admin/users/u2', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users/u2': () => json(detail()),
+        '/api/v1/users/u2/emails/ada%40work.example/primary': (url) => {
+          posts.push(url.pathname);
+          return json(detail({ primaryEmail: 'ada@work.example' }));
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Actions for ada@work.example' }));
+    await ui.click(await screen.findByRole('menuitem', { name: 'Make primary' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Sign-in emails go to ada@work.example.')).toBeVisible();
+    await ui.click(within(dialog).getByRole('button', { name: 'Make primary' }));
+    await waitFor(() => expect(posts).toHaveLength(1));
+  });
+
+  it('shows No emails for an account without addresses and no Polaris link without an identity', async () => {
+    await renderApp('/admin/users/u2', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users/u2': () => json(detail({ emails: [], identities: [] })),
+        '/api/v1/settings': settings,
+      },
+    });
+    expect(await screen.findByText('No emails')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add verified email')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Polaris ID/ })).toBeNull();
   });
 
   it('shows the API error when adding an email fails', async () => {

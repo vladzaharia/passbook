@@ -1,31 +1,29 @@
 import { Link } from '@tanstack/react-router';
+import { UserCheck } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { ENTITY } from '@/web/lib/entities.ts';
 import { isApiError } from '@/web/lib/errors.ts';
+import { useSession } from '@/web/lib/session.ts';
 import {
-  Badge,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   ConfirmDialog,
+  EntityAvatar,
   ErrorState,
-  KeyValue,
   PageHeader,
-  SkeletonRows,
+  SkeletonDetail,
   StatusPill,
+  TwoPane,
+  toast,
 } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
-import { useIdpUrl } from '../settings/queries.ts';
-import { roleLabel } from './labels.ts';
 import { useUser, useUserMutations } from './queries.ts';
-import { EmailsCard, IdentitiesCard, PassesCard, SessionsCard } from './user-sections.tsx';
+import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-sections.tsx';
 
 export function UserDetailPage({ userId }: { userId: string }) {
   const query = useUser(userId);
+  const session = useSession();
   const { setStatus } = useUserMutations(userId);
   const [confirm, setConfirm] = useState(false);
-  const idpUrl = useIdpUrl();
   const crumbs = [
     { label: 'Users', to: '/admin/users' },
     { label: query.data?.name ?? query.data?.primaryEmail ?? 'User' },
@@ -35,7 +33,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
     return (
       <>
         <PageHeader title="User" breadcrumbs={crumbs} />
-        <SkeletonRows label="Loading user" />
+        <SkeletonDetail label="Loading user" />
       </>
     );
   }
@@ -54,82 +52,60 @@ export function UserDetailPage({ userId }: { userId: string }) {
 
   const user = query.data;
   const disabled = user.status === 'disabled';
+  const self = session.data?.authenticated === true && session.data.user.id === user.id;
+  const name = user.name ?? user.primaryEmail;
   return (
     <>
       <PageHeader
-        width="detail"
-        title={user.name ?? user.primaryEmail}
+        title={name}
         breadcrumbs={crumbs}
+        avatar={<EntityAvatar kind="user" id={user.id} name={name} size={40} />}
         meta={
           <>
-            <StatusPill status={user.status} tone={disabled ? 'neutral' : 'success'}>
-              {disabled ? 'Disabled' : 'Active'}
-            </StatusPill>
-            {user.name ? <span>{user.primaryEmail}</span> : null}
+            <StatusPill status={disabled ? 'disabled' : 'active'} />
+            {user.lastRoles.map((r) => (
+              <StatusPill key={r} status={r} />
+            ))}
+            <Link
+              to="/admin/audit"
+              search={{ targetType: 'user', targetId: user.id }}
+              className="inline-flex min-h-6 items-center gap-1.5 rounded-sm text-fg-muted hover:text-fg-strong hover:underline"
+            >
+              <ENTITY.audit.icon aria-hidden className="size-4" />
+              Audit log
+            </Link>
           </>
         }
         actions={
-          <>
-            <Button variant="outline" asChild>
-              <Link to="/admin/audit" search={{ targetType: 'user', targetId: user.id }}>
-                Audit log
-              </Link>
+          disabled ? (
+            <Button iconStart={<UserCheck aria-hidden />} onClick={() => setConfirm(true)}>
+              Enable
             </Button>
-            <Button variant={disabled ? 'primary' : 'outline'} onClick={() => setConfirm(true)}>
-              {disabled ? 'Enable' : 'Disable'}
+          ) : self ? null : (
+            <Button
+              variant="outline"
+              iconStart={<ACTION_ICON.void aria-hidden />}
+              onClick={() => setConfirm(true)}
+            >
+              Disable
             </Button>
-          </>
+          )
         }
       />
-      <div className="flex max-w-3xl flex-col gap-6">
-        <Card>
-          <CardHeader title="Account" />
-          <CardBody>
-            <KeyValue
-              items={[
-                { label: 'Email', value: user.primaryEmail },
-                { label: 'ID', value: user.id, mono: true },
-                {
-                  label: 'Roles',
-                  value: (
-                    <span className="flex flex-wrap items-center gap-1">
-                      {user.lastRoles.map((r) => (
-                        <Badge key={r}>{roleLabel(r)}</Badge>
-                      ))}
-                      {idpUrl ? (
-                        <a
-                          className="ml-2 text-xs text-accent-fg underline"
-                          href={idpUrl}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          Managed in Polaris ID
-                        </a>
-                      ) : null}
-                    </span>
-                  ),
-                },
-                { label: 'Created', value: formatDateTime(user.createdAt) },
-                { label: 'Last sign-in', value: formatDateTime(user.lastLoginAt) },
-              ]}
-            />
-          </CardBody>
-        </Card>
+      <TwoPane aside={<AccountCard user={user} />}>
         <EmailsCard user={user} />
-        <IdentitiesCard user={user} />
         <SessionsCard user={user} now={Date.now()} />
-        <PassesCard user={user} />
-      </div>
+        <IdentitiesCard user={user} />
+      </TwoPane>
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
-        title={disabled ? 'Enable this user?' : 'Disable this user?'}
+        title={disabled ? `Enable ${name}?` : `Disable ${name}?`}
         description={
-          disabled
-            ? 'The user can sign in again.'
-            : 'The user is refused at their next request. Sessions stay listed until they expire.'
+          disabled ? 'They can sign in again.' : 'They are signed out at their next request.'
         }
         confirmLabel={disabled ? 'Enable' : 'Disable'}
+        destructive={!disabled}
         onConfirm={async () => {
           await setStatus.mutateAsync(disabled ? 'active' : 'disabled');
           toast.success(disabled ? 'User enabled' : 'User disabled');
