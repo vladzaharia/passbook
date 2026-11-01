@@ -64,7 +64,10 @@ function TemplateCard({
         selected ? 'border-accent' : 'border-border',
       )}
     >
-      <div className="pointer-events-none max-h-56 overflow-hidden" aria-hidden>
+      <div
+        className="pointer-events-none max-h-56 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
+        aria-hidden
+      >
         {preview.data ? (
           <PassPreview
             passJson={preview.data.passJson}

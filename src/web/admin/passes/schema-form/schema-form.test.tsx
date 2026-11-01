@@ -231,9 +231,9 @@ describe('SchemaForm', () => {
       expect(screen.getByLabelText('Expires')).toBeDisabled();
     });
 
-    it('defaults the label to None', () => {
+    it('defaults the label to No date', () => {
       render(<Harness schema={expiry()} />);
-      expect(screen.getByRole('checkbox', { name: 'None' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'No date' })).toBeChecked();
     });
 
     it('checking it removes the value; unchecking enables the input', async () => {

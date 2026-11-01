@@ -118,8 +118,8 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
   );
 
   return (
-    <div className="grid gap-4">
-      <Card>
+    <div className="grid min-w-0 gap-6">
+      <Card className="min-w-0">
         <CardHeader
           title="Outbox"
           actions={
@@ -134,9 +134,11 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
             </Button>
           }
         />
-        <CardBody>
+        <div className="min-w-0">
           {delivery.isError ? (
-            <ErrorState error={delivery.error} onRetry={() => void delivery.refetch()} />
+            <CardBody>
+              <ErrorState error={delivery.error} onRetry={() => void delivery.refetch()} />
+            </CardBody>
           ) : (
             <DataTable
               caption="Delivery history"
@@ -148,12 +150,14 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
               empty={<EmptyState icon={Mail} title="Nothing sent yet" />}
             />
           )}
-          <p className="mt-2 text-xs text-fg-muted">Accepted means handed off, not received.</p>
-        </CardBody>
+          <p className="border-t border-border px-4 py-3 text-xs text-fg-muted">
+            Accepted means handed off, not received.
+          </p>
+        </div>
       </Card>
-      <Card>
+      <Card className="min-w-0">
         <CardHeader title="Resend email" />
-        <CardBody className="grid max-w-md gap-3">
+        <CardBody className="grid max-w-md min-w-0 gap-4">
           <FormField
             label="Send to"
             help={

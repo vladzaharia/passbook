@@ -17,6 +17,7 @@ import {
   StatusPill,
 } from '../../ui/index.ts';
 import { useTemplates } from './api.ts';
+import { styleList } from './labels.ts';
 
 export interface TemplateListSearch {
   origin?: 'baked' | 'uploaded' | undefined;
@@ -78,14 +79,14 @@ export function TemplatesListPage({
         meta: { nowrap: true },
         header: 'Org',
         enableSorting: false,
-        cell: ({ row }) => row.original.orgName ?? 'None',
+        cell: ({ row }) => row.original.orgName ?? '—',
       },
       {
         id: 'styles',
         meta: { hideBelow: 'xl', stackHidden: true },
         header: 'Styles',
         enableSorting: false,
-        cell: ({ row }) => row.original.styles.join(', '),
+        cell: ({ row }) => styleList(row.original.styles),
       },
       {
         id: 'version',

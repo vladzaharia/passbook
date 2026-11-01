@@ -24,7 +24,7 @@ function Filter({
   return (
     <Select
       aria-label={label}
-      className="w-40"
+      className="w-full sm:w-40"
       value={value ?? ALL}
       onValueChange={(v) => onChange(v === ALL ? undefined : v)}
       options={[{ value: ALL, label: `${label}: all` }, ...options]}
@@ -42,7 +42,7 @@ function SearchBox({ value, onChange }: { value: string; onChange: (v: string) =
     return () => clearTimeout(t);
   }, [draft, value, onChange]);
   return (
-    <div className="relative w-full sm:w-64">
+    <div className="relative col-span-2 w-full sm:col-span-1 sm:w-64">
       <Search
         aria-hidden
         className="pointer-events-none absolute top-2.5 left-3 size-4 text-fg-muted"
@@ -71,7 +71,7 @@ export function PassListFilters({
   const connections = useConnections({ orgId: search.orgId });
   const active = Object.values(search).some((v) => v !== undefined && v !== '');
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="mb-4 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
       <SearchBox value={search.q ?? ''} onChange={(q) => onChange({ q: q || undefined })} />
       <Filter
         label="Org"

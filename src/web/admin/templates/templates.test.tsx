@@ -40,7 +40,7 @@ describe('templates list', () => {
       'href',
       '/admin/templates/b1',
     );
-    expect(screen.getByText('None')).toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Baked').length).toBeGreaterThan(1);
     expect(seen[0]?.searchParams.get('origin')).toBe('baked');
   });
@@ -87,6 +87,7 @@ describe('template detail', () => {
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
+    await user.click(await screen.findByRole('tab', { name: 'Versions' }));
     expect(await screen.findByText('Missing @3x icon.')).toBeInTheDocument();
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
     await user.click(screen.getByRole('button', { name: 'Report for ffeeddccbbaa' }));
@@ -116,6 +117,7 @@ describe('template detail', () => {
         },
       },
     });
+    await user.click(await screen.findByRole('tab', { name: 'Versions' }));
     await user.click(await screen.findByRole('button', { name: 'Activate ffeeddccbbaa' }));
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('checkbox', { name: /Rebuild all passes/ }));
@@ -181,9 +183,8 @@ describe('template detail', () => {
         '/api/v1/templates/b1/preview': preview,
       },
     });
-    await user.click(await screen.findByRole('tab', { name: 'Inputs' }));
     const select = await screen.findByRole('combobox', { name: 'Organization' });
-    expect(select).toHaveTextContent('None');
+    expect(select).toHaveTextContent('Any org');
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     await user.click(select);
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
@@ -212,7 +213,8 @@ describe('template detail', () => {
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Archive' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Archive' }));
     const dialog = await screen.findByRole('alertdialog');
     expect(dialog).toHaveTextContent('archived while passes use them and deleted when none do');
     await user.click(within(dialog).getByRole('button', { name: 'Archive' }));

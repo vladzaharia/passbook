@@ -111,7 +111,7 @@ export function describeSchema(schema: unknown): FieldGroup[] {
       widget: widgetOf(def, type),
       type,
       required: required.has(key),
-      noneLabel: str(def['x-noneLabel']) ?? 'None',
+      noneLabel: str(def['x-noneLabel']) ?? 'No date',
       hasDefault: 'default' in def && def.default !== undefined,
       options: optionsOf(def),
       schema: def,

@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
+import { cn } from '../../lib/cn.ts';
 import { isApiError } from '../../lib/errors.ts';
 import {
   Button,
@@ -27,6 +28,7 @@ import {
   cleanValues,
   defaultValues,
   type FormValues,
+  keysBoundTo,
   SchemaForm,
   validateValues,
 } from './schema-form/index.ts';
@@ -160,6 +162,23 @@ export function NewPassPage() {
     setStep((s) => s + 1);
   }
 
+  const stepRef = useRef<HTMLLIElement>(null);
+  const firstStep = useRef(true);
+  // A new step opens at its top, not at the previous step's scroll offset.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs on step change only
+  useEffect(() => {
+    if (firstStep.current) {
+      firstStep.current = false;
+      return;
+    }
+    stepRef.current?.focus();
+  }, [step]);
+
+  const hiddenKeys = useMemo(
+    () => keysBoundTo(template.data?.manifest, '/voided'),
+    [template.data],
+  );
+
   const canNext =
     (step === 0 && orgId) ||
     (step === 1 && templateId && template.data) ||
@@ -176,8 +195,13 @@ export function NewPassPage() {
         {STEPS.map((label, i) => (
           <li
             key={label}
+            ref={i === step ? stepRef : undefined}
+            tabIndex={i === step ? -1 : undefined}
             aria-current={i === step ? 'step' : undefined}
-            className={i === step ? 'font-medium text-fg-strong' : 'text-fg-muted'}
+            className={cn(
+              'scroll-mt-20 outline-none',
+              i === step ? 'font-medium text-fg-strong' : 'text-fg-muted',
+            )}
           >
             {i + 1}. {label}
           </li>
@@ -221,6 +245,7 @@ export function NewPassPage() {
               schema={template.data.inputSchema}
               value={input}
               onChange={setInput}
+              hiddenKeys={hiddenKeys}
               showAllErrors={showErrors}
               serverErrors={fieldErrors}
             />

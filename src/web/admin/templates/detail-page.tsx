@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Archive, Copy, Lock, Trash2 } from 'lucide-react';
+import { Archive, Copy, Lock, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
@@ -13,6 +13,10 @@ import {
   ConfirmDialog,
   Dialog,
   DialogContent,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   ErrorState,
   FormField,
   Input,
@@ -29,7 +33,9 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { PassPreviewPanel } from '../passes/pass-preview.tsx';
+import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate, useTemplateActions, useTemplatePreview } from './api.ts';
+import { styleList } from './labels.ts';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { OrgPanel } from './org-panel.tsx';
 import { VersionsPanel } from './versions-panel.tsx';
@@ -103,6 +109,44 @@ function ClonePanel({
   );
 }
 
+function InputFields({ schema }: { schema: unknown }) {
+  const fields = flatFields(describeSchema(schema));
+  if (fields.length === 0) return <p className="p-4 text-sm text-fg-muted">No inputs.</p>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <caption className="sr-only">Template inputs</caption>
+        <thead>
+          <tr className="border-b border-border text-fg-muted">
+            <th scope="col" className="h-10 px-4 font-medium">
+              Name
+            </th>
+            <th scope="col" className="h-10 px-3 font-medium">
+              Label
+            </th>
+            <th scope="col" className="h-10 px-3 font-medium">
+              Type
+            </th>
+            <th scope="col" className="h-10 px-4 font-medium">
+              Required
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {fields.map((f) => (
+            <tr key={f.key} className="border-b border-border last:border-b-0">
+              <td className="px-4 py-2 font-mono text-xs whitespace-nowrap">{f.key}</td>
+              <td className="px-3 py-2 whitespace-nowrap">{f.label}</td>
+              <td className="px-3 py-2 whitespace-nowrap text-fg-muted">{f.widget}</td>
+              <td className="px-4 py-2 whitespace-nowrap">{f.required ? 'Yes' : 'No'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function TemplateDetailPage({ templateId }: { templateId: string }) {
   const navigate = useNavigate();
   const template = useTemplate(templateId);
@@ -140,8 +184,9 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
       <PageHeader
         title={t.name}
         breadcrumbs={crumbs}
-        description={
-          <span className="inline-flex flex-wrap items-center gap-2">
+        description={t.description ?? undefined}
+        meta={
+          <>
             {baked ? (
               <Badge tone="accent">
                 <Lock aria-hidden />
@@ -151,8 +196,7 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
               <Badge>Uploaded</Badge>
             )}
             <StatusPill status={t.status} tone={t.status === 'active' ? 'success' : 'neutral'} />
-            {t.description}
-          </span>
+          </>
         }
         actions={
           <>
@@ -164,24 +208,48 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
               {baked ? 'Customize' : 'Clone'}
             </Button>
             {baked ? null : (
-              <Button
-                variant="danger"
-                iconStart={archives ? <Archive aria-hidden /> : <Trash2 aria-hidden />}
-                onClick={() => setRemove(true)}
-              >
-                {archives ? 'Archive' : 'Delete'}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
+                    More
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem destructive onSelect={() => setRemove(true)}>
+                    {archives ? <Archive aria-hidden /> : <Trash2 aria-hidden />}
+                    {archives ? 'Archive' : 'Delete'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </>
         }
       />
-      <Tabs defaultValue="versions">
+      <Tabs defaultValue="overview" className="min-w-0">
         <TabsList aria-label="Template sections">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="versions">Versions</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="manifest">Manifest</TabsTrigger>
           <TabsTrigger value="inputs">Inputs</TabsTrigger>
         </TabsList>
+        <TabsContent value="overview">
+          <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
+            <OrgPanel key={t.orgId ?? 'none'} templateId={t.id} orgId={t.orgId} />
+            <Card>
+              <CardHeader title="Details" />
+              <CardBody>
+                <KeyValue
+                  items={[
+                    { label: 'Slug', value: t.slug, mono: true },
+                    { label: 'Styles', value: styleList(t.styles) },
+                    { label: 'Passes', value: String(t.passCount) },
+                  ]}
+                />
+              </CardBody>
+            </Card>
+          </div>
+        </TabsContent>
         <TabsContent value="versions">
           <VersionsPanel template={t} />
         </TabsContent>
@@ -211,20 +279,19 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
           )}
         </TabsContent>
         <TabsContent value="inputs">
-          <div className="grid gap-4">
-            <OrgPanel key={t.orgId ?? 'none'} templateId={t.id} orgId={t.orgId} />
+          <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
             <Card>
-              <CardBody>
-                <KeyValue
-                  items={[
-                    { label: 'Slug', value: t.slug, mono: true },
-                    { label: 'Styles', value: t.styles.join(', ') },
-                    { label: 'Passes', value: String(t.passCount) },
-                  ]}
-                />
-              </CardBody>
+              <CardHeader title="Fields" />
+              <InputFields schema={t.inputSchema} />
             </Card>
-            <JsonViewer value={t.inputSchema} label="Input schema" maxHeight="max-h-[32rem]" />
+            <details className="rounded-lg border border-border bg-surface-raised">
+              <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-fg-strong">
+                Input schema (JSON)
+              </summary>
+              <div className="border-t border-border p-4">
+                <JsonViewer value={t.inputSchema} label="Input schema" maxHeight="max-h-[32rem]" />
+              </div>
+            </details>
           </div>
         </TabsContent>
       </Tabs>

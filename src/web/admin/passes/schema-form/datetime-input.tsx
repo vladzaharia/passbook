@@ -31,11 +31,11 @@ export function DateTimeInput({ value, onValue, disabled, onBlur, ...control }: 
           setDraft(e.target.value);
           onValue(e.target.value ? localToIso(e.target.value, zone) : undefined);
         }}
-        className="min-w-0 flex-1"
+        className="min-w-56 flex-1"
       />
       <Select
         aria-label="Time zone"
-        className="w-52"
+        className="w-52 max-w-full"
         disabled={disabled}
         value={zone}
         onValueChange={(z) => {

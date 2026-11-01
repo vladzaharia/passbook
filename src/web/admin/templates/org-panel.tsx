@@ -37,7 +37,7 @@ export function OrgPanel({ templateId, orgId }: { templateId: string; orgId: str
                 setError(undefined);
               }}
               options={[
-                { value: NONE, label: 'None' },
+                { value: NONE, label: 'Any org' },
                 ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
               ]}
             />
