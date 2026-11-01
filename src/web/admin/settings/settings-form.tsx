@@ -1,15 +1,17 @@
-import { useMemo, useState } from 'react';
+import { type ReactNode, useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
+import { cn } from '@/web/lib/cn.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
-  CheckboxField,
+  Card,
   ErrorState,
-  FormField,
   Input,
+  Label,
   SaveBar,
   SkeletonRows,
+  Switch,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
@@ -29,28 +31,44 @@ function FieldInput({
   field,
   value,
   error,
+  flat,
   onChange,
 }: {
+  flat: boolean;
   field: SettingField;
   value: string | boolean;
   error: string | undefined;
   onChange: (v: string | boolean) => void;
 }) {
+  const id = useId();
+  const helpId = field.help ? `${id}-help` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
+  const label = (
+    <div className="min-w-0">
+      <Label htmlFor={id} className="text-fg-strong">
+        {field.label}
+      </Label>
+      {field.help ? (
+        <p id={helpId} className="mt-0.5 text-sm text-fg-muted">
+          {field.help}
+        </p>
+      ) : null}
+    </div>
+  );
+  let control: ReactNode;
   if (field.kind === 'boolean') {
-    return (
-      <div className="flex flex-col gap-1">
-        <CheckboxField
-          label={field.label}
-          checked={value === true}
-          onCheckedChange={(c) => onChange(c === true)}
-        />
-        {field.help ? <p className="ml-6 text-xs text-fg-muted">{field.help}</p> : null}
-      </div>
+    control = (
+      <Switch
+        id={id}
+        aria-describedby={describedBy}
+        checked={value === true}
+        onCheckedChange={(c) => onChange(c)}
+      />
     );
-  }
-  return (
-    <FormField label={field.label} help={field.help} error={error}>
-      {(props) => (
+  } else {
+    control = (
+      <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
           {field.kind === 'color' ? (
             <input
@@ -62,17 +80,51 @@ function FieldInput({
             />
           ) : null}
           <Input
-            {...props}
+            id={id}
+            aria-describedby={describedBy}
+            aria-invalid={error ? true : undefined}
             inputMode={field.kind === 'int' ? 'numeric' : undefined}
-            className="max-w-sm"
+            className={field.kind === 'int' ? 'w-28' : 'max-w-sm'}
             value={String(value)}
             onChange={(e) => onChange(e.target.value)}
           />
           {field.suffix ? <span className="text-sm text-fg-muted">{field.suffix}</span> : null}
         </div>
+        {error ? (
+          <p id={errorId} role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div
+      className={cn(
+        !flat &&
+          'grid gap-x-8 gap-y-2 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-start',
+        flat && 'flex flex-col gap-1.5',
+        !flat &&
+          field.kind === 'boolean' &&
+          'grid-cols-[minmax(0,1fr)_auto] items-center md:grid-cols-[minmax(0,1fr)_auto]',
       )}
-    </FormField>
+    >
+      {label}
+      <div className={field.kind === 'boolean' ? 'justify-self-end' : undefined}>{control}</div>
+    </div>
   );
+}
+
+/** Sections in field order; ungrouped fields share one untitled section. */
+function sections(fields: readonly SettingField[]) {
+  const out: { title: string | null; fields: SettingField[] }[] = [];
+  for (const f of fields) {
+    const title = f.group ?? null;
+    const last = out[out.length - 1];
+    if (last && last.title === title) last.fields.push(f);
+    else out.push({ title, fields: [f] });
+  }
+  return out;
 }
 
 export interface SettingsFormProps {
@@ -121,21 +173,36 @@ export function SettingsForm({ scope, fields }: SettingsFormProps) {
 
   return (
     <form
-      className="flex flex-col gap-5"
+      className={cn('flex flex-col gap-8', dirty && 'pb-20')}
       onSubmit={(e) => {
         e.preventDefault();
         void onSave();
       }}
     >
-      {fields.map((f) => (
-        <FieldInput
-          key={f.key}
-          field={f}
-          value={draft[f.key] ?? ''}
-          error={errors[f.key]}
-          onChange={(v) => setEdits((prev) => ({ ...prev, [f.key]: v }))}
-        />
-      ))}
+      {sections(fields).map((section) => {
+        const rows = section.fields.map((f) => (
+          <FieldInput
+            key={f.key}
+            field={f}
+            flat={!section.title}
+            value={draft[f.key] ?? ''}
+            error={errors[f.key]}
+            onChange={(v) => setEdits((prev) => ({ ...prev, [f.key]: v }))}
+          />
+        ));
+        if (!section.title)
+          return (
+            <div key="flat" className="flex flex-col gap-5">
+              {rows}
+            </div>
+          );
+        return (
+          <section key={section.title} aria-label={section.title} className="flex flex-col gap-2">
+            <h2 className="text-base font-semibold text-fg-strong">{section.title}</h2>
+            <Card className="divide-y divide-border">{rows}</Card>
+          </section>
+        );
+      })}
       <SaveBar
         dirty={dirty}
         saving={save.isPending}

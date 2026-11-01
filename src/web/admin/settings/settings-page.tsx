@@ -1,16 +1,22 @@
-import { Badge, Card, CardBody, CardHeader, KeyValue, PageHeader } from '@/web/ui/index.ts';
+import { ExternalLink } from 'lucide-react';
+import { Badge, Card, KeyValue, PageHeader } from '@/web/ui/index.ts';
 import { PLATFORM_FIELDS } from './fields.ts';
 import { useSettings } from './queries.ts';
 import { SettingsForm } from './settings-form.tsx';
 
-function OidcCard() {
+function OidcSection() {
   const { data } = useSettings('platform');
   if (!data) return null;
   const { oidc } = data;
   return (
-    <Card>
-      <CardHeader title="Polaris ID" actions={<Badge>Read-only</Badge>} />
-      <CardBody>
+    <section aria-labelledby="oidc-heading" className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <h2 id="oidc-heading" className="text-base font-semibold text-fg-strong">
+          Polaris ID
+        </h2>
+        <Badge>Read-only</Badge>
+      </div>
+      <Card className="p-4">
         <KeyValue
           items={[
             { label: 'Issuer', value: oidc.issuer, mono: true },
@@ -18,20 +24,17 @@ function OidcCard() {
             { label: 'User group', value: oidc.userGroup, mono: true },
           ]}
         />
-        <p className="mt-3 text-sm text-fg-muted">
-          Managed in{' '}
-          <a
-            className="text-accent-fg underline"
-            href={oidc.issuer}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Polaris ID
-          </a>
-          .
-        </p>
-      </CardBody>
-    </Card>
+        <a
+          className="mt-4 inline-flex min-h-6 items-center gap-1 text-sm text-accent-fg underline"
+          href={oidc.issuer}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Polaris ID
+          <ExternalLink aria-hidden className="size-3.5" />
+        </a>
+      </Card>
+    </section>
   );
 }
 
@@ -39,14 +42,9 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" />
-      <div className="flex max-w-2xl flex-col gap-6">
-        <Card>
-          <CardHeader title="Platform" />
-          <CardBody>
-            <SettingsForm scope="platform" fields={PLATFORM_FIELDS} />
-          </CardBody>
-        </Card>
-        <OidcCard />
+      <div className="flex max-w-3xl flex-col gap-8">
+        <SettingsForm scope="platform" fields={PLATFORM_FIELDS} />
+        <OidcSection />
       </div>
     </>
   );

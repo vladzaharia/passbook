@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
@@ -37,7 +38,7 @@ describe('sortBySeverity', () => {
 });
 
 describe('status page', () => {
-  it('lists components by severity and has no a11y violations', async () => {
+  it('groups components, sorts by severity and has no a11y violations', async () => {
     const { container } = await renderApp('/admin/status', {
       session: 'admin',
       handlers: {
@@ -45,14 +46,38 @@ describe('status page', () => {
         '/api/v1/status/workflows': () => json({ items: [] }),
       },
     });
-    const list = await screen.findByRole('list', { name: 'Components' });
+    const list = await screen.findByRole('list', { name: 'Platform' });
     const labels = within(list)
       .getAllByRole('listitem')
-      .map((li) => li.querySelector('p')?.textContent);
+      .map((li) => li.querySelector('span.font-medium')?.textContent);
     expect(labels).toEqual(['Beta', 'Delta', 'Cosmos', 'Alpha']);
     expect(screen.getByText('Queue backlog 900')).toBeInTheDocument();
+    expect(screen.getByText('1 component failing')).toBeInTheDocument();
     expect(await screen.findByText('No workflow runs')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('puts each kind in its group and shows details behind a disclosure', async () => {
+    const withData = {
+      ...status,
+      components: [
+        { ...comp('q', 'Job queue', 'verified'), kind: 'queue', data: { backlog: 2, dlq: 1 } },
+        { ...comp('o', 'Pocket ID', 'verified'), kind: 'oidc' },
+      ],
+    };
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': () => json(withData),
+        '/api/v1/status/workflows': () => json({ items: [] }),
+      },
+    });
+    const platform = await screen.findByRole('list', { name: 'Platform' });
+    expect(within(platform).getByText('2 queued, 1 dead-lettered')).toBeInTheDocument();
+    expect(within(platform).getByText('Backlog')).not.toBeVisible();
+    await userEvent.setup().click(within(platform).getByText('Details'));
+    expect(within(platform).getByText('Backlog')).toBeVisible();
+    expect(screen.getByRole('list', { name: 'Sign-in' })).toBeInTheDocument();
   });
 
   it('maps data keys to labels and hides null values', () => {
@@ -75,7 +100,7 @@ describe('status page', () => {
         '/api/v1/status/workflows': () => json({ items: [] }),
       },
     });
-    await screen.findByRole('list', { name: 'Components' });
+    await screen.findByRole('list', { name: 'Platform' });
     expect(screen.getAllByText(/Checked/)).toHaveLength(1);
     expect(screen.queryByText(/^Build /)).not.toBeInTheDocument();
   });
