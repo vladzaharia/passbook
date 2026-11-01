@@ -17,7 +17,7 @@ export function PortalLayout() {
         <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-2 px-4 sm:gap-4">
           <Wordmark />
           <nav aria-label="Main" className="relative mr-auto flex min-w-0 gap-1 overflow-x-auto">
-            <ActiveIndicator watch={pathname} />
+            <ActiveIndicator />
             {PORTAL_NAV.map((item) => {
               const active = isActivePath(pathname, item.to);
               return (

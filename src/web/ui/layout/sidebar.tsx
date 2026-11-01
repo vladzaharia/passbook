@@ -7,7 +7,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav aria-label="Admin" className="relative flex flex-col gap-0.5 p-2">
-      <ActiveIndicator watch={pathname} />
+      <ActiveIndicator />
       {ADMIN_NAV.map((item) => {
         const active = isActivePath(pathname, item.to);
         return (
