@@ -14,6 +14,8 @@ export interface SettingRowProps {
 
 const ROW = 'px-4 py-4';
 const SPLIT = 'grid gap-x-8 gap-y-2 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-center';
+/** Number fields stay beside their label on phones too, like switches. */
+const SPLIT_NUMBER = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 md:gap-x-8';
 
 function Control({
   field,
@@ -91,7 +93,12 @@ export function SettingRow({ field, value, error, flat, onChange }: SettingRowPr
     </p>
   ) : null;
   const control = (
-    <div className={cn('flex min-w-0 flex-col gap-1', !flat && 'md:items-end')}>
+    <div
+      className={cn(
+        'flex min-w-0 flex-col gap-1',
+        !flat && (field.kind === 'int' ? 'items-end' : 'md:items-end'),
+      )}
+    >
       <Control
         field={field}
         value={value}
@@ -101,7 +108,13 @@ export function SettingRow({ field, value, error, flat, onChange }: SettingRowPr
         onChange={onChange}
       />
       {error ? (
-        <p id={errorId} className={cn('text-xs text-danger', !flat && 'md:text-right')}>
+        <p
+          id={errorId}
+          className={cn(
+            'text-xs text-danger',
+            !flat && (field.kind === 'int' ? 'text-right' : 'md:text-right'),
+          )}
+        >
           {error}
         </p>
       ) : null}
@@ -117,7 +130,7 @@ export function SettingRow({ field, value, error, flat, onChange }: SettingRowPr
     );
   }
   return (
-    <div className={cn(ROW, SPLIT)}>
+    <div className={cn(ROW, field.kind === 'int' ? SPLIT_NUMBER : SPLIT)}>
       <div className="flex min-w-0 flex-col gap-0.5">
         <Label htmlFor={id} className="text-fg-strong">
           {field.label}

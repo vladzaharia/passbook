@@ -142,7 +142,7 @@ describe('settings page', () => {
     for (const p of container.querySelectorAll('form p[id$="-help"]'))
       expect(p).toHaveClass('text-xs', 'text-fg-muted');
     const cooldown = screen.getByLabelText('Refresh cooldown');
-    expect(cooldown.closest('.md\\:items-end')).not.toBeNull();
+    expect(cooldown.closest('.items-end')).not.toBeNull();
     expect(cooldown.parentElement).toHaveTextContent('s');
   });
 
