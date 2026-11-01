@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Wallet, WalletCards } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { cn } from '../lib/cn.ts';
@@ -113,7 +113,8 @@ export function MyPassesPage() {
   } else if (passes.length === 0) {
     body = (
       <EmptyState
-        icon={WalletCards}
+        art="wallet"
+        artState="empty"
         title="No passes"
         description="Passes sent to your sign-in email appear here."
       />

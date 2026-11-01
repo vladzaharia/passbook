@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { useOrgFilter } from '@/web/lib/org-filter.tsx';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Button,
   Card,
@@ -98,7 +98,7 @@ function DeleteOrg({ id, slug, name }: { id: string; slug: string; name: string 
 
 export function OrgDetailPage({ orgId }: { orgId: string }) {
   const query = useOrg(orgId);
-  const { setOrgId } = useOrgFilter();
+  const { setOrgId } = useOrgScope();
   const navigate = useNavigate();
   const crumbs = [
     { label: 'Organizations', to: '/admin/orgs' },

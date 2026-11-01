@@ -89,7 +89,12 @@ export function ImagesTab({
           ) : assets.isError ? (
             <ErrorState error={assets.error} onRetry={() => void assets.refetch()} />
           ) : assets.data.items.length === 0 ? (
-            <EmptyState title="No overrides" description="The template images are used." />
+            <EmptyState
+              inline
+              art="frames"
+              title="No overrides"
+              description="The template images are used."
+            />
           ) : (
             <ul className="divide-y divide-border">
               {assets.data.items.map((a) => (

@@ -101,7 +101,7 @@ export function StatusPage() {
             onRecheck={() => status.refetch()}
           />
           {data.components.length === 0 ? (
-            <EmptyState title="No components reported" />
+            <EmptyState art="pulse" title="No components reported" />
           ) : (
             groupComponents(data.components).map((g) => {
               const worst = countStates(g.items);

@@ -125,7 +125,7 @@ describe('DataTable', () => {
         caption="Passes"
         columns={COLUMNS}
         data={[]}
-        empty={<EmptyState title="No passes" />}
+        empty={<EmptyState art="passes" title="No passes" />}
       />,
     );
     expect(screen.getByText('No passes')).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('DataTable', () => {
         columns={COLUMNS}
         data={[]}
         loading
-        empty={<EmptyState title="No passes" />}
+        empty={<EmptyState art="passes" title="No passes" />}
       />,
     );
     expect(screen.getByRole('status')).toHaveTextContent('Loading Passes');
@@ -191,7 +191,7 @@ describe('states', () => {
   it('EmptyState and SkeletonRows have no violations', async () => {
     const { container } = render(
       <div>
-        <EmptyState title="Nothing here" description="Create one." />
+        <EmptyState art="passes" title="Nothing here" description="Create one." />
         <SkeletonRows rows={2} />
       </div>,
     );

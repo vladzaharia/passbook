@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Mail, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { DeliveryEntrySchema, type PassDetailSchema } from '@/shared/contracts/passes.ts';
@@ -153,7 +153,7 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
               columns={columns}
               data={delivery.data.items}
               getRowId={(r) => r.id}
-              empty={<EmptyState icon={Mail} title="Nothing sent yet" />}
+              empty={<EmptyState inline art="envelope" title="Nothing sent yet" />}
             />
           )}
           <p className="border-t border-border px-4 py-3 text-xs text-fg-muted">

@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Cable, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { ConnectionSchema } from '@/shared/contracts/connections.ts';
-import { useOrgFilter } from '../../lib/org-filter.tsx';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import { Button, DataTable, EmptyState, ErrorState, PageHeader, Select } from '../../ui/index.ts';
 import { formatDate } from '../passes/format.ts';
@@ -28,7 +28,7 @@ export function ConnectionsListPage({
   search: ConnectionListSearch;
   onSearch: (patch: Partial<ConnectionListSearch>) => void;
 }) {
-  const { orgId: globalOrg } = useOrgFilter();
+  const { orgId: globalOrg } = useOrgScope();
   const orgId = search.orgId ?? globalOrg;
   const orgs = useOrgOptions();
   const connectorName = useConnectorNames();
@@ -158,7 +158,7 @@ export function ConnectionsListPage({
           loading={list.isPending}
           empty={
             <EmptyState
-              icon={Cable}
+              art="plugs"
               title="No connections"
               action={
                 <Button asChild iconStart={<Plus aria-hidden />}>

@@ -61,6 +61,7 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
         <PageHeader title="Pass" breadcrumbs={crumbs} />
         {missing ? (
           <EmptyState
+            art="torn"
             title="Pass not found"
             action={
               <Button asChild>

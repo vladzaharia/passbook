@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Search, Users } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Badge,
@@ -94,7 +94,8 @@ export function UsersPage({
             getRowId={(u) => u.id}
             empty={
               <EmptyState
-                icon={Users}
+                art="people"
+                variant={filtered ? 'filtered' : 'empty'}
                 title={filtered ? 'No users match' : 'No users yet'}
                 description={filtered ? undefined : 'Users appear after their first sign-in.'}
                 action={

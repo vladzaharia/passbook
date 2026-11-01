@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { ApiKeyListSchema, type ApiKeySchema } from '@/shared/contracts/api-keys.ts';
 import { api } from '@/web/lib/api.ts';
-import { useOrgFilter } from '@/web/lib/org-filter.tsx';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Badge,
   Button,
@@ -33,7 +33,7 @@ export function keyState(key: ApiKey, now: number): 'revoked' | 'expired' | 'act
 export function ApiKeysPage() {
   const client = useQueryClient();
   const orgName = useOrgNames();
-  const { orgId } = useOrgFilter();
+  const { orgId } = useOrgScope();
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey>();
   const list = useQuery({
@@ -67,7 +67,7 @@ export function ApiKeysPage() {
           getRowId={(k) => k.id}
           empty={
             <EmptyState
-              icon={KeyRound}
+              art="key"
               title="No API keys"
               action={
                 <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>

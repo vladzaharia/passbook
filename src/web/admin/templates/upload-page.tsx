@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { errorMessage } from '../../lib/errors.ts';
-import { useOrgFilter } from '../../lib/org-filter.tsx';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Button,
@@ -93,7 +93,7 @@ function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void
 }
 
 export function TemplateUploadPage() {
-  const { orgId: globalOrg } = useOrgFilter();
+  const { orgId: globalOrg } = useOrgScope();
   const orgs = useOrgOptions();
   const upload = useUploadTemplate();
   const [orgId, setOrgId] = useState<string | undefined>(globalOrg);

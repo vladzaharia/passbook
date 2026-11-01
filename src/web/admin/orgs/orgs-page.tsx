@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Building2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
@@ -167,7 +167,7 @@ export function OrgsPage() {
           getRowId={(o) => o.id}
           empty={
             <EmptyState
-              icon={Building2}
+              art="building"
               title="No organizations"
               action={
                 <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>

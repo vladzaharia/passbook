@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { FileStack, Lock, Upload } from 'lucide-react';
+import { Lock, Upload } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
-import { useOrgFilter } from '../../lib/org-filter.tsx';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Badge,
@@ -57,7 +57,7 @@ export function TemplatesListPage({
   search: TemplateListSearch;
   onSearch: (patch: Partial<TemplateListSearch>) => void;
 }) {
-  const { orgId: globalOrg } = useOrgFilter();
+  const { orgId: globalOrg } = useOrgScope();
   const orgId = search.orgId ?? globalOrg;
   const orgs = useOrgOptions();
   const list = useTemplates({ orgId, origin: search.origin, includeArchived: search.archived });
@@ -205,7 +205,7 @@ export function TemplatesListPage({
           loading={list.isPending}
           empty={
             <EmptyState
-              icon={FileStack}
+              art="template"
               title="No templates"
               action={
                 <Button asChild iconStart={<Upload aria-hidden />}>

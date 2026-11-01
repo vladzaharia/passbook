@@ -37,7 +37,7 @@ export function ActivityTab({ passId, active }: { passId: string; active: boolea
   if (audit.isError) {
     return <ErrorState error={audit.error} onRetry={() => void audit.refetch()} />;
   }
-  if (audit.data.items.length === 0) return <EmptyState title="No activity" />;
+  if (audit.data.items.length === 0) return <EmptyState art="activity" title="No activity" />;
   const items: TimelineItem[] = audit.data.items.map((e) => ({
     id: String(e.id),
     title: actionLabel(e.action),

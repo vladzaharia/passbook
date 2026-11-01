@@ -5,7 +5,7 @@ import { actionLabel } from '@/web/lib/actions.ts';
 import { api } from '@/web/lib/api.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { useArrival } from '@/web/lib/motion.ts';
-import { useOrgFilter } from '@/web/lib/org-filter.tsx';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Badge,
   Card,
@@ -161,7 +161,7 @@ export function OverviewPage({
   onSearch: (next: OverviewSearch) => void;
 }) {
   const range = search.range ?? '7d';
-  const { orgId } = useOrgFilter();
+  const { orgId } = useOrgScope();
   const metrics = useMetrics(range, orgId);
   const arrived = useArrival(metrics.isPending);
   const picker = (

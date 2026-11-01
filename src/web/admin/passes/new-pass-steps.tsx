@@ -17,7 +17,7 @@ export function OrgStep({
   if (orgs.isPending) return <Spinner />;
   if (orgs.isError) return <ErrorState error={orgs.error} onRetry={() => void orgs.refetch()} />;
   const items = orgs.data.items.filter((o) => o.status === 'active');
-  if (items.length === 0) return <EmptyState title="No active organizations" />;
+  if (items.length === 0) return <EmptyState art="building" title="No active organizations" />;
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((o) => (
@@ -108,7 +108,8 @@ export function TemplateStep({
     return <ErrorState error={templates.error} onRetry={() => void templates.refetch()} />;
   }
   const items = templates.data.items.filter((t) => t.status === 'active' && t.activeVersion);
-  if (items.length === 0) return <EmptyState title="No templates for this organization" />;
+  if (items.length === 0)
+    return <EmptyState art="template" title="No templates for this organization" />;
   const own = items.filter((t) => t.orgId === orgId);
   const rest = items.filter((t) => t.orgId !== orgId);
   const grid = (list: typeof items) => (

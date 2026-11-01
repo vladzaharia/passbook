@@ -1,4 +1,4 @@
-import { ScrollText, Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { type ComponentProps, useEffect, useState } from 'react';
 import { actionLabel } from '@/web/lib/actions.ts';
 import {
@@ -202,7 +202,11 @@ export function AuditPage({
             getRowId={(r) => String(r.id)}
             onRowClick={(r) => onSearch({ ...filters, entry: r.id })}
             empty={
-              <EmptyState icon={ScrollText} title={filtered ? 'No entries match' : 'No entries'} />
+              <EmptyState
+                art="log"
+                variant={filtered ? 'filtered' : 'empty'}
+                title={filtered ? 'No entries match' : 'No entries'}
+              />
             }
             columns={[
               {

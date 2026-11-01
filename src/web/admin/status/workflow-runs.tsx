@@ -29,7 +29,7 @@ export function WorkflowRuns() {
             stack={false}
             data={runs.data.items}
             getRowId={(r) => r.instanceId}
-            empty={<EmptyState className="border-0 py-6" title="No workflow runs" />}
+            empty={<EmptyState inline art="runs" title="No workflow runs" />}
             columns={[
               {
                 header: 'Kind',

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ShieldCheck, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import {
   Badge,
@@ -41,7 +41,7 @@ export function IdentitiesPage() {
           getRowId={(i) => i.id}
           empty={
             <EmptyState
-              icon={ShieldCheck}
+              art="certificate"
               title="No identities"
               action={
                 <Button iconStart={<Upload aria-hidden />} onClick={() => setUploading(true)}>

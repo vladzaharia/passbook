@@ -76,6 +76,8 @@ export function problemToError(status: number, body: unknown): ApiError {
 /** One sentence for the UI. Never exposes raw server text for 5xx. */
 export function errorMessage(error: unknown): string {
   if (isApiError(error)) {
+    // The body did not match its schema (lib/api.ts parse): a reload fetches the current app.
+    if (error.code === 'invalid_response') return 'Could not read the response. Reload.';
     if (error.status === 0) return 'Network error. Check your connection.';
     if (error.status === 403) return 'You do not have access.';
     if (error.status >= 500) return 'Server error. Try again.';
