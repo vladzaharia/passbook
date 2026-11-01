@@ -1,45 +1,80 @@
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import type { z } from 'zod';
 import type { ValidationReportSchema } from '@/shared/contracts/templates.ts';
+import { cn } from '../../lib/cn.ts';
+import { Callout, type CalloutTone } from '../../ui/index.ts';
+import './upload.css';
 
 type Report = z.infer<typeof ValidationReportSchema>;
+type Issue = Report['issues'][number];
 
-/** Errors first, then warnings. Icon and word carry severity, not colour alone. */
-export function ValidationReport({ report }: { report: Report }) {
-  if (report.issues.length === 0) {
+const GROUPS: { severity: Issue['severity']; tone: CalloutTone; one: string; many: string }[] = [
+  { severity: 'error', tone: 'danger', one: 'error', many: 'errors' },
+  { severity: 'warning', tone: 'warning', one: 'warning', many: 'warnings' },
+  { severity: 'info', tone: 'info', one: 'note', many: 'notes' },
+];
+
+const line = (i: Issue) => (
+  <>
+    {i.message}
+    {i.path ? <span className="ml-1.5 font-mono text-xs text-fg-muted">{i.path}</span> : null}
+  </>
+);
+
+/** Errors, then warnings, then notes, each a Callout; they rise in turn when they arrive. */
+export function ValidationReport({ report, rise = false }: { report: Report; rise?: boolean }) {
+  if (report.issues.length === 0)
     return (
-      <p className="inline-flex items-center gap-2 text-sm text-success">
-        <CheckCircle2 aria-hidden className="size-4" />
+      <Callout tone="success" icon={CheckCircle2}>
         No issues
-      </p>
+      </Callout>
     );
-  }
-  const sorted = [...report.issues].sort((a, b) =>
-    a.severity === b.severity ? 0 : a.severity === 'error' ? -1 : 1,
-  );
+  const groups = GROUPS.map((g) => ({
+    ...g,
+    list: report.issues.filter((i) => i.severity === g.severity),
+  })).filter((g) => g.list.length > 0);
   return (
-    <ul className="grid gap-2">
-      {sorted.map((issue, i) => {
-        const error = issue.severity === 'error';
-        const Icon = error ? XCircle : AlertTriangle;
+    <div className={cn('flex flex-col gap-3', rise && 'wl-report')}>
+      {groups.map((g, n) => (
+        <div key={g.severity} style={{ '--i': n } as CSSProperties}>
+          <Callout
+            tone={g.tone}
+            title={`${g.list.length} ${g.list.length === 1 ? g.one : g.many}`}
+            items={g.list.map(line)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const CHECKS: { label: string; test: (files: string[]) => boolean }[] = [
+  { label: 'pass.json with one style', test: (f) => f.includes('pass.json') },
+  { label: 'wallet.template.json', test: (f) => f.includes('wallet.template.json') },
+  {
+    label: 'icon@2x.png and icon@3x.png',
+    test: (f) => f.includes('icon@2x.png') && f.includes('icon@3x.png'),
+  },
+  { label: 'Logo trimmed, no padding', test: (f) => f.some((n) => /^logo@[23]x\.png$/.test(n)) },
+  { label: 'en.lproj/pass.strings', test: (f) => f.some((n) => /\.lproj\/pass\.strings$/.test(n)) },
+];
+
+/** What a good package holds; items tick once the chosen archive shows them. */
+export function PackageChecklist({ files }: { files: string[] | undefined }) {
+  return (
+    <ul className="flex flex-col gap-2 text-sm">
+      {CHECKS.map((c) => {
+        const ok = files ? c.test(files) : false;
+        const Icon = ok ? CheckCircle2 : Circle;
         return (
-          <li
-            // biome-ignore lint/suspicious/noArrayIndexKey: issues repeat code and path
-            key={i}
-            className="flex items-start gap-2 text-sm"
-          >
+          <li key={c.label} className="flex items-center gap-2">
             <Icon
               aria-hidden
-              className={`mt-0.5 size-4 shrink-0 ${error ? 'text-danger' : 'text-warning'}`}
+              className={cn('size-4 shrink-0', ok ? 'text-success' : 'text-fg-subtle')}
             />
-            <span>
-              <span className="font-medium text-fg-strong">{error ? 'Error' : 'Warning'}</span>{' '}
-              <span className="font-mono text-xs text-fg-muted">{issue.code}</span>
-              {issue.path ? (
-                <span className="font-mono text-xs text-fg-muted"> {issue.path}</span>
-              ) : null}
-              <span className="block text-fg">{issue.message}</span>
-            </span>
+            <span className={ok ? 'text-fg' : 'text-fg-muted'}>{c.label}</span>
+            <span className="sr-only">{files ? (ok ? 'found' : 'missing') : ''}</span>
           </li>
         );
       })}

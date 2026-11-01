@@ -1,6 +1,9 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { toast as sonner } from 'sonner';
 import type { z } from 'zod';
 import type { TemplateDetailSchema, TemplateVersionSchema } from '@/shared/contracts/templates.ts';
+import { ACTION_ICON } from '../../lib/action-icons.ts';
 import {
   Badge,
   Button,
@@ -8,6 +11,7 @@ import {
   CardBody,
   CardHeader,
   CheckboxField,
+  ConfirmDialog,
   Dialog,
   DialogContent,
   StatusPill,
@@ -72,6 +76,41 @@ function ActivateDialog({
   );
 }
 
+/** Moves every pass on an older version to the active one, after a confirm with the count. */
+function UpdatePasses({ template }: { template: Template }) {
+  const actions = useTemplateActions(template.id);
+  const navigate = useNavigate();
+  const [ask, setAsk] = useState(false);
+  const n = template.passesOnOlderVersions;
+  if (n === 0 || template.status !== 'active') return null;
+  const label = `Update ${n} ${n === 1 ? 'pass' : 'passes'}`;
+  return (
+    <>
+      <Button
+        size="sm"
+        iconStart={<ACTION_ICON.refresh aria-hidden />}
+        onClick={() => setAsk(true)}
+      >
+        {label}
+      </Button>
+      <ConfirmDialog
+        open={ask}
+        onOpenChange={setAsk}
+        title={`${label}?`}
+        description="Each moves to the active version and devices get the update."
+        confirmLabel={label}
+        onConfirm={async () => {
+          await actions.reissue.mutateAsync();
+          sonner.success(`Updating ${n} ${n === 1 ? 'pass' : 'passes'}`, {
+            duration: 6000,
+            action: { label: 'View run', onClick: () => void navigate({ to: '/admin/status' }) },
+          });
+        }}
+      />
+    </>
+  );
+}
+
 export function VersionsPanel({ template }: { template: Template }) {
   const [pick, setPick] = useState<Version | null>(null);
   const [report, setReport] = useState<string | undefined>(
@@ -102,6 +141,9 @@ export function VersionsPanel({ template }: { template: Template }) {
                     {v.active ? (
                       <StatusPill status="active" tone="success" className="ml-2" />
                     ) : null}
+                    <span className="ml-3 text-xs text-fg-muted tabular-nums">
+                      Passes: {v.passCount}
+                    </span>
                     {errors > 0 ? (
                       <Badge tone="danger" className="ml-2">
                         {errors} {errors === 1 ? 'error' : 'errors'}
@@ -114,6 +156,7 @@ export function VersionsPanel({ template }: { template: Template }) {
                     ) : null}
                   </div>
                   <div className="flex gap-2">
+                    {v.active ? <UpdatePasses template={template} /> : null}
                     <Button
                       size="sm"
                       variant="outline"

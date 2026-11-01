@@ -1,0 +1,64 @@
+/* Upload template: the drop zone's template art assembles with the import (moment 10). */
+.wl-drop [data-part="p"],
+.wl-drop [data-part="e"] {
+  transition:
+    translate 300ms var(--wl-ease-spring),
+    opacity 160ms var(--wl-ease-out);
+}
+.wl-drop[data-drag] [data-part="p"] {
+  translate: 0 -4px;
+}
+
+/* Assembling: the entrance is off; each server step lands the next piece. */
+.wl-drop[data-landed] [data-part] {
+  animation: none;
+}
+.wl-drop[data-landed] [data-part="p"],
+.wl-drop[data-landed] [data-part="e"] {
+  opacity: 0;
+  translate: 0 -14px;
+  transition:
+    translate 360ms var(--wl-ease-spring),
+    opacity 160ms var(--wl-ease-out);
+}
+.wl-drop:is([data-landed="1"], [data-landed="2"], [data-landed="3"], [data-landed="4"])
+  [data-part="p"][data-i="0"],
+.wl-drop:is([data-landed="2"], [data-landed="3"], [data-landed="4"]) [data-part="p"][data-i="1"],
+.wl-drop:is([data-landed="3"], [data-landed="4"]) [data-part="p"][data-i="2"],
+.wl-drop[data-landed="4"] [data-part="e"] {
+  opacity: 1;
+  translate: none;
+}
+/* A failure slides the failing piece out; the outline shakes once. */
+.wl-drop[data-failed="0"] [data-part="p"][data-i="0"],
+.wl-drop[data-failed="1"] [data-part="p"][data-i="1"],
+.wl-drop[data-failed="2"] [data-part="p"][data-i="2"] {
+  opacity: 0;
+  translate: 16px 0;
+}
+.wl-drop[data-shake] {
+  animation: wl-shake var(--wl-dur-shake, 240ms) var(--wl-ease-move);
+}
+.wl-drop[data-done] [data-part="e"] {
+  animation: wl-v-stamp 420ms var(--wl-ease-bounce);
+}
+
+/* Report items rise 4 px, 30 ms apart, capped at six. */
+.wl-report > * {
+  --wl-rise: 4px;
+  animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 6) * 30ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-drop [data-part],
+  .wl-drop[data-landed] [data-part="p"],
+  .wl-drop[data-landed] [data-part="e"] {
+    translate: none !important;
+    animation: none !important;
+  }
+  .wl-drop[data-shake],
+  .wl-report > * {
+    animation: none;
+  }
+}

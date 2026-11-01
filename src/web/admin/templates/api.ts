@@ -4,15 +4,18 @@ import {
   PreviewResponseSchema,
   TemplateDetailSchema,
   TemplateListSchema,
+  TemplateReissueResponseSchema,
+  UploadListSchema,
   UploadTemplateResponseSchema,
 } from '@/shared/contracts/templates.ts';
-import { api } from '../../lib/api.ts';
+import { api, listQuery } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
 
 export interface TemplateFilters {
   orgId?: string | undefined;
   origin?: 'baked' | 'uploaded' | undefined;
   includeArchived?: boolean | undefined;
+  q?: string | undefined;
 }
 
 export const templateKeys = {
@@ -23,14 +26,34 @@ export const templateKeys = {
 };
 
 export function useTemplates(filters: TemplateFilters, enabled = true) {
+  return useQuery(
+    listQuery({
+      queryKey: templateKeys.list(filters),
+      queryFn: ({ signal }) =>
+        api.get('/api/v1/templates', TemplateListSchema, {
+          query: {
+            ...filters,
+            includeArchived: filters.includeArchived || undefined,
+            q: filters.q || undefined,
+            limit: 200,
+          },
+          signal,
+        }),
+      enabled,
+    }),
+  );
+}
+
+/** The newest imports for the "Recent uploads" strip. */
+export function useRecentUploads(orgId: string | undefined) {
   return useQuery({
-    queryKey: templateKeys.list(filters),
+    queryKey: ['admin', 'templates', 'uploads', orgId ?? null],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/templates', TemplateListSchema, {
-        query: { ...filters, includeArchived: filters.includeArchived || undefined, limit: 200 },
+      api.get('/api/v1/templates/uploads', UploadListSchema, {
+        query: { orgId, limit: 5 },
         signal,
       }),
-    enabled,
+    staleTime: 10_000,
   });
 }
 
@@ -80,6 +103,21 @@ export function useTemplateActions(id: string) {
       mutationFn: () => api.delete(`/api/v1/templates/${id}`),
       onSuccess: done,
     }),
+    archive: useMutation({
+      mutationFn: (archived: boolean) =>
+        api.post(
+          `/api/v1/templates/${id}/${archived ? 'archive' : 'restore'}`,
+          TemplateDetailSchema,
+        ),
+      onSuccess: done,
+    }),
+    reissue: useMutation({
+      mutationFn: () => api.post(`/api/v1/templates/${id}/reissue`, TemplateReissueResponseSchema),
+      onSuccess: async () => {
+        await done();
+        await qc.invalidateQueries({ queryKey: ['admin', 'passes'] });
+      },
+    }),
   };
 }
 
@@ -93,12 +131,28 @@ export function useUploadTemplate() {
   });
 }
 
-/** Live preview for a draft input. Debounced by the caller; aborted when the input changes. */
-export function useDraftPreview(id: string | undefined, input: Record<string, unknown>) {
+/**
+ * Live preview for a draft input, as `orgId`'s pass (its name, colours and logo) when given.
+ * Debounced by the caller; aborted when the input changes.
+ */
+export function useDraftPreview(
+  id: string | undefined,
+  input: Record<string, unknown>,
+  options: { orgId?: string | undefined; version?: string | undefined } = {},
+) {
   return useQuery({
-    queryKey: ['admin', 'templates', 'draft-preview', id, input],
+    queryKey: ['admin', 'templates', 'draft-preview', id, input, options.orgId, options.version],
     queryFn: ({ signal }) =>
-      api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, { input }, { signal }),
+      api.post(
+        `/api/v1/templates/${id}/preview`,
+        PreviewResponseSchema,
+        {
+          input,
+          ...(options.orgId ? { orgId: options.orgId } : {}),
+          ...(options.version ? { version: options.version } : {}),
+        },
+        { signal },
+      ),
     enabled: Boolean(id),
     placeholderData: keepPreviousData,
     staleTime: 60_000,

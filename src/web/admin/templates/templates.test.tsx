@@ -41,9 +41,30 @@ describe('templates list', () => {
       'href',
       '/admin/templates/b1',
     );
-    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Baked').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('Built-in').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Baked')).toBeNull();
     expect(seen[0]?.searchParams.get('origin')).toBe('baked');
+    expect(screen.getByText('2 templates')).toBeInTheDocument();
+  });
+
+  it('searches by name and shows a Version column in the table view', async () => {
+    const user = userEvent.setup();
+    const seen: URL[] = [];
+    const { router } = await renderApp('/admin/templates?view=table', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates': (url) => {
+          seen.push(url);
+          return json({ items: [templateSummary()], nextCursor: null });
+        },
+      },
+    });
+    expect(await screen.findByRole('columnheader', { name: 'Version' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Status' })).toBeNull();
+    await user.type(screen.getByRole('searchbox', { name: 'Search templates' }), 'henry');
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('q')).toBe('henry'));
+    expect((router.state.location.search as { q?: string }).q).toBe('henry');
   });
 
   it('adds includeArchived when asked and keeps it in the URL', async () => {
@@ -59,7 +80,8 @@ describe('templates list', () => {
         },
       },
     });
-    await user.click(await screen.findByRole('checkbox', { name: 'Show archived' }));
+    await user.click(await screen.findByRole('combobox', { name: /Archived/ }));
+    await user.click(await screen.findByRole('option', { name: 'Shown' }));
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('includeArchived')).toBe('true'));
     expect((router.state.location.search as { archived?: boolean }).archived).toBe(true);
   });
@@ -128,7 +150,7 @@ describe('template detail', () => {
     );
   });
 
-  it('offers Customize for baked templates and no delete', async () => {
+  it('offers New pass and Duplicate on built-in templates, and no delete', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];
     await renderApp('/admin/templates/b1', {
@@ -146,17 +168,24 @@ describe('template detail', () => {
         '/api/v1/templates/copy1/preview': preview,
       },
     });
-    expect(await screen.findByRole('button', { name: 'Customize' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Archive' })).toBeNull();
+    expect(await screen.findByRole('link', { name: 'New pass' })).toHaveAttribute(
+      'href',
+      '/admin/passes/new?templateId=b1',
+    );
+    expect(screen.getByRole('link', { name: /2 passes/ })).toHaveAttribute(
+      'href',
+      '/admin/passes?templateId=b1',
+    );
+    expect(screen.queryByText(/Customize|Any org/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Customize' }));
-    const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Customize' }));
+    await user.click(screen.getByRole('button', { name: 'Duplicate' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Duplicate template' });
+    await user.click(within(dialog).getByRole('button', { name: 'Duplicate' }));
     expect(await within(dialog).findByText('Choose an organization.')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('combobox'));
+    await user.click(within(dialog).getByRole('combobox', { name: /Organization/ }));
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
-    await user.click(within(dialog).getByRole('button', { name: 'Customize' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Duplicate' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1', name: 'Copper card copy' }]));
   });
 
@@ -184,43 +213,53 @@ describe('template detail', () => {
         '/api/v1/templates/b1/preview': preview,
       },
     });
-    const select = await screen.findByRole('combobox', { name: 'Organization' });
-    expect(select).toHaveTextContent('Any org');
-    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+    expect(await screen.findByText('All organizations')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Change organization' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Change organization' });
+    const select = within(dialog).getByRole('combobox', { name: 'Organization' });
+    expect(select).toHaveTextContent('All organizations');
     await user.click(select);
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText(/Passes of another organization/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog).findByText(/Passes of another organization/)).toBeInTheDocument();
     conflict = false;
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1' }, { orgId: 'org1' }]));
   });
 
-  it('archives when passes use it and explains the rule', async () => {
+  it('archives with the count sentence and restores', async () => {
     const user = userEvent.setup();
     const calls: string[] = [];
-    const { router } = await renderApp('/admin/templates/tpl1', {
+    let archived = false;
+    await renderApp('/admin/templates/tpl1', {
       session: 'admin',
       handlers: {
         '/api/v1/orgs': orgs,
         '/api/v1/templates': () => json({ items: [], nextCursor: null }),
-        '/api/v1/templates/tpl1': (_u, init) => {
-          if (method(init) === 'DELETE') {
-            calls.push('DELETE');
-            return json({ ok: true });
-          }
+        '/api/v1/templates/tpl1': () =>
+          json(templateDetail({ passCount: 4, status: archived ? 'archived' : 'active' })),
+        '/api/v1/templates/tpl1/archive': () => {
+          calls.push('archive');
+          archived = true;
+          return json(templateDetail({ passCount: 4, status: 'archived' }));
+        },
+        '/api/v1/templates/tpl1/restore': () => {
+          calls.push('restore');
+          archived = false;
           return json(templateDetail({ passCount: 4 }));
         },
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
     await user.click(await screen.findByRole('button', { name: 'More' }));
+    // Passes use it: Archive, not Delete.
+    expect(screen.queryByRole('menuitem', { name: 'Delete' })).toBeNull();
     await user.click(await screen.findByRole('menuitem', { name: 'Archive' }));
     const dialog = await screen.findByRole('alertdialog');
-    expect(dialog).toHaveTextContent('archived while passes use them and deleted when none do');
+    expect(dialog).toHaveTextContent('New passes cannot use it. 4 existing passes keep working.');
     await user.click(within(dialog).getByRole('button', { name: 'Archive' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/templates'));
-    expect(calls).toEqual(['DELETE']);
+    await user.click(await screen.findByRole('button', { name: 'Restore' }));
+    await waitFor(() => expect(calls).toEqual(['archive', 'restore']));
   });
 
   it('shows the manifest', async () => {
@@ -320,7 +359,11 @@ describe('template detail', () => {
         '/api/v1/templates/nope': () => problem(404, 'not_found', 'Template not found.'),
       },
     });
-    expect(await screen.findByRole('alert')).toHaveTextContent('Template not found.');
+    expect(await screen.findByRole('heading', { name: 'Template not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to templates' })).toHaveAttribute(
+      'href',
+      '/admin/templates',
+    );
   });
 });
 
@@ -363,7 +406,7 @@ describe('template upload', () => {
             error: null,
           };
           if (polls === 1) return json({ ...base, status: 'queued', step: null });
-          if (polls < 4) return json({ ...base, status: 'running', step: 'validate' });
+          if (polls < 4) return json({ ...base, status: 'running', step: 'analyze' });
           return json({
             ...base,
             status: 'complete',
@@ -379,8 +422,8 @@ describe('template upload', () => {
       },
     });
     await fill(user);
-    expect(await screen.findByText('Processing: validate')).toBeInTheDocument();
-    expect(await screen.findByText('Import complete')).toBeInTheDocument();
+    expect(await screen.findByText('Checking files and images')).toBeInTheDocument();
+    expect(await screen.findByText('New template')).toBeInTheDocument();
     expect(screen.getByText('Dropped unused slot.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open template' })).toHaveAttribute(
       'href',
@@ -395,14 +438,17 @@ describe('template upload', () => {
     expect(polls).toBe(settled);
   });
 
-  it('shows the failure and lets the user try again', async () => {
+  it('shows the failure and takes a fixed file without asking again', async () => {
     const user = userEvent.setup();
+    const posts: URL[] = [];
     await renderApp('/admin/templates/upload', {
       session: 'admin',
       handlers: {
         '/api/v1/orgs': orgs,
-        '/api/v1/templates/uploads': () =>
-          json({ uploadId: 'up1', workflowInstanceId: 'wf1' }, 202),
+        '/api/v1/templates/uploads': (url) => {
+          posts.push(url);
+          return json({ uploadId: 'up1', workflowInstanceId: 'wf1' }, 202);
+        },
         '/api/v1/templates/uploads/up1': () =>
           json({
             uploadId: 'up1',
@@ -421,8 +467,11 @@ describe('template upload', () => {
     await fill(user);
     expect(await screen.findByText('Archive has too many entries.')).toBeInTheDocument();
     expect(screen.getByText('More than 100 entries.')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByRole('button', { name: 'Upload' })).toBeDisabled();
+    // The fix goes straight up with the same org.
+    const input = document.querySelector('input[type=file]') as HTMLInputElement;
+    await user.upload(input, new File(['zip'], 'fixed.zip', { type: 'application/zip' }));
+    await waitFor(() => expect(posts.length).toBe(2));
+    expect(posts[1]?.searchParams.get('orgId')).toBe('org1');
   });
 
   it('maps the IMPORT_INVALID code to a sentence', async () => {
@@ -474,7 +523,7 @@ describe('template upload', () => {
     await screen.findByRole('combobox', { name: 'Organization' });
     const input = document.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File(['x'], 'notes.txt', { type: 'text/plain' }));
-    expect(await screen.findByText(/unsupported type/)).toBeInTheDocument();
+    expect(await screen.findByText('Choose a .zip or .pkpasstemplate.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Upload' })).toBeDisabled();
   });
 
