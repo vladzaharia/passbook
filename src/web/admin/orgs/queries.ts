@@ -7,7 +7,7 @@ import {
   OrgSummarySchema,
   type UpdateOrgSchema,
 } from '@/shared/contracts/orgs.ts';
-import { api } from '@/web/lib/api.ts';
+import { api, listQuery } from '@/web/lib/api.ts';
 
 export const orgKeys = {
   all: ['orgs'] as const,
@@ -15,19 +15,22 @@ export const orgKeys = {
   detail: (id: string) => ['orgs', 'detail', id] as const,
 };
 
-export function useOrgList() {
-  return useQuery({
-    queryKey: orgKeys.list,
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200 }, signal }),
-  });
+const orgPath = (id: string) => `/api/v1/orgs/${encodeURIComponent(id)}`;
+
+export function useOrgList(q?: string) {
+  return useQuery(
+    listQuery({
+      queryKey: [...orgKeys.list, q ?? ''],
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200, q }, signal }),
+    }),
+  );
 }
 
 export function useOrg(id: string) {
   return useQuery({
     queryKey: orgKeys.detail(id),
-    queryFn: ({ signal }) =>
-      api.get(`/api/v1/orgs/${encodeURIComponent(id)}`, OrgSummarySchema, { signal }),
+    queryFn: ({ signal }) => api.get(orgPath(id), OrgSummarySchema, { signal }),
   });
 }
 
@@ -50,16 +53,47 @@ export function useCreateOrg() {
 export function useUpdateOrg(id: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: z.input<typeof UpdateOrgSchema>) =>
-      api.patch(`/api/v1/orgs/${encodeURIComponent(id)}`, OrgSchema, body),
+    mutationFn: (body: z.input<typeof UpdateOrgSchema>) => api.patch(orgPath(id), OrgSchema, body),
     onSuccess: () => client.invalidateQueries({ queryKey: orgKeys.all }),
   });
 }
 
+export function useSetOrgStatus(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (status: 'active' | 'suspended') =>
+      api.post(`${orgPath(id)}/status`, OrgSchema, { status }),
+    onSuccess: () => client.invalidateQueries({ queryKey: orgKeys.all }),
+  });
+}
+
+export type BrandingSlot = 'logo' | 'icon';
+
+export function useBrandingImage(id: string) {
+  const client = useQueryClient();
+  const done = () => client.invalidateQueries({ queryKey: orgKeys.all });
+  return {
+    upload: useMutation({
+      mutationFn: (v: { slot: BrandingSlot; x3: string; x2?: string }) =>
+        api.put(`${orgPath(id)}/branding/${v.slot}`, OrgSchema, { x3: v.x3, x2: v.x2 }),
+      onSuccess: done,
+    }),
+    remove: useMutation({
+      mutationFn: (slot: BrandingSlot) =>
+        api.delete(`${orgPath(id)}/branding/${slot}`).then(() => slot),
+      onSuccess: done,
+    }),
+  };
+}
+
+/** Admin URL of an uploaded image; the sha busts the cache after a new upload. */
+export const brandingUrl = (id: string, slot: BrandingSlot, sha: string, scale = '3x') =>
+  `${orgPath(id)}/branding/${slot}/${scale}?v=${sha.slice(0, 12)}`;
+
 export function useDeleteOrg(id: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: () => api.delete(`/api/v1/orgs/${encodeURIComponent(id)}`),
+    mutationFn: () => api.delete(orgPath(id)),
     onSuccess: () => client.invalidateQueries({ queryKey: orgKeys.all }),
   });
 }

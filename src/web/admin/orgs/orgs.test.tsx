@@ -34,29 +34,39 @@ describe('slugify', () => {
 });
 
 describe('org form helpers', () => {
-  it('validates name and accent', () => {
+  it('validates name, accent and pass colours as a set', () => {
     const d = orgToDraft(summary() as never);
     expect(validateOrg(d)).toEqual({});
     expect(validateOrg({ ...d, name: ' ', accent: 'red' })).toEqual({
       name: 'Required.',
       accent: 'Use a 6-digit hex like #0f766e.',
     });
+    expect(validateOrg({ ...d, background: '#000000' })).toEqual({
+      foreground: 'Set all three colours.',
+      label: 'Set all three colours.',
+    });
   });
-  it('keeps support contacts and drops cleared branding fields', () => {
-    const org = summary() as never;
+
+  it('keeps support contacts and images and drops cleared fields', () => {
+    const org = summary({
+      branding: {
+        accent: '#0f766e',
+        supportEmail: 'help@acme.test',
+        icon: { sha: 'a'.repeat(64), w: 114, h: 114 },
+      },
+    }) as never;
     const d = { ...orgToDraft(org), accent: '', identity: 'i9' };
     expect(orgPatch(d, org)).toEqual({
       name: 'Acme Gym',
-      status: 'active',
       defaultIdentityId: 'i9',
-      branding: { supportEmail: 'help@acme.test' },
+      branding: { supportEmail: 'help@acme.test', icon: { sha: 'a'.repeat(64), w: 114, h: 114 } },
     });
     expect(orgPatch({ ...d, identity: 'default' }, org).defaultIdentityId).toBeNull();
   });
 });
 
 describe('orgs list', () => {
-  it('lists orgs with counts, accessible', async () => {
+  it('lists orgs with monograms and counts, accessible', async () => {
     const { container } = await renderApp('/admin/orgs', {
       session: 'admin',
       handlers: { '/api/v1/orgs': () => json({ items: [summary()], nextCursor: null }) },
@@ -66,12 +76,24 @@ describe('orgs list', () => {
       '/admin/orgs/o1',
     );
     expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText('1 organization')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('shows empty and error states', async () => {
-    await renderApp('/admin/orgs', { session: 'admin' });
+  it('searches with q and shows the filtered empty state', async () => {
+    const { fetchMock, container } = await renderApp('/admin/orgs?q=zzz', {
+      session: 'admin',
+      handlers: { '/api/v1/orgs': () => json({ items: [], nextCursor: null }) },
+    });
+    expect(await screen.findByText('No organizations match')).toBeInTheDocument();
+    expect(container.querySelector('[data-art="building"]')).not.toBeNull();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('q=zzz'))).toBe(true);
+  });
+
+  it('shows the empty state with the building', async () => {
+    const { container } = await renderApp('/admin/orgs', { session: 'admin' });
     expect(await screen.findByText('No organizations')).toBeInTheDocument();
+    expect(container.querySelector('[data-art="building"]')).not.toBeNull();
   });
 
   it('shows an error', async () => {
@@ -82,33 +104,37 @@ describe('orgs list', () => {
     expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
   });
 
-  it('creates an org with a slug derived from the name', async () => {
+  it('creates an org in an md dialog and highlights the new row', async () => {
     let body: unknown;
-    const { router } = await renderApp('/admin/orgs', {
+    let created = false;
+    const { container } = await renderApp('/admin/orgs', {
       session: 'admin',
       handlers: {
         '/api/v1/orgs': (_u, init) => {
           if (init?.method === 'POST') {
             body = JSON.parse(String(init.body));
+            created = true;
             return json(summary({ id: 'o2' }), 201);
           }
-          return json({ items: [], nextCursor: null });
+          return json({
+            items: created ? [summary({ id: 'o2', name: 'New' }), summary()] : [summary()],
+            nextCursor: null,
+          });
         },
-        '/api/v1/orgs/o2': () => json(summary({ id: 'o2' })),
-        '/api/v1/identities': () => json({ items: [] }),
-        '/api/v1/settings': () => json(settingsEmpty),
       },
     });
     const ui = userEvent.setup();
-    await ui.click((await screen.findAllByRole('button', { name: 'New organization' }))[0]!);
+    await ui.click(await screen.findByRole('button', { name: 'New organization' }));
     const dialog = await screen.findByRole('dialog');
+    expect(dialog.className).toContain('sm:max-w-lg');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
     await ui.type(within(dialog).getByLabelText(/Name/), 'Acme Gym');
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o2'));
+    await waitFor(() => expect(container.querySelectorAll('[data-new]')).toHaveLength(1));
+    expect(container.querySelector('[data-new]')?.getAttribute('data-row-id')).toBe('o2');
   });
 
   it('shows a slug conflict from the server', async () => {
@@ -141,22 +167,76 @@ describe('org detail', () => {
     ...extra,
   });
 
-  it('shows counts and the form, accessible', async () => {
+  it('shows count links, the form and pass branding, accessible', async () => {
     const { container } = await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: handlers(),
     });
     expect(await screen.findByRole('heading', { level: 1, name: 'Acme Gym' })).toBeInTheDocument();
-    const counts = screen.getByRole('list', { name: 'Counts' });
-    expect(within(counts).getByText('12')).toBeInTheDocument();
+    const passes = screen.getByRole('link', { name: '12 passes in Acme Gym' });
+    expect(passes).toHaveAttribute('href', '/admin/passes');
+    expect(screen.getByRole('link', { name: '3 API keys in Acme Gym' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^View / })).toBeNull();
+    expect(screen.queryByLabelText('Status')).toBeNull();
     expect(screen.getByLabelText('Accent colour')).toHaveValue('#0f766e');
-    expect(screen.queryByLabelText(/Logo/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View connections' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View API keys' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pass branding' })).toBeInTheDocument();
+    expect(screen.queryByText('Get started')).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('saves branding changes with a PATCH', async () => {
+  it('scopes the list when a count is opened', async () => {
+    const { router, fetchMock } = await renderApp('/admin/orgs/o1', {
+      session: 'admin',
+      handlers: { ...handlers(), '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+    });
+    await userEvent.setup().click(await screen.findByRole('link', { name: /12 passes/ }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some((c) => /\/api\/v1\/passes\?.*orgId=o1/.test(String(c[0]))),
+      ).toBe(true),
+    );
+  });
+
+  it('shows the checklist for a new org, with the template step checked', async () => {
+    await renderApp('/admin/orgs/o1', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/orgs/o1': () =>
+          json(summary({ counts: { passes: 0, templates: 1, connections: 0, apiKeys: 0 } })),
+      },
+    });
+    const list = await screen.findByRole('region', { name: 'Get started' });
+    expect(within(list).getByText('(done)', { exact: false })).toBeInTheDocument();
+    expect(within(list).getByRole('link', { name: /New pass/ })).toBeInTheDocument();
+  });
+
+  it('suspends after a danger confirm', async () => {
+    const posts: unknown[] = [];
+    await renderApp('/admin/orgs/o1', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/orgs/o1/status': (_u, init) => {
+          posts.push(JSON.parse(String(init?.body)));
+          return json(summary({ status: 'suspended' }));
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Suspend' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(
+      within(dialog).getByText('Passes stop updating and API keys stop working for Acme Gym.'),
+    ).toBeVisible();
+    const confirm = within(dialog).getByRole('button', { name: 'Suspend' });
+    expect(confirm.className).toContain('bg-danger');
+    await ui.click(confirm);
+    await waitFor(() => expect(posts).toEqual([{ status: 'suspended' }]));
+  });
+
+  it('saves the form with a PATCH and no status', async () => {
     let body: unknown;
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
@@ -172,21 +252,20 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    const name = await screen.findByLabelText(/Name/);
+    const name = await screen.findByLabelText(/^Name/);
     await ui.clear(name);
     await ui.type(name, 'Acme 2');
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(body).toEqual({
         name: 'Acme 2',
-        status: 'active',
         defaultIdentityId: null,
         branding: { accent: '#0f766e', supportEmail: 'help@acme.test' },
       }),
     );
   });
 
-  it('rejects a bad accent without calling the API', async () => {
+  it('warns about a low-contrast accent and rejects a bad one without calling the API', async () => {
     let patched = false;
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
@@ -200,6 +279,9 @@ describe('org detail', () => {
     });
     const ui = userEvent.setup();
     const accent = await screen.findByLabelText('Accent colour');
+    await ui.clear(accent);
+    await ui.type(accent, '#d97706');
+    expect(await screen.findByText(/Links in emails are 3.2:1/)).toBeInTheDocument();
     await ui.clear(accent);
     await ui.type(accent, 'teal');
     await ui.click(screen.getByRole('button', { name: 'Save' }));
@@ -224,8 +306,7 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click(await screen.findByRole('button', { name: 'More' }));
-    await ui.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    await ui.click(await screen.findByRole('button', { name: 'Delete' }));
     const dialog = await screen.findByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete' });
     expect(confirm).toBeDisabled();

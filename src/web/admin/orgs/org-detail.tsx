@@ -1,105 +1,39 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Trash2 } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { ENTITY } from '@/web/lib/entities.ts';
+import { isApiError } from '@/web/lib/errors.ts';
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
-  Dialog,
-  DialogContent,
-  DropdownMenuItem,
+  ConfirmDialog,
+  EntityAvatar,
   ErrorState,
-  FormField,
-  Input,
-  KeyValue,
-  MoreMenu,
   PageHeader,
-  SkeletonRows,
+  SkeletonDetail,
+  TwoPane,
+  TypedConfirmDialog,
+  toast,
 } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
 import { ORG_FIELDS } from '../settings/fields.ts';
 import { SettingsForm } from '../settings/settings-form.tsx';
+import { CountsCard, OrgChecklist, OverviewCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
-import { useDeleteOrg, useOrg } from './queries.ts';
+import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
 
-// Accent lives in the org branding form; settings here cover support contacts.
+// Accent lives in the org form; settings here cover support contacts.
 const SUPPORT_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('support.'));
-
-function DeleteOrg({ id, slug, name }: { id: string; slug: string; name: string }) {
-  const remove = useDeleteOrg(id);
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const [typed, setTyped] = useState('');
-  const [error, setError] = useState<string>();
-
-  async function confirm() {
-    setError(undefined);
-    try {
-      await remove.mutateAsync();
-      toast.success('Organization deleted');
-      await navigate({ to: '/admin/orgs' });
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
-
-  return (
-    <>
-      <MoreMenu>
-        <DropdownMenuItem destructive onSelect={() => setOpen(true)}>
-          <Trash2 aria-hidden />
-          Delete
-        </DropdownMenuItem>
-      </MoreMenu>
-      <Dialog
-        open={open}
-        onOpenChange={(o) => {
-          setOpen(o);
-          if (!o) {
-            setTyped('');
-            setError(undefined);
-          }
-        }}
-      >
-        <DialogContent
-          title={`Delete ${name}?`}
-          description="Its templates, passes and connections stop working. This cannot be undone."
-          size="sm"
-          footer={
-            <>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                iconStart={<Trash2 aria-hidden />}
-                disabled={typed !== slug}
-                loading={remove.isPending}
-                onClick={() => void confirm()}
-              >
-                Delete
-              </Button>
-            </>
-          }
-        >
-          <FormField label={`Type ${slug} to confirm`} error={error}>
-            {(p) => <Input {...p} value={typed} onChange={(e) => setTyped(e.target.value)} />}
-          </FormField>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
 
 export function OrgDetailPage({ orgId }: { orgId: string }) {
   const query = useOrg(orgId);
-  const { setOrgId } = useOrgScope();
+  const remove = useDeleteOrg(orgId);
+  const setStatus = useSetOrgStatus(orgId);
   const navigate = useNavigate();
+  const [confirm, setConfirm] = useState<'status' | 'delete'>();
   const crumbs = [
     { label: 'Organizations', to: '/admin/orgs' },
     { label: query.data?.name ?? 'Organization' },
@@ -109,7 +43,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
     return (
       <>
         <PageHeader title="Organization" breadcrumbs={crumbs} />
-        <SkeletonRows label="Loading organization" />
+        <SkeletonDetail label="Loading organization" />
       </>
     );
   }
@@ -128,90 +62,63 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
     );
   }
   const org = query.data;
-  const counts: [string, number][] = [
-    ['Passes', org.counts.passes],
-    ['Templates', org.counts.templates],
-    ['Connections', org.counts.connections],
-    ['API keys', org.counts.apiKeys],
-  ];
+  const suspended = org.status === 'suspended';
   return (
     <>
       <PageHeader
-        width="detail"
         title={org.name}
         breadcrumbs={crumbs}
-        meta={<OrgStatus status={org.status} />}
-        actions={<DeleteOrg id={org.id} slug={org.slug} name={org.name} />}
+        avatar={
+          <EntityAvatar
+            kind="org"
+            id={org.id}
+            name={org.name}
+            accent={org.branding.accent}
+            size={40}
+          />
+        }
+        meta={
+          <>
+            <OrgStatus status={org.status} />
+            <span className="font-mono text-xs">{org.slug}</span>
+            <Link
+              to="/admin/audit"
+              search={{ orgId: org.id }}
+              className="inline-flex min-h-6 items-center gap-1.5 rounded-sm hover:text-fg-strong hover:underline"
+            >
+              <ENTITY.audit.icon aria-hidden className="size-4" />
+              Audit log
+            </Link>
+          </>
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              iconStart={suspended ? <Play aria-hidden /> : <Pause aria-hidden />}
+              onClick={() => setConfirm('status')}
+            >
+              {suspended ? 'Reactivate' : 'Suspend'}
+            </Button>
+            <Button
+              variant="outline"
+              iconStart={<ACTION_ICON.delete aria-hidden />}
+              onClick={() => setConfirm('delete')}
+            >
+              Delete
+            </Button>
+          </>
+        }
       />
-      <div className="flex max-w-3xl flex-col gap-6">
-        <Card>
-          <CardHeader title="Overview" />
-          <CardBody className="flex flex-col gap-4">
-            <KeyValue
-              items={[
-                { label: 'Slug', value: org.slug, mono: true },
-                { label: 'ID', value: org.id, mono: true },
-                { label: 'Created', value: formatDateTime(org.createdAt) },
-                { label: 'Updated', value: formatDateTime(org.updatedAt) },
-              ]}
-            />
-            <ul aria-label="Counts" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {counts.map(([label, n]) => (
-                <li key={label} className="rounded-md border border-border p-3">
-                  <p className="text-2xl font-semibold text-fg-strong">{n}</p>
-                  <p className="text-xs text-fg-muted">{label}</p>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOrgId(org.id);
-                  void navigate({ to: '/admin/passes' });
-                }}
-              >
-                View passes
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOrgId(org.id);
-                  void navigate({ to: '/admin/templates' });
-                }}
-              >
-                View templates
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOrgId(org.id);
-                  void navigate({ to: '/admin/connections' });
-                }}
-              >
-                View connections
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOrgId(org.id);
-                  void navigate({ to: '/admin/api-keys' });
-                }}
-              >
-                View API keys
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/audit" search={{ orgId: org.id }}>
-                  Audit log
-                </Link>
-              </Button>
-            </div>
-          </CardBody>
-        </Card>
+      <TwoPane
+        aside={
+          <>
+            <CountsCard org={org} />
+            <OverviewCard org={org} />
+          </>
+        }
+      >
+        {org.counts.passes === 0 ? <OrgChecklist org={org} /> : null}
         <OrgForm key={`${org.updatedAt}`} org={org} />
         <Card>
           <CardHeader title="Support contacts" />
@@ -219,7 +126,36 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
             <SettingsForm scope={`org:${org.id}`} fields={SUPPORT_FIELDS} />
           </CardBody>
         </Card>
-      </div>
+      </TwoPane>
+      <ConfirmDialog
+        open={confirm === 'status'}
+        onOpenChange={(o) => !o && setConfirm(undefined)}
+        title={suspended ? `Reactivate ${org.name}?` : `Suspend ${org.name}?`}
+        description={
+          suspended
+            ? `Passes update and API keys work again for ${org.name}.`
+            : `Passes stop updating and API keys stop working for ${org.name}.`
+        }
+        confirmLabel={suspended ? 'Reactivate' : 'Suspend'}
+        destructive={!suspended}
+        onConfirm={async () => {
+          await setStatus.mutateAsync(suspended ? 'active' : 'suspended');
+          toast.success(suspended ? 'Organization reactivated' : 'Organization suspended');
+        }}
+      />
+      <TypedConfirmDialog
+        open={confirm === 'delete'}
+        onOpenChange={(o) => !o && setConfirm(undefined)}
+        title={`Delete ${org.name}?`}
+        description="Its templates, passes and connections stop working. This cannot be undone."
+        word={org.slug}
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          await remove.mutateAsync();
+          toast.success('Organization deleted');
+          await navigate({ to: '/admin/orgs' });
+        }}
+      />
     </>
   );
 }
