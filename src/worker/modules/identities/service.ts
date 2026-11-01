@@ -20,6 +20,7 @@ import {
   findByPassType,
   getIdentityRow,
   type IdentityRow,
+  identityFacts,
   identityInUse,
   insertIdentity,
   listIdentityRows,
@@ -39,7 +40,20 @@ export function daysRemaining(notAfter: number | null, now: number): number | nu
   return notAfter === null ? null : Math.floor((notAfter - now) / DAY_MS);
 }
 
+/** Apple's reason code from a probe's audit detail; null when it passed or none was given. */
+function probeReason(detail: string | null): string | null {
+  if (!detail) return null;
+  try {
+    const parsed = JSON.parse(detail) as { reason?: unknown };
+    return typeof parsed.reason === 'string' ? parsed.reason : null;
+  } catch {
+    // Audit detail is written as JSON by probeRow; anything else carries no reason.
+    return null;
+  }
+}
+
 export async function toDto(ctx: ServiceContext, row: IdentityRow): Promise<IdentityDto> {
+  const facts = await identityFacts(ctx.env.DB, row.id);
   let subject: string | null = null;
   let serial: string | null = null;
   if (row.cert_pem) {
@@ -67,6 +81,9 @@ export async function toDto(ctx: ServiceContext, row: IdentityRow): Promise<Iden
     apnsBinding: row.apns_binding,
     apnsAvailable: apnsBindingPresent(ctx.env, row.apns_binding),
     apnsHealth: row.apns_health,
+    apnsCheckedAt: facts.checked_at,
+    apnsReason: probeReason(facts.detail),
+    passCount: facts.pass_count,
     nfcEnabled: row.nfc_enabled === 1,
     isDefault: row.is_default === 1,
     createdAt: row.created_at,

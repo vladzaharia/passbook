@@ -233,6 +233,28 @@ export interface IdentityRotation {
   now: number;
 }
 
+export interface IdentityFacts {
+  checked_at: number | null;
+  /** The probe's audit detail (JSON with health, status and reason). */
+  detail: string | null;
+  pass_count: number;
+}
+
+/** The last APNs check (audit log) and the signed pass count, capped like org counts. */
+export async function identityFacts(db: D1Database, id: string): Promise<IdentityFacts> {
+  const row = await first<IdentityFacts>(
+    db,
+    `SELECT
+       (SELECT at FROM audit_log WHERE target_type = 'identity' AND target_id = ?1
+          AND action = 'identity.apns_probe' ORDER BY at DESC, id DESC LIMIT 1) AS checked_at,
+       (SELECT detail FROM audit_log WHERE target_type = 'identity' AND target_id = ?1
+          AND action = 'identity.apns_probe' ORDER BY at DESC, id DESC LIMIT 1) AS detail,
+       (SELECT count(*) FROM (SELECT 1 FROM passes WHERE identity_id = ?1 LIMIT 100000)) AS pass_count`,
+    [id],
+  );
+  return row ?? { checked_at: null, detail: null, pass_count: 0 };
+}
+
 export async function setProbeHealth(
   db: D1Database,
   id: string,

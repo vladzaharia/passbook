@@ -17,6 +17,11 @@ export const IdentitySchema = z.object({
   apnsBinding: z.string().nullable(),
   apnsAvailable: z.boolean(),
   apnsHealth: z.enum(['unknown', 'healthy', 'failing']),
+  /** The last APNs check (from the audit log) and Apple's reason code when it failed. */
+  apnsCheckedAt: TimestampSchema.nullable().default(null),
+  apnsReason: z.string().nullable().default(null),
+  /** Passes signed with this identity (stops counting at 100000). */
+  passCount: z.number().int().nonnegative().default(0),
   nfcEnabled: z.boolean(),
   isDefault: z.boolean(),
   createdAt: TimestampSchema,

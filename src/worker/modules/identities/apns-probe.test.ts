@@ -136,6 +136,16 @@ describe('apns probe', () => {
     );
     expect(rows[0]?.detail).toContain('BadCertificate');
     expect(await first(env.DB, 'SELECT COUNT(*) AS n FROM registrations')).toEqual(before);
+    const dto = await app.request(
+      `/api/v1/identities/${identityId}`,
+      { headers: fake.admin() },
+      withBinding(undefined),
+    );
+    expect(await dto.json()).toMatchObject({
+      apnsReason: 'BadCertificate',
+      apnsCheckedAt: expect.any(Number),
+      passCount: 0,
+    });
   });
 
   it('daily run probes identities with a binding', async () => {
