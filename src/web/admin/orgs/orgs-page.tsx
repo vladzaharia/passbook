@@ -197,7 +197,12 @@ export function OrgsPage() {
               id: 'status',
               cell: ({ row }) => <OrgStatus status={row.original.status} />,
             },
-            { header: 'Passes', id: 'passes', cell: ({ row }) => row.original.counts.passes },
+            {
+              header: 'Passes',
+              id: 'passes',
+              meta: { numeric: true },
+              cell: ({ row }) => row.original.counts.passes,
+            },
             {
               header: 'Templates',
               id: 'templates',

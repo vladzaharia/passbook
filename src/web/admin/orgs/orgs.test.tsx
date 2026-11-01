@@ -224,7 +224,8 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click(await screen.findByRole('button', { name: 'Delete' }));
+    await ui.click(await screen.findByRole('button', { name: 'More' }));
+    await ui.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     const dialog = await screen.findByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete' });
     expect(confirm).toBeDisabled();
