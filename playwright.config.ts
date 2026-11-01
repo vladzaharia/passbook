@@ -9,7 +9,12 @@ export default defineConfig({
   // No retries anywhere: a flake is a bug to fix, not to mask.
   retries: 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
-  use: { baseURL: `http://localhost:${port}`, trace: 'retain-on-failure' },
+  // Reduced motion: no view transitions or entrance animations, so clicks never land mid-transition.
+  use: {
+    baseURL: `http://localhost:${port}`,
+    trace: 'retain-on-failure',
+    reducedMotion: 'reduce',
+  },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/, use: { ...devices['Desktop Chrome'] } },
     {
