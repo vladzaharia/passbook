@@ -72,6 +72,10 @@ its own container; every grid/flex ancestor gets `min-w-0`.
 4. Actions right of the title: at most three visible (one primary or the main state change, then
    outline buttons), the rest in a `More` menu. Delete, rotate, download and copy go in `More`.
 5. Below 640: actions sit in one row under the title; overflow goes to `More`. Never two rows.
+6. `More` is the kit `MoreMenu` (items are `DropdownMenuItem`s). Row-action menus in tables stay
+   ghost `IconButton`s.
+7. Create actions (page headers and empty states) lead with a Lucide icon: `Plus` for New/Add,
+   `Upload` for Upload (`iconStart={<Plus aria-hidden />}`).
 
 ## Sections and cards
 
@@ -108,7 +112,7 @@ its own container; every grid/flex ancestor gets `min-w-0`.
   below, error `text-xs danger` replaces help and sets the danger border.
 - Fields fill their card (`max-w-3xl` page). Two columns only at ≥768 for short related fields.
   Fixed widths only for number + unit (`w-28`) and colour (swatch + `w-40` hex).
-- Booleans: `Switch` for persisted settings (setting row: label left, switch right). `Checkbox` for
+- Booleans: `SwitchRow` (kit) for persisted settings: label and help left, switch right. `Checkbox` for
   options inside a form or dialog (label right). One kind per form.
 - Date-time: date-time input `min-w-56`; timezone select beside it at ≥768, below it otherwise.
   The clear checkbox reads `No date` (or `Never expires` for expiry) everywhere.
@@ -141,12 +145,19 @@ Icon + Title Case text, always from `src/web/lib/status.ts`. Never render a raw 
 - Loading: `Skeleton` in the final layout's shape. `Spinner` only in buttons and polling rows.
 - Error: `ErrorState` with one sentence (what happened, what to do) and Retry.
 
+## Tabbed detail pages
+
+- The active tab lives in the URL as `?tab=<id>` (`passDetailSearchSchema` in
+  `admin/passes/search.ts`, `validateSearch` in `routes/admin/passes/$passId.tsx`).
+- Changing tab replaces history. An invalid or missing tab falls back to the default.
+
 ## Dialogs and drawers
 
 - Sizes: `sm` (384) confirms, `md` (512) forms, `lg` (768) uploads and editors.
 - Header title (+ optional one-line description), X close except on alert dialogs; footer right:
   Cancel outline, then the action (primary, or danger with the verb: `Void`, `Delete`).
-- Focus returns to the opener on close (use `DialogTrigger` or `onCloseAutoFocus`).
+- Focus returns to the opener on close (use `DialogTrigger` or `onCloseAutoFocus`). Opened from a
+  menu item, it returns to the menu trigger.
 - Sheets: left for navigation, right for record detail (`w-96` at ≥640, full width minus 16px below).
 
 ## Typography
@@ -169,7 +180,9 @@ stack.
 - Lucide, `size-4` in buttons, nav and menus; `size-3.5` in pills; `size-8` in empty states.
   Icon-only buttons use `IconButton` (label + tooltip). Destructive buttons carry `Trash2`.
 - Focus: 2px `--pk-focus` outline, offset 2 (buttons), 1 (fields). Shown for keyboard focus only;
-  tabs must not show it after a click. Route changes focus the `h1`.
+  tabs must not show it after a click. Route changes focus the `h1`. After a mouse or touch
+  interaction (`html[data-modality=pointer]`) buttons and controls show no ring, including in
+  dialogs and on the restored opener; the next key press brings it back. Text fields keep theirs.
 - Motion: colour transitions 150ms; overlays fade/pop 150–200ms; sheets slide 200ms; nothing animates
   on page load. `prefers-reduced-motion` turns it off (`base.css`).
 
