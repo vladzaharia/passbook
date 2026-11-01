@@ -34,7 +34,8 @@ test('public link works without sign-in and dies when rotated', async ({ browser
   const adminCtx = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
   const adminPage = await adminCtx.newPage();
   await adminPage.goto(`/admin/passes/${pass.id}`);
-  await adminPage.getByRole('button', { name: 'Rotate link' }).click();
+  await adminPage.getByRole('button', { name: 'More' }).click();
+  await adminPage.getByRole('menuitem', { name: 'Rotate link' }).click();
   await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Rotate' }).click();
   await expect(adminPage.getByText('Link rotated')).toBeVisible();
 

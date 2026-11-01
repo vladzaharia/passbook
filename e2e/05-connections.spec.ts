@@ -22,7 +22,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
 
   await page.getByLabel(/^Name/).fill(name);
   await page.getByLabel('Count', { exact: true }).fill('3');
-  await page.getByLabel('Holder Domain', { exact: true }).fill(domain);
+  await page.getByLabel('Holder domain', { exact: true }).fill(domain);
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByRole('combobox', { name: 'Template', exact: true }).click();
@@ -65,12 +65,14 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   // The run shows in the runs list and health reads healthy.
   await expect(async () => {
     await page.reload();
-    await expect(page.getByRole('row', { name: /admin changed 3 seen, 3 changed/ })).toBeVisible({
+    await expect(page.getByRole('row', { name: /admin changed.*3 seen, 3 changed/i })).toBeVisible({
       timeout: 2_000,
     });
   }).toPass({ timeout: 30_000 });
   await expect(page.getByText('Failures in a row')).toBeVisible();
-  await expect(page.getByText('Healthy', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('tabpanel', { name: 'Health' }).getByText('Healthy', { exact: true }),
+  ).toBeVisible();
 
   const passes = (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items;
   expect(passes.map((p: { holderEmail: string }) => p.holderEmail).sort()).toEqual(

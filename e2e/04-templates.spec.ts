@@ -51,8 +51,9 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
   await expect(page.getByRole('link', { name })).toBeVisible();
 
   await page.getByRole('link', { name }).click();
-  await expect(page.getByText('Uploaded', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByText('Uploaded', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page).toHaveURL(/\/admin\/templates$/);
   await expect(page.getByRole('link', { name })).toHaveCount(0);

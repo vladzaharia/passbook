@@ -50,7 +50,8 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   expect(row.lastRefreshedAt).toBeGreaterThanOrEqual(row.refreshRequestedAt);
 
   // Remove from my passes.
-  await tile.getByRole('button', { name: 'Remove' }).click();
+  await tile.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: 'Remove' }).click();
   await page
     .getByRole('alertdialog', { name: 'Remove from my passes?' })
     .getByRole('button', { name: 'Remove' })
