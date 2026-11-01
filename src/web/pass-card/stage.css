@@ -1,0 +1,261 @@
+/*
+ * Presentation of a pass: tilt, shine, flip, deal and mint. The pass art inside is untouched.
+ * Self-contained (SSR pages inline it without the app tokens), so values fall back to literals.
+ */
+.pc-stage {
+  --px: 0;
+  --py: 0;
+  --flip: 0deg;
+  --pc-tilt: var(--wl-tilt, 7deg);
+  --pc-spring: var(
+    --wl-ease-spring,
+    linear(0, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 1.017 20.5%, 1.043 24.5%, 1.007 36%, 1)
+  );
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  container-type: inline-size;
+  view-transition-class: pass;
+}
+
+/* The pass lights the surface under it with its own background colour. */
+.pc-stage::before {
+  content: "";
+  position: absolute;
+  inset: 14% 10% -3%;
+  z-index: -1;
+  border-radius: 40%;
+  background: var(--pc-glow, transparent);
+  filter: blur(36px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.pc-lift {
+  perspective: 320cqw;
+}
+
+.pc-flipper {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--py) * -2 * var(--pc-tilt)))
+    rotateY(calc(var(--px) * 2 * var(--pc-tilt) + var(--flip)));
+}
+
+.pc-face {
+  position: relative;
+  container-type: inline-size;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.pc-face[data-side="back"] {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+/* The back keeps the front's size and scrolls, as in Wallet. */
+.pc-face[data-side="back"] .pc-root,
+.pc-face[data-side="back"] .pc-card {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.pc-stage[data-face="back"],
+.pc-stage:has(> .pc-flip-toggle:checked) {
+  --flip: 180deg;
+}
+/* The far face leaves the tab order and accessibility tree once the card is edge-on. */
+.pc-stage[data-face="front"] .pc-face[data-side="back"],
+.pc-stage[data-face="back"] .pc-face[data-side="front"],
+.pc-stage:has(> .pc-flip-toggle:checked) .pc-face[data-side="front"] {
+  visibility: hidden;
+}
+.pc-stage:has(> .pc-flip-toggle:checked) .pc-face[data-side="back"] {
+  visibility: visible;
+}
+
+.pc-stage[data-single] {
+  --flip: 0deg;
+}
+.pc-stage[data-single] .pc-face {
+  position: relative;
+  transform: none;
+  visibility: visible;
+}
+
+/* Light: a pointer-following highlight, only while the pointer is on the card. */
+.pc-shine,
+.pc-sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: calc(100cqw * 14 / 320);
+  pointer-events: none;
+}
+.pc-shine {
+  opacity: 0;
+  mix-blend-mode: overlay;
+}
+.pc-shine::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.5), transparent 40%);
+  transform: translate(calc(var(--px) * 100%), calc(var(--py) * 100%));
+}
+.pc-stage[data-tracking] .pc-shine {
+  opacity: 1;
+}
+
+/* Mint: one foil sweep across the card plus a small press-and-settle. */
+.pc-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--wl-foil-1, #2dd4bf) 45%, transparent) 42%,
+    rgb(255 255 255 / 0.6) 50%,
+    color-mix(in srgb, var(--wl-foil-2, #9a5cff) 45%, transparent) 58%,
+    color-mix(in srgb, var(--wl-foil-3, #ffc24d) 30%, transparent) 64%,
+    transparent 72%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transform: translateX(-110%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pc-flipper {
+    transition: transform var(--wl-dur-flip, 640ms) var(--pc-spring);
+  }
+  .pc-stage[data-tracking] .pc-flipper {
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+  }
+  /* Shown at once, hidden after the turn; backface-visibility covers the gap. */
+  .pc-face {
+    transition: visibility 0s;
+  }
+  .pc-stage[data-face="front"] .pc-face[data-side="back"],
+  .pc-stage[data-face="back"] .pc-face[data-side="front"],
+  .pc-stage:has(> .pc-flip-toggle:checked) .pc-face[data-side="front"] {
+    transition-delay: var(--wl-dur-flip, 640ms);
+  }
+  .pc-stage:has(> .pc-flip-toggle:checked) .pc-face[data-side="back"] {
+    transition-delay: 0s;
+  }
+  .pc-shine {
+    transition: opacity 200ms ease-out;
+  }
+  .pc-stage[data-enter] .pc-lift {
+    animation: pc-deal var(--wl-dur-card, 480ms) var(--pc-spring) backwards;
+    animation-delay: calc(min(var(--i, 0), 6) * 60ms);
+  }
+  .pc-stage[data-enter]::before {
+    animation: pc-fade var(--wl-dur-card, 480ms) ease-out backwards;
+    animation-delay: calc(min(var(--i, 0), 6) * 60ms + 120ms);
+  }
+  .pc-stage[data-enter] > .pc-flip-label {
+    animation: pc-rise 260ms cubic-bezier(0, 0, 0, 1) 240ms backwards;
+  }
+  .pc-lift[data-mint] {
+    animation: pc-mint 640ms;
+  }
+  .pc-lift[data-mint] .pc-sheen::before {
+    animation: pc-sheen var(--wl-dur-sheen, 900ms) cubic-bezier(0.2, 0, 0, 1);
+  }
+}
+
+@keyframes pc-deal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) rotateX(20deg) scale(0.94);
+  }
+}
+@keyframes pc-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes pc-mint {
+  0% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0.3, 0, 1, 1);
+  }
+  20% {
+    transform: scale(0.965);
+    animation-timing-function: linear(0, 0.24 7%, 0.86 17%, 1.1 24%, 1.08 35%, 0.98 46%, 1);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes pc-sheen {
+  0% {
+    opacity: 1;
+    transform: translateX(-110%);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(110%);
+  }
+}
+
+/* Script-free flip control for SSR pages. */
+.pc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.pc-flip-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  min-height: 2.25rem;
+  margin: 0.75rem auto 0;
+  padding: 0 1rem;
+  border: 1px solid var(--line-strong, currentColor);
+  border-radius: 0.375rem;
+  background: var(--raised, transparent);
+  color: var(--fg, inherit);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+.pc-flip-label:hover {
+  background: var(--sunken, rgb(127 127 127 / 0.15));
+}
+.pc-stage:has(> .pc-flip-toggle:checked) .pc-flip-label {
+  border-color: var(--accent, currentColor);
+  color: var(--accent, inherit);
+}
+.pc-stage:has(> .pc-flip-toggle:focus-visible) .pc-flip-label {
+  outline: 2px solid var(--focus, currentColor);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-flipper,
+  .pc-face,
+  .pc-shine {
+    transition: none;
+  }
+  .pc-flipper {
+    transform: rotateY(var(--flip));
+  }
+}
