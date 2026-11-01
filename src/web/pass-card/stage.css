@@ -50,6 +50,8 @@
   container-type: inline-size;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* WebKit only hides a back face that has its own 3D transform. */
+  transform: rotateY(0deg);
 }
 .pc-face[data-side="back"] {
   position: absolute;
