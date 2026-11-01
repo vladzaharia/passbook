@@ -16,6 +16,7 @@ import {
 import { formatDate } from '../passes/format.ts';
 import { ErrorLine } from './error-line.tsx';
 import { HealthPill } from './health.tsx';
+import { errorMessage } from './labels.ts';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
 type Run = z.infer<typeof ConnectionRunSchema>;
@@ -44,7 +45,7 @@ const ms = (v: number | null) => (v === null ? null : `${Math.round(v)} ms`);
 
 /** Sampled record errors, one per line; collapsed until opened. */
 function SampledErrors({ detail }: { detail: string | null | undefined }) {
-  if (!detail) return null;
+  if (!detail) return <>—</>;
   const lines = detail.split('\n');
   return (
     <details className="text-xs">
@@ -90,7 +91,17 @@ const columns: ColumnDef<Run, never>[] = [
     id: 'code',
     header: 'Code',
     enableSorting: false,
-    cell: ({ row }) => <ErrorLine code={row.original.errorCode} />,
+    cell: ({ row }) =>
+      row.original.errorCode ? (
+        <span
+          className="font-mono text-xs text-danger"
+          title={errorMessage(row.original.errorCode) ?? undefined}
+        >
+          {row.original.errorCode}
+        </span>
+      ) : (
+        '—'
+      ),
   },
   {
     id: 'http',
@@ -145,7 +156,10 @@ export function HealthPanel({ connection: c }: { connection: Detail }) {
                     ? `Open until ${formatDate(c.breakerOpenUntil)}`
                     : 'Closed',
               },
-              { label: 'Last error', value: <ErrorLine code={c.lastErrorCode} /> },
+              {
+                label: 'Last error',
+                value: c.lastErrorCode ? <ErrorLine code={c.lastErrorCode} /> : null,
+              },
               {
                 label: 'Latency p50 / p95',
                 value: `${ms(c.metrics.p50Ms) ?? 'n/a'} / ${ms(c.metrics.p95Ms) ?? 'n/a'}`,

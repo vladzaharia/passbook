@@ -1,15 +1,61 @@
 import * as Primitive from '@radix-ui/react-tabs';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 
 export const Tabs = Primitive.Root;
 
 export function TabsList({ className, ...props }: ComponentProps<typeof Primitive.List>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [fade, setFade] = useState({ start: false, end: false });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const start = el.scrollLeft > 1;
+      const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setFade((f) => (f.start === start && f.end === end ? f : { start, end }));
+    };
+    const reveal = () => {
+      const active = el.querySelector<HTMLElement>('[data-state=active]');
+      if (!active || el.scrollWidth <= el.clientWidth) return;
+      el.scrollLeft = active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2;
+    };
+    reveal();
+    measure();
+    el.addEventListener('scroll', measure, { passive: true });
+    const mo = new MutationObserver(() => {
+      reveal();
+      measure();
+    });
+    mo.observe(el, { attributes: true, attributeFilter: ['data-state'], subtree: true });
+    const ro = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
+    ro?.observe(el);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      mo.disconnect();
+      ro?.disconnect();
+    };
+  }, []);
   return (
-    <Primitive.List
-      className={cn('flex gap-1 overflow-x-auto border-b border-border', className)}
-      {...props}
-    />
+    <div className="relative min-w-0">
+      <Primitive.List
+        ref={ref}
+        className={cn('flex gap-1 overflow-x-auto border-b border-border', className)}
+        {...props}
+      />
+      {fade.start ? (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-surface-page to-transparent"
+        />
+      ) : null}
+      {fade.end ? (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface-page to-transparent"
+        />
+      ) : null}
+    </div>
   );
 }
 

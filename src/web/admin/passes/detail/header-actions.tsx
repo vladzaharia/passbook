@@ -63,7 +63,7 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
         loading={actions.refreshFromSource.isPending}
         onClick={() => run(() => actions.refreshFromSource.mutateAsync(), 'Refresh requested')}
       >
-        Refresh
+        <span className="max-sm:sr-only">Refresh</span>
       </Button>
       <Button
         variant="outline"

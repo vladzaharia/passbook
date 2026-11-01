@@ -87,7 +87,9 @@ export function ConnectionsListPage({
         header: 'Last success',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="text-xs text-fg-muted">{formatDate(row.original.lastSuccessAt)}</span>
+          <span className="text-xs whitespace-nowrap text-fg-muted">
+            {formatDate(row.original.lastSuccessAt)}
+          </span>
         ),
       },
       {
