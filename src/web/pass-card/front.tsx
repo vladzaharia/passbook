@@ -109,27 +109,34 @@ function BoardingPass({ view, layout }: Props) {
   );
 }
 
-/** The first primary field without a label is the bold title. */
+/** Apple's poster: art bleeds over the whole card; the lower area is a darkened blur of it. */
 function Poster({ view, layout }: Props) {
   const [title, ...rest] = layout.primary;
   const heading = title && !title.label ? title : undefined;
   const fields = heading ? rest : layout.primary;
+  const art = view.images.artwork ?? view.images.background;
   return (
     <>
-      <div className="pc-art" data-darken={!view.suppressHeaderDarkening || undefined}>
-        <Img image={view.images.artwork} fallback={view.images.background} className="pc-art-img" />
+      <Img image={art} className="pc-poster-blur" />
+      <Img image={view.images.artwork} fallback={view.images.background} className="pc-art-img" />
+      <div className="pc-poster-shade" data-darken={!view.suppressHeaderDarkening || undefined} />
+      <div className="pc-poster-body">
         <div className="pc-art-top">
           <LogoLine view={view} poster={layout.poster} slot="primaryLogo" />
           <FieldRow fields={layout.header} className="pc-header" />
         </div>
-        <div className="pc-art-bottom">
-          {heading ? <h2 className="pc-title">{heading.text}</h2> : null}
-          <FieldRow fields={fields} className="pc-primary" />
+        <div className="pc-poster-low">
+          <Code layout={layout} />
+          {heading || fields.length ? (
+            <div className="pc-poster-primary">
+              {heading ? <h2 className="pc-title">{heading.text}</h2> : null}
+              <FieldRow fields={fields} className="pc-primary" />
+            </div>
+          ) : null}
           {layout.poster ? <Rows layout={layout} /> : null}
+          <FieldRow fields={layout.footer.slice(0, 1)} className="pc-poster-footer" />
         </div>
       </div>
-      <FieldRow fields={layout.footer} className="pc-poster-footer" />
-      <Code layout={layout} />
     </>
   );
 }

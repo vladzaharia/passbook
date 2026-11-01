@@ -58,6 +58,35 @@ describe('style specifics', () => {
     expect(screen.getByText('Downtown')).toBeInTheDocument();
   });
 
+  it('posterGeneric lays out art, code, title row and one footer without a footer panel', () => {
+    const pass: PassJson = {
+      ...posterGeneric,
+      posterGeneric: {
+        headerFields: [{ key: 'k', label: 'KEY TAG', value: '325604493' }],
+        primaryFields: [
+          { key: 'n', value: 'Member Name' },
+          { key: 'p', label: 'Pass', value: 'Membership' },
+        ],
+        footerFields: [
+          { key: 'f', value: 'Henry’s Gymnasium' },
+          { key: 'g', value: 'Hidden' },
+        ],
+      },
+    };
+    const { container } = render(<PassCard view={view(pass)} />);
+    const low = container.querySelector('.pc-poster-low') as HTMLElement;
+    const parts = [...low.children].map((e) => e.className);
+    expect(parts[0]).toContain('pc-code');
+    expect(parts[1]).toContain('pc-poster-primary');
+    expect(parts[2]).toContain('pc-poster-footer');
+    expect(container.querySelector('.pc-poster-primary .pc-title')).toHaveTextContent(
+      'Member Name',
+    );
+    expect(container.querySelector('.pc-poster-primary .pc-label')).toHaveTextContent('Pass');
+    expect(container.querySelectorAll('.pc-poster-footer .pc-field')).toHaveLength(1);
+    expect(container.querySelector('.pc-art-top')).toHaveTextContent('KEY TAG');
+  });
+
   it('posterGeneric on the legacy target draws generic', () => {
     const { container } = render(<PassCard view={view(posterGeneric)} target="legacy" />);
     expect(container.querySelector('.pc-root')).toHaveAttribute('data-style', 'generic');
