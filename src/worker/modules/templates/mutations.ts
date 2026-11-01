@@ -6,6 +6,7 @@ import type {
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { actorOf } from '../../platform/context.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import {
   ConflictError,
   ForbiddenError,
@@ -298,7 +299,7 @@ export async function removeTemplate(
     await deleteTemplate(ctx.env.DB, id);
   } catch (error) {
     // A pass was created after the count; the foreign key keeps the rows.
-    if (error instanceof Error && /FOREIGN KEY/i.test(error.message)) return archive();
+    if (classifyD1Error(error)?.kind === 'foreign_key') return archive();
     throw error;
   }
   clearTemplateCache(ctx.env, id);

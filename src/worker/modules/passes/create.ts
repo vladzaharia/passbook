@@ -1,6 +1,7 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -129,10 +130,10 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     });
   } catch (error) {
     await ctx.env.BUCKET.delete(objectKey);
-    const message = error instanceof Error ? error.message : '';
-    if (/UNIQUE constraint failed: passes\.(identity_id|download_token)/.test(message))
+    const info = classifyD1Error(error);
+    if (info?.kind === 'unique' && /passes\.(identity_id|download_token)/.test(info.detail))
       throw new ConflictError('That serial is already in use.', 'SERIAL_TAKEN');
-    if (/UNIQUE constraint failed: .*passes\.external_ref/.test(message))
+    if (info?.kind === 'unique' && /passes\.external_ref/.test(info.detail))
       throw new ConflictError('That connection ref already has a pass.', 'PASS_REF_TAKEN');
     throw error;
   }

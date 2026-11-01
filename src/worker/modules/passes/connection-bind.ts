@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { BindPassConnectionSchema } from '../../../shared/contracts/index.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -47,11 +48,8 @@ export async function bindPassConnection(
   try {
     await setBinding(db, pass.id, { connectionId, externalRef, fieldSources });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      /UNIQUE constraint failed: .*passes\.external_ref/.test(error.message)
-    )
-      throw refTaken();
+    const info = classifyD1Error(error);
+    if (info?.kind === 'unique' && /passes\.external_ref/.test(info.detail)) throw refTaken();
     throw error;
   }
   await recordAudit(ctx, {

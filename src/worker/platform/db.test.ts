@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { fixtures, makeEnv, makeOrg, makePass, makeTemplate } from '../../../test/helpers/index.ts';
-import { all, casUpdate, chunk, first, likeEscape, run, stmt } from './db.ts';
+import { all, casUpdate, chunk, classifyD1Error, first, likeEscape, run, stmt } from './db.ts';
 
 describe('db helpers', () => {
   it('binds undefined as NULL, booleans as 0/1 and bytes as blobs', async () => {
@@ -75,5 +75,43 @@ describe('db helpers', () => {
   it('chunks lists and escapes LIKE', () => {
     expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
     expect(likeEscape('50%_off\\')).toBe('50\\%\\_off\\\\');
+  });
+});
+
+describe('classifyD1Error', () => {
+  const failure = async (sql: string, params: string[] = []) => {
+    try {
+      await run(env.DB, sql, params);
+    } catch (error) {
+      return classifyD1Error(error);
+    }
+    throw new Error('statement did not fail');
+  };
+
+  it('names the unique columns', async () => {
+    await run(env.DB, 'CREATE TABLE IF NOT EXISTS t_unique (a TEXT, b TEXT, UNIQUE (a, b))');
+    await run(env.DB, "INSERT INTO t_unique VALUES ('x', 'y')");
+    expect(await failure("INSERT INTO t_unique VALUES ('x', 'y')")).toEqual({
+      kind: 'unique',
+      detail: 't_unique.a, t_unique.b',
+    });
+  });
+
+  it('flags foreign key violations', async () => {
+    const info = await failure(
+      "INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES ('a@b.c', 'no-user', 'oidc', 1)",
+    );
+    expect(info?.kind).toBe('foreign_key');
+  });
+
+  it('flags trigger aborts and ignores everything else', async () => {
+    expect(
+      classifyD1Error(new Error('D1_ERROR: registration cap reached: SQLITE_CONSTRAINT')),
+    ).toEqual({
+      kind: 'abort',
+      detail: 'registration cap reached',
+    });
+    expect(classifyD1Error(new Error('D1_ERROR: no such table: nope'))).toBeNull();
+    expect(classifyD1Error('boom')).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { writeEvent } from '../../platform/analytics.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, BadRequestError, UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { redactString } from '../../platform/log.ts';
@@ -100,7 +101,7 @@ export async function registerDevice(
     });
   } catch (error) {
     // Lost the race for the last slot: the trigger aborts the batch.
-    if (error instanceof Error && error.message.includes('registration cap reached')) throw full;
+    if (classifyD1Error(error)?.kind === 'abort') throw full;
     throw error;
   }
   writeEvent(ctx.env, {

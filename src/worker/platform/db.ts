@@ -99,3 +99,23 @@ export async function casUpdate(
   ]);
   return row?.version ?? null;
 }
+
+export type D1ErrorKind = 'unique' | 'foreign_key' | 'abort';
+
+export interface D1ErrorInfo {
+  kind: D1ErrorKind;
+  /** `table.column` list for unique violations, the RAISE text for aborts, else the message. */
+  detail: string;
+}
+
+/** Maps D1's SQLite error text to a kind. Null for anything else, so callers rethrow. */
+export function classifyD1Error(error: unknown): D1ErrorInfo | null {
+  const message = error instanceof Error ? error.message : '';
+  const unique = /UNIQUE constraint failed: ([^:]+?)(?::|$| \()/.exec(message);
+  if (unique?.[1]) return { kind: 'unique', detail: unique[1] };
+  if (/FOREIGN KEY constraint failed/i.test(message))
+    return { kind: 'foreign_key', detail: message };
+  const abort = /(?:^|: )(registration cap reached)\b/.exec(message);
+  if (abort?.[1]) return { kind: 'abort', detail: abort[1] };
+  return null;
+}
