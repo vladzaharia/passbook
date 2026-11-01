@@ -1,10 +1,12 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { AuditListSchema } from '@/shared/contracts/audit.ts';
 import { api } from '@/web/lib/api.ts';
 import type { AuditSearch } from './audit-search.ts';
 
-export function useAuditLog(search: AuditSearch, limit = 50) {
-  const { entry: _entry, ...filters } = search;
+export type AuditQuery = Omit<AuditSearch, 'entry'> & { excludeAction?: string | undefined };
+
+/** Filters change the key; the old rows stay on screen while the new ones load. */
+export function useAuditLog(filters: AuditQuery, limit = 50) {
   return useInfiniteQuery({
     queryKey: ['audit', filters, limit],
     initialPageParam: undefined as string | undefined,
@@ -14,5 +16,6 @@ export function useAuditLog(search: AuditSearch, limit = 50) {
         signal,
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
   });
 }

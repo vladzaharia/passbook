@@ -3,39 +3,36 @@ import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
 import { actionLabel } from '@/web/lib/actions.ts';
 import { DiffViewer, JsonViewer, KeyValue, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
-import { actorText, targetText } from './labels.ts';
+import { actorRef, targetRef } from './labels.ts';
 import { describeDetail } from './redact.ts';
+import { RefChip } from './ref-chip.tsx';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
 
+/** The one place raw codes show: the action code under the title, the request id below. */
 export function EntryDrawer({
   entry,
   orgName,
   onClose,
 }: {
   entry: AuditEntry | undefined;
-  orgName: (id: string | null) => string;
+  orgName: (id: string | null) => string | undefined;
   onClose: () => void;
 }) {
   const view = describeDetail(entry?.detail);
+  const target = entry ? targetRef(entry) : undefined;
   return (
     <Sheet open={entry !== undefined} onOpenChange={(o) => !o && onClose()}>
       <SheetContent title={entry ? actionLabel(entry.action) : 'Audit entry'} className="w-96">
         {entry ? (
-          <div className="flex flex-col gap-5 overflow-y-auto p-4">
+          <div className="flex flex-col gap-5 overflow-y-auto p-4 pt-0">
+            <code className="font-mono text-xs text-fg-muted">{entry.action}</code>
             <KeyValue
               items={[
-                { label: 'Action', value: entry.action, mono: true },
                 { label: 'Time', value: formatDateTime(entry.at) },
-                {
-                  label: 'Actor',
-                  value: actorText(entry),
-                },
-                {
-                  label: 'Target',
-                  value: targetText(entry) || null,
-                },
-                { label: 'Org', value: entry.orgId ? orgName(entry.orgId) : null },
+                { label: 'Actor', value: <RefChip value={actorRef(entry)} /> },
+                { label: 'Target', value: target ? <RefChip value={target} /> : null },
+                { label: 'Organization', value: entry.orgId ? orgName(entry.orgId) : null },
                 { label: 'Request', value: entry.requestId, mono: true },
               ]}
             />
