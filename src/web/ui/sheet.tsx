@@ -45,9 +45,7 @@ export function SheetContent({
         }}
         className={cn(
           'fixed inset-y-0 z-50 flex w-72 max-w-[calc(100%-1rem)] flex-col border-border bg-surface-raised shadow-elevation-3',
-          side === 'left'
-            ? 'left-0 border-r data-[state=open]:animate-[wallet-slide-left_200ms_ease-out]'
-            : 'right-0 border-l data-[state=open]:animate-[wallet-slide-right_200ms_ease-out]',
+          side === 'left' ? 'wl-sheet-left left-0 border-r' : 'wl-sheet-right right-0 border-l',
           className,
         )}
         {...props}

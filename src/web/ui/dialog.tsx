@@ -55,8 +55,7 @@ export function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
-export const OVERLAY =
-  'fixed inset-0 z-40 bg-black/60 data-[state=open]:animate-[wallet-fade_150ms_ease-out]';
+export const OVERLAY = 'wl-overlay fixed inset-0 z-40 bg-black/60';
 
 export function DialogOverlay({
   className,
@@ -99,8 +98,8 @@ export function DialogContent({
           if (!e.defaultPrevented) restoreOpener(opener)(e);
         }}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border bg-surface-overlay shadow-elevation-3',
-          'data-[state=open]:animate-[wallet-pop_150ms_ease-out]',
+          'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border bg-surface-overlay',
+          'wl-dialog shadow-[var(--wl-edge),var(--pk-elevation-3)]',
           SIZES[size],
           className,
         )}

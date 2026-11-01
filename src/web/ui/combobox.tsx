@@ -55,7 +55,7 @@ export function Combobox({
         <PopoverPrimitive.Content
           align="start"
           sideOffset={4}
-          className="z-50 w-(--radix-popover-trigger-width) min-w-56 rounded-md border border-border bg-surface-overlay shadow-elevation-2"
+          className="wl-pop origin-(--radix-popover-content-transform-origin) z-50 w-(--radix-popover-trigger-width) min-w-56 rounded-md border border-border bg-surface-overlay shadow-elevation-2"
         >
           <Command>
             <Command.Input

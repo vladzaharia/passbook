@@ -67,7 +67,7 @@ export function Select({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={4}
-          className="z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-auto rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2"
+          className="wl-pop origin-(--radix-select-content-transform-origin) z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-auto rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2"
         >
           <SelectPrimitive.Viewport>
             {options.map((o) => (

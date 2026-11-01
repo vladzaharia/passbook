@@ -18,7 +18,7 @@ export function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'z-50 w-72 rounded-md border border-border bg-surface-overlay p-3 text-sm text-fg shadow-elevation-2',
+          'wl-pop origin-(--radix-popover-content-transform-origin) z-50 w-72 rounded-md border border-border bg-surface-overlay p-3 text-sm text-fg shadow-elevation-2',
           className,
         )}
         {...props}
