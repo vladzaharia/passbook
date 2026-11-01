@@ -38,10 +38,13 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
 
 export type PageWidth = 'full' | 'detail';
 
-/** One width per page type (docs/design/ui-consistency.md): detail and form pages use max-w-3xl. */
+/**
+ * Every admin page uses the full main width; width is capped per block (FormGrid, prose, dialogs),
+ * never per page (docs/design/ui-consistency.md "Layout"). Kept for callers that still pass it.
+ */
 export const PAGE_WIDTH: Record<PageWidth, string> = {
   full: '',
-  detail: 'max-w-3xl',
+  detail: '',
 };
 
 /** Wraps a page's blocks (tab panels included) to the page type's width. */
@@ -73,6 +76,8 @@ export interface PageHeaderProps {
   width?: PageWidth;
   /** Customer pages use a larger title at >=640. */
   size?: 'md' | 'lg';
+  /** A 40 px EntityAvatar left of the h1 (users, orgs). */
+  avatar?: ReactNode;
   className?: string;
 }
 
@@ -85,6 +90,7 @@ export function PageHeader({
   actions,
   width = 'full',
   size = 'md',
+  avatar,
   className,
 }: PageHeaderProps) {
   useEffect(() => {
@@ -94,26 +100,29 @@ export function PageHeader({
     <header className={cn('mb-6 flex min-w-0 flex-col gap-3', PAGE_WIDTH[width], className)}>
       {breadcrumbs?.length ? <Breadcrumbs items={breadcrumbs} /> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1
-            tabIndex={-1}
-            className={cn(
-              'text-2xl font-semibold tracking-[-0.015em] text-fg-strong',
-              size === 'lg' && 'sm:text-3xl',
-            )}
-          >
-            {title}
-          </h1>
-          {description ? <p className="mt-1 text-sm text-fg-muted">{description}</p> : null}
-          {meta ? (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
-              {meta}
-            </div>
-          ) : null}
+        <div className="flex min-w-0 items-start gap-3">
+          {avatar}
+          <div className="min-w-0">
+            <h1
+              tabIndex={-1}
+              className={cn(
+                'text-2xl font-semibold tracking-[-0.015em] text-fg-strong',
+                size === 'lg' && 'sm:text-3xl',
+              )}
+            >
+              {title}
+            </h1>
+            {description ? (
+              <p className="mt-1 max-w-[65ch] text-sm text-fg-muted">{description}</p>
+            ) : null}
+            {meta ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+                {meta}
+              </div>
+            ) : null}
+          </div>
         </div>
-        {actions ? (
-          <div className="flex flex-wrap items-center gap-2 max-sm:w-full">{actions}</div>
-        ) : null}
+        {actions ? <div className="flex items-center gap-2 max-sm:w-full">{actions}</div> : null}
       </div>
     </header>
   );

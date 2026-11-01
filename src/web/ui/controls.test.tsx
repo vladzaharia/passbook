@@ -113,8 +113,10 @@ describe('FormField', () => {
     const input = screen.getByLabelText(/email/i);
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAttribute('aria-required', 'true');
-    expect(input).toHaveAccessibleDescription('Used for sign-in Invalid email');
-    expect(screen.getByRole('alert')).toHaveTextContent('Invalid email');
+    // The error replaces the help and is linked by aria-describedby, never role=alert.
+    expect(input).toHaveAccessibleDescription('Invalid email');
+    expect(screen.queryByText('Used for sign-in')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
     await noViolations(container);
   });
 

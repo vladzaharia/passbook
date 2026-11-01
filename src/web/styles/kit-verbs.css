@@ -149,3 +149,34 @@
   transform-origin: 50% 100%;
   animation: wl-spark 640ms var(--wl-ease-out) calc(var(--i) * 40ms) backwards;
 }
+
+/* One foil sheen across a freshly revealed secret (SecretReveal). */
+@keyframes wl-sheen-once {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(110%);
+  }
+}
+.wl-sheen-once::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--wl-foil-1) 35%, transparent) 45%,
+    color-mix(in srgb, var(--wl-foil-2) 30%, transparent) 55%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-sheen-once::after {
+    animation: wl-sheen-once var(--wl-dur-sheen) var(--wl-ease-move) 300ms backwards;
+    opacity: 1;
+    transform: translateX(110%);
+  }
+}

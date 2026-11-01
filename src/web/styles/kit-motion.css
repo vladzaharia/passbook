@@ -89,6 +89,12 @@
     transform: scaleY(0);
   }
 }
+@keyframes wl-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--wl-step-x, 16px));
+  }
+}
 @keyframes wl-spin {
   to {
     transform: rotate(360deg);
@@ -129,16 +135,34 @@
 }
 @media (max-width: 639.98px) {
   .wl-dialog,
-  .wl-action-sheet {
+  .wl-pop.wl-action-sheet {
     --wl-sheet-y: 100%;
   }
   .wl-dialog[data-state="open"],
-  .wl-action-sheet[data-state="open"] {
+  .wl-pop.wl-action-sheet[data-state="open"] {
     animation: wl-slide-in 260ms var(--wl-ease-out) backwards;
   }
   .wl-dialog[data-state="closed"],
-  .wl-action-sheet[data-state="closed"] {
+  .wl-pop.wl-action-sheet[data-state="closed"] {
     animation: wl-slide-out 200ms var(--wl-ease-in) forwards;
+  }
+}
+
+/* Phones: menus open as a bottom action sheet. Radix positions the wrapper inline, so the sheet
+   overrides it. The ::before is the backdrop. */
+@media (max-width: 639.98px) {
+  [data-radix-popper-content-wrapper]:has(> .wl-action-sheet) {
+    position: fixed !important;
+    inset: auto 0 0 !important;
+    min-width: 0 !important;
+    transform: none !important;
+  }
+  .wl-action-sheet::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: rgb(0 0 0 / 0.6);
   }
 }
 
@@ -294,6 +318,11 @@
   animation: wl-tl-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
 }
 
+/* Wizard: the new step enters from the direction of travel; the stepper line fills. */
+.wl-step {
+  animation: wl-step-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+
 /* Tab panels fade in (kept under reduced motion: an opacity swap under 150 ms). */
 .wl-panel[data-state="active"] {
   animation: wl-fade-in 120ms var(--wl-ease-out) backwards;
@@ -338,6 +367,9 @@
   .wl-indicator[data-ready] {
     transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);
   }
+  .wl-fill {
+    transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);
+  }
   .wl-indicator[data-variant="list"][data-ready] {
     transition-duration: 120ms;
     transition-timing-function: var(--wl-ease-out);
@@ -371,6 +403,10 @@
     animation: none;
   }
   .wl-offline {
+    animation: wl-fade-in 120ms linear backwards;
+  }
+  /* A wizard step swaps with a short fade (kept: opacity under 150 ms). */
+  .wl-step {
     animation: wl-fade-in 120ms linear backwards;
   }
   .wl-offline[data-closing] {

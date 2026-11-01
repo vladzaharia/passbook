@@ -20,9 +20,9 @@ import {
   MoreMenu,
   toast,
 } from '../../../ui/index.ts';
+import { confirmWord, TypedConfirmDialog } from '../../../ui/typed-confirm-dialog.tsx';
 import { usePassActions } from '../api.ts';
 import { absoluteUrl } from '../format.ts';
-import { TypedConfirmDialog } from '../typed-confirm.tsx';
 
 type Pass = z.infer<typeof PassDetailSchema>;
 
@@ -137,7 +137,7 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
         onOpenChange={setDel}
         title="Delete pass?"
         description="Removes the pass, its versions and images. Installed copies stop updating."
-        word={pass.serial}
+        word={confirmWord({ title: pass.title, slug: pass.serial })}
         confirmLabel="Delete pass"
         onConfirm={async () => {
           await actions.remove.mutateAsync();

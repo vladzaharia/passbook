@@ -2,6 +2,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
+import { installInputModality } from './lib/input-modality.ts';
 import { AppProviders } from './lib/providers.tsx';
 import { createQueryClient } from './lib/query-client.ts';
 import { createAppRouter } from './router.tsx';
@@ -10,8 +11,12 @@ import './styles/app.css';
 // zod's JIT probes new Function(), which the CSP (no unsafe-eval) reports on every page.
 z.config({ jitless: true });
 
-// A deploy replaces hashed chunks; reload once to pick up the new shell.
+installInputModality();
+
+// A deploy replaces hashed chunks; reload once to pick up the new shell. Offline, a reload would
+// lose the shell: the route shows "Could not load this page" with Reload instead (RouteError).
 window.addEventListener('vite:preloadError', (event) => {
+  if (!navigator.onLine) return;
   event.preventDefault();
   try {
     if (sessionStorage.getItem('chunk-reload')) return;

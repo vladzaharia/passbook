@@ -90,11 +90,11 @@ describe('ConfirmDialog', () => {
     );
   }
 
-  it('is an alertdialog and focuses the safe action first', async () => {
+  it('is an alertdialog and focuses itself, never Cancel', async () => {
     render(<Harness onConfirm={() => {}} />);
     const dialog = await screen.findByRole('alertdialog', { name: 'Delete pass?' });
     expect((await axe(dialog)).violations).toEqual([]);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
+    await waitFor(() => expect(dialog).toHaveFocus());
   });
 
   it('does not close on outside click but closes on Escape', async () => {

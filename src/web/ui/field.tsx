@@ -21,12 +21,13 @@ export interface FormFieldProps {
 
 export function FormField({ label, help, error, required, className, children }: FormFieldProps) {
   const id = useId();
-  const helpId = help ? `${id}-help` : undefined;
+  // The error replaces the help; the control points at whichever shows.
   const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
+  const helpId = help && !error ? `${id}-help` : undefined;
+  const describedBy = errorId ?? helpId;
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
-      <Label htmlFor={id}>
+    <div className={cn('flex flex-col', className)}>
+      <Label htmlFor={id} className="mb-2">
         {label}
         {required ? (
           <span aria-hidden className="ml-0.5 text-danger">
@@ -40,14 +41,13 @@ export function FormField({ label, help, error, required, className, children }:
         'aria-invalid': error ? true : undefined,
         'aria-required': required ? true : undefined,
       })}
-      {help ? (
-        <p id={helpId} className="text-xs text-fg-muted">
-          {help}
-        </p>
-      ) : null}
       {error ? (
-        <p id={errorId} role="alert" className="text-xs text-danger">
+        <p id={errorId} className="mt-1 max-w-[65ch] text-xs text-danger">
           {error}
+        </p>
+      ) : help ? (
+        <p id={helpId} className="mt-1 max-w-[65ch] text-xs text-fg-muted">
+          {help}
         </p>
       ) : null}
     </div>

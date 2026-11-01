@@ -190,7 +190,7 @@ describe('template detail', () => {
     await user.click(select);
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/Passes of another organization/);
+    expect(await screen.findByText(/Passes of another organization/)).toBeInTheDocument();
     conflict = false;
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1' }, { orgId: 'org1' }]));

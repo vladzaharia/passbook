@@ -20,6 +20,8 @@ export function DropdownMenuContent({
         collisionPadding={collisionPadding}
         className={cn(
           'wl-pop origin-(--radix-dropdown-menu-content-transform-origin) z-50 min-w-44 rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
+          // Phones: an action sheet anchored to the bottom edge (kit-motion.css .wl-action-sheet).
+          'wl-action-sheet max-sm:w-screen max-sm:rounded-b-none max-sm:rounded-t-xl max-sm:p-2 max-sm:pb-[max(0.5rem,env(safe-area-inset-bottom))]',
           className,
         )}
         {...props}
@@ -29,7 +31,7 @@ export function DropdownMenuContent({
 }
 
 const ITEM =
-  'flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-fg outline-hidden data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:text-fg-muted';
+  'flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-fg outline-hidden max-sm:min-h-11 pointer-coarse:min-h-11 data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-muted';
 
 export function DropdownMenuItem({
   className,

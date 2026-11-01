@@ -26,8 +26,8 @@ import {
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
+import { confirmWord, TypedConfirmDialog } from '../../ui/typed-confirm-dialog.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
-import { TypedConfirmDialog } from '../passes/typed-confirm.tsx';
 import { useTemplate } from '../templates/api.ts';
 import { useConnection, useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
@@ -358,7 +358,7 @@ export function ConnectionDetailPage({
         onOpenChange={setDel}
         title="Delete connection?"
         description="Bound passes keep their data and stop syncing."
-        word={c.name}
+        word={confirmWord({ title: c.name })}
         confirmLabel="Delete connection"
         onConfirm={async () => {
           await actions.remove.mutateAsync();

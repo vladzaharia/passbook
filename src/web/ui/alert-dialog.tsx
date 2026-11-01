@@ -1,9 +1,16 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { Button } from './button.tsx';
-import { DialogOverlay, restoreOpener, useOpener } from './dialog.tsx';
+import {
+  DIALOG_ACTIONS,
+  DIALOG_PANEL,
+  DialogOverlay,
+  focusInitial,
+  restoreOpener,
+  useOpener,
+} from './dialog.tsx';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -30,7 +37,6 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const cancelRef = useRef<HTMLButtonElement>(null);
   const opener = useOpener(open);
 
   async function confirm() {
@@ -53,15 +59,13 @@ export function ConfirmDialog({
         <DialogOverlay />
         <DialogPrimitive.Content
           role="alertdialog"
-          // The safe choice gets focus first.
-          onOpenAutoFocus={(e) => {
-            e.preventDefault();
-            cancelRef.current?.focus();
-          }}
+          // The dialog itself takes focus (never Cancel), so a pointer user sees no ring.
+          onOpenAutoFocus={focusInitial}
           onCloseAutoFocus={restoreOpener(opener)}
           onInteractOutside={(e) => e.preventDefault()}
           className={cn(
-            'wl-dialog fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface-overlay p-5 shadow-[var(--wl-edge),var(--pk-elevation-3)]',
+            DIALOG_PANEL,
+            'p-5 outline-none sm:max-w-sm max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))]',
           )}
         >
           <DialogPrimitive.Title className="text-base font-semibold text-fg-strong">
@@ -77,13 +81,8 @@ export function ConfirmDialog({
               {error}
             </p>
           ) : null}
-          <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <Button
-              ref={cancelRef}
-              variant="outline"
-              disabled={busy}
-              onClick={() => onOpenChange(false)}
-            >
+          <div className={cn(DIALOG_ACTIONS, 'mt-5')}>
+            <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
               {cancelLabel}
             </Button>
             <Button variant={destructive ? 'danger' : 'primary'} loading={busy} onClick={confirm}>

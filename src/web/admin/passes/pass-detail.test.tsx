@@ -413,7 +413,8 @@ describe('pass detail: header actions', () => {
     const dialog = await screen.findByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete pass' });
     expect(confirm).toBeDisabled();
-    await user.type(within(dialog).getByLabelText('Type SER-001 to confirm'), 'SER-001');
+    // The word is the pass title (human, at most 24 characters), matched case-insensitively.
+    await user.type(within(dialog).getByLabelText('Type Sam Jones to confirm'), ' sam jones ');
     expect(confirm).toBeEnabled();
     await user.click(confirm);
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
