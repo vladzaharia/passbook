@@ -1,32 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { MetricsOverviewSchema } from '@/shared/contracts/metrics.ts';
 import { api } from '@/web/lib/api.ts';
-import { cn } from '@/web/lib/cn.ts';
 import { useArrival } from '@/web/lib/motion.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
-  Badge,
   Card,
   CardBody,
-  CardHeader,
-  CountUp,
   ErrorState,
   PageHeader,
   Select,
   Skeleton,
-  SkeletonChartCard,
-  SkeletonRows,
-  StatusPill,
-  Timeline,
+  useDelayed,
 } from '@/web/ui/index.ts';
-import { targetText } from '../audit/labels.ts';
-import { useAuditLog } from '../audit/queries.ts';
-import { sortBySeverity, useStatus } from '../status/queries.ts';
-import { LineChart } from './chart.tsx';
-import { formatCount } from './format.ts';
+import type { Range } from './chart.tsx';
+import { ChartsCard } from './charts-card.tsx';
+import { GetStarted, setupDone, useGetStartedDismissed } from './get-started.tsx';
+import { Health } from './health.tsx';
+import { Kpis, RANGE_LABEL } from './kpis.tsx';
+import { RecentActivity } from './recent-activity.tsx';
 
-export type Range = '24h' | '7d' | '30d';
+export type { Range };
 export interface OverviewSearch {
   range?: Range | undefined;
 }
@@ -37,6 +30,7 @@ export function parseOverviewSearch(raw: Record<string, unknown>): OverviewSearc
   };
 }
 
+/** A range or scope change keeps the old numbers on screen until the new ones land. */
 function useMetrics(range: Range, orgId: string | undefined) {
   return useQuery({
     queryKey: ['metrics', range, orgId ?? null],
@@ -46,110 +40,32 @@ function useMetrics(range: Range, orgId: string | undefined) {
         signal,
       }),
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 }
 
-function Kpi({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+/** The loaded layout's shape: four tiles, the counts row, the charts card. */
+function MetricsSkeleton() {
   return (
-    <li className="rounded-lg border border-border bg-surface-raised p-4 shadow-[var(--wl-edge),var(--pk-elevation-1)]">
-      <p className="text-xs text-fg-muted">{label}</p>
-      <CountUp
-        value={value}
-        format={formatCount}
-        className={cn(
-          'mt-1 block text-3xl font-semibold tracking-[-0.02em]',
-          warn && value > 0 ? 'text-danger' : 'text-fg-strong',
-        )}
-      />
-    </li>
-  );
-}
-
-function Health() {
-  const status = useStatus();
-  return (
-    <Card>
-      <CardHeader
-        title="Health"
-        actions={
-          <Link to="/admin/status" className="text-xs text-accent-fg underline">
-            All components
-          </Link>
-        }
-      />
-      <CardBody>
-        {status.isPending ? (
-          <SkeletonRows rows={2} label="Loading health" />
-        ) : status.isError ? (
-          <ErrorState error={status.error} onRetry={() => status.refetch()} />
-        ) : (
-          (() => {
-            const problems = sortBySeverity(status.data.components).filter(
-              (c) => c.state === 'failing' || c.state === 'degraded',
-            );
-            return (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <StatusPill status={status.data.overall} />
-                  <span className="text-fg-muted">
-                    {problems.length === 0
-                      ? 'All components working.'
-                      : `${problems.length} ${problems.length === 1 ? 'component needs' : 'components need'} attention.`}
-                  </span>
-                </div>
-                {problems.length > 0 ? (
-                  <ul className="flex flex-col gap-2 border-t border-border pt-3">
-                    {problems.slice(0, 5).map((c) => (
-                      <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="min-w-0 truncate">{c.label}</span>
-                        <span className="text-xs text-fg-muted">
-                          {c.state === 'failing' ? 'Failing' : 'Degraded'}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            );
-          })()
-        )}
-      </CardBody>
-    </Card>
-  );
-}
-
-function Activity({ orgId }: { orgId: string | undefined }) {
-  const log = useAuditLog({ orgId }, 8);
-  const items = log.data?.pages[0]?.items ?? [];
-  return (
-    <Card>
-      <CardHeader
-        title="Recent activity"
-        actions={
-          <Link to="/admin/audit" className="text-xs text-accent-fg underline">
-            Audit log
-          </Link>
-        }
-      />
-      <CardBody>
-        {log.isPending ? (
-          <SkeletonRows rows={3} label="Loading activity" />
-        ) : log.isError ? (
-          <ErrorState error={log.error} onRetry={() => log.refetch()} />
-        ) : items.length === 0 ? (
-          <p className="text-sm text-fg-muted">No activity yet.</p>
-        ) : (
-          <Timeline
-            items={items.map((e) => ({
-              id: String(e.id),
-              action: e.action,
-              time: e.at,
-              description: targetText(e) || undefined,
-            }))}
-          />
-        )}
-      </CardBody>
-    </Card>
+    <div role="status" aria-busy className="flex flex-col gap-6">
+      <span className="sr-only">Loading metrics</span>
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {['a', 'b', 'c', 'd'].map((k) => (
+            <Skeleton key={k} className="h-[6.5rem]" />
+          ))}
+        </div>
+        <Skeleton className="h-6 w-80 max-w-full" />
+      </div>
+      <Card>
+        <div className="h-14 border-b border-border" />
+        <CardBody className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+          {['a', 'b', 'c', 'd'].map((k) => (
+            <Skeleton key={k} className="h-[8.25rem]" />
+          ))}
+        </CardBody>
+      </Card>
+    </div>
   );
 }
 
@@ -164,17 +80,16 @@ export function OverviewPage({
   const { orgId } = useOrgScope();
   const metrics = useMetrics(range, orgId);
   const arrived = useArrival(metrics.isPending);
+  const busy = useDelayed(metrics.isPlaceholderData && metrics.isFetching, 150);
+  const [dismissed, dismiss] = useGetStartedDismissed();
+  const data = metrics.data;
   const picker = (
     <Select
       aria-label="Range"
-      className="w-36"
+      className="w-40"
       value={range}
       onValueChange={(v) => onSearch({ range: v as Range })}
-      options={[
-        { value: '24h', label: 'Last 24 hours' },
-        { value: '7d', label: 'Last 7 days' },
-        { value: '30d', label: 'Last 30 days' },
-      ]}
+      options={(['24h', '7d', '30d'] as const).map((r) => ({ value: r, label: RANGE_LABEL[r] }))}
     />
   );
   return (
@@ -182,65 +97,24 @@ export function OverviewPage({
       <PageHeader title="Overview" actions={picker} />
       <div className="flex flex-col gap-6">
         {metrics.isPending ? (
-          <>
-            <div role="status" aria-busy className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <span className="sr-only">Loading metrics</span>
-              {Array.from({ length: 8 }, (_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
-                <Skeleton key={i} className="h-[5.625rem]" />
-              ))}
-            </div>
-            <Card>
-              <CardHeader title="Activity" />
-              <CardBody className="grid gap-6 md:grid-cols-2">
-                {['Issued', 'Updated', 'Downloads', 'Pushes'].map((t) => (
-                  <SkeletonChartCard key={t} label={`Loading ${t.toLowerCase()}`} />
-                ))}
-              </CardBody>
-            </Card>
-          </>
-        ) : metrics.isError ? (
+          <MetricsSkeleton />
+        ) : metrics.isError || !data ? (
           <ErrorState error={metrics.error} onRetry={() => metrics.refetch()} />
         ) : (
           <>
-            <ul
-              aria-label="Totals"
-              className={cn('grid grid-cols-2 gap-3 md:grid-cols-4', arrived && 'wl-stagger')}
-            >
-              <Kpi label="Passes" value={metrics.data.totals.passes} />
-              <Kpi label="Active" value={metrics.data.totals.activePasses} />
-              <Kpi label="Voided" value={metrics.data.totals.voidedPasses} />
-              <Kpi label="Holders" value={metrics.data.totals.holders} />
-              <Kpi label="Devices" value={metrics.data.totals.devices} />
-              <Kpi label={`Issued, ${range}`} value={metrics.data.totals.issued} />
-              <Kpi label={`Downloads, ${range}`} value={metrics.data.totals.downloads} />
-              <Kpi
-                label={`Push failures, ${range}`}
-                value={metrics.data.totals.pushFailures}
-                warn
-              />
-            </ul>
-            <Card>
-              <CardHeader
-                title="Activity"
-                actions={
-                  metrics.data.source === 'd1' ? (
-                    <Badge title="Counted from the database">Approximate</Badge>
-                  ) : null
-                }
-              />
-              <CardBody className="grid gap-6 md:grid-cols-2">
-                <LineChart title="Issued" points={metrics.data.series.issued} range={range} />
-                <LineChart title="Updated" points={metrics.data.series.updated} range={range} />
-                <LineChart title="Downloads" points={metrics.data.series.downloads} range={range} />
-                <LineChart title="Pushes" points={metrics.data.series.pushes} range={range} />
-              </CardBody>
-            </Card>
+            <Kpis data={data} range={range} enter={arrived} />
+            {!dismissed && !setupDone(data.setup) ? (
+              <GetStarted setup={data.setup} onDismiss={dismiss} />
+            ) : (
+              <ChartsCard data={data} range={range} enter={arrived} busy={busy} />
+            )}
           </>
         )}
-        <div className="grid items-start gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-3">
           <Health />
-          <Activity orgId={orgId} />
+          <div className="min-w-0 xl:col-span-2">
+            <RecentActivity orgId={orgId} />
+          </div>
         </div>
       </div>
     </>

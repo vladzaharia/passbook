@@ -1,0 +1,95 @@
+/*
+ * Overview motion (docs/design/motion-and-expression.md): the chart clips in once (600 ms), a
+ * range change crossfades (160 ms), the hover guide glides (80 ms) and its dot pops. Transform and
+ * opacity only. Under reduced motion only a short crossfade stays.
+ */
+@keyframes wl-chart-clip {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes wl-chart-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes wl-chart-gone {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wl-dot-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+.wl-chart-clip {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+.wl-chart-in {
+  animation: wl-chart-fade 160ms var(--wl-ease-out) backwards;
+}
+.wl-chart-out {
+  animation: wl-chart-gone 160ms var(--wl-ease-in) forwards;
+}
+
+/* The guide and dot are full-plot boxes moved by --fx/--fy; the frame clips them 8 px out. */
+.wl-plot-frame {
+  position: absolute;
+  inset: -8px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wl-guide,
+.wl-dot {
+  position: absolute;
+  inset: 8px;
+  transition: transform 80ms var(--wl-ease-out);
+}
+.wl-guide {
+  transform: translateX(calc(var(--fx) * 100%));
+}
+.wl-guide::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 1px;
+  background: var(--pk-border-strong);
+}
+.wl-dot {
+  transform: translate(calc(var(--fx) * 100%), calc(var(--fy) * 100%));
+}
+.wl-dot > span {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--pk-accent-fg);
+  box-shadow: 0 0 0 2px var(--pk-surface-raised);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-chart-clip {
+    animation: wl-chart-clip 600ms var(--wl-ease-out) backwards;
+  }
+  .wl-dot > span {
+    animation: wl-dot-pop 240ms var(--wl-ease-bounce) backwards;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-guide,
+  .wl-dot {
+    transition: none;
+  }
+  .wl-chart-in {
+    animation-duration: 120ms;
+  }
+  .wl-chart-out {
+    animation-duration: 120ms;
+  }
+}
