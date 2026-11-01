@@ -59,6 +59,7 @@ export async function requestMagic(c: Context<AppBindings>) {
           email,
           bindingHash: await sha256Hex(binding),
           next: safeNext(input.next),
+          ipPrefix: ipPrefix(ip),
         }))(),
     );
   }

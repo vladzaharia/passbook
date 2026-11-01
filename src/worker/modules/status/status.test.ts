@@ -138,6 +138,31 @@ describe('status components', () => {
     expect(find(t, 'oidc')?.state).toBe('not_configured');
   });
 
+  it('grades email by the magic-link daily budget', async () => {
+    const clock = new ManualClock(Date.now());
+    const at = clock.now() - (clock.now() % 86_400_000);
+    const put = (n: number) =>
+      run(
+        env.DB,
+        `INSERT INTO counters (key, window_start, count) VALUES ('magic:daily', ?, ?)
+         ON CONFLICT (key, window_start) DO UPDATE SET count = excluded.count`,
+        [at, n],
+      );
+    const overrides = { MAGIC_LINK_DAILY_CAP: '100' } as Partial<AppEnv>;
+    await put(79);
+    expect(find(await status(overrides, okFetch, clock), 'email')?.state).toBe('configured');
+    clearStatusCache(env.DB);
+    await put(80);
+    expect(find(await status(overrides, okFetch, clock), 'email')).toMatchObject({
+      state: 'degraded',
+      data: { magicToday: 80, magicCap: 100 },
+    });
+    clearStatusCache(env.DB);
+    await put(100);
+    expect(find(await status(overrides, okFetch, clock), 'email')?.state).toBe('failing');
+    await run(env.DB, "DELETE FROM counters WHERE key = 'magic:daily'");
+  });
+
   it('caches oidc discovery and the whole status briefly', async () => {
     let calls = 0;
     const counting = (async () => {

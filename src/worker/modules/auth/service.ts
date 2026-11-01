@@ -7,7 +7,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { issueMagicLink, withinCaps, withinDailyCap } from './magic-service.ts';
+import { withinCaps, withinDailyCap } from './magic-caps.ts';
+import { issueMagicLink } from './magic-service.ts';
 import * as repo from './repo.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
 

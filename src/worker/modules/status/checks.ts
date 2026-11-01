@@ -5,6 +5,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { lastIdentityCheck } from '../identities/check.ts';
 import { apnsBindingPresent } from '../identities/db-resolver.ts';
 import type { IdentityRow } from '../identities/repo.ts';
+import { dailyCapOf, dayStart } from '../auth/magic-caps.ts';
+import { readCounter } from '../auth/magic-repo.ts';
 import { lastCronRun } from './cron.ts';
 import { connectionHealthCounts, unhealthyConnections, workflowCounts } from './repo.ts';
 
@@ -168,15 +170,28 @@ export function identityComponent(
   };
 }
 
-export function checkEmail(ctx: ServiceContext): Draft {
+export async function checkEmail(ctx: ServiceContext): Promise<Draft> {
   const configured = Boolean(ctx.env.EMAIL && ctx.env.EMAIL_FROM);
+  const magicCap = dailyCapOf(ctx.env);
+  const magicToday = await readCounter(ctx.env.DB, 'magic:daily', dayStart(ctx.clock.now()));
+  const state: State = !configured
+    ? 'not_configured'
+    : magicToday >= magicCap
+      ? 'failing'
+      : magicToday >= magicCap * 0.8
+        ? 'degraded'
+        : 'configured';
   return {
     id: 'email',
     kind: 'email',
     label: 'Email Sending',
-    state: configured ? 'configured' : 'not_configured',
-    detail: configured ? null : 'No EMAIL binding or sender.',
-    data: { sender: ctx.env.EMAIL_FROM || null },
+    state,
+    detail: !configured
+      ? 'No EMAIL binding or sender.'
+      : state === 'configured'
+        ? null
+        : `Sign-in mail ${magicToday} of ${magicCap} today.`,
+    data: { sender: ctx.env.EMAIL_FROM || null, magicToday, magicCap },
   };
 }
 

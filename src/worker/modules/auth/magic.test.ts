@@ -136,6 +136,27 @@ describe('request', () => {
     expect(h.mail).toHaveLength(5);
   });
 
+  it('caps sends per network per day, and other networks are unaffected', async () => {
+    const ip = (n: number) => ({ headers: { 'cf-connecting-ip': `203.0.113.${n}` } });
+    const send = async (n: number) =>
+      h.call('/auth/magic/request', {
+        method: 'POST',
+        json: { email: await knownEmail(), turnstileToken: 'ok' },
+        ...ip(n),
+      });
+    for (let i = 0; i < 31; i++) expect((await send(i % 200)).status).toBe(202);
+    expect(h.mail).toHaveLength(30);
+    expect((await send(7)).status).toBe(202);
+    expect(h.mail).toHaveLength(30);
+    const other = await h.call('/auth/magic/request', {
+      method: 'POST',
+      json: { email: await knownEmail(), turnstileToken: 'ok' },
+      headers: { 'cf-connecting-ip': '198.51.100.9' },
+    });
+    expect(other.status).toBe(202);
+    expect(h.mail).toHaveLength(31);
+  });
+
   it('honours the daily cap and does not count unknown addresses against it', async () => {
     h.restore();
     h = await harness({ MAGIC_LINK_DAILY_CAP: '2' });
