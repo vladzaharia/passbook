@@ -26,13 +26,18 @@ export function publicUrlOf(downloadUrl: string, origin = window.location.origin
 export function AddToWalletButton({
   downloadUrl,
   size = 'md',
+  onPress,
 }: {
   downloadUrl: string;
   size?: 'sm' | 'md' | 'lg';
+  /** Runs as the download starts (the card dips towards the button). */
+  onPress?: () => void;
 }) {
   return (
     <Button asChild size={size} iconStart={<Wallet aria-hidden />}>
-      <a href={downloadUrl}>Add to Apple Wallet</a>
+      <a href={downloadUrl} onClick={onPress}>
+        Add to Apple Wallet
+      </a>
     </Button>
   );
 }

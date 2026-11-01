@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Wallet, WalletCards } from 'lucide-react';
-import type { CSSProperties, ReactNode } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
@@ -26,11 +26,13 @@ function PassTile({ pass }: { pass: MyPass }) {
   const name = passName(pass);
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const voided = pass.status === 'voided';
+  const [dip, setDip] = useState(0);
   return (
     <Card className="flex w-full flex-col gap-3 p-4">
       <PassCardStage
         view={toView(pass)}
         mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+        dip={dip}
         transitionName={`pass-${pass.id}`}
       />
       <div className="min-w-0">
@@ -52,7 +54,11 @@ function PassTile({ pass }: { pass: MyPass }) {
       <div className="mt-auto flex items-center gap-2">
         {voided ? null : (
           <>
-            <AddToWalletButton downloadUrl={pass.downloadUrl} size="sm" />
+            <AddToWalletButton
+              downloadUrl={pass.downloadUrl}
+              size="sm"
+              onPress={() => setDip((n) => n + 1)}
+            />
             <RefreshButton passId={pass.id} pass={pass} size="sm" />
           </>
         )}

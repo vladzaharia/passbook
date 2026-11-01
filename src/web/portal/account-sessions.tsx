@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
+import { cn } from '../lib/cn.ts';
+import { useArrival } from '../lib/motion.ts';
 import {
   Button,
   Card,
@@ -43,6 +45,7 @@ export function deviceLabel(ua: string | null): string {
 export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhere: () => void }) {
   const client = useQueryClient();
   const query = useQuery(mySessionsQuery);
+  const arrived = useArrival(query.isPending);
   const [confirmAll, setConfirmAll] = useState(false);
   const refresh = () => client.invalidateQueries({ queryKey: mySessionsKey });
   const revoke = useMutation({
@@ -70,10 +73,11 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
           <ErrorState error={query.error} onRetry={() => void query.refetch()} />
         ) : null}
         {query.data ? (
-          <ul className="divide-y divide-border">
-            {query.data.items.map((s) => (
+          <ul className={cn('divide-y divide-border', arrived && 'wl-stagger')}>
+            {query.data.items.map((s, i) => (
               <li
                 key={s.id}
+                style={{ '--i': i } as CSSProperties}
                 className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
               >
                 <div className="min-w-0">

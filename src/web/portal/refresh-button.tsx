@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { RefreshCw } from 'lucide-react';
+import { Check, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button, type ButtonProps, toast } from '../ui/index.ts';
 import { myPassesKey, requestRefresh } from './api.ts';
@@ -34,6 +34,12 @@ export function RefreshButton({
   const now = useNow(active);
   const { phase, secondsLeft } = refreshPhase(pass, now, localRequestedAt, cooldownMs);
   const prev = useRef(phase);
+  const [justDone, setJustDone] = useState(false);
+  useEffect(() => {
+    if (!justDone) return;
+    const t = setTimeout(() => setJustDone(false), 1500);
+    return () => clearTimeout(t);
+  }, [justDone]);
 
   const mutation = useMutation({
     mutationFn: async () => ({ clickedAt: Date.now(), res: await requestRefresh(passId) }),
@@ -53,7 +59,10 @@ export function RefreshButton({
     setActive(phase !== 'idle');
     const requested = Math.max(pass.refreshRequestedAt ?? 0, localRequestedAt ?? 0);
     const done = (pass.lastRefreshedAt ?? 0) >= requested;
-    if (prev.current === 'pending' && phase !== 'pending' && done) toast.success('Pass updated');
+    if (prev.current === 'pending' && phase !== 'pending' && done) {
+      toast.success('Pass updated');
+      setJustDone(true);
+    }
     prev.current = phase;
   }, [phase, pass.lastRefreshedAt, pass.refreshRequestedAt, localRequestedAt]);
 
@@ -68,7 +77,7 @@ export function RefreshButton({
     <Button
       variant={variant}
       size={size}
-      iconStart={<RefreshCw aria-hidden />}
+      iconStart={justDone ? <Check aria-hidden className="wl-check" /> : <RefreshCw aria-hidden />}
       loading={phase === 'pending' || mutation.isPending}
       disabled={phase === 'cooldown'}
       onClick={() => mutation.mutate()}

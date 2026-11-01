@@ -66,6 +66,7 @@ export function PassDetailPage({ passId }: { passId: string }) {
   const query = useQuery(myPassQuery(passId));
   const navigate = useNavigate();
   const [face, setFace] = useState<'front' | 'back'>('front');
+  const [dip, setDip] = useState(0);
 
   if (query.isPending) {
     return (
@@ -113,7 +114,10 @@ export function PassDetailPage({ passId }: { passId: string }) {
             <StatusPill status="voided" />
           ) : (
             <>
-              <AddToWalletButton downloadUrl={pass.downloadUrl} />
+              <AddToWalletButton
+                downloadUrl={pass.downloadUrl}
+                onPress={() => setDip((n) => n + 1)}
+              />
               <RefreshButton passId={pass.id} pass={pass} />
             </>
           )
@@ -142,6 +146,7 @@ export function PassDetailPage({ passId }: { passId: string }) {
             face={face}
             flippable
             mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+            dip={dip}
             transitionName={`pass-${pass.id}`}
           />
           <Button
