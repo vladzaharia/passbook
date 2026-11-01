@@ -1,5 +1,5 @@
 import type { Json } from '../../../shared/contracts/common.ts';
-import { all, first, run, type SqlValue } from '../../platform/db.ts';
+import { all, first, likeEscape, run, type SqlValue } from '../../platform/db.ts';
 
 export type OnMissing = 'keep' | 'flag' | 'void';
 export type Mode = 'poll' | 'webhook' | 'hybrid' | 'manual' | 'snapshot';
@@ -216,12 +216,18 @@ export async function listConnections(
   q: {
     orgId?: string | undefined;
     health?: Health | undefined;
+    q?: string | undefined;
     cursor?: string | undefined;
     limit: number;
   },
 ): Promise<ConnectionRow[]> {
   const where: string[] = [];
   const params: SqlValue[] = [];
+  const term = q.q?.trim().toLowerCase();
+  if (term) {
+    where.push("lower(name) LIKE ? ESCAPE '\\'");
+    params.push(`%${likeEscape(term)}%`);
+  }
   if (q.orgId) {
     where.push('org_id = ?');
     params.push(q.orgId);

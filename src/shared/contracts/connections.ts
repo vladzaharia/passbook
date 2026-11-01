@@ -26,6 +26,8 @@ export const ConnectorInfoSchema = z.object({
   type: z.string(),
   version: z.number().int(),
   displayName: z.string(),
+  /** One line for the connector picker. */
+  description: z.string().default(''),
   capabilities: z.object({
     poll: z.boolean(),
     delta: z.boolean(),
@@ -119,10 +121,16 @@ export const ConnectionDetailSchema = ConnectionSchema.extend({
 export const ConnectionListQuerySchema = z.object({
   orgId: IdSchema.optional(),
   health: ConnectionHealthSchema.optional(),
+  /** Name contains. */
+  q: z.string().max(200).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
-export const ConnectionListSchema = pageOf(ConnectionSchema);
+/** A list row: the connection plus the passes bound to it. */
+export const ConnectionSummarySchema = ConnectionSchema.extend({
+  passCount: z.number().int().nonnegative().default(0),
+});
+export const ConnectionListSchema = pageOf(ConnectionSummarySchema);
 
 export const CreateConnectionSchema = z.object({
   orgId: IdSchema,
@@ -158,6 +166,18 @@ export const TestConnectionResponseSchema = z.object({
   detail: z.string().optional(),
   errorCode: z.string().optional(),
   durationMs: z.number().int(),
+});
+/** Tests an unsaved configuration: nothing is stored; secrets are used once and dropped. */
+export const TestConfigSchema = z.object({
+  orgId: IdSchema,
+  connectorType: z.string().max(64),
+  config: z.record(z.string(), JsonSchema),
+  secrets: z.record(z.string(), z.string().max(4096)).optional(),
+});
+/** The first record the source returned, as JSON pointers and short previews. */
+export const SampleFieldSchema = z.object({ pointer: z.string(), preview: z.string() });
+export const TestConfigResponseSchema = TestConnectionResponseSchema.extend({
+  sample: z.array(SampleFieldSchema).optional(),
 });
 export const SyncNowResponseSchema = z.object({ runId: IdSchema, workflowInstanceId: z.string() });
 export const WebhookAckSchema = z.object({ accepted: z.literal(true) });

@@ -42,6 +42,8 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   /** Bump when the config or secret shape changes (and provide migrate). */
   version: number;
   displayName: string;
+  /** One line for the connector picker. */
+  description?: string;
   capabilities: ConnectorCapabilities;
   /** Non-secret fields; also drives the admin form. */
   configSchema: ZodType<C>;

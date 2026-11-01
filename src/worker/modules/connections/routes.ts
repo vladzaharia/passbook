@@ -14,6 +14,8 @@ import {
   IdParamSchema,
   OkSchema,
   SyncNowResponseSchema,
+  TestConfigResponseSchema,
+  TestConfigSchema,
   TestConnectionResponseSchema,
   UpdateConnectionSchema,
   WebhookAckSchema,
@@ -29,6 +31,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import * as actions from './actions.ts';
 import { connectorInfo } from './dto.ts';
 import * as service from './service.ts';
+import { testConfig } from './test-config.ts';
 import { receiveWebhook } from './webhooks.ts';
 
 type C = Context<AppBindings>;
@@ -138,6 +141,26 @@ register(
     await service.remove(sctx(c), actor(c), (valid(c, 'param') as { id: string }).id);
     return c.json({ ok: true as const });
   },
+);
+// Test reaches outside hosts with admin-supplied URLs: paced per admin on top of safe fetch.
+connectionsRoutes.use(
+  '/test-config',
+  rateLimit('RL_API_KEY', (c) => `test-config:${actor(c).id ?? clientIp(c)}`),
+);
+register(
+  connectionsRoutes,
+  'connections',
+  {
+    method: 'post',
+    path: '/test-config',
+    summary: 'Test an unsaved configuration',
+    body: TestConfigSchema,
+    response: TestConfigResponseSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await testConfig(sctx(c), actor(c), valid(c, 'json') as z.infer<typeof TestConfigSchema>),
+    ),
 );
 register(
   connectionsRoutes,

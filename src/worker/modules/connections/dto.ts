@@ -74,6 +74,7 @@ export function connectorInfo(def: AnyConnector): z.infer<typeof ConnectorInfoSc
     type: def.type,
     version: def.version,
     displayName: def.displayName,
+    description: def.description ?? '',
     capabilities: {
       poll: caps.poll === true,
       delta: caps.delta === true,
