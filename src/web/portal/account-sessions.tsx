@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type CSSProperties, useState } from 'react';
-import { cn } from '../lib/cn.ts';
-import { deviceLabel } from '../lib/device.ts';
-import { useArrival } from '../lib/motion.ts';
+import { LogOut } from 'lucide-react';
+import { useState } from 'react';
+import type { z } from 'zod';
+import type { MySessionListSchema } from '@/shared/contracts/me.ts';
+import { prefersReducedMotion, removeWithTransition } from '../lib/motion.ts';
 import {
   Button,
   Card,
@@ -10,34 +11,52 @@ import {
   CardHeader,
   ConfirmDialog,
   ErrorState,
+  SessionList,
   SkeletonRows,
-  StatusPill,
   toast,
 } from '../ui/index.ts';
 import { mySessionsKey, mySessionsQuery, revokeAllSessions, revokeSession } from './api.ts';
-import { formatWhen } from './pass-view.ts';
 
+type Sessions = z.infer<typeof MySessionListSchema>;
+
+/** Signed-in devices (kit SessionList). Revoked rows leave through a view transition. */
 export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhere: () => void }) {
   const client = useQueryClient();
   const query = useQuery(mySessionsQuery);
-  const arrived = useArrival(query.isPending);
   const [confirmAll, setConfirmAll] = useState(false);
-  const refresh = () => client.invalidateQueries({ queryKey: mySessionsKey });
+  const [leaving, setLeaving] = useState(false);
   const revoke = useMutation({
     mutationFn: revokeSession,
-    onSuccess: async () => {
+    onSuccess: (_res, id) => {
+      removeWithTransition(() =>
+        client.setQueryData<Sessions>(mySessionsKey, (old) =>
+          old ? { ...old, items: old.items.filter((s) => s.id !== id) } : old,
+        ),
+      );
       toast.success('Session revoked');
-      await refresh();
     },
     onError: (e) => toast.error(e, 'Revoke failed'),
   });
+
+  // The other rows leave 30 ms apart, then the browser signs out (at most 320 ms of motion).
+  function signOutEverywhere() {
+    const others = query.data?.items.filter((s) => !s.current).length ?? 0;
+    setLeaving(true);
+    const wait = prefersReducedMotion() ? 0 : Math.min(160 + Math.min(others, 6) * 30, 320);
+    setTimeout(onSignedOutEverywhere, wait);
+  }
 
   return (
     <Card>
       <CardHeader
         title="Sessions"
         actions={
-          <Button variant="outline" size="sm" onClick={() => setConfirmAll(true)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconStart={<LogOut aria-hidden />}
+            onClick={() => setConfirmAll(true)}
+          >
             Sign out everywhere
           </Button>
         }
@@ -48,36 +67,13 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
           <ErrorState error={query.error} onRetry={() => void query.refetch()} />
         ) : null}
         {query.data ? (
-          <ul className={cn('divide-y divide-border', arrived && 'wl-stagger')}>
-            {query.data.items.map((s, i) => (
-              <li
-                key={s.id}
-                style={{ '--i': i } as CSSProperties}
-                className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
-              >
-                <div className="min-w-0">
-                  <p className="flex items-center gap-2 text-sm text-fg-strong">
-                    {deviceLabel(s.userAgent)}
-                    {s.current ? <StatusPill status="this_device" /> : null}
-                  </p>
-                  <p className="text-xs text-fg-muted">
-                    Last active {formatWhen(s.lastSeenAt)} · signed in {formatWhen(s.createdAt)}
-                  </p>
-                </div>
-                {s.current ? null : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Revoke ${deviceLabel(s.userAgent)} session`}
-                    loading={revoke.isPending && revoke.variables === s.id}
-                    onClick={() => revoke.mutate(s.id)}
-                  >
-                    Revoke
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="wl-sessions" data-leaving={leaving || undefined}>
+            <SessionList
+              items={query.data.items}
+              onRevoke={(id) => revoke.mutate(id)}
+              {...(revoke.isPending && revoke.variables ? { revoking: revoke.variables } : {})}
+            />
+          </div>
         ) : null}
       </CardBody>
       <ConfirmDialog
@@ -89,7 +85,7 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
         destructive
         onConfirm={async () => {
           await revokeAllSessions();
-          onSignedOutEverywhere();
+          signOutEverywhere();
         }}
       />
     </Card>
