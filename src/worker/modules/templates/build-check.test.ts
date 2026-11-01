@@ -4,7 +4,8 @@ import { planPass } from '../../../passkit/build.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { AssetEntry, PassJson } from '../../../passkit/types.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { behaviors, previewPass } from './build-check.ts';
+import { type Logger, nullLogger } from '../../platform/log.ts';
+import { behaviors, dryRun, previewPass } from './build-check.ts';
 import { generatedSource } from './sync.ts';
 
 let env: AppEnv;
@@ -61,5 +62,33 @@ describe('previewPass', () => {
     expect(preview.passJson.featuredActions).toEqual(planned.passJson.featuredActions);
     expect(preview.passJson.authenticationToken).toBeUndefined();
     expect(preview.issues).toEqual(planned.report.issues);
+  });
+});
+
+describe('dryRun', () => {
+  const now = new Date(1_700_000_000_000);
+
+  it('logs and rethrows an infrastructure failure instead of reporting it', async () => {
+    const logged: { event: string; data?: Record<string, unknown> }[] = [];
+    const log = {
+      ...nullLogger,
+      error: (event: string, data?: Record<string, unknown>) => void logged.push({ event, data }),
+    };
+    const failing = {
+      ...resolved('henrys-copper'),
+      assets: [{ name: 'icon.png' }],
+    } as ResolvedTemplate;
+    const broken = {
+      ...env,
+      PLATFORM_PASS_TYPE_ID: env.PLATFORM_PASS_TYPE_ID,
+    } as AppEnv;
+    const readAsset = async (): Promise<Uint8Array> => {
+      throw new Error('D1_ERROR: x');
+    };
+    await expect(
+      dryRun(broken, failing, readAsset, 'Org', now, log as unknown as Logger),
+    ).rejects.toThrow('D1_ERROR');
+    expect(logged[0]?.event).toBe('templates.dry_run_failed');
+    expect(logged[0]?.data?.code).toBe('DRY_RUN_FAILED');
   });
 });

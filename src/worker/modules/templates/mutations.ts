@@ -220,6 +220,7 @@ export async function replaceManifest(
         async (name) => readAll(await registry.openAsset(current, name)),
         org?.name ?? row.name,
         new Date(ctx.clock.now()),
+        ctx.log,
       )),
     );
   }

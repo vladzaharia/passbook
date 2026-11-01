@@ -10,7 +10,8 @@ import type {
 } from '../../../passkit/types.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { NotFoundError } from '../../platform/errors.ts';
+import { AppError, NotFoundError } from '../../platform/errors.ts';
+import type { Logger } from '../../platform/log.ts';
 import { createIdentityResolver } from '../identities/resolver.ts';
 
 export const behaviors = createBehaviorRegistry([...behaviorPlugins]);
@@ -68,6 +69,7 @@ export async function dryRun(
   readAsset: (name: string) => Promise<Uint8Array>,
   organizationName: string,
   now: Date,
+  log: Logger,
 ): Promise<ValidationIssue[]> {
   const input = template.manifest.sample;
   try {
@@ -109,12 +111,11 @@ export async function dryRun(
         throw inner;
       }
     }
-    return [
-      {
-        severity: 'error',
-        code: 'DRY_RUN_FAILED',
-        message: error instanceof Error ? error.message : 'Dry-run build failed.',
-      },
-    ];
+    if (error instanceof AppError) {
+      return [{ severity: 'error', code: 'DRY_RUN_FAILED', message: error.message }];
+    }
+    // Infrastructure failure, not a template problem: let the step retry instead of blaming the upload.
+    log.error('templates.dry_run_failed', { code: 'DRY_RUN_FAILED', error });
+    throw error;
   }
 }

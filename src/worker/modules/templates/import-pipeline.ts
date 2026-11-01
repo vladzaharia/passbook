@@ -158,6 +158,7 @@ export async function dryRunStage(ctx: ServiceContext, p: ImportParams): Promise
     (name) => getBytes(ctx, `${stage(p)}b/${name}`),
     org?.name ?? 'Organization',
     new Date(ctx.clock.now()),
+    ctx.log,
   );
   const known = new Set(a.report.issues.map((i) => `${i.code}|${i.path ?? ''}|${i.message}`));
   const merged = [
