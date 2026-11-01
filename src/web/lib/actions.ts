@@ -1,58 +1,101 @@
-const ACTION_LABELS: Record<string, string> = {
-  'api_key.create': 'API key created',
-  'api_key.revoke': 'API key revoked',
-  'auth.sign_in': 'Signed in',
-  'auth.sign_out': 'Signed out',
-  'connection.breaker_open': 'Connection paused after failures',
-  'connection.create': 'Connection created',
-  'connection.delete': 'Connection deleted',
-  'connection.sync': 'Connection synced',
-  'connection.test': 'Connection tested',
-  'connection.update': 'Connection updated',
-  'connection.webhook_secret': 'Webhook secret rotated',
-  'cron.run': 'Scheduled job ran',
-  'delivery.dead_letter': 'Delivery failed',
-  'holder.assign': 'Holder assigned',
-  'holder.attach': 'Holder attached',
-  'holder.clear_block': 'Holder block cleared',
-  'holder.reassign': 'Holder reassigned',
-  'holder.remove': 'Holder removed',
-  'holder.unassign': 'Holder unassigned',
-  'identity.apns_probe': 'Push connection checked',
-  'identity.delete': 'Identity deleted',
-  'identity.rotate': 'Identity rotated',
-  'identity.update': 'Identity updated',
-  'identity.upload': 'Identity uploaded',
-  'org.create': 'Organization created',
-  'org.delete': 'Organization deleted',
-  'org.update': 'Organization updated',
-  'pass.asset.delete': 'Pass image removed',
-  'pass.asset.put': 'Pass image added',
-  'pass.bulk_reissue': 'Passes reissued',
-  'pass.create': 'Pass created',
-  'pass.delete': 'Pass deleted',
-  'pass.personalized': 'Pass personalized',
-  'pass.remove_from_user': 'Pass removed from account',
-  'pass.resend_email': 'Pass email resent',
-  'pass.rotate_link': 'Pass link rotated',
-  'pass.update': 'Pass updated',
-  'pass.void': 'Pass voided',
-  'session.revoke': 'Session revoked',
-  'settings.update': 'Settings updated',
-  'template.activate': 'Template activated',
-  'template.archive': 'Template archived',
-  'template.assign_org': 'Template organization changed',
-  'template.clone': 'Template cloned',
-  'template.delete': 'Template deleted',
-  'template.manifest': 'Template manifest changed',
-  'template.upload': 'Template uploaded',
-  'pass.unvoid': 'Pass restored',
-  'user.disable': 'User disabled',
-  'user.enable': 'User enabled',
-  'user.email_add': 'Email added',
-  'user.email_remove': 'Email removed',
-  'user.email_verified': 'Email verified',
-  'user.sessions_revoke': 'Sessions revoked',
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowRightLeft,
+  BadgeCheck,
+  CircleCheck,
+  Clock,
+  ImageMinus,
+  ImagePlus,
+  LogIn,
+  type LucideIcon,
+  MailCheck,
+  MailPlus,
+  MailX,
+  Pause,
+  Play,
+  Settings,
+  ShieldCheck,
+  Star,
+  UserCheck,
+  UserMinus,
+  UserPlus,
+  UserX,
+} from 'lucide-react';
+import { ACTION_ICON } from './action-icons.ts';
+import { ENTITY } from './entities.ts';
+import type { Tone } from './status.ts';
+
+export interface ActionEntry {
+  label: string;
+  icon: LucideIcon;
+  /** success: created or working; info: changed; warning: paused or taken away; danger: lost. */
+  tone: Tone;
+}
+
+const a = (label: string, icon: LucideIcon, tone: Tone): ActionEntry => ({ label, icon, tone });
+const I = ACTION_ICON;
+
+/** Audit and activity vocabulary: a label, a glyph and a tone per action code. */
+export const ACTIONS: Record<string, ActionEntry> = {
+  'api_key.create': a('API key created', ENTITY.apiKey.icon, 'success'),
+  'api_key.revoke': a('API key revoked', ENTITY.apiKey.icon, 'warning'),
+  'auth.sign_in': a('Signed in', LogIn, 'success'),
+  'auth.sign_out': a('Signed out', I.signOut, 'neutral'),
+  'connection.breaker_open': a('Connection paused after failures', Pause, 'warning'),
+  'connection.create': a('Connection created', ENTITY.connection.icon, 'success'),
+  'connection.delete': a('Connection deleted', I.delete, 'danger'),
+  'connection.sync': a('Connection synced', I.refresh, 'success'),
+  'connection.test': a('Connection tested', I.test, 'info'),
+  'connection.update': a('Connection updated', I.edit, 'info'),
+  'connection.webhook_secret': a('Webhook secret rotated', I.rotate, 'info'),
+  'cron.run': a('Scheduled job ran', Clock, 'neutral'),
+  'delivery.dead_letter': a('Delivery failed', MailX, 'danger'),
+  'holder.assign': a('Holder assigned', UserPlus, 'success'),
+  'holder.attach': a('Holder attached', UserCheck, 'success'),
+  'holder.clear_block': a('Holder block cleared', ShieldCheck, 'info'),
+  'holder.reassign': a('Holder reassigned', ArrowRightLeft, 'info'),
+  'holder.remove': a('Holder removed', UserMinus, 'warning'),
+  'holder.unassign': a('Holder unassigned', UserX, 'neutral'),
+  'identity.apns_probe': a('Push connection checked', I.recheck, 'info'),
+  'identity.delete': a('Identity deleted', I.delete, 'danger'),
+  'identity.rotate': a('Identity rotated', I.rotate, 'info'),
+  'identity.update': a('Identity updated', I.edit, 'info'),
+  'identity.upload': a('Identity uploaded', ENTITY.identity.icon, 'success'),
+  'org.create': a('Organization created', ENTITY.org.icon, 'success'),
+  'org.delete': a('Organization deleted', I.delete, 'danger'),
+  'org.reactivate': a('Organization reactivated', Play, 'success'),
+  'org.suspend': a('Organization suspended', Pause, 'warning'),
+  'org.update': a('Organization updated', I.edit, 'info'),
+  'pass.asset.delete': a('Pass image removed', ImageMinus, 'neutral'),
+  'pass.asset.put': a('Pass image added', ImagePlus, 'success'),
+  'pass.bulk_reissue': a('Passes reissued', I.updateDevices, 'info'),
+  'pass.create': a('Pass created', ENTITY.pass.icon, 'success'),
+  'pass.delete': a('Pass deleted', I.delete, 'danger'),
+  'pass.personalized': a('Pass personalized', BadgeCheck, 'success'),
+  'pass.remove_from_user': a('Pass removed from account', UserMinus, 'warning'),
+  'pass.resend_email': a('Pass email resent', I.sendEmail, 'info'),
+  'pass.rotate_link': a('Pass link rotated', I.rotate, 'info'),
+  'pass.unvoid': a('Pass restored', I.unvoid, 'success'),
+  'pass.update': a('Pass updated', I.edit, 'info'),
+  'pass.void': a('Pass voided', I.void, 'warning'),
+  'session.revoke': a('Session revoked', I.signOut, 'warning'),
+  'settings.update': a('Settings updated', Settings, 'info'),
+  'template.activate': a('Template activated', CircleCheck, 'success'),
+  'template.archive': a('Template archived', Archive, 'neutral'),
+  'template.assign_org': a('Template organization changed', ENTITY.org.icon, 'info'),
+  'template.clone': a('Template duplicated', I.duplicate, 'success'),
+  'template.delete': a('Template deleted', I.delete, 'danger'),
+  'template.manifest': a('Template manifest changed', I.edit, 'info'),
+  'template.restore': a('Template restored', ArchiveRestore, 'success'),
+  'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
+  'user.disable': a('User disabled', UserX, 'warning'),
+  'user.email_add': a('Email added', MailPlus, 'success'),
+  'user.email_primary': a('Primary email changed', Star, 'info'),
+  'user.email_remove': a('Email removed', MailX, 'neutral'),
+  'user.email_verified': a('Email verified', MailCheck, 'success'),
+  'user.enable': a('User enabled', UserCheck, 'success'),
+  'user.sessions_revoke': a('Sessions revoked', I.signOut, 'warning'),
 };
 
 export const humanize = (code: string) => {
@@ -62,5 +105,10 @@ export const humanize = (code: string) => {
 
 /** Sentence for an audit action code; unknown codes are humanized. */
 export function actionLabel(action: string): string {
-  return ACTION_LABELS[action] ?? humanize(action);
+  return ACTIONS[action]?.label ?? humanize(action);
+}
+
+/** Label, glyph and tone; unknown codes get the audit glyph in neutral. */
+export function actionOf(action: string): ActionEntry {
+  return ACTIONS[action] ?? a(humanize(action), ENTITY.audit.icon, 'neutral');
 }

@@ -44,7 +44,7 @@ function Head({ c }: { c: Component }) {
         aria-hidden
         className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-sunken text-fg-muted"
       >
-        <Icon className="size-4.5" />
+        <Icon className="size-4" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-fg-strong">

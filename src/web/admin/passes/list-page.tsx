@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Ticket } from 'lucide-react';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
-import { useOrgFilter } from '../../lib/org-filter.tsx';
+import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Button,
   DataTable,
@@ -53,12 +54,14 @@ function RowActions({ pass }: { pass: PassSummaryDto }) {
             )
           }
         >
+          {voided ? <ACTION_ICON.unvoid aria-hidden /> : <ACTION_ICON.void aria-hidden />}
           {voided ? 'Unvoid' : 'Void'}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={!pass.connectionId}
           onSelect={() => run(() => actions.refreshFromSource.mutateAsync(), 'Refresh requested')}
         >
+          <ACTION_ICON.refresh aria-hidden />
           Refresh
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -76,7 +79,7 @@ export function PassesListPage({
   search: ListSearch;
   onSearch: (patch: Partial<ListSearch>) => void;
 }) {
-  const { orgId: globalOrg } = useOrgFilter();
+  const { orgId: globalOrg } = useOrgScope();
   const effective: ListSearch = { ...search, orgId: search.orgId ?? globalOrg };
   const list = usePassList(effective);
   const templates = useTemplates({ orgId: effective.orgId });
@@ -212,7 +215,8 @@ export function PassesListPage({
             rowHeight={56}
             empty={
               <EmptyState
-                icon={Ticket}
+                art="passes"
+                variant={filtered ? 'filtered' : 'empty'}
                 title={filtered ? 'No passes match' : 'No passes yet'}
                 action={
                   filtered ? (

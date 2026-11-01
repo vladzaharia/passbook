@@ -16,7 +16,7 @@ import { ApiError } from '../lib/errors.ts';
 import '../lib/test-utils.tsx';
 import { ConfirmDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
-import { CommandPalette } from './command-palette.tsx';
+import { CommandPalette, matchLabel } from './command-palette.tsx';
 import { Dialog, DialogContent, DialogTrigger } from './dialog.tsx';
 import {
   DropdownMenu,
@@ -217,18 +217,18 @@ describe('CommandPalette', () => {
             items: [
               { id: 'passes', label: 'Passes', onSelect: () => onGo('passes') },
               { id: 'users', label: 'Users', onSelect: () => onGo('users') },
-            ],
+            ].filter((i) => matchLabel(i.label, query)),
           },
           {
             heading: 'Passes',
-            items: [{ id: 'p1', label: 'Remote hit', remote: true, onSelect: () => onGo('p1') }],
+            items: [{ id: 'p1', label: 'Remote hit', onSelect: () => onGo('p1') }],
           },
         ]}
       />
     );
   }
 
-  it('filters local items, always shows remote ones, and runs the selected item', async () => {
+  it('shows the groups it is given and runs the selected item', async () => {
     const user = userEvent.setup();
     const onGo = vi.fn();
     render(<Harness onGo={onGo} />);
