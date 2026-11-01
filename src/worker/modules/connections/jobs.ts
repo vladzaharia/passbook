@@ -88,7 +88,7 @@ export async function handlePassRefresh(
 ): Promise<void> {
   const pass = await getPassById(ctx.env.DB, job.passId);
   if (!pass) {
-    ctx.log.warn('pass.refresh_missing', { passId: job.passId });
+    ctx.log.warn('pass.refresh_missing', { code: 'PASS_MISSING', passId: job.passId });
     return;
   }
   try {

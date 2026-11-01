@@ -74,7 +74,7 @@ export async function runDailyIdentityChecks(ctx: ServiceContext): Promise<void>
       ctx.log.warn('identity.check_failed', { identityId: row.id, code: result.code });
     const days = result.daysRemaining;
     if (days === null || days > EXPIRY_WARNING_DAYS) continue;
-    ctx.log.warn('identity.expiring', { identityId: row.id, days });
+    ctx.log.warn('identity.expiring', { code: 'IDENTITY_EXPIRING', identityId: row.id, days });
     await recordAudit(ctx, {
       actorType: 'system',
       orgId: row.org_id,

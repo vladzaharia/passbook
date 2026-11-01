@@ -31,7 +31,7 @@ async function sendIdentityProof(
   const conflict = () => new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   if (!sign.bindingHash) throw conflict();
   if (!(await withinCaps(ctx, email)) || !(await withinDailyCap(ctx))) {
-    ctx.log.warn('auth.magic_throttled', { userId: ownerId });
+    ctx.log.warn('auth.magic_throttled', { code: 'MAGIC_THROTTLED', userId: ownerId });
     throw conflict();
   }
   await issueMagicLink(ctx, {
@@ -101,7 +101,8 @@ export async function signInOidc(
   if (trust) {
     const { ownerId } = await repo.addUserEmail(db, email, user.id, 'oidc', ctx.clock.now());
     verified = ownerId === user.id;
-    if (!verified) ctx.log.warn('auth.oidc_email_conflict', { userId: user.id });
+    if (!verified)
+      ctx.log.warn('auth.oidc_email_conflict', { code: 'OIDC_EMAIL_CONFLICT', userId: user.id });
   } else {
     verified = (await repo.emailsOf(db, user.id)).some((e) => e.email === email);
   }

@@ -88,7 +88,7 @@ export async function processSignInRequest(
       return;
     }
     if (!(await withinCaps(ctx, input.email))) {
-      ctx.log.warn('auth.magic_throttled', {});
+      ctx.log.warn('auth.magic_throttled', { code: 'MAGIC_THROTTLED' });
       return;
     }
     if (!(await withinDailyCap(ctx))) {
@@ -122,7 +122,7 @@ export async function processVerifyRequest(
       return;
     }
     if (!(await withinCaps(ctx, input.email))) {
-      ctx.log.warn('auth.magic_throttled', {});
+      ctx.log.warn('auth.magic_throttled', { code: 'MAGIC_THROTTLED' });
       return;
     }
     if (!(await withinDailyCap(ctx))) {

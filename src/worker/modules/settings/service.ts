@@ -50,7 +50,12 @@ function validStored(
     const def = registry.get(row.key);
     const parsed = def?.schema.safeParse(JSON.parse(row.value));
     if (parsed?.success) values[row.key] = parsed.data;
-    else ctx.log.warn('settings.invalid_stored_value', { scope, key: row.key });
+    else
+      ctx.log.warn('settings.invalid_stored_value', {
+        code: 'SETTING_INVALID',
+        scope,
+        key: row.key,
+      });
   }
   return values;
 }

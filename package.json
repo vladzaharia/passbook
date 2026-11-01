@@ -27,7 +27,8 @@
     "identity:add": "node tools/identity-add.ts",
     "predeploy": "node tools/deploy.ts --check",
     "deploy": "node tools/deploy.ts",
-    "check": "npm run gen && npm run ci:lint && npm run typecheck && npm run test && npm run build",
+    "check:rules": "node tools/check-log-codes.ts",
+    "check": "npm run gen && npm run ci:lint && npm run check:rules && npm run typecheck && npm run test && npm run build",
     "dev:oidc": "node test/mock-oidc/server.ts 5174"
   },
   "dependencies": {

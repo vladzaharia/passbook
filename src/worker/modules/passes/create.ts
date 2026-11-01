@@ -161,7 +161,11 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     } catch (error) {
       // The pass exists; a capped email is resent on request, not a failed create.
       if (!(error instanceof AppError) || error.code !== 'EMAIL_RATE_LIMITED') throw error;
-      ctx.log.warn('passes.email_rate_limited', { orgId: p.orgId, passId: id });
+      ctx.log.warn('passes.email_rate_limited', {
+        code: 'EMAIL_RATE_LIMITED',
+        orgId: p.orgId,
+        passId: id,
+      });
     }
   }
   return (await getPass(db, id)) ?? pass;

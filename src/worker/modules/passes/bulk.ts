@@ -120,7 +120,8 @@ export async function startBulkReissue(
   } catch (error) {
     ctx.log.error('passes.workflow_start_failed', {
       orgId: body.orgId ?? null,
-      error: error instanceof Error ? error.name : 'unknown',
+      code: 'WORKFLOW_START_FAILED',
+      error,
     });
     await setWorkflowRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), {
       errorCode: 'WORKFLOW_START',

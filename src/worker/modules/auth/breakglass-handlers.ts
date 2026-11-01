@@ -65,7 +65,7 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
   const ok =
     token.length > 0 && token.length <= 256 && (await safeEqual(await sha256Hex(token), expected));
   if (!ok) {
-    ctx.log.warn('auth.breakglass_failed', { ipPrefix: ipPrefix(ip) });
+    ctx.log.warn('auth.breakglass_failed', { code: 'BREAKGLASS_FAILED', ipPrefix: ipPrefix(ip) });
     await recordFailure(ctx, ipPrefix(ip));
     writeEvent(c.env, { event: 'auth.sign_in', outcome: 'breakglass_failed' });
     return c.html(breakglassPage(c.var.nonce, { error: 'Wrong token.', next }), 401);
@@ -78,7 +78,11 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
       bindingHash: null,
       next: next ?? null,
     });
-    ctx.log.warn('auth.breakglass_used', { userId: result.userId, ipPrefix: ipPrefix(ip) });
+    ctx.log.warn('auth.breakglass_used', {
+      code: 'BREAKGLASS_USED',
+      userId: result.userId,
+      ipPrefix: ipPrefix(ip),
+    });
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);
     return c.redirect(next ? nextOrHome(next) : '/admin', 302);
   } catch (cause) {

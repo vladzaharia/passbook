@@ -50,7 +50,8 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
     } catch (error) {
       ctx.log.error('templates.import_failed', {
         orgId: p.orgId,
-        error: error instanceof Error ? error.name : 'unknown',
+        code: 'IMPORT_FAILED',
+        error,
       });
       await failImport(
         ctx,
@@ -63,7 +64,8 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
       } catch (cleanupError) {
         ctx.log.error('templates.cleanup_failed', {
           orgId: p.orgId,
-          error: cleanupError instanceof Error ? cleanupError.name : 'unknown',
+          code: 'IMPORT_CLEANUP_FAILED',
+          error: cleanupError,
         });
       }
       throw error;

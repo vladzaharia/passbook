@@ -44,7 +44,7 @@ export async function requestMagic(c: Context<AppBindings>) {
   }
   const input = MagicLinkRequestSchema.parse(await c.req.json());
   if (!(await verifyTurnstile(c.env, input.turnstileToken, ip, ctx.log))) {
-    ctx.log.warn('auth.turnstile_failed', {});
+    ctx.log.warn('auth.turnstile_failed', { code: 'TURNSTILE_FAILED' });
     throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
   }
   // Stable per browser: a stranger's or repeated request must not orphan an earlier link.

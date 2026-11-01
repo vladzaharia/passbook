@@ -148,7 +148,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
       return errorPage(c, 'Sign-in unavailable', 'The sign-in provider failed. Try again.', 502);
     }
     if (cause instanceof OidcVerifyError || cause instanceof OidcGrantRefusedError) {
-      ctx.log.warn('auth.oidc_rejected', { reason: cause.message });
+      ctx.log.warn('auth.oidc_rejected', { code: 'OIDC_REJECTED', error: cause });
       return errorPage(c, 'Sign-in failed', 'The sign-in could not be verified. Try again.', 400);
     }
     throw cause;

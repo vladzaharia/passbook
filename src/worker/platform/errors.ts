@@ -1,6 +1,7 @@
-import type { Context } from 'hono';
+import type { Context, ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { ZodError } from 'zod';
+import type { AppBindings } from './context.ts';
 
 export interface FieldIssue {
   path: string;
@@ -177,19 +178,20 @@ export function problemResponse(error: unknown, requestId?: string): Response {
 }
 
 /** Hono `onError` handler. Unexpected errors are logged with their cause; clients only get the code. */
-export function handleError(error: unknown, c: Context): Response {
-  const requestId = c.get('requestId') as string | undefined;
-  const log = c.get('log') as { error: (event: string, data?: object) => void } | undefined;
+export const handleError: ErrorHandler<AppBindings> = (error, c) => {
+  const requestId = c.var.requestId;
   const problem = toProblem(error, requestId);
   if (problem.status >= 500 && problem.status !== 501) {
-    log?.error('request.failed', {
+    c.var.log?.error('request.failed', {
       code: problem.code,
-      error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+      method: c.req.method,
+      route: c.req.routePath,
+      error,
     });
   }
   return problemResponse(error, requestId);
-}
+};
 
-export function notFoundHandler(c: Context): Response {
-  return problemResponse(new NotFoundError(), c.get('requestId') as string | undefined);
+export function notFoundHandler(c: Context<AppBindings>): Response {
+  return problemResponse(new NotFoundError(), c.var.requestId);
 }

@@ -34,7 +34,11 @@ async function copyAsset(ctx: ServiceContext, t: BakedTemplate, asset: BakedAsse
   );
   const html = response.headers.get('content-type')?.startsWith('text/html');
   if (!response.ok || html) {
-    ctx.log.error('templates.baked_asset_missing', { templateId: t.id, asset: asset.name });
+    ctx.log.error('templates.baked_asset_missing', {
+      code: 'BAKED_ASSET_MISSING',
+      templateId: t.id,
+      asset: asset.name,
+    });
     throw new Error(`Baked asset missing: ${t.slug}/${asset.name}`);
   }
   await ctx.env.BUCKET.put(key, await response.arrayBuffer());
@@ -44,7 +48,7 @@ async function copyAsset(ctx: ServiceContext, t: BakedTemplate, asset: BakedAsse
 async function persistAssets(ctx: ServiceContext, source: SyncSource): Promise<boolean> {
   // Deployed Workers always have ASSETS; only bare dev and test runtimes lack it.
   if (!ctx.env.ASSETS) {
-    ctx.log.warn('templates.baked_assets_not_persisted', {});
+    ctx.log.warn('templates.baked_assets_not_persisted', { code: 'ASSETS_BINDING_MISSING' });
     return false;
   }
   const jobs = source.templates.flatMap((t) => t.assets.map((a) => ({ t, a })));

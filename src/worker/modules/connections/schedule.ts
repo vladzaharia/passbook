@@ -103,7 +103,7 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
           conn.generation,
         );
         await setWorkflowStatus(sctx.env.DB, instanceId, 'errored', now, 'RUN_LOST');
-        sctx.log.warn('connection.run_lost', { connectionId: conn.id });
+        sctx.log.warn('connection.run_lost', { code: 'RUN_LOST', connectionId: conn.id });
         continue;
       }
       await startSync(sctx, conn, 'schedule', instanceId);
