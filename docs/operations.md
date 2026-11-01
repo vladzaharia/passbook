@@ -102,3 +102,10 @@ Admin sign-in for when Pocket ID is down.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
+
+## Runtime decisions
+
+- **workerd versions**: `npm run test:worker` runs on the pool's miniflare (workerd 1.20260815), dev and prod on the root wrangler (1.20261012). The pool pins its own copy until a release catches up. The Dependabot `cloudflare` group tracks it; when one ships, align versions and drop the `overrides` entries in `package.json`. Stay on vitest 4 until the pool supports 5.
+- **Placement**: default. `placement: smart` needs a latency comparison against D1 from production Observability data; none exists before launch. Revisit after a week of traffic.
+- **`/assets/*` worker-first**: kept. A missing hashed chunk would otherwise get the SPA fallback page cached immutable under the chunk URL; the guard turns it into a 404. The cost is one invocation per asset request.
+- **Baked template sync**: runs from the minute cron after a version change; the first template request still checks lazily as a fallback.
