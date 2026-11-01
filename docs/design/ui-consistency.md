@@ -358,6 +358,38 @@ the system stack.
 - Dark raised surfaces get a 1 px lit top edge (`--wl-edge`); the primary button glows on hover and
   keyboard focus.
 
+## Kit reference
+
+Everything is exported from `src/web/ui/index.ts`; registries and hooks live in `src/web/lib/`.
+
+| Need | Use |
+| --- | --- |
+| Entity glyph, art, label, plural | `ENTITY[kind]` (`lib/entities.ts`); `connectorIcon(id)`, `DELIVERY_ICON` |
+| Action glyph | `ACTION_ICON.refresh`, `.rotate`, `.void`, `.delete`, `.signOut`… (`lib/action-icons.ts`); `THEME_ICON` |
+| Audit or activity line | `actionOf(code)` → `{ label, icon, tone }`; `actionLabel(code)` |
+| Status | `StatusPill status icon?`; `StatusIcon` for a state every row repeats (tooltip carries the hint) |
+| Empty | `EmptyState art title action? description? variant? inline? heading?`; `FilteredEmpty entity onClear` |
+| Error | `ErrorState error? title? onRetry? retryLabel?` (Retry spins `RefreshCw`; a failed retry shakes) |
+| Lists | `DataTable … loading fetching filtered empty emptyFiltered toolbar footer` (rows carry `data-row-id`, new rows `data-new`); `FilterBar search filters onClear` (`DATE_RANGES`, `rangeStart`); `LoadMore … noun={['pass','passes']} scoped`; queries use `listQuery({...})` |
+| Rows | `ListRows` + `ListRow leading title pills meta trailing rowId isNew`; `RowActions label actions` |
+| Account rows | `EmailList`, `SessionList`, `InlineAddField` (presentational; the page owns mutations) |
+| Layout | `TwoPane aside asideFrom='xl'\|'lg' stickyAside`; `FormGrid` + `FormSpan full`; `FieldGroup title onlyFieldLabel` |
+| Forms | `Form form onSubmit` (blocked submit: focus, scroll, one polite summary); `RhfField`; `NumberField unit`; `DateTimeField clearLabel defaultZone` |
+| Choices | `SegmentedControl label options value onValueChange`; `OptionTile` (Enter or double-click commits); `EntityPicker kind` |
+| Wizards | `Wizard steps current onStep aside dirty onCancel onBack onNext formId nextLabel busy` |
+| Confirms | `ConfirmDialog`; `TypedConfirmDialog word={confirmWord({ title, slug })}`; `SecretReveal fields onDone` |
+| Notes | `Callout tone title items actions` |
+| Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
+| Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
+| Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
+| Buttons | `Button busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `mutationButton(m)` spreads `loading`/`paused` |
+| Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
+| Badge | `AppleWalletBadge href label?`; `appleWalletBadgeHtml({ href, email? })` for SSR and email |
+| Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
+| Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner` |
+| Org scope | `useOrgScope()` (`lib/org-filter.tsx`); `isOrgScoped(path)` hides the switcher |
+| Palette | `usePalette()?.open()` opens the admin palette (null outside the shell) |
+
 ## Light and dark
 
 - Both themes from the same tokens; dark is the default. Check every page in both.

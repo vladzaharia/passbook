@@ -56,3 +56,11 @@ html[data-modality="pointer"]
     font-family: var(--pk-font-sans);
   }
 }
+
+/* Touch: inline text links get a 44 px hit height without moving the text. */
+@media (pointer: coarse) {
+  :where(p, li, dd, td, figcaption) > a:not([class*="min-h-"]) {
+    padding-block: 0.75rem;
+    margin-block: -0.75rem;
+  }
+}

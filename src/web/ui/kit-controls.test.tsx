@@ -12,6 +12,7 @@ import { JsonViewer } from './code-block.tsx';
 import { DateTimeField, formatLocal } from './date-time-field.tsx';
 import { EntityAvatar, EntityChip, EntityIcon, initialsOf, onColor } from './entity.tsx';
 import { EntityPicker } from './entity-picker.tsx';
+import { DATE_RANGES, FilterBar, rangeStart } from './filter-bar.tsx';
 import { Form, RhfField, useZodForm } from './form.tsx';
 import { FieldGroup, FormGrid, FormSpan } from './form-grid.tsx';
 import { Input } from './input.tsx';
@@ -352,5 +353,47 @@ describe('AppleWalletBadge', () => {
     expect(appleWalletBadgeHtml({ href: '/x', email: { origin: 'https://w.example' } })).toContain(
       'https://w.example/apple/badge/en/black@2x.png',
     );
+  });
+});
+
+describe('FilterBar', () => {
+  it('renders "Label: value" triggers, fills set ones and offers Clear', async () => {
+    const user = userEvent.setup();
+    const onClear = vi.fn();
+    render(
+      <FilterBar
+        search={{ value: '', onChange: () => {}, placeholder: 'Search passes' }}
+        onClear={onClear}
+        filters={[
+          {
+            id: 'status',
+            label: 'Status',
+            value: 'voided',
+            defaultValue: 'all',
+            options: [
+              { value: 'all', label: 'All' },
+              { value: 'voided', label: 'Voided' },
+            ],
+            onChange: () => {},
+          },
+          {
+            id: 'date',
+            label: 'Date',
+            value: 'any',
+            defaultValue: 'any',
+            options: DATE_RANGES,
+            onChange: () => {},
+          },
+        ]}
+      />,
+    );
+    const status = screen.getByRole('combobox', { name: 'Status: Voided' });
+    expect(status).toHaveTextContent('Status:Voided');
+    expect(status.className).toContain('bg-accent-subtle');
+    expect(screen.getByRole('combobox', { name: 'Date: any' })).not.toHaveClass('bg-accent-subtle');
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(onClear).toHaveBeenCalled();
+    expect(rangeStart('7d', 8 * 86_400_000)).toBe(86_400_000);
+    expect(rangeStart('any', 1)).toBeUndefined();
   });
 });

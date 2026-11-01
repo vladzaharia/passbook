@@ -10,8 +10,15 @@ export function Toaster() {
       position="bottom-right"
       // Keep toasts clear of the fixed SaveBar; an error toast sits there until dismissed and
       // would otherwise cover Save/Discard.
-      offset={{ bottom: '5rem', right: '1rem' }}
-      mobileOffset={{ bottom: '5rem', left: '1rem', right: '1rem' }}
+      offset={{
+        bottom: 'calc(5rem + env(safe-area-inset-bottom))',
+        right: 'max(1rem, env(safe-area-inset-right))',
+      }}
+      mobileOffset={{
+        bottom: 'calc(5rem + env(safe-area-inset-bottom))',
+        left: 'max(1rem, env(safe-area-inset-left))',
+        right: 'max(1rem, env(safe-area-inset-right))',
+      }}
       closeButton
       toastOptions={{
         classNames: {

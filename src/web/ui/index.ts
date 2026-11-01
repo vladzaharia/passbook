@@ -25,6 +25,7 @@ export * from './entity-picker.tsx';
 export * from './error-state.tsx';
 export * from './field.tsx';
 export * from './file-drop.tsx';
+export * from './filter-bar.tsx';
 export * from './form.tsx';
 export * from './form-grid.tsx';
 export * from './icon-button.tsx';

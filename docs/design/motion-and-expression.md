@@ -136,6 +136,13 @@ System:
 - Reduced motion: the final frame, no beat.
 - Budget: ≤40 SVG nodes per art; all art ≤8 kB gzip. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines) and `src/web/ui/art/art.css`; the map in `src/web/ui/art/index.ts`.
+- API: `<EntityArt name size="lg"|"sm"|"xl" beat?>` or the named component (`PassesArt`…).
+  `LayersArt compare` splits the top two sheets. `WalletArt state mood="flat" lift` (states
+  `login`, `empty`, `lost`, `confirm`, `expired`, `no-access`, `break-glass`) renders through
+  `renderToStaticMarkup`; SSR pages inline `art.css?raw` (tokens fall back to the SSR names) and
+  pass `beat={false}` to stay static. Hover replay needs a `data-art-host` ancestor.
+- Parts animate from CSS variables on `[data-part]` (`--f` from, `--t` rest, `--d`, `--u`, `--e`,
+  beat `--b`); `art.test.tsx` checks the timing budget from the stylesheet.
 
 | Art | Picture | Entrance | Beat |
 | --- | --- | --- | --- |
@@ -148,7 +155,7 @@ System:
 | `key` | Lock with keyhole; key with an accent bow | Key slides in (240 ms), turns 90° (320 ms spring) | Turns back and forth |
 | `log` | Document window with five text bars; newest bullet accent | Rises 8 px (200 ms); lines scroll up one step (320 ms) | One more line scrolls |
 | `activity` | Rail with three dots; newest accent | Rail draws (scaleY, 300 ms); dots pop 80 ms apart | Newest dot pops |
-| `pulse` | Monitor with a heartbeat line | An accent dot travels the line once (520 ms), trail fading in behind | Dot travels again |
+| `pulse` | Monitor with a heartbeat line | An accent dot travels the line once (480 ms, the part ceiling), trail fading in behind | Dot travels again |
 | `runs` | Three linked nodes | A dot hops node to node (3 × 160 ms); each node pops | One more hop |
 | `phone` | Phone; a pass above it; accent bubble | Phone rises 8 px; the pass drops toward the screen and stops above it (360 ms spring) | Pass bobs; with devices it slides into the screen and the bubble pops |
 | `envelope` | Envelope with a flap; pass inside with an accent edge | Rises 8 px (200 ms); flap opens (220 ms); pass peeks up (280 ms spring) | Pass sinks and peeks |
@@ -193,7 +200,7 @@ or the SSR mascot pages.
    | Beat | Motion |
    | --- | --- |
    | Scene | The `wallet` mascot (112×84; 96×72 under 640) sits on the hosted card's top edge; three mini passes in foil teal, violet and gold are tucked in the pocket, peeking over the edge |
-   | Load | Pocket rises 8 px and fades in (0–200 ms). Cards pop out (20 → −4 → 0 px, bounce, 60 ms apart) and fan to −10°, 0°, 10° from the bottom centre (120–640 ms). Eyes open (scaleY 0 → 1, 120 ms) at 600 ms. Done by 720 ms. The form works from 0 ms |
+   | Load | Pocket rises 8 px and fades in (0–200 ms). Cards pop out (bounce, 60 ms apart) and fan to −12°, 0°, 12° from the bottom centre (100–540 ms). Eyes open (scaleY 0 → 1, 120 ms) at 480 ms. Done by 600 ms, inside the art budget. The form works from 0 ms |
    | Idle | One bob (±3 px, ±1°, one cycle) and one blink at 2.4 s (scaleY 1 → .1 → 1, 140 ms). Fine pointers: the fan tilts towards the pointer, at most 4°. Nothing moves on its own after 5 s |
    | Email | When the address is valid, the top card lifts 6 px and shows its first letter (200 ms spring) |
    | Send link | The top card slides out of the pocket and drops behind the card like a letter going out (260 ms ease-in); the card flips (640 ms spring) to the code face, the far face inert; focus moves to the code field |
