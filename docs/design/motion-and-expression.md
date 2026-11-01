@@ -102,8 +102,24 @@ Two speeds:
 7. **Empty states.** One illustration: three blank pass silhouettes fanned −6°, 0°, 6°, the
    page's Lucide icon on the top card, a 1 px foil edge. It fans open once (480 ms spring).
    SVG and CSS on tokens; same title and single action as today.
-8. **Sign-in.** The card rises once (260 ms) and the wordmark card flips once. Requesting a magic
-   link flips the card to the code step. SSR auth pages get the same rise in CSS only.
+8. **Sign-in: "the wallet fills"** (owner direction, 2026-11-01: more flourished and fun than the
+   Polaris Key structure it sits on; see ui-consistency.md "Sign-in pages").
+
+   | Beat | Motion |
+   | --- | --- |
+   | Scene | A fan of 4–5 small pass cards (foil teal, violet, gold, two tints) tucked behind the top edge of the hosted card, tilted −8°…8°, peeking out like cards in a wallet |
+   | Load | Cards deal in one by one: rise 24 px and rotate from 0° to their angle, 60 ms apart, 480 ms spring. The wallet mark opens once (lid −25° and back) and a tiny pass pops out of it |
+   | Idle | Each card bobs on its own phase (±3 px, ±1°, 4–7 s loops). Fine pointers: the fan parallax-tilts towards the pointer, max 4°. Paused when the tab is hidden |
+   | Email | When the address looks valid, the top card lifts 6 px and shows the user's initial: "this one's yours" |
+   | Continue | The top card slides out of the fan and drops behind the card like a letter going out; the card flips (640 ms spring) to the code step |
+   | Code | Each character pops into its slot (scale 0.6 → 1, 140 ms spring), grouped `XXXX-XXXX`. Complete: the field glows teal once. Wrong: shake (3 × 6 px, 320 ms) plus the danger border and icon. Expired: an hourglass flips once |
+   | Success | The fan slides down into the wallet mark (60 ms stagger, 520 ms), the mark bounces (1 → 1.12 → 1), then the route transition into the app |
+   | Polaris ID | Hover: one foil sweep along the button border |
+   | Worker pages | Break-glass, magic-link confirm, link expired and no access share the fan and the deal-in, CSS only. Link expired: one card is greyed and slips down. No access: the fan stays closed under a small lock |
+   | Reduced motion | Static fan at its final angles; no idle, shake or fly-out (border and icon carry errors); steps and success change instantly |
+
+   SVG and CSS on tokens, transform and opacity only, no library. Copy stays as terse as the
+   reference: the fun is all in the motion.
 
 ## Expressive visual language
 

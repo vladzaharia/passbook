@@ -245,7 +245,7 @@ Same brand tokens; Wallet keeps its own wordmark and teal.
 | Action | Full-width primary with a trailing arrow ("Continue →"); alternatives below an "or" divider (e.g. "Continue with Polaris ID", outline) |
 | Footer | Lock icon plus one line on what signing in does |
 | Below | `Help · Privacy` links, centred |
-| Motion | Owner request R5: the login gets its own cute animation, layered on this structure, reduced-motion safe |
+| Motion | Wallet is more flourished than the reference: "the wallet fills" (motion-and-expression.md, Signature moment 8), layered on this structure, reduced-motion safe |
 
 The trust and footer lines are the only explanatory text allowed on these pages: one line each.
 - Public pass page: wordmark (or org name) header, pass centered (deals in, flips with a no-script
