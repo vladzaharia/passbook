@@ -161,7 +161,7 @@ export function ConnectionsListPage({
               icon={Cable}
               title="No connections"
               action={
-                <Button asChild>
+                <Button asChild iconStart={<Plus aria-hidden />}>
                   <Link to="/admin/connections/new">New connection</Link>
                 </Button>
               }

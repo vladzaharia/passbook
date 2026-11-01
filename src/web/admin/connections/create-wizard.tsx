@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import { ConnectionSchema, type CreateConnectionSchema } from '@/shared/contracts/connections.ts';
@@ -342,7 +343,11 @@ export function CreateConnectionWizard() {
             Next
           </Button>
         ) : (
-          <Button loading={create.isPending} onClick={() => create.mutate()}>
+          <Button
+            loading={create.isPending}
+            iconStart={<Plus aria-hidden />}
+            onClick={() => create.mutate()}
+          >
             Create connection
           </Button>
         )}
