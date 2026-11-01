@@ -1,5 +1,5 @@
 export const AMR_LABEL: Record<string, string> = {
-  oidc: 'Pocket ID',
+  oidc: 'Polaris ID',
   magic_link: 'Email link',
   breakglass: 'Break-glass',
 };
@@ -11,6 +11,6 @@ export const roleLabel = (role: string) => ROLE_LABEL[role] ?? role;
 
 export const VERIFIED_VIA_LABEL: Record<string, string> = {
   magic_link: 'email link',
-  oidc: 'Pocket ID',
+  oidc: 'Polaris ID',
   admin: 'an admin',
 };
