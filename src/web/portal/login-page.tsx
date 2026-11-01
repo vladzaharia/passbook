@@ -195,7 +195,7 @@ export function LoginPage({
           {message}
         </p>
       ) : null}
-      <Card className="wl-rise overflow-hidden">
+      <Card className="wl-rise wl-foil-edge overflow-hidden">
         <CardBody>{body}</CardBody>
       </Card>
     </>

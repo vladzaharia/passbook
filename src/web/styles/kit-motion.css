@@ -213,6 +213,18 @@
   background: var(--wl-foil);
 }
 
+/* Sign-in card: a 2px foil line along the top edge (the card clips it to its radius). */
+.wl-foil-edge {
+  position: relative;
+}
+.wl-foil-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--wl-foil);
+}
+
 /* Sliding pill or underline behind the active item (ui/active-indicator.tsx). */
 .wl-indicator {
   position: absolute;
