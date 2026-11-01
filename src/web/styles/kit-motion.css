@@ -1,0 +1,254 @@
+/*
+ * Kit motion: overlays, controls, indicators, empty-state art. Tokens live in motion.css.
+ * Enter uses fill-mode backwards and exit forwards, so nothing holds a layer at rest.
+ */
+@keyframes wl-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes wl-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wl-pop-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--wl-from-x, 0), var(--wl-from-y, 4px)) scale(0.97);
+  }
+}
+@keyframes wl-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes wl-sheet-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes wl-sheet-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes wl-sheet-left-out {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@keyframes wl-sheet-right-out {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes wl-check {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes wl-bar-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes wl-pulse {
+  from {
+    opacity: 0.5;
+  }
+}
+@keyframes wl-flip-in {
+  from {
+    transform: perspective(600px) rotateY(-180deg);
+  }
+}
+@keyframes wl-turn {
+  from {
+    opacity: 0;
+    transform: perspective(800px) rotateY(-70deg);
+  }
+}
+@keyframes wl-fan {
+  from {
+    transform: none;
+  }
+}
+
+/* Overlay backdrop. */
+.wl-overlay[data-state="open"] {
+  animation: wl-fade-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+.wl-overlay[data-state="closed"] {
+  animation: wl-fade-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+}
+
+/* Dialogs: rise and settle; leave quicker than they came. */
+.wl-dialog[data-state="open"] {
+  --wl-from-y: 8px;
+  animation: wl-pop-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+.wl-dialog[data-state="closed"] {
+  animation: wl-pop-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+}
+
+/* Popovers, menus, selects, tooltips: grow from the trigger side. */
+.wl-pop:is([data-state="open"], [data-state="delayed-open"], [data-state="instant-open"]) {
+  animation: wl-pop-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+.wl-pop[data-state="closed"] {
+  animation: wl-pop-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+}
+.wl-pop[data-side="top"] {
+  --wl-from-y: 4px;
+}
+.wl-pop[data-side="bottom"] {
+  --wl-from-y: -4px;
+}
+.wl-pop[data-side="left"] {
+  --wl-from-x: 4px;
+  --wl-from-y: 0;
+}
+.wl-pop[data-side="right"] {
+  --wl-from-x: -4px;
+  --wl-from-y: 0;
+}
+
+/* Sheets. */
+.wl-sheet-left[data-state="open"] {
+  animation: wl-sheet-left var(--wl-dur-route) var(--wl-ease-move) backwards;
+}
+.wl-sheet-left[data-state="closed"] {
+  animation: wl-sheet-left-out var(--wl-dur-enter) var(--wl-ease-in) forwards;
+}
+.wl-sheet-right[data-state="open"] {
+  animation: wl-sheet-right var(--wl-dur-route) var(--wl-ease-move) backwards;
+}
+.wl-sheet-right[data-state="closed"] {
+  animation: wl-sheet-right-out var(--wl-dur-enter) var(--wl-ease-in) forwards;
+}
+
+/* Confirmations: a check that pops in (copy, saved, refreshed, checkbox). */
+.wl-check {
+  animation: wl-check var(--wl-dur-card) var(--wl-ease-bounce) backwards;
+}
+
+/* Fixed bars that arrive from the bottom edge. */
+.wl-bar {
+  animation: wl-bar-up var(--wl-dur-route) var(--wl-ease-spring) backwards;
+}
+
+/* Skeletons only show for slow loads, then pulse. */
+.wl-skeleton {
+  animation:
+    wl-fade-in var(--wl-dur-enter) var(--wl-ease-out) var(--pk-delay-skeleton) backwards,
+    wl-pulse 1s ease-in-out calc(var(--pk-delay-skeleton) + var(--wl-dur-enter)) infinite alternate;
+}
+
+/* Status change: one ring in the pill's tone. */
+.wl-ring {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  animation: wl-ring var(--wl-dur-flip) var(--wl-ease-out);
+}
+
+/* A step that replaces the previous one in the same card turns in (magic-link code step). */
+.wl-turn {
+  transform-origin: 0 50%;
+  animation: wl-turn var(--wl-dur-card) var(--wl-ease-spring) backwards;
+}
+
+/* Wordmark card flips once when the shell first mounts. */
+.wl-wordmark-icon {
+  animation: wl-flip-in var(--wl-dur-flip) var(--wl-ease-spring) 120ms backwards;
+}
+
+/* Empty-state art: three blank passes that fan open once. */
+.wl-stack {
+  position: relative;
+  width: 4.5rem;
+  height: 4.25rem;
+}
+.wl-stack > span {
+  position: absolute;
+  inset: 0 auto auto 50%;
+  width: 2.75rem;
+  height: 3.75rem;
+  margin-left: -1.375rem;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-raised);
+  transform: translateX(var(--x, 0)) rotate(var(--r, 0deg));
+  transform-origin: 50% 100%;
+  animation: wl-fan var(--wl-dur-card) var(--wl-ease-spring) 80ms backwards;
+}
+.wl-stack > span:nth-child(1) {
+  --x: -0.875rem;
+  --r: -10deg;
+  opacity: 0.6;
+}
+.wl-stack > span:nth-child(2) {
+  --x: 0.875rem;
+  --r: 10deg;
+  opacity: 0.6;
+}
+.wl-stack > span:nth-child(3) {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--pk-text-subtle);
+  box-shadow: var(--wl-edge), var(--pk-elevation-2);
+}
+.wl-stack > span:nth-child(3)::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--wl-foil);
+}
+
+/* Sliding pill or underline behind the active item (ui/active-indicator.tsx). */
+.wl-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-state-selected-fill);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.wl-indicator[data-variant="underline"] {
+  border-radius: 1px;
+  background: var(--pk-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-indicator[data-ready] {
+    transition: transform var(--wl-dur-card) var(--wl-ease-spring);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-overlay,
+  .wl-dialog,
+  .wl-pop,
+  .wl-sheet-left,
+  .wl-sheet-right,
+  .wl-check,
+  .wl-bar,
+  .wl-ring,
+  .wl-wordmark-icon,
+  .wl-turn,
+  .wl-stack > span {
+    animation: none;
+  }
+  .wl-skeleton {
+    animation: none;
+    opacity: 0.7;
+  }
+}

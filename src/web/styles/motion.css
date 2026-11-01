@@ -166,18 +166,3 @@ html:active-view-transition-type(back) {
 #main {
   view-transition-name: main;
 }
-/* Sliding pill behind the active nav item (ui/active-indicator.tsx). */
-.wl-indicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-radius: var(--pk-radius-md);
-  background: var(--pk-state-selected-fill);
-  transform-origin: 0 0;
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .wl-indicator[data-ready] {
-    transition: transform var(--wl-dur-card) var(--wl-ease-spring);
-  }
-}
