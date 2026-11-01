@@ -7,7 +7,13 @@ import { isOrgActive } from '../orgs/active.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
-import { currentPassJson, getPassByDownloadToken, listAssets, type Pass } from '../passes/repo.ts';
+import {
+  currentPassJson,
+  getOrg,
+  getPassByDownloadToken,
+  listAssets,
+  type Pass,
+} from '../passes/repo.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { getPassAsset } from './repo.ts';
 
@@ -46,6 +52,8 @@ export async function supportContacts(
 
 export interface PublicPageModel {
   passJson: PassJson;
+  /** The org's name, when the pass names none. */
+  orgName: string;
   /** Asset name -> URL, cache-busted by content hash so the response can be immutable. */
   assets: Record<string, string>;
 }
@@ -62,7 +70,8 @@ export async function pageModel(ctx: ServiceContext, pass: Pass): Promise<Public
   }
   for (const a of await listAssets(ctx.env.DB, pass.id))
     assets[a.name] = `${base}${a.name}?v=${a.sha1}`;
-  return { passJson: parseStoredPassJson(raw), assets };
+  const org = await getOrg(ctx.env.DB, pass.orgId);
+  return { passJson: parseStoredPassJson(raw), assets, orgName: org?.name ?? '' };
 }
 
 export interface PublicAsset {

@@ -5,6 +5,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { rateLimit } from '../../platform/rate-limit.ts';
+import { passDevice } from '../../ssr/device.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { qrDataUri } from '../../ssr/qr.ts';
 import { servePassFile } from '../passes/file.ts';
@@ -21,6 +22,7 @@ const PAGE_HEADERS = {
   'x-robots-tag': 'noindex, nofollow',
 };
 
+/** Formatting locale for dates and numbers on the card; the page copy stays English. */
 const langOf = (header: string | undefined): string => {
   const tag = header?.split(',')[0]?.split(';')[0]?.trim();
   return tag && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(tag) ? tag : 'en';
@@ -67,12 +69,12 @@ register(
       const html = renderPassPage({
         view,
         nonce,
-        lang,
-        title: view.organizationName || 'Pass',
+        orgName: view.organizationName || model.orgName,
+        passTitle: pass.displayTitle ?? view.description ?? model.orgName,
         downloadHref,
-        badgeSrc: '/apple/add-to-apple-wallet.svg',
         qrSrc: pass.status === 'active' ? qrDataUri(`${base}${downloadHref}`) : null,
         voided: pass.status === 'voided',
+        ...passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
       });
       return new Response(html, { headers: PAGE_HEADERS });

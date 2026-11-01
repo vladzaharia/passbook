@@ -1,211 +1,197 @@
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { Download, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
-import type { Json } from '@/passkit/types.ts';
-import { formatValue } from '@/shared/pass-view/format.ts';
+import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Ban, Clock } from 'lucide-react';
+import { type ReactNode, useEffect, useState } from 'react';
+import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import { isApiError } from '../lib/errors.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
+  Breadcrumbs,
   Button,
+  Callout,
   Card,
   CardBody,
   CardHeader,
-  CopyButton,
+  EmptyState,
   ErrorState,
   KeyValue,
-  PageHeader,
   PassSideToggle,
   Skeleton,
   StatusPill,
 } from '../ui/index.ts';
-import { myPassQuery } from './api.ts';
-import { formatWhen, passName, toView } from './pass-view.ts';
+import { myPassesKey, myPassQuery } from './api.ts';
+import { canAddToWallet } from './device.ts';
+import { InWalletPill } from './my-passes-page.tsx';
+import { fieldRows, updatedLine } from './pass-fields.ts';
+import { type MyPass, passName, toView } from './pass-view.ts';
+import { QrCode } from './qr-code.tsx';
+import { isPendingRefresh } from './refresh.ts';
 import { RefreshButton } from './refresh-button.tsx';
-import { AddToWalletButton, publicUrlOf, RemovePassButton } from './wallet-actions.tsx';
+import { AddToWalletButton, PassMoreMenu, publicUrlOf } from './wallet-actions.tsx';
+import './portal.css';
 
-const CRUMBS = [{ label: 'My passes', to: '/' }];
+type Page = typeof MyPassListSchema._output;
 
-const ABBREVIATIONS = new Set(['ID', 'VIP', 'URL', 'QR', 'SKU', 'ZIP', 'PIN', 'UPC', 'ETA', 'DOB']);
-
-/** Pass labels are often written in capitals for the card; show them as a sentence. */
-function sentenceCase(label: string): string {
-  if (label.length < 2 || label !== label.toUpperCase()) return label;
-  const words = label.split(' ').map((w, i) => {
-    if (ABBREVIATIONS.has(w)) return w;
-    const lower = w.toLowerCase();
-    return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
-  });
-  return words.join(' ');
+/** The list's copy of the pass, so a tile click shows the card on the first frame. */
+function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass | undefined {
+  const list = client.getQueryData<InfiniteData<Page>>(myPassesKey);
+  return list?.pages.flatMap((p) => p.items).find((p) => p.id === id);
 }
 
-function fieldRows(passJson: Record<string, unknown>) {
-  const styles = ['generic', 'storeCard', 'coupon', 'eventTicket', 'boardingPass', 'posterGeneric'];
-  const style = styles.find((s) => passJson[s] && typeof passJson[s] === 'object');
-  if (!style) return [];
-  const block = passJson[style] as Record<string, unknown>;
-  const rows: { label: string; value: string }[] = [];
-  for (const group of ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields']) {
-    const list = block[group];
-    if (!Array.isArray(list)) continue;
-    for (const f of list) {
-      if (!f || typeof f !== 'object') continue;
-      const spec = f as Record<string, unknown>;
-      const { label, key, value } = spec;
-      if (value === undefined || value === null || typeof value === 'object') continue;
-      const text = formatValue(value as Json, spec, {
-        locale: navigator.language,
-        now: new Date(),
-      }).text;
-      rows.push({ label: sentenceCase(String(label ?? key ?? '')), value: text });
-    }
-  }
-  return rows;
-}
+const AREAS =
+  'grid gap-6 [grid-template-areas:"title"_"pass"_"side"] lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-x-12 lg:[grid-template-areas:"pass_title"_"pass_side"] lg:grid-rows-[auto_1fr]';
 
-export function PassDetailPage({ passId }: { passId: string }) {
-  const query = useQuery(myPassQuery(passId));
+function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const navigate = useNavigate();
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [dip, setDip] = useState(0);
-
-  if (query.isPending) {
-    return (
-      <>
-        <PageHeader title="Pass" breadcrumbs={[...CRUMBS, { label: 'Pass' }]} />
-        <Skeleton className="h-72" />
-      </>
-    );
-  }
-  if (query.isError) {
-    return (
-      <>
-        <PageHeader title="Pass" breadcrumbs={[...CRUMBS, { label: 'Pass' }]} />
-        <ErrorState
-          error={query.error}
-          title={
-            isApiError(query.error) && query.error.isNotFound ? 'Pass not found' : 'Could not load'
-          }
-          onRetry={
-            isApiError(query.error) && query.error.isNotFound
-              ? undefined
-              : () => void query.refetch()
-          }
-        />
-      </>
-    );
-  }
-
-  const pass = query.data;
   const name = passName(pass);
   const view = toView(pass);
   const voided = pass.status === 'voided';
   const publicUrl = publicUrlOf(pass.downloadUrl);
-  const rows = fieldRows(pass.passJson);
+  const canAdd = canAddToWallet();
+  const active = !voided && !view.expired;
+  useEffect(() => {
+    document.title = `${name} · Wallet`;
+  }, [name]);
 
   return (
-    <>
-      <PageHeader
-        size="lg"
-        title={name}
-        description={pass.orgName}
-        breadcrumbs={[...CRUMBS, { label: name }]}
-        actions={
-          voided ? (
-            <StatusPill status="voided" />
-          ) : (
-            <>
-              <AddToWalletButton
-                downloadUrl={pass.downloadUrl}
-                onPress={() => setDip((n) => n + 1)}
-              />
-              <RefreshButton passId={pass.id} pass={pass} />
-            </>
-          )
-        }
-      />
-      {view.expired && !voided ? (
-        <p
-          role="status"
-          className="mb-4 rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm"
+    <div className={AREAS}>
+      <div className="min-w-0 [grid-area:title]">
+        <h1
+          tabIndex={-1}
+          className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong sm:text-3xl"
         >
-          This pass has expired.
+          {name}
+        </h1>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-muted">
+          <span>{pass.orgName}</span>
+          <span aria-hidden>·</span>
+          <span>{updatedLine(pass.modifiedAt)}</span>
+          {pass.inWallet && !voided ? <InWalletPill /> : null}
         </p>
-      ) : null}
-      {voided ? (
-        <p
-          role="status"
-          className="mb-4 rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm"
-        >
-          This pass was voided.
-        </p>
-      ) : null}
-      <div className="grid gap-4 md:grid-cols-[minmax(0,22rem)_1fr]">
-        <div className="flex flex-col gap-3">
-          <PassCardStage
-            view={view}
-            face={face}
-            flippable
-            mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
-            dip={dip}
-            transitionName={`pass-${pass.id}`}
-          />
-          <div className="flex justify-center">
-            <PassSideToggle value={face} onChange={setFace} />
+      </div>
+      <div className="flex min-w-0 flex-col items-center gap-3 [grid-area:pass]">
+        <PassCardStage
+          view={view}
+          face={face}
+          flippable
+          enter={dealt}
+          dim={voided}
+          mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          dip={dip}
+          syncing={isPendingRefresh(pass, Date.now())}
+          transitionName={`pass-${pass.id}`}
+        />
+        <PassSideToggle value={face} onChange={setFace} />
+      </div>
+      <div
+        className={`flex min-w-0 flex-col gap-6 [grid-area:side] ${dealt ? 'wl-after-card' : ''}`}
+      >
+        {active && !canAdd && publicUrl ? (
+          <Card className="flex flex-col items-center gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+            <QrCode value={publicUrl} label={`QR code for ${name}`} />
+            <div className="flex flex-col gap-1 text-center sm:text-left">
+              <p className="text-sm font-medium text-fg-strong">Scan with your iPhone.</p>
+              <p className="text-sm text-fg-muted">Open on iPhone or Mac to add to Wallet.</p>
+            </div>
+          </Card>
+        ) : null}
+        {/* Refresh and More wrap as a pair, never one alone. */}
+        <div className="flex flex-wrap items-center gap-2">
+          {active && !pass.inWallet ? (
+            <AddToWalletButton
+              downloadUrl={pass.downloadUrl}
+              onPress={() => setDip((n) => n + 1)}
+            />
+          ) : null}
+          <div className="flex items-center gap-2">
+            {voided ? null : <RefreshButton passId={pass.id} pass={pass} size="lg" />}
+            <PassMoreMenu
+              page
+              passId={pass.id}
+              passTitle={name}
+              publicUrl={voided ? null : publicUrl}
+              addAgainHref={pass.inWallet && active ? pass.downloadUrl : null}
+              onRemoved={() => void navigate({ to: '/' })}
+            />
           </div>
         </div>
-        <div className="flex flex-col gap-4">
-          {rows.length ? (
-            <Card>
-              <CardHeader title="Details" />
-              <CardBody>
-                <KeyValue items={rows} />
-              </CardBody>
-            </Card>
-          ) : null}
-          <Card>
-            <CardHeader title="Pass" />
-            <CardBody className="flex flex-col gap-3">
-              <KeyValue
-                items={[
-                  { label: 'Updated', value: formatWhen(pass.modifiedAt) },
-                  {
-                    label: 'Last refreshed',
-                    value: pass.lastRefreshedAt ? formatWhen(pass.lastRefreshedAt) : null,
-                  },
-                ]}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                {voided ? null : (
-                  <Button asChild variant="outline" size="sm" iconStart={<Download aria-hidden />}>
-                    <a href={pass.downloadUrl} download>
-                      Download .pkpass
-                    </a>
-                  </Button>
-                )}
-                {publicUrl ? (
-                  <>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      iconStart={<ExternalLink aria-hidden />}
-                    >
-                      <a href={publicUrl}>Public page</a>
-                    </Button>
-                    <CopyButton value={publicUrl} label="Copy public link" />
-                  </>
-                ) : null}
-                <RemovePassButton
-                  passId={pass.id}
-                  passTitle={name}
-                  onRemoved={() => void navigate({ to: '/' })}
-                />
-              </div>
-            </CardBody>
-          </Card>
-        </div>
+        {voided ? (
+          <Callout tone="warning" icon={Ban}>
+            This pass was voided.
+          </Callout>
+        ) : view.expired ? (
+          <Callout tone="warning" icon={Clock}>
+            This pass has expired.
+          </Callout>
+        ) : null}
+        <Card>
+          <CardHeader title="Details" />
+          <CardBody>
+            <KeyValue
+              items={[
+                { label: 'Status', value: <StatusPill status={pass.status} /> },
+                ...fieldRows(pass.passJson),
+              ]}
+            />
+          </CardBody>
+        </Card>
       </div>
+    </div>
+  );
+}
+
+export function PassDetailPage({ passId }: { passId: string }) {
+  const client = useQueryClient();
+  const [seed] = useState(() => fromList(client, passId));
+  const query = useQuery({
+    ...myPassQuery(passId),
+    ...(seed
+      ? {
+          initialData: seed,
+          initialDataUpdatedAt: client.getQueryState(myPassesKey)?.dataUpdatedAt,
+        }
+      : {}),
+  });
+  const crumbs = [
+    { label: 'My passes', to: '/' },
+    { label: query.data ? passName(query.data) : 'Pass' },
+  ];
+
+  let body: ReactNode;
+  if (query.isPending) {
+    body = (
+      <div className={AREAS} aria-busy="true">
+        <Skeleton className="h-16 [grid-area:title]" />
+        <Skeleton className="mx-auto h-[28rem] w-full max-w-[22rem] [grid-area:pass]" />
+        <Skeleton className="h-48 [grid-area:side]" />
+      </div>
+    );
+  } else if (query.isError && isApiError(query.error) && query.error.isNotFound) {
+    body = (
+      <EmptyState
+        heading
+        art="wallet"
+        artState="lost"
+        title="Pass not found"
+        action={
+          <Button asChild variant="outline">
+            <Link to="/">Back to My passes</Link>
+          </Button>
+        }
+      />
+    );
+  } else if (query.isError) {
+    body = <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  } else {
+    // Arriving from the grid, the card morphs in; a deep link deals it instead.
+    body = <Detail pass={query.data} dealt={!seed} />;
+  }
+  return (
+    <>
+      <Breadcrumbs items={crumbs} className="mb-4" />
+      {body}
     </>
   );
 }

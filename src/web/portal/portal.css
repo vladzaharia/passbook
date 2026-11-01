@@ -1,0 +1,68 @@
+/* Portal motion (motion-and-expression.md): tile chrome after the deal, the QR scan line, the
+   detail panel after the card. Transform and opacity only; reduced motion keeps nothing moving. */
+.wl-qr-scan {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--wl-foil);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--wl-foil-1) 60%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The tile's title and actions rise 8 px after its card deals in. */
+  .wl-tile-chrome {
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards) + 160ms);
+  }
+  /* Deep link: the details panel rises after the card (240 ms). */
+  .wl-after-card {
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
+  }
+  .wl-qr-scan {
+    animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
+  }
+  /* A new email row rises (the kit adds the insert highlight). */
+  .wl-account-emails li[data-new] {
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  }
+  /* Sign out everywhere: the other devices leave 30 ms apart before the redirect. */
+  .wl-sessions[data-leaving] li:has(button) {
+    animation: wl-row-out 160ms var(--wl-ease-in) forwards;
+  }
+  .wl-sessions[data-leaving] li:nth-child(2) {
+    animation-delay: 30ms;
+  }
+  .wl-sessions[data-leaving] li:nth-child(3) {
+    animation-delay: 60ms;
+  }
+  .wl-sessions[data-leaving] li:nth-child(4) {
+    animation-delay: 90ms;
+  }
+  .wl-sessions[data-leaving] li:nth-child(n + 5) {
+    animation-delay: 120ms;
+  }
+}
+/* Reduced motion: the other devices fade (120 ms) before the redirect. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-sessions[data-leaving] li:has(button) {
+    opacity: 0;
+    transition: opacity 120ms linear;
+  }
+}
+
+@keyframes wl-qr-scan {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(11.5rem);
+  }
+}

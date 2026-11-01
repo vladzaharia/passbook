@@ -6,6 +6,7 @@ import { AppError, UnavailableError, UpstreamError } from '../../platform/errors
 import { sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import type { HostedArt } from '../../ssr/hosted.ts';
 import {
   clearCookie,
   ipPrefix,
@@ -28,7 +29,7 @@ import {
   type RelyingParty,
   redeemAuthorizationCode,
 } from './oidc-client.ts';
-import { messagePage, SIGN_IN_ERRORS } from './pages.ts';
+import { messagePage, noAccessPage, SIGN_IN_ERRORS } from './pages.ts';
 import * as repo from './repo.ts';
 import { signInOidc } from './service.ts';
 
@@ -56,11 +57,23 @@ function errorPage(
   title: string,
   message: string,
   status: 400 | 403 | 502,
+  art?: HostedArt,
 ) {
   return c.html(
-    messagePage(c.var.nonce, { title, message, href: '/login', action: 'Back to sign in' }),
+    messagePage(c.var.nonce, {
+      title,
+      message,
+      href: '/login',
+      action: 'Back to sign in',
+      ...(art ? { art } : {}),
+    }),
     status,
   );
+}
+
+/** GET /auth/no-access: where a Polaris ID without Wallet access lands (a clean URL). */
+export function noAccess(c: Context<AppBindings>) {
+  return c.html(noAccessPage(c.var.nonce));
 }
 
 export async function startOidc(c: Context<AppBindings>) {
@@ -93,6 +106,8 @@ export async function startOidc(c: Context<AppBindings>) {
       state: secrets.state,
       nonce: secrets.nonce,
       codeChallenge: secrets.challenge,
+      // "Use another Polaris ID" (/auth/no-access) asks the provider to sign in again.
+      ...(c.req.query('prompt') === 'login' ? { prompt: 'login' as const } : {}),
     }),
     302,
   );
@@ -170,6 +185,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
     if ((cause as AppError).code === 'EMAIL_PROOF_SENT') {
       setBindingCookie(c, MAGIC_COOKIE, proofBinding, MAGIC_TTL_MS / 1000);
     }
-    return errorPage(c, known.title, known.message, known.status);
+    if ((cause as AppError).code === 'NO_ACCESS') return c.redirect('/auth/no-access', 303);
+    return errorPage(c, known.title, known.message, known.status, known.art);
   }
 }

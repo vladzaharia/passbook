@@ -62,6 +62,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
       templateId: row.template_id,
       templateVersion: row.template_version,
     }),
+    inWallet: row.registered === 1,
   };
 }
 
@@ -167,6 +168,23 @@ export async function removeMyEmail(ctx: ServiceContext, userId: string, rawEmai
     actorType: 'user',
     actorId: userId,
     action: 'user.email_remove',
+    targetType: 'user',
+    targetId: userId,
+  });
+  return listMyEmails(ctx, userId);
+}
+
+/** Sign-in emails go to another of my verified addresses. */
+export async function makeMyEmailPrimary(ctx: ServiceContext, userId: string, rawEmail: string) {
+  const email = strictEmail(rawEmail);
+  if (!email) throw new ValidationError('Enter a valid email address.', [], 'INVALID_EMAIL');
+  if (!(await repo.setPrimaryEmail(ctx.env.DB, userId, email))) {
+    throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
+  }
+  await recordAudit(ctx, {
+    actorType: 'user',
+    actorId: userId,
+    action: 'user.email_primary',
     targetType: 'user',
     targetId: userId,
   });

@@ -9,7 +9,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { limitBody } from './body-limit.ts';
 import { breakglassForm, breakglassSignIn } from './breakglass-handlers.ts';
 import { confirmMagic, consumeMagic, requestMagic } from './magic-handlers.ts';
-import { callbackOidc, startOidc } from './oidc-handlers.ts';
+import { callbackOidc, noAccess, startOidc } from './oidc-handlers.ts';
 import { getSession, logout } from './session-handlers.ts';
 
 /** /auth */
@@ -36,6 +36,12 @@ register(
   'auth',
   { method: 'get', path: '/oidc/callback', summary: 'Pocket ID callback', status: 302 },
   callbackOidc,
+);
+register(
+  authRoutes,
+  'auth',
+  { method: 'get', path: '/no-access', summary: 'No access page for a Polaris ID (HTML)' },
+  noAccess,
 );
 register(
   authRoutes,

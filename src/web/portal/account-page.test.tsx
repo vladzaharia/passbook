@@ -1,9 +1,10 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { focusManager } from '@tanstack/react-query';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { deviceLabel } from '../lib/device.ts';
-import { json, problem, renderApp } from '../lib/test-utils.tsx';
+import { json, problem, renderApp, sessionFixture } from '../lib/test-utils.tsx';
 
 const signOut = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../lib/session.ts', async (orig) => ({
@@ -11,7 +12,10 @@ vi.mock('../lib/session.ts', async (orig) => ({
   signOut,
 }));
 
-beforeEach(() => signOut.mockClear());
+beforeEach(() => {
+  signOut.mockClear();
+  sessionStorage.clear();
+});
 afterEach(() => vi.unstubAllGlobals());
 
 const emails = (over: object[] = []) => ({
@@ -61,48 +65,67 @@ describe('account page', () => {
     });
     expect(await screen.findByText('work@example.com')).toBeInTheDocument();
     expect(await screen.findByText('This device')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Revoke Safari on iOS session' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Revoke Safari on iOS' })).toBeInTheDocument();
+    const rows = within(screen.getByRole('list', { name: 'Sessions' })).getAllByRole('listitem');
+    for (const row of rows) expect(row.querySelector('svg')).not.toBeNull();
+    expect(screen.queryByText(/^Name/)).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('adds an email and shows the code form for unverified rows', async () => {
+  it('adds an email as a pending row with Resend and Cancel, then sees it verified', async () => {
     const user = userEvent.setup();
     let items = emails();
     const posted: unknown[] = [];
-    const consumed: unknown[] = [];
     await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': (_u, init) => {
           if (init?.method === 'POST') {
             posted.push(JSON.parse(String(init.body)));
-            items = emails([
-              { email: 'new@example.com', verifiedAt: null, verifiedVia: null, primary: false },
-            ]);
             return json({ ok: true }, 202);
           }
           return json(items);
         },
         '/api/v1/me/sessions': () => json(sessions()),
-        '/auth/magic/consume': (_u, init) => {
-          consumed.push(JSON.parse(String(init?.body)));
-          items = emails([
-            { email: 'new@example.com', verifiedAt: 3, verifiedVia: 'magic_link', primary: false },
-          ]);
-          return json({});
-        },
       },
     });
     await user.type(await screen.findByLabelText('Add email'), 'new@example.com');
     await user.click(screen.getByRole('button', { name: 'Add' }));
-    expect(await screen.findByText('Unverified')).toBeInTheDocument();
+    expect(await screen.findByText('Check your inbox')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enter code' })).toBeNull();
     expect(posted).toEqual([{ email: 'new@example.com' }]);
+    expect(sessionStorage.getItem('wallet-pending-emails')).toContain('new@example.com');
 
-    await user.type(await screen.findByLabelText('Code'), '654321');
-    await user.click(screen.getByRole('button', { name: 'Verify' }));
-    await waitFor(() => expect(screen.queryByText('Unverified')).toBeNull());
-    expect(consumed).toEqual([{ email: 'new@example.com', code: '654321' }]);
+    await user.click(screen.getByRole('button', { name: 'Actions for new@example.com' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Resend' }));
+    expect(await screen.findByText('Sent again')).toBeInTheDocument();
+    expect(posted).toHaveLength(2);
+
+    // The user confirms in the email and comes back: the focus refetch shows it verified.
+    items = emails([
+      { email: 'new@example.com', verifiedAt: 3, verifiedVia: 'magic_link', primary: false },
+    ]);
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+    await waitFor(() => expect(screen.queryByText('Check your inbox')).toBeNull());
+    expect(screen.getByText('new@example.com')).toBeInTheDocument();
+    expect(sessionStorage.getItem('wallet-pending-emails')).not.toContain('new@example.com');
+    focusManager.setFocused(undefined);
+  });
+
+  it('cancels a pending address', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('wallet-pending-emails', JSON.stringify(['later@example.com']));
+    await renderApp('/account', {
+      handlers: {
+        '/api/v1/me/emails': () => json(emails()),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Actions for later@example.com' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByText('later@example.com')).toBeNull());
   });
 
   it('rejects an invalid email locally and shows server errors', async () => {
@@ -111,7 +134,7 @@ describe('account page', () => {
       handlers: {
         '/api/v1/me/emails': (_u, init) =>
           init?.method === 'POST'
-            ? problem(409, 'email_taken', 'That email belongs to another account.')
+            ? problem(429, 'RATE_LIMITED', 'Too many requests. Try again in a minute.')
             : json(emails()),
         '/api/v1/me/sessions': () => json(sessions()),
       },
@@ -120,13 +143,17 @@ describe('account page', () => {
     await user.type(input, 'bad');
     await user.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Enter a valid email.')).toBeInTheDocument();
-    await user.clear(input);
-    await user.type(input, 'taken@example.com');
+    await user.type(screen.getByLabelText('Add email'), 'work@example.com');
     await user.click(screen.getByRole('button', { name: 'Add' }));
-    expect(await screen.findByText('That email belongs to another account.')).toBeInTheDocument();
+    expect(await screen.findByText('That email is already on your account.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Add email'), 'taken@example.com');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+    expect(
+      await screen.findByText('Too many requests. Try again in a minute.'),
+    ).toBeInTheDocument();
   });
 
-  it('removes a non-primary email after confirming; primary has no remove', async () => {
+  it('removes a non-primary email after confirming; primary has no actions', async () => {
     const user = userEvent.setup();
     let removed = '';
     await renderApp('/account', {
@@ -140,13 +167,57 @@ describe('account page', () => {
       },
     });
     await screen.findByText('work@example.com');
-    expect(screen.queryByRole('button', { name: 'Remove test@example.com' })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Remove work@example.com' }));
+    expect(screen.queryByRole('button', { name: 'Actions for test@example.com' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Actions for work@example.com' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remove' }),
     );
     await waitFor(() => expect(screen.queryByText('work@example.com')).toBeNull());
     expect(removed).toBe('work@example.com');
+  });
+
+  it('makes another verified email primary after confirming', async () => {
+    const user = userEvent.setup();
+    let sessionCalls = 0;
+    const swapped = {
+      items: [
+        { email: 'test@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: false },
+        { email: 'work@example.com', verifiedAt: 2, verifiedVia: 'magic_link', primary: true },
+      ],
+    };
+    await renderApp('/account', {
+      handlers: {
+        '/api/v1/session': () => {
+          sessionCalls++;
+          return json(sessionFixture('user'));
+        },
+        '/api/v1/me/emails': () => json(emails()),
+        '/api/v1/me/emails/work%40example.com/primary': () => json(swapped),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Actions for work@example.com' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Make primary' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent('Sign-in emails go to work@example.com.');
+    const before = sessionCalls;
+    await user.click(within(dialog).getByRole('button', { name: 'Make primary' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Actions for test@example.com' })).toBeVisible(),
+    );
+    await waitFor(() => expect(sessionCalls).toBeGreaterThan(before));
+  });
+
+  it('focuses the add row when asked to add another email', async () => {
+    await renderApp('/account?add=email', {
+      handlers: {
+        '/api/v1/me/emails': () => json(emails()),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    const input = await screen.findByLabelText('Add email');
+    await waitFor(() => expect(document.activeElement).toBe(input));
   });
 
   it('revokes another session', async () => {
@@ -163,7 +234,7 @@ describe('account page', () => {
         },
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Revoke Safari on iOS session' }));
+    await user.click(await screen.findByRole('button', { name: 'Revoke Safari on iOS' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: /^Revoke / })).toBeNull());
     expect(revoked).toBe(true);
   });

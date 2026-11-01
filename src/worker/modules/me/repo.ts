@@ -20,13 +20,16 @@ export interface MyPassRow {
   template_name: string;
   org_name: string;
   pass_json: string | null;
+  /** 1 when a device registered the pass. */
+  registered: number;
 }
 
 // pass_versions keeps the built pass.json for recent versions; it is what the card renders.
 const SELECT = `
   SELECT p.id, p.org_id, p.template_id, p.template_version, p.display_title, p.display_subtitle, p.status, p.modified_at, p.last_refreshed_at,
          p.refresh_requested_at, p.download_token, t.name AS template_name, o.name AS org_name,
-         COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json
+         COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json,
+         EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered
   FROM passes p
   JOIN templates t ON t.id = p.template_id
   JOIN orgs o ON o.id = p.org_id
@@ -50,6 +53,20 @@ export async function removeEmail(db: Db, userId: string, email: string): Promis
   return changes > 0;
 }
 
+/** Sign-in emails go to `email`, which must be one of the user's verified addresses. */
+export async function setPrimaryEmail(db: Db, userId: string, email: string): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE users SET primary_email = ?
+     WHERE id = ? AND EXISTS (SELECT 1 FROM user_emails WHERE user_id = ? AND email = ?)`,
+    [email, userId, userId, email],
+  );
+  return changes > 0;
+}
+
+// A pass already in someone's Wallet leaves the Add all bundle (re-adding stays per pass).
+const NOT_IN_WALLET = 'NOT EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = passes.id)';
+
 export interface BundleRow {
   id: string;
   object_key: string;
@@ -60,7 +77,7 @@ export const countBundlePasses = async (db: Db, userId: string) =>
   (
     await first<{ n: number }>(
       db,
-      `SELECT COUNT(*) AS n FROM passes WHERE owner_user_id = ? AND status = 'active'`,
+      `SELECT COUNT(*) AS n FROM passes WHERE owner_user_id = ? AND status = 'active' AND ${NOT_IN_WALLET}`,
       [userId],
     )
   )?.n ?? 0;
@@ -69,6 +86,7 @@ export const listBundlePasses = (db: Db, userId: string, limit: number, offset: 
   all<BundleRow>(
     db,
     `SELECT id, object_key, object_size FROM passes
-     WHERE owner_user_id = ? AND status = 'active' ORDER BY id DESC LIMIT ? OFFSET ?`,
+     WHERE owner_user_id = ? AND status = 'active' AND ${NOT_IN_WALLET}
+     ORDER BY id DESC LIMIT ? OFFSET ?`,
     [userId, limit, offset],
   );

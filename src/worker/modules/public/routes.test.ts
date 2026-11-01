@@ -25,12 +25,17 @@ const actor = { type: 'user', id: 'admin-1' } as const;
 describe('GET /p/:token', () => {
   it('renders the pass without script, with a no-JS back toggle and a download link', async () => {
     const pass = await kit.pass();
-    const res = await get(`/p/${pass.downloadToken}`, { 'accept-language': 'fr-CA,fr;q=0.9' });
+    const res = await get(`/p/${pass.downloadToken}`, { 'accept-language': 'de-DE,de;q=0.9' });
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('<!doctype html>');
-    expect(html).toContain('<html lang="fr-CA">');
-    expect(html).toContain('<meta name="robots" content="noindex, nofollow, noarchive"/>');
+    // The copy is English whatever the visitor's language; the card formats in their locale.
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('<meta name="robots" content="noindex, nofollow, noarchive">');
+    expect(html).toContain('<meta name="format-detection" content="telephone=no">');
+    expect(html).toContain('rel="apple-touch-icon"');
+    expect(html).toContain('<meta name="theme-color"');
+    expect(html).not.toContain('theme-toggle');
     expect(html).toMatch(
       /<input id="pc-flip" type="radio" class="pc-flip-toggle pc-sr" name="pc-flip"/,
     );
@@ -80,6 +85,33 @@ describe('GET /p/:token', () => {
     expect(res.headers.get('content-type')).toContain('text/html');
   });
 
+  it('leads with the org, never the platform wordmark', async () => {
+    const pass = await kit.pass();
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const head = /<header class="pp-head">(.*?)<\/header>/.exec(html)?.[1] ?? '';
+    expect(head).toContain(kit.org.name);
+    expect(html).not.toContain('class="mark"');
+  });
+
+  it.each([
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, false],
+    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, true],
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, true],
+  ])('follows the device rule on %s', async (_name, ua, qr, line) => {
+    const pass = await kit.pass();
+    const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
+    expect(html.includes('Scan with your iPhone.')).toBe(qr);
+    expect(html.includes('Open on iPhone or Mac to add to Wallet.')).toBe(line);
+    expect(html).toContain('alt="Add to Apple Wallet"');
+  });
+
+  it('asks in-app browsers to open Safari', async () => {
+    const pass = await kit.pass();
+    const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148';
+    const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
+    expect(html).toContain('Open in Safari to add to Wallet.');
+  });
+
   it('offers a QR hand-off for desktop visitors that points at the pass download', async () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
@@ -97,6 +129,11 @@ describe('GET /p/:token', () => {
     expect(html).toContain('This pass was voided.');
     expect(html).not.toContain('Add to Apple Wallet');
     expect(html).not.toContain('QR code');
+    // Quiet: no deal, glow or tilt (and no tilt script).
+    expect(html).not.toContain('data-enter');
+    expect(html).not.toContain('data-tilt');
+    expect(html).toContain('data-glow="off"');
+    expect(html).not.toContain('pass-tilt.js');
   });
 
   it('shows an expired banner', async () => {
@@ -162,7 +199,7 @@ describe('GET /p/:token', () => {
   it('has a heading, and its only inline styles are pass colour variables', async () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).toMatch(/<h1 class="sr">[^<]+<\/h1>/);
+    expect(html).toMatch(/<h1><small>[^<]+<\/small>[^<]+<\/h1>/);
     const styles = [...html.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1] ?? '');
     expect(styles.length).toBeGreaterThan(0);
     for (const v of styles)
@@ -184,8 +221,10 @@ describe('GET /p/:token', () => {
     const res = await get(`/p/${'y'.repeat(43)}`);
     expect(res.headers.get('content-type')).toContain('text/html');
     const body = await res.text();
-    expect(body).toContain('This link has expired.');
-    expect(body).toContain('href="/login"');
+    expect(body).toContain('<h1>Link expired</h1>');
+    expect(body).toContain('Sign in to see your passes.');
+    expect(body).toContain('class="card" data-state="expired"');
+    expect(body).toMatch(/<a class="btn" href="\/login">Sign in<\/a>/);
     await rotateLink(kit.ctx, actor, pass.id, null);
     expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
     expect((await get(`/p/${pass.downloadToken}/pass.pkpass`)).status).toBe(404);

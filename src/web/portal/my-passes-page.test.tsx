@@ -68,7 +68,11 @@ describe('my passes', () => {
   it('shows the empty state', async () => {
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list() } });
     expect(await screen.findByText('No passes')).toBeInTheDocument();
-    expect(screen.getByText('Passes sent to your sign-in email appear here.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add another email' })).toHaveAttribute(
+      'href',
+      '/account?add=email',
+    );
+    expect(document.querySelector('[data-art="wallet"][data-state="empty"]')).not.toBeNull();
   });
 
   it('shows an error with retry', async () => {

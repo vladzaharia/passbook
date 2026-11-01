@@ -1,0 +1,185 @@
+/* Hosted sign-in card: two faces in one grid cell (one height, no shift); the flipper turns. */
+.wl-login-card {
+  perspective: 1600px;
+}
+.wl-login-flipper {
+  display: grid;
+  transform-style: preserve-3d;
+}
+.wl-login-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* WebKit only hides a back face that has its own 3D transform. */
+  transform: rotateY(0deg);
+}
+.wl-login-face[data-side="code"],
+.wl-login-flipper[data-face="code"] {
+  transform: rotateY(180deg);
+}
+/* The far face leaves once the card is edge-on (it is also inert). */
+.wl-login-flipper[data-face="email"] > [data-side="code"],
+.wl-login-flipper[data-face="code"] > [data-side="email"] {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-login-flipper {
+    transition: transform var(--wl-dur-flip) var(--wl-ease-spring);
+  }
+  .wl-login-face {
+    transition: visibility 0s;
+  }
+  .wl-login-flipper[data-face="email"] > [data-side="code"],
+  .wl-login-flipper[data-face="code"] > [data-side="email"] {
+    transition-delay: var(--wl-dur-flip);
+  }
+}
+
+/* Reduced motion: no turn; the faces swap with a short fade. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-login-flipper[data-face="code"],
+  .wl-login-face[data-side="code"] {
+    transform: none;
+  }
+  .wl-login-face {
+    transition:
+      opacity 150ms linear,
+      visibility 0s;
+  }
+  .wl-login-flipper[data-face="email"] > [data-side="code"],
+  .wl-login-flipper[data-face="code"] > [data-side="email"] {
+    opacity: 0;
+    transition-delay: 0s, 150ms;
+  }
+}
+
+/* The 6-digit code: the input holds the value, the slots draw it (grouped 123 456). */
+.wl-code {
+  position: relative;
+}
+.wl-code-input {
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  text-align: center;
+}
+.wl-code-input::selection {
+  background: transparent;
+}
+.wl-code-slots {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  pointer-events: none;
+  color: var(--pk-text-strong);
+  font-family: var(--pk-font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 2rem;
+}
+.wl-code-slot {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  width: 1.375rem;
+}
+.wl-code-slot:nth-child(4) {
+  margin-inline-start: 0.875rem;
+}
+.wl-code-slot:empty::before {
+  content: "";
+  width: 0.625rem;
+  height: 2px;
+  margin-top: 1.25rem;
+  border-radius: 1px;
+  background: var(--pk-border-strong);
+}
+.wl-code-digit {
+  display: inline-block;
+}
+.wl-code:focus-within .wl-code-slot[data-caret]::after {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--pk-accent);
+}
+/* Complete: the field glows teal once (opacity only). */
+.wl-code::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--pk-radius-md);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--pk-accent) 40%, transparent),
+    0 0 18px color-mix(in oklab, var(--pk-accent) 35%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-code-digit {
+    animation: wl-check 140ms var(--wl-ease-spring) backwards;
+    animation-delay: calc(var(--i, 0) * 30ms);
+  }
+  .wl-code[data-complete]::after {
+    animation: wl-code-glow 300ms var(--wl-ease-out) 100ms;
+  }
+}
+@keyframes wl-code-glow {
+  40% {
+    opacity: 1;
+  }
+}
+
+/* Polaris ID: one foil sweep along the border per fine-pointer hover. */
+.wl-sweep-ring {
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.wl-sweep-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 60%;
+  background: var(--wl-foil);
+  opacity: 0;
+  transform: translateX(-100%);
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .wl-sweep:hover .wl-sweep-ring::before {
+    animation: wl-sweep 480ms var(--wl-ease-move);
+  }
+}
+@keyframes wl-sweep {
+  0% {
+    opacity: 1;
+    transform: translateX(-100%);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(170%);
+  }
+}

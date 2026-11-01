@@ -327,6 +327,8 @@ export function authorizationUrl(
     state: string;
     nonce: string;
     codeChallenge: string;
+    /** `login` makes the provider ask who is signing in (another account). */
+    prompt?: 'login';
   },
 ): string {
   const u = new URL(discovered.authorizationEndpoint);
@@ -338,6 +340,7 @@ export function authorizationUrl(
   u.searchParams.set('nonce', flow.nonce);
   u.searchParams.set('code_challenge', flow.codeChallenge);
   u.searchParams.set('code_challenge_method', 'S256');
+  if (flow.prompt) u.searchParams.set('prompt', flow.prompt);
   return u.toString();
 }
 
