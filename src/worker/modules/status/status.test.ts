@@ -6,6 +6,7 @@ import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import { clearOidcCache, failuresLine } from './checks.ts';
 import { clearStatusCache, getStatus, recordCronRun } from './service.ts';
 
@@ -136,6 +137,20 @@ describe('status components', () => {
     clearStatusCache(env.DB);
     const t = await status({ OIDC_ISSUER: '' });
     expect(find(t, 'oidc')?.state).toBe('not_configured');
+  });
+
+  it('marks oidc degraded while email trust is on', async () => {
+    await run(
+      env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'true', 0)",
+    );
+    clearSettingsCache(env.DB);
+    const s = await status();
+    expect(find(s, 'oidc')).toMatchObject({ state: 'degraded', detail: 'Email trust on.' });
+    await run(env.DB, "DELETE FROM settings WHERE key = 'oidc.trustEmail'");
+    clearSettingsCache(env.DB);
+    clearStatusCache(env.DB);
+    expect(find(await status(), 'oidc')?.state).toBe('verified');
   });
 
   it('grades email by the magic-link daily budget', async () => {

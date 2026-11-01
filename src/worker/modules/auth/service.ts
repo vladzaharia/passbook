@@ -88,6 +88,22 @@ async function startSession(
   return { userId, roles, session };
 }
 
+async function auditIdentityLinked(
+  ctx: ServiceContext,
+  userId: string,
+  via: 'trusted_email' | 'mail_proof' | 'new_user',
+  emailVerified: boolean,
+): Promise<void> {
+  await recordAudit(ctx, {
+    actorType: 'user',
+    actorId: userId,
+    action: 'auth.identity_linked',
+    targetType: 'user',
+    targetId: userId,
+    detail: { provider: OIDC_PROVIDER, via, emailVerified },
+  });
+}
+
 async function createUser(ctx: ServiceContext, email: string, name: string | null) {
   await repo.insertUser(ctx.env.DB, { id: ctx.ids.id(), name, email, now: ctx.clock.now() });
   const user = await repo.findUserByPrimaryEmail(ctx.env.DB, email);
@@ -140,10 +156,13 @@ export async function signInOidc(
   if (roles.length === 0) throw new ForbiddenError('No access.', 'NO_ACCESS');
   const email = strictEmail(claims.email);
   if (!email) throw new ForbiddenError('The account has no usable email.', 'NO_EMAIL');
-  const { 'oidc.trustEmail': trust } = await getPlatformSettings(ctx);
+  const { 'oidc.trustEmail': setting } = await getPlatformSettings(ctx);
+  // The setting is not enough: the provider must also assert that it verified the address.
+  const trust = setting && claims.emailVerified === true;
 
   const identity = await repo.findIdentity(db, OIDC_PROVIDER, claims.sub);
   let user = identity ? await repo.getUser(db, identity.user_id) : null;
+  let linkVia: 'trusted_email' | 'new_user' = 'new_user';
   if (!user) {
     const owner =
       (await repo.findUserByEmail(db, email)) ?? (await repo.findUserByPrimaryEmail(db, email));
@@ -154,6 +173,7 @@ export async function signInOidc(
       await sendIdentityProof(ctx, owner.id, email, claims, sign);
     }
     user = owner ?? (await createUser(ctx, email, claims.name ?? null));
+    linkVia = owner ? 'trusted_email' : 'new_user';
   }
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
 
@@ -166,7 +186,10 @@ export async function signInOidc(
     now: ctx.clock.now(),
   };
   if (identity) await repo.updateIdentity(db, identityRow);
-  else await repo.insertIdentity(db, { ...identityRow, userId: user.id });
+  else {
+    await repo.insertIdentity(db, { ...identityRow, userId: user.id });
+    await auditIdentityLinked(ctx, user.id, linkVia, claims.emailVerified);
+  }
 
   let verified = false;
   if (trust) {
@@ -198,6 +221,7 @@ export async function signInMagicLink(
   if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   if (pending) {
     await repo.insertIdentity(db, { ...pending, userId: user.id, now: ctx.clock.now() });
+    await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
   }
   const result = await startSession(ctx, user.id, ['user'], 'magic_link', null, sign);
   await attachWaitingPassesForEmail(ctx, user.id, email);

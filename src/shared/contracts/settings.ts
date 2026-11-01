@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { JsonSchema } from './common.ts';
 
 export const PlatformSettingsSchema = z.object({
-  'oidc.trustEmail': z.boolean().default(true),
+  'oidc.trustEmail': z.boolean().default(false),
   'auth.magicLinkEnabled': z.boolean().default(true),
   'email.senderName': z.string().max(80).default('Wallet'),
   'refresh.userCooldownSeconds': z.number().int().min(5).max(3600).default(30),

@@ -26,14 +26,29 @@ const person = (groups: string[], extra: { email?: string; sub?: string } = {}) 
 };
 const session = async (jar: Jar) => (await h.call('/api/v1/session', { cookies: jar })).json();
 
+async function setTrust(on: boolean | null) {
+  await run(h.env.DB, "DELETE FROM settings WHERE key = 'oidc.trustEmail'");
+  if (on !== null)
+    await run(
+      h.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', ?, 0)",
+      [String(on)],
+    );
+  clearSettingsCache(h.env.DB);
+}
+
 beforeEach(async () => {
   await resetOidcClientCaches(ISSUER);
   h = await harness();
 });
-afterEach(() => h.restore());
+afterEach(async () => {
+  h.restore();
+  await setTrust(null);
+});
 
 describe('oidc sign-in', () => {
   it('signs an admin in and stores only hashes', async () => {
+    await setTrust(true);
     const jar: Jar = new Map();
     const user = person(['wallet-admins']);
     const { res, start } = await oidcSignIn(h, jar, user);
@@ -98,6 +113,7 @@ describe('oidc sign-in', () => {
   });
 
   it('links a new subject to the user who owns the email', async () => {
+    await setTrust(true);
     const f = fixtures(h.env);
     const existing = await makeUser(f);
     const jar: Jar = new Map();
@@ -149,6 +165,7 @@ describe('oidc sign-in', () => {
   });
 
   it('attaches passes waiting for the sign-in email and writes auth.sign_in', async () => {
+    await setTrust(true);
     h.restore();
     const points: { blobs: string[] }[] = [];
     h = await harness({
@@ -190,19 +207,7 @@ describe('oidc sign-in', () => {
     expect([...limiter.calls.keys()]).toContain('oidc:1.1.1.1');
   });
 
-  describe('oidc.trustEmail off', () => {
-    beforeEach(async () => {
-      await run(
-        h.env.DB,
-        "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'false', 0)",
-      );
-      clearSettingsCache(h.env.DB);
-    });
-    afterEach(async () => {
-      await run(h.env.DB, "DELETE FROM settings WHERE key = 'oidc.trustEmail'");
-      clearSettingsCache(h.env.DB);
-    });
-
+  describe('oidc.trustEmail off (default)', () => {
     it('proves an existing email owner by mail before linking', async () => {
       const f = fixtures(h.env);
       const existing = await makeUser(f);
@@ -233,6 +238,13 @@ describe('oidc sign-in', () => {
         [user.sub],
       );
       expect(row?.user_id).toBe(existing.id);
+      const linked = await all<{ detail: string }>(
+        h.env.DB,
+        "SELECT detail FROM audit_log WHERE action = 'auth.identity_linked' AND target_id = ?",
+        [existing.id],
+      );
+      expect(linked.map((r) => JSON.parse(r.detail).via)).toEqual(['mail_proof']);
+      expect(linked[0]?.detail).not.toContain(existing.primaryEmail);
       h.mail.length = 0;
       const again = await oidcSignIn(h, new Map(), user);
       expect(again.res.status).toBe(302);
@@ -243,6 +255,71 @@ describe('oidc sign-in', () => {
       const user = person(['wallet-users']);
       const { res } = await oidcSignIn(h, new Map(), user);
       expect(res.status).toBe(302);
+      expect(
+        await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [user.email]),
+      ).toBeNull();
+    });
+  });
+
+  describe('oidc.trustEmail on', () => {
+    it('still proves the owner when the claim is unverified, linking nothing', async () => {
+      await setTrust(true);
+      const existing = await makeUser(fixtures(h.env));
+      const jar: Jar = new Map();
+      const user = {
+        ...person(['wallet-users'], { email: existing.primaryEmail }),
+        emailVerified: false,
+      };
+      const { res } = await oidcSignIn(h, jar, user);
+      expect(res.status).toBe(403);
+      expect(await res.text()).toContain('Check your email');
+      expect(jar.has('__Host-wallet_sid')).toBe(false);
+      expect(
+        await first(h.env.DB, 'SELECT 1 FROM auth_identities WHERE subject = ?', [user.sub]),
+      ).toBeNull();
+    });
+
+    it('links a verified claim and audits the link without the email', async () => {
+      await setTrust(true);
+      const existing = await makeUser(fixtures(h.env));
+      const user = {
+        ...person(['wallet-users'], { email: existing.primaryEmail }),
+        emailVerified: true,
+      };
+      const { res } = await oidcSignIn(h, new Map(), user);
+      expect(res.status).toBe(302);
+      const rows = await all<{ detail: string }>(
+        h.env.DB,
+        "SELECT detail FROM audit_log WHERE action = 'auth.identity_linked' AND target_id = ?",
+        [existing.id],
+      );
+      expect(rows).toHaveLength(1);
+      expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({
+        provider: 'pocketid',
+        via: 'trusted_email',
+        emailVerified: true,
+      });
+      expect(rows[0]?.detail).not.toContain(existing.primaryEmail);
+    });
+
+    it('attaches no waiting passes for a new user with an unverified claim', async () => {
+      await setTrust(true);
+      const f1 = fixtures(h.env);
+      const org = await makeOrg(f1);
+      const user = { ...person(['wallet-users']), emailVerified: false };
+      const pass = await makePass(f1, {
+        orgId: org.id,
+        template: makeTemplate().resolved,
+        holderEmail: user.email,
+      });
+      const { res } = await oidcSignIn(h, new Map(), user);
+      expect(res.status).toBe(302);
+      const row = await first<{ owner_user_id: string | null }>(
+        h.env.DB,
+        'SELECT owner_user_id FROM passes WHERE id = ?',
+        [pass.id],
+      );
+      expect(row?.owner_user_id).toBeNull();
       expect(
         await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [user.email]),
       ).toBeNull();
