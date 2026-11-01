@@ -17,9 +17,17 @@ export const UserListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
-export const UserListSchema = pageOf(UserSchema);
+export const SignInMethodSchema = z.enum(['oidc', 'magic_link', 'breakglass']);
+export const UserSummarySchema = UserSchema.extend({
+  /** Passes the user holds. */
+  passCount: z.number().int().nonnegative().default(0),
+  /** A Polaris ID identity, a verified email (email link), the break-glass token. */
+  signInMethods: z.array(SignInMethodSchema).default([]),
+});
+export const UserListSchema = pageOf(UserSummarySchema);
 
 export const UserDetailSchema = UserSchema.extend({
+  signInMethods: z.array(SignInMethodSchema),
   emails: z.array(
     z.object({
       email: z.string(),
@@ -47,6 +55,10 @@ export const UserDetailSchema = UserSchema.extend({
       expiresAt: TimestampSchema,
       revokedAt: TimestampSchema.nullable(),
       userAgent: z.string().nullable(),
+      /** The requester's own session. */
+      current: z.boolean(),
+      /** How it signed in: "Polaris ID", "Email link", "Break-glass". */
+      method: z.string(),
     }),
   ),
   /** First 100 owned passes (title falls back to the serial); `passCount` is the total. */

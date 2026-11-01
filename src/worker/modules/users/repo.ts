@@ -1,10 +1,49 @@
-import { all, first, likeEscape, run } from '../../platform/db.ts';
+import { all, chunk, first, likeEscape, placeholders, run } from '../../platform/db.ts';
 import type { UserRow } from '../auth/repo.ts';
 
 export { getUser, type UserRow } from '../auth/repo.ts';
-export { listRecentSessions } from '../auth/sessions-repo.ts';
+export { getSession, listRecentSessions } from '../auth/sessions-repo.ts';
 
 type Db = D1Database;
+
+export interface UserFacts {
+  pass_count: number;
+  has_email: number;
+  /** Identity providers linked to the user, comma separated. */
+  providers: string | null;
+}
+
+/** Pass count, whether a verified email exists and the linked identity providers, per user. */
+export async function factsFor(
+  db: Db,
+  userIds: readonly string[],
+): Promise<Map<string, UserFacts>> {
+  const out = new Map<string, UserFacts>();
+  for (const ids of chunk(userIds)) {
+    const rows = await all<UserFacts & { id: string }>(
+      db,
+      `SELECT u.id AS id,
+         (SELECT count(*) FROM passes p WHERE p.owner_user_id = u.id) AS pass_count,
+         EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id) AS has_email,
+         (SELECT group_concat(DISTINCT a.provider) FROM auth_identities a WHERE a.user_id = u.id) AS providers
+       FROM users u WHERE u.id IN (${placeholders(ids.length)})`,
+      ids,
+    );
+    for (const { id, ...facts } of rows) out.set(id, facts);
+  }
+  return out;
+}
+
+/** Only a verified address of the same user can become primary. */
+export async function setPrimaryEmail(db: Db, userId: string, email: string): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE users SET primary_email = ?
+     WHERE id = ? AND EXISTS (SELECT 1 FROM user_emails WHERE email = ? AND user_id = ?)`,
+    [email, userId, email, userId],
+  );
+  return changes > 0;
+}
 
 export interface ListFilter {
   q?: string;
