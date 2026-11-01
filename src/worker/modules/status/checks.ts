@@ -189,7 +189,7 @@ export function clearOidcCache(): void {
 
 export async function checkOidc(ctx: ServiceContext, fetchImpl: typeof fetch): Promise<Draft> {
   const issuer = ctx.env.OIDC_ISSUER?.replace(/\/+$/, '');
-  const base = { id: 'oidc', kind: 'oidc', label: 'Pocket ID' } as const;
+  const base = { id: 'oidc', kind: 'oidc', label: 'Polaris ID' } as const;
   if (!issuer) return { ...base, state: 'not_configured', detail: 'No issuer.' };
   const hit = oidcCache.get(issuer);
   const now = ctx.clock.now();
@@ -259,15 +259,38 @@ export function failuresLine(n: number): string | null {
   return `${n} consecutive ${n === 1 ? 'failure' : 'failures'}.`;
 }
 
+/** A deployed worker (https, not loopback): crons are expected to run there. */
+export function isDeployed(env: { PUBLIC_BASE_URL?: string }): boolean {
+  try {
+    const url = new URL(env.PUBLIC_BASE_URL ?? '');
+    return url.protocol === 'https:' && !/^(localhost|127\.|\[::1\])/.test(url.hostname);
+  } catch {
+    // An unparsable base URL is a misconfiguration surfaced elsewhere; treat it as local here.
+    return false;
+  }
+}
+
 export async function checkCron(ctx: ServiceContext): Promise<Draft[]> {
   const now = ctx.clock.now();
+  const deployed = isDeployed(ctx.env);
   const one = async (name: 'minute' | 'daily', maxAge: number): Promise<Draft> => {
     const at = await lastCronRun(ctx, name);
-    const stale = at !== null && now - at > maxAge;
-    return {
+    const base = {
       id: `cron:${name}`,
       kind: 'cron',
       label: name === 'minute' ? 'Cron (minute)' : 'Cron (daily)',
+    } as const;
+    // Deployed, a cron with no run in a day is a problem; locally crons never fire.
+    if (deployed && (at === null || now - at > DAY))
+      return {
+        ...base,
+        state: 'degraded',
+        detail: 'No recent run.',
+        data: { lastRunAt: at, noRecentRun: true },
+      };
+    const stale = at !== null && now - at > maxAge;
+    return {
+      ...base,
       state: at === null ? 'configured' : stale ? 'degraded' : 'verified',
       detail: at === null ? 'No run recorded.' : stale ? 'Last run is overdue.' : null,
       data: { lastRunAt: at },

@@ -38,6 +38,8 @@ export function clearStatusCache(db?: D1Database): void {
 
 export interface StatusDeps {
   fetch?: typeof fetch;
+  /** Skip the short cache (Recheck). Probes stay bounded; OIDC discovery keeps its own cache. */
+  fresh?: boolean;
 }
 
 async function identityComponents(ctx: ServiceContext) {
@@ -71,7 +73,7 @@ function overall(components: Component[]): Component['state'] {
 export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Promise<Status> {
   const now = ctx.clock.now();
   const hit = cache.get(ctx.env.DB);
-  if (hit && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.status;
+  if (!deps.fresh && hit && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.status;
 
   const parts = await Promise.all([
     checkDatabase(ctx),
