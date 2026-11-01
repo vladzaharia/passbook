@@ -19,9 +19,9 @@ export function Checkbox({ className, ...props }: ComponentProps<typeof Checkbox
     >
       <CheckboxPrimitive.Indicator>
         {props.checked === 'indeterminate' ? (
-          <Minus aria-hidden className="size-3.5" />
+          <Minus aria-hidden className="wl-check size-3.5" />
         ) : (
-          <Check aria-hidden className="size-3.5" />
+          <Check aria-hidden className="wl-check size-3.5" />
         )}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>

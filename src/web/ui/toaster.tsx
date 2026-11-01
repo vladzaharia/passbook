@@ -18,6 +18,7 @@ export function Toaster() {
           toast:
             '!bg-surface-overlay !text-fg-strong !border !border-border !rounded-lg !shadow-elevation-3',
           description: '!text-fg-muted',
+          icon: 'wl-check',
           actionButton: '!bg-accent !text-accent-on',
           closeButton: '!bg-surface-overlay !text-fg !border-border',
         },

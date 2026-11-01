@@ -31,7 +31,9 @@ export function CopyButton({ value, label = 'Copy', className }: CopyButtonProps
         label={state === 'copied' ? 'Copied' : label}
         size="sm"
         className={className}
-        icon={state === 'copied' ? <Check aria-hidden /> : <Copy aria-hidden />}
+        icon={
+          state === 'copied' ? <Check aria-hidden className="wl-check" /> : <Copy aria-hidden />
+        }
         onClick={copy}
       />
       <span role="status" className="sr-only">

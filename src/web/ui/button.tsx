@@ -7,7 +7,8 @@ import { Spinner } from './spinner.tsx';
 export const buttonVariants = cva(
   [
     'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium',
-    'transition-colors duration-150',
+    'transition-[color,background-color,border-color,box-shadow,scale] duration-(--wl-dur-hover)',
+    'active:not-disabled:not-aria-disabled:scale-(--pk-motion-scale-press)',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
     'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
     '[&_svg]:shrink-0',
@@ -16,7 +17,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),white_12%)]',
+          'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),white_12%)] hover:not-disabled:not-aria-disabled:shadow-[var(--wl-glow-accent)] focus-visible:shadow-[var(--wl-glow-accent)]',
         secondary:
           'bg-state-hover-tint text-fg-strong hover:not-disabled:not-aria-disabled:bg-surface-sunken',
         outline:
