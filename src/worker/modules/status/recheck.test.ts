@@ -31,7 +31,7 @@ const cron = (s: Awaited<ReturnType<typeof getStatus>>, name: string) =>
 describe('status recheck and crons', () => {
   it('names the sign-in provider Polaris ID', async () => {
     const s = await getStatus(createServiceContext(base), { fetch: okFetch });
-    expect(s.components.find((c) => c.kind === 'oidc')?.label).toBe('Polaris ID');
+    expect(s.components.find((c) => c.id === 'oidc')?.label).toBe('Polaris ID');
   });
 
   it('fresh skips the short cache', async () => {
