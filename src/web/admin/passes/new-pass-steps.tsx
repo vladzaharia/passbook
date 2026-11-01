@@ -68,7 +68,7 @@ function TemplateCard({
     >
       <div
         className="pointer-events-none max-h-56 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
-        aria-hidden
+        inert
       >
         {preview.data ? (
           <PassPreview

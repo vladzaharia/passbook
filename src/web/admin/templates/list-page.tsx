@@ -33,7 +33,8 @@ function TemplateThumb({ template }: { template: TemplateSummaryDto }) {
   const live = template.status === 'active' && Boolean(template.activeVersion);
   const preview = useTemplatePreview(live ? template.id : '');
   return (
-    <div aria-hidden className="pointer-events-none w-8 shrink-0">
+    // Decorative: inert keeps the pass's own links out of the tab order and the a11y tree.
+    <div inert className="pointer-events-none w-8 shrink-0">
       {live && preview.data ? (
         <PassPreview
           passJson={preview.data.passJson}
