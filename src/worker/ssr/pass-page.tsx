@@ -58,6 +58,7 @@ export function PassPage(props: PassPageProps) {
         <meta name="color-scheme" content="light dark" />
         <title>{props.title}</title>
         <script src="/theme-init.js" />
+        <script src="/pass-tilt.js" defer />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
         <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + stageCss + CSS }} />
       </head>
@@ -71,7 +72,7 @@ export function PassPage(props: PassPageProps) {
               {notice}
             </div>
           ) : null}
-          <PassCardStage view={view} tilt={false} enter toggleId="pc-flip" />
+          <PassCardStage view={view} enter toggleId="pc-flip" />
           {active ? (
             <a className="badge" href={props.downloadHref}>
               <img src={props.badgeSrc} alt="Add to Apple Wallet" />
