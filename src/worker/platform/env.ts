@@ -1,5 +1,5 @@
 /** Worker environment. `Env` comes from `wrangler types`; this adds bindings that are optional at runtime. */
-export interface AppEnv extends Omit<Env, 'APNS'> {
+export interface AppEnv extends Omit<Env, 'APNS' | 'BREAKGLASS_TOKEN_SHA256'> {
   /**
    * Absent until the platform certificate is uploaded; treated as "push unavailable".
    * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
