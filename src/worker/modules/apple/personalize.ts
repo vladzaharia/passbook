@@ -23,7 +23,14 @@ const text = (max: number) => z.string().max(max).optional();
 
 /** Apple's PersonalizationDictionary. */
 export const PersonalizationDictionarySchema = z.object({
-  personalizationToken: z.string().min(1).max(512),
+  // Wallet picks the token and it is signed verbatim. Any JSON container needs { or [, so a
+  // JSON-shaped token (a forged manifest.json) is refused here, before any lookup or signing.
+  personalizationToken: z
+    .string()
+    .min(1)
+    .max(512)
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: rejecting control characters is the point
+    .regex(/^[^{}[\]"\\\s\u0000-\u001f\u007f-\u009f]+$/),
   requiredPersonalizationInfo: z.object({
     fullName: text(200),
     givenName: text(100),
@@ -95,18 +102,27 @@ export async function personalize(
   input: { passTypeId: string; serial: string; body: unknown },
 ): Promise<Uint8Array> {
   const db = ctx.env.DB;
+  const parsed = PersonalizationDictionarySchema.safeParse(input.body);
+  if (!parsed.success) {
+    ctx.log.warn('apple.personalize_refused', { code: 'PERSONALIZATION_INVALID' });
+    throw new BadRequestError('Invalid personalization.', 'PERSONALIZATION_INVALID');
+  }
   const identity = await identityByPassType(db, input.passTypeId);
   const pass = identity ? await getPassBySerial(db, identity.id, input.serial) : null;
-  if (!identity || !pass || !identity.nfcEnabled || !(await isOrgActive(ctx, pass.orgId)))
+  if (
+    !identity ||
+    !pass ||
+    pass.deletedAt !== null ||
+    pass.status === 'voided' ||
+    !identity.nfcEnabled ||
+    !(await isOrgActive(ctx, pass.orgId))
+  )
     throw unavailable();
   const deps = depsOf(ctx.env);
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const required = await requiredFields(deps.registry, template);
   if (!required) throw unavailable();
 
-  const parsed = PersonalizationDictionarySchema.safeParse(input.body);
-  if (!parsed.success)
-    throw new BadRequestError('Invalid personalization.', 'PERSONALIZATION_INVALID');
   const { personalizationToken: token, requiredPersonalizationInfo: info } = parsed.data;
   if (required.some((f) => FIELD_KEYS[f] && !FIELD_KEYS[f](info)))
     throw new BadRequestError(
