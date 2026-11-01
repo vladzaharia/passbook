@@ -3,7 +3,7 @@ import type { PassJson } from '@/passkit/types.ts';
 import { normalize } from '@/shared/pass-view/index.ts';
 import { cn } from '../../lib/cn.ts';
 import { assetUrlMap } from '../../pass-card/assets.ts';
-import { PassCard } from '../../pass-card/index.tsx';
+import { PassCardStage } from '../../pass-card/index.tsx';
 import { Button } from '../../ui/index.ts';
 
 /** Asset names to URLs under the base; all candidates when the API sends no list. */
@@ -27,6 +27,10 @@ export interface PassPreviewProps {
   assetNames?: readonly string[];
   face?: 'front' | 'back';
   target?: IosTarget;
+  /** Render both faces so a face change flips the card. */
+  flippable?: boolean;
+  /** Plays the mint sheen when this changes (by identity). */
+  mint?: unknown;
   className?: string;
 }
 
@@ -36,6 +40,8 @@ export function PassPreview({
   assetNames,
   face = 'front',
   target = '27',
+  flippable = false,
+  mint,
   className,
 }: PassPreviewProps) {
   const view = useMemo(() => {
@@ -55,7 +61,15 @@ export function PassPreview({
       </p>
     );
   }
-  return <PassCard view={view} face={face} className={cn('mx-auto w-full max-w-xs', className)} />;
+  return (
+    <PassCardStage
+      view={view}
+      face={face}
+      flippable={flippable}
+      mint={mint}
+      className={cn('mx-auto w-full max-w-xs', className)}
+    />
+  );
 }
 
 /** Front/back flip plus the iOS 27 / earlier toggle. */
@@ -80,6 +94,8 @@ export function PassPreviewPanel({
         {...(assetNames ? { assetNames } : {})}
         face={face}
         target={target}
+        flippable
+        mint={passJson}
       />
       <div className="flex flex-wrap justify-center gap-4">
         <Toggle
