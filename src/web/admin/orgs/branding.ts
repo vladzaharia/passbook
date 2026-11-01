@@ -89,13 +89,16 @@ export interface PreparedImage {
   x2?: string;
 }
 
-/** Reads an @3x PNG, checks its size and derives the @2x. Throws one sentence on failure. */
+/** A file the browser can tell is wrong before upload; the message is one sentence. */
+export class ImageInputError extends Error {}
+
+/** Reads an @3x PNG, checks its size and derives the @2x. Throws ImageInputError on failure. */
 export async function prepareImage(slot: 'logo' | 'icon', file: File): Promise<PreparedImage> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const size = pngSize(bytes);
-  if (!size) throw new Error('Choose a PNG file.');
+  if (!size) throw new ImageInputError('Choose a PNG file.');
   const bad = imageSizeError(slot, size.w, size.h);
-  if (bad) throw new Error(bad);
+  if (bad) throw new ImageInputError(bad);
   // A browser that cannot draw the PNG sends the @3x alone; the server derives the @2x.
   const x2 = await derive2x(file, size.w, size.h).catch(() => undefined);
   return { x3: toBase64(bytes), ...(x2 ? { x2: toBase64(x2) } : {}) };

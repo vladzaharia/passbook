@@ -17,7 +17,7 @@ import {
   SwitchRow,
   toast,
 } from '@/web/ui/index.ts';
-import { HEX, passColorWarnings, prepareImage } from './branding.ts';
+import { HEX, ImageInputError, passColorWarnings, prepareImage } from './branding.ts';
 import { ColorField } from './color-field.tsx';
 import { type BrandingSlot, brandingUrl, useBrandingImage } from './queries.ts';
 
@@ -82,7 +82,7 @@ function ImageSlot({ org, slot }: { org: Org; slot: BrandingSlot }) {
       await upload.mutateAsync({ slot, ...prepared });
       toast.success(`${SLOT[slot].label} uploaded`);
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(cause instanceof ImageInputError ? cause.message : errorMessage(cause));
     }
   }
 
