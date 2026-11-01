@@ -21,6 +21,7 @@ const REJECTED = new Set([
   'ExpiredProviderToken',
 ]);
 const TOPIC = new Set(['TopicDisallowed', 'MissingTopic']);
+const UNREACHABLE = new Set(['NetworkError', 'Timeout', 'ServiceUnavailable']);
 
 /** One sentence for a failed or unclear check; the code stays beside it in mono. */
 export function failureSentence(reason: string | null, status?: number): string {
@@ -29,7 +30,8 @@ export function failureSentence(reason: string | null, status?: number): string 
     return 'Apple refused this pass type for the certificate. Check the pass type ID.';
   if ((reason && REJECTED.has(reason)) || status === 403)
     return 'Apple rejected the push certificate. Upload a new one.';
-  if (status === 0) return 'Could not reach Apple. Try again.';
+  if (status === 0 || (reason && UNREACHABLE.has(reason)))
+    return 'Could not reach Apple. Try again.';
   return 'Apple gave no clear answer. Try again later.';
 }
 
