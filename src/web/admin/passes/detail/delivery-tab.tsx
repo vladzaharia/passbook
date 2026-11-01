@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { RefreshCw } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
-import { DeliveryEntrySchema, type PassDetailSchema } from '@/shared/contracts/passes.ts';
+import { DeliveryEntrySchema, type PassDetailDto } from '@/shared/contracts/passes.ts';
+import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { api } from '../../../lib/api.ts';
+import { DELIVERY_ICON } from '../../../lib/entities.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { deliveryKindLabel } from '../../../lib/status.ts';
 import {
@@ -17,18 +18,100 @@ import {
   EmptyState,
   ErrorState,
   FormField,
+  IconButton,
   Input,
   StatusPill,
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
 import { formatDate, newKey } from '../format.ts';
+import { DevicesCard } from './devices-card.tsx';
 
-type Pass = z.infer<typeof PassDetailSchema>;
 type Entry = z.infer<typeof DeliveryEntrySchema>;
 const ListSchema = z.object({ items: z.array(DeliveryEntrySchema) });
 
-export function DeliveryTab({ pass }: { pass: Pass }) {
+function SendEmailCard({
+  pass,
+  sent,
+  onSent,
+}: {
+  pass: PassDetailDto;
+  sent: boolean;
+  onSent: () => void;
+}) {
+  const actions = usePassActions(pass.id);
+  const [to, setTo] = useState(pass.holderEmail ?? '');
+  const [attach, setAttach] = useState(false);
+  const [error, setError] = useState<string>();
+  const [done, setDone] = useState(0);
+  // One key per click intent: a retry of the same click cannot send twice.
+  const key = useRef(newKey());
+
+  async function send() {
+    setError(undefined);
+    const address = to.trim();
+    try {
+      await actions.resendEmail.mutateAsync({
+        ...(address && address.toLowerCase() !== pass.holderEmail?.toLowerCase()
+          ? { to: address }
+          : {}),
+        ...(attach ? { attach: true } : {}),
+        key: key.current,
+      });
+      key.current = newKey();
+      setDone((n) => n + 1);
+      toast.success(`Email queued to ${address || pass.holderEmail}`);
+      onSent();
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  return (
+    <Card className="min-w-0">
+      <CardHeader title={sent ? 'Resend email' : 'Send email'} />
+      <CardBody>
+        <form
+          className="flex min-w-0 flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send();
+          }}
+        >
+          <FormField label="Send to" error={error}>
+            {(c) => (
+              <Input
+                {...c}
+                type="email"
+                autoComplete="off"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            )}
+          </FormField>
+          <CheckboxField
+            label="Attach .pkpass"
+            checked={attach}
+            onCheckedChange={(c) => setAttach(c === true)}
+          />
+          <div>
+            <Button
+              type="submit"
+              iconStart={<ACTION_ICON.sendEmail aria-hidden />}
+              loading={actions.resendEmail.isPending}
+              done={done}
+              disabled={!to.trim()}
+            >
+              {sent ? 'Resend email' : 'Send email'}
+            </Button>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  );
+}
+
+export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
   const actions = usePassActions(pass.id);
   const delivery = useQuery({
     queryKey: ['admin', 'passes', 'delivery', pass.id],
@@ -37,28 +120,8 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
     initialData: { items: pass.deliveries },
     staleTime: 0,
   });
-  const [to, setTo] = useState('');
-  const [attach, setAttach] = useState(false);
-  const [error, setError] = useState<string>();
-  // One key per click intent: a retry of the same click cannot send twice.
-  const key = useRef(newKey());
-
-  async function resend(address?: string) {
-    const withAttachment = attach;
-    setError(undefined);
-    try {
-      await actions.resendEmail.mutateAsync({
-        ...(address ? { to: address } : {}),
-        ...(withAttachment ? { attach: true } : {}),
-        key: key.current,
-      });
-      key.current = newKey();
-      toast.success('Email queued');
-      void delivery.refetch();
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
+  const items = delivery.data.items;
+  const sent = items.some((d) => d.kind === 'email');
 
   async function retry(entry: Entry) {
     try {
@@ -79,42 +142,54 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
       {
         id: 'kind',
         header: 'Kind',
-        enableSorting: false,
-        cell: ({ row }) => deliveryKindLabel(row.original.kind),
+        cell: ({ row }) => {
+          const Icon = DELIVERY_ICON[row.original.kind];
+          return (
+            <span className="inline-flex items-center gap-2">
+              {Icon ? <Icon aria-hidden className="size-4 text-fg-muted" /> : null}
+              {deliveryKindLabel(row.original.kind)}
+            </span>
+          );
+        },
       },
       {
         id: 'state',
         header: 'State',
-        enableSorting: false,
         cell: ({ row }) => <StatusPill status={row.original.state} />,
       },
       {
         id: 'attempts',
         header: 'Attempts',
-        enableSorting: false,
+        meta: { numeric: true },
         cell: ({ row }) => row.original.attempts,
       },
       {
         id: 'error',
         header: 'Error',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="font-mono text-xs">{row.original.errorCode ?? '—'}</span>
-        ),
+        cell: ({ row }) =>
+          row.original.errorCode ? (
+            <span className="font-mono text-xs text-fg-muted">{row.original.errorCode}</span>
+          ) : (
+            <span className="text-fg-subtle">—</span>
+          ),
       },
       {
         id: 'created',
         header: 'Created',
-        enableSorting: false,
+        meta: { nowrap: true },
         cell: ({ row }) => formatDate(row.original.createdAt),
       },
       {
         id: 'retry',
         header: () => <span className="sr-only">Retry</span>,
-        enableSorting: false,
         cell: ({ row }) =>
           row.original.state === 'failed' || row.original.state === 'partial' ? (
-            <Button size="sm" variant="outline" onClick={() => void retryRef.current(row.original)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              iconStart={<ACTION_ICON.refresh aria-hidden />}
+              onClick={() => void retryRef.current(row.original)}
+            >
               Retry
             </Button>
           ) : null,
@@ -125,78 +200,38 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
 
   return (
     <div className="grid min-w-0 gap-6">
+      <SendEmailCard pass={pass} sent={sent} onSent={() => void delivery.refetch()} />
       <Card className="min-w-0">
         <CardHeader
           title="Outbox"
           actions={
-            <Button
+            <IconButton
               size="sm"
-              variant="outline"
-              iconStart={<RefreshCw aria-hidden />}
-              loading={delivery.isFetching}
+              label="Reload list"
+              data-busy={delivery.isFetching ? 'spin' : undefined}
+              icon={<ACTION_ICON.refresh aria-hidden />}
               onClick={() => void delivery.refetch()}
-            >
-              Refresh
-            </Button>
+            />
           }
         />
-        <div className="min-w-0">
-          {delivery.isError ? (
-            <CardBody>
-              <ErrorState error={delivery.error} onRetry={() => void delivery.refetch()} />
-            </CardBody>
-          ) : (
-            <DataTable
-              caption="Delivery history"
-              bare
-              stack={false}
-              columns={columns}
-              data={delivery.data.items}
-              getRowId={(r) => r.id}
-              empty={<EmptyState inline art="envelope" title="Nothing sent yet" />}
-            />
-          )}
-          <p className="border-t border-border px-4 py-3 text-xs text-fg-muted">
-            Sent means handed off, not received.
-          </p>
-        </div>
-      </Card>
-      <Card className="min-w-0">
-        <CardHeader title="Resend email" />
-        <CardBody className="grid max-w-md min-w-0 gap-4">
-          <FormField
-            label="Send to"
-            help={
-              pass.holderEmail ? `Default: ${pass.holderEmail}` : 'The pass has no holder email.'
-            }
-            error={error}
-          >
-            {(c) => (
-              <Input
-                {...c}
-                type="email"
-                autoComplete="off"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
-            )}
-          </FormField>
-          <CheckboxField
-            label="Attach .pkpass"
-            checked={attach}
-            onCheckedChange={(c) => setAttach(c === true)}
+        {delivery.isError ? (
+          <CardBody>
+            <ErrorState error={delivery.error} onRetry={() => void delivery.refetch()} />
+          </CardBody>
+        ) : (
+          <DataTable
+            caption="Delivery history"
+            bare
+            stack={false}
+            columns={columns}
+            data={items}
+            getRowId={(r) => r.id}
+            fetching={delivery.isFetching}
+            empty={<EmptyState inline art="envelope" title="Nothing sent yet" />}
           />
-          <div>
-            <Button
-              loading={actions.resendEmail.isPending}
-              disabled={!to.trim() && !pass.holderEmail}
-              onClick={() => void resend(to.trim() || undefined)}
-            >
-              Resend email
-            </Button>
-          </div>
-        </CardBody>
+        )}
       </Card>
+      <DevicesCard pass={pass} />
     </div>
   );
 }

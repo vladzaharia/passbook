@@ -205,10 +205,12 @@ describe('pass detail: save and conflicts', () => {
       }),
     });
     await user.click(
-      await screen.findByRole('button', { name: 'Reset Member name to connection' }),
+      await screen.findByRole('button', { name: "Use the connection's value for Member name" }),
     );
-    await waitFor(() => expect(screen.getAllByText('Connection').length).toBeGreaterThan(0));
-    expect(screen.queryByRole('button', { name: 'Reset Member name to connection' })).toBeNull();
+    // The connection owns the field again: it locks with a From chip.
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: /Member name/ })).toBeDisabled(),
+    );
   });
 
   it('has no axe violations', async () => {
@@ -245,13 +247,21 @@ describe('pass detail: tabs', () => {
         },
       }),
     });
-    const email = await screen.findByLabelText('Holder email');
+    await user.click(await screen.findByRole('button', { name: 'Change' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Change holder' });
+    const email = within(dialog).getByLabelText('Email');
     await user.clear(email);
     await user.type(email, 'new@example.com');
-    await user.click(screen.getByRole('button', { name: 'Assign' }));
+    // Sending is on by default and names the address.
+    expect(
+      within(dialog).getByRole('checkbox', { name: 'Email the pass to new@example.com' }),
+    ).toBeChecked();
+    await user.click(within(dialog).getByRole('checkbox', { name: /Email the pass/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Change holder' }));
     await waitFor(() =>
       expect(server.calls.some((c) => c.path === '/api/v1/holders/assign')).toBe(true),
     );
+    expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/resend-email')).toBe(false);
   });
 
   it('confirms before reassigning an owned pass', async () => {
@@ -265,6 +275,7 @@ describe('pass detail: tabs', () => {
     await renderApp('/admin/passes/p1?tab=holder', {
       session: 'admin',
       handlers: handlers(server, {
+        '/api/v1/passes/p1/resend-email': () => json({ ok: true }, 202),
         '/api/v1/holders/reassign': () =>
           json({
             passId: 'p1',
@@ -277,19 +288,26 @@ describe('pass detail: tabs', () => {
           }),
       }),
     });
-    expect(await screen.findByRole('link', { name: 'Olive Owner' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Olive Owner/ })).toHaveAttribute(
       'href',
       '/admin/users/u9',
     );
-    const email = screen.getByLabelText('Holder email');
+    await user.click(screen.getByRole('button', { name: 'Change' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Change holder' });
+    expect(dialog).toHaveTextContent('The current owner loses the pass');
+    const email = within(dialog).getByLabelText('Email');
     await user.clear(email);
     await user.type(email, 'b@example.com');
-    await user.click(screen.getByRole('button', { name: 'Reassign' }));
-    const dialog = await screen.findByRole('alertdialog');
     expect(server.calls.some((c) => c.path === '/api/v1/holders/reassign')).toBe(false);
-    await user.click(within(dialog).getByRole('button', { name: 'Reassign' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Change and send' }));
     await waitFor(() =>
       expect(server.calls.some((c) => c.path === '/api/v1/holders/reassign')).toBe(true),
+    );
+    // One email to the new holder.
+    await waitFor(() =>
+      expect(server.calls.filter((c) => c.path === '/api/v1/passes/p1/resend-email')).toHaveLength(
+        1,
+      ),
     );
   });
 
@@ -299,22 +317,30 @@ describe('pass detail: tabs', () => {
     await renderApp('/admin/passes/p1?tab=images', {
       session: 'admin',
       handlers: handlers(server, {
-        '/api/v1/passes/p1/assets/thumbnail@2x.png': () =>
-          problem(422, 'IMAGE_INVALID', 'Image is smaller than 90x90.'),
+        '/api/v1/passes/p1/assets/icon@2x.png': () =>
+          problem(422, 'ASSET_DIMENSIONS', 'icon@2x.png must be 76 × 76 px.'),
       }),
     });
-    await screen.findByText('No overrides');
+    await screen.findByRole('button', { name: 'Replace Icon' });
     const input = document.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File(['nope'], 'bad.png', { type: 'image/png' }));
     expect(await screen.findByText('Not a PNG file.')).toBeInTheDocument();
     expect(server.calls.some((c) => c.method === 'PUT')).toBe(false);
 
-    const png = new Uint8Array(33);
-    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-    new DataView(png.buffer).setUint32(16, 40);
-    new DataView(png.buffer).setUint32(20, 40);
-    await user.upload(input, new File([png], 'ok.png', { type: 'image/png' }));
-    expect(await screen.findByText('Image is smaller than 90x90.')).toBeInTheDocument();
+    const png = (w: number, h: number) => {
+      const bytes = new Uint8Array(33);
+      bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      new DataView(bytes.buffer).setUint32(16, w);
+      new DataView(bytes.buffer).setUint32(20, h);
+      return new File([bytes], 'ok.png', { type: 'image/png' });
+    };
+    // A size that fits no scale is refused here, naming what fits.
+    await user.upload(input, png(500, 40));
+    expect(await screen.findByText(/76 × 76 px \(@2x\)/)).toBeInTheDocument();
+    expect(server.calls.some((c) => c.method === 'PUT')).toBe(false);
+    // The scale comes from the size; the server's message shows on the tile.
+    await user.upload(input, png(76, 76));
+    expect(await screen.findByText('icon@2x.png must be 76 × 76 px.')).toBeInTheDocument();
     expect(server.calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
   });
 
@@ -347,10 +373,13 @@ describe('pass detail: tabs', () => {
           json({ changes: [{ path: 'description', from: 'Old', to: 'Membership' }] }),
       }),
     });
-    expect(await screen.findByText('description: "Old"')).toBeInTheDocument();
-    expect(screen.getByText('description: "Membership"')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Render v1' })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'Render v2' }));
+    expect(await screen.findByText('description')).toBeInTheDocument();
+    const changes = screen.getByRole('list', { name: 'Changes' });
+    expect(within(changes).getByText('Old')).toBeInTheDocument();
+    expect(within(changes).getByText('Membership')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Preview v1' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /^Render/ })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Preview v2' }));
     await waitFor(() =>
       expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/versions/2')).toBe(true),
     );
@@ -387,13 +416,27 @@ describe('pass detail: tabs', () => {
     expect(crumb).not.toHaveTextContent('p1');
   });
 
-  it('shows the device count', async () => {
-    await renderApp('/admin/passes/p1?tab=devices', {
+  it('lists devices in Delivery and counts them in the header', async () => {
+    await renderApp('/admin/passes/p1?tab=delivery', {
       session: 'admin',
       handlers: handlers(newServer()),
     });
-    expect(await screen.findByText('Registered devices')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(await screen.findByText('On 2 devices')).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Devices' })).toBeNull();
+    const devices = screen.getByRole('list', { name: 'Devices' });
+    expect(within(devices).getByText('a1b2c3')).toBeInTheDocument();
+    expect(within(devices).getByText('No push yet')).toBeInTheDocument();
+  });
+
+  it('titles the email card by whether it was sent, prefilled with the holder', async () => {
+    const never = newServer({ deliveries: [] });
+    await renderApp('/admin/passes/p1?tab=delivery', {
+      session: 'admin',
+      handlers: handlers(never),
+    });
+    expect(await screen.findByRole('button', { name: 'Send email' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Send to')).toHaveValue('sam@example.com');
+    expect(screen.getByRole('button', { name: 'Reload list' })).toBeInTheDocument();
   });
 });
 
@@ -450,7 +493,8 @@ describe('pass detail: header actions', () => {
 
   it('opens the public page in a new tab without a referrer', async () => {
     await renderApp('/admin/passes/p1', { session: 'admin', handlers: handlers(newServer()) });
-    const link = await screen.findByRole('link', { name: 'Open public page' });
+    await screen.findByRole('button', { name: 'More' });
+    const link = screen.getByRole('link', { name: /Open\s*public page/ });
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
   });

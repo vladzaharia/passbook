@@ -44,9 +44,8 @@ describe('new pass details step', () => {
         '/api/v1/connections': () => json({ items: [], nextCursor: null }),
       },
     });
-    await user.click(await screen.findByRole('button', { name: /Henry's/ }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(await screen.findByRole('button', { name: /Copper card/ }));
+    // One org: the wizard opens on Template.
+    await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByLabelText(/Member name/);
 
@@ -55,13 +54,13 @@ describe('new pass details step', () => {
     expect(screen.queryByRole('option', { name: 'None' })).toBeNull();
     await user.keyboard('{Escape}');
 
-    expect(await screen.findByText(/Preview unavailable/)).toBeInTheDocument();
-    await new Promise((r) => setTimeout(r, 400));
-    expect(previewPosts).toEqual([]);
-
-    await user.type(screen.getByLabelText(/Member name/), 'Sam');
+    // The card shows from the first frame: empty required fields borrow the sample.
     await waitFor(() =>
-      expect(previewPosts).toContainEqual({ input: { name: 'Sam', level: 'blue' } }),
+      expect(previewPosts).toContainEqual({ input: { name: 'Sam', level: 'blue' }, orgId: 'org1' }),
+    );
+    await user.type(screen.getByLabelText(/Member name/), 'Ann');
+    await waitFor(() =>
+      expect(previewPosts).toContainEqual({ input: { name: 'Ann', level: 'blue' }, orgId: 'org1' }),
     );
   });
 });
@@ -78,32 +77,29 @@ describe('new pass template step', () => {
         '/api/v1/templates': () => json({ items, nextCursor: null }),
         '/api/v1/templates/tpl1/preview': previewOk,
         '/api/v1/templates/tpl2/preview': previewOk,
+        '/api/v1/templates/tpl1': () => json(templateDetail()),
       },
     });
-    await user.click(await screen.findByRole('button', { name: /Henry's/ }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    return user;
   }
 
-  it('lists the org templates first, then the unassigned ones', async () => {
+  it('marks templates every org can use as Shared', async () => {
     await openTemplates([
       templateSummary({ id: 'tpl2', name: 'Plain card', orgId: null, orgName: null }),
       templateSummary(),
     ]);
-    const own = await screen.findByRole('heading', { name: "Henry's" });
-    const other = screen.getByRole('heading', { name: 'Other templates' });
-    const copper = screen.getByRole('button', { name: /Copper card/ });
-    const plain = screen.getByRole('button', { name: /Plain card/ });
-    expect(own.compareDocumentPosition(copper) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(copper.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(other.compareDocumentPosition(plain) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const plain = await screen.findByRole('radio', { name: /Plain card/ });
+    expect(plain.closest('label')).toHaveTextContent('Shared');
+    expect(
+      screen.getByRole('radio', { name: /Copper card/ }).closest('label'),
+    ).not.toHaveTextContent('Shared');
   });
 
-  it('shows one list without headings when the org has none', async () => {
-    await openTemplates([
-      templateSummary({ id: 'tpl2', name: 'Plain card', orgId: null, orgName: null }),
-    ]);
-    expect(await screen.findByRole('button', { name: /Plain card/ })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Other templates' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: "Henry's" })).toBeNull();
+  it('advances on Enter from a focused template', async () => {
+    const user = await openTemplates([templateSummary()]);
+    const tile = await screen.findByRole('radio', { name: /Copper card/ });
+    tile.focus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('heading', { name: 'Details' })).toBeInTheDocument();
   });
 });

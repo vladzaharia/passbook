@@ -1,9 +1,8 @@
-import { Link } from '@tanstack/react-router';
+import { MoreHorizontal, Pencil, Unplug } from 'lucide-react';
 import { useState } from 'react';
-import type { z } from 'zod';
-import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
+import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import { humanizeStatus } from '../../../lib/status.ts';
+import { formatDateTime } from '../../../lib/format.ts';
 import {
   Button,
   Card,
@@ -11,8 +10,17 @@ import {
   CardHeader,
   CheckboxField,
   ConfirmDialog,
+  Dialog,
+  DialogContent,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  EmptyState,
+  EntityChip,
   ErrorState,
   FormField,
+  IconButton,
   Input,
   KeyValue,
   Select,
@@ -22,118 +30,124 @@ import {
 import { useConnection, useConnections } from '../../connections/api.ts';
 import { HealthPill } from '../../connections/health.tsx';
 import { usePassActions } from '../api.ts';
-import { formatDate } from '../format.ts';
 
-type Pass = z.infer<typeof PassDetailSchema>;
-
-function BindForm({ pass }: { pass: Pass }) {
+function BindDialog({
+  pass,
+  open,
+  onOpenChange,
+}: {
+  pass: PassDetailDto;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const actions = usePassActions(pass.id);
   const connections = useConnections({ orgId: pass.orgId });
-  const [connectionId, setConnectionId] = useState<string | undefined>(
-    pass.connectionId ?? undefined,
-  );
-  const [ref, setRef] = useState('');
-  const [reset, setReset] = useState(false);
+  const [connectionId, setConnectionId] = useState(pass.connectionId ?? undefined);
+  const [ref, setRef] = useState(pass.externalRef ?? '');
+  const [takeOver, setTakeOver] = useState(false);
   const [error, setError] = useState<string>();
-  const [unbind, setUnbind] = useState(false);
 
   async function bind() {
     const externalRef = ref.trim();
     if (!connectionId) return setError('Choose a connection.');
-    if (!externalRef) return setError('Enter the connection ref.');
+    if (!externalRef) return setError('Enter the record id in the source.');
     setError(undefined);
     try {
       await actions.bindConnection.mutateAsync({
         connectionId,
         externalRef,
-        ...(reset ? { resetFieldSources: true } : {}),
+        ...(takeOver ? { resetFieldSources: true } : {}),
       });
-      setRef('');
       toast.success('Bound');
+      onOpenChange(false);
     } catch (cause) {
       setError(errorMessage(cause));
     }
   }
 
   return (
-    <Card>
-      <CardHeader title={pass.connectionId ? 'Rebind' : 'Bind to a connection'} />
-      <CardBody className="grid gap-4">
-        <FormField label="Connection" required>
-          {(c) => (
-            <Select
-              {...c}
-              value={connectionId}
-              onValueChange={setConnectionId}
-              options={(connections.data?.items ?? []).map((x) => ({ value: x.id, label: x.name }))}
-            />
-          )}
-        </FormField>
-        <FormField label="Ref" required help="The record id in the source." error={error}>
-          {(c) => (
-            <Input {...c} autoComplete="off" value={ref} onChange={(e) => setRef(e.target.value)} />
-          )}
-        </FormField>
-        <CheckboxField
-          label="Let the connection take over all fields"
-          checked={reset}
-          onCheckedChange={(c) => setReset(c === true)}
-        />
-        <div className="flex flex-wrap gap-2">
-          <Button loading={actions.bindConnection.isPending} onClick={() => void bind()}>
-            {pass.connectionId ? 'Rebind' : 'Bind'}
-          </Button>
-          {pass.connectionId ? (
-            <Button variant="outline" onClick={() => setUnbind(true)}>
-              Unbind
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        title={pass.connectionId ? 'Change connection' : 'Bind to a connection'}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
-          ) : null}
+            <Button loading={actions.bindConnection.isPending} onClick={() => void bind()}>
+              Bind
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <FormField label="Connection" required>
+            {(c) => (
+              <Select
+                {...c}
+                value={connectionId}
+                onValueChange={setConnectionId}
+                options={(connections.data?.items ?? []).map((x) => ({
+                  value: x.id,
+                  label: x.name,
+                }))}
+              />
+            )}
+          </FormField>
+          <FormField label="Record id" required help="The record's id in the source." error={error}>
+            {(c) => (
+              <Input
+                {...c}
+                autoComplete="off"
+                value={ref}
+                onChange={(e) => setRef(e.target.value)}
+              />
+            )}
+          </FormField>
+          <CheckboxField
+            label="Let the connection take over every field"
+            checked={takeOver}
+            onCheckedChange={(c) => setTakeOver(c === true)}
+          />
         </div>
-      </CardBody>
-      <ConfirmDialog
-        open={unbind}
-        onOpenChange={setUnbind}
-        title="Unbind pass?"
-        description="The connection stops updating this pass. Field values stay."
-        confirmLabel="Unbind"
-        destructive
-        onConfirm={async () => {
-          await actions.bindConnection.mutateAsync({ connectionId: null, externalRef: null });
-          setConnectionId(undefined);
-          toast.success('Unbound');
-        }}
-      />
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function Bound({ pass }: { pass: Pass }) {
+function Bound({ pass, onChange }: { pass: PassDetailDto; onChange: () => void }) {
   const connection = useConnection(pass.connectionId ?? undefined);
   const actions = usePassActions(pass.id);
+  const [unbind, setUnbind] = useState(false);
   if (connection.isPending) return <SkeletonKeyValue label="Loading connection" />;
-  if (connection.isError) {
+  if (connection.isError)
     return <ErrorState error={connection.error} onRetry={() => void connection.refetch()} />;
-  }
   const c = connection.data;
-  const lastRun = c.runs[0];
   return (
     <Card>
       <CardHeader
         title="Connection"
         actions={
-          <Button
-            size="sm"
-            variant="outline"
-            loading={actions.refreshFromSource.isPending}
-            onClick={() =>
-              actions.refreshFromSource
-                .mutateAsync()
-                .then(() => toast.success('Refresh requested'))
-                .catch((error: unknown) => toast.error(error))
-            }
-          >
-            Refresh now
-          </Button>
+          <>
+            <Button variant="ghost" size="sm" iconStart={<Pencil aria-hidden />} onClick={onChange}>
+              Change
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <IconButton
+                  size="sm"
+                  label="More connection actions"
+                  icon={<MoreHorizontal aria-hidden />}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem destructive onSelect={() => setUnbind(true)}>
+                  <Unplug aria-hidden />
+                  Unbind
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         }
       />
       <CardBody>
@@ -142,36 +156,70 @@ function Bound({ pass }: { pass: Pass }) {
             {
               label: 'Connection',
               value: (
-                <Link
-                  to={`/admin/connections/${c.id}` as never}
-                  className="text-accent-fg hover:underline"
-                >
-                  {c.name}
-                </Link>
+                <EntityChip
+                  kind="connection"
+                  id={c.id}
+                  name={c.name}
+                  to={`/admin/connections/${c.id}`}
+                />
               ),
             },
             { label: 'Health', value: <HealthPill health={c.health} /> },
-            { label: 'External ID', value: pass.externalId, mono: true },
-            { label: 'Last refreshed', value: formatDate(pass.lastRefreshedAt) },
+            { label: 'Record id', value: pass.externalRef ?? null, mono: true },
             {
-              label: 'Last run',
-              value: lastRun
-                ? `${humanizeStatus(lastRun.outcome)} · ${formatDate(lastRun.startedAt)}`
-                : null,
+              label: 'Last pull',
+              value: pass.lastRefreshedAt ? formatDateTime(pass.lastRefreshedAt) : null,
             },
-            { label: 'Sync error', value: pass.syncErrorCode, mono: true },
+            ...(pass.syncErrorCode
+              ? [{ label: 'Sync error', value: pass.syncErrorCode, mono: true }]
+              : []),
           ]}
         />
       </CardBody>
+      <ConfirmDialog
+        open={unbind}
+        onOpenChange={setUnbind}
+        title="Unbind pass?"
+        description="Fields stop syncing. Their current values stay."
+        confirmLabel="Unbind"
+        destructive
+        onConfirm={async () => {
+          await actions.bindConnection.mutateAsync({ connectionId: null, externalRef: null });
+          toast.success('Unbound');
+        }}
+      />
     </Card>
   );
 }
 
-export function ConnectionTab({ pass }: { pass: Pass }) {
+export function ConnectionTab({ pass }: { pass: PassDetailDto }) {
+  const [binding, setBinding] = useState(false);
+  const [opened, setOpened] = useState(0);
+  const open = () => {
+    setOpened((n) => n + 1);
+    setBinding(true);
+  };
   return (
-    <div className="grid gap-4">
-      {pass.connectionId ? <Bound pass={pass} /> : null}
-      <BindForm key={pass.connectionId ?? ''} pass={pass} />
-    </div>
+    <>
+      {pass.connectionId ? (
+        <Bound pass={pass} onChange={open} />
+      ) : (
+        <Card>
+          <EmptyState
+            inline
+            art="plugs"
+            title="Not bound to a connection"
+            action={
+              pass.status === 'voided' ? undefined : (
+                <Button variant="outline" size="sm" onClick={open}>
+                  Bind to a connection
+                </Button>
+              )
+            }
+          />
+        </Card>
+      )}
+      <BindDialog key={opened} pass={pass} open={binding} onOpenChange={setBinding} />
+    </>
   );
 }

@@ -1,155 +1,135 @@
 import type { CSSProperties } from 'react';
+import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '../../lib/cn.ts';
 import { useArrival } from '../../lib/motion.ts';
-import { useOrgOptions } from '../../lib/search.ts';
 import {
+  Badge,
   EmptyState,
+  EntityAvatar,
   ErrorState,
+  OptionTile,
   Skeleton,
   SkeletonRows,
   SkeletonTileGrid,
 } from '../../ui/index.ts';
-import { useTemplatePreview, useTemplates } from '../templates/api.ts';
+import { useTemplatePreview } from '../templates/api.ts';
 import { PassPreview } from './pass-preview.tsx';
 
-export function OrgStep({
-  orgId,
-  onSelect,
-}: {
-  orgId: string | undefined;
-  onSelect: (id: string) => void;
-}) {
-  const orgs = useOrgOptions();
-  if (orgs.isPending) return <SkeletonRows rows={3} label="Loading organizations" />;
-  if (orgs.isError) return <ErrorState error={orgs.error} onRetry={() => void orgs.refetch()} />;
-  const items = orgs.data.items.filter((o) => o.status === 'active');
-  if (items.length === 0) return <EmptyState art="building" title="No active organizations" />;
-  return (
-    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((o) => (
-        <li key={o.id}>
-          <button
-            type="button"
-            aria-pressed={o.id === orgId}
-            onClick={() => onSelect(o.id)}
-            className={cn(
-              'w-full rounded-lg border bg-surface-raised p-4 text-left wl-colors hover:bg-state-hover-tint',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-              o.id === orgId ? 'border-accent' : 'border-border',
-            )}
-          >
-            <span className="block font-medium text-fg-strong">{o.name}</span>
-            <span className="block text-xs text-fg-muted">{o.slug}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function TemplateCard({
-  id,
-  name,
-  description,
-  selected,
-  onSelect,
-}: {
+export interface OrgOption {
   id: string;
   name: string;
-  description: string | null;
-  selected: boolean;
-  onSelect: () => void;
+  slug: string;
+  branding: { accent?: string | undefined };
+}
+
+export function OrgStep({
+  orgs,
+  loading,
+  error,
+  orgId,
+  onSelect,
+  onCommit,
+}: {
+  orgs: OrgOption[];
+  loading: boolean;
+  error: unknown;
+  orgId: string | undefined;
+  onSelect: (id: string) => void;
+  onCommit: (id: string) => void;
 }) {
-  const preview = useTemplatePreview(id);
+  if (loading) return <SkeletonRows rows={3} label="Loading organizations" />;
+  if (error) return <ErrorState error={error} />;
+  if (orgs.length === 0) return <EmptyState art="building" title="No active organizations" />;
   return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onSelect}
-      className={cn(
-        'flex h-full w-full flex-col gap-3 rounded-lg border bg-surface-raised p-4 text-left wl-colors hover:bg-state-hover-tint',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-        selected ? 'border-accent' : 'border-border',
-      )}
+    <div
+      role="radiogroup"
+      aria-label="Organization"
+      className="grid gap-3 @container sm:grid-cols-2 xl:grid-cols-3"
     >
-      <div
-        className="pointer-events-none max-h-56 overflow-hidden [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
-        inert
-      >
-        {preview.data ? (
-          <PassPreview
-            passJson={preview.data.passJson}
-            assetBaseUrl={preview.data.assetBaseUrl}
-            assetNames={preview.data.assetNames}
-            still
-            className="max-w-48"
-          />
-        ) : preview.isPending ? (
-          <Skeleton className="aspect-[320/420] w-full max-w-48 rounded-xl" />
-        ) : (
-          <p className="text-xs text-fg-muted">No preview</p>
-        )}
-      </div>
-      <span>
-        <span className="block font-medium text-fg-strong">{name}</span>
-        {description ? <span className="block text-xs text-fg-muted">{description}</span> : null}
-      </span>
-    </button>
+      {orgs.map((o) => (
+        <OptionTile
+          key={o.id}
+          name="org"
+          value={o.id}
+          checked={o.id === orgId}
+          onSelect={onSelect}
+          onCommit={onCommit}
+          media={
+            <EntityAvatar kind="org" id={o.id} name={o.name} accent={o.branding.accent} size={40} />
+          }
+          label={o.name}
+          description={o.slug}
+        />
+      ))}
+    </div>
   );
 }
 
+function TemplateStill({ id }: { id: string }) {
+  const preview = useTemplatePreview(id);
+  return (
+    <div aria-hidden inert className="pointer-events-none w-14 shrink-0">
+      {preview.data ? (
+        <PassPreview
+          passJson={preview.data.passJson}
+          assetBaseUrl={preview.data.assetBaseUrl}
+          assetNames={preview.data.assetNames}
+          still
+        />
+      ) : (
+        <Skeleton className="aspect-[320/420] w-full rounded-md" />
+      )}
+    </div>
+  );
+}
+
+/** Template choices as tiles with a still; Shared marks platform templates every org can use. */
 export function TemplateStep({
-  orgId,
+  templates,
+  loading,
+  error,
   templateId,
   onSelect,
+  onCommit,
 }: {
-  orgId: string;
+  templates: TemplateSummaryDto[];
+  loading: boolean;
+  error: unknown;
   templateId: string | undefined;
   onSelect: (id: string) => void;
+  onCommit: (id: string) => void;
 }) {
-  const templates = useTemplates({ orgId });
-  const arrived = useArrival(templates.isPending);
-  if (templates.isPending) return <SkeletonTileGrid label="Loading templates" />;
-  if (templates.isError) {
-    return <ErrorState error={templates.error} onRetry={() => void templates.refetch()} />;
-  }
-  const items = templates.data.items.filter((t) => t.status === 'active' && t.activeVersion);
-  if (items.length === 0)
+  const arrived = useArrival(loading);
+  if (loading) return <SkeletonTileGrid label="Loading templates" />;
+  if (error) return <ErrorState error={error} />;
+  if (templates.length === 0)
     return <EmptyState art="template" title="No templates for this organization" />;
-  const own = items.filter((t) => t.orgId === orgId);
-  const rest = items.filter((t) => t.orgId !== orgId);
-  const grid = (list: typeof items) => (
-    <ul className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-3', arrived && 'wl-deal')}>
-      {list.map((t, i) => (
-        <li key={t.id} style={{ '--i': i } as CSSProperties}>
-          <TemplateCard
-            id={t.id}
-            name={t.name}
-            description={t.description}
-            selected={t.id === templateId}
-            onSelect={() => onSelect(t.id)}
-          />
-        </li>
-      ))}
-    </ul>
-  );
-  if (own.length === 0) return grid(rest);
   return (
-    <div className="grid gap-6">
-      <section aria-labelledby="templates-own" className="grid gap-3">
-        <h3 id="templates-own" className="text-sm font-medium text-fg-strong">
-          {own[0]?.orgName ?? 'Organization'}
-        </h3>
-        {grid(own)}
-      </section>
-      {rest.length > 0 ? (
-        <section aria-labelledby="templates-other" className="grid gap-3">
-          <h3 id="templates-other" className="text-sm font-medium text-fg-strong">
-            Other templates
-          </h3>
-          {grid(rest)}
-        </section>
-      ) : null}
+    <div
+      role="radiogroup"
+      aria-label="Template"
+      className={cn('grid gap-3 sm:grid-cols-2 xl:grid-cols-3', arrived && 'wl-stagger')}
+    >
+      {templates.map((t, i) => (
+        <div key={t.id} style={{ '--i': i } as CSSProperties}>
+          <OptionTile
+            name="template"
+            value={t.id}
+            checked={t.id === templateId}
+            onSelect={onSelect}
+            onCommit={onCommit}
+            media={<TemplateStill id={t.id} />}
+            label={
+              <span className="inline-flex min-w-0 items-center gap-2">
+                <span className="truncate">{t.name}</span>
+                {t.orgId === null ? <Badge>Shared</Badge> : null}
+              </span>
+            }
+            description={t.description ?? undefined}
+            className="h-full"
+          />
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,77 +1,68 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import type { z } from 'zod';
+import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import { useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Button,
+  Celebrate,
   EmptyState,
   ErrorState,
+  KeyValue,
   PageHeader,
-  Select,
-  Skeleton,
+  SkeletonDetail,
   StatusPill,
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
+  toast,
 } from '../../../ui/index.ts';
-import { useTemplate } from '../../templates/api.ts';
-import { usePass, usePassVersion } from '../api.ts';
-import { PassPreviewPanel } from '../pass-preview.tsx';
+import { useDraftPreview, useTemplate } from '../../templates/api.ts';
+import { usePass, usePassActions, usePassVersion } from '../api.ts';
+import { newKey } from '../format.ts';
+import { usePassActionRunner } from '../pass-actions.tsx';
+import { PassPreview, PassPreviewPanel } from '../pass-preview.tsx';
 import { PreviewLayout } from '../preview-layout.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
-import { ConnectionTab } from './connection-tab.tsx';
-import { DeliveryTab } from './delivery-tab.tsx';
-import { FieldsTab } from './fields-tab.tsx';
-import { PassHeaderActions } from './header-actions.tsx';
-import { HolderTab } from './holder-tab.tsx';
-import { ImagesTab } from './images-tab.tsx';
-import { ActivityTab, DevicesTab } from './info-tabs.tsx';
-import { VersionsTab } from './versions-tab.tsx';
+import { CreatedCallout, PassWarnings, VoidedCallout } from './callouts.tsx';
+import { HeaderActionsView } from './header-actions.tsx';
+import { PassTabs } from './pass-tabs.tsx';
+import { useCreated, useLasting, useStageMotion } from './stage-state.ts';
+import '../passes.css';
 
 type Search = z.infer<typeof passDetailSearchSchema>;
-type Tab = NonNullable<Search['tab']>;
+export type Tab = NonNullable<Search['tab']>;
+
+const devices = (n: number) => `On ${n} ${n === 1 ? 'device' : 'devices'}`;
 
 export function PassDetailPage({ passId, search }: { passId: string; search: Search }) {
   const navigate = useNavigate();
   const pass = usePass(passId);
-  const minted = useMintedOnArrival(passId);
-  const template = useTemplate(pass.data?.templateId);
-  const picked = search.v !== undefined && search.v !== pass.data?.version ? search.v : undefined;
-  const version = usePassVersion(passId, picked);
-  const tab: Tab = search.tab ?? 'fields';
-  const setSearch = (patch: Partial<Search>) =>
-    void navigate({
-      to: '.',
-      search: ((prev: Search) => {
-        const next = { ...prev, ...patch };
-        return Object.fromEntries(Object.entries(next).filter(([, v]) => v !== undefined));
-      }) as never,
-      replace: true,
-    });
-
   const crumbs = [
     { label: 'Passes', to: '/admin/passes' },
     { label: pass.data ? (pass.data.title ?? pass.data.serial) : 'Pass' },
   ];
   if (pass.isError) {
     const missing = isApiError(pass.error) && pass.error.isNotFound;
+    if (missing)
+      return (
+        <EmptyState
+          heading
+          art="torn"
+          title="Pass not found"
+          action={
+            <Button asChild variant="outline">
+              <Link to="/admin/passes">Back to passes</Link>
+            </Button>
+          }
+          className="mt-6"
+        />
+      );
     return (
       <>
         <PageHeader title="Pass" breadcrumbs={crumbs} />
-        {missing ? (
-          <EmptyState
-            art="torn"
-            title="Pass not found"
-            action={
-              <Button asChild>
-                <Link to="/admin/passes">Back to passes</Link>
-              </Button>
-            }
-          />
-        ) : (
-          <ErrorState error={pass.error} onRetry={() => void pass.refetch()} />
-        )}
+        <ErrorState error={pass.error} onRetry={() => void pass.refetch()} />
       </>
     );
   }
@@ -79,64 +70,142 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
     return (
       <>
         <PageHeader title="Pass" breadcrumbs={crumbs} />
-        <Skeleton className="h-64 w-full" />
+        <SkeletonDetail label="Loading pass" />
       </>
     );
   }
-  const p = pass.data;
-  const shown = picked !== undefined && version.data ? version.data : p;
+  return (
+    <Loaded
+      pass={pass.data}
+      search={search}
+      crumbs={crumbs}
+      setSearch={(patch) =>
+        void navigate({
+          to: '.',
+          search: ((prev: Search) =>
+            Object.fromEntries(
+              Object.entries({ ...prev, ...patch }).filter(([, v]) => v !== undefined),
+            )) as never,
+          replace: true,
+        })
+      }
+    />
+  );
+}
+
+function Loaded({
+  pass: p,
+  search,
+  crumbs,
+  setSearch,
+}: {
+  pass: PassDetailDto;
+  search: Search;
+  crumbs: { label: string; to?: string }[];
+  setSearch: (patch: Partial<Search>) => void;
+}) {
+  const minted = useMintedOnArrival(p.id);
+  const [deal] = useState(() => !minted);
+  const created = useCreated(p.id);
+  const runner = usePassActionRunner(p, p);
+  const actions = usePassActions(p.id);
+  const template = useTemplate(p.templateId);
+  const motion = useStageMotion(p.version, p.status, minted);
+  const picked = search.v !== undefined && search.v !== p.version ? search.v : undefined;
+  const version = usePassVersion(p.id, picked);
+  const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+  const draftPreview = useDraftPreview(draft ? p.templateId : undefined, draft ?? {}, {
+    orgId: p.orgId,
+    version: p.templateVersion,
+  });
+  const tab: Tab = search.tab ?? 'fields';
+  const voided = p.status === 'voided';
+  const loadingVersion = picked !== undefined && !version.data;
+  const waiting = useLasting(loadingVersion || (draft !== null && draftPreview.isFetching));
+  const source =
+    draft && draftPreview.data
+      ? draftPreview.data
+      : picked !== undefined && version.data
+        ? version.data
+        : p;
+  const showing = picked !== undefined && version.data ? picked : p.version;
+
+  const stage = (size: 'column' | 'card' | 'sheet') => (
+    <div className="relative">
+      {size === 'sheet' ? null : <Celebrate when={created.first} />}
+      <PassPreviewPanel
+        passJson={source.passJson}
+        assetBaseUrl={source.assetBaseUrl}
+        assetNames={source.assetNames}
+        transitionName={size === 'sheet' ? undefined : `pass-${p.id}`}
+        enter={deal && showing === p.version && size !== 'sheet'}
+        mint={picked === undefined && !draft ? motion.mint : undefined}
+        settle={motion.settle}
+        dim={voided}
+        unsaved={draft !== null}
+        waiting={waiting}
+        swapKey={showing}
+        label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
+        className={size === 'card' ? 'gap-2' : undefined}
+      />
+    </div>
+  );
 
   return (
     <>
       <PageHeader
         title={p.title ?? p.serial}
+        breadcrumbs={crumbs}
         meta={
           <>
             <StatusPill status={p.status} />
             <StatusPill status={p.holderState} />
-            <span>v{p.version}</span>
+            <span className="tabular-nums">v{p.version}</span>
+            <span>{devices(p.deviceCount)}</span>
           </>
         }
-        breadcrumbs={crumbs}
-        actions={<PassHeaderActions pass={p} />}
+        actions={<HeaderActionsView runner={runner} />}
       />
-      {p.warnings.length > 0 ? (
-        <ul className="mb-4 list-disc rounded-lg border border-warning-border bg-warning-subtle py-2 pr-3 pl-7 text-sm text-fg-strong">
-          {p.warnings.map((w) => (
-            <li key={`${w.code}${w.path ?? ''}`}>{w.message}</li>
-          ))}
-        </ul>
-      ) : null}
+      <div className="mb-6 flex flex-col gap-3 empty:hidden">
+        {voided ? <VoidedCallout pass={p} runner={runner} stamp={motion.stamp} /> : null}
+        {created.unsent && !voided ? (
+          <CreatedCallout
+            pass={p}
+            runner={runner}
+            onDismiss={created.dismiss}
+            onSend={() =>
+              actions.resendEmail
+                .mutateAsync({ key: newKey() })
+                .then(() => {
+                  toast.success(`Pass emailed to ${p.holderEmail}`);
+                  created.dismiss();
+                })
+                .catch((error: unknown) => toast.error(error))
+            }
+          />
+        ) : null}
+        <PassWarnings pass={p} />
+      </div>
       <PreviewLayout
-        previewActions={
-          <Select
-            aria-label="Version"
-            className="w-40"
-            value={String(picked ?? p.version)}
-            onValueChange={(v) => setSearch({ v: Number(v) === p.version ? undefined : Number(v) })}
-            options={[...p.versions]
-              .sort((a, b) => b.version - a.version)
-              .map((v) => ({
-                value: String(v.version),
-                label: `v${v.version}${v.version === p.version ? ' (current)' : ''}`,
-                disabled: v.purged,
-              }))}
+        title={p.title ?? p.serial}
+        stage={stage}
+        still={
+          <PassPreview
+            passJson={p.passJson}
+            assetBaseUrl={p.assetBaseUrl}
+            assetNames={p.assetNames}
+            still
+            dim={voided}
           />
         }
-        preview={
-          picked !== undefined && version.isError ? (
-            <ErrorState error={version.error} title="Could not load version" />
-          ) : picked !== undefined && version.isPending ? (
-            <Skeleton className="h-80 w-full" />
-          ) : (
-            <PassPreviewPanel
-              passJson={shown.passJson}
-              assetBaseUrl={shown.assetBaseUrl}
-              assetNames={p.assetNames}
-              transitionName={`pass-${p.id}`}
-              mintOnArrival={minted}
-            />
-          )
+        summary={
+          <KeyValue
+            items={[
+              { label: 'Holder', value: p.holderEmail },
+              { label: 'Version', value: `v${p.version}` },
+              { label: 'On device', value: p.deviceCount > 0 ? String(p.deviceCount) : null },
+            ]}
+          />
         }
       >
         <Tabs value={tab} onValueChange={(t) => setSearch({ tab: t as Tab })} className="min-w-0">
@@ -145,11 +214,10 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
               [
                 ['fields', 'Fields'],
                 ['holder', 'Holder'],
-                ['images', 'Images'],
                 ['delivery', 'Delivery'],
+                ['images', 'Images'],
                 ['versions', 'Versions'],
                 ['connection', 'Connection'],
-                ['devices', 'Devices'],
                 ['activity', 'Activity'],
               ] as const
             ).map(([value, label]) => (
@@ -158,41 +226,14 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
               </TabsTrigger>
             ))}
           </TabsList>
-          <TabsContent value="fields">
-            {template.isError ? (
-              <ErrorState error={template.error} onRetry={() => void template.refetch()} />
-            ) : template.data ? (
-              <FieldsTab
-                key={p.id}
-                pass={p}
-                schema={template.data.inputSchema}
-                manifest={template.data.manifest}
-              />
-            ) : (
-              <Skeleton className="h-48 w-full" />
-            )}
-          </TabsContent>
-          <TabsContent value="holder">
-            <HolderTab key={p.holderEmail ?? ''} pass={p} />
-          </TabsContent>
-          <TabsContent value="images">
-            <ImagesTab passId={p.id} passJson={p.passJson} />
-          </TabsContent>
-          <TabsContent value="delivery" className="min-w-0">
-            <DeliveryTab pass={p} />
-          </TabsContent>
-          <TabsContent value="versions">
-            <VersionsTab pass={p} selected={picked} onSelect={(v) => setSearch({ v })} />
-          </TabsContent>
-          <TabsContent value="connection">
-            <ConnectionTab pass={p} />
-          </TabsContent>
-          <TabsContent value="devices">
-            <DevicesTab pass={p} />
-          </TabsContent>
-          <TabsContent value="activity">
-            <ActivityTab passId={p.id} active={tab === 'activity'} />
-          </TabsContent>
+          <PassTabs
+            pass={p}
+            tab={tab}
+            template={template}
+            picked={picked}
+            onPick={(v) => setSearch({ v })}
+            onDraft={setDraft}
+          />
         </Tabs>
       </PreviewLayout>
     </>

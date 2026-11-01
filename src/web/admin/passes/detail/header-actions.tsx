@@ -1,150 +1,85 @@
-import { useNavigate } from '@tanstack/react-router';
-import {
-  Ban,
-  Copy,
-  Download,
-  ExternalLink,
-  KeyRound,
-  RefreshCw,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react';
-import { useState } from 'react';
-import type { z } from 'zod';
-import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
-import {
-  Button,
-  ConfirmDialog,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  MoreMenu,
-  toast,
-} from '../../../ui/index.ts';
-import { confirmWord, TypedConfirmDialog } from '../../../ui/typed-confirm-dialog.tsx';
-import { usePassActions } from '../api.ts';
-import { absoluteUrl } from '../format.ts';
+import { Fragment } from 'react';
+import type { PassDetailDto } from '@/shared/contracts/passes.ts';
+import { Button, DropdownMenuItem, DropdownMenuSeparator, MoreMenu } from '../../../ui/index.ts';
+import { type PassActionRunner, usePassActionRunner } from '../pass-actions.tsx';
 
-type Pass = z.infer<typeof PassDetailSchema>;
+/** Header: the bar actions as outline buttons (one row), the rest in More (destructive last). */
+export function PassHeaderActions({ pass }: { pass: PassDetailDto }) {
+  const runner = usePassActionRunner(pass, pass);
+  return <HeaderActionsView runner={runner} />;
+}
 
-export function PassHeaderActions({ pass }: { pass: Pass }) {
-  const actions = usePassActions(pass.id);
-  const navigate = useNavigate();
-  const [rotate, setRotate] = useState(false);
-  const [del, setDel] = useState(false);
-  const [voidAsk, setVoidAsk] = useState(false);
-  const voided = pass.status === 'voided';
-
-  async function run(fn: () => Promise<unknown>, done: string) {
-    try {
-      await fn();
-      toast.success(done);
-    } catch (error) {
-      toast.error(error);
-    }
-  }
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(absoluteUrl(pass.publicUrl));
-      toast.success('Link copied');
-    } catch {
-      toast.error(new Error('Could not copy. Copy the link from the public page.'));
-    }
-  }
-
+export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
+  const bar = runner.defs.filter((d) => d.bar);
+  const more = runner.defs.filter((d) => !d.bar);
+  const firstDanger = more.findIndex((d) => d.destructive);
   return (
     <>
-      <Button
-        variant="outline"
-        iconStart={<RefreshCw aria-hidden />}
-        loading={actions.refreshFromSource.isPending}
-        onClick={() => run(() => actions.refreshFromSource.mutateAsync(), 'Refresh requested')}
-      >
-        <span className="max-sm:sr-only">Refresh</span>
-      </Button>
-      <Button
-        variant="outline"
-        iconStart={voided ? <RotateCcw aria-hidden /> : <Ban aria-hidden />}
-        loading={actions.setVoided.isPending}
-        onClick={() =>
-          voided
-            ? run(() => actions.setVoided.mutateAsync(false), 'Pass unvoided')
-            : setVoidAsk(true)
-        }
-      >
-        {voided ? 'Unvoid' : 'Void'}
-      </Button>
-      <Button asChild variant="outline" iconStart={<ExternalLink aria-hidden />}>
-        <a
-          href={pass.publicUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open public page"
-        >
+      {bar.map((d) => {
+        const Icon = d.icon;
+        const short =
+          d.id === 'open' ? 'Open' : d.id === 'update' ? 'Update' : d.id === 'pull' ? 'Pull' : null;
+        const text = short ? (
           <span>
-            Open<span className="max-sm:sr-only"> public page</span>
+            {short}
+            <span className="max-md:sr-only">{d.label.slice(short.length)}</span>
           </span>
-        </a>
-      </Button>
+        ) : (
+          d.label
+        );
+        if (d.id === 'open' && runner.links)
+          return (
+            <Button key={d.id} asChild variant="outline" iconStart={<Icon aria-hidden />}>
+              <a
+                href={runner.links.publicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={d.label}
+              >
+                {text}
+              </a>
+            </Button>
+          );
+        return (
+          <Button
+            key={d.id}
+            variant="outline"
+            iconStart={<Icon aria-hidden />}
+            loading={runner.pending[d.id]}
+            busy={d.id === 'pull' ? 'spin' : undefined}
+            done={runner.done[d.id]}
+            disabled={(d.id === 'open' && !runner.links) || undefined}
+            aria-label={short ? d.label : undefined}
+            onClick={() => runner.run(d.id)}
+          >
+            {text}
+          </Button>
+        );
+      })}
       <MoreMenu>
-        <DropdownMenuItem onSelect={() => void copyLink()}>
-          <Copy aria-hidden />
-          Copy public link
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href={pass.downloadUrl} download>
-            <Download aria-hidden />
-            Download .pkpass
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setRotate(true)}>
-          <KeyRound aria-hidden />
-          Rotate link
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem destructive onSelect={() => setDel(true)}>
-          <Trash2 aria-hidden />
-          Delete
-        </DropdownMenuItem>
+        {more.map((d, i) => {
+          const Icon = d.icon;
+          return (
+            <Fragment key={d.id}>
+              {i === firstDanger && i > 0 ? <DropdownMenuSeparator /> : null}
+              {d.id === 'download' && runner.links ? (
+                <DropdownMenuItem asChild>
+                  <a href={runner.links.downloadUrl} download>
+                    <Icon aria-hidden />
+                    {d.label}
+                  </a>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem destructive={d.destructive} onSelect={() => runner.run(d.id)}>
+                  <Icon aria-hidden />
+                  {d.label}
+                </DropdownMenuItem>
+              )}
+            </Fragment>
+          );
+        })}
       </MoreMenu>
-
-      <ConfirmDialog
-        open={voidAsk}
-        onOpenChange={setVoidAsk}
-        title="Void pass?"
-        description="Wallet marks it void on the holder's device."
-        confirmLabel="Void"
-        destructive
-        onConfirm={async () => {
-          await actions.setVoided.mutateAsync(true);
-          toast.success('Pass voided');
-        }}
-      />
-      <ConfirmDialog
-        open={rotate}
-        onOpenChange={setRotate}
-        title="Rotate public link?"
-        description="The current link and download URL stop working."
-        confirmLabel="Rotate"
-        destructive
-        onConfirm={async () => {
-          await actions.rotateLink.mutateAsync();
-          toast.success('Link rotated');
-        }}
-      />
-      <TypedConfirmDialog
-        open={del}
-        onOpenChange={setDel}
-        title="Delete pass?"
-        description="Removes the pass, its versions and images. Installed copies stop updating."
-        word={confirmWord({ title: pass.title, slug: pass.serial })}
-        confirmLabel="Delete pass"
-        onConfirm={async () => {
-          await actions.remove.mutateAsync();
-          toast.success('Pass deleted');
-          void navigate({ to: '/admin/passes' });
-        }}
-      />
+      {runner.dialogs}
     </>
   );
 }

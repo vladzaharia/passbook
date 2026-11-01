@@ -136,8 +136,10 @@ describe('validateValues', () => {
 describe('SchemaForm', () => {
   it('renders groups, help text and required marks', () => {
     render(<Harness />);
-    expect(screen.getByRole('group', { name: 'Member' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Extra' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Member' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Extra' })).toBeInTheDocument();
+    // The * sits right after the label text.
+    expect(screen.getByText('Full name').parentElement?.textContent).toMatch(/^Full name\s*\*/);
     expect(screen.getByLabelText(/Full name/)).toBeInTheDocument();
     expect(screen.getByText('As printed.')).toBeInTheDocument();
   });
@@ -181,20 +183,28 @@ describe('SchemaForm', () => {
     expect(screen.getByText('Already used.')).toBeInTheDocument();
   });
 
-  it('shows source badges and resets a manual field', async () => {
+  it('locks connection-owned fields with a From chip and resets a manual one', async () => {
     const user = userEvent.setup();
     const onReset = vi.fn();
     render(
       <Harness
         initial={{ name: 'Ann' }}
         fieldSources={{ name: 'manual', level: 'connection' }}
+        sourceName="MemberSpot sync"
         onResetField={onReset}
       />,
     );
-    expect(screen.getByText('Manual')).toBeInTheDocument();
-    expect(screen.getByText('Connection')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Reset Full name to connection' }));
+    expect(screen.getAllByText(/From MemberSpot sync/)).toHaveLength(1);
+    expect(screen.getByRole('combobox', { name: /Level/ })).toBeDisabled();
+    await user.click(
+      screen.getByRole('button', { name: "Use the connection's value for Full name" }),
+    );
     expect(onReset).toHaveBeenCalledWith('name');
+  });
+
+  it('shows no chips without a connection', () => {
+    render(<Harness initial={{ name: 'Ann' }} />);
+    expect(screen.queryByText(/^From /)).toBeNull();
   });
 
   it('rejects an unsupported image file', async () => {
@@ -225,10 +235,10 @@ describe('SchemaForm', () => {
       },
     });
 
-    it('starts checked with the input disabled, labelled from x-noneLabel', () => {
+    it('starts checked with the date hidden, labelled from x-noneLabel', () => {
       render(<Harness schema={expiry({ 'x-noneLabel': 'Never expires' })} />);
       expect(screen.getByRole('checkbox', { name: 'Never expires' })).toBeChecked();
-      expect(screen.getByLabelText('Expires')).toBeDisabled();
+      expect(screen.queryByLabelText('Expires')).toBeNull();
     });
 
     it('defaults the label to No date', () => {
@@ -236,7 +246,7 @@ describe('SchemaForm', () => {
       expect(screen.getByRole('checkbox', { name: 'No date' })).toBeChecked();
     });
 
-    it('checking it removes the value; unchecking enables the input', async () => {
+    it('checking it removes the value; unchecking shows the input', async () => {
       const user = userEvent.setup();
       const onValue = vi.fn();
       render(
@@ -251,7 +261,7 @@ describe('SchemaForm', () => {
       expect(screen.getByLabelText('Expires')).toBeEnabled();
       await user.click(box);
       expect(onValue).toHaveBeenLastCalledWith({});
-      expect(screen.getByLabelText('Expires')).toBeDisabled();
+      expect(screen.queryByLabelText('Expires')).toBeNull();
       await user.click(box);
       expect(screen.getByLabelText('Expires')).toBeEnabled();
     });
