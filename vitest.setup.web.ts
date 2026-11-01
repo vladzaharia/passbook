@@ -1,3 +1,4 @@
+import './src/web/pass-card/barcode-loader.ts';
 import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach, expect } from 'vitest';

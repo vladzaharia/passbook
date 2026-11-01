@@ -1,4 +1,4 @@
-/** bwip-js is large: the browser loads it on demand, the Worker registers it up front. */
+/** The encoders are large: the browser loads them on demand, the Worker registers them up front. */
 export type ToSvg = (options: Record<string, unknown>) => string;
 
 let engine: ToSvg | undefined;
@@ -10,11 +10,17 @@ export function setBarcodeEngine(toSvg: ToSvg): void {
   engine = toSvg;
 }
 
+/** The browser entry registers a dynamic import (barcode-loader.ts); the Worker never loads lazily. */
+let loader: (() => Promise<ToSvg>) | undefined;
+
+export function setBarcodeLoader(load: () => Promise<ToSvg>): void {
+  loader = load;
+}
+
 export function loadBarcodeEngine(): Promise<ToSvg> {
   if (engine) return Promise.resolve(engine);
-  loading ??= import('bwip-js/generic').then((mod) => {
-    const lib = (mod.default ?? mod) as unknown as { toSVG: ToSvg };
-    const toSvg: ToSvg = (options) => lib.toSVG(options);
+  if (!loader) return Promise.reject(new Error('No barcode engine registered.'));
+  loading ??= loader().then((toSvg) => {
     engine = toSvg;
     return toSvg;
   });

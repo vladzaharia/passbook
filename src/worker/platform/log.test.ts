@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import type { AppBindings } from './context.ts';
-import { handleError, NotFoundError } from './errors.ts';
+import { handleError } from './error-handler.ts';
+import { NotFoundError } from './errors.ts';
 import { createLogger, redact, redactString } from './log.ts';
 
 describe('redaction', () => {

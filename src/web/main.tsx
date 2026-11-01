@@ -2,6 +2,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
+import './pass-card/barcode-loader.ts';
 import { installInputModality } from './lib/input-modality.ts';
 import { AppProviders } from './lib/providers.tsx';
 import { createQueryClient } from './lib/query-client.ts';

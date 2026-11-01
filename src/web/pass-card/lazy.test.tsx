@@ -7,7 +7,8 @@ import { assetUrlMap, CANDIDATE_ASSETS } from './assets.ts';
 import { getBarcodeEngine } from './barcode-engine.ts';
 import { PassCard } from './index.tsx';
 
-// No sync-barcode import here: the browser path loads bwip-js on demand.
+// No sync-barcode import here: the browser path loads the encoders on demand (vitest.setup.web.ts).
+
 const view = (extra = {}) =>
   normalize(generic, { assets, now: new Date('2026-10-31T12:00:00Z'), timeZone: 'UTC', ...extra });
 

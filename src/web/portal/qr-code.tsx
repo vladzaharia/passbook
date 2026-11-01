@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { loadBarcodeEngine } from '../pass-card/barcode-engine.ts';
 import { Skeleton } from '../ui/index.ts';
 import './portal.css';
 
@@ -14,10 +15,9 @@ export function QrCode({ value, label }: { value: string; label: string }) {
     let live = true;
     setSrc(undefined);
     setFailed(false);
-    import('bwip-js/generic')
-      .then((mod) => {
-        const bwip = (mod.default ?? mod) as unknown as { toSVG(opts: object): string };
-        const svg = bwip.toSVG({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });
+    loadBarcodeEngine()
+      .then((toSvg) => {
+        const svg = toSvg({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });
         if (live) setSrc(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
       })
       .catch(() => live && setFailed(true));

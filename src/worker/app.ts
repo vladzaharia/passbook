@@ -21,7 +21,7 @@ import { usersRoutes } from './modules/users/routes.ts';
 import { type AuthStores, denyAllStores } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
-import { handleError, notFoundHandler } from './platform/errors.ts';
+import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { securityHeaders } from './platform/security-headers.ts';
 
 const DEFAULT_BODY_BYTES = 256 * 1024;
