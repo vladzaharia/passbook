@@ -25,6 +25,8 @@ export interface FieldDef {
   required: boolean;
   /** Server-applied default, if the schema declares one. */
   hasDefault: boolean;
+  /** Label of the checkbox that omits an optional date-time (`x-noneLabel`). */
+  noneLabel: string;
   options?: { value: string; label: string }[] | undefined;
   schema: Record<string, unknown>;
 }
@@ -109,6 +111,7 @@ export function describeSchema(schema: unknown): FieldGroup[] {
       widget: widgetOf(def, type),
       type,
       required: required.has(key),
+      noneLabel: str(def['x-noneLabel']) ?? 'None',
       hasDefault: 'default' in def && def.default !== undefined,
       options: optionsOf(def),
       schema: def,

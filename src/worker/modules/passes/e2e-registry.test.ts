@@ -20,6 +20,7 @@ import { putPassAsset } from './asset-service.ts';
 import { createPassRow } from './create.ts';
 import { overrideDeps } from './deps.ts';
 import { getPass } from './repo.ts';
+import { updatePass } from './service.ts';
 import { expectValidZip, ICON_PNG } from './test-kit.ts';
 
 /** No fake registry: templates come from D1/R2 (uploaded) and the ASSETS binding (baked). */
@@ -75,6 +76,56 @@ describe('registry to pkpass', () => {
     await putPassAsset(ctx, actor, pass.id, 'icon.png', ICON_PNG, null);
     const republished = await checkStored(pass.id);
     expect(republished?.version).toBe(2);
+  });
+
+  it('drops expirationDate from the signed pass.json once the input is cleared', async () => {
+    const manifest = {
+      schema: 1,
+      name: 'Expiry E2E',
+      inputs: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', 'x-label': 'Name' },
+          expirationDate: {
+            type: 'string',
+            format: 'date-time',
+            'x-label': 'Expires',
+            'x-noneLabel': 'Never expires',
+          },
+        },
+      },
+      sample: { name: 'Alex' },
+      bindings: [
+        { to: { field: 'name' }, value: '{{name}}' },
+        { to: { pointer: '/expirationDate' }, value: '{{expirationDate}}', omitIfEmpty: true },
+      ],
+      display: { title: '{{name}}' },
+    };
+    const imported = await importZip(env, clock, {
+      orgId,
+      zip: zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest) })),
+      name: 'Expiry E2E',
+    });
+    const pass = await createPassRow(ctx, {
+      orgId,
+      templateId: imported.result?.templateId ?? '',
+      input: { name: 'Alex', expirationDate: '2030-01-01T00:00:00Z' },
+      source: 'manual',
+      actor,
+    });
+    const passJsonOf = async (id: string) => {
+      const row = await getPass(env.DB, id);
+      const object = await env.BUCKET.get(row?.objectKey ?? '');
+      const files = unzipSync(new Uint8Array((await object?.arrayBuffer()) ?? new ArrayBuffer(0)));
+      return JSON.parse(new TextDecoder().decode(files['pass.json'])) as Record<string, unknown>;
+    };
+    expect((await passJsonOf(pass.id)).expirationDate).toBe('2030-01-01T00:00:00Z');
+
+    await updatePass(ctx, actor, pass.id, { input: { expirationDate: null } }, { scope: null });
+    const after = await passJsonOf(pass.id);
+    expect(after).not.toHaveProperty('expirationDate');
+    expect(after.description).toBeDefined();
   });
 
   it('builds a pass from a baked template served by the ASSETS binding', async () => {
