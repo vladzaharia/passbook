@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
 import { cn } from '../lib/cn.ts';
+import { TOUCH_HIT } from './button.tsx';
 
 export interface Crumb {
   label: string;
@@ -20,7 +21,10 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
               {item.to && !last ? (
                 <Link
                   to={item.to as never}
-                  className="inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline"
+                  className={cn(
+                    'relative inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline',
+                    TOUCH_HIT,
+                  )}
                 >
                   {item.label}
                 </Link>

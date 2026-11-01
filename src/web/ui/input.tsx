@@ -8,10 +8,12 @@ import { cn } from '../lib/cn.ts';
  */
 export const CONTROL = [
   'w-full min-w-0 rounded-md border border-border-strong bg-(--wl-field) px-3 text-sm text-fg',
-  'placeholder:text-fg-subtle wl-colors hover:not-disabled:not-read-only:border-fg-muted',
+  'placeholder:text-fg-subtle wl-colors',
+  // Buttons (select and combobox triggers) match :read-only too; only text fields sink.
+  'hover:not-disabled:[&:not(:is(input,textarea):read-only)]:border-fg-muted',
   'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
   'disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-fg/50',
-  'read-only:bg-surface-sunken read-only:text-fg-muted',
+  '[&:is(input,textarea):read-only]:bg-surface-sunken [&:is(input,textarea):read-only]:text-fg-muted',
   'aria-[invalid=true]:border-danger pointer-coarse:text-base',
 ].join(' ');
 

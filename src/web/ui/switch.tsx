@@ -1,15 +1,17 @@
 import * as SwitchPrimitive from '@radix-ui/react-switch';
 import type { ComponentProps } from 'react';
 import { cn } from '../lib/cn.ts';
+import { TOUCH_HIT } from './button.tsx';
 
 export function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.Root>) {
   return (
     <SwitchPrimitive.Root
       className={cn(
-        'inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-border-strong bg-surface-sunken p-[3px] transition-[background-color,border-color] duration-(--wl-dur-hover)',
+        'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-border-strong bg-surface-sunken p-[3px] transition-[background-color,border-color] duration-(--wl-dur-hover)',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'data-[state=checked]:border-state-checked-edge data-[state=checked]:bg-state-checked-fill',
         'disabled:cursor-not-allowed disabled:opacity-50',
+        TOUCH_HIT,
         className,
       )}
       {...props}

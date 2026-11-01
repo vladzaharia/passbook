@@ -43,4 +43,10 @@ describe('kit lint', () => {
       expect(text, path).not.toMatch(/mt-\[/);
     }
   });
+
+  it('sinks only text fields when read-only (buttons match :read-only too)', () => {
+    for (const { path, text } of files) {
+      expect(text, path).not.toMatch(/(^|[\s'"`:])read-only:/);
+    }
+  });
 });
