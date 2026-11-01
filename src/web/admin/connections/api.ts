@@ -11,11 +11,12 @@ import {
   TestConnectionResponseSchema,
   type UpdateConnectionSchema,
 } from '@/shared/contracts/connections.ts';
-import { api } from '../../lib/api.ts';
+import { api, listQuery } from '../../lib/api.ts';
 
 export interface ConnectionFilters {
   orgId?: string | undefined;
   health?: string | undefined;
+  q?: string | undefined;
 }
 
 export const connectionKeys = {
@@ -26,15 +27,17 @@ export const connectionKeys = {
 };
 
 export function useConnections(filters: ConnectionFilters, enabled = true) {
-  return useQuery({
-    queryKey: connectionKeys.list(filters),
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/connections', ConnectionListSchema, {
-        query: { ...filters, limit: 200 },
-        signal,
-      }),
-    enabled,
-  });
+  return useQuery(
+    listQuery({
+      queryKey: connectionKeys.list(filters),
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        api.get('/api/v1/connections', ConnectionListSchema, {
+          query: { ...filters, limit: 200 },
+          signal,
+        }),
+      enabled,
+    }),
+  );
 }
 
 export function useConnection(id: string | undefined) {

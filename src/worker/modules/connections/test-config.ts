@@ -40,7 +40,7 @@ export function sampleFields(record: UpstreamRecord): { pointer: string; preview
 }
 
 /** The first record the source gives: the list's first page, else the test record. */
-async function firstRecord(
+export async function firstRecord(
   def: AnyConnector,
   cc: ConnectorContext<unknown, unknown>,
 ): Promise<UpstreamRecord | null> {

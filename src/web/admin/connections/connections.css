@@ -1,0 +1,28 @@
+/* The picked connector's glyph bounces once (240 ms). */
+@keyframes wl-glyph-bounce {
+  40% {
+    transform: translateY(-3px) scale(1.08);
+  }
+}
+/* An opening breaker pulses its icon once (600 ms). */
+@keyframes wl-breaker-pulse {
+  30% {
+    transform: scale(1.25);
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-glyph-bounce > svg {
+    animation: wl-glyph-bounce 240ms var(--wl-ease-bounce);
+  }
+  .wl-breaker-pulse {
+    animation: wl-breaker-pulse 600ms var(--wl-ease-out);
+  }
+  /* Test result: a pass pops, a fail shakes (kit keyframes). */
+  .wl-result[data-result="ok"] {
+    animation: wl-check 300ms var(--wl-ease-bounce);
+  }
+  .wl-result[data-result="fail"] {
+    animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+  }
+}

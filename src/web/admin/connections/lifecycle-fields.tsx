@@ -1,11 +1,21 @@
-import { FormField, Input, Select, SwitchRow } from '../../ui/index.ts';
-import { useTemplates } from '../templates/api.ts';
+import { CalendarClock, Combine, Hand, Layers, type LucideIcon, Radio } from 'lucide-react';
+import {
+  CheckboxField,
+  FormField,
+  Input,
+  NumberField,
+  OptionTile,
+  Select,
+  SwitchRow,
+} from '../../ui/index.ts';
 import { MODE_LABEL } from './labels.ts';
 
 export interface Lifecycle {
   mode: 'poll' | 'webhook' | 'hybrid' | 'manual' | 'snapshot';
-  intervalSeconds: string;
+  /** Whole minutes; blank uses the connector default. */
+  intervalMinutes: string;
   holderEmailField: string;
+  /** Chosen on the Mapping step or tab. */
   defaultTemplateId: string;
   autoCreate: boolean;
   autoEmail: boolean;
@@ -18,30 +28,36 @@ export interface ModeCapabilities {
   snapshot: boolean;
 }
 
-/** Modes the connector can run; always includes the current one so the select is never blank. */
+const MODE: Record<Lifecycle['mode'], { icon: LucideIcon; description: string }> = {
+  poll: { icon: CalendarClock, description: 'Checks the source on a schedule.' },
+  webhook: { icon: Radio, description: 'The source sends changes as they happen.' },
+  hybrid: { icon: Combine, description: 'Webhooks, plus a scheduled check.' },
+  manual: { icon: Hand, description: 'Runs only on Sync now.' },
+  snapshot: { icon: Layers, description: 'Reads the full list each run.' },
+};
+
+/** Modes the connector can run; always includes the current one. */
 export function modeOptions(
   caps: ModeCapabilities | undefined,
   current: Lifecycle['mode'],
-): { value: Lifecycle['mode']; label: string }[] {
-  const all: { value: Lifecycle['mode']; label: string; ok: boolean }[] = [
-    { value: 'poll', label: MODE_LABEL.poll, ok: !caps || caps.poll },
-    { value: 'webhook', label: MODE_LABEL.webhook, ok: !caps || caps.webhook },
-    { value: 'hybrid', label: MODE_LABEL.hybrid, ok: !caps || (caps.poll && caps.webhook) },
-    { value: 'manual', label: MODE_LABEL.manual, ok: true },
-    { value: 'snapshot', label: MODE_LABEL.snapshot, ok: Boolean(caps?.snapshot) },
-  ];
-  return all
-    .filter((o) => o.ok || o.value === current)
-    .map(({ value, label }) => ({ value, label }));
+): Lifecycle['mode'][] {
+  const ok: Record<Lifecycle['mode'], boolean> = {
+    poll: !caps || caps.poll,
+    webhook: !caps || caps.webhook,
+    hybrid: !caps || (caps.poll && caps.webhook),
+    manual: true,
+    snapshot: Boolean(caps?.snapshot),
+  };
+  return (Object.keys(ok) as Lifecycle['mode'][]).filter((m) => ok[m] || m === current);
 }
 
-export const NO_TEMPLATE = '__none__';
+export const scheduled = (mode: Lifecycle['mode']) => mode === 'poll' || mode === 'hybrid';
 
 export function lifecycleToPatch(l: Lifecycle) {
-  const interval = l.intervalSeconds.trim() ? Number(l.intervalSeconds) : undefined;
+  const minutes = l.intervalMinutes.trim() ? Number(l.intervalMinutes) : undefined;
   return {
     mode: l.mode,
-    ...(interval !== undefined ? { intervalSeconds: interval } : {}),
+    ...(minutes !== undefined && scheduled(l.mode) ? { intervalSeconds: minutes * 60 } : {}),
     ...(l.holderEmailField.trim() ? { holderEmailField: l.holderEmailField.trim() } : {}),
     ...(l.defaultTemplateId ? { defaultTemplateId: l.defaultTemplateId } : {}),
     autoCreate: l.autoCreate,
@@ -51,116 +67,126 @@ export function lifecycleToPatch(l: Lifecycle) {
 }
 
 export function lifecycleError(l: Lifecycle): string | undefined {
-  if (l.intervalSeconds.trim()) {
-    const n = Number(l.intervalSeconds);
-    if (!Number.isInteger(n) || n < 60)
-      return 'Interval must be a whole number of at least 60 seconds.';
+  if (scheduled(l.mode) && l.intervalMinutes.trim()) {
+    const n = Number(l.intervalMinutes);
+    if (!Number.isInteger(n) || n < 1) return 'Interval must be a whole number of minutes.';
   }
-  if (l.autoCreate && !l.defaultTemplateId) return 'Auto create needs a default template.';
+  if (l.autoCreate && !l.defaultTemplateId) return 'Choose a template on Mapping to create passes.';
   return undefined;
 }
 
+/** Mode tiles, the interval (scheduled modes only), holder email and what happens to passes. */
 export function LifecycleFields({
-  orgId,
   value,
   onChange,
   disabled,
   error,
   capabilities,
+  defaultMinutes,
+  variant = 'wizard',
 }: {
   capabilities?: ModeCapabilities | undefined;
-  orgId: string;
   value: Lifecycle;
   onChange: (next: Lifecycle) => void;
   disabled?: boolean;
   error?: string | undefined;
+  /** The connector's default, shown as the placeholder. */
+  defaultMinutes?: number | undefined;
+  /** Checkboxes in the wizard, switches for the saved settings. */
+  variant?: 'wizard' | 'settings';
 }) {
-  const templates = useTemplates({ orgId });
   const set = <K extends keyof Lifecycle>(key: K, v: Lifecycle[K]) =>
     onChange({ ...value, [key]: v });
+  const bool = (label: string, field: 'autoCreate' | 'autoEmail', help?: string) =>
+    variant === 'settings' ? (
+      <SwitchRow
+        label={label}
+        help={help}
+        disabled={disabled}
+        checked={value[field]}
+        onCheckedChange={(v) => set(field, v)}
+      />
+    ) : (
+      <CheckboxField
+        label={label}
+        disabled={disabled}
+        checked={value[field]}
+        onCheckedChange={(v) => set(field, v === true)}
+      />
+    );
   return (
-    <div className="grid gap-4">
-      <FormField label="Mode">
-        {(c) => (
-          <Select
-            {...c}
-            disabled={disabled}
-            value={value.mode}
-            onValueChange={(v) => set('mode', v as Lifecycle['mode'])}
-            options={modeOptions(capabilities, value.mode)}
-          />
-        )}
-      </FormField>
-      <FormField label="Interval (seconds)" help="Minimum 60.">
-        {(c) => (
-          <Input
-            {...c}
-            className="w-28"
-            type="number"
-            inputMode="numeric"
-            disabled={disabled}
-            value={value.intervalSeconds}
-            onChange={(e) => set('intervalSeconds', e.target.value)}
-          />
-        )}
-      </FormField>
-      <FormField label="Default template">
-        {(c) => (
-          <Select
-            {...c}
-            disabled={disabled}
-            value={value.defaultTemplateId || NO_TEMPLATE}
-            onValueChange={(v) => set('defaultTemplateId', v === NO_TEMPLATE ? '' : v)}
-            options={[
-              { value: NO_TEMPLATE, label: 'None' },
-              ...(templates.data?.items ?? []).map((t) => ({ value: t.id, label: t.name })),
-            ]}
-          />
-        )}
-      </FormField>
-      <FormField label="Holder email field" help="Upstream pointer for the holder email.">
-        {(c) => (
-          <Input
-            {...c}
-            disabled={disabled}
-            value={value.holderEmailField}
-            onChange={(e) => set('holderEmailField', e.target.value)}
-          />
-        )}
-      </FormField>
-      <SwitchRow
-        label="Create passes for new records"
-        disabled={disabled}
-        checked={value.autoCreate}
-        onCheckedChange={(v) => set('autoCreate', v)}
-      />
-      <SwitchRow
-        label="Email new passes"
-        help="Off by default so a first sync cannot mass-email."
-        disabled={disabled}
-        checked={value.autoEmail}
-        onCheckedChange={(v) => set('autoEmail', v)}
-      />
-      <FormField label="When a record is missing">
-        {(c) => (
-          <Select
-            {...c}
-            disabled={disabled}
-            value={value.onMissing}
-            onValueChange={(v) => set('onMissing', v as Lifecycle['onMissing'])}
-            options={[
-              { value: 'keep', label: 'Keep the pass' },
-              { value: 'flag', label: 'Flag the pass' },
-              { value: 'void', label: 'Void the pass' },
-            ]}
-          />
-        )}
-      </FormField>
-      {error ? (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+    <div className="flex min-w-0 flex-col gap-4">
+      <fieldset className="min-w-0">
+        <legend className="mb-2 text-sm font-medium text-fg">Mode</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {modeOptions(capabilities, value.mode).map((m) => (
+            <OptionTile
+              key={m}
+              name="connection-mode"
+              value={m}
+              label={MODE_LABEL[m]}
+              description={MODE[m].description}
+              icon={MODE[m].icon}
+              checked={value.mode === m}
+              disabled={disabled}
+              onSelect={(v) => set('mode', v as Lifecycle['mode'])}
+            />
+          ))}
+        </div>
+      </fieldset>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {scheduled(value.mode) ? (
+          <FormField label="Interval" help="Blank uses the connector default.">
+            {(c) => (
+              <NumberField
+                {...c}
+                unit="min"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                disabled={disabled}
+                placeholder={defaultMinutes ? String(defaultMinutes) : undefined}
+                value={value.intervalMinutes === '' ? null : Number(value.intervalMinutes)}
+                onValueChange={(n) => set('intervalMinutes', n === null ? '' : String(n))}
+              />
+            )}
+          </FormField>
+        ) : null}
+        <FormField label="Holder email" help="JSON pointer to the email in each record.">
+          {(c) => (
+            <Input
+              {...c}
+              className="font-mono"
+              placeholder="/email"
+              spellCheck={false}
+              autoCapitalize="off"
+              disabled={disabled}
+              value={value.holderEmailField}
+              onChange={(e) => set('holderEmailField', e.target.value)}
+            />
+          )}
+        </FormField>
+        <FormField label="When a record is missing">
+          {(c) => (
+            <Select
+              {...c}
+              disabled={disabled}
+              value={value.onMissing}
+              onValueChange={(v) => set('onMissing', v as Lifecycle['onMissing'])}
+              options={[
+                { value: 'keep', label: 'Keep the pass' },
+                { value: 'flag', label: 'Flag the pass' },
+                { value: 'void', label: 'Void the pass' },
+              ]}
+            />
+          )}
+        </FormField>
+      </div>
+      <div className="flex flex-col gap-2">
+        {bool('Create passes for new records', 'autoCreate')}
+        {bool('Email new passes', 'autoEmail', 'Off by default so a first sync cannot mass-email.')}
+      </div>
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
     </div>
   );
 }

@@ -161,11 +161,14 @@ export const UpdateConnectionSchema = CreateConnectionSchema.omit({
     maxConcurrency: z.number().int().min(1).max(20).nullable().optional(),
     requestsPerMinute: z.number().int().min(1).max(6000).nullable().optional(),
   });
+/** The first record the source returned, as JSON pointers and short previews. */
+export const SampleFieldSchema = z.object({ pointer: z.string(), preview: z.string() });
 export const TestConnectionResponseSchema = z.object({
   ok: z.boolean(),
   detail: z.string().optional(),
   errorCode: z.string().optional(),
   durationMs: z.number().int(),
+  sample: z.array(SampleFieldSchema).optional(),
 });
 /** Tests an unsaved configuration: nothing is stored; secrets are used once and dropped. */
 export const TestConfigSchema = z.object({
@@ -174,11 +177,7 @@ export const TestConfigSchema = z.object({
   config: z.record(z.string(), JsonSchema),
   secrets: z.record(z.string(), z.string().max(4096)).optional(),
 });
-/** The first record the source returned, as JSON pointers and short previews. */
-export const SampleFieldSchema = z.object({ pointer: z.string(), preview: z.string() });
-export const TestConfigResponseSchema = TestConnectionResponseSchema.extend({
-  sample: z.array(SampleFieldSchema).optional(),
-});
+export const TestConfigResponseSchema = TestConnectionResponseSchema;
 export const SyncNowResponseSchema = z.object({ runId: IdSchema, workflowInstanceId: z.string() });
 export const WebhookAckSchema = z.object({ accepted: z.literal(true) });
 
