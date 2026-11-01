@@ -28,6 +28,13 @@ export function modeLabel(mode: string): string {
   return (MODE_LABEL as Record<string, string>)[mode] ?? mode;
 }
 
+/** "Demo, poll"; drops the mode when the connector name already says it ("Webhook push"). */
+export function kindLabel(connector: string, mode: string): string {
+  return connector.toLowerCase().includes(mode.toLowerCase())
+    ? connector
+    : `${connector}, ${mode.toLowerCase()}`;
+}
+
 export const HEALTH_FILTERS = [
   ['healthy', 'Healthy'],
   ['degraded', 'Degraded'],

@@ -31,7 +31,7 @@ import { useConnection, useConnectionActions, useConnector, useConnectorNames } 
 import { ConfigTab } from './config-tab.tsx';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
-import { modeLabel } from './labels.ts';
+import { kindLabel, modeLabel } from './labels.ts';
 import {
   type Lifecycle,
   LifecycleFields,
@@ -226,9 +226,7 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
         meta={
           <>
             <HealthPill health={c.enabled ? c.health : 'disabled'} />
-            <span>
-              {connectorName(c.connectorType)}, {modeLabel(c.mode).toLowerCase()}
-            </span>
+            <span>{kindLabel(connectorName(c.connectorType), modeLabel(c.mode))}</span>
           </>
         }
         actions={
