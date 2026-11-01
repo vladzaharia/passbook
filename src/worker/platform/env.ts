@@ -5,6 +5,8 @@ export interface AppEnv extends Omit<Env, 'APNS'> {
    * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
    */
   APNS?: Fetcher;
+  /** SHA-256 of the break-glass token. Unset turns the route off. */
+  BREAKGLASS_TOKEN_SHA256?: string;
   /** Optional ceiling on the daily magic-link volume. */
   MAGIC_LINK_DAILY_CAP?: string;
   /** Optional chain override; defaults to the bundled WWDR G4. */
@@ -13,14 +15,25 @@ export interface AppEnv extends Omit<Env, 'APNS'> {
   KEK_V3?: string;
 }
 
-export type RateLimitName =
-  | 'RL_LOGIN'
-  | 'RL_MAGIC_LINK'
-  | 'RL_PUBLIC'
-  | 'RL_APPLE'
-  | 'RL_API_KEY'
-  | 'RL_WEBHOOK'
-  | 'RL_REFRESH';
+/** Binding names come from the generated Env, so renaming a ratelimits entry fails typecheck. */
+export type RateLimitName = { [K in keyof Env]: Env[K] extends RateLimit ? K : never }[keyof Env];
+
+export const RATE_LIMITS = [
+  'RL_LOGIN',
+  'RL_MAGIC_LINK',
+  'RL_PUBLIC',
+  'RL_APPLE',
+  'RL_API_KEY',
+  'RL_WEBHOOK',
+  'RL_REFRESH',
+] as const satisfies readonly RateLimitName[];
+
+/** Fails to compile when a ratelimits binding is missing from RATE_LIMITS. */
+export const RATE_LIMITS_COVER_ALL: [Exclude<RateLimitName, (typeof RATE_LIMITS)[number]>] extends [
+  never,
+]
+  ? true
+  : never = true;
 
 /** Reads a string secret or var that is not part of the generated `Env` (e.g. SIGNER_<PREFIX>_*). */
 export function envString(env: object, name: string): string | undefined {

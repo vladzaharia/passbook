@@ -5,6 +5,19 @@ import type {
 } from '../../src/worker/modules/delivery/apns.ts';
 import type { Mailer, MailMessage } from '../../src/worker/modules/delivery/mailer.ts';
 
+/** Rate-limit binding that counts by key and refuses past `limit` calls per key. */
+export function fakeRateLimiter(options: { limit: number }) {
+  const counts = new Map<string, number>();
+  return {
+    counts,
+    async limit({ key }: { key: string }) {
+      const n = (counts.get(key) ?? 0) + 1;
+      counts.set(key, n);
+      return { success: n <= options.limit };
+    },
+  } as unknown as RateLimit & { counts: Map<string, number> };
+}
+
 export interface FakeApns extends ApnsTransport {
   sent: { target: ApnsTarget; token: string }[];
   /** token -> result override. Default is 200. */

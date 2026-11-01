@@ -2,16 +2,29 @@ import type { Context, MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from './context.ts';
 import type { AppEnv, RateLimitName } from './env.ts';
-import { RateLimitedError } from './errors.ts';
+import { RateLimitedError, UnavailableError } from './errors.ts';
+import { createLogger } from './log.ts';
 
-/** True when the request may proceed. A missing binding allows the request. */
+const warned = new Set<string>();
+
+export function resetRateLimitWarnings(): void {
+  warned.clear();
+}
+
+/** True when the request may proceed. A missing binding fails closed with a 503. */
 export async function checkRateLimit(
   env: AppEnv,
   name: RateLimitName,
   key: string,
 ): Promise<boolean> {
-  const limiter = (env as unknown as Partial<Record<RateLimitName, RateLimit>>)[name];
-  if (!limiter) return true;
+  const limiter = env[name] as RateLimit | undefined;
+  if (typeof limiter?.limit !== 'function') {
+    if (!warned.has(name)) {
+      warned.add(name);
+      createLogger().error('ratelimit.binding_missing', { code: 'RATE_LIMIT_UNAVAILABLE', name });
+    }
+    throw new UnavailableError('Try again shortly.', 'RATE_LIMIT_UNAVAILABLE');
+  }
   const { success } = await limiter.limit({ key });
   return success;
 }

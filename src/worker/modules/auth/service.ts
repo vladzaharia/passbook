@@ -290,5 +290,14 @@ export async function signInBreakglass(
   if (!user || user.status !== 'active') {
     throw new ForbiddenError('Break-glass sign-in is disabled.', 'BREAKGLASS_DISABLED');
   }
-  return startSession(ctx, user.id, ['admin', 'user'], 'breakglass', user.name, sign);
+  const result = await startSession(ctx, user.id, ['admin', 'user'], 'breakglass', user.name, sign);
+  await recordAudit(ctx, {
+    actorType: 'user',
+    actorId: user.id,
+    action: 'auth.breakglass_used',
+    targetType: 'user',
+    targetId: user.id,
+    ipPrefix: sign.ipPrefix,
+  });
+  return result;
 }

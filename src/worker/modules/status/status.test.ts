@@ -139,6 +139,18 @@ describe('status components', () => {
     expect(find(t, 'oidc')?.state).toBe('not_configured');
   });
 
+  it('fails the ratelimits component and names a missing binding', async () => {
+    const ok = await status();
+    expect(find(ok, 'ratelimits')?.state).toBe('verified');
+    clearStatusCache(env.DB);
+    const s = await status({ RL_APPLE: undefined } as unknown as Partial<AppEnv>);
+    expect(find(s, 'ratelimits')).toMatchObject({
+      state: 'failing',
+      data: { RL_APPLE: 'missing', RL_LOGIN: 'present' },
+    });
+    expect(find(s, 'ratelimits')?.detail).toContain('RL_APPLE');
+  });
+
   it('marks oidc degraded while email trust is on', async () => {
     await run(
       env.DB,

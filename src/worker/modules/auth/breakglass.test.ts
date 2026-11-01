@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { clearStatusCache, getStatus } from '../status/service.ts';
 import { fakeLimiter, harness, type Jar, type TestHarness } from './test-support.ts';
 
 const TOKEN = 'wbg_test-token-0123456789abcdefghijklmnopqrstuv';
@@ -139,5 +141,90 @@ describe('break-glass sign-in', () => {
     expect(safe.headers.get('location')).toBe('/admin/status');
     const unsafe = await submit(TOKEN, new Map(), { next: '//evil.example' });
     expect(unsafe.headers.get('location')).toBe('/admin');
+  });
+});
+
+describe('break-glass audit and status', () => {
+  const failures = () =>
+    all<{ ip_prefix: string | null; detail: string }>(
+      h.env.DB,
+      "SELECT ip_prefix, detail FROM audit_log WHERE action = 'auth.breakglass_failed'",
+    );
+  const component = async () => {
+    const ctx = createServiceContext(h.env, { clock: h.clock });
+    const status = await getStatus(ctx);
+    return status.components.find((c) => c.id === 'breakglass');
+  };
+  const clean = async () => {
+    await run(h.env.DB, "DELETE FROM audit_log WHERE action LIKE 'auth.breakglass%'");
+    await run(h.env.DB, "DELETE FROM counters WHERE key LIKE '%breakglass%'");
+  };
+
+  it('audits a wrong token with the network and no token text', async () => {
+    h = await enabled();
+    await clean();
+    const res = await h.call('/auth/breakglass', {
+      method: 'POST',
+      body: new URLSearchParams({ token: 'wbg_secret-guess' }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'cf-connecting-ip': '203.0.113.5',
+      },
+    });
+    expect(res.status).toBe(401);
+    const rows = await failures();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.ip_prefix).toBe('203.0.113.0/24');
+    expect(rows[0]?.detail).not.toContain('wbg_secret-guess');
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({ reason: 'wrong_token' });
+  });
+
+  it('stops writing rows after 100 failures in an hour', async () => {
+    h = await enabled();
+    await clean();
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      "INSERT INTO counters (key, window_start, count) VALUES ('audit:breakglass_failed', ?, 100)",
+      [now - (now % 3_600_000)],
+    );
+    expect((await submit('wbg_wrong')).status).toBe(401);
+    expect(await failures()).toHaveLength(0);
+    const day = await first<{ count: number }>(
+      h.env.DB,
+      "SELECT count FROM counters WHERE key = 'breakglass:fail'",
+    );
+    expect(day?.count).toBe(1);
+  });
+
+  it('audits a success as auth.breakglass_used against the break-glass user', async () => {
+    h = await enabled();
+    await clean();
+    expect((await submit(TOKEN)).status).toBe(302);
+    const rows = await all<{ target_type: string; target_id: string; ip_prefix: string | null }>(
+      h.env.DB,
+      "SELECT target_type, target_id, ip_prefix FROM audit_log WHERE action = 'auth.breakglass_used'",
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.target_type).toBe('user');
+    expect(rows[0]?.target_id).toBeTruthy();
+  });
+
+  it('shows in status: not configured, last use, then degraded after a failure', async () => {
+    h = await harness();
+    await clean();
+    expect((await component())?.state).toBe('not_configured');
+    h.restore();
+    h = await enabled();
+    clearStatusCache(h.env.DB);
+    await submit(TOKEN);
+    clearStatusCache(h.env.DB);
+    const used = await component();
+    expect(used?.state).toBe('configured');
+    expect(used?.data?.lastUsedAt).toBe(h.clock.now());
+    await submit('wbg_wrong');
+    clearStatusCache(h.env.DB);
+    expect(await component()).toMatchObject({ state: 'degraded', data: { failuresToday: 1 } });
+    await clean();
   });
 });
