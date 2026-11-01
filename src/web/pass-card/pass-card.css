@@ -68,14 +68,11 @@
   object-fit: contain;
 }
 .pc-logo-text {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
   margin-inline-end: calc(var(--u) * 6);
-  overflow: hidden;
   font-size: calc(var(--u) * 15);
   font-weight: 600;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .pc-row {
@@ -84,11 +81,10 @@
   gap: calc(var(--u) * 6) calc(var(--u) * 14);
   justify-content: space-between;
 }
-/* Header fields keep their words whole, as in Wallet; the logo gives way first. */
+/* Header fields wrap between words, never inside one; the logo image gives way first. */
 .pc-header {
-  flex: 0 0 auto;
-  max-width: 72%;
-  min-width: 0;
+  flex: 0 1 auto;
+  min-width: min-content;
   justify-content: flex-end;
   flex-wrap: nowrap;
   gap: calc(var(--u) * 12);
@@ -113,13 +109,12 @@
 }
 .pc-header .pc-field {
   flex: 0 1 auto;
-  white-space: nowrap;
+  min-width: min-content;
+  white-space: normal;
 }
 .pc-header .pc-label,
 .pc-header .pc-value {
-  overflow: hidden;
   overflow-wrap: normal;
-  text-overflow: ellipsis;
 }
 .pc-label {
   font-size: calc(var(--u) * 10);
