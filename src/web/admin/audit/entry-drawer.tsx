@@ -9,7 +9,7 @@ import { RefChip } from './ref-chip.tsx';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
 
-/** The one place raw codes show: the action code under the title, the request id below. */
+/** The one place raw codes show: the action code under the label, the request id below. */
 export function EntryDrawer({
   entry,
   orgName,
@@ -23,10 +23,22 @@ export function EntryDrawer({
   const target = entry ? targetRef(entry) : undefined;
   return (
     <Sheet open={entry !== undefined} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent title={entry ? actionLabel(entry.action) : 'Audit entry'} className="w-96">
+      <SheetContent
+        title={entry ? actionLabel(entry.action) : 'Audit entry'}
+        className="w-96"
+        header={
+          entry ? (
+            <div className="min-w-0">
+              <p aria-hidden className="truncate text-sm font-semibold text-fg-strong">
+                {actionLabel(entry.action)}
+              </p>
+              <code className="font-mono text-xs text-fg-muted">{entry.action}</code>
+            </div>
+          ) : undefined
+        }
+      >
         {entry ? (
-          <div className="flex flex-col gap-5 overflow-y-auto p-4 pt-0">
-            <code className="font-mono text-xs text-fg-muted">{entry.action}</code>
+          <div className="flex flex-col gap-5 overflow-y-auto p-4">
             <KeyValue
               items={[
                 { label: 'Time', value: formatDateTime(entry.at) },

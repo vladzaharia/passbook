@@ -46,19 +46,21 @@ function Picked({
   const id = useId();
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-        {children(id)}
+      <div className="flex min-h-6 items-center justify-between gap-2">
+        <Label htmlFor={id}>{label}</Label>
         {set ? (
-          <IconButton
-            label={`Clear ${label.toLowerCase()}`}
-            icon={<X aria-hidden />}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-my-1 min-h-6 px-2"
+            aria-label={`Clear ${label.toLowerCase()}`}
             onClick={onClear}
-          />
-        ) : (
-          <span className="size-9" />
-        )}
+          >
+            Clear
+          </Button>
+        ) : null}
       </div>
+      {children(id)}
     </div>
   );
 }

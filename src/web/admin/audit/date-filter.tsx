@@ -54,8 +54,8 @@ export function DateFilter({
         </span>
         <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
       </PopoverTrigger>
-      <PopoverContent align="start" className="flex w-72 flex-col gap-4">
-        <div className="grid grid-cols-4 gap-1">
+      <PopoverContent align="start" className="flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-4">
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
           {QUICK.map((q) => (
             <Button
               key={q.value}
@@ -68,7 +68,7 @@ export function DateFilter({
             </Button>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor={`${id}-from`}>From</Label>
             <Input
