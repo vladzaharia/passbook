@@ -14,5 +14,5 @@
     "test",
     "worker-configuration.d.ts"
   ],
-  "exclude": ["test/mock-oidc/server.ts", "test/e2e", "src/web/pass-card/**/*.test.tsx"]
+  "exclude": ["test/mock-oidc/server.ts", "src/web/pass-card/**/*.test.tsx"]
 }
