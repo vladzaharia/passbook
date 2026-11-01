@@ -206,6 +206,7 @@ export function SettingsForm({ scope, fields }: SettingsFormProps) {
       <SaveBar
         dirty={dirty}
         saving={save.isPending}
+        paused={save.isPaused}
         onSave={() => void onSave()}
         onDiscard={() => {
           setEdits({});

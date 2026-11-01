@@ -8,6 +8,8 @@ import { Button } from './button.tsx';
 export interface SaveBarProps {
   dirty: boolean;
   saving?: boolean;
+  /** The save mutation is waiting for the network (TanStack paused it offline). */
+  paused?: boolean;
   onSave: () => void;
   onDiscard: () => void;
   saveLabel?: string;
@@ -19,27 +21,38 @@ type Phase = 'hidden' | 'shown' | 'saved' | 'closing';
  * Appears while there are unsaved changes. After a save the Save icon turns into a check for
  * 400 ms, then the bar slides down (200 ms); Discard leaves at once. It stays mounted while closing.
  */
-export function SaveBar({ dirty, saving, onSave, onDiscard, saveLabel = 'Save' }: SaveBarProps) {
+export function SaveBar({
+  dirty,
+  saving,
+  paused,
+  onSave,
+  onDiscard,
+  saveLabel = 'Save',
+}: SaveBarProps) {
   const [phase, setPhase] = useState<Phase>(dirty ? 'shown' : 'hidden');
   const wasSaving = useRef(false);
-  if (saving) wasSaving.current = true;
   useEffect(() => {
+    if (saving) wasSaving.current = true;
     if (dirty) {
       setPhase('shown');
-      return;
+      if (saving || !wasSaving.current) return;
+      // Still dirty after a save: it failed, or the form resets on the next render. Give it a beat.
+      const t = setTimeout(() => {
+        wasSaving.current = false;
+      }, 500);
+      return () => clearTimeout(t);
     }
-    if (phase !== 'shown' || saving) return;
-    const saved = wasSaving.current && !saving;
+    if (saving) return;
+    const saved = wasSaving.current;
     wasSaving.current = false;
-    const leave = () => setPhase(prefersReducedMotion() ? 'hidden' : 'closing');
-    if (!saved) {
-      setPhase('hidden');
-      return;
-    }
-    setPhase('saved');
-    const t = setTimeout(leave, 400);
+    setPhase((p) => (p === 'shown' && saved ? 'saved' : p === 'shown' ? 'hidden' : p));
+    return undefined;
+  }, [dirty, saving]);
+  useEffect(() => {
+    if (phase !== 'saved') return;
+    const t = setTimeout(() => setPhase(prefersReducedMotion() ? 'hidden' : 'closing'), 400);
     return () => clearTimeout(t);
-  }, [dirty, saving, phase]);
+  }, [phase]);
   if (phase === 'hidden') return null;
   const done = phase === 'saved' || phase === 'closing';
   return (
@@ -56,11 +69,12 @@ export function SaveBar({ dirty, saving, onSave, onDiscard, saveLabel = 'Save' }
           {done ? 'Saved' : 'Unsaved changes'}
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" disabled={saving || done} onClick={onDiscard}>
+          <Button variant="outline" disabled={saving || paused || done} onClick={onDiscard}>
             Discard
           </Button>
           <Button
-            loading={saving}
+            loading={saving && !paused}
+            paused={paused}
             disabled={done}
             iconStart={done ? <Check aria-hidden className="wl-check" /> : <Save aria-hidden />}
             onClick={onSave}
