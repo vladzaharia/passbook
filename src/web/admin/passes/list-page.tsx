@@ -211,6 +211,7 @@ export function PassesListPage({
             data={rows}
             getRowId={(r) => r.id}
             loading={list.isPending}
+            fetching={list.isFetching && !list.isFetchingNextPage}
             virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
             rowHeight={56}
             empty={

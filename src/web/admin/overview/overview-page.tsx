@@ -15,6 +15,7 @@ import {
   PageHeader,
   Select,
   Skeleton,
+  SkeletonChartCard,
   SkeletonRows,
   StatusPill,
   Timeline,
@@ -181,13 +182,23 @@ export function OverviewPage({
       <PageHeader title="Overview" actions={picker} />
       <div className="flex flex-col gap-6">
         {metrics.isPending ? (
-          <div role="status" aria-busy className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <span className="sr-only">Loading metrics</span>
-            {Array.from({ length: 8 }, (_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
-              <Skeleton key={i} className="h-20" />
-            ))}
-          </div>
+          <>
+            <div role="status" aria-busy className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <span className="sr-only">Loading metrics</span>
+              {Array.from({ length: 8 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
+                <Skeleton key={i} className="h-[5.625rem]" />
+              ))}
+            </div>
+            <Card>
+              <CardHeader title="Activity" />
+              <CardBody className="grid gap-6 md:grid-cols-2">
+                {['Issued', 'Updated', 'Downloads', 'Pushes'].map((t) => (
+                  <SkeletonChartCard key={t} label={`Loading ${t.toLowerCase()}`} />
+                ))}
+              </CardBody>
+            </Card>
+          </>
         ) : metrics.isError ? (
           <ErrorState error={metrics.error} onRetry={() => metrics.refetch()} />
         ) : (

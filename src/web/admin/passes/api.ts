@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { z } from 'zod';
 import { AuditListSchema } from '@/shared/contracts/audit.ts';
 import { OkSchema } from '@/shared/contracts/common.ts';
@@ -49,6 +55,8 @@ export function usePassList(filters: PassFilters) {
         signal,
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    // A filter change keeps the old rows on screen; DataTable dims them and runs the rail.
+    placeholderData: keepPreviousData,
   });
 }
 
