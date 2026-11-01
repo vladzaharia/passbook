@@ -60,15 +60,14 @@ export function EntityAvatar({ kind, id, name, accent, size = 24, className }: E
     return (
       <span
         aria-hidden
+        data-initials={initialsOf(name)}
         style={{ background: `oklch(0.5 0.11 ${hueOf(id)})` } as CSSProperties}
         className={cn(
-          'inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold text-white',
+          'inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold text-white after:content-[attr(data-initials)]',
           SIZE[size],
           className,
         )}
-      >
-        {initialsOf(name)}
-      </span>
+      />
     );
   }
   const own = accent && /^#[\da-f]{6}$/i.test(accent) ? accent : undefined;
@@ -82,13 +81,12 @@ export function EntityAvatar({ kind, id, name, accent, size = 24, className }: E
       )}
     >
       <span
+        data-initials={initialsOf(name).slice(0, size === 24 ? 1 : 2)}
         style={
           (own ? { background: own, color: onColor(own) } : undefined) as CSSProperties | undefined
         }
-        className="inline-flex size-full select-none items-center justify-center rounded-[5px] bg-(--wl-org-fallback) font-semibold text-white"
-      >
-        {initialsOf(name).slice(0, size === 24 ? 1 : 2)}
-      </span>
+        className="inline-flex size-full select-none items-center justify-center rounded-[5px] bg-(--wl-org-fallback) font-semibold text-white after:content-[attr(data-initials)]"
+      />
     </span>
   );
 }
