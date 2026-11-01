@@ -49,6 +49,7 @@ export interface PassPatch {
   templateVersion?: string;
   externalId?: string | null;
   resetToConnection?: string[];
+  notify?: boolean;
 }
 
 /** `null` values in `input` remove the field. Changed fields become `manual`. */
@@ -66,6 +67,7 @@ export async function updatePass(
     cause: causeOf(actor),
     actor,
     ...(options.ifMatch !== undefined ? { expectedVersion: options.ifMatch } : {}),
+    notify: patch.notify === true,
     mutate: (current): Mutation => {
       changedKeys.length = 0;
       const personalization: Personalization = { ...current.personalization };

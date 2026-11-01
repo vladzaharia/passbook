@@ -1,5 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import { all, first, likeEscape, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 
 export type PassStatus = 'active' | 'voided';
 export type FieldSources = Record<string, 'manual' | 'connection'>;
@@ -45,9 +45,13 @@ export interface Pass {
   contentHash: string | null;
   deletedAt: number | null;
   createdAt: number;
+  /** Registered devices; 0 when the query did not count them. */
+  deviceCount: number;
+  /** The org's slug, for download file names; null when the query did not join it. */
+  orgSlug: string | null;
 }
 
-interface PassDbRow {
+export interface PassDbRow {
   id: string;
   org_id: string;
   identity_id: string;
@@ -80,7 +84,14 @@ interface PassDbRow {
   content_hash: string | null;
   deleted_at: number | null;
   created_at: number;
+  device_count?: number;
+  org_slug?: string | null;
 }
+
+/** Every pass column plus its registered-device count (registrations_pass index). */
+export const PASS_SELECT = `SELECT *,
+  (SELECT count(*) FROM registrations r WHERE r.pass_id = passes.id) AS device_count,
+  (SELECT slug FROM orgs o WHERE o.id = passes.org_id) AS org_slug FROM passes`;
 
 export function mapPass(row: PassDbRow): Pass {
   return {
@@ -116,6 +127,8 @@ export function mapPass(row: PassDbRow): Pass {
     contentHash: row.content_hash,
     deletedAt: row.deleted_at,
     createdAt: row.created_at,
+    deviceCount: row.device_count ?? 0,
+    orgSlug: row.org_slug ?? null,
   };
 }
 
@@ -127,7 +140,7 @@ export async function getPass(
 ): Promise<Pass | null> {
   const row = await first<PassDbRow>(
     db,
-    'SELECT * FROM passes WHERE id = ? AND (? IS NULL OR org_id = ?) AND deleted_at IS NULL',
+    `${PASS_SELECT} WHERE id = ? AND (? IS NULL OR org_id = ?) AND deleted_at IS NULL`,
     [id, orgScope, orgScope],
   );
   return row ? mapPass(row) : null;
@@ -136,7 +149,7 @@ export async function getPass(
 export async function getPassByDownloadToken(db: D1Database, token: string): Promise<Pass | null> {
   const row = await first<PassDbRow>(
     db,
-    'SELECT * FROM passes WHERE download_token = ? AND deleted_at IS NULL',
+    `${PASS_SELECT} WHERE download_token = ? AND deleted_at IS NULL`,
     [token],
   );
   return row ? mapPass(row) : null;
@@ -148,70 +161,11 @@ export async function getPassBySerial(
   identityId: string,
   serial: string,
 ): Promise<Pass | null> {
-  const row = await first<PassDbRow>(
-    db,
-    'SELECT * FROM passes WHERE identity_id = ? AND serial = ?',
-    [identityId, serial],
-  );
+  const row = await first<PassDbRow>(db, `${PASS_SELECT} WHERE identity_id = ? AND serial = ?`, [
+    identityId,
+    serial,
+  ]);
   return row ? mapPass(row) : null;
-}
-
-export interface PassListFilter {
-  orgId?: string | null;
-  templateId?: string;
-  connectionId?: string;
-  status?: PassStatus;
-  holderEmail?: string;
-  holderState?: 'unassigned' | 'waiting' | 'owned';
-  q?: string;
-  cursor?: string;
-  limit: number;
-}
-
-const HOLDER_STATE_SQL = {
-  unassigned: 'holder_email IS NULL AND owner_user_id IS NULL',
-  waiting: 'holder_email IS NOT NULL AND owner_user_id IS NULL',
-  owned: 'owner_user_id IS NOT NULL',
-} as const;
-
-/** Newest first by id (UUIDv7). Search is prefix-only on display fields, exact on serial. */
-export async function listPasses(
-  db: D1Database,
-  filter: PassListFilter,
-): Promise<{ items: Pass[]; nextCursor: string | null }> {
-  const where: string[] = ['deleted_at IS NULL'];
-  const params: (string | number)[] = [];
-  const add = (sql: string, ...values: (string | number)[]) => {
-    where.push(sql);
-    params.push(...values);
-  };
-  if (filter.orgId) add('org_id = ?', filter.orgId);
-  if (filter.templateId) add('template_id = ?', filter.templateId);
-  if (filter.connectionId) add('connection_id = ?', filter.connectionId);
-  if (filter.status) add('status = ?', filter.status);
-  if (filter.holderEmail) add('holder_email = ?', filter.holderEmail);
-  if (filter.holderState) where.push(HOLDER_STATE_SQL[filter.holderState]);
-  if (filter.cursor) add('id < ?', filter.cursor);
-  const q = filter.q?.trim();
-  if (q) {
-    const prefix = `${likeEscape(q)}%`;
-    add(
-      "(display_title LIKE ? ESCAPE '\\' OR display_subtitle LIKE ? ESCAPE '\\' OR external_id LIKE ? ESCAPE '\\' OR holder_email LIKE ? ESCAPE '\\' OR serial = ?)",
-      prefix,
-      prefix,
-      prefix,
-      prefix,
-      q,
-    );
-  }
-  const rows = await all<PassDbRow>(
-    db,
-    `SELECT * FROM passes WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
-    [...params, filter.limit + 1],
-  );
-  const page = rows.slice(0, filter.limit).map(mapPass);
-  const last = page.at(-1);
-  return { items: page, nextCursor: rows.length > filter.limit && last ? last.id : null };
 }
 
 /** Latest recorded pass.json. Metadata-only edits bump `version` without a new row, so no exact match. */
@@ -257,19 +211,43 @@ export async function countRegistrations(db: D1Database, passId: string): Promis
   return row?.n ?? 0;
 }
 
-export async function getOrg(
-  db: D1Database,
-  orgId: string,
-): Promise<{ id: string; name: string; status: string; defaultIdentityId: string | null } | null> {
+export interface PassOrg {
+  id: string;
+  slug: string;
+  name: string;
+  status: string;
+  defaultIdentityId: string | null;
+  /** Raw branding JSON; read it with readBranding. */
+  branding: unknown;
+}
+
+export async function getOrg(db: D1Database, orgId: string): Promise<PassOrg | null> {
   const row = await first<{
     id: string;
+    slug: string;
     name: string;
     status: string;
     default_identity_id: string | null;
-  }>(db, 'SELECT id, name, status, default_identity_id FROM orgs WHERE id = ?', [orgId]);
-  return row
-    ? { id: row.id, name: row.name, status: row.status, defaultIdentityId: row.default_identity_id }
-    : null;
+    branding: string | null;
+  }>(db, 'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?', [
+    orgId,
+  ]);
+  if (!row) return null;
+  let branding: unknown = {};
+  try {
+    branding = JSON.parse(row.branding ?? '{}');
+  } catch {
+    // The column has a json_valid CHECK; a bad value means no branding, never a failed build.
+    branding = {};
+  }
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    status: row.status,
+    defaultIdentityId: row.default_identity_id,
+    branding,
+  };
 }
 
 export async function connectionInOrg(
@@ -353,6 +331,8 @@ export async function pendingPushId(db: D1Database, passId: string): Promise<str
   return row?.id ?? null;
 }
 
+export * from './repo-devices.ts';
 export * from './repo-history.ts';
+export * from './repo-list.ts';
 export * from './repo-ops.ts';
 export * from './repo-write.ts';

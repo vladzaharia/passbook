@@ -7,6 +7,8 @@ import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
+import { brandingWarnings, readBranding, tenantPassJson } from './branding.ts';
+import { applyChangeMessages } from './change-messages.ts';
 import { depsOf } from './deps.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
 
@@ -23,6 +25,13 @@ export interface BuildRequest {
   templateVersion?: string;
   personalization: Personalization;
   status: PassStatus;
+  /** Raw `orgs.branding`; colours, logo and icon replace the template's (readBranding). */
+  branding?: unknown;
+  /**
+   * An editor's save: without `notify` no field carries a changeMessage; with it only fields whose
+   * value differs from `previous` do. Omitted (syncs, upgrades), the template's messages stay.
+   */
+  changeMessages?: { previous: PassJson | null; notify: boolean };
 }
 
 export interface Artifact {
@@ -129,17 +138,25 @@ export function displayOf(
   };
 }
 
+/** Org branding fills the slots a per-pass override leaves; overrides win. */
+function brandedOverrides(overrides: AssetRow[], branding: AssetRow[]): AssetRow[] {
+  if (branding.length === 0) return overrides;
+  const taken = replacedBy(overrides.map((a) => a.name));
+  return [...overrides, ...branding.filter((b) => !taken(b.name))];
+}
+
 /** Resolves, builds, signs and packages one pass. Does not touch R2 or D1 state. */
 export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Promise<Artifact> {
   const deps = depsOf(ctx.env);
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
   const identity = await deps.identities.byId(req.identityId);
-  const overrides = await listAssets(ctx.env.DB, req.passId);
+  const branding = readBranding(req.branding);
+  const passOverrides = await listAssets(ctx.env.DB, req.passId);
   const { template, registry } = await withOverrides(
-    resolved,
+    { ...resolved, passJson: tenantPassJson(resolved.passJson, req.orgName, branding) },
     deps.registry,
     ctx.env.BUCKET,
-    overrides,
+    brandedOverrides(passOverrides, branding.images),
   );
   const now = new Date(ctx.clock.now());
   try {
@@ -159,8 +176,16 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       now,
     });
     let { signed } = built;
+    let resign = false;
     if (req.status === 'voided' && built.passJson.voided !== true) {
       built.passJson.voided = true;
+      resign = true;
+    }
+    if (req.changeMessages) {
+      const { previous, notify } = req.changeMessages;
+      resign = applyChangeMessages(built.passJson, previous, notify) || resign;
+    }
+    if (resign) {
       const {
         'pass.json': _pass,
         'manifest.json': _manifest,
@@ -179,7 +204,14 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       title: display.title,
       subtitle: display.subtitle,
       contentHash: built.contentHash,
-      warnings: built.report.issues.filter((i) => i.severity === 'warning'),
+      warnings: [
+        ...built.report.issues.filter((i) => i.severity === 'warning'),
+        ...brandingWarnings(
+          req.templateId,
+          branding,
+          passOverrides.map((a) => a.name),
+        ),
+      ],
     };
   } catch (error) {
     if (error instanceof PassBuildError) {

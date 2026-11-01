@@ -80,6 +80,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
   const artifact = await buildArtifact(ctx, {
     orgId: p.orgId,
     orgName: org.name,
+    branding: org.branding,
     passId: id,
     serial,
     authToken,
