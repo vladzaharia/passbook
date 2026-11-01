@@ -6,7 +6,7 @@ import type { AuditSearch } from './audit-search.ts';
 export type AuditQuery = Omit<AuditSearch, 'entry'> & { excludeAction?: string | undefined };
 
 /** Filters change the key; the old rows stay on screen while the new ones load. */
-export function useAuditLog(filters: AuditQuery, limit = 50) {
+export function useAuditLog(filters: AuditQuery, limit = 50, staleTime?: number) {
   return useInfiniteQuery({
     queryKey: ['audit', filters, limit],
     initialPageParam: undefined as string | undefined,
@@ -17,5 +17,6 @@ export function useAuditLog(filters: AuditQuery, limit = 50) {
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     placeholderData: keepPreviousData,
+    ...(staleTime === undefined ? {} : { staleTime }),
   });
 }

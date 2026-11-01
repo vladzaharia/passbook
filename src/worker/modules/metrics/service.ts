@@ -164,7 +164,9 @@ export async function getOverview(
   const byKey = cache.get(ctx.env.DB) ?? new Map();
   cache.set(ctx.env.DB, byKey);
   const hit = byKey.get(key);
-  if (hit && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.value;
+  // A new platform skips the cache so the checklist ticks at once; its tables are tiny then.
+  const settled = hit && hit.value.setup.passEmailsSent > 0;
+  if (hit && settled && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.value;
 
   const scope: repo.Scope = { orgId: query.orgId, templateId: query.templateId };
   const range = RANGES[query.range];

@@ -137,9 +137,15 @@ describe('metrics from D1', () => {
     expect((await getOverview(ctx, { orgId: org.id, range: '7d' })).totals.issued).toBe(1);
   });
 
-  it('caches briefly', async () => {
+  it('caches briefly once the platform is set up', async () => {
     const { clock, f, ctx } = setup();
     const { org } = await orgWithPasses(f, 1);
+    // A pass email went out: past first run, so the short cache applies.
+    await run(
+      env.DB,
+      "INSERT INTO outbox (id, org_id, kind, state, created_at) VALUES (?, ?, 'email', 'sent', ?)",
+      [f.ids.id(), org.id, clock.now()],
+    );
     const first = await getOverview(ctx, { orgId: org.id, range: '24h' });
     await orgWithPasses(f, 0);
     const template = makeTemplate({ id: `tpl-metrics-cache-${n++}`, orgId: org.id });

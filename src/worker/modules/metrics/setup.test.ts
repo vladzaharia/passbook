@@ -58,4 +58,25 @@ describe('first-run setup counts', () => {
     expect(scoped.totals.passes).toBe(0);
     expect(scoped.setup).toEqual({ ...after, orgs: after.orgs + 1 });
   });
+
+  it('skips the short cache until the first pass email, then caches again', async () => {
+    const clock = new ManualClock(Date.now());
+    const f = fixtures(base, clock);
+    const ctx = createServiceContext(base, { clock });
+    await run(env.DB, "DELETE FROM outbox WHERE kind = 'email'");
+    clearMetricsCache(env.DB);
+    const first = (await getOverview(ctx, { range: '24h' })).setup.orgs;
+    await makeOrg(f);
+    expect((await getOverview(ctx, { range: '24h' })).setup.orgs).toBe(first + 1);
+
+    await run(
+      env.DB,
+      "INSERT INTO outbox (id, org_id, kind, state, created_at) VALUES (?, 'o', 'email', 'sent', ?)",
+      [f.ids.id(), clock.now()],
+    );
+    clearMetricsCache(env.DB);
+    const settled = (await getOverview(ctx, { range: '24h' })).setup.orgs;
+    await makeOrg(f);
+    expect((await getOverview(ctx, { range: '24h' })).setup.orgs).toBe(settled);
+  });
 });

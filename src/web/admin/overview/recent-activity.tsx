@@ -19,7 +19,8 @@ import { formatDateTime, formatRelative } from './format.ts';
 
 /** Six one-line rows without sign-ins; each opens its target, or the entry when it has none. */
 export function RecentActivity({ orgId }: { orgId: string | undefined }) {
-  const log = useAuditLog({ orgId, excludeAction: 'auth.' }, 6);
+  // Refetch on every visit: what just happened is the point of this card.
+  const log = useAuditLog({ orgId, excludeAction: 'auth.' }, 6, 0);
   const items = log.data?.pages[0]?.items ?? [];
   const now = Date.now();
   return (

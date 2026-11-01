@@ -39,7 +39,8 @@ function useMetrics(range: Range, orgId: string | undefined) {
         query: { range, orgId },
         signal,
       }),
-    staleTime: 30_000,
+    // While the checklist shows, every visit refetches so a step ticks as soon as it is done.
+    staleTime: (q) => (q.state.data && !setupDone(q.state.data.setup) ? 0 : 30_000),
     placeholderData: keepPreviousData,
   });
 }
