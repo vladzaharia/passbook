@@ -25,6 +25,7 @@ import {
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { CheckApnsButton } from './apns-check.tsx';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
 import {
   useDeleteIdentity,
@@ -253,6 +254,14 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           </CardBody>
         </Card>
         <ApnsHelp identity={identity} />
+        {identity.apnsAvailable ? (
+          <Card>
+            <CardHeader title="APNs" />
+            <CardBody>
+              <CheckApnsButton identityId={identity.id} />
+            </CardBody>
+          </Card>
+        ) : null}
         <EditCard
           key={`${identity.label}|${identity.apnsBinding}|${identity.nfcEnabled}|${identity.isDefault}`}
           identity={identity}

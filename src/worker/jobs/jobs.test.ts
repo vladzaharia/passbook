@@ -129,6 +129,7 @@ describe('cron dispatcher', () => {
   it('runs every hook of both schedules without a logged failure', async () => {
     expect(CRON_HOOKS[MINUTE_CRON]?.length).toBeGreaterThan(0);
     expect(CRON_HOOKS[DAILY_CRON]?.length).toBeGreaterThan(0);
+    expect(CRON_HOOKS[DAILY_CRON]?.map((h) => h.name)).toContain('identities.apns_probe');
     const appEnv = await makeEnv();
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {

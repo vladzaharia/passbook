@@ -233,6 +233,14 @@ export interface IdentityRotation {
   now: number;
 }
 
+export async function setProbeHealth(
+  db: D1Database,
+  id: string,
+  health: 'healthy' | 'failing',
+): Promise<void> {
+  await run(db, 'UPDATE signing_identities SET apns_health = ? WHERE id = ?', [health, id]);
+}
+
 /** Swaps cert and key atomically: new credential, repoint, drop the old credential. */
 export async function rotateIdentityRows(db: D1Database, r: IdentityRotation): Promise<void> {
   const c = r.credential;

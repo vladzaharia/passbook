@@ -289,6 +289,47 @@ describe('identity detail', () => {
     await waitFor(() => expect(body).toEqual({ cause: 'resign', identityId: 'i1' }));
   });
 
+  it.each([
+    [
+      { health: 'healthy', status: 400, reason: 'BadDeviceToken' },
+      'APNs accepted the certificate.',
+    ],
+    [
+      { health: 'failing', status: 403, reason: 'BadCertificate' },
+      'APNs rejected the certificate: BadCertificate.',
+    ],
+  ])('checks APNs and shows the result inline', async (reply, line) => {
+    let calls = 0;
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1/apns-check': () => {
+          calls += 1;
+          return json({ ...reply, checkedAt: 1_700_000_000_000 });
+        },
+        '/api/v1/identities/i1': () => json(identity()),
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Check APNs' }));
+    expect(await screen.findByText(line)).toBeInTheDocument();
+    expect(calls).toBe(1);
+  });
+
+  it('shows the error when the check fails', async () => {
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1/apns-check': () =>
+          problem(429, 'RATE_LIMITED', 'Too many requests. Try again shortly.'),
+        '/api/v1/identities/i1': () => json(identity()),
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Check APNs' }));
+    expect(await screen.findByText(/Too many requests/)).toBeInTheDocument();
+  });
+
   it('rotates the certificate from PEM input', async () => {
     let body: unknown;
     await renderApp('/admin/identities/i1', {
