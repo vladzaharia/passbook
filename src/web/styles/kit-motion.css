@@ -1,6 +1,6 @@
 /*
- * Kit motion: overlays, controls, indicators, empty-state art. Tokens live in motion.css.
- * Enter uses fill-mode backwards and exit forwards, so nothing holds a layer at rest.
+ * Kit motion: overlays, controls, bars, indicators, skeletons. Tokens live in motion.css. Enter uses
+ * fill-mode backwards and exit forwards, so nothing holds a layer at rest.
  */
 @keyframes wl-fade-in {
   from {
@@ -15,7 +15,7 @@
 @keyframes wl-pop-in {
   from {
     opacity: 0;
-    transform: translate(var(--wl-from-x, 0), var(--wl-from-y, 4px)) scale(0.97);
+    transform: translate(var(--wl-from-x, 0), var(--wl-from-y, 4px)) scale(0.98);
   }
 }
 @keyframes wl-pop-out {
@@ -24,35 +24,36 @@
     transform: scale(0.98);
   }
 }
-@keyframes wl-sheet-left {
+@keyframes wl-tip-in {
   from {
-    transform: translateX(-100%);
+    opacity: 0;
+    transform: translate(var(--wl-from-x, 0), var(--wl-from-y, 0));
   }
 }
-@keyframes wl-sheet-right {
+@keyframes wl-slide-in {
   from {
-    transform: translateX(100%);
+    transform: translate(var(--wl-sheet-x, 0), var(--wl-sheet-y, 0));
   }
 }
-@keyframes wl-sheet-left-out {
+@keyframes wl-slide-out {
   to {
-    transform: translateX(-100%);
+    transform: translate(var(--wl-sheet-x, 0), var(--wl-sheet-y, 0));
   }
 }
-@keyframes wl-sheet-right-out {
+@keyframes wl-bar-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes wl-bar-down {
   to {
-    transform: translateX(100%);
+    transform: translateY(100%);
   }
 }
 @keyframes wl-check {
   from {
     opacity: 0;
     transform: scale(0.6);
-  }
-}
-@keyframes wl-bar-up {
-  from {
-    transform: translateY(100%);
   }
 }
 @keyframes wl-pulse {
@@ -71,10 +72,32 @@
     transform: perspective(800px) rotateY(-70deg);
   }
 }
-@keyframes wl-fan {
+@keyframes wl-seg-icon {
   from {
-    transform: none;
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.6);
   }
+}
+@keyframes wl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes wl-shake {
+  20% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  80% {
+    transform: translateX(-2px);
+  }
+}
+
+/* Loops that carry pending state (spinners, running pills); they run under reduced motion too. */
+.wl-spin {
+  animation: wl-spin 1s linear infinite;
 }
 
 /* Overlay backdrop. */
@@ -85,7 +108,7 @@
   animation: wl-fade-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
 }
 
-/* Dialogs: rise and settle; leave quicker than they came. */
+/* Dialogs: rise and settle; leave quicker than they came. Below 640 they are bottom sheets. */
 .wl-dialog[data-state="open"] {
   --wl-from-y: 8px;
   animation: wl-pop-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
@@ -93,58 +116,130 @@
 .wl-dialog[data-state="closed"] {
   animation: wl-pop-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
 }
+@media (max-width: 639.98px) {
+  .wl-dialog,
+  .wl-action-sheet {
+    --wl-sheet-y: 100%;
+  }
+  .wl-dialog[data-state="open"],
+  .wl-action-sheet[data-state="open"] {
+    animation: wl-slide-in 260ms var(--wl-ease-out) backwards;
+  }
+  .wl-dialog[data-state="closed"],
+  .wl-action-sheet[data-state="closed"] {
+    animation: wl-slide-out 200ms var(--wl-ease-in) forwards;
+  }
+}
 
-/* Popovers, menus, selects, tooltips: grow from the trigger side. */
+/* Popovers, menus, selects: grow from the trigger side. */
 .wl-pop:is([data-state="open"], [data-state="delayed-open"], [data-state="instant-open"]) {
   animation: wl-pop-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
 }
 .wl-pop[data-state="closed"] {
   animation: wl-pop-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
 }
-.wl-pop[data-side="top"] {
+:is(.wl-pop, .wl-tip)[data-side="top"] {
   --wl-from-y: 4px;
 }
-.wl-pop[data-side="bottom"] {
+:is(.wl-pop, .wl-tip)[data-side="bottom"] {
   --wl-from-y: -4px;
 }
-.wl-pop[data-side="left"] {
+:is(.wl-pop, .wl-tip)[data-side="left"] {
   --wl-from-x: 4px;
   --wl-from-y: 0;
 }
-.wl-pop[data-side="right"] {
+:is(.wl-pop, .wl-tip)[data-side="right"] {
   --wl-from-x: -4px;
   --wl-from-y: 0;
 }
+/* Tooltips: opacity plus 2 px from their side, no scale. */
+.wl-tip {
+  --wl-from-x: 0;
+  --wl-from-y: 0;
+}
+.wl-tip[data-side="top"] {
+  --wl-from-y: 2px;
+}
+.wl-tip[data-side="bottom"] {
+  --wl-from-y: -2px;
+}
+.wl-tip[data-side="left"] {
+  --wl-from-x: 2px;
+}
+.wl-tip[data-side="right"] {
+  --wl-from-x: -2px;
+}
+.wl-tip:is([data-state="delayed-open"], [data-state="instant-open"]) {
+  animation: wl-tip-in var(--wl-dur-tooltip) var(--wl-ease-out) backwards;
+}
+.wl-tip[data-state="closed"] {
+  animation: wl-fade-out var(--wl-dur-tooltip-out) var(--wl-ease-in) forwards;
+}
 
-/* Sheets. */
-.wl-sheet-left[data-state="open"] {
-  animation: wl-sheet-left var(--wl-dur-route) var(--wl-ease-move) backwards;
+/* Sheets: left for navigation, right for record detail. */
+.wl-sheet-left {
+  --wl-sheet-x: -100%;
 }
-.wl-sheet-left[data-state="closed"] {
-  animation: wl-sheet-left-out var(--wl-dur-enter) var(--wl-ease-in) forwards;
+.wl-sheet-right {
+  --wl-sheet-x: 100%;
 }
-.wl-sheet-right[data-state="open"] {
-  animation: wl-sheet-right var(--wl-dur-route) var(--wl-ease-move) backwards;
+:is(.wl-sheet-left, .wl-sheet-right)[data-state="open"] {
+  animation: wl-slide-in 260ms var(--wl-ease-move) backwards;
 }
-.wl-sheet-right[data-state="closed"] {
-  animation: wl-sheet-right-out var(--wl-dur-enter) var(--wl-ease-in) forwards;
+:is(.wl-sheet-left, .wl-sheet-right)[data-state="closed"] {
+  animation: wl-slide-out 200ms var(--wl-ease-in) forwards;
+}
+/* While a finger drags the sheet, it follows without easing (sheet.tsx sets --wl-drag). */
+:is(.wl-sheet-left, .wl-sheet-right)[data-dragging] {
+  transform: translateX(var(--wl-drag, 0));
+  animation: none;
+}
+:is(.wl-sheet-left, .wl-sheet-right)[data-settling] {
+  transition: transform 200ms var(--wl-ease-spring);
 }
 
-/* Confirmations: a check that pops in (copy, saved, refreshed, checkbox). */
+/* Confirmations: a check that pops in (copy, saved, refreshed). */
 .wl-check {
-  animation: wl-check var(--wl-dur-card) var(--wl-ease-bounce) backwards;
+  animation: wl-check 300ms var(--wl-ease-bounce) backwards;
+}
+/* Checkbox ticks: only after a change (checkbox.tsx keys the icon by the change count). */
+.wl-tick {
+  animation: wl-check 200ms var(--wl-ease-spring) backwards;
 }
 
-/* Fixed bars that arrive from the bottom edge. */
+/* Toast icons: success pops, info fades, errors shake once. */
+[data-sonner-toast][data-type="success"] [data-icon] {
+  animation: wl-check 300ms var(--wl-ease-bounce) backwards;
+}
+[data-sonner-toast][data-type="info"] [data-icon] {
+  animation: wl-fade-in 160ms var(--wl-ease-out) backwards;
+}
+[data-sonner-toast][data-type="error"] [data-icon] {
+  animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+}
+
+/* Fixed bars that arrive from the bottom edge (SaveBar, WizardBar) and leave the same way. */
 .wl-bar {
-  animation: wl-bar-up var(--wl-dur-route) var(--wl-ease-spring) backwards;
+  animation: wl-bar-up 260ms var(--wl-ease-spring) backwards;
+}
+.wl-bar[data-closing] {
+  animation: wl-bar-down 200ms var(--wl-ease-in) forwards;
+}
+/* The offline bar drops in under the top bar and leaves upwards. */
+.wl-offline {
+  --wl-sheet-y: -100%;
+  animation: wl-slide-in 200ms var(--wl-ease-out) backwards;
+}
+.wl-offline[data-closing] {
+  animation: wl-slide-out 160ms var(--wl-ease-in) forwards;
 }
 
-/* Skeletons only show for slow loads, then pulse. */
+/* Skeletons only show for slow loads (150 ms), then pulse; the content takes over with a fade. */
 .wl-skeleton {
-  animation:
-    wl-fade-in var(--wl-dur-enter) var(--wl-ease-out) var(--pk-delay-skeleton) backwards,
-    wl-pulse 1s ease-in-out calc(var(--pk-delay-skeleton) + var(--wl-dur-enter)) infinite alternate;
+  animation: wl-fade-in 1ms linear var(--pk-delay-skeleton) backwards;
+}
+.wl-skeleton-out {
+  animation: wl-fade-out 120ms var(--wl-ease-in) forwards;
 }
 
 /* Status change: one ring in the pill's tone. */
@@ -158,62 +253,33 @@
   animation: wl-ring var(--wl-dur-flip) var(--wl-ease-out);
 }
 
-/* A step that replaces the previous one in the same card turns in (magic-link code step). */
+/* A failure after a user action shakes the thing that failed, once. */
+.wl-shake {
+  animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+}
+
+/* A step that replaces the previous one in the same card turns in (magic-link code, secrets). */
 .wl-turn {
   transform-origin: 0 50%;
   animation: wl-turn var(--wl-dur-card) var(--wl-ease-spring) backwards;
 }
 
-/* Wordmark card flips once when the shell first mounts. */
-.wl-wordmark-icon {
+/* Wordmark card flips once per browser session (wordmark.tsx sets data-flip). */
+.wl-wordmark-icon[data-flip] {
   animation: wl-flip-in var(--wl-dur-flip) var(--wl-ease-spring) 120ms backwards;
 }
 
-/* Empty-state art: three blank passes that fan open once. */
-.wl-stack {
-  position: relative;
-  width: 4.5rem;
-  height: 4.25rem;
-}
-.wl-stack > span {
-  position: absolute;
-  inset: 0 auto auto 50%;
-  width: 2.75rem;
-  height: 3.75rem;
-  margin-left: -1.375rem;
-  border: 1px solid var(--pk-border-strong);
-  border-radius: var(--pk-radius-md);
-  background: var(--pk-surface-raised);
-  transform: translateX(var(--x, 0)) rotate(var(--r, 0deg));
-  transform-origin: 50% 100%;
-  animation: wl-fan var(--wl-dur-card) var(--wl-ease-spring) 80ms backwards;
-}
-.wl-stack > span:nth-child(1) {
-  --x: -0.875rem;
-  --r: -10deg;
-  opacity: 0.6;
-}
-.wl-stack > span:nth-child(2) {
-  --x: 0.875rem;
-  --r: 10deg;
-  opacity: 0.6;
-}
-.wl-stack > span:nth-child(3) {
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  color: var(--pk-text-subtle);
-  box-shadow: var(--wl-edge), var(--pk-elevation-2);
-}
-.wl-stack > span:nth-child(3)::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: var(--wl-foil);
+/* The theme segment's icon rotates in when it becomes the choice. */
+.wl-seg-icon {
+  animation: wl-seg-icon var(--wl-dur-indicator) var(--wl-ease-spring) backwards;
 }
 
-/* Sign-in card: a 2px foil line along the top edge (the card clips it to its radius). */
+/* Tab panels fade in (kept under reduced motion: an opacity swap under 150 ms). */
+.wl-panel[data-state="active"] {
+  animation: wl-fade-in 120ms var(--wl-ease-out) backwards;
+}
+
+/* Sign-in card and secrets: a 2px foil line along the top edge (the card clips it). */
 .wl-foil-edge {
   position: relative;
 }
@@ -232,35 +298,60 @@
   left: 0;
   border-radius: var(--pk-radius-md);
   background: var(--pk-state-selected-fill);
-  transform-origin: 0 0;
   pointer-events: none;
 }
 .wl-indicator[data-variant="underline"] {
   border-radius: 1px;
   background: var(--pk-accent);
 }
+.wl-indicator[data-variant="thumb"] {
+  background: var(--pk-surface-raised);
+  box-shadow:
+    0 0 0 1px var(--pk-border-strong),
+    var(--pk-elevation-1);
+}
+.wl-indicator[data-variant="list"] {
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-accent-subtle);
+}
 @media (prefers-reduced-motion: no-preference) {
   .wl-indicator[data-ready] {
-    transition: transform var(--wl-dur-card) var(--wl-ease-spring);
+    transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);
+  }
+  .wl-indicator[data-variant="list"][data-ready] {
+    transition-duration: 120ms;
+    transition-timing-function: var(--wl-ease-out);
+  }
+  .wl-skeleton {
+    animation:
+      wl-fade-in 1ms linear var(--pk-delay-skeleton) backwards,
+      wl-pulse 1s ease-in-out calc(var(--pk-delay-skeleton) + 200ms) infinite alternate;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .wl-overlay,
   .wl-dialog,
+  .wl-action-sheet,
   .wl-pop,
+  .wl-tip,
   .wl-sheet-left,
   .wl-sheet-right,
   .wl-check,
+  .wl-tick,
   .wl-bar,
   .wl-ring,
+  .wl-shake,
   .wl-wordmark-icon,
   .wl-turn,
-  .wl-stack > span {
+  .wl-seg-icon,
+  [data-sonner-toast] [data-icon] {
     animation: none;
   }
-  .wl-skeleton {
-    animation: none;
-    opacity: 0.7;
+  .wl-offline {
+    animation: wl-fade-in 120ms linear backwards;
+  }
+  .wl-offline[data-closing] {
+    animation: wl-fade-out 120ms linear forwards;
   }
 }

@@ -1,13 +1,17 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { cn } from '../lib/cn.ts';
+import { TOUCH_HIT } from './button.tsx';
 import { Tooltip } from './tooltip.tsx';
 
 const iconButtonVariants = cva(
   [
-    'inline-flex shrink-0 items-center justify-center rounded-md transition-colors duration-150',
+    'relative inline-flex shrink-0 items-center justify-center rounded-md',
+    'transition-[color,background-color,border-color,scale] duration-(--wl-dur-hover) ease-(--wl-ease-move)',
+    'motion-safe:active:not-disabled:scale-(--pk-motion-scale-press)',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
     'disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4',
+    TOUCH_HIT,
   ],
   {
     variants: {

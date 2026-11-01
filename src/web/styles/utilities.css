@@ -1,0 +1,22 @@
+/* Kit utilities. Plain classes in the utilities layer, so Tailwind utilities can still override. */
+@layer utilities {
+  /* Colour transitions on the hover token. Use instead of transition-colors (tokens.test.ts). */
+  .wl-colors {
+    transition-property: color, background-color, border-color, outline-color, fill, stroke;
+    transition-duration: var(--wl-dur-hover);
+    transition-timing-function: var(--wl-ease-move);
+  }
+
+  /* Safe areas (viewport-fit=cover): edge-anchored chrome pads by the inset, at least the gutter
+     (--wl-gutter, 1rem by default). */
+  .px-safe {
+    padding-left: max(var(--wl-gutter, 1rem), env(safe-area-inset-left));
+    padding-right: max(var(--wl-gutter, 1rem), env(safe-area-inset-right));
+  }
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}

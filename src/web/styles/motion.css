@@ -1,24 +1,31 @@
 /*
- * Motion and expression tokens (docs/design/motion-and-expression.md).
- * Two speeds: chrome answers fast (80-260ms); passes move like cards (480-640ms, spring).
- * Only transform and opacity animate. prefers-reduced-motion: reduce switches it all off below.
+ * Motion tokens, route fade-through, list entrances and the loading rail
+ * (docs/design/motion-and-expression.md). Only transform and opacity animate. The brand zeroes its
+ * --pk-duration-* under reduced motion, so token-timed motion goes instant there; short opacity
+ * fades and .wl-essential loops use literal durations and stay.
  */
 :root {
   --wl-dur-press: var(--pk-duration-micro);
   --wl-dur-hover: var(--pk-duration-fast);
   --wl-dur-exit: var(--pk-duration-fast);
+  --wl-dur-tooltip: 100ms;
+  --wl-dur-tooltip-out: 80ms;
   --wl-dur-enter: var(--pk-duration-base);
+  --wl-dur-shake: 240ms;
   --wl-dur-route: var(--pk-duration-moderate);
+  --wl-dur-indicator: 280ms;
   --wl-dur-card: var(--pk-duration-deliberate);
   --wl-dur-flip: 640ms;
   --wl-dur-sheen: 900ms;
   --wl-dur-count: 600ms;
+  --wl-dur-highlight: 1200ms;
+  --wl-art-delay: 80ms;
 
   --wl-ease-out: var(--pk-ease-enter);
   --wl-ease-in: var(--pk-ease-exit);
   --wl-ease-move: var(--pk-ease-standard);
   --wl-ease-spring: var(--pk-ease-spring);
-  /* Bigger overshoot, for celebrations only. */
+  /* 13% overshoot: stamps, seals, success checks, celebrations. */
   --wl-ease-bounce: linear(
     0,
     0.06 3%,
@@ -39,7 +46,7 @@
   --wl-stagger-cards: calc(var(--pk-stagger-step) * 2);
   --wl-tilt: 7deg;
 
-  /* Foil: Wallet teal, Polaris violet, Polaris gold. Sheens, celebrations, empty-state art. */
+  /* Foil: Wallet teal, Polaris violet, Polaris gold. Light only, never a fill. */
   --wl-foil-1: #2dd4bf;
   --wl-foil-2: var(--polaris-key-violet-dark);
   --wl-foil-3: var(--polaris-key-gold-dark);
@@ -72,22 +79,31 @@
     transform: translateY(var(--wl-rise));
   }
 }
+@keyframes wl-fade {
+  from {
+    opacity: 0;
+  }
+}
 @keyframes wl-deal {
   from {
     opacity: 0;
     transform: translateY(var(--wl-deal)) rotate(-2deg) scale(0.96);
   }
 }
+/* Opacity holds at 0 for the first 30 ms, so the old page is gone before the new one shows. */
 @keyframes wl-route-in {
   from {
     opacity: 0;
-    transform: translate(var(--wl-route-x, 0), var(--wl-route-y, var(--wl-rise)));
+    transform: translate(var(--wl-route-x, 0), var(--wl-rise));
+  }
+  15% {
+    opacity: 0;
   }
 }
 @keyframes wl-route-out {
   to {
     opacity: 0;
-    transform: translate(calc(var(--wl-route-x, 0) * -0.5), 0);
+    transform: translateX(calc(var(--wl-route-x, 0px) * -0.5));
   }
 }
 @keyframes wl-ring {
@@ -100,9 +116,36 @@
     transform: scale(1.6);
   }
 }
+@keyframes wl-highlight {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wl-row-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes wl-rail {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(330%);
+  }
+}
 
 /* One-shot entrance for a block that arrives after its skeleton. */
 .wl-rise {
+  animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+/* Content replacing a skeleton rises 4 px over 200 ms while the skeleton fades. */
+.wl-handoff {
+  --wl-rise: 4px;
   animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
 }
 /* Children enter in turn: set --i on each child (capped at 6 steps). */
@@ -110,32 +153,77 @@
   animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
   animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger));
 }
+/* Rows that arrive during a route transition only fade: the page is already moving. */
+.wl-stagger[data-quiet] > * {
+  animation: wl-fade 160ms var(--wl-ease-out) backwards;
+}
 .wl-deal > * {
   animation: wl-deal var(--wl-dur-card) var(--wl-ease-spring) backwards;
   animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards));
 }
 
-/* Route transitions (router.tsx sets the types). The shell stays put; main moves. */
+/* Rows new since the last render: an accent wash that fades, no movement (useInsertHighlight). */
+li[data-new],
+tr[data-new] {
+  position: relative;
+}
+li[data-new]::after,
+tr[data-new] > :first-child::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--pk-accent-subtle);
+  opacity: 0;
+  pointer-events: none;
+  animation: wl-highlight var(--wl-dur-highlight) var(--wl-ease-out);
+}
+
+/* Refetch: rows dim after 150 ms and a 2 px rail runs along the top edge (LoadingRail). The rail
+   carries pending state, so it keeps running under reduced motion. */
+[aria-busy="true"] > .wl-dim,
+.wl-dim[aria-busy="true"] {
+  opacity: 0.6;
+  transition: opacity 120ms var(--wl-ease-out);
+}
+.wl-rail {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wl-rail::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  border-radius: 1px;
+  background: var(--pk-accent);
+  animation: wl-rail 900ms linear infinite;
+}
+
+/* Route fade-through (router.tsx sets the types). The shell stays put; main moves. */
 ::view-transition-old(root),
-::view-transition-new(root) {
+::view-transition-new(root),
+::view-transition-old(main),
+::view-transition-new(main) {
   animation: none;
 }
 ::view-transition-group(main) {
   animation: none;
 }
-::view-transition-old(main) {
-  animation: wl-route-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+html:active-view-transition-type(forward, back, swap)::view-transition-old(main) {
+  animation: wl-route-out 90ms var(--wl-ease-in) forwards;
 }
-::view-transition-new(main) {
-  animation: wl-route-in var(--wl-dur-route) var(--wl-ease-out) backwards;
+html:active-view-transition-type(forward, back, swap)::view-transition-new(main) {
+  animation: wl-route-in 200ms var(--wl-ease-out) 60ms backwards;
 }
 html:active-view-transition-type(forward) {
   --wl-route-x: var(--wl-slide);
-  --wl-route-y: 0;
 }
 html:active-view-transition-type(back) {
   --wl-route-x: calc(var(--wl-slide) * -1);
-  --wl-route-y: 0;
 }
 /* Shared pass cards morph between pages (PassCardStage transitionName). */
 ::view-transition-group(*.pass) {
@@ -144,10 +232,31 @@ html:active-view-transition-type(back) {
 }
 /* A card with no partner on the other page leaves and arrives with main. */
 ::view-transition-old(*.pass):only-child {
-  animation: wl-route-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+  animation: wl-route-out 90ms var(--wl-ease-in) forwards;
 }
 ::view-transition-new(*.pass):only-child {
-  animation: wl-route-in var(--wl-dur-route) var(--wl-ease-out) backwards;
+  animation: wl-route-in 200ms var(--wl-ease-out) 60ms backwards;
+}
+/* Row removal (removeWithTransition): the row shrinks away, neighbours close up. */
+html:active-view-transition-type(row)::view-transition-old(main) {
+  opacity: 0;
+}
+::view-transition-group(*.row) {
+  animation-duration: 240ms;
+  animation-timing-function: var(--wl-ease-move);
+}
+::view-transition-old(*.row):only-child {
+  animation: wl-row-out 160ms var(--wl-ease-in) forwards;
+}
+::view-transition-new(*.row):only-child {
+  animation: wl-fade 160ms var(--wl-ease-out) backwards;
+}
+/* Admin theme change: the page crossfades (ThemeProvider starts a "theme" transition). */
+html:active-view-transition-type(theme)::view-transition-old(*) {
+  animation: wl-fade 200ms var(--wl-ease-move) reverse forwards;
+}
+html:active-view-transition-type(theme)::view-transition-new(*) {
+  animation: wl-fade 200ms var(--wl-ease-move);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -157,8 +266,11 @@ html:active-view-transition-type(back) {
     animation: none !important;
   }
   .wl-rise,
+  .wl-handoff,
   .wl-stagger > *,
-  .wl-deal > * {
+  .wl-deal > *,
+  li[data-new]::after,
+  tr[data-new] > :first-child::after {
     animation: none;
   }
 }

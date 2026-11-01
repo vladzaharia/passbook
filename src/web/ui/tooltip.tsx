@@ -21,7 +21,7 @@ export function Tooltip({ content, children, side = 'top', className }: TooltipP
           side={side}
           sideOffset={6}
           className={cn(
-            'wl-pop origin-(--radix-tooltip-content-transform-origin) z-50 max-w-xs rounded-md border border-border bg-surface-overlay px-2 py-1 text-xs text-fg-strong shadow-elevation-2',
+            'wl-tip z-50 max-w-xs rounded-md border border-border bg-surface-overlay px-2 py-1 text-xs text-fg-strong shadow-elevation-2',
             className,
           )}
         >

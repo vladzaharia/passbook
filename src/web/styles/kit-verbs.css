@@ -1,0 +1,151 @@
+/*
+ * Action verbs (docs/design/motion-and-expression.md "Action verbs") and celebration sparks.
+ * Transform on the svg or its paths only. Pending loops ([data-busy]) carry state and run under
+ * reduced motion; confirmations ([data-verb-done]) and hover verbs need no-preference.
+ */
+@keyframes wl-v-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes wl-v-bob {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@keyframes wl-v-turn {
+  from {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes wl-v-key {
+  from {
+    transform: rotate(-90deg);
+  }
+}
+@keyframes wl-v-stamp {
+  from {
+    transform: scale(1.3) rotate(-12deg);
+  }
+}
+@keyframes wl-v-fly {
+  45% {
+    opacity: 0;
+    transform: translate(6px, -6px);
+  }
+  46% {
+    opacity: 0;
+    transform: translate(-6px, 6px);
+  }
+}
+@keyframes wl-spark {
+  from {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(calc(var(--a) + 40deg)) translateY(-14px) scaleY(0.4);
+  }
+}
+
+[data-busy="spin"] > svg:first-child {
+  animation: wl-spin 900ms linear infinite;
+}
+[data-busy="pulse"] > svg:first-child {
+  animation: wl-v-pulse 600ms ease-in-out infinite;
+}
+[data-busy="bob"] > svg:first-child :is(path:nth-child(1), path:nth-child(2)) {
+  animation: wl-v-bob 600ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-verb-done] > svg.lucide-rotate-cw {
+    animation: wl-v-turn 400ms var(--wl-ease-out);
+  }
+  [data-verb-done] > svg.lucide-key-round {
+    animation: wl-v-key 300ms var(--wl-ease-spring);
+  }
+  [data-verb-done="undo"] > svg.lucide-key-round {
+    animation-direction: reverse;
+  }
+  [data-verb-done] > svg.lucide-ban {
+    animation: wl-v-stamp 300ms var(--wl-ease-bounce);
+  }
+  [data-verb-done] > svg:is(.lucide-send, .lucide-mail) {
+    animation: wl-v-fly 440ms var(--wl-ease-move);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    :is(button, a)
+      svg:is(
+        .lucide-trash-2,
+        .lucide-download,
+        .lucide-external-link,
+        .lucide-log-out,
+        .lucide-upload,
+        .lucide-send,
+        .lucide-mail,
+        .lucide-plus
+      )
+      :is(path, rect),
+    :is(button, a) svg.lucide-plus {
+      transition: transform 160ms var(--wl-ease-out);
+      transform-box: fill-box;
+    }
+    :is(button, a):hover:not(:disabled)
+      svg.lucide-trash-2
+      :is(path:nth-child(4), path:nth-child(5)) {
+      transform-origin: 0 100%;
+      transform: translateY(-1.5px) rotate(-12deg);
+    }
+    :is(button, a):hover:not(:disabled)
+      svg.lucide-download
+      :is(path:nth-child(1), path:nth-child(3)) {
+      transform: translateY(1.5px);
+    }
+    :is(button, a):hover:not(:disabled)
+      svg.lucide-external-link
+      :is(path:nth-child(1), path:nth-child(2)) {
+      transform: translate(1.5px, -1.5px);
+    }
+    :is(button, a):hover:not(:disabled)
+      svg.lucide-log-out
+      :is(path:nth-child(1), path:nth-child(2)) {
+      transform: translateX(1.5px);
+    }
+    :is(button, a):hover:not(:disabled)
+      svg.lucide-upload
+      :is(path:nth-child(1), path:nth-child(2)) {
+      transform: translateY(-1.5px);
+    }
+    :is(button, a):hover:not(:disabled) svg:is(.lucide-send, .lucide-mail) {
+      transform: translate(1.5px, -1.5px);
+      transition: transform 160ms var(--wl-ease-out);
+    }
+    :is(button, a):hover:not(:disabled) svg.lucide-plus {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+/* Celebrate: six foil sparks fly out once (ui/celebrate.tsx). */
+.wl-sparks {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.wl-spark {
+  position: absolute;
+  top: -3px;
+  left: -1px;
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--wl-foil);
+  opacity: 0;
+  transform-origin: 50% 100%;
+  animation: wl-spark 640ms var(--wl-ease-out) calc(var(--i) * 40ms) backwards;
+}
