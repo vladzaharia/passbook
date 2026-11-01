@@ -3,13 +3,18 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "./src/web/pass-card/sync-barcode.ts",
+    "./src/web/pass-card/barcode-loader.ts"
+  ],
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "dev": "node tools/build-templates.ts && node tools/dev-vars.ts && vite dev",
     "dev:vars": "node tools/dev-vars.ts",
-    "build": "node tools/build-templates.ts && vite build && wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "build": "node tools/build-templates.ts && vite build && node tools/check-bundle.ts && wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "gen": "node tools/build-templates.ts && wrangler types --strict-vars=false",
     "format": "biome check --write .",
     "lint": "biome check .",

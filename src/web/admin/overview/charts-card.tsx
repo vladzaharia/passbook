@@ -2,7 +2,8 @@ import { Table2 } from 'lucide-react';
 import { useState } from 'react';
 import type { MetricsOverview, SeriesKey } from '@/shared/contracts/metrics.ts';
 import { Button, Card, CardBody, CardHeader, LoadingRail } from '@/web/ui/index.ts';
-import { LineChart, type Range } from './chart.tsx';
+import { LineChart } from './chart.tsx';
+import type { Range } from './range.ts';
 
 const CHARTS: { key: SeriesKey; title: string }[] = [
   { key: 'issued', title: 'Issued' },

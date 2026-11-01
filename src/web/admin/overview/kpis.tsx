@@ -6,9 +6,10 @@ import { cn } from '@/web/lib/cn.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { PASS_STATUS } from '@/web/lib/status.ts';
 import { EntityIcon } from '@/web/ui/index.ts';
-import { chartGeometry, type Point, type Range } from './chart.tsx';
+import { chartGeometry, type Point } from './chart.tsx';
 import { useRememberedCount } from './count.ts';
 import { formatCount } from './format.ts';
+import type { Range } from './range.ts';
 
 export const RANGE_LABEL: Record<Range, string> = {
   '24h': 'Last 24 hours',

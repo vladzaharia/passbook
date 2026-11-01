@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { parseUsersSearch } from './users-page.tsx';
+import { parseUsersSearch } from './users-search.ts';
 
 const user = (over: Record<string, unknown> = {}) => ({
   id: 'u2',

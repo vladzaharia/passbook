@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { parseUsersSearch, UsersPage } from '../../../admin/users/users-page.tsx';
+import { UsersPage } from '../../../admin/users/users-page.tsx';
+import { parseUsersSearch } from '../../../admin/users/users-search.ts';
 
 export const Route = createFileRoute('/admin/users/')({
   validateSearch: parseUsersSearch,

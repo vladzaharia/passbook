@@ -12,23 +12,15 @@ import {
   Skeleton,
   useDelayed,
 } from '@/web/ui/index.ts';
-import type { Range } from './chart.tsx';
 import { ChartsCard } from './charts-card.tsx';
 import { GetStarted, setupDone, useGetStartedDismissed } from './get-started.tsx';
 import { Health } from './health.tsx';
 import { Kpis, RANGE_LABEL } from './kpis.tsx';
+import type { OverviewSearch } from './overview-search.ts';
+import type { Range } from './range.ts';
 import { RecentActivity } from './recent-activity.tsx';
 
-export type { Range };
-export interface OverviewSearch {
-  range?: Range | undefined;
-}
-
-export function parseOverviewSearch(raw: Record<string, unknown>): OverviewSearch {
-  return {
-    range: raw.range === '24h' || raw.range === '30d' || raw.range === '7d' ? raw.range : undefined,
-  };
-}
+export type { OverviewSearch, Range };
 
 /** A range or scope change keeps the old numbers on screen until the new ones land. */
 function useMetrics(range: Range, orgId: string | undefined) {

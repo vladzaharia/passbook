@@ -76,6 +76,32 @@ export default defineConfig({
       ],
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Stable vendor chunks by library. Admin-only libraries (table, virtual, cmdk) stay out.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react',
+              test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 30,
+            },
+            {
+              name: 'tanstack',
+              test: /node_modules[\\/]@tanstack[\\/](react-router|router-core|history|react-query|query-core|react-store|store)[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'radix',
+              test: /node_modules[\\/](@radix-ui|react-remove-scroll|react-remove-scroll-bar|react-style-singleton|aria-hidden|use-callback-ref|use-sidecar|get-nonce|@floating-ui)[\\/]/,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
+  },
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   plugins: [
     sonnerNoInlineCss(),

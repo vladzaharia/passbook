@@ -1,13 +1,14 @@
 import { type CSSProperties, useEffect, useId, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
 import { formatCount } from './format.ts';
+import type { Range } from './range.ts';
+
 import './overview.css';
 
 export interface Point {
   t: number;
   v: number;
 }
-export type Range = '24h' | '7d' | '30d';
 
 /** Plot space; the svg stretches it to the box (preserveAspectRatio none, non-scaling strokes). */
 const W = 600;
