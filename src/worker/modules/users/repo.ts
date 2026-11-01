@@ -66,12 +66,15 @@ export async function listUsers(db: Db, f: ListFilter): Promise<UserRow[]> {
   }
   const q = f.q?.trim();
   if (q) {
-    const like = `%${likeEscape(q.toLowerCase())}%`;
+    // Prefix match on NOCASE-indexed columns; the contains search it replaces could only scan.
+    const prefix = `${likeEscape(q)}%`;
     where.push(
-      `(id = ? OR lower(primary_email) LIKE ? ESCAPE '\\' OR lower(coalesce(name, '')) LIKE ? ESCAPE '\\'
-        OR id IN (SELECT user_id FROM user_emails WHERE email LIKE ? ESCAPE '\\'))`,
+      `id IN (SELECT id FROM users WHERE id = ?
+        UNION SELECT id FROM users WHERE primary_email LIKE ? ESCAPE '\\'
+        UNION SELECT id FROM users WHERE name LIKE ? ESCAPE '\\'
+        UNION SELECT user_id FROM user_emails WHERE email LIKE ? ESCAPE '\\')`,
     );
-    params.push(q, like, like, like);
+    params.push(q, prefix, prefix, prefix);
   }
   params.push(f.limit + 1);
   return all<UserRow>(

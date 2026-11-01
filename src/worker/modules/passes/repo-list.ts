@@ -44,9 +44,17 @@ export async function listPasses(
   if (filter.cursor) add('id < ?', filter.cursor);
   const q = filter.q?.trim();
   if (q) {
+    // One indexed prefix lookup per column (NOCASE indexes), merged by id: an OR of LIKEs scans.
     const prefix = `${likeEscape(q)}%`;
+    const like = (column: string) => `SELECT id FROM passes WHERE ${column} LIKE ? ESCAPE '\\'`;
     add(
-      "(display_title LIKE ? ESCAPE '\\' OR display_subtitle LIKE ? ESCAPE '\\' OR external_id LIKE ? ESCAPE '\\' OR holder_email LIKE ? ESCAPE '\\' OR serial = ?)",
+      `id IN (${[
+        like('display_title'),
+        like('display_subtitle'),
+        like('external_id'),
+        like('holder_email'),
+        'SELECT id FROM passes WHERE serial = ?',
+      ].join(' UNION ')})`,
       prefix,
       prefix,
       prefix,
