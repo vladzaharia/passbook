@@ -7,6 +7,7 @@ export * from './code-block.tsx';
 export * from './combobox.tsx';
 export * from './command-palette.tsx';
 export * from './copy-button.tsx';
+export * from './count-up.tsx';
 export * from './data-table.tsx';
 export * from './dialog.tsx';
 export * from './diff-viewer.tsx';

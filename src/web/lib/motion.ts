@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 /** True when the user asked for less motion. False outside the browser. */
 export function prefersReducedMotion(): boolean {
@@ -40,4 +40,53 @@ export function viewTransitionOption() {
     'startViewTransition' in document &&
     CSS.supports('selector(:active-view-transition-type(a))');
   return typed ? { types: routeTransitionTypes } : false;
+}
+
+/** Counts renders where `value` changed after mount: a key that replays a one-shot animation. */
+export function useChangeCount(value: unknown): number {
+  const prev = useRef(value);
+  const count = useRef(0);
+  if (!Object.is(prev.current, value)) {
+    prev.current = value;
+    count.current += 1;
+  }
+  return count.current;
+}
+
+/**
+ * Writes a number into `ref`, counting to `value`: from 0 on mount, from the shown value on
+ * change. The element renders the final text, so tests and reduced motion see it as is.
+ */
+export function useCountUp(
+  ref: { current: HTMLElement | null },
+  value: number,
+  format: (n: number) => string,
+  ms = 600,
+) {
+  const shown = useRef(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion() || typeof requestAnimationFrame !== 'function') {
+      shown.current = value;
+      return;
+    }
+    const from = shown.current;
+    if (from === value) return;
+    const start = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / ms);
+      const n = Math.round(from + (value - from) * (1 - (1 - t) ** 3));
+      shown.current = n;
+      el.textContent = format(n);
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    el.textContent = format(from);
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      el.textContent = format(value);
+      shown.current = value;
+    };
+  }, [ref, value, format, ms]);
 }

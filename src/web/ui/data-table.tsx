@@ -9,8 +9,17 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import { Fragment, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  Fragment,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { cn } from '../lib/cn.ts';
+import { useArrival } from '../lib/motion.ts';
 import { SkeletonRows } from './skeleton.tsx';
 
 declare module '@tanstack/react-table' {
@@ -136,6 +145,8 @@ export function DataTable<T>({
     estimateSize: () => rowHeight,
     overscan: 8,
   });
+  // Rows animate in once when they replace the skeleton; refetches and sorts do not animate.
+  const arrived = useArrival(Boolean(loading) && data.length === 0) && !virtualHeight;
 
   if (loading && data.length === 0) return <SkeletonRows label={`Loading ${caption}`} />;
   if (data.length === 0 && empty) return <>{empty}</>;
@@ -159,9 +170,14 @@ export function DataTable<T>({
       {narrow && titleCol ? (
         <ul
           aria-label={caption}
-          className={cn('divide-y divide-border md:hidden', frame, className)}
+          className={cn(
+            'divide-y divide-border md:hidden',
+            arrived && 'wl-stagger [--wl-rise:4px]',
+            frame,
+            className,
+          )}
         >
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const cells = new Map(row.getVisibleCells().map((c) => [c.column.id, c]));
             const render = (id: string) => {
               const cell = cells.get(id);
@@ -173,6 +189,7 @@ export function DataTable<T>({
               // biome-ignore lint/a11y/useKeyWithClickEvents: pointer shortcut; the title is the link
               <li
                 key={row.id}
+                style={arrived ? ({ '--i': index } as CSSProperties) : undefined}
                 className={cn(
                   'flex items-start gap-3 px-4 py-3',
                   onRowClick && 'cursor-pointer active:bg-state-hover-tint',
@@ -257,16 +274,22 @@ export function DataTable<T>({
                 </tr>
               ))}
             </thead>
-            <tbody>
+            <tbody className={arrived ? 'wl-stagger [--wl-rise:4px]' : undefined}>
               {padTop > 0 ? (
                 <tr aria-hidden>
                   <td colSpan={span} style={{ height: padTop }} />
                 </tr>
               ) : null}
-              {visible.map((row) => (
+              {visible.map((row, index) => (
                 <tr
                   key={row.id}
-                  style={virtualHeight ? { height: rowHeight } : undefined}
+                  style={
+                    virtualHeight
+                      ? { height: rowHeight }
+                      : arrived
+                        ? ({ '--i': index } as CSSProperties)
+                        : undefined
+                  }
                   className={cn(
                     'border-b border-border last:border-b-0 hover:bg-state-hover-tint',
                     onRowClick && 'cursor-pointer',
