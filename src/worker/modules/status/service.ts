@@ -23,7 +23,7 @@ import {
   worst,
 } from './checks.ts';
 import { recentWorkflowRuns } from './repo.ts';
-import { checkBreakglass, checkRateLimits } from './security-checks.ts';
+import { checkBreakglass, checkRateLimits, checkTurnstile } from './security-checks.ts';
 
 export { lastCronRun, recordCronRun } from './cron.ts';
 
@@ -87,6 +87,7 @@ export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Pro
     checkBuild(ctx),
     checkRateLimits(ctx),
     checkBreakglass(ctx),
+    checkTurnstile(ctx),
   ]);
   const components: Component[] = parts
     .flat()

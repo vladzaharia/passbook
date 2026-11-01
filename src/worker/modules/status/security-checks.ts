@@ -40,3 +40,14 @@ export async function checkBreakglass(ctx: ServiceContext): Promise<Draft> {
     data: { lastUsedAt, failuresToday },
   };
 }
+
+export function checkTurnstile(ctx: ServiceContext): Draft {
+  const configured = Boolean(ctx.env.TURNSTILE_SECRET && ctx.env.TURNSTILE_SITE_KEY);
+  return {
+    id: 'turnstile',
+    kind: 'oidc',
+    label: 'Turnstile',
+    state: configured ? 'configured' : 'not_configured',
+    detail: configured ? null : 'Email sign-in is refused: no secret or site key.',
+  };
+}

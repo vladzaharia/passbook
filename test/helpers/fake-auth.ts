@@ -6,9 +6,12 @@ import type {
   SessionAuth,
 } from '../../src/worker/platform/auth.ts';
 import { SESSION_COOKIE } from '../../src/worker/platform/auth.ts';
+import type { DeniedEvent } from '../../src/worker/platform/denied.ts';
 
 export interface FakeAuth {
   stores: AuthStores;
+  /** Events passed to onDenied, in order. */
+  denied: DeniedEvent[];
   /** Headers for a cookie session. Includes the CSRF token and same-origin hints for unsafe methods. */
   session(options?: { userId?: string; roles?: Role[]; origin?: string }): Record<string, string>;
   admin(): Record<string, string>;
@@ -24,11 +27,16 @@ export interface FakeAuth {
 export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
   const sessions = new Map<string, SessionAuth>();
   const keys = new Map<string, ApiKeyAuth>();
+  const denied: DeniedEvent[] = [];
   let n = 0;
   return {
+    denied,
     stores: {
       sessions: { resolve: async (cookie) => sessions.get(cookie) ?? null },
       apiKeys: { resolve: async (raw) => keys.get(raw) ?? null },
+      onDenied: (event) => {
+        denied.push(event);
+      },
     },
     session({ userId = 'user-1', roles = ['user'] as Role[], origin: o = origin } = {}) {
       const id = `fake-session-${++n}`;

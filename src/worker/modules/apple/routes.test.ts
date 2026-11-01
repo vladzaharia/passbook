@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { fakeAuth, fakeRateLimiter } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
 import { getPass, type Pass } from '../passes/repo.ts';
 import { updatePass } from '../passes/service.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
@@ -339,5 +340,42 @@ describe('retention', () => {
       "SELECT seq FROM sqlite_sequence WHERE name = 'revisions'",
     );
     expect(seq?.seq ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('rate limit layers', () => {
+  const limited = (ip: number, device: number) => ({
+    ip: fakeRateLimiter({ limit: ip }),
+    device: fakeRateLimiter({ limit: device }),
+  });
+  const send = (path: string, env: AppEnv, ipAddr = '198.51.100.7') =>
+    app.request(`${ORIGIN}/wallet/v1${path}`, { headers: { 'cf-connecting-ip': ipAddr } }, env);
+  const envWith = (l: ReturnType<typeof limited>) =>
+    ({ ...kit.env, RL_APPLE_IP: l.ip, RL_APPLE: l.device }) as AppEnv;
+
+  it('does not throttle many devices behind one IP', async () => {
+    const env = envWith(limited(3000, 120));
+    for (let i = 0; i < 400; i++)
+      expect((await send(`/devices/nat-${i}/registrations/${TYPE}`, env)).status).not.toBe(429);
+  });
+
+  it('limits one serial to 120 requests per window', async () => {
+    const env = envWith(limited(3000, 120));
+    const statuses: number[] = [];
+    for (let i = 0; i < 121; i++)
+      statuses.push((await send(`/passes/${TYPE}/one-serial`, env, `10.0.${i % 200}.1`)).status);
+    expect(statuses.slice(0, 120)).not.toContain(429);
+    expect(statuses[120]).toBe(429);
+  });
+
+  it('limits one IP to 3000 requests per window', async () => {
+    const l = limited(3000, 120);
+    l.ip.counts.set('RL_APPLE_IP:203.0.113.9', 3000);
+    expect((await send(`/devices/x/registrations/${TYPE}`, envWith(l), '203.0.113.9')).status).toBe(
+      429,
+    );
+    expect(
+      (await send(`/devices/x/registrations/${TYPE}`, envWith(l), '203.0.113.10')).status,
+    ).not.toBe(429);
   });
 });

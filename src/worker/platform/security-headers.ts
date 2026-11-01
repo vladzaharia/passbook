@@ -1,6 +1,14 @@
 import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from './context.ts';
 
+/** Shared with public/_headers; security-headers.test.ts fails when the two drift. */
+export const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), payment=(), usb=()';
+export const HSTS = 'max-age=31536000; includeSubDomains';
+export const REFERRER_DEFAULT = 'strict-origin-when-cross-origin';
+export const COOP = 'same-origin';
+export const CORP = 'same-origin';
+export const XFO = 'DENY';
+
 export function contentSecurityPolicy(nonce?: string): string {
   const n = nonce ? ` 'nonce-${nonce}'` : '';
   return [
@@ -33,21 +41,16 @@ export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => 
     if (!headers.has(name)) headers.set(name, value);
   };
   set('content-security-policy', contentSecurityPolicy(c.var.nonce));
-  set('strict-transport-security', 'max-age=31536000; includeSubDomains');
+  set('strict-transport-security', HSTS);
   set('x-content-type-options', 'nosniff');
   set(
     'referrer-policy',
-    NO_REFERRER_PREFIXES.some((p) => path.startsWith(p))
-      ? 'no-referrer'
-      : 'strict-origin-when-cross-origin',
+    NO_REFERRER_PREFIXES.some((p) => path.startsWith(p)) ? 'no-referrer' : REFERRER_DEFAULT,
   );
-  set(
-    'permissions-policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
-  );
-  set('cross-origin-opener-policy', 'same-origin');
-  set('cross-origin-resource-policy', 'same-origin');
-  set('x-frame-options', 'DENY');
+  set('permissions-policy', PERMISSIONS_POLICY);
+  set('cross-origin-opener-policy', COOP);
+  set('cross-origin-resource-policy', CORP);
+  set('x-frame-options', XFO);
   if (NO_STORE_PREFIXES.some((p) => path.startsWith(p)) || path.endsWith('/pass.pkpass')) {
     set('cache-control', 'no-store');
   }

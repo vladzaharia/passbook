@@ -302,10 +302,10 @@ describe('device logs per IP', () => {
   });
 });
 
-describe('RL_APPLE', () => {
+describe('RL_APPLE_IP', () => {
   it('answers 429 once the per-IP limit is spent, keyed by IP', async () => {
     const limiter = fakeLimiter(1);
-    const env = { ...kit.env, RL_APPLE: limiter } as unknown as AppEnv;
+    const env = { ...kit.env, RL_APPLE_IP: limiter } as unknown as AppEnv;
     const get = (ip: string) =>
       call(`/devices/rl/registrations/${TYPE}`, { headers: { 'cf-connecting-ip': ip } }, env);
     expect((await get('1.1.1.1')).status).toBe(204);
@@ -313,6 +313,6 @@ describe('RL_APPLE', () => {
     expect(limited.status).toBe(429);
     expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
     expect((await get('2.2.2.2')).status).toBe(204);
-    expect([...limiter.calls.keys()]).toEqual(['RL_APPLE:1.1.1.1', 'RL_APPLE:2.2.2.2']);
+    expect([...limiter.calls.keys()]).toEqual(['RL_APPLE_IP:1.1.1.1', 'RL_APPLE_IP:2.2.2.2']);
   });
 });

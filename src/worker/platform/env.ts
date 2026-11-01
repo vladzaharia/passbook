@@ -23,6 +23,7 @@ export const RATE_LIMITS = [
   'RL_MAGIC_LINK',
   'RL_PUBLIC',
   'RL_APPLE',
+  'RL_APPLE_IP',
   'RL_API_KEY',
   'RL_WEBHOOK',
   'RL_REFRESH',
