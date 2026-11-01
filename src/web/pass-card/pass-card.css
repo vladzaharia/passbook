@@ -69,6 +69,7 @@
 }
 .pc-logo-text {
   flex: 0 0 auto;
+  margin-inline-end: calc(var(--u) * 6);
   font-size: calc(var(--u) * 15);
   font-weight: 600;
   white-space: nowrap;
@@ -81,7 +82,8 @@
   justify-content: space-between;
 }
 .pc-header {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   justify-content: flex-end;
   flex-wrap: nowrap;
   gap: calc(var(--u) * 12);
@@ -105,7 +107,7 @@
   align-items: flex-start;
 }
 .pc-header .pc-field {
-  white-space: nowrap;
+  white-space: normal;
 }
 .pc-label {
   font-size: calc(var(--u) * 10);

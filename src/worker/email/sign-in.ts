@@ -1,3 +1,5 @@
+import { EMAIL_LIGHT as c, emailShell, escapeHtml } from './shell.ts';
+
 export interface SignInEmailInput {
   purpose: 'sign_in' | 'verify_email';
   link: string;
@@ -14,16 +16,10 @@ export interface RenderedEmail {
   text: string;
 }
 
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
-
 export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
   const verify = input.purpose === 'verify_email';
   const subject = verify ? 'Confirm your email' : 'Your sign-in link';
+  const title = verify ? 'Confirm your email' : 'Sign in to Wallet';
   const action = verify ? 'Confirm email' : 'Sign in';
   const expiry = `Expires in ${input.expiresMinutes} minutes. Ignore this email if you did not ask for it.`;
   const codeLine = input.code ? `Code: ${input.code}` : '';
@@ -32,18 +28,21 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
 
   const text = [askedBy, `${action}: ${input.link}`, codeLine, expiry].filter(Boolean).join('\n\n');
 
-  const link = escapeHtml(input.link);
-  const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${subject}</title></head>
-<body style="margin:0;padding:24px;background:#f5f5f5;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-<table role="presentation" width="420" cellpadding="0" cellspacing="0" style="max-width:420px;background:#fff;border-radius:8px;padding:24px">
-<tr><td style="font-size:16px;line-height:24px">
-${askedBy ? `<p style="margin:0 0 16px">${escapeHtml(askedBy)}</p>` : ''}
-<p style="margin:0 0 16px"><a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px">${action}</a></p>
-${input.code ? `<p style="margin:0 0 16px">Code: <strong style="font-size:20px;letter-spacing:3px">${escapeHtml(input.code)}</strong></p>` : ''}
-<p style="margin:0;font-size:13px;line-height:20px;color:#555">${expiry}</p>
-</td></tr></table></td></tr></table></body></html>`;
+  const body = `<p class="e-strong" style="margin:0 0 ${askedBy ? '8' : '20'}px;font-size:20px;line-height:28px;font-weight:600;color:${c.strong}">${title}</p>
+${askedBy ? `<p class="e-text" style="margin:0 0 20px;font-size:14px;line-height:20px;color:${c.text}">${escapeHtml(askedBy)}</p>` : ''}
+<p style="margin:0 0 20px"><a class="e-btn" href="${escapeHtml(input.link)}" style="display:inline-block;background:${c.accent};color:${c.accentOn};text-decoration:none;font-size:15px;font-weight:500;line-height:20px;padding:8px 20px;border-radius:6px">${action}</a></p>
+${input.code ? `<p class="e-muted" style="margin:0 0 4px;font-size:12px;line-height:18px;color:${c.muted}">Or enter this code</p><p class="e-well e-strong" style="margin:0 0 24px;padding:10px 12px;border:1px solid ${c.line};border-radius:6px;background:${c.page};font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:20px;line-height:28px;letter-spacing:4px;color:${c.strong}">${escapeHtml(input.code)}</p>` : ''}
+<p class="e-muted" style="margin:0;font-size:12px;line-height:18px;color:${c.muted}">${expiry}</p>`;
 
-  return { subject, html, text };
+  return {
+    subject,
+    html: emailShell({
+      lang: 'en',
+      title: subject,
+      header: 'Wallet',
+      headerColor: '#1f2937',
+      body,
+    }),
+    text,
+  };
 }
