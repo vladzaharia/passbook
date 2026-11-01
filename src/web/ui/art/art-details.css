@@ -1,0 +1,162 @@
+/* Art parts: runs to unplugged. */
+[data-art="runs"] [data-part="n"] {
+  --f: scale(0.6);
+  --d: calc(var(--i, 0) * 220ms);
+  --u: 160ms;
+}
+[data-art="runs"] [data-part="h"] {
+  --k: wl-a-hop;
+  --u: 440ms;
+  --e: linear;
+  --b: translateY(-6px);
+  --bu: 300ms;
+}
+
+[data-art="phone"] [data-part="f"] {
+  --f: translateY(8px);
+  --u: 240ms;
+  --e: var(--art-out);
+}
+[data-art="phone"] [data-part="p"] {
+  --f: translateY(-10px);
+  --d: 120ms;
+  --u: 360ms;
+  --b: translateY(3px);
+}
+[data-art="phone"] [data-part="u"] {
+  --f: scale(0);
+  --d: 400ms;
+  --u: 200ms;
+  --e: var(--art-bo);
+}
+
+[data-art="envelope"] [data-part="e"] {
+  --f: translateY(8px);
+  --u: 200ms;
+  --e: var(--art-out);
+}
+[data-art="envelope"] [data-part="c"] {
+  --t: scaleY(0);
+  --f: none;
+  --fo: 1;
+  --o: 50% 0;
+  --d: 120ms;
+  --u: 110ms;
+  --e: var(--art-in);
+}
+[data-art="envelope"] [data-part="u"] {
+  --f: scaleY(0);
+  --fo: 1;
+  --o: 50% 100%;
+  --d: 230ms;
+  --u: 110ms;
+  --e: var(--art-out);
+}
+[data-art="envelope"] [data-part="p"] {
+  --f: translateY(16px);
+  --fo: 1;
+  --d: 300ms;
+  --u: 280ms;
+  --b: translateY(6px);
+}
+
+[data-art="frames"] [data-part="b"] {
+  --t: rotate(-6deg);
+  --f: rotate(-6deg) translateY(4px);
+  --u: 240ms;
+  --e: var(--art-out);
+}
+[data-art="frames"] [data-part="f"] {
+  --t: rotate(4deg);
+  --f: translateX(10px) rotate(10deg);
+  --b: translateX(6px);
+}
+[data-art="frames"] [data-part="s"] {
+  --f: translateY(4px);
+  --d: 200ms;
+  --u: 300ms;
+}
+
+[data-art="layers"] [data-part="s"] {
+  --f: translateY(-12px);
+  --d: calc(var(--i, 0) * 60ms);
+  --u: 300ms;
+  --b: translate(4px, -2px);
+}
+[data-art="layers"][data-pose="compare"] [data-i="1"] {
+  --t: translateX(10px);
+}
+[data-art="layers"][data-pose="compare"] [data-i="2"] {
+  --t: translateX(-10px);
+}
+
+[data-art="mapping"] [data-part="s"] {
+  --f: scale(0.6);
+  --d: calc(var(--i, 0) * 40ms);
+  --u: 200ms;
+}
+[data-art="mapping"] [data-part="a"] {
+  --f: scaleX(0);
+  --o: 0 50%;
+  --d: 240ms;
+  --u: 300ms;
+  --e: var(--art-out);
+  --b: scaleX(0.3);
+}
+
+[data-art="lens"] [data-part="c"] {
+  --fo: 0.3;
+  --d: calc(100ms + var(--i, 0) * 80ms);
+  --u: 200ms;
+  --e: var(--art-out);
+}
+[data-art^="lens"] [data-part="g"] {
+  --f: translateX(-12px) rotate(-8deg);
+  --b: translateX(10px);
+}
+
+[data-art="torn"] [data-part="c"] {
+  --t: translate(6px, -4px) rotate(12deg);
+  --f: none;
+  --fo: 1;
+  --o: 0 0;
+  --d: 120ms;
+  --u: 420ms;
+  --b: rotate(3deg);
+  --bu: 300ms;
+}
+
+[data-art="lock"] [data-part="k"] {
+  --f: translateY(6px);
+  --u: 200ms;
+  --e: var(--art-out);
+}
+[data-art="lock"] [data-part="s"] {
+  --f: translateY(-5px);
+  --fo: 1;
+  --d: 120ms;
+  --u: 200ms;
+  --e: var(--art-bo);
+  --b: translateY(-4px);
+  --bu: 300ms;
+}
+[data-art="lock"] [data-part="b"] {
+  --f: scaleY(0.94);
+  --fo: 1;
+  --o: 50% 100%;
+  --d: 300ms;
+  --u: 160ms;
+}
+
+[data-art="unplugged"] [data-part="p"] {
+  --f: translate(10px, -8px) rotate(8deg);
+  --fo: 1;
+  --u: 300ms;
+  --e: var(--art-in);
+}
+[data-art="unplugged"] [data-part="k"] {
+  --k: wl-a-flick;
+  --d: 280ms;
+  --u: 300ms;
+  --e: linear;
+}

@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { ART, ART_NAMES, EntityArt, WalletArt, type WalletState } from './index.ts';
 
 const DIR = join(process.cwd(), 'src/web/ui/art');
-const css = readFileSync(join(DIR, 'art.css'), 'utf8');
+const css = ['art.css', 'art-records.css', 'art-details.css', 'art-wallet.css']
+  .map((f) => readFileSync(join(DIR, f), 'utf8'))
+  .join('\n');
 const STATES: WalletState[] = [
   'login',
   'empty',
@@ -112,6 +114,11 @@ describe('entity art', () => {
       const doc = new DOMParser().parseFromString(html, 'image/svg+xml');
       expect(doc.querySelectorAll('*').length).toBeLessThanOrEqual(40);
     }
+    // SSR pages inline ART_CSS (css.ts): every art stylesheet, the engine first.
+    const ssr = readFileSync(join(DIR, 'css.ts'), 'utf8');
+    const sheets = readdirSync(DIR).filter((f) => f.endsWith('.css'));
+    for (const f of sheets) expect(ssr).toContain(`./${f}?raw`);
+    expect(ssr).toMatch(/\[base, records, details, wallet\]/);
   });
 
   it('animates only transform and opacity', () => {
@@ -159,8 +166,9 @@ describe('entity art', () => {
   });
 
   it('fits the 8 kB gzip budget', () => {
+    // css.ts is SSR glue: the browser bundle never loads it.
     const files = readdirSync(DIR)
-      .filter((f) => !f.includes('.test.'))
+      .filter((f) => !f.includes('.test.') && f !== 'css.ts')
       .sort();
     const all = files.map((f) => readFileSync(join(DIR, f), 'utf8')).join('\n');
     expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(8 * 1024);

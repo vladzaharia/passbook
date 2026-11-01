@@ -24,7 +24,7 @@ const card = (n: 1 | 2 | 3, extra?: string) => (
   </g>
 );
 
-/** The holder mascot. SSR-safe: no inline styles; pages inline art.css?raw. */
+/** The holder mascot. SSR-safe: no inline styles; pages inline ART_CSS (css.ts). */
 export function WalletArt({ state = 'empty', mood, lift, ...props }: WalletArtProps) {
   const cards = state !== 'empty' && state !== 'lost';
   return (

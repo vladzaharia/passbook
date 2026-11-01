@@ -1,0 +1,99 @@
+/* Art parts: the wallet mascot. */
+[data-art="wallet"] [data-part="w"] {
+  --f: translateY(8px);
+  --u: 200ms;
+  --e: var(--art-out);
+  --b: translateY(-3px) rotate(-1deg);
+}
+[data-art="wallet"] :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+  --f: translateY(16px);
+  --fo: 1;
+  --o: 50% 100%;
+  --d: calc(100ms + var(--i, 0) * 60ms);
+  --u: 320ms;
+  --e: var(--art-bo);
+}
+[data-art="wallet"] [data-part="c1"] {
+  --t: translate(-10px, 2px) rotate(-12deg);
+}
+[data-art="wallet"] [data-part="c3"] {
+  --t: translate(10px, 2px) rotate(12deg);
+}
+[data-art="wallet"] [data-part="eyes"] {
+  --f: scaleY(0);
+  --fo: 1;
+  --d: 480ms;
+  --u: 120ms;
+  --e: var(--art-out);
+  --b: scaleY(0.1);
+  --bu: 140ms;
+}
+[data-art="wallet"] [data-part="gh"] {
+  --f: translateY(4px);
+  --d: 200ms;
+  --u: 300ms;
+  --b: translateY(-3px);
+}
+[data-state="empty"] [data-part="eyes"] {
+  --t: translateY(-1.2px);
+}
+[data-state="lost"] [data-part="ln"] {
+  --f: translate(8px, -6px) rotate(10deg);
+  --d: 120ms;
+}
+[data-state="lost"] [data-part="eyes"] {
+  --k: wl-a-look;
+  --d: 240ms;
+  --u: 360ms;
+  --e: var(--art-mv);
+}
+[data-state="confirm"] [data-part="ck"] {
+  --f: scale(0);
+  --d: 300ms;
+  --u: 300ms;
+  --e: var(--art-bo);
+}
+[data-state="expired"] [data-part="c3"] {
+  --t: translate(12px, 6px) rotate(30deg);
+  --f: translate(10px, 2px) rotate(12deg);
+  --d: 100ms;
+  --u: 480ms;
+  --e: var(--art-sp);
+}
+[data-state="no-access"] :is([data-part="c1"], [data-part="c3"]) {
+  --t: none;
+  --d: 0ms;
+  --u: 300ms;
+  --e: var(--art-sp);
+}
+[data-state="no-access"] [data-part="c1"] {
+  --f: translate(-10px, 2px) rotate(-12deg);
+}
+[data-state="no-access"] [data-part="c3"] {
+  --f: translate(10px, 2px) rotate(12deg);
+}
+[data-state="no-access"] [data-part="lk"] {
+  --f: translateY(-4px);
+  --d: 200ms;
+  --u: 200ms;
+}
+[data-state="no-access"] [data-part="sh"] {
+  --f: translateY(-4px);
+  --fo: 1;
+  --d: 340ms;
+  --u: 200ms;
+  --e: var(--art-bo);
+}
+[data-state="break-glass"] [data-part="key"] {
+  --t: rotate(90deg);
+  --f: none;
+  --o: 0 50%;
+  --d: 200ms;
+  --u: 360ms;
+}
+[data-art="wallet"] [data-mood="flat"] [data-part="eyes"] {
+  --t: scaleY(0.25);
+}
+[data-art="wallet"] [data-lift] [data-part="c2"] {
+  --t: translateY(-6px);
+}

@@ -1,5 +1,8 @@
 import { type ReactNode, useEffect, useId, useRef } from 'react';
 import './art.css';
+import './art-records.css';
+import './art-details.css';
+import './art-wallet.css';
 
 export type ArtSize = 'sm' | 'lg' | 'xl';
 
