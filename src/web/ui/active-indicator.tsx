@@ -14,10 +14,13 @@ export function ActiveIndicator({ variant = 'pill' }: { variant?: 'pill' | 'unde
     const host = pill?.parentElement;
     if (!pill || !host) return;
     let frame = 0;
-    const place = () => {
+    // Only a change of active item slides. A resize (window, rotation, scrollbar) snaps, or the
+    // pill would be caught mid-slide at a stale size.
+    const place = (slide: boolean) => {
       const active = host.querySelector<HTMLElement>(ACTIVE);
       pill.hidden = !active;
       if (!active) return;
+      if (!slide) delete pill.dataset.ready;
       const w = active.offsetWidth;
       // Width is fixed at first placement; later widths scale, so only transform animates.
       pill.dataset.base ??= String(w);
@@ -28,20 +31,20 @@ export function ActiveIndicator({ variant = 'pill' }: { variant?: 'pill' | 'unde
       pill.style.width = `${base}px`;
       pill.style.height = `${h}px`;
       pill.style.transform = `translate(${active.offsetLeft}px, ${y}px) scaleX(${w / base})`;
-      // Placed once without motion; later changes slide.
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         pill.dataset.ready = '';
       });
     };
-    place();
-    const mo = new MutationObserver(place);
+    place(false);
+    const mo = new MutationObserver(() => place(true));
     mo.observe(host, {
       attributes: true,
       attributeFilter: ['aria-current', 'data-state'],
       subtree: true,
     });
-    const ro = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place);
+    const ro =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => place(false));
     ro?.observe(host);
     return () => {
       cancelAnimationFrame(frame);
