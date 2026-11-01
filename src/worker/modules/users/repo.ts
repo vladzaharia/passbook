@@ -57,10 +57,23 @@ export const identitiesOf = (db: Db, userId: string) =>
     [userId],
   );
 
+export interface OwnedPassRow {
+  id: string;
+  title: string;
+  template_name: string;
+  org_name: string;
+  status: 'active' | 'voided';
+}
+
 export const ownedPasses = (db: Db, userId: string) =>
-  all<{ id: string; title: string }>(
+  all<OwnedPassRow>(
     db,
-    'SELECT id, COALESCE(display_title, serial) AS title FROM passes WHERE owner_user_id = ? ORDER BY id DESC LIMIT 100',
+    `SELECT p.id, COALESCE(p.display_title, p.serial) AS title,
+            COALESCE(t.name, p.template_id) AS template_name, o.name AS org_name, p.status
+     FROM passes p
+     JOIN orgs o ON o.id = p.org_id
+     LEFT JOIN templates t ON t.id = p.template_id
+     WHERE p.owner_user_id = ? ORDER BY p.id DESC LIMIT 100`,
     [userId],
   );
 

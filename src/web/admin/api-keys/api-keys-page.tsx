@@ -69,7 +69,11 @@ export function ApiKeysPage() {
             <EmptyState
               icon={KeyRound}
               title="No API keys"
-              action={<Button onClick={() => setCreating(true)}>New key</Button>}
+              action={
+                <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
+                  New key
+                </Button>
+              }
             />
           }
           columns={[
