@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const OrgBrandingSchema = z.object({
   accent: z
@@ -35,7 +35,7 @@ export const OrgSummarySchema = OrgSchema.extend({
 
 export const CreateOrgSchema = z.object({
   slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,63}$/),
-  name: z.string().min(1).max(120),
+  name: PlainLineSchema(120),
   defaultIdentityId: IdSchema.nullable().optional(),
   branding: OrgBrandingSchema.optional(),
 });

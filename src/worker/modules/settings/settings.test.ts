@@ -37,6 +37,32 @@ beforeEach(async () => {
 });
 
 describe('settings api', () => {
+  it('rejects control and bidi characters in the sender name', async () => {
+    for (const v of ['A\u2028B', 'A\u202EB', 'A\r\nBcc: x']) {
+      expect((await call('PUT', '', { values: { 'email.senderName': v } })).status).toBe(422);
+    }
+    expect((await call('PUT', '', { values: { 'email.senderName': 'Acme Passes' } })).status).toBe(
+      200,
+    );
+  });
+
+  it('validates org support links', async () => {
+    const org = await makeOrg(fixtures(appEnv));
+    const put = (values: object) => call('PUT', '', { scope: `org:${org.id}`, values });
+    for (const values of [
+      { 'support.url': 'javascript:alert(1)' },
+      { 'support.url': 'http://x.example' },
+      { 'support.url': 'https://user:pw@x.example' },
+      { 'support.email': 'a@b' },
+    ]) {
+      expect((await put(values)).status).toBe(422);
+    }
+    expect(
+      (await put({ 'support.url': 'https://x.example/help', 'support.email': 'help@x.example' }))
+        .status,
+    ).toBe(200);
+  });
+
   it('lists every registered key with defaults and the read-only oidc block', async () => {
     const body = (await (await call('GET', '')).json()) as List;
     expect(body.items.map((i) => i.key)).toContain('retention.auditDays');

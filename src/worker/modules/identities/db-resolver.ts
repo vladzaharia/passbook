@@ -27,7 +27,9 @@ export function clearIdentityKeyCache(): void {
 const notFound = () => new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
 
 export function apnsBindingPresent(env: AppEnv, binding: string | null): boolean {
-  return binding !== null && Boolean((env as unknown as Record<string, unknown>)[binding]);
+  if (binding === null) return false;
+  const value = (env as unknown as Record<string, { fetch?: unknown } | undefined>)[binding];
+  return typeof value?.fetch === 'function';
 }
 
 /** Decrypts the private key PEM of a DB identity. Throws if the credential is missing or unreadable. */

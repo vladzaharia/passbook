@@ -322,12 +322,16 @@ describe('db identity resolver', () => {
     const f = await acme();
     const dto = (await (await upload(f)).json()) as Dto;
     expect((await call('PATCH', `/${dto.id}`, { apnsBinding: 'lower' })).status).toBe(422);
+    for (const apnsBinding of ['DB', 'ASSETS', 'KEK_V1', 'APNS'])
+      expect((await call('PATCH', `/${dto.id}`, { apnsBinding })).status).toBe(422);
     const set = (await (
       await call('PATCH', `/${dto.id}`, { apnsBinding: 'APNS_ACME' })
     ).json()) as Dto;
     expect(set).toMatchObject({ apnsBinding: 'APNS_ACME', apnsAvailable: false });
     expect((await createIdentityResolver(appEnv).byId(dto.id)).apnsBinding).toBeNull();
     appEnv = { ...appEnv, APNS_ACME: {} as Fetcher } as AppEnv;
+    expect((await createIdentityResolver(appEnv).byId(dto.id)).apnsBinding).toBeNull();
+    appEnv = { ...appEnv, APNS_ACME: { fetch: async () => new Response() } } as unknown as AppEnv;
     expect((await createIdentityResolver(appEnv).byId(dto.id)).apnsBinding).toBe('APNS_ACME');
     expect(((await (await call('GET', `/${dto.id}`)).json()) as Dto).apnsAvailable).toBe(true);
   });
