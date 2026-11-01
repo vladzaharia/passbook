@@ -58,6 +58,8 @@ describe('settings page', () => {
     });
     expect(await screen.findByLabelText('Email sender name')).toHaveValue('Wallet');
     expect(screen.getByLabelText('Refresh cooldown')).toHaveValue('30');
+    expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
+    expect(screen.getByRole('region', { name: 'Sign-in' })).toBeInTheDocument();
     expect(await screen.findByText('wallet-admins')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -75,6 +77,28 @@ describe('settings page', () => {
     });
     const link = await screen.findByRole('link', { name: 'Polaris ID' });
     expect(link).toHaveAttribute('href', 'https://id.staging.test');
+  });
+
+  it('toggles a switch and saves the boolean', async () => {
+    let body: unknown;
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/settings': (_url, init) => {
+          if (init?.method === 'PUT') {
+            body = JSON.parse(String(init.body));
+            return json(entries({ 'auth.magicLinkEnabled': false }));
+          }
+          return json(entries());
+        },
+      },
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('switch', { name: 'Magic-link sign-in' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(body).toEqual({ scope: 'platform', values: { 'auth.magicLinkEnabled': false } }),
+    );
   });
 
   it('saves only the changed value and clears the dirty bar', async () => {

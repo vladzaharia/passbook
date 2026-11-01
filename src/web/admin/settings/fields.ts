@@ -8,6 +8,8 @@ export interface SettingField {
   label: string;
   kind: FieldKind;
   help?: string;
+  /** Section heading; fields without one render as a flat list. */
+  group?: string;
   suffix?: string;
   /** Optional org settings may be cleared; platform settings always hold a value. */
   optional?: boolean;
@@ -20,6 +22,7 @@ const O = OrgSettingsSchema.shape;
 export const PLATFORM_FIELDS: readonly SettingField[] = [
   {
     key: 'oidc.trustEmail',
+    group: 'Sign-in',
     label: 'Trust Polaris ID emails',
     kind: 'boolean',
     help: 'Off requires a magic-link proof when a new sign-in matches an existing email.',
@@ -27,18 +30,21 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
   },
   {
     key: 'auth.magicLinkEnabled',
+    group: 'Sign-in',
     label: 'Magic-link sign-in',
     kind: 'boolean',
     schema: P['auth.magicLinkEnabled'],
   },
   {
     key: 'email.senderName',
+    group: 'Email',
     label: 'Email sender name',
     kind: 'text',
     schema: P['email.senderName'],
   },
   {
     key: 'refresh.userCooldownSeconds',
+    group: 'Passes and retention',
     label: 'Refresh cooldown',
     kind: 'int',
     suffix: 'seconds',
@@ -47,6 +53,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
   },
   {
     key: 'retention.passVersionsKeep',
+    group: 'Passes and retention',
     label: 'Pass versions kept',
     kind: 'int',
     help: '1 to 50.',
@@ -54,6 +61,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
   },
   {
     key: 'retention.auditDays',
+    group: 'Passes and retention',
     label: 'Audit retention',
     kind: 'int',
     suffix: 'days',

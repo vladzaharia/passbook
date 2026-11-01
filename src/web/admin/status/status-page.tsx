@@ -1,140 +1,137 @@
 import { RefreshCw } from 'lucide-react';
+import { cn } from '@/web/lib/cn.ts';
+import { statusOf } from '@/web/lib/status.ts';
 import {
   Button,
   Card,
-  CardBody,
-  CardHeader,
-  DataTable,
   EmptyState,
   ErrorState,
-  KeyValue,
   PageHeader,
   SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { ComponentRow } from './component-row.tsx';
 import { dataItems } from './data-items.ts';
-import { sortBySeverity, useStatus, useWorkflowRuns } from './queries.ts';
+import { countStates, groupComponents, headline, type State } from './groups.ts';
+import { sortBySeverity, useStatus } from './queries.ts';
+import { WorkflowRuns } from './workflow-runs.tsx';
 
-const RUN_STATUS: Record<string, 'verified' | 'degraded' | 'failing' | 'configured'> = {
-  complete: 'verified',
-  running: 'configured',
-  queued: 'configured',
-  errored: 'failing',
-  terminated: 'degraded',
+const ORDER: State[] = ['failing', 'degraded', 'not_configured', 'configured', 'verified'];
+
+const TONE_BG: Record<string, string> = {
+  success: 'border-success-border bg-success-subtle',
+  info: 'border-info-border bg-info-subtle',
+  warning: 'border-warning-border bg-warning-subtle',
+  danger: 'border-danger-border bg-danger-subtle',
+  neutral: 'border-border bg-surface-raised',
 };
 
-function Workflows() {
-  const runs = useWorkflowRuns();
+function Summary({
+  overall,
+  counts,
+  checkedAt,
+  fetching,
+  onRecheck,
+}: {
+  overall: State;
+  counts: Record<State, number>;
+  checkedAt: number;
+  fetching: boolean;
+  onRecheck: () => void;
+}) {
+  const entry = statusOf(overall);
+  const Icon = entry?.icon;
   return (
-    <Card>
-      <CardHeader title="Recent workflow runs" />
-      <CardBody>
-        {runs.isPending ? (
-          <SkeletonRows rows={3} label="Loading workflow runs" />
-        ) : runs.isError ? (
-          <ErrorState error={runs.error} onRetry={() => runs.refetch()} />
-        ) : (
-          <DataTable
-            caption="Workflow runs"
-            data={runs.data.items}
-            getRowId={(r) => r.instanceId}
-            empty={<EmptyState title="No workflow runs" />}
-            columns={[
-              { header: 'Kind', accessorKey: 'kind' },
-              {
-                header: 'Status',
-                accessorKey: 'status',
-                cell: ({ row }) => (
-                  <StatusPill status={RUN_STATUS[row.original.status] ?? 'configured'}>
-                    {row.original.status}
-                  </StatusPill>
-                ),
-              },
-              {
-                header: 'Started',
-                accessorKey: 'startedAt',
-                cell: ({ row }) => formatDateTime(row.original.startedAt),
-              },
-              {
-                header: 'Error',
-                accessorKey: 'errorCode',
-                cell: ({ row }) =>
-                  row.original.errorCode ? (
-                    <code className="font-mono text-xs">{row.original.errorCode}</code>
-                  ) : (
-                    ''
-                  ),
-              },
-            ]}
-          />
-        )}
-      </CardBody>
-    </Card>
+    <section
+      aria-label="Overall status"
+      className={cn(
+        'flex flex-wrap items-center gap-x-5 gap-y-4 rounded-lg border p-5',
+        TONE_BG[entry?.tone ?? 'neutral'],
+      )}
+    >
+      {Icon ? <Icon aria-hidden className="size-9 shrink-0 text-fg-strong" /> : null}
+      <div className="min-w-0 flex-1 basis-60">
+        <p className="text-xl font-semibold text-fg-strong">{headline(counts)}</p>
+        <p className="mt-0.5 text-sm text-fg">
+          Checked{' '}
+          <time dateTime={new Date(checkedAt).toISOString()}>{formatDateTime(checkedAt)}</time>
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        iconStart={<RefreshCw aria-hidden />}
+        loading={fetching}
+        onClick={onRecheck}
+      >
+        Recheck
+      </Button>
+      <ul aria-label="Component counts" className="flex basis-full flex-wrap gap-2">
+        {ORDER.filter((s) => counts[s] > 0).map((s) => (
+          <li key={s}>
+            <StatusPill status={s}>
+              {counts[s]} {statusOf(s)?.label.toLowerCase()}
+            </StatusPill>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
 export function StatusPage() {
   const status = useStatus();
   const orgName = useOrgNames();
-  const refresh = (
-    <div className="flex items-center gap-3">
-      {status.data ? (
-        <span className="text-xs text-fg-muted">
-          Checked {formatDateTime(Math.max(0, ...status.data.components.map((c) => c.checkedAt)))}
-        </span>
-      ) : null}
-      <Button
-        variant="outline"
-        iconStart={<RefreshCw aria-hidden />}
-        loading={status.isFetching && !status.isPending}
-        onClick={() => status.refetch()}
-      >
-        Refresh
-      </Button>
-    </div>
-  );
-  const items = (data: Parameters<typeof dataItems>[0] | undefined) =>
-    data ? dataItems(data, orgName) : [];
+  const data = status.data;
   return (
     <>
-      <PageHeader title="Status" actions={refresh} />
+      <PageHeader title="Status" />
       {status.isPending ? (
         <SkeletonRows label="Loading status" />
-      ) : status.isError ? (
+      ) : status.isError || !data ? (
         <ErrorState error={status.error} onRetry={() => status.refetch()} />
       ) : (
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <span className="flex items-center gap-2">
-              Overall <StatusPill status={status.data.overall} />
-            </span>
-          </div>
-          {status.data.components.length === 0 ? (
+        <div className="flex max-w-4xl flex-col gap-8">
+          <Summary
+            overall={data.overall}
+            counts={countStates(data.components)}
+            checkedAt={Math.max(0, ...data.components.map((c) => c.checkedAt))}
+            fetching={status.isFetching}
+            onRecheck={() => status.refetch()}
+          />
+          {data.components.length === 0 ? (
             <EmptyState title="No components reported" />
           ) : (
-            <ul className="flex flex-col gap-2" aria-label="Components">
-              {sortBySeverity(status.data.components).map((c) => (
-                <li key={c.id}>
-                  <Card className="p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium text-fg-strong">{c.label}</p>
-                        <p className="text-xs text-fg-muted">{c.kind}</p>
-                      </div>
-                      <StatusPill status={c.state} />
-                    </div>
-                    {c.detail ? <p className="mt-2 text-sm text-fg">{c.detail}</p> : null}
-                    {items(c.data).length > 0 ? (
-                      <KeyValue className="mt-3" items={items(c.data)} />
+            groupComponents(data.components).map((g) => {
+              const worst = countStates(g.items);
+              const problems = worst.failing + worst.degraded;
+              return (
+                <section key={g.id} aria-labelledby={`g-${g.id}`} className="flex flex-col gap-2">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 id={`g-${g.id}`} className="text-base font-semibold text-fg-strong">
+                      {g.title}
+                    </h2>
+                    {problems > 0 ? (
+                      <span className="text-sm text-fg-muted">{problems} need attention</span>
                     ) : null}
+                  </div>
+                  <Card className="overflow-hidden">
+                    <ul aria-label={g.title} className="divide-y divide-border">
+                      {sortBySeverity(g.items).map((c) => (
+                        <ComponentRow
+                          key={c.id}
+                          component={c}
+                          items={c.data ? dataItems(c.data, orgName) : []}
+                        />
+                      ))}
+                    </ul>
                   </Card>
-                </li>
-              ))}
-            </ul>
+                </section>
+              );
+            })
           )}
-          <Workflows />
+          <WorkflowRuns />
         </div>
       )}
     </>
