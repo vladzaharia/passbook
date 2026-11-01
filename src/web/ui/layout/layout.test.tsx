@@ -314,7 +314,10 @@ describe('user menu', () => {
       handlers: { '/auth/logout': () => new Response(null, { status: 204 }) },
     });
     await user.click(await screen.findByRole('button', { name: 'Account menu' }));
-    expect(await screen.findByText('test@example.com')).toBeInTheDocument();
+    // The account page shows the address too; look inside the menu.
+    expect(
+      await within(await screen.findByRole('menu')).findByText('test@example.com'),
+    ).toBeInTheDocument();
     await user.click(await screen.findByRole('menuitem', { name: 'Sign out' }));
     await waitFor(() => {
       const call = fetchMock.mock.calls.find(([url]) => String(url) === '/auth/logout');

@@ -87,14 +87,12 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
   const codeRef = useRef<HTMLInputElement>(null);
   const flipper = useRef<HTMLDivElement>(null);
   const face = sent ? 'code' : 'email';
-  const turned = useRef(false);
+  const lastFace = useRef(face);
 
   // Focus follows the flip: the code field once the card has turned, the email field on return.
   useEffect(() => {
-    if (!turned.current) {
-      turned.current = true;
-      return;
-    }
+    if (lastFace.current === face) return;
+    lastFace.current = face;
     const target = face === 'code' ? codeRef.current : emailRef.current;
     const el = flipper.current;
     if (!target || !el || prefersReducedMotion()) {

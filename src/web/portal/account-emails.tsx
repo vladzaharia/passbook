@@ -45,10 +45,11 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
 
   // Drop pending rows once the server lists them as verified (the pill fades with the swap).
   const { list, drop } = pending;
+  const listed = query.data?.items;
   useEffect(() => {
-    const done = list.filter((e) => verified.some((v) => v.email === e));
+    const done = list.filter((e) => listed?.some((v) => v.email === e));
     if (done.length) removeWithTransition(() => drop(done));
-  }, [list, verified, drop]);
+  }, [list, listed, drop]);
 
   useEffect(() => {
     if (!focusAdd || !query.data) return;
