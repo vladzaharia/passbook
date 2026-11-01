@@ -1,20 +1,17 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
+import type { z } from 'zod';
+import { ApiScopeSchema, type RoleSchema } from '../../shared/contracts/common.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
-export type Role = 'admin' | 'user';
+export type Role = z.infer<typeof RoleSchema>;
 export type Amr = 'oidc' | 'magic_link' | 'breakglass';
-export const API_SCOPES = [
-  'passes:read',
-  'passes:write',
-  'holders:write',
-  'templates:read',
-] as const;
-export type ApiScope = (typeof API_SCOPES)[number];
+export const API_SCOPES = ApiScopeSchema.options;
+export type ApiScope = z.infer<typeof ApiScopeSchema>;
 
 export const SESSION_COOKIE = '__Host-wallet_sid';
 

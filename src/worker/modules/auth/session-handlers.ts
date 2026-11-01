@@ -43,7 +43,8 @@ async function endSessionUrl(c: Context<AppBindings>): Promise<string | null> {
   const rp = oidcConfig(c.env);
   if (!rp) return null;
   try {
-    const { endSessionEndpoint } = await discover(rp);
+    const ctx = serviceContext(c);
+    const { endSessionEndpoint } = await discover(rp, { nowMs: ctx.clock.now(), log: ctx.log });
     if (!endSessionEndpoint) return null;
     const url = new URL(endSessionEndpoint);
     url.searchParams.set('client_id', rp.clientId);

@@ -30,7 +30,7 @@ const langOf = (header: string | undefined): string => {
 
 /** Visitor zone from Cloudflare, if it is a zone Intl knows. */
 function zoneOf(c: C): string | undefined {
-  const tz = (c.req.raw as { cf?: { timezone?: unknown } }).cf?.timezone;
+  const tz = c.req.raw.cf?.timezone;
   if (typeof tz !== 'string' || !tz) return undefined;
   try {
     new Intl.DateTimeFormat('en', { timeZone: tz });

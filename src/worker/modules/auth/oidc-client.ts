@@ -11,7 +11,7 @@ import {
   jwtVerify,
 } from 'jose';
 import { randomBytes, sha256Base64Url, toBase64Url } from '../../platform/ids.ts';
-import { createLogger } from '../../platform/log.ts';
+import type { Logger } from '../../platform/log.ts';
 import { isIpLiteral } from '../../platform/safe-fetch.ts';
 
 export const ALLOWED_ID_TOKEN_ALGS: readonly string[] = ['RS256', 'ES256', 'EdDSA'];
@@ -229,20 +229,22 @@ function interpret(rp: RelyingParty, doc: Record<string, unknown>): DiscoveredIs
   };
 }
 
-const cacheLog = createLogger();
-
 /** The Cache API is an optimisation; any failure falls back to the network. */
-async function cachedDocument(url: string): Promise<Record<string, unknown> | null> {
+async function cachedDocument(url: string, log: Logger): Promise<Record<string, unknown> | null> {
   try {
     const hit = await caches.default.match(url);
     return hit ? ((await hit.json()) as Record<string, unknown>) : null;
   } catch {
-    cacheLog.warn('oidc.cache_failed', { code: 'CACHE_READ' });
+    log.warn('oidc.cache_failed', { code: 'CACHE_READ' });
     return null;
   }
 }
 
-async function storeDocument(url: string, doc: Record<string, unknown>): Promise<void> {
+async function storeDocument(
+  url: string,
+  doc: Record<string, unknown>,
+  log: Logger,
+): Promise<void> {
   try {
     await caches.default.put(
       url,
@@ -251,21 +253,21 @@ async function storeDocument(url: string, doc: Record<string, unknown>): Promise
       }),
     );
   } catch {
-    cacheLog.warn('oidc.cache_failed', { code: 'CACHE_WRITE' });
+    log.warn('oidc.cache_failed', { code: 'CACHE_WRITE' });
   }
 }
 
 /** The issuer's discovery document, validated; cached per isolate and in the Cache API. */
 export async function discover(
   rp: RelyingParty,
-  opts: { fetch?: OidcFetch; nowMs?: number } = {},
+  opts: { fetch?: OidcFetch; nowMs: number; log: Logger },
 ): Promise<DiscoveredIssuer> {
-  const nowMs = opts.nowMs ?? Date.now();
+  const { nowMs, log } = opts;
   const key = `${rp.issuer}\n${rp.allowedHosts.join(',')}`;
   const hit = discoveryCache.get(key);
   if (hit && hit.expires > nowMs) return hit.value;
   const cacheUrl = discoveryCacheUrl(rp.issuer);
-  const cached = await cachedDocument(cacheUrl);
+  const cached = await cachedDocument(cacheUrl, log);
   let value: DiscoveredIssuer | null = null;
   if (cached) {
     try {
@@ -283,7 +285,7 @@ export async function discover(
       opts.fetch,
     );
     value = interpret(rp, doc);
-    await storeDocument(cacheUrl, doc);
+    await storeDocument(cacheUrl, doc, log);
   }
   discoveryCache.set(key, { value, expires: nowMs + DISCOVERY_TTL_MS });
   return value;
@@ -405,10 +407,10 @@ export async function verifyIdToken(
   discovered: DiscoveredIssuer,
   rp: Pick<RelyingParty, 'issuer' | 'clientId' | 'algorithms'>,
   token: string,
-  expect: { nonce: string; fetch?: OidcFetch; nowMs?: number },
+  expect: { nonce: string; fetch?: OidcFetch; nowMs: number },
 ): Promise<JWTPayload> {
   if (!rp.clientId) throw new OidcVerifyError('no audience configured');
-  const nowMs = expect.nowMs ?? Date.now();
+  const { nowMs } = expect;
   const verifyWith = async (refresh: boolean): Promise<JWTPayload> => {
     const jwks = await loadJwks(discovered, { fetch: expect.fetch, nowMs, refresh });
     const { payload } = await jwtVerify(token, createLocalJWKSet(jwks), {
@@ -457,7 +459,7 @@ export async function redeemAuthorizationCode(
     codeVerifier: string;
     nonce: string;
   },
-  opts: { fetch?: OidcFetch; nowMs?: number } = {},
+  opts: { fetch?: OidcFetch; nowMs: number; log: Logger },
 ): Promise<{ claims: JWTPayload; discovered: DiscoveredIssuer }> {
   const discovered = await discover(rp, opts);
   checkAuthorizationIss(discovered, response.iss);

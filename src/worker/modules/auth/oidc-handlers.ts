@@ -83,7 +83,7 @@ export async function startOidc(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
   let discovered: Awaited<ReturnType<typeof discover>>;
   try {
-    discovered = await discover(rp);
+    discovered = await discover(rp, { nowMs: ctx.clock.now(), log: ctx.log });
   } catch (error) {
     ctx.log.error('auth.oidc_discovery_failed', { error });
     throw new UpstreamError('Sign-in provider is unreachable.', 'OIDC_UNREACHABLE');
@@ -135,13 +135,17 @@ export async function callbackOidc(c: Context<AppBindings>) {
 
   let claims: Record<string, unknown>;
   try {
-    ({ claims } = await redeemAuthorizationCode(rp, {
-      code,
-      iss: iss ?? null,
-      redirectUri: redirectUri(c.env),
-      codeVerifier: flow.code_verifier,
-      nonce: flow.nonce,
-    }));
+    ({ claims } = await redeemAuthorizationCode(
+      rp,
+      {
+        code,
+        iss: iss ?? null,
+        redirectUri: redirectUri(c.env),
+        codeVerifier: flow.code_verifier,
+        nonce: flow.nonce,
+      },
+      { nowMs: ctx.clock.now(), log: ctx.log },
+    ));
   } catch (cause) {
     if (cause instanceof OidcNetworkError) {
       ctx.log.error('auth.oidc_network', { error: cause });

@@ -31,8 +31,8 @@ export interface AppBindings {
 export function actorOf(auth: AuthContext | undefined): Actor {
   if (!auth) return { type: 'system', id: null };
   return auth.kind === 'session'
-    ? { type: 'user', id: (auth as SessionAuth).userId }
-    : { type: 'api_key', id: (auth as ApiKeyAuth).keyId };
+    ? { type: 'user', id: auth.userId }
+    : { type: 'api_key', id: auth.keyId };
 }
 
 export interface ContextOptions {

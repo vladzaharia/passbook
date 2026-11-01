@@ -1,5 +1,6 @@
 import { exportJWK, generateKeyPair, type JWK, SignJWT } from 'jose';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { nullLogger } from '../../platform/log.ts';
 import {
   checkAuthorizationIss,
   discover,
@@ -109,42 +110,52 @@ describe('oidcUrlProblem', () => {
 describe('discover', () => {
   it('pins the issuer and caches the document', async () => {
     const server = idp([]);
-    const found = await discover(rp, { fetch: server.fetch });
+    const found = await discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger });
     expect(found.tokenEndpoint).toBe(`${ISSUER}/token`);
-    await discover(rp, { fetch: server.fetch });
+    await discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger });
     expect(server.calls).toHaveLength(1);
   });
 
   it('refuses an issuer mismatch', async () => {
     const server = idp([]);
     server.doc.issuer = 'https://evil.test';
-    await expect(discover(rp, { fetch: server.fetch })).rejects.toThrow(OidcVerifyError);
+    await expect(
+      discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(OidcVerifyError);
   });
 
   it('refuses endpoints on another host', async () => {
     const server = idp([]);
     server.doc.token_endpoint = 'https://evil.test/token';
-    await expect(discover(rp, { fetch: server.fetch })).rejects.toThrow(/token_endpoint refused/);
+    await expect(
+      discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(/token_endpoint refused/);
   });
 
   it('refuses a provider without the code flow', async () => {
     const server = idp([]);
     server.doc.response_types_supported = ['token'];
-    await expect(discover(rp, { fetch: server.fetch })).rejects.toThrow(OidcVerifyError);
+    await expect(
+      discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(OidcVerifyError);
   });
 
   it('never follows redirects', async () => {
     const server = idp([]);
     server.overrides['/.well-known/openid-configuration'] = () =>
       new Response(null, { status: 302, headers: { location: 'https://evil.test/' } });
-    await expect(discover(rp, { fetch: server.fetch })).rejects.toThrow(OidcNetworkError);
+    await expect(
+      discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(OidcNetworkError);
   });
 
   it('caps response size', async () => {
     const server = idp([]);
     server.overrides['/.well-known/openid-configuration'] = () =>
       new Response(JSON.stringify({ pad: 'x'.repeat(70_000) }), { status: 200 });
-    await expect(discover(rp, { fetch: server.fetch })).rejects.toThrow(/too large/);
+    await expect(
+      discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(/too large/);
   });
 });
 
@@ -166,7 +177,7 @@ describe('verifyIdToken', () => {
   async function setup() {
     const key = await makeKey('RS256', 'k1');
     const server = idp([key.jwk]);
-    const discovered = await discover(rp, { fetch: server.fetch });
+    const discovered = await discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger });
     const verify = (token: string, nonce = 'n1', nowMs = NOW) =>
       verifyIdToken(discovered, rp, token, { nonce, fetch: server.fetch, nowMs });
     return { key, server, verify };
@@ -220,7 +231,7 @@ describe('verifyIdToken', () => {
   it('rejects algorithms outside the allowlist', async () => {
     const key = await makeKey('PS256', 'ps');
     const server = idp([key.jwk]);
-    const discovered = await discover(rp, { fetch: server.fetch });
+    const discovered = await discover(rp, { fetch: server.fetch, nowMs: NOW, log: nullLogger });
     const token = await sign(key, {}, { alg: 'PS256' });
     await expect(
       verifyIdToken(discovered, rp, token, { nonce: 'n1', fetch: server.fetch, nowMs: NOW }),
@@ -273,7 +284,7 @@ describe('redeemAuthorizationCode', () => {
     const { claims } = await redeemAuthorizationCode(
       rp,
       { code: 'c1', iss: ISSUER, redirectUri: 'https://app/cb', codeVerifier: 'v1', nonce: 'n1' },
-      { fetch: fetchImpl, nowMs: NOW },
+      { fetch: fetchImpl, nowMs: NOW, log: nullLogger },
     );
     expect(claims.sub).toBe('sub-1');
     const form = new URLSearchParams(body);
@@ -292,16 +303,16 @@ describe('redeemAuthorizationCode', () => {
       codeVerifier: 'v',
       nonce: 'n1',
     };
-    await expect(redeemAuthorizationCode(rp, args, { fetch: server.fetch })).rejects.toThrow(
-      OidcGrantRefusedError,
-    );
+    await expect(
+      redeemAuthorizationCode(rp, args, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(OidcGrantRefusedError);
     server.overrides['/token'] = () => new Response('boom', { status: 500 });
-    await expect(redeemAuthorizationCode(rp, args, { fetch: server.fetch })).rejects.toThrow(
-      OidcNetworkError,
-    );
+    await expect(
+      redeemAuthorizationCode(rp, args, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(OidcNetworkError);
     server.overrides['/token'] = () => Response.json({ access_token: 'x' });
-    await expect(redeemAuthorizationCode(rp, args, { fetch: server.fetch })).rejects.toThrow(
-      /no id_token/,
-    );
+    await expect(
+      redeemAuthorizationCode(rp, args, { fetch: server.fetch, nowMs: NOW, log: nullLogger }),
+    ).rejects.toThrow(/no id_token/);
   });
 });
