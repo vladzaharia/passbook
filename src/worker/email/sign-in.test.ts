@@ -16,6 +16,20 @@ describe('renderSignInEmail', () => {
     expect(mail.html).toContain('lang="en"');
   });
 
+  it('uses the shared fluid shell with a title and color-scheme meta', () => {
+    const mail = renderSignInEmail({
+      purpose: 'sign_in',
+      link: 'https://wallet.test/auth/magic?t=abc',
+      code: '123456',
+      expiresMinutes: 15,
+    });
+    expect(mail.html).toContain('max-width:480px');
+    expect(mail.html).not.toContain('width="420"');
+    expect(mail.html).toContain('Sign in to Wallet');
+    expect(mail.html).toContain('<meta name="color-scheme" content="light dark">');
+    expect(mail.html).toContain('prefers-color-scheme:dark');
+  });
+
   it('omits the code for email verification', () => {
     const mail = renderSignInEmail({
       purpose: 'verify_email',

@@ -4,6 +4,7 @@ import '../../web/pass-card/sync-barcode.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCard } from '../../web/pass-card/index.tsx';
 import cardCss from '../../web/pass-card/pass-card.css?raw';
+import { THEME_CSS, wordmarkHtml } from './theme.ts';
 
 export interface PassPageProps {
   view: PassView;
@@ -19,25 +20,21 @@ export interface PassPageProps {
   support?: { email: string | null; url: string | null };
 }
 
-// No quotes or child combinators: React escapes text in <style>.
 const CSS = `
-:root{color-scheme:light dark;--bg:#f4f4f5;--fg:#18181b;--muted:#52525b;--warn:#b45309;--line:#d4d4d8}
-@media (prefers-color-scheme:dark){:root{--bg:#09090b;--fg:#fafafa;--muted:#a1a1aa;--warn:#fbbf24;--line:#3f3f46}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-main{max-width:28rem;margin:0 auto;padding:1.5rem 1rem 3rem;display:flex;flex-direction:column;gap:1.25rem}
-.banner{border:1px solid var(--warn);color:var(--warn);border-radius:.5rem;padding:.625rem .875rem;font-weight:600}
+${THEME_CSS}
+main{max-width:28rem;margin:0 auto;padding:.5rem 1rem 3rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+main>*{width:100%;min-width:0}
+.banner{border:1px solid var(--warn-line);background:var(--warn-subtle);color:var(--strong);border-radius:.5rem;padding:.625rem .875rem;font-weight:500}
 details{border-top:1px solid var(--line);padding-top:.75rem}
 summary{cursor:pointer;min-height:1.5rem;color:var(--muted)}
 details[open] summary{margin-bottom:.75rem}
-.badge{display:inline-block;align-self:flex-start;padding:.25rem}
+main>.badge{display:block;width:auto;padding:.25rem}
 .badge img{display:block;height:3rem;width:auto}
-.handoff{display:none;border-top:1px solid var(--line);padding-top:1rem;color:var(--muted)}
-.handoff img{display:block;width:9rem;height:9rem;background:#fff;border-radius:.5rem;margin-bottom:.5rem}
+.handoff{display:none;border-top:1px solid var(--line);padding-top:1rem;color:var(--muted);text-align:center}
+.handoff img{display:block;width:9rem;height:9rem;background:#fff;border-radius:.5rem;margin:0 auto .5rem}
+.handoff p{margin:0}
 @media (hover:hover) and (pointer:fine) and (min-width:40rem){.handoff{display:block}}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-a{color:inherit}
-footer{border-top:1px solid var(--line);padding-top:.75rem;color:var(--muted);font-size:.875rem}
+footer{border-top:1px solid var(--line);padding-top:.75rem;color:var(--muted);font-size:.875rem;text-align:center;overflow-wrap:anywhere}
 `;
 
 export function PassPage(props: PassPageProps) {
@@ -52,11 +49,14 @@ export function PassPage(props: PassPageProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex, nofollow, noarchive" />
         <meta name="referrer" content="no-referrer" />
+        <meta name="color-scheme" content="light dark" />
         <title>{props.title}</title>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
         <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + CSS }} />
       </head>
       <body>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static wordmark markup, no user input */}
+        <header className="top" dangerouslySetInnerHTML={{ __html: wordmarkHtml() }} />
         <main>
           <h1 className="sr">{props.title}</h1>
           {notice ? (
@@ -103,10 +103,14 @@ export function NotFoundPage(props: { nonce: string }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex, nofollow" />
+        <meta name="color-scheme" content="light dark" />
         <title>Not found</title>
-        <style nonce={props.nonce}>{CSS}</style>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
+        <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: CSS }} />
       </head>
       <body>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static wordmark markup, no user input */}
+        <header className="top" dangerouslySetInnerHTML={{ __html: wordmarkHtml() }} />
         <main>
           <h1 className="sr">Not found</h1>
           <p>

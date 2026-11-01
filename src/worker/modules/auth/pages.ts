@@ -1,4 +1,5 @@
 /** Script-free SSR pages for the auth flows. */
+import { THEME_CSS, wordmarkHtml } from '../../ssr/theme.ts';
 
 export const escapeHtml = (value: string) =>
   value
@@ -8,17 +9,22 @@ export const escapeHtml = (value: string) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-const STYLE = `:root{color-scheme:light dark;--bg:#fff;--fg:#111;--mut:#666;--line:#ddd}
-@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#999;--line:#333}}
-body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-main{width:100%;max-width:360px}h1{font-size:20px;margin:0 0 8px}p{margin:0 0 16px;color:var(--mut)}
-button,a.btn{display:inline-block;font:inherit;padding:10px 18px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);cursor:pointer;text-decoration:none}
-a{color:var(--fg)}
-input{box-sizing:border-box;width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
-label{display:block;margin:0 0 4px}`;
+const STYLE = `${THEME_CSS}
+main{width:100%;max-width:24rem;margin:0 auto;padding:2.5rem 1rem}
+h1{margin:0 0 1rem;font-size:1.5rem;line-height:2rem;font-weight:600;color:var(--strong)}
+.card{border:1px solid var(--line);border-radius:.5rem;background:var(--raised);padding:1rem;box-shadow:0 1px 2px rgb(0 0 0/.12)}
+.card p{margin:0 0 1rem;color:var(--muted)}
+.card p:last-child,.card form p:last-child{margin-bottom:0}
+.btn,button{display:inline-flex;align-items:center;justify-content:center;width:100%;height:2.25rem;padding:0 1rem;border:0;border-radius:.375rem;background:var(--accent);color:var(--accent-on);font:inherit;font-weight:500;text-decoration:none;cursor:pointer}
+.btn:hover,button:hover{filter:brightness(1.08)}
+label{display:block;margin:0 0 .25rem;font-weight:500;color:var(--strong)}
+input{width:100%;height:2.25rem;padding:0 .75rem;border:1px solid var(--line-strong);border-radius:.375rem;background:var(--sunken);color:var(--fg);font:inherit}
+.field{margin:0 0 1rem}
+.err{border:1px solid var(--danger);border-radius:.375rem;background:var(--danger-subtle);color:var(--strong)!important;padding:.5rem .75rem}
+.who{font-weight:500;color:var(--strong)!important;overflow-wrap:anywhere}`;
 
 function layout(nonce: string, title: string, body: string): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style nonce="${nonce}">${STYLE}</style></head><body><main>${body}</main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style nonce="${nonce}">${STYLE}</style></head><body><header class="top">${wordmarkHtml()}</header><main><h1>${escapeHtml(title)}</h1><div class="card">${body}</div></main></body></html>`;
 }
 
 export function confirmPage(
@@ -34,8 +40,7 @@ export function confirmPage(
   return layout(
     nonce,
     verify ? 'Confirm email' : 'Sign in',
-    `<h1>${verify ? 'Confirm email' : 'Sign in'}</h1>
-<p>${escapeHtml(input.email)}</p>${verify && input.requester ? `<p>Adds this address to the account of ${escapeHtml(input.requester)}.</p>` : ''}
+    `<p class="who">${escapeHtml(input.email)}</p>${verify && input.requester ? `<p>Adds this address to the account of ${escapeHtml(input.requester)}.</p>` : ''}
 <form method="post" action="/auth/magic/consume"><input type="hidden" name="token" value="${escapeHtml(input.token)}"><button type="submit">${verify ? 'Confirm' : 'Sign in'}</button></form>`,
   );
 }
@@ -47,11 +52,7 @@ export function messagePage(
   const link = input.href
     ? `<a class="btn" href="${escapeHtml(input.href)}">${escapeHtml(input.action ?? 'Continue')}</a>`
     : '';
-  return layout(
-    nonce,
-    input.title,
-    `<h1>${escapeHtml(input.title)}</h1><p>${escapeHtml(input.message)}</p>${link}`,
-  );
+  return layout(nonce, input.title, `<p>${escapeHtml(input.message)}</p>${link}`);
 }
 
 export const SIGN_IN_ERRORS: Record<string, { title: string; message: string; status: 400 | 403 }> =
@@ -99,16 +100,16 @@ export const SIGN_IN_ERRORS: Record<string, { title: string; message: string; st
   };
 
 export function breakglassPage(nonce: string, input: { error?: string; next?: string }): string {
-  const error = input.error ? `<p role="alert">${escapeHtml(input.error)}</p>` : '';
+  const error = input.error ? `<p class="err" role="alert">${escapeHtml(input.error)}</p>` : '';
   const next = input.next
     ? `<input type="hidden" name="next" value="${escapeHtml(input.next)}">`
     : '';
   return layout(
     nonce,
     'Break-glass sign-in',
-    `<h1>Break-glass sign-in</h1>${error}
-<form method="post" action="/auth/breakglass"><label for="t">Token</label>
-<p><input id="t" name="token" type="password" autocomplete="off" required></p>${next}
+    `${error}
+<form method="post" action="/auth/breakglass"><div class="field"><label for="t">Token</label>
+<input id="t" name="token" type="password" autocomplete="off" required></div>${next}
 <button type="submit">Sign in</button></form>`,
   );
 }
