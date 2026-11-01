@@ -2,9 +2,8 @@ import type { ZodType, z } from 'zod';
 import { isPointer } from '../../connectors/lib/pointer.ts';
 import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
-import { baseUrl } from '../../platform/env.ts';
 import { type FieldIssue, ValidationError } from '../../platform/errors.ts';
-import { assertPublicHost, assertSafeUrl } from '../../platform/safe-fetch.ts';
+import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps, resolverOf } from './deps.ts';
 import type { Mode } from './repo.ts';
@@ -55,7 +54,7 @@ export function assertModeSupported(def: AnyConnector, mode: Mode): void {
 
 /** Rejects URLs that break the SSRF rules (static checks plus DNS) before they are stored. */
 export async function assertSafeUrls(sctx: ServiceContext, urls: string[]): Promise<void> {
-  const platformHosts = [new URL(baseUrl(sctx.env)).hostname, 'workers.dev'];
+  const platformHosts = platformHostsOf(sctx.env);
   const resolver = resolverOf(getDeps());
   for (const raw of urls) {
     try {

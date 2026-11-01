@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, PageQuerySchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, PageQuerySchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 
 const HexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
@@ -56,7 +56,7 @@ export const OrgListQuerySchema = PageQuerySchema.extend({
 
 export const CreateOrgSchema = z.object({
   slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,63}$/),
-  name: z.string().min(1).max(120),
+  name: PlainLineSchema(120),
   defaultIdentityId: IdSchema.nullable().optional(),
   branding: OrgBrandingSchema.optional(),
 });

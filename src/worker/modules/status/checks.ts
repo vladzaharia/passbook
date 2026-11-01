@@ -2,9 +2,12 @@ import type { z } from 'zod';
 import type { ComponentStatusSchema } from '../../../shared/contracts/status.ts';
 import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { dailyCapOf, dayStart } from '../auth/magic-caps.ts';
+import { readCounter } from '../auth/magic-repo.ts';
 import type { lastIdentityCheck } from '../identities/check.ts';
 import { apnsBindingPresent } from '../identities/db-resolver.ts';
 import type { IdentityRow } from '../identities/repo.ts';
+import { getPlatformSettings } from '../settings/service.ts';
 import { connectionHealthCounts, unhealthyConnections, workflowCounts } from './repo.ts';
 
 export type Component = z.infer<typeof ComponentStatusSchema>;
@@ -166,15 +169,28 @@ export function identityComponent(
   };
 }
 
-export function checkEmail(ctx: ServiceContext): Draft {
+export async function checkEmail(ctx: ServiceContext): Promise<Draft> {
   const configured = Boolean(ctx.env.EMAIL && ctx.env.EMAIL_FROM);
+  const magicCap = dailyCapOf(ctx.env);
+  const magicToday = await readCounter(ctx.env.DB, 'magic:daily', dayStart(ctx.clock.now()));
+  const state: State = !configured
+    ? 'not_configured'
+    : magicToday >= magicCap
+      ? 'failing'
+      : magicToday >= magicCap * 0.8
+        ? 'degraded'
+        : 'configured';
   return {
     id: 'email',
     kind: 'email',
     label: 'Email Sending',
-    state: configured ? 'configured' : 'not_configured',
-    detail: configured ? null : 'No EMAIL binding or sender.',
-    data: { sender: ctx.env.EMAIL_FROM || null },
+    state,
+    detail: !configured
+      ? 'No EMAIL binding or sender.'
+      : state === 'configured'
+        ? null
+        : `Sign-in mail ${magicToday} of ${magicCap} today.`,
+    data: { sender: ctx.env.EMAIL_FROM || null, magicToday, magicCap },
   };
 }
 
@@ -185,13 +201,23 @@ export function clearOidcCache(): void {
   oidcCache.clear();
 }
 
+function withTrust(draft: Draft, trustOn: boolean): Draft {
+  if (!trustOn) return draft;
+  return {
+    ...draft,
+    state: worst([draft.state, 'degraded']),
+    detail: draft.detail ?? 'Email trust on.',
+  };
+}
+
 export async function checkOidc(ctx: ServiceContext, fetchImpl: typeof fetch): Promise<Draft> {
   const issuer = ctx.env.OIDC_ISSUER?.replace(/\/+$/, '');
   const base = { id: 'oidc', kind: 'oidc', label: 'Polaris ID' } as const;
   if (!issuer) return { ...base, state: 'not_configured', detail: 'No issuer.' };
+  const trustOn = (await getPlatformSettings(ctx))['oidc.trustEmail'];
   const hit = oidcCache.get(issuer);
   const now = ctx.clock.now();
-  if (hit && now >= hit.at && now - hit.at < OIDC_TTL_MS) return hit.draft;
+  if (hit && now >= hit.at && now - hit.at < OIDC_TTL_MS) return withTrust(hit.draft, trustOn);
   let draft: Draft;
   try {
     const res = await fetchImpl(`${issuer}/.well-known/openid-configuration`, {
@@ -208,7 +234,7 @@ export async function checkOidc(ctx: ServiceContext, fetchImpl: typeof fetch): P
     draft = { ...base, state: 'degraded', detail: 'Discovery unreachable.' };
   }
   oidcCache.set(issuer, { at: now, draft });
-  return draft;
+  return withTrust(draft, trustOn);
 }
 
 export async function checkConnections(ctx: ServiceContext): Promise<Draft[]> {

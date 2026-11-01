@@ -3,6 +3,7 @@ import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
+import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
 export type Role = 'admin' | 'user';
@@ -49,6 +50,8 @@ export interface ApiKeyStore {
 export interface AuthStores {
   sessions: SessionStore;
   apiKeys: ApiKeyStore;
+  /** Audits a refused principal. Platform never imports a module; stores.ts wires this. */
+  onDenied?(event: DeniedEvent): Promise<void> | void;
 }
 
 export const denyAllStores: AuthStores = {
@@ -92,10 +95,16 @@ export const requireSession: MiddlewareHandler<AppBindings> = createMiddleware(a
 /** Cookie session with the admin role. */
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
   const session = await sessionOrThrow(c);
-  if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
+  requireAdminRole(c, session);
   await csrfGuard(c, session);
   await next();
 });
+
+function requireAdminRole(c: Context<AppBindings>, session: SessionAuth): void {
+  if (session.roles.includes('admin')) return;
+  reportDenied(c, 'FORBIDDEN', session);
+  throw new ForbiddenError('Admin access is required.');
+}
 
 export type ScopeSelector = ApiScope | ((c: Context<AppBindings>) => ApiScope);
 
@@ -116,13 +125,15 @@ export function requireApiKeyOrAdmin(scope: ScopeSelector): MiddlewareHandler<Ap
       if (!auth)
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
       const needed = typeof scope === 'function' ? scope(c) : scope;
-      if (!auth.scopes.includes(needed))
+      if (!auth.scopes.includes(needed)) {
+        reportDenied(c, 'MISSING_SCOPE', auth);
         throw new ForbiddenError(`The API key lacks the ${needed} scope.`, 'MISSING_SCOPE');
+      }
       c.set('auth', auth);
       return next();
     }
     const session = await sessionOrThrow(c);
-    if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
+    requireAdminRole(c, session);
     await csrfGuard(c, session);
     return next();
   });

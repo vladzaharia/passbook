@@ -99,5 +99,14 @@
     "vitest": "4.1.12",
     "vitest-axe": "0.1.0",
     "wrangler": "4.151.1"
+  },
+  "overrides": {
+    "@cloudflare/vitest-pool-workers": {
+      "zod": "4.6.7"
+    },
+    "miniflare": {
+      "undici": "7.30.1",
+      "sharp": "0.35.5"
+    }
   }
 }

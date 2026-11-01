@@ -6,6 +6,7 @@ import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import { clearOidcCache, failuresLine } from './checks.ts';
 import { clearStatusCache, getStatus, recordCronRun } from './service.ts';
 
@@ -136,6 +137,57 @@ describe('status components', () => {
     clearStatusCache(env.DB);
     const t = await status({ OIDC_ISSUER: '' });
     expect(find(t, 'oidc')?.state).toBe('not_configured');
+  });
+
+  it('fails the ratelimits component and names a missing binding', async () => {
+    const ok = await status();
+    expect(find(ok, 'ratelimits')?.state).toBe('verified');
+    clearStatusCache(env.DB);
+    const s = await status({ RL_APPLE: undefined } as unknown as Partial<AppEnv>);
+    expect(find(s, 'ratelimits')).toMatchObject({
+      state: 'failing',
+      data: { RL_APPLE: 'missing', RL_LOGIN: 'present' },
+    });
+    expect(find(s, 'ratelimits')?.detail).toContain('RL_APPLE');
+  });
+
+  it('marks oidc degraded while email trust is on', async () => {
+    await run(
+      env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'true', 0)",
+    );
+    clearSettingsCache(env.DB);
+    const s = await status();
+    expect(find(s, 'oidc')).toMatchObject({ state: 'degraded', detail: 'Email trust on.' });
+    await run(env.DB, "DELETE FROM settings WHERE key = 'oidc.trustEmail'");
+    clearSettingsCache(env.DB);
+    clearStatusCache(env.DB);
+    expect(find(await status(), 'oidc')?.state).toBe('verified');
+  });
+
+  it('grades email by the magic-link daily budget', async () => {
+    const clock = new ManualClock(Date.now());
+    const at = clock.now() - (clock.now() % 86_400_000);
+    const put = (n: number) =>
+      run(
+        env.DB,
+        `INSERT INTO counters (key, window_start, count) VALUES ('magic:daily', ?, ?)
+         ON CONFLICT (key, window_start) DO UPDATE SET count = excluded.count`,
+        [at, n],
+      );
+    const overrides = { MAGIC_LINK_DAILY_CAP: '100' } as Partial<AppEnv>;
+    await put(79);
+    expect(find(await status(overrides, okFetch, clock), 'email')?.state).toBe('configured');
+    clearStatusCache(env.DB);
+    await put(80);
+    expect(find(await status(overrides, okFetch, clock), 'email')).toMatchObject({
+      state: 'degraded',
+      data: { magicToday: 80, magicCap: 100 },
+    });
+    clearStatusCache(env.DB);
+    await put(100);
+    expect(find(await status(overrides, okFetch, clock), 'email')?.state).toBe('failing');
+    await run(env.DB, "DELETE FROM counters WHERE key = 'magic:daily'");
   });
 
   it('caches oidc discovery and the whole status briefly', async () => {

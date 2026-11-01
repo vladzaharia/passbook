@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import type { AuthContext } from './auth.ts';
 import type { AppBindings } from './context.ts';
+import { reportDenied } from './denied.ts';
 import { ForbiddenError } from './errors.ts';
 import { safeEqual } from './ids.ts';
 
@@ -26,10 +27,13 @@ export const sameOriginOnly: MiddlewareHandler<AppBindings> = createMiddleware(a
 /** Same-origin plus X-CSRF-Token equal to the session's secret. Applies to cookie sessions only. */
 export async function csrfGuard(c: Context<AppBindings>, auth: AuthContext): Promise<void> {
   if (SAFE_METHODS.has(c.req.method) || auth.kind !== 'session') return;
-  if (!sameOrigin(c))
+  if (!sameOrigin(c)) {
+    reportDenied(c, 'CSRF_ORIGIN', auth);
     throw new ForbiddenError('Cross-origin requests are not allowed.', 'CSRF_ORIGIN');
+  }
   const token = c.req.header(CSRF_HEADER);
   if (!token || !(await safeEqual(token, auth.csrfSecret))) {
+    reportDenied(c, 'CSRF_TOKEN', auth);
     throw new ForbiddenError('Reload the page and try again.', 'CSRF_TOKEN');
   }
 }

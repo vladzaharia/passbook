@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { assertSafeUrl, createSafeFetch, isIpLiteral, isPrivateIp } from './safe-fetch.ts';
+import {
+  assertSafeUrl,
+  createSafeFetch,
+  isIpLiteral,
+  isPrivateIp,
+  platformHostsOf,
+} from './safe-fetch.ts';
 
 describe('assertSafeUrl', () => {
   it.each([
@@ -28,6 +34,25 @@ describe('assertSafeUrl', () => {
   });
 });
 
+describe('platformHostsOf', () => {
+  const env = {
+    PUBLIC_BASE_URL: 'https://wallet.plrs.im',
+    OIDC_ISSUER: 'https://id.plrs.im',
+    SSRF_DENY_HOSTS: 'plrs.im',
+  };
+  it('lists the base, issuer, workers.dev and the deny list', () => {
+    expect(platformHostsOf(env).sort()).toEqual(
+      ['id.plrs.im', 'plrs.im', 'wallet.plrs.im', 'workers.dev'].sort(),
+    );
+  });
+  it.each(['https://id.plrs.im/api', 'https://other.plrs.im/x', 'https://plrs.im/'])(
+    'refuses %s',
+    (url) => {
+      expect(() => assertSafeUrl(url, platformHostsOf(env))).toThrow(/not allowed/);
+    },
+  );
+});
+
 describe('ip classification', () => {
   it.each([
     '10.0.0.1',
@@ -41,6 +66,12 @@ describe('ip classification', () => {
     'fe80::1',
     'fd00::1',
     '::ffff:10.0.0.1',
+    '::ffff:7f00:1',
+    '2002:7f00:1::1',
+    '2001:0:4136:e378:8000:63bf:3fff:fdd2',
+    '2001::1',
+    '64:ff9b:1::a00:1',
+    '100::1',
     '224.0.0.1',
   ])('%s is private', (ip) => expect(isPrivateIp(ip)).toBe(true));
   it.each(['1.1.1.1', '8.8.8.8', '172.32.0.1', '2606:4700:4700::1111'])('%s is public', (ip) =>

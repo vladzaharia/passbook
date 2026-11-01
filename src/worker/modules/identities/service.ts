@@ -34,7 +34,8 @@ type Patch = z.infer<typeof UpdateIdentitySchema>;
 type Rotation = z.infer<typeof RotateIdentitySchema>;
 
 const DAY_MS = 86_400_000;
-const BINDING_NAME = /^[A-Z][A-Z0-9_]{0,63}$/;
+/** Only APNS_* bindings: the name is looked up on env, so it must never reach DB, KEK_* or ASSETS. */
+const BINDING_NAME = /^APNS_[A-Z0-9_]{1,59}$/;
 
 export function daysRemaining(notAfter: number | null, now: number): number | null {
   return notAfter === null ? null : Math.floor((notAfter - now) / DAY_MS);

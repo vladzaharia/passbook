@@ -26,6 +26,16 @@ beforeAll(async () => {
 });
 
 describe('orgs api', () => {
+  it('rejects header-injection and bidi characters in the name', async () => {
+    for (const name of ['Acme\r\nBcc: x@y.z', 'Acme\u202Eevil', 'A\u2028B']) {
+      expect((await call('POST', '', { slug: 'inj-org', name })).status).toBe(422);
+    }
+    const ok = await call('POST', '', { slug: 'inj-ok', name: 'Acme' });
+    expect(ok.status).toBe(201);
+    const id = ((await ok.json()) as { id: string }).id;
+    expect((await call('PATCH', `/${id}`, { name: 'Acme\r\nBcc: x@y.z' })).status).toBe(422);
+  });
+
   it('requires an admin', async () => {
     expect((await call('GET', '', undefined, fake.user())).status).toBe(403);
     expect((await call('GET', '', undefined, {})).status).toBe(401);

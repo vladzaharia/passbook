@@ -7,6 +7,17 @@ export const EmailSchema = z
   .max(254)
   .transform((value) => value.trim().toLowerCase().normalize('NFC'))
   .pipe(z.email());
+// biome-ignore lint/suspicious/noControlCharactersInRegex: rejecting control characters is the point
+const NOT_PLAIN = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/u;
+/** One line of display text that may reach a mail header: no controls, line separators or bidi marks. */
+export const PlainLineSchema = (max: number) =>
+  z
+    .string()
+    .trim()
+    .normalize()
+    .min(1)
+    .max(max)
+    .refine((value) => !NOT_PLAIN.test(value), 'Use plain text on one line.');
 /** Milliseconds since the epoch. */
 export const TimestampSchema = z.number().int().nonnegative();
 /** Any JSON value. Not recursive on purpose: recursive schemas break OpenAPI generation. */

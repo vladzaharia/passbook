@@ -64,7 +64,7 @@ describe('pass branding images', () => {
     expect(res.status).toBe(422);
     const problem = (await res.json()) as { code: string; detail: string };
     expect(problem.code).toBe('IMAGE_SIZE');
-    expect(problem.detail).toContain('114x114px');
+    expect(problem.detail).toContain('114 × 114 px');
   });
 
   it('stores @3x and @2x, records the image and keeps it across updates', async () => {

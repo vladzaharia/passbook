@@ -1,10 +1,20 @@
 import { z } from 'zod';
-import { JsonSchema } from './common.ts';
+import { strictEmail } from '../email.ts';
+import { JsonSchema, PlainLineSchema } from './common.ts';
+
+function isHttpsUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.username === '' && url.password === '';
+  } catch {
+    return false;
+  }
+}
 
 export const PlatformSettingsSchema = z.object({
-  'oidc.trustEmail': z.boolean().default(true),
+  'oidc.trustEmail': z.boolean().default(false),
   'auth.magicLinkEnabled': z.boolean().default(true),
-  'email.senderName': z.string().max(80).default('Wallet'),
+  'email.senderName': PlainLineSchema(80).default('Wallet'),
   'refresh.userCooldownSeconds': z.number().int().min(5).max(3600).default(30),
   'retention.passVersionsKeep': z.number().int().min(1).max(50).default(3),
   'retention.auditDays': z.number().int().min(30).max(3650).default(365),
@@ -14,8 +24,16 @@ export const OrgSettingsSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
-  'support.email': z.string().max(254).optional(),
-  'support.url': z.string().max(500).optional(),
+  'support.email': z
+    .string()
+    .max(254)
+    .refine((v) => strictEmail(v) !== null, 'Enter a valid email address.')
+    .optional(),
+  'support.url': z
+    .string()
+    .max(500)
+    .refine(isHttpsUrl, 'Use an https URL without credentials.')
+    .optional(),
 });
 
 export const SettingScopeSchema = z.union([z.literal('platform'), z.string().regex(/^org:.+$/)]);

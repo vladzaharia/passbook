@@ -1,4 +1,4 @@
-import { all } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 
 const KINDS = ['template_import', 'bulk_reissue', 'connection_sync'] as const;
 
@@ -43,6 +43,19 @@ export function recentWorkflowRuns(db: D1Database, limit: number): Promise<Workf
     `${KINDS.map(() => branch).join(' UNION ALL ')} ORDER BY started_at DESC LIMIT ?`,
     [...KINDS.flatMap((kind) => [kind, limit]), limit],
   );
+}
+
+/** Latest break-glass sign-in, through the audit_target index. */
+export async function lastBreakglassUse(db: D1Database): Promise<number | null> {
+  const row = await first<{ at: number }>(
+    db,
+    `SELECT at FROM audit_log
+     WHERE target_type = 'user'
+       AND target_id = (SELECT user_id FROM auth_identities WHERE provider = 'breakglass' AND subject = 'breakglass')
+       AND action = 'auth.breakglass_used'
+     ORDER BY at DESC LIMIT 1`,
+  );
+  return row?.at ?? null;
 }
 
 export interface ConnectionHealthRow {

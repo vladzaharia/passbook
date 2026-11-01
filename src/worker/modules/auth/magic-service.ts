@@ -2,10 +2,10 @@ import { renderSignInEmail } from '../../email/sign-in.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { BadRequestError, ForbiddenError, UnavailableError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
-import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer, type Mailer } from '../delivery/mailer.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import { withinCaps, withinDailyCap, withinIpCap } from './magic-caps.ts';
 import * as repo from './magic-repo.ts';
 import {
   type PendingIdentity,
@@ -17,8 +17,6 @@ import {
 
 export const MAGIC_TTL_MS = 15 * 60 * 1000;
 export const MAX_CODE_ATTEMPTS = 5;
-const DEFAULT_DAILY_CAP = 2000;
-const EMAIL_HOURLY_CAP = 5;
 const CODE_FAILURE_CAP = 10;
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -39,25 +37,6 @@ export interface IssueInput {
   requester?: string | null;
   /** Pocket ID identity to link when this sign_in link is consumed. */
   pendingIdentity?: PendingIdentity | null;
-}
-
-export async function withinCaps(ctx: ServiceContext, email: string): Promise<boolean> {
-  const now = ctx.clock.now();
-  const emailKey = (await sha256Hex(`magic-email:${email}`)).slice(0, 32);
-  if (!(await checkRateLimit(ctx.env, 'RL_MAGIC_LINK', `email:${emailKey}`))) return false;
-  const perEmail = await repo.bumpCounter(
-    ctx.env.DB,
-    `magic:email:${emailKey}`,
-    now - (now % HOUR),
-  );
-  return perEmail <= EMAIL_HOURLY_CAP;
-}
-
-/** Counted only for addresses that would receive mail, so strangers cannot burn the cap. */
-export async function withinDailyCap(ctx: ServiceContext): Promise<boolean> {
-  const now = ctx.clock.now();
-  const cap = Number(ctx.env.MAGIC_LINK_DAILY_CAP) || DEFAULT_DAILY_CAP;
-  return (await repo.bumpCounter(ctx.env.DB, 'magic:daily', now - (now % DAY))) <= cap;
 }
 
 /** Creates the link and sends it. Callers decide whether the address is eligible. */
@@ -99,20 +78,30 @@ export async function issueMagicLink(
  */
 export async function processSignInRequest(
   ctx: ServiceContext,
-  input: { email: string; bindingHash: string; next: string | null },
+  input: { email: string; bindingHash: string; next: string | null; ipPrefix?: string | null },
 ): Promise<void> {
   try {
     // Unknown addresses are dropped first so they never spend a victim's or the global budget.
     if (!(await repo.isKnownAddress(ctx.env.DB, input.email))) return;
+    if (!(await withinIpCap(ctx, input.ipPrefix ?? null))) {
+      ctx.log.warn('auth.magic_ip_cap', { code: 'MAGIC_IP_CAP' });
+      return;
+    }
     if (!(await withinCaps(ctx, input.email))) {
       ctx.log.warn('auth.magic_throttled', {});
       return;
     }
     if (!(await withinDailyCap(ctx))) {
-      ctx.log.warn('auth.magic_daily_cap', {});
+      ctx.log.error('auth.magic_daily_cap', { code: 'MAGIC_DAILY_CAP' });
       return;
     }
-    await issueMagicLink(ctx, { ...input, purpose: 'sign_in', userId: null });
+    await issueMagicLink(ctx, {
+      email: input.email,
+      bindingHash: input.bindingHash,
+      next: input.next,
+      purpose: 'sign_in',
+      userId: null,
+    });
     ctx.log.info('auth.magic_sent', { purpose: 'sign_in' });
   } catch (error) {
     ctx.log.error('auth.magic_send_failed', { error });
@@ -137,7 +126,7 @@ export async function processVerifyRequest(
       return;
     }
     if (!(await withinDailyCap(ctx))) {
-      ctx.log.warn('auth.magic_daily_cap', {});
+      ctx.log.error('auth.magic_daily_cap', { code: 'MAGIC_DAILY_CAP' });
       return;
     }
     await issueMagicLink(ctx, {

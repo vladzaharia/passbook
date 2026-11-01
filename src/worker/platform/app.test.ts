@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
 import type { AppEnv } from './env.ts';
+import { PERMISSIONS_POLICY } from './security-headers.ts';
 
 const ORIGIN = 'https://wallet.test';
 const auth = fakeAuth(ORIGIN);
@@ -22,6 +23,7 @@ describe('app shell', () => {
     expect(res.headers.get('strict-transport-security')).toContain('includeSubDomains');
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
+    expect(res.headers.get('permissions-policy')).toBe(PERMISSIONS_POLICY);
     expect(res.headers.get('x-request-id')).toBeTruthy();
   });
 
@@ -90,6 +92,22 @@ describe('auth ports', () => {
   it('refuses non-admin sessions on admin routes', async () => {
     const res = await call('/api/v1/users', { headers: auth.user() });
     expect(res.status).toBe(403);
+  });
+
+  it('reports an authenticated refusal once, and nothing for anonymous or unknown callers', async () => {
+    auth.denied.length = 0;
+    expect((await call('/api/v1/users', { headers: auth.user('u-9') })).status).toBe(403);
+    expect(auth.denied).toEqual([
+      expect.objectContaining({
+        code: 'FORBIDDEN',
+        actorType: 'user',
+        actorId: 'u-9',
+        route: '/api/v1/users',
+      }),
+    ]);
+    await call('/api/v1/users');
+    await call('/api/v1/passes', { headers: { authorization: 'Bearer wlt_unknown_key' } });
+    expect(auth.denied).toHaveLength(1);
   });
 
   it('lets an admin reach admin routes', async () => {

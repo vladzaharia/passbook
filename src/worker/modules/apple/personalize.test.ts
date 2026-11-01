@@ -184,6 +184,59 @@ describe('personalize', () => {
     expect(stored).toBeNull();
   });
 
+  const withToken = (tok: string) =>
+    JSON.stringify({
+      personalizationToken: tok,
+      requiredPersonalizationInfo: { fullName: 'Sam Lee', emailAddress: 'sam.lee@example.com' },
+    });
+  const hex40 = 'a'.repeat(40);
+
+  it('refuses tokens shaped like JSON, before any signing', async () => {
+    const pass = await personalizable();
+    const oracle = JSON.stringify({ 'pass.json': hex40, 'icon.png': hex40 });
+    for (const tok of [oracle, 'has space', 'q"uote', '[1]', 'a\\b', 'a\u0085b', 'a\nb']) {
+      const res = await post(pass, withToken(tok));
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { code: string }).code).toBe('PERSONALIZATION_INVALID');
+    }
+    const stored = await first(
+      kit.env.DB,
+      'SELECT 1 FROM pass_personalizations WHERE pass_id = ?',
+      [pass.id],
+    );
+    expect(stored).toBeNull();
+  });
+
+  it('is unavailable for deleted and voided passes', async () => {
+    const pass = await personalizable();
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [pass.id]);
+    const gone = await post(pass);
+    expect(gone.status).toBe(404);
+    expect(((await gone.json()) as { code: string }).code).toBe('PERSONALIZATION_UNAVAILABLE');
+    await run(kit.env.DB, "UPDATE passes SET deleted_at = NULL, status = 'voided' WHERE id = ?", [
+      pass.id,
+    ]);
+    const voided = await post(pass);
+    expect(voided.status).toBe(404);
+    expect(((await voided.json()) as { code: string }).code).toBe('PERSONALIZATION_UNAVAILABLE');
+    await run(kit.env.DB, "UPDATE passes SET status = 'active' WHERE id = ?", [pass.id]);
+  });
+
+  it('signs an opaque base64url token over exactly those bytes', async () => {
+    const pass = await personalizable();
+    const tok = 'Zm9vYmFyLXRva2VuXzEyMw';
+    const res = await post(pass, withToken(tok));
+    expect(res.status).toBe(200);
+    const sig = new Uint8Array(await res.arrayBuffer());
+    const digest = new Uint8Array(
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tok)),
+    );
+    const hay = Array.from(sig).join(',');
+    expect(hay).toContain(Array.from(digest).join(','));
+    const other = await post(pass, withToken('different'));
+    expect(other.status).toBe(409);
+  });
+
   it('is unavailable for a suspended org', async () => {
     const pass = await personalizable();
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [pass.orgId]);
@@ -249,10 +302,10 @@ describe('device logs per IP', () => {
   });
 });
 
-describe('RL_APPLE', () => {
+describe('RL_APPLE_IP', () => {
   it('answers 429 once the per-IP limit is spent, keyed by IP', async () => {
     const limiter = fakeLimiter(1);
-    const env = { ...kit.env, RL_APPLE: limiter } as unknown as AppEnv;
+    const env = { ...kit.env, RL_APPLE_IP: limiter } as unknown as AppEnv;
     const get = (ip: string) =>
       call(`/devices/rl/registrations/${TYPE}`, { headers: { 'cf-connecting-ip': ip } }, env);
     expect((await get('1.1.1.1')).status).toBe(204);
@@ -260,6 +313,6 @@ describe('RL_APPLE', () => {
     expect(limited.status).toBe(429);
     expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
     expect((await get('2.2.2.2')).status).toBe(204);
-    expect([...limiter.calls.keys()]).toEqual(['RL_APPLE:1.1.1.1', 'RL_APPLE:2.2.2.2']);
+    expect([...limiter.calls.keys()]).toEqual(['RL_APPLE_IP:1.1.1.1', 'RL_APPLE_IP:2.2.2.2']);
   });
 });

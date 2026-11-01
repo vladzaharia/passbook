@@ -12,6 +12,7 @@ import {
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { withinVerifyUserCap } from '../auth/magic-caps.ts';
 import { processVerifyRequest } from '../auth/magic-service.ts';
 import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
 import { removePassFromUser } from '../holders/service.ts';
@@ -150,6 +151,7 @@ export async function addMyEmail(ctx: ServiceContext, userId: string, rawEmail: 
   if (!(await checkRateLimit(ctx.env, 'RL_MAGIC_LINK', `verify:${userId}`))) {
     throw new RateLimitedError();
   }
+  if (!(await withinVerifyUserCap(ctx, userId))) throw new RateLimitedError();
   ctx.waitUntil(processVerifyRequest(ctx, { userId, email }));
   return { ok: true as const };
 }

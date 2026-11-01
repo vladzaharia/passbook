@@ -43,7 +43,7 @@ export async function requestMagic(c: Context<AppBindings>) {
     throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
   }
   const input = MagicLinkRequestSchema.parse(await c.req.json());
-  if (!(await verifyTurnstile(c.env, input.turnstileToken, ip))) {
+  if (!(await verifyTurnstile(c.env, input.turnstileToken, ip, ctx.log))) {
     ctx.log.warn('auth.turnstile_failed', {});
     throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
   }
@@ -59,6 +59,7 @@ export async function requestMagic(c: Context<AppBindings>) {
           email,
           bindingHash: await sha256Hex(binding),
           next: safeNext(input.next),
+          ipPrefix: ipPrefix(ip),
         }))(),
     );
   }

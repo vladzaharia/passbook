@@ -22,14 +22,19 @@ export interface Mailer {
   send(message: MailMessage): Promise<{ messageId: string }>;
 }
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping control characters is the point
+const HEADER_UNSAFE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/gu;
+/** Backstop for values stored before write-time validation: no value may break a header line. */
+const oneLine = (value: string) => value.replace(HEADER_UNSAFE, ' ').replace(/ {2,}/g, ' ').trim();
+
 /** Cloudflare Email Sending binding. Sender is EMAIL_FROM (one onboarded address). */
 export function createEmailBindingMailer(env: AppEnv): Mailer {
   return {
     async send(message) {
       const result = await env.EMAIL.send({
-        from: { name: message.fromName ?? 'Wallet', email: env.EMAIL_FROM },
+        from: { name: oneLine(message.fromName ?? 'Wallet'), email: env.EMAIL_FROM },
         to: message.to,
-        subject: message.subject,
+        subject: oneLine(message.subject),
         html: message.html,
         text: message.text,
         ...(message.replyTo ? { replyTo: message.replyTo } : {}),

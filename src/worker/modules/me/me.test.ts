@@ -263,6 +263,18 @@ describe('emails', () => {
     expect((await del('not-an-email')).status).toBe(422);
   });
 
+  it('caps verification mails per user per day', async () => {
+    const { session } = await setup();
+    const add = (n: number) =>
+      send('POST', '/api/v1/me/emails', session.headers, {
+        email: `cap${n}-${Date.now()}@example.test`,
+      });
+    for (let i = 0; i < 10; i++) expect((await add(i)).status).toBe(202);
+    const over = await add(10);
+    expect(over.status).toBe(429);
+    expect(h.mail).toHaveLength(10);
+  });
+
   it('cannot remove an address belonging to someone else', async () => {
     const { session } = await setup();
     const other = await makeUser(f());

@@ -1,5 +1,7 @@
+import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
+import type { AppBindings } from '../../platform/context.ts';
 import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
@@ -20,7 +22,16 @@ const passParams = z.object({ passTypeId: z.string(), serial: z.string() });
 
 /** /wallet/v1: Apple Wallet web service. Authorization: ApplePass <token>. */
 export const appleRoutes = createRouter();
-appleRoutes.use('*', rateLimit('RL_APPLE'));
+// Phones behind one NAT share an IP, so the per-IP layer is wide and the tight limits are per
+// device and per pass. /log has neither, so it keeps the IP key.
+appleRoutes.use('*', rateLimit('RL_APPLE_IP'));
+const byDevice = (c: Context<AppBindings>) => `device:${c.req.param('deviceId')?.slice(0, 128)}`;
+const byPass = (c: Context<AppBindings>) =>
+  `pass:${c.req.param('passTypeId')}:${c.req.param('serial')}`;
+appleRoutes.use('/devices/:deviceId/*', rateLimit('RL_APPLE', byDevice));
+appleRoutes.use('/passes/:passTypeId/:serial', rateLimit('RL_APPLE', byPass));
+appleRoutes.use('/passes/:passTypeId/:serial/personalize', rateLimit('RL_APPLE', byPass));
+appleRoutes.use('/log', rateLimit('RL_APPLE'));
 appleRoutes.use(
   '*',
   bodyLimit({
