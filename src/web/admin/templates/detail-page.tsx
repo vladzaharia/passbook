@@ -62,7 +62,7 @@ function ClonePanel({
     if (!orgId) return setError('Choose an organization.');
     try {
       const copy = await actions.clone.mutateAsync({ orgId, name: name.trim() || undefined });
-      toast.success('Template cloned');
+      toast.success(template.origin === 'baked' ? 'Template customized' : 'Template cloned');
       onOpenChange(false);
       void navigate({ to: `/admin/templates/${copy.id}` as never });
     } catch (cause) {
@@ -74,14 +74,14 @@ function ClonePanel({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size="sm"
-        title="Clone template"
+        title={template.origin === 'baked' ? 'Customize template' : 'Clone template'}
         footer={
           <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button loading={actions.clone.isPending} onClick={() => void clone()}>
-              Clone
+              {template.origin === 'baked' ? 'Customize' : 'Clone'}
             </Button>
           </>
         }
@@ -233,8 +233,8 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
           <TabsTrigger value="manifest">Manifest</TabsTrigger>
           <TabsTrigger value="inputs">Inputs</TabsTrigger>
         </TabsList>
-        <TabsContent value="overview">
-          <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
+        <TabsContent value="overview" className="max-w-3xl">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
             <OrgPanel key={t.orgId ?? 'none'} templateId={t.id} orgId={t.orgId} />
             <Card>
               <CardHeader title="Details" />
@@ -250,11 +250,11 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
             </Card>
           </div>
         </TabsContent>
-        <TabsContent value="versions">
+        <TabsContent value="versions" className="max-w-3xl">
           <VersionsPanel template={t} />
         </TabsContent>
-        <TabsContent value="preview">
-          <Card className="max-w-sm">
+        <TabsContent value="preview" className="max-w-3xl">
+          <Card>
             <CardHeader title="Sample" />
             <CardBody>
               {preview.data ? (
@@ -271,15 +271,15 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
             </CardBody>
           </Card>
         </TabsContent>
-        <TabsContent value="manifest">
+        <TabsContent value="manifest" className="max-w-3xl">
           {baked ? (
             <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
           ) : (
             <ManifestEditor key={t.activeVersion ?? ''} template={t} />
           )}
         </TabsContent>
-        <TabsContent value="inputs">
-          <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
+        <TabsContent value="inputs" className="max-w-3xl">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
             <Card>
               <CardHeader title="Fields" />
               <InputFields schema={t.inputSchema} />

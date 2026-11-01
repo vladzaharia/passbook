@@ -80,7 +80,7 @@ export function ImagesTab({
   }
 
   return (
-    <div className="grid max-w-3xl gap-4">
+    <div className="grid gap-4">
       <Card>
         <CardHeader title="Image overrides" />
         <CardBody>

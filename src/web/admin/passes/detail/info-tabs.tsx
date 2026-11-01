@@ -17,7 +17,7 @@ type Pass = z.infer<typeof PassDetailSchema>;
 
 export function DevicesTab({ pass }: { pass: Pass }) {
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <CardBody>
         <KeyValue
           items={[
@@ -43,5 +43,11 @@ export function ActivityTab({ passId, active }: { passId: string; active: boolea
     time: e.at,
     description: e.actorLabel ?? e.actorType,
   }));
-  return <Timeline items={items} />;
+  return (
+    <Card>
+      <CardBody>
+        <Timeline items={items} />
+      </CardBody>
+    </Card>
+  );
 }

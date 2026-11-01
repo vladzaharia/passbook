@@ -151,11 +151,11 @@ describe('template detail', () => {
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Customize' }));
     const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Clone' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Customize' }));
     expect(await within(dialog).findByText('Choose an organization.')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
-    await user.click(within(dialog).getByRole('button', { name: 'Clone' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Customize' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1', name: 'Copper card copy' }]));
   });
 
@@ -185,7 +185,7 @@ describe('template detail', () => {
     });
     const select = await screen.findByRole('combobox', { name: 'Organization' });
     expect(select).toHaveTextContent('Any org');
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     await user.click(select);
     await user.click(await screen.findByRole('option', { name: "Henry's" }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -258,7 +258,7 @@ describe('template detail', () => {
     });
     await user.click(await screen.findByRole('tab', { name: 'Manifest' }));
     const editor = await screen.findByRole('textbox', { name: 'Manifest JSON' });
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     await user.click(editor);
     await user.paste(' ');
     await user.click(screen.getByRole('button', { name: 'Save' }));

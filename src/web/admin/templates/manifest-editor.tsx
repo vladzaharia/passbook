@@ -2,7 +2,16 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { errorMessage, isApiError } from '../../lib/errors.ts';
-import { Button, Card, CardBody, CardHeader, Textarea, toast } from '../../ui/index.ts';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  SaveBar,
+  Textarea,
+  toast,
+  UnsavedChangesDialog,
+  useUnsavedChangesGuard,
+} from '../../ui/index.ts';
 import { useTemplateActions } from './api.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -15,6 +24,7 @@ export function ManifestEditor({ template }: { template: Template }) {
   const [text, setText] = useState(() => pretty(template.manifest));
   const [problems, setProblems] = useState<string[]>([]);
   const dirty = text !== pretty(template.manifest);
+  const guard = useUnsavedChangesGuard(dirty);
 
   async function save() {
     let manifest: unknown;
@@ -45,32 +55,7 @@ export function ManifestEditor({ template }: { template: Template }) {
 
   return (
     <Card>
-      <CardHeader
-        title="Manifest"
-        actions={
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!dirty}
-              onClick={() => {
-                setText(pretty(template.manifest));
-                setProblems([]);
-              }}
-            >
-              Discard
-            </Button>
-            <Button
-              size="sm"
-              disabled={!dirty}
-              loading={actions.replaceManifest.isPending}
-              onClick={() => void save()}
-            >
-              Save
-            </Button>
-          </>
-        }
-      />
+      <CardHeader title="Manifest" />
       <CardBody className="grid gap-3">
         <Textarea
           aria-label="Manifest JSON"
@@ -91,6 +76,16 @@ export function ManifestEditor({ template }: { template: Template }) {
           </ul>
         ) : null}
       </CardBody>
+      <SaveBar
+        dirty={dirty}
+        saving={actions.replaceManifest.isPending}
+        onSave={() => void save()}
+        onDiscard={() => {
+          setText(pretty(template.manifest));
+          setProblems([]);
+        }}
+      />
+      <UnsavedChangesDialog blocker={guard} />
     </Card>
   );
 }

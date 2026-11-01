@@ -49,7 +49,7 @@ export function HolderTab({ pass }: { pass: Pass }) {
   }
 
   return (
-    <div className="grid max-w-3xl gap-4">
+    <div className="grid gap-4">
       <Card>
         <CardHeader title="Holder" />
         <CardBody>

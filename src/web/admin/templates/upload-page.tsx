@@ -112,60 +112,62 @@ export function TemplateUploadPage() {
       {uploadId ? (
         <Progress uploadId={uploadId} onReset={reset} />
       ) : (
-        <div className="grid gap-4">
-          <FormField label="Organization">
-            {(c) => (
-              <Select
-                {...c}
-                value={orgId ?? NONE}
-                onValueChange={(v) => setOrgId(v === NONE ? undefined : v)}
-                options={[
-                  { value: NONE, label: 'None' },
-                  ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
-                ]}
+        <Card className="max-w-3xl">
+          <CardBody className="grid gap-4">
+            <FormField label="Organization">
+              {(c) => (
+                <Select
+                  {...c}
+                  value={orgId ?? NONE}
+                  onValueChange={(v) => setOrgId(v === NONE ? undefined : v)}
+                  options={[
+                    { value: NONE, label: 'None' },
+                    ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
+                  ]}
+                />
+              )}
+            </FormField>
+            <FormField label="Name" help="Defaults to the package name.">
+              {(c) => (
+                <Input
+                  {...c}
+                  maxLength={120}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              )}
+            </FormField>
+            <div>
+              <FileDrop
+                accept=".zip,.pkpasstemplate"
+                maxBytes={MAX_BYTES}
+                label={file ? `${file.name} (change)` : 'Choose a .zip or .pkpasstemplate'}
+                disabled={upload.isPending}
+                onFiles={([f]) => setFile(f)}
               />
-            )}
-          </FormField>
-          <FormField label="Name" help="Defaults to the package name.">
-            {(c) => (
-              <Input
-                {...c}
-                maxLength={120}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            )}
-          </FormField>
-          <div>
-            <FileDrop
-              accept=".zip,.pkpasstemplate"
-              maxBytes={MAX_BYTES}
-              label={file ? `${file.name} (change)` : 'Choose a .zip or .pkpasstemplate'}
-              disabled={upload.isPending}
-              onFiles={([f]) => setFile(f)}
-            />
-          </div>
-          {upload.isError ? (
-            <p role="alert" className="text-sm text-danger">
-              {errorMessage(upload.error)}
-            </p>
-          ) : null}
-          <div>
-            <Button
-              loading={upload.isPending}
-              disabled={!file}
-              onClick={async () => {
-                if (!file) return;
-                const res = await upload
-                  .mutateAsync({ file, orgId, name: name.trim() || undefined })
-                  .catch(() => undefined);
-                if (res) setUploadId(res.uploadId);
-              }}
-            >
-              Upload
-            </Button>
-          </div>
-        </div>
+            </div>
+            {upload.isError ? (
+              <p role="alert" className="text-sm text-danger">
+                {errorMessage(upload.error)}
+              </p>
+            ) : null}
+            <div>
+              <Button
+                loading={upload.isPending}
+                disabled={!file}
+                onClick={async () => {
+                  if (!file) return;
+                  const res = await upload
+                    .mutateAsync({ file, orgId, name: name.trim() || undefined })
+                    .catch(() => undefined);
+                  if (res) setUploadId(res.uploadId);
+                }}
+              >
+                Upload
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
       )}
     </>
   );

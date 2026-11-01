@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { errorMessage } from '../../lib/errors.ts';
 import { useOrgOptions } from '../../lib/search.ts';
-import { Button, Card, CardBody, CardHeader, FormField, Select, toast } from '../../ui/index.ts';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  FormField,
+  SaveBar,
+  Select,
+  toast,
+  UnsavedChangesDialog,
+  useUnsavedChangesGuard,
+} from '../../ui/index.ts';
 import { useTemplateActions } from './api.ts';
 
 const NONE = 'none';
@@ -12,6 +22,7 @@ export function OrgPanel({ templateId, orgId }: { templateId: string; orgId: str
   const [value, setValue] = useState(orgId ?? NONE);
   const [error, setError] = useState<string>();
   const dirty = value !== (orgId ?? NONE);
+  const guard = useUnsavedChangesGuard(dirty);
 
   async function save() {
     setError(undefined);
@@ -24,7 +35,7 @@ export function OrgPanel({ templateId, orgId }: { templateId: string; orgId: str
   }
 
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <CardHeader title="Organization" />
       <CardBody className="grid gap-3">
         <FormField label="Organization" error={error}>
@@ -43,16 +54,17 @@ export function OrgPanel({ templateId, orgId }: { templateId: string; orgId: str
             />
           )}
         </FormField>
-        <div>
-          <Button
-            loading={actions.assignOrg.isPending}
-            disabled={!dirty}
-            onClick={() => void save()}
-          >
-            Save
-          </Button>
-        </div>
       </CardBody>
+      <SaveBar
+        dirty={dirty}
+        saving={actions.assignOrg.isPending}
+        onSave={() => void save()}
+        onDiscard={() => {
+          setValue(orgId ?? NONE);
+          setError(undefined);
+        }}
+      />
+      <UnsavedChangesDialog blocker={guard} />
     </Card>
   );
 }
