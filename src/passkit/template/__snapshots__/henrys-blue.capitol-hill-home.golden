@@ -20,7 +20,7 @@
     {
       "identifier": "member-portal",
       "type": "membershipBenefits",
-      "url": "https://henrysgymnasium.thememberspot.com/signin"
+      "url": "https://henrysgymnasium.thememberspot.com/"
     },
     {
       "identifier": "home-club",
@@ -46,10 +46,10 @@
         "value": "Welcome to Henry’s."
       },
       {
-        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>",
+        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>",
         "key": "portal",
         "label": "MANAGE YOUR MEMBERSHIP",
-        "value": "https://henrysgymnasium.thememberspot.com/signin"
+        "value": "https://henrysgymnasium.thememberspot.com/"
       },
       {
         "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>",
@@ -142,10 +142,10 @@
         "value": "Welcome to Henry’s."
       },
       {
-        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>",
+        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>",
         "key": "portal-poster",
         "label": "MANAGE YOUR MEMBERSHIP",
-        "value": "https://henrysgymnasium.thememberspot.com/signin"
+        "value": "https://henrysgymnasium.thememberspot.com/"
       },
       {
         "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>",

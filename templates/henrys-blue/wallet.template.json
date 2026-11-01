@@ -106,7 +106,8 @@
         "x-label": "Expires",
         "x-group": "Status",
         "x-order": 80,
-        "x-widget": "datetime"
+        "x-widget": "datetime",
+        "x-noneLabel": "Never expires"
       },
       "voided": {
         "type": "boolean",
@@ -115,17 +116,6 @@
         "x-group": "Status",
         "x-order": 90,
         "x-widget": "switch"
-      },
-      "memberPortalURL": {
-        "type": "string",
-        "format": "uri",
-        "maxLength": 300,
-        "pattern": "^https://",
-        "default": "https://henrysgymnasium.thememberspot.com/signin",
-        "x-label": "Portal link",
-        "x-group": "Links",
-        "x-order": 100,
-        "x-widget": "url"
       }
     }
   },
@@ -223,25 +213,6 @@
     {
       "to": {
         "field": [
-          "portal",
-          "portal-poster"
-        ]
-      },
-      "value": "{{memberPortalURL}}"
-    },
-    {
-      "to": {
-        "field": [
-          "portal",
-          "portal-poster"
-        ],
-        "prop": "attributedValue"
-      },
-      "value": "<a href=\"{{memberPortalURL|html}}\">Member portal</a>"
-    },
-    {
-      "to": {
-        "field": [
           "phone",
           "phone-poster"
         ]
@@ -271,13 +242,6 @@
         "prop": "altText"
       },
       "value": "{{memberId}}"
-    },
-    {
-      "to": {
-        "action": "member-portal",
-        "prop": "url"
-      },
-      "value": "{{memberPortalURL}}"
     },
     {
       "to": {

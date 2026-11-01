@@ -71,7 +71,7 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
       {
         identifier: 'member-portal',
         type: 'membershipBenefits',
-        url: expect.stringContaining('https://'),
+        url: 'https://henrysgymnasium.thememberspot.com/',
       },
       { identifier: 'home-club', type: 'place', placeIdentifier: 'I23C636C7300F20FD' },
     ]);
@@ -153,22 +153,22 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
     expect(ended.generic?.headerFields?.[0]?.value).toBe('Cancelled');
   });
 
-  it('escapes the portal link in attributed text and rejects non-https links', async () => {
-    const pass = (
-      await build(slug, material, { ...member, memberPortalURL: 'https://x.test/?a=b&c=d' })
-    ).passJson;
-    const portal = pass.generic?.backFields?.find((f) => f.key === 'portal');
-    expect(portal?.attributedValue).toBe('<a href="https://x.test/?a=b&amp;c=d">Member portal</a>');
-    for (const memberPortalURL of [
-      'javascript:alert(1)',
-      'http://x.test',
-      'https://x.test/"><b>',
-    ]) {
-      const error = await build(slug, material, { ...member, memberPortalURL }).catch(
-        (e: unknown) => e,
-      );
-      expect((error as PassBuildError).code, memberPortalURL).toBe('INVALID_INPUT');
+  it('always links the member portal and has no portal input', async () => {
+    const url = 'https://henrysgymnasium.thememberspot.com/';
+    const pass = (await build(slug, material, member)).passJson;
+    for (const style of [pass.generic, pass.posterGeneric]) {
+      const portal = style?.backFields?.find((f) => f.key.startsWith('portal'));
+      expect(portal?.value).toBe(url);
+      expect(portal?.attributedValue).toBe(`<a href="${url}">Member portal</a>`);
     }
+    expect(pass.featuredActions).toContainEqual(
+      expect.objectContaining({ identifier: 'member-portal', url }),
+    );
+    const error = await build(slug, material, {
+      ...member,
+      memberPortalURL: 'https://x.test/',
+    }).catch((e: unknown) => e);
+    expect((error as PassBuildError).code).toBe('INVALID_INPUT');
   });
 
   it('rejects ids outside the Code 39 set, unknown clubs and unknown access', async () => {
