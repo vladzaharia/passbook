@@ -121,7 +121,7 @@ describe('entity identity', () => {
         <EntityChip kind="template" id="0190aaaa-bbbb-7ccc-8ddd-eeeeffff0001" />
       </>,
     );
-    expect(container.textContent).toContain('AL');
+    expect(container.querySelector('[data-initials="AL"]')).not.toBeNull();
     expect(container.querySelector('.size-9 svg.size-5')).not.toBeNull();
     expect(screen.getByText('ff0001')).toHaveClass('font-mono');
   });
