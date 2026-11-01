@@ -18,6 +18,8 @@ export interface AuditFilter {
   actorId?: string;
   /** Prefix match. */
   action?: string;
+  /** Prefix to leave out. */
+  excludeAction?: string;
   targetType?: string;
   targetId?: string;
   from?: number;
@@ -40,6 +42,8 @@ export async function listAuditRows(
   if (filter.orgId) add('org_id = ?', filter.orgId);
   if (filter.actorId) add('actor_id = ?', filter.actorId);
   if (filter.action) add("action LIKE ? ESCAPE '\\'", `${likeEscape(filter.action)}%`);
+  if (filter.excludeAction)
+    add("action NOT LIKE ? ESCAPE '\\'", `${likeEscape(filter.excludeAction)}%`);
   if (filter.targetType) add('target_type = ?', filter.targetType);
   if (filter.targetId) add('target_id = ?', filter.targetId);
   if (filter.from !== undefined) add('at >= ?', filter.from);
