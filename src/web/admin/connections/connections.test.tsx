@@ -318,6 +318,15 @@ describe('connection detail', () => {
     expect(options).toEqual(['Poll', 'Manual']);
   });
 
+  it('opens the tab from the URL', async () => {
+    const state = { c: connectionDetail({ mode: 'webhook' }) };
+    await renderApp('/admin/connections/c1?tab=settings', {
+      session: 'admin',
+      handlers: detailHandlers(state),
+    });
+    expect(await screen.findByRole('tab', { name: 'Settings', selected: true })).toBeVisible();
+  });
+
   it('rotates the webhook secret and shows it once', async () => {
     const user = userEvent.setup();
     const state = { c: connectionDetail({ mode: 'webhook' }) };
@@ -339,7 +348,8 @@ describe('connection detail', () => {
     expect(
       await screen.findByText('https://wallet.example/hooks/connections/c1'),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Create secret' }));
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Create secret' }));
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     const region = await screen.findByRole('region', { name: 'Webhook secret' });

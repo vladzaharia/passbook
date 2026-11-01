@@ -1,15 +1,4 @@
-import { useState } from 'react';
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  CodeBlock,
-  ConfirmDialog,
-  CopyButton,
-  KeyValue,
-  toast,
-} from '../../ui/index.ts';
+import { Card, CardBody, CardHeader, CodeBlock, CopyButton, KeyValue } from '../../ui/index.ts';
 
 /** 32 random bytes as hex. The client generates it so the server never has to echo a secret. */
 export function generateSecret(): string {
@@ -36,24 +25,15 @@ export function SecretOnce({ url, secret }: { url: string | null; secret: string
 export function WebhookPanel({
   url,
   hasSecret,
-  onRotate,
+  secret,
 }: {
   url: string | null;
   hasSecret: boolean;
-  onRotate: (secret: string) => Promise<unknown>;
+  secret?: string;
 }) {
-  const [confirm, setConfirm] = useState(false);
-  const [secret, setSecret] = useState<string>();
   return (
     <Card className="max-w-3xl">
-      <CardHeader
-        title="Webhook"
-        actions={
-          <Button size="sm" variant="outline" onClick={() => setConfirm(true)}>
-            {hasSecret ? 'Rotate secret' : 'Create secret'}
-          </Button>
-        }
-      />
+      <CardHeader title="Webhook" />
       <CardBody className="grid gap-4">
         <KeyValue
           items={[
@@ -71,20 +51,6 @@ export function WebhookPanel({
         />
         {secret ? <SecretOnce url={null} secret={secret} /> : null}
       </CardBody>
-      <ConfirmDialog
-        open={confirm}
-        onOpenChange={setConfirm}
-        title={hasSecret ? 'Rotate webhook secret?' : 'Create webhook secret?'}
-        description={hasSecret ? 'Senders using the old secret are rejected.' : undefined}
-        confirmLabel={hasSecret ? 'Rotate' : 'Create'}
-        destructive={hasSecret}
-        onConfirm={async () => {
-          const next = generateSecret();
-          await onRotate(next);
-          setSecret(next);
-          toast.success('Secret saved');
-        }}
-      />
     </Card>
   );
 }
