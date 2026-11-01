@@ -1,13 +1,12 @@
 import type { z } from 'zod';
 import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
-import { actionLabel } from '@/web/lib/actions.ts';
 import {
   Card,
   CardBody,
   EmptyState,
   ErrorState,
   KeyValue,
-  Spinner,
+  SkeletonTimeline,
   Timeline,
   type TimelineItem,
 } from '../../../ui/index.ts';
@@ -33,16 +32,16 @@ export function DevicesTab({ pass }: { pass: Pass }) {
 
 export function ActivityTab({ passId, active }: { passId: string; active: boolean }) {
   const audit = usePassAudit(passId, active);
-  if (audit.isPending) return <Spinner />;
+  if (audit.isPending) return <SkeletonTimeline label="Loading activity" />;
   if (audit.isError) {
     return <ErrorState error={audit.error} onRetry={() => void audit.refetch()} />;
   }
   if (audit.data.items.length === 0) return <EmptyState art="activity" title="No activity" />;
   const items: TimelineItem[] = audit.data.items.map((e) => ({
     id: String(e.id),
-    title: actionLabel(e.action),
+    action: e.action,
     time: e.at,
-    description: e.actorLabel ?? e.actorType,
+    actorLabel: e.actorLabel ?? e.actorType,
   }));
   return (
     <Card>

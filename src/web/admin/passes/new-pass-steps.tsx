@@ -2,7 +2,13 @@ import type { CSSProperties } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { useArrival } from '../../lib/motion.ts';
 import { useOrgOptions } from '../../lib/search.ts';
-import { EmptyState, ErrorState, Spinner } from '../../ui/index.ts';
+import {
+  EmptyState,
+  ErrorState,
+  Skeleton,
+  SkeletonRows,
+  SkeletonTileGrid,
+} from '../../ui/index.ts';
 import { useTemplatePreview, useTemplates } from '../templates/api.ts';
 import { PassPreview } from './pass-preview.tsx';
 
@@ -14,7 +20,7 @@ export function OrgStep({
   onSelect: (id: string) => void;
 }) {
   const orgs = useOrgOptions();
-  if (orgs.isPending) return <Spinner />;
+  if (orgs.isPending) return <SkeletonRows rows={3} label="Loading organizations" />;
   if (orgs.isError) return <ErrorState error={orgs.error} onRetry={() => void orgs.refetch()} />;
   const items = orgs.data.items.filter((o) => o.status === 'active');
   if (items.length === 0) return <EmptyState art="building" title="No active organizations" />;
@@ -27,7 +33,7 @@ export function OrgStep({
             aria-pressed={o.id === orgId}
             onClick={() => onSelect(o.id)}
             className={cn(
-              'w-full rounded-lg border bg-surface-raised p-4 text-left transition-colors hover:bg-state-hover-tint',
+              'w-full rounded-lg border bg-surface-raised p-4 text-left wl-colors hover:bg-state-hover-tint',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
               o.id === orgId ? 'border-accent' : 'border-border',
             )}
@@ -61,7 +67,7 @@ function TemplateCard({
       aria-pressed={selected}
       onClick={onSelect}
       className={cn(
-        'flex h-full w-full flex-col gap-3 rounded-lg border bg-surface-raised p-4 text-left transition-colors hover:bg-state-hover-tint',
+        'flex h-full w-full flex-col gap-3 rounded-lg border bg-surface-raised p-4 text-left wl-colors hover:bg-state-hover-tint',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         selected ? 'border-accent' : 'border-border',
       )}
@@ -79,7 +85,7 @@ function TemplateCard({
             className="max-w-48"
           />
         ) : preview.isPending ? (
-          <Spinner />
+          <Skeleton className="aspect-[320/420] w-full max-w-48 rounded-xl" />
         ) : (
           <p className="text-xs text-fg-muted">No preview</p>
         )}
@@ -103,7 +109,7 @@ export function TemplateStep({
 }) {
   const templates = useTemplates({ orgId });
   const arrived = useArrival(templates.isPending);
-  if (templates.isPending) return <Spinner />;
+  if (templates.isPending) return <SkeletonTileGrid label="Loading templates" />;
   if (templates.isError) {
     return <ErrorState error={templates.error} onRetry={() => void templates.refetch()} />;
   }

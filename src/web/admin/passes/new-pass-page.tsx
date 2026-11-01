@@ -16,7 +16,9 @@ import {
   FormField,
   Input,
   PageHeader,
-  Spinner,
+  PendingNote,
+  Skeleton,
+  SkeletonKeyValue,
   Switch,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
@@ -66,7 +68,7 @@ function LivePreview({
     <Card className="lg:sticky lg:top-4 lg:self-start">
       <CardHeader
         title="Preview"
-        actions={preview.isFetching ? <Spinner label="Updating preview" /> : null}
+        actions={preview.isFetching ? <PendingNote label="Updating preview" /> : null}
       />
       <CardBody>
         {preview.data ? (
@@ -79,7 +81,7 @@ function LivePreview({
         ) : preview.isError || !valid ? (
           <p className="text-sm text-fg-muted">Preview unavailable until the details are valid.</p>
         ) : (
-          <Spinner />
+          <Skeleton className="aspect-[320/420] w-full rounded-xl" />
         )}
         {preview.data?.warnings.length ? (
           <ul className="mt-3 list-disc pl-5 text-xs text-warning">
@@ -247,7 +249,7 @@ export function NewPassPage() {
         template.isError ? (
           <ErrorState error={template.error} onRetry={() => void template.refetch()} />
         ) : !template.data ? (
-          <Spinner />
+          <SkeletonKeyValue />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
             <SchemaForm

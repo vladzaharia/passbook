@@ -78,6 +78,17 @@
     transform: rotate(-90deg) scale(0.6);
   }
 }
+@keyframes wl-tl-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+@keyframes wl-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+}
 @keyframes wl-spin {
   to {
     transform: rotate(360deg);
@@ -274,6 +285,15 @@
   animation: wl-seg-icon var(--wl-dur-indicator) var(--wl-ease-spring) backwards;
 }
 
+/* Timeline: the rail draws once; a new entry slides in from the left. */
+.wl-rail-draw {
+  transform-origin: 50% 0;
+  animation: wl-draw-y 300ms var(--wl-ease-out) backwards;
+}
+.wl-tl-new {
+  animation: wl-tl-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+
 /* Tab panels fade in (kept under reduced motion: an opacity swap under 150 ms). */
 .wl-panel[data-state="active"] {
   animation: wl-fade-in 120ms var(--wl-ease-out) backwards;
@@ -345,6 +365,8 @@
   .wl-wordmark-icon,
   .wl-turn,
   .wl-seg-icon,
+  .wl-rail-draw,
+  .wl-tl-new,
   [data-sonner-toast] [data-icon] {
     animation: none;
   }

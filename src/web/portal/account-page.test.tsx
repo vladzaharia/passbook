@@ -2,8 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { deviceLabel } from '../lib/device.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
-import { deviceLabel } from './account-sessions.tsx';
 
 const signOut = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../lib/session.ts', async (orig) => ({

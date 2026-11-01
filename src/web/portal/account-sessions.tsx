@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type CSSProperties, useState } from 'react';
 import { cn } from '../lib/cn.ts';
+import { deviceLabel } from '../lib/device.ts';
 import { useArrival } from '../lib/motion.ts';
 import {
   Button,
@@ -15,32 +16,6 @@ import {
 } from '../ui/index.ts';
 import { mySessionsKey, mySessionsQuery, revokeAllSessions, revokeSession } from './api.ts';
 import { formatWhen } from './pass-view.ts';
-
-/** Short device label from a user agent; the raw string is not useful in a list. */
-export function deviceLabel(ua: string | null): string {
-  if (!ua) return 'Unknown device';
-  const os = /iPhone|iPad/.test(ua)
-    ? 'iOS'
-    : /Android/.test(ua)
-      ? 'Android'
-      : /Mac OS X/.test(ua)
-        ? 'macOS'
-        : /Windows/.test(ua)
-          ? 'Windows'
-          : /Linux/.test(ua)
-            ? 'Linux'
-            : null;
-  const browser = /Edg\//.test(ua)
-    ? 'Edge'
-    : /Firefox\//.test(ua)
-      ? 'Firefox'
-      : /Chrome\//.test(ua)
-        ? 'Chrome'
-        : /Safari\//.test(ua)
-          ? 'Safari'
-          : null;
-  return [browser, os].filter(Boolean).join(' on ') || 'Unknown device';
-}
 
 export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhere: () => void }) {
   const client = useQueryClient();

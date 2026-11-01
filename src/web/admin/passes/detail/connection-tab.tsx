@@ -16,7 +16,7 @@ import {
   Input,
   KeyValue,
   Select,
-  Spinner,
+  SkeletonKeyValue,
   toast,
 } from '../../../ui/index.ts';
 import { useConnection, useConnections } from '../../connections/api.ts';
@@ -110,7 +110,7 @@ function BindForm({ pass }: { pass: Pass }) {
 function Bound({ pass }: { pass: Pass }) {
   const connection = useConnection(pass.connectionId ?? undefined);
   const actions = usePassActions(pass.id);
-  if (connection.isPending) return <Spinner />;
+  if (connection.isPending) return <SkeletonKeyValue label="Loading connection" />;
   if (connection.isError) {
     return <ErrorState error={connection.error} onRetry={() => void connection.refetch()} />;
   }

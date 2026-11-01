@@ -18,7 +18,8 @@ import {
   PageHeader,
   RadioGroup,
   Select,
-  Spinner,
+  SkeletonKeyValue,
+  SkeletonRows,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
@@ -201,7 +202,7 @@ export function CreateConnectionWizard() {
             )}
           </FormField>
           {connectors.isPending ? (
-            <Spinner />
+            <SkeletonRows rows={3} label="Loading connectors" />
           ) : connectors.isError ? (
             <ErrorState error={connectors.error} onRetry={() => void connectors.refetch()} />
           ) : (
@@ -225,7 +226,7 @@ export function CreateConnectionWizard() {
 
       {step === 1 ? (
         connector.isPending ? (
-          <Spinner />
+          <SkeletonKeyValue label="Loading connector" />
         ) : connector.isError ? (
           <ErrorState error={connector.error} onRetry={() => void connector.refetch()} />
         ) : (

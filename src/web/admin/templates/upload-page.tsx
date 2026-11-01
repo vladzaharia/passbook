@@ -14,8 +14,8 @@ import {
   FormField,
   Input,
   PageHeader,
+  PendingNote,
   Select,
-  Spinner,
 } from '../../ui/index.ts';
 import { useImportStatus, useUploadTemplate } from './api.ts';
 import { ValidationReport } from './validation-report.tsx';
@@ -46,7 +46,7 @@ function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void
     return (
       <Card className="max-w-3xl">
         <CardBody className="flex items-center gap-3">
-          <Spinner label="Processing upload" />
+          <PendingNote label="Processing upload" />
           <p className="text-sm text-fg-strong" aria-live="polite">
             {s?.step ? `Processing: ${s.step}` : 'Queued'}
           </p>

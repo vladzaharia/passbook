@@ -12,7 +12,7 @@ import {
   ErrorState,
   FormField,
   Select,
-  Spinner,
+  SkeletonRows,
   StatusPill,
 } from '../../../ui/index.ts';
 import { usePassDiff } from '../api.ts';
@@ -118,7 +118,7 @@ export function VersionsTab({
           {from === to ? (
             <p className="text-sm text-fg-muted">Pick two different versions.</p>
           ) : diff.isPending && diff.fetchStatus !== 'idle' ? (
-            <Spinner />
+            <SkeletonRows rows={4} label="Loading changes" />
           ) : diff.isError ? (
             <ErrorState error={diff.error} onRetry={() => void diff.refetch()} />
           ) : diff.data ? (

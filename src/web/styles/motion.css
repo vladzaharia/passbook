@@ -180,10 +180,11 @@ tr[data-new] > :first-child::after {
 
 /* Refetch: rows dim after 150 ms and a 2 px rail runs along the top edge (LoadingRail). The rail
    carries pending state, so it keeps running under reduced motion. */
-[aria-busy="true"] > .wl-dim,
-.wl-dim[aria-busy="true"] {
-  opacity: 0.6;
+.wl-dim {
   transition: opacity 120ms var(--wl-ease-out);
+}
+[aria-busy="true"] .wl-dim {
+  opacity: 0.6;
 }
 .wl-rail {
   position: absolute;
@@ -238,7 +239,7 @@ html:active-view-transition-type(back) {
   animation: wl-route-in 200ms var(--wl-ease-out) 60ms backwards;
 }
 /* Row removal (removeWithTransition): the row shrinks away, neighbours close up. */
-html:active-view-transition-type(row)::view-transition-old(main) {
+html[data-removing]::view-transition-old(main) {
   opacity: 0;
 }
 ::view-transition-group(*.row) {

@@ -1,7 +1,6 @@
-import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { ApiError } from '../lib/errors.ts';
@@ -10,7 +9,7 @@ import { CodeBlock, JsonViewer } from './code-block.tsx';
 import { CopyButton } from './copy-button.tsx';
 import { DataTable } from './data-table.tsx';
 import { DiffViewer } from './diff-viewer.tsx';
-import { EmptyState } from './empty-state.tsx';
+import { EmptyState, FilteredEmpty } from './empty-state.tsx';
 import { ErrorState } from './error-state.tsx';
 import { FileDrop } from './file-drop.tsx';
 import { KeyValue } from './key-value.tsx';
@@ -35,7 +34,7 @@ const ROWS: Row[] = [
 const COLUMNS: ColumnDef<Row, never>[] = [
   { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'count', header: 'Count' },
-  { id: 'actions', header: 'Actions', enableSorting: false, cell: () => 'x' },
+  { id: 'actions', header: 'Actions', cell: () => 'x' },
 ];
 
 const names = () =>
@@ -54,69 +53,72 @@ describe('DataTable', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('sorts via the header button and reports aria-sort', async () => {
-    const user = userEvent.setup();
-    render(<DataTable caption="Passes" columns={COLUMNS} data={ROWS} />);
-    await user.click(screen.getByRole('button', { name: /name/i }));
-    expect(names()).toEqual(['Alpha', 'Bravo', 'Charlie']);
-    expect(screen.getByRole('columnheader', { name: /name/i })).toHaveAttribute(
-      'aria-sort',
-      'ascending',
-    );
-    await user.click(screen.getByRole('button', { name: /name/i }));
-    expect(names()).toEqual(['Charlie', 'Bravo', 'Alpha']);
-    expect(screen.getByRole('columnheader', { name: /name/i })).toHaveAttribute(
-      'aria-sort',
-      'descending',
-    );
+  it('lists rows in server order with no sort controls', () => {
+    render(<DataTable caption="Passes" columns={COLUMNS} data={ROWS} getRowId={(r) => r.id} />);
+    expect(names()).toEqual(['Bravo', 'Alpha', 'Charlie']);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).not.toHaveAttribute('aria-sort');
   });
 
-  it('does not offer sorting on non-sortable columns', () => {
-    render(<DataTable caption="Passes" columns={COLUMNS} data={ROWS} />);
-    expect(screen.queryByRole('button', { name: /actions/i })).toBeNull();
-  });
-
-  it('supports controlled sorting for URL state', async () => {
+  it('renders the filtered empty state with the toolbar, and hides the toolbar when truly empty', async () => {
     const user = userEvent.setup();
-    const seen: SortingState[] = [];
-    function Harness() {
-      const [sorting, setSorting] = useState<SortingState>([{ id: 'count', desc: true }]);
-      return (
-        <DataTable
-          caption="Passes"
-          columns={COLUMNS}
-          data={ROWS}
-          sorting={sorting}
-          onSortingChange={(updater) => {
-            const next = typeof updater === 'function' ? updater(sorting) : updater;
-            seen.push(next);
-            setSorting(next);
-          }}
-        />
-      );
-    }
-    render(<Harness />);
-    expect(names()).toEqual(['Alpha', 'Bravo', 'Charlie']);
-    await user.click(screen.getByRole('button', { name: /name/i }));
-    expect(seen.at(-1)).toEqual([{ id: 'name', desc: false }]);
-  });
-
-  it('leaves server-sorted rows in order with manualSorting', async () => {
-    const user = userEvent.setup();
-    const onSortingChange = vi.fn();
-    render(
+    const onClear = vi.fn();
+    const toolbar = <search>toolbar</search>;
+    const { rerender } = render(
       <DataTable
         caption="Passes"
         columns={COLUMNS}
-        data={ROWS}
-        manualSorting
-        sorting={[]}
-        onSortingChange={onSortingChange}
+        data={[]}
+        filtered
+        toolbar={toolbar}
+        empty={<EmptyState art="passes" title="No passes yet" />}
+        emptyFiltered={<FilteredEmpty entity="pass" onClear={onClear} />}
       />,
     );
-    await user.click(screen.getByRole('button', { name: /name/i }));
-    expect(onSortingChange).toHaveBeenCalled();
+    expect(screen.getByText('No passes match')).toBeInTheDocument();
+    expect(screen.getByText('toolbar')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(onClear).toHaveBeenCalled();
+    rerender(
+      <DataTable
+        caption="Passes"
+        columns={COLUMNS}
+        data={[]}
+        toolbar={toolbar}
+        empty={<EmptyState art="passes" title="No passes yet" />}
+        emptyFiltered={<FilteredEmpty entity="pass" onClear={onClear} />}
+      />,
+    );
+    expect(screen.getByText('No passes yet')).toBeInTheDocument();
+    expect(screen.queryByText('toolbar')).toBeNull();
+  });
+
+  it('keeps rows on a refetch, then dims them and runs the rail after 150 ms', async () => {
+    const { container } = render(
+      <DataTable caption="Passes" columns={COLUMNS} data={ROWS} getRowId={(r) => r.id} fetching />,
+    );
+    expect(screen.queryByRole('status')).toBeNull();
     expect(names()).toEqual(['Bravo', 'Alpha', 'Charlie']);
+    await waitFor(() => expect(container.querySelector('[aria-busy="true"]')).not.toBeNull());
+    expect(container.querySelector('.wl-rail')).not.toBeNull();
+  });
+
+  it('marks rows new since the last render, never on first load', () => {
+    const { container, rerender } = render(
+      <DataTable caption="Passes" columns={COLUMNS} data={ROWS} getRowId={(r) => r.id} />,
+    );
+    expect(container.querySelectorAll('[data-new]')).toHaveLength(0);
+    rerender(
+      <DataTable
+        caption="Passes"
+        columns={COLUMNS}
+        data={[...ROWS, { id: '4', name: 'Delta', count: 0 }]}
+        getRowId={(r) => r.id}
+      />,
+    );
+    const fresh = container.querySelectorAll('[data-new]');
+    expect(fresh).toHaveLength(1);
+    expect(fresh[0]).toHaveAttribute('data-row-id', '4');
   });
 
   it('shows the empty node, the loading skeleton, and rows over a stale load', () => {
@@ -156,13 +158,17 @@ describe('LoadMore', () => {
   it('shows the button only when more is available', async () => {
     const user = userEvent.setup();
     const onLoadMore = vi.fn();
-    const { rerender } = render(<LoadMore hasMore shown={50} onLoadMore={onLoadMore} />);
+    const { rerender } = render(
+      <LoadMore hasMore shown={50} noun={['pass', 'passes']} onLoadMore={onLoadMore} />,
+    );
     await user.click(screen.getByRole('button', { name: 'Load more' }));
     expect(onLoadMore).toHaveBeenCalledOnce();
-    expect(screen.getByText('50 shown')).toBeInTheDocument();
-    rerender(<LoadMore hasMore={false} shown={50} onLoadMore={onLoadMore} />);
+    expect(screen.getByText('50 passes')).toBeInTheDocument();
+    rerender(
+      <LoadMore hasMore={false} shown={1} noun={['pass', 'passes']} onLoadMore={onLoadMore} />,
+    );
     expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.getByText('50 total')).toBeInTheDocument();
+    expect(screen.getByText('1 pass')).toBeInTheDocument();
   });
 
   it('disables while loading', () => {
@@ -228,6 +234,25 @@ describe('KeyValue, Timeline', () => {
       '2026-01-02T00:00:00.000Z',
     );
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('Timeline takes glyph and tone from the action and highlights new entries', () => {
+    const at = Date.UTC(2026, 0, 2);
+    const first = [
+      { id: 'a', action: 'auth.sign_in', time: at },
+      { id: 'b', action: 'api_key.create', time: at },
+    ];
+    const { container, rerender } = render(<Timeline items={first} />);
+    expect(screen.getByText('Signed in')).toBeInTheDocument();
+    const glyphs = [...container.querySelectorAll('li > span:nth-child(2) svg')].map((s) =>
+      s.getAttribute('class'),
+    );
+    expect(glyphs[0]).not.toEqual(glyphs[1]);
+    expect(container.querySelectorAll('.wl-tl-new')).toHaveLength(0);
+    rerender(<Timeline items={[{ id: 'c', action: 'pass.void', time: at }, ...first]} />);
+    const fresh = container.querySelectorAll('.wl-tl-new');
+    expect(fresh).toHaveLength(1);
+    expect(fresh[0]).toHaveTextContent('Pass voided');
   });
 });
 

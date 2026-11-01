@@ -1,3 +1,4 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { ApiError, problemToError } from './errors.ts';
 import { loginHref } from './redirect.ts';
@@ -171,3 +172,13 @@ export const api = createApiClient({
   getCsrfToken: () => csrfProvider(),
   onUnauthorized: redirectToLogin,
 });
+
+/**
+ * Options for a list query: a key change (filter, search, page) keeps the previous rows on screen
+ * while the next ones load (DataTable dims them and runs the loading rail).
+ */
+export function listQuery<O extends object>(
+  options: O,
+): O & { placeholderData: typeof keepPreviousData } {
+  return { ...options, placeholderData: keepPreviousData };
+}

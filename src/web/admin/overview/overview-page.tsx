@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { MetricsOverviewSchema } from '@/shared/contracts/metrics.ts';
-import { actionLabel } from '@/web/lib/actions.ts';
 import { api } from '@/web/lib/api.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { useArrival } from '@/web/lib/motion.ts';
@@ -142,7 +141,7 @@ function Activity({ orgId }: { orgId: string | undefined }) {
           <Timeline
             items={items.map((e) => ({
               id: String(e.id),
-              title: actionLabel(e.action),
+              action: e.action,
               time: e.at,
               description: targetText(e) || undefined,
             }))}

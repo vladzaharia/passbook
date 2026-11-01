@@ -70,7 +70,7 @@ export function FileDrop({
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
         className={cn(
-          'relative flex flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong px-6 py-8 text-center text-sm text-fg-muted transition-colors',
+          'relative flex flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong px-6 py-8 text-center text-sm text-fg-muted wl-colors',
           'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
           over && 'border-accent bg-accent-subtle',
           disabled && 'opacity-50',

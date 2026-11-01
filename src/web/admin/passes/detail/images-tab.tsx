@@ -10,8 +10,9 @@ import {
   FileDrop,
   FormField,
   IconButton,
+  PendingNote,
   Select,
-  Spinner,
+  SkeletonRows,
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions, usePassAssets } from '../api.ts';
@@ -85,7 +86,7 @@ export function ImagesTab({
         <CardHeader title="Image overrides" />
         <CardBody>
           {assets.isPending ? (
-            <Spinner />
+            <SkeletonRows rows={2} label="Loading images" />
           ) : assets.isError ? (
             <ErrorState error={assets.error} onRetry={() => void assets.refetch()} />
           ) : assets.data.items.length === 0 ? (
@@ -162,7 +163,7 @@ export function ImagesTab({
             disabled={actions.uploadAsset.isPending}
             onFiles={([file]) => file && void upload(file)}
           />
-          {actions.uploadAsset.isPending ? <Spinner label="Uploading" /> : null}
+          {actions.uploadAsset.isPending ? <PendingNote label="Uploading" /> : null}
           {error ? (
             <p role="alert" className="text-sm text-danger">
               {error}
