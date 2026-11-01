@@ -412,7 +412,6 @@ describe('upload', () => {
     const noOrg = await upload(zip(), 'orgId=01900000-0000-7000-8000-000000000000');
     expect(noOrg.status).toBe(404);
     expect(await noOrg.json()).toMatchObject({ code: 'ORG_NOT_FOUND' });
-    expect((await upload(zip(), '')).status).toBe(422);
     expect((await upload(new Uint8Array(), `orgId=${org.id}`)).status).toBe(400);
   });
 
@@ -744,6 +743,93 @@ describe('delete', () => {
       [t.id],
     );
     expect(row).toEqual({ action: 'template.delete', org_id: org.id, actor_id: adminId });
+  });
+});
+
+describe('org assignment', () => {
+  const patch = (id: string, body: unknown, headers = admin) =>
+    call(`/${id}`, { method: 'PATCH', ...json(body) }, headers);
+  const orgOf = async (id: string) =>
+    (
+      await first<{ org_id: string | null }>(env.DB, 'SELECT org_id FROM templates WHERE id = ?', [
+        id,
+      ])
+    )?.org_id;
+
+  it('assigns and unassigns a baked template and audits both', async () => {
+    const res = await patch('baked:starter-generic', { orgId: org.id });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { orgId: string; orgName: string };
+    expect(body.orgId).toBe(org.id);
+    expect(body.orgName).toEqual(expect.any(String));
+    expect(await orgOf('baked:starter-generic')).toBe(org.id);
+    const other = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
+    expect((await call('/baked:starter-generic', {}, other)).status).toBe(403);
+
+    const back = await patch('baked:starter-generic', { orgId: null });
+    expect(((await back.json()) as { orgName: null }).orgName).toBeNull();
+    expect(await orgOf('baked:starter-generic')).toBeNull();
+    const rows = await all<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'template.assign_org' AND target_id = 'baked:starter-generic' ORDER BY id",
+    );
+    expect(rows).toHaveLength(2);
+    expect(JSON.parse(rows[1]?.detail ?? '{}')).toEqual({ from: org.id, to: null });
+  });
+
+  it('is admin only; api keys keep read-only access', async () => {
+    expect((await patch(templateId, { orgId: null }, user)).status).toBe(403);
+    const key = auth.apiKey({ scopes: ['templates:read', 'passes:write'] });
+    expect((await patch(templateId, { orgId: null }, key)).status).toBe(401);
+    expect((await patch(templateId, { orgId: null }, {})).status).toBe(401);
+    expect((await call(`/${templateId}`, {}, key)).status).toBe(200);
+  });
+
+  it('validates the body and the org', async () => {
+    expect((await patch(templateId, {})).status).toBe(422);
+    expect(
+      (await patch(templateId, { orgId: '01900000-0000-7000-8000-000000000000' })).status,
+    ).toBe(404);
+    expect((await patch('baked:nope', { orgId: null })).status).toBe(404);
+  });
+
+  it('refuses while passes of another org use the template, but allows unassigning', async () => {
+    const t = await seed(org.id, 'Shared Card');
+    const template = await createTemplateRegistry(env).resolve(t.id, t.version);
+    await makePass(f, { orgId: org.id, template });
+
+    const res = await patch(t.id, { orgId: otherOrg.id });
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { code: string }).code).toBe('TEMPLATE_USED_BY_OTHER_ORG');
+    expect(await orgOf(t.id)).toBe(org.id);
+
+    expect((await patch(t.id, { orgId: org.id })).status).toBe(200);
+    expect((await patch(t.id, { orgId: null })).status).toBe(200);
+    expect((await patch(t.id, { orgId: org.id })).status).toBe(200);
+  });
+
+  it('lists orgId and orgName, and still deletes assets after reassignment', async () => {
+    const t = await seed(org.id, 'Moves Around');
+    expect((await patch(t.id, { orgId: otherOrg.id })).status).toBe(200);
+    const list = (await (await call(`?orgId=${otherOrg.id}`)).json()) as {
+      items: { id: string; orgId: string | null; orgName: string | null }[];
+    };
+    const row = list.items.find((i) => i.id === t.id);
+    expect(row?.orgId).toBe(otherOrg.id);
+    expect(row?.orgName).toEqual(expect.any(String));
+    expect(list.items.some((i) => i.orgId === null && i.orgName === null)).toBe(true);
+    expect(await (await call(`/${t.id}`, { method: 'DELETE' })).json()).toEqual({
+      ok: true,
+      outcome: 'deleted',
+    });
+    expect(
+      (await env.BUCKET.list({ prefix: `templates/${org.id}/${t.id}/` })).objects,
+    ).toHaveLength(0);
+  });
+
+  it('accepts an upload with no org', async () => {
+    const zip = zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest('No Org')) }));
+    expect((await upload(zip, 'name=No+Org')).status).toBe(202);
   });
 });
 

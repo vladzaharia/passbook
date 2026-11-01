@@ -36,7 +36,7 @@ export interface TemplatePlan {
 /** Re-uploading a slug adds a version to the same template. Baked slugs are off limits. */
 export async function planTemplate(
   ctx: ServiceContext,
-  orgId: string,
+  orgId: string | null,
   slug: string,
 ): Promise<TemplatePlan> {
   const existing = await findTemplateBySlug(ctx.env.DB, orgId, slug);
@@ -56,7 +56,7 @@ export interface VersionBody {
 
 export interface CommitArgs {
   plan: TemplatePlan;
-  orgId: string;
+  orgId: string | null;
   slug: string;
   name: string;
   description: string | null;

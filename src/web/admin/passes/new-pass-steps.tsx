@@ -102,9 +102,11 @@ export function TemplateStep({
   }
   const items = templates.data.items.filter((t) => t.status === 'active' && t.activeVersion);
   if (items.length === 0) return <EmptyState title="No templates for this organization" />;
-  return (
+  const own = items.filter((t) => t.orgId === orgId);
+  const rest = items.filter((t) => t.orgId !== orgId);
+  const grid = (list: typeof items) => (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((t) => (
+      {list.map((t) => (
         <li key={t.id}>
           <TemplateCard
             id={t.id}
@@ -116,5 +118,24 @@ export function TemplateStep({
         </li>
       ))}
     </ul>
+  );
+  if (own.length === 0) return grid(rest);
+  return (
+    <div className="grid gap-6">
+      <section aria-labelledby="templates-own" className="grid gap-3">
+        <h3 id="templates-own" className="text-sm font-medium text-fg-strong">
+          {own[0]?.orgName ?? 'Organization'}
+        </h3>
+        {grid(own)}
+      </section>
+      {rest.length > 0 ? (
+        <section aria-labelledby="templates-other" className="grid gap-3">
+          <h3 id="templates-other" className="text-sm font-medium text-fg-strong">
+            Other templates
+          </h3>
+          {grid(rest)}
+        </section>
+      ) : null}
+    </div>
   );
 }

@@ -31,6 +31,7 @@ import {
 import { PassPreviewPanel } from '../passes/pass-preview.tsx';
 import { useTemplate, useTemplateActions, useTemplatePreview } from './api.ts';
 import { ManifestEditor } from './manifest-editor.tsx';
+import { OrgPanel } from './org-panel.tsx';
 import { VersionsPanel } from './versions-panel.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -211,6 +212,7 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
         </TabsContent>
         <TabsContent value="inputs">
           <div className="grid gap-4">
+            <OrgPanel key={t.orgId ?? 'none'} templateId={t.id} orgId={t.orgId} />
             <Card>
               <CardBody>
                 <KeyValue

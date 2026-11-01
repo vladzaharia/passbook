@@ -19,6 +19,7 @@ import {
 import { useImportStatus, useUploadTemplate } from './api.ts';
 import { ValidationReport } from './validation-report.tsx';
 
+const NONE = 'none';
 const MAX_BYTES = 15 * 1024 * 1024;
 const crumbs = [{ label: 'Templates', to: '/admin/templates' }, { label: 'Upload' }];
 
@@ -112,13 +113,16 @@ export function TemplateUploadPage() {
         <Progress uploadId={uploadId} onReset={reset} />
       ) : (
         <div className="grid max-w-lg gap-4">
-          <FormField label="Organization" required>
+          <FormField label="Organization">
             {(c) => (
               <Select
                 {...c}
-                value={orgId ?? ''}
-                onValueChange={setOrgId}
-                options={(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name }))}
+                value={orgId ?? NONE}
+                onValueChange={(v) => setOrgId(v === NONE ? undefined : v)}
+                options={[
+                  { value: NONE, label: 'None' },
+                  ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
+                ]}
               />
             )}
           </FormField>
@@ -149,9 +153,9 @@ export function TemplateUploadPage() {
           <div>
             <Button
               loading={upload.isPending}
-              disabled={!file || !orgId}
+              disabled={!file}
               onClick={async () => {
-                if (!file || !orgId) return;
+                if (!file) return;
                 const res = await upload
                   .mutateAsync({ file, orgId, name: name.trim() || undefined })
                   .catch(() => undefined);

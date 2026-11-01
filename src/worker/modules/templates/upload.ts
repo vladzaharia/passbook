@@ -29,8 +29,9 @@ export async function acceptUpload(
     throw new PayloadTooLargeError('The archive is larger than 15 MB.', 'ARCHIVE_TOO_LARGE');
   const isZip = archive[0] === 0x50 && archive[1] === 0x4b;
   if (!isZip) throw new BadRequestError('The file is not a zip archive.', 'NOT_A_ZIP');
-  const org = await getOrgName(ctx.env.DB, query.orgId);
-  if (!org) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  const org = query.orgId ? await getOrgName(ctx.env.DB, query.orgId) : null;
+  if (query.orgId && !org) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  const orgId = org?.id ?? null;
 
   const uploadId = ctx.ids.id();
   const objectKey = `uploads/${uploadId}.zip`;
@@ -40,7 +41,7 @@ export async function acceptUpload(
   });
   await insertImport(ctx.env.DB, {
     uploadId,
-    orgId: org.id,
+    orgId: orgId,
     name: query.name?.trim() || null,
     objectKey,
     createdBy,
@@ -49,11 +50,11 @@ export async function acceptUpload(
   try {
     await ctx.env.TEMPLATE_IMPORT.create({
       id: uploadId,
-      params: { uploadId, orgId: org.id, objectKey, createdBy },
+      params: { uploadId, orgId: orgId, objectKey, createdBy },
     });
   } catch (error) {
     ctx.log.error('templates.workflow_start_failed', {
-      orgId: org.id,
+      orgId: orgId,
       error: error instanceof Error ? error.name : 'unknown',
     });
     const now = ctx.clock.now();
@@ -64,7 +65,7 @@ export async function acceptUpload(
   }
   const actor = actorOf(auth);
   await recordAudit(ctx, {
-    orgId: org.id,
+    orgId: orgId,
     actorType: actor.type,
     actorId: actor.id,
     action: 'template.upload',

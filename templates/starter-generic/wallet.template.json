@@ -96,7 +96,8 @@
         "x-group": "Status",
         "x-order": 100,
         "format": "date-time",
-        "x-widget": "datetime"
+        "x-widget": "datetime",
+        "x-noneLabel": "Never expires"
       },
       "officeLat": {
         "type": "number",

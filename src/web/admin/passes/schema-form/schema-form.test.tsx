@@ -216,6 +216,52 @@ describe('SchemaForm', () => {
     );
   });
 
+  describe('optional date-time', () => {
+    const expiry = (extra: Record<string, unknown> = {}, required = false) => ({
+      type: 'object',
+      required: required ? ['expirationDate'] : [],
+      properties: {
+        expirationDate: { type: 'string', format: 'date-time', 'x-label': 'Expires', ...extra },
+      },
+    });
+
+    it('starts checked with the input disabled, labelled from x-noneLabel', () => {
+      render(<Harness schema={expiry({ 'x-noneLabel': 'Never expires' })} />);
+      expect(screen.getByRole('checkbox', { name: 'Never expires' })).toBeChecked();
+      expect(screen.getByLabelText('Expires')).toBeDisabled();
+    });
+
+    it('defaults the label to None', () => {
+      render(<Harness schema={expiry()} />);
+      expect(screen.getByRole('checkbox', { name: 'None' })).toBeChecked();
+    });
+
+    it('checking it removes the value; unchecking enables the input', async () => {
+      const user = userEvent.setup();
+      const onValue = vi.fn();
+      render(
+        <Harness
+          schema={expiry({ 'x-noneLabel': 'Never expires' })}
+          initial={{ expirationDate: '2030-01-01T00:00:00Z' }}
+          onValue={onValue}
+        />,
+      );
+      const box = screen.getByRole('checkbox', { name: 'Never expires' });
+      expect(box).not.toBeChecked();
+      expect(screen.getByLabelText('Expires')).toBeEnabled();
+      await user.click(box);
+      expect(onValue).toHaveBeenLastCalledWith({});
+      expect(screen.getByLabelText('Expires')).toBeDisabled();
+      await user.click(box);
+      expect(screen.getByLabelText('Expires')).toBeEnabled();
+    });
+
+    it('has no checkbox when the field is required', () => {
+      render(<Harness schema={expiry({}, true)} />);
+      expect(screen.queryByRole('checkbox')).toBeNull();
+    });
+  });
+
   it('has no axe violations', async () => {
     const { container } = render(<Harness />);
     expect((await axe(container)).violations).toEqual([]);

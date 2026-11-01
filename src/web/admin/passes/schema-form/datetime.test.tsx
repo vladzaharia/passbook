@@ -71,6 +71,7 @@ describe('SchemaForm datetime widget', () => {
     const user = userEvent.setup();
     const onValue = vi.fn();
     render(<Harness onValue={onValue} />);
+    await user.click(screen.getByRole('checkbox', { name: 'None' }));
     await user.click(screen.getByRole('combobox', { name: /^Time zone/ }));
     await user.click(await screen.findByRole('option', { name: 'America/Los_Angeles' }));
     fireEvent.change(screen.getByLabelText('Expires'), { target: { value: '2027-01-31T23:59' } });

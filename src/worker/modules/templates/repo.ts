@@ -127,6 +127,7 @@ export interface ListFilter {
 
 export interface ListedTemplate extends TemplateRow {
   passCount: number;
+  orgName: string | null;
 }
 
 export async function listTemplates(db: D1Database, f: ListFilter): Promise<ListedTemplate[]> {
@@ -149,17 +150,18 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     where.push('(t.created_at < ? OR (t.created_at = ? AND t.id < ?))');
     params.push(f.cursor.createdAt, f.cursor.createdAt, f.cursor.id);
   }
-  const rows = await all<TemplateSql & { pass_count: number }>(
+  const rows = await all<TemplateSql & { pass_count: number; org_name: string | null }>(
     db,
     `SELECT ${TEMPLATE_COLUMNS.split(', ')
       .map((c) => `t.${c}`)
       .join(', ')},
-       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL) AS pass_count
+       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL) AS pass_count,
+       (SELECT o.name FROM orgs o WHERE o.id = t.org_id) AS org_name
      FROM templates t WHERE ${where.join(' AND ')}
      ORDER BY t.created_at DESC, t.id DESC LIMIT ?`,
     [...params, f.limit],
   );
-  return rows.map((r) => ({ ...templateRow(r), passCount: r.pass_count }));
+  return rows.map((r) => ({ ...templateRow(r), passCount: r.pass_count, orgName: r.org_name }));
 }
 
 export async function countPasses(db: D1Database, templateId: string): Promise<number> {
@@ -167,6 +169,29 @@ export async function countPasses(db: D1Database, templateId: string): Promise<n
     db,
     'SELECT COUNT(*) AS n FROM passes WHERE template_id = ?',
     [templateId],
+  );
+  return row?.n ?? 0;
+}
+
+export async function setTemplateOrg(
+  db: D1Database,
+  id: string,
+  orgId: string | null,
+  now: number,
+): Promise<void> {
+  await run(db, 'UPDATE templates SET org_id = ?, updated_at = ? WHERE id = ?', [orgId, now, id]);
+}
+
+/** Live passes of orgs other than `orgId` that use any version of the template. */
+export async function countPassesOutsideOrg(
+  db: D1Database,
+  templateId: string,
+  orgId: string,
+): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    'SELECT COUNT(*) AS n FROM passes WHERE template_id = ? AND org_id != ? AND deleted_at IS NULL',
+    [templateId, orgId],
   );
   return row?.n ?? 0;
 }
@@ -295,7 +320,7 @@ export async function getOrgName(
 
 export interface ImportRow {
   uploadId: string;
-  orgId: string;
+  orgId: string | null;
   name: string | null;
   objectKey: string;
   step: string | null;
@@ -311,7 +336,7 @@ export async function insertImport(
   db: D1Database,
   row: {
     uploadId: string;
-    orgId: string;
+    orgId: string | null;
     name: string | null;
     objectKey: string;
     createdBy: string | null;
@@ -337,7 +362,7 @@ export async function insertImport(
 export async function getImport(db: D1Database, uploadId: string): Promise<ImportRow | null> {
   const row = await first<{
     upload_id: string;
-    org_id: string;
+    org_id: string | null;
     name: string | null;
     object_key: string;
     step: string | null;

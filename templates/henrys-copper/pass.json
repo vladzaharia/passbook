@@ -25,7 +25,7 @@
     {
       "identifier": "member-portal",
       "type": "membershipBenefits",
-      "url": "https://henrysgymnasium.thememberspot.com/signin"
+      "url": "https://henrysgymnasium.thememberspot.com/"
     },
     {
       "identifier": "home-club",
@@ -76,8 +76,8 @@
       {
         "key": "portal-poster",
         "label": "MANAGE YOUR MEMBERSHIP",
-        "value": "https://henrysgymnasium.thememberspot.com/signin",
-        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
+        "value": "https://henrysgymnasium.thememberspot.com/",
+        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
       },
       {
         "key": "phone-poster",
@@ -157,8 +157,8 @@
       {
         "key": "portal",
         "label": "MANAGE YOUR MEMBERSHIP",
-        "value": "https://henrysgymnasium.thememberspot.com/signin",
-        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/signin\">Member portal</a>"
+        "value": "https://henrysgymnasium.thememberspot.com/",
+        "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
       },
       {
         "key": "phone",

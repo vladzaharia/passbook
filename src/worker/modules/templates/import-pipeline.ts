@@ -16,7 +16,7 @@ import { getImport, getOrgName, setWorkflowRun, updateImport } from './repo.ts';
 
 export interface ImportParams {
   uploadId: string;
-  orgId: string;
+  orgId: string | null;
   objectKey: string;
   createdBy: string | null;
 }
@@ -141,7 +141,7 @@ export async function analyzeStage(
 export async function dryRunStage(ctx: ServiceContext, p: ImportParams): Promise<StageResult> {
   const saved = await getJson<Saved>(ctx, `${stage(p)}analysis.json`);
   const a = saved.analysis;
-  const org = await getOrgName(ctx.env.DB, p.orgId);
+  const org = p.orgId ? await getOrgName(ctx.env.DB, p.orgId) : null;
   const template: ResolvedTemplate = {
     id: 'dry-run',
     version: a.version,

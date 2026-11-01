@@ -65,3 +65,45 @@ describe('new pass details step', () => {
     );
   });
 });
+
+describe('new pass template step', () => {
+  async function openTemplates(items: unknown[]) {
+    const user = userEvent.setup();
+    const previewOk = () =>
+      json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] });
+    await renderApp('/admin/passes/new', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
+        '/api/v1/templates': () => json({ items, nextCursor: null }),
+        '/api/v1/templates/tpl1/preview': previewOk,
+        '/api/v1/templates/tpl2/preview': previewOk,
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: /Henry's/ }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+  }
+
+  it('lists the org templates first, then the unassigned ones', async () => {
+    await openTemplates([
+      templateSummary({ id: 'tpl2', name: 'Plain card', orgId: null, orgName: null }),
+      templateSummary(),
+    ]);
+    const own = await screen.findByRole('heading', { name: "Henry's" });
+    const other = screen.getByRole('heading', { name: 'Other templates' });
+    const copper = screen.getByRole('button', { name: /Copper card/ });
+    const plain = screen.getByRole('button', { name: /Plain card/ });
+    expect(own.compareDocumentPosition(copper) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(copper.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(other.compareDocumentPosition(plain) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('shows one list without headings when the org has none', async () => {
+    await openTemplates([
+      templateSummary({ id: 'tpl2', name: 'Plain card', orgId: null, orgName: null }),
+    ]);
+    expect(await screen.findByRole('button', { name: /Plain card/ })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Other templates' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: "Henry's" })).toBeNull();
+  });
+});

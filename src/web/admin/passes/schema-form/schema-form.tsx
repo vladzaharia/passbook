@@ -3,6 +3,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import {
   Badge,
   Button,
+  CheckboxField,
   FileDrop,
   FormField,
   Input,
@@ -107,7 +108,11 @@ function Control({ field, value, onValue, onBlur, control, disabled, maxImageByt
         <Input {...common} type="date" value={text} onChange={(e) => onValue(e.target.value)} />
       );
     case 'datetime':
-      return <DateTimeInput {...common} value={text} onValue={onValue} />;
+      return field.required ? (
+        <DateTimeInput {...common} value={text} onValue={onValue} />
+      ) : (
+        <OptionalDateTime {...common} field={field} value={text} onValue={onValue} />
+      );
     case 'image':
       return <ImageInput {...common} text={text} onValue={onValue} maxBytes={maxImageBytes} />;
     case 'email':
@@ -131,6 +136,39 @@ function Control({ field, value, onValue, onBlur, control, disabled, maxImageByt
     default:
       return <Input {...common} value={text} onChange={(e) => onValue(e.target.value)} />;
   }
+}
+
+function OptionalDateTime({
+  field,
+  value,
+  onValue,
+  ...rest
+}: {
+  field: FieldDef;
+  value: string;
+  onValue: (v: string | undefined) => void;
+} & Record<string, unknown>) {
+  const [wantsNone, setNone] = useState(value === '');
+  const none = wantsNone && value === '';
+  return (
+    <div className="flex flex-col gap-2">
+      <DateTimeInput
+        {...(rest as { onBlur: () => void })}
+        value={value}
+        onValue={onValue}
+        disabled={none || rest.disabled === true}
+      />
+      <CheckboxField
+        label={field.noneLabel}
+        checked={none}
+        disabled={rest.disabled === true}
+        onCheckedChange={(c) => {
+          setNone(c === true);
+          if (c === true) onValue(undefined);
+        }}
+      />
+    </div>
+  );
 }
 
 function coerceOption(field: FieldDef, raw: string): unknown {

@@ -37,6 +37,7 @@ export function templateSummary(over: Record<string, unknown> = {}) {
   return {
     id: 'tpl1',
     orgId: 'org1',
+    orgName: "Henry's",
     slug: 'copper',
     name: 'Copper card',
     description: null,
