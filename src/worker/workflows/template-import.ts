@@ -53,12 +53,14 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
         code: 'IMPORT_FAILED',
         error,
       });
-      await failImport(
-        ctx,
-        p,
-        [{ severity: 'error', code: 'IMPORT_FAILED', message: 'The import failed. Try again.' }],
-        'IMPORT_FAILED',
-      );
+      await step.do('fail-import', async () => {
+        await failImport(
+          ctx,
+          p,
+          [{ severity: 'error', code: 'IMPORT_FAILED', message: 'The import failed. Try again.' }],
+          'IMPORT_FAILED',
+        );
+      });
       try {
         await step.do('cleanup-failed', () => cleanupStage(ctx, p));
       } catch (cleanupError) {

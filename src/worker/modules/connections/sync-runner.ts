@@ -60,18 +60,20 @@ export async function executeSync(
   } catch (error) {
     sctx.log.error('connection.sync_aborted', { connectionId: p.connectionId, error });
     try {
-      const now = sctx.clock.now();
-      await finishRun(sctx.env.DB, {
-        id: p.runId,
-        finishedAt: now,
-        outcome: 'error',
-        recordsSeen: 0,
-        passesChanged: 0,
-        errorCode: 'INTERNAL',
-        errorDetail: null,
-        httpStatus: null,
+      await step.do('abort-record', async () => {
+        const now = sctx.clock.now();
+        await finishRun(sctx.env.DB, {
+          id: p.runId,
+          finishedAt: now,
+          outcome: 'error',
+          recordsSeen: 0,
+          passesChanged: 0,
+          errorCode: 'INTERNAL',
+          errorDetail: null,
+          httpStatus: null,
+        });
+        await setWorkflowStatus(sctx.env.DB, p.instanceId, 'errored', now, 'INTERNAL');
       });
-      await setWorkflowStatus(sctx.env.DB, p.instanceId, 'errored', now, 'INTERNAL');
     } catch (inner) {
       sctx.log.error('connection.sync_abort_record_failed', { error: inner });
     }
@@ -89,7 +91,9 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
 
   if (!start.ok) {
     if (start.reason === 'GONE') {
-      await setWorkflowStatus(sctx.env.DB, p.instanceId, 'complete', sctx.clock.now());
+      await step.do('mark-gone', () =>
+        setWorkflowStatus(sctx.env.DB, p.instanceId, 'complete', sctx.clock.now()),
+      );
       return;
     }
     if (start.reason === 'STALE_GENERATION' || start.reason === 'ORG_INACTIVE') stale = true;

@@ -1,5 +1,6 @@
 import type { WorkflowEvent, WorkflowStep } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { guardWrites } from '../../../../test/helpers/guarded-step.ts';
 import { fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -16,9 +17,9 @@ beforeAll(async () => {
 });
 
 /** The runtime constructor needs a native ExecutionContext; the workflow only reads `env`. */
-function workflow(): TemplateImport {
+function workflow(over: AppEnv = env): TemplateImport {
   const instance = Object.create(TemplateImport.prototype) as TemplateImport;
-  Object.defineProperty(instance, 'env', { value: env });
+  Object.defineProperty(instance, 'env', { value: over });
   return instance;
 }
 
@@ -86,5 +87,21 @@ describe('TemplateImport workflow', () => {
     );
     expect(run).toEqual({ status: 'errored', error_code: 'IMPORT_FAILED' });
     expect((await getImport(env.DB, p.uploadId))?.report?.issues[0]?.code).toBe('IMPORT_FAILED');
+  });
+
+  it('writes the failure only inside named steps', async () => {
+    const p = await start(zipOf(basicPackage()));
+    const guard = guardWrites(env);
+    const names: string[] = [];
+    const step = guard.step({
+      do: async (name: string, a: unknown, b?: unknown) => {
+        names.push(name);
+        if (name === 'analyze') throw new Error('boom');
+        return ((typeof a === 'function' ? a : b) as () => unknown)();
+      },
+    }) as unknown as WorkflowStep;
+    await expect(workflow(guard.env).run(event(p), step)).rejects.toThrow('boom');
+    expect(names).toEqual(['start', 'extract', 'analyze', 'fail-import', 'cleanup-failed']);
+    expect(guard.violations).toEqual([]);
   });
 });

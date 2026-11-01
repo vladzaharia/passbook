@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { guardWrites } from '../../../../test/helpers/guarded-step.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { setDeps } from './deps.ts';
@@ -468,7 +469,7 @@ describe('generation fence', () => {
     await service.remove(kit.sctx, kit.actor, dto.id);
     const step = inlineStep();
     await sync(dto.id, {}, step);
-    expect(step.names).toEqual(['start']);
+    expect(step.names).toEqual(['start', 'mark-gone']);
   });
 });
 
@@ -623,5 +624,68 @@ describe('run history', () => {
     expect(runs).toHaveLength(2);
     expect(runs[0]?.startedAt).toBeGreaterThan(runs[1]?.startedAt ?? 0);
     expect(runs[0]?.durationMs).toBe(0);
+  });
+});
+
+describe('workflow writes stay inside steps', () => {
+  const params = (connectionId: string, generation: number): SyncRunParams => ({
+    connectionId,
+    generation,
+    trigger: 'schedule',
+    runId: `run-guard-${connectionId.slice(-6)}`,
+    instanceId: `inst-guard-${connectionId.slice(-6)}`,
+  });
+  const seedWorkflowRun = (instanceId: string) =>
+    run(
+      kit.env.DB,
+      "INSERT INTO workflow_runs (instance_id, kind, status, org_id, started_at) VALUES (?, 'connection_sync', 'running', ?, 1)",
+      [instanceId, kit.org.id],
+    );
+
+  it('records a gone connection in the mark-gone step', async () => {
+    const dto = await createDemo(kit);
+    await service.remove(kit.sctx, kit.actor, dto.id);
+    const guard = guardWrites(kit.env);
+    const step = guard.step(inlineStep());
+    const p = params(dto.id, 1);
+    await seedWorkflowRun(p.instanceId);
+    await executeSync({ ...kit.sctx, env: guard.env }, step, p);
+    expect(guard.violations).toEqual([]);
+    expect(
+      (
+        await first<{ status: string }>(
+          kit.env.DB,
+          'SELECT status FROM workflow_runs WHERE instance_id = ?',
+          [p.instanceId],
+        )
+      )?.status,
+    ).toBe('complete');
+  });
+
+  it('records an aborted run in the abort-record step', async () => {
+    const dto = await createDemo(kit);
+    const guard = guardWrites(kit.env);
+    const inner = inlineStep();
+    const flaky: StepLike = {
+      ...inner,
+      do: async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+        if (name === 'limits') throw new Error('boom');
+        return inner.do(name, fn);
+      },
+    };
+    const step = guard.step(flaky);
+    const p = params(dto.id, (await getConnection(kit.env.DB, dto.id))?.generation ?? 1);
+    await seedWorkflowRun(p.instanceId);
+    await expect(executeSync({ ...kit.sctx, env: guard.env }, step, p)).rejects.toThrow('boom');
+    expect(guard.violations).toEqual([]);
+    expect(
+      (
+        await first<{ status: string }>(
+          kit.env.DB,
+          'SELECT status FROM workflow_runs WHERE instance_id = ?',
+          [p.instanceId],
+        )
+      )?.status,
+    ).toBe('errored');
   });
 });

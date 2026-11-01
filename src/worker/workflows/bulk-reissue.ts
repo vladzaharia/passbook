@@ -44,16 +44,16 @@ export async function runBulkReissue(
     );
     throw error;
   }
-  await step.do('finish', () =>
-    setWorkflowStatus(
+  await step.do('finish', async () => {
+    await setWorkflowStatus(
       env.DB,
       instanceId,
       'complete',
       ctx.clock.now(),
       totals.failed > 0 ? 'PARTIAL_FAILURE' : null,
-    ),
-  );
-  ctx.log.info('bulk_reissue.done', { ...totals, templateId: params.templateId });
+    );
+    ctx.log.info('bulk_reissue.done', { ...totals, templateId: params.templateId });
+  });
   return totals;
 }
 
