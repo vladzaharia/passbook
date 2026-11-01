@@ -183,7 +183,7 @@ export async function getOverview(
     repo.passTotals(ctx.env.DB, scope),
     load(ctx, w, scope, now),
     repo.recentAudit(ctx.env.DB, scope, 10),
-    repo.setupCounts(ctx.env.DB, { orgId: query.orgId }),
+    repo.setupCounts(ctx.env.DB),
   ]);
   const series = Object.fromEntries(
     SERIES_KEYS.map((k) => [k, fill(loaded.rows[k], start, end, range.bucketMs)]),

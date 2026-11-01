@@ -169,25 +169,20 @@ export interface SetupCounts {
   latestPassId: string | null;
 }
 
-/** Counts behind the first-run checklist; scoped to one org when given. */
-export async function setupCounts(db: D1Database, scope: Scope): Promise<SetupCounts> {
-  const org = scope.orgId ?? null;
+/** Counts behind the first-run checklist. Platform-wide: the checklist is for a new platform. */
+export async function setupCounts(db: D1Database): Promise<SetupCounts> {
   const row = await first<Omit<SetupCounts, 'latestPassId'>>(
     db,
     `SELECT
-       (SELECT count(*) FROM orgs WHERE status != 'deleted' AND (?1 IS NULL OR id = ?1)) AS orgs,
-       (SELECT count(*) FROM templates WHERE org_id IS NOT NULL AND status != 'deleted'
-          AND (?1 IS NULL OR org_id = ?1)) AS assignedTemplates,
-       (SELECT count(*) FROM passes WHERE deleted_at IS NULL AND (?1 IS NULL OR org_id = ?1)) AS passes,
-       (SELECT count(*) FROM outbox WHERE kind = 'email' AND state = 'sent'
-          AND (?1 IS NULL OR org_id = ?1)) AS passEmailsSent`,
-    [org],
+       (SELECT count(*) FROM orgs WHERE status != 'deleted') AS orgs,
+       (SELECT count(*) FROM templates WHERE org_id IS NOT NULL AND status != 'deleted')
+         AS assignedTemplates,
+       (SELECT count(*) FROM passes WHERE deleted_at IS NULL) AS passes,
+       (SELECT count(*) FROM outbox WHERE kind = 'email' AND state = 'sent') AS passEmailsSent`,
   );
   const latest = await first<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE deleted_at IS NULL AND (?1 IS NULL OR org_id = ?1)
-     ORDER BY created_at DESC, id DESC LIMIT 1`,
-    [org],
+    'SELECT id FROM passes WHERE deleted_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1',
   );
   return {
     orgs: row?.orgs ?? 0,

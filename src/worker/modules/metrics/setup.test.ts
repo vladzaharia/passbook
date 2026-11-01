@@ -21,20 +21,12 @@ beforeAll(async () => {
 beforeEach(() => clearMetricsCache(env.DB));
 
 describe('first-run setup counts', () => {
-  it('counts orgs, assigned templates, passes and sent pass emails per scope', async () => {
+  it('counts orgs, assigned templates, passes and sent pass emails platform-wide', async () => {
     const clock = new ManualClock(Date.now());
     const f = fixtures(base, clock);
     const ctx = createServiceContext(base, { clock });
+    const before = (await getOverview(ctx, { range: '7d' })).setup;
     const org = await makeOrg(f);
-    const empty = await getOverview(ctx, { orgId: org.id, range: '7d' });
-    expect(empty.setup).toEqual({
-      orgs: 1,
-      assignedTemplates: 0,
-      passes: 0,
-      passEmailsSent: 0,
-      latestPassId: null,
-    });
-
     // makePass stores its template under the org: one assigned template.
     const template = makeTemplate({ id: `tpl-setup-${org.id}`, orgId: org.id });
     await makePass(f, { orgId: org.id, template: template.resolved });
@@ -50,21 +42,20 @@ describe('first-run setup counts', () => {
     await outbox('sent');
 
     clearMetricsCache(env.DB);
-    const done = await getOverview(ctx, { orgId: org.id, range: '7d' });
-    expect(done.setup).toEqual({
-      orgs: 1,
-      assignedTemplates: 1,
-      passes: 2,
-      passEmailsSent: 1,
+    const after = (await getOverview(ctx, { range: '7d' })).setup;
+    expect(after).toEqual({
+      orgs: before.orgs + 1,
+      assignedTemplates: before.assignedTemplates + 1,
+      passes: before.passes + 2,
+      passEmailsSent: before.passEmailsSent + 1,
       latestPassId: latest.id,
     });
 
+    // A scope narrows the totals, not the checklist: it is about the platform.
     const other = await makeOrg(f);
     clearMetricsCache(env.DB);
     const scoped = await getOverview(ctx, { orgId: other.id, range: '7d' });
-    expect(scoped.setup).toMatchObject({ passes: 0, passEmailsSent: 0, latestPassId: null });
-    const platform = await getOverview(ctx, { range: '7d' });
-    expect(platform.setup.orgs).toBeGreaterThanOrEqual(2);
-    expect(platform.setup.passEmailsSent).toBeGreaterThanOrEqual(1);
+    expect(scoped.totals.passes).toBe(0);
+    expect(scoped.setup).toEqual({ ...after, orgs: after.orgs + 1 });
   });
 });

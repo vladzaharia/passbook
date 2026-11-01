@@ -48,7 +48,7 @@ export const MetricsOverviewSchema = z.object({
     syncRuns: series,
     signIns: series,
   }),
-  /** First-run checklist: each step checks itself from these counts (scoped like the totals). */
+  /** First-run checklist counts. Platform-wide whatever the scope: the checklist is for a new platform. */
   setup: z.object({
     orgs: z.number().int(),
     /** Templates assigned to an organization. */
