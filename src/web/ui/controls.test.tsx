@@ -10,7 +10,6 @@ import { Button } from './button.tsx';
 import { Checkbox, CheckboxField } from './checkbox.tsx';
 import { Combobox } from './combobox.tsx';
 import { FormField } from './field.tsx';
-import { applyApiErrors, RhfField, useZodForm } from './form.tsx';
 import { IconButton } from './icon-button.tsx';
 import { Input, Textarea } from './input.tsx';
 import { RadioGroup } from './radio-group.tsx';
@@ -236,102 +235,5 @@ describe('Checkbox, Switch, RadioGroup', () => {
     await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('radio', { name: 'Link' })).toBeChecked();
     await noViolations(container);
-  });
-});
-
-describe('forms with zod', () => {
-  const schema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    age: z.coerce.number().min(18, 'Too young'),
-  });
-
-  function Harness({
-    onValid,
-    serverError,
-  }: {
-    onValid: (v: unknown) => void;
-    serverError?: ApiError;
-  }) {
-    const form = useZodForm(schema, { name: '', age: 20 });
-    return (
-      <form onSubmit={form.handleSubmit(onValid, () => {})} noValidate>
-        <RhfField control={form.control} name="name" label="Name">
-          {(field, p) => <Input {...field} {...p} />}
-        </RhfField>
-        <RhfField control={form.control} name="age" label="Age">
-          {(field, p) => <Input {...field} {...p} value={String(field.value)} />}
-        </RhfField>
-        <Button type="submit">Send</Button>
-        <Button onClick={() => applyApiErrors(form, serverError)}>Apply server</Button>
-      </form>
-    );
-  }
-
-  it('shows field errors on invalid submit and does not call onValid', async () => {
-    const user = userEvent.setup();
-    const onValid = vi.fn();
-    render(<Harness onValid={onValid} />);
-    await user.click(screen.getByRole('button', { name: 'Send' }));
-    expect(await screen.findByText('Name is required')).toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
-    expect(onValid).not.toHaveBeenCalled();
-  });
-
-  it('submits parsed output when valid', async () => {
-    const user = userEvent.setup();
-    const onValid = vi.fn();
-    render(<Harness onValid={onValid} />);
-    await user.type(screen.getByLabelText('Name'), 'Ada');
-    await user.click(screen.getByRole('button', { name: 'Send' }));
-    await waitFor(() => expect(onValid).toHaveBeenCalled());
-    expect(onValid.mock.calls[0]?.[0]).toEqual({ name: 'Ada', age: 20 });
-  });
-
-  it('maps API field errors onto matching fields and ignores unknown ones', async () => {
-    const user = userEvent.setup();
-    const error = new ApiError({
-      status: 422,
-      code: 'validation_failed',
-      fields: { name: 'Taken', unknown: 'x' },
-    });
-    render(<Harness onValid={() => {}} serverError={error} />);
-    await user.click(screen.getByRole('button', { name: 'Apply server' }));
-    expect(await screen.findByText('Taken')).toBeInTheDocument();
-    expect(screen.queryByText('x')).toBeNull();
-  });
-
-  it('applyApiErrors returns false for non-API errors', () => {
-    const setError = vi.fn();
-    expect(applyApiErrors({ setError, getValues: (() => ({})) as never }, new Error('x'))).toBe(
-      false,
-    );
-    expect(setError).not.toHaveBeenCalled();
-  });
-});
-
-describe('StatusPill', () => {
-  it.each([
-    ['verified', 'Verified'],
-    ['configured', 'Configured'],
-    ['degraded', 'Degraded'],
-    ['failing', 'Failing'],
-    ['not_configured', 'Not configured'],
-    ['active', 'Active'],
-    ['voided', 'Voided'],
-  ])('renders %s with text', async (status, text) => {
-    const { container } = render(<StatusPill status={status} />);
-    expect(screen.getByText(text)).toBeInTheDocument();
-    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
-    await noViolations(container);
-  });
-
-  it('falls back to neutral with a humanized label for unknown keys', () => {
-    render(<StatusPill status="mystery_state" />);
-    expect(screen.getByText('Mystery state')).toBeInTheDocument();
-  });
-
-  it('knows delivery and run states', () => {
-    render(<StatusPill status="sent" />);
-    expect(screen.getByText('Sent')).toBeInTheDocument();
   });
 });

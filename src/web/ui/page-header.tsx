@@ -51,23 +51,6 @@ export const PAGE_WIDTH: Record<PageWidth, string> = {
   detail: '',
 };
 
-/** Wraps a page's blocks (tab panels included) to the page type's width. */
-export function PageBody({
-  width = 'detail',
-  className,
-  children,
-}: {
-  width?: PageWidth;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className={cn('flex min-w-0 flex-col gap-6', PAGE_WIDTH[width], className)}>
-      {children}
-    </div>
-  );
-}
-
 export interface PageHeaderProps {
   title: string;
   description?: ReactNode;

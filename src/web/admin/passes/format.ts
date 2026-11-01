@@ -1,9 +1,7 @@
 export { formatDateTime as formatDate } from '../../lib/format.ts';
 
 export function newKey(): string {
-  return (
-    globalThis.crypto?.randomUUID?.() ?? `k-${Math.random().toString(36).slice(2)}-${Date.now()}`
-  );
+  return crypto.randomUUID();
 }
 
 /** Stable JSON for fingerprints: same inputs give the same string. */

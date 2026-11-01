@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { AppleWalletBadge, appleWalletBadgeHtml } from './apple-wallet-badge.tsx';
 import { JsonViewer } from './code-block.tsx';
 import { DATE_RANGES, FilterBar, rangeStart } from './filter-bar.tsx';
-import { Form, RhfField, useZodForm } from './form.tsx';
 import { Input } from './input.tsx';
 import { CopyField, middle, SecretReveal } from './secret-reveal.tsx';
 import { TooltipProvider } from './tooltip.tsx';
@@ -18,39 +17,6 @@ afterEach(() => {
 });
 
 const wrap = (node: ReactNode) => <TooltipProvider>{node}</TooltipProvider>;
-
-describe('Form', () => {
-  const schema = z.object({
-    name: z.string().min(1, 'Enter a name.'),
-    email: z.string().min(1, 'Enter an email.'),
-  });
-
-  function Harness() {
-    const form = useZodForm(schema, { name: '', email: '' });
-    return (
-      <Form form={form} onSubmit={() => {}}>
-        <RhfField control={form.control} name="name" label="Name" required>
-          {(field, c) => <Input {...c} {...field} />}
-        </RhfField>
-        <RhfField control={form.control} name="email" label="Email" required>
-          {(field, c) => <Input {...c} {...field} />}
-        </RhfField>
-        <button type="submit">Save</button>
-      </Form>
-    );
-  }
-
-  it('focuses the first invalid field and announces one polite summary', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<Harness />);
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(screen.getByLabelText(/^Name/)).toHaveFocus());
-    const live = container.querySelectorAll('[aria-live="polite"]');
-    expect(live).toHaveLength(1);
-    expect(live[0]).toHaveTextContent('2 fields need attention');
-    expect(container.querySelector('[role="alert"]')).toBeNull();
-  });
-});
 
 describe('TypedConfirmDialog', () => {
   it('picks a human word', () => {

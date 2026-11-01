@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/worker/index.ts!",
+    "src/web/main.tsx!",
+    "src/web/routes/**/*.{ts,tsx}!",
+    "tools/*.ts",
+    "e2e/**/*.ts",
+    "test/**/*.ts",
+    "public/*.js",
+    "*.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}!", "tools/**/*.ts", "e2e/**/*.ts", "test/**/*.ts"],
+  "ignore": ["src/generated/**", "src/web/routeTree.gen.ts", "worker-configuration.d.ts"],
+  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss"],
+  "ignoreBinaries": ["openssl"],
+  "rules": {
+    "exports": "off",
+    "types": "off",
+    "nsExports": "off",
+    "nsTypes": "off",
+    "classMembers": "off",
+    "enumMembers": "off",
+    "duplicates": "off"
+  }
+}
