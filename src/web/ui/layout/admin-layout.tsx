@@ -32,8 +32,7 @@ export function AdminLayout() {
           </div>
           <Button
             variant="outline"
-            size="sm"
-            className="mr-auto shrink-0 justify-start gap-2 text-fg-muted sm:w-64"
+            className="mr-auto shrink-0 justify-start gap-2 px-3 font-normal text-fg-muted sm:w-64"
             iconStart={<Search aria-hidden />}
             onClick={() => setPaletteOpen(true)}
           >

@@ -61,6 +61,8 @@ export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: Turnstile
         widgetId = t.render(host.current, {
           sitekey: siteKey,
           theme: resolved,
+          // The production widget is invisible; this keeps a managed fallback hidden unless needed.
+          appearance: 'interaction-only',
           callback: (token: string) => callbacks.current.onToken(token),
           'expired-callback': () => callbacks.current.onToken(null),
           'error-callback': () => {
@@ -76,5 +78,5 @@ export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: Turnstile
     };
   }, [siteKey, resetKey, resolved]);
 
-  return <div ref={host} data-testid="turnstile" className="min-h-[65px]" />;
+  return <div ref={host} data-testid="turnstile" />;
 }

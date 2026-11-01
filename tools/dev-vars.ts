@@ -11,6 +11,8 @@ const entries: Record<string, string> = {
   OIDC_CLIENT_SECRET: 'dev-oidc-secret',
   // Cloudflare's always-pass Turnstile test secret.
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
+  // Invisible always-pass test key; the production key only works on wallet.plrs.im.
+  TURNSTILE_SITE_KEY: '1x00000000000000000000BB',
   // Local mock provider (npm run dev:oidc), not the production issuer.
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-dev',
