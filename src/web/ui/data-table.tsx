@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { SkeletonRows } from './skeleton.tsx';
 
@@ -191,7 +191,11 @@ export function DataTable<T>({
                   ))}
                 </div>
                 {actions.length ? (
-                  <div className="shrink-0">{actions.map((c) => render(c.id))}</div>
+                  <div className="shrink-0">
+                    {actions.map((c) => (
+                      <Fragment key={c.id}>{render(c.id)}</Fragment>
+                    ))}
+                  </div>
                 ) : null}
               </li>
             );
@@ -276,7 +280,8 @@ export function DataTable<T>({
                         key={cell.id}
                         className={cn(
                           'px-3 py-2 align-middle text-fg',
-                          meta.nowrap && 'max-w-56 truncate whitespace-nowrap',
+                          (meta.nowrap || !stack) && 'whitespace-nowrap',
+                          meta.nowrap && 'max-w-56 truncate',
                           meta.numeric && 'text-right tabular-nums',
                           meta.hideBelow && HIDE_BELOW[meta.hideBelow],
                         )}

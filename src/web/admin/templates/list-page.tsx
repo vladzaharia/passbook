@@ -46,15 +46,18 @@ export function TemplatesListPage({
         header: 'Template',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="min-w-0">
+          <div className="min-w-0 max-w-xs xl:max-w-md">
             <Link
               to={`/admin/templates/${row.original.id}` as never}
-              className="font-medium text-accent-fg hover:underline"
+              className="block truncate font-medium text-accent-fg hover:underline"
+              title={row.original.name}
             >
               {row.original.name}
             </Link>
             {row.original.description ? (
-              <p className="truncate text-xs text-fg-muted">{row.original.description}</p>
+              <p className="truncate text-xs text-fg-muted" title={row.original.description}>
+                {row.original.description}
+              </p>
             ) : null}
           </div>
         ),
@@ -79,11 +82,15 @@ export function TemplatesListPage({
         meta: { nowrap: true },
         header: 'Org',
         enableSorting: false,
-        cell: ({ row }) => row.original.orgName ?? '—',
+        cell: ({ row }) => (
+          <span className="block max-w-44 truncate" title={row.original.orgName ?? undefined}>
+            {row.original.orgName ?? '—'}
+          </span>
+        ),
       },
       {
         id: 'styles',
-        meta: { hideBelow: 'xl', stackHidden: true },
+        meta: { hideBelow: 'xl', stackHidden: true, nowrap: true },
         header: 'Styles',
         enableSorting: false,
         cell: ({ row }) => styleList(row.original.styles),
@@ -94,7 +101,9 @@ export function TemplatesListPage({
         header: 'Active',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-mono text-xs">{row.original.activeVersion?.slice(0, 8) ?? ''}</span>
+          <span className="font-mono text-xs">
+            {row.original.activeVersion?.slice(0, 8) ?? '—'}
+          </span>
         ),
       },
       {

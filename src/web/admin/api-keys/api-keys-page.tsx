@@ -73,7 +73,7 @@ export function ApiKeysPage() {
             />
           }
           columns={[
-            { header: 'Name', accessorKey: 'name' },
+            { header: 'Name', accessorKey: 'name', meta: { nowrap: true } },
             {
               header: 'Prefix',
               accessorKey: 'prefix',
@@ -84,12 +84,13 @@ export function ApiKeysPage() {
             {
               header: 'Org',
               id: 'org',
+              meta: { nowrap: true },
               cell: ({ row }) => orgName(row.original.orgId),
             },
             {
               header: 'Scopes',
               id: 'scopes',
-              meta: { hideBelow: 'lg', stackHidden: true },
+              meta: { hideBelow: 'xl', stackHidden: true },
               cell: ({ row }) => (
                 <span className="flex flex-wrap gap-1">
                   {row.original.scopes.map((s) => (
@@ -101,12 +102,13 @@ export function ApiKeysPage() {
             {
               header: 'Last used',
               id: 'used',
-              meta: { hideBelow: 'lg', stackHidden: true },
+              meta: { hideBelow: 'xl', stackHidden: true, nowrap: true },
               cell: ({ row }) => formatDay(row.original.lastUsedAt, 'Never'),
             },
             {
               header: 'Expires',
               id: 'expires',
+              meta: { nowrap: true },
               cell: ({ row }) => formatDay(row.original.expiresAt, 'Never'),
             },
             {

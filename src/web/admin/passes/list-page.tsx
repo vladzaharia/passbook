@@ -93,7 +93,7 @@ export function PassesListPage({
         header: 'Pass',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="min-w-0">
+          <div className="min-w-0 max-w-72">
             <Link
               to={`/admin/passes/${row.original.id}` as never}
               className="block truncate font-medium text-accent-fg hover:underline"
@@ -121,7 +121,7 @@ export function PassesListPage({
       },
       {
         id: 'holder',
-        meta: { stackHidden: true },
+        meta: { stackHidden: true, hideBelow: 'lg' },
         header: 'Holder',
         enableSorting: false,
         cell: ({ row }) => (
@@ -129,7 +129,7 @@ export function PassesListPage({
             <StatusPill status={row.original.holderState} />
             {row.original.holderEmail ? (
               <span
-                className="max-w-64 truncate text-xs whitespace-nowrap text-fg-muted"
+                className="max-w-52 truncate text-xs whitespace-nowrap text-fg-muted max-xl:hidden"
                 title={row.original.holderEmail}
               >
                 {row.original.holderEmail}
@@ -156,7 +156,7 @@ export function PassesListPage({
       },
       {
         id: 'template',
-        meta: { hideBelow: 'lg', nowrap: true },
+        meta: { hideBelow: 'xl', nowrap: true },
         header: 'Template',
         enableSorting: false,
         cell: ({ row }) => {
@@ -215,8 +215,24 @@ export function PassesListPage({
                 icon={Ticket}
                 title={filtered ? 'No passes match' : 'No passes yet'}
                 action={
-                  filtered ? undefined : (
-                    <Button asChild>
+                  filtered ? (
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        onSearch({
+                          q: undefined,
+                          orgId: undefined,
+                          templateId: undefined,
+                          connectionId: undefined,
+                          status: undefined,
+                          holderState: undefined,
+                        })
+                      }
+                    >
+                      Clear filters
+                    </Button>
+                  ) : (
+                    <Button asChild iconStart={<Plus aria-hidden />}>
                       <Link to="/admin/passes/new">New pass</Link>
                     </Button>
                   )

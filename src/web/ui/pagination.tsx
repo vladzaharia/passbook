@@ -9,7 +9,7 @@ export interface LoadMoreProps {
 
 /** Cursor pagination: the API returns nextCursor, never page numbers. */
 export function LoadMore({ hasMore, loading, onLoadMore, shown }: LoadMoreProps) {
-  if (!hasMore && shown === undefined) return null;
+  if (!hasMore && !shown) return null;
   return (
     <div className="flex items-center justify-between gap-3 pt-3 text-sm text-fg-muted">
       <span>{shown === undefined ? '' : hasMore ? `${shown} shown` : `${shown} total`}</span>
