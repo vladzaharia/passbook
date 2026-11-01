@@ -99,3 +99,11 @@ export const WIZARD_HIDDEN = (flat: Obj | undefined, authType: string): Set<stri
   }
   return hidden;
 };
+
+/** Server field errors under a prefix ("config."), keyed without it. */
+export function prefixed(fields: Record<string, string>, prefix: string) {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(fields))
+    if (k.startsWith(prefix)) out[k.slice(prefix.length)] = v;
+  return Object.keys(out).length > 0 ? out : undefined;
+}

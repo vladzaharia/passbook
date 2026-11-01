@@ -9,9 +9,7 @@ import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   ErrorState,
-  FormField,
   PageHeader,
-  Select,
   SkeletonKeyValue,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
@@ -23,9 +21,9 @@ import {
   flatFields,
   validateValues,
 } from '../passes/schema-form/index.ts';
-import { useTemplate, useTemplates } from '../templates/api.ts';
+import { useTemplate } from '../templates/api.ts';
 import { connectionKeys, useConnector, useConnectors } from './api.ts';
-import { flattenSchema, nestValues, WIZARD_HIDDEN } from './config-schema.ts';
+import { flattenSchema, nestValues, prefixed, WIZARD_HIDDEN } from './config-schema.ts';
 import { CreatedStep } from './created-step.tsx';
 import {
   type Lifecycle,
@@ -35,6 +33,7 @@ import {
 } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow } from './mapping.ts';
 import { MappingEditor, targetsOf } from './mapping-editor.tsx';
+import { TemplateSelect } from './template-select.tsx';
 import type { TestOutcome } from './test-result.tsx';
 import { generateSecret } from './webhook.tsx';
 import { ReviewStep, WizardAside } from './wizard-review.tsx';
@@ -47,7 +46,6 @@ const STEPS = [
   { id: 'lifecycle', title: 'Lifecycle' },
   { id: 'review', title: 'Review' },
 ] as const;
-const NO_TEMPLATE = '__none__';
 
 const DEFAULT_LIFE: Lifecycle = {
   mode: 'poll',
@@ -60,13 +58,6 @@ const DEFAULT_LIFE: Lifecycle = {
 };
 
 type CreateBody = z.input<typeof CreateConnectionSchema>;
-
-function prefixed(fields: Record<string, string>, prefix: string) {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(fields))
-    if (k.startsWith(prefix)) out[k.slice(prefix.length)] = v;
-  return Object.keys(out).length > 0 ? out : undefined;
-}
 
 export function CreateConnectionWizard() {
   const navigate = useNavigate();
@@ -84,7 +75,6 @@ export function CreateConnectionWizard() {
   const [showErrors, setShowErrors] = useState(false);
   const [created, setCreated] = useState<{ id: string; url: string | null; secret?: string }>();
   const connector = useConnector(type);
-  const templates = useTemplates({ orgId }, Boolean(orgId));
   const template = useTemplate(life.defaultTemplateId || undefined);
 
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
@@ -254,22 +244,11 @@ export function CreateConnectionWizard() {
         ) : null}
         {step === 2 ? (
           <>
-            <FormField label="Template" help="Passes are built from it.">
-              {(c) => (
-                <Select
-                  {...c}
-                  className="sm:max-w-sm"
-                  value={life.defaultTemplateId || NO_TEMPLATE}
-                  onValueChange={(v) =>
-                    setLife({ ...life, defaultTemplateId: v === NO_TEMPLATE ? '' : v })
-                  }
-                  options={[
-                    { value: NO_TEMPLATE, label: 'None' },
-                    ...(templates.data?.items ?? []).map((t) => ({ value: t.id, label: t.name })),
-                  ]}
-                />
-              )}
-            </FormField>
+            <TemplateSelect
+              orgId={orgId}
+              value={life.defaultTemplateId}
+              onChange={(defaultTemplateId) => setLife({ ...life, defaultTemplateId })}
+            />
             <MappingEditor
               rows={rows}
               onChange={setRows}

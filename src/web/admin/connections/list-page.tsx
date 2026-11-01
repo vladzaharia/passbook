@@ -104,7 +104,10 @@ export function ConnectionsListPage({
             <div className="flex min-w-0 max-w-64 flex-col items-start gap-0.5">
               <HealthPill health={row.original.enabled ? row.original.health : 'disabled'} />
               {line ? (
-                <span className="block max-w-full truncate text-xs text-fg-muted" title={line}>
+                <span
+                  className="block max-w-full truncate text-xs leading-3 text-fg-muted"
+                  title={line}
+                >
                   {line}
                 </span>
               ) : null}

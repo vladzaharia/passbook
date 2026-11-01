@@ -10,13 +10,12 @@ import {
   FormField,
   Input,
   SaveBar,
-  Select,
   toast,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
-import { useTemplate, useTemplates } from '../templates/api.ts';
+import { useTemplate } from '../templates/api.ts';
 import { useConnectionActions, useConnector } from './api.ts';
 import {
   type Lifecycle,
@@ -26,9 +25,9 @@ import {
 } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow, type SourceField, toRows } from './mapping.ts';
 import { MappingEditor, targetsOf } from './mapping-editor.tsx';
+import { TemplateSelect } from './template-select.tsx';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
-const NO_TEMPLATE = '__none__';
 
 export function lifecycleOf(c: Detail): Lifecycle {
   return {
@@ -56,7 +55,6 @@ export function MappingTab({
 }) {
   const actions = useConnectionActions(c.id);
   const connector = useConnector(c.connectorType);
-  const templates = useTemplates({ orgId: c.orgId });
   const original = useMemo(() => JSON.stringify(c.mapping ?? {}), [c.mapping]);
   const [templateId, setTemplateId] = useState(c.defaultTemplateId ?? '');
   const template = useTemplate(templateId || undefined);
@@ -105,20 +103,7 @@ export function MappingTab({
         }
       />
       <CardBody className="flex flex-col gap-4">
-        <FormField label="Template">
-          {(f) => (
-            <Select
-              {...f}
-              className="sm:max-w-sm"
-              value={templateId || NO_TEMPLATE}
-              onValueChange={(v) => setTemplateId(v === NO_TEMPLATE ? '' : v)}
-              options={[
-                { value: NO_TEMPLATE, label: 'None' },
-                ...(templates.data?.items ?? []).map((t) => ({ value: t.id, label: t.name })),
-              ]}
-            />
-          )}
-        </FormField>
+        <TemplateSelect orgId={c.orgId} value={templateId} onChange={setTemplateId} />
         <MappingEditor
           rows={rows}
           onChange={setRows}
