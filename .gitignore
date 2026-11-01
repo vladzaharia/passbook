@@ -21,3 +21,4 @@ artifacts/
 # Public Apple WWDR intermediate (overrides a global *.pem ignore)
 !certificates/*.pem
 e2e/.auth/
+.playwright-mcp/
