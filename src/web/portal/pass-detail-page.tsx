@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { Json } from '@/passkit/types.ts';
 import { formatValue } from '@/shared/pass-view/format.ts';
 import { isApiError } from '../lib/errors.ts';
-import { PassCard } from '../pass-card/index.tsx';
+import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Button,
   Card,
@@ -136,11 +136,16 @@ export function PassDetailPage({ passId }: { passId: string }) {
       ) : null}
       <div className="grid gap-4 md:grid-cols-[minmax(0,22rem)_1fr]">
         <div className="flex flex-col gap-3">
-          <PassCard view={view} face={face} />
+          <PassCardStage
+            view={view}
+            face={face}
+            flippable
+            mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+            transitionName={`pass-${pass.id}`}
+          />
           <Button
             variant="outline"
             size="sm"
-            aria-pressed={face === 'back'}
             onClick={() => setFace(face === 'front' ? 'back' : 'front')}
           >
             {face === 'front' ? 'Show back' : 'Show front'}

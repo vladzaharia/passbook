@@ -39,10 +39,10 @@ describe('pass detail', () => {
       expect.stringMatching(/\/p\/abcdefghijklmnopqrst$/),
     );
     await user.click(screen.getByRole('button', { name: 'Show back' }));
-    expect(screen.getByRole('button', { name: 'Show front' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: 'Show front' })).toBeInTheDocument();
+    // The far face leaves the tab order and accessibility tree.
+    expect(container.querySelector('.pc-face[data-side="front"]')).toHaveAttribute('inert');
+    expect(container.querySelector('.pc-face[data-side="back"]')).not.toHaveAttribute('inert');
     expect((await axe(container)).violations).toEqual([]);
   });
 

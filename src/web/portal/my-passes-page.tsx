@@ -1,9 +1,11 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Wallet, WalletCards } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
-import { PassCard } from '../pass-card/index.tsx';
+import { cn } from '../lib/cn.ts';
+import { useArrival } from '../lib/motion.ts';
+import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Button,
   Card,
@@ -26,7 +28,11 @@ function PassTile({ pass }: { pass: MyPass }) {
   const voided = pass.status === 'voided';
   return (
     <Card className="flex w-full flex-col gap-3 p-4">
-      <PassCard view={toView(pass)} face="front" />
+      <PassCardStage
+        view={toView(pass)}
+        mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+        transitionName={`pass-${pass.id}`}
+      />
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-2">
           <h2 className="truncate text-sm font-semibold text-fg-strong">
@@ -86,6 +92,7 @@ function AddAllLinks({ count }: { count: number }) {
 export function MyPassesPage() {
   const query = useInfiniteQuery(myPassesQuery);
   const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
+  const arrived = useArrival(query.isPending);
 
   let body: ReactNode;
   if (query.isPending) {
@@ -109,9 +116,9 @@ export function MyPassesPage() {
     body = (
       <>
         <AddAllLinks count={passes.filter((p) => p.status !== 'voided').length} />
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {passes.map((pass) => (
-            <li key={pass.id} className="flex">
+        <ul className={cn('grid gap-4 sm:grid-cols-2', arrived && 'wl-deal')}>
+          {passes.map((pass, i) => (
+            <li key={pass.id} className="flex" style={{ '--i': i } as CSSProperties}>
               <PassTile pass={pass} />
             </li>
           ))}
