@@ -7,6 +7,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { workflowErrorMessage, workflowKindLabel } from './labels.ts';
 import { useWorkflowRuns } from './queries.ts';
 
 export function WorkflowRuns() {
@@ -30,7 +31,13 @@ export function WorkflowRuns() {
             getRowId={(r) => r.instanceId}
             empty={<EmptyState className="border-0 py-6" title="No workflow runs" />}
             columns={[
-              { header: 'Kind', accessorKey: 'kind' },
+              {
+                header: 'Kind',
+                accessorKey: 'kind',
+                cell: ({ row }) => (
+                  <span className="whitespace-nowrap">{workflowKindLabel(row.original.kind)}</span>
+                ),
+              },
               {
                 header: 'Status',
                 accessorKey: 'status',
@@ -39,16 +46,25 @@ export function WorkflowRuns() {
               {
                 header: 'Started',
                 accessorKey: 'startedAt',
-                cell: ({ row }) => formatDateTime(row.original.startedAt),
+                cell: ({ row }) => (
+                  <span className="whitespace-nowrap">
+                    {formatDateTime(row.original.startedAt)}
+                  </span>
+                ),
               },
               {
                 header: 'Error',
                 accessorKey: 'errorCode',
                 cell: ({ row }) =>
                   row.original.errorCode ? (
-                    <code className="font-mono text-xs">{row.original.errorCode}</code>
+                    <div className="min-w-0">
+                      <p>{workflowErrorMessage(row.original.kind, row.original.errorCode)}</p>
+                      <code className="font-mono text-xs text-fg-muted">
+                        {row.original.errorCode}
+                      </code>
+                    </div>
                   ) : (
-                    ''
+                    '—'
                   ),
               },
             ]}

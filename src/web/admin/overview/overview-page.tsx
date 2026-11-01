@@ -16,7 +16,7 @@ import {
   StatusPill,
   Timeline,
 } from '@/web/ui/index.ts';
-import { targetText } from '../audit/labels.ts';
+import { actionLabel, targetText } from '../audit/labels.ts';
 import { useAuditLog } from '../audit/queries.ts';
 import { sortBySeverity, useStatus } from '../status/queries.ts';
 import { LineChart } from './chart.tsx';
@@ -76,26 +76,35 @@ function Health() {
         ) : status.isError ? (
           <ErrorState error={status.error} onRetry={() => status.refetch()} />
         ) : (
-          <div className="flex flex-col gap-3">
-            <StatusPill status={status.data.overall} className="self-start" />
-            {(() => {
-              const problems = sortBySeverity(status.data.components).filter(
-                (c) => c.state === 'failing' || c.state === 'degraded',
-              );
-              return problems.length === 0 ? (
-                <p className="text-sm text-fg-muted">No failing or degraded components.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {problems.slice(0, 5).map((c) => (
-                    <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 truncate">{c.label}</span>
-                      <StatusPill status={c.state} />
-                    </li>
-                  ))}
-                </ul>
-              );
-            })()}
-          </div>
+          (() => {
+            const problems = sortBySeverity(status.data.components).filter(
+              (c) => c.state === 'failing' || c.state === 'degraded',
+            );
+            return (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <StatusPill status={status.data.overall} />
+                  <span className="text-fg-muted">
+                    {problems.length === 0
+                      ? 'All components working.'
+                      : `${problems.length} ${problems.length === 1 ? 'component needs' : 'components need'} attention.`}
+                  </span>
+                </div>
+                {problems.length > 0 ? (
+                  <ul className="flex flex-col gap-2 border-t border-border pt-3">
+                    {problems.slice(0, 5).map((c) => (
+                      <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0 truncate">{c.label}</span>
+                        <span className="text-xs text-fg-muted">
+                          {c.state === 'failing' ? 'Failing' : 'Degraded'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            );
+          })()
         )}
       </CardBody>
     </Card>
@@ -126,7 +135,7 @@ function Activity({ orgId }: { orgId: string | undefined }) {
           <Timeline
             items={items.map((e) => ({
               id: String(e.id),
-              title: <code className="font-mono text-xs">{e.action}</code>,
+              title: actionLabel(e.action),
               time: e.at,
               description: targetText(e) || undefined,
             }))}
@@ -208,7 +217,7 @@ export function OverviewPage({
             </Card>
           </>
         )}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid items-start gap-6 lg:grid-cols-2">
           <Health />
           <Activity orgId={orgId} />
         </div>

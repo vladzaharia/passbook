@@ -139,7 +139,7 @@ describe('overview page', () => {
     expect(screen.getByRole('img', { name: /Updated: 0 total/ })).toBeInTheDocument();
     expect(screen.getByText('Downloads').closest('figure')).toHaveTextContent('No data');
     expect(await screen.findByText('Push queue')).toBeInTheDocument();
-    expect(await screen.findByText('pass.voided')).toBeInTheDocument();
+    expect(await screen.findByText('Pass voided')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -176,7 +176,7 @@ describe('overview page', () => {
         '/api/v1/audit': () => json({ items: [], nextCursor: null }),
       },
     });
-    expect(await screen.findByText('No failing or degraded components.')).toBeInTheDocument();
+    expect(await screen.findByText('All components working.')).toBeInTheDocument();
     expect(await screen.findByText('No activity yet.')).toBeInTheDocument();
   });
 });

@@ -140,6 +140,7 @@ describe('status page', () => {
       },
     });
     expect(await screen.findByText('apns_failed')).toBeInTheDocument();
-    expect(screen.getByText('bulk_reissue')).toBeInTheDocument();
+    expect(screen.getByText('Bulk reissue')).toBeInTheDocument();
+    expect(screen.getByText('The run failed. Try again.')).toBeInTheDocument();
   });
 });
