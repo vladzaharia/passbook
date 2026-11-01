@@ -83,6 +83,7 @@ export function OverviewPage({
   const busy = useDelayed(metrics.isPlaceholderData && metrics.isFetching, 150);
   const [dismissed, dismiss] = useGetStartedDismissed();
   const data = metrics.data;
+  const checklist = data !== undefined && !dismissed && !setupDone(data.setup);
   const picker = (
     <Select
       aria-label="Range"
@@ -103,9 +104,9 @@ export function OverviewPage({
         ) : (
           <>
             <Kpis data={data} range={range} enter={arrived} />
-            {!dismissed && !setupDone(data.setup) ? (
-              <GetStarted setup={data.setup} onDismiss={dismiss} />
-            ) : (
+            {checklist ? <GetStarted setup={data.setup} onDismiss={dismiss} /> : null}
+            {/* With no passes yet the checklist stands in for the (empty) charts. */}
+            {checklist && data.setup.passes === 0 ? null : (
               <ChartsCard data={data} range={range} enter={arrived} busy={busy} />
             )}
           </>

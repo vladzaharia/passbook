@@ -52,6 +52,12 @@ export function axisLabel(t: number, range: Range): string {
     : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+/** One bucket, precise enough to tell 6-hour buckets apart: "Nov 1, 6 AM" on 7 days. */
+export function pointLabel(t: number, range: Range): string {
+  if (range !== '7d') return axisLabel(t, range);
+  return new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric' });
+}
+
 /** Whole-number ticks only: top, middle (when whole) and zero. */
 export function ticks(max: number): { f: number; label: string | null }[] {
   return [1, 0.5, 0].map((f) => ({
@@ -124,7 +130,7 @@ export function LineChart({ title, points, range, unavailable, enter, showData }
     ? `${title}: not available`
     : empty
       ? `${title}: no data`
-      : `${title}: ${formatCount(total)} total${peak && peak.v > 0 ? `, peak ${formatCount(peak.v)} on ${axisLabel(peak.t, range)}` : ''}`;
+      : `${title}: ${formatCount(total)} total${peak && peak.v > 0 ? `, peak ${formatCount(peak.v)} on ${pointLabel(peak.t, range)}` : ''}`;
 
   function onMove(e: React.PointerEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -140,7 +146,7 @@ export function LineChart({ title, points, range, unavailable, enter, showData }
   const readout = unavailable
     ? '—'
     : active
-      ? `${axisLabel(active.t, range)}: ${formatCount(active.v)}`
+      ? `${pointLabel(active.t, range)}: ${formatCount(active.v)}`
       : formatCount(total);
   const at = (i: number | undefined) =>
     ({ '--fx': geo.fx[i ?? 0] ?? 0, '--fy': geo.fy[i ?? 0] ?? 1 }) as CSSProperties;
@@ -170,7 +176,7 @@ export function LineChart({ title, points, range, unavailable, enter, showData }
             <tbody>
               {points.map((p) => (
                 <tr key={p.t} className="border-t border-border">
-                  <td className="px-2 py-1 text-fg">{axisLabel(p.t, range)}</td>
+                  <td className="px-2 py-1 text-fg">{pointLabel(p.t, range)}</td>
                   <td className="px-2 py-1 text-right text-fg tabular-nums">{formatCount(p.v)}</td>
                 </tr>
               ))}

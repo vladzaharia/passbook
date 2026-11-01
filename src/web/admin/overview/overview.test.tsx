@@ -255,6 +255,8 @@ describe('get started', () => {
       'href',
       '/admin/passes/p7?tab=holder',
     );
+    // With a pass issued the charts are back, under the checklist.
+    expect(screen.getByRole('img', { name: /Issued/ })).toBeInTheDocument();
     sent = 1;
     await queryClient.invalidateQueries({ queryKey: ['metrics'] });
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull());
