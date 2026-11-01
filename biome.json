@@ -16,7 +16,10 @@
       "!docs/research",
       "!docs/audits",
       "!templates",
-      "!public",
+      "!public/templates",
+      "!public/fonts",
+      "!public/apple",
+      "!public/*.svg",
       "!package-lock.json",
       "!migrations/*.sql"
     ]
@@ -44,10 +47,20 @@
       "preset": "recommended",
       "style": { "useImportType": "error", "noNonNullAssertion": "warn" },
       "suspicious": { "noExplicitAny": "error", "noConsole": "error" },
-      "correctness": { "noUnusedImports": "error", "noUnusedVariables": "error" }
+      "correctness": { "noUnusedImports": "error", "noUnusedVariables": "error" },
+      "nursery": { "noFloatingPromises": "error", "noMisusedPromises": "error" }
     }
   },
   "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": { "noImportantStyles": "off" },
+          "style": { "noDescendingSpecificity": "off" }
+        }
+      }
+    },
     {
       "includes": ["tools/**", "e2e/**", "test/mock-oidc/**", "*.config.ts"],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }

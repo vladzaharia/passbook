@@ -131,7 +131,7 @@ export function provision(opts: {
   const { names, run, log } = opts;
   const result: ProvisionResult = { ran: [], skipped: [], databaseId: null };
   for (const step of buildSteps(names)) {
-    if (step.probe && step.probe.done(run(step.probe.args))) {
+    if (step.probe?.done(run(step.probe.args))) {
       result.skipped.push(step.title);
       log(`skip  ${step.title}`);
       continue;

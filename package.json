@@ -13,7 +13,7 @@
     "gen": "node tools/build-templates.ts && wrangler types --strict-vars=false",
     "format": "biome check --write .",
     "lint": "biome check .",
-    "ci:lint": "biome ci .",
+    "ci:lint": "biome ci --error-on-warnings .",
     "typecheck": "tsc -p tsconfig.worker.json && tsc -p tsconfig.web.json && tsc -p tsconfig.node.json",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",

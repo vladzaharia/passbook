@@ -287,7 +287,7 @@ export async function signInBreakglass(
     userId = user.id;
   }
   const user = await repo.getUser(ctx.env.DB, userId);
-  if (!user || user.status !== 'active') {
+  if (user?.status !== 'active') {
     throw new ForbiddenError('Break-glass sign-in is disabled.', 'BREAKGLASS_DISABLED');
   }
   const result = await startSession(ctx, user.id, ['admin', 'user'], 'breakglass', user.name, sign);
