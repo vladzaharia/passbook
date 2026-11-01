@@ -1,5 +1,5 @@
 import { Eye, EyeOff } from 'lucide-react';
-import { useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { Button } from './button.tsx';
 import { Callout } from './callout.tsx';
@@ -13,6 +13,10 @@ export interface SecretField {
   value: string;
   /** Masked until Show (default true). */
   secret?: boolean;
+  /** The copy button's name when "Copy <label>" reads wrong: "Copy endpoint URL". */
+  copyLabel?: string;
+  /** Catches the foil sheen (default true); one sheen per reveal reads best. */
+  sheen?: boolean;
 }
 
 /** "abcdefghij…uvwxyz" for long values; the full value is in the tooltip. */
@@ -21,7 +25,7 @@ export function middle(value: string, keep = 12): string {
 }
 
 /** A labelled value with Show and Copy in their own columns. */
-export function CopyField({ label, value, secret = true }: SecretField) {
+export function CopyField({ label, value, secret = true, copyLabel, sheen = true }: SecretField) {
   const id = useId();
   const [shown, setShown] = useState(!secret);
   const text = shown ? middle(value) : '•'.repeat(Math.min(24, Math.max(12, value.length)));
@@ -34,7 +38,10 @@ export function CopyField({ label, value, secret = true }: SecretField) {
         <Tooltip content={shown && text !== value ? value : undefined}>
           <output
             aria-labelledby={id}
-            className="wl-sheen-once relative block min-w-0 overflow-hidden truncate rounded-md border border-border bg-surface-sunken px-3 py-2 font-mono text-xs text-fg-strong"
+            className={cn(
+              'relative block min-w-0 overflow-hidden truncate rounded-md border border-border bg-surface-sunken px-3 py-2 font-mono text-xs text-fg-strong',
+              sheen && 'wl-sheen-once',
+            )}
           >
             {shown ? (
               text
@@ -56,7 +63,7 @@ export function CopyField({ label, value, secret = true }: SecretField) {
         ) : (
           <span />
         )}
-        <CopyButton value={value} label={`Copy ${label}`} />
+        <CopyButton value={value} label={copyLabel ?? `Copy ${label}`} />
       </div>
     </div>
   );
@@ -70,11 +77,17 @@ export function SecretReveal({
   fields,
   onDone,
   doneLabel = 'Done',
+  savedLabel = 'I saved the secret',
+  children,
   className,
 }: {
   fields: readonly SecretField[];
   onDone: () => void;
   doneLabel?: string;
+  /** The checkbox that gates Done: "I saved the key". */
+  savedLabel?: string;
+  /** Extra content under the fields (an example request). */
+  children?: ReactNode;
   className?: string;
 }) {
   const [saved, setSaved] = useState(false);
@@ -84,9 +97,10 @@ export function SecretReveal({
       {fields.map((f) => (
         <CopyField key={f.label} {...f} />
       ))}
+      {children}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CheckboxField
-          label="I saved the secret"
+          label={savedLabel}
           checked={saved}
           onCheckedChange={(v) => setSaved(v === true)}
         />

@@ -22,6 +22,7 @@ import {
   listConnections,
   patchConnection,
 } from './repo.ts';
+import { passCountsFor } from './repo-passes.ts';
 import { listRuns, runStats } from './repo-runs.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import {
@@ -82,12 +83,17 @@ export async function listAll(
   const rows = await listConnections(sctx.env.DB, {
     orgId: query.orgId,
     health: query.health,
+    q: query.q,
     cursor: query.cursor,
     limit: query.limit + 1,
   });
   const page = rows.slice(0, query.limit);
+  const counts = await passCountsFor(
+    sctx.env.DB,
+    page.map((r) => r.id),
+  );
   return {
-    items: page.map((r) => toDto(sctx.env, r)),
+    items: page.map((r) => ({ ...toDto(sctx.env, r), passCount: counts.get(r.id) ?? 0 })),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }

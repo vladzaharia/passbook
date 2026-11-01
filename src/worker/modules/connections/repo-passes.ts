@@ -212,3 +212,21 @@ export async function getInbox(
     deleted: r.deleted === 1,
   }));
 }
+
+/** Passes bound to each connection (list rows). */
+export async function passCountsFor(
+  db: D1Database,
+  connectionIds: readonly string[],
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  for (const ids of chunk(connectionIds)) {
+    const rows = await all<{ id: string; n: number }>(
+      db,
+      `SELECT connection_id AS id, count(*) AS n FROM passes
+       WHERE connection_id IN (${placeholders(ids.length)}) GROUP BY connection_id`,
+      ids,
+    );
+    for (const r of rows) out.set(r.id, r.n);
+  }
+  return out;
+}

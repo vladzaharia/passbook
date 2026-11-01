@@ -1,38 +1,30 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import { ConnectionSchema, type CreateConnectionSchema } from '@/shared/contracts/connections.ts';
 import { api } from '../../lib/api.ts';
-import { isApiError } from '../../lib/errors.ts';
+import { errorMessage, isApiError } from '../../lib/errors.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
   ErrorState,
-  FormField,
-  Input,
   PageHeader,
-  RadioGroup,
-  Select,
   SkeletonKeyValue,
-  SkeletonRows,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
+  Wizard,
 } from '../../ui/index.ts';
 import {
   cleanValues,
   describeSchema,
-  type FormValues,
   flatFields,
-  SchemaForm,
   validateValues,
 } from '../passes/schema-form/index.ts';
-import { useTemplate, useTemplates } from '../templates/api.ts';
+import { useTemplate } from '../templates/api.ts';
 import { connectionKeys, useConnector, useConnectors } from './api.ts';
+import { flattenSchema, nestValues, prefixed, WIZARD_HIDDEN } from './config-schema.ts';
+import { CreatedStep } from './created-step.tsx';
 import {
   type Lifecycle,
   LifecycleFields,
@@ -40,16 +32,24 @@ import {
   lifecycleToPatch,
 } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow } from './mapping.ts';
-import { MappingEditor } from './mapping-editor.tsx';
-import { secretSchema } from './secret-schema.ts';
-import { generateSecret, SecretOnce } from './webhook.tsx';
+import { MappingEditor, targetsOf } from './mapping-editor.tsx';
+import { TemplateSelect } from './template-select.tsx';
+import type { TestOutcome } from './test-result.tsx';
+import { generateSecret } from './webhook.tsx';
+import { ReviewStep, WizardAside } from './wizard-review.tsx';
+import { type ConfigDraft, ConfigStep, ConnectorStep } from './wizard-steps.tsx';
 
-const STEPS = ['Connector', 'Configuration', 'Mapping', 'Lifecycle', 'Create'] as const;
-const NO_TEMPLATE = '__none__';
+const STEPS = [
+  { id: 'connector', title: 'Connector' },
+  { id: 'config', title: 'Configuration' },
+  { id: 'mapping', title: 'Mapping' },
+  { id: 'lifecycle', title: 'Lifecycle' },
+  { id: 'review', title: 'Review' },
+] as const;
 
 const DEFAULT_LIFE: Lifecycle = {
   mode: 'poll',
-  intervalSeconds: '',
+  intervalMinutes: '',
   holderEmailField: '',
   defaultTemplateId: '',
   autoCreate: false,
@@ -62,46 +62,60 @@ type CreateBody = z.input<typeof CreateConnectionSchema>;
 export function CreateConnectionWizard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { orgId: scoped } = useOrgScope();
   const orgs = useOrgOptions();
   const connectors = useConnectors();
   const [step, setStep] = useState(0);
-  const [orgId, setOrgId] = useState<string>();
+  const [orgId, setOrgId] = useState<string | undefined>(scoped);
   const [type, setType] = useState<string>();
-  const [name, setName] = useState('');
-  const [config, setConfig] = useState<FormValues>({});
-  const [secrets, setSecrets] = useState<FormValues>({});
+  const [draft, setDraft] = useState<ConfigDraft>({ name: '', config: {}, secrets: {} });
+  const [test, setTest] = useState<TestOutcome>();
   const [rows, setRows] = useState<MappingRow[]>([]);
   const [life, setLife] = useState<Lifecycle>(DEFAULT_LIFE);
   const [showErrors, setShowErrors] = useState(false);
   const [created, setCreated] = useState<{ id: string; url: string | null; secret?: string }>();
   const connector = useConnector(type);
-  const templates = useTemplates({ orgId }, Boolean(orgId));
   const template = useTemplate(life.defaultTemplateId || undefined);
 
-  const dirty = !created && (Boolean(orgId) || name !== '' || Object.keys(config).length > 0);
+  const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
-
-  const cfgSchema = connector.data?.configSchema;
-  const secSchema = useMemo(
-    () => (connector.data?.secretSchema ? secretSchema(connector.data.secretSchema) : null),
-    [connector.data],
-  );
-  const hasSecrets = secSchema ? flatFields(describeSchema(secSchema)).length > 0 : false;
-  const cfgErrors = cfgSchema ? validateValues(cfgSchema, config) : {};
-  const secErrors = secSchema ? validateValues(secSchema, secrets) : {};
+  const info = connector.data;
+  const flat = useMemo(() => flattenSchema(info?.configSchema), [info]);
+  const authType = String(draft.config['auth.type'] ?? 'none');
+  const shownSecrets = useMemo(() => {
+    const hidden = WIZARD_HIDDEN(flattenSchema(info?.secretSchema), authType);
+    return Object.fromEntries(
+      Object.entries(cleanValues(draft.secrets))
+        .filter(([k]) => !hidden.has(k))
+        .map(([k, v]) => [k, String(v)]),
+    );
+  }, [info, draft.secrets, authType]);
+  const cfgErrors = flat ? validateValues(flat, draft.config) : {};
+  const secErrors = useMemo(() => {
+    const schema = info?.secretSchema;
+    if (!schema) return {};
+    const hidden = WIZARD_HIDDEN(flattenSchema(schema), authType);
+    return Object.fromEntries(
+      Object.entries(validateValues(schema, draft.secrets)).filter(([k]) => !hidden.has(k)),
+    );
+  }, [info, draft.secrets, authType]);
   const mapped = fromRows(rows);
   const lifeError = lifecycleError(life);
+  const sample =
+    test?.kind === 'result' && test.result.sample
+      ? test.result.sample
+      : Object.keys(info?.outputFields ?? {}).map((k) => ({ pointer: `/${k}` }));
+  const targets = template.data
+    ? targetsOf(flatFields(describeSchema(template.data.inputSchema)))
+    : [];
+  const defaultMinutes = info ? Math.round(info.defaults.intervalSeconds / 60) : undefined;
 
-  // Capabilities limit which modes make sense; start from the first supported one.
+  // Start from the first mode the connector supports.
   useEffect(() => {
-    const caps = connector.data?.capabilities;
+    const caps = info?.capabilities;
     if (!caps) return;
-    setLife((l) => ({
-      ...l,
-      mode: caps.poll ? 'poll' : caps.webhook ? 'webhook' : 'manual',
-      intervalSeconds: String(connector.data?.defaults.intervalSeconds ?? ''),
-    }));
-  }, [connector.data]);
+    setLife((l) => ({ ...l, mode: caps.poll ? 'poll' : caps.webhook ? 'webhook' : 'manual' }));
+  }, [info]);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -110,15 +124,9 @@ export function CreateConnectionWizard() {
       const body: CreateBody = {
         orgId: orgId as string,
         connectorType: type as string,
-        name: name.trim(),
-        config: cleanValues(config) as CreateBody['config'],
-        ...(hasSecrets
-          ? {
-              secrets: Object.fromEntries(
-                Object.entries(cleanValues(secrets)).map(([k, v]) => [k, String(v)]),
-              ),
-            }
-          : {}),
+        name: draft.name.trim(),
+        config: nestValues(cleanValues(draft.config)) as CreateBody['config'],
+        ...(Object.keys(shownSecrets).length ? { secrets: shownSecrets } : {}),
         ...(Object.keys(mapped.mapping).length > 0 ? { mapping: mapped.mapping } : {}),
         ...lifecycleToPatch(life),
         ...(webhookSecret ? { webhookSecret } : {}),
@@ -128,242 +136,165 @@ export function CreateConnectionWizard() {
     },
     onSuccess: async ({ connection, webhookSecret }) => {
       await qc.invalidateQueries({ queryKey: connectionKeys.all });
-      // A secret is shown once here; otherwise the effect below opens the connection.
       setCreated({ id: connection.id, url: connection.webhookUrl, secret: webhookSecret });
     },
   });
-
+  const open = (id: string) => void navigate({ to: `/admin/connections/${id}` as never });
+  // Without a secret to show, the new connection opens at once.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: navigate once per creation
   useEffect(() => {
-    if (created && !created.secret) {
-      void navigate({ to: `/admin/connections/${created.id}` as never });
-    }
-  }, [created, navigate]);
+    if (created && !created.secret) open(created.id);
+  }, [created]);
 
   const serverFields = isApiError(create.error) ? create.error.fields : {};
-  const cfgServer = fieldsWithPrefix(serverFields, 'config.');
-  const secServer = fieldsWithPrefix(serverFields, 'secrets.');
+  const crumbs = [{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }];
+  const blockCreate = life.autoCreate && (!life.defaultTemplateId || rows.length === 0);
 
   function next() {
-    if (step === 0 && (!orgId || !type)) return;
-    if (step === 1) {
-      if (!name.trim() || Object.keys(cfgErrors).length > 0 || Object.keys(secErrors).length > 0) {
-        return setShowErrors(true);
-      }
-    }
+    if (step === 0 && (!orgId || !type)) return setShowErrors(true);
+    const invalid = Object.keys(cfgErrors).length + Object.keys(secErrors).length > 0;
+    if (step === 1 && (!draft.name.trim() || invalid)) return setShowErrors(true);
     if (step === 2 && Object.keys(mapped.errors).length > 0) return setShowErrors(true);
     if (step === 3 && lifeError) return setShowErrors(true);
     setShowErrors(false);
+    if (step === STEPS.length - 1) {
+      if (!blockCreate) create.mutate();
+      return;
+    }
     setStep((s) => s + 1);
   }
-
-  const crumbs = [{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }];
 
   if (created?.secret) {
     return (
       <>
         <PageHeader title="Connection created" breadcrumbs={crumbs} />
-        <div className="grid max-w-2xl gap-4">
-          <SecretOnce url={created.url} secret={created.secret} />
-          <div>
-            <Button asChild>
-              <Link to={`/admin/connections/${created.id}` as never}>Open connection</Link>
-            </Button>
-          </div>
-        </div>
+        <CreatedStep
+          url={created.url}
+          secret={created.secret}
+          connectorType={type ?? ''}
+          onDone={() => open(created.id)}
+        />
       </>
     );
   }
 
+  const orgList = orgs.data?.items ?? [];
+  const orgName = orgList.find((o) => o.id === orgId)?.name ?? '—';
   return (
     <>
       <PageHeader title="New connection" breadcrumbs={crumbs} />
-      <ol className="mb-6 flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Steps">
-        {STEPS.map((label, i) => (
-          <li
-            key={label}
-            aria-current={i === step ? 'step' : undefined}
-            className={i === step ? 'font-medium text-fg-strong' : 'text-fg-muted'}
-          >
-            {i + 1}. {label}
-          </li>
-        ))}
-      </ol>
-
-      {step === 0 ? (
-        <div className="grid max-w-xl gap-4">
-          <FormField label="Organization" required>
-            {(c) => (
-              <Select
-                {...c}
-                value={orgId}
-                onValueChange={setOrgId}
-                options={(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name }))}
-              />
-            )}
-          </FormField>
-          {connectors.isPending ? (
-            <SkeletonRows rows={3} label="Loading connectors" />
-          ) : connectors.isError ? (
-            <ErrorState error={connectors.error} onRetry={() => void connectors.refetch()} />
-          ) : (
-            <RadioGroup
-              legend="Connector"
-              value={type}
-              onValueChange={(v) => {
-                setType(v);
-                setConfig({});
-                setSecrets({});
-              }}
-              options={connectors.data.items.map((c) => ({
-                value: c.type,
-                label: c.displayName,
-                hint: c.type,
-              }))}
-            />
-          )}
-        </div>
-      ) : null}
-
-      {step === 1 ? (
-        connector.isPending ? (
-          <SkeletonKeyValue label="Loading connector" />
-        ) : connector.isError ? (
-          <ErrorState error={connector.error} onRetry={() => void connector.refetch()} />
-        ) : (
-          <div className="grid max-w-3xl gap-6">
-            <FormField
-              label="Name"
-              required
-              error={showErrors && !name.trim() ? 'Required.' : undefined}
-            >
-              {(c) => (
-                <Input
-                  {...c}
-                  maxLength={120}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              )}
-            </FormField>
-            <SchemaForm
-              schema={cfgSchema}
-              value={config}
-              onChange={setConfig}
-              showAllErrors={showErrors}
-              serverErrors={cfgServer}
-            />
-            {hasSecrets ? (
-              <Card>
-                <CardHeader title="Credentials" />
-                <CardBody>
-                  <SchemaForm
-                    schema={secSchema}
-                    value={secrets}
-                    onChange={setSecrets}
-                    showAllErrors={showErrors}
-                    serverErrors={secServer}
-                  />
-                  <p className="mt-3 text-xs text-fg-muted">Stored encrypted. Not shown again.</p>
-                </CardBody>
-              </Card>
-            ) : null}
-          </div>
-        )
-      ) : null}
-
-      {step === 2 ? (
-        <div className="grid max-w-4xl gap-4">
-          <FormField label="Template">
-            {(c) => (
-              <Select
-                {...c}
-                className="max-w-sm"
-                value={life.defaultTemplateId || NO_TEMPLATE}
-                onValueChange={(v) =>
-                  setLife({ ...life, defaultTemplateId: v === NO_TEMPLATE ? '' : v })
-                }
-                options={[
-                  { value: NO_TEMPLATE, label: 'None' },
-                  ...(templates.data?.items ?? []).map((t) => ({ value: t.id, label: t.name })),
-                ]}
-              />
-            )}
-          </FormField>
-          <MappingEditor
-            rows={rows}
-            onChange={setRows}
-            errors={showErrors ? mapped.errors : {}}
-            inputKeys={
-              template.data
-                ? flatFields(describeSchema(template.data.inputSchema)).map((f) => f.key)
-                : []
-            }
-            outputKeys={Object.keys(connector.data?.outputFields ?? {}).map((k) => `/${k}`)}
+      <Wizard
+        steps={STEPS}
+        current={step}
+        onStep={setStep}
+        aside={<WizardAside connector={info} sample={sample} />}
+        dirty={dirty}
+        onCancel={() => void navigate({ to: '/admin/connections' })}
+        onBack={step > 0 ? () => setStep(step - 1) : undefined}
+        onNext={next}
+        nextLabel={step === STEPS.length - 1 ? 'Create' : 'Next'}
+        nextDisabled={step === STEPS.length - 1 && blockCreate}
+        busy={create.isPending}
+      >
+        {step === 0 ? (
+          <ConnectorStep
+            connectors={connectors.data?.items ?? []}
+            loading={connectors.isPending}
+            type={type}
+            onType={(t) => {
+              if (t === type) return;
+              setType(t);
+              setDraft((d) => ({ ...d, config: {}, secrets: {} }));
+              setTest(undefined);
+            }}
+            onCommit={next}
+            orgs={scoped ? null : orgList}
+            orgId={orgId}
+            onOrg={setOrgId}
           />
-        </div>
-      ) : null}
-
-      {step === 3 && orgId ? (
-        <LifecycleFields
-          orgId={orgId}
-          value={life}
-          onChange={setLife}
-          capabilities={connector.data?.capabilities}
-          error={showErrors ? lifeError : undefined}
-        />
-      ) : null}
-
-      {step === 4 ? (
-        <Card className="max-w-md">
-          <CardHeader title="Review" />
-          <CardBody className="grid gap-1 text-sm">
-            <p>Name: {name}</p>
-            <p>Connector: {connector.data?.displayName}</p>
-            <p>Mode: {life.mode}</p>
-            <p>Mappings: {Object.keys(mapped.mapping).length}</p>
-            <p>Create passes automatically: {life.autoCreate ? 'Yes' : 'No'}</p>
-            {create.isError ? (
-              <p role="alert" className="mt-2 text-danger">
-                {isApiError(create.error) && Object.keys(serverFields).length > 0
-                  ? 'Fix the highlighted fields on Configuration.'
-                  : create.error.message}
+        ) : null}
+        {step === 0 && connectors.isError ? (
+          <ErrorState error={connectors.error} onRetry={() => void connectors.refetch()} />
+        ) : null}
+        {step === 0 && showErrors && (!orgId || !type) ? (
+          <p className="text-sm text-danger">
+            {!orgId ? 'Choose an organization.' : 'Choose a connector.'}
+          </p>
+        ) : null}
+        {step === 1 ? (
+          info && orgId ? (
+            <ConfigStep
+              connector={info}
+              orgId={orgId}
+              draft={draft}
+              onChange={setDraft}
+              showErrors={showErrors}
+              serverErrors={{
+                config: prefixed(serverFields, 'config.'),
+                secrets: prefixed(serverFields, 'secrets.'),
+              }}
+              test={test}
+              onTest={setTest}
+            />
+          ) : connector.isError ? (
+            <ErrorState error={connector.error} onRetry={() => void connector.refetch()} />
+          ) : (
+            <SkeletonKeyValue label="Loading connector" />
+          )
+        ) : null}
+        {step === 2 ? (
+          <>
+            <TemplateSelect
+              orgId={orgId}
+              value={life.defaultTemplateId}
+              onChange={(defaultTemplateId) => setLife({ ...life, defaultTemplateId })}
+            />
+            <MappingEditor
+              rows={rows}
+              onChange={setRows}
+              errors={showErrors ? mapped.errors : {}}
+              targets={targets}
+              sources={sample}
+            />
+          </>
+        ) : null}
+        {step === 3 ? (
+          <LifecycleFields
+            value={life}
+            onChange={setLife}
+            capabilities={info?.capabilities}
+            defaultMinutes={defaultMinutes}
+            error={showErrors ? lifeError : undefined}
+          />
+        ) : null}
+        {step === 4 ? (
+          <>
+            <ReviewStep
+              orgName={orgName}
+              connector={info}
+              name={draft.name}
+              life={life}
+              templateName={template.data?.name}
+              mappings={Object.keys(mapped.mapping).length}
+              defaultMinutes={defaultMinutes}
+              onEdit={setStep}
+            />
+            {blockCreate ? (
+              <p className="text-sm text-danger">
+                Creating passes needs a template and mappings. Turn it off or add them.
               </p>
             ) : null}
-          </CardBody>
-        </Card>
-      ) : null}
-
-      <div className="mt-8 flex gap-2">
-        {step > 0 ? (
-          <Button variant="outline" disabled={create.isPending} onClick={() => setStep(step - 1)}>
-            Back
-          </Button>
+            {create.isError ? (
+              <p className="text-sm text-danger">
+                {Object.keys(serverFields).length > 0
+                  ? 'Fix the highlighted fields on Configuration.'
+                  : errorMessage(create.error)}
+              </p>
+            ) : null}
+          </>
         ) : null}
-        {step < 4 ? (
-          <Button disabled={step === 0 && (!orgId || !type)} onClick={next}>
-            Next
-          </Button>
-        ) : (
-          <Button
-            loading={create.isPending}
-            iconStart={<Plus aria-hidden />}
-            onClick={() => create.mutate()}
-          >
-            Create connection
-          </Button>
-        )}
-      </div>
+      </Wizard>
       <UnsavedChangesDialog blocker={guard} />
     </>
   );
-}
-
-function fieldsWithPrefix(
-  fields: Record<string, string>,
-  prefix: string,
-): Record<string, string> | undefined {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(fields))
-    if (k.startsWith(prefix)) out[k.slice(prefix.length)] = v;
-  return Object.keys(out).length > 0 ? out : undefined;
 }

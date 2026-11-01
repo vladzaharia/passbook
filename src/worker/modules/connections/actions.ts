@@ -17,6 +17,7 @@ import { classify, prepare } from './runtime.ts';
 import { adminInstanceId, startSync } from './schedule.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import { auditActor, requireConnection } from './service.ts';
+import { firstRecord, sampleFields } from './test-config.ts';
 import { assertModeSupported, requireConnector } from './validate.ts';
 
 /** Calls the connector's test(). Writes a 'test' run; never changes health or passes. */
@@ -43,10 +44,12 @@ export async function test(
       ok: true as const,
       detail: 'No test available.',
     };
+    const record = await firstRecord(prep.def, prep.cc);
     result = {
       ok: true,
       ...(outcome.detail ? { detail: outcome.detail } : {}),
       durationMs: sctx.clock.now() - startedAt,
+      ...(record ? { sample: sampleFields(record) } : {}),
     };
   } catch (error) {
     const failure = classify(error);

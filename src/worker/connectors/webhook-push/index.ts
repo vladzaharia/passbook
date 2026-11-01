@@ -13,13 +13,33 @@ const MAX_RECORDS = 100;
 const pointer = z.string().max(200).refine(isPointer, 'Not a JSON pointer.');
 
 const config = z.object({
-  signatureHeader: z.string().refine(isAllowedHeaderName).default(SIGNATURE_HEADER),
-  timestampHeader: z.string().refine(isAllowedHeaderName).default(TIMESTAMP_HEADER),
-  eventIdPointer: pointer.default('/id'),
-  recordsPointer: pointer.default('/records'),
-  refPointer: pointer.default('/ref'),
-  recordPointer: pointer.default('/record'),
-  deletedPointer: pointer.default('/deleted'),
+  recordsPointer: pointer
+    .default('/records')
+    .meta({ 'x-label': 'Records', 'x-help': 'Where the list of records sits in the body.' }),
+  refPointer: pointer
+    .default('/ref')
+    .meta({ 'x-label': 'Record ID', 'x-help': 'Inside each item.' }),
+  recordPointer: pointer
+    .default('/record')
+    .meta({ 'x-label': 'Record', 'x-help': 'The record inside each item.' }),
+  deletedPointer: pointer
+    .default('/deleted')
+    .meta({ 'x-label': 'Deleted flag', 'x-help': 'True removes the record.' }),
+  eventIdPointer: pointer.default('/id').meta({
+    'x-label': 'Event ID',
+    'x-help': 'Repeated events are ignored.',
+    'x-group': 'Advanced',
+  }),
+  signatureHeader: z
+    .string()
+    .refine(isAllowedHeaderName)
+    .default(SIGNATURE_HEADER)
+    .meta({ 'x-label': 'Signature header', 'x-group': 'Advanced' }),
+  timestampHeader: z
+    .string()
+    .refine(isAllowedHeaderName)
+    .default(TIMESTAMP_HEADER)
+    .meta({ 'x-label': 'Timestamp header', 'x-group': 'Advanced' }),
 });
 
 /** Records arrive in the signed webhook body; nothing is fetched. */
@@ -27,6 +47,7 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
   type: 'webhook-push',
   version: 1,
   displayName: 'Webhook push',
+  description: 'Your system sends signed records.',
   capabilities: { webhook: true },
   configSchema: config,
   outputFields: {},

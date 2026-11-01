@@ -1,4 +1,4 @@
-import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
+import { all, chunk, first, likeEscape, placeholders, run } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
 
@@ -36,13 +36,38 @@ export async function slugTaken(db: D1Database, slug: string, exceptId?: string)
   return row !== null;
 }
 
-/** Newest first; `before` is the exclusive id bound (UUIDv7 ids sort by creation time). */
-export function listOrgRows(db: D1Database, before: string | undefined, limit: number) {
+/**
+ * Newest first; `before` is the exclusive id bound (UUIDv7 ids sort by creation time). `q` matches
+ * the name or slug.
+ */
+export function listOrgRows(db: D1Database, before: string | undefined, limit: number, q?: string) {
+  const term = q?.trim().toLowerCase();
+  const like = term ? `%${likeEscape(term)}%` : null;
   return all<OrgRow>(
     db,
-    `SELECT ${COLUMNS} FROM orgs WHERE status != 'deleted' AND id < ? ORDER BY id DESC LIMIT ?`,
-    [before ?? '￿', limit],
+    `SELECT ${COLUMNS} FROM orgs WHERE status != 'deleted' AND id < ?
+       ${like ? "AND (lower(name) LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\')" : ''}
+     ORDER BY id DESC LIMIT ?`,
+    like ? [before ?? '￿', like, like, limit] : [before ?? '￿', limit],
   );
+}
+
+export async function setOrgStatus(
+  db: D1Database,
+  id: string,
+  status: 'active' | 'suspended',
+  now: number,
+): Promise<void> {
+  await run(db, 'UPDATE orgs SET status = ?, updated_at = ? WHERE id = ?', [status, now, id]);
+}
+
+export async function setOrgBranding(
+  db: D1Database,
+  id: string,
+  branding: string,
+  now: number,
+): Promise<void> {
+  await run(db, 'UPDATE orgs SET branding = ?, updated_at = ? WHERE id = ?', [branding, now, id]);
 }
 
 export async function insertOrg(db: D1Database, row: OrgRow): Promise<void> {

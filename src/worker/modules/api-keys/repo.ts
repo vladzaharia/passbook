@@ -35,8 +35,14 @@ export async function insertKey(db: Db, key: ApiKeyRow): Promise<void> {
   );
 }
 
+/** Newest first, with the creator's name (or email) for the actor chip. */
 export const listKeys = (db: Db) =>
-  all<ApiKeyRow>(db, 'SELECT * FROM api_keys ORDER BY created_at DESC, id DESC LIMIT 500');
+  all<ApiKeyRow & { created_by_name: string | null }>(
+    db,
+    `SELECT k.*, coalesce(u.name, u.primary_email) AS created_by_name
+     FROM api_keys k LEFT JOIN users u ON u.id = k.created_by
+     ORDER BY k.created_at DESC, k.id DESC LIMIT 500`,
+  );
 
 export const getKey = (db: Db, id: string) =>
   first<ApiKeyRow>(db, 'SELECT * FROM api_keys WHERE id = ?', [id]);

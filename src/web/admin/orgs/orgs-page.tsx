@@ -1,231 +1,156 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
+import { useEffect, useState } from 'react';
+import type { z } from 'zod';
+import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
+import { formatDay } from '@/web/lib/format.ts';
 import {
   Button,
   DataTable,
-  Dialog,
-  DialogContent,
   EmptyState,
+  EntityAvatar,
   ErrorState,
-  FormField,
-  Input,
+  FilterBar,
+  FilteredEmpty,
+  LoadMore,
   PageHeader,
-  SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { formatDay } from '../overview/format.ts';
-import { useCreateOrg, useOrgList } from './queries.ts';
+import { CreateOrgDialog } from './create-org-dialog.tsx';
+import { useOrgList } from './queries.ts';
 
-export function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64);
-}
+export { slugify } from './create-org-dialog.tsx';
 
-const SLUG = /^[a-z0-9][a-z0-9-]{1,63}$/;
+type Org = z.infer<typeof OrgSummarySchema>;
 
 export function OrgStatus({ status }: { status: 'active' | 'suspended' | 'deleted' }) {
-  return (
-    <StatusPill
-      status={status}
-      tone={status === 'active' ? 'success' : status === 'suspended' ? 'warning' : 'neutral'}
-    >
-      {status[0]?.toUpperCase()}
-      {status.slice(1)}
+  return status === 'suspended' ? (
+    <StatusPill status="suspended" tone="warning">
+      Suspended
     </StatusPill>
+  ) : (
+    <StatusPill status={status === 'active' ? 'active' : 'disabled'} />
   );
 }
 
-function CreateOrgDialog({
-  open,
-  onOpenChange,
+const COLUMNS: ColumnDef<Org, never>[] = [
+  {
+    header: 'Organization',
+    id: 'name',
+    cell: ({ row }) => (
+      <div className="flex min-h-10 min-w-0 items-center gap-3">
+        <EntityAvatar
+          kind="org"
+          id={row.original.id}
+          name={row.original.name}
+          accent={row.original.branding.accent}
+        />
+        <div className="min-w-0">
+          <Link
+            to="/admin/orgs/$orgId"
+            params={{ orgId: row.original.id }}
+            className="block truncate font-medium text-accent-fg hover:underline"
+          >
+            {row.original.name}
+          </Link>
+          <span className="block truncate font-mono text-xs text-fg-muted">
+            {row.original.slug}
+          </span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    header: 'Status',
+    id: 'status',
+    cell: ({ row }) => <OrgStatus status={row.original.status} />,
+  },
+  {
+    header: 'Passes',
+    id: 'passes',
+    meta: { numeric: true },
+    cell: ({ row }) => row.original.counts.passes.toLocaleString(),
+  },
+  {
+    header: 'Templates',
+    id: 'templates',
+    meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
+    cell: ({ row }) => row.original.counts.templates.toLocaleString(),
+  },
+  {
+    header: 'Connections',
+    id: 'connections',
+    meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
+    cell: ({ row }) => row.original.counts.connections.toLocaleString(),
+  },
+  {
+    header: 'Created',
+    id: 'created',
+    meta: { hideBelow: 'lg', stackHidden: true, nowrap: true },
+    cell: ({ row }) => formatDay(row.original.createdAt),
+  },
+];
+
+export function OrgsPage({
+  search = {},
+  onSearch = () => undefined,
 }: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
+  search?: { q?: string | undefined };
+  onSearch?: (next: { q?: string | undefined }) => void;
 }) {
-  const create = useCreateOrg();
-  const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [slugEdited, setSlugEdited] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string>();
-
-  function close() {
-    onOpenChange(false);
-    setName('');
-    setSlug('');
-    setSlugEdited(false);
-    setErrors({});
-    setFormError(undefined);
-  }
-
-  async function submit() {
-    const found: Record<string, string> = {};
-    if (!name.trim()) found.name = 'Required.';
-    if (!SLUG.test(slug)) found.slug = 'Use 2 to 64 lowercase letters, digits or hyphens.';
-    setErrors(found);
-    setFormError(undefined);
-    if (Object.keys(found).length > 0) return;
-    try {
-      const org = await create.mutateAsync({ name: name.trim(), slug });
-      toast.success('Organization created');
-      close();
-      await navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
-    } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
-      setFormError(errorMessage(cause));
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
-      <DialogContent
-        title="New organization"
-        footer={
-          <>
-            <Button variant="outline" onClick={close}>
-              Cancel
-            </Button>
-            <Button loading={create.isPending} onClick={() => void submit()}>
-              Create
-            </Button>
-          </>
-        }
-      >
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          <FormField label="Name" required error={errors.name}>
-            {(p) => (
-              <Input
-                {...p}
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (!slugEdited) setSlug(slugify(e.target.value));
-                }}
-              />
-            )}
-          </FormField>
-          <FormField label="Slug" required error={errors.slug}>
-            {(p) => (
-              <Input
-                {...p}
-                className="font-mono"
-                value={slug}
-                onChange={(e) => {
-                  setSlugEdited(true);
-                  setSlug(e.target.value);
-                }}
-              />
-            )}
-          </FormField>
-          {formError ? (
-            <p role="alert" className="text-sm text-danger">
-              {formError}
-            </p>
-          ) : null}
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function OrgsPage() {
-  const list = useOrgList();
+  const [text, setText] = useState(search.q ?? '');
+  useEffect(() => setText(search.q ?? ''), [search.q]);
+  useEffect(() => {
+    const trimmed = text.trim();
+    if (trimmed === (search.q ?? '')) return;
+    const t = setTimeout(() => onSearch({ q: trimmed || undefined }), 300);
+    return () => clearTimeout(t);
+  }, [text, search.q, onSearch]);
+  const list = useOrgList(search.q);
   const [creating, setCreating] = useState(false);
+  const rows = list.data?.items ?? [];
+  const empty = !list.isPending && rows.length === 0 && !search.q;
+  const clear = () => {
+    setText('');
+    onSearch({});
+  };
+  const create = (variant: 'primary' | 'outline') => (
+    <Button variant={variant} iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
+      New organization
+    </Button>
+  );
   return (
     <>
-      <PageHeader
-        title="Organizations"
-        actions={
-          <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New organization
-          </Button>
-        }
-      />
-      {list.isPending ? (
-        <SkeletonRows label="Loading organizations" />
-      ) : list.isError ? (
+      <PageHeader title="Organizations" actions={create(empty ? 'outline' : 'primary')} />
+      {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (
         <DataTable
           caption="Organizations"
-          data={list.data.items}
+          loading={list.isPending}
+          fetching={list.isFetching}
+          data={rows}
           getRowId={(o) => o.id}
-          empty={
-            <EmptyState
-              art="building"
-              title="No organizations"
-              action={
-                <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-                  New organization
-                </Button>
-              }
+          filtered={Boolean(search.q)}
+          toolbar={
+            <FilterBar
+              search={{ value: text, onChange: setText, placeholder: 'Search organizations' }}
+              filters={[]}
+              onClear={clear}
             />
           }
-          columns={[
-            {
-              header: 'Name',
-              id: 'name',
-              cell: ({ row }) => (
-                <Link
-                  to="/admin/orgs/$orgId"
-                  params={{ orgId: row.original.id }}
-                  className="font-medium text-accent-fg hover:underline"
-                >
-                  {row.original.name}
-                </Link>
-              ),
-            },
-            {
-              header: 'Slug',
-              id: 'slug',
-              meta: { nowrap: true },
-              cell: ({ row }) => <code className="font-mono text-xs">{row.original.slug}</code>,
-            },
-            {
-              header: 'Status',
-              id: 'status',
-              cell: ({ row }) => <OrgStatus status={row.original.status} />,
-            },
-            {
-              header: 'Passes',
-              id: 'passes',
-              meta: { numeric: true },
-              cell: ({ row }) => row.original.counts.passes,
-            },
-            {
-              header: 'Templates',
-              id: 'templates',
-              meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
-              cell: ({ row }) => row.original.counts.templates,
-            },
-            {
-              header: 'Connections',
-              id: 'connections',
-              meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
-              cell: ({ row }) => row.original.counts.connections,
-            },
-            {
-              header: 'Created',
-              id: 'created',
-              meta: { hideBelow: 'lg', stackHidden: true },
-              cell: ({ row }) => formatDay(row.original.createdAt),
-            },
-          ]}
+          emptyFiltered={<FilteredEmpty entity="org" onClear={clear} />}
+          empty={<EmptyState art="building" title="No organizations" action={create('primary')} />}
+          footer={
+            <LoadMore
+              hasMore={false}
+              onLoadMore={() => undefined}
+              shown={rows.length}
+              noun={['organization', 'organizations']}
+            />
+          }
+          columns={COLUMNS}
         />
       )}
       <CreateOrgDialog open={creating} onOpenChange={setCreating} />

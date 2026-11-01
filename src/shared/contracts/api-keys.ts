@@ -8,6 +8,8 @@ export const ApiKeySchema = z.object({
   prefix: z.string(),
   scopes: z.array(ApiScopeSchema),
   createdBy: IdSchema.nullable(),
+  /** The creator's name or email, for the actor chip. */
+  createdByName: z.string().nullable().default(null),
   createdAt: TimestampSchema,
   lastUsedAt: TimestampSchema.nullable(),
   expiresAt: TimestampSchema.nullable(),

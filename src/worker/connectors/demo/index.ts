@@ -5,18 +5,39 @@ const PAGE_SIZE = 10;
 const TIERS = ['Bronze', 'Silver', 'Gold', 'Platinum'];
 
 const config = z.object({
-  seed: z.string().max(60).default('demo'),
+  seed: z
+    .string()
+    .max(60)
+    .default('demo')
+    .meta({ 'x-label': 'Seed', 'x-help': 'Same seed, same members.', 'x-order': 1 }),
   /** Upstream holds m-001 .. m-<count>. */
-  count: z.number().int().min(0).max(500).default(25),
+  count: z
+    .number()
+    .int()
+    .min(0)
+    .max(500)
+    .default(25)
+    .meta({ 'x-label': 'Members', 'x-help': 'Up to 500.', 'x-order': 2 }),
   /** Raise to simulate upstream changes: points shift for every record. */
-  revision: z.number().int().min(0).max(10_000).default(0),
+  revision: z
+    .number()
+    .int()
+    .min(0)
+    .max(10_000)
+    .default(0)
+    .meta({ 'x-label': 'Revision', 'x-help': 'Raise it to change every member.', 'x-order': 3 }),
   /** Refs the upstream reports as deleted / not found. */
-  missing: z.array(z.string().max(60)).max(100).default([]),
+  missing: z
+    .array(z.string().max(60))
+    .max(100)
+    .default([])
+    .meta({ 'x-label': 'Missing members', 'x-help': 'Refs such as m-004.', 'x-order': 6 }),
   /** Simulate a failing upstream. */
   fail: z
     .enum(['none', 'auth', 'timeout', 'upstream', 'rate_limited'])
     .default('none')
     .meta({
+      'x-order': 5,
       'x-label': 'Simulated failure',
       'x-enumLabels': {
         none: 'None',
@@ -26,7 +47,11 @@ const config = z.object({
         rate_limited: 'Rate limited',
       },
     }),
-  holderDomain: z.string().max(100).default('example.com').meta({ 'x-label': 'Holder domain' }),
+  holderDomain: z
+    .string()
+    .max(100)
+    .default('example.com')
+    .meta({ 'x-label': 'Holder domain', 'x-placeholder': 'example.com', 'x-order': 4 }),
 });
 type Config = z.infer<typeof config>;
 
@@ -80,6 +105,7 @@ const definition: ConnectorDefinition<Config, undefined> = {
   type: 'demo',
   version: 1,
   displayName: 'Demo',
+  description: 'Sample members to try a sync.',
   capabilities: { poll: true, delta: true },
   configSchema: config,
   outputFields: {

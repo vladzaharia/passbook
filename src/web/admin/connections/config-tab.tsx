@@ -25,6 +25,7 @@ import {
   validateValues,
 } from '../passes/schema-form/index.ts';
 import { type ConnectionPatch, useConnectionActions, useConnector } from './api.ts';
+import { flattenSchema, flattenValues, nestValues, secretKeysFor } from './config-schema.ts';
 import { secretSchema } from './secret-schema.ts';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
@@ -49,14 +50,17 @@ function prefixed(fields: Record<string, string>, prefix: string) {
 export function ConfigTab({ c }: { c: Detail }) {
   const actions = useConnectionActions(c.id);
   const connector = useConnector(c.connectorType);
-  const cfgSchema = connector.data?.configSchema;
+  const cfgSchema = useMemo(
+    () => flattenSchema(connector.data?.configSchema),
+    [connector.data?.configSchema],
+  );
   const secSchema = useMemo(
     () => (connector.data?.secretSchema ? secretSchema(connector.data.secretSchema) : null),
     [connector.data],
   );
   const hasSecrets = secSchema ? flatFields(describeSchema(secSchema)).length > 0 : false;
   const initialConfig = useMemo(
-    () => (cfgSchema ? pickDeclared(cfgSchema, c.config) : {}),
+    () => (cfgSchema ? pickDeclared(cfgSchema, flattenValues(c.config)) : {}),
     [cfgSchema, c.config],
   );
   const [config, setConfig] = useState<FormValues | undefined>();
@@ -99,7 +103,7 @@ export function ConfigTab({ c }: { c: Detail }) {
       concError;
     if (invalid) return setShowErrors(true);
     const patch: ConnectionPatch = {};
-    if (!sameValues(cfg, initialConfig)) patch.config = cleanValues(cfg) as never;
+    if (!sameValues(cfg, initialConfig)) patch.config = nestValues(cleanValues(cfg)) as never;
     if (replacing) {
       patch.secrets = Object.fromEntries(
         Object.entries(cleanValues(secrets)).map(([k, v]) => [k, String(v)]),
@@ -122,7 +126,7 @@ export function ConfigTab({ c }: { c: Detail }) {
 
   const defaults = connector.data?.defaults;
   return (
-    <div className="grid max-w-3xl gap-6 pb-16">
+    <div className="flex min-w-0 flex-col gap-6">
       {cfgSchema ? (
         <Card>
           <CardHeader title="Connector" />
@@ -155,7 +159,7 @@ export function ConfigTab({ c }: { c: Detail }) {
                   Keep current
                 </Button>
               ) : (
-                <Button variant="outline" size="sm" onClick={() => setReplacing(true)}>
+                <Button variant="ghost" size="sm" onClick={() => setReplacing(true)}>
                   Replace credentials
                 </Button>
               )
@@ -165,6 +169,7 @@ export function ConfigTab({ c }: { c: Detail }) {
             {replacing ? (
               <SchemaForm
                 schema={secSchema}
+                hiddenKeys={secretKeysFor(secSchema, String(cfg['auth.type'] ?? 'none'))}
                 value={secrets}
                 onChange={setSecrets}
                 showAllErrors={showErrors}
@@ -174,8 +179,7 @@ export function ConfigTab({ c }: { c: Detail }) {
               />
             ) : (
               <p className="text-sm text-fg-muted">
-                {c.hasCredential ? 'Credentials are set.' : 'No credentials set.'} Stored encrypted.
-                Never shown.
+                {c.hasCredential ? 'Set. Stored encrypted, never shown.' : 'Not set.'}
               </p>
             )}
           </CardBody>

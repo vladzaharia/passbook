@@ -1,23 +1,33 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
-import type { ConnectionSchema } from '@/shared/contracts/connections.ts';
+import type { ConnectionSummarySchema } from '@/shared/contracts/connections.ts';
+import { connectorIcon } from '../../lib/entities.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
-import { Button, DataTable, EmptyState, ErrorState, PageHeader, Select } from '../../ui/index.ts';
-import { formatDate } from '../passes/format.ts';
+import {
+  Button,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  FilteredEmpty,
+  LoadMore,
+  PageHeader,
+} from '../../ui/index.ts';
 import { useConnections, useConnectorNames } from './api.ts';
-import { ErrorLine } from './error-line.tsx';
 import { HealthPill } from './health.tsx';
+import { healthLine } from './health-text.ts';
 import { HEALTH_FILTERS, modeLabel } from './labels.ts';
 
-type Connection = z.infer<typeof ConnectionSchema>;
+type Connection = z.infer<typeof ConnectionSummarySchema>;
 const ALL = 'all';
 
 export interface ConnectionListSearch {
-  orgId?: string | undefined;
+  q?: string | undefined;
   health?: string | undefined;
 }
 
@@ -28,143 +38,163 @@ export function ConnectionsListPage({
   search: ConnectionListSearch;
   onSearch: (patch: Partial<ConnectionListSearch>) => void;
 }) {
-  const { orgId: globalOrg } = useOrgScope();
-  const orgId = search.orgId ?? globalOrg;
+  const { orgId } = useOrgScope();
   const orgs = useOrgOptions();
   const connectorName = useConnectorNames();
-  const list = useConnections({ orgId, health: search.health });
+  const [text, setText] = useState(search.q ?? '');
+  useEffect(() => setText(search.q ?? ''), [search.q]);
+  useEffect(() => {
+    const trimmed = text.trim();
+    if (trimmed === (search.q ?? '')) return;
+    const t = setTimeout(() => onSearch({ q: trimmed || undefined }), 300);
+    return () => clearTimeout(t);
+  }, [text, search.q, onSearch]);
+  const list = useConnections({ orgId, health: search.health, q: search.q });
+  const rows = list.data?.items ?? [];
+  const filtered = Boolean(search.q || search.health);
   const orgNames = useMemo(
     () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
     [orgs.data],
   );
-  const columns = useMemo<ColumnDef<Connection, never>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<Connection, never>[]>(() => {
+    const now = Date.now();
+    return [
       {
         id: 'name',
         header: 'Connection',
-        enableSorting: false,
         cell: ({ row }) => (
-          <Link
-            to={`/admin/connections/${row.original.id}` as never}
-            className="font-medium text-accent-fg hover:underline"
-          >
-            {row.original.name}
-          </Link>
-        ),
-      },
-      {
-        id: 'type',
-        meta: { stackHidden: true },
-        header: 'Connector',
-        enableSorting: false,
-        cell: ({ row }) => connectorName(row.original.connectorType),
-      },
-      {
-        id: 'org',
-        header: 'Org',
-        enableSorting: false,
-        cell: ({ row }) => orgNames.get(row.original.orgId) ?? row.original.orgId,
-      },
-      {
-        id: 'mode',
-        header: 'Mode',
-        enableSorting: false,
-        cell: ({ row }) => modeLabel(row.original.mode),
-      },
-      {
-        id: 'health',
-        header: 'Health',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex flex-col items-start gap-1">
-            <HealthPill health={row.original.enabled ? row.original.health : 'disabled'} />
-            <ErrorLine code={row.original.lastErrorCode} />
+          <div className="min-w-0 max-w-72">
+            <Link
+              to={`/admin/connections/${row.original.id}` as never}
+              className="block truncate font-medium text-accent-fg hover:underline"
+            >
+              {row.original.name}
+            </Link>
+            {orgId ? null : (
+              <span
+                className="block truncate text-xs text-fg-muted"
+                title={orgNames.get(row.original.orgId)}
+              >
+                {orgNames.get(row.original.orgId) ?? '—'}
+              </span>
+            )}
           </div>
         ),
       },
       {
-        id: 'last',
-        header: 'Last success',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="text-xs whitespace-nowrap text-fg-muted">
-            {formatDate(row.original.lastSuccessAt)}
-          </span>
-        ),
+        id: 'source',
+        header: 'Source',
+        meta: { nowrap: true },
+        cell: ({ row }) => {
+          const Icon = connectorIcon(row.original.connectorType);
+          return (
+            <span className="inline-flex items-center gap-2">
+              <Icon aria-hidden className="size-4 shrink-0 text-fg-muted" />
+              {connectorName(row.original.connectorType)} · {modeLabel(row.original.mode)}
+            </span>
+          );
+        },
       },
       {
-        id: 'auto',
-        meta: { hideBelow: 'lg', stackHidden: true },
-        header: 'Auto create',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="text-sm text-fg-muted">{row.original.autoCreate ? 'On' : 'Off'}</span>
-        ),
+        id: 'health',
+        header: 'Health',
+        cell: ({ row }) => {
+          const line = healthLine(row.original, now);
+          return (
+            <div className="flex min-w-0 max-w-64 flex-col items-start gap-0.5">
+              <HealthPill health={row.original.enabled ? row.original.health : 'disabled'} />
+              {line ? (
+                <span
+                  className="block max-w-full truncate text-xs leading-3 text-fg-muted"
+                  title={line}
+                >
+                  {line}
+                </span>
+              ) : null}
+            </div>
+          );
+        },
       },
-    ],
-    [orgNames, connectorName],
+      {
+        id: 'passes',
+        header: 'Passes',
+        meta: { numeric: true },
+        cell: ({ row }) =>
+          row.original.passCount > 0 ? (
+            <Link
+              to="/admin/passes"
+              search={{ connectionId: row.original.id }}
+              aria-label={`${row.original.passCount} passes from ${row.original.name}`}
+              className="rounded-sm text-accent-fg tabular-nums hover:underline"
+            >
+              {row.original.passCount.toLocaleString()}
+            </Link>
+          ) : (
+            <span className="text-fg-muted tabular-nums">0</span>
+          ),
+      },
+      {
+        id: 'last',
+        header: 'Last success',
+        meta: { nowrap: true, hideBelow: 'lg', stackHidden: true },
+        cell: ({ row }) => formatDateTime(row.original.lastSuccessAt, '—'),
+      },
+    ];
+  }, [orgNames, connectorName, orgId]);
+
+  const clear = () => {
+    setText('');
+    onSearch({ q: undefined, health: undefined });
+  };
+  const empty = !list.isPending && rows.length === 0 && !filtered;
+  const create = (variant: 'primary' | 'outline') => (
+    <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
+      <Link to="/admin/connections/new">New connection</Link>
+    </Button>
   );
 
   return (
     <>
-      <PageHeader
-        title="Connections"
-        actions={
-          <Button asChild iconStart={<Plus aria-hidden />}>
-            <Link to="/admin/connections/new">New connection</Link>
-          </Button>
-        }
-      />
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <Select
-          aria-label="Org"
-          className="sm:w-44"
-          value={orgId ?? ALL}
-          onValueChange={(v) => onSearch({ orgId: v === ALL ? undefined : v })}
-          options={[
-            { value: ALL, label: 'Org: all' },
-            ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
-          ]}
-        />
-        <Select
-          aria-label="Health"
-          className="sm:w-44"
-          value={search.health ?? ALL}
-          onValueChange={(v) => onSearch({ health: v === ALL ? undefined : v })}
-          options={[
-            { value: ALL, label: 'Health: all' },
-            ...HEALTH_FILTERS.map(([value, label]) => ({ value, label })),
-          ]}
-        />
-        {orgId || search.health ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="max-sm:col-span-2"
-            onClick={() => onSearch({ orgId: undefined, health: undefined })}
-          >
-            Clear
-          </Button>
-        ) : null}
-      </div>
-      {list.isError ? (
+      <PageHeader title="Connections" actions={create(empty ? 'outline' : 'primary')} />
+      {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
       ) : (
         <DataTable
           caption="Connections"
           columns={columns}
-          data={list.data?.items ?? []}
+          data={rows}
           getRowId={(r) => r.id}
           loading={list.isPending}
-          empty={
-            <EmptyState
-              art="plugs"
-              title="No connections"
-              action={
-                <Button asChild iconStart={<Plus aria-hidden />}>
-                  <Link to="/admin/connections/new">New connection</Link>
-                </Button>
-              }
+          fetching={list.isFetching}
+          filtered={filtered}
+          toolbar={
+            <FilterBar
+              search={{ value: text, onChange: setText, placeholder: 'Search connections' }}
+              filters={[
+                {
+                  id: 'health',
+                  label: 'Health',
+                  value: search.health ?? ALL,
+                  defaultValue: ALL,
+                  options: [
+                    { value: ALL, label: 'All' },
+                    ...HEALTH_FILTERS.map(([value, label]) => ({ value, label })),
+                  ],
+                  onChange: (v) => onSearch({ health: v === ALL ? undefined : v }),
+                },
+              ]}
+              onClear={clear}
+            />
+          }
+          emptyFiltered={<FilteredEmpty entity="connection" onClear={clear} />}
+          empty={<EmptyState art="plugs" title="No connections" action={create('primary')} />}
+          footer={
+            <LoadMore
+              hasMore={false}
+              onLoadMore={() => undefined}
+              shown={rows.length}
+              noun={['connection', 'connections']}
+              scoped
             />
           }
         />

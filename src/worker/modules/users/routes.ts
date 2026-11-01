@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   AddUserEmailSchema,
   IdParamSchema,
+  IdSchema,
   OkSchema,
   UpdateUserSchema,
   UserDetailSchema,
@@ -15,17 +16,15 @@ import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { limitBody } from '../auth/body-limit.ts';
-import {
-  addVerifiedEmail,
-  getUserDetail,
-  listUsers,
-  removeEmail,
-  revokeUserSessions,
-  setUserStatus,
-} from './service.ts';
+import { addVerifiedEmail, makePrimaryEmail, removeEmail } from './emails.ts';
+import { getUserDetail, listUsers, setUserStatus } from './service.ts';
+import { revokeUserSession, revokeUserSessions } from './sessions.ts';
 
 type C = Context<AppBindings>;
 const id = (c: C) => c.req.param('id') ?? '';
+const email = (c: C) => c.req.param('email') ?? '';
+/** The requester's own session id hash, so the detail can mark "This device". */
+const ownSession = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
 
 export const usersRoutes = createRouter();
 guard(usersRoutes, requireAdmin);
@@ -54,7 +53,7 @@ register(
     params: IdParamSchema,
     response: UserDetailSchema,
   },
-  async (c: C) => c.json(await getUserDetail(serviceContext(c), id(c))),
+  async (c: C) => c.json(await getUserDetail(serviceContext(c), id(c), ownSession(c))),
 );
 register(
   usersRoutes,
@@ -86,7 +85,8 @@ register(
   },
   async (c: C) => {
     const { email } = AddUserEmailSchema.parse(await c.req.json());
-    return c.json(await addVerifiedEmail(serviceContext(c), currentUserId(c), id(c), email), 201);
+    const ctx = serviceContext(c);
+    return c.json(await addVerifiedEmail(ctx, currentUserId(c), id(c), email, ownSession(c)), 201);
   },
 );
 register(
@@ -100,8 +100,21 @@ register(
     response: UserDetailSchema,
   },
   async (c: C) =>
+    c.json(await removeEmail(serviceContext(c), currentUserId(c), id(c), email(c), ownSession(c))),
+);
+register(
+  usersRoutes,
+  'users',
+  {
+    method: 'post',
+    path: '/{id}/emails/{email}/primary',
+    summary: 'Make an email primary',
+    params: IdParamSchema.extend({ email: z.string() }),
+    response: UserDetailSchema,
+  },
+  async (c: C) =>
     c.json(
-      await removeEmail(serviceContext(c), currentUserId(c), id(c), c.req.param('email') ?? ''),
+      await makePrimaryEmail(serviceContext(c), currentUserId(c), id(c), email(c), ownSession(c)),
     ),
 );
 register(
@@ -116,6 +129,22 @@ register(
   },
   async (c: C) => {
     await revokeUserSessions(serviceContext(c), currentUserId(c), id(c));
+    return c.json({ ok: true as const });
+  },
+);
+register(
+  usersRoutes,
+  'users',
+  {
+    method: 'delete',
+    path: '/{id}/sessions/{sessionId}',
+    summary: 'Revoke one session',
+    params: IdParamSchema.extend({ sessionId: IdSchema }),
+    response: OkSchema,
+  },
+  async (c: C) => {
+    const sessionId = c.req.param('sessionId') ?? '';
+    await revokeUserSession(serviceContext(c), currentUserId(c), id(c), sessionId);
     return c.json({ ok: true as const });
   },
 );

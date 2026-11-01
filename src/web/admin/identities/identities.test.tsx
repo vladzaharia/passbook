@@ -116,12 +116,18 @@ describe('identities list', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('shows empty and error states', async () => {
-    await renderApp('/admin/identities', {
+  it('shows the certificate empty state and the certificate drop in the upload dialog', async () => {
+    const { container } = await renderApp('/admin/identities', {
       session: 'admin',
       handlers: { '/api/v1/identities': () => json({ items: [] }) },
     });
     expect(await screen.findByText('No identities')).toBeInTheDocument();
+    expect(container.querySelector('[data-art="certificate"]')).not.toBeNull();
+    const ui = userEvent.setup();
+    await ui.click(screen.getAllByRole('button', { name: 'Upload' })[1] as HTMLElement);
+    const dialog = await screen.findByRole('dialog');
+    await ui.click(within(dialog).getByLabelText('.p12 file'));
+    expect(dialog.querySelector('[data-art="certificate"]')).not.toBeNull();
   });
 
   it('shows an error', async () => {
@@ -186,9 +192,13 @@ describe('identity detail', () => {
           ),
       },
     });
-    expect(await screen.findByText('APNs binding missing')).toBeInTheDocument();
+    expect(await screen.findByText('Push setup')).toBeInTheDocument();
     expect(screen.getByText(/mtls-certificate upload/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(screen.getByText('Push unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    await userEvent.setup().keyboard('{Escape}');
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -238,7 +248,9 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     expect(screen.queryByLabelText('APNs binding')).not.toBeInTheDocument();
-    await ui.click(await screen.findByLabelText('NFC enabled'));
+    expect(await screen.findByText('Set in the environment')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Default identity' })).toBeDisabled();
+    await ui.click(screen.getByRole('switch', { name: 'NFC' }));
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(body).toBeDefined());
     expect(body).toEqual({ label: 'Platform', nfcEnabled: true, isDefault: true });
@@ -274,7 +286,7 @@ describe('identity detail', () => {
     await renderApp('/admin/identities/i1', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities/i1': () => json(identity()),
+        '/api/v1/identities/i1': () => json(identity({ passCount: 45 })),
         '/api/v1/passes/bulk-reissue': (_u, init) => {
           body = JSON.parse(String(init?.body));
           return json({ workflowInstanceId: 'bulk-1' });
@@ -282,22 +294,20 @@ describe('identity detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click(await screen.findByRole('button', { name: 'Re-sign all passes' }));
+    await ui.click(await screen.findByRole('button', { name: 'More' }));
+    await ui.click(await screen.findByRole('menuitem', { name: 'Re-sign 45 passes' }));
     expect(body).toBeUndefined();
-    await ui.click(
-      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Re-sign' }),
-    );
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Re-sign 45 passes?')).toBeVisible();
+    await ui.click(within(dialog).getByRole('button', { name: 'Re-sign' }));
     await waitFor(() => expect(body).toEqual({ cause: 'resign', identityId: 'i1' }));
   });
 
   it.each([
-    [
-      { health: 'healthy', status: 400, reason: 'BadDeviceToken' },
-      'APNs accepted the certificate.',
-    ],
+    [{ health: 'healthy', status: 400, reason: 'BadDeviceToken' }, 'Healthy'],
     [
       { health: 'failing', status: 403, reason: 'BadCertificate' },
-      'APNs rejected the certificate: BadCertificate.',
+      'Apple rejected the push certificate. Upload a new one.',
     ],
   ])('checks APNs and shows the result inline', async (reply, line) => {
     let calls = 0;
@@ -308,13 +318,15 @@ describe('identity detail', () => {
           calls += 1;
           return json({ ...reply, checkedAt: 1_700_000_000_000 });
         },
-        '/api/v1/identities/i1': () => json(identity()),
+        '/api/v1/identities/i1': () => json(identity({ apnsHealth: 'unknown' })),
       },
     });
     const ui = userEvent.setup();
-    await ui.click(await screen.findByRole('button', { name: 'Check APNs' }));
+    await ui.click(await screen.findByRole('button', { name: 'Check' }));
     expect(await screen.findByText(line)).toBeInTheDocument();
     expect(calls).toBe(1);
+    if (reply.health === 'failing')
+      expect(screen.getByText('BadCertificate')).toHaveClass('font-mono');
   });
 
   it('shows the error when the check fails', async () => {
@@ -327,7 +339,7 @@ describe('identity detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click(await screen.findByRole('button', { name: 'Check APNs' }));
+    await ui.click(await screen.findByRole('button', { name: 'Check' }));
     expect(await screen.findByText(/Too many requests/)).toBeInTheDocument();
   });
 

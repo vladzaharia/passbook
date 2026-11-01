@@ -47,7 +47,7 @@ export function RotateIdentityDialog({
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
       <DialogContent
         title="Rotate certificate"
-        description="Upload the renewed certificate and key for the same pass type ID. Existing passes keep working."
+        description="Same pass type ID. Existing passes keep working."
         size="lg"
         footer={
           <>

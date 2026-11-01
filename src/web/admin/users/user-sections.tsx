@@ -1,254 +1,158 @@
 import { Link } from '@tanstack/react-router';
-import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import type { z } from 'zod';
 import type { UserDetailSchema } from '@/shared/contracts/users.ts';
+import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { ENTITY } from '@/web/lib/entities.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
+import { formatDateTime } from '@/web/lib/format.ts';
+import { removeWithTransition } from '@/web/lib/motion.ts';
 import {
   Badge,
   Button,
   Card,
   CardBody,
   CardHeader,
+  CardLink,
   ConfirmDialog,
-  DataTable,
-  FormField,
-  IconButton,
-  Input,
-  StatusPill,
+  EmailList,
+  EmptyState,
+  KeyValue,
+  ListRow,
+  ListRows,
+  SessionList,
+  toast,
 } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
 import { useIdpUrl } from '../settings/queries.ts';
-import { amrLabel, roleLabel, VERIFIED_VIA_LABEL } from './labels.ts';
+import { isPolaris, methodsLabel, providerLabel } from './labels.ts';
 import { useUserMutations } from './queries.ts';
 
 export type UserDetail = z.infer<typeof UserDetailSchema>;
 
 export function EmailsCard({ user }: { user: UserDetail }) {
-  const { addEmail, removeEmail } = useUserMutations(user.id);
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string>();
+  const { addEmail, removeEmail, makePrimary } = useUserMutations(user.id);
+  const [addError, setAddError] = useState<string>();
   const [removing, setRemoving] = useState<string>();
+  const [promoting, setPromoting] = useState<string>();
+  const busyEmail = addEmail.isPending
+    ? addEmail.variables
+    : makePrimary.isPending
+      ? makePrimary.variables
+      : undefined;
 
-  async function add() {
-    setError(undefined);
+  async function add(email: string) {
+    setAddError(undefined);
     try {
-      await addEmail.mutateAsync(email.trim());
-      setEmail('');
+      await addEmail.mutateAsync(email);
       toast.success('Email added');
     } catch (cause) {
-      setError(errorMessage(cause));
+      setAddError(errorMessage(cause));
     }
   }
 
   return (
     <Card>
       <CardHeader title="Emails" />
-      <CardBody className="flex flex-col gap-4">
-        <ul className="flex flex-col divide-y divide-border">
-          {user.emails.map((e) => (
-            <li key={e.email} className="flex items-center justify-between gap-3 py-2 first:pt-0">
-              <div className="min-w-0">
-                <p className="truncate text-sm text-fg-strong">
-                  {e.email}
-                  {e.email === user.primaryEmail ? (
-                    <StatusPill status="primary" className="ml-2" />
-                  ) : null}
-                </p>
-                <p className="text-xs text-fg-muted">
-                  Verified by {VERIFIED_VIA_LABEL[e.verifiedVia] ?? e.verifiedVia},{' '}
-                  {formatDateTime(e.verifiedAt)}
-                </p>
-              </div>
-              {e.email === user.primaryEmail ? null : (
-                <IconButton
-                  label={`Remove ${e.email}`}
-                  icon={<Trash2 aria-hidden />}
-                  onClick={() => setRemoving(e.email)}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
-        <form
-          className="flex flex-wrap items-end gap-2"
-          onSubmit={(ev) => {
-            ev.preventDefault();
-            if (email.trim()) void add();
-          }}
-        >
-          <FormField label="Add verified email" error={error} className="min-w-56 flex-1">
-            {(p) => (
-              <Input
-                {...p}
-                type="email"
-                value={email}
-                onChange={(ev) => setEmail(ev.target.value)}
-              />
-            )}
-          </FormField>
-          <Button
-            type="submit"
-            variant="outline"
-            iconStart={<Plus aria-hidden />}
-            loading={addEmail.isPending}
-          >
-            Add
-          </Button>
-        </form>
+      <CardBody>
+        <EmailList
+          addLabel="Add verified email"
+          items={user.emails.map((e) => ({
+            email: e.email,
+            primary: e.email === user.primaryEmail,
+            verified: true,
+            pending: false,
+          }))}
+          busyEmail={busyEmail}
+          addError={addError}
+          onAdd={(email) => void add(email)}
+          onRemove={setRemoving}
+          onMakePrimary={setPromoting}
+          onResend={() => undefined}
+          onCancelPending={() => undefined}
+        />
       </CardBody>
       <ConfirmDialog
         open={removing !== undefined}
         onOpenChange={(o) => !o && setRemoving(undefined)}
         title={`Remove ${removing ?? 'email'}?`}
-        description="The user can no longer sign in with this address."
+        description="They can no longer sign in with this address."
         confirmLabel="Remove"
         destructive
         onConfirm={async () => {
-          if (removing) await removeEmail.mutateAsync(removing);
+          if (!removing) return;
+          await removeEmail.mutateAsync(removing);
+          toast.success('Email removed');
+        }}
+      />
+      <ConfirmDialog
+        open={promoting !== undefined}
+        onOpenChange={(o) => !o && setPromoting(undefined)}
+        title="Make primary?"
+        description={`Sign-in emails go to ${promoting ?? ''}.`}
+        confirmLabel="Make primary"
+        onConfirm={async () => {
+          if (!promoting) return;
+          await makePrimary.mutateAsync(promoting);
+          toast.success('Primary email changed');
         }}
       />
     </Card>
   );
 }
 
-export function IdentitiesCard({ user }: { user: UserDetail }) {
-  const idpUrl = useIdpUrl();
-  return (
-    <Card>
-      <CardHeader
-        title="Sign-in identities"
-        actions={
-          idpUrl ? (
-            <a
-              className="text-xs text-accent-fg underline"
-              href={idpUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              Manage groups in Polaris ID
-            </a>
-          ) : null
-        }
-      />
-      <CardBody className="p-0">
-        <DataTable
-          caption="Identities"
-          bare
-          stack={false}
-          data={user.identities}
-          getRowId={(i) => `${i.provider}:${i.subject}`}
-          empty={<p className="p-4 text-sm text-fg-muted">No linked identities.</p>}
-          columns={[
-            {
-              header: 'Provider',
-              id: 'provider',
-              cell: ({ row }) => amrLabel(row.original.provider),
-            },
-            {
-              header: 'Email claim',
-              id: 'claim',
-              cell: ({ row }) => row.original.emailClaim ?? '—',
-            },
-            {
-              header: 'Groups',
-              id: 'groups',
-              cell: ({ row }) => (
-                <span className="flex flex-wrap gap-1">
-                  {row.original.groups.map((g) => (
-                    <Badge key={g}>{g}</Badge>
-                  ))}
-                </span>
-              ),
-            },
-            {
-              header: 'Last used',
-              id: 'used',
-              cell: ({ row }) => formatDateTime(row.original.lastUsedAt),
-            },
-          ]}
-        />
-      </CardBody>
-    </Card>
-  );
-}
-
 export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
-  const { revokeSessions } = useUserMutations(user.id);
+  const { revokeSessions, revokeSession } = useUserMutations(user.id);
   const [confirm, setConfirm] = useState(false);
-  const live = user.sessions.filter((s) => s.revokedAt === null && s.expiresAt > now);
+  const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
+  const live = user.sessions.filter(
+    (s) => s.revokedAt === null && s.expiresAt > now && !gone.has(s.id),
+  );
+  const others = live.filter((s) => !s.current);
+
+  async function revoke(id: string) {
+    try {
+      await revokeSession.mutateAsync(id);
+      removeWithTransition(() => setGone((g) => new Set(g).add(id)));
+      toast.success('Session revoked');
+    } catch (cause) {
+      toast.error(cause);
+    }
+  }
+
   return (
     <Card>
       <CardHeader
         title="Sessions"
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={live.length === 0}
-            onClick={() => setConfirm(true)}
-          >
-            Revoke all
-          </Button>
+          others.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              iconStart={<ACTION_ICON.signOut aria-hidden />}
+              onClick={() => setConfirm(true)}
+            >
+              Revoke all
+            </Button>
+          ) : null
         }
       />
-      <CardBody className="p-0">
-        <DataTable
-          caption="Sessions"
-          bare
-          stack={false}
-          data={user.sessions}
-          getRowId={(s) => s.id}
-          empty={<p className="p-4 text-sm text-fg-muted">No sessions.</p>}
-          columns={[
-            {
-              header: 'State',
-              id: 'state',
-              cell: ({ row }) => {
-                const s = row.original;
-                const state =
-                  s.revokedAt !== null ? 'Revoked' : s.expiresAt <= now ? 'Expired' : 'Active';
-                return (
-                  <StatusPill status={state} tone={state === 'Active' ? 'success' : 'neutral'}>
-                    {state}
-                  </StatusPill>
-                );
-              },
-            },
-            {
-              header: 'Sign-in',
-              id: 'amr',
-              cell: ({ row }) => amrLabel(row.original.amr),
-            },
-            {
-              header: 'Roles',
-              id: 'roles',
-              cell: ({ row }) => row.original.roles.map(roleLabel).join(', '),
-            },
-            {
-              header: 'Last seen',
-              id: 'seen',
-              cell: ({ row }) => formatDateTime(row.original.lastSeenAt),
-            },
-            {
-              header: 'Device',
-              id: 'ua',
-              cell: ({ row }) => (
-                <span className="block max-w-56 truncate" title={row.original.userAgent ?? ''}>
-                  {row.original.userAgent ?? '—'}
-                </span>
-              ),
-            },
-          ]}
-        />
-      </CardBody>
+      {live.length === 0 ? (
+        <EmptyState inline art={ENTITY.device.art} title="No sessions" />
+      ) : (
+        <CardBody>
+          <SessionList
+            items={live}
+            revoking={revokeSession.isPending ? revokeSession.variables : undefined}
+            onRevoke={(id) => void revoke(id)}
+          />
+        </CardBody>
+      )}
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
         title="Revoke all sessions?"
-        description="The user is signed out everywhere."
-        confirmLabel="Revoke"
+        description="They are signed out everywhere."
+        confirmLabel="Revoke all"
         destructive
         onConfirm={async () => {
           await revokeSessions.mutateAsync();
@@ -259,43 +163,77 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
   );
 }
 
-export function PassesCard({ user }: { user: UserDetail }) {
+export function IdentitiesCard({ user }: { user: UserDetail }) {
+  const idpUrl = useIdpUrl();
+  const polaris = user.identities.some((i) => isPolaris(i.provider));
   return (
     <Card>
-      <CardHeader title={`Passes (${user.passCount})`} />
-      {user.passes.length === 0 ? (
-        <CardBody>
-          <p className="text-sm text-fg-muted">No passes.</p>
-        </CardBody>
+      <CardHeader
+        title="Sign-in identities"
+        actions={polaris && idpUrl ? <CardLink href={idpUrl}>Manage in Polaris ID</CardLink> : null}
+      />
+      {user.identities.length === 0 ? (
+        <EmptyState inline art={ENTITY.user.art} title="No linked identities" />
       ) : (
-        <ul className="divide-y divide-border">
-          {user.passes.map(({ id, title, templateName, orgName, status }) => (
-            <li
-              key={id}
-              className="flex flex-col items-start gap-1.5 px-4 py-2 md:flex-row md:items-center md:justify-between md:gap-3"
-            >
-              <div className="min-w-0 max-w-full">
-                <Link
-                  to="/admin/passes/$passId"
-                  params={{ passId: id }}
-                  className="block truncate text-sm font-medium text-accent-fg hover:underline"
-                >
-                  {title}
-                </Link>
-                <p className="truncate text-xs text-fg-muted">
-                  {templateName} · {orgName}
-                </p>
-              </div>
-              <StatusPill status={status} className="shrink-0" />
-            </li>
-          ))}
-        </ul>
+        <CardBody>
+          <ListRows label="Sign-in identities">
+            {user.identities.map((i) => (
+              <ListRow
+                key={`${i.provider}:${i.subject}`}
+                leading={<ENTITY.identity.icon aria-hidden />}
+                title={providerLabel(i.provider)}
+                meta={[i.emailClaim, `Last used ${formatDateTime(i.lastUsedAt, '—')}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+                trailing={
+                  i.groups.length ? (
+                    <span className="flex max-w-48 flex-wrap justify-end gap-1">
+                      {i.groups.map((g) => (
+                        <Badge key={g}>{g}</Badge>
+                      ))}
+                    </span>
+                  ) : null
+                }
+              />
+            ))}
+          </ListRows>
+        </CardBody>
       )}
-      {user.passCount > user.passes.length ? (
-        <p className="border-t border-border px-4 py-3 text-xs text-fg-muted">
-          Showing {user.passes.length} of {user.passCount}.
-        </p>
-      ) : null}
+    </Card>
+  );
+}
+
+/** The aside: what the account is, at a glance. */
+export function AccountCard({ user }: { user: UserDetail }) {
+  return (
+    <Card>
+      <CardHeader title="Account" />
+      <CardBody>
+        <KeyValue
+          items={[
+            { label: 'Signs in with', value: methodsLabel(user.signInMethods) },
+            {
+              label: 'Passes',
+              value:
+                user.passCount > 0 ? (
+                  <Link
+                    to="/admin/passes"
+                    search={{ q: user.primaryEmail }}
+                    className="inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums hover:underline"
+                  >
+                    <ENTITY.pass.icon aria-hidden className="size-4" />
+                    {user.passCount} {user.passCount === 1 ? 'pass' : 'passes'}
+                  </Link>
+                ) : (
+                  'None'
+                ),
+            },
+            { label: 'Created', value: formatDateTime(user.createdAt) },
+            { label: 'Last sign-in', value: formatDateTime(user.lastLoginAt, '—') },
+            { label: 'ID', value: user.id, mono: true },
+          ]}
+        />
+      </CardBody>
     </Card>
   );
 }

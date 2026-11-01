@@ -1,21 +1,24 @@
 import { Link } from '@tanstack/react-router';
-import { Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useEffect, useMemo, useState } from 'react';
+import type { z } from 'zod';
+import type { UserSummarySchema } from '@/shared/contracts/users.ts';
+import { formatDateTime } from '@/web/lib/format.ts';
 import {
-  Badge,
-  Button,
   DataTable,
   EmptyState,
+  EntityAvatar,
   ErrorState,
-  Input,
+  FilterBar,
+  FilteredEmpty,
   LoadMore,
   PageHeader,
-  Select,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
-import { roleLabel } from './labels.ts';
+import { methodsLabel } from './labels.ts';
 import { useUserList } from './queries.ts';
+
+type UserRow = z.infer<typeof UserSummarySchema>;
 
 export interface UsersSearch {
   q?: string | undefined;
@@ -29,6 +32,84 @@ export function parseUsersSearch(raw: Record<string, unknown>): UsersSearch {
 }
 
 const ALL = 'all';
+
+const COLUMNS: ColumnDef<UserRow, never>[] = [
+  {
+    header: 'User',
+    id: 'user',
+    cell: ({ row }) => {
+      const u = row.original;
+      const name = u.name ?? u.primaryEmail;
+      return (
+        <div className="flex min-h-10 min-w-0 items-center gap-3">
+          <EntityAvatar kind="user" id={u.id} name={name} />
+          <div className="min-w-0">
+            <Link
+              to="/admin/users/$userId"
+              params={{ userId: u.id }}
+              className="block truncate font-medium text-accent-fg hover:underline"
+            >
+              {name}
+            </Link>
+            {u.name ? (
+              <span className="block truncate text-xs text-fg-muted">{u.primaryEmail}</span>
+            ) : null}
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    header: 'Status',
+    id: 'status',
+    cell: ({ row }) => <StatusPill status={row.original.status} />,
+  },
+  {
+    header: 'Roles',
+    id: 'roles',
+    meta: { stackHidden: true },
+    cell: ({ row }) =>
+      row.original.lastRoles.length ? (
+        <span className="flex flex-wrap gap-1">
+          {row.original.lastRoles.map((r) => (
+            <StatusPill key={r} status={r} />
+          ))}
+        </span>
+      ) : (
+        '—'
+      ),
+  },
+  {
+    header: 'Signs in with',
+    id: 'methods',
+    meta: { nowrap: true, hideBelow: 'lg' },
+    cell: ({ row }) => methodsLabel(row.original.signInMethods),
+  },
+  {
+    header: 'Passes',
+    id: 'passes',
+    meta: { numeric: true },
+    cell: ({ row }) =>
+      row.original.passCount > 0 ? (
+        <Link
+          to="/admin/passes"
+          search={{ q: row.original.primaryEmail }}
+          aria-label={`${row.original.passCount} passes held by ${row.original.primaryEmail}`}
+          className="rounded-sm text-accent-fg tabular-nums hover:underline"
+        >
+          {row.original.passCount}
+        </Link>
+      ) : (
+        <span className="text-fg-muted tabular-nums">0</span>
+      ),
+  },
+  {
+    header: 'Last sign-in',
+    id: 'last',
+    meta: { nowrap: true, hideBelow: 'lg', stackHidden: true },
+    cell: ({ row }) => formatDateTime(row.original.lastLoginAt, '—'),
+  },
+];
 
 export function UsersPage({
   search,
@@ -48,130 +129,76 @@ export function UsersPage({
   }, [text, search, onSearch]);
 
   const list = useUserList(search);
-  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.status);
 
   return (
     <>
       <PageHeader title="Users" />
-      <div className="mb-4 grid gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <div className="relative w-full sm:w-64">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-fg-subtle"
-          />
-          <Input
-            type="search"
-            aria-label="Search users"
-            placeholder="Name or email"
-            className="pl-8"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </div>
-        <Select
-          aria-label="Status"
-          className="sm:w-44"
-          value={search.status ?? ALL}
-          onValueChange={(v) =>
-            onSearch({ ...search, status: v === ALL ? undefined : (v as 'active' | 'disabled') })
-          }
-          options={[
-            { value: ALL, label: 'Status: all' },
-            { value: 'active', label: 'Active' },
-            { value: 'disabled', label: 'Disabled' },
-          ]}
-        />
-      </div>
-      {list.isError ? (
+      {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (
-        <>
-          <DataTable
-            caption="Users"
-            loading={list.isPending}
-            data={rows}
-            getRowId={(u) => u.id}
-            empty={
-              <EmptyState
-                art="people"
-                variant={filtered ? 'filtered' : 'empty'}
-                title={filtered ? 'No users match' : 'No users yet'}
-                description={filtered ? undefined : 'Users appear after their first sign-in.'}
-                action={
-                  filtered ? (
-                    <Button variant="outline" onClick={() => onSearch({})}>
-                      Clear filters
-                    </Button>
-                  ) : undefined
-                }
-              />
-            }
-            columns={[
-              {
-                header: 'User',
-                id: 'user',
-                cell: ({ row }) => (
-                  <div className="flex min-h-10 min-w-0 flex-col justify-center">
-                    <Link
-                      to="/admin/users/$userId"
-                      params={{ userId: row.original.id }}
-                      className="font-medium text-accent-fg hover:underline"
-                    >
-                      {row.original.name ?? row.original.primaryEmail}
-                    </Link>
-                    {row.original.name ? (
-                      <span className="block truncate text-xs text-fg-muted">
-                        {row.original.primaryEmail}
-                      </span>
-                    ) : null}
-                  </div>
-                ),
-              },
-              {
-                header: 'Status',
-                id: 'status',
-                cell: ({ row }) => (
-                  <StatusPill
-                    status={row.original.status}
-                    tone={row.original.status === 'active' ? 'success' : 'neutral'}
-                  >
-                    {row.original.status === 'active' ? 'Active' : 'Disabled'}
-                  </StatusPill>
-                ),
-              },
-              {
-                header: 'Roles',
-                id: 'roles',
-                cell: ({ row }) => (
-                  <span className="flex flex-wrap gap-1">
-                    {row.original.lastRoles.map((r) => (
-                      <Badge key={r}>{roleLabel(r)}</Badge>
-                    ))}
-                  </span>
-                ),
-              },
-              {
-                header: 'Last sign-in',
-                id: 'last',
-                meta: { nowrap: true },
-                cell: ({ row }) => formatDateTime(row.original.lastLoginAt),
-              },
-              {
-                header: 'Created',
-                id: 'created',
-                meta: { hideBelow: 'lg', stackHidden: true, nowrap: true },
-                cell: ({ row }) => formatDateTime(row.original.createdAt),
-              },
-            ]}
-          />
-          <LoadMore
-            hasMore={Boolean(list.hasNextPage)}
-            loading={list.isFetchingNextPage}
-            onLoadMore={() => list.fetchNextPage()}
-            shown={rows.length}
-          />
-        </>
+        <DataTable
+          caption="Users"
+          loading={list.isPending}
+          fetching={list.isFetching && !list.isFetchingNextPage}
+          data={rows}
+          getRowId={(u) => u.id}
+          filtered={filtered}
+          toolbar={
+            <FilterBar
+              search={{ value: text, onChange: setText, placeholder: 'Search users' }}
+              filters={[
+                {
+                  id: 'status',
+                  label: 'Status',
+                  value: search.status ?? ALL,
+                  defaultValue: ALL,
+                  options: [
+                    { value: ALL, label: 'All' },
+                    { value: 'active', label: 'Active' },
+                    { value: 'disabled', label: 'Disabled' },
+                  ],
+                  onChange: (v) =>
+                    onSearch({
+                      ...search,
+                      status: v === ALL ? undefined : (v as 'active' | 'disabled'),
+                    }),
+                },
+              ]}
+              onClear={() => {
+                setText('');
+                onSearch({});
+              }}
+            />
+          }
+          emptyFiltered={
+            <FilteredEmpty
+              entity="user"
+              onClear={() => {
+                setText('');
+                onSearch({});
+              }}
+            />
+          }
+          empty={
+            <EmptyState
+              art="people"
+              title="No users yet"
+              description="Users appear after their first sign-in."
+            />
+          }
+          footer={
+            <LoadMore
+              hasMore={Boolean(list.hasNextPage)}
+              loading={list.isFetchingNextPage}
+              onLoadMore={() => list.fetchNextPage()}
+              shown={rows.length}
+              noun={['user', 'users']}
+            />
+          }
+          columns={COLUMNS}
+        />
       )}
     </>
   );

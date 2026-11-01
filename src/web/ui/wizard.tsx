@@ -28,6 +28,8 @@ export interface WizardProps {
   formId?: string;
   /** "Next" on early steps, "Create" on the last. */
   nextLabel?: string;
+  /** Next or Create cannot run yet (the step explains why). */
+  nextDisabled?: boolean;
   busy?: boolean;
   children: ReactNode;
 }
@@ -122,10 +124,11 @@ export function WizardBar({
   onNext,
   formId,
   nextLabel = 'Next',
+  nextDisabled,
   busy,
 }: Pick<
   WizardProps,
-  'dirty' | 'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'busy'
+  'dirty' | 'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'nextDisabled' | 'busy'
 >) {
   const [asking, setAsking] = useState(false);
   return (
@@ -151,6 +154,7 @@ export function WizardBar({
             type={formId ? 'submit' : 'button'}
             form={formId}
             loading={busy}
+            disabled={nextDisabled}
             onClick={formId ? undefined : onNext}
           >
             {nextLabel}

@@ -9,6 +9,8 @@ export interface TwoPaneProps {
   asideFrom?: 'lg' | 'xl';
   /** The aside sticks below the top bar while the main column scrolls. */
   stickyAside?: boolean;
+  /** The aside's landmark name; the shell's sidebar is another complementary landmark. */
+  asideLabel?: string;
   className?: string;
 }
 
@@ -18,6 +20,7 @@ export function TwoPane({
   aside,
   asideFrom = 'xl',
   stickyAside,
+  asideLabel = 'Summary',
   className,
 }: TwoPaneProps) {
   return (
@@ -32,6 +35,7 @@ export function TwoPane({
     >
       <div className="flex min-w-0 flex-col gap-6">{children}</div>
       <aside
+        aria-label={asideLabel}
         className={cn(
           'flex min-w-0 flex-col gap-6',
           stickyAside &&

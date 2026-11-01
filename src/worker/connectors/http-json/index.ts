@@ -32,12 +32,41 @@ const config = z.object({
       if (!URL.canParse(v)) return true;
       const u = new URL(v);
       return !u.search && !u.hash && !u.username && !u.password;
-    }, 'No query, fragment or credentials.'),
+    }, 'No query, fragment or credentials.')
+    .meta({
+      'x-label': 'Base URL',
+      'x-help': 'HTTPS. No query string.',
+      'x-placeholder': 'https://api.example.com/v1',
+      'x-order': 1,
+    }),
   recordPath: path
     .refine((v) => v.split('{ref}').length === 2, 'Must contain {ref} once.')
-    .default('/{ref}'),
-  recordPointer: pointer.default(''),
-  holderEmailPointer: pointer.optional(),
+    .default('/{ref}')
+    .meta({
+      'x-label': 'Record path',
+      'x-widget': 'text',
+      'x-help': 'Added to the base URL. {ref} is the record ID.',
+      'x-placeholder': '/members/{ref}',
+      'x-order': 2,
+    }),
+  recordPointer: pointer.default('').meta({
+    'x-label': 'Record location',
+    'x-help': 'JSON pointer to the record in the response. Empty means the whole body.',
+    'x-placeholder': '/data',
+    'x-order': 3,
+  }),
+  holderEmailPointer: pointer.optional().meta({
+    'x-label': 'Holder email',
+    'x-help': 'JSON pointer to the email in the response.',
+    'x-placeholder': '/email',
+    'x-order': 4,
+  }),
+  testRef: z.string().max(200).optional().meta({
+    'x-label': 'Test record ID',
+    'x-help': 'Fetched by Test.',
+    'x-placeholder': 'm-001',
+    'x-order': 5,
+  }),
   auth: z
     .object({
       type: z
@@ -48,48 +77,85 @@ const config = z.object({
           'x-enumLabels': {
             none: 'None',
             bearer: 'Bearer token',
-            basic: 'Username and password',
-            header: 'Custom header',
+            basic: 'Basic',
+            header: 'Header',
           },
         }),
-      headerName: z.string().refine(isAllowedHeaderName, 'Header not allowed.').optional(),
+      headerName: z
+        .string()
+        .refine(isAllowedHeaderName, 'Header not allowed.')
+        .optional()
+        .meta({ 'x-label': 'Header name', 'x-placeholder': 'X-Api-Key', 'x-auth': ['header'] }),
     })
-    .default({ type: 'none' }),
+    .default({ type: 'none' })
+    .meta({ 'x-label': 'Authentication' }),
   list: z
     .object({
-      path,
+      path: path.meta({
+        'x-label': 'List path',
+        'x-widget': 'text',
+        'x-help': 'Returns changed records page by page.',
+        'x-placeholder': '/members',
+      }),
       cursorParam: z
         .string()
         .regex(/^[A-Za-z0-9_.-]{1,40}$/)
-        .default('cursor'),
-      cursorPointer: pointer.default('/cursor'),
-      itemsPointer: pointer.default('/items'),
-      refPointer: pointer.default('/id'),
-      recordPointer: pointer.default(''),
-      deletedPointer: pointer.optional(),
-      hasMorePointer: pointer.optional(),
+        .default('cursor')
+        .meta({ 'x-label': 'Cursor parameter' }),
+      cursorPointer: pointer.default('/cursor').meta({ 'x-label': 'Next cursor' }),
+      itemsPointer: pointer.default('/items').meta({ 'x-label': 'Items' }),
+      refPointer: pointer.default('/id').meta({ 'x-label': 'Item ID' }),
+      recordPointer: pointer.default('').meta({ 'x-label': 'Item record' }),
+      deletedPointer: pointer.optional().meta({ 'x-label': 'Deleted flag' }),
+      hasMorePointer: pointer.optional().meta({ 'x-label': 'More pages flag' }),
     })
-    .optional(),
+    .optional()
+    .meta({ 'x-label': 'List endpoint' }),
   webhook: z
     .object({
-      eventIdPointer: pointer.default('/id'),
-      refsPointer: pointer.default('/refs'),
-      signatureHeader: z.string().refine(isAllowedHeaderName).default(SIGNATURE_HEADER),
-      timestampHeader: z.string().refine(isAllowedHeaderName).default(TIMESTAMP_HEADER),
+      eventIdPointer: pointer.default('/id').meta({ 'x-label': 'Event ID' }),
+      refsPointer: pointer.default('/refs').meta({ 'x-label': 'Record IDs' }),
+      signatureHeader: z
+        .string()
+        .refine(isAllowedHeaderName)
+        .default(SIGNATURE_HEADER)
+        .meta({ 'x-label': 'Signature header' }),
+      timestampHeader: z
+        .string()
+        .refine(isAllowedHeaderName)
+        .default(TIMESTAMP_HEADER)
+        .meta({ 'x-label': 'Timestamp header' }),
     })
     .default({
       eventIdPointer: '/id',
       refsPointer: '/refs',
       signatureHeader: SIGNATURE_HEADER,
       timestampHeader: TIMESTAMP_HEADER,
-    }),
-  testRef: z.string().max(200).optional(),
+    })
+    .meta({ 'x-label': 'Webhook' }),
 });
+/** `x-auth` names the auth types a secret belongs to, so the form shows only those. */
 const secrets = z.object({
-  token: z.string().max(4096).optional(),
-  username: z.string().max(256).optional(),
-  password: z.string().max(1024).optional(),
-  headerValue: z.string().max(4096).optional(),
+  token: z
+    .string()
+    .max(4096)
+    .optional()
+    .meta({ 'x-label': 'Token', 'x-auth': ['bearer'] }),
+  username: z
+    .string()
+    .max(256)
+    .optional()
+    .meta({ 'x-label': 'Username', 'x-auth': ['basic'] }),
+  password: z
+    .string()
+    .max(1024)
+    .optional()
+    .meta({ 'x-label': 'Password', 'x-auth': ['basic'] }),
+  headerValue: z
+    .string()
+    .max(4096)
+    .optional()
+    .meta({ 'x-label': 'Header value', 'x-auth': ['header'] }),
 });
 
 type Config = z.infer<typeof config>;
@@ -140,6 +206,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
   type: 'http-json',
   version: 1,
   displayName: 'HTTP JSON',
+  description: 'Fetch records from a JSON API.',
   capabilities: { poll: true, delta: true, webhook: true },
   configSchema: config,
   secretSchema: secrets,
