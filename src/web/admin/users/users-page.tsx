@@ -13,6 +13,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
+import { roleLabel } from './labels.ts';
 import { useUserList } from './queries.ts';
 
 export interface UsersSearch {
@@ -52,8 +53,8 @@ export function UsersPage({
   return (
     <>
       <PageHeader title="Users" />
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative w-full max-w-sm">
+      <div className="mb-4 grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:w-64">
           <Search
             aria-hidden
             className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-fg-subtle"
@@ -69,7 +70,7 @@ export function UsersPage({
         </div>
         <Select
           aria-label="Status"
-          className="w-40"
+          className="sm:w-44"
           value={search.status ?? ALL}
           onValueChange={(v) =>
             onSearch({ ...search, status: v === ALL ? undefined : (v as 'active' | 'disabled') })
@@ -102,18 +103,20 @@ export function UsersPage({
                 header: 'User',
                 id: 'user',
                 cell: ({ row }) => (
-                  <Link
-                    to="/admin/users/$userId"
-                    params={{ userId: row.original.id }}
-                    className="font-medium text-accent-fg hover:underline"
-                  >
-                    {row.original.name ?? row.original.primaryEmail}
+                  <div className="flex min-h-10 min-w-0 flex-col justify-center">
+                    <Link
+                      to="/admin/users/$userId"
+                      params={{ userId: row.original.id }}
+                      className="font-medium text-accent-fg hover:underline"
+                    >
+                      {row.original.name ?? row.original.primaryEmail}
+                    </Link>
                     {row.original.name ? (
-                      <span className="block text-xs font-normal text-fg-muted">
+                      <span className="block truncate text-xs text-fg-muted">
                         {row.original.primaryEmail}
                       </span>
                     ) : null}
-                  </Link>
+                  </div>
                 ),
               },
               {
@@ -132,9 +135,9 @@ export function UsersPage({
                 header: 'Roles',
                 id: 'roles',
                 cell: ({ row }) => (
-                  <span className="flex gap-1">
+                  <span className="flex flex-wrap gap-1">
                     {row.original.lastRoles.map((r) => (
-                      <Badge key={r}>{r}</Badge>
+                      <Badge key={r}>{roleLabel(r)}</Badge>
                     ))}
                   </span>
                 ),

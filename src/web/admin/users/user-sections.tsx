@@ -20,6 +20,7 @@ import {
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { useIdpUrl } from '../settings/queries.ts';
+import { amrLabel, roleLabel, VERIFIED_VIA_LABEL } from './labels.ts';
 import { useUserMutations } from './queries.ts';
 
 export type UserDetail = z.infer<typeof UserDetailSchema>;
@@ -52,13 +53,12 @@ export function EmailsCard({ user }: { user: UserDetail }) {
                 <p className="truncate text-sm text-fg-strong">
                   {e.email}
                   {e.email === user.primaryEmail ? (
-                    <Badge className="ml-2" tone="accent">
-                      Primary
-                    </Badge>
+                    <StatusPill status="primary" className="ml-2" />
                   ) : null}
                 </p>
                 <p className="text-xs text-fg-muted">
-                  Verified via {e.verifiedVia.replace('_', ' ')}, {formatDateTime(e.verifiedAt)}
+                  Verified by {VERIFIED_VIA_LABEL[e.verifiedVia] ?? e.verifiedVia},{' '}
+                  {formatDateTime(e.verifiedAt)}
                 </p>
               </div>
               {e.email === user.primaryEmail ? null : (
@@ -127,20 +127,24 @@ export function IdentitiesCard({ user }: { user: UserDetail }) {
           ) : null
         }
       />
-      <CardBody>
+      <CardBody className="p-0">
         <DataTable
           caption="Identities"
           bare
           stack={false}
           data={user.identities}
           getRowId={(i) => `${i.provider}:${i.subject}`}
-          empty={<p className="text-sm text-fg-muted">No linked identities.</p>}
+          empty={<p className="p-4 text-sm text-fg-muted">No linked identities.</p>}
           columns={[
-            { header: 'Provider', accessorKey: 'provider' },
+            {
+              header: 'Provider',
+              id: 'provider',
+              cell: ({ row }) => amrLabel(row.original.provider),
+            },
             {
               header: 'Email claim',
               id: 'claim',
-              cell: ({ row }) => row.original.emailClaim ?? '',
+              cell: ({ row }) => row.original.emailClaim ?? '—',
             },
             {
               header: 'Groups',
@@ -184,14 +188,14 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
           </Button>
         }
       />
-      <CardBody>
+      <CardBody className="p-0">
         <DataTable
           caption="Sessions"
           bare
           stack={false}
           data={user.sessions}
           getRowId={(s) => s.id}
-          empty={<p className="text-sm text-fg-muted">No sessions.</p>}
+          empty={<p className="p-4 text-sm text-fg-muted">No sessions.</p>}
           columns={[
             {
               header: 'State',
@@ -207,11 +211,15 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
                 );
               },
             },
-            { header: 'Sign-in', accessorKey: 'amr' },
+            {
+              header: 'Sign-in',
+              id: 'amr',
+              cell: ({ row }) => amrLabel(row.original.amr),
+            },
             {
               header: 'Roles',
               id: 'roles',
-              cell: ({ row }) => row.original.roles.join(', '),
+              cell: ({ row }) => row.original.roles.map(roleLabel).join(', '),
             },
             {
               header: 'Last seen',
@@ -223,7 +231,7 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
               id: 'ua',
               cell: ({ row }) => (
                 <span className="block max-w-56 truncate" title={row.original.userAgent ?? ''}>
-                  {row.original.userAgent ?? ''}
+                  {row.original.userAgent ?? '—'}
                 </span>
               ),
             },
@@ -249,26 +257,34 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
 export function PassesCard({ user }: { user: UserDetail }) {
   return (
     <Card>
-      <CardHeader title={`Passes (${user.passes.length})`} />
-      <CardBody>
-        {user.passes.length === 0 ? (
+      <CardHeader title={`Passes (${user.passCount})`} />
+      {user.passes.length === 0 ? (
+        <CardBody>
           <p className="text-sm text-fg-muted">No passes.</p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {user.passes.map(({ id, title }) => (
-              <li key={id}>
-                <Link
-                  to="/admin/passes/$passId"
-                  params={{ passId: id }}
-                  className="text-sm text-accent-fg underline"
-                >
-                  {title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardBody>
+        </CardBody>
+      ) : (
+        <ul className="divide-y divide-border">
+          {user.passes.map(({ id, title }) => (
+            <li key={id} className="flex items-center justify-between gap-3 px-4 py-2">
+              <Link
+                to="/admin/passes/$passId"
+                params={{ passId: id }}
+                className="min-w-0 truncate text-sm font-medium text-accent-fg hover:underline"
+              >
+                {title}
+              </Link>
+              <span className="shrink-0 font-mono text-xs text-fg-muted" title={id}>
+                {id.slice(-8)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {user.passCount > user.passes.length ? (
+        <p className="border-t border-border px-4 py-3 text-xs text-fg-muted">
+          Showing {user.passes.length} of {user.passCount}.
+        </p>
+      ) : null}
     </Card>
   );
 }
