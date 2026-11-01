@@ -1,0 +1,45 @@
+/*
+ * Check APNs (motion-and-expression.md "Action verbs", Stethoscope): two rings leave the seal while
+ * the check runs (640 ms, the second at 320 ms; they carry state, so they run under reduced
+ * motion). The server's answer pops the seal (healthy) or shakes it (failing), once.
+ */
+@keyframes wl-apns-ring {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+@keyframes wl-apns-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+.wl-apns-seal {
+  position: relative;
+}
+.wl-apns-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1.5px solid var(--pk-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.wl-apns-seal[data-pending] > .wl-apns-ring {
+  animation: wl-apns-ring 640ms var(--wl-ease-out) infinite;
+}
+.wl-apns-seal[data-pending] > .wl-apns-ring:nth-child(2) {
+  animation-delay: 320ms;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-apns-seal[data-result="healthy"] > svg {
+    animation: wl-apns-pop 300ms var(--wl-ease-bounce);
+  }
+  .wl-apns-seal[data-result="failing"] {
+    animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+  }
+}

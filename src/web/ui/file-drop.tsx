@@ -1,6 +1,7 @@
 import { Upload } from 'lucide-react';
 import { type DragEvent, useId, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
+import { type ArtName, EntityArt } from './art/index.ts';
 
 export interface FileDropProps {
   onFiles: (files: File[]) => void;
@@ -10,6 +11,8 @@ export interface FileDropProps {
   maxBytes?: number;
   label?: string;
   disabled?: boolean;
+  /** The entity's art (sm) in place of the upload glyph: certificate, template. */
+  art?: ArtName;
   className?: string;
 }
 
@@ -35,6 +38,7 @@ export function FileDrop({
   maxBytes,
   label = 'Drop files or choose',
   disabled,
+  art,
   className,
 }: FileDropProps) {
   const id = useId();
@@ -63,6 +67,7 @@ export function FileDrop({
     <div className={className}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: drag target only; the file input inside is the keyboard path */}
       <div
+        data-art-host={art ? '' : undefined}
         onDragOver={(e) => {
           e.preventDefault();
           if (!disabled) setOver(true);
@@ -76,7 +81,7 @@ export function FileDrop({
           disabled && 'opacity-50',
         )}
       >
-        <Upload aria-hidden className="size-6" />
+        {art ? <EntityArt name={art} size="sm" /> : <Upload aria-hidden className="size-6" />}
         <label
           htmlFor={id}
           className="cursor-pointer font-medium text-fg-strong after:absolute after:inset-0"
