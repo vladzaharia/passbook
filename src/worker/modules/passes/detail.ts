@@ -4,6 +4,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listOutboxForPass } from '../delivery/repo.ts';
+import { replacedBy } from './assets.ts';
 import { resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import {
@@ -53,14 +54,16 @@ export async function assetNamesOf(
   pass: Pick<Pass, 'id' | 'orgId' | 'templateId' | 'templateVersion'>,
 ): Promise<string[]> {
   const names = new Set<string>();
+  const overrides = await listAssets(ctx.env.DB, pass.id);
+  const replaced = replacedBy(overrides.map((a) => a.name));
   try {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-    for (const a of template.assets) names.add(a.name);
+    for (const a of template.assets) if (!replaced(a.name)) names.add(a.name);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.warn('pass.asset_names_unavailable', { passId: pass.id, code: error.code });
   }
-  for (const a of await listAssets(ctx.env.DB, pass.id)) names.add(a.name);
+  for (const a of overrides) names.add(a.name);
   return [...names];
 }
 

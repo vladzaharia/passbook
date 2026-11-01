@@ -7,6 +7,7 @@ import { deletePassAsset, putPassAsset } from './asset-service.ts';
 import { reissuePage } from './bulk.ts';
 import { createPassIdempotent } from './create.ts';
 import { overrideDeps } from './deps.ts';
+import { assetNamesOf } from './detail.ts';
 import { publishPass } from './publish.ts';
 import { getPass } from './repo.ts';
 import {
@@ -75,6 +76,36 @@ describe('image overrides', () => {
     await expect(
       updatePass(kit.ctx, actor, pass.id, { input: { memberName: 'Rebuilt' } }, { scope: null }),
     ).resolves.toBeDefined();
+  });
+
+  it('replaces every template scale of an overridden slot', async () => {
+    const id = `tpl-scales-${kit.fx.ids.token(4)}`;
+    const logo = makePng(40, 40);
+    const t = kit.registry.add({
+      id,
+      version: 'v1',
+      manifest: kit.template.manifest,
+      passJson: kit.template.passJson,
+      assets: { 'icon.png': TINY_PNG, 'logo.png': logo, 'logo@2x.png': logo, 'logo@3x.png': logo },
+    });
+    await persistTemplate(kit.fx, t);
+    const pass = await createPassRow(kit.ctx, {
+      orgId: kit.org.id,
+      templateId: id,
+      templateVersion: 'v1',
+      input: { memberName: 'Scales' },
+      source: 'manual',
+      actor,
+    });
+    await putPassAsset(kit.ctx, actor, pass.id, 'logo.png', makePng(30, 30), null);
+    const published = await getPass(kit.env.DB, pass.id);
+    const names = expectValidZip(await bytesOf(published?.objectKey ?? ''));
+    expect(names).toContain('logo.png');
+    expect(names).not.toContain('logo@2x.png');
+    expect(names).not.toContain('logo@3x.png');
+    expect(names).toContain('icon.png');
+    const served = await assetNamesOf(kit.ctx, published ?? pass);
+    expect(served.filter((n) => n.startsWith('logo'))).toEqual(['logo.png']);
   });
 
   it('rejects truncated and corrupt PNGs', async () => {

@@ -6,7 +6,7 @@ import type { AssetEntry, PassJson, Personalization } from '../../../passkit/typ
 import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { parseAssetName } from './assets.ts';
+import { parseAssetName, replacedBy } from './assets.ts';
 import { depsOf } from './deps.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
 
@@ -68,7 +68,7 @@ async function withOverrides(
   overrides: AssetRow[],
 ): Promise<{ template: ResolvedTemplate; registry: TemplateRegistry }> {
   if (overrides.length === 0) return { template, registry };
-  const names = new Set(overrides.map((a) => a.name));
+  const replaced = replacedBy(overrides.map((a) => a.name));
   const entries: AssetEntry[] = [];
   for (const a of overrides) {
     const { slot, scale } = parseAssetName(a.name);
@@ -88,7 +88,7 @@ async function withOverrides(
   return {
     template: {
       ...template,
-      assets: [...template.assets.filter((a) => !names.has(a.name)), ...entries],
+      assets: [...template.assets.filter((a) => !replaced(a.name)), ...entries],
     },
     registry: {
       list: (query) => registry.list(query),

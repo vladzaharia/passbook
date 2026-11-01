@@ -1,3 +1,4 @@
+import { slotOf } from '../../../passkit/template/package.ts';
 import type { ImageSlot } from '../../../passkit/types.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import { isPngInfo, parsePng } from '../templates/package/png.ts';
@@ -31,6 +32,19 @@ export function parseAssetName(name: string): ParsedAssetName {
     throw new ValidationError(`Unknown image slot in ${name}.`, [], 'ASSET_SLOT');
   }
   return { slot, scale: match[2] === '3' ? 3 : match[2] === '2' ? 2 : 1 };
+}
+
+/**
+ * Matches template files that pass overrides replace. An override replaces every scale and locale
+ * of its slot; otherwise Wallet on a Retina device would pick the template's @2x/@3x file.
+ */
+export function replacedBy(overrideNames: Iterable<string>): (templateName: string) => boolean {
+  const slots = new Set<string>();
+  for (const name of overrideNames) slots.add(parseAssetName(name).slot);
+  return (templateName) => {
+    const slot = slotOf(templateName);
+    return slot !== null && slots.has(slot);
+  };
 }
 
 export interface PngInfo {
