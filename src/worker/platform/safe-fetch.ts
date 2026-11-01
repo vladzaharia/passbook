@@ -65,22 +65,71 @@ export function isPrivateIp(ip: string): boolean {
     );
   }
   if (!bare.includes(':')) return true;
-  const mapped = /^(?:::ffff:|::)(\d+\.\d+\.\d+\.\d+)$/.exec(bare);
-  if (mapped?.[1]) return isPrivateIp(mapped[1]);
+  const h = expandIpv6(bare);
+  if (!h) return true;
+  const [h0 = 0, h1 = 0, h2 = 0, h3 = 0, h4 = 0, h5 = 0, h6 = 0, h7 = 0] = h;
+  const embedded = `${h6 >> 8}.${h6 & 255}.${h7 >> 8}.${h7 & 255}`;
+  // ::ffff:a.b.c.d (mapped) and ::a.b.c.d (compatible) carry an IPv4 address.
+  if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0 && (h5 === 0xffff || h5 === 0))
+    return h5 === 0 && h6 === 0 && h7 <= 1 ? true : isPrivateIp(embedded);
   return (
-    bare === '::' ||
-    bare === '::1' ||
-    bare.startsWith('fe8') ||
-    bare.startsWith('fe9') ||
-    bare.startsWith('fea') ||
-    bare.startsWith('feb') ||
-    bare.startsWith('fc') ||
-    bare.startsWith('fd') ||
-    bare.startsWith('ff') ||
-    bare.startsWith('64:ff9b') ||
-    bare.startsWith('2001:db8') ||
-    bare.startsWith('::ffff:')
+    (h0 & 0xffc0) === 0xfe80 || // fe80::/10 link-local
+    (h0 & 0xfe00) === 0xfc00 || // fc00::/7 unique local
+    (h0 & 0xff00) === 0xff00 || // ff00::/8 multicast
+    (h0 === 0x64 && h1 === 0xff9b) || // 64:ff9b::/96 and 64:ff9b:1::/48 NAT64
+    (h0 === 0x100 && h1 === 0 && h2 === 0 && h3 === 0) || // 100::/64 discard
+    (h0 === 0x2001 && h1 === 0) || // 2001::/32 Teredo
+    (h0 === 0x2001 && h1 === 0xdb8) || // documentation
+    h0 === 0x2002 // 2002::/16 6to4
   );
+}
+
+/** Eight 16-bit groups, or null when the text is not a valid IPv6 address. */
+function expandIpv6(text: string): number[] | null {
+  let ip = text.split('%')[0] ?? '';
+  const tail = /(\d+\.\d+\.\d+\.\d+)$/.exec(ip)?.[1];
+  if (tail) {
+    const v4 = ipv4ToInt(tail);
+    if (!v4) return null;
+    const [a = 0, b = 0, c = 0, d = 0] = v4;
+    ip = `${ip.slice(0, -tail.length)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  }
+  const halves = ip.split('::');
+  if (halves.length > 2) return null;
+  const parse = (part: string) => (part === '' ? [] : part.split(':'));
+  const head = parse(halves[0] ?? '');
+  const rest = halves.length === 2 ? parse(halves[1] ?? '') : [];
+  const fill = halves.length === 2 ? 8 - head.length - rest.length : 0;
+  const groups = [...head, ...Array<string>(Math.max(fill, 0)).fill('0'), ...rest];
+  if (groups.length !== 8 || fill < 0 || (halves.length === 1 && head.length !== 8)) return null;
+  const nums = groups.map((g) => (/^[0-9a-f]{1,4}$/.test(g) ? Number.parseInt(g, 16) : Number.NaN));
+  return nums.every((n) => !Number.isNaN(n)) ? nums : null;
+}
+
+/** Hostnames of the platform itself, plus the SSRF_DENY_HOSTS list. Never reachable through connectors. */
+export function platformHostsOf(env: {
+  PUBLIC_BASE_URL: string;
+  OIDC_ISSUER?: string;
+  SSRF_DENY_HOSTS?: string;
+}): string[] {
+  const hostOf = (raw: string | undefined) => {
+    try {
+      return raw ? new URL(raw).hostname.toLowerCase() : null;
+    } catch {
+      return null;
+    }
+  };
+  const listed = (env.SSRF_DENY_HOSTS ?? '')
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean);
+  return [
+    ...new Set(
+      [hostOf(env.PUBLIC_BASE_URL), hostOf(env.OIDC_ISSUER), 'workers.dev', ...listed].filter(
+        (h): h is string => Boolean(h),
+      ),
+    ),
+  ];
 }
 
 /** Static URL rules (spec section 9). Throws ValidationError; performs no network I/O. */

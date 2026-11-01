@@ -7,7 +7,7 @@ import {
 } from '../../connectors/types.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
-import { createSafeFetch } from '../../platform/safe-fetch.ts';
+import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps } from './deps.ts';
 import type { ConnectionRow } from './repo.ts';
@@ -67,9 +67,8 @@ export async function prepare(
   const webhookSecret = await readWebhookSecret(sctx, conn);
   const timeoutMs = def.defaults.timeoutMs;
   const deps = getDeps();
-  const host = new URL(baseUrl(sctx.env)).hostname;
   const fetch = createSafeFetch({
-    platformHosts: [host, 'workers.dev'],
+    platformHosts: platformHostsOf(sctx.env),
     timeoutMs,
     ...(deps.resolver ? { resolver: deps.resolver } : {}),
     ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
