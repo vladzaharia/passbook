@@ -16,6 +16,8 @@ export const MyPassSchema = z.object({
   assetBaseUrl: z.string(),
   /** Image files the pass can load: template files plus per-pass overrides. */
   assetNames: z.array(z.string()),
+  /** A device has registered the pass: it is in someone's Wallet (and leaves Add all). */
+  inWallet: z.boolean(),
 });
 export const MyPassListSchema = pageOf(MyPassSchema);
 
@@ -27,6 +29,8 @@ export const MyEmailSchema = z.object({
 });
 export const MyEmailListSchema = z.object({ items: z.array(MyEmailSchema) });
 export const AddEmailRequestSchema = z.object({ email: z.string().max(254) });
+/** POST /api/v1/me/emails/{email}/primary: sign-in emails go to this verified address. */
+export const MyEmailParamSchema = z.object({ email: z.string().max(254) });
 
 export const MySessionSchema = z.object({
   id: IdSchema,

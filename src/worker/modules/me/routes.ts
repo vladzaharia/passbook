@@ -7,6 +7,7 @@ import {
   MY_PASSES_BUNDLE_PARTS_HEADER,
   MyBundleQuerySchema,
   MyEmailListSchema,
+  MyEmailParamSchema,
   MyPassListSchema,
   MyPassSchema,
   MySessionListSchema,
@@ -27,6 +28,7 @@ import {
   listMyEmails,
   listMyPasses,
   listMySessions,
+  makeMyEmailPrimary,
   myPassesBundle,
   refreshMyPass,
   removeMyEmail,
@@ -152,6 +154,21 @@ register(
   },
   async (c: C) =>
     c.json(await removeMyEmail(serviceContext(c), currentUserId(c), c.req.param('email') ?? '')),
+);
+register(
+  meRoutes,
+  'me',
+  {
+    method: 'post',
+    path: '/emails/{email}/primary',
+    summary: 'Make a verified email the primary (sign-in emails go there)',
+    params: MyEmailParamSchema,
+    response: MyEmailListSchema,
+  },
+  async (c: C) =>
+    c.json(
+      await makeMyEmailPrimary(serviceContext(c), currentUserId(c), c.req.param('email') ?? ''),
+    ),
 );
 register(
   meRoutes,
