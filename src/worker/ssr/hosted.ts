@@ -1,0 +1,86 @@
+/**
+ * The hosted shell shared by the SSR auth and error pages. Same metrics as /login
+ * (src/web/portal/login-page.tsx): wordmark, the wallet scene on the card's top edge, then the
+ * card, so the h1 and card sit at identical positions. Script-free; the art moves in CSS only.
+ */
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { ART_CSS } from '../../web/ui/art/css.ts';
+import { TornArt } from '../../web/ui/art/torn.tsx';
+import { UnpluggedArt } from '../../web/ui/art/unplugged.tsx';
+import { WalletArt, type WalletState } from '../../web/ui/art/wallet.tsx';
+import { escapeHtml, HEAD_HTML, THEME_CSS, wordmarkHtml } from './theme.ts';
+
+export const HOSTED_FOOTER = 'Signing in shows the passes sent to your email.';
+
+const LOCK =
+  '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+const OCTAGON_X =
+  '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z"/><path d="m15 9-6 6M9 9l6 6"/></svg>';
+
+export const HOSTED_CSS = `${THEME_CSS}
+${ART_CSS}
+.hosted{display:flex;flex-direction:column;align-items:center;width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
+.brand{display:flex;align-items:center;justify-content:center;height:2.75rem}
+.scene{position:relative;z-index:0;width:112px;height:84px;margin:1rem 0 -14px}
+.scene .wl-art{width:112px;height:84px}
+.card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--line);border-radius:1.125rem;background:var(--raised);box-shadow:inset 0 1px 0 var(--edge),var(--shadow)}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(115deg,var(--foil-1),var(--foil-2) 55%,var(--foil-3))}
+.body{display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem}
+h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.015em;color:var(--strong)}
+.lede{margin:.25rem 0 0;font-size:.875rem;line-height:1.25rem;color:var(--muted);overflow-wrap:anywhere}
+.lede b{font-weight:500;color:var(--strong)}
+.stack{display:flex;flex-direction:column;gap:1rem;margin:0}
+.callout{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--danger-line);border-radius:.625rem;background:var(--danger-subtle);color:var(--fg);font-size:.875rem;line-height:1.25rem}
+.callout svg{flex:none;width:1rem;height:1rem;margin-top:.125rem;color:var(--danger)}
+label{display:block;margin:0 0 .5rem;font-size:.875rem;line-height:1.25rem;font-weight:500;color:var(--fg)}
+input{display:block;width:100%;height:2.75rem;padding:0 .75rem;border:1px solid var(--line-strong);border-radius:.375rem;background:var(--field);color:var(--fg);font:inherit;font-size:1rem}
+input:focus-visible{outline-offset:1px}
+.foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:.875rem;line-height:1.25rem;color:var(--muted)}
+.foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
+@media(min-width:40rem){.hosted{padding-top:3.5rem}.body{padding:1.5rem}.foot{padding:1rem 1.5rem}}
+@media(max-width:39.99rem){.scene,.scene .wl-art{width:96px;height:72px}}`;
+
+/** The mascot's states, a tired mascot (flat eyes) for rate limits, or an error art. */
+export type HostedArt = WalletState | 'tired' | 'torn' | 'unplugged';
+
+function artHtml(art: HostedArt): string {
+  const props = { size: 'xl' as const, beat: false };
+  const el =
+    art === 'torn'
+      ? createElement(TornArt, props)
+      : art === 'unplugged'
+        ? createElement(UnpluggedArt, props)
+        : art === 'tired'
+          ? createElement(WalletArt, { ...props, state: 'login', mood: 'flat' })
+          : createElement(WalletArt, { ...props, state: art });
+  return renderToStaticMarkup(el);
+}
+
+export interface HostedPageInput {
+  nonce: string;
+  /** `<title>` and the card's h1. */
+  title: string;
+  /** The scene's art and state beat (CSS only, static after load). */
+  art: HostedArt;
+  /** At most one short line under the h1, already escaped. */
+  lede?: string;
+  /** One sentence in a danger callout at the top of the card body. */
+  error?: string;
+  /** Card body after the h1, already escaped. */
+  body: string;
+  /** The lock line under the card body (sign-in pages). */
+  footer?: boolean;
+}
+
+export const calloutHtml = (message: string) =>
+  `<p class="callout" role="alert">${OCTAGON_X}<span>${escapeHtml(message)}</span></p>`;
+
+/** A full hosted page: wordmark, wallet scene, card with an h1 and the body. */
+export function hostedPage(input: HostedPageInput): string {
+  const art = artHtml(input.art);
+  const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
+  const error = input.error ? calloutHtml(input.error) : '';
+  const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · Wallet</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main></body></html>`;
+}

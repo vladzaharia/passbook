@@ -73,19 +73,33 @@ describe('oidc sign-in', () => {
     const jar: Jar = new Map();
     const user = person(['other']);
     const { res } = await oidcSignIn(h, jar, user);
-    expect(res.status).toBe(403);
-    expect(await res.text()).toContain('No access');
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe('/auth/no-access');
     expect(jar.has('__Host-wallet_sid')).toBe(false);
+    const page = await h.call('/auth/no-access');
+    const html = await page.text();
+    expect(html).toContain('This Polaris ID account cannot use Wallet.');
+    expect(html).toContain('href="/login?focus=email"');
+    expect(html).toContain('href="/auth/oidc/start?prompt=login"');
+    expect(html).toContain('class="card" data-state="no-access"');
     expect(
       await first(h.env.DB, 'SELECT 1 FROM users WHERE primary_email = ?', [user.email]),
     ).toBeNull();
+  });
+
+  it('asks the provider to sign in again for another account', async () => {
+    const start = await h.call('/auth/oidc/start?prompt=login');
+    expect(start.status).toBe(302);
+    expect(new URL(start.headers.get('location') ?? '').searchParams.get('prompt')).toBe('login');
+    const plain = await h.call('/auth/oidc/start');
+    expect(new URL(plain.headers.get('location') ?? '').searchParams.has('prompt')).toBe(false);
   });
 
   it('never grants a role whose group variable is unset', async () => {
     h.restore();
     h = await harness({ OIDC_ADMIN_GROUP: '' });
     const jar: Jar = new Map();
-    expect((await oidcSignIn(h, jar, person(['wallet-admins']))).res.status).toBe(403);
+    expect((await oidcSignIn(h, jar, person(['wallet-admins']))).res.status).toBe(303);
     expect((await oidcSignIn(h, jar, person(['wallet-admins', 'wallet-users']))).res.status).toBe(
       302,
     );
@@ -94,7 +108,7 @@ describe('oidc sign-in', () => {
     h = await harness({ OIDC_ADMIN_GROUP: '', OIDC_USER_GROUP: '' });
     expect(
       (await oidcSignIn(h, new Map(), person(['wallet-users', 'wallet-admins']))).res.status,
-    ).toBe(403);
+    ).toBe(303);
   });
 
   it('links a new subject to the user who owns the email', async () => {

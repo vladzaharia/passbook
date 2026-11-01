@@ -30,7 +30,7 @@ import {
   processSignInRequest,
 } from './magic-service.ts';
 import { nextOrHome, safeNext } from './next.ts';
-import { confirmPage, messagePage, SIGN_IN_ERRORS } from './pages.ts';
+import { confirmPage, expiredPage, messagePage, SIGN_IN_ERRORS } from './pages.ts';
 import { resolveSession } from './sessions.ts';
 import { verifyTurnstile } from './turnstile.ts';
 
@@ -72,18 +72,7 @@ export async function confirmMagic(c: Context<AppBindings>) {
     token.length >= 16 && token.length <= 256
       ? await peekMagicLink(serviceContext(c), token)
       : null;
-  if (!link) {
-    const known = SIGN_IN_ERRORS.LINK_INVALID;
-    return c.html(
-      messagePage(c.var.nonce, {
-        title: known?.title ?? 'Link expired',
-        message: known?.message ?? 'Request a new link.',
-        href: '/login',
-        action: 'Back to sign in',
-      }),
-      400,
-    );
-  }
+  if (!link) return c.html(expiredPage(c.var.nonce), 400);
   return c.html(confirmPage(c.var.nonce, { token, ...link }));
 }
 
@@ -131,12 +120,15 @@ export async function consumeMagic(c: Context<AppBindings>) {
     const known = error instanceof AppError ? SIGN_IN_ERRORS[error.code] : undefined;
     if (!isForm || !known) throw error;
     return c.html(
-      messagePage(c.var.nonce, {
-        title: known.title,
-        message: known.message,
-        href: '/login',
-        action: 'Back to sign in',
-      }),
+      known === SIGN_IN_ERRORS.LINK_INVALID
+        ? expiredPage(c.var.nonce)
+        : messagePage(c.var.nonce, {
+            title: known.title,
+            message: known.message,
+            href: '/login',
+            action: 'Back to sign in',
+            ...(known.art ? { art: known.art } : {}),
+          }),
       known.status,
     );
   }
