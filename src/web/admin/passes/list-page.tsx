@@ -1,76 +1,59 @@
+import { useQueries } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus } from 'lucide-react';
-import { useMemo } from 'react';
+import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
-import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
+import { api } from '../../lib/api.ts';
+import { formatDay } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
+import { useOrgOptions } from '../../lib/search.ts';
+import { humanizeStatus } from '../../lib/status.ts';
 import {
   Button,
   DataTable,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   EmptyState,
   ErrorState,
-  IconButton,
+  FilteredEmpty,
   LoadMore,
   PageHeader,
-  StatusPill,
-  toast,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
-import { usePassActions, usePassList } from './api.ts';
-import { formatDate } from './format.ts';
-import { type ListSearch, PassListFilters } from './list-filters.tsx';
-
-function RowActions({ pass }: { pass: PassSummaryDto }) {
-  const actions = usePassActions(pass.id);
-  const voided = pass.status === 'voided';
-  const run = async (fn: () => Promise<unknown>, done: string) => {
-    try {
-      await fn();
-      toast.success(done);
-    } catch (error) {
-      toast.error(error);
-    }
-  };
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <IconButton
-          label={`Actions for ${pass.title ?? pass.serial}`}
-          icon={<MoreHorizontal aria-hidden />}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem
-          onSelect={() =>
-            run(
-              () => actions.setVoided.mutateAsync(!voided),
-              voided ? 'Pass unvoided' : 'Pass voided',
-            )
-          }
-        >
-          {voided ? <ACTION_ICON.unvoid aria-hidden /> : <ACTION_ICON.void aria-hidden />}
-          {voided ? 'Unvoid' : 'Void'}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={!pass.connectionId}
-          onSelect={() => run(() => actions.refreshFromSource.mutateAsync(), 'Refresh requested')}
-        >
-          <ACTION_ICON.refresh aria-hidden />
-          Refresh
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+import { usePassList } from './api.ts';
+import { downloadText, toCsv } from './csv.ts';
+import { PassListContext, passColumns, type Swatch } from './list-columns.tsx';
+import { CLEARED, type ListSearch, PassListFilters } from './list-filters.tsx';
+import { SelectionBar } from './selection-bar.tsx';
+import './passes.css';
 
 /** Small lists render plainly; the window only pays off for long ones. */
 const VIRTUALIZE_ABOVE = 100;
+
+/** One template preview per template on the page gives each row its pass colours. */
+function useSwatches(templateIds: string[]): Map<string, Swatch> {
+  return useQueries({
+    queries: templateIds.map((id) => ({
+      queryKey: ['admin', 'templates', 'preview', id, null],
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, {}, { signal }),
+      staleTime: Number.POSITIVE_INFINITY,
+      retry: false,
+    })),
+    combine: (results) => {
+      const map = new Map<string, Swatch>();
+      results.forEach((r, i) => {
+        const j = r.data?.passJson as { backgroundColor?: unknown; foregroundColor?: unknown };
+        const id = templateIds[i];
+        if (id && typeof j?.backgroundColor === 'string')
+          map.set(id, {
+            background: j.backgroundColor,
+            foreground: typeof j.foregroundColor === 'string' ? j.foregroundColor : '#fff',
+          });
+      });
+      return map;
+    },
+  });
+}
 
 export function PassesListPage({
   search,
@@ -79,132 +62,105 @@ export function PassesListPage({
   search: ListSearch;
   onSearch: (patch: Partial<ListSearch>) => void;
 }) {
-  const { orgId: globalOrg } = useOrgScope();
-  const effective: ListSearch = { ...search, orgId: search.orgId ?? globalOrg };
-  const list = usePassList(effective);
-  const templates = useTemplates({ orgId: effective.orgId });
-  const names = useMemo(
+  const { orgId } = useOrgScope();
+  const list = usePassList({ ...search, orgId });
+  const templates = useTemplates({ orgId });
+  const orgs = useOrgOptions(!orgId);
+  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
+  const truth = !list.isPending && !filtered && rows.length === 0;
+
+  // A new filter or scope is a new list: the selection does not carry over.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on the query key only
+  useEffect(() => setSelected(new Set()), [orgId, JSON.stringify(search)]);
+
+  const templateNames = useMemo(
     () => new Map((templates.data?.items ?? []).map((t) => [t.id, t.name])),
     [templates.data],
   );
-  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
+  const orgNames = useMemo(
+    () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
+    [orgs.data],
+  );
+  const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);
+  const swatches = useSwatches(templateIds);
+  const showSubtitles = useMemo(() => {
+    const seen = new Set<string>();
+    return rows.some((r) => {
+      const t = r.title ?? r.serial;
+      if (seen.has(t)) return true;
+      seen.add(t);
+      return false;
+    });
+  }, [rows]);
 
-  const columns = useMemo<ColumnDef<PassSummaryDto, never>[]>(
-    () => [
-      {
-        id: 'title',
-        header: 'Pass',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="min-w-0 max-w-72">
-            <Link
-              to={`/admin/passes/${row.original.id}` as never}
-              className="block truncate font-medium text-accent-fg hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {row.original.title ?? row.original.serial}
-            </Link>
-            {row.original.subtitle ? (
-              <p className="truncate text-xs text-fg-muted">{row.original.subtitle}</p>
-            ) : null}
-            {row.original.holderEmail ? (
-              <p
-                className="truncate text-xs text-fg-muted md:hidden"
-                title={row.original.holderEmail}
-              >
-                {row.original.holderEmail}
-              </p>
-            ) : null}
-            <div className="mt-1 flex flex-wrap items-center gap-2 md:hidden">
-              <StatusPill status={row.original.status} />
-              <StatusPill status={row.original.holderState} />
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: 'holder',
-        meta: { stackHidden: true, hideBelow: 'lg' },
-        header: 'Holder',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex min-w-0 flex-col items-start gap-1">
-            <StatusPill status={row.original.holderState} />
-            {row.original.holderEmail ? (
-              <span
-                className="max-w-52 truncate text-xs whitespace-nowrap text-fg-muted max-xl:hidden"
-                title={row.original.holderEmail}
-              >
-                {row.original.holderEmail}
-              </span>
-            ) : null}
-          </div>
-        ),
-      },
-      {
-        id: 'status',
-        meta: { stackHidden: true },
-        header: 'Status',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <StatusPill status={row.original.status} />
-            {row.original.syncErrorCode ? (
-              <StatusPill status="failing" tone="danger">
-                {row.original.syncErrorCode}
-              </StatusPill>
-            ) : null}
-          </div>
-        ),
-      },
-      {
-        id: 'template',
-        meta: { hideBelow: 'xl', nowrap: true },
-        header: 'Template',
-        enableSorting: false,
-        cell: ({ row }) => {
-          const name = names.get(row.original.templateId) ?? row.original.templateId;
-          return <span title={name}>{name}</span>;
-        },
-      },
-      {
-        id: 'modified',
-        meta: { nowrap: true },
-        header: 'Modified',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="text-xs text-fg-muted">
-            {formatDate(row.original.modifiedAt)} (v{row.original.version})
-          </span>
-        ),
-      },
-      {
-        id: 'actions',
-        header: () => <span className="sr-only">Actions</span>,
-        enableSorting: false,
-        cell: ({ row }) => <RowActions pass={row.original} />,
-      },
-    ],
-    [names],
+  const toggle = useCallback(
+    (id: string) =>
+      setSelected((s) => {
+        const next = new Set(s);
+        if (!next.delete(id)) next.add(id);
+        return next;
+      }),
+    [],
+  );
+  const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  const toggleAll = useCallback(
+    () => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id))),
+    [allSelected, rows],
   );
 
-  const filtered = Object.values(search).some(Boolean);
+  const columns = useMemo(() => passColumns(!orgId), [orgId]);
+  const context = useMemo(
+    () => ({
+      templateNames,
+      orgNames,
+      swatches,
+      showSubtitles,
+      selected,
+      allSelected,
+      onToggle: toggle,
+      onToggleAll: toggleAll,
+    }),
+    [templateNames, orgNames, swatches, showSubtitles, selected, allSelected, toggle, toggleAll],
+  );
+
+  function exportCsv() {
+    const chosen = rows.filter((r) => selected.has(r.id));
+    const header = [
+      'Pass',
+      'Holder',
+      'Holder state',
+      ...(orgId ? [] : ['Organization']),
+      'Template',
+      'On device',
+      'Updated',
+    ];
+    const line = (r: PassSummaryDto) => [
+      r.title ?? r.serial,
+      r.holderEmail ?? '',
+      humanizeStatus(r.holderState),
+      ...(orgId ? [] : [orgNames.get(r.orgId) ?? '']),
+      templateNames.get(r.templateId) ?? '',
+      String(r.deviceCount),
+      formatDay(r.modifiedAt, ''),
+    ];
+    downloadText('passes.csv', toCsv(header, chosen.map(line)));
+  }
+
+  const create = (variant: 'primary' | 'outline') => (
+    <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
+      <Link to="/admin/passes/new">New pass</Link>
+    </Button>
+  );
 
   return (
-    <>
-      <PageHeader
-        title="Passes"
-        actions={
-          <Button asChild iconStart={<Plus aria-hidden />}>
-            <Link to="/admin/passes/new">New pass</Link>
-          </Button>
-        }
-      />
-      <PassListFilters search={effective} onChange={onSearch} />
-      {list.isError ? (
-        <ErrorState error={list.error} onRetry={() => void list.refetch()} />
-      ) : (
-        <>
+    <div className={selected.size > 0 ? 'pb-20' : undefined}>
+      <PageHeader title="Passes" actions={create(truth ? 'outline' : 'primary')} />
+      <PassListContext.Provider value={context}>
+        {list.isError ? (
+          <ErrorState error={list.error} onRetry={() => void list.refetch()} />
+        ) : (
           <DataTable
             caption="Passes"
             columns={columns}
@@ -213,46 +169,36 @@ export function PassesListPage({
             loading={list.isPending}
             fetching={list.isFetching && !list.isFetchingNextPage}
             virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
-            rowHeight={56}
-            empty={
-              <EmptyState
-                art="passes"
-                variant={filtered ? 'filtered' : 'empty'}
-                title={filtered ? 'No passes match' : 'No passes yet'}
-                action={
-                  filtered ? (
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        onSearch({
-                          q: undefined,
-                          orgId: undefined,
-                          templateId: undefined,
-                          connectionId: undefined,
-                          status: undefined,
-                          holderState: undefined,
-                        })
-                      }
-                    >
-                      Clear filters
-                    </Button>
-                  ) : (
-                    <Button asChild iconStart={<Plus aria-hidden />}>
-                      <Link to="/admin/passes/new">New pass</Link>
-                    </Button>
-                  )
-                }
+            filtered={filtered}
+            toolbar={
+              <PassListFilters
+                search={search}
+                orgId={orgId}
+                templates={templates.data?.items ?? []}
+                onChange={onSearch}
+              />
+            }
+            empty={<EmptyState art="passes" title="No passes yet" action={create('primary')} />}
+            emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}
+            footer={
+              <LoadMore
+                hasMore={Boolean(list.hasNextPage)}
+                loading={list.isFetchingNextPage}
+                onLoadMore={() => void list.fetchNextPage()}
+                shown={rows.length || undefined}
+                noun={['pass', 'passes']}
+                scoped
               />
             }
           />
-          <LoadMore
-            hasMore={Boolean(list.hasNextPage)}
-            loading={list.isFetchingNextPage}
-            onLoadMore={() => void list.fetchNextPage()}
-            shown={rows.length || undefined}
-          />
-        </>
-      )}
-    </>
+        )}
+      </PassListContext.Provider>
+      <SelectionBar
+        ids={[...selected]}
+        orgId={orgId}
+        onClear={() => setSelected(new Set())}
+        onExport={exportCsv}
+      />
+    </div>
   );
 }

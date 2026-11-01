@@ -33,7 +33,7 @@ export const PassSummarySchema = z.object({
   holderState: z.enum(['unassigned', 'waiting', 'owned']),
   ownerUserId: IdSchema.nullable(),
   /** Devices that have the pass in Wallet. */
-  deviceCount: z.number().int(),
+  deviceCount: z.number().int().default(0),
   modifiedAt: TimestampSchema,
   createdAt: TimestampSchema,
 });
@@ -95,16 +95,16 @@ export const PassDetailSchema = PassSummarySchema.extend({
   downloadUrl: z.string(),
   publicUrl: z.string(),
   registrations: z.number().int(),
-  devices: z.array(PassDeviceSchema),
+  devices: z.array(PassDeviceSchema).default([]),
   lastRefreshedAt: TimestampSchema.nullable(),
   versions: z.array(PassVersionSchema),
   deliveries: z.array(DeliveryEntrySchema),
   /** Who voided the pass and when; null while active. */
-  voided: PassVoidedSchema.nullable(),
+  voided: PassVoidedSchema.nullable().default(null),
   /** Issues with this pass's own content (fields, images, branding). */
   warnings: z.array(ValidationIssueSchema),
   /** Issues every pass of the template shares; the template page shows them. */
-  templateWarnings: z.array(ValidationIssueSchema),
+  templateWarnings: z.array(ValidationIssueSchema).default([]),
 });
 export type PassDetailDto = z.infer<typeof PassDetailSchema>;
 

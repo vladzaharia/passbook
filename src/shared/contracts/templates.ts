@@ -58,7 +58,7 @@ export const TemplateVersionSchema = z.object({
   report: ValidationReportSchema,
   active: z.boolean(),
   /** Live passes on this version. */
-  passCount: z.number().int(),
+  passCount: z.number().int().default(0),
 });
 
 export const TemplateVersionDetailSchema = TemplateVersionSchema.extend({
@@ -73,7 +73,7 @@ export const TemplateDetailSchema = TemplateSummarySchema.extend({
   manifest: JsonSchema,
   versions: z.array(TemplateVersionSchema),
   /** Live passes on a version other than the active one: what "Update N passes" moves. */
-  passesOnOlderVersions: z.number().int(),
+  passesOnOlderVersions: z.number().int().default(0),
 });
 
 const BoolQuery = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');

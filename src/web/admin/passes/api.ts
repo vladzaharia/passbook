@@ -1,15 +1,10 @@
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { AuditListSchema } from '@/shared/contracts/audit.ts';
 import { OkSchema } from '@/shared/contracts/common.ts';
 import { HolderSchema } from '@/shared/contracts/holders.ts';
 import {
+  BulkPassActionResponseSchema,
   PassActionResponseSchema,
   PassAssetListSchema,
   PassAssetSchema,
@@ -18,7 +13,7 @@ import {
   RefreshPassResponseSchema,
   RotateLinkResponseSchema,
 } from '@/shared/contracts/passes.ts';
-import { api } from '../../lib/api.ts';
+import { api, listQuery } from '../../lib/api.ts';
 
 export interface PassFilters {
   q?: string | undefined;
@@ -27,6 +22,7 @@ export interface PassFilters {
   connectionId?: string | undefined;
   status?: 'active' | 'voided' | undefined;
   holderState?: 'unassigned' | 'waiting' | 'owned' | undefined;
+  onDevice?: 'true' | 'false' | undefined;
 }
 
 /** Body of PUT /passes/{id}/connection; null ids unbind. */
@@ -46,17 +42,28 @@ export const passKeys = {
 };
 
 export function usePassList(filters: PassFilters) {
-  return useInfiniteQuery({
-    queryKey: passKeys.list(filters),
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }) =>
-      api.get('/api/v1/passes', PassListSchema, {
-        query: { ...filters, cursor: pageParam, limit: 50 },
-        signal,
-      }),
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  return useInfiniteQuery(
     // A filter change keeps the old rows on screen; DataTable dims them and runs the rail.
-    placeholderData: keepPreviousData,
+    listQuery({
+      queryKey: passKeys.list(filters),
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get('/api/v1/passes', PassListSchema, {
+          query: { ...filters, cursor: pageParam, limit: 50 },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+    }),
+  );
+}
+
+/** Void or email up to 100 passes of one org; each is audited on its own. */
+export function useBulkPassAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { action: 'void' | 'send_email'; ids: string[]; orgId?: string }) =>
+      api.post('/api/v1/passes/bulk', BulkPassActionResponseSchema, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
   });
 }
 
@@ -133,7 +140,7 @@ export function usePassActions(id: string) {
       onSuccess: refresh,
     }),
     resendEmail: useMutation({
-      mutationFn: (input: { to?: string; attach?: boolean; key: string }) =>
+      mutationFn: (input: { to?: string | undefined; attach?: boolean; key: string }) =>
         api.post(
           `/api/v1/passes/${id}/resend-email`,
           OkSchema,

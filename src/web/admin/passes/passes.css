@@ -1,0 +1,121 @@
+/* Admin passes: row chip, preview chrome, version crossfade, slot tiles. Transform and opacity only. */
+
+/* A 20x28 chip in the pass's own colours: the background, with a header line in its text colour. */
+.wl-pass-chip {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 28px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--chip-bg, var(--pk-surface-sunken));
+  box-shadow:
+    0 0 0 1px var(--pk-border-subtle),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+.wl-pass-chip::before,
+.wl-pass-chip::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--chip-fg, var(--pk-border-strong));
+  opacity: 0.55;
+}
+.wl-pass-chip::before {
+  top: 5px;
+  width: 7px;
+}
+.wl-pass-chip::after {
+  top: 12px;
+  width: 11px;
+  opacity: 0.35;
+}
+.wl-pass-chip[data-voided] {
+  opacity: 0.4;
+}
+
+/* Preview chrome: an "Unsaved" ribbon on the card's frame, never on the art. */
+.wl-unsaved {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--wl-dur-enter) var(--wl-ease-out),
+    transform var(--wl-dur-enter) var(--wl-ease-out);
+  pointer-events: none;
+}
+.wl-unsaved[data-on] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Switching versions: the card holds at .5 after 150 ms, then the new face crossfades in place. */
+.wl-version-wait {
+  transition: opacity 120ms var(--wl-ease-out) 150ms;
+}
+.wl-version-wait[data-waiting] {
+  opacity: 0.5;
+}
+.wl-version-in {
+  animation: wl-fade 160ms var(--wl-ease-move);
+}
+
+/* Diff rows rise 4 px with a 20 ms stagger, once. */
+.wl-diff-rise > * {
+  animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 6) * 20ms);
+  --wl-rise: 4px;
+}
+
+/* Slot tiles: a checkerboard behind transparent art. */
+.wl-checker {
+  background-color: var(--pk-surface-sunken);
+  background-image:
+    linear-gradient(45deg, var(--pk-border-subtle) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--pk-border-subtle) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--pk-border-subtle) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--pk-border-subtle) 75%);
+  background-size: 12px 12px;
+  background-position:
+    0 0,
+    0 6px,
+    6px -6px,
+    -6px 0;
+}
+.wl-slot[data-over] {
+  border-color: var(--pk-accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-chevron {
+    transition: transform 200ms var(--wl-ease-out);
+  }
+  [data-stamp] svg.lucide-ban:first-child {
+    animation: wl-v-stamp 300ms var(--wl-ease-bounce);
+  }
+  .wl-turn-once {
+    animation: wl-v-turn 400ms var(--wl-ease-out);
+  }
+  .wl-slot[data-over] .wl-slot-thumb {
+    transform: translateY(-2px);
+  }
+  .wl-slot-thumb {
+    transition: transform 160ms var(--wl-ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-unsaved,
+  .wl-diff-rise > * {
+    transform: none;
+    animation: none;
+  }
+  .wl-version-in {
+    animation: wl-fade 120ms linear;
+  }
+}

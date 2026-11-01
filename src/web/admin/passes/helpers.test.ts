@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { changedKeys } from './detail/fields-tab.tsx';
+import { fitScale, requiredSize, usedSlots } from './detail/image-slots.ts';
 import { fingerprint } from './format.ts';
-import { assetMap, forTarget } from './pass-preview.tsx';
+import { actionsFor } from './pass-actions.tsx';
+import { assetMap, viewTarget } from './pass-preview.tsx';
 import { assetName, checkPng, MAX_ASSET_BYTES } from './png.ts';
 import { cleanValues, pickDeclared, sameValues } from './schema-form/index.ts';
+import { locationError, parseLocation } from './schema-form/location.ts';
+import { passSummary } from './test-fixtures.ts';
 
 function png(width: number, height: number, size = 33): File {
   const bytes = new Uint8Array(size);
@@ -24,7 +28,7 @@ describe('checkPng', () => {
     );
     expect((await checkPng(png(0, 10))).ok).toBe(false);
     expect((await checkPng(png(5000, 10))).ok).toBe(false);
-    expect((await checkPng(png(10, 10, MAX_ASSET_BYTES + 1))).message).toMatch(/Larger than/);
+    expect((await checkPng(png(10, 10, MAX_ASSET_BYTES + 1))).message).toMatch(/over 1 MB/);
   });
   it('names slots by scale', () => {
     expect(assetName('thumbnail', 1)).toBe('thumbnail.png');
@@ -55,10 +59,9 @@ describe('draft helpers', () => {
 });
 
 describe('pass preview helpers', () => {
-  it('forTarget drops the scheme list only for earlier iOS', () => {
-    const json = { preferredStyleSchemes: ['posterGeneric', 'generic'], generic: {} };
-    expect(forTarget(json, '27')).toBe(json);
-    expect(forTarget(json, 'legacy')).toEqual({ generic: {} });
+  it('maps the kit iOS toggle to the pass view target', () => {
+    expect(viewTarget('27')).toBe('ios27');
+    expect(viewTarget('legacy')).toBe('legacy');
   });
   it('assetMap enumerates real names, or every image slot when none are given', () => {
     const map = assetMap('/p/tok/assets/');
@@ -69,5 +72,76 @@ describe('pass preview helpers', () => {
       'strip.png': '/a/strip.png',
       'en.lproj/logo.png': '/a/en.lproj%2Flogo.png',
     });
+  });
+});
+
+describe('pass actions', () => {
+  const ids = (p: Parameters<typeof actionsFor>[0]) => actionsFor(p).map((a) => a.id);
+  it('puts the state change first and destructive actions last', () => {
+    const manual = passSummary({ holderState: 'waiting' }) as Parameters<typeof actionsFor>[0];
+    expect(ids(manual)).toEqual([
+      'update',
+      'void',
+      'open',
+      'rotate',
+      'download',
+      'copy',
+      'clear',
+      'delete',
+    ]);
+    const bound = { ...manual, connectionId: 'c1' };
+    expect(ids(bound)[0]).toBe('pull');
+  });
+  it('offers only Unvoid in the bar of a voided pass and never Update or Pull', () => {
+    const voided = {
+      ...(passSummary() as Parameters<typeof actionsFor>[0]),
+      status: 'voided' as const,
+    };
+    const defs = actionsFor(voided);
+    expect(defs.filter((d) => d.bar).map((d) => d.id)).toEqual(['unvoid']);
+    expect(defs.map((d) => d.id)).not.toContain('update');
+  });
+});
+
+describe('image slots', () => {
+  it('reads the scale from the size and names the expected size when nothing fits', () => {
+    expect(fitScale('strip', 750, 288)).toEqual({ scale: 2 });
+    expect(fitScale('strip', 1125, 432)).toEqual({ scale: 3 });
+    const bad = fitScale('thumbnail', 600, 600);
+    expect('error' in bad && bad.error).toContain('180 × 180 px');
+    expect(requiredSize('artwork', 2)).toBe('716 × 896 px');
+  });
+  it('lists the slots the template ships for its style, plus icon and logo', () => {
+    const poster = { preferredStyleSchemes: ['posterEventTicket', 'eventTicket'], eventTicket: {} };
+    expect(usedSlots(poster, ['artwork@2x.png', 'icon@2x.png', 'secondaryLogo@2x.png'])).toEqual([
+      'icon',
+      'logo',
+      'secondaryLogo',
+      'artwork',
+    ]);
+    expect(usedSlots({ generic: {} }, ['thumbnail@2x.png'])).toEqual(['icon', 'logo', 'thumbnail']);
+  });
+});
+
+describe('location field', () => {
+  it('reads a pair, an Apple Maps link and a Google Maps link', () => {
+    expect(parseLocation('47.6062, -122.3321')).toEqual({ lat: 47.6062, lng: -122.3321 });
+    expect(parseLocation('https://maps.apple.com/?ll=47.6,-122.3&q=Pin')).toEqual({
+      lat: 47.6,
+      lng: -122.3,
+    });
+    expect(parseLocation('https://www.google.com/maps/@47.61,-122.33,15z')).toEqual({
+      lat: 47.61,
+      lng: -122.33,
+    });
+    expect(parseLocation('nowhere')).toBeUndefined();
+  });
+  it('rejects latitude past 90 and longitude past 180', () => {
+    expect(locationError(parseLocation('95, 10'), '95, 10')).toBe(
+      'Latitude must be from -90 to 90.',
+    );
+    expect(locationError(parseLocation('10, 190'), '10, 190')).toBe(
+      'Longitude must be from -180 to 180.',
+    );
   });
 });
