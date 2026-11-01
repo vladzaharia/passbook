@@ -84,6 +84,7 @@ export function DialogContent({
   size = 'md',
   className,
   children,
+  onOpenAutoFocus,
   onCloseAutoFocus,
   ...props
 }: DialogContentProps) {
@@ -93,6 +94,18 @@ export function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         {...(description ? {} : { 'aria-describedby': undefined })}
+        onOpenAutoFocus={(e) => {
+          onOpenAutoFocus?.(e);
+          if (e.defaultPrevented) return;
+          // Radix focuses the first tabbable (the close button); a field marked data-autofocus wins.
+          const target = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>(
+            '[data-autofocus]',
+          );
+          if (target) {
+            e.preventDefault();
+            target.focus();
+          }
+        }}
         onCloseAutoFocus={(e) => {
           onCloseAutoFocus?.(e);
           if (!e.defaultPrevented) restoreOpener(opener)(e);
