@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
@@ -10,6 +11,7 @@ import {
   CardHeader,
   Dialog,
   DialogContent,
+  DropdownMenuItem,
   ErrorState,
   FormField,
   Input,
@@ -17,6 +19,7 @@ import {
   PageHeader,
   SkeletonRows,
 } from '@/web/ui/index.ts';
+import { MoreMenu } from '../connections/more-menu.tsx';
 import { formatDateTime } from '../overview/format.ts';
 import { ORG_FIELDS } from '../settings/fields.ts';
 import { SettingsForm } from '../settings/settings-form.tsx';
@@ -47,9 +50,12 @@ function DeleteOrg({ id, slug, name }: { id: string; slug: string; name: string 
 
   return (
     <>
-      <Button variant="danger" onClick={() => setOpen(true)}>
-        Delete
-      </Button>
+      <MoreMenu>
+        <DropdownMenuItem destructive onSelect={() => setOpen(true)}>
+          <Trash2 aria-hidden />
+          Delete
+        </DropdownMenuItem>
+      </MoreMenu>
       <Dialog
         open={open}
         onOpenChange={(o) => {
@@ -71,6 +77,7 @@ function DeleteOrg({ id, slug, name }: { id: string; slug: string; name: string 
               </Button>
               <Button
                 variant="danger"
+                iconStart={<Trash2 aria-hidden />}
                 disabled={typed !== slug}
                 loading={remove.isPending}
                 onClick={() => void confirm()}
@@ -133,11 +140,12 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
         width="detail"
         title={org.name}
         breadcrumbs={crumbs}
+        meta={<OrgStatus status={org.status} />}
         actions={<DeleteOrg id={org.id} slug={org.slug} name={org.name} />}
       />
       <div className="flex max-w-3xl flex-col gap-6">
         <Card>
-          <CardHeader title="Overview" actions={<OrgStatus status={org.status} />} />
+          <CardHeader title="Overview" />
           <CardBody className="flex flex-col gap-4">
             <KeyValue
               items={[

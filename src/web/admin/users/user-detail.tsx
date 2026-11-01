@@ -17,6 +17,7 @@ import {
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { useIdpUrl } from '../settings/queries.ts';
+import { roleLabel } from './labels.ts';
 import { useUser, useUserMutations } from './queries.ts';
 import { EmailsCard, IdentitiesCard, PassesCard, SessionsCard } from './user-sections.tsx';
 
@@ -59,6 +60,14 @@ export function UserDetailPage({ userId }: { userId: string }) {
         width="detail"
         title={user.name ?? user.primaryEmail}
         breadcrumbs={crumbs}
+        meta={
+          <>
+            <StatusPill status={user.status} tone={disabled ? 'neutral' : 'success'}>
+              {disabled ? 'Disabled' : 'Active'}
+            </StatusPill>
+            {user.name ? <span>{user.primaryEmail}</span> : null}
+          </>
+        }
         actions={
           <>
             <Button variant="outline" asChild>
@@ -66,7 +75,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
                 Audit log
               </Link>
             </Button>
-            <Button variant={disabled ? 'primary' : 'danger'} onClick={() => setConfirm(true)}>
+            <Button variant={disabled ? 'primary' : 'outline'} onClick={() => setConfirm(true)}>
               {disabled ? 'Enable' : 'Disable'}
             </Button>
           </>
@@ -74,14 +83,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
       />
       <div className="flex max-w-3xl flex-col gap-6">
         <Card>
-          <CardHeader
-            title="Account"
-            actions={
-              <StatusPill status={user.status} tone={disabled ? 'neutral' : 'success'}>
-                {disabled ? 'Disabled' : 'Active'}
-              </StatusPill>
-            }
-          />
+          <CardHeader title="Account" />
           <CardBody>
             <KeyValue
               items={[
@@ -92,7 +94,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
                   value: (
                     <span className="flex flex-wrap items-center gap-1">
                       {user.lastRoles.map((r) => (
-                        <Badge key={r}>{r}</Badge>
+                        <Badge key={r}>{roleLabel(r)}</Badge>
                       ))}
                       {idpUrl ? (
                         <a
@@ -128,7 +130,6 @@ export function UserDetailPage({ userId }: { userId: string }) {
             : 'The user is refused at their next request. Sessions stay listed until they expire.'
         }
         confirmLabel={disabled ? 'Enable' : 'Disable'}
-        destructive={!disabled}
         onConfirm={async () => {
           await setStatus.mutateAsync(disabled ? 'active' : 'disabled');
           toast.success(disabled ? 'User enabled' : 'User disabled');

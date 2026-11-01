@@ -1,18 +1,18 @@
 import { useNavigate } from '@tanstack/react-router';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
-  Badge,
   Button,
   Card,
   CardBody,
   CardHeader,
-  CheckboxField,
   CodeBlock,
   ConfirmDialog,
+  DropdownMenuItem,
   ErrorState,
   FormField,
   Input,
@@ -20,9 +20,12 @@ import {
   PageHeader,
   SaveBar,
   SkeletonRows,
+  StatusPill,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
+import { MoreMenu } from '../connections/more-menu.tsx';
+import { SwitchRow } from '../connections/switch-row.tsx';
 import { useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { CheckApnsButton } from './apns-check.tsx';
@@ -140,16 +143,16 @@ function EditCard({ identity }: { identity: Identity }) {
               ]}
             />
           )}
-          <CheckboxField
+          <SwitchRow
             label="NFC enabled"
             checked={draft.nfc}
-            onCheckedChange={(c) => setDraft({ ...draft, nfc: c === true })}
+            onCheckedChange={(c) => setDraft({ ...draft, nfc: c })}
           />
-          <CheckboxField
+          <SwitchRow
             label="Default identity"
             checked={draft.isDefault}
             disabled={identity.isDefault}
-            onCheckedChange={(c) => setDraft({ ...draft, isDefault: c === true })}
+            onCheckedChange={(c) => setDraft({ ...draft, isDefault: c })}
           />
         </form>
       </CardBody>
@@ -210,35 +213,35 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         width="detail"
         title={identity.label}
         breadcrumbs={crumbs}
+        meta={
+          <>
+            {identity.isDefault ? <StatusPill status="default" /> : null}
+            {identity.source === 'env' ? <span>From environment</span> : null}
+          </>
+        }
         actions={
           <>
             <Button variant="outline" onClick={() => setConfirmResign(true)}>
               Re-sign all passes
             </Button>
             {identity.source === 'db' ? (
-              <>
-                <Button variant="outline" onClick={() => setRotating(true)}>
+              <MoreMenu>
+                <DropdownMenuItem onSelect={() => setRotating(true)}>
+                  <RefreshCw aria-hidden />
                   Rotate certificate
-                </Button>
-                <Button variant="danger" onClick={() => setConfirm(true)}>
+                </DropdownMenuItem>
+                <DropdownMenuItem destructive onSelect={() => setConfirm(true)}>
+                  <Trash2 aria-hidden />
                   Delete
-                </Button>
-              </>
+                </DropdownMenuItem>
+              </MoreMenu>
             ) : null}
           </>
         }
       />
       <div className="flex max-w-3xl flex-col gap-6">
         <Card>
-          <CardHeader
-            title="Certificate"
-            actions={
-              <>
-                {identity.isDefault ? <Badge tone="accent">Default</Badge> : null}
-                {identity.source === 'env' ? <Badge>From environment</Badge> : null}
-              </>
-            }
-          />
+          <CardHeader title="Certificate" />
           <CardBody>
             <KeyValue
               items={[

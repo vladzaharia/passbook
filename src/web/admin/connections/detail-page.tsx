@@ -9,6 +9,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  DropdownMenuItem,
   ErrorState,
   FormField,
   Input,
@@ -26,9 +27,11 @@ import {
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { TypedConfirmDialog } from '../passes/typed-confirm.tsx';
 import { useTemplate } from '../templates/api.ts';
-import { useConnection, useConnectionActions, useConnector } from './api.ts';
+import { useConnection, useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
+import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
+import { modeLabel } from './labels.ts';
 import {
   type Lifecycle,
   LifecycleFields,
@@ -37,6 +40,7 @@ import {
 } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow, toRows } from './mapping.ts';
 import { MappingEditor } from './mapping-editor.tsx';
+import { MoreMenu } from './more-menu.tsx';
 import { WebhookPanel } from './webhook.tsx';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
@@ -170,6 +174,7 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
   const [del, setDel] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string }>();
   const connector = useConnector(connection.data?.connectorType);
+  const connectorName = useConnectorNames();
   const crumbs = [
     { label: 'Connections', to: '/admin/connections' },
     { label: connection.data?.name ?? 'Connection' },
@@ -217,7 +222,15 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
       <PageHeader
         title={c.name}
         breadcrumbs={crumbs}
-        description={`${c.connectorType} · ${c.mode}`}
+        width="detail"
+        meta={
+          <>
+            <HealthPill health={c.enabled ? c.health : 'disabled'} />
+            <span>
+              {connectorName(c.connectorType)}, {modeLabel(c.mode).toLowerCase()}
+            </span>
+          </>
+        }
         actions={
           <>
             <Button
@@ -242,40 +255,37 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
             >
               Sync now
             </Button>
-            <Button
-              variant="outline"
-              iconStart={c.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}
-              loading={actions.update.isPending}
-              onClick={() =>
-                actions.update
-                  .mutateAsync({ enabled: !c.enabled })
-                  .then(() =>
-                    toast.success(c.enabled ? 'Connection disabled' : 'Connection enabled'),
-                  )
-                  .catch((error: unknown) => toast.error(error))
-              }
-            >
-              {c.enabled ? 'Disable' : 'Enable'}
-            </Button>
-            <Button
-              variant="danger"
-              iconStart={<Trash2 aria-hidden />}
-              onClick={() => setDel(true)}
-            >
-              Delete
-            </Button>
+            <MoreMenu>
+              <DropdownMenuItem
+                onSelect={() =>
+                  actions.update
+                    .mutateAsync({ enabled: !c.enabled })
+                    .then(() =>
+                      toast.success(c.enabled ? 'Connection disabled' : 'Connection enabled'),
+                    )
+                    .catch((error: unknown) => toast.error(error))
+                }
+              >
+                {c.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}
+                {c.enabled ? 'Disable' : 'Enable'}
+              </DropdownMenuItem>
+              <DropdownMenuItem destructive onSelect={() => setDel(true)}>
+                <Trash2 aria-hidden />
+                Delete
+              </DropdownMenuItem>
+            </MoreMenu>
           </>
         }
       />
       {testResult ? (
         <p
           role={testResult.ok ? 'status' : 'alert'}
-          className={`mb-4 text-sm ${testResult.ok ? 'text-success' : 'text-danger'}`}
+          className={`mb-4 max-w-3xl text-sm ${testResult.ok ? 'text-success' : 'text-danger'}`}
         >
           {testResult.text}
         </p>
       ) : null}
-      <Tabs defaultValue="health">
+      <Tabs defaultValue="health" className="max-w-3xl min-w-0">
         <TabsList aria-label="Connection sections">
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="mapping">Mapping</TabsTrigger>

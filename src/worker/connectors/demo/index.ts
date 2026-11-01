@@ -13,8 +13,20 @@ const config = z.object({
   /** Refs the upstream reports as deleted / not found. */
   missing: z.array(z.string().max(60)).max(100).default([]),
   /** Simulate a failing upstream. */
-  fail: z.enum(['none', 'auth', 'timeout', 'upstream', 'rate_limited']).default('none'),
-  holderDomain: z.string().max(100).default('example.com'),
+  fail: z
+    .enum(['none', 'auth', 'timeout', 'upstream', 'rate_limited'])
+    .default('none')
+    .meta({
+      'x-label': 'Simulated failure',
+      'x-enumLabels': {
+        none: 'None',
+        auth: 'Auth rejected',
+        timeout: 'Timeout',
+        upstream: 'Upstream error',
+        rate_limited: 'Rate limited',
+      },
+    }),
+  holderDomain: z.string().max(100).default('example.com').meta({ 'x-label': 'Holder domain' }),
 });
 type Config = z.infer<typeof config>;
 
