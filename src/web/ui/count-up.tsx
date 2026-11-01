@@ -1,9 +1,9 @@
-import { useRef } from 'react';
+import { cn } from '../lib/cn.ts';
 import { useCountUp } from '../lib/motion.ts';
 
 const plain = (n: number) => n.toLocaleString();
 
-/** A number that counts to its value. Screen readers get the value only. */
+/** A number that counts to its value in 600 ms. */
 export function CountUp({
   value,
   format = plain,
@@ -13,14 +13,5 @@ export function CountUp({
   format?: (n: number) => string;
   className?: string;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  useCountUp(ref, value, format);
-  return (
-    <span className={className}>
-      <span ref={ref} aria-hidden className="tabular-nums">
-        {format(value)}
-      </span>
-      <span className="sr-only">{format(value)}</span>
-    </span>
-  );
+  return <span className={cn('tabular-nums', className)}>{format(useCountUp(value))}</span>;
 }

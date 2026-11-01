@@ -21,8 +21,9 @@ export function installDomShims(): void {
   proto.setPointerCapture ??= () => {};
   proto.releasePointerCapture ??= () => {};
   if (!window.matchMedia) {
+    // Tests run with reduced motion, like e2e: counts and transitions settle at once.
     window.matchMedia = ((query: string) => ({
-      matches: false,
+      matches: query.includes('prefers-reduced-motion: reduce'),
       media: query,
       addEventListener: () => {},
       removeEventListener: () => {},

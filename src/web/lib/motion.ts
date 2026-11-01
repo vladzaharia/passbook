@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 /** True when the user asked for less motion. False outside the browser. */
 export function prefersReducedMotion(): boolean {
@@ -54,39 +54,31 @@ export function useChangeCount(value: unknown): number {
 }
 
 /**
- * Writes a number into `ref`, counting to `value`: from 0 on mount, from the shown value on
- * change. The element renders the final text, so tests and reduced motion see it as is.
+ * The number to show while counting to `value`: from 0 on mount, from the shown number on change,
+ * 600 ms ease-out. Without a layout engine (tests) or with reduced motion it is `value`.
  */
-export function useCountUp(
-  ref: { current: HTMLElement | null },
-  value: number,
-  format: (n: number) => string,
-  ms = 600,
-) {
-  const shown = useRef(0);
+export function useCountUp(value: number, ms = 600): number {
+  const [shown, setShown] = useState(value);
+  const last = useRef(0);
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el || prefersReducedMotion() || typeof requestAnimationFrame !== 'function') {
-      shown.current = value;
+    if (typeof matchMedia !== 'function' || prefersReducedMotion()) {
+      last.current = value;
+      setShown(value);
       return;
     }
-    const from = shown.current;
-    if (from === value) return;
+    const from = last.current;
     const start = performance.now();
     let frame = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / ms);
       const n = Math.round(from + (value - from) * (1 - (1 - t) ** 3));
-      shown.current = n;
-      el.textContent = format(n);
+      last.current = n;
+      setShown(n);
       if (t < 1) frame = requestAnimationFrame(tick);
     };
-    el.textContent = format(from);
+    setShown(from);
     frame = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(frame);
-      el.textContent = format(value);
-      shown.current = value;
-    };
-  }, [ref, value, format, ms]);
+    return () => cancelAnimationFrame(frame);
+  }, [value, ms]);
+  return shown;
 }
