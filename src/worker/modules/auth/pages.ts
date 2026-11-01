@@ -1,5 +1,5 @@
 /** Script-free SSR pages for the auth flows. */
-import { THEME_CSS, wordmarkHtml } from '../../ssr/theme.ts';
+import { THEME_CSS, themeInitHtml, themeToggleHtml, wordmarkHtml } from '../../ssr/theme.ts';
 
 export const escapeHtml = (value: string) =>
   value
@@ -24,7 +24,7 @@ input{width:100%;height:2.25rem;padding:0 .75rem;border:1px solid var(--line-str
 .who{font-weight:500;color:var(--strong)!important;overflow-wrap:anywhere}`;
 
 function layout(nonce: string, title: string, body: string): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style nonce="${nonce}">${STYLE}</style></head><body><header class="top">${wordmarkHtml()}</header><main><h1>${escapeHtml(title)}</h1><div class="card">${body}</div></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style nonce="${nonce}">${STYLE}</style>${themeInitHtml}</head><body><header class="top">${wordmarkHtml()}${themeToggleHtml}</header><main><h1>${escapeHtml(title)}</h1><div class="card">${body}</div></main></body></html>`;
 }
 
 export function confirmPage(

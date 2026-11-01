@@ -11,7 +11,7 @@ export function BareLayout() {
         <Wordmark />
         <ThemeToggle />
       </header>
-      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-md flex-1 px-4 py-10">
+      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-sm flex-1 px-4 py-10">
         <Outlet />
       </main>
     </div>

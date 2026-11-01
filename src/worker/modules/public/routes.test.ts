@@ -34,7 +34,7 @@ describe('GET /p/:token', () => {
     expect(html).toContain('<details>');
     expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
-    expect(html).not.toContain('<script');
+    expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
   });
 
   it('lists the org support contacts in the footer and drops unsafe ones', async () => {

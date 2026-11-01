@@ -277,7 +277,7 @@ describe('confirm page and token', () => {
       const html = await page.text();
       expect(html).toContain('action="/auth/magic/consume"');
       expect(html).toContain(email);
-      expect(html).not.toContain('<script');
+      expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
       expect(page.headers.get('cache-control')).toBe('no-store');
       expect(page.headers.get('referrer-policy')).toBe('no-referrer');
     }

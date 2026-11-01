@@ -50,7 +50,7 @@ describe('break-glass sign-in', () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('action="/auth/breakglass"');
-    expect(html).not.toContain('<script');
+    expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
   });
 
   it('refuses a wrong token without creating a session', async () => {

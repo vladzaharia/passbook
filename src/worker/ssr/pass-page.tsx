@@ -4,7 +4,7 @@ import '../../web/pass-card/sync-barcode.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCard } from '../../web/pass-card/index.tsx';
 import cardCss from '../../web/pass-card/pass-card.css?raw';
-import { THEME_CSS, wordmarkHtml } from './theme.ts';
+import { THEME_CSS, themeToggleHtml, wordmarkHtml } from './theme.ts';
 
 export interface PassPageProps {
   view: PassView;
@@ -37,6 +37,8 @@ main>.badge{display:block;width:auto;padding:.25rem}
 footer{border-top:1px solid var(--line);padding-top:.75rem;color:var(--muted);font-size:.875rem;text-align:center;overflow-wrap:anywhere}
 `;
 
+const HEADER = wordmarkHtml() + themeToggleHtml;
+
 export function PassPage(props: PassPageProps) {
   const { view } = props;
   const voided = props.voided || view.voided;
@@ -51,12 +53,13 @@ export function PassPage(props: PassPageProps) {
         <meta name="referrer" content="no-referrer" />
         <meta name="color-scheme" content="light dark" />
         <title>{props.title}</title>
+        <script src="/theme-init.js" />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
         <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: cardCss + CSS }} />
       </head>
       <body>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static wordmark markup, no user input */}
-        <header className="top" dangerouslySetInnerHTML={{ __html: wordmarkHtml() }} />
+        <header className="top" dangerouslySetInnerHTML={{ __html: HEADER }} />
         <main>
           <h1 className="sr">{props.title}</h1>
           {notice ? (
@@ -66,7 +69,7 @@ export function PassPage(props: PassPageProps) {
           ) : null}
           <PassCard view={view} face="front" />
           <details>
-            <summary>Back</summary>
+            <summary>Show back</summary>
             <PassCard view={view} face="back" />
           </details>
           {active ? (
@@ -105,12 +108,13 @@ export function NotFoundPage(props: { nonce: string }) {
         <meta name="robots" content="noindex, nofollow" />
         <meta name="color-scheme" content="light dark" />
         <title>Not found</title>
+        <script src="/theme-init.js" />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bundled CSS, no user input */}
         <style nonce={props.nonce} dangerouslySetInnerHTML={{ __html: CSS }} />
       </head>
       <body>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static wordmark markup, no user input */}
-        <header className="top" dangerouslySetInnerHTML={{ __html: wordmarkHtml() }} />
+        <header className="top" dangerouslySetInnerHTML={{ __html: HEADER }} />
         <main>
           <h1 className="sr">Not found</h1>
           <p>
