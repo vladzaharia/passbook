@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
   type ComponentStatusSchema,
@@ -31,6 +31,18 @@ export function useStatus() {
     queryKey: ['status'],
     queryFn: ({ signal }) => api.get('/api/v1/status', StatusResponseSchema, { signal }),
     staleTime: 15_000,
+  });
+}
+
+/** Recheck skips the server's short cache; the runs reload with it. */
+export function useRecheck() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.get('/api/v1/status', StatusResponseSchema, { query: { fresh: '1' } }),
+    onSuccess: (data) => {
+      client.setQueryData(['status'], data);
+      void client.invalidateQueries({ queryKey: ['status', 'workflows'], exact: true });
+    },
   });
 }
 
