@@ -13,9 +13,12 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
   const holder = `${memberId.toLowerCase()}@example.test`;
 
   await page.goto('/admin/passes/new');
-  await page.getByRole('button', { name: /Henry/ }).click();
+  await page
+    .getByText(/^Henry/)
+    .first()
+    .click();
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: /Blue Entrance/ }).click();
+  await page.getByText('Henry’s · Blue Entrance', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByLabel('Member name').fill(memberName);
@@ -28,7 +31,7 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
 
   await page.getByLabel('Holder email').fill(holder);
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Create pass' }).click();
+  await page.getByRole('button', { name: 'Create and send' }).click();
 
   await page.waitForURL(/\/admin\/passes\/[0-9a-f-]+$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(memberName);

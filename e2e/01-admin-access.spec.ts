@@ -12,16 +12,14 @@ test('admin signs in through Pocket ID and lands on the admin overview', async (
 test('a user-group account cannot open /admin', async ({ page }) => {
   await signInAs(page, 'user', '/');
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Forbidden' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'You do not have access' })).toBeVisible();
   const status = await page.evaluate(async () => (await fetch('/api/v1/orgs')).status);
   expect(status).toBe(403);
 });
 
 test('an account with no group is refused with the short page', async ({ page }) => {
   await startOidcAs(page, 'nobody', '/');
-  await expect(
-    page.getByText('This account is not in an allowed group. Ask an admin.'),
-  ).toBeVisible();
+  await expect(page.getByText('This Polaris ID account cannot use Wallet.')).toBeVisible();
   const session = await page.evaluate(
     async () => (await (await fetch('/api/v1/session')).json()).authenticated,
   );

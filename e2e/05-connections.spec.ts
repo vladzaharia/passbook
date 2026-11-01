@@ -17,33 +17,35 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.goto('/admin/connections/new');
   await page.getByRole('combobox', { name: 'Organization', exact: true }).click();
   await page.getByRole('option', { name: seed.org.name }).click();
-  await page.getByRole('radio', { name: /Demo/ }).check();
+  await page.getByText('Demo', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByLabel(/^Name/).fill(name);
-  await page.getByLabel('Count', { exact: true }).fill('3');
+  await page.getByLabel('Members', { exact: true }).fill('3');
   await page.getByLabel('Holder domain', { exact: true }).fill(domain);
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByRole('combobox', { name: 'Template', exact: true }).click();
   await page.getByRole('option', { name: 'Wallet · Generic' }).click();
   const mappings: [string, string][] = [
-    ['holder', '/memberName'],
-    ['memberId', '/memberId'],
-    ['points', '/points'],
+    ['Name *', '/memberName'],
+    ['ID *', '/memberId'],
+    ['Points', '/points'],
   ];
-  for (const [i, [input, from]] of mappings.entries()) {
+  for (const [i, [field, from]] of mappings.entries()) {
     await page.getByRole('button', { name: 'Add mapping' }).click();
-    const group = page.getByRole('group', { name: `Mapping ${i + 1}` });
-    await group.getByLabel('Template input').fill(input);
-    await group.getByLabel('Upstream pointer').fill(from);
+    const row = page.getByRole('list', { name: 'Mappings' }).getByRole('listitem').nth(i);
+    await row.getByRole('combobox', { name: 'Source field' }).click();
+    await page.getByRole('option', { name: from, exact: true }).click();
+    await row.getByRole('combobox', { name: 'Template field' }).click();
+    await page.getByRole('option', { name: field, exact: true }).click();
   }
   await page.getByRole('button', { name: 'Next' }).click();
 
-  await page.getByLabel('Holder email field').fill('/email');
-  await page.getByRole('switch', { name: 'Create passes for new records' }).click();
+  await page.getByLabel('Holder email', { exact: true }).fill('/email');
+  await page.getByRole('checkbox', { name: 'Create passes for new records' }).check();
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Create connection' }).click();
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL(/\/admin\/connections\/[0-9a-f-]+$/);
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
   const connectionId = page.url().split('/').pop() as string;
@@ -65,14 +67,14 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   // The run shows in the runs list and health reads healthy.
   await expect(async () => {
     await page.reload();
-    await expect(page.getByRole('row', { name: /admin changed.*3 seen, 3 changed/i })).toBeVisible({
+    await expect(
+      page.getByRole('row', { name: /Sync now.*Changed.*3 seen, 3 changed/i }),
+    ).toBeVisible({
       timeout: 2_000,
     });
   }).toPass({ timeout: 30_000 });
-  await expect(page.getByText('Failures in a row')).toBeVisible();
-  await expect(
-    page.getByRole('tabpanel', { name: 'Health' }).getByText('Healthy', { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText('Paused after repeated failures')).toBeVisible();
+  await expect(page.getByText('Healthy', { exact: true })).toBeVisible();
 
   const passes = (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items;
   expect(passes.map((p: { holderEmail: string }) => p.holderEmail).sort()).toEqual(

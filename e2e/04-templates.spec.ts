@@ -43,7 +43,7 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
     buffer: variantZip(name),
   });
   await page.getByRole('button', { name: 'Upload', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Import complete' })).toBeVisible({
+  await expect(page.getByRole('link', { name: 'Open template' })).toBeVisible({
     timeout: 60_000,
   });
 
@@ -61,9 +61,9 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
 
 test('baked templates are locked and the API refuses to delete them', async ({ page }) => {
   await page.goto('/admin/templates/baked:starter-generic');
-  await expect(page.getByText('Baked', { exact: true })).toBeVisible();
+  await expect(page.getByText('Built-in', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Customize' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Duplicate' })).toBeVisible();
 
   const api = await apiAs('admin');
   const res = await api.ctx.fetch('/api/v1/templates/baked%3Astarter-generic', {
