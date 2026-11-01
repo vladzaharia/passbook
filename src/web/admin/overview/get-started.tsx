@@ -41,7 +41,9 @@ interface Step {
   to: string;
   search?: Record<string, string>;
   verb: string;
-  icon: ReactNode;
+  /** Create verbs lead with their icon; navigation trails a chevron. */
+  iconStart?: ReactNode;
+  iconEnd?: ReactNode;
   art?: ArtName;
 }
 
@@ -94,7 +96,7 @@ export function GetStarted({
       done: setup.orgs > 0,
       to: '/admin/orgs',
       verb: 'New organization',
-      icon: <Plus aria-hidden />,
+      iconStart: <Plus aria-hidden />,
       art: 'building',
     },
     {
@@ -103,7 +105,7 @@ export function GetStarted({
       done: setup.assignedTemplates > 0,
       to: '/admin/templates',
       verb: 'Templates',
-      icon: <ChevronRight aria-hidden />,
+      iconEnd: <ChevronRight aria-hidden />,
       art: 'template',
     },
     {
@@ -112,7 +114,7 @@ export function GetStarted({
       done: setup.passes > 0,
       to: '/admin/passes/new',
       verb: 'New pass',
-      icon: <Plus aria-hidden />,
+      iconStart: <Plus aria-hidden />,
       art: 'passes',
     },
     {
@@ -122,7 +124,7 @@ export function GetStarted({
       to: setup.latestPassId ? `/admin/passes/${setup.latestPassId}` : '/admin/passes',
       search: setup.latestPassId ? { tab: 'holder' } : undefined,
       verb: 'Send email',
-      icon: <Mail aria-hidden />,
+      iconStart: <Mail aria-hidden />,
     },
   ];
   const next = steps.findIndex((s) => !s.done);
@@ -131,8 +133,8 @@ export function GetStarted({
       asChild
       size="sm"
       variant={i === next ? 'primary' : 'outline'}
-      iconStart={s.verb === 'Templates' ? undefined : s.icon}
-      iconEnd={s.verb === 'Templates' ? s.icon : undefined}
+      iconStart={s.iconStart}
+      iconEnd={s.iconEnd}
     >
       <Link to={s.to as never} search={s.search as never}>
         {s.verb}

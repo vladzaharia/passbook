@@ -16,6 +16,9 @@ export const RANGE_LABEL: Record<Range, string> = {
   '30d': 'Last 30 days',
 };
 
+/** Range-bound tiles say which range they count. */
+const RANGE_SHORT: Record<Range, string> = { '24h': '24 h', '7d': '7 days', '30d': '30 days' };
+
 /** A list a tile opens: path plus search, so the router builds the URL. */
 interface Target {
   to: string;
@@ -78,7 +81,10 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
           />
           <span className="min-w-0 truncate text-sm text-fg-muted">{kpi.label}</span>
           {kpi.ranged ? (
-            <span className="sr-only">, {RANGE_LABEL[range].toLowerCase()}</span>
+            <span className="ml-auto shrink-0 text-xs text-fg-muted">
+              <span className="sr-only">, </span>
+              {RANGE_SHORT[range]}
+            </span>
           ) : null}
         </span>
         <span className="flex flex-col gap-2 @min-[15rem]:flex-row @min-[15rem]:items-end @min-[15rem]:justify-between">
@@ -201,7 +207,7 @@ export function Kpis({
           />
           <Secondary id="devices" label="Devices" value={t.devices} to="/admin/passes" />
           <li aria-hidden className="h-4 w-px bg-border max-sm:hidden" />
-          <li className="text-fg-subtle">{RANGE_LABEL[range]}</li>
+          <li className="text-xs text-fg-muted">{RANGE_LABEL[range]}</li>
           <Secondary id="issued" label="Issued" value={t.issued} to="/admin/passes" />
           <Secondary id="updated" label="Updated" value={t.updated} to="/admin/passes" />
           <Secondary

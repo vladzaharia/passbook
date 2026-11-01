@@ -89,7 +89,8 @@ export function AuditRows({
               <RefChip value={actorRef(r)} className="max-w-[45%]" />
               {target ? (
                 <>
-                  <ArrowRight aria-label="to" className="size-3 shrink-0 text-fg-subtle" />
+                  <ArrowRight aria-hidden className="size-3 shrink-0 text-fg-muted" />
+                  <span className="sr-only">to</span>
                   <RefChip value={target} className="min-w-0" />
                 </>
               ) : null}
