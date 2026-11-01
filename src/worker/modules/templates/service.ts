@@ -11,20 +11,24 @@ import type {
   TemplateListSchema,
   TemplateSummarySchema,
   TemplateVersionDetailSchema,
+  UploadListSchema,
 } from '../../../shared/contracts/index.ts';
 import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { brandingWarnings, readBranding, tenantPassJson } from '../passes/branding.ts';
+import { getOrg as getPassOrg } from '../passes/repo.ts';
 import { previewPass } from './build-check.ts';
 import { createTemplateRegistry } from './registry.ts';
 import {
-  countPasses,
+  countPassesByVersion,
   getImport,
   getOrgName,
   getTemplate,
   getVersion,
   type ListedTemplate,
+  listRecentImports,
   listTemplates,
   listVersions,
   type TemplateRow,
@@ -54,7 +58,7 @@ export function summaryOf(row: TemplateRow, passCount: number, orgName: string |
   };
 }
 
-function versionDto(v: VersionRow, active: string | null) {
+function versionDto(v: VersionRow, active: string | null, passCount = 0) {
   return {
     version: v.version,
     createdAt: v.createdAt,
@@ -62,6 +66,7 @@ function versionDto(v: VersionRow, active: string | null) {
     assets: v.assets.map(({ source: _source, ...asset }) => asset),
     report: v.report,
     active: v.version === active,
+    passCount,
   };
 }
 
@@ -103,6 +108,7 @@ export async function list(
     origin: query.origin,
     status: query.status,
     includeArchived: query.includeArchived,
+    ...(query.q ? { q: query.q } : {}),
     limit: query.limit + 1,
     cursor,
   });
@@ -120,19 +126,29 @@ export async function detail(
   id: string,
 ): Promise<Detail> {
   const row = await loadTemplate(ctx, auth, id);
-  const versions = await listVersions(ctx.env.DB, id);
+  const [versions, counts] = await Promise.all([
+    listVersions(ctx.env.DB, id),
+    countPassesByVersion(ctx.env.DB, id),
+  ]);
   const active = versions.find((v) => v.version === row.activeVersion);
   if (!active) throw new NotFoundError('Template has no active version.', 'TEMPLATE_NOT_FOUND');
+  let total = 0;
+  let older = 0;
+  for (const [version, n] of counts) {
+    total += n;
+    if (version !== row.activeVersion) older += n;
+  }
   return {
     ...summaryOf(
       row,
-      await countPasses(ctx.env.DB, id),
+      total,
       row.orgId ? ((await getOrgName(ctx.env.DB, row.orgId))?.name ?? null) : null,
     ),
     inputSchema: active.manifest.inputs as Json,
     sample: active.manifest.sample,
     manifest: active.manifest as unknown as Json,
-    versions: versions.map((v) => versionDto(v, row.activeVersion)),
+    versions: versions.map((v) => versionDto(v, row.activeVersion, counts.get(v.version) ?? 0)),
+    passesOnOlderVersions: older,
   };
 }
 
@@ -145,8 +161,9 @@ export async function versionDetail(
   const row = await loadTemplate(ctx, auth, id);
   const v = await getVersion(ctx.env.DB, id, version);
   if (!v) throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');
+  const counts = await countPassesByVersion(ctx.env.DB, id);
   return {
-    ...versionDto(v, row.activeVersion),
+    ...versionDto(v, row.activeVersion, counts.get(v.version) ?? 0),
     manifest: v.manifest as unknown as Json,
     passJson: v.passJson,
   };
@@ -188,11 +205,17 @@ export async function preview(
   body: z.infer<typeof PreviewRequestSchema>,
 ): Promise<z.infer<typeof PreviewResponseSchema>> {
   const row = await loadTemplate(ctx, auth, id);
-  const template: ResolvedTemplate = await createTemplateRegistry(ctx.env, { ctx }).resolve(
+  const resolved: ResolvedTemplate = await createTemplateRegistry(ctx.env, { ctx }).resolve(
     id,
     body.version,
   );
-  const org = row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null;
+  if (body.orgId) assertOrgAccess(auth, body.orgId);
+  const tenant = body.orgId ? await getPassOrg(ctx.env.DB, body.orgId) : null;
+  const org = tenant ?? (row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null);
+  const branding = readBranding(tenant?.branding);
+  const template = tenant
+    ? { ...resolved, passJson: tenantPassJson(resolved.passJson, tenant.name, branding) }
+    : resolved;
   try {
     const result = previewPass(
       ctx.env,
@@ -203,7 +226,7 @@ export async function preview(
     );
     return {
       passJson: result.passJson,
-      warnings: result.issues,
+      warnings: [...result.issues, ...(tenant ? brandingWarnings(id, branding, []) : [])],
       assetNames: [
         ...new Set([
           ...template.assets.map((a) => a.name),
@@ -221,6 +244,23 @@ export async function preview(
       );
     throw error;
   }
+}
+
+export async function recentUploads(
+  ctx: ServiceContext,
+  auth: AuthContext | undefined,
+  query: { orgId?: string | undefined; limit: number },
+): Promise<z.infer<typeof UploadListSchema>> {
+  let orgId = query.orgId;
+  if (auth?.kind === 'api_key' && auth.orgId !== null) {
+    if (orgId) assertOrgAccess(auth, orgId);
+    orgId = auth.orgId;
+  }
+  const items = await listRecentImports(ctx.env.DB, {
+    ...(orgId ? { orgId } : {}),
+    limit: query.limit,
+  });
+  return { items };
 }
 
 export async function importStatus(

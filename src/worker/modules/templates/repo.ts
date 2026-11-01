@@ -5,7 +5,7 @@ import type {
   TemplateManifest,
   ValidationReport,
 } from '../../../passkit/types.ts';
-import { all, first, run, stmt } from '../../platform/db.ts';
+import { all, first, likeEscape, run, stmt } from '../../platform/db.ts';
 
 export interface TemplateRow {
   id: string;
@@ -121,6 +121,8 @@ export interface ListFilter {
   origin?: 'baked' | 'uploaded';
   status?: TemplateRow['status'];
   includeArchived?: boolean;
+  /** Substring of the name or slug. */
+  q?: string;
   limit: number;
   cursor?: { createdAt: number; id: string } | null;
 }
@@ -145,6 +147,11 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
   if (f.origin) {
     where.push('t.origin = ?');
     params.push(f.origin);
+  }
+  if (f.q) {
+    const like = `%${likeEscape(f.q.toLowerCase())}%`;
+    where.push("(lower(t.name) LIKE ? ESCAPE '\\' OR t.slug LIKE ? ESCAPE '\\')");
+    params.push(like, like);
   }
   if (f.cursor) {
     where.push('(t.created_at < ? OR (t.created_at = ? AND t.id < ?))');
@@ -458,3 +465,5 @@ export async function insertWorkflowRun(
     [row.instanceId, row.kind, row.orgId, row.targetId, row.now],
   );
 }
+
+export * from './repo-usage.ts';

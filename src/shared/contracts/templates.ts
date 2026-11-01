@@ -57,6 +57,8 @@ export const TemplateVersionSchema = z.object({
   assets: z.array(AssetEntrySchema),
   report: ValidationReportSchema,
   active: z.boolean(),
+  /** Live passes on this version. */
+  passCount: z.number().int(),
 });
 
 export const TemplateVersionDetailSchema = TemplateVersionSchema.extend({
@@ -70,6 +72,8 @@ export const TemplateDetailSchema = TemplateSummarySchema.extend({
   sample: z.record(z.string(), JsonSchema),
   manifest: JsonSchema,
   versions: z.array(TemplateVersionSchema),
+  /** Live passes on a version other than the active one: what "Update N passes" moves. */
+  passesOnOlderVersions: z.number().int(),
 });
 
 const BoolQuery = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');
@@ -79,6 +83,8 @@ export const TemplateListQuerySchema = z.object({
   includeArchived: BoolQuery.optional(),
   origin: z.enum(['baked', 'uploaded']).optional(),
   status: z.enum(['active', 'archived']).optional(),
+  /** Matches name or slug, case-insensitive. */
+  q: z.string().trim().max(100).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
@@ -100,6 +106,29 @@ export const ImportStatusSchema = z.object({
   version: z.string().nullable(),
   report: ValidationReportSchema.nullable(),
   error: z.string().nullable(),
+});
+
+export const UploadListQuerySchema = z.object({
+  orgId: IdSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+export const UploadSummarySchema = z.object({
+  uploadId: IdSchema,
+  name: z.string().nullable(),
+  status: ImportStatusSchema.shape.status,
+  templateId: IdSchema.nullable(),
+  version: z.string().nullable(),
+  error: z.string().nullable(),
+  /** Errors and warnings in the report. */
+  issues: z.number().int(),
+  createdAt: TimestampSchema,
+});
+export const UploadListSchema = z.object({ items: z.array(UploadSummarySchema) });
+
+export const TemplateReissueResponseSchema = z.object({
+  workflowInstanceId: z.string(),
+  /** Passes on older versions when the run started. */
+  passes: z.number().int(),
 });
 
 export const TemplateVersionParamSchema = z.object({
@@ -131,6 +160,8 @@ export const UpdateTemplateSchema = z.object({ orgId: IdSchema.nullable() });
 export const UpdateManifestSchema = z.object({ manifest: JsonSchema });
 export const PreviewRequestSchema = z.object({
   version: z.string().optional(),
+  /** Preview as this org's pass: its name, colours, logo and icon. */
+  orgId: IdSchema.optional(),
   input: z.record(z.string(), JsonSchema).optional(),
   locale: z.string().max(35).optional(),
 });
