@@ -38,7 +38,7 @@ const devices = (n: number) =>
   n === 0 ? 'Not on a device yet' : `On ${n} ${n === 1 ? 'device' : 'devices'}`;
 
 export function PassDetailPage({ passId, search }: { passId: string; search: Search }) {
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: '/admin/passes/$passId' });
   const pass = usePass(passId);
   const crumbs = [
     { label: 'Passes', to: '/admin/passes' },
@@ -83,10 +83,10 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
       setSearch={(patch) =>
         void navigate({
           to: '.',
-          search: ((prev: Search) =>
+          search: (prev: Search) =>
             Object.fromEntries(
               Object.entries({ ...prev, ...patch }).filter(([, v]) => v !== undefined),
-            )) as never,
+            ),
           replace: true,
         })
       }

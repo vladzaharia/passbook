@@ -139,7 +139,8 @@ export function CreateConnectionWizard() {
       setCreated({ id: connection.id, url: connection.webhookUrl, secret: webhookSecret });
     },
   });
-  const open = (id: string) => void navigate({ to: `/admin/connections/${id}` as never });
+  const open = (id: string) =>
+    void navigate({ to: '/admin/connections/$connectionId', params: { connectionId: id } });
   // Without a secret to show, the new connection opens at once.
   // biome-ignore lint/correctness/useExhaustiveDependencies: navigate once per creation
   useEffect(() => {

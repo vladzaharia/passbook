@@ -67,7 +67,7 @@ export function CardLink({
   }
   return (
     <Button asChild variant="ghost" size="sm" iconEnd={<ChevronRight aria-hidden />}>
-      <Link to={(to ?? '/') as never}>{children}</Link>
+      <Link to={to ?? '/'}>{children}</Link>
     </Button>
   );
 }

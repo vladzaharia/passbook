@@ -40,7 +40,8 @@ function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
         <span className="flex min-w-0 max-w-80 items-center gap-3">
           <TemplateStill template={row.original} className="w-7 shrink-0" />
           <Link
-            to={`/admin/templates/${row.original.id}` as never}
+            to="/admin/templates/$templateId"
+            params={{ templateId: row.original.id }}
             className="truncate font-medium text-fg-strong hover:text-accent-fg hover:underline"
           >
             {row.original.name}

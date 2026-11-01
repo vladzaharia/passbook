@@ -112,14 +112,17 @@ export function TemplateUploadPage({
         <div className="flex flex-wrap gap-2">
           {s?.templateId ? (
             <Button asChild>
-              <Link to={`/admin/templates/${s.templateId}` as never}>Open template</Link>
+              <Link to="/admin/templates/$templateId" params={{ templateId: s.templateId }}>
+                Open template
+              </Link>
             </Button>
           ) : null}
           {result.data && result.data.passesOnOlderVersions > 0 ? (
             <Button asChild variant="outline" iconStart={<ACTION_ICON.refresh aria-hidden />}>
               <Link
-                to={`/admin/templates/${s?.templateId}` as never}
-                search={{ tab: 'versions' } as never}
+                to="/admin/templates/$templateId"
+                params={{ templateId: s?.templateId ?? '' }}
+                search={{ tab: 'versions' }}
               >
                 Update passes
               </Link>

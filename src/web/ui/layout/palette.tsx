@@ -73,7 +73,7 @@ export function AdminPalette({
   const connections = useConnectionOptions(open && term.length > 0);
   const orgName = new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name]));
   const go = (to: string, search?: Record<string, string>) => () =>
-    void navigate({ to: to as never, ...(search ? { search: search as never } : {}) });
+    void navigate({ to: to, ...(search ? { search: search } : {}) });
 
   useEffect(() => {
     if (!open) {

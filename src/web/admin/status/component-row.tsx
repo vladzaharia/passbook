@@ -44,7 +44,7 @@ export function ComponentRow({ component: c, items }: { component: Component; it
         <div className="flex shrink-0 items-center">
           {link ? (
             <Button asChild variant="ghost" size="sm" className="max-sm:px-2">
-              <Link to={link as never} aria-label={`Open ${label}`}>
+              <Link to={link} aria-label={`Open ${label}`}>
                 {openLabel}
               </Link>
             </Button>

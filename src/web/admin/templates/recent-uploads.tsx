@@ -32,7 +32,7 @@ export function RecentUploads({ orgId }: { orgId: string | undefined }) {
               trailing={
                 <Link
                   to="/admin/templates/upload"
-                  search={{ upload: u.uploadId } as never}
+                  search={{ upload: u.uploadId }}
                   className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-sm text-fg hover:bg-state-hover-tint hover:text-fg-strong"
                 >
                   Report

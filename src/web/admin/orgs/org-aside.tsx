@@ -53,7 +53,7 @@ export function CountsCard({ org }: { org: Org }) {
             return (
               <li key={key}>
                 <Link
-                  to={to as never}
+                  to={to}
                   onClick={() => setOrgId(org.id)}
                   aria-label={`${n} ${text} in ${org.name}`}
                   className="group flex min-h-20 flex-col gap-1 rounded-md border border-border p-3 wl-colors hover:border-border-strong hover:bg-state-hover-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
@@ -103,7 +103,7 @@ export function OrgChecklist({ org }: { org: Org }) {
   const { setOrgId } = useOrgScope();
   const go = (to: string, label: string, scoped = true) => (
     <Button asChild variant="ghost" size="sm" iconEnd={<ChevronRight aria-hidden />}>
-      <Link to={to as never} onClick={scoped ? () => setOrgId(org.id) : undefined}>
+      <Link to={to} onClick={scoped ? () => setOrgId(org.id) : undefined}>
         {label}
       </Link>
     </Button>

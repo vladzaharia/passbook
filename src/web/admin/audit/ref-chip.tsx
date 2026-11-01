@@ -37,7 +37,7 @@ export function RefChip({ value, className }: { value: Ref; className?: string }
     );
   return (
     <Link
-      to={value.to as never}
+      to={value.to}
       onClick={stop}
       className={cn(
         classes,

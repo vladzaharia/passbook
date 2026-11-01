@@ -149,7 +149,7 @@ export function NewPassPage({
     },
   });
   useEffect(() => {
-    if (createdId) void navigate({ to: `/admin/passes/${createdId}` as never });
+    if (createdId) void navigate({ to: '/admin/passes/$passId', params: { passId: createdId } });
   }, [createdId, navigate]);
 
   const fieldErrors = useMemo(() => {

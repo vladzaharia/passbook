@@ -150,7 +150,7 @@ function Loaded({
           <>
             {archived ? null : (
               <Button asChild iconStart={<ACTION_ICON.create aria-hidden />}>
-                <Link to="/admin/passes/new" search={newPass as never}>
+                <Link to="/admin/passes/new" search={newPass}>
                   New pass
                 </Link>
               </Button>
@@ -165,7 +165,7 @@ function Loaded({
             {baked ? null : (
               <MoreMenu>
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/templates/upload" search={{ templateId: t.id } as never}>
+                  <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
                     <ACTION_ICON.upload aria-hidden />
                     Upload version
                   </Link>
@@ -239,7 +239,7 @@ function Loaded({
         <Tabs
           value={tab}
           onValueChange={(v) =>
-            void navigate({ to: '.', search: { tab: v as Tab } as never, replace: true })
+            void navigate({ to: '.', search: { tab: v as Tab }, replace: true })
           }
           className="min-w-0"
         >

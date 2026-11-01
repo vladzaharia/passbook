@@ -60,8 +60,8 @@ export function WorkflowRuns({ orgName }: { orgName: (id: string | null) => stri
                 const label = workflowKindLabel(row.original.kind);
                 return link ? (
                   <Link
-                    to={link.to as never}
-                    search={link.search as never}
+                    to={link.to}
+                    search={link.search}
                     className="font-medium text-accent-fg hover:underline"
                   >
                     {label}

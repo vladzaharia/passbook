@@ -71,7 +71,7 @@ export function TemplateOverview({ template: t }: { template: Template }) {
                 value: (
                   <Link
                     to="/admin/passes"
-                    search={{ templateId: t.id } as never}
+                    search={{ templateId: t.id }}
                     className="inline-flex items-center gap-1 underline-offset-2 hover:text-fg-strong hover:underline"
                   >
                     {passes(t.passCount)}

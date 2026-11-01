@@ -149,7 +149,8 @@ export function HolderTab({ pass }: { pass: PassDetailDto }) {
                   {owner ? <EntityAvatar kind="user" id={owner} name={who} /> : null}
                   {owner ? (
                     <Link
-                      to={`/admin/users/${owner}` as never}
+                      to="/admin/users/$userId"
+                      params={{ userId: owner }}
                       className="flex min-w-0 items-baseline gap-2 underline-offset-2 hover:underline"
                     >
                       <span className="truncate text-fg-strong">

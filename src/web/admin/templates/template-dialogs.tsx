@@ -35,7 +35,7 @@ export function DuplicateDialog({
       markMinted(`template:${copy.id}`);
       toast.success('Template duplicated');
       onOpenChange(false);
-      void navigate({ to: `/admin/templates/${copy.id}` as never });
+      void navigate({ to: '/admin/templates/$templateId', params: { templateId: copy.id } });
     } catch (cause) {
       setError(errorMessage(cause));
     }

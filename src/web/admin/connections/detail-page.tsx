@@ -80,7 +80,7 @@ export function ConnectionDetailPage({
   const setTab = (next: string) =>
     void navigate({
       to: '.',
-      search: { tab: next as NonNullable<ConnectionDetailSearch['tab']> } as never,
+      search: { tab: next as NonNullable<ConnectionDetailSearch['tab']> },
       replace: true,
     });
   const Icon = connectorIcon(c.connectorType);

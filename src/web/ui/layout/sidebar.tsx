@@ -17,7 +17,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             return (
               <Link
                 key={item.to}
-                to={item.to as never}
+                to={item.to}
                 onClick={onNavigate}
                 activeOptions={{ exact: item.to === '/admin' }}
                 aria-current={active ? 'page' : undefined}

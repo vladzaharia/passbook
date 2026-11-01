@@ -136,7 +136,7 @@ export function GetStarted({
       iconStart={s.iconStart}
       iconEnd={s.iconEnd}
     >
-      <Link to={s.to as never} search={s.search as never}>
+      <Link to={s.to} search={s.search}>
         {s.verb}
       </Link>
     </Button>

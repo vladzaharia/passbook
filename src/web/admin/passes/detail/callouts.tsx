@@ -52,7 +52,7 @@ export function PassWarnings({ pass }: { pass: PassDetailDto }) {
               <Link
                 key={`${w.code}${w.path ?? ''}`}
                 to="."
-                search={{ tab: IMAGE_CODES.test(w.code) ? 'images' : 'fields' } as never}
+                search={{ tab: IMAGE_CODES.test(w.code) ? 'images' : 'fields' }}
                 className="underline-offset-2 hover:underline"
               >
                 {w.message}

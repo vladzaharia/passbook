@@ -28,7 +28,7 @@ export function Wordmark({ to = '/', flip = true }: { to?: string; flip?: boolea
   }, [play]);
   return (
     <Link
-      to={to as never}
+      to={to}
       className="inline-flex min-h-8 items-center gap-2 rounded-md text-base font-semibold text-fg-strong pointer-coarse:min-h-11"
     >
       <WalletCards

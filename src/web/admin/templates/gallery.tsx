@@ -85,7 +85,8 @@ export function TemplateGallery({
             ) : null}
             <div className="min-w-0 flex-1">
               <Link
-                to={`/admin/templates/${t.id}` as never}
+                to="/admin/templates/$templateId"
+                params={{ templateId: t.id }}
                 className="block truncate text-sm font-medium text-fg-strong after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
               >
                 {t.name}

@@ -67,8 +67,8 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
   return (
     <li style={{ '--i': index } as CSSProperties} className="min-w-0">
       <Link
-        to={kpi.to as never}
-        search={kpi.search as never}
+        to={kpi.to}
+        search={kpi.search}
         className={cn(
           // min-h-0 opts this block link out of base.css's touch padding for inline links.
           'flex h-full min-h-0 flex-col gap-2.5 rounded-lg border border-border bg-surface-raised p-4',
@@ -131,8 +131,8 @@ function Secondary({
   return (
     <li>
       <Link
-        to={to as never}
-        search={search as never}
+        to={to}
+        search={search}
         className="inline-flex min-h-6 items-baseline gap-1.5 rounded-sm text-fg-muted hover:text-fg-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         {label}

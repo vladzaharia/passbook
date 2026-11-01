@@ -77,7 +77,8 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
     <span className="flex min-w-0 max-w-72 items-center gap-3">
       <PassChip swatch={o.swatches.get(p.templateId)} voided={p.status === 'voided'} />
       <Link
-        to={`/admin/passes/${p.id}` as never}
+        to="/admin/passes/$passId"
+        params={{ passId: p.id }}
         className={
           p.status === 'voided'
             ? 'truncate font-medium text-fg-muted line-through decoration-fg-subtle hover:text-fg-strong'

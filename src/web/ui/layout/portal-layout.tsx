@@ -27,7 +27,7 @@ export function PortalLayout() {
               return (
                 <Link
                   key={item.to}
-                  to={item.to as never}
+                  to={item.to}
                   activeOptions={{ exact: item.to === '/' }}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
@@ -40,10 +40,7 @@ export function PortalLayout() {
               );
             })}
             {hasAdmin(session) ? (
-              <Link
-                to={'/admin' as never}
-                className={cn(NAV_LINK, 'text-fg-muted hover:text-fg-strong')}
-              >
+              <Link to="/admin" className={cn(NAV_LINK, 'text-fg-muted hover:text-fg-strong')}>
                 Admin
               </Link>
             ) : null}

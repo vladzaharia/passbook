@@ -20,7 +20,7 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
             <li key={item.to ?? item.label} className="flex items-center gap-1">
               {item.to && !last ? (
                 <Link
-                  to={item.to as never}
+                  to={item.to}
                   className={cn(
                     'relative inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline',
                     TOUCH_HIT,

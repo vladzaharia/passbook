@@ -56,8 +56,8 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
                   leading={<action.icon aria-hidden className={cn(TONE_TEXT[action.tone])} />}
                   title={
                     <Link
-                      to={link.to as never}
-                      search={link.search as never}
+                      to={link.to}
+                      search={link.search}
                       className="rounded-sm after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                     >
                       {action.label}

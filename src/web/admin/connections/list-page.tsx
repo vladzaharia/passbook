@@ -65,7 +65,8 @@ export function ConnectionsListPage({
         cell: ({ row }) => (
           <div className="min-w-0 max-w-72">
             <Link
-              to={`/admin/connections/${row.original.id}` as never}
+              to="/admin/connections/$connectionId"
+              params={{ connectionId: row.original.id }}
               className="block truncate font-medium text-accent-fg hover:underline"
             >
               {row.original.name}

@@ -143,7 +143,7 @@ export function EntityChip({ kind, id, name, to, className }: EntityChipProps) {
   if (!to) return <span className={classes}>{body}</span>;
   return (
     <Link
-      to={to as never}
+      to={to}
       className={cn(
         classes,
         'rounded-sm text-fg hover:text-fg-strong hover:underline underline-offset-2',

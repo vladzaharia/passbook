@@ -63,7 +63,7 @@ export function NotFoundPage() {
             </Button>
           ) : null}
           <Button asChild variant="outline">
-            <Link to={'/admin' as never}>Go to Overview</Link>
+            <Link to="/admin">Go to Overview</Link>
           </Button>
         </div>
       }

@@ -41,7 +41,7 @@ export function Health() {
                     leading={<Icon aria-hidden />}
                     title={
                       <Link
-                        to={(componentLink(c) ?? '/admin/status') as never}
+                        to={componentLink(c) ?? '/admin/status'}
                         className="rounded-sm after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                       >
                         {c.id === 'connections' ? 'All connections' : c.label}

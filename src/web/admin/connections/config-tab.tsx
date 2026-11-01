@@ -103,7 +103,8 @@ export function ConfigTab({ c }: { c: Detail }) {
       concError;
     if (invalid) return setShowErrors(true);
     const patch: ConnectionPatch = {};
-    if (!sameValues(cfg, initialConfig)) patch.config = nestValues(cleanValues(cfg)) as never;
+    if (!sameValues(cfg, initialConfig))
+      patch.config = nestValues(cleanValues(cfg)) as ConnectionPatch['config'];
     if (replacing) {
       patch.secrets = Object.fromEntries(
         Object.entries(cleanValues(secrets)).map(([k, v]) => [k, String(v)]),
