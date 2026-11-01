@@ -38,8 +38,8 @@ describe('pass detail', () => {
       'href',
       expect.stringMatching(/\/p\/abcdefghijklmnopqrst$/),
     );
-    await user.click(screen.getByRole('button', { name: 'Details' }));
-    expect(screen.getByRole('button', { name: 'Front' })).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Details' }));
+    expect(screen.getByRole('radio', { name: 'Details' })).toBeChecked();
     // The far face leaves the tab order and accessibility tree.
     expect(container.querySelector('.pc-face[data-side="front"]')).toHaveAttribute('inert');
     expect(container.querySelector('.pc-face[data-side="back"]')).not.toHaveAttribute('inert');

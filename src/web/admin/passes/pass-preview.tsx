@@ -4,7 +4,7 @@ import { normalize } from '@/shared/pass-view/index.ts';
 import { cn } from '../../lib/cn.ts';
 import { assetUrlMap } from '../../pass-card/assets.ts';
 import { PassCardStage } from '../../pass-card/index.tsx';
-import { Button } from '../../ui/index.ts';
+import { PassSideToggle, PassTargetToggle, usePassFacesDiffer } from '../../ui/index.ts';
 
 /** Asset names to URLs under the base; all candidates when the API sends no list. */
 export function assetMap(assetBaseUrl: string, names?: readonly string[]): Record<string, string> {
@@ -100,6 +100,7 @@ export function PassPreviewPanel({
 }) {
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [target, setTarget] = useState<IosTarget>('27');
+  const differ = usePassFacesDiffer(passJson);
   const [arrived, setArrived] = useState(false);
   useEffect(() => {
     if (mintOnArrival) setArrived(true);
@@ -119,55 +120,10 @@ export function PassPreviewPanel({
         mint={mint}
         {...(transitionName ? { transitionName } : {})}
       />
-      <div className="flex flex-wrap justify-center gap-4">
-        <Toggle
-          label="Side"
-          value={face}
-          onChange={setFace}
-          options={[
-            ['front', 'Front'],
-            ['back', 'Back'],
-          ]}
-        />
-        <Toggle
-          label="iOS"
-          value={target}
-          onChange={setTarget}
-          options={[
-            ['27', 'iOS 27'],
-            ['legacy', 'Earlier'],
-          ]}
-        />
+      <div className="flex flex-wrap justify-center gap-2">
+        <PassSideToggle value={face} onChange={setFace} />
+        {differ ? <PassTargetToggle value={target} onChange={setTarget} /> : null}
       </div>
     </div>
-  );
-}
-
-function Toggle<T extends string>({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: T;
-  onChange: (v: T) => void;
-  options: [T, string][];
-}) {
-  return (
-    <fieldset className="flex items-center gap-1">
-      <legend className="sr-only">{label}</legend>
-      {options.map(([v, text]) => (
-        <Button
-          key={v}
-          size="sm"
-          variant={value === v ? 'secondary' : 'ghost'}
-          aria-pressed={value === v}
-          onClick={() => onChange(v)}
-        >
-          {text}
-        </Button>
-      ))}
-    </fieldset>
   );
 }

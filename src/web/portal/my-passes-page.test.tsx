@@ -37,7 +37,7 @@ describe('my passes', () => {
       handlers: { '/api/v1/me/passes': () => list(passFixture()) },
     });
     await screen.findByRole('heading', { name: 'Gym membership', level: 2 });
-    expect(screen.queryByRole('link', { name: /Add all/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /All passes/ })).toBeNull();
   });
 
   it('links the bundle for two passes', async () => {
@@ -46,7 +46,7 @@ describe('my passes', () => {
         '/api/v1/me/passes': () => list(passFixture(), passFixture({ id: 'p2' })),
       },
     });
-    expect(await screen.findByRole('link', { name: 'Add all to Apple Wallet' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /All passes \(2\)/ })).toHaveAttribute(
       'href',
       '/api/v1/me/passes.pkpasses?part=1',
     );
@@ -55,10 +55,11 @@ describe('my passes', () => {
   it('splits eleven passes into two bundle links', async () => {
     const many = Array.from({ length: 11 }, (_, i) => passFixture({ id: `p${i}` }));
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(...many) } });
-    expect(
-      await screen.findByRole('link', { name: 'Add passes 1-10 to Apple Wallet' }),
-    ).toHaveAttribute('href', '/api/v1/me/passes.pkpasses?part=1');
-    expect(screen.getByRole('link', { name: 'Add pass 11 to Apple Wallet' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Passes 1–10/ })).toHaveAttribute(
+      'href',
+      '/api/v1/me/passes.pkpasses?part=1',
+    );
+    expect(screen.getByRole('link', { name: /Passes 11/ })).toHaveAttribute(
       'href',
       '/api/v1/me/passes.pkpasses?part=2',
     );

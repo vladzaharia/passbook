@@ -15,6 +15,7 @@ import {
   ErrorState,
   KeyValue,
   PageHeader,
+  PassSideToggle,
   Skeleton,
   StatusPill,
 } from '../ui/index.ts';
@@ -149,13 +150,9 @@ export function PassDetailPage({ passId }: { passId: string }) {
             dip={dip}
             transitionName={`pass-${pass.id}`}
           />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFace(face === 'front' ? 'back' : 'front')}
-          >
-            {face === 'front' ? 'Details' : 'Front'}
-          </Button>
+          <div className="flex justify-center">
+            <PassSideToggle value={face} onChange={setFace} />
+          </div>
         </div>
         <div className="flex flex-col gap-4">
           {rows.length ? (

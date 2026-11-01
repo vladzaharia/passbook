@@ -1,12 +1,12 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Wallet } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
+  AppleWalletBadge,
   Button,
   Card,
   EmptyState,
@@ -51,7 +51,7 @@ function PassTile({ pass }: { pass: MyPass }) {
         <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         <p className="text-xs text-fg-subtle">Updated {formatWhen(pass.modifiedAt)}</p>
       </div>
-      <div className="mt-auto flex items-center gap-2">
+      <div className="mt-auto flex flex-wrap items-center gap-2">
         {voided ? null : (
           <>
             <AddToWalletButton
@@ -81,13 +81,15 @@ function AddAllLinks({ count }: { count: number }) {
         const from = i * MY_PASSES_BUNDLE_SIZE + 1;
         const to = Math.min(count, from + MY_PASSES_BUNDLE_SIZE - 1);
         return (
-          <Button key={from} asChild variant="outline" size="sm" iconStart={<Wallet aria-hidden />}>
-            <a href={`${MY_PASSES_BUNDLE_PATH}?part=${i + 1}`}>
-              {parts === 1
-                ? 'Add all to Apple Wallet'
-                : `Add pass${from === to ? ` ${from}` : `es ${from}-${to}`} to Apple Wallet`}
-            </a>
-          </Button>
+          <AppleWalletBadge
+            key={from}
+            href={`${MY_PASSES_BUNDLE_PATH}?part=${i + 1}`}
+            label={
+              parts === 1
+                ? `All passes (${count})`
+                : `Passes ${from === to ? from : `${from}–${to}`}`
+            }
+          />
         );
       })}
     </div>
@@ -102,7 +104,7 @@ export function MyPassesPage() {
   let body: ReactNode;
   if (query.isPending) {
     body = (
-      <div className="grid gap-4 sm:grid-cols-2" aria-busy="true">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-busy="true">
         <Skeleton className="h-72" />
         <Skeleton className="h-72" />
       </div>
@@ -122,7 +124,7 @@ export function MyPassesPage() {
     body = (
       <>
         <AddAllLinks count={passes.filter((p) => p.status !== 'voided').length} />
-        <ul className={cn('grid gap-4 sm:grid-cols-2', arrived && 'wl-deal')}>
+        <ul className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2', arrived && 'wl-deal')}>
           {passes.map((pass, i) => (
             <li key={pass.id} className="flex" style={{ '--i': i } as CSSProperties}>
               <PassTile pass={pass} />
