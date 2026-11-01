@@ -59,6 +59,8 @@ describe('create', () => {
     };
     const item = listed.items.find((i) => i.id === key.id);
     expect(item).toBeTruthy();
+    // makeUser sets no name, so the chip shows the creator's email.
+    expect(item?.createdByName).toBe(`${userId}@example.com`);
     expect(JSON.stringify(listed)).not.toContain(key.secret);
   });
 

@@ -15,7 +15,7 @@ export type ApiKeyDto = z.infer<typeof ApiKeySchema>;
 const KEY_SHAPE = /^wlt_([A-Za-z0-9_-]{8})_([A-Za-z0-9_-]{43})$/;
 const TOUCH_EVERY_MS = 5 * 60 * 1000;
 
-function toDto(row: repo.ApiKeyRow): ApiKeyDto {
+function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKeyDto {
   return {
     id: row.id,
     orgId: row.org_id,
@@ -23,6 +23,7 @@ function toDto(row: repo.ApiKeyRow): ApiKeyDto {
     prefix: row.prefix,
     scopes: parseScopes(row.scopes),
     createdBy: row.created_by,
+    createdByName: row.created_by_name ?? null,
     createdAt: row.created_at,
     lastUsedAt: row.last_used_at,
     expiresAt: row.expires_at,
