@@ -17,15 +17,15 @@ import {
   FormField,
   Input,
   KeyValue,
+  MoreMenu,
   PageHeader,
   SaveBar,
   SkeletonRows,
   StatusPill,
+  SwitchRow,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
-import { MoreMenu } from '../connections/more-menu.tsx';
-import { SwitchRow } from '../connections/switch-row.tsx';
 import { useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { CheckApnsButton } from './apns-check.tsx';

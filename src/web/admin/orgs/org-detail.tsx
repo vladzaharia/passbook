@@ -16,10 +16,10 @@ import {
   FormField,
   Input,
   KeyValue,
+  MoreMenu,
   PageHeader,
   SkeletonRows,
 } from '@/web/ui/index.ts';
-import { MoreMenu } from '../connections/more-menu.tsx';
 import { formatDateTime } from '../overview/format.ts';
 import { ORG_FIELDS } from '../settings/fields.ts';
 import { SettingsForm } from '../settings/settings-form.tsx';

@@ -1,6 +1,7 @@
 import { MoreHorizontal } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../../ui/index.ts';
+import { Button } from './button.tsx';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from './dropdown-menu.tsx';
 
 /** Page-header overflow: items are DropdownMenuItem children. */
 export function MoreMenu({ children }: { children: ReactNode }) {

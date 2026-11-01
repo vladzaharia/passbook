@@ -13,6 +13,7 @@ import {
   ErrorState,
   FormField,
   Input,
+  MoreMenu,
   PageHeader,
   SaveBar,
   Skeleton,
@@ -40,7 +41,6 @@ import {
 } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow, toRows } from './mapping.ts';
 import { MappingEditor } from './mapping-editor.tsx';
-import { MoreMenu } from './more-menu.tsx';
 import { WebhookPanel } from './webhook.tsx';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;

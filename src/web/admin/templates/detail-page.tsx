@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Archive, Copy, Lock, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Archive, Copy, Lock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
@@ -13,15 +13,13 @@ import {
   ConfirmDialog,
   Dialog,
   DialogContent,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   ErrorState,
   FormField,
   Input,
   JsonViewer,
   KeyValue,
+  MoreMenu,
   PageHeader,
   Select,
   Skeleton,
@@ -208,19 +206,12 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
               {baked ? 'Customize' : 'Clone'}
             </Button>
             {baked ? null : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
-                    More
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem destructive onSelect={() => setRemove(true)}>
-                    {archives ? <Archive aria-hidden /> : <Trash2 aria-hidden />}
-                    {archives ? 'Archive' : 'Delete'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <MoreMenu>
+                <DropdownMenuItem destructive onSelect={() => setRemove(true)}>
+                  {archives ? <Archive aria-hidden /> : <Trash2 aria-hidden />}
+                  {archives ? 'Archive' : 'Delete'}
+                </DropdownMenuItem>
+              </MoreMenu>
             )}
           </>
         }

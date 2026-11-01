@@ -9,15 +9,24 @@ import {
   useRef,
 } from 'react';
 import { cn } from '../lib/cn.ts';
+import { installInputModality } from '../lib/input-modality.ts';
 
 const OpenerContext = createContext<{ current: HTMLElement | null } | null>(null);
+
+/** The element to refocus: a dropdown item resolves to its menu trigger, which outlives the item. */
+function openerOf(active: HTMLElement): HTMLElement {
+  const labelledBy = active.closest('[role="menu"]')?.getAttribute('aria-labelledby');
+  const trigger = labelledBy ? document.getElementById(labelledBy) : null;
+  return trigger ?? active;
+}
 
 /** Remembers the element focused when a state-controlled overlay opens. */
 export function useOpener(open: boolean | undefined) {
   const opener = useRef<HTMLElement | null>(null);
   useLayoutEffect(() => {
+    installInputModality();
     if (open && document.activeElement instanceof HTMLElement) {
-      opener.current = document.activeElement;
+      opener.current = openerOf(document.activeElement);
     }
   }, [open]);
   return opener;
