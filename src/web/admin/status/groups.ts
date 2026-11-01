@@ -25,6 +25,21 @@ export function groupComponents<T extends Pick<Component, 'kind'>>(components: r
   })).filter((g) => g.items.length > 0);
 }
 
+/**
+ * Two columns from row counts, groups kept in order: each goes to the shorter column. It depends on
+ * the data only, so opening a disclosure never moves a card to the other side.
+ */
+export function splitColumns<G extends { items: readonly unknown[] }>(groups: readonly G[]) {
+  const cols: [G[], G[]] = [[], []];
+  const rows = [0, 0];
+  for (const g of groups) {
+    const i = (rows[1] ?? 0) < (rows[0] ?? 0) ? 1 : 0;
+    cols[i]?.push(g);
+    rows[i] = (rows[i] ?? 0) + g.items.length + 1;
+  }
+  return cols;
+}
+
 /** "All connections" sums the connection rows; counting it too would report one failure twice. */
 export const isAggregate = (c: Pick<Component, 'id'>) => c.id === 'connections';
 export const leaves = <T extends Pick<Component, 'id'>>(components: readonly T[]) =>

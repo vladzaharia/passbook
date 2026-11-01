@@ -12,7 +12,7 @@ import {
 import { useOrgList } from '../orgs/queries.ts';
 import { ComponentRow } from './component-row.tsx';
 import { dataItems } from './data-items.ts';
-import { groupComponents, problems } from './groups.ts';
+import { groupComponents, problems, splitColumns } from './groups.ts';
 import { sortBySeverity, useRecheck, useStatus } from './queries.ts';
 import { Summary } from './summary.tsx';
 import { WorkflowRuns } from './workflow-runs.tsx';
@@ -50,40 +50,41 @@ export function StatusPage() {
               <EmptyState inline art="pulse" title="No components" />
             </Card>
           ) : (
-            // Two balanced columns at 1280 and up; groups never split across them.
-            <div className="-mb-6 gap-6 xl:columns-2">
-              {groupComponents(data.components).map((g) => {
-                const bad = problems(g.items).length;
-                return (
-                  <section
-                    key={g.id}
-                    aria-labelledby={`g-${g.id}`}
-                    className="mb-6 break-inside-avoid"
-                  >
-                    <Card className="overflow-hidden">
-                      <CardHeader
-                        title={<span id={`g-${g.id}`}>{g.title}</span>}
-                        actions={
-                          bad > 0 ? (
-                            <span className="text-xs text-fg-muted">
-                              {bad} {bad === 1 ? 'needs' : 'need'} attention
-                            </span>
-                          ) : null
-                        }
-                      />
-                      <ul aria-label={g.title} className="divide-y divide-border">
-                        {sortBySeverity(g.items).map((c) => (
-                          <ComponentRow
-                            key={c.id}
-                            component={c}
-                            items={c.data ? dataItems(c.data, orgName) : []}
+            // Two columns at 1280 and up, split by row count so a card never changes sides.
+            <div className="grid items-start gap-6 xl:grid-cols-2">
+              {splitColumns(groupComponents(data.components)).map((column, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: always two columns
+                <div key={i} className="flex min-w-0 flex-col gap-6">
+                  {column.map((g) => {
+                    const bad = problems(g.items).length;
+                    return (
+                      <section key={g.id} aria-labelledby={`g-${g.id}`}>
+                        <Card className="overflow-hidden">
+                          <CardHeader
+                            title={<span id={`g-${g.id}`}>{g.title}</span>}
+                            actions={
+                              bad > 0 ? (
+                                <span className="text-xs text-fg-muted">
+                                  {bad} {bad === 1 ? 'needs' : 'need'} attention
+                                </span>
+                              ) : null
+                            }
                           />
-                        ))}
-                      </ul>
-                    </Card>
-                  </section>
-                );
-              })}
+                          <ul aria-label={g.title} className="divide-y divide-border">
+                            {sortBySeverity(g.items).map((c) => (
+                              <ComponentRow
+                                key={c.id}
+                                component={c}
+                                items={c.data ? dataItems(c.data, orgName) : []}
+                              />
+                            ))}
+                          </ul>
+                        </Card>
+                      </section>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           )}
           <WorkflowRuns orgName={orgName} />

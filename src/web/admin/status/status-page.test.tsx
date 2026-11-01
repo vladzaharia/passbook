@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { dataItems } from './data-items.ts';
-import { type Component, componentLink, headline } from './groups.ts';
+import { type Component, componentLink, headline, splitColumns } from './groups.ts';
 import { sortBySeverity } from './queries.ts';
 
 const comp = (
@@ -60,6 +60,18 @@ describe('status helpers', () => {
       '2 components failing',
     );
     expect(headline(typed(comp('x', 'X', 'configured')))).toBe('All good');
+  });
+
+  it('splits groups into two columns by rows, keeping their order', () => {
+    const g = (id: string, n: number) => ({ id, items: Array.from({ length: n }) });
+    const [left, right] = splitColumns([
+      g('platform', 6),
+      g('delivery', 2),
+      g('sign-in', 1),
+      g('int', 3),
+    ]);
+    expect(left.map((x) => x.id)).toEqual(['platform']);
+    expect(right.map((x) => x.id)).toEqual(['delivery', 'sign-in', 'int']);
   });
 
   it('links components to the page that owns them', () => {
