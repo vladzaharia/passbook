@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
@@ -6,17 +6,16 @@ import { cn } from '@/web/lib/cn.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
   Card,
+  ConfirmDialog,
   ErrorState,
-  Input,
-  Label,
   SaveBar,
   SkeletonRows,
-  SwitchRow,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { changedValues, type Draft, type SettingField, toDraft } from './fields.ts';
 import { useSaveSettings, useSettings } from './queries.ts';
+import { SettingRow } from './setting-row.tsx';
 
 type Entries = z.infer<typeof SettingsListSchema>['items'];
 
@@ -25,94 +24,6 @@ function currentValues(entries: Entries): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const e of entries) out[e.key] = e.value ?? e.default;
   return out;
-}
-
-function TextFieldInput({
-  field,
-  value,
-  error,
-  flat,
-  onChange,
-}: {
-  flat: boolean;
-  field: SettingField;
-  value: string | boolean;
-  error: string | undefined;
-  onChange: (v: string | boolean) => void;
-}) {
-  const id = useId();
-  const helpId = field.help ? `${id}-help` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
-  const label = (
-    <div className="min-w-0">
-      <Label htmlFor={id} className="text-fg-strong">
-        {field.label}
-      </Label>
-      {field.help ? (
-        <p id={helpId} className="mt-0.5 text-sm text-fg-muted">
-          {field.help}
-        </p>
-      ) : null}
-    </div>
-  );
-  const control = (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2">
-        {field.kind === 'color' ? (
-          <input
-            type="color"
-            aria-label={`${field.label} picker`}
-            value={/^#[0-9a-f]{6}$/i.test(String(value)) ? String(value) : '#000000'}
-            onChange={(e) => onChange(e.target.value)}
-            className="size-9 shrink-0 cursor-pointer rounded-md border border-border-strong bg-transparent p-0.5"
-          />
-        ) : null}
-        <Input
-          id={id}
-          aria-describedby={describedBy}
-          aria-invalid={error ? true : undefined}
-          inputMode={field.kind === 'int' ? 'numeric' : undefined}
-          className={field.kind === 'int' ? 'w-28' : 'max-w-sm'}
-          value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        {field.suffix ? <span className="text-sm text-fg-muted">{field.suffix}</span> : null}
-      </div>
-      {error ? (
-        <p id={errorId} role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-  return (
-    <div
-      className={cn(
-        !flat &&
-          'grid gap-x-8 gap-y-2 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-start',
-        flat && 'flex flex-col gap-1.5',
-      )}
-    >
-      {label}
-      {control}
-    </div>
-  );
-}
-function FieldInput(props: Parameters<typeof TextFieldInput>[0]) {
-  if (props.field.kind === 'boolean') {
-    return (
-      <div className={cn(!props.flat && 'px-4 py-4')}>
-        <SwitchRow
-          label={props.field.label}
-          help={props.field.help}
-          checked={props.value === true}
-          onCheckedChange={(c) => props.onChange(c)}
-        />
-      </div>
-    );
-  }
-  return <TextFieldInput {...props} />;
 }
 
 /** Sections in field order; ungrouped fields share one untitled section. */
@@ -127,12 +38,22 @@ function sections(fields: readonly SettingField[]) {
   return out;
 }
 
+/** A change that needs a danger confirm first; Cancel puts `key` back. */
+export interface SaveGuard {
+  key: string;
+  title: string;
+  description: ReactNode;
+  confirmLabel: string;
+}
+
 export interface SettingsFormProps {
   scope: string;
   fields: readonly SettingField[];
+  /** Asked with the changed values before saving. */
+  guard?: (values: Record<string, unknown>) => SaveGuard | null;
 }
 
-export function SettingsForm({ scope, fields }: SettingsFormProps) {
+export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
   const query = useSettings(scope);
   const save = useSaveSettings(scope);
   const initial = useMemo(
@@ -141,19 +62,30 @@ export function SettingsForm({ scope, fields }: SettingsFormProps) {
   );
   const [edits, setEdits] = useState<Draft>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pending, setPending] = useState<{ guard: SaveGuard; values: Record<string, unknown> }>();
+  const [summary, setSummary] = useState('');
+  const form = useRef<HTMLFormElement>(null);
+  const confirmed = useRef(false);
   const draft: Draft = { ...initial, ...edits };
   const dirty = Boolean(initial) && fields.some((f) => draft[f.key] !== initial?.[f.key]);
-  const guard = useUnsavedChangesGuard(dirty);
+  const blocker = useUnsavedChangesGuard(dirty);
 
   if (query.isPending) return <SkeletonRows rows={4} label="Loading settings" />;
   if (query.isError || !initial)
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
 
-  async function onSave() {
-    if (!initial) return;
-    const { values, errors: local } = changedValues(fields, draft, initial);
-    setErrors(local);
-    if (Object.keys(local).length > 0) return;
+  /** Blocked submit: focus the first invalid field and say how many need attention. */
+  function block(local: Record<string, string>) {
+    const n = Object.keys(local).length;
+    setSummary(`${n} ${n === 1 ? 'field needs' : 'fields need'} attention`);
+    requestAnimationFrame(() => {
+      const el = form.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
+      el?.focus();
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }
+
+  async function commit(values: Record<string, unknown>) {
     try {
       await save.mutateAsync(values);
       setEdits({});
@@ -167,21 +99,38 @@ export function SettingsForm({ scope, fields }: SettingsFormProps) {
         }
       }
       setErrors(server);
-      if (Object.keys(server).length === 0) toast.error(errorMessage(cause));
+      if (Object.keys(server).length > 0) block(server);
+      else toast.error(errorMessage(cause));
     }
+  }
+
+  async function onSave() {
+    if (!initial) return;
+    const { values, errors: local } = changedValues(fields, draft, initial);
+    setErrors(local);
+    if (Object.keys(local).length > 0) return block(local);
+    setSummary('');
+    const g = guard?.(values);
+    if (g) return setPending({ guard: g, values });
+    await commit(values);
   }
 
   return (
     <form
+      ref={form}
+      noValidate
       className={cn('flex flex-col gap-8', dirty && 'pb-20')}
       onSubmit={(e) => {
         e.preventDefault();
         void onSave();
       }}
     >
+      <p className="sr-only" aria-live="polite">
+        {summary}
+      </p>
       {sections(fields).map((section) => {
         const rows = section.fields.map((f) => (
-          <FieldInput
+          <SettingRow
             key={f.key}
             field={f}
             flat={!section.title}
@@ -192,7 +141,7 @@ export function SettingsForm({ scope, fields }: SettingsFormProps) {
         ));
         if (!section.title)
           return (
-            <div key="flat" className="flex flex-col gap-5">
+            <div key="flat" className="flex flex-col gap-4">
               {rows}
             </div>
           );
@@ -211,9 +160,29 @@ export function SettingsForm({ scope, fields }: SettingsFormProps) {
         onDiscard={() => {
           setEdits({});
           setErrors({});
+          setSummary('');
         }}
       />
-      <UnsavedChangesDialog blocker={guard} />
+      <ConfirmDialog
+        open={pending !== undefined}
+        onOpenChange={(open) => {
+          if (open) return;
+          // Cancel: the guarded setting goes back to what is saved.
+          const key = pending?.guard.key;
+          if (!confirmed.current && key) setEdits(({ [key]: _dropped, ...rest }) => rest);
+          confirmed.current = false;
+          setPending(undefined);
+        }}
+        destructive
+        title={pending?.guard.title ?? ''}
+        description={pending?.guard.description}
+        confirmLabel={pending?.guard.confirmLabel}
+        onConfirm={async () => {
+          confirmed.current = true;
+          if (pending) await commit(pending.values);
+        }}
+      />
+      <UnsavedChangesDialog blocker={blocker} />
     </form>
   );
 }

@@ -10,6 +10,7 @@ export interface SettingField {
   help?: string;
   /** Section heading; fields without one render as a flat list. */
   group?: string;
+  /** Unit inside a number field ("s", "days"). */
   suffix?: string;
   /** Optional org settings may be cleared; platform settings always hold a value. */
   optional?: boolean;
@@ -33,6 +34,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     group: 'Sign-in',
     label: 'Magic-link sign-in',
     kind: 'boolean',
+    help: 'Holders without Polaris ID cannot sign in.',
     schema: P['auth.magicLinkEnabled'],
   },
   {
@@ -47,8 +49,8 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     group: 'Passes and retention',
     label: 'Refresh cooldown',
     kind: 'int',
-    suffix: 'seconds',
-    help: '5 to 3600. Per user.',
+    suffix: 's',
+    help: '5 to 3600 seconds, per user.',
     schema: P['refresh.userCooldownSeconds'],
   },
   {

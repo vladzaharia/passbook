@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -57,7 +57,7 @@ describe('settings page', () => {
       handlers: { '/api/v1/settings': () => json(entries()) },
     });
     expect(await screen.findByLabelText('Email sender name')).toHaveValue('Wallet');
-    expect(screen.getByLabelText('Refresh cooldown')).toHaveValue('30');
+    expect(screen.getByLabelText('Refresh cooldown')).toHaveValue(30);
     expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
     expect(screen.getByRole('region', { name: 'Sign-in' })).toBeInTheDocument();
     expect(await screen.findByText('wallet-admins')).toBeInTheDocument();
@@ -79,11 +79,12 @@ describe('settings page', () => {
     expect(link).toHaveAttribute('href', 'https://id.staging.test');
   });
 
-  it('toggles a switch and saves the boolean', async () => {
+  it('confirms turning magic links off with the email-only count, then saves', async () => {
     let body: unknown;
     await renderApp('/admin/settings', {
       session: 'admin',
       handlers: {
+        '/api/v1/settings/impact': () => json({ emailOnlyUsers: 12 }),
         '/api/v1/settings': (_url, init) => {
           if (init?.method === 'PUT') {
             body = JSON.parse(String(init.body));
@@ -96,9 +97,53 @@ describe('settings page', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('switch', { name: 'Magic-link sign-in' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Turn off magic-link sign-in?' });
+    expect(await within(dialog).findByText('12 users')).toBeInTheDocument();
+    expect(body).toBeUndefined();
+    await user.click(within(dialog).getByRole('button', { name: 'Turn off' }));
     await waitFor(() =>
       expect(body).toEqual({ scope: 'platform', values: { 'auth.magicLinkEnabled': false } }),
     );
+  });
+
+  it('keeps magic links on when the confirm is cancelled', async () => {
+    let puts = 0;
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/settings/impact': () => json({ emailOnlyUsers: 1 }),
+        '/api/v1/settings': (_url, init) => {
+          if (init?.method === 'PUT') puts++;
+          return json(entries());
+        },
+      },
+    });
+    const user = userEvent.setup();
+    const toggle = await screen.findByRole('switch', { name: 'Magic-link sign-in' });
+    await user.click(toggle);
+    expect(toggle).not.toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(await within(dialog).findByText('1 user')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(toggle).toBeChecked();
+    expect(puts).toBe(0);
+  });
+
+  it('sets help in xs muted and the control column flush right', async () => {
+    const { container } = await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: { '/api/v1/settings': () => json(entries()) },
+    });
+    await screen.findByLabelText('Email sender name');
+    const help = screen.getByText('Holders without Polaris ID cannot sign in.');
+    expect(help).toHaveClass('text-xs', 'text-fg-muted');
+    for (const p of container.querySelectorAll('form p[id$="-help"]'))
+      expect(p).toHaveClass('text-xs', 'text-fg-muted');
+    const cooldown = screen.getByLabelText('Refresh cooldown');
+    expect(cooldown.closest('.md\\:items-end')).not.toBeNull();
+    expect(cooldown.parentElement).toHaveTextContent('s');
   });
 
   it('saves only the changed value and clears the dirty bar', async () => {
@@ -142,7 +187,9 @@ describe('settings page', () => {
     await user.clear(input);
     await user.type(input, '1');
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    await waitFor(() => expect(input).toHaveFocus());
     expect(puts).toBe(0);
   });
 
