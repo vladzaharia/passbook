@@ -129,7 +129,12 @@ export function PassMoreMenu({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           {page ? (
-            <Button variant="outline" size="lg" iconStart={<MoreHorizontal aria-hidden />}>
+            <Button
+              variant="outline"
+              size="lg"
+              className="max-sm:px-3"
+              iconStart={<MoreHorizontal aria-hidden />}
+            >
               <span className="max-sm:sr-only">More</span>
             </Button>
           ) : (

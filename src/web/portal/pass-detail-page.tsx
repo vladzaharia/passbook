@@ -97,6 +97,7 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
             </div>
           </Card>
         ) : null}
+        {/* Refresh and More wrap as a pair, never one alone. */}
         <div className="flex flex-wrap items-center gap-2">
           {active && !pass.inWallet ? (
             <AddToWalletButton
@@ -104,15 +105,17 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
               onPress={() => setDip((n) => n + 1)}
             />
           ) : null}
-          {voided ? null : <RefreshButton passId={pass.id} pass={pass} size="lg" />}
-          <PassMoreMenu
-            page
-            passId={pass.id}
-            passTitle={name}
-            publicUrl={voided ? null : publicUrl}
-            addAgainHref={pass.inWallet && active ? pass.downloadUrl : null}
-            onRemoved={() => void navigate({ to: '/' })}
-          />
+          <div className="flex items-center gap-2">
+            {voided ? null : <RefreshButton passId={pass.id} pass={pass} size="lg" />}
+            <PassMoreMenu
+              page
+              passId={pass.id}
+              passTitle={name}
+              publicUrl={voided ? null : publicUrl}
+              addAgainHref={pass.inWallet && active ? pass.downloadUrl : null}
+              onRemoved={() => void navigate({ to: '/' })}
+            />
+          </div>
         </div>
         {voided ? (
           <Callout tone="warning" icon={Ban}>

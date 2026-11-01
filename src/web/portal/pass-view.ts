@@ -20,7 +20,3 @@ export function toView(pass: MyPass): PassView {
 export function passName(pass: MyPass): string {
   return pass.title ?? pass.templateName;
 }
-
-export function formatWhen(ms: number): string {
-  return new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-}
