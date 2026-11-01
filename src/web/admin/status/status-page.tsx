@@ -113,7 +113,9 @@ export function StatusPage() {
                       {g.title}
                     </h2>
                     {problems > 0 ? (
-                      <span className="text-sm text-fg-muted">{problems} need attention</span>
+                      <span className="text-sm text-fg-muted">
+                        {problems} {problems === 1 ? 'needs' : 'need'} attention
+                      </span>
                     ) : null}
                   </div>
                   <Card className="overflow-hidden">

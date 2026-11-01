@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
 import { DiffViewer, JsonViewer, KeyValue, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
-import { actorText, targetText } from './labels.ts';
+import { actionLabel, actorText, targetText } from './labels.ts';
 import { describeDetail } from './redact.ts';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
@@ -19,21 +19,20 @@ export function EntryDrawer({
   const view = describeDetail(entry?.detail);
   return (
     <Sheet open={entry !== undefined} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent title={entry?.action ?? 'Audit entry'} className="w-[32rem]">
+      <SheetContent title={entry ? actionLabel(entry.action) : 'Audit entry'} className="w-[32rem]">
         {entry ? (
           <div className="flex flex-col gap-5 overflow-y-auto p-4">
             <KeyValue
               items={[
+                { label: 'Action', value: entry.action, mono: true },
                 { label: 'Time', value: formatDateTime(entry.at) },
                 {
                   label: 'Actor',
                   value: actorText(entry),
-                  mono: true,
                 },
                 {
                   label: 'Target',
                   value: targetText(entry) || null,
-                  mono: true,
                 },
                 { label: 'Org', value: entry.orgId ? orgName(entry.orgId) : null },
                 { label: 'Request', value: entry.requestId, mono: true },

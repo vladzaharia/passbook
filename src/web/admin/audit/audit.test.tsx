@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { dayToMs, msToDay, parseAuditSearch } from './audit-search.ts';
-import { actorText, targetText } from './labels.ts';
+import { actionLabel, actorText, targetText } from './labels.ts';
 import { describeDetail, REDACTED, redact } from './redact.ts';
 
 const entry = (id: number, over: Record<string, unknown> = {}) => ({
@@ -85,7 +85,6 @@ describe('audit page', () => {
     });
     const ui = userEvent.setup();
     await ui.type(await screen.findByLabelText('Action'), 'pass.void');
-    await ui.click(screen.getByRole('button', { name: 'Apply' }));
     await screen.findByText('No entries match');
     expect(router.state.location.search).toMatchObject({ action: 'pass.void' });
   });
@@ -135,7 +134,7 @@ describe('audit page', () => {
     });
     await userEvent
       .setup()
-      .click(await screen.findByRole('button', { name: /details for thing.updated.1/ }));
+      .click(await screen.findByRole('button', { name: /details for Thing updated 1/ }));
     const drawer = await screen.findByRole('dialog');
     expect(within(drawer).getByRole('region', { name: 'Diff' })).toBeInTheDocument();
     expect(drawer.textContent).not.toContain('hunter');
@@ -160,12 +159,17 @@ describe('audit page', () => {
 });
 
 describe('labels', () => {
+  it('maps action codes to sentences and humanizes unknown ones', () => {
+    expect(actionLabel('auth.sign_in')).toBe('Signed in');
+    expect(actionLabel('pass.resend_email')).toBe('Pass email resent');
+    expect(actionLabel('thing.updated')).toBe('Thing updated');
+  });
   it('prefers labels and falls back to ids', () => {
     const e = entry(1) as Parameters<typeof actorText>[0];
-    expect(actorText(e)).toBe('user: u1');
-    expect(targetText(e)).toBe('org: o1');
-    expect(actorText({ ...e, actorLabel: 'Ada' })).toBe('user: Ada');
-    expect(targetText({ ...e, targetLabel: 'Acme' })).toBe('org: Acme');
+    expect(actorText(e)).toBe('User: u1');
+    expect(targetText(e)).toBe('Organization: o1');
+    expect(actorText({ ...e, actorLabel: 'Ada' })).toBe('User: Ada');
+    expect(targetText({ ...e, targetLabel: 'Acme' })).toBe('Organization: Acme');
     expect(targetText({ ...e, targetType: null, targetId: null })).toBe('');
   });
 });
