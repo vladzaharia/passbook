@@ -39,6 +39,13 @@ export const UpdateIdentitySchema = z.object({
   nfcEnabled: z.boolean().optional(),
   apnsBinding: z.string().max(64).nullable().optional(),
 });
+export const ApnsProbeResultSchema = z.object({
+  health: z.enum(['healthy', 'failing', 'inconclusive', 'unavailable']),
+  status: z.number().int(),
+  reason: z.string().nullable(),
+  checkedAt: TimestampSchema,
+});
+export type ApnsProbeResult = z.infer<typeof ApnsProbeResultSchema>;
 /** Replaces the certificate and key of an identity; pass type and team IDs must match. */
 export const RotateIdentitySchema = z.object({
   certificatePem: z.string().min(1).max(20_000).optional(),

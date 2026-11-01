@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
+  ApnsProbeResultSchema,
   IdentityListSchema,
   IdentitySchema,
   type RotateIdentitySchema,
@@ -58,6 +59,14 @@ export function useRotateIdentity(id: string) {
   return useMutation({
     mutationFn: (body: z.input<typeof RotateIdentitySchema>) =>
       api.post(`${path(id)}/rotate`, IdentitySchema, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
+export function useCheckApns(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post(`${path(id)}/apns-check`, ApnsProbeResultSchema, {}),
     onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
   });
 }

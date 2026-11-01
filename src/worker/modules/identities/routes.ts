@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import type { z } from 'zod';
 import {
+  ApnsProbeResultSchema,
   IdentityListSchema,
   IdentitySchema,
   IdParamSchema,
@@ -12,8 +13,10 @@ import {
 import { requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor, valid } from '../audit/http.ts';
+import { probeApns } from './apns-probe.ts';
 import {
   deleteIdentity,
   getIdentity,
@@ -124,4 +127,19 @@ register(
         valid<z.infer<typeof RotateIdentitySchema>>(c, 'json'),
       ),
     ),
+);
+register(
+  identitiesRoutes,
+  'identities',
+  {
+    method: 'post',
+    path: '/{id}/apns-check',
+    summary: 'Probe APNs with the identity certificate using a dummy token',
+    params: IdParamSchema,
+    response: ApnsProbeResultSchema,
+  },
+  async (c: Ctx) => {
+    await enforceRateLimit(c.env, 'RL_REFRESH', `apns-check:${idOf(c)}`);
+    return c.json(await probeApns(serviceContext(c), requestActor(c), idOf(c)));
+  },
 );
