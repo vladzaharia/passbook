@@ -47,6 +47,7 @@ export const PORTAL_NAV: readonly Pick<NavItem, 'label' | 'to'>[] = [
 ];
 
 export function isActivePath(pathname: string, to: string): boolean {
-  if (to === '/admin' || to === '/') return pathname === to;
+  if (to === '/') return pathname === '/' || pathname.startsWith('/passes/');
+  if (to === '/admin') return pathname === to;
   return pathname === to || pathname.startsWith(`${to}/`);
 }

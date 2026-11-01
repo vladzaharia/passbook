@@ -25,10 +25,17 @@ import { AddToWalletButton, publicUrlOf, RemovePassButton } from './wallet-actio
 
 const CRUMBS = [{ label: 'My passes', to: '/' }];
 
+const ABBREVIATIONS = new Set(['ID', 'VIP', 'URL', 'QR', 'SKU', 'ZIP', 'PIN', 'UPC', 'ETA', 'DOB']);
+
 /** Pass labels are often written in capitals for the card; show them as a sentence. */
 function sentenceCase(label: string): string {
   if (label.length < 2 || label !== label.toUpperCase()) return label;
-  return label.charAt(0) + label.slice(1).toLowerCase();
+  const words = label.split(' ').map((w, i) => {
+    if (ABBREVIATIONS.has(w)) return w;
+    const lower = w.toLowerCase();
+    return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+  });
+  return words.join(' ');
 }
 
 function fieldRows(passJson: Record<string, unknown>) {
