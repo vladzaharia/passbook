@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type FormEvent, useState } from 'react';
+import { type CSSProperties, type FormEvent, useState } from 'react';
 import { api } from '../lib/api.ts';
+import { cn } from '../lib/cn.ts';
 import { errorMessage } from '../lib/errors.ts';
+import { useArrival } from '../lib/motion.ts';
 import {
   Button,
   Card,
@@ -58,6 +60,7 @@ function CodeForm({ email, onDone }: { email: string; onDone: () => void }) {
 export function EmailsSection() {
   const client = useQueryClient();
   const query = useQuery(myEmailsQuery);
+  const arrived = useArrival(query.isPending);
   const [email, setEmail] = useState('');
   const [fieldError, setFieldError] = useState<string>();
   const [removing, setRemoving] = useState<string>();
@@ -92,9 +95,13 @@ export function EmailsSection() {
           <ErrorState error={query.error} onRetry={() => void query.refetch()} />
         ) : null}
         {query.data ? (
-          <ul className="divide-y divide-border">
-            {query.data.items.map((item) => (
-              <li key={item.email} className="py-3 first:pt-0">
+          <ul className={cn('divide-y divide-border', arrived && 'wl-stagger')}>
+            {query.data.items.map((item, i) => (
+              <li
+                key={item.email}
+                className="py-3 first:pt-0"
+                style={{ '--i': i } as CSSProperties}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <span className="truncate text-sm text-fg-strong">{item.email}</span>

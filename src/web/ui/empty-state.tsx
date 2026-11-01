@@ -18,7 +18,15 @@ export function EmptyState({ title, description, icon: Icon, action, className }
         className,
       )}
     >
-      {Icon ? <Icon aria-hidden className="size-8 text-fg-subtle" /> : null}
+      {Icon ? (
+        <div aria-hidden className="wl-stack mb-2">
+          <span />
+          <span />
+          <span>
+            <Icon className="size-5" />
+          </span>
+        </div>
+      ) : null}
       <p className="text-sm font-medium text-fg-strong">{title}</p>
       {description ? <p className="max-w-sm text-sm text-fg-muted">{description}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}

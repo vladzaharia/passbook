@@ -47,67 +47,9 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
-}
-
-@keyframes wallet-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes wallet-pop {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@keyframes wallet-pulse {
-  from {
-    opacity: 0.5;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes wallet-slide-left {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: none;
-  }
-}
-@keyframes wallet-slide-right {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: none;
-  }
-}
-
-/* Mouse and touch focus (including restored focus after an overlay closes) shows no ring on
-   buttons and controls; the first key press flips data-modality back and the ring returns.
-   Text fields keep their focus style. */
-:root[data-modality="pointer"]
-:is(
-  button,
-  a,
-  [role="button"],
-  [role="checkbox"],
-  [role="switch"],
-  [role="radio"],
-  [role="tab"],
-  [role="menuitem"]
-):focus-visible {
-  outline: none;
 }

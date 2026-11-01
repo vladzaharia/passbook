@@ -3,6 +3,7 @@ import { cn } from '../../lib/cn.ts';
 import { isActivePath, PORTAL_NAV } from '../../lib/nav.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { isAdmin as hasAdmin, useSession } from '../../lib/session.ts';
+import { ActiveIndicator } from '../active-indicator.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { UserMenu } from './user-menu.tsx';
 import { Wordmark } from './wordmark.tsx';
@@ -15,7 +16,8 @@ export function PortalLayout() {
       <header className="border-b border-border bg-surface-raised">
         <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-2 px-4 sm:gap-4">
           <Wordmark />
-          <nav aria-label="Main" className="mr-auto flex min-w-0 gap-1 overflow-x-auto">
+          <nav aria-label="Main" className="relative mr-auto flex min-w-0 gap-1 overflow-x-auto">
+            <ActiveIndicator />
             {PORTAL_NAV.map((item) => {
               const active = isActivePath(pathname, item.to);
               return (
@@ -25,10 +27,8 @@ export function PortalLayout() {
                   activeOptions={{ exact: item.to === '/' }}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm',
-                    active
-                      ? 'bg-state-selected-fill text-fg-strong'
-                      : 'text-fg-muted hover:text-fg-strong',
+                    'relative inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm',
+                    active ? 'text-fg-strong' : 'text-fg-muted hover:text-fg-strong',
                   )}
                 >
                   {item.label}

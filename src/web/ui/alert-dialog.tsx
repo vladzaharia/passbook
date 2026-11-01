@@ -61,7 +61,7 @@ export function ConfirmDialog({
           onCloseAutoFocus={restoreOpener(opener)}
           onInteractOutside={(e) => e.preventDefault()}
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface-overlay p-5 shadow-elevation-3',
+            'wl-dialog fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface-overlay p-5 shadow-[var(--wl-edge),var(--pk-elevation-3)]',
           )}
         >
           <DialogPrimitive.Title className="text-base font-semibold text-fg-strong">

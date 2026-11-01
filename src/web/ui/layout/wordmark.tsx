@@ -7,7 +7,7 @@ export function Wordmark({ to = '/' }: { to?: string }) {
       to={to as never}
       className="inline-flex min-h-8 items-center gap-2 rounded-md text-base font-semibold text-fg-strong"
     >
-      <WalletCards aria-hidden className="size-5 text-accent-fg" />
+      <WalletCards aria-hidden className="wl-wordmark-icon size-5 text-accent-fg" />
       Wallet
     </Link>
   );

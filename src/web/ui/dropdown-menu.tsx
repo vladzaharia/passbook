@@ -19,7 +19,7 @@ export function DropdownMenuContent({
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
         className={cn(
-          'z-50 min-w-44 rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
+          'wl-pop origin-(--radix-dropdown-menu-content-transform-origin) z-50 min-w-44 rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
           className,
         )}
         {...props}

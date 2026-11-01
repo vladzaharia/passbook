@@ -97,7 +97,7 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click((await screen.findAllByRole('button', { name: 'New key' }))[0]!);
+    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click((await screen.findAllByRole('button', { name: 'New key' }))[0]!);
+    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'x');
     await user.click(within(dialog).getByRole('checkbox', { name: 'passes:read' }));

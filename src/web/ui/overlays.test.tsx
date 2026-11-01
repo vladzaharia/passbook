@@ -52,6 +52,25 @@ describe('Dialog', () => {
   });
 });
 
+describe('Dialog autofocus', () => {
+  it('focuses a field marked data-autofocus instead of the close button', async () => {
+    const user = userEvent.setup();
+    render(
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>Delete</Button>
+        </DialogTrigger>
+        <DialogContent title="Delete pass?" footer={<Button>Delete pass</Button>}>
+          <input aria-label="Type delete to confirm" data-autofocus />
+        </DialogContent>
+      </Dialog>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByLabelText('Type delete to confirm')).toHaveFocus();
+  });
+});
+
 describe('ConfirmDialog', () => {
   function Harness({ onConfirm }: { onConfirm: () => void | Promise<void> }) {
     const [open, setOpen] = useState(true);

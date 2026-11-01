@@ -9,16 +9,16 @@ export function RouteAnnouncer() {
   const pathname = useRouterState({
     select: (s) => (s.status === 'idle' ? s.resolvedLocation?.pathname : undefined),
   });
-  const first = useRef(true);
+  const last = useRef<string | undefined>(undefined);
   const [message, setMessage] = useState('');
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read
   useEffect(() => {
     if (pathname === undefined) return;
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    // A search-only change (?tab=, filters) passes through pending and back to the same path;
+    // focus stays where the user put it. The first resolved path is the initial load.
+    const previous = last.current;
+    last.current = pathname;
+    if (previous === undefined || previous === pathname) return;
     // Wait a frame so the new route has rendered its heading.
     const frame = requestAnimationFrame(() => {
       const main = document.getElementById(MAIN_ID);

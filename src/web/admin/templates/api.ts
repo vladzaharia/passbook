@@ -48,6 +48,7 @@ export function useTemplatePreview(id: string, version?: string) {
     queryFn: ({ signal }) =>
       api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, { version }, { signal }),
     staleTime: Number.POSITIVE_INFINITY,
+    enabled: Boolean(id),
   });
 }
 

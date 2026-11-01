@@ -52,7 +52,7 @@ export function ApiKeysPage() {
         title="API keys"
         actions={
           <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New key
+            New API key
           </Button>
         }
       />
@@ -71,7 +71,7 @@ export function ApiKeysPage() {
               title="No API keys"
               action={
                 <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-                  New key
+                  New API key
                 </Button>
               }
             />

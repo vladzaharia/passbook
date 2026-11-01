@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { Json } from '@/passkit/types.ts';
 import { formatValue } from '@/shared/pass-view/format.ts';
 import { isApiError } from '../lib/errors.ts';
-import { PassCard } from '../pass-card/index.tsx';
+import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Button,
   Card,
@@ -66,6 +66,7 @@ export function PassDetailPage({ passId }: { passId: string }) {
   const query = useQuery(myPassQuery(passId));
   const navigate = useNavigate();
   const [face, setFace] = useState<'front' | 'back'>('front');
+  const [dip, setDip] = useState(0);
 
   if (query.isPending) {
     return (
@@ -104,6 +105,7 @@ export function PassDetailPage({ passId }: { passId: string }) {
   return (
     <>
       <PageHeader
+        size="lg"
         title={name}
         description={pass.orgName}
         breadcrumbs={[...CRUMBS, { label: name }]}
@@ -112,7 +114,10 @@ export function PassDetailPage({ passId }: { passId: string }) {
             <StatusPill status="voided" />
           ) : (
             <>
-              <AddToWalletButton downloadUrl={pass.downloadUrl} />
+              <AddToWalletButton
+                downloadUrl={pass.downloadUrl}
+                onPress={() => setDip((n) => n + 1)}
+              />
               <RefreshButton passId={pass.id} pass={pass} />
             </>
           )
@@ -136,11 +141,17 @@ export function PassDetailPage({ passId }: { passId: string }) {
       ) : null}
       <div className="grid gap-4 md:grid-cols-[minmax(0,22rem)_1fr]">
         <div className="flex flex-col gap-3">
-          <PassCard view={view} face={face} />
+          <PassCardStage
+            view={view}
+            face={face}
+            flippable
+            mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+            dip={dip}
+            transitionName={`pass-${pass.id}`}
+          />
           <Button
             variant="outline"
             size="sm"
-            aria-pressed={face === 'back'}
             onClick={() => setFace(face === 'front' ? 'back' : 'front')}
           >
             {face === 'front' ? 'Show back' : 'Show front'}

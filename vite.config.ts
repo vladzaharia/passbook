@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
@@ -54,6 +55,8 @@ const e2eConfig =
       }
     : {};
 
+const root = fileURLToPath(new URL('.', import.meta.url)).replace(/\/$/, '');
+
 export default defineConfig({
   publicDir: 'public',
   environments: { wallet: { build: { minify: true } } },
@@ -64,7 +67,8 @@ export default defineConfig({
     // must not trigger full page reloads mid-session.
     watch: {
       ignored: [
-        '**/.claude/**',
+        // Other worktrees under .claude; a dev server running inside one still watches itself.
+        (path: string) => path.startsWith(`${root}/.claude/`),
         '**/.wrangler/**',
         '**/test-results/**',
         '**/playwright-report/**',

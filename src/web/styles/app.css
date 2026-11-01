@@ -5,3 +5,5 @@
 @import "sonner/dist/styles.css";
 @import "./wallet.css";
 @import "./base.css";
+@import "./motion.css";
+@import "./kit-motion.css";

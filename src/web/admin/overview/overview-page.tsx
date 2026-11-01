@@ -3,12 +3,15 @@ import { Link } from '@tanstack/react-router';
 import { MetricsOverviewSchema } from '@/shared/contracts/metrics.ts';
 import { actionLabel } from '@/web/lib/actions.ts';
 import { api } from '@/web/lib/api.ts';
+import { cn } from '@/web/lib/cn.ts';
+import { useArrival } from '@/web/lib/motion.ts';
 import { useOrgFilter } from '@/web/lib/org-filter.tsx';
 import {
   Badge,
   Card,
   CardBody,
   CardHeader,
+  CountUp,
   ErrorState,
   PageHeader,
   Select,
@@ -48,13 +51,16 @@ function useMetrics(range: Range, orgId: string | undefined) {
 
 function Kpi({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
   return (
-    <li className="rounded-lg border border-border bg-surface-raised p-4">
+    <li className="rounded-lg border border-border bg-surface-raised p-4 shadow-[var(--wl-edge),var(--pk-elevation-1)]">
       <p className="text-xs text-fg-muted">{label}</p>
-      <p
-        className={`mt-1 text-2xl font-semibold ${warn && value > 0 ? 'text-danger' : 'text-fg-strong'}`}
-      >
-        {formatCount(value)}
-      </p>
+      <CountUp
+        value={value}
+        format={formatCount}
+        className={cn(
+          'mt-1 block text-3xl font-semibold tracking-[-0.02em]',
+          warn && value > 0 ? 'text-danger' : 'text-fg-strong',
+        )}
+      />
     </li>
   );
 }
@@ -157,6 +163,7 @@ export function OverviewPage({
   const range = search.range ?? '7d';
   const { orgId } = useOrgFilter();
   const metrics = useMetrics(range, orgId);
+  const arrived = useArrival(metrics.isPending);
   const picker = (
     <Select
       aria-label="Range"
@@ -186,7 +193,10 @@ export function OverviewPage({
           <ErrorState error={metrics.error} onRetry={() => metrics.refetch()} />
         ) : (
           <>
-            <ul aria-label="Totals" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <ul
+              aria-label="Totals"
+              className={cn('grid grid-cols-2 gap-3 md:grid-cols-4', arrived && 'wl-stagger')}
+            >
               <Kpi label="Passes" value={metrics.data.totals.passes} />
               <Kpi label="Active" value={metrics.data.totals.activePasses} />
               <Kpi label="Voided" value={metrics.data.totals.voidedPasses} />

@@ -44,6 +44,9 @@ export interface ShellInput {
   body: string;
 }
 
+/** Foil line over the header: Wallet teal, Polaris violet, Polaris gold. No gradient support: teal. */
+const FOIL = ['#2dd4bf', '#9a5cff', '#ffc24d'];
+
 /** Shared by the sign-in and pass emails: fluid 480px card, header bar, padded body. */
 export function emailShell(input: ShellInput): string {
   const c = EMAIL_LIGHT;
@@ -61,7 +64,8 @@ export function emailShell(input: ShellInput): string {
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="e-page" style="background:${c.page}">
 <tr><td align="center" style="padding:24px 16px">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="e-card" style="width:100%;max-width:480px;background:${c.card};border-radius:12px">
-<tr><td style="background:${input.headerColor};padding:20px 24px;border-radius:12px 12px 0 0;color:#ffffff;font-size:18px;font-weight:600">${escapeHtml(input.header)}</td></tr>
+<tr><td style="height:3px;line-height:3px;font-size:0;background:${FOIL[0]};background-image:linear-gradient(115deg,${FOIL.join(',')});border-radius:12px 12px 0 0">&nbsp;</td></tr>
+<tr><td style="background:${input.headerColor};padding:20px 24px;color:#ffffff;font-size:18px;font-weight:600">${escapeHtml(input.header)}</td></tr>
 <tr><td class="e-text" style="padding:24px;color:${c.text}">
 ${input.body}
 </td></tr>

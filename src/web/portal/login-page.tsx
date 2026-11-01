@@ -36,7 +36,7 @@ function CodeStep({ email, next, onBack }: { email: string; next: string; onBack
     consume.mutate();
   }
   return (
-    <div className="flex flex-col gap-4">
+    <div className="wl-turn flex flex-col gap-4">
       <h2 className="text-lg font-semibold text-fg-strong">Check your email</h2>
       <p className="text-sm text-fg-muted">If {email} has an account, we sent a link and a code.</p>
       <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
@@ -195,7 +195,7 @@ export function LoginPage({
           {message}
         </p>
       ) : null}
-      <Card>
+      <Card className="wl-rise wl-foil-edge overflow-hidden">
         <CardBody>{body}</CardBody>
       </Card>
     </>

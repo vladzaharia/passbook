@@ -140,9 +140,10 @@ Icon + Title Case text, always from `src/web/lib/status.ts`. Never render a raw 
 
 ## Empty, loading, error
 
-- `EmptyState`: dashed box, icon `size-8 fg-subtle`, title `text-sm font-medium`, one action. Filtered
-  lists: `No passes match` + `Clear filters`.
-- Loading: `Skeleton` in the final layout's shape. `Spinner` only in buttons and polling rows.
+- `EmptyState`: dashed box, pass-stack art (three fanned blank passes, the icon on top), title
+  `text-sm font-medium`, one action. Filtered lists: `No passes match` + `Clear filters`.
+- Loading: `Skeleton` in the final layout's shape; it appears after 150 ms. `Spinner` only in buttons
+  and polling rows.
 - Error: `ErrorState` with one sentence (what happened, what to do) and Retry.
 
 ## Tabbed detail pages
@@ -164,12 +165,12 @@ Icon + Title Case text, always from `src/web/lib/status.ts`. Never render a raw 
 
 | Role | Class |
 | --- | --- |
-| Page title | `text-2xl font-semibold` |
+| Page title | `text-2xl font-semibold tracking-[-0.015em]`; customer pages `sm:text-3xl` (`size="lg"`) |
 | Section heading (no card) | `text-base font-semibold` |
 | Card / dialog title | `text-sm font-semibold` (dialog `text-base`) |
 | Body, table cells, labels | `text-sm` |
 | Meta, help, secondary lines | `text-xs fg-muted` |
-| Stat value | `text-2xl font-semibold tabular-nums` |
+| Stat value | `CountUp`, `text-3xl font-semibold tabular-nums`; counts to its value |
 | Code, ids, hashes, JSON | `font-mono text-xs` |
 
 Brand sans everywhere, including SSR pages (served font, system fallback). Emails use the system
@@ -177,14 +178,29 @@ stack.
 
 ## Icons, focus, motion
 
-- Lucide, `size-4` in buttons, nav and menus; `size-3.5` in pills; `size-8` in empty states.
+- Lucide, `size-4` in buttons, nav and menus; `size-3.5` in pills; `size-5` in empty-state art.
   Icon-only buttons use `IconButton` (label + tooltip). Destructive buttons carry `Trash2`.
 - Focus: 2px `--pk-focus` outline, offset 2 (buttons), 1 (fields). Shown for keyboard focus only;
   tabs must not show it after a click. Route changes focus the `h1`. After a mouse or touch
   interaction (`html[data-modality=pointer]`) buttons and controls show no ring, including in
   dialogs and on the restored opener; the next key press brings it back. Text fields keep theirs.
-- Motion: colour transitions 150ms; overlays fade/pop 150–200ms; sheets slide 200ms; nothing animates
-  on page load. `prefers-reduced-motion` turns it off (`base.css`).
+- Motion: follow [motion-and-expression.md](motion-and-expression.md). Chrome moves in 80–260 ms with
+  ease-out; passes in 480–640 ms on a spring. Route changes move main only (fade with an 8 px rise, or
+  a 16 px slide by path depth); search-param changes (`?tab=`, filters) never animate. Lists animate
+  once, after their skeleton, 30 ms apart, capped at six. Overlays open from their trigger in 200 ms
+  and fade out in 120 ms; sheets slide in 260 ms; nav and tab indicators slide. Only transform and
+  opacity animate. `prefers-reduced-motion` turns all of it off (`base.css`, `motion.css`,
+  `kit-motion.css`).
+
+## Passes and expression
+
+- Every pass renders through `PassCardStage`: glow in the pass colour, tilt and highlight on fine
+  pointers, 3D flip between faces, deal in on arrival, mint on change. Thumbnails are `still`. The
+  pass art is never restyled.
+- Teal is the only interactive accent. The foil gradient is reserved for the mint sweep, empty-state
+  art, and the sign-in card and email top edge.
+- Dark raised surfaces get a 1 px lit top edge (`--wl-edge`); the primary button glows on hover and
+  keyboard focus.
 
 ## Light and dark
 
@@ -210,8 +226,10 @@ stack.
   sentence case.
 - Sign-in, magic-link confirm, link expired, no access, break-glass: one SSR shell matching `/login`
   (wordmark header, `surface-page`, `max-w-sm` card, teal primary, 36px controls).
-- Public pass page: wordmark (or org name) header, pass centered, Add to Apple Wallet badge and QR
-  centered under it, voided banner in `warning`.
-- Emails: fluid container `width:100%; max-width:480px`; org header bar (org accent, else slate);
+- Public pass page: wordmark (or org name) header, pass centered (deals in, flips with a no-script
+  `Show back` toggle, tilts on fine pointers through `/pass-tilt.js`), Add to Apple Wallet badge and
+  QR centered under it, voided banner in `warning`.
+- Emails: fluid container `width:100%; max-width:480px`; 3px foil line (teal fallback) over the org
+  header bar (org accent, else slate);
   one title line (`Sign in to Wallet`, `Your pass is ready`); one primary action; footer note
   `12px`. Sign-in and pass emails share the layout. Nothing wider than 320px.

@@ -10,6 +10,7 @@ export function AccountPage() {
   return (
     <>
       <PageHeader
+        size="lg"
         title="Account"
         actions={
           <Button variant="outline" iconStart={<LogOut aria-hidden />} onClick={doSignOut}>

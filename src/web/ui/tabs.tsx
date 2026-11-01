@@ -1,10 +1,11 @@
 import * as Primitive from '@radix-ui/react-tabs';
 import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
+import { ActiveIndicator } from './active-indicator.tsx';
 
 export const Tabs = Primitive.Root;
 
-export function TabsList({ className, ...props }: ComponentProps<typeof Primitive.List>) {
+export function TabsList({ className, children, ...props }: ComponentProps<typeof Primitive.List>) {
   const ref = useRef<HTMLDivElement>(null);
   const [fade, setFade] = useState({ start: false, end: false });
   useEffect(() => {
@@ -40,9 +41,12 @@ export function TabsList({ className, ...props }: ComponentProps<typeof Primitiv
     <div className="relative min-w-0">
       <Primitive.List
         ref={ref}
-        className={cn('flex gap-1 overflow-x-auto border-b border-border', className)}
+        className={cn('relative flex gap-1 overflow-x-auto border-b border-border', className)}
         {...props}
-      />
+      >
+        <ActiveIndicator variant="underline" />
+        {children}
+      </Primitive.List>
       {fade.start ? (
         <span
           aria-hidden
@@ -82,7 +86,7 @@ export function TabsTrigger({
       }}
       className={cn(
         'relative -mb-px min-h-9 shrink-0 border-b-2 border-transparent px-3 text-sm text-fg-muted transition-colors',
-        'hover:text-fg-strong data-[state=active]:border-accent data-[state=active]:text-fg-strong',
+        'hover:text-fg-strong data-[state=active]:text-fg-strong',
         'outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
         // Radix focuses the trigger on pointer down; only keyboard focus shows the ring.
         'data-pointer:focus-visible:outline-none',

@@ -16,7 +16,8 @@ import {
   Select,
   StatusPill,
 } from '../../ui/index.ts';
-import { useTemplates } from './api.ts';
+import { PassPreview } from '../passes/pass-preview.tsx';
+import { useTemplatePreview, useTemplates } from './api.ts';
 import { styleList } from './labels.ts';
 
 export interface TemplateListSearch {
@@ -26,6 +27,28 @@ export interface TemplateListSearch {
 }
 
 const ALL = 'all';
+
+/** A still, 32 px render of the template's sample pass. */
+function TemplateThumb({ template }: { template: TemplateSummaryDto }) {
+  const live = template.status === 'active' && Boolean(template.activeVersion);
+  const preview = useTemplatePreview(live ? template.id : '');
+  return (
+    // Decorative: inert keeps the pass's own links out of the tab order and the a11y tree.
+    <div inert className="pointer-events-none w-8 shrink-0">
+      {live && preview.data ? (
+        <PassPreview
+          passJson={preview.data.passJson}
+          assetBaseUrl={preview.data.assetBaseUrl}
+          assetNames={preview.data.assetNames}
+          still
+          className="mx-0 max-w-8"
+        />
+      ) : (
+        <div className="aspect-[320/460] w-8 rounded-sm border border-border bg-surface-sunken" />
+      )}
+    </div>
+  );
+}
 
 export function TemplatesListPage({
   search,
@@ -46,19 +69,22 @@ export function TemplatesListPage({
         header: 'Template',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="min-w-0 max-w-xs xl:max-w-md">
-            <Link
-              to={`/admin/templates/${row.original.id}` as never}
-              className="block truncate font-medium text-accent-fg hover:underline"
-              title={row.original.name}
-            >
-              {row.original.name}
-            </Link>
-            {row.original.description ? (
-              <p className="truncate text-xs text-fg-muted" title={row.original.description}>
-                {row.original.description}
-              </p>
-            ) : null}
+          <div className="flex min-w-0 items-center gap-3">
+            <TemplateThumb template={row.original} />
+            <div className="min-w-0 max-w-xs xl:max-w-md">
+              <Link
+                to={`/admin/templates/${row.original.id}` as never}
+                className="block truncate font-medium text-accent-fg hover:underline"
+                title={row.original.name}
+              >
+                {row.original.name}
+              </Link>
+              {row.original.description ? (
+                <p className="truncate text-xs text-fg-muted" title={row.original.description}>
+                  {row.original.description}
+                </p>
+              ) : null}
+            </div>
           </div>
         ),
       },

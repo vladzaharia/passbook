@@ -1,0 +1,168 @@
+/*
+ * Motion and expression tokens (docs/design/motion-and-expression.md).
+ * Two speeds: chrome answers fast (80-260ms); passes move like cards (480-640ms, spring).
+ * Only transform and opacity animate. prefers-reduced-motion: reduce switches it all off below.
+ */
+:root {
+  --wl-dur-press: var(--pk-duration-micro);
+  --wl-dur-hover: var(--pk-duration-fast);
+  --wl-dur-exit: var(--pk-duration-fast);
+  --wl-dur-enter: var(--pk-duration-base);
+  --wl-dur-route: var(--pk-duration-moderate);
+  --wl-dur-card: var(--pk-duration-deliberate);
+  --wl-dur-flip: 640ms;
+  --wl-dur-sheen: 900ms;
+  --wl-dur-count: 600ms;
+
+  --wl-ease-out: var(--pk-ease-enter);
+  --wl-ease-in: var(--pk-ease-exit);
+  --wl-ease-move: var(--pk-ease-standard);
+  --wl-ease-spring: var(--pk-ease-spring);
+  /* Bigger overshoot, for celebrations only. */
+  --wl-ease-bounce: linear(
+    0,
+    0.06 3%,
+    0.24 7%,
+    0.86 17%,
+    1.1 24%,
+    1.13 28%,
+    1.08 35%,
+    0.98 46%,
+    1.01 58%,
+    1
+  );
+
+  --wl-rise: var(--pk-motion-distance-md);
+  --wl-slide: 16px;
+  --wl-deal: var(--pk-motion-distance-xl);
+  --wl-stagger: var(--pk-stagger-step);
+  --wl-stagger-cards: calc(var(--pk-stagger-step) * 2);
+  --wl-tilt: 7deg;
+
+  /* Foil: Wallet teal, Polaris violet, Polaris gold. Sheens, celebrations, empty-state art. */
+  --wl-foil-1: #2dd4bf;
+  --wl-foil-2: var(--polaris-key-violet-dark);
+  --wl-foil-3: var(--polaris-key-gold-dark);
+  --wl-foil: linear-gradient(115deg, var(--wl-foil-1), var(--wl-foil-2) 55%, var(--wl-foil-3));
+  /* Lit top edge on raised surfaces; dark only. */
+  --wl-edge: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --wl-glow-accent: 0 6px 24px -8px color-mix(in oklab, var(--pk-accent) 70%, transparent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --wl-foil-1: #0f766e;
+    --wl-foil-2: var(--polaris-key-violet-light);
+    --wl-foil-3: var(--polaris-key-gold-light);
+    --wl-edge: inset 0 0 0 0 transparent;
+    --wl-glow-accent: 0 4px 14px -6px color-mix(in oklab, var(--pk-accent) 55%, transparent);
+  }
+}
+[data-theme="light"] {
+  --wl-foil-1: #0f766e;
+  --wl-foil-2: var(--polaris-key-violet-light);
+  --wl-foil-3: var(--polaris-key-gold-light);
+  --wl-edge: inset 0 0 0 0 transparent;
+  --wl-glow-accent: 0 4px 14px -6px color-mix(in oklab, var(--pk-accent) 55%, transparent);
+}
+
+@keyframes wl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--wl-rise));
+  }
+}
+@keyframes wl-deal {
+  from {
+    opacity: 0;
+    transform: translateY(var(--wl-deal)) rotate(-2deg) scale(0.96);
+  }
+}
+@keyframes wl-route-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--wl-route-x, 0), var(--wl-route-y, var(--wl-rise)));
+  }
+}
+@keyframes wl-route-out {
+  to {
+    opacity: 0;
+    transform: translate(calc(var(--wl-route-x, 0) * -0.5), 0);
+  }
+}
+@keyframes wl-ring {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* One-shot entrance for a block that arrives after its skeleton. */
+.wl-rise {
+  animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+/* Children enter in turn: set --i on each child (capped at 6 steps). */
+.wl-stagger > * {
+  animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger));
+}
+.wl-deal > * {
+  animation: wl-deal var(--wl-dur-card) var(--wl-ease-spring) backwards;
+  animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards));
+}
+
+/* Route transitions (router.tsx sets the types). The shell stays put; main moves. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(main) {
+  animation: none;
+}
+::view-transition-old(main) {
+  animation: wl-route-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+}
+::view-transition-new(main) {
+  animation: wl-route-in var(--wl-dur-route) var(--wl-ease-out) backwards;
+}
+html:active-view-transition-type(forward) {
+  --wl-route-x: var(--wl-slide);
+  --wl-route-y: 0;
+}
+html:active-view-transition-type(back) {
+  --wl-route-x: calc(var(--wl-slide) * -1);
+  --wl-route-y: 0;
+}
+/* Shared pass cards morph between pages (PassCardStage transitionName). */
+::view-transition-group(*.pass) {
+  animation-duration: var(--wl-dur-card);
+  animation-timing-function: var(--wl-ease-spring);
+}
+/* A card with no partner on the other page leaves and arrives with main. */
+::view-transition-old(*.pass):only-child {
+  animation: wl-route-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
+}
+::view-transition-new(*.pass):only-child {
+  animation: wl-route-in var(--wl-dur-route) var(--wl-ease-out) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .wl-rise,
+  .wl-stagger > *,
+  .wl-deal > * {
+    animation: none;
+  }
+}
+
+#main {
+  view-transition-name: main;
+}
