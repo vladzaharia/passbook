@@ -2,6 +2,7 @@ import type { PassField, PassFields, PassJson, PassStyle } from '../../passkit/t
 import { pickBarcode } from './barcode.ts';
 import { type FormatContext, formatValue } from './format.ts';
 import { autolink, type Detector, parseAttributed, safeHref } from './sanitize.ts';
+import { eventSemantics, flightSemantics } from './semantic.ts';
 import { localize } from './strings.ts';
 import type {
   ActionView,
@@ -30,8 +31,11 @@ export function chooseStyle(pass: PassJson, target: PassTarget): StyleChoice | u
   const legacy = LEGACY_STYLES.find((s) => pass[s] !== undefined);
   if (legacy) {
     const schemes = Array.isArray(pass.preferredStyleSchemes) ? pass.preferredStyleSchemes : [];
+    // iOS 26 and earlier keep a poster event ticket only when it is an NFC pass.
     const isPoster =
-      target === 'ios27' && legacy === 'eventTicket' && schemes.includes('posterEventTicket');
+      legacy === 'eventTicket' &&
+      schemes.includes('posterEventTicket') &&
+      (target === 'ios27' || (pass.nfc !== undefined && pass.nfc !== null));
     return {
       style: legacy,
       poster: isPoster,
@@ -79,6 +83,8 @@ export function toField(f: PassField, ctx: FieldContext, kind: 'back' | 'front')
   } else if (kind === 'back' && !formatted.dateTime) {
     segments = autolink(text, detectors(f));
   }
+  // Wallet does not link front fields: an attributed value shows as plain text.
+  if (kind === 'front') segments = segments.map((s) => ({ text: s.text }));
   return {
     key: String(f.key),
     ...(typeof f.label === 'string' && f.label ? { label: localize(ctx.strings, f.label) } : {}),
@@ -145,15 +151,17 @@ interface Limits {
   footer: number;
   /** Secondary and auxiliary share one row of `secondary` fields. */
   merge: boolean;
+  /** Secondary plus auxiliary at most this many in total (generic). */
+  combined?: number;
 }
 
 const LIMITS: Record<PassStyle, Limits> = {
-  generic: { header: 3, primary: 1, secondary: 4, aux: 4, footer: 0, merge: false },
+  generic: { header: 3, primary: 1, secondary: 4, aux: 4, footer: 0, merge: false, combined: 4 },
   storeCard: { header: 3, primary: 1, secondary: 4, aux: 0, footer: 0, merge: true },
   coupon: { header: 3, primary: 1, secondary: 4, aux: 0, footer: 0, merge: true },
   eventTicket: { header: 3, primary: 1, secondary: 4, aux: 4, footer: 0, merge: false },
   boardingPass: { header: 3, primary: 2, secondary: 4, aux: 5, footer: 0, merge: false },
-  posterGeneric: { header: 1, primary: 4, secondary: 0, aux: 0, footer: 1, merge: false },
+  posterGeneric: { header: 1, primary: 4, secondary: 0, aux: 0, footer: 2, merge: false },
 };
 
 export function buildLayout(
@@ -182,13 +190,17 @@ export function buildLayout(
     secondary = take(front(fields.secondaryFields), lim.secondary);
     const rows: PassField[][] = [[], []];
     for (const f of auxRaw) rows[style === 'eventTicket' && f.row === 1 ? 1 : 0]?.push(f);
+    let room =
+      lim.combined === undefined ? Number.POSITIVE_INFINITY : lim.combined - secondary.length;
     auxiliary = rows
-      .map((r) =>
-        take(
+      .map((r) => {
+        const n = Math.max(0, Math.min(lim.aux, room));
+        room -= n;
+        return take(
           r.map((f) => toField(f, ctx, 'front')),
-          lim.aux,
-        ),
-      )
+          n,
+        );
+      })
       .filter((r) => r.length);
   }
   const footer = take(front(fields.footerFields), lim.footer);
@@ -196,6 +208,15 @@ export function buildLayout(
   const additionalInfo = list(fields.additionalInfoFields).map((f) => toField(f, ctx, 'back'));
   const transitType = typeof fields.transitType === 'string' ? fields.transitType : undefined;
   const barcode = pickBarcode(pass, target);
+  const schemes = Array.isArray(pass.preferredStyleSchemes) ? pass.preferredStyleSchemes : [];
+  const semantic =
+    target !== 'ios27'
+      ? undefined
+      : choice.poster
+        ? eventSemantics(pass, ctx)
+        : style === 'boardingPass' && schemes.includes('semanticBoardingPass')
+          ? flightSemantics(pass, ctx)
+          : undefined;
   return {
     target,
     style: choice.degraded ? 'generic' : style,
@@ -214,5 +235,7 @@ export function buildLayout(
     ...(style === 'boardingPass'
       ? { transit: TRANSIT[transitType ?? ''] ?? (TRANSIT.PKTransitTypeGeneric as TransitView) }
       : {}),
+    ...(semantic ? { semantic } : {}),
+    approximate: Boolean(semantic) || choice.poster,
   };
 }

@@ -7,6 +7,7 @@
   --py: 0;
   --flip: 0deg;
   --pc-tilt: var(--wl-tilt, 7deg);
+  --pc-radius: calc(100cqw * 14 / 320);
   --pc-spring: var(
     --wl-ease-spring,
     linear(0, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 1.017 20.5%, 1.043 24.5%, 1.007 36%, 1)
@@ -14,8 +15,18 @@
   position: relative;
   isolation: isolate;
   width: 100%;
+  max-width: 22rem;
+  min-width: 0;
+  margin-inline: auto;
   container-type: inline-size;
   view-transition-class: pass;
+}
+/* Touch: a gentler press tilt; vertical drags still scroll the page. */
+@media (pointer: coarse) {
+  .pc-stage[data-tilt] {
+    --pc-tilt: 5deg;
+    touch-action: pan-y;
+  }
 }
 
 /* The pass lights the surface under it with its own background colour. */
@@ -31,7 +42,41 @@
   background: radial-gradient(closest-side, var(--pc-glow, transparent), transparent);
   opacity: 0.32;
   pointer-events: none;
+  transition: opacity var(--wl-dur-card, 480ms) ease-out;
 }
+/* Voided: the glow fades away (and so does the rim). */
+.pc-stage[data-dim]::before,
+.pc-stage[data-dim] .pc-lift::after {
+  opacity: 0;
+}
+/* Dark theme: a hairline rim and a soft drop keep dark passes visible; outside the card only. */
+.pc-lift {
+  position: relative;
+}
+.pc-lift::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--pc-radius);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--wl-dur-card, 480ms) ease-out;
+}
+:root[data-theme="dark"] .pc-lift::after {
+  opacity: 1;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.07),
+    0 16px 40px -16px rgb(0 0 0);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pc-lift::after {
+    opacity: 1;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.07),
+      0 16px 40px -16px rgb(0 0 0);
+  }
+}
+
 /* On light surfaces the glow reads as a shadow; keep it fainter. */
 :root[data-theme="light"] .pc-stage::before {
   opacity: 0.2;
@@ -44,6 +89,24 @@
 
 .pc-lift {
   perspective: 320cqw;
+}
+
+/* Refresh pending: a 2 px foil rail under the card, outside the art (carries state: kept). */
+.pc-sync-rail {
+  position: relative;
+  display: block;
+  height: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  border-radius: 1px;
+}
+.pc-sync-rail::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: var(--wl-foil, linear-gradient(115deg, #2dd4bf, #9a5cff 55%, #ffc24d));
+  animation: pc-rail 900ms linear infinite;
 }
 
 .pc-flipper {
@@ -170,7 +233,7 @@
     animation: pc-fade var(--wl-dur-card, 480ms) ease-out backwards;
     animation-delay: calc(min(var(--i, 0), 6) * 60ms + 120ms);
   }
-  .pc-stage[data-enter] > .pc-flip-label {
+  .pc-stage[data-enter] > .pc-seg {
     animation: pc-rise 260ms cubic-bezier(0, 0, 0, 1) 240ms backwards;
   }
   .pc-lift[data-dip] {
@@ -179,11 +242,36 @@
   .pc-lift[data-mint] {
     animation: pc-mint 640ms;
   }
-  .pc-lift[data-mint] .pc-sheen::before {
+  /* The sheen sweeps the visible face only. */
+  .pc-stage:not([data-face="back"])
+    .pc-lift[data-mint]
+    .pc-face:not([data-side="back"])
+    .pc-sheen::before,
+  .pc-stage[data-face="back"] .pc-lift[data-mint] .pc-face[data-side="back"] .pc-sheen::before {
     animation: pc-sheen var(--wl-dur-sheen, 900ms) cubic-bezier(0.2, 0, 0, 1);
+  }
+  .pc-lift[data-settle] {
+    animation: pc-settle 320ms var(--pc-spring);
+  }
+  .pc-stage[data-press] .pc-flipper {
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
   }
 }
 
+@keyframes pc-settle {
+  40% {
+    transform: scale(0.98);
+  }
+}
+@keyframes pc-rail {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(330%);
+  }
+}
 @keyframes pc-deal {
   from {
     opacity: 0;
@@ -233,7 +321,8 @@
   }
 }
 
-/* Script-free flip control for SSR pages. */
+/* Script-free side control for SSR pages: a Front / Details radio pair styled as a segmented
+   control (the SPA uses the kit SegmentedControl). */
 .pc-sr {
   position: absolute;
   width: 1px;
@@ -242,32 +331,41 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.pc-flip-label {
+.pc-seg {
+  display: flex;
+  width: max-content;
+  margin: 0.75rem auto 0;
+  padding: 2px;
+  border: 1px solid var(--line, rgb(127 127 127 / 0.3));
+  border-radius: 0.375rem;
+  background: var(--sunken, rgb(127 127 127 / 0.12));
+}
+.pc-seg label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: max-content;
   min-height: 2.25rem;
-  margin: 0.75rem auto 0;
   padding: 0 1rem;
-  border: 1px solid var(--line-strong, currentColor);
-  border-radius: 0.375rem;
-  background: var(--raised, transparent);
-  color: var(--fg, inherit);
+  border-radius: 5px;
+  color: var(--muted, inherit);
   font-weight: 500;
   cursor: pointer;
   user-select: none;
 }
-.pc-flip-label:hover {
-  background: var(--sunken, rgb(127 127 127 / 0.15));
+.pc-stage:has(> .pc-flip-front:checked) .pc-seg label:first-of-type,
+.pc-stage:has(> .pc-flip-toggle:checked) .pc-seg label:last-of-type {
+  background: var(--raised, transparent);
+  box-shadow: 0 0 0 1px var(--line-strong, currentColor);
+  color: var(--strong, inherit);
 }
-.pc-stage:has(> .pc-flip-toggle:checked) .pc-flip-label {
-  border-color: var(--accent, currentColor);
-  color: var(--accent, inherit);
-}
-.pc-stage:has(> .pc-flip-toggle:focus-visible) .pc-flip-label {
+.pc-stage:has(> .pc-flip-front:focus-visible) .pc-seg label:first-of-type,
+.pc-stage:has(> .pc-flip-toggle:focus-visible) .pc-seg label:last-of-type {
   outline: 2px solid var(--focus, currentColor);
   outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .pc-seg label {
+    min-height: 2.75rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

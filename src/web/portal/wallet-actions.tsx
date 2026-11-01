@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreHorizontal, QrCode as QrIcon, Trash2, Wallet } from 'lucide-react';
+import { MoreHorizontal, QrCode as QrIcon, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
+  AppleWalletBadge,
   Button,
   ConfirmDialog,
   Dialog,
@@ -23,23 +24,16 @@ export function publicUrlOf(downloadUrl: string, origin = window.location.origin
   return new URL(m[1], origin).toString();
 }
 
+/** Apple's badge (the kit AppleWalletBadge); never a custom button. */
 export function AddToWalletButton({
   downloadUrl,
-  size = 'md',
   onPress,
 }: {
   downloadUrl: string;
-  size?: 'sm' | 'md' | 'lg';
-  /** Runs as the download starts (the card dips towards the button). */
+  /** Runs as the download starts (the card dips towards the badge). */
   onPress?: () => void;
 }) {
-  return (
-    <Button asChild size={size} iconStart={<Wallet aria-hidden />}>
-      <a href={downloadUrl} onClick={onPress}>
-        Add to Apple Wallet
-      </a>
-    </Button>
-  );
+  return <AppleWalletBadge href={downloadUrl} onClick={onPress} />;
 }
 
 function QrDialog({

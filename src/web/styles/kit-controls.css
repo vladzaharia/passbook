@@ -1,0 +1,209 @@
+/*
+ * Control motion: checks, skeletons, rings, steps, indicators and loops that carry state. Tokens
+ * live in motion.css; keyframes shared with overlays (wl-fade-in) in kit-motion.css.
+ */
+@keyframes wl-check {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes wl-pulse {
+  from {
+    opacity: 0.5;
+  }
+}
+@keyframes wl-flip-in {
+  from {
+    transform: perspective(600px) rotateY(-180deg);
+  }
+}
+@keyframes wl-turn {
+  from {
+    opacity: 0;
+    transform: perspective(800px) rotateY(-70deg);
+  }
+}
+@keyframes wl-seg-icon {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.6);
+  }
+}
+@keyframes wl-tl-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+@keyframes wl-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes wl-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--wl-step-x, 16px));
+  }
+}
+@keyframes wl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes wl-shake {
+  20% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  80% {
+    transform: translateX(-2px);
+  }
+}
+
+/* Loops that carry pending state (spinners, running pills); they run under reduced motion too. */
+.wl-spin {
+  animation: wl-spin 1s linear infinite;
+}
+
+/* Confirmations: a check that pops in (copy, saved, refreshed). */
+.wl-check {
+  animation: wl-check 300ms var(--wl-ease-bounce) backwards;
+}
+/* Checkbox ticks: only after a change (checkbox.tsx keys the icon by the change count). */
+.wl-tick {
+  animation: wl-check 200ms var(--wl-ease-spring) backwards;
+}
+
+/* Skeletons only show for slow loads (150 ms), then pulse; the content takes over with a fade. */
+.wl-skeleton {
+  animation: wl-fade-in 1ms linear var(--pk-delay-skeleton) backwards;
+}
+.wl-skeleton-out {
+  animation: wl-fade-out 120ms var(--wl-ease-in) forwards;
+}
+
+/* Status change: one ring in the pill's tone. */
+.wl-ring {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  animation: wl-ring var(--wl-dur-flip) var(--wl-ease-out);
+}
+
+/* A failure after a user action shakes the thing that failed, once. */
+.wl-shake {
+  animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+}
+
+/* A step that replaces the previous one in the same card turns in (magic-link code, secrets). */
+.wl-turn {
+  transform-origin: 0 50%;
+  animation: wl-turn var(--wl-dur-card) var(--wl-ease-spring) backwards;
+}
+
+/* Wordmark card flips once per browser session (wordmark.tsx sets data-flip). */
+.wl-wordmark-icon[data-flip] {
+  animation: wl-flip-in var(--wl-dur-flip) var(--wl-ease-spring) 120ms backwards;
+}
+
+/* The theme segment's icon rotates in when it becomes the choice. */
+.wl-seg-icon {
+  animation: wl-seg-icon var(--wl-dur-indicator) var(--wl-ease-spring) backwards;
+}
+
+/* Timeline: the rail draws once; a new entry slides in from the left. */
+.wl-rail-draw {
+  transform-origin: 50% 0;
+  animation: wl-draw-y 300ms var(--wl-ease-out) backwards;
+}
+.wl-tl-new {
+  animation: wl-tl-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+
+/* Wizard: the new step enters from the direction of travel; the stepper line fills. */
+.wl-step {
+  animation: wl-step-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+}
+
+/* Tab panels fade in (kept under reduced motion: an opacity swap under 150 ms). */
+.wl-panel[data-state="active"] {
+  animation: wl-fade-in 120ms var(--wl-ease-out) backwards;
+}
+
+/* Sign-in card and secrets: a 2px foil line along the top edge (the card clips it). */
+.wl-foil-edge {
+  position: relative;
+}
+.wl-foil-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--wl-foil);
+}
+
+/* Sliding pill or underline behind the active item (ui/active-indicator.tsx). */
+.wl-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-state-selected-fill);
+  pointer-events: none;
+}
+.wl-indicator[data-variant="underline"] {
+  border-radius: 1px;
+  background: var(--pk-accent);
+}
+.wl-indicator[data-variant="thumb"] {
+  background: var(--pk-surface-raised);
+  box-shadow:
+    0 0 0 1px var(--pk-border-strong),
+    var(--pk-elevation-1);
+}
+.wl-indicator[data-variant="list"] {
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-accent-subtle);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-indicator[data-ready] {
+    transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);
+  }
+  .wl-fill {
+    transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);
+  }
+  .wl-indicator[data-variant="list"][data-ready] {
+    transition-duration: 120ms;
+    transition-timing-function: var(--wl-ease-out);
+  }
+  .wl-skeleton {
+    animation:
+      wl-fade-in 1ms linear var(--pk-delay-skeleton) backwards,
+      wl-pulse 1s ease-in-out calc(var(--pk-delay-skeleton) + 200ms) infinite alternate;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-check,
+  .wl-tick,
+  .wl-ring,
+  .wl-shake,
+  .wl-wordmark-icon,
+  .wl-turn,
+  .wl-seg-icon,
+  .wl-rail-draw,
+  .wl-tl-new {
+    animation: none;
+  }
+  /* A wizard step swaps with a short fade (kept: opacity under 150 ms). */
+  .wl-step {
+    animation: wl-fade-in 120ms linear backwards;
+  }
+}

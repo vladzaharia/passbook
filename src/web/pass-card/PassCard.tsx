@@ -30,6 +30,8 @@ export function PassCard({ view, face = 'front', className, target }: PassCardPr
       data-face={face}
       data-style={layout.style}
       data-poster={layout.poster || undefined}
+      data-semantic={layout.semantic?.kind}
+      data-approximate={layout.approximate || undefined}
       data-dark={c.dark || undefined}
     >
       {/* biome-ignore lint/a11y/useSemanticElements: fieldset adds form semantics; a landmark per card is noise */}
@@ -68,7 +70,7 @@ export function PassCardFlip({ defaultFace = 'front', ...props }: PassCardFlipPr
         className="pc-flip-btn"
         onClick={() => setFace(face === 'front' ? 'back' : 'front')}
       >
-        {face === 'front' ? 'Show back' : 'Show front'}
+        {face === 'front' ? 'Details' : 'Front'}
       </button>
     </div>
   );

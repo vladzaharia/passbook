@@ -11,7 +11,7 @@ function Group({ title, fields }: { title?: string; fields: FieldView[] }) {
           <li key={f.key} className="pc-item">
             {f.label ? <span className="pc-label">{f.label}</span> : null}
             <span className="pc-value">
-              <Rich field={f} />
+              <Rich field={f} wrap />
             </span>
           </li>
         ))}

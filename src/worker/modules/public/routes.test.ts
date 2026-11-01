@@ -31,8 +31,12 @@ describe('GET /p/:token', () => {
     expect(html).toContain('<!doctype html>');
     expect(html).toContain('<html lang="fr-CA">');
     expect(html).toContain('<meta name="robots" content="noindex, nofollow, noarchive"/>');
-    expect(html).toMatch(/<input id="pc-flip" type="checkbox" class="pc-flip-toggle/);
-    expect(html).toContain('<label for="pc-flip" class="pc-flip-label">Show back</label>');
+    expect(html).toMatch(
+      /<input id="pc-flip" type="radio" class="pc-flip-toggle pc-sr" name="pc-flip"/,
+    );
+    expect(html).toContain(
+      '<label for="pc-flip-front">Front</label><label for="pc-flip">Details</label>',
+    );
     expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);

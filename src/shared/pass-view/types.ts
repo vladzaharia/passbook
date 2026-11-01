@@ -58,6 +58,29 @@ export interface ColorsView {
   dark: boolean;
 }
 
+/** What Wallet draws from `semantics` on iOS 27 poster event tickets and semantic boarding passes. */
+export type SemanticView =
+  | {
+      kind: 'event';
+      title?: string;
+      date?: string;
+      venue?: string;
+      seats?: string;
+      admission?: string;
+    }
+  | {
+      kind: 'flight';
+      from?: string;
+      fromName?: string;
+      to?: string;
+      toName?: string;
+      departs?: string;
+      arrives?: string;
+      gate?: string;
+      seat?: string;
+      flight?: string;
+    };
+
 export interface LayoutView {
   target: PassTarget;
   style: PassStyle;
@@ -78,6 +101,10 @@ export interface LayoutView {
   barcode?: BarcodeView;
   actions: ActionView[];
   transit?: TransitView;
+  /** Semantic layout (poster event ticket, semantic boarding pass); fields are the fallback. */
+  semantic?: SemanticView;
+  /** Our drawing approximates Wallet's (semantic layouts): show "Approximate". */
+  approximate: boolean;
 }
 
 export interface PassView {

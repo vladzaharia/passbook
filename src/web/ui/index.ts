@@ -1,4 +1,5 @@
 export * from './alert-dialog.tsx';
+export * from './apple-wallet-badge.tsx';
 export * from './art/index.ts';
 export * from './badge.tsx';
 export * from './button.tsx';

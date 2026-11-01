@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { PassJson } from '../../passkit/types.ts';
 import { resolveColors } from './color.ts';
@@ -13,7 +15,7 @@ import {
   storeCard,
 } from './fixtures/index.ts';
 import { resolveImages } from './images.ts';
-import { normalize } from './normalize.ts';
+import { facesDiffer, normalize } from './normalize.ts';
 
 const now = new Date('2026-10-31T12:00:00Z');
 const opts = { assets, now, timeZone: 'UTC' };
@@ -128,10 +130,10 @@ describe('fields', () => {
   });
 });
 
-describe('display limits', () => {
-  const many = (n: number) =>
-    Array.from({ length: n }, (_, i) => ({ key: `k${i}`, value: `v${i}` }));
+const many = (n: number, prefix = 'k') =>
+  Array.from({ length: n }, (_, i) => ({ key: `${prefix}${i}`, value: `v${i}` }));
 
+describe('display limits', () => {
   it('generic keeps 3 header, 1 primary, 4 secondary; the rest goes to overflow', () => {
     const p = {
       ...generic,
@@ -176,7 +178,7 @@ describe('display limits', () => {
     expect([l.primary.length, l.auxiliary[0]?.length]).toEqual([2, 5]);
   });
 
-  it('posterGeneric shows 1 header, up to 4 primary, 1 footer and hides secondary', () => {
+  it('posterGeneric shows 1 header, up to 4 primary, 2 footers and hides secondary', () => {
     const p = {
       ...posterGeneric,
       posterGeneric: {
@@ -188,9 +190,9 @@ describe('display limits', () => {
     } as PassJson;
     const l = normalize(p, opts).layout;
     expect([l.header.length, l.primary.length, l.secondary.length, l.footer.length]).toEqual([
-      1, 4, 0, 1,
+      1, 4, 0, 2,
     ]);
-    expect(l.overflow.length).toBe(1 + 2 + 1 + 2);
+    expect(l.overflow.length).toBe(1 + 2 + 1 + 1);
   });
 
   it('keeps back and additional info whole', () => {
@@ -311,7 +313,7 @@ describe('colors', () => {
     });
   });
 
-  it('rejects malformed colors and unreadable pairs', () => {
+  it('rejects malformed colors and keeps unreadable pairs as given', () => {
     expect(resolveColors({ backgroundColor: 'rgb(300,0,0)' }).background).toBe(
       'rgb(255, 255, 255)',
     );
@@ -321,13 +323,14 @@ describe('colors', () => {
     expect(
       resolveColors({ backgroundColor: 'rgb(10,10,10)', foregroundColor: 'rgb(20,20,20)' })
         .foreground,
-    ).toBe('rgb(255, 255, 255)');
+    ).toBe('rgb(20, 20, 20)');
   });
 
-  it('derives a label color when missing or unreadable', () => {
-    expect(
-      resolveColors({ backgroundColor: 'rgb(0,0,0)', labelColor: 'rgb(1,1,1)' }).label,
-    ).not.toBe('rgb(1, 1, 1)');
+  it('derives a label color only when missing', () => {
+    expect(resolveColors({ backgroundColor: 'rgb(0,0,0)', labelColor: 'rgb(1,1,1)' }).label).toBe(
+      'rgb(1, 1, 1)',
+    );
+    expect(resolveColors({ backgroundColor: 'rgb(0,0,0)' }).label).not.toBe('rgb(0, 0, 0)');
     expect(resolveColors({ labelColor: 'rgb(100, 100, 100)' }).label).toBe('rgb(100, 100, 100)');
   });
 });
@@ -395,5 +398,65 @@ describe('other keys', () => {
     expect(v.suppressHeaderDarkening).toBe(true);
     expect(v.relevantDate).toBe('2026-11-01T00:00:00Z');
     expect(v.locations).toEqual([{ latitude: 1, longitude: 2, relevantText: 'Here' }]);
+  });
+});
+
+describe('truthful previews', () => {
+  const henrysBlue = JSON.parse(
+    readFileSync(join(process.cwd(), 'templates/henrys-blue/pass.json'), 'utf8'),
+  ) as PassJson;
+
+  it("draws Henry's blue as a generic pass with Code128 on iOS 26 and earlier", () => {
+    const v = normalize(henrysBlue, { ...opts, target: 'legacy' });
+    expect(v.style).toBe('generic');
+    expect(v.layout.barcode?.format).toBe('PKBarcodeFormatCode128');
+    expect(facesDiffer(v)).toBe(true);
+  });
+
+  it('keeps an NFC poster event ticket a poster on iOS 26 and earlier', () => {
+    const nfc = { ...posterEventTicket, nfc: { message: 'X', encryptionPublicKey: 'K' } };
+    expect(normalize(nfc, { ...opts, target: 'legacy' }).layout.poster).toBe(true);
+    expect(normalize(posterEventTicket, { ...opts, target: 'legacy' }).layout.poster).toBe(false);
+  });
+
+  it('caps generic secondary plus auxiliary at four and lists the rest', () => {
+    const p = {
+      ...generic,
+      generic: { secondaryFields: many(3), auxiliaryFields: many(3, 'a') },
+    } as PassJson;
+    const l = normalize(p, opts).layout;
+    expect(l.secondary.length + l.auxiliary.flat().length).toBe(4);
+    expect(l.overflow).toHaveLength(2);
+  });
+
+  it('shows two posterGeneric footers', () => {
+    const p = {
+      ...posterGeneric,
+      posterGeneric: { ...posterGeneric.posterGeneric, footerFields: many(2) },
+    } as PassJson;
+    expect(normalize(p, opts).layout.footer).toHaveLength(2);
+  });
+
+  it('draws front attributed values as plain text', () => {
+    const p = {
+      ...generic,
+      generic: {
+        primaryFields: [
+          { key: 'p', value: 'Site', attributedValue: '<a href="https://example.com">Site</a>' },
+        ],
+      },
+    } as PassJson;
+    const [field] = normalize(p, opts).layout.primary;
+    expect(field?.segments.every((s) => !s.href)).toBe(true);
+  });
+
+  it('lays a poster event ticket out from semantics, approximately', () => {
+    const p = {
+      ...posterEventTicket,
+      semantics: { eventName: 'Harbor Lights', venueName: 'Pier 62', admissionLevel: 'VIP' },
+    } as PassJson;
+    const l = normalize(p, opts).layout;
+    expect(l.semantic).toMatchObject({ kind: 'event', title: 'Harbor Lights', venue: 'Pier 62' });
+    expect(l.approximate).toBe(true);
   });
 });

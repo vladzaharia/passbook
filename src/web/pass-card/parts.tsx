@@ -2,7 +2,32 @@ import { Bus, BusFront, Plane, Ship, TrainFront } from 'lucide-react';
 import { useState } from 'react';
 import type { FieldView, ImageView, PassView, TransitView } from '../../shared/pass-view/index.ts';
 
-export function Rich({ field }: { field: FieldView }) {
+const BREAKABLE = /^(?:https?:\/\/\S+|[^\s@]+@[^\s@]+\.[^\s@]+|www\.\S+)$/i;
+
+/** URLs and emails break only after "@", "." or "/" (a <wbr> after each); other text as usual. */
+export function Breakable({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(\s+)/).map((word, w) =>
+        BREAKABLE.test(word)
+          ? word.split(/(?<=[@./])/).map((piece, i, all) =>
+              i < all.length - 1 ? (
+                // biome-ignore lint/suspicious/noArrayIndexKey: positional pieces of one string
+                <span key={`${w}-${i}`}>
+                  {piece}
+                  <wbr />
+                </span>
+              ) : (
+                piece
+              ),
+            )
+          : word,
+      )}
+    </>
+  );
+}
+
+export function Rich({ field, wrap }: { field: FieldView; wrap?: boolean }) {
   if (field.dateTime) return <time dateTime={field.dateTime}>{field.text}</time>;
   return (
     <>
@@ -15,20 +40,26 @@ export function Rich({ field }: { field: FieldView }) {
             {...(s.href.startsWith('https:') ? { target: '_blank' } : {})}
             rel="noopener noreferrer nofollow"
           >
-            {s.text}
+            {wrap ? <Breakable text={s.text} /> : s.text}
           </a>
         ) : (
           // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional and static
-          <span key={i}>{s.text}</span>
+          <span key={i}>{wrap ? <Breakable text={s.text} /> : s.text}</span>
         ),
       )}
     </>
   );
 }
 
+/** Front values are one line; a long primary value steps its size down once before truncating. */
 export function Field({ field, big }: { field: FieldView; big?: boolean }) {
   return (
-    <div className="pc-field" data-align={field.align} data-big={big || undefined}>
+    <div
+      className="pc-field"
+      data-align={field.align}
+      data-big={big || undefined}
+      data-long={field.text.length > 12 || undefined}
+    >
       {field.label ? <span className="pc-label">{field.label}</span> : null}
       <span className="pc-value">
         <Rich field={field} />

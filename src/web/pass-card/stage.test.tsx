@@ -35,14 +35,34 @@ describe('PassCardStage', () => {
   it('sets the glow colour and the shared transition name', () => {
     const { container } = render(<PassCardStage view={view} transitionName="pass-1" />);
     const stage = container.querySelector<HTMLElement>('.pc-stage');
-    expect(stage?.style.getPropertyValue('--pc-glow')).toBe(view.colors.background);
+    // The fixture's navy is darker than .12 luminance, so its label colour lights the glow.
+    expect(stage?.style.getPropertyValue('--pc-glow')).toBe(
+      `color-mix(in srgb, ${view.colors.label} 60%, ${view.colors.background})`,
+    );
     expect(stage?.style.viewTransitionName).toBe('pass-1');
   });
 
-  it('flips without script on SSR pages', () => {
+  it('flips without script on SSR pages through a Front / Details pair', () => {
     const html = renderToStaticMarkup(<PassCardStage view={view} toggleId="flip" tilt={false} />);
-    expect(html).toContain('<input id="flip" type="checkbox" class="pc-flip-toggle');
-    expect(html).toContain('<label for="flip" class="pc-flip-label">Show back</label>');
+    expect(html).toMatch(/<input id="flip-front" type="radio"[^>]*name="flip"[^>]*checked=""/);
+    expect(html).toMatch(/<input id="flip" type="radio" class="pc-flip-toggle pc-sr" name="flip"/);
+    expect(html).toContain(
+      '<label for="flip-front">Front</label><label for="flip">Details</label>',
+    );
     expect(html).not.toContain('inert');
+  });
+
+  it('glows in the pass colour when it is light enough', () => {
+    const light = normalize({ ...generic, backgroundColor: 'rgb(220, 120, 40)' }, { assets });
+    const { container } = render(<PassCardStage view={light} />);
+    const stage = container.querySelector<HTMLElement>('.pc-stage');
+    expect(stage?.style.getPropertyValue('--pc-glow')).toBe('rgb(220, 120, 40)');
+  });
+
+  it('runs the sync rail only while syncing', () => {
+    const { container, rerender } = render(<PassCardStage view={view} syncing />);
+    expect(container.querySelector('.pc-sync-rail')).not.toBeNull();
+    rerender(<PassCardStage view={view} />);
+    expect(container.querySelector('.pc-sync-rail')).toBeNull();
   });
 });

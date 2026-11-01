@@ -154,7 +154,7 @@ export function PassDetailPage({ passId }: { passId: string }) {
             size="sm"
             onClick={() => setFace(face === 'front' ? 'back' : 'front')}
           >
-            {face === 'front' ? 'Show back' : 'Show front'}
+            {face === 'front' ? 'Details' : 'Front'}
           </Button>
         </div>
         <div className="flex flex-col gap-4">

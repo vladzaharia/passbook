@@ -56,7 +56,6 @@ function PassTile({ pass }: { pass: MyPass }) {
           <>
             <AddToWalletButton
               downloadUrl={pass.downloadUrl}
-              size="sm"
               onPress={() => setDip((n) => n + 1)}
             />
             <RefreshButton passId={pass.id} pass={pass} size="sm" />

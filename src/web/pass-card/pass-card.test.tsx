@@ -58,7 +58,7 @@ describe('style specifics', () => {
     expect(screen.getByText('Downtown')).toBeInTheDocument();
   });
 
-  it('posterGeneric lays out art, code, title row and one footer without a footer panel', () => {
+  it('posterGeneric lays out art, code, title row and two footers without a footer panel', () => {
     const pass: PassJson = {
       ...posterGeneric,
       posterGeneric: {
@@ -83,7 +83,7 @@ describe('style specifics', () => {
       'Member Name',
     );
     expect(container.querySelector('.pc-poster-primary .pc-label')).toHaveTextContent('Pass');
-    expect(container.querySelectorAll('.pc-poster-footer .pc-field')).toHaveLength(1);
+    expect(container.querySelectorAll('.pc-poster-footer .pc-field')).toHaveLength(2);
     expect(container.querySelector('.pc-art-top')).toHaveTextContent('KEY TAG');
   });
 
@@ -193,9 +193,52 @@ describe('PassCardFlip', () => {
     const user = userEvent.setup();
     const { container } = render(<PassCardFlip view={view(generic)} />);
     expect(container.querySelector('.pc-root')).toHaveAttribute('data-face', 'front');
-    await user.click(screen.getByRole('button', { name: 'Show back' }));
+    await user.click(screen.getByRole('button', { name: 'Details' }));
     expect(container.querySelector('.pc-root')).toHaveAttribute('data-face', 'back');
-    expect(within(container).getByRole('button', { name: 'Show front' })).toBeInTheDocument();
+    expect(within(container).getByRole('button', { name: 'Front' })).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+});
+
+describe('truthful front', () => {
+  it('renders the colours exactly as given', () => {
+    const low = {
+      ...generic,
+      backgroundColor: 'rgb(50, 60, 70)',
+      foregroundColor: 'rgb(60, 70, 80)',
+    } as PassJson;
+    const { container } = render(<PassCard view={view(low)} />);
+    const card = container.querySelector<HTMLElement>('.pc-card');
+    expect(card?.style.getPropertyValue('--pc-fg')).toBe('rgb(60, 70, 80)');
+  });
+
+  it('steps a long primary value down before truncating and never links the front', () => {
+    const long = {
+      ...generic,
+      generic: {
+        primaryFields: [
+          { key: 'p', value: 'A primary value that runs on and on and on past fifty' },
+        ],
+        secondaryFields: [
+          {
+            key: 's',
+            value: 'Read https://example.com',
+            attributedValue: '<a href="https://example.com">site</a>',
+          },
+        ],
+      },
+    } as PassJson;
+    const { container } = render(<PassCard view={view(long)} />);
+    expect(container.querySelector('.pc-primary .pc-field')).toHaveAttribute('data-long');
+    expect(container.querySelector('.pc-root[data-face="front"] a')).toBeNull();
+  });
+
+  it('breaks back emails and URLs only after @, . or /', () => {
+    const { container } = render(<PassCard view={view(generic)} face="back" />);
+    const mail = container.querySelector('a[href^="mailto:"]');
+    expect(mail?.querySelectorAll('wbr').length).toBeGreaterThan(0);
+    for (const piece of mail?.querySelectorAll('span') ?? []) {
+      expect(piece.textContent).toMatch(/[@./]$/);
+    }
   });
 });

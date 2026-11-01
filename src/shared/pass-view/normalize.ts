@@ -57,9 +57,7 @@ export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
     target,
     layout,
     layouts,
-    hasAlternate:
-      layouts.ios27.style !== layouts.legacy.style ||
-      layouts.ios27.poster !== layouts.legacy.poster,
+    hasAlternate: facesDiffer({ layouts }),
     organizationName: localize(options.strings, text(pass.organizationName)),
     description: localize(options.strings, text(pass.description)),
     ...(logoText ? { logoText } : {}),
@@ -85,4 +83,21 @@ export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
     locale,
     warnings: [...warnings],
   };
+}
+
+const shape = (l: LayoutView) =>
+  JSON.stringify([
+    l.style,
+    l.poster,
+    l.degraded,
+    l.semantic?.kind,
+    [l.header, l.primary, l.secondary, l.auxiliary.flat(), l.footer].map((r) =>
+      r.map((f) => f.key),
+    ),
+    l.barcode?.format,
+  ]);
+
+/** True when iOS 27 and iOS 26 draw different faces: only then does the target toggle show. */
+export function facesDiffer(view: Pick<PassView, 'layouts'>): boolean {
+  return shape(view.layouts.ios27) !== shape(view.layouts.legacy);
 }

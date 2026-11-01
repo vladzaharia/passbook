@@ -122,7 +122,7 @@ export function RowActions({ actions, label }: { actions: readonly RowAction[]; 
       </Button>
     );
   }
-  const ordered = [...actions].sort((a, b) => Number(a.destructive) - Number(b.destructive));
+  const ordered = [...actions].sort((a, b) => Number(!!a.destructive) - Number(!!b.destructive));
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -64,14 +64,21 @@ export interface ColorInput {
   footerBackgroundColor?: unknown;
 }
 
+/** Dark enough that the stage needs a rim and a lighter glow; luminance under `threshold`. */
+export function isDarkBackground(color: string, threshold = 0.12): boolean {
+  const c = parseColor(color);
+  return c ? luminance(c) < threshold : false;
+}
+
+/**
+ * The pass colours exactly as given (truthful preview: Wallet draws an unreadable pair too; the
+ * template lint warns instead). Only missing colours get defaults.
+ */
 export function resolveColors(pass: ColorInput) {
   const bg = parseColor(pass.backgroundColor) ?? WHITE;
   const dark = luminance(bg) < 0.4;
-  let fg = parseColor(pass.foregroundColor) ?? (dark ? WHITE : BLACK);
-  // An unreadable pair is a pass bug; Wallet would still draw it, we keep it legible.
-  if (contrast(fg, bg) < 3) fg = dark ? WHITE : BLACK;
-  const labelIn = parseColor(pass.labelColor);
-  const label = labelIn && contrast(labelIn, bg) >= 2 ? labelIn : mix(fg, bg, 0.35);
+  const fg = parseColor(pass.foregroundColor) ?? (dark ? WHITE : BLACK);
+  const label = parseColor(pass.labelColor) ?? mix(fg, bg, 0.35);
   const strip = parseColor(pass.stripColor);
   const footer = parseColor(pass.footerBackgroundColor);
   return {

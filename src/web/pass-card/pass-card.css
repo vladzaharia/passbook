@@ -117,7 +117,8 @@
   overflow-wrap: normal;
 }
 .pc-label {
-  font-size: calc(var(--u) * 10);
+  /* Labels never go under 11 px, even on small stills. */
+  font-size: max(11px, calc(var(--u) * 10));
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -175,6 +176,7 @@
 .pc-code {
   margin-top: auto;
   display: flex;
+  flex: none;
   justify-content: center;
 }
 .pc-barcode {
@@ -333,7 +335,7 @@
 }
 .pc-art-top .pc-label {
   font-weight: 700;
-  font-size: calc(var(--u) * 12);
+  font-size: max(11px, calc(var(--u) * 12));
 }
 .pc-art-top .pc-value {
   font-size: calc(var(--u) * 14);
@@ -397,7 +399,7 @@
 }
 .pc-poster-primary .pc-primary .pc-label {
   order: -1;
-  font-size: calc(var(--u) * 11);
+  font-size: max(11px, calc(var(--u) * 11));
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
@@ -410,6 +412,35 @@
 }
 .pc-poster-footer .pc-value {
   font-size: calc(var(--u) * 13);
+}
+
+/* Front values are one line each with an ellipsis, as Wallet truncates them; the card keeps its
+   height per style, so the barcode is never pushed out. */
+.pc-root[data-face="front"] .pc-row {
+  flex-wrap: nowrap;
+}
+.pc-root[data-face="front"] .pc-field,
+.pc-root[data-face="front"] .pc-header .pc-field {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.pc-root[data-face="front"] .pc-field > .pc-label,
+.pc-root[data-face="front"] .pc-field > .pc-value {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+/* A long primary value steps down one size before it truncates. */
+.pc-root[data-face="front"] .pc-primary .pc-field[data-long] > .pc-value {
+  font-size: calc(var(--u) * 24);
+}
+.pc-poster-meta {
+  margin: calc(var(--u) * 4) 0 0;
+  font-size: calc(var(--u) * 13);
+  opacity: 0.85;
 }
 
 /* back */
@@ -482,6 +513,11 @@
   flex-direction: column;
   gap: calc(var(--u) * 2);
   padding: calc(var(--u) * 10) calc(var(--u) * 12);
+}
+/* Back text wraps between words; URLs and emails only after "@", "." or "/" (<wbr>). */
+.pc-item .pc-value {
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 .pc-item + .pc-item {
   border-top: 1px solid rgb(127 127 127 / 0.3);

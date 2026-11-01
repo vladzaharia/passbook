@@ -1,4 +1,4 @@
-import type { LayoutView, PassView } from '../../shared/pass-view/index.ts';
+import type { LayoutView, PassView, SemanticView } from '../../shared/pass-view/index.ts';
 import { BarcodeSvg } from './barcode.tsx';
 import { Field, FieldRow, Img, LogoLine, TransitGlyph } from './parts.tsx';
 
@@ -89,7 +89,50 @@ function EventTicket({ view, layout }: Props) {
   );
 }
 
+/** A semantic boarding pass: airports big, then times, gate and seat (approximate). */
+function Flight({ view, layout, s }: Props & { s: Extract<SemanticView, { kind: 'flight' }> }) {
+  const line = (label: string, value?: string) =>
+    value ? (
+      <div className="pc-field">
+        <span className="pc-label">{label}</span>
+        <span className="pc-value">{value}</span>
+      </div>
+    ) : null;
+  return (
+    <>
+      <div className="pc-top">
+        <LogoLine view={view} poster={false} slot="primaryLogo" />
+        <FieldRow fields={layout.header} className="pc-header" />
+      </div>
+      <div className="pc-route">
+        <div className="pc-field" data-big="">
+          {s.fromName ? <span className="pc-label">{s.fromName}</span> : null}
+          <span className="pc-value">{s.from}</span>
+        </div>
+        {layout.transit ? <TransitGlyph transit={layout.transit} /> : <span />}
+        <div className="pc-field" data-big="" data-align="right">
+          {s.toName ? <span className="pc-label">{s.toName}</span> : null}
+          <span className="pc-value">{s.to}</span>
+        </div>
+      </div>
+      <div className="pc-row">
+        {line('Departs', s.departs)}
+        {line('Arrives', s.arrives)}
+      </div>
+      <div className="pc-row">
+        {line('Flight', s.flight)}
+        {line('Gate', s.gate)}
+        {line('Seat', s.seat)}
+      </div>
+      <Code layout={layout} />
+    </>
+  );
+}
+
 function BoardingPass({ view, layout }: Props) {
+  if (layout.semantic?.kind === 'flight') {
+    return <Flight view={view} layout={layout} s={layout.semantic} />;
+  }
   const [from, to] = layout.primary;
   return (
     <>
@@ -112,8 +155,13 @@ function BoardingPass({ view, layout }: Props) {
 /** Apple's poster: art bleeds over the whole card; the lower area is a darkened blur of it. */
 function Poster({ view, layout }: Props) {
   const [title, ...rest] = layout.primary;
-  const heading = title && !title.label ? title : undefined;
-  const fields = heading ? rest : layout.primary;
+  const event = layout.semantic?.kind === 'event' ? layout.semantic : undefined;
+  const heading = event?.title
+    ? { key: 'eventName', text: event.title }
+    : title && !title.label
+      ? title
+      : undefined;
+  const fields = event ? [] : heading ? rest : layout.primary;
   const art = view.images.artwork ?? view.images.background;
   return (
     <>
@@ -130,11 +178,34 @@ function Poster({ view, layout }: Props) {
           {heading || fields.length ? (
             <div className="pc-poster-primary">
               {heading ? <h2 className="pc-title">{heading.text}</h2> : null}
-              <FieldRow fields={fields} className="pc-primary" />
+              {event ? (
+                <p className="pc-poster-meta">
+                  {[event.date, event.venue].filter(Boolean).join(' · ')}
+                </p>
+              ) : (
+                <FieldRow fields={fields} className="pc-primary" />
+              )}
             </div>
           ) : null}
-          {layout.poster ? <Rows layout={layout} /> : null}
-          <FieldRow fields={layout.footer.slice(0, 1)} className="pc-poster-footer" />
+          {event && (event.seats || event.admission) ? (
+            <div className="pc-row">
+              {event.seats ? (
+                <div className="pc-field">
+                  <span className="pc-label">Seat</span>
+                  <span className="pc-value">{event.seats}</span>
+                </div>
+              ) : null}
+              {event.admission ? (
+                <div className="pc-field">
+                  <span className="pc-label">Admission</span>
+                  <span className="pc-value">{event.admission}</span>
+                </div>
+              ) : null}
+            </div>
+          ) : layout.poster ? (
+            <Rows layout={layout} />
+          ) : null}
+          <FieldRow fields={layout.footer} className="pc-poster-footer" />
         </div>
       </div>
     </>
