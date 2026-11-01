@@ -1,0 +1,10 @@
+/* A revoked key dims to .55 in 200 ms (its KeyRound turns back, kit-verbs.css). */
+.wl-keys :is(tr, li)[data-row-id]:has([data-revoked]) {
+  opacity: 0.55;
+  transition: opacity 200ms var(--wl-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-keys :is(tr, li)[data-row-id]:has([data-revoked]) {
+    transition-duration: 150ms;
+  }
+}
