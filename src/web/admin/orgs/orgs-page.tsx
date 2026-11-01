@@ -169,7 +169,11 @@ export function OrgsPage() {
             <EmptyState
               icon={Building2}
               title="No organizations"
-              action={<Button onClick={() => setCreating(true)}>New organization</Button>}
+              action={
+                <Button iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
+                  New organization
+                </Button>
+              }
             />
           }
           columns={[

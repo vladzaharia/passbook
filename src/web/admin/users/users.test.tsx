@@ -44,7 +44,9 @@ const detail = (over: Record<string, unknown> = {}) => ({
       userAgent: 'Safari',
     },
   ],
-  passes: [{ id: 'p1', title: 'Gold card' }],
+  passes: [
+    { id: 'p1', title: 'Gold card', templateName: 'Gold', orgName: 'Henrys', status: 'active' },
+  ],
   passCount: 1,
   recentAudit: [],
   ...over,
@@ -140,6 +142,7 @@ describe('user detail', () => {
       'href',
       '/admin/passes/p1',
     );
+    expect(screen.getByText('Gold · Henrys')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 

@@ -100,7 +100,13 @@ export async function getUserDetail(ctx: ServiceContext, id: string): Promise<Us
       revokedAt: s.revoked_at,
       userAgent: s.user_agent,
     })),
-    passes,
+    passes: passes.map((p) => ({
+      id: p.id,
+      title: p.title,
+      templateName: p.template_name,
+      orgName: p.org_name,
+      status: p.status,
+    })),
     passCount,
     recentAudit: audit.map((a) => ({
       id: a.id,

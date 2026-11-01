@@ -130,7 +130,13 @@ describe('detail', () => {
       emails: { email: string }[];
       identities: { groups: string[]; provider: string }[];
       sessions: { revokedAt: number | null }[];
-      passes: { id: string; title: string }[];
+      passes: {
+        id: string;
+        title: string;
+        templateName: string;
+        orgName: string;
+        status: string;
+      }[];
       passCount: number;
       recentAudit: { action: string }[];
     };
@@ -139,6 +145,8 @@ describe('detail', () => {
     expect(body.sessions).toHaveLength(1);
     expect(body.sessions[0]?.revokedAt).not.toBeNull();
     expect(body.passes.map((p) => p.id)).toEqual([pass.id]);
+    expect(body.passes[0]).toMatchObject({ orgName: org.name, status: 'active' });
+    expect(body.passes[0]?.templateName).toEqual(expect.any(String));
     expect(body.passCount).toBe(1);
     expect(body.recentAudit.map((x) => x.action)).toContain('user.sessions_revoke');
   });

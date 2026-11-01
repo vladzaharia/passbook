@@ -43,7 +43,11 @@ export function IdentitiesPage() {
             <EmptyState
               icon={ShieldCheck}
               title="No identities"
-              action={<Button onClick={() => setUploading(true)}>Upload</Button>}
+              action={
+                <Button iconStart={<Upload aria-hidden />} onClick={() => setUploading(true)}>
+                  Upload
+                </Button>
+              }
             />
           }
           columns={[
