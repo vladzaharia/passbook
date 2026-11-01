@@ -110,7 +110,8 @@ describe('my passes', () => {
   it('offers a QR for the public link on desktop', async () => {
     const user = userEvent.setup();
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(passFixture()) } });
-    await user.click(await screen.findByRole('button', { name: 'Show QR' }));
+    await user.click(await screen.findByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Show QR' }));
     const dialog = await screen.findByRole('dialog');
     expect(
       await within(dialog).findByRole('img', { name: 'QR code for Gym membership' }),
@@ -215,7 +216,8 @@ describe('remove', () => {
         },
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Remove' }));
+    await user.click(await screen.findByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText('Remove from my passes?')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
@@ -230,14 +232,16 @@ describe('remove', () => {
         '/api/v1/me/passes/p1': () => problem(409, 'conflict', 'Pass changed. Reload.'),
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Remove' }));
+    await user.click(await screen.findByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Cancel' }),
     );
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(fetchMock.mock.calls.some(([, i]) => i?.method === 'DELETE')).toBe(false);
 
-    await user.click(screen.getByRole('button', { name: 'Remove' }));
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
     expect(await within(dialog).findByText('Pass changed. Reload.')).toBeInTheDocument();

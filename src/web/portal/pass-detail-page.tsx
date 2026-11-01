@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Download, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import type { Json } from '@/passkit/types.ts';
+import { formatValue } from '@/shared/pass-view/format.ts';
 import { isApiError } from '../lib/errors.ts';
 import { PassCard } from '../pass-card/index.tsx';
 import {
@@ -23,6 +25,12 @@ import { AddToWalletButton, publicUrlOf, RemovePassButton } from './wallet-actio
 
 const CRUMBS = [{ label: 'My passes', to: '/' }];
 
+/** Pass labels are often written in capitals for the card; show them as a sentence. */
+function sentenceCase(label: string): string {
+  if (label.length < 2 || label !== label.toUpperCase()) return label;
+  return label.charAt(0) + label.slice(1).toLowerCase();
+}
+
 function fieldRows(passJson: Record<string, unknown>) {
   const styles = ['generic', 'storeCard', 'coupon', 'eventTicket', 'boardingPass', 'posterGeneric'];
   const style = styles.find((s) => passJson[s] && typeof passJson[s] === 'object');
@@ -34,9 +42,14 @@ function fieldRows(passJson: Record<string, unknown>) {
     if (!Array.isArray(list)) continue;
     for (const f of list) {
       if (!f || typeof f !== 'object') continue;
-      const { label, key, value } = f as Record<string, unknown>;
+      const spec = f as Record<string, unknown>;
+      const { label, key, value } = spec;
       if (value === undefined || value === null || typeof value === 'object') continue;
-      rows.push({ label: String(label ?? key ?? ''), value: String(value) });
+      const text = formatValue(value as Json, spec, {
+        locale: navigator.language,
+        now: new Date(),
+      }).text;
+      rows.push({ label: sentenceCase(String(label ?? key ?? '')), value: text });
     }
   }
   return rows;

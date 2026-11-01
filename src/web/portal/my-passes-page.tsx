@@ -16,7 +16,7 @@ import {
 import { myPassesQuery } from './api.ts';
 import { formatWhen, type MyPass, passName, toView } from './pass-view.ts';
 import { RefreshButton } from './refresh-button.tsx';
-import { AddToWalletButton, publicUrlOf, QrButton, RemovePassButton } from './wallet-actions.tsx';
+import { AddToWalletButton, PassMoreMenu, publicUrlOf } from './wallet-actions.tsx';
 
 const isApplePhone = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
 
@@ -25,7 +25,7 @@ function PassTile({ pass }: { pass: MyPass }) {
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const voided = pass.status === 'voided';
   return (
-    <Card className="flex flex-col gap-3 p-4">
+    <Card className="flex w-full flex-col gap-3 p-4">
       <PassCard view={toView(pass)} face="front" />
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-2">
@@ -43,15 +43,18 @@ function PassTile({ pass }: { pass: MyPass }) {
         <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         <p className="text-xs text-fg-subtle">Updated {formatWhen(pass.modifiedAt)}</p>
       </div>
-      {voided ? null : (
-        <div className="flex flex-wrap items-center gap-2">
-          <AddToWalletButton downloadUrl={pass.downloadUrl} size="sm" />
-          <RefreshButton passId={pass.id} pass={pass} size="sm" />
-          {publicUrl && !isApplePhone() ? <QrButton passTitle={name} url={publicUrl} /> : null}
-        </div>
-      )}
-      <div className="flex justify-end">
-        <RemovePassButton passId={pass.id} passTitle={name} />
+      <div className="mt-auto flex items-center gap-2">
+        {voided ? null : (
+          <>
+            <AddToWalletButton downloadUrl={pass.downloadUrl} size="sm" />
+            <RefreshButton passId={pass.id} pass={pass} size="sm" />
+          </>
+        )}
+        <PassMoreMenu
+          passId={pass.id}
+          passTitle={name}
+          qrUrl={voided || isApplePhone() ? null : publicUrl}
+        />
       </div>
     </Card>
   );
@@ -108,7 +111,7 @@ export function MyPassesPage() {
         <AddAllLinks count={passes.filter((p) => p.status !== 'voided').length} />
         <ul className="grid gap-4 sm:grid-cols-2">
           {passes.map((pass) => (
-            <li key={pass.id}>
+            <li key={pass.id} className="flex">
               <PassTile pass={pass} />
             </li>
           ))}
