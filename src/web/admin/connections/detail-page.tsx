@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Pause, Play, RefreshCw, Trash2, Zap } from 'lucide-react';
+import { KeyRound, Pause, Play, RefreshCw, Trash2, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
@@ -9,10 +9,12 @@ import {
   Card,
   CardBody,
   CardHeader,
+  ConfirmDialog,
   DropdownMenuItem,
   ErrorState,
   FormField,
   Input,
+  MoreMenu,
   PageHeader,
   SaveBar,
   Skeleton,
@@ -40,8 +42,8 @@ import {
 } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow, toRows } from './mapping.ts';
 import { MappingEditor } from './mapping-editor.tsx';
-import { MoreMenu } from './more-menu.tsx';
-import { WebhookPanel } from './webhook.tsx';
+import type { ConnectionDetailSearch } from './search.ts';
+import { generateSecret, WebhookPanel } from './webhook.tsx';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
 
@@ -167,11 +169,19 @@ function SettingsTab({ c }: { c: Detail }) {
   );
 }
 
-export function ConnectionDetailPage({ connectionId }: { connectionId: string }) {
+export function ConnectionDetailPage({
+  connectionId,
+  search,
+}: {
+  connectionId: string;
+  search: ConnectionDetailSearch;
+}) {
   const navigate = useNavigate();
   const connection = useConnection(connectionId);
   const actions = useConnectionActions(connectionId);
   const [del, setDel] = useState(false);
+  const [rotate, setRotate] = useState(false);
+  const [secret, setSecret] = useState<string>();
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string }>();
   const connector = useConnector(connection.data?.connectorType);
   const connectorName = useConnectorNames();
@@ -201,6 +211,14 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
   const showWebhook = connector.data
     ? connector.data.capabilities.webhook
     : c.mode === 'webhook' || c.mode === 'hybrid';
+
+  const tab = search.tab === 'webhook' && !showWebhook ? 'health' : (search.tab ?? 'health');
+  const setTab = (next: string) =>
+    void navigate({
+      to: '.',
+      search: { tab: next as NonNullable<ConnectionDetailSearch['tab']> } as never,
+      replace: true,
+    });
 
   async function test() {
     setTestResult(undefined);
@@ -267,6 +285,12 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
                 {c.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}
                 {c.enabled ? 'Disable' : 'Enable'}
               </DropdownMenuItem>
+              {showWebhook ? (
+                <DropdownMenuItem onSelect={() => setRotate(true)}>
+                  <KeyRound aria-hidden />
+                  {c.hasWebhookSecret ? 'Rotate secret' : 'Create secret'}
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem destructive onSelect={() => setDel(true)}>
                 <Trash2 aria-hidden />
                 Delete
@@ -283,7 +307,7 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
           {testResult.text}
         </p>
       ) : null}
-      <Tabs defaultValue="health" className="max-w-3xl min-w-0">
+      <Tabs value={tab} onValueChange={setTab} className="max-w-3xl min-w-0">
         <TabsList aria-label="Connection sections">
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="mapping">Mapping</TabsTrigger>
@@ -310,14 +334,25 @@ export function ConnectionDetailPage({ connectionId }: { connectionId: string })
         </TabsContent>
         {showWebhook ? (
           <TabsContent value="webhook">
-            <WebhookPanel
-              url={c.webhookUrl}
-              hasSecret={c.hasWebhookSecret}
-              onRotate={(webhookSecret) => actions.update.mutateAsync({ webhookSecret })}
-            />
+            <WebhookPanel url={c.webhookUrl} hasSecret={c.hasWebhookSecret} secret={secret} />
           </TabsContent>
         ) : null}
       </Tabs>
+      <ConfirmDialog
+        open={rotate}
+        onOpenChange={setRotate}
+        title={c.hasWebhookSecret ? 'Rotate webhook secret?' : 'Create webhook secret?'}
+        description={c.hasWebhookSecret ? 'Senders using the old secret are rejected.' : undefined}
+        confirmLabel={c.hasWebhookSecret ? 'Rotate' : 'Create'}
+        destructive={c.hasWebhookSecret}
+        onConfirm={async () => {
+          const next = generateSecret();
+          await actions.update.mutateAsync({ webhookSecret: next });
+          setSecret(next);
+          setTab('webhook');
+          toast.success('Secret saved');
+        }}
+      />
       <TypedConfirmDialog
         open={del}
         onOpenChange={setDel}

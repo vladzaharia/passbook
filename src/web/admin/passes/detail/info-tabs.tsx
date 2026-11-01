@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
+import { actionLabel } from '@/web/lib/actions.ts';
 import {
   Card,
   CardBody,
@@ -11,7 +12,7 @@ import {
   type TimelineItem,
 } from '../../../ui/index.ts';
 import { usePassAudit } from '../api.ts';
-import { actionLabel, formatDate } from '../format.ts';
+import { formatDate } from '../format.ts';
 
 type Pass = z.infer<typeof PassDetailSchema>;
 

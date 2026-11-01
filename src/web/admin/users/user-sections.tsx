@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
@@ -88,7 +88,12 @@ export function EmailsCard({ user }: { user: UserDetail }) {
               />
             )}
           </FormField>
-          <Button type="submit" variant="outline" loading={addEmail.isPending}>
+          <Button
+            type="submit"
+            variant="outline"
+            iconStart={<Plus aria-hidden />}
+            loading={addEmail.isPending}
+          >
             Add
           </Button>
         </form>
@@ -264,18 +269,24 @@ export function PassesCard({ user }: { user: UserDetail }) {
         </CardBody>
       ) : (
         <ul className="divide-y divide-border">
-          {user.passes.map(({ id, title }) => (
-            <li key={id} className="flex items-center justify-between gap-3 px-4 py-2">
-              <Link
-                to="/admin/passes/$passId"
-                params={{ passId: id }}
-                className="min-w-0 truncate text-sm font-medium text-accent-fg hover:underline"
-              >
-                {title}
-              </Link>
-              <span className="shrink-0 font-mono text-xs text-fg-muted" title={id}>
-                {id.slice(-8)}
-              </span>
+          {user.passes.map(({ id, title, templateName, orgName, status }) => (
+            <li
+              key={id}
+              className="flex flex-col items-start gap-1.5 px-4 py-2 md:flex-row md:items-center md:justify-between md:gap-3"
+            >
+              <div className="min-w-0 max-w-full">
+                <Link
+                  to="/admin/passes/$passId"
+                  params={{ passId: id }}
+                  className="block truncate text-sm font-medium text-accent-fg hover:underline"
+                >
+                  {title}
+                </Link>
+                <p className="truncate text-xs text-fg-muted">
+                  {templateName} · {orgName}
+                </p>
+              </div>
+              <StatusPill status={status} className="shrink-0" />
             </li>
           ))}
         </ul>

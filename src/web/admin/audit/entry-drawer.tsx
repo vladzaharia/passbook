@@ -1,8 +1,9 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
+import { actionLabel } from '@/web/lib/actions.ts';
 import { DiffViewer, JsonViewer, KeyValue, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
-import { actionLabel, actorText, targetText } from './labels.ts';
+import { actorText, targetText } from './labels.ts';
 import { describeDetail } from './redact.ts';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;

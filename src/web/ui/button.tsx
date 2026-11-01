@@ -1,4 +1,4 @@
-import { Slot } from '@radix-ui/react-slot';
+import { Slot, Slottable } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ButtonHTMLAttributes, MouseEvent, ReactNode, Ref } from 'react';
 import { cn } from '../lib/cn.ts';
@@ -82,7 +82,9 @@ export function Button({
         onClick={guard}
         {...props}
       >
-        {children}
+        {loading ? <Spinner label="" /> : iconStart}
+        <Slottable>{children}</Slottable>
+        {iconEnd}
       </Slot>
     );
   }

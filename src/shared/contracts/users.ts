@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, pageOf, RoleSchema, TimestampSchema } from './common.ts';
+import { PassStatusSchema } from './passes.ts';
 
 export const UserSchema = z.object({
   id: IdSchema,
@@ -49,7 +50,15 @@ export const UserDetailSchema = UserSchema.extend({
     }),
   ),
   /** First 100 owned passes (title falls back to the serial); `passCount` is the total. */
-  passes: z.array(z.object({ id: IdSchema, title: z.string() })),
+  passes: z.array(
+    z.object({
+      id: IdSchema,
+      title: z.string(),
+      templateName: z.string(),
+      orgName: z.string(),
+      status: PassStatusSchema,
+    }),
+  ),
   passCount: z.number().int().nonnegative(),
   recentAudit: z.array(
     z.object({

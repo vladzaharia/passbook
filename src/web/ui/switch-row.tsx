@@ -1,5 +1,6 @@
 import { type ComponentProps, type ReactNode, useId } from 'react';
-import { Label, Switch } from '../../ui/index.ts';
+import { Label } from './label.tsx';
+import { Switch } from './switch.tsx';
 
 /** Persisted boolean: label (and help) left, switch right. */
 export function SwitchRow({

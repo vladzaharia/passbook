@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
@@ -11,7 +11,7 @@ import {
   Label,
   SaveBar,
   SkeletonRows,
-  Switch,
+  SwitchRow,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
@@ -27,7 +27,7 @@ function currentValues(entries: Entries): Record<string, unknown> {
   return out;
 }
 
-function FieldInput({
+function TextFieldInput({
   field,
   value,
   error,
@@ -56,63 +56,63 @@ function FieldInput({
       ) : null}
     </div>
   );
-  let control: ReactNode;
-  if (field.kind === 'boolean') {
-    control = (
-      <Switch
-        id={id}
-        aria-describedby={describedBy}
-        checked={value === true}
-        onCheckedChange={(c) => onChange(c)}
-      />
-    );
-  } else {
-    control = (
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          {field.kind === 'color' ? (
-            <input
-              type="color"
-              aria-label={`${field.label} picker`}
-              value={/^#[0-9a-f]{6}$/i.test(String(value)) ? String(value) : '#000000'}
-              onChange={(e) => onChange(e.target.value)}
-              className="size-9 shrink-0 cursor-pointer rounded-md border border-border-strong bg-transparent p-0.5"
-            />
-          ) : null}
-          <Input
-            id={id}
-            aria-describedby={describedBy}
-            aria-invalid={error ? true : undefined}
-            inputMode={field.kind === 'int' ? 'numeric' : undefined}
-            className={field.kind === 'int' ? 'w-28' : 'max-w-sm'}
-            value={String(value)}
+  const control = (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        {field.kind === 'color' ? (
+          <input
+            type="color"
+            aria-label={`${field.label} picker`}
+            value={/^#[0-9a-f]{6}$/i.test(String(value)) ? String(value) : '#000000'}
             onChange={(e) => onChange(e.target.value)}
+            className="size-9 shrink-0 cursor-pointer rounded-md border border-border-strong bg-transparent p-0.5"
           />
-          {field.suffix ? <span className="text-sm text-fg-muted">{field.suffix}</span> : null}
-        </div>
-        {error ? (
-          <p id={errorId} role="alert" className="text-sm text-danger">
-            {error}
-          </p>
         ) : null}
+        <Input
+          id={id}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : undefined}
+          inputMode={field.kind === 'int' ? 'numeric' : undefined}
+          className={field.kind === 'int' ? 'w-28' : 'max-w-sm'}
+          value={String(value)}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        {field.suffix ? <span className="text-sm text-fg-muted">{field.suffix}</span> : null}
       </div>
-    );
-  }
+      {error ? (
+        <p id={errorId} role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
   return (
     <div
       className={cn(
         !flat &&
           'grid gap-x-8 gap-y-2 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-start',
         flat && 'flex flex-col gap-1.5',
-        !flat &&
-          field.kind === 'boolean' &&
-          'grid-cols-[minmax(0,1fr)_auto] items-center md:grid-cols-[minmax(0,1fr)_auto]',
       )}
     >
       {label}
-      <div className={field.kind === 'boolean' ? 'justify-self-end' : undefined}>{control}</div>
+      {control}
     </div>
   );
+}
+function FieldInput(props: Parameters<typeof TextFieldInput>[0]) {
+  if (props.field.kind === 'boolean') {
+    return (
+      <div className={cn(!props.flat && 'px-4 py-4')}>
+        <SwitchRow
+          label={props.field.label}
+          help={props.field.help}
+          checked={props.value === true}
+          onCheckedChange={(c) => props.onChange(c)}
+        />
+      </div>
+    );
+  }
+  return <TextFieldInput {...props} />;
 }
 
 /** Sections in field order; ungrouped fields share one untitled section. */

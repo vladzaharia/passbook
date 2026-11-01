@@ -5,7 +5,6 @@ import {
   Download,
   ExternalLink,
   KeyRound,
-  MoreHorizontal,
   RefreshCw,
   RotateCcw,
   Trash2,
@@ -16,11 +15,9 @@ import type { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import {
   Button,
   ConfirmDialog,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  MoreMenu,
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
@@ -89,34 +86,27 @@ export function PassHeaderActions({ pass }: { pass: Pass }) {
           </span>
         </a>
       </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
-            <span className="max-sm:sr-only">More</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => void copyLink()}>
-            <Copy aria-hidden />
-            Copy public link
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href={pass.downloadUrl} download>
-              <Download aria-hidden />
-              Download .pkpass
-            </a>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setRotate(true)}>
-            <KeyRound aria-hidden />
-            Rotate link
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem destructive onSelect={() => setDel(true)}>
-            <Trash2 aria-hidden />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <MoreMenu>
+        <DropdownMenuItem onSelect={() => void copyLink()}>
+          <Copy aria-hidden />
+          Copy public link
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={pass.downloadUrl} download>
+            <Download aria-hidden />
+            Download .pkpass
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setRotate(true)}>
+          <KeyRound aria-hidden />
+          Rotate link
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem destructive onSelect={() => setDel(true)}>
+          <Trash2 aria-hidden />
+          Delete
+        </DropdownMenuItem>
+      </MoreMenu>
 
       <ConfirmDialog
         open={voidAsk}

@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Archive, Copy, Lock, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Archive, Copy, Lock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
@@ -13,15 +13,13 @@ import {
   ConfirmDialog,
   Dialog,
   DialogContent,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   ErrorState,
   FormField,
   Input,
   JsonViewer,
   KeyValue,
+  MoreMenu,
   PageHeader,
   Select,
   Skeleton,
@@ -33,11 +31,13 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { PassPreviewPanel } from '../passes/pass-preview.tsx';
+import { PreviewLayout } from '../passes/preview-layout.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate, useTemplateActions, useTemplatePreview } from './api.ts';
 import { styleList } from './labels.ts';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { OrgPanel } from './org-panel.tsx';
+import type { templateDetailSearchSchema } from './search.ts';
 import { VersionsPanel } from './versions-panel.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -147,8 +147,12 @@ function InputFields({ schema }: { schema: unknown }) {
   );
 }
 
-export function TemplateDetailPage({ templateId }: { templateId: string }) {
+type Search = z.infer<typeof templateDetailSearchSchema>;
+type Tab = NonNullable<Search['tab']>;
+
+export function TemplateDetailPage({ templateId, search }: { templateId: string; search: Search }) {
   const navigate = useNavigate();
+  const tab: Tab = search.tab ?? 'overview';
   const template = useTemplate(templateId);
   const preview = useTemplatePreview(templateId);
   const actions = useTemplateActions(templateId);
@@ -208,93 +212,93 @@ export function TemplateDetailPage({ templateId }: { templateId: string }) {
               {baked ? 'Customize' : 'Clone'}
             </Button>
             {baked ? null : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
-                    More
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem destructive onSelect={() => setRemove(true)}>
-                    {archives ? <Archive aria-hidden /> : <Trash2 aria-hidden />}
-                    {archives ? 'Archive' : 'Delete'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <MoreMenu>
+                <DropdownMenuItem destructive onSelect={() => setRemove(true)}>
+                  {archives ? <Archive aria-hidden /> : <Trash2 aria-hidden />}
+                  {archives ? 'Archive' : 'Delete'}
+                </DropdownMenuItem>
+              </MoreMenu>
             )}
           </>
         }
       />
-      <Tabs defaultValue="overview" className="min-w-0">
-        <TabsList aria-label="Template sections">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="versions">Versions</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-          <TabsTrigger value="manifest">Manifest</TabsTrigger>
-          <TabsTrigger value="inputs">Inputs</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="max-w-3xl">
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
-            <OrgPanel key={t.orgId ?? 'none'} templateId={t.id} orgId={t.orgId} />
-            <Card>
-              <CardHeader title="Details" />
-              <CardBody>
-                <KeyValue
-                  items={[
-                    { label: 'Slug', value: t.slug, mono: true },
-                    { label: 'Styles', value: styleList(t.styles) },
-                    { label: 'Passes', value: String(t.passCount) },
-                  ]}
-                />
-              </CardBody>
-            </Card>
-          </div>
-        </TabsContent>
-        <TabsContent value="versions" className="max-w-3xl">
-          <VersionsPanel template={t} />
-        </TabsContent>
-        <TabsContent value="preview" className="max-w-3xl">
-          <Card>
-            <CardHeader title="Sample" />
-            <CardBody>
-              {preview.data ? (
-                <PassPreviewPanel
-                  passJson={preview.data.passJson}
-                  assetBaseUrl={preview.data.assetBaseUrl}
-                  assetNames={preview.data.assetNames}
-                />
-              ) : preview.isError ? (
-                <ErrorState error={preview.error} onRetry={() => void preview.refetch()} />
-              ) : (
-                <Skeleton className="h-80 w-full" />
-              )}
-            </CardBody>
-          </Card>
-        </TabsContent>
-        <TabsContent value="manifest" className="max-w-3xl">
-          {baked ? (
-            <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
+      <PreviewLayout
+        preview={
+          preview.data ? (
+            <PassPreviewPanel
+              passJson={preview.data.passJson}
+              assetBaseUrl={preview.data.assetBaseUrl}
+              assetNames={preview.data.assetNames}
+            />
+          ) : preview.isError ? (
+            <ErrorState error={preview.error} onRetry={() => void preview.refetch()} />
           ) : (
-            <ManifestEditor key={t.activeVersion ?? ''} template={t} />
-          )}
-        </TabsContent>
-        <TabsContent value="inputs" className="max-w-3xl">
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
-            <Card>
-              <CardHeader title="Fields" />
-              <InputFields schema={t.inputSchema} />
-            </Card>
-            <details className="rounded-lg border border-border bg-surface-raised">
-              <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-fg-strong">
-                Input schema (JSON)
-              </summary>
-              <div className="border-t border-border p-4">
-                <JsonViewer value={t.inputSchema} label="Input schema" maxHeight="max-h-[32rem]" />
-              </div>
-            </details>
-          </div>
-        </TabsContent>
-      </Tabs>
+            <Skeleton className="h-80 w-full" />
+          )
+        }
+      >
+        <Tabs
+          value={tab}
+          onValueChange={(v) =>
+            void navigate({ to: '.', search: { tab: v as Tab } as never, replace: true })
+          }
+          className="min-w-0"
+        >
+          <TabsList aria-label="Template sections">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="versions">Versions</TabsTrigger>
+            <TabsTrigger value="manifest">Manifest</TabsTrigger>
+            <TabsTrigger value="inputs">Inputs</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
+              <OrgPanel key={t.orgId ?? 'none'} templateId={t.id} orgId={t.orgId} />
+              <Card>
+                <CardHeader title="Details" />
+                <CardBody>
+                  <KeyValue
+                    items={[
+                      { label: 'Slug', value: t.slug, mono: true },
+                      { label: 'Styles', value: styleList(t.styles) },
+                      { label: 'Passes', value: String(t.passCount) },
+                    ]}
+                  />
+                </CardBody>
+              </Card>
+            </div>
+          </TabsContent>
+          <TabsContent value="versions">
+            <VersionsPanel template={t} />
+          </TabsContent>
+          <TabsContent value="manifest">
+            {baked ? (
+              <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
+            ) : (
+              <ManifestEditor key={t.activeVersion ?? ''} template={t} />
+            )}
+          </TabsContent>
+          <TabsContent value="inputs">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
+              <Card>
+                <CardHeader title="Fields" />
+                <InputFields schema={t.inputSchema} />
+              </Card>
+              <details className="rounded-lg border border-border bg-surface-raised">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-fg-strong">
+                  Input schema (JSON)
+                </summary>
+                <div className="border-t border-border p-4">
+                  <JsonViewer
+                    value={t.inputSchema}
+                    label="Input schema"
+                    maxHeight="max-h-[32rem]"
+                  />
+                </div>
+              </details>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </PreviewLayout>
 
       <ClonePanel template={t} open={clone} onOpenChange={setClone} />
       <ConfirmDialog

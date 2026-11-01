@@ -1,7 +1,6 @@
-import { FormField, Input, Select } from '../../ui/index.ts';
+import { FormField, Input, Select, SwitchRow } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
 import { MODE_LABEL } from './labels.ts';
-import { SwitchRow } from './switch-row.tsx';
 
 export interface Lifecycle {
   mode: 'poll' | 'webhook' | 'hybrid' | 'manual' | 'snapshot';

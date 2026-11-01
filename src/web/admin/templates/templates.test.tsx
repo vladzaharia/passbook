@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -8,7 +8,8 @@ import { importPolling } from './api.ts';
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 const orgs = () => json({ items: [ORG], nextCursor: null });
-const preview = () => json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a' });
+const preview = () =>
+  json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] });
 
 describe('templates list', () => {
   it('marks baked templates and sends the origin filter', async () => {
@@ -237,6 +238,25 @@ describe('template detail', () => {
     expect((editor as HTMLTextAreaElement).value).toContain('"inputs"');
   });
 
+  it('keeps the tab in the URL and falls back to overview for unknown tabs', async () => {
+    const user = userEvent.setup();
+    const handlers = {
+      '/api/v1/orgs': orgs,
+      '/api/v1/templates/tpl1': () => json(templateDetail()),
+      '/api/v1/templates/tpl1/preview': preview,
+    };
+    const { router } = await renderApp('/admin/templates/tpl1?tab=bogus', {
+      session: 'admin',
+      handlers,
+    });
+    const overview = await screen.findByRole('tab', { name: 'Overview' });
+    expect(overview).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Inputs' }));
+    await waitFor(() =>
+      expect((router.state.location.search as { tab?: string }).tab).toBe('inputs'),
+    );
+  });
+
   it('saves an edited manifest and shows server errors by path', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];
@@ -261,7 +281,7 @@ describe('template detail', () => {
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     await user.click(editor);
     await user.paste(' ');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(await screen.findByRole('button', { name: 'Save' }));
     expect(await screen.findByText('/bindings/0/to: Unknown target.')).toBeInTheDocument();
     expect(bodies).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -284,9 +304,10 @@ describe('template detail', () => {
       },
     });
     await user.click(await screen.findByRole('tab', { name: 'Manifest' }));
-    await user.click(await screen.findByRole('textbox', { name: 'Manifest JSON' }));
-    await user.paste('{');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Manifest JSON' }), {
+      target: { value: '{' },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Save' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid JSON');
     expect(calls).toBe(0);
   });
