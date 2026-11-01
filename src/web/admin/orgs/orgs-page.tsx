@@ -189,6 +189,7 @@ export function OrgsPage() {
             {
               header: 'Slug',
               id: 'slug',
+              meta: { nowrap: true },
               cell: ({ row }) => <code className="font-mono text-xs">{row.original.slug}</code>,
             },
             {
@@ -200,16 +201,19 @@ export function OrgsPage() {
             {
               header: 'Templates',
               id: 'templates',
+              meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
               cell: ({ row }) => row.original.counts.templates,
             },
             {
               header: 'Connections',
               id: 'connections',
+              meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
               cell: ({ row }) => row.original.counts.connections,
             },
             {
               header: 'Created',
               id: 'created',
+              meta: { hideBelow: 'lg', stackHidden: true },
               cell: ({ row }) => formatDay(row.original.createdAt),
             },
           ]}

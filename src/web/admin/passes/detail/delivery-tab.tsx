@@ -27,16 +27,6 @@ type Pass = z.infer<typeof PassDetailSchema>;
 type Entry = z.infer<typeof DeliveryEntrySchema>;
 const ListSchema = z.object({ items: z.array(DeliveryEntrySchema) });
 
-const TONE: Record<Entry['state'], 'success' | 'warning' | 'danger' | 'neutral' | 'info'> = {
-  sent: 'success',
-  partial: 'warning',
-  failed: 'danger',
-  cancelled: 'neutral',
-  pending: 'info',
-  enqueued: 'info',
-  processing: 'info',
-};
-
 export function DeliveryTab({ pass }: { pass: Pass }) {
   const actions = usePassActions(pass.id);
   const delivery = useQuery({
@@ -90,9 +80,7 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
         id: 'state',
         header: 'State',
         enableSorting: false,
-        cell: ({ row }) => (
-          <StatusPill status={row.original.state} tone={TONE[row.original.state]} />
-        ),
+        cell: ({ row }) => <StatusPill status={row.original.state} />,
       },
       {
         id: 'attempts',
@@ -152,6 +140,8 @@ export function DeliveryTab({ pass }: { pass: Pass }) {
           ) : (
             <DataTable
               caption="Delivery history"
+              bare
+              stack={false}
               columns={columns}
               data={delivery.data.items}
               getRowId={(r) => r.id}

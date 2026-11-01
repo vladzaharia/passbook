@@ -43,7 +43,7 @@ function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void
   const s = status.data;
   if (!s || s.status === 'queued' || s.status === 'running') {
     return (
-      <Card className="max-w-lg">
+      <Card className="max-w-3xl">
         <CardBody className="flex items-center gap-3">
           <Spinner label="Processing upload" />
           <p className="text-sm text-fg-strong" aria-live="polite">
@@ -55,7 +55,7 @@ function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void
   }
   if (s.status === 'errored' || s.status === 'terminated') {
     return (
-      <Card className="max-w-lg">
+      <Card className="max-w-3xl">
         <CardHeader title="Import failed" />
         <CardBody className="grid gap-3">
           <p role="alert" className="text-sm text-danger">
@@ -72,7 +72,7 @@ function Progress({ uploadId, onReset }: { uploadId: string; onReset: () => void
     );
   }
   return (
-    <Card className="max-w-lg">
+    <Card className="max-w-3xl">
       <CardHeader title="Import complete" />
       <CardBody className="grid gap-3">
         {s.report ? <ValidationReport report={s.report} /> : null}
@@ -112,7 +112,7 @@ export function TemplateUploadPage() {
       {uploadId ? (
         <Progress uploadId={uploadId} onReset={reset} />
       ) : (
-        <div className="grid max-w-lg gap-4">
+        <div className="grid gap-4">
           <FormField label="Organization">
             {(c) => (
               <Select

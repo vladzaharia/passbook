@@ -78,7 +78,7 @@ export function LifecycleFields({
   const set = <K extends keyof Lifecycle>(key: K, v: Lifecycle[K]) =>
     onChange({ ...value, [key]: v });
   return (
-    <div className="grid max-w-xl gap-4">
+    <div className="grid gap-4">
       <FormField label="Mode">
         {(c) => (
           <Select

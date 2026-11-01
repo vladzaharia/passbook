@@ -9,14 +9,6 @@ import {
 import { formatDateTime } from '../overview/format.ts';
 import { useWorkflowRuns } from './queries.ts';
 
-const RUN_STATUS: Record<string, 'verified' | 'degraded' | 'failing' | 'configured'> = {
-  complete: 'verified',
-  running: 'configured',
-  queued: 'configured',
-  errored: 'failing',
-  terminated: 'degraded',
-};
-
 export function WorkflowRuns() {
   const runs = useWorkflowRuns();
   return (
@@ -32,6 +24,8 @@ export function WorkflowRuns() {
         ) : (
           <DataTable
             caption="Workflow runs"
+            bare
+            stack={false}
             data={runs.data.items}
             getRowId={(r) => r.instanceId}
             empty={<EmptyState className="border-0 py-6" title="No workflow runs" />}
@@ -40,11 +34,7 @@ export function WorkflowRuns() {
               {
                 header: 'Status',
                 accessorKey: 'status',
-                cell: ({ row }) => (
-                  <StatusPill status={RUN_STATUS[row.original.status] ?? 'configured'}>
-                    {row.original.status}
-                  </StatusPill>
-                ),
+                cell: ({ row }) => <StatusPill status={row.original.status} />,
               },
               {
                 header: 'Started',

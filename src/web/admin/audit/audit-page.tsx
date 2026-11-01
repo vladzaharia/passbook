@@ -149,6 +149,7 @@ export function AuditPage({
         <>
           <DataTable
             caption="Audit log"
+            stack={false}
             loading={log.isPending}
             data={rows}
             getRowId={(r) => String(r.id)}
@@ -189,6 +190,7 @@ export function AuditPage({
               {
                 header: 'Org',
                 id: 'org',
+                meta: { hideBelow: 'xl' },
                 cell: ({ row }) => (row.original.orgId ? orgName(row.original.orgId) : ''),
               },
             ]}

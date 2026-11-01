@@ -3,7 +3,7 @@ import { Ticket } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ADMIN_NAV } from '../../lib/nav.ts';
 import { useOrgFilter } from '../../lib/org-filter.tsx';
-import { useRecentPassSearch } from '../../lib/search.ts';
+import { useOrgOptions, useRecentPassSearch } from '../../lib/search.ts';
 import { type CommandGroup, CommandPalette } from '../command-palette.tsx';
 
 /** Opens with Cmd/Ctrl+K. Navigation entries are local; passes come from the API. */
@@ -18,6 +18,8 @@ export function AdminPalette({
   const { orgId } = useOrgFilter();
   const [query, setQuery] = useState('');
   const passes = useRecentPassSearch(open ? query : '', orgId);
+  const orgs = useOrgOptions(open);
+  const orgName = new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name]));
 
   useEffect(() => {
     if (!open) setQuery('');
@@ -51,7 +53,7 @@ export function AdminPalette({
         id: p.id,
         label: p.title ?? p.serial,
         icon: Ticket,
-        hint: p.holderEmail ?? p.status,
+        hint: [orgName.get(p.orgId), p.holderEmail ?? p.serial].filter(Boolean).join(' · '),
         remote: true,
         onSelect: () => void navigate({ to: `/admin/passes/${p.id}` as never }),
       })),

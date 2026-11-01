@@ -86,7 +86,7 @@ const columns: ColumnDef<Run, never>[] = [
 export function HealthPanel({ connection: c }: { connection: Detail }) {
   return (
     <div className="grid gap-4">
-      <Card className="max-w-2xl">
+      <Card className="max-w-3xl">
         <CardHeader title="Health" />
         <CardBody>
           <KeyValue
@@ -125,6 +125,8 @@ export function HealthPanel({ connection: c }: { connection: Detail }) {
         <CardBody>
           <DataTable
             caption="Connection runs"
+            bare
+            stack={false}
             columns={columns}
             data={c.runs.slice(0, 20)}
             getRowId={(r) => r.id}

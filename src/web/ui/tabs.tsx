@@ -13,13 +13,33 @@ export function TabsList({ className, ...props }: ComponentProps<typeof Primitiv
   );
 }
 
-export function TabsTrigger({ className, ...props }: ComponentProps<typeof Primitive.Trigger>) {
+export function TabsTrigger({
+  className,
+  onPointerDown,
+  onKeyDown,
+  onBlur,
+  ...props
+}: ComponentProps<typeof Primitive.Trigger>) {
   return (
     <Primitive.Trigger
+      onPointerDown={(e) => {
+        e.currentTarget.dataset.pointer = '';
+        onPointerDown?.(e);
+      }}
+      onKeyDown={(e) => {
+        delete e.currentTarget.dataset.pointer;
+        onKeyDown?.(e);
+      }}
+      onBlur={(e) => {
+        delete e.currentTarget.dataset.pointer;
+        onBlur?.(e);
+      }}
       className={cn(
         'relative -mb-px min-h-9 shrink-0 border-b-2 border-transparent px-3 text-sm text-fg-muted transition-colors',
         'hover:text-fg-strong data-[state=active]:border-accent data-[state=active]:text-fg-strong',
-        'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
+        'outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
+        // Radix focuses the trigger on pointer down; only keyboard focus shows the ring.
+        'data-pointer:focus-visible:outline-none',
         className,
       )}
       {...props}

@@ -98,7 +98,7 @@ export function EmailsSection() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <span className="truncate text-sm text-fg-strong">{item.email}</span>
-                    {item.primary ? <StatusPill status="owned">Primary</StatusPill> : null}
+                    {item.primary ? <StatusPill status="primary" /> : null}
                     {item.verifiedAt ? null : <StatusPill status="waiting">Unverified</StatusPill>}
                   </div>
                   <div className="flex gap-1">

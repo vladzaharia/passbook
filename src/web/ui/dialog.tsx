@@ -1,9 +1,48 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import type { ComponentProps, ReactNode } from 'react';
+import {
+  type ComponentProps,
+  createContext,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 import { cn } from '../lib/cn.ts';
 
-export const Dialog = DialogPrimitive.Root;
+const OpenerContext = createContext<{ current: HTMLElement | null } | null>(null);
+
+/** Remembers the element focused when a state-controlled overlay opens. */
+export function useOpener(open: boolean | undefined) {
+  const opener = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (open && document.activeElement instanceof HTMLElement) {
+      opener.current = document.activeElement;
+    }
+  }, [open]);
+  return opener;
+}
+
+/** Onclose auto-focus handler: returns focus to the opener when Radix has no trigger to use. */
+export function restoreOpener(opener: { current: HTMLElement | null } | null) {
+  return (e: Event) => {
+    const el = opener?.current;
+    if (el?.isConnected) {
+      e.preventDefault();
+      el.focus();
+    }
+  };
+}
+
+/** Dialog root. Focus returns to the opener on close, with or without a DialogTrigger. */
+export function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
+  const opener = useOpener(props.open);
+  return (
+    <OpenerContext.Provider value={opener}>
+      <DialogPrimitive.Root {...props} />
+    </OpenerContext.Provider>
+  );
+}
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
@@ -37,15 +76,21 @@ export function DialogContent({
   size = 'md',
   className,
   children,
+  onCloseAutoFocus,
   ...props
 }: DialogContentProps) {
+  const opener = useContext(OpenerContext);
   return (
     <DialogPrimitive.Portal>
       <DialogOverlay />
       <DialogPrimitive.Content
         {...(description ? {} : { 'aria-describedby': undefined })}
+        onCloseAutoFocus={(e) => {
+          onCloseAutoFocus?.(e);
+          if (!e.defaultPrevented) restoreOpener(opener)(e);
+        }}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border bg-surface-overlay shadow-elevation-3',
+          'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border bg-surface-overlay shadow-elevation-3',
           'data-[state=open]:animate-[wallet-pop_150ms_ease-out]',
           SIZES[size],
           className,

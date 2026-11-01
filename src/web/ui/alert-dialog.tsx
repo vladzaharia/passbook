@@ -3,7 +3,7 @@ import { type ReactNode, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { Button } from './button.tsx';
-import { DialogOverlay } from './dialog.tsx';
+import { DialogOverlay, restoreOpener, useOpener } from './dialog.tsx';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -31,6 +31,7 @@ export function ConfirmDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const opener = useOpener(open);
 
   async function confirm() {
     setBusy(true);
@@ -57,9 +58,10 @@ export function ConfirmDialog({
             e.preventDefault();
             cancelRef.current?.focus();
           }}
+          onCloseAutoFocus={restoreOpener(opener)}
           onInteractOutside={(e) => e.preventDefault()}
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface-overlay p-5 shadow-elevation-3',
+            'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface-overlay p-5 shadow-elevation-3',
           )}
         >
           <DialogPrimitive.Title className="text-base font-semibold text-fg-strong">

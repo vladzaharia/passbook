@@ -37,5 +37,5 @@ export function ApnsPill({ identity }: { identity: Identity }) {
     return <StatusPill status="not_configured">Push unavailable</StatusPill>;
   if (identity.apnsHealth === 'healthy') return <StatusPill status="verified">Healthy</StatusPill>;
   if (identity.apnsHealth === 'failing') return <StatusPill status="failing">Failing</StatusPill>;
-  return <StatusPill status="configured">Not checked</StatusPill>;
+  return <StatusPill status="not_checked" />;
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
+import { formatDateTime } from '../lib/format.ts';
 import type { Tone } from '../lib/status.ts';
 
 export interface TimelineItem {
@@ -21,7 +22,7 @@ const DOT: Record<Tone, string> = {
 };
 
 export function formatTime(time: number | string): string {
-  return typeof time === 'number' ? new Date(time).toLocaleString() : time;
+  return typeof time === 'number' ? formatDateTime(time) : time;
 }
 
 export function Timeline({

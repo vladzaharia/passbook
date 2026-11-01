@@ -207,6 +207,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   return (
     <>
       <PageHeader
+        width="detail"
         title={identity.label}
         breadcrumbs={crumbs}
         actions={

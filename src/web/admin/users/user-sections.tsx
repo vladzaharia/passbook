@@ -130,6 +130,8 @@ export function IdentitiesCard({ user }: { user: UserDetail }) {
       <CardBody>
         <DataTable
           caption="Identities"
+          bare
+          stack={false}
           data={user.identities}
           getRowId={(i) => `${i.provider}:${i.subject}`}
           empty={<p className="text-sm text-fg-muted">No linked identities.</p>}
@@ -185,6 +187,8 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
       <CardBody>
         <DataTable
           caption="Sessions"
+          bare
+          stack={false}
           data={user.sessions}
           getRowId={(s) => s.id}
           empty={<p className="text-sm text-fg-muted">No sessions.</p>}

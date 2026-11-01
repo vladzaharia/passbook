@@ -17,30 +17,40 @@ export function AdminLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface-raised lg:flex">
-        <div className="flex h-14 items-center px-4">
-          <Wordmark to="/admin" />
-        </div>
-        <div className="min-h-0 flex-1 overflow-auto">
-          <SidebarNav />
-        </div>
-      </aside>
+      {/* The column paints the sidebar background full page height; the inner aside stays sticky. */}
+      <div className="hidden border-r border-border bg-surface-raised lg:block">
+        <aside className="sticky top-0 flex h-dvh flex-col">
+          <div className="flex h-14 items-center px-4">
+            <Wordmark to="/admin" />
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto">
+            <SidebarNav />
+          </div>
+        </aside>
+      </div>
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-surface-page px-3 sm:px-4">
           <div className="lg:hidden">
             <IconButton label="Menu" icon={<Menu aria-hidden />} onClick={() => setNavOpen(true)} />
           </div>
+          <IconButton
+            label="Search"
+            icon={<Search aria-hidden />}
+            onClick={() => setPaletteOpen(true)}
+            className="sm:hidden"
+          />
           <Button
             variant="outline"
-            className="mr-auto shrink-0 justify-start gap-2 px-3 font-normal text-fg-muted sm:w-64"
+            className="mr-auto hidden shrink-0 justify-start gap-2 px-3 font-normal text-fg-muted sm:inline-flex sm:w-64"
             iconStart={<Search aria-hidden />}
             onClick={() => setPaletteOpen(true)}
           >
-            <span className="sr-only sm:not-sr-only sm:truncate">Search</span>
-            <kbd className="ml-auto hidden rounded-sm border border-border px-1.5 font-mono text-xs sm:inline">
+            <span className="truncate">Search</span>
+            <kbd className="ml-auto rounded-sm border border-border px-1.5 font-mono text-xs">
               ⌘K
             </kbd>
           </Button>
+          <span className="mr-auto sm:hidden" />
           <OrgFilter />
           <ThemeToggle />
           <UserMenu />

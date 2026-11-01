@@ -60,6 +60,7 @@ export function TemplatesListPage({
       },
       {
         id: 'origin',
+        meta: { hideBelow: 'xl', stackHidden: true },
         header: 'Origin',
         enableSorting: false,
         cell: ({ row }) =>
@@ -74,18 +75,21 @@ export function TemplatesListPage({
       },
       {
         id: 'org',
+        meta: { nowrap: true },
         header: 'Org',
         enableSorting: false,
         cell: ({ row }) => row.original.orgName ?? 'None',
       },
       {
         id: 'styles',
+        meta: { hideBelow: 'xl', stackHidden: true },
         header: 'Styles',
         enableSorting: false,
         cell: ({ row }) => row.original.styles.join(', '),
       },
       {
         id: 'version',
+        meta: { hideBelow: 'xl', stackHidden: true },
         header: 'Active',
         enableSorting: false,
         cell: ({ row }) => (
@@ -94,6 +98,7 @@ export function TemplatesListPage({
       },
       {
         id: 'passes',
+        meta: { numeric: true, stackHidden: true },
         header: 'Passes',
         enableSorting: false,
         cell: ({ row }) => row.original.passCount,

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { type StatusKey, statusOf, TONE_ICON, type Tone } from '../lib/status.ts';
+import { humanizeStatus, type StatusKey, statusOf, TONE_ICON, type Tone } from '../lib/status.ts';
 import { Badge } from './badge.tsx';
 
 export interface StatusPillProps {
-  /** A known status key (health or pass); unknown keys render neutral with the raw text. */
+  /** A known status key (health or pass); unknown keys render neutral with a humanized label. */
   status: StatusKey | (string & {});
   tone?: Tone;
   children?: ReactNode;
@@ -18,7 +18,7 @@ export function StatusPill({ status, tone, children, className }: StatusPillProp
   return (
     <Badge tone={t} className={className}>
       <Icon aria-hidden />
-      {children ?? entry?.label ?? status}
+      {children ?? entry?.label ?? humanizeStatus(status)}
     </Badge>
   );
 }

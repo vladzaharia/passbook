@@ -44,7 +44,7 @@ export function WebhookPanel({
   const [confirm, setConfirm] = useState(false);
   const [secret, setSecret] = useState<string>();
   return (
-    <Card className="max-w-2xl">
+    <Card className="max-w-3xl">
       <CardHeader
         title="Webhook"
         actions={

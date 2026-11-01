@@ -29,6 +29,14 @@ export interface CommandPaletteProps {
   placeholder?: string;
 }
 
+/** Every word must appear in the label or keywords (no fuzzy matching: 'maya' must not find 'API keys'). */
+export function matchLabel(value: string, search: string, keywords?: string[]): number {
+  const label = value.split(':').slice(2).join(':');
+  const hay = `${label} ${(keywords ?? []).join(' ')}`.toLowerCase();
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+  return words.every((w) => hay.includes(w)) ? 1 : 0;
+}
+
 export function CommandPalette({
   open,
   onOpenChange,
@@ -45,10 +53,10 @@ export function CommandPalette({
         <DialogOverlay />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          className="fixed top-[15vh] left-1/2 z-50 w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-elevation-3"
+          className="fixed top-[15vh] left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-elevation-3"
         >
           <DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>
-          <Command label={placeholder} loop>
+          <Command label={placeholder} loop filter={matchLabel}>
             <div className="flex items-center gap-2 border-b border-border px-3">
               <Search aria-hidden className="size-4 text-fg-muted" />
               <Command.Input
@@ -88,7 +96,9 @@ export function CommandPalette({
                         {item.icon ? <item.icon aria-hidden /> : null}
                         <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         {item.hint ? (
-                          <span className="text-xs text-fg-subtle">{item.hint}</span>
+                          <span className="max-w-[45%] truncate text-xs text-fg-subtle">
+                            {item.hint}
+                          </span>
                         ) : null}
                       </Command.Item>
                     ))}

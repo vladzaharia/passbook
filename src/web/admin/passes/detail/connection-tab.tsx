@@ -55,7 +55,7 @@ function BindForm({ pass }: { pass: Pass }) {
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card className="max-w-3xl">
       <CardHeader title={pass.connectionId ? 'Rebind' : 'Bind to a connection'} />
       <CardBody className="grid gap-4">
         <FormField label="Connection" required>
@@ -116,7 +116,7 @@ function Bound({ pass }: { pass: Pass }) {
   const c = connection.data;
   const lastRun = c.runs[0];
   return (
-    <Card className="max-w-2xl">
+    <Card className="max-w-3xl">
       <CardHeader
         title="Connection"
         actions={

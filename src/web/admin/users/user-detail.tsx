@@ -56,6 +56,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
   return (
     <>
       <PageHeader
+        width="detail"
         title={user.name ?? user.primaryEmail}
         breadcrumbs={crumbs}
         actions={
@@ -71,7 +72,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
           </>
         }
       />
-      <div className="flex max-w-4xl flex-col gap-6">
+      <div className="flex max-w-3xl flex-col gap-6">
         <Card>
           <CardHeader
             title="Account"

@@ -130,6 +130,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
   return (
     <>
       <PageHeader
+        width="detail"
         title={org.name}
         breadcrumbs={crumbs}
         actions={<DeleteOrg id={org.id} slug={org.slug} name={org.name} />}

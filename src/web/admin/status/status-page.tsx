@@ -86,13 +86,13 @@ export function StatusPage() {
   const data = status.data;
   return (
     <>
-      <PageHeader title="Status" />
+      <PageHeader title="Status" width="detail" />
       {status.isPending ? (
         <SkeletonRows label="Loading status" />
       ) : status.isError || !data ? (
         <ErrorState error={status.error} onRetry={() => status.refetch()} />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-8">
+        <div className="flex max-w-3xl flex-col gap-8">
           <Summary
             overall={data.overall}
             counts={countStates(data.components)}

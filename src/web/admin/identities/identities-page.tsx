@@ -63,6 +63,7 @@ export function IdentitiesPage() {
             {
               header: 'Pass type ID',
               id: 'ptid',
+              meta: { hideBelow: 'lg' },
               cell: ({ row }) => (
                 <span className="font-mono text-xs">
                   {row.original.passTypeIdentifier}
@@ -80,6 +81,7 @@ export function IdentitiesPage() {
             {
               header: 'Flags',
               id: 'flags',
+              meta: { hideBelow: 'lg', stackHidden: true },
               cell: ({ row }) => (
                 <span className="flex flex-wrap gap-1">
                   {row.original.isDefault ? <Badge tone="accent">Default</Badge> : null}

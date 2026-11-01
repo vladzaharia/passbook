@@ -14,9 +14,7 @@ export function PortalLayout() {
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-border bg-surface-raised">
         <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-2 px-4 sm:gap-4">
-          <div className="hidden sm:block">
-            <Wordmark />
-          </div>
+          <Wordmark />
           <nav aria-label="Main" className="mr-auto flex min-w-0 gap-1 overflow-x-auto">
             {PORTAL_NAV.map((item) => {
               const active = isActivePath(pathname, item.to);

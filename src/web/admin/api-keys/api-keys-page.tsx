@@ -89,6 +89,7 @@ export function ApiKeysPage() {
             {
               header: 'Scopes',
               id: 'scopes',
+              meta: { hideBelow: 'lg', stackHidden: true },
               cell: ({ row }) => (
                 <span className="flex flex-wrap gap-1">
                   {row.original.scopes.map((s) => (
@@ -100,6 +101,7 @@ export function ApiKeysPage() {
             {
               header: 'Last used',
               id: 'used',
+              meta: { hideBelow: 'lg', stackHidden: true },
               cell: ({ row }) => formatDay(row.original.lastUsedAt, 'Never'),
             },
             {

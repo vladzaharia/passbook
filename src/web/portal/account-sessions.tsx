@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
-  Badge,
   Button,
   Card,
   CardBody,
@@ -9,6 +8,7 @@ import {
   ConfirmDialog,
   ErrorState,
   SkeletonRows,
+  StatusPill,
   toast,
 } from '../ui/index.ts';
 import { mySessionsKey, mySessionsQuery, revokeAllSessions, revokeSession } from './api.ts';
@@ -79,7 +79,7 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-sm text-fg-strong">
                     {deviceLabel(s.userAgent)}
-                    {s.current ? <Badge tone="accent">This device</Badge> : null}
+                    {s.current ? <StatusPill status="this_device" /> : null}
                   </p>
                   <p className="text-xs text-fg-muted">
                     Last active {formatWhen(s.lastSeenAt)} · signed in {formatWhen(s.createdAt)}

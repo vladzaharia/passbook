@@ -147,6 +147,7 @@ export function UsersPage({
               {
                 header: 'Created',
                 id: 'created',
+                meta: { hideBelow: 'lg', stackHidden: true },
                 cell: ({ row }) => formatDateTime(row.original.createdAt),
               },
             ]}

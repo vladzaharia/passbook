@@ -6,15 +6,7 @@ import type { z } from 'zod';
 import type { ConnectionSchema } from '@/shared/contracts/connections.ts';
 import { useOrgFilter } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
-import {
-  Badge,
-  Button,
-  DataTable,
-  EmptyState,
-  ErrorState,
-  PageHeader,
-  Select,
-} from '../../ui/index.ts';
+import { Button, DataTable, EmptyState, ErrorState, PageHeader, Select } from '../../ui/index.ts';
 import { formatDate } from '../passes/format.ts';
 import { useConnections } from './api.ts';
 import { HealthPill } from './health.tsx';
@@ -59,6 +51,7 @@ export function ConnectionsListPage({
       },
       {
         id: 'type',
+        meta: { stackHidden: true },
         header: 'Connector',
         enableSorting: false,
         cell: ({ row }) => row.original.connectorType,
@@ -93,10 +86,12 @@ export function ConnectionsListPage({
       },
       {
         id: 'auto',
+        meta: { hideBelow: 'lg', stackHidden: true },
         header: 'Auto create',
         enableSorting: false,
-        cell: ({ row }) =>
-          row.original.autoCreate ? <Badge tone="info">On</Badge> : <Badge>Off</Badge>,
+        cell: ({ row }) => (
+          <span className="text-sm text-fg-muted">{row.original.autoCreate ? 'On' : 'Off'}</span>
+        ),
       },
     ],
     [orgNames],

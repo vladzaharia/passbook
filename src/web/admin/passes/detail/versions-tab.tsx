@@ -12,6 +12,7 @@ import {
   FormField,
   Select,
   Spinner,
+  StatusPill,
 } from '../../../ui/index.ts';
 import { usePassDiff } from '../api.ts';
 import { formatDate } from '../format.ts';
@@ -68,7 +69,7 @@ export function VersionsTab({
                 </div>
                 {selected === v.version ||
                 (selected === undefined && v.version === pass.version) ? (
-                  <Badge tone="info">Showing</Badge>
+                  <StatusPill status="showing" />
                 ) : (
                   <Button
                     size="sm"

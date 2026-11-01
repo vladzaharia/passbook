@@ -1,4 +1,4 @@
-import { type ErrorComponentProps, Link } from '@tanstack/react-router';
+import { type ErrorComponentProps, Link, useRouterState } from '@tanstack/react-router';
 import { Ban, FileQuestion } from 'lucide-react';
 import { isApiError } from '../../lib/errors.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
@@ -9,11 +9,20 @@ import { PageHeader } from '../page-header.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { Wordmark } from './wordmark.tsx';
 
-const HOME = (
-  <Link to="/" className={buttonVariants({ variant: 'outline' })}>
-    Home
-  </Link>
-);
+/** Home stays inside the area the visitor is in: /admin for console pages. */
+function HomeLink() {
+  const inAdmin = useRouterState({ select: (s) => s.location.pathname.startsWith('/admin') });
+  return (
+    <Link
+      to={(inAdmin ? '/admin' : '/') as never}
+      className={buttonVariants({ variant: 'outline' })}
+    >
+      Home
+    </Link>
+  );
+}
+
+const HOME = <HomeLink />;
 
 export function ForbiddenPage() {
   return (

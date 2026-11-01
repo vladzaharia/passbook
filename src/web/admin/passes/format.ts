@@ -1,6 +1,4 @@
-export function formatDate(ms: number | null | undefined): string {
-  return ms ? new Date(ms).toLocaleString() : 'Never';
-}
+export { formatDateTime as formatDate } from '../../lib/format.ts';
 
 export function newKey(): string {
   return (

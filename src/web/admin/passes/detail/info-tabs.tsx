@@ -17,7 +17,7 @@ type Pass = z.infer<typeof PassDetailSchema>;
 
 export function DevicesTab({ pass }: { pass: Pass }) {
   return (
-    <Card className="max-w-md">
+    <Card className="max-w-3xl">
       <CardBody>
         <KeyValue
           items={[

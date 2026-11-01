@@ -113,6 +113,7 @@ export function PassesListPage({
       },
       {
         id: 'holder',
+        meta: { stackHidden: true },
         header: 'Holder',
         enableSorting: false,
         cell: ({ row }) => (
@@ -126,6 +127,7 @@ export function PassesListPage({
       },
       {
         id: 'status',
+        meta: { stackHidden: true },
         header: 'Status',
         enableSorting: false,
         cell: ({ row }) => (
@@ -141,6 +143,7 @@ export function PassesListPage({
       },
       {
         id: 'template',
+        meta: { hideBelow: 'lg' },
         header: 'Template',
         enableSorting: false,
         cell: ({ row }) => names.get(row.original.templateId) ?? row.original.templateId,

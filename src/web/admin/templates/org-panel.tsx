@@ -24,7 +24,7 @@ export function OrgPanel({ templateId, orgId }: { templateId: string; orgId: str
   }
 
   return (
-    <Card className="max-w-md">
+    <Card className="max-w-3xl">
       <CardHeader title="Organization" />
       <CardBody className="grid gap-3">
         <FormField label="Organization" error={error}>

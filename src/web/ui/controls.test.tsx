@@ -312,8 +312,13 @@ describe('StatusPill', () => {
     await noViolations(container);
   });
 
-  it('falls back to neutral with the raw text for unknown keys', () => {
-    render(<StatusPill status="mystery" />);
-    expect(screen.getByText('mystery')).toBeInTheDocument();
+  it('falls back to neutral with a humanized label for unknown keys', () => {
+    render(<StatusPill status="mystery_state" />);
+    expect(screen.getByText('Mystery state')).toBeInTheDocument();
+  });
+
+  it('knows delivery and run states', () => {
+    render(<StatusPill status="sent" />);
+    expect(screen.getByText('Sent')).toBeInTheDocument();
   });
 });

@@ -127,26 +127,27 @@ function SettingsTab({ c }: { c: Detail }) {
   }
 
   return (
-    <div className="grid gap-4 pb-16">
-      <FormField label="Name" required error={showError && !name.trim() ? 'Required.' : undefined}>
-        {(f) => (
-          <Input
-            {...f}
-            className="max-w-xl"
-            maxLength={120}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        )}
-      </FormField>
-      <LifecycleFields
-        orgId={c.orgId}
-        capabilities={connector.data?.capabilities}
-        value={life}
-        onChange={setLife}
-        disabled={actions.update.isPending}
-        error={showError ? error : undefined}
-      />
+    <Card className="max-w-3xl">
+      <CardHeader title="Settings" />
+      <CardBody className="grid gap-4">
+        <FormField
+          label="Name"
+          required
+          error={showError && !name.trim() ? 'Required.' : undefined}
+        >
+          {(f) => (
+            <Input {...f} maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
+          )}
+        </FormField>
+        <LifecycleFields
+          orgId={c.orgId}
+          capabilities={connector.data?.capabilities}
+          value={life}
+          onChange={setLife}
+          disabled={actions.update.isPending}
+          error={showError ? error : undefined}
+        />
+      </CardBody>
       <SaveBar
         dirty={dirty}
         saving={actions.update.isPending}
@@ -158,7 +159,7 @@ function SettingsTab({ c }: { c: Detail }) {
         }}
       />
       <UnsavedChangesDialog blocker={guard} />
-    </div>
+    </Card>
   );
 }
 

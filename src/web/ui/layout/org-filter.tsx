@@ -14,7 +14,7 @@ export function OrgFilter() {
   return (
     <Select
       aria-label="Organization filter"
-      className="w-28 sm:w-56"
+      className="w-28 shrink-0 sm:w-56"
       options={options}
       value={orgId ?? ALL}
       onValueChange={(v) => setOrgId(v === ALL ? undefined : v)}

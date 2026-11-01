@@ -17,16 +17,18 @@ export function SaveBar({ dirty, saving, onSave, onDiscard, saveLabel = 'Save' }
   return (
     <section
       aria-label="Unsaved changes"
-      className="fixed inset-x-0 bottom-0 z-30 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-overlay px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-elevation-3"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-[env(safe-area-inset-bottom)] shadow-elevation-3 lg:left-60"
     >
-      <p className="text-sm text-fg-strong">Unsaved changes</p>
-      <div className="flex gap-2">
-        <Button variant="outline" disabled={saving} onClick={onDiscard}>
-          Discard
-        </Button>
-        <Button loading={saving} onClick={onSave}>
-          {saveLabel}
-        </Button>
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <p className="text-sm text-fg-strong">Unsaved changes</p>
+        <div className="flex gap-2">
+          <Button variant="outline" disabled={saving} onClick={onDiscard}>
+            Discard
+          </Button>
+          <Button loading={saving} onClick={onSave}>
+            {saveLabel}
+          </Button>
+        </div>
       </div>
     </section>
   );
