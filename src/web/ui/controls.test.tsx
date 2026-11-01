@@ -162,7 +162,7 @@ describe('Combobox', () => {
         onValueChange={onValueChange}
       />,
     );
-    const trigger = screen.getByRole('combobox', { name: 'Org' });
+    const trigger = screen.getByRole('combobox', { name: 'Org: Select' });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await user.click(trigger);
     await user.keyboard('acm');

@@ -111,11 +111,13 @@ describe('index.html', () => {
 describe('theme-init.js', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    window.history.replaceState(null, '', '/');
     delete document.documentElement.dataset.theme;
     delete document.documentElement.dataset.themePref;
   });
 
-  const run = (stored: string | null | 'throw') => {
+  const run = (stored: string | null | 'throw', path = '/admin/passes') => {
+    window.history.replaceState(null, '', path);
     vi.stubGlobal('localStorage', {
       getItem: () => {
         if (stored === 'throw') throw new Error('blocked');
@@ -125,11 +127,20 @@ describe('theme-init.js', () => {
     new Function(themeInit)();
   };
 
-  it.each(['dark', 'light'])('applies a stored %s theme', (value) => {
+  it.each(['dark', 'light'])('applies a stored %s theme in the admin console', (value) => {
     run(value);
     expect(document.documentElement.dataset.theme).toBe(value);
     expect(document.documentElement.dataset.themePref).toBe(value);
   });
+
+  it.each(['/', '/account', '/login', '/administrator'])(
+    'ignores the stored theme on holder page %s',
+    (path) => {
+      run('dark', path);
+      expect(document.documentElement.dataset.theme).toBeUndefined();
+      expect(document.documentElement.dataset.themePref).toBe('system');
+    },
+  );
 
   it.each([null, 'system', 'neon'])('leaves the system theme for %s', (value) => {
     document.documentElement.dataset.theme = 'dark';

@@ -4,17 +4,21 @@ import { isActivePath, PORTAL_NAV } from '../../lib/nav.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { isAdmin as hasAdmin, useSession } from '../../lib/session.ts';
 import { ActiveIndicator } from '../active-indicator.tsx';
-import { ThemeToggle } from './theme-toggle.tsx';
+import { OfflineBanner } from '../offline-banner.tsx';
 import { UserMenu } from './user-menu.tsx';
 import { Wordmark } from './wordmark.tsx';
 
+const NAV_LINK =
+  'relative inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm wl-colors pointer-coarse:min-h-11';
+
+/** Holder pages follow the system appearance: no theme toggle here. */
 export function PortalLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session } = useSession();
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-border bg-surface-raised">
-        <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-2 px-4 sm:gap-4">
+    <div className="wl-portal flex min-h-dvh flex-col">
+      <header className="border-b border-border bg-surface-raised pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-safe sm:gap-4">
           <Wordmark />
           <nav aria-label="Main" className="relative mr-auto flex min-w-0 gap-1 overflow-x-auto">
             <ActiveIndicator />
@@ -27,7 +31,7 @@ export function PortalLayout() {
                   activeOptions={{ exact: item.to === '/' }}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'relative inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm',
+                    NAV_LINK,
                     active ? 'text-fg-strong' : 'text-fg-muted hover:text-fg-strong',
                   )}
                 >
@@ -38,17 +42,17 @@ export function PortalLayout() {
             {hasAdmin(session) ? (
               <Link
                 to={'/admin' as never}
-                className="inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm text-fg-muted hover:text-fg-strong"
+                className={cn(NAV_LINK, 'text-fg-muted hover:text-fg-strong')}
               >
                 Admin
               </Link>
             ) : null}
           </nav>
-          <ThemeToggle />
           <UserMenu />
         </div>
       </header>
-      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
+      <OfflineBanner />
+      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-safe py-6">
         <Outlet />
       </main>
     </div>

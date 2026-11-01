@@ -43,9 +43,12 @@ describe('route guards in the app', () => {
   });
 
   it('shows the forbidden page to a signed-in non-admin on /admin', async () => {
-    await renderApp('/admin', { session: 'user' });
-    expect(await screen.findByRole('heading', { name: 'Forbidden', level: 1 })).toBeInTheDocument();
-    expect(screen.getByText('You do not have access')).toBeInTheDocument();
+    const { container } = await renderApp('/admin', { session: 'user' });
+    expect(
+      await screen.findByRole('heading', { name: 'You do not have access', level: 1 }),
+    ).toBeInTheDocument();
+    expect(container.querySelector('[data-art]')).toHaveAttribute('data-art', 'lock');
+    expect(screen.getByRole('button', { name: 'Sign in as someone else' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Admin' })).toBeNull();
   });
 
@@ -60,9 +63,28 @@ describe('route guards in the app', () => {
     expect(await screen.findByRole('link', { name: 'Admin' })).toBeInTheDocument();
   });
 
-  it('renders the not found page for unknown paths', async () => {
-    await renderApp('/nope', { session: 'user' });
-    expect(await screen.findByRole('heading', { name: 'Not found', level: 1 })).toBeInTheDocument();
+  it('renders the holder not found page with the lost wallet', async () => {
+    const { container } = await renderApp('/nope', { session: 'user' });
+    expect(
+      await screen.findByRole('heading', { name: 'Page not found', level: 1 }),
+    ).toBeInTheDocument();
+    const art = container.querySelector('[data-art]');
+    expect(art).toHaveAttribute('data-art', 'wallet');
+    expect(art).toHaveAttribute('data-state', 'lost');
+  });
+
+  it('renders the admin not found page with a palette search', async () => {
+    const user = userEvent.setup();
+    const { container } = await renderApp('/admin/nope', { session: 'admin' });
+    expect(
+      await screen.findByRole('heading', { name: 'Page not found', level: 1 }),
+    ).toBeInTheDocument();
+    expect(container.querySelector('main [data-art]')).toHaveAttribute('data-art', 'torn');
+    expect(screen.getByRole('link', { name: 'Go to Overview' })).toBeInTheDocument();
+    await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Search' }));
+    expect(
+      await screen.findByRole('combobox', { name: 'Search pages and passes' }),
+    ).toBeInTheDocument();
   });
 
   it('shows a session fetch failure instead of the page', async () => {
@@ -204,7 +226,7 @@ describe('admin layout', () => {
           }),
       },
     });
-    const filter = await screen.findByRole('combobox', { name: /^Organization filter/ });
+    const filter = await screen.findByRole('combobox', { name: /^Organization scope/ });
     expect(filter).toHaveTextContent('All orgs');
     await user.click(filter);
     await user.click(await screen.findByRole('option', { name: 'Henrys' }));
@@ -213,38 +235,42 @@ describe('admin layout', () => {
   });
 });
 
-describe('theme toggle', () => {
-  it('sets and clears data-theme and persists the choice', async () => {
-    const user = userEvent.setup();
-    await renderApp('/account', { session: 'user' });
-    const open = async () => user.click(await screen.findByRole('button', { name: 'Theme' }));
+describe('theme', () => {
+  const openMenu = async (user: ReturnType<typeof userEvent.setup>) =>
+    user.click(await screen.findByRole('button', { name: 'Account menu' }));
 
-    await open();
+  it('sets and clears data-theme from the admin account menu and persists the choice', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin', { session: 'admin' });
+    await openMenu(user);
     await user.click(await screen.findByRole('menuitemradio', { name: 'Light' }));
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(localStorage.getItem(THEME_KEY)).toBe('light');
-
-    await open();
-    await user.click(await screen.findByRole('menuitemradio', { name: 'Dark' }));
+    // The menu stays open while choosing.
+    await user.click(screen.getByRole('menuitemradio', { name: 'Dark' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
-
-    await open();
-    await user.click(await screen.findByRole('menuitemradio', { name: 'System' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'System' }));
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem(THEME_KEY)).toBe('system');
   });
 
-  it('starts from the stored preference', async () => {
-    localStorage.setItem(THEME_KEY, 'light');
-    await renderApp('/account', { session: 'user' });
-    await screen.findByRole('button', { name: 'Theme' });
-    expect(document.documentElement.dataset.theme).toBe('light');
+  it('applies the stored preference in the admin console only', async () => {
+    localStorage.setItem(THEME_KEY, 'dark');
+    const first = await renderApp('/admin', { session: 'admin' });
+    await screen.findByRole('navigation', { name: 'Admin' });
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    first.unmount();
+    await renderApp('/account', { session: 'admin' });
+    await screen.findByRole('heading', { name: 'Account', level: 1 });
+    // Holder pages follow the system appearance and offer no toggle.
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBeUndefined());
+    expect(screen.queryByRole('button', { name: 'Theme' })).toBeNull();
   });
 
   it('ignores a corrupt stored value', async () => {
     localStorage.setItem(THEME_KEY, 'neon');
-    await renderApp('/account', { session: 'user' });
-    await screen.findByRole('button', { name: 'Theme' });
+    await renderApp('/admin', { session: 'admin' });
+    await screen.findByRole('navigation', { name: 'Admin' });
     expect(document.documentElement.dataset.theme).toBeUndefined();
   });
 
@@ -259,10 +285,24 @@ describe('theme toggle', () => {
       },
       removeItem: () => {},
     });
-    await renderApp('/account', { session: 'user' });
-    await user.click(await screen.findByRole('button', { name: 'Theme' }));
+    await renderApp('/admin', { session: 'admin' });
+    await openMenu(user);
     await user.click(await screen.findByRole('menuitemradio', { name: 'Dark' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('lists My passes, Account, Theme and Sign out in the admin account menu', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin', { session: 'admin' });
+    await openMenu(user);
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((i) => i.textContent),
+    ).toEqual(['My passes', 'Account', 'Sign out']);
+    expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(3);
+    expect(within(menu).getByText('Theme')).toBeInTheDocument();
   });
 });
 
