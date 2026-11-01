@@ -1,5 +1,6 @@
 import { ScrollText, Search, SlidersHorizontal } from 'lucide-react';
 import { type ComponentProps, useEffect, useState } from 'react';
+import { actionLabel } from '@/web/lib/actions.ts';
 import {
   Button,
   DataTable,
@@ -18,7 +19,7 @@ import { useOrgList, useOrgNames } from '../orgs/queries.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { type AuditSearch, dayToMs, msToDay } from './audit-search.ts';
 import { EntryDrawer } from './entry-drawer.tsx';
-import { actionLabel, actorText, targetText } from './labels.ts';
+import { actorText, targetText } from './labels.ts';
 import { useAuditLog } from './queries.ts';
 
 const ALL = 'all';

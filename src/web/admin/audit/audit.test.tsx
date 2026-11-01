@@ -2,9 +2,10 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
+import { actionLabel } from '@/web/lib/actions.ts';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { dayToMs, msToDay, parseAuditSearch } from './audit-search.ts';
-import { actionLabel, actorText, targetText } from './labels.ts';
+import { actorText, targetText } from './labels.ts';
 import { describeDetail, REDACTED, redact } from './redact.ts';
 
 const entry = (id: number, over: Record<string, unknown> = {}) => ({

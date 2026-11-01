@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { MetricsOverviewSchema } from '@/shared/contracts/metrics.ts';
+import { actionLabel } from '@/web/lib/actions.ts';
 import { api } from '@/web/lib/api.ts';
 import { useOrgFilter } from '@/web/lib/org-filter.tsx';
 import {
@@ -16,7 +17,7 @@ import {
   StatusPill,
   Timeline,
 } from '@/web/ui/index.ts';
-import { actionLabel, targetText } from '../audit/labels.ts';
+import { targetText } from '../audit/labels.ts';
 import { useAuditLog } from '../audit/queries.ts';
 import { sortBySeverity, useStatus } from '../status/queries.ts';
 import { LineChart } from './chart.tsx';
