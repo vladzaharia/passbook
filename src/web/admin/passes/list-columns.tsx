@@ -131,7 +131,7 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
           {
             id: 'org',
             header: 'Organization',
-            meta: { hideBelow: 'xl', nowrap: true },
+            meta: { hideBelow: 'xl', nowrap: true, stackHidden: true },
             cell: ({ row }) => <OrgCell pass={row.original} />,
           } satisfies ColumnDef<PassSummaryDto, never>,
         ]
@@ -139,13 +139,13 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
     {
       id: 'template',
       header: 'Template',
-      meta: { hideBelow: 'lg', nowrap: true },
+      meta: { hideBelow: 'lg', nowrap: true, stackHidden: true },
       cell: ({ row }) => <TemplateCell pass={row.original} />,
     },
     {
       id: 'devices',
       header: 'On device',
-      meta: { hideBelow: 'lg', numeric: true },
+      meta: { hideBelow: 'lg', numeric: true, stackHidden: true },
       cell: ({ row }) =>
         row.original.deviceCount > 0 ? (
           row.original.deviceCount

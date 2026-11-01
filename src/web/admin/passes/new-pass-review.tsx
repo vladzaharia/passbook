@@ -23,6 +23,7 @@ export function ReviewStep({
   steps,
   onEdit,
   brandingMissing,
+  warnings,
   error,
 }: {
   org: string | undefined;
@@ -34,6 +35,8 @@ export function ReviewStep({
   steps: { org?: number; template: number; details: number; holder: number };
   onEdit: (step: number) => void;
   brandingMissing: boolean;
+  /** The preview's other warnings (lint), one line each. */
+  warnings: readonly string[];
   error: ReactNode;
 }) {
   const fields = describeSchema(schema)
@@ -55,6 +58,13 @@ export function ReviewStep({
         <Callout tone="warning" title="No pass branding">
           The pass shows the starter logo and icon.
         </Callout>
+      ) : null}
+      {warnings.length > 0 ? (
+        <Callout
+          tone="warning"
+          title={`${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'}`}
+          items={warnings}
+        />
       ) : null}
       <Card>
         <CardBody>

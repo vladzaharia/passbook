@@ -159,7 +159,7 @@ const storeStrip: Painter = (u, v, w, h, s) => {
   return [...c, 255];
 };
 
-/** Event poster: night gradient, light beams and a date block at the top leading corner. */
+/** Event poster: night gradient, light beams and a faint date block. */
 const eventArt: Painter = (u, v, w, h, s) => {
   let c = mixRgb(NIGHT, MAGENTA, v ** 1.2);
   for (const [x, a] of [
@@ -169,8 +169,11 @@ const eventArt: Painter = (u, v, w, h, s) => {
     const beam = Math.abs(u - x - (v - 1) * 0.25) - 0.05 * (1 - v);
     c = over(c, [253, 224, 71], cover(beam * w) * a * (1 - v * 0.6));
   }
-  c = over(c, [255, 255, 255], cover(box(u * w, v * h, 52 * s, 56 * s, 30 * s, 34 * s, 8 * s)) * 0.92);
-  c = over(c, MAGENTA, cover(box(u * w, v * h, 52 * s, 34 * s, 30 * s, 12 * s, 8 * s) + 0) * 0.9);
+  // The date block sits right of centre, clear of the logo and the header fields.
+  const bx = w - 58 * s;
+  const by = h * 0.3;
+  c = over(c, [255, 255, 255], cover(box(u * w, v * h, bx, by, 30 * s, 34 * s, 8 * s)) * 0.18);
+  c = over(c, MAGENTA, cover(box(u * w, v * h, bx, by - 22 * s, 30 * s, 12 * s, 8 * s)) * 0.45);
   return [...c, 255];
 };
 /** Classic event ticket: the poster colours as a quiet background. */

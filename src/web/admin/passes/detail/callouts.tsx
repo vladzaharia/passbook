@@ -8,35 +8,13 @@ import { formatDateTime } from '../../../lib/format.ts';
 import { Button, Callout, IconButton } from '../../../ui/index.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
 
-/** Voided: when and by whom, and the one way back. The Ban stamps when it just happened. */
-export function VoidedCallout({
-  pass,
-  runner,
-  stamp,
-}: {
-  pass: PassDetailDto;
-  runner: PassActionRunner;
-  stamp: boolean;
-}) {
+/** Voided: when and by whom; Unvoid sits in the header. The Ban stamps when it just happened. */
+export function VoidedCallout({ pass, stamp }: { pass: PassDetailDto; stamp: boolean }) {
   const v = pass.voided;
   const by = v?.actorLabel ?? (v?.actorType === 'connection' ? 'its connection' : null);
   return (
     <div data-stamp={stamp || undefined}>
-      <Callout
-        tone="warning"
-        icon={ACTION_ICON.void}
-        actions={
-          <Button
-            size="sm"
-            variant="outline"
-            iconStart={<ACTION_ICON.unvoid aria-hidden />}
-            loading={runner.pending.unvoid}
-            onClick={() => runner.run('unvoid')}
-          >
-            Unvoid
-          </Button>
-        }
-      >
+      <Callout tone="warning" icon={ACTION_ICON.void}>
         Voided on {formatDateTime(v?.at ?? pass.modifiedAt)}
         {by ? ` by ${by}` : ''}. Holders see it as void.
       </Callout>

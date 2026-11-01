@@ -6,6 +6,7 @@ import { assetUrlMap } from '../../pass-card/assets.ts';
 import { PassCardStage } from '../../pass-card/index.tsx';
 import {
   Badge,
+  LoadingRail,
   type PassSide,
   PassSideToggle,
   type PassTarget,
@@ -134,6 +135,7 @@ export function PassPreviewPanel({
         <span className="wl-unsaved" data-on={unsaved || undefined} aria-hidden={!unsaved}>
           <Badge tone="warning">Unsaved</Badge>
         </span>
+        <LoadingRail show={Boolean(waiting)} />
         <div className="wl-version-wait" data-waiting={waiting || undefined}>
           <div key={swapKey} className={swapKey === undefined ? undefined : 'wl-version-in'}>
             <PassPreview {...preview} face={face} target={shown} flippable />

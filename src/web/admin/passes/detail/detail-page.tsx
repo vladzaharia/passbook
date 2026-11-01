@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { isApiError } from '../../../lib/errors.ts';
@@ -34,7 +34,8 @@ import '../passes.css';
 type Search = z.infer<typeof passDetailSearchSchema>;
 export type Tab = NonNullable<Search['tab']>;
 
-const devices = (n: number) => `On ${n} ${n === 1 ? 'device' : 'devices'}`;
+const devices = (n: number) =>
+  n === 0 ? 'Not on a device yet' : `On ${n} ${n === 1 ? 'device' : 'devices'}`;
 
 export function PassDetailPage({ passId, search }: { passId: string; search: Search }) {
   const navigate = useNavigate();
@@ -105,7 +106,12 @@ function Loaded({
   setSearch: (patch: Partial<Search>) => void;
 }) {
   const minted = useMintedOnArrival(p.id);
-  const [deal] = useState(() => !minted);
+  // The deal runs once on a hard load; data-enter then goes, so later mints and settles can play.
+  const [deal, setDeal] = useState(() => !minted);
+  useEffect(() => {
+    const t = setTimeout(() => setDeal(false), 900);
+    return () => clearTimeout(t);
+  }, []);
   const created = useCreated(p.id);
   const runner = usePassActionRunner(p, p);
   const actions = usePassActions(p.id);
@@ -138,13 +144,14 @@ function Loaded({
         assetBaseUrl={source.assetBaseUrl}
         assetNames={source.assetNames}
         transitionName={size === 'sheet' ? undefined : `pass-${p.id}`}
-        enter={deal && showing === p.version && size !== 'sheet'}
+        enter={deal && picked === undefined && size !== 'sheet'}
         mint={picked === undefined && !draft ? motion.mint : undefined}
         settle={motion.settle}
         dim={voided}
         unsaved={draft !== null}
         waiting={waiting}
-        swapKey={showing}
+        // Browsing versions crossfades in place; a new current version mints the same card.
+        swapKey={picked === undefined ? 'current' : showing}
         label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
         className={size === 'card' ? 'gap-2' : undefined}
       />
@@ -167,7 +174,7 @@ function Loaded({
         actions={<HeaderActionsView runner={runner} />}
       />
       <div className="mb-6 flex flex-col gap-3 empty:hidden">
-        {voided ? <VoidedCallout pass={p} runner={runner} stamp={motion.stamp} /> : null}
+        {voided ? <VoidedCallout pass={p} stamp={motion.stamp} /> : null}
         {created.unsent && !voided ? (
           <CreatedCallout
             pass={p}

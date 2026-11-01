@@ -95,8 +95,13 @@ function Loaded({
   const preview = useTemplatePreview(t.id);
   const actions = useTemplateActions(t.id);
   const minted = useMintedOnArrival(`template:${t.id}`);
-  // A duplicate mints once on arrival: the value must change after mount.
+  // A duplicate mints once on arrival (the value must change after mount); a hard load deals once.
   const [mint, setMint] = useState(0);
+  const [deal, setDeal] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setDeal(false), 900);
+    return () => clearTimeout(t);
+  }, []);
   useEffect(() => {
     if (minted) setMint(1);
   }, [minted]);
@@ -114,7 +119,7 @@ function Loaded({
         passJson={preview.data.passJson}
         assetBaseUrl={preview.data.assetBaseUrl}
         assetNames={preview.data.assetNames}
-        enter={size !== 'sheet' && !minted}
+        enter={size !== 'sheet' && !minted && deal}
         mint={mint}
         label={
           t.activeVersion ? (

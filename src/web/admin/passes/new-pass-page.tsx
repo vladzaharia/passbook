@@ -309,6 +309,9 @@ export function NewPassPage({
             }}
             onEdit={go}
             brandingMissing={Boolean(preview?.warnings.some((w) => w.code === 'PLATFORM_BRANDING'))}
+            warnings={(preview?.warnings ?? [])
+              .filter((w) => w.severity === 'warning' && w.code !== 'PLATFORM_BRANDING')
+              .map((w) => w.message)}
             error={
               create.isError ? (
                 <Callout tone="danger">
