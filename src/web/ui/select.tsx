@@ -1,7 +1,7 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/cn.ts';
-import { CONTROL } from './input.tsx';
+import { CONTROL, CONTROL_HEIGHT } from './input.tsx';
 
 export interface SelectOption {
   value: string;
@@ -11,6 +11,10 @@ export interface SelectOption {
 
 export interface SelectProps {
   options: readonly SelectOption[];
+  /** Toolbar and filter selects: the trigger reads "Label: value" and is the accessible name. */
+  label?: string;
+  /** A filter that differs from its default: accent-subtle fill. */
+  set?: boolean;
   value?: string;
   onValueChange?: (value: string) => void;
   placeholder?: string;
@@ -29,6 +33,8 @@ export function Select({
   value,
   onValueChange,
   placeholder = 'Select',
+  label: prefix,
+  set,
   className,
   id,
   name,
@@ -36,7 +42,8 @@ export function Select({
   ...rest
 }: SelectProps) {
   // An accessible name must contain the visible value (WCAG 2.5.3 label in name).
-  const { 'aria-label': label, ...other } = rest;
+  const { 'aria-label': ariaLabel, ...other } = rest;
+  const label = ariaLabel ?? prefix;
   const current = options.find((o) => o.value === value)?.label ?? (value ? '' : placeholder);
   const aria = {
     ...other,
@@ -53,12 +60,19 @@ export function Select({
         id={id}
         className={cn(
           CONTROL,
-          'flex h-9 items-center justify-between gap-2 whitespace-nowrap text-left',
+          CONTROL_HEIGHT,
+          'flex items-center justify-between gap-2 whitespace-nowrap text-left',
+          set && 'border-accent bg-accent-subtle text-fg-strong',
           className,
         )}
         {...aria}
       >
-        <SelectPrimitive.Value placeholder={placeholder} className="block min-w-0 truncate" />
+        <span className="flex min-w-0 items-center gap-1">
+          {prefix ? <span className="shrink-0 text-fg-muted">{prefix}:</span> : null}
+          <span className="min-w-0 truncate">
+            <SelectPrimitive.Value placeholder={placeholder} />
+          </span>
+        </span>
         <SelectPrimitive.Icon className="shrink-0">
           <ChevronDown aria-hidden className="size-4 text-fg-muted" />
         </SelectPrimitive.Icon>
@@ -75,7 +89,7 @@ export function Select({
                 key={o.value}
                 value={o.value}
                 disabled={o.disabled}
-                className="relative flex min-h-8 cursor-pointer select-none items-center rounded-sm py-1.5 pr-3 pl-8 text-sm text-fg outline-hidden data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong"
+                className="relative flex min-h-8 cursor-pointer select-none items-center rounded-sm py-1.5 pr-3 pl-8 text-sm text-fg outline-hidden pointer-coarse:min-h-11 data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong"
               >
                 <SelectPrimitive.ItemIndicator className="absolute left-2">
                   <Check aria-hidden className="size-4 text-accent-fg" />

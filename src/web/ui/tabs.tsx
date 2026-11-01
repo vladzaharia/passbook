@@ -1,11 +1,90 @@
 import * as Primitive from '@radix-ui/react-tabs';
-import { type ComponentProps, useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Children,
+  type ComponentProps,
+  createContext,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { cn } from '../lib/cn.ts';
+import { PHONE, useMediaQuery } from '../lib/media.ts';
+import { prefersReducedMotion } from '../lib/motion.ts';
 import { ActiveIndicator } from './active-indicator.tsx';
+import { IconButton } from './icon-button.tsx';
+import { Select } from './select.tsx';
 
-export const Tabs = Primitive.Root;
+interface TabsState {
+  value: string | undefined;
+  setValue: (value: string) => void;
+}
+const TabsContext = createContext<TabsState | null>(null);
 
+/** Radix tabs that share their value with the phone select (TabsList, more than five tabs). */
+export function Tabs({
+  value,
+  defaultValue,
+  onValueChange,
+  ...props
+}: ComponentProps<typeof Primitive.Root>) {
+  const [own, setOwn] = useState(defaultValue);
+  const current = value ?? own;
+  const setValue = (next: string) => {
+    if (value === undefined) setOwn(next);
+    onValueChange?.(next);
+  };
+  return (
+    <TabsContext.Provider value={{ value: current, setValue }}>
+      <Primitive.Root value={current} onValueChange={setValue} {...props} />
+    </TabsContext.Provider>
+  );
+}
+
+const textOf = (node: ReactNode): string =>
+  typeof node === 'string' || typeof node === 'number'
+    ? String(node)
+    : Array.isArray(node)
+      ? node.map(textOf).join('')
+      : isValidElement<{ children?: ReactNode }>(node)
+        ? textOf(node.props.children)
+        : '';
+
+/** Below 640 more than five tabs become a Select ("Section: Fields"); else a scrolling strip. */
 export function TabsList({ className, children, ...props }: ComponentProps<typeof Primitive.List>) {
+  const state = useContext(TabsContext);
+  const phone = useMediaQuery(PHONE);
+  const triggers = Children.toArray(children).filter(
+    (c): c is ReactElement<{ value: string; children?: ReactNode; disabled?: boolean }> =>
+      isValidElement<{ value?: string }>(c) && typeof c.props.value === 'string',
+  );
+  if (phone && state && triggers.length > 5) {
+    return (
+      <Select
+        label="Section"
+        className="w-full"
+        value={state.value}
+        onValueChange={state.setValue}
+        options={triggers.map((t) => ({
+          value: t.props.value,
+          label: textOf(t.props.children),
+          disabled: t.props.disabled,
+        }))}
+      />
+    );
+  }
+  return (
+    <Strip className={className} {...props}>
+      {children}
+    </Strip>
+  );
+}
+
+function Strip({ className, children, ...props }: ComponentProps<typeof Primitive.List>) {
   const ref = useRef<HTMLDivElement>(null);
   const [fade, setFade] = useState({ start: false, end: false });
   useEffect(() => {
@@ -19,7 +98,10 @@ export function TabsList({ className, children, ...props }: ComponentProps<typeo
     const reveal = () => {
       const active = el.querySelector<HTMLElement>('[data-state=active]');
       if (!active || el.scrollWidth <= el.clientWidth) return;
-      el.scrollLeft = active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2;
+      el.scrollTo({
+        left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      });
     };
     reveal();
     measure();
@@ -37,28 +119,47 @@ export function TabsList({ className, children, ...props }: ComponentProps<typeo
       ro?.disconnect();
     };
   }, []);
+  const page = (dir: 1 | -1) => {
+    const el = ref.current;
+    el?.scrollBy({
+      left: dir * el.clientWidth * 0.7,
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+  };
+  const edge = (side: 'start' | 'end') => (
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-y-0 flex w-8 items-center from-surface-page from-40% to-transparent',
+        side === 'start'
+          ? 'left-0 justify-start bg-gradient-to-r'
+          : 'right-0 justify-end bg-gradient-to-l',
+      )}
+    >
+      <IconButton
+        label={side === 'start' ? 'Earlier tabs' : 'More tabs'}
+        size="sm"
+        tabIndex={-1}
+        className="pointer-events-auto size-6"
+        icon={side === 'start' ? <ChevronLeft aria-hidden /> : <ChevronRight aria-hidden />}
+        onClick={() => page(side === 'start' ? -1 : 1)}
+      />
+    </div>
+  );
   return (
     <div className="relative min-w-0">
       <Primitive.List
         ref={ref}
-        className={cn('relative flex gap-1 overflow-x-auto border-b border-border', className)}
+        className={cn(
+          'relative flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none]',
+          className,
+        )}
         {...props}
       >
         <ActiveIndicator variant="underline" />
         {children}
       </Primitive.List>
-      {fade.start ? (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-surface-page to-transparent"
-        />
-      ) : null}
-      {fade.end ? (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface-page to-transparent"
-        />
-      ) : null}
+      {fade.start ? edge('start') : null}
+      {fade.end ? edge('end') : null}
     </div>
   );
 }
@@ -85,7 +186,7 @@ export function TabsTrigger({
         onBlur?.(e);
       }}
       className={cn(
-        'relative -mb-px min-h-9 shrink-0 border-b-2 border-transparent px-3 text-sm text-fg-muted transition-colors',
+        'relative -mb-px min-h-9 shrink-0 border-b-2 border-transparent px-3 text-sm text-fg-muted wl-colors pointer-coarse:min-h-11',
         'hover:text-fg-strong data-[state=active]:text-fg-strong',
         'outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
         // Radix focuses the trigger on pointer down; only keyboard focus shows the ring.
@@ -100,7 +201,7 @@ export function TabsTrigger({
 export function TabsContent({ className, ...props }: ComponentProps<typeof Primitive.Content>) {
   return (
     <Primitive.Content
-      className={cn('pt-4 focus-visible:outline-2 focus-visible:outline-focus', className)}
+      className={cn('wl-panel pt-4 focus-visible:outline-2 focus-visible:outline-focus', className)}
       {...props}
     />
   );
