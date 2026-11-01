@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { z } from 'zod';
-import { ApiError } from '../lib/errors.ts';
 import '../lib/test-utils.tsx';
 import { Button } from './button.tsx';
 import { Checkbox, CheckboxField } from './checkbox.tsx';
@@ -14,7 +12,6 @@ import { IconButton } from './icon-button.tsx';
 import { Input, Textarea } from './input.tsx';
 import { RadioGroup } from './radio-group.tsx';
 import { Select } from './select.tsx';
-import { StatusPill } from './status-pill.tsx';
 import { Switch } from './switch.tsx';
 import { TooltipProvider } from './tooltip.tsx';
 

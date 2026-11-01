@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory';
-import type { ApiKeyAuth, AuthContext, AuthStores, SessionAuth } from './auth.ts';
+import type { AuthContext, AuthStores } from './auth.ts';
 import { type Clock, systemClock } from './clock.ts';
 import type { AppEnv } from './env.ts';
 import { createIds, type Ids } from './ids.ts';
