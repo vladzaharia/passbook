@@ -22,7 +22,7 @@ export function ListRows({
   label?: string;
 }) {
   return (
-    <ul aria-label={label} className={cn('divide-y divide-border', className)}>
+    <ul aria-label={label} className={cn('@container divide-y divide-border', className)}>
       {children}
     </ul>
   );
@@ -60,7 +60,11 @@ export function ListRow({
     <li
       data-row-id={rowId}
       data-new={isNew ? '' : undefined}
-      className={cn('flex min-h-11 items-center gap-3 py-3 first:pt-0 last:pb-0', className)}
+      className={cn(
+        // Very narrow (200 % zoom on a phone): the trailing control drops under the body.
+        'flex min-h-11 items-center gap-3 py-3 first:pt-0 last:pb-0 @max-[16rem]:flex-wrap',
+        className,
+      )}
     >
       {leading ? (
         <span className="flex size-6 shrink-0 items-center justify-center text-fg-muted [&>svg]:size-4">

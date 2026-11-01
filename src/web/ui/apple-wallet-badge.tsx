@@ -48,7 +48,7 @@ export function AppleWalletBadge({
       href={href}
       onClick={onClick}
       className={cn(
-        'inline-flex w-max items-center gap-3 rounded-lg p-1.5 text-sm font-medium text-fg-strong',
+        'inline-flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg p-1.5 text-sm font-medium text-fg-strong',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         className,
       )}
