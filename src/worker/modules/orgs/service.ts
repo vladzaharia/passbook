@@ -19,6 +19,7 @@ import {
   listOrgRows,
   markOrgDeleted,
   type OrgRow,
+  setOrgStatus as setOrgStatusRow,
   slugTaken,
   updateOrgRow,
 } from './repo.ts';
@@ -26,7 +27,7 @@ import {
 type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
 
-function toDto(row: OrgRow): OrgDto {
+export function toDto(row: OrgRow): OrgDto {
   return {
     id: row.id,
     slug: row.slug,
@@ -39,7 +40,7 @@ function toDto(row: OrgRow): OrgDto {
   };
 }
 
-async function requireOrg(ctx: ServiceContext, id: string): Promise<OrgRow> {
+export async function requireOrg(ctx: ServiceContext, id: string): Promise<OrgRow> {
   const row = await getOrgRow(ctx.env.DB, id);
   if (!row) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   return row;
@@ -61,9 +62,9 @@ async function checkSlug(ctx: ServiceContext, slug: string, exceptId?: string) {
 
 export async function listOrgs(
   ctx: ServiceContext,
-  query: { cursor?: string; limit: number },
+  query: { cursor?: string; limit: number; q?: string },
 ): Promise<{ items: Summary[]; nextCursor: string | null }> {
-  const rows = await listOrgRows(ctx.env.DB, query.cursor, query.limit + 1);
+  const rows = await listOrgRows(ctx.env.DB, query.cursor, query.limit + 1, query.q);
   const page = rows.slice(0, query.limit);
   const counts = await countsFor(
     ctx.env.DB,
@@ -131,7 +132,7 @@ export async function updateOrg(
     status: input.status ?? before.status,
     default_identity_id:
       input.defaultIdentityId === undefined ? before.default_identity_id : input.defaultIdentityId,
-    branding: input.branding ? JSON.stringify(input.branding) : before.branding,
+    branding: input.branding ? keepImages(input.branding, before.branding) : before.branding,
     updated_at: ctx.clock.now(),
   };
   await updateOrgRow(ctx.env.DB, next);
@@ -147,12 +148,49 @@ export async function updateOrg(
     await recordAudit(ctx, {
       ...auditActor(actor),
       orgId: id,
-      action: input.status && input.status !== before.status ? `org.${input.status}` : 'org.update',
+      action:
+        input.status && input.status !== before.status ? statusAction(input.status) : 'org.update',
       targetType: 'org',
       targetId: id,
       detail: { changes },
     });
   return toDto(next);
+}
+
+const statusAction = (status: 'active' | 'suspended') =>
+  status === 'suspended' ? 'org.suspend' : 'org.reactivate';
+
+/** Images are set only by the upload endpoint, so an update keeps the stored ones. */
+function keepImages(next: Branding, stored: string): string {
+  const { logo: _logo, icon: _icon, ...rest } = next;
+  const prev = JSON.parse(stored) as Branding;
+  return JSON.stringify({
+    ...rest,
+    ...(prev.logo ? { logo: prev.logo } : {}),
+    ...(prev.icon ? { icon: prev.icon } : {}),
+  });
+}
+
+/** Suspend: passes stop updating and the org's API keys stop working. */
+export async function setOrgStatus(
+  ctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  status: 'active' | 'suspended',
+): Promise<OrgDto> {
+  const before = await requireOrg(ctx, id);
+  if (before.status === status) return toDto(before);
+  const now = ctx.clock.now();
+  await setOrgStatusRow(ctx.env.DB, id, status, now);
+  await recordAudit(ctx, {
+    ...auditActor(actor),
+    orgId: id,
+    action: statusAction(status),
+    targetType: 'org',
+    targetId: id,
+    detail: { changes: { status: { from: before.status, to: status } } },
+  });
+  return toDto({ ...before, status, updated_at: now });
 }
 
 /** Soft delete: passes and audit rows keep their org reference. */
