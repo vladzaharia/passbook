@@ -52,7 +52,7 @@ export function AuditPage({
     org: orgName(filters.orgId ?? null),
   };
   const toolbar = <AuditFilters search={filters} onSearch={onSearch} names={names} />;
-  const empty = <EmptyState art="log" title="No entries" />;
+  const empty = <EmptyState art="log" mood="flat" title="No entries" />;
   const emptyFiltered = (
     <EmptyState
       art="log"

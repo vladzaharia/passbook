@@ -241,7 +241,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
         />
         {delivery.isError ? (
           <CardBody>
-            <ErrorState error={delivery.error} onRetry={() => void delivery.refetch()} />
+            <ErrorState inline error={delivery.error} onRetry={() => void delivery.refetch()} />
           </CardBody>
         ) : (
           <DataTable

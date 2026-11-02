@@ -121,7 +121,7 @@ function Bound({ pass, onChange }: { pass: PassDetailDto; onChange: () => void }
   const [unbind, setUnbind] = useState(false);
   if (connection.isPending) return <SkeletonKeyValue label="Loading connection" />;
   if (connection.isError)
-    return <ErrorState error={connection.error} onRetry={() => void connection.refetch()} />;
+    return <ErrorState inline error={connection.error} onRetry={() => void connection.refetch()} />;
   const c = connection.data;
   return (
     <Card>

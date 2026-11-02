@@ -86,7 +86,18 @@
   transform-origin: 48px 66px;
 }
 [data-art="wallet"] [data-mood="sad"] > [data-body] {
+  --mk: wl-w-sigh;
   transform: scale(1.02, 0.95);
+}
+[data-art="wallet"] [data-mood="flat"] > [data-body] {
+  transform: scale(1.01, 0.97);
+}
+/* Curious tips its passes toward what it looks at; happy hops once. */
+[data-art="wallet"] [data-mood="curious"] [data-fan] {
+  transform: rotate(7deg);
+}
+[data-art="wallet"] [data-mood="happy"] > [data-body] {
+  --mk: wl-w-hop;
 }
 [data-art="wallet"] [data-part="w"][data-mood="sad"] {
   --b: translateY(0);
@@ -153,9 +164,17 @@
   [data-art="wallet"] [data-body] {
     transition: transform 240ms var(--art-sp);
   }
-  /* One sigh once the art has landed: a breath in, then down into the slump. */
-  [data-art="wallet"] [data-mood="sad"] > [data-body] {
-    animation: wl-w-sigh 640ms var(--art-mv) var(--wl-sigh-delay, 680ms) backwards;
+  /* The mood's one beat once the art has landed: sad sighs into its slump, curious leans in,
+     happy hops. */
+  [data-art="wallet"] [data-mood] > [data-body],
+  [data-art="wallet"] [data-mood="curious"] [data-fan] {
+    animation: var(--mk, none) 640ms var(--art-mv) var(--wl-sigh-delay, 680ms) backwards;
+  }
+  [data-art="wallet"] [data-mood="curious"] [data-fan] {
+    --mk: wl-w-lean;
+  }
+  .wl-art[data-still] :is([data-body], [data-fan]) {
+    animation: none;
   }
 }
 @keyframes wl-w-sigh {
@@ -165,6 +184,40 @@
   40% {
     transform: translateY(-1.5px) scale(0.98, 1.04);
   }
+}
+@keyframes wl-w-lean {
+  0% {
+    transform: none;
+  }
+  45% {
+    transform: rotate(12deg);
+  }
+}
+@keyframes wl-w-hop {
+  35% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: scale(1.05, 0.93);
+  }
+}
+
+/* Buddy (buddy.tsx): centred on its host's top edge, base (y 66 of 72) on the edge, the prop on
+   the same edge at its right. */
+.wl-buddy {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% -91.67%;
+  pointer-events: none;
+}
+.wl-buddy-prop {
+  position: absolute;
+  bottom: var(--wl-prop-y, 1px);
+  left: 74%;
+}
+.wl-buddy[data-prop] [data-look] {
+  transform: translateX(1.5px);
 }
 [data-art="wallet"] [data-lift] [data-part="c2"] {
   --t: translateY(-6px);

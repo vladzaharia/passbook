@@ -37,7 +37,8 @@ function Changes({ id, from, to }: { id: string; from: number; to: number }) {
   }, [landed]);
   if (diff.isPending && diff.fetchStatus !== 'idle')
     return <SkeletonRows rows={3} label="Loading changes" />;
-  if (diff.isError) return <ErrorState error={diff.error} onRetry={() => void diff.refetch()} />;
+  if (diff.isError)
+    return <ErrorState inline error={diff.error} onRetry={() => void diff.refetch()} />;
   const changes = diff.data?.changes ?? [];
   if (changes.length === 0) return <p className="text-sm text-fg-muted">No field changes.</p>;
   return (
