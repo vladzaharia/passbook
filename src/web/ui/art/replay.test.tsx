@@ -211,7 +211,7 @@ describe('scene stylesheets', () => {
       for (const [sel, body] of blocks(text)) {
         if (sel.startsWith('@keyframes')) continue;
         if (/(^|[\s;{])(animation|transition)(-[a-z]+)?\s*:/.test(body))
-          expect(sel, f).toBe('@media (prefers-reduced-motion: no-preference)');
+          expect(sel, f).toMatch(/^@media \(prefers-reduced-motion: no-preference\)( and |$)/);
       }
     }
   });

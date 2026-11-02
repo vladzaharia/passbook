@@ -35,11 +35,11 @@ span[data-replay] .wl-art > :not([data-part="sd"], defs) {
   :is([data-scene="wave"], [data-scene="tear"], [data-scene="nudge"]):not([data-run]) {
     transform: translateY(-50px);
   }
-  /* A pointer over it: one blink, so it reads as alive. */
-  @media (hover: hover) {
-    [data-replay]:hover :is(.e, [data-eye]) {
-      animation: wl-r-blink 180ms var(--art-mv, ease-in-out);
-    }
+}
+/* A pointer over it: one blink, so it reads as alive. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  [data-replay]:hover :is(.e, [data-eye]) {
+    animation: wl-r-blink 180ms var(--art-mv, ease-in-out);
   }
 }
 @keyframes wl-r-blink {
