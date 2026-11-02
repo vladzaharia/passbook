@@ -7,6 +7,7 @@ import { api } from './api.ts';
 export interface Swatch {
   background: string;
   foreground: string;
+  label?: string;
   /** Artwork, background, strip or thumbnail, in that order, when the template has one. */
   image?: string;
 }
@@ -28,12 +29,17 @@ export function useSwatches(templateIds: readonly string[]): Map<string, Swatch>
       results.forEach((r, i) => {
         const id = templateIds[i];
         const data = r.data;
-        const j = data?.passJson as { backgroundColor?: unknown; foregroundColor?: unknown };
+        const j = data?.passJson as {
+          backgroundColor?: unknown;
+          foregroundColor?: unknown;
+          labelColor?: unknown;
+        };
         if (!id || !data || typeof j?.backgroundColor !== 'string') return;
         const name = IMAGES.find((n) => data.assetNames.includes(n));
         map.set(id, {
           background: j.backgroundColor,
           foreground: typeof j.foregroundColor === 'string' ? j.foregroundColor : '#fff',
+          ...(typeof j.labelColor === 'string' ? { label: j.labelColor } : {}),
           ...(name ? { image: assetUrlMap(data.assetBaseUrl, [name])[name] } : {}),
         });
       });

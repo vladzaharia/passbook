@@ -2,6 +2,17 @@ import { contrast, parseColor } from '@/shared/pass-view/color.ts';
 
 export const HEX = /^#[0-9a-fA-F]{6}$/;
 
+/** "#0f172a" or pass.json's "rgb(15, 23, 42)" as "#0f172a" (the colour picker takes hex only). */
+export function hexOf(color: string): string | undefined {
+  if (HEX.test(color)) return color;
+  const m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/.exec(color);
+  if (!m) return undefined;
+  return `#${m
+    .slice(1)
+    .map((n) => Math.min(255, Number(n)).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 /** Light and dark email grounds (email shell). */
 const EMAIL_LIGHT = '#ffffff';
 const EMAIL_DARK = '#060912';

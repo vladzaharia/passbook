@@ -143,6 +143,7 @@ export function OrgForm({ org }: { org: Org }) {
                 label="Accent colour"
                 value={draft.accent}
                 fallback={DEFAULT_ACCENT}
+                empty="Teal"
                 error={errors.accent}
                 help="Email header and links. Empty uses teal."
                 onChange={(accent) => patch({ accent })}
