@@ -15,7 +15,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requestActor, valid } from '../audit/http.ts';
+import { requestActor } from '../audit/http.ts';
 import { probeApns } from './apns-probe.ts';
 import {
   deleteIdentity,

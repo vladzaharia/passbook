@@ -12,7 +12,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { methodScope, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from '../passes/http.ts';
+import { actorFor, assertOrg, type C, orgScopeOf, svc } from '../passes/http.ts';
 import {
   assignHolder,
   assignHoldersBulk,

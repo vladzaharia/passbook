@@ -56,8 +56,6 @@ templatesRoutes.use(
 );
 
 type C = Context<AppBindings>;
-const valid = <T>(c: C, target: 'query' | 'param' | 'json'): T =>
-  (c.req as unknown as { valid(target: string): unknown }).valid(target) as T;
 
 async function archiveBytes(c: C): Promise<Uint8Array> {
   const type = c.req.header('content-type') ?? '';

@@ -6,7 +6,7 @@ import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { servePassFile } from '../passes/file.ts';
-import { type C, svc, valid } from '../passes/http.ts';
+import { type C, svc } from '../passes/http.ts';
 import { personalize } from './personalize.ts';
 import {
   authorizePass,

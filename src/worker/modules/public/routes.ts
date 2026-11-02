@@ -9,7 +9,7 @@ import { passDevice } from '../../ssr/device.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { qrDataUri } from '../../ssr/qr.ts';
 import { servePassFile } from '../passes/file.ts';
-import { type C, svc, valid } from '../passes/http.ts';
+import { type C, svc } from '../passes/http.ts';
 import { openPublicAsset, pageModel, passForToken, supportContacts } from './service.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */

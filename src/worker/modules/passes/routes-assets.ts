@@ -11,7 +11,7 @@ import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { deletePassAsset, listPassAssets, putPassAsset } from './asset-service.ts';
 import { MAX_ASSET_BYTES } from './assets.ts';
-import { actorFor, type C, orgScopeOf, svc, valid } from './http.ts';
+import { actorFor, type C, orgScopeOf, svc } from './http.ts';
 
 type Params = z.infer<typeof IdParamSchema>;
 

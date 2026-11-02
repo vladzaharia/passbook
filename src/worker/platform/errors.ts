@@ -76,11 +76,6 @@ export class RateLimitedError extends AppError {
     super('RATE_LIMITED', 429, message, { headers: { 'retry-after': String(retryAfterSeconds) } });
   }
 }
-export class NotImplementedError extends AppError {
-  constructor(message = 'Not implemented.') {
-    super('NOT_IMPLEMENTED', 501, message);
-  }
-}
 export class UpstreamError extends AppError {
   constructor(message = 'Upstream request failed.', code = 'UPSTREAM') {
     super(code, 502, message);

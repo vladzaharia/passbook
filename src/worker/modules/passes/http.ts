@@ -8,11 +8,6 @@ import type { Actor } from './service.ts';
 
 export type C = Context<AppBindings>;
 
-/** Reads the zod-validated part of a request registered through `register()`. */
-export function valid<T>(c: C, target: 'query' | 'param' | 'json'): T {
-  return (c.req as unknown as { valid(t: string): unknown }).valid(target) as T;
-}
-
 export const svc = serviceContext;
 
 export function authOf(c: C): AuthContext {

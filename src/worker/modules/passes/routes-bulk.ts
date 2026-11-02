@@ -9,7 +9,7 @@ import { requireAdmin } from '../../platform/auth.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction } from './bulk-actions.ts';
-import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
+import { actorFor, assertOrg, type C, orgScopeOf, svc } from './http.ts';
 
 /** Many-pass actions: void or email a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {

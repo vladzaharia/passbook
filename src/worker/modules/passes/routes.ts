@@ -22,7 +22,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
-import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
+import { actorFor, assertOrg, type C, orgScopeOf, svc } from './http.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
 import {

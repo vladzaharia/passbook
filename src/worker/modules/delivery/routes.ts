@@ -3,7 +3,7 @@ import { DeliveryEntrySchema, IdSchema } from '../../../shared/contracts/index.t
 import { requireAdmin } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { type C, valid } from '../passes/http.ts';
+import type { C } from '../passes/http.ts';
 import { listPassDeliveries } from './service.ts';
 
 export const deliveryRoutes = createRouter();

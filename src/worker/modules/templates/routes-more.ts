@@ -15,8 +15,6 @@ import { recentUploads } from './service.ts';
 
 type C = Context<AppBindings>;
 type Router = ReturnType<typeof createRouter>;
-const valid = <T>(c: C, target: 'query' | 'param'): T =>
-  (c.req as unknown as { valid(target: string): unknown }).valid(target) as T;
 
 /** GET /uploads; registered before GET /{id} so "uploads" is not read as an id. */
 export function registerUploadList(router: Router): void {

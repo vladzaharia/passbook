@@ -9,7 +9,7 @@ import { requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requestActor, valid } from '../audit/http.ts';
+import { requestActor } from '../audit/http.ts';
 import { listSettings, settingsImpact, updateSettings } from './service.ts';
 
 export const settingsRoutes = createRouter();
