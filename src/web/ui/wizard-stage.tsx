@@ -1,5 +1,4 @@
 import { type ReactNode, useId } from 'react';
-import './wizard.css';
 
 /**
  * The wizard's stage at 1024 and up: a full-height slice on the sunken surface, from the top bar
