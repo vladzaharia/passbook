@@ -209,6 +209,7 @@ export function DataTable<T>({
                             className={cn(
                               'h-10 px-3 font-medium whitespace-nowrap text-fg-muted',
                               meta.numeric && 'text-right',
+                              meta.grow && 'w-full',
                               meta.hideBelow && HIDE_BELOW[meta.hideBelow],
                             )}
                           >
@@ -251,7 +252,9 @@ export function DataTable<T>({
                               className={cn(
                                 'h-11 px-3 py-2 align-middle text-fg whitespace-nowrap',
                                 meta.nowrap && 'max-w-56 truncate',
+                                meta.nowrap === 'wide' && 'xl:max-w-84',
                                 meta.numeric && 'text-right tabular-nums',
+                                meta.grow && 'w-full',
                                 meta.hideBelow && HIDE_BELOW[meta.hideBelow],
                               )}
                             >
