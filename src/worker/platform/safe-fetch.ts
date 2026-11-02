@@ -50,7 +50,7 @@ export function isPrivateIp(ip: string): boolean {
   const bare = ip.replace(/^\[|\]$/g, '').toLowerCase();
   const v4 = ipv4ToInt(bare);
   if (v4) {
-    const [a = 0, b = 0] = v4;
+    const [a = 0, b = 0, c = 0] = v4;
     return (
       a === 0 ||
       a === 10 ||
@@ -58,7 +58,10 @@ export function isPrivateIp(ip: string): boolean {
       (a === 100 && b >= 64 && b <= 127) ||
       (a === 169 && b === 254) ||
       (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 0) ||
+      (a === 192 && b === 0) || // 192.0.0.0/24 and 192.0.2.0/24
+      (a === 192 && b === 88 && c === 99) || // 192.88.99.0/24 6to4 relay
+      (a === 198 && b === 51 && c === 100) || // 198.51.100.0/24 documentation
+      (a === 203 && b === 0 && c === 113) || // 203.0.113.0/24 documentation
       (a === 192 && b === 168) ||
       (a === 198 && (b === 18 || b === 19)) ||
       a >= 224

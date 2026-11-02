@@ -26,8 +26,10 @@ export const appleRoutes = createRouter();
 // device and per pass. /log has neither, so it keeps the IP key.
 appleRoutes.use('*', rateLimit('RL_APPLE_IP'));
 const byDevice = (c: Context<AppBindings>) => `device:${c.req.param('deviceId')?.slice(0, 128)}`;
+export const passRateKey = (passTypeId: string | undefined, serial: string | undefined) =>
+  `pass:${passTypeId?.slice(0, 128)}:${serial?.slice(0, 64)}`;
 const byPass = (c: Context<AppBindings>) =>
-  `pass:${c.req.param('passTypeId')}:${c.req.param('serial')}`;
+  passRateKey(c.req.param('passTypeId'), c.req.param('serial'));
 appleRoutes.use('/devices/:deviceId/*', rateLimit('RL_APPLE', byDevice));
 appleRoutes.use('/passes/:passTypeId/:serial', rateLimit('RL_APPLE', byPass));
 appleRoutes.use('/passes/:passTypeId/:serial/personalize', rateLimit('RL_APPLE', byPass));

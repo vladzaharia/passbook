@@ -42,18 +42,31 @@ export async function registrationCount(db: D1Database, passId: string): Promise
   return row?.n ?? 0;
 }
 
+// One identity serves every org, so a device row is shared. A pass of org B must not redirect the
+// pushes of a device that already holds passes of org A.
+const NO_OTHER_ORG = `NOT EXISTS (SELECT 1 FROM registrations r JOIN passes p ON p.id = r.pass_id
+  WHERE r.device_id = devices.device_id AND r.identity_id = devices.identity_id AND p.org_id <> ?)`;
+
 /** Device and registration in one transaction; the `registrations_cap` trigger enforces the cap. */
 export async function addRegistration(
   db: D1Database,
-  r: { deviceId: string; identityId: string; passId: string; pushToken: string; now: number },
+  r: {
+    deviceId: string;
+    identityId: string;
+    passId: string;
+    pushToken: string;
+    now: number;
+    orgId?: string;
+  },
 ): Promise<void> {
   await batch(db, [
     stmt(
       db,
       `INSERT INTO devices (device_id, identity_id, push_token, updated_at) VALUES (?, ?, ?, ?)
        ON CONFLICT (device_id, identity_id) DO UPDATE SET push_token = excluded.push_token,
-         updated_at = excluded.updated_at`,
-      [r.deviceId, r.identityId, r.pushToken, r.now],
+         updated_at = excluded.updated_at
+       WHERE ${NO_OTHER_ORG}`,
+      [r.deviceId, r.identityId, r.pushToken, r.now, r.orgId ?? ''],
     ),
     stmt(
       db,
@@ -69,11 +82,13 @@ export async function updatePushToken(
   identityId: string,
   pushToken: string,
   now: number,
+  orgId: string,
 ): Promise<void> {
   await run(
     db,
-    'UPDATE devices SET push_token = ?, updated_at = ? WHERE device_id = ? AND identity_id = ?',
-    [pushToken, now, deviceId, identityId],
+    `UPDATE devices SET push_token = ?, updated_at = ? WHERE device_id = ? AND identity_id = ?
+     AND ${NO_OTHER_ORG}`,
+    [pushToken, now, deviceId, identityId, orgId],
   );
 }
 

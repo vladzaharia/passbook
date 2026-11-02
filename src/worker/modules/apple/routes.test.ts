@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, fakeRateLimiter } from '../../../../test/helpers/index.ts';
+import { fakeAuth, fakeRateLimiter, makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -7,6 +7,7 @@ import { getPass, type Pass } from '../passes/repo.ts';
 import { updatePass } from '../passes/service.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { dailyApple } from './jobs.ts';
+import { passRateKey } from './routes.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TYPE = 'pass.im.plrs.wallet';
@@ -51,6 +52,21 @@ describe('register', () => {
       [pass.id],
     );
     expect(count?.n).toBe(1);
+  });
+
+  it('does not let a pass of another org move an existing device’s push token', async () => {
+    const a = await kit.pass();
+    const otherOrg = await makeOrg(kit.fx, { name: 'Other Gym' });
+    const b = await kit.pass({ orgId: otherOrg.id });
+    expect((await register(a, 'dev-shared', token('a'))).status).toBe(201);
+    await register(b, 'dev-shared', token('c'));
+    await register(b, 'dev-shared', token('d'));
+    const device = await first<{ push_token: string }>(
+      kit.env.DB,
+      'SELECT push_token FROM devices WHERE device_id = ?',
+      ['dev-shared'],
+    );
+    expect(device?.push_token).toBe(token('a'));
   });
 
   it('answers 401 for a missing, wrong or differently sized token and for unknown passes alike', async () => {
@@ -340,6 +356,12 @@ describe('retention', () => {
       "SELECT seq FROM sqlite_sequence WHERE name = 'revisions'",
     );
     expect(seq?.seq ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('rate limit keys', () => {
+  it('caps the pass key at 200 characters', () => {
+    expect(passRateKey('t'.repeat(10_000), 's'.repeat(10_000)).length).toBeLessThanOrEqual(200);
   });
 });
 

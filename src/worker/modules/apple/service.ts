@@ -82,7 +82,7 @@ export async function registerDevice(
   const db = ctx.env.DB;
   const now = ctx.clock.now();
   if (await registrationExists(db, input.deviceId, identity.id, pass.id)) {
-    await updatePushToken(db, input.deviceId, identity.id, input.pushToken, now);
+    await updatePushToken(db, input.deviceId, identity.id, input.pushToken, now, pass.orgId);
     return 'existing';
   }
   const full = new AppError(
@@ -98,6 +98,7 @@ export async function registerDevice(
       passId: pass.id,
       pushToken: input.pushToken,
       now,
+      orgId: pass.orgId,
     });
   } catch (error) {
     // Lost the race for the last slot: the trigger aborts the batch.
