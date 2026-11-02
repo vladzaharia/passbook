@@ -67,6 +67,13 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/generated/**', '**/*.test.*'],
+      // Per area, so each coverage run (node projects, worker project) checks the files it measures.
+      thresholds: {
+        'src/worker/**': { lines: 90, branches: 80 },
+        'src/web/**': { lines: 85, branches: 75 },
+        'src/passkit/**': { lines: 88, branches: 80 },
+        'src/shared/**': { lines: 90, branches: 80 },
+      },
     },
   },
 });

@@ -24,7 +24,7 @@
     "test:unit": "vitest run --project unit",
     "test:worker": "vitest run --project worker",
     "test:web": "vitest run --project web",
-    "coverage": "vitest run --project unit --project web --coverage --coverage.reportsDirectory=coverage/node && vitest run --project worker --coverage --coverage.provider=istanbul --coverage.reportsDirectory=coverage/worker",
+    "coverage": "vitest run --project unit --project web --coverage --coverage.include='src/{passkit,shared,web}/**/*.{ts,tsx}' --coverage.reportsDirectory=coverage/node && vitest run --project worker --coverage --coverage.provider=istanbul --coverage.include='src/worker/**/*.{ts,tsx}' --coverage.reportsDirectory=coverage/worker",
     "test:e2e": "playwright test",
     "db:local": "wrangler d1 migrations apply wallet-platform --local",
     "breakglass": "node tools/breakglass.ts",
