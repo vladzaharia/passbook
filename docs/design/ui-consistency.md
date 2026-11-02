@@ -73,7 +73,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Page | Layout |
 | --- | --- |
 | List, Settings | Full main width |
-| Detail with pass preview (pass, template) | ≥1280: preview column 20rem + tabs. 640–1279: horizontal summary card (pass 220px, status, holder, quick actions) above the tabs. <640: compact row (64px still, title, `Show pass` opens the stage in a bottom sheet) |
+| Detail with pass preview (pass, template) | ≥1024: preview column + tabs (16rem to 1279, 20rem from 1280). 640–1023: horizontal summary card (pass 180px, holder, quick actions; the header carries status and version) above the tabs. <640: compact row (64px still, title, `Show pass` opens the stage in a bottom sheet) |
 | Detail (org, user, identity, connection, status) | `TwoPane`: main column + 20rem aside at ≥1280 (summary, counts, danger actions); stacked below |
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |

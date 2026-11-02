@@ -205,15 +205,7 @@ function Loaded({
             dim={voided}
           />
         }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Holder', value: p.holderEmail },
-              { label: 'Version', value: `v${p.version}` },
-              { label: 'On device', value: p.deviceCount > 0 ? String(p.deviceCount) : null },
-            ]}
-          />
-        }
+        summary={<KeyValue items={[{ label: 'Holder', value: p.holderEmail }]} />}
       >
         <Tabs value={tab} onValueChange={(t) => setSearch({ tab: t as Tab })} className="min-w-0">
           <TabsList aria-label="Pass sections">
