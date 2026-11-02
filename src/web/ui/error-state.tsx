@@ -44,6 +44,8 @@ export function ErrorState({
 }: ErrorStateProps) {
   const requestId = isApiError(error) ? error.requestId : undefined;
   const [retrying, setRetrying] = useState(false);
+  // Each Retry sends the buddy back to the plug.
+  const [tries, setTries] = useState(0);
   const failedAgain = useChangeCount(error);
   const art = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -55,6 +57,7 @@ export function ErrorState({
   }, [failedAgain]);
 
   async function retry() {
+    setTries((n) => n + 1);
     setRetrying(true);
     try {
       await onRetry?.();
@@ -83,7 +86,7 @@ export function ErrorState({
             </span>
           </>
         ) : (
-          <Buddy mood="sad" prop={<UnpluggedArt size="sm" />} />
+          <Buddy mood="sad" scene="plug" replay={tries} prop={<UnpluggedArt size="sm" />} />
         )}
       </div>
       <div

@@ -9,6 +9,7 @@ import {
   Breadcrumbs,
   Button,
   Callout,
+  Cameo,
   Card,
   CardBody,
   CardHeader,
@@ -18,6 +19,7 @@ import {
   PassSideToggle,
   Skeleton,
   StatusPill,
+  WalletArt,
 } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { canAddToWallet } from './device.ts';
@@ -72,18 +74,26 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
         </p>
       </div>
       <div className="flex min-w-0 flex-col items-center gap-3 [grid-area:pass]">
-        <PassCardStage
-          view={view}
-          face={face}
-          flippable
-          enter={dealt}
-          dim={voided}
-          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
-          settle={pass.status}
-          dip={dip}
-          syncing={isPendingRefresh(pass, Date.now())}
-          transitionName={`pass-${pass.id}`}
-        />
+        <div className="relative isolate w-full max-w-[22rem]">
+          <PassCardStage
+            view={view}
+            face={face}
+            flippable
+            enter={dealt}
+            dim={voided}
+            mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+            settle={pass.status}
+            dip={dip}
+            syncing={isPendingRefresh(pass, Date.now())}
+            transitionName={`pass-${pass.id}`}
+          />
+          {/* Not on a device yet: the buddy steps out from behind the card and points: add it. */}
+          {active && !pass.inWallet ? (
+            <Cameo scene="nudge" className="absolute top-[calc(100%+2px)] right-0 -z-1">
+              <WalletArt state="login" mood="happy" size="sm" beat={false} />
+            </Cameo>
+          ) : null}
+        </div>
         <PassSideToggle value={face} onChange={setFace} />
       </div>
       <div

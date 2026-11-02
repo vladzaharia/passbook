@@ -1,0 +1,98 @@
+/* Cheer (a template imported): it crouches, hops and throws its middle pass high like a finished
+   template, the outer two out like arms; it lands, holds it up with a wiggle and lowers it. 1.8 s,
+   once; 1% = 18 ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="cheer"][data-run] .wl-art [data-body] {
+    animation: wl-s-cheer-body 1.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="cheer"][data-run] .wl-art [data-part="c2"] {
+    animation: wl-s-cheer-up 1.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="cheer"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-cheer-l 1.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="cheer"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-cheer-r 1.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="cheer"][data-run] .wl-art [data-part="joy"] {
+    animation: wl-s-cheer-joy 1.8s ease-in-out;
+  }
+}
+
+@keyframes wl-s-cheer-body {
+  12% {
+    translate: 0 0;
+    scale: 1.06 0.9;
+  }
+  26% {
+    translate: 0 -9px;
+    scale: 0.96 1.06;
+  }
+  36% {
+    translate: 0 -10px;
+    scale: 1;
+  }
+  48% {
+    translate: 0 0;
+    scale: 1.07 0.9;
+  }
+  58% {
+    translate: 0 0;
+    scale: 0.98 1.03;
+  }
+  66% {
+    scale: 1;
+  }
+}
+@keyframes wl-s-cheer-up {
+  14% {
+    translate: 0 2px;
+    rotate: 0deg;
+  }
+  30%,
+  70% {
+    translate: 0 -14px;
+  }
+  46% {
+    rotate: -6deg;
+  }
+  56% {
+    rotate: 6deg;
+  }
+  64% {
+    rotate: 0deg;
+  }
+  84% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-cheer-l {
+  14% {
+    rotate: 6deg;
+  }
+  30%,
+  70% {
+    rotate: -16deg;
+  }
+  84% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-cheer-r {
+  14% {
+    rotate: -6deg;
+  }
+  30%,
+  70% {
+    rotate: 16deg;
+  }
+  84% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-cheer-joy {
+  26%,
+  60% {
+    scale: 1.15 1.25;
+  }
+}

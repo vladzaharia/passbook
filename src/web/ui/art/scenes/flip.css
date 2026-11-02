@@ -1,0 +1,107 @@
+/* Flip (audit log, nothing logged; flat): it leafs through the log with its gold pass, three
+   flicks, each scrolling the lines up; nothing new comes. It looks at you, unimpressed, and
+   shrugs. 2.8 s, once; 1% = 28 ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="flip"][data-run] .wl-art [data-body] {
+    animation: wl-s-flip-body 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="flip"][data-run] .wl-art [data-look] {
+    animation: wl-s-flip-look 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="flip"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-flip-arm 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="flip"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-shrug-l 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="flip"][data-run] [data-art="log"] :is([data-part="l"], [data-part="n"]) {
+    animation: wl-s-flip-lines 2.8s ease-in-out;
+  }
+}
+
+@keyframes wl-s-flip-body {
+  6% {
+    rotate: 0deg;
+  }
+  14%,
+  50% {
+    rotate: 4deg;
+    translate: 0 0;
+    scale: 1;
+  }
+  58% {
+    rotate: 0deg;
+  }
+  64%,
+  72% {
+    translate: 0 -2px;
+    scale: 0.98 1.03;
+  }
+  80% {
+    translate: 0 0.5px;
+    scale: 1.02 0.97;
+  }
+  88% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes wl-s-flip-look {
+  6%,
+  50% {
+    translate: 1.6px 1.2px;
+  }
+  60%,
+  86% {
+    translate: 0 0;
+  }
+}
+/* Reaches the log; flicks up at 18, 30 and 42%. */
+@keyframes wl-s-flip-arm {
+  6% {
+    rotate: 0deg;
+  }
+  14%,
+  26%,
+  38%,
+  50% {
+    rotate: 46deg;
+  }
+  19%,
+  31%,
+  43% {
+    rotate: 34deg;
+  }
+  58% {
+    rotate: 0deg;
+  }
+}
+/* Each flick scrolls the lines up and out; the same lines come back from below. */
+@keyframes wl-s-flip-lines {
+  0%,
+  17%,
+  29%,
+  41% {
+    translate: 0 0;
+    opacity: 1;
+  }
+  20%,
+  32%,
+  44% {
+    translate: 0 -5px;
+    opacity: 0;
+  }
+  20.01%,
+  32.01%,
+  44.01% {
+    translate: 0 5px;
+    opacity: 0;
+  }
+  24%,
+  36%,
+  48%,
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}

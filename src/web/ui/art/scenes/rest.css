@@ -1,0 +1,49 @@
+/* Buddy scenes at rest, in the first paint. The scenes themselves (scenes/*.css) load with the
+   art registry and play under [data-run] (replay.ts); each ends on the pose drawn here. */
+
+/* Only painted parts take the click that replays a scene; the box around them stays clickthrough. */
+span[data-replay] {
+  pointer-events: none;
+}
+span[data-replay] .wl-art > :not([data-part="sd"], defs) {
+  pointer-events: visiblePainted;
+}
+.wl-art .e {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Search: no dotted pass over its head (it is looking for one); it ends facing you. */
+[data-scene="search"] [data-part="gh"] {
+  display: none;
+}
+.wl-buddy[data-scene="search"] [data-mood] [data-part="eyes"] {
+  --t: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  span[data-replay] .wl-art > :not([data-part="sd"], defs),
+  svg[data-replay] {
+    cursor: pointer;
+  }
+  /* The scene owns the mood's beat and the face's wink. */
+  [data-replay]:not([data-scene="beat"], [data-scene="hello"]) :is([data-body], [data-fan]),
+  .wl-face[data-replay]:is([data-scene="cheer"], [data-scene="post"]) [data-wink] {
+    animation: none;
+  }
+  /* Beside a pass: behind it until its scene steps it out. */
+  :is([data-scene="wave"], [data-scene="tear"], [data-scene="nudge"]):not([data-run]) {
+    transform: translateY(-50px);
+  }
+}
+/* A pointer over it: one blink, so it reads as alive. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  [data-replay]:hover :is(.e, [data-eye]) {
+    animation: wl-r-blink 180ms var(--art-mv, ease-in-out);
+  }
+}
+@keyframes wl-r-blink {
+  50% {
+    scale: 1 0.1;
+  }
+}

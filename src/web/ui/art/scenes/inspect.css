@@ -1,0 +1,155 @@
+/* Inspect (a list with nothing in it, curious): it eyes the entity's art, leans in and taps it
+   twice with its gold pass; the art plays its own beat; it tilts its head, brow up, and blinks.
+   2.4 s, once; 1% = 24 ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="inspect"][data-run] .wl-art [data-body] {
+    animation: wl-s-inspect-body 2.4s ease-in-out;
+  }
+  .wl-buddy[data-scene="inspect"][data-run] .wl-art [data-look] {
+    animation: wl-s-inspect-look 2.4s ease-in-out;
+  }
+  .wl-buddy[data-scene="inspect"][data-run] .wl-art [data-fan] {
+    animation: wl-s-inspect-fan 2.4s ease-in-out;
+  }
+  .wl-buddy[data-scene="inspect"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-inspect-tap 2.4s ease-in-out;
+  }
+  .wl-buddy[data-scene="inspect"][data-run] .wl-art [data-part="br"] {
+    animation: wl-s-brow 2.4s ease-in-out;
+  }
+  .wl-buddy[data-scene="inspect"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-inspect-blink 2.4s ease-in-out;
+  }
+  .wl-buddy[data-scene="inspect"][data-run] .wl-buddy-prop {
+    transform-origin: 50% 100%;
+    animation: wl-s-inspect-bump 2.4s ease-out;
+  }
+  /* The second tap sets off the art's own beat. */
+  .wl-buddy[data-scene="inspect"][data-run] .wl-buddy-prop [data-b] {
+    animation: wl-s-tap var(--bu, 400ms) var(--be, var(--art-mv)) calc(820ms + var(--bd, 0ms));
+  }
+}
+
+@keyframes wl-s-inspect-body {
+  8% {
+    rotate: -1.5deg;
+    scale: 1.02 0.97;
+  }
+  18%,
+  40% {
+    rotate: 5deg;
+    scale: 1;
+  }
+  50% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+  60%,
+  78% {
+    rotate: -6deg;
+    translate: 0 -1px;
+  }
+  88% {
+    rotate: 1deg;
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-inspect-look {
+  6%,
+  45% {
+    translate: 1.2px 1px;
+  }
+  52% {
+    translate: 1px -0.8px;
+  }
+  60%,
+  84% {
+    translate: -0.8px -0.4px;
+  }
+}
+@keyframes wl-s-inspect-fan {
+  10% {
+    rotate: -3deg;
+  }
+  20%,
+  46% {
+    rotate: 4deg;
+  }
+  56% {
+    rotate: 0deg;
+  }
+}
+/* The gold pass reaches out: tap, back, tap. */
+@keyframes wl-s-inspect-tap {
+  14% {
+    rotate: 0deg;
+  }
+  24% {
+    rotate: 32deg;
+  }
+  28% {
+    rotate: 23deg;
+  }
+  33% {
+    rotate: 33deg;
+  }
+  38% {
+    rotate: 25deg;
+  }
+  48% {
+    rotate: -3deg;
+  }
+  54% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-inspect-bump {
+  0%,
+  23% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  25% {
+    translate: 1.5px 0;
+    rotate: 3deg;
+  }
+  29% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  34.5% {
+    translate: 2px 0;
+    rotate: 4deg;
+  }
+  40% {
+    translate: 0 0;
+    rotate: -1deg;
+  }
+  45%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-brow {
+  0%,
+  52%,
+  90%,
+  100% {
+    translate: 0 0;
+  }
+  58%,
+  82% {
+    translate: 0 -1.4px;
+  }
+}
+@keyframes wl-s-inspect-blink {
+  0%,
+  64%,
+  68%,
+  100% {
+    scale: 1;
+  }
+  66% {
+    scale: 1 0.1;
+  }
+}

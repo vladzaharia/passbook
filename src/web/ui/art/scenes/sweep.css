@@ -1,0 +1,126 @@
+/* Sweep (filtered to nothing): it watches its lens sweep left across the dimmed art and back,
+   finds nothing and shrugs, passes out like hands. 2.8 s, once; 1% = 28 ms. The glass is in the
+   lens overlay's own units (0.4 px each). */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="sweep"][data-run] .wl-art [data-body] {
+    animation: wl-s-sweep-body 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="sweep"][data-run] .wl-art [data-look] {
+    animation: wl-s-sweep-look 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="sweep"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-shrug-l 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="sweep"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-shrug-r 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="sweep"][data-run] .wl-art [data-part="br"] {
+    animation: wl-s-sweep-brow 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="sweep"][data-run] .wl-buddy-prop [data-part="g"] {
+    animation: wl-s-sweep-glass 2.8s ease-in-out;
+  }
+}
+
+@keyframes wl-s-sweep-body {
+  8%,
+  56% {
+    rotate: 4deg;
+    translate: 0 0;
+    scale: 1;
+  }
+  64%,
+  72% {
+    rotate: 0deg;
+    translate: 0 -2px;
+    scale: 0.98 1.03;
+  }
+  80% {
+    translate: 0 0.5px;
+    scale: 1.02 0.97;
+  }
+  88% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes wl-s-sweep-look {
+  6% {
+    translate: 1.6px 1.2px;
+  }
+  30% {
+    translate: 0.4px 1.4px;
+  }
+  40% {
+    translate: -0.6px 1.4px;
+  }
+  52% {
+    translate: 1.2px 1.2px;
+  }
+  60% {
+    translate: 1.6px 1.2px;
+  }
+  66%,
+  84% {
+    translate: 0 -0.6px;
+  }
+}
+@keyframes wl-s-sweep-glass {
+  12% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+  20% {
+    scale: 1.4;
+  }
+  28% {
+    translate: -70px -14px;
+    rotate: -10deg;
+  }
+  38% {
+    translate: -112px -6px;
+    rotate: -14deg;
+  }
+  50% {
+    translate: -40px -16px;
+    rotate: 8deg;
+    scale: 1.4;
+  }
+  58% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
+/* The shrug: the outer passes swing out and back like hands. */
+@keyframes wl-s-shrug-l {
+  58%,
+  80% {
+    rotate: 0deg;
+  }
+  64%,
+  72% {
+    rotate: -12deg;
+  }
+}
+@keyframes wl-s-shrug-r {
+  58%,
+  80% {
+    rotate: 0deg;
+  }
+  64%,
+  72% {
+    rotate: 12deg;
+  }
+}
+@keyframes wl-s-sweep-brow {
+  58%,
+  84% {
+    translate: 0 0;
+  }
+  64%,
+  76% {
+    translate: 0 -1.6px;
+  }
+}

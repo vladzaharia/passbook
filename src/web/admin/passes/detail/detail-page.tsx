@@ -6,6 +6,7 @@ import { isApiError } from '../../../lib/errors.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Button,
+  Cameo,
   Celebrate,
   EmptyState,
   ErrorState,
@@ -34,6 +35,17 @@ import '../passes.css';
 
 type Search = z.infer<typeof passDetailSearchSchema>;
 export type Tab = NonNullable<Search['tab']>;
+
+/** Under the left eye; hidden until the tear scene (art/scenes/beside.css). */
+const TEAR = (
+  <path
+    data-tear=""
+    className="c1"
+    opacity="0"
+    stroke="none"
+    d="M42.6 45.6c-1.3 1.9-2.4 3.4-2.4 4.7a2.4 2.4 0 0 0 4.8 0c0-1.3-1.1-2.8-2.4-4.7Z"
+  />
+);
 
 const devices = (n: number) =>
   n === 0 ? 'Not on a device yet' : `On ${n} ${n === 1 ? 'device' : 'devices'}`;
@@ -155,12 +167,17 @@ function Loaded({
         swapKey={picked === undefined ? 'current' : showing}
         label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
         className={size === 'card' ? 'gap-2' : undefined}
-        // Just created: the buddy steps out from behind the pass and stays beside it.
+        // Just created, the buddy steps out from behind the pass and waves at it; just voided, it
+        // sheds a tear. It stays beside the pass.
         beside={
-          size === 'column' && minted ? (
-            <span aria-hidden className="wl-pass-buddy">
+          size !== 'column' ? undefined : motion.stamp ? (
+            <Cameo key="tear" scene="tear" className="wl-pass-buddy">
+              <WalletArt state="login" mood="sad" size="sm" beat={false} front={TEAR} />
+            </Cameo>
+          ) : minted ? (
+            <Cameo key="wave" scene="wave" className="wl-pass-buddy">
               <WalletArt state="login" mood="happy" size="sm" beat={false} />
-            </span>
+            </Cameo>
           ) : undefined
         }
       />
@@ -193,7 +210,7 @@ function Loaded({
               actions.resendEmail
                 .mutateAsync({ key: newKey() })
                 .then(() => {
-                  toast.success(`Pass emailed to ${p.holderEmail}`);
+                  toast.sent(`Pass emailed to ${p.holderEmail}`);
                   created.dismiss();
                 })
                 .catch((error: unknown) => toast.error(error))

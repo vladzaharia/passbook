@@ -22,6 +22,21 @@ import { TemplateArt } from './template.tsx';
 import { TornArt } from './torn.tsx';
 import { UnpluggedArt } from './unplugged.tsx';
 import { WalletArt } from './wallet.tsx';
+// Buddy scenes ride in this chunk: they start after the art lands, never in the first paint.
+import './scenes/common.css';
+import './scenes/search.css';
+import './scenes/search-beats.css';
+import './scenes/inspect.css';
+import './scenes/sweep.css';
+import './scenes/mend.css';
+import './scenes/tug.css';
+import './scenes/plug.css';
+import './scenes/peek.css';
+import './scenes/flip.css';
+import './scenes/cheer.css';
+import './scenes/wave.css';
+import './scenes/beside.css';
+import './scenes/face.css';
 
 /** Every entity art by name; loaded beside the app (index.ts), not in its first chunk. */
 export const ART = {

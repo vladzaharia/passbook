@@ -58,6 +58,12 @@ export function Toaster() {
 
 export const toast = {
   success: (message: string) => sonner.success(message, { duration: 4000 }),
+  /** A holder emailed: the face posts its pass like a letter. */
+  sent: (message: string) =>
+    sonner.success(message, {
+      duration: 4000,
+      icon: <BuddyFace scene="post" className="size-4" />,
+    }),
   info: (message: string) => sonner.info(message, { duration: 4000 }),
   /** Errors stay until dismissed. Accepts an ApiError or any value. */
   error: (error: unknown, title = 'Failed') =>

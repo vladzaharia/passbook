@@ -1,0 +1,87 @@
+/* Peek (lost: a page or pass not found, the palette with no results): its lens sweeps left over
+   its head and back, then comes down over its right eye, which looms large and blinks; lens back,
+   a tilt. 2.6 s, once; 1% = 26 ms. The glass is see-through so the eye shows. */
+[data-scene="peek"] [data-part="ln"] circle {
+  fill-opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene="peek"][data-run] .wl-art [data-part="ln"] {
+    animation: wl-s-peek-lens 2.6s ease-in-out;
+  }
+  [data-scene="peek"][data-run] .wl-art [data-look] {
+    animation: wl-s-peek-look 2.6s ease-in-out;
+  }
+  [data-scene="peek"][data-run] .wl-art .e:last-child {
+    animation: wl-s-peek-eye 2.6s ease-in-out;
+  }
+  [data-scene="peek"][data-run] .wl-art [data-body] {
+    animation: wl-s-peek-body 2.6s ease-in-out;
+  }
+}
+
+@keyframes wl-s-peek-lens {
+  6% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  22% {
+    translate: -30px 4px;
+    rotate: -16deg;
+  }
+  36% {
+    translate: 5px -1px;
+    rotate: 8deg;
+  }
+  /* Down over the right eye, a little larger. */
+  48%,
+  64% {
+    translate: -13.5px 18.5px;
+    rotate: 0deg;
+    scale: 1.15;
+  }
+  80% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
+@keyframes wl-s-peek-look {
+  6% {
+    translate: 1px -1.4px;
+  }
+  22% {
+    translate: -2px -1.2px;
+  }
+  36% {
+    translate: 2px -1.4px;
+  }
+  46%,
+  70% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-peek-eye {
+  44%,
+  70% {
+    scale: 1;
+  }
+  50%,
+  55%,
+  59%,
+  64% {
+    scale: 1.8;
+  }
+  57% {
+    scale: 1.8 0.15;
+  }
+}
+@keyframes wl-s-peek-body {
+  70% {
+    rotate: 0deg;
+  }
+  78%,
+  88% {
+    rotate: -5deg;
+  }
+}

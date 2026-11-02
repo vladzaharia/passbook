@@ -1,0 +1,145 @@
+/* Mend (not found, sad): it props the torn pass up with its gold pass, the corner slides back
+   into the tear and holds, it perks up; the corner slips off again and it sighs. 3.2 s, once;
+   1% = 32 ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="mend"][data-run] .wl-art [data-body] {
+    animation: wl-s-mend-body 3.2s ease-in-out;
+  }
+  .wl-buddy[data-scene="mend"][data-run] .wl-art [data-look] {
+    animation: wl-s-mend-look 3.2s ease-in-out;
+  }
+  .wl-buddy[data-scene="mend"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-mend-hold 3.2s ease-in-out;
+  }
+  .wl-buddy[data-scene="mend"][data-run] .wl-art :is([data-part="eyes"], [data-part="br"]) {
+    animation: wl-s-mend-hope 3.2s ease-in-out;
+  }
+  .wl-buddy[data-scene="mend"][data-run] .wl-buddy-prop {
+    transform-origin: 30% 100%;
+    animation: wl-s-mend-lift 3.2s ease-in-out;
+  }
+  .wl-buddy[data-scene="mend"][data-run] [data-art="torn"] [data-part="c"] {
+    animation: wl-s-mend-corner 3.2s ease-in-out;
+  }
+}
+
+@keyframes wl-s-mend-body {
+  6% {
+    rotate: 0deg;
+  }
+  14%,
+  50% {
+    rotate: 4deg;
+    translate: 0 0;
+    scale: 1;
+  }
+  40%,
+  48% {
+    translate: 0 -1.5px;
+  }
+  58% {
+    rotate: 1deg;
+    translate: 0 0;
+    scale: 1;
+  }
+  /* The sigh: up a little, then down into the slump. */
+  70% {
+    rotate: 0deg;
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+  84% {
+    translate: 0 0.5px;
+    scale: 1.02 0.96;
+  }
+}
+@keyframes wl-s-mend-look {
+  6%,
+  36% {
+    translate: 1.4px -0.4px;
+  }
+  44% {
+    translate: 1.6px -1.2px;
+  }
+  60% {
+    translate: 1.4px 0.6px;
+  }
+  72% {
+    translate: 0 0.4px;
+  }
+}
+@keyframes wl-s-mend-hold {
+  8% {
+    rotate: 0deg;
+  }
+  18%,
+  52% {
+    rotate: 34deg;
+  }
+  56% {
+    rotate: 30deg;
+  }
+  66% {
+    rotate: 0deg;
+  }
+}
+/* Eyes widen and brows lift while the corner holds. */
+@keyframes wl-s-mend-hope {
+  34%,
+  54% {
+    translate: 0 0;
+    scale: 1;
+  }
+  40%,
+  50% {
+    translate: 0 -0.6px;
+    scale: 1.12;
+  }
+}
+@keyframes wl-s-mend-lift {
+  14% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  22%,
+  54% {
+    translate: -2px -3px;
+    rotate: -5deg;
+  }
+  62% {
+    translate: 0 -1px;
+    rotate: 2deg;
+  }
+  68% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+/* Into the tear with a snap, a wobble, then off again past its rest. */
+@keyframes wl-s-mend-corner {
+  20% {
+    transform: var(--t);
+  }
+  27% {
+    transform: translate(10px, -10px) rotate(28deg);
+  }
+  34% {
+    transform: translate(-0.5px, 0.5px) rotate(-4deg) scale(1.15);
+  }
+  37%,
+  48% {
+    transform: none;
+  }
+  51% {
+    transform: rotate(7deg);
+  }
+  53% {
+    transform: rotate(-3deg);
+  }
+  60% {
+    transform: translate(12px, -12px) rotate(40deg);
+  }
+  68% {
+    transform: var(--t);
+  }
+}

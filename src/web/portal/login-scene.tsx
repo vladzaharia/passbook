@@ -1,7 +1,7 @@
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
-import { WalletArt } from '../ui/index.ts';
+import { useScene, WalletArt } from '../ui/index.ts';
 import './login-scene.css';
 
 /**
@@ -174,6 +174,8 @@ export function LoginScene({
   const root = state.root;
   const pocket = useRef<HTMLSpanElement>(null);
   const hourglass = useRef<HTMLSpanElement>(null);
+  // A click waves hello at rest (art/scenes/common.css).
+  const { ref: hello } = useScene<HTMLSpanElement>(false);
   useScenePointer(root);
   useOneShot(pocket, 'shake', state.shake);
   useOneShot(hourglass, 'flip', state.expired);
@@ -191,7 +193,7 @@ export function LoginScene({
       data-bye={bye || undefined}
       aria-hidden
     >
-      <span className="wl-login-lean">
+      <span ref={hello} className="wl-login-lean" data-replay="" data-scene="hello">
         <span ref={pocket} className="wl-login-pocket">
           <WalletArt
             state="login"

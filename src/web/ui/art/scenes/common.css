@@ -1,0 +1,75 @@
+/* Shared scene pieces. While a scene runs, the prop's idle beat gives way to it; a scene that
+   wants the prop's own beat plays wl-s-tap (the engine's beat under a name of its own). */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-run] .wl-buddy-prop [data-b] {
+    animation: none;
+  }
+  /* beat: a click replays the mood's one beat at once (the upload zone's buddy). */
+  .wl-buddy[data-scene="beat"][data-run] .wl-art [data-body] {
+    animation: var(--wl-s-beat, wl-s-boing) 640ms var(--art-mv);
+  }
+  .wl-buddy[data-scene="beat"][data-run] .wl-art [data-mood="curious"] [data-fan] {
+    animation: wl-s-lean 640ms var(--art-mv);
+  }
+  /* hello (the sign-in wallet at rest): a bounce and the top pass waves, like a hand. */
+  .wl-login-scene:not([data-beat]) [data-scene="hello"][data-run] .wl-art [data-body] {
+    animation: wl-s-boing 640ms var(--art-mv);
+  }
+  .wl-login-scene:not([data-beat]) [data-scene="hello"][data-run] .wl-art [data-part="c2"] {
+    animation: wl-s-hello 860ms var(--art-mv) 120ms;
+  }
+}
+[data-scene="beat"] [data-mood="sad"] {
+  --wl-s-beat: wl-s-sigh;
+}
+[data-scene="beat"] [data-mood="happy"] {
+  --wl-s-beat: wl-s-hop;
+}
+@keyframes wl-s-tap {
+  50% {
+    opacity: var(--bo, 1);
+    transform: var(--t,) var(--b,);
+  }
+}
+@keyframes wl-s-sigh {
+  40% {
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+}
+@keyframes wl-s-hop {
+  35% {
+    translate: 0 -5px;
+  }
+  60% {
+    scale: 1.05 0.93;
+  }
+}
+@keyframes wl-s-boing {
+  30% {
+    scale: 1.04 0.94;
+  }
+  60% {
+    translate: 0 -2px;
+    scale: 0.98 1.03;
+  }
+}
+@keyframes wl-s-hello {
+  20% {
+    rotate: -14deg;
+  }
+  45% {
+    rotate: 12deg;
+  }
+  70% {
+    rotate: -7deg;
+  }
+  88% {
+    rotate: 3deg;
+  }
+}
+@keyframes wl-s-lean {
+  45% {
+    rotate: 5deg;
+  }
+}

@@ -1,0 +1,150 @@
+/* Buddies beside a pass card (behind it until their scene runs; rest.css). Their step out is
+   shared: up from under the card on a spring, 420 ms.
+   tear (admin, a pass just voided; sad): it steps out, looks up at the dimmed pass, a tear rolls
+   down its face and it sighs. 2.4 s; 1% = 24 ms.
+   nudge (portal, a pass not on a device yet; happy): it steps out, hops, looks up at the pass,
+   then at you, and points its gold pass to the side twice: add it. 2.4 s. */
+@media (prefers-reduced-motion: no-preference) {
+  :is([data-scene="tear"], [data-scene="nudge"])[data-run] {
+    animation: wl-s-out 2.4s linear;
+  }
+  [data-scene="tear"][data-run] .wl-art [data-body] {
+    animation: wl-s-tear-body 2.4s ease-in-out;
+  }
+  [data-scene="tear"][data-run] .wl-art [data-look] {
+    animation: wl-s-tear-look 2.4s ease-in-out;
+  }
+  [data-scene="tear"][data-run] .wl-art [data-tear] {
+    animation: wl-s-tear-drop 2.4s ease-in;
+  }
+  [data-scene="nudge"][data-run] .wl-art [data-body] {
+    animation: wl-s-nudge-body 2.4s ease-in-out;
+  }
+  [data-scene="nudge"][data-run] .wl-art [data-look] {
+    animation: wl-s-nudge-look 2.4s ease-in-out;
+  }
+  [data-scene="nudge"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-nudge-point 2.4s ease-in-out;
+  }
+}
+
+@keyframes wl-s-out {
+  0% {
+    transform: translateY(-50px);
+    animation-timing-function: linear(
+      0,
+      0.035 2.1%,
+      0.141 4.4%,
+      0.723 12.9%,
+      1.017 20.5%,
+      1.043 24.5%,
+      1.007 36%,
+      1
+    );
+  }
+  17.5%,
+  100% {
+    transform: none;
+  }
+}
+@keyframes wl-s-tear-body {
+  44% {
+    translate: 0 0;
+    scale: 1;
+  }
+  /* A sob as the tear wells, then the sigh. */
+  50% {
+    translate: 0 -1px;
+    scale: 0.98 1.03;
+  }
+  56% {
+    translate: 0 0;
+    scale: 1.01 0.98;
+  }
+  72% {
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+  86% {
+    translate: 0 0.5px;
+    scale: 1.02 0.96;
+  }
+}
+@keyframes wl-s-tear-look {
+  20%,
+  46% {
+    translate: -1.4px -1.6px;
+  }
+  58% {
+    translate: 0 0.4px;
+  }
+}
+/* Wells under the left eye, rolls down the pocket and fades. */
+@keyframes wl-s-tear-drop {
+  0%,
+  44% {
+    opacity: 0;
+    scale: 0.2;
+    translate: 0 0;
+  }
+  52% {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+  80% {
+    opacity: 1;
+    translate: 0 9px;
+  }
+  90%,
+  100% {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+@keyframes wl-s-nudge-body {
+  20% {
+    translate: 0 0;
+    scale: 1;
+  }
+  26% {
+    translate: 0 0;
+    scale: 1.05 0.92;
+  }
+  33% {
+    translate: 0 -6px;
+    scale: 0.97 1.04;
+  }
+  41% {
+    translate: 0 0;
+    scale: 1.05 0.93;
+  }
+  47% {
+    scale: 1;
+  }
+}
+@keyframes wl-s-nudge-look {
+  44%,
+  60% {
+    translate: -1.6px -1.4px;
+  }
+  68%,
+  88% {
+    translate: 1.6px 0;
+  }
+}
+@keyframes wl-s-nudge-point {
+  64% {
+    rotate: 0deg;
+  }
+  70%,
+  80% {
+    rotate: 30deg;
+  }
+  75% {
+    rotate: 18deg;
+  }
+  88% {
+    rotate: 0deg;
+  }
+}
