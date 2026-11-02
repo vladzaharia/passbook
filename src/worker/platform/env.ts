@@ -35,7 +35,10 @@ export const RATE_LIMITS = [
   'RL_REFRESH',
 ] as const satisfies readonly RateLimitName[];
 
-/** Fails to compile when a ratelimits binding is missing from RATE_LIMITS. */
+/**
+ * Fails to compile when a ratelimits binding is missing from RATE_LIMITS.
+ * @public
+ */
 export const RATE_LIMITS_COVER_ALL: [Exclude<RateLimitName, (typeof RATE_LIMITS)[number]>] extends [
   never,
 ]
@@ -46,12 +49,6 @@ export const RATE_LIMITS_COVER_ALL: [Exclude<RateLimitName, (typeof RATE_LIMITS)
 export function envString(env: object, name: string): string | undefined {
   const value = (env as Record<string, unknown>)[name];
   return typeof value === 'string' && value.length > 0 ? value : undefined;
-}
-
-export function requireEnvString(env: object, name: string): string {
-  const value = envString(env, name);
-  if (!value) throw new Error(`Missing environment value ${name}`);
-  return value;
 }
 
 export function baseUrl(env: Pick<AppEnv, 'PUBLIC_BASE_URL'>): string {

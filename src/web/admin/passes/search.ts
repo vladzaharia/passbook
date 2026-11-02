@@ -12,7 +12,6 @@ export const passListSearchSchema = z.object({
   holderState: opt(z.enum(['unassigned', 'waiting', 'owned'])),
   onDevice: opt(z.enum(['true', 'false'])),
 });
-export type PassListSearch = z.infer<typeof passListSearchSchema>;
 
 export const newPassSearchSchema = z.object({
   orgId: opt(z.string()),

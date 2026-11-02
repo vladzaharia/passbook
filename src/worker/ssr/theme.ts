@@ -1,7 +1,3 @@
-/** The brand spring (pk-ease-spring). */
-export const SPRING =
-  'linear(0,0.009,0.035 2.1%,0.141 4.4%,0.723 12.9%,0.938 16.7%,1.017 20.5%,1.043 24.5%,1.035 28.4%,1.007 36%,0.998 42.4%,1)';
-
 const LIGHT =
   '--page:#f6f8ff;--raised:#fff;--sunken:#ebeef8;--field:#fff;--strong:#060912;--fg:#262d40;--muted:#48536b;--line:#dadee9;--line-strong:#7e8699;--hover:rgb(6 9 18/.05);--accent:#0f766e;--accent-hover:#2f857e;--accent-on:#fff;--danger:#be2323;--danger-line:#db423c;--danger-subtle:#f0e3e9;--warn:#814d00;--warn-subtle:#fdf0c8;--warn-line:#a15c07;--focus:#0f766e;--foil-1:#0f766e;--foil-2:#7a2fff;--foil-3:#d07a00;--edge:transparent;--shadow:0 1px 2px 0 rgb(6 9 18/.06)';
 const DARK =

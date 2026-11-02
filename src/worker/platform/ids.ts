@@ -100,13 +100,3 @@ export function createIds(clock: Clock): Ids {
     },
   };
 }
-
-/** Sequential ids and tokens for tests. */
-export function createSequentialIds(prefix = 'id'): Ids {
-  let n = 0;
-  return {
-    id: () => `${prefix}-${String(++n).padStart(6, '0')}`,
-    token: () => `${prefix}-token-${String(++n).padStart(6, '0')}`,
-    code: (digits = 6) => String(++n).padStart(digits, '0'),
-  };
-}

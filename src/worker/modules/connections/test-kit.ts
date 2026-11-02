@@ -148,8 +148,6 @@ export function inlineStep(): StepLike & { names: string[]; sleeps: number[] } {
   };
 }
 
-export type { Json };
-
 /** A service context whose CONNECTION_SYNC binding records instead of starting workflows. */
 export function withWorkflow(
   kit: Kit,

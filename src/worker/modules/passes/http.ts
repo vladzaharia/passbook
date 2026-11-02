@@ -36,8 +36,3 @@ export function actorFor(c: C): Actor {
   if (actor.type === 'device') return { type: 'system', id: actor.id };
   return { type: actor.type, id: actor.id };
 }
-
-export const causeFor = (actor: Actor): 'admin' | 'api' =>
-  actor.type === 'api_key' ? 'api' : 'admin';
-
-export const ipOf = clientIp;

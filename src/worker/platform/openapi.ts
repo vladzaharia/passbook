@@ -38,15 +38,6 @@ export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono
   return router;
 }
 
-/** Declares the route (so OpenAPI and validation are real) with a 501 handler. */
-export function stub(router: OpenAPIHono<AppBindings>, tag: string, spec: RouteSpec): void {
-  register(router, tag, spec, () => {
-    throw new NotImplementedError(
-      `${spec.method.toUpperCase()} ${spec.path} is not implemented yet.`,
-    );
-  });
-}
-
 export function register(
   router: OpenAPIHono<AppBindings>,
   tag: string,

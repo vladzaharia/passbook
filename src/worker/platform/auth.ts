@@ -67,14 +67,6 @@ async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | nu
   return cookie ? c.var.stores.sessions.resolve(cookie) : null;
 }
 
-/** Loads the auth context if present; never rejects. */
-export const loadAuth: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
-  const key = bearer(c);
-  const auth = key ? await c.var.stores.apiKeys.resolve(key) : await resolveSession(c);
-  if (auth) c.set('auth', auth);
-  await next();
-});
-
 async function sessionOrThrow(c: Context<AppBindings>): Promise<SessionAuth> {
   const session = c.var.auth?.kind === 'session' ? c.var.auth : await resolveSession(c);
   if (!session) throw new UnauthenticatedError();

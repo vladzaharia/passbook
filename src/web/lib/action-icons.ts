@@ -43,6 +43,4 @@ export const ACTION_ICON = {
   edit: Pencil,
 } as const satisfies Record<string, LucideIcon>;
 
-export type ActionKind = keyof typeof ACTION_ICON;
-
 export const THEME_ICON = { system: Monitor, light: Sun, dark: Moon } as const;

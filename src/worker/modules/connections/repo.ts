@@ -198,19 +198,6 @@ export async function getConnection(db: D1Database, id: string): Promise<Connect
   return r ? toRow(r) : null;
 }
 
-export async function getConnectionInOrg(
-  db: D1Database,
-  orgId: string,
-  id: string,
-): Promise<ConnectionRow | null> {
-  const r = await first<ConnectionSql>(
-    db,
-    'SELECT * FROM connections WHERE id = ? AND org_id = ?',
-    [id, orgId],
-  );
-  return r ? toRow(r) : null;
-}
-
 export async function listConnections(
   db: D1Database,
   q: {

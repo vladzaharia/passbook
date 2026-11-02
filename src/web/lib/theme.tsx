@@ -40,10 +40,6 @@ const systemTheme = (): 'light' | 'dark' =>
     ? 'light'
     : 'dark';
 
-export function resolveTheme(pref: ThemePref): 'light' | 'dark' {
-  return pref === 'system' ? systemTheme() : pref;
-}
-
 interface ThemeContextValue {
   /** The stored admin preference. */
   pref: ThemePref;

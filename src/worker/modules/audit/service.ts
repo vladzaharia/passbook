@@ -6,8 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { type AuditRow, auditStmt, labelKey, listAuditRows, loadLabels } from './repo.ts';
 import type { AuditEntry } from './types.ts';
 
-export { diffFields, redact, redactDetail } from './redact.ts';
-export type { AuditActorType, AuditEntry } from './types.ts';
+export { diffFields } from './redact.ts';
 
 /** Audit fields for a request actor. */
 export function auditActor(actor: Actor): Pick<AuditEntry, 'actorType' | 'actorId'> {

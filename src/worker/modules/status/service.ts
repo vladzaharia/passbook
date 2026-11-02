@@ -25,7 +25,7 @@ import { checkCron } from './cron-check.ts';
 import { recentWorkflowRuns } from './repo.ts';
 import { checkBreakglass, checkRateLimits, checkTurnstile } from './security-checks.ts';
 
-export { lastCronRun, recordCronRun } from './cron.ts';
+export { recordCronRun } from './cron.ts';
 
 export type Status = z.infer<typeof StatusResponseSchema>;
 type RunList = z.infer<typeof WorkflowRunListSchema>;

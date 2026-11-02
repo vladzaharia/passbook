@@ -5,7 +5,6 @@ import type { IdentityResolver } from './env-identity.ts';
 export {
   type IdentityResolver,
   PLATFORM_IDENTITY_ID,
-  type ResolvedIdentity,
   readEnvIdentity,
 } from './env-identity.ts';
 
