@@ -3,11 +3,13 @@ import type { ApiKeySchema, CreateApiKeySchema } from '../../../shared/contracts
 import type { ApiKeyStore } from '../../platform/auth.ts';
 import { API_SCOPES, type ApiKeyAuth, type ApiScope } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
+import { batch } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditStmt } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
 import * as repo from './repo.ts';
 
@@ -74,16 +76,18 @@ export async function createApiKey(
     expires_at: input.expiresAt ?? null,
     revoked_at: null,
   };
-  await repo.insertKey(ctx.env.DB, row);
-  await recordAudit(ctx, {
-    orgId,
-    actorType: 'user',
-    actorId: actorUserId,
-    action: 'api_key.create',
-    targetType: 'api_key',
-    targetId: row.id,
-    detail: { name: row.name, scopes: parseScopes(row.scopes), expiresAt: row.expires_at },
-  });
+  await batch(ctx.env.DB, [
+    repo.insertKeyStmt(ctx.env.DB, row),
+    auditStmt(ctx.env.DB, ctx, {
+      orgId,
+      actorType: 'user',
+      actorId: actorUserId,
+      action: 'api_key.create',
+      targetType: 'api_key',
+      targetId: row.id,
+      detail: { name: row.name, scopes: parseScopes(row.scopes), expiresAt: row.expires_at },
+    }),
+  ]);
   return { ...toDto(row), secret };
 }
 

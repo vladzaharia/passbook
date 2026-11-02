@@ -1,27 +1,13 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema, AuditQuerySchema } from '../../../shared/contracts/audit.ts';
 import type { Actor } from '../../platform/context.ts';
-import { run } from '../../platform/db.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { redactDetail } from './redact.ts';
-import { type AuditRow, labelKey, listAuditRows, loadLabels } from './repo.ts';
+import { type AuditRow, auditStmt, labelKey, listAuditRows, loadLabels } from './repo.ts';
+import type { AuditEntry } from './types.ts';
 
 export { diffFields, redact, redactDetail } from './redact.ts';
-
-export type AuditActorType = 'user' | 'api_key' | 'system' | 'connection' | 'device';
-
-export interface AuditEntry {
-  orgId?: string | null;
-  actorType: AuditActorType;
-  actorId?: string | null;
-  action: string;
-  targetType?: string | null;
-  targetId?: string | null;
-  ipPrefix?: string | null;
-  /** Redacted diff. Never include secrets, tokens or personalization values. */
-  detail?: Record<string, unknown> | null;
-}
+export type { AuditActorType, AuditEntry } from './types.ts';
 
 /** Audit fields for a request actor. */
 export function auditActor(actor: Actor): Pick<AuditEntry, 'actorType' | 'actorId'> {
@@ -30,23 +16,7 @@ export function auditActor(actor: Actor): Pick<AuditEntry, 'actorType' | 'actorI
 
 /** Every module records mutations through this. Detail is redacted again here as a backstop. */
 export async function recordAudit(ctx: ServiceContext, entry: AuditEntry): Promise<void> {
-  await run(
-    ctx.env.DB,
-    `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      ctx.clock.now(),
-      entry.orgId ?? null,
-      entry.actorType,
-      entry.actorId ?? null,
-      entry.action,
-      entry.targetType ?? null,
-      entry.targetId ?? null,
-      ctx.requestId,
-      entry.ipPrefix ?? null,
-      entry.detail ? JSON.stringify(redactDetail(entry.detail)) : null,
-    ],
-  );
+  await auditStmt(ctx.env.DB, ctx, entry).run();
 }
 
 type Query = z.infer<typeof AuditQuerySchema>;

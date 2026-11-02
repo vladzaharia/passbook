@@ -1,4 +1,7 @@
-import { all, likeEscape, run, type SqlValue } from '../../platform/db.ts';
+import { all, likeEscape, run, type SqlValue, stmt } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { redactDetail } from './redact.ts';
+import type { AuditEntry } from './types.ts';
 
 export interface AuditRow {
   id: number;
@@ -104,4 +107,32 @@ export async function loadLabels(
     for (const row of rows) if (row.label) labels.set(labelKey(type, row.id), row.label);
   }
   return labels;
+}
+
+/**
+ * The audit INSERT as a statement, so a mutation and its audit row commit in one `db.batch`.
+ * Detail is redacted here as a backstop.
+ */
+export function auditStmt(
+  db: D1Database,
+  ctx: Pick<ServiceContext, 'clock' | 'requestId'>,
+  entry: AuditEntry,
+): D1PreparedStatement {
+  return stmt(
+    db,
+    `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      ctx.clock.now(),
+      entry.orgId ?? null,
+      entry.actorType,
+      entry.actorId ?? null,
+      entry.action,
+      entry.targetType ?? null,
+      entry.targetId ?? null,
+      ctx.requestId,
+      entry.ipPrefix ?? null,
+      entry.detail ? JSON.stringify(redactDetail(entry.detail)) : null,
+    ],
+  );
 }

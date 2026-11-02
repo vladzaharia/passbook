@@ -41,6 +41,20 @@ async function create(body: object) {
 }
 
 describe('create', () => {
+  it('commits the key and its audit row together', async () => {
+    await run(
+      h.env.DB,
+      "CREATE TRIGGER fail_audit BEFORE INSERT ON audit_log BEGIN SELECT RAISE(ABORT, 'audit down'); END",
+    );
+    try {
+      const { res } = await create({ name: 'Atomic', scopes: ['passes:read'] });
+      expect(res.status).toBe(500);
+      expect(await first(h.env.DB, "SELECT 1 AS x FROM api_keys WHERE name = 'Atomic'")).toBeNull();
+    } finally {
+      await run(h.env.DB, 'DROP TRIGGER fail_audit');
+    }
+  });
+
   it('returns the secret once and stores only a hash', async () => {
     const { res, key, userId } = await create({ name: 'CI', scopes: ['passes:read'] });
     expect(res.status).toBe(201);

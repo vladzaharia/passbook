@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -16,8 +16,8 @@ export interface ApiKeyRow {
   revoked_at: number | null;
 }
 
-export async function insertKey(db: Db, key: ApiKeyRow): Promise<void> {
-  await run(
+export function insertKeyStmt(db: Db, key: ApiKeyRow): D1PreparedStatement {
+  return stmt(
     db,
     `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, created_by, created_at, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
