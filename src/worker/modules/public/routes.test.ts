@@ -120,6 +120,27 @@ describe('GET /p/:token', () => {
     const svg = atob((qr ?? '').split(',')[1] ?? '');
     expect(svg).toContain('<svg');
     expect(html).toContain('Scan with your iPhone');
+    // The add QR is a phone in the action column, under the badge.
+    expect(html).toMatch(/<div class="phone"><img src="data:image\/svg\+xml/);
+    expect(html.indexOf('Add to Apple Wallet')).toBeLessThan(html.indexOf('class="phone"'));
+  });
+
+  it('links a voided pass to the org support, once', async () => {
+    const pass = await kit.pass();
+    await run(
+      kit.env.DB,
+      'INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, ?, ?, 1)',
+      [`org:${kit.org.id}`, 'support.email', JSON.stringify('help@gym.test')],
+    );
+    clearSettingsCache(kit.env.DB);
+    await voidPass(kit.ctx, actor, pass.id, null);
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const note = /<p class="note"[^]*?<\/p>/.exec(html)?.[0] ?? '';
+    expect(note).toContain('This pass was voided.');
+    expect(note).toContain('href="mailto:help@gym.test"');
+    expect(html.match(/mailto:help@gym.test/g)).toHaveLength(1);
+    await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
+    clearSettingsCache(kit.env.DB);
   });
 
   it('shows a voided banner and no download for a voided pass', async () => {
