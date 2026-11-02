@@ -133,7 +133,7 @@ export function CommandPalette({
                 onValueChange={onQueryChange}
                 placeholder={placeholder}
                 aria-label={placeholder}
-                className="h-11 w-full bg-transparent text-sm text-fg outline-hidden placeholder:text-fg-subtle pointer-coarse:text-base"
+                className="h-11 w-full bg-transparent text-sm text-fg outline-hidden placeholder:text-fg-subtle pointer-coarse:text-[max(16px,1rem)]"
               />
             </div>
             <Command.List className="min-h-0 flex-1 overflow-auto p-1 [&_[cmdk-list-sizer]]:relative">

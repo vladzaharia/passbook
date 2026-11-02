@@ -80,3 +80,28 @@
   --wl-field-disabled: var(--pk-surface-sunken);
   --wl-placeholder: #858b9a;
 }
+
+/* Increase Contrast: muted text moves toward the body text and hairlines take the strong edge. */
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme="dark"] {
+    --pk-text-muted: #c3cbe0;
+    --pk-text-subtle: #b5bed3;
+    --pk-border-subtle: #61697b;
+    --wl-placeholder: #8f98ad;
+  }
+  [data-theme="light"] {
+    --pk-text-muted: #333b50;
+    --pk-text-subtle: #48536b;
+    --pk-border-subtle: #7e8699;
+    --wl-placeholder: #5d667b;
+  }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --pk-text-muted: #333b50;
+    --pk-text-subtle: #48536b;
+    --pk-border-subtle: #7e8699;
+    --wl-placeholder: #5d667b;
+  }
+}

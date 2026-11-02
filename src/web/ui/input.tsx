@@ -14,7 +14,8 @@ export const CONTROL = [
   'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
   'disabled:cursor-not-allowed disabled:border-border disabled:bg-(--wl-field-disabled) disabled:text-fg/50',
   '[&:is(input,textarea):read-only]:bg-surface-sunken [&:is(input,textarea):read-only]:text-fg-muted',
-  'aria-[invalid=true]:border-danger pointer-coarse:text-base',
+  // 16 px at least, so focus never zooms, even at the smaller iOS text sizes.
+  'aria-[invalid=true]:border-danger pointer-coarse:text-[max(16px,1rem)]',
 ].join(' ');
 
 /** Single-line control height: 36 px, 44 px on touch. */

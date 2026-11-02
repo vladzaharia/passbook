@@ -84,7 +84,7 @@ export function Combobox({
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
               onValueChange={onSearch}
-              className="h-9 w-full border-b border-border bg-transparent px-3 text-sm text-fg outline-hidden placeholder:text-fg-subtle pointer-coarse:h-11 pointer-coarse:text-base"
+              className="h-9 w-full border-b border-border bg-transparent px-3 text-sm text-fg outline-hidden placeholder:text-fg-subtle pointer-coarse:h-11 pointer-coarse:text-[max(16px,1rem)]"
             />
             <Command.List className="max-h-64 overflow-auto p-1">
               {loading ? null : (
