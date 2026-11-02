@@ -104,10 +104,10 @@ describe('orgs list', () => {
     expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
   });
 
-  it('creates an org in an md dialog and highlights the new row', async () => {
+  it('creates an org in an md dialog, clears fixed errors and opens the new org', async () => {
     let body: unknown;
     let created = false;
-    const { container } = await renderApp('/admin/orgs', {
+    const { router } = await renderApp('/admin/orgs', {
       session: 'admin',
       handlers: {
         '/api/v1/orgs': (_u, init) => {
@@ -129,12 +129,17 @@ describe('orgs list', () => {
     expect(dialog.className).toContain('sm:max-w-lg');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
+    await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByLabelText(/Name/)));
+    expect(await within(dialog).findByText('2 fields need attention')).toBeInTheDocument();
     await ui.type(within(dialog).getByLabelText(/Name/), 'Acme Gym');
+    // The fix clears both errors as it is typed.
+    expect(within(dialog).queryByText('Required.')).toBeNull();
+    expect(within(dialog).getByLabelText(/Name/)).not.toHaveAttribute('aria-invalid');
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
+    expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym' }));
-    await waitFor(() => expect(container.querySelectorAll('[data-new]')).toHaveLength(1));
-    expect(container.querySelector('[data-new]')?.getAttribute('data-row-id')).toBe('o2');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o2'));
   });
 
   it('shows a slug conflict from the server', async () => {

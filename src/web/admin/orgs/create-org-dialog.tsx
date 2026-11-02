@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { Button, Dialog, DialogContent, FormField, Input } from '@/web/ui/index.ts';
+import { Button, Dialog, DialogContent, Form, FormField, Input } from '@/web/ui/index.ts';
 import { useCreateOrg } from './queries.ts';
 
 export function slugify(name: string): string {
@@ -17,7 +17,14 @@ export function slugify(name: string): string {
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,63}$/;
 
-/** Creates the org and stays on the list, where the new row lights up; the toast opens it. */
+function validate(name: string, slug: string): Record<string, string> {
+  const found: Record<string, string> = {};
+  if (!name.trim()) found.name = 'Required.';
+  if (!SLUG.test(slug)) found.slug = 'Use 2 to 64 lowercase letters, digits or hyphens.';
+  return found;
+}
+
+/** Creates the org and opens it, where the checklist shows the next steps. */
 export function CreateOrgDialog({
   open,
   onOpenChange,
@@ -30,40 +37,36 @@ export function CreateOrgDialog({
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Once shown, errors follow the values: a fix clears its message on the same keystroke.
+  const [shown, setShown] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
+  const local = validate(name, slug);
+  const errors = { ...serverErrors, ...(shown ? local : {}) };
 
   function close() {
     onOpenChange(false);
     setName('');
     setSlug('');
     setSlugEdited(false);
-    setErrors({});
+    setShown(false);
+    setServerErrors({});
     setFormError(undefined);
   }
 
   async function submit() {
-    const found: Record<string, string> = {};
-    if (!name.trim()) found.name = 'Required.';
-    if (!SLUG.test(slug)) found.slug = 'Use 2 to 64 lowercase letters, digits or hyphens.';
-    setErrors(found);
     setFormError(undefined);
-    if (Object.keys(found).length > 0) return;
     try {
       const org = await create.mutateAsync({ name: name.trim(), slug });
       close();
-      toast.success('Organization created', {
-        duration: 6000,
-        action: {
-          label: 'Open',
-          onClick: () => void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } }),
-        },
-      });
+      toast.success('Organization created');
+      void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
     } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
+      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);
       setFormError(errorMessage(cause));
     }
   }
+  const clearServer = (key: string) => setServerErrors(({ [key]: _gone, ...rest }) => rest);
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
@@ -81,14 +84,12 @@ export function CreateOrgDialog({
           </>
         }
       >
-        <form
+        <Form
           id="new-org"
-          noValidate
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
+          invalid={Object.keys(local).length > 0}
+          onInvalid={() => setShown(true)}
+          onValid={() => void submit()}
         >
           <FormField label="Name" required error={errors.name}>
             {(p) => (
@@ -99,6 +100,7 @@ export function CreateOrgDialog({
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
+                  clearServer('name');
                   if (!slugEdited) setSlug(slugify(e.target.value));
                 }}
               />
@@ -121,12 +123,13 @@ export function CreateOrgDialog({
                 onChange={(e) => {
                   setSlugEdited(true);
                   setSlug(e.target.value);
+                  clearServer('slug');
                 }}
               />
             )}
           </FormField>
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

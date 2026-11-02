@@ -95,7 +95,10 @@ function ChangeHolderDialog({
                 type="email"
                 autoComplete="off"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (EMAIL.test(e.target.value.trim())) setError(undefined);
+                }}
               />
             )}
           </FormField>
