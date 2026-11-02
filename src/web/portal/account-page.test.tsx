@@ -114,6 +114,53 @@ describe('account page', () => {
     focusManager.setFocused(undefined);
   });
 
+  it('shows an unverified primary with Verify, no Remove, then verified after the link', async () => {
+    const user = userEvent.setup();
+    let items = {
+      items: [{ email: 'test@example.com', verifiedAt: null, verifiedVia: null, primary: true }],
+    };
+    const posted: unknown[] = [];
+    const { container } = await renderApp('/account', {
+      handlers: {
+        '/api/v1/me/emails': (_u, init) => {
+          if (init?.method === 'POST') {
+            posted.push(JSON.parse(String(init.body)));
+            return json({ ok: true }, 202);
+          }
+          return json(items);
+        },
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    const list = within(await screen.findByRole('list', { name: 'Emails' }));
+    expect(await list.findByText('Not verified')).toBeInTheDocument();
+    expect(list.queryByText('No emails')).toBeNull();
+    expect(list.queryByRole('button', { name: /Remove/ })).toBeNull();
+    expect((await axe(container)).violations).toEqual([]);
+
+    await user.click(list.getByRole('button', { name: 'Verify' }));
+    expect(posted).toEqual([{ email: 'test@example.com' }]);
+    expect(await list.findByText('Check your inbox')).toBeInTheDocument();
+
+    items = {
+      items: [
+        { email: 'test@example.com', verifiedAt: 5, verifiedVia: 'magic_link', primary: true },
+      ],
+    } as unknown as typeof items;
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+    await waitFor(() => expect(screen.queryByText('Check your inbox')).toBeNull());
+    expect(screen.queryByText('Not verified')).toBeNull();
+    expect(screen.getAllByText('test@example.com').length).toBeGreaterThan(0);
+    const rows = within(screen.getByRole('list', { name: 'Emails' })).getAllByText(
+      'test@example.com',
+    );
+    expect(rows).toHaveLength(1);
+    focusManager.setFocused(undefined);
+  });
+
   it('cancels a pending address', async () => {
     const user = userEvent.setup();
     sessionStorage.setItem('wallet-pending-emails', JSON.stringify(['later@example.com']));
