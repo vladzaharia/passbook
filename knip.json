@@ -7,21 +7,10 @@
     "test/**/*.ts",
     "*.config.ts"
   ],
-  "project": [
-    "src/**/*.{ts,tsx}!",
-    "tools/**/*.ts",
-    "e2e/**/*.ts",
-    "test/**/*.ts"
-  ],
+  "project": ["src/**/*.{ts,tsx}!", "tools/**/*.ts", "e2e/**/*.ts", "test/**/*.ts"],
   "ignore": [],
-  "ignoreDependencies": [
-    "@polaris-key/brand",
-    "cloudflare",
-    "tailwindcss"
-  ],
-  "ignoreBinaries": [
-    "openssl"
-  ],
+  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss"],
+  "ignoreBinaries": ["openssl"],
   "rules": {
     "nsExports": "off",
     "nsTypes": "off",
@@ -30,28 +19,12 @@
   },
   "ignoreExportsUsedInFile": true,
   "ignoreIssues": {
-    "src/passkit/**": [
-      "exports",
-      "types"
-    ],
-    "src/shared/**": [
-      "exports",
-      "types"
-    ],
-    "tools/lib/**": [
-      "exports"
-    ],
-    "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": [
-      "exports"
-    ],
-    "src/web/ui/art/index.ts": [
-      "types"
-    ],
-    "src/web/pass-card/index.tsx": [
-      "types"
-    ],
-    "src/web/admin/passes/schema-form/index.ts": [
-      "types"
-    ]
+    "src/passkit/**": ["exports", "types"],
+    "src/shared/**": ["exports", "types"],
+    "tools/lib/**": ["exports"],
+    "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": ["exports"],
+    "src/web/ui/art/index.ts": ["types"],
+    "src/web/pass-card/index.tsx": ["types"],
+    "src/web/admin/passes/schema-form/index.ts": ["types"]
   }
 }

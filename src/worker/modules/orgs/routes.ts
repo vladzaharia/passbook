@@ -29,8 +29,6 @@ guard(orgsRoutes, requireAdmin);
 orgsRoutes.use('*', limitBody(1024 * 1024));
 
 type Ctx = Context<AppBindings>;
-const idOf = (c: Ctx) => valid<{ id: string }>(c, 'param').id;
-const slotOf = (c: Ctx) => valid<z.infer<typeof BrandingSlotParamSchema>>(c, 'param').slot;
 
 register(
   orgsRoutes,
@@ -42,7 +40,7 @@ register(
     query: OrgListQuerySchema,
     response: OrgListSchema,
   },
-  async (c: Ctx) => c.json(await listOrgs(serviceContext(c), valid(c, 'query'))),
+  async (c) => c.json(await listOrgs(serviceContext(c), c.req.valid('query'))),
 );
 register(
   orgsRoutes,
@@ -55,15 +53,8 @@ register(
     status: 201,
     response: OrgSchema,
   },
-  async (c: Ctx) =>
-    c.json(
-      await createOrg(
-        serviceContext(c),
-        requestActor(c),
-        valid<z.infer<typeof CreateOrgSchema>>(c, 'json'),
-      ),
-      201,
-    ),
+  async (c) =>
+    c.json(await createOrg(serviceContext(c), requestActor(c), c.req.valid('json')), 201),
 );
 register(
   orgsRoutes,
@@ -75,7 +66,7 @@ register(
     params: IdParamSchema,
     response: OrgSummarySchema,
   },
-  async (c: Ctx) => c.json(await getOrg(serviceContext(c), idOf(c))),
+  async (c) => c.json(await getOrg(serviceContext(c), c.req.valid('param').id)),
 );
 register(
   orgsRoutes,
@@ -88,13 +79,13 @@ register(
     body: UpdateOrgSchema,
     response: OrgSchema,
   },
-  async (c: Ctx) =>
+  async (c) =>
     c.json(
       await updateOrg(
         serviceContext(c),
         requestActor(c),
-        idOf(c),
-        valid<z.infer<typeof UpdateOrgSchema>>(c, 'json'),
+        c.req.valid('param').id,
+        c.req.valid('json'),
       ),
     ),
 );
@@ -109,13 +100,13 @@ register(
     body: OrgStatusSchema,
     response: OrgSchema,
   },
-  async (c: Ctx) =>
+  async (c) =>
     c.json(
       await setOrgStatus(
         serviceContext(c),
         requestActor(c),
-        idOf(c),
-        valid<z.infer<typeof OrgStatusSchema>>(c, 'json').status,
+        c.req.valid('param').id,
+        c.req.valid('json').status,
       ),
     ),
 );
@@ -130,14 +121,14 @@ register(
     body: UploadBrandingImageSchema,
     response: OrgSchema,
   },
-  async (c: Ctx) =>
+  async (c) =>
     c.json(
       await putBrandingImage(
         serviceContext(c),
         requestActor(c),
-        idOf(c),
-        slotOf(c),
-        valid<z.infer<typeof UploadBrandingImageSchema>>(c, 'json'),
+        c.req.valid('param').id,
+        c.req.valid('param').slot,
+        c.req.valid('json'),
       ),
     ),
 );
@@ -151,8 +142,15 @@ register(
     params: BrandingSlotParamSchema,
     response: OrgSchema,
   },
-  async (c: Ctx) =>
-    c.json(await deleteBrandingImage(serviceContext(c), requestActor(c), idOf(c), slotOf(c))),
+  async (c) =>
+    c.json(
+      await deleteBrandingImage(
+        serviceContext(c),
+        requestActor(c),
+        c.req.valid('param').id,
+        c.req.valid('param').slot,
+      ),
+    ),
 );
 register(
   orgsRoutes,
@@ -167,8 +165,8 @@ register(
       scale: z.enum(['2x', '3x']),
     }),
   },
-  async (c: Ctx) => {
-    const p = valid<{ id: string; slot: 'logo' | 'icon'; scale: '2x' | '3x' }>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     const bytes = await getBrandingImage(serviceContext(c), p.id, p.slot, p.scale === '3x' ? 3 : 2);
     return c.body(bytes, 200, {
       'content-type': 'image/png',
@@ -187,8 +185,8 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: Ctx) => {
-    await deleteOrg(serviceContext(c), requestActor(c), idOf(c));
+  async (c) => {
+    await deleteOrg(serviceContext(c), requestActor(c), c.req.valid('param').id);
     return c.json({ ok: true });
   },
 );

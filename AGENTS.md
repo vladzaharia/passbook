@@ -31,7 +31,7 @@ Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`.
 | --- | --- |
 | Auth middleware, `AuthContext`, `SessionStore`, `ApiKeyStore` | `src/worker/platform/auth.ts` |
 | Errors, logger, clock, ids, crypto, db, safe-fetch, rate-limit, analytics | `src/worker/platform/*.ts` |
-| Router + stub helper | `src/worker/platform/openapi.ts` |
+| Router + register helper | `src/worker/platform/openapi.ts` |
 | Pass engine (`buildPass`, `signPass`, `packagePass`, `validatePass`, types) | `src/passkit/index.ts` |
 | `TemplateRegistry`, `ResolvedTemplate`, in-memory registry | `src/passkit/template/` |
 | Identity resolver | `src/worker/modules/identities/resolver.ts` |
@@ -43,7 +43,7 @@ Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`.
 | API contracts | `src/shared/contracts/*.ts` |
 | Test factories, fake auth, fakes, mock OIDC | `test/helpers/`, `test/mock-oidc/` |
 
-Replace a stub by implementing it in your module's `routes.ts` with `register(router, tag, spec, handler)` (same spec as the stub) and keep the `export const xRoutes` name. `app.ts` already mounts every module.
+Replace a stub by implementing it in your module's `routes.ts` with `register(router, tag, spec, handler)` (same spec) and keep the `export const xRoutes` name. `app.ts` already mounts every module.
 
 Test routes before auth exists: `createApp({ stores: fakeAuth().stores })` and send `fake.admin()` / `fake.user()` / `fake.apiKey()` headers.
 

@@ -38,8 +38,8 @@ register(
     query: HolderListQuerySchema,
     response: HolderListSchema,
   },
-  async (c: C) => {
-    const q = valid<z.infer<typeof HolderListQuerySchema>>(c, 'query');
+  async (c) => {
+    const q = c.req.valid('query');
     if (q.orgId) assertOrg(c, q.orgId);
     const orgId = orgScopeOf(c) ?? q.orgId;
     return c.json(await listHolders(svc(c), { ...q, orgId }));
@@ -56,15 +56,7 @@ register(
     body: AssignHolderSchema,
     response: HolderSchema,
   },
-  async (c: C) =>
-    c.json(
-      await assignHolder(
-        svc(c),
-        actorFor(c),
-        valid<z.infer<typeof AssignHolderSchema>>(c, 'json'),
-        orgScopeOf(c),
-      ),
-    ),
+  async (c) => c.json(await assignHolder(svc(c), actorFor(c), c.req.valid('json'), orgScopeOf(c))),
 );
 
 register(
@@ -77,8 +69,8 @@ register(
     body: AssignHoldersBulkSchema,
     response: HolderListSchema,
   },
-  async (c: C) => {
-    const { items } = valid<z.infer<typeof AssignHoldersBulkSchema>>(c, 'json');
+  async (c) => {
+    const { items } = c.req.valid('json');
     return c.json({
       items: await assignHoldersBulk(svc(c), actorFor(c), items, orgScopeOf(c)),
       nextCursor: null,
@@ -96,15 +88,8 @@ register(
     body: ReassignHolderSchema,
     response: HolderSchema,
   },
-  async (c: C) =>
-    c.json(
-      await reassignHolder(
-        svc(c),
-        actorFor(c),
-        valid<z.infer<typeof ReassignHolderSchema>>(c, 'json'),
-        orgScopeOf(c),
-      ),
-    ),
+  async (c) =>
+    c.json(await reassignHolder(svc(c), actorFor(c), c.req.valid('json'), orgScopeOf(c))),
 );
 
 register(
@@ -117,15 +102,8 @@ register(
     body: UnassignHolderSchema,
     response: HolderSchema,
   },
-  async (c: C) =>
-    c.json(
-      await unassignHolder(
-        svc(c),
-        actorFor(c),
-        valid<z.infer<typeof UnassignHolderSchema>>(c, 'json').passId,
-        orgScopeOf(c),
-      ),
-    ),
+  async (c) =>
+    c.json(await unassignHolder(svc(c), actorFor(c), c.req.valid('json').passId, orgScopeOf(c))),
 );
 
 register(
@@ -138,13 +116,8 @@ register(
     body: ClearBlockSchema,
     response: OkSchema,
   },
-  async (c: C) => {
-    await clearBlock(
-      svc(c),
-      actorFor(c),
-      valid<z.infer<typeof ClearBlockSchema>>(c, 'json'),
-      orgScopeOf(c),
-    );
+  async (c) => {
+    await clearBlock(svc(c), actorFor(c), c.req.valid('json'), orgScopeOf(c));
     return c.json({ ok: true });
   },
 );

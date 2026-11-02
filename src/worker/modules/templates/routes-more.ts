@@ -17,7 +17,6 @@ type C = Context<AppBindings>;
 type Router = ReturnType<typeof createRouter>;
 const valid = <T>(c: C, target: 'query' | 'param'): T =>
   (c.req as unknown as { valid(target: string): unknown }).valid(target) as T;
-const idOf = (c: C) => valid<{ id: string }>(c, 'param').id;
 
 /** GET /uploads; registered before GET /{id} so "uploads" is not read as an id. */
 export function registerUploadList(router: Router): void {
@@ -31,14 +30,7 @@ export function registerUploadList(router: Router): void {
       query: UploadListQuerySchema,
       response: UploadListSchema,
     },
-    async (c: C) =>
-      c.json(
-        await recentUploads(
-          serviceContext(c),
-          c.var.auth,
-          valid<z.infer<typeof UploadListQuerySchema>>(c, 'query'),
-        ),
-      ),
+    async (c) => c.json(await recentUploads(serviceContext(c), c.var.auth, c.req.valid('query'))),
   );
 }
 
@@ -52,7 +44,8 @@ export function registerLifecycle(router: Router): void {
       router,
       'templates',
       { method: 'post', path, summary, params: IdParamSchema, response: TemplateDetailSchema },
-      async (c: C) => c.json(await setArchived(serviceContext(c), c.var.auth, idOf(c), archived)),
+      async (c) =>
+        c.json(await setArchived(serviceContext(c), c.var.auth, c.req.valid('param').id, archived)),
     );
   }
 
@@ -67,7 +60,8 @@ export function registerLifecycle(router: Router): void {
       status: 202,
       response: TemplateReissueResponseSchema,
     },
-    async (c: C) => c.json(await reissueTemplate(serviceContext(c), c.var.auth, idOf(c)), 202),
+    async (c) =>
+      c.json(await reissueTemplate(serviceContext(c), c.var.auth, c.req.valid('param').id), 202),
   );
 
   register(
@@ -79,8 +73,8 @@ export function registerLifecycle(router: Router): void {
       summary: 'The active version as an uploadable zip',
       params: IdParamSchema,
     },
-    async (c: C) => {
-      const pkg = await templatePackage(serviceContext(c), c.var.auth, idOf(c));
+    async (c) => {
+      const pkg = await templatePackage(serviceContext(c), c.var.auth, c.req.valid('param').id);
       return new Response(pkg.bytes, {
         headers: {
           'content-type': 'application/zip',

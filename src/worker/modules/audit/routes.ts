@@ -20,5 +20,5 @@ register(
     query: AuditQuerySchema,
     response: AuditListSchema,
   },
-  async (c: Context<AppBindings>) => c.json(await listAudit(serviceContext(c), valid(c, 'query'))),
+  async (c) => c.json(await listAudit(serviceContext(c), c.req.valid('query'))),
 );

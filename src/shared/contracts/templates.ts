@@ -157,7 +157,7 @@ export const CloneTemplateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
 });
 export const UpdateTemplateSchema = z.object({ orgId: IdSchema.nullable() });
-export const UpdateManifestSchema = z.object({ manifest: JsonSchema });
+export const UpdateManifestSchema = z.object({ manifest: z.record(z.string(), JsonSchema) });
 export const PreviewRequestSchema = z.object({
   version: z.string().optional(),
   /** Preview as this org's pass: its name, colours, logo and icon. */

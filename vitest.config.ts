@@ -44,7 +44,11 @@ export default defineConfig({
         test: {
           name: 'worker',
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
-          setupFiles: ['./test/setup/block-network.ts', './test/setup/apply-migrations.ts'],
+          setupFiles: [
+            './test/setup/block-network.ts',
+            './test/setup/check-responses.ts',
+            './test/setup/apply-migrations.ts',
+          ],
         },
       },
       {

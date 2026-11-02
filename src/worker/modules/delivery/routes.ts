@@ -21,8 +21,8 @@ register(
     query,
     response: z.object({ items: z.array(DeliveryEntrySchema) }),
   },
-  async (c: C) => {
-    const { passId } = valid<z.infer<typeof query>>(c, 'query');
+  async (c) => {
+    const { passId } = c.req.valid('query');
     const rows = await listPassDeliveries(serviceContext(c), passId);
     return c.json({
       items: rows.map((r) => ({

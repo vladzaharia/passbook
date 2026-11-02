@@ -30,7 +30,6 @@ export const identitiesRoutes = createRouter();
 guard(identitiesRoutes, requireAdmin);
 
 type Ctx = Context<AppBindings>;
-const idOf = (c: Ctx) => valid<{ id: string }>(c, 'param').id;
 
 register(
   identitiesRoutes,
@@ -49,15 +48,8 @@ register(
     status: 201,
     response: IdentitySchema,
   },
-  async (c: Ctx) =>
-    c.json(
-      await uploadIdentity(
-        serviceContext(c),
-        requestActor(c),
-        valid<z.infer<typeof UploadIdentitySchema>>(c, 'json'),
-      ),
-      201,
-    ),
+  async (c) =>
+    c.json(await uploadIdentity(serviceContext(c), requestActor(c), c.req.valid('json')), 201),
 );
 register(
   identitiesRoutes,
@@ -69,7 +61,7 @@ register(
     params: IdParamSchema,
     response: IdentitySchema,
   },
-  async (c: Ctx) => c.json(await getIdentity(serviceContext(c), idOf(c))),
+  async (c) => c.json(await getIdentity(serviceContext(c), c.req.valid('param').id)),
 );
 register(
   identitiesRoutes,
@@ -82,13 +74,13 @@ register(
     body: UpdateIdentitySchema,
     response: IdentitySchema,
   },
-  async (c: Ctx) =>
+  async (c) =>
     c.json(
       await updateIdentity(
         serviceContext(c),
         requestActor(c),
-        idOf(c),
-        valid<z.infer<typeof UpdateIdentitySchema>>(c, 'json'),
+        c.req.valid('param').id,
+        c.req.valid('json'),
       ),
     ),
 );
@@ -102,8 +94,8 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: Ctx) => {
-    await deleteIdentity(serviceContext(c), requestActor(c), idOf(c));
+  async (c) => {
+    await deleteIdentity(serviceContext(c), requestActor(c), c.req.valid('param').id);
     return c.json({ ok: true });
   },
 );
@@ -118,13 +110,13 @@ register(
     body: RotateIdentitySchema,
     response: IdentitySchema,
   },
-  async (c: Ctx) =>
+  async (c) =>
     c.json(
       await rotateIdentity(
         serviceContext(c),
         requestActor(c),
-        idOf(c),
-        valid<z.infer<typeof RotateIdentitySchema>>(c, 'json'),
+        c.req.valid('param').id,
+        c.req.valid('json'),
       ),
     ),
 );
@@ -138,8 +130,8 @@ register(
     params: IdParamSchema,
     response: ApnsProbeResultSchema,
   },
-  async (c: Ctx) => {
-    await enforceRateLimit(c.env, 'RL_REFRESH', `apns-check:${idOf(c)}`);
-    return c.json(await probeApns(serviceContext(c), requestActor(c), idOf(c)));
+  async (c) => {
+    await enforceRateLimit(c.env, 'RL_REFRESH', `apns-check:${c.req.valid('param').id}`);
+    return c.json(await probeApns(serviceContext(c), requestActor(c), c.req.valid('param').id));
   },
 );

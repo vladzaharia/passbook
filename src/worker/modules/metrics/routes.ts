@@ -21,6 +21,5 @@ register(
     query: MetricsQuerySchema,
     response: MetricsOverviewSchema,
   },
-  async (c: Context<AppBindings>) =>
-    c.json(await getOverview(serviceContext(c), valid<MetricsQuery>(c, 'query'))),
+  async (c) => c.json(await getOverview(serviceContext(c), c.req.valid('query'))),
 );

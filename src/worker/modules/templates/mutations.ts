@@ -197,8 +197,10 @@ export async function replaceManifest(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   id: string,
-  manifest: TemplateManifest,
+  input: Record<string, unknown>,
 ) {
+  // A JSON object of unknown shape; validateManifest below is what makes it a manifest.
+  const manifest = input as unknown as TemplateManifest;
   const row = await loadTemplate(ctx, auth, id);
   const denied = baked(row);
   if (denied) throw denied;

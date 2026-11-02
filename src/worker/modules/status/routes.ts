@@ -24,8 +24,8 @@ register(
     query: StatusQuerySchema,
     response: StatusResponseSchema,
   },
-  async (c: Context<AppBindings>) => {
-    const { fresh } = valid<{ fresh?: '0' | '1' }>(c, 'query');
+  async (c) => {
+    const { fresh } = c.req.valid('query');
     return c.json(await getStatus(serviceContext(c), { fresh: fresh === '1' }));
   },
 );
@@ -38,5 +38,5 @@ register(
     summary: 'Recent workflow runs',
     response: WorkflowRunListSchema,
   },
-  async (c: Context<AppBindings>) => c.json(await listWorkflowRuns(serviceContext(c))),
+  async (c) => c.json(await listWorkflowRuns(serviceContext(c))),
 );

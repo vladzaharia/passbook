@@ -37,8 +37,7 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       params: IdParamSchema,
       response: PassAssetListSchema,
     },
-    async (c: C) =>
-      c.json(await listPassAssets(svc(c), valid<Params>(c, 'param').id, orgScopeOf(c))),
+    async (c) => c.json(await listPassAssets(svc(c), c.req.valid('param').id, orgScopeOf(c))),
   );
 
   register(
@@ -51,8 +50,8 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       params: PassAssetParamSchema,
       response: PassAssetSchema,
     },
-    async (c: C) => {
-      const p = valid<z.infer<typeof PassAssetParamSchema>>(c, 'param');
+    async (c) => {
+      const p = c.req.valid('param');
       const bytes = new Uint8Array(await c.req.arrayBuffer());
       return c.json(await putPassAsset(svc(c), actorFor(c), p.id, p.name, bytes, orgScopeOf(c)));
     },
@@ -68,8 +67,8 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       params: PassAssetParamSchema,
       response: OkSchema,
     },
-    async (c: C) => {
-      const p = valid<z.infer<typeof PassAssetParamSchema>>(c, 'param');
+    async (c) => {
+      const p = c.req.valid('param');
       await deletePassAsset(svc(c), actorFor(c), p.id, p.name, orgScopeOf(c));
       return c.json({ ok: true });
     },

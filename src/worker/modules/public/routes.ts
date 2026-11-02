@@ -51,11 +51,11 @@ register(
     summary: 'Pass page (server-rendered HTML)',
     params: PublicTokenParamSchema,
   },
-  async (c: C) => {
+  async (c) => {
     const svcCtx = svc(c);
     const nonce = c.var.nonce;
     try {
-      const pass = await passForToken(svcCtx, valid<Token>(c, 'param').token);
+      const pass = await passForToken(svcCtx, c.req.valid('param').token);
       const model = await pageModel(svcCtx, pass);
       const lang = langOf(c.req.header('accept-language'));
       const view = normalize(model.passJson, {
@@ -98,8 +98,8 @@ register(
     summary: 'Download the pass',
     params: PublicTokenParamSchema,
   },
-  async (c: C) => {
-    const pass = await passForToken(svc(c), valid<Token>(c, 'param').token);
+  async (c) => {
+    const pass = await passForToken(svc(c), c.req.valid('param').token);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
     if (response.status === 200)
       writeEvent(c.env, {
@@ -121,8 +121,8 @@ register(
     summary: 'Pass image',
     params: PublicAssetParamSchema,
   },
-  async (c: C) => {
-    const p = valid<{ token: string; name: string }>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     const ctx = svc(c);
     const pass = await passForToken(ctx, p.token);
     const asset = await openPublicAsset(ctx, pass, p.name);

@@ -21,8 +21,6 @@ import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
 
 type C = Context<AppBindings>;
-const id = (c: C) => c.req.param('id') ?? '';
-const email = (c: C) => c.req.param('email') ?? '';
 /** The requester's own session id hash, so the detail can mark "This device". */
 const ownSession = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
 
@@ -40,8 +38,7 @@ register(
     query: UserListQuerySchema,
     response: UserListSchema,
   },
-  async (c: C) =>
-    c.json(await listUsers(serviceContext(c), UserListQuerySchema.parse(c.req.query()))),
+  async (c) => c.json(await listUsers(serviceContext(c), c.req.valid('query'))),
 );
 register(
   usersRoutes,
@@ -53,7 +50,8 @@ register(
     params: IdParamSchema,
     response: UserDetailSchema,
   },
-  async (c: C) => c.json(await getUserDetail(serviceContext(c), id(c), ownSession(c))),
+  async (c) =>
+    c.json(await getUserDetail(serviceContext(c), c.req.valid('param').id, ownSession(c))),
 );
 register(
   usersRoutes,
@@ -66,9 +64,11 @@ register(
     body: UpdateUserSchema,
     response: UserSchema,
   },
-  async (c: C) => {
-    const { status } = UpdateUserSchema.parse(await c.req.json());
-    return c.json(await setUserStatus(serviceContext(c), currentUserId(c), id(c), status));
+  async (c) => {
+    const { status } = c.req.valid('json');
+    return c.json(
+      await setUserStatus(serviceContext(c), currentUserId(c), c.req.valid('param').id, status),
+    );
   },
 );
 register(
@@ -83,10 +83,13 @@ register(
     status: 201,
     response: UserDetailSchema,
   },
-  async (c: C) => {
-    const { email } = AddUserEmailSchema.parse(await c.req.json());
+  async (c) => {
+    const { email } = c.req.valid('json');
     const ctx = serviceContext(c);
-    return c.json(await addVerifiedEmail(ctx, currentUserId(c), id(c), email, ownSession(c)), 201);
+    return c.json(
+      await addVerifiedEmail(ctx, currentUserId(c), c.req.valid('param').id, email, ownSession(c)),
+      201,
+    );
   },
 );
 register(
@@ -99,8 +102,16 @@ register(
     params: IdParamSchema.extend({ email: z.string() }),
     response: UserDetailSchema,
   },
-  async (c: C) =>
-    c.json(await removeEmail(serviceContext(c), currentUserId(c), id(c), email(c), ownSession(c))),
+  async (c) =>
+    c.json(
+      await removeEmail(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').id,
+        c.req.valid('param').email,
+        ownSession(c),
+      ),
+    ),
 );
 register(
   usersRoutes,
@@ -112,9 +123,15 @@ register(
     params: IdParamSchema.extend({ email: z.string() }),
     response: UserDetailSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
-      await makePrimaryEmail(serviceContext(c), currentUserId(c), id(c), email(c), ownSession(c)),
+      await makePrimaryEmail(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').id,
+        c.req.valid('param').email,
+        ownSession(c),
+      ),
     ),
 );
 register(
@@ -127,8 +144,8 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: C) => {
-    await revokeUserSessions(serviceContext(c), currentUserId(c), id(c));
+  async (c) => {
+    await revokeUserSessions(serviceContext(c), currentUserId(c), c.req.valid('param').id);
     return c.json({ ok: true as const });
   },
 );
@@ -142,9 +159,14 @@ register(
     params: IdParamSchema.extend({ sessionId: IdSchema }),
     response: OkSchema,
   },
-  async (c: C) => {
-    const sessionId = c.req.param('sessionId') ?? '';
-    await revokeUserSession(serviceContext(c), currentUserId(c), id(c), sessionId);
+  async (c) => {
+    const sessionId = c.req.valid('param').sessionId;
+    await revokeUserSession(
+      serviceContext(c),
+      currentUserId(c),
+      c.req.valid('param').id,
+      sessionId,
+    );
     return c.json({ ok: true as const });
   },
 );

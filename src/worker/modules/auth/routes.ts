@@ -25,7 +25,7 @@ register(
   {
     method: 'get',
     path: '/oidc/start',
-    summary: 'Start Pocket ID sign-in',
+    summary: 'Start Polaris ID sign-in',
     query: OidcStartQuerySchema,
     status: 302,
   },
@@ -34,7 +34,7 @@ register(
 register(
   authRoutes,
   'auth',
-  { method: 'get', path: '/oidc/callback', summary: 'Pocket ID callback', status: 302 },
+  { method: 'get', path: '/oidc/callback', summary: 'Polaris ID callback', status: 302 },
   callbackOidc,
 );
 register(
