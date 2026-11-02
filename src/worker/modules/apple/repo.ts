@@ -42,53 +42,40 @@ export async function registrationCount(db: D1Database, passId: string): Promise
   return row?.n ?? 0;
 }
 
-// One identity serves every org, so a device row is shared. A pass of org B must not redirect the
-// pushes of a device that already holds passes of org A.
-const NO_OTHER_ORG = `NOT EXISTS (SELECT 1 FROM registrations r JOIN passes p ON p.id = r.pass_id
-  WHERE r.device_id = devices.device_id AND r.identity_id = devices.identity_id AND p.org_id <> ?)`;
-
-/** Device and registration in one transaction; the `registrations_cap` trigger enforces the cap. */
+/**
+ * Device and registration in one transaction; the `registrations_cap` trigger enforces the cap.
+ * The push token is stored on the registration: one identity serves every org, so the device row
+ * is shared and a token written there by one pass would redirect the others.
+ */
 export async function addRegistration(
   db: D1Database,
-  r: {
-    deviceId: string;
-    identityId: string;
-    passId: string;
-    pushToken: string;
-    now: number;
-    orgId?: string;
-  },
+  r: { deviceId: string; identityId: string; passId: string; pushToken: string; now: number },
 ): Promise<void> {
   await batch(db, [
     stmt(
       db,
       `INSERT INTO devices (device_id, identity_id, push_token, updated_at) VALUES (?, ?, ?, ?)
-       ON CONFLICT (device_id, identity_id) DO UPDATE SET push_token = excluded.push_token,
-         updated_at = excluded.updated_at
-       WHERE ${NO_OTHER_ORG}`,
-      [r.deviceId, r.identityId, r.pushToken, r.now, r.orgId ?? ''],
+       ON CONFLICT (device_id, identity_id) DO UPDATE SET updated_at = excluded.updated_at`,
+      [r.deviceId, r.identityId, r.pushToken, r.now],
     ),
     stmt(
       db,
-      'INSERT INTO registrations (device_id, identity_id, pass_id, created_at) VALUES (?, ?, ?, ?)',
-      [r.deviceId, r.identityId, r.passId, r.now],
+      `INSERT INTO registrations (device_id, identity_id, pass_id, push_token, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [r.deviceId, r.identityId, r.passId, r.pushToken, r.now],
     ),
   ]);
 }
 
 export async function updatePushToken(
   db: D1Database,
-  deviceId: string,
-  identityId: string,
-  pushToken: string,
-  now: number,
-  orgId: string,
+  r: { deviceId: string; identityId: string; passId: string; pushToken: string; now: number },
 ): Promise<void> {
   await run(
     db,
-    `UPDATE devices SET push_token = ?, updated_at = ? WHERE device_id = ? AND identity_id = ?
-     AND ${NO_OTHER_ORG}`,
-    [pushToken, now, deviceId, identityId, orgId],
+    `UPDATE registrations SET push_token = ?
+     WHERE device_id = ? AND identity_id = ? AND pass_id = ?`,
+    [r.pushToken, r.deviceId, r.identityId, r.passId],
   );
 }
 

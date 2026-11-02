@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { renderPassEmail } from '../../email/pass.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { purgeLogs } from '../apple/repo.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { createMtlsApnsTransport } from './apns.ts';
@@ -212,12 +212,14 @@ describe('outbox claims', () => {
 });
 
 describe('dead tokens', () => {
-  it('removes the device and every registration of it for the identity', async () => {
+  it('removes every registration of the device that holds the dead token', async () => {
     const one = await kit.pass();
     const two = await kit.pass();
     await kit.device(one, 'dead-dev', 'f'.repeat(64));
     await kit.device(two, 'dead-dev', 'f'.repeat(64));
-    await dropRegistrations(kit.env.DB, one.identityId, ['dead-dev']);
+    await dropRegistrations(kit.env.DB, one.identityId, [
+      { deviceId: 'dead-dev', pushToken: 'f'.repeat(64) },
+    ]);
     const left = await first(
       kit.env.DB,
       "SELECT 1 FROM registrations WHERE device_id = 'dead-dev'",
@@ -225,6 +227,26 @@ describe('dead tokens', () => {
     const device = await first(kit.env.DB, "SELECT 1 FROM devices WHERE device_id = 'dead-dev'");
     expect(left).toBeNull();
     expect(device).toBeNull();
+  });
+});
+
+describe('dead tokens on a shared device', () => {
+  it('keeps registrations that hold a different token', async () => {
+    const mine = await kit.pass();
+    const other = await kit.pass();
+    await kit.device(mine, 'shared-dev', 'a'.repeat(64));
+    await kit.device(other, 'shared-dev', 'b'.repeat(64));
+    await dropRegistrations(kit.env.DB, mine.identityId, [
+      { deviceId: 'shared-dev', pushToken: 'b'.repeat(64) },
+    ]);
+    const left = await all<{ pass_id: string }>(
+      kit.env.DB,
+      "SELECT pass_id FROM registrations WHERE device_id = 'shared-dev'",
+    );
+    expect(left.map((r) => r.pass_id)).toEqual([mine.id]);
+    expect(
+      await first(kit.env.DB, "SELECT 1 FROM devices WHERE device_id = 'shared-dev'"),
+    ).not.toBeNull();
   });
 });
 

@@ -135,7 +135,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
   const results = await deps.apns.send(target, [...byToken.keys()], now);
 
   const saved: PushResultRow[] = [];
-  const gone: string[] = [];
+  const gone: { deviceId: string; pushToken: string }[] = [];
   const count: Record<PushOutcome, number> = { ok: 0, gone: 0, transient: 0, cert: 0, rejected: 0 };
   for (const result of results) {
     const outcome = classifyApns(result);
@@ -147,7 +147,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
         reason: result.reason ?? null,
         apnsId: result.apnsId ?? null,
       });
-      if (outcome === 'gone') gone.push(device.deviceId);
+      if (outcome === 'gone') gone.push({ deviceId: device.deviceId, pushToken: device.pushToken });
     }
     writeEvent(ctx.env, {
       event: 'push.result',
