@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { errorMessage, isApiError } from '../lib/errors.ts';
 import { useChangeCount } from '../lib/motion.ts';
+import { Buddy } from './art/buddy.tsx';
 import { UnpluggedArt } from './art/unplugged.tsx';
 import { Button } from './button.tsx';
 
@@ -14,6 +15,8 @@ export interface ErrorStateProps {
   onRetry?: () => unknown;
   retryLabel?: string;
   action?: ReactNode;
+  /** A section of a page (a tab, a card): the small art, no buddy, so a view has one at most. */
+  inline?: boolean;
   className?: string;
 }
 
@@ -26,8 +29,9 @@ export function isChunkLoadError(error: unknown): boolean {
 }
 
 /**
- * Neutral card: a danger tile, the unplugged art, one sentence, Retry. The request id hides under
- * Details. A failure after Retry shakes the art once; the first render never shakes.
+ * Neutral card, one sentence, Retry; the request id hides under Details. The sad buddy sits on its
+ * top edge beside the pulled plug; inline, a danger tile on the unplugged art. A failure after
+ * Retry shakes the art once; the first render never shakes.
  */
 export function ErrorState({
   error,
@@ -35,6 +39,7 @@ export function ErrorState({
   onRetry,
   retryLabel = 'Retry',
   action,
+  inline = false,
   className,
 }: ErrorStateProps) {
   const requestId = isApiError(error) ? error.requestId : undefined;
@@ -61,20 +66,32 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-4 rounded-lg border border-border bg-surface-raised p-4 text-center shadow-[var(--wl-edge),var(--pk-elevation-1)] sm:flex-row sm:text-left',
+        'relative flex flex-col items-center gap-4 rounded-lg border border-border bg-surface-raised p-4 text-center shadow-[var(--wl-edge),var(--pk-elevation-1)]',
+        inline ? 'sm:flex-row sm:text-left' : 'mt-18 pt-8',
         className,
       )}
     >
-      <div ref={art} className="relative shrink-0">
-        <UnpluggedArt size="sm" />
-        <span
-          aria-hidden
-          className="absolute -top-1 -left-1 inline-flex size-6 items-center justify-center rounded-md border border-danger-border bg-danger-subtle text-danger [&_svg]:size-3.5"
-        >
-          <TriangleAlert />
-        </span>
+      <div ref={art} className={inline ? 'relative shrink-0' : 'contents'}>
+        {inline ? (
+          <>
+            <UnpluggedArt size="sm" />
+            <span
+              aria-hidden
+              className="absolute -top-1 -left-1 inline-flex size-6 items-center justify-center rounded-md border border-danger-border bg-danger-subtle text-danger [&_svg]:size-3.5"
+            >
+              <TriangleAlert />
+            </span>
+          </>
+        ) : (
+          <Buddy mood="sad" prop={<UnpluggedArt size="sm" />} />
+        )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col items-center gap-2 sm:items-start">
+      <div
+        className={cn(
+          'flex min-w-0 flex-1 flex-col items-center gap-2',
+          inline && 'sm:items-start',
+        )}
+      >
         <p role="alert" className="max-w-[65ch] text-sm text-fg-strong">
           {title ?? errorMessage(error)}
         </p>

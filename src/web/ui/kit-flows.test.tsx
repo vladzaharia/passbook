@@ -231,6 +231,16 @@ describe('ErrorState and offline', () => {
     expect(container.firstElementChild?.className).toContain('bg-surface-raised');
   });
 
+  it('seats the sad buddy beside the pulled plug; inline keeps the small art alone', () => {
+    const error = new ApiError({ status: 500, code: 'server_error' });
+    const page = render(<ErrorState error={error} onRetry={() => {}} />).container;
+    expect(page.querySelector('[data-buddy] [data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    expect(page.querySelector('[data-buddy] [data-art="unplugged"]')).not.toBeNull();
+    const inline = render(<ErrorState inline error={error} onRetry={() => {}} />).container;
+    expect(inline.querySelector('[data-buddy]')).toBeNull();
+    expect(inline.querySelector('[data-art="unplugged"]')).not.toBeNull();
+  });
+
   it('shakes the art only when a retry fails again', () => {
     const first = new ApiError({ status: 500, code: 'server_error' });
     const { container, rerender } = render(<ErrorState error={first} onRetry={() => {}} />);

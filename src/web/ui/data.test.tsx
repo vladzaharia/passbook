@@ -194,6 +194,29 @@ describe('states', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('EmptyState seats a curious buddy with the entity art; inline shows the art alone', () => {
+    const box = render(<EmptyState art="passes" title="No passes yet" />).container;
+    const buddy = box.querySelector('[data-buddy]');
+    expect(buddy).toHaveAttribute('aria-hidden', 'true');
+    expect(buddy?.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'curious');
+    expect(buddy?.querySelector('[data-part="w"]')).toHaveAttribute('data-seat');
+    expect(buddy?.querySelector('[data-art="passes"]')).not.toBeNull();
+    const filtered = render(
+      <FilteredEmpty entity="pass" onClear={() => {}} />,
+    ).container.querySelector('[data-buddy]');
+    expect(filtered?.querySelector('[data-art="lens-overlay"]')).not.toBeNull();
+    const missing = render(<EmptyState heading art="torn" title="Page not found" />).container;
+    expect(missing.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    const quiet = render(<EmptyState art="log" mood="flat" title="No entries" />).container;
+    expect(quiet.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'flat');
+    const wallet = render(<EmptyState art="wallet" title="No passes" />).container;
+    expect(wallet.querySelector('[data-art="wallet"]')).toHaveAttribute('data-state', 'empty');
+    expect(wallet.querySelectorAll('[data-art]')).toHaveLength(1);
+    const inline = render(<EmptyState inline art="phone" title="No devices" />).container;
+    expect(inline.querySelector('[data-buddy]')).toBeNull();
+    expect(inline.querySelector('[data-art="phone"]')).not.toBeNull();
+  });
+
   it('EmptyState and SkeletonRows have no violations', async () => {
     const { container } = render(
       <div>
