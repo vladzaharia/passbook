@@ -1,0 +1,34 @@
+/* hello (the sign-in wallet and the auth pages' wallet, at rest; a click only): a squash and
+   stretch, and the top pass waves like a hand. Not while the sign-in card has a beat going. SSR
+   pages inline it with ART_CSS (art/css.ts) and replay it with public/buddy-replay.js. */
+@media (prefers-reduced-motion: no-preference) {
+  :not([data-beat]) > [data-scene="hello"][data-replay][data-run] .wl-art [data-body] {
+    animation: wl-s-boing 640ms var(--art-mv);
+  }
+  :not([data-beat]) > [data-scene="hello"][data-replay][data-run] .wl-art [data-part="c2"] {
+    animation: wl-s-hello 860ms var(--art-mv) 120ms;
+  }
+}
+@keyframes wl-s-boing {
+  30% {
+    scale: 1.04 0.94;
+  }
+  60% {
+    translate: 0 -2px;
+    scale: 0.98 1.03;
+  }
+}
+@keyframes wl-s-hello {
+  20% {
+    rotate: -14deg;
+  }
+  45% {
+    rotate: 12deg;
+  }
+  70% {
+    rotate: -7deg;
+  }
+  88% {
+    rotate: 3deg;
+  }
+}

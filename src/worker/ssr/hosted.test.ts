@@ -7,13 +7,16 @@ import {
   noAccessPage,
   SIGN_IN_ERRORS,
 } from '../modules/auth/pages.ts';
+import { contentSecurityPolicy } from '../platform/security-headers.ts';
 import { renderErrorPage } from './error-page.tsx';
-import { HOSTED_CSS } from './hosted.ts';
+import { HOSTED_CSS, REPLAY_SCRIPT } from './hosted.ts';
 import { HOSTED_ART_CSS } from './hosted-art.tsx';
 import { renderNotFoundPage } from './pass-page.tsx';
 import { THEME_CSS } from './theme.ts';
 
 const NONCE = 'n0nce';
+/** The only script a hosted page loads: same-origin, never inline. */
+const scripts = (html: string) => html.match(/<script[^>]*>[\s\S]*?<\/script>/g) ?? [];
 const primaries = (html: string) => html.match(/class="btn"/g)?.length ?? 0;
 const mood = (html: string) => /data-part="w"[^>]*data-mood="([a-z]+)"/.exec(html)?.[1];
 const back = (code: string) => {
@@ -31,12 +34,12 @@ describe('hosted auth pages', () => {
     ['expired', expiredPage(NONCE)],
     ['no-access', noAccessPage(NONCE)],
     ['break-glass', breakglassPage(NONCE, {})],
-  ])('renders the %s card with its own art, script-free', (state, html) => {
+  ])('renders the %s card with its own art and no inline script', (state, html) => {
     expect(html).toContain(`<section class="card" data-state="${state}">`);
     expect(html).toContain(`data-art="wallet" data-state="${state}"`);
     expect(html).toContain('data-beat="off"');
     expect(html).toContain(`<style nonce="${NONCE}">`);
-    expect(html).not.toMatch(/<script/);
+    expect(scripts(html)).toEqual([REPLAY_SCRIPT]);
     expect(html).not.toMatch(/\sstyle="/);
     expect(html).not.toContain('theme-toggle');
     expect(html).toContain('<html lang="en">');
@@ -91,9 +94,9 @@ describe('hosted auth pages', () => {
   it('puts the wordmark left and the wallet right in one band, then the card', () => {
     const html = expiredPage(NONCE);
     expect(html).toMatch(
-      /<main class="hosted"><div class="band"><div class="brand"><a class="mark" href="\/"><svg aria-hidden="true"[^>]*>.*?<\/svg>PassBook<\/a><\/div><div class="scene" aria-hidden="true"><svg[^>]*data-art="wallet"/,
+      /<main class="hosted"><div class="band"><div class="brand"><a class="mark" href="\/"><svg aria-hidden="true"[^>]*>.*?<\/svg>PassBook<\/a><\/div><div class="scene" aria-hidden="true"><span data-replay="" data-scene="hello"><svg[^>]*data-art="wallet"/,
     );
-    expect(html).toMatch(/<\/svg><\/div><\/div><section class="card"/);
+    expect(html).toMatch(/<\/svg><\/span><\/div><\/div><section class="card"/);
     expect(HOSTED_CSS).toContain('.band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;');
     expect(HOSTED_CSS).toContain('.band .mark svg{width:1.5rem;height:1.5rem}');
   });
@@ -180,6 +183,36 @@ describe('hosted auth pages', () => {
   });
 });
 
+describe('click to replay the wallet', () => {
+  const pages = [
+    expiredPage(NONCE),
+    noAccessPage(NONCE),
+    renderErrorPage({ status: 404, nonce: NONCE }),
+    renderNotFoundPage(NONCE),
+  ];
+
+  it('wraps the art in the replay hooks, decorative', () => {
+    for (const html of pages) {
+      expect(html).toMatch(
+        /<div class="scene" aria-hidden="true"><span data-replay="" data-scene="hello"><svg data-art="wallet"/,
+      );
+      expect(html).not.toMatch(/data-replay[^>]*tabindex/);
+    }
+    expect(HOSTED_CSS).toContain('.scene>[data-replay]{display:block}');
+  });
+
+  it('loads one same-origin deferred script the CSP already allows, nothing inline', () => {
+    expect(REPLAY_SCRIPT).toBe('<script src="/buddy-replay.js" defer></script>');
+    const csp = contentSecurityPolicy(NONCE);
+    expect(csp).toContain("script-src 'self' 'nonce-");
+    expect(csp).not.toMatch(/script-src [^;]*unsafe-inline/);
+    for (const html of pages) {
+      expect(html).not.toMatch(/<script(?![^>]*\ssrc="\/)/);
+      expect(html).not.toMatch(/\son[a-z]+="/);
+    }
+  });
+});
+
 describe('renderErrorPage', () => {
   it.each([
     [404, 'Page not found', 'Go home', 'lost'],
@@ -193,7 +226,7 @@ describe('renderErrorPage', () => {
     expect(html.includes('data-part="hg"')).toBe(status === 429);
     expect(primaries(html)).toBe(1);
     expect(html).toMatch(new RegExp(`<a class="btn" href="[^"]*">${action}</a>`));
-    expect(html).not.toMatch(/<script/);
+    expect(scripts(html)).toEqual([REPLAY_SCRIPT]);
   });
 
   it('says how long to wait from Retry-After', () => {

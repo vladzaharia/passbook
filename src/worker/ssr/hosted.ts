@@ -2,14 +2,18 @@
  * The hosted shell shared by the SSR auth and error pages. Same metrics as /login
  * (src/web/portal/login-page.tsx, login-scene.css): one header band, the 20 px wordmark at the
  * card's left text inset and the 128×96 wallet scene (112×84 under 640) seated on the card's top
- * edge at the right, then the card, so the h1 and card sit at identical positions. Script-free;
- * the art moves in CSS only, once on load.
+ * edge at the right, then the card, so the h1 and card sit at identical positions. The art moves in
+ * CSS only, once on load; one same-origin script (public/buddy-replay.js) replays its hello on a
+ * click. No inline script.
  */
 import { ART_CSS } from '../../web/ui/art/css.ts';
 import { artHtml, HOSTED_ART_CSS, type HostedArt } from './hosted-art.tsx';
 import { escapeHtml, HEAD_HTML, THEME_CSS, wordmarkHtml } from './theme.ts';
 
 export const HOSTED_FOOTER = 'Signing in shows the passes sent to your email.';
+
+/** Click to replay the wallet's hello; same-origin, so `script-src 'self'` covers it. */
+export const REPLAY_SCRIPT = '<script src="/buddy-replay.js" defer></script>';
 
 const LOCK =
   '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
@@ -26,6 +30,7 @@ ${HOSTED_ART_CSS}
 .band .mark svg{width:1.5rem;height:1.5rem}
 .scene{position:relative;z-index:2;flex:none;width:128px;height:96px;margin-bottom:-8px;pointer-events:none}
 .scene .wl-art{width:128px;height:96px}
+.scene>[data-replay]{display:block}
 .card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--line);border-radius:1.125rem;background:var(--raised);box-shadow:inset 0 1px 0 var(--edge),var(--shadow)}
 .card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(115deg,var(--foil-1),var(--foil-2) 55%,var(--foil-3))}
 .body{display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem}
@@ -71,5 +76,5 @@ export function hostedPage(input: HostedPageInput): string {
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main></body></html>`;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
 }
