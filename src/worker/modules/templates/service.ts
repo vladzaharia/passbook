@@ -222,13 +222,21 @@ export async function preview(
           await backContactsFor(ctx, tenant.id, tenant.branding),
         ),
       }
-    : resolved;
+    : // No org yet: the back shows what an org without contacts gets, never an empty Contact.
+      {
+        ...resolved,
+        passJson: withBackContacts(resolved.passJson, {
+          contact: null,
+          passService: baseUrl(ctx.env),
+        }),
+      };
   try {
     const result = previewPass(
       ctx.env,
       template,
       body.input ?? template.manifest.sample,
-      org?.name ?? row.name,
+      // A shared template has no org: a placeholder, never the template's name, signs the back.
+      org?.name ?? 'Organization',
       new Date(ctx.clock.now()),
     );
     return {
