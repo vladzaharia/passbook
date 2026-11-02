@@ -135,7 +135,7 @@ describe('GET /p/:token', () => {
     clearSettingsCache(kit.env.DB);
     await voidPass(kit.ctx, actor, pass.id, null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    const note = /<p class="note"[^]*?<\/p>/.exec(html)?.[0] ?? '';
+    const note = /<p class="note"[\s\S]*?<\/p>/.exec(html)?.[0] ?? '';
     expect(note).toContain('This pass was voided.');
     expect(note).toContain('href="mailto:help@gym.test"');
     expect(html.match(/mailto:help@gym.test/g)).toHaveLength(1);
