@@ -36,73 +36,73 @@
       {
         "changeMessage": "Your membership status is now %@.",
         "key": "status",
-        "label": "MEMBERSHIP STATUS",
+        "label": "Membership status",
         "value": "Active"
       },
       {
         "key": "message",
-        "label": "FROM HENRY’S",
+        "label": "From Henry’s",
         "value": "Welcome to Henry’s."
       },
       {
         "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>",
         "key": "portal",
-        "label": "MANAGE YOUR MEMBERSHIP",
+        "label": "Manage your membership",
         "value": "https://henrysgymnasium.thememberspot.com/"
       },
       {
         "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>",
         "key": "directions-capitol-hill",
-        "label": "CAPITOL HILL",
+        "label": "Capitol Hill",
         "value": "1617 Boylston Ave, Seattle, WA 98122"
       },
       {
         "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>",
         "key": "directions-queen-anne",
-        "label": "QUEEN ANNE",
+        "label": "Queen Anne",
         "value": "14 Mercer St, Seattle, WA 98109"
       },
       {
         "attributedValue": "<a href=\"tel:+12066440969\">(206) 644-0969</a>",
         "key": "phone",
-        "label": "CONTACT THE GYM",
+        "label": "Contact the gym",
         "value": "(206) 644-0969"
       },
       {
         "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>",
         "key": "support",
-        "label": "MEMBER SUPPORT",
+        "label": "Member support",
         "value": "epicexperience@henrysgymnasium.com"
       },
       {
         "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>",
         "key": "website",
-        "label": "HENRY’S GYMNASIUM",
+        "label": "Henry’s Gymnasium",
         "value": "https://henrysgymnasium.com/"
       },
       {
         "key": "terms",
-        "label": "ABOUT THIS PASS",
+        "label": "About this pass",
         "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
         "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>",
         "key": "issuer",
-        "label": "PASS SERVICE",
+        "label": "Pass service",
         "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
       }
     ],
     "headerFields": [
       {
         "key": "memberId",
-        "label": "MEMBER",
+        "label": "Member",
         "value": "DEMO0001"
       }
     ],
     "primaryFields": [
       {
         "key": "memberName",
-        "label": "MEMBER",
+        "label": "Name",
         "value": "Alex Morgan"
       }
     ],
@@ -110,13 +110,13 @@
       {
         "changeMessage": "Your membership is now %@.",
         "key": "membership",
-        "label": "MEMBERSHIP",
+        "label": "Membership",
         "value": "All-Inclusive Wellness"
       },
       {
         "changeMessage": "Your home club is now %@.",
         "key": "homeClub",
-        "label": "HOME CLUB",
+        "label": "Home club",
         "value": "Queen Anne"
       }
     ]
@@ -141,59 +141,59 @@
       {
         "changeMessage": "Your membership status is now %@.",
         "key": "status-poster",
-        "label": "MEMBERSHIP STATUS",
+        "label": "Membership status",
         "value": "Active"
       },
       {
         "key": "message-poster",
-        "label": "FROM HENRY’S",
+        "label": "From Henry’s",
         "value": "Welcome to Henry’s."
       },
       {
         "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>",
         "key": "portal-poster",
-        "label": "MANAGE YOUR MEMBERSHIP",
+        "label": "Manage your membership",
         "value": "https://henrysgymnasium.thememberspot.com/"
       },
       {
         "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.615835,-122.323555\">Directions to Capitol Hill</a>",
         "key": "directions-capitol-hill-poster",
-        "label": "CAPITOL HILL",
+        "label": "Capitol Hill",
         "value": "1617 Boylston Ave, Seattle, WA 98122"
       },
       {
         "attributedValue": "<a href=\"https://maps.apple.com/?daddr=47.624765,-122.356206\">Directions to Queen Anne</a>",
         "key": "directions-queen-anne-poster",
-        "label": "QUEEN ANNE",
+        "label": "Queen Anne",
         "value": "14 Mercer St, Seattle, WA 98109"
       },
       {
         "attributedValue": "<a href=\"tel:+12066440969\">(206) 644-0969</a>",
         "key": "phone-poster",
-        "label": "CONTACT THE GYM",
+        "label": "Contact the gym",
         "value": "(206) 644-0969"
       },
       {
         "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>",
         "key": "support-poster",
-        "label": "MEMBER SUPPORT",
+        "label": "Member support",
         "value": "epicexperience@henrysgymnasium.com"
       },
       {
         "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>",
         "key": "website-poster",
-        "label": "HENRY’S GYMNASIUM",
+        "label": "Henry’s Gymnasium",
         "value": "https://henrysgymnasium.com/"
       },
       {
         "key": "terms-poster",
-        "label": "ABOUT THIS PASS",
+        "label": "About this pass",
         "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
         "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>",
         "key": "issuer-poster",
-        "label": "PASS SERVICE",
+        "label": "Pass service",
         "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/"
       }
     ],
@@ -207,7 +207,7 @@
     "headerFields": [
       {
         "key": "memberId-poster",
-        "label": "MEMBER",
+        "label": "Member",
         "value": "DEMO0001"
       }
     ],
@@ -219,7 +219,7 @@
       {
         "changeMessage": "Your home club is now %@.",
         "key": "homeClub-poster",
-        "label": "HOME CLUB",
+        "label": "Home club",
         "value": "Queen Anne"
       }
     ]

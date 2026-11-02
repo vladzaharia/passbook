@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "a2610989c060d2a2086b1e517a325492f4d51e46";
+export const BAKED_BUILD_HASH = "7d806f3ff18eda13d5edd6fcbfda609501dfce71";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "5219c55fcd8f2b0c",
+    "version": "994290705ddb37c7",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -153,7 +153,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "clubs": {
           "capitol-hill": {
             "name": "Capitol Hill",
-            "label": "CAPITOL HILL",
+            "label": "Capitol Hill",
             "street": "1617 Boylston Ave",
             "address": "1617 Boylston Ave, Seattle, WA 98122",
             "lat": 47.615835,
@@ -164,7 +164,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "queen-anne": {
             "name": "Queen Anne",
-            "label": "QUEEN ANNE",
+            "label": "Queen Anne",
             "street": "14 Mercer St",
             "address": "14 Mercer St, Seattle, WA 98109",
             "lat": 47.624765,
@@ -359,7 +359,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId-poster",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
@@ -370,7 +370,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           {
             "key": "homeClub-poster",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -385,47 +385,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status-poster",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message-poster",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal-poster",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone-poster",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support-poster",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website-poster",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms-poster",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer-poster",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -435,27 +435,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
         "primaryFields": [
           {
             "key": "memberName",
-            "label": "MEMBER",
+            "label": "Name",
             "value": "Alex Morgan"
           }
         ],
         "secondaryFields": [
           {
             "key": "membership",
-            "label": "MEMBERSHIP",
+            "label": "Membership",
             "value": "All-Inclusive Wellness",
             "changeMessage": "Your membership is now %@."
           },
           {
             "key": "homeClub",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -464,47 +464,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -523,7 +523,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/artwork@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/artwork@2x.png"
         }
       },
       {
@@ -537,7 +537,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/artwork@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/artwork@3x.png"
         }
       },
       {
@@ -545,12 +545,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 743,
-        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df",
-        "crc32": 3740293075,
+        "size": 760,
+        "sha1": "295fd28c415697d0b9b0e2a1854031c4c2840865",
+        "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/994290705ddb37c7/en.lproj/pass.strings"
         }
       },
       {
@@ -564,7 +564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/icon@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/icon@2x.png"
         }
       },
       {
@@ -578,63 +578,63 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/icon@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 13860,
-        "sha1": "34901c151c85f2755fc272070858db3604289658",
-        "crc32": 972620379,
-        "width": 320,
+        "size": 9169,
+        "sha1": "e280423c9e24d980e17bc04f9968f1db4f9b00d5",
+        "crc32": 532407714,
+        "width": 216,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/logo@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 22469,
-        "sha1": "77a189d2293d69ab698fd707f49977a52f8e464b",
-        "crc32": 2517702097,
-        "width": 480,
+        "size": 15430,
+        "sha1": "b260d29069b71a94482bb75ff49d0d28d1180083",
+        "crc32": 2846001471,
+        "width": 324,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/logo@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 8049,
-        "sha1": "778c3e6d4fbde973c61522722ef60997042d7e71",
-        "crc32": 4007933364,
-        "width": 252,
+        "size": 5146,
+        "sha1": "12dbac161a44dbffdca4e47418add9953c62316c",
+        "crc32": 2945709477,
+        "width": 130,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 12698,
-        "sha1": "6d6ea23891fd176738bf8d6c1b9b2dc24d65aabc",
-        "crc32": 1589541587,
-        "width": 378,
+        "size": 8155,
+        "sha1": "84e82b64504bae02137891113b10270d489c61b0",
+        "crc32": 3200501183,
+        "width": 195,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/primaryLogo@3x.png"
         }
       }
     ],
@@ -643,49 +643,24 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 86361,
         "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
-        "path": "/templates/henrys-blue/5219c55fcd8f2b0c/background@2x.png"
+        "path": "/templates/henrys-blue/994290705ddb37c7/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 156846,
         "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
-        "path": "/templates/henrys-blue/5219c55fcd8f2b0c/background@3x.png"
+        "path": "/templates/henrys-blue/994290705ddb37c7/background@3x.png"
       }
     ],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "logo@2x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "logo@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "logo@3x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "logo@3x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "primaryLogo@2x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "primaryLogo@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "primaryLogo@3x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "primaryLogo@3x.png"
-        }
-      ]
+      "issues": []
     }
   },
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "a0bf9fe90cb2d9e1",
+    "version": "01dcec9fd38add9c",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -830,7 +805,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "clubs": {
           "capitol-hill": {
             "name": "Capitol Hill",
-            "label": "CAPITOL HILL",
+            "label": "Capitol Hill",
             "street": "1617 Boylston Ave",
             "address": "1617 Boylston Ave, Seattle, WA 98122",
             "lat": 47.615835,
@@ -841,7 +816,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "queen-anne": {
             "name": "Queen Anne",
-            "label": "QUEEN ANNE",
+            "label": "Queen Anne",
             "street": "14 Mercer St",
             "address": "14 Mercer St, Seattle, WA 98109",
             "lat": 47.624765,
@@ -1036,7 +1011,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId-poster",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
@@ -1047,7 +1022,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           {
             "key": "homeClub-poster",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -1062,47 +1037,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status-poster",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message-poster",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal-poster",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone-poster",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support-poster",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website-poster",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms-poster",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer-poster",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -1112,27 +1087,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
         "primaryFields": [
           {
             "key": "memberName",
-            "label": "MEMBER",
+            "label": "Name",
             "value": "Alex Morgan"
           }
         ],
         "secondaryFields": [
           {
             "key": "membership",
-            "label": "MEMBERSHIP",
+            "label": "Membership",
             "value": "All-Inclusive Wellness",
             "changeMessage": "Your membership is now %@."
           },
           {
             "key": "homeClub",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -1141,47 +1116,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -1200,7 +1175,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/artwork@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/artwork@2x.png"
         }
       },
       {
@@ -1214,7 +1189,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/artwork@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/artwork@3x.png"
         }
       },
       {
@@ -1222,12 +1197,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 743,
-        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df",
-        "crc32": 3740293075,
+        "size": 760,
+        "sha1": "295fd28c415697d0b9b0e2a1854031c4c2840865",
+        "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/en.lproj/pass.strings"
         }
       },
       {
@@ -1241,7 +1216,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/icon@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/icon@2x.png"
         }
       },
       {
@@ -1255,63 +1230,63 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/icon@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 13860,
-        "sha1": "34901c151c85f2755fc272070858db3604289658",
-        "crc32": 972620379,
-        "width": 320,
+        "size": 9169,
+        "sha1": "e280423c9e24d980e17bc04f9968f1db4f9b00d5",
+        "crc32": 532407714,
+        "width": 216,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/logo@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 22469,
-        "sha1": "77a189d2293d69ab698fd707f49977a52f8e464b",
-        "crc32": 2517702097,
-        "width": 480,
+        "size": 15430,
+        "sha1": "b260d29069b71a94482bb75ff49d0d28d1180083",
+        "crc32": 2846001471,
+        "width": 324,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/logo@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 8049,
-        "sha1": "778c3e6d4fbde973c61522722ef60997042d7e71",
-        "crc32": 4007933364,
-        "width": 252,
+        "size": 5146,
+        "sha1": "12dbac161a44dbffdca4e47418add9953c62316c",
+        "crc32": 2945709477,
+        "width": 130,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 12698,
-        "sha1": "6d6ea23891fd176738bf8d6c1b9b2dc24d65aabc",
-        "crc32": 1589541587,
-        "width": 378,
+        "size": 8155,
+        "sha1": "84e82b64504bae02137891113b10270d489c61b0",
+        "crc32": 3200501183,
+        "width": 195,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/primaryLogo@3x.png"
         }
       }
     ],
@@ -1320,43 +1295,18 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 89428,
         "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
-        "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/background@2x.png"
+        "path": "/templates/henrys-copper/01dcec9fd38add9c/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 161342,
         "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
-        "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/background@3x.png"
+        "path": "/templates/henrys-copper/01dcec9fd38add9c/background@3x.png"
       }
     ],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "logo@2x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "logo@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "logo@3x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "logo@3x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "primaryLogo@2x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "primaryLogo@2x.png"
-        },
-        {
-          "severity": "warning",
-          "code": "IMAGE_PADDING",
-          "message": "primaryLogo@3x.png has empty space around the art; trim it so Wallet aligns it.",
-          "path": "primaryLogo@3x.png"
-        }
-      ]
+      "issues": []
     }
   },
   {

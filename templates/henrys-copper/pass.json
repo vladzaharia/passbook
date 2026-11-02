@@ -37,7 +37,7 @@
     "headerFields": [
       {
         "key": "memberId-poster",
-        "label": "MEMBER",
+        "label": "Member",
         "value": "DEMO0001"
       }
     ],
@@ -48,7 +48,7 @@
       },
       {
         "key": "homeClub-poster",
-        "label": "HOME CLUB",
+        "label": "Home club",
         "value": "Capitol Hill",
         "changeMessage": "Your home club is now %@."
       }
@@ -63,47 +63,47 @@
     "backFields": [
       {
         "key": "status-poster",
-        "label": "MEMBERSHIP STATUS",
+        "label": "Membership status",
         "value": "Active",
         "changeMessage": "Your membership status is now %@."
       },
       {
         "key": "message-poster",
-        "label": "FROM HENRY’S",
+        "label": "From Henry’s",
         "value": "Welcome to Henry’s."
       },
       {
         "key": "portal-poster",
-        "label": "MANAGE YOUR MEMBERSHIP",
+        "label": "Manage your membership",
         "value": "https://henrysgymnasium.thememberspot.com/",
         "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
       },
       {
         "key": "phone-poster",
-        "label": "CONTACT THE GYM",
+        "label": "Contact the gym",
         "value": "(206) 644-7797",
         "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
       },
       {
         "key": "support-poster",
-        "label": "MEMBER SUPPORT",
+        "label": "Member support",
         "value": "epicexperience@henrysgymnasium.com",
         "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
       },
       {
         "key": "website-poster",
-        "label": "HENRY’S GYMNASIUM",
+        "label": "Henry’s Gymnasium",
         "value": "https://henrysgymnasium.com/",
         "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
       },
       {
         "key": "terms-poster",
-        "label": "ABOUT THIS PASS",
+        "label": "About this pass",
         "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
         "key": "issuer-poster",
-        "label": "PASS SERVICE",
+        "label": "Pass service",
         "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
         "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
       }
@@ -113,27 +113,27 @@
     "headerFields": [
       {
         "key": "memberId",
-        "label": "MEMBER",
+        "label": "Member",
         "value": "DEMO0001"
       }
     ],
     "primaryFields": [
       {
         "key": "memberName",
-        "label": "MEMBER",
+        "label": "Name",
         "value": "Alex Morgan"
       }
     ],
     "secondaryFields": [
       {
         "key": "membership",
-        "label": "MEMBERSHIP",
+        "label": "Membership",
         "value": "All-Inclusive Wellness",
         "changeMessage": "Your membership is now %@."
       },
       {
         "key": "homeClub",
-        "label": "HOME CLUB",
+        "label": "Home club",
         "value": "Capitol Hill",
         "changeMessage": "Your home club is now %@."
       }
@@ -142,47 +142,47 @@
     "backFields": [
       {
         "key": "status",
-        "label": "MEMBERSHIP STATUS",
+        "label": "Membership status",
         "value": "Active",
         "changeMessage": "Your membership status is now %@."
       },
       {
         "key": "message",
-        "label": "FROM HENRY’S",
+        "label": "From Henry’s",
         "value": "Welcome to Henry’s."
       },
       {
         "key": "portal",
-        "label": "MANAGE YOUR MEMBERSHIP",
+        "label": "Manage your membership",
         "value": "https://henrysgymnasium.thememberspot.com/",
         "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
       },
       {
         "key": "phone",
-        "label": "CONTACT THE GYM",
+        "label": "Contact the gym",
         "value": "(206) 644-7797",
         "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
       },
       {
         "key": "support",
-        "label": "MEMBER SUPPORT",
+        "label": "Member support",
         "value": "epicexperience@henrysgymnasium.com",
         "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
       },
       {
         "key": "website",
-        "label": "HENRY’S GYMNASIUM",
+        "label": "Henry’s Gymnasium",
         "value": "https://henrysgymnasium.com/",
         "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
       },
       {
         "key": "terms",
-        "label": "ABOUT THIS PASS",
+        "label": "About this pass",
         "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
         "key": "issuer",
-        "label": "PASS SERVICE",
+        "label": "Pass service",
         "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
         "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
       }
