@@ -115,7 +115,9 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
             onChange={(v) => {
               setCode(v);
               setFieldError(undefined);
+              scene.gaze(v.length / CODE_LENGTH);
             }}
+            onBlur={() => scene.gaze(null)}
             inputRef={codeRef}
             invalid={Boolean(fieldError)}
             describedBy={fieldError ? noteId : undefined}

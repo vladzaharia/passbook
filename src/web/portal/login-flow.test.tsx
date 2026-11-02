@@ -22,6 +22,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   window.turnstile = undefined;
+  vi.restoreAllMocks();
 });
 
 const sent = () => json({ ok: true }, 202);
@@ -72,15 +73,61 @@ describe('magic link', () => {
     await waitFor(() => expect(goTo).toHaveBeenCalledWith('/passes/p1'));
     expect(consumed).toEqual([{ email: 'sam@example.com', code: '123456' }]);
     expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'success');
+    // The wallet fills: the eyes smile.
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'happy');
+    expect(container.querySelector('[data-look] .wl-login-joy')).not.toBeNull();
   });
 
-  it('shows the first letter of a valid address on the top card', async () => {
+  it('shows the first letter of a valid address on the top card, in place under reduced motion', async () => {
     const user = userEvent.setup();
     const { container } = await renderApp('/login', { session: 'anon' });
     await user.type(await screen.findByLabelText('Email'), 'ada@example');
-    expect(container.querySelector('.wl-login-letter [data-on]')).toBeNull();
+    expect(container.querySelector('.wl-login-initial')).toBeNull();
     await user.type(screen.getByLabelText('Email'), '.com');
-    expect(container.querySelector('.wl-login-letter [data-on] text')).toHaveTextContent('A');
+    const initial = container.querySelector('[data-part="c2"] .wl-login-initial');
+    expect(initial).toHaveTextContent('A');
+    expect(container.querySelector('[data-lift]')).toBeNull();
+    await user.clear(screen.getByLabelText('Email'));
+    expect(container.querySelector('.wl-login-initial')).toBeNull();
+  });
+
+  it('lifts the top card when motion is allowed', async () => {
+    const original = window.matchMedia;
+    // Motion allowed: every query answers false, so prefers-reduced-motion: reduce is off.
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      ...original(query),
+      matches: false,
+    }));
+    const user = userEvent.setup();
+    const { container } = await renderApp('/login', { session: 'anon' });
+    await user.type(await screen.findByLabelText('Email'), 'bo@example.com');
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-lift');
+    expect(container.querySelector('.wl-login-initial')).toHaveTextContent('B');
+  });
+
+  it('turns the eyes toward typing, then lets go on blur', async () => {
+    const user = userEvent.setup();
+    const { container } = await renderApp('/login', { session: 'anon' });
+    const email = await screen.findByLabelText('Email');
+    const scene = container.querySelector('.wl-login-scene') as HTMLElement;
+    expect(scene).not.toHaveAttribute('data-gaze');
+    await user.type(email, 'ada@example.com');
+    expect(scene).toHaveAttribute('data-gaze');
+    expect(Number(scene.style.getPropertyValue('--gx'))).toBeCloseTo((15 / 30) * 2 - 1);
+    await user.tab();
+    expect(scene).not.toHaveAttribute('data-gaze');
+  });
+
+  it('pauses the scene while the tab is hidden', async () => {
+    const { container } = await renderApp('/login', { session: 'anon' });
+    await screen.findByLabelText('Email');
+    const scene = container.querySelector('.wl-login-scene');
+    const state = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(scene).toHaveAttribute('data-paused');
+    state.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(scene).not.toHaveAttribute('data-paused');
   });
 
   it('checks the address, then waits for the challenge instead of failing', async () => {
@@ -141,7 +188,29 @@ describe('magic link', () => {
     expect(error.textContent).not.toMatch(/link/i);
     expect(screen.getByLabelText('Code')).toHaveAttribute('aria-invalid', 'true');
     expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'flat');
+    expect(container.querySelector('.wl-login-hourglass')).not.toHaveAttribute('data-on');
     expect(goTo).not.toHaveBeenCalled();
+  });
+
+  it('flips the hourglass when the code has run out', async () => {
+    const user = userEvent.setup();
+    const now = Date.now();
+    const { container } = await renderApp('/login', {
+      session: 'anon',
+      handlers: {
+        '/auth/magic/request': sent,
+        '/auth/magic/consume': () =>
+          problem(400, 'LINK_INVALID', 'This link or code is invalid or expired.'),
+      },
+    });
+    await requestLink(user);
+    await user.type(screen.getByLabelText('Code'), '000000');
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 16 * 60_000);
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await screen.findByText('That code is wrong or expired.');
+    expect(container.querySelector('.wl-login-hourglass')).toHaveAttribute('data-on');
+    expect(clock).toHaveBeenCalled();
   });
 
   it('rejects a short code locally and goes back to the email face', async () => {
@@ -155,6 +224,8 @@ describe('magic link', () => {
     const email = await screen.findByLabelText('Email');
     await waitFor(() => expect(document.activeElement).toBe(email));
     expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toBeVisible();
+    // The posted card comes back to the pocket.
+    expect(document.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'back');
   });
 
   it('counts down before a resend, then sends again', async () => {

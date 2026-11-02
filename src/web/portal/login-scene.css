@@ -1,20 +1,24 @@
-/* Sign-in scene (motion-and-expression.md, moment 8). The art parts come from the kit wallet;
-   these rules add the login beats on top: lean, letter, send, shake, hourglass, success. */
+/* Sign-in scene (motion-and-expression.md, moment 8). The art parts come from the kit wallet
+   (art-wallet.css); these rules add the sign-in beats: parallax, lift, post, return, shake,
+   hourglass and the tuck on success. The sign-in card's top edge cuts the art at y 60 of 72:
+   128×96 covers the pocket's bottom 16 px, 112×84 under 640 its bottom 14 px. */
 .wl-login-scene {
-  --lean: 0deg;
+  --px: 0;
+  --py: 0;
+  --gx: 0;
   position: relative;
-  width: 112px;
-  height: 84px;
+  width: 128px;
+  height: 96px;
 }
 .wl-login-scene .wl-art {
-  width: 112px;
-  height: 84px;
+  width: 128px;
+  height: 96px;
 }
 @media (max-width: 39.99rem) {
   .wl-login-scene,
   .wl-login-scene .wl-art {
-    width: 96px;
-    height: 72px;
+    width: 112px;
+    height: 84px;
   }
 }
 .wl-login-lean,
@@ -25,35 +29,25 @@
   height: 100%;
   transform-origin: 50% 90%;
 }
-.wl-login-lean {
-  transform: rotate(var(--lean));
+.wl-login-scene .wl-art [data-part="w"] {
+  --o: 50% 100%;
 }
-
-/* The top card's letter: an overlay svg with the same parts, so it moves with the card. */
-.wl-login-letter {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.wl-login-letter text {
+.wl-login-scene .wl-login-initial {
   stroke: none;
   fill: #fff;
-  font-family: var(--pk-font-sans);
-  font-size: 12px;
-  font-weight: 600;
+  font: 600 12px var(--pk-font-sans);
   text-anchor: middle;
   dominant-baseline: central;
+}
+.wl-login-scene [data-mood="happy"] [data-part="eyes"] {
   opacity: 0;
 }
-.wl-login-letter [data-on] text {
-  opacity: 1;
-}
 
-/* Expired code: an hourglass beside the clasp flips once. */
+/* Expired code: an hourglass beside the fan flips once. */
 .wl-login-hourglass {
   position: absolute;
-  top: 16%;
-  left: 82%;
+  top: 6%;
+  left: 80%;
   width: 20px;
   height: 20px;
   opacity: 0;
@@ -76,64 +70,157 @@
   fill: var(--pk-accent);
 }
 
-/* The sent card is gone while the code face shows; success keeps it gone. */
-.wl-login-scene:is([data-beat="sent"], [data-beat="success"]) .wl-art [data-part="c2"] {
+/* The posted card stays out while the code face shows. */
+.wl-login-scene[data-beat="sent"] .wl-art [data-part="c2"] {
   opacity: 0;
 }
 
+/* Hidden tab: everything holds, so the entrance and the idle beat play when someone looks. */
+.wl-login-scene[data-paused] .wl-art * {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  /* Parallax (fine pointers): the wallet sways, the fan leans further, the eyes look. */
   .wl-login-lean {
-    transition: transform 200ms var(--wl-ease-out);
+    transform: rotate(calc(var(--px) * 1.5deg));
   }
-  .wl-login-letter text,
-  .wl-login-hourglass {
-    transition: opacity 150ms var(--wl-ease-out);
+  .wl-login-scene .wl-art [data-fan] {
+    transform: rotate(calc(var(--px) * 2.5deg));
   }
+  .wl-login-scene .wl-art [data-look] {
+    transform: translate(calc(var(--px) * 1.5px), calc(var(--py) * 1px));
+  }
+  .wl-login-lean,
+  .wl-login-scene .wl-art :is([data-fan], [data-look]) {
+    transition: transform 240ms var(--wl-ease-out);
+  }
+  .wl-login-scene .wl-art :is([data-part="c1"], [data-part="c3"]) {
+    transition: transform 320ms var(--wl-ease-spring);
+  }
+
+  /* A valid address: the initial stamps onto the lifted card. */
+  .wl-login-scene .wl-art .wl-login-initial {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wl-login-stamp 280ms var(--wl-ease-bounce) 60ms backwards;
+  }
+
+  /* Send: the card hops out over the pocket's shoulder and drops behind the sign-in card like a
+     letter going out. The two left close up a little; the eyes look down to the code. */
+  .wl-login-scene[data-beat="sent"] .wl-art [data-part="c2"] {
+    --o: 48px 23px;
+    animation: wl-login-post 320ms both;
+  }
+  .wl-login-scene[data-beat="sent"] .wl-art [data-part="c1"] {
+    --t: rotate(-10deg);
+  }
+  .wl-login-scene[data-beat="sent"] .wl-art [data-part="c3"] {
+    --t: rotate(10deg);
+  }
+  .wl-login-scene[data-beat="sent"] .wl-art [data-look] {
+    transform: translate(calc(var(--px) * 1.5px), 1.2px);
+  }
+  /* Typing: the eyes look down at the field and follow the text across it. */
+  .wl-login-scene[data-gaze] .wl-art [data-look] {
+    transform: translate(calc(var(--gx) * 1.5px), 1.3px);
+  }
+  /* Different email: the card comes back up out of the pocket. */
+  .wl-login-scene[data-beat="back"] .wl-art [data-part="c2"] {
+    animation: wl-login-return 360ms var(--wl-ease-spring) backwards;
+  }
+
   .wl-login-pocket[data-shake] {
     animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
   }
   .wl-login-hourglass[data-flip] {
     animation: wl-login-flip 480ms var(--wl-ease-spring);
   }
-  /* Send: the top card slides out of the pocket and drops behind the hosted card. */
-  .wl-login-scene[data-beat="sent"] .wl-art [data-part="c2"] {
-    animation: wl-login-send 260ms var(--wl-ease-in) backwards;
-  }
-  /* Success: the cards drop into the pocket and the pocket nods; navigation does not wait. */
+
+  /* Success: the card comes home, the fan slides into the pocket, the pocket bounces and the
+     eyes smile. Navigation does not wait for any of it. */
   .wl-login-scene[data-beat="success"] .wl-art [data-part="c2"] {
-    animation: none;
+    animation: wl-login-home 260ms var(--wl-ease-in) both;
   }
   .wl-login-scene[data-beat="success"] .wl-art :is([data-part="c1"], [data-part="c3"]) {
-    animation: wl-login-drop 200ms var(--wl-ease-in) forwards;
+    animation: wl-login-tuck 200ms var(--wl-ease-in) 60ms forwards;
   }
   .wl-login-scene[data-beat="success"] .wl-art [data-part="w"] {
-    transform-origin: 50% 100%;
-    animation: wl-login-nod 120ms var(--wl-ease-out) 200ms;
+    animation: wl-login-bounce 360ms var(--wl-ease-bounce) 220ms backwards;
+  }
+  .wl-login-scene .wl-art .wl-login-joy {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wl-login-joy 240ms var(--wl-ease-bounce) 220ms backwards;
+  }
+  /* The open eyes stay until the smiling ones pop in. */
+  .wl-login-scene .wl-art [data-mood="happy"] [data-part="eyes"] {
+    transition: opacity 60ms linear 220ms;
   }
 }
 
-@keyframes wl-login-send {
+@keyframes wl-login-stamp {
   from {
-    opacity: 1;
-    transform: var(--t,);
-  }
-  35% {
-    opacity: 1;
-    transform: translate(10px, -16px) rotate(14deg);
-  }
-  to {
-    opacity: 1;
-    transform: translate(34px, 64px) rotate(48deg);
+    opacity: 0;
+    transform: scale(1.9);
   }
 }
-@keyframes wl-login-drop {
-  to {
-    transform: translateY(18px) var(--t,);
+@keyframes wl-login-post {
+  0% {
+    opacity: 1;
+    transform: translateY(-6px);
+    animation-timing-function: var(--wl-ease-out);
+  }
+  28% {
+    opacity: 1;
+    transform: translate(10px, -16px) rotate(12deg);
+    animation-timing-function: linear;
+  }
+  55% {
+    opacity: 1;
+    transform: translate(32px, -8px) rotate(36deg);
+    animation-timing-function: var(--wl-ease-in);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(44px, 58px) rotate(60deg);
   }
 }
-@keyframes wl-login-nod {
-  50% {
-    transform: scaleY(0.94);
+@keyframes wl-login-return {
+  from {
+    transform: translateY(20px);
+  }
+}
+@keyframes wl-login-home {
+  0% {
+    opacity: 0;
+    transform: translateY(-22px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(18px);
+  }
+}
+@keyframes wl-login-tuck {
+  to {
+    transform: translateY(18px);
+  }
+}
+@keyframes wl-login-bounce {
+  from {
+    transform: scale(1.06, 0.9);
+  }
+}
+@keyframes wl-login-joy {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
   }
 }
 @keyframes wl-login-flip {
@@ -142,9 +229,9 @@
   }
 }
 
+/* Reduced motion: the fanned frame; faces and states swap with a short fade. */
 @media (prefers-reduced-motion: reduce) {
-  .wl-login-scene .wl-art [data-part="c2"],
-  .wl-login-letter text,
+  .wl-login-scene .wl-art :is([data-part="c2"], [data-part="eyes"]),
   .wl-login-hourglass {
     transition: opacity 150ms linear;
   }

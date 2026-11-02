@@ -77,45 +77,34 @@ export interface LoginCardProps {
 
 /**
  * The hosted sign-in card. Two faces share one grid cell, so the card keeps one height; sending
- * the link flips it (640 ms spring) to the code face, the far face inert. Under reduced motion
- * the faces crossfade.
+ * the link posts the top card and flips this one (640 ms spring) to the code face, the far face
+ * inert. Under reduced motion the faces crossfade.
  */
 export function LoginCard({ next, notice, methods, front, scene }: LoginCardProps) {
   const request = useMagicRequest(next);
   const [sent, setSent] = useState<{ email: string; at: number } | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
-  const flipper = useRef<HTMLDivElement>(null);
   const face = sent ? 'code' : 'email';
   const lastFace = useRef(face);
 
-  // Focus follows the flip: the code field once the card has turned, the email field on return.
+  // Focus follows the flip: the code field once the card faces front (the spring is face-on by
+  // then; the 120 ms wait is in login-card.css), the email field on return.
   useEffect(() => {
     if (lastFace.current === face) return;
     lastFace.current = face;
     const target = face === 'code' ? codeRef.current : emailRef.current;
-    const el = flipper.current;
-    if (!target || !el || prefersReducedMotion()) {
+    if (!target || prefersReducedMotion()) {
       target?.focus();
       return;
     }
-    const done = () => target.focus();
-    const t = setTimeout(done, 700);
-    const end = (e: TransitionEvent) => {
-      if (e.target !== el) return;
-      clearTimeout(t);
-      done();
-    };
-    el.addEventListener('transitionend', end, { once: true });
-    return () => {
-      clearTimeout(t);
-      el.removeEventListener('transitionend', end);
-    };
+    const t = setTimeout(() => target.focus(), face === 'code' ? 500 : 360);
+    return () => clearTimeout(t);
   }, [face]);
 
   return (
     <div className="wl-login-card">
-      <div ref={flipper} className="wl-login-flipper" data-face={face}>
+      <div className="wl-login-flipper" data-face={face}>
         <Face side="email" hidden={face !== 'email'} title="Sign in">
           {front ??
             (methods ? (

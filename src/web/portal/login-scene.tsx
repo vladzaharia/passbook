@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { WalletArt } from '../ui/index.ts';
 import './login-scene.css';
 
-/** What the wallet is doing: tucked cards, the top card sent off, or the cards dropping home. */
-export type SceneBeat = 'rest' | 'sent' | 'success';
+/**
+ * What the wallet is doing: cards fanned (rest), the top card posted behind the sign-in card
+ * (sent), the card back after "Use a different email" (back), or the fan tucked in (success).
+ */
+export type SceneBeat = 'rest' | 'sent' | 'back' | 'success';
 
 export interface SceneState {
   beat: SceneBeat;
@@ -15,6 +18,8 @@ export interface SceneState {
   shake: number;
   /** Bumped when a code turns out to be expired: the hourglass flips. */
   expired: number;
+  /** The scene root, for gaze (set per keystroke without a render). */
+  root: RefObject<HTMLDivElement | null>;
 }
 
 export interface SceneActions {
@@ -23,21 +28,29 @@ export interface SceneActions {
   back: () => void;
   fail: (opts?: { expired?: boolean }) => void;
   succeed: () => void;
+  /** The eyes follow typing: 0…1 across the field; null (blur) or 1.5 s idle lets go. */
+  gaze: (at: number | null) => void;
 }
+
+const GAZE_HOLD_MS = 1500;
 
 /** Scene state for the sign-in page; the card drives it through the actions. */
 export function useLoginScene(): [SceneState, SceneActions] {
+  const root = useRef<HTMLDivElement>(null);
+  const gazeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(gazeTimer.current), []);
   const [state, setState] = useState<SceneState>({
     beat: 'rest',
     letter: null,
     shake: 0,
     expired: 0,
+    root,
   });
   const actions = useMemo<SceneActions>(
     () => ({
       setLetter: (letter) => setState((s) => (s.letter === letter ? s : { ...s, letter })),
       send: () => setState((s) => ({ ...s, beat: 'sent' })),
-      back: () => setState((s) => ({ ...s, beat: 'rest' })),
+      back: () => setState((s) => ({ ...s, beat: 'back' })),
       fail: (opts) =>
         setState((s) => ({
           ...s,
@@ -45,6 +58,16 @@ export function useLoginScene(): [SceneState, SceneActions] {
           expired: opts?.expired ? s.expired + 1 : s.expired,
         })),
       succeed: () => setState((s) => ({ ...s, beat: 'success' })),
+      gaze: (at) => {
+        const el = root.current;
+        clearTimeout(gazeTimer.current);
+        if (!el) return;
+        el.toggleAttribute('data-gaze', at !== null);
+        if (at === null) return;
+        el.style.setProperty('--gx', (Math.min(1, Math.max(0, at)) * 2 - 1).toFixed(3));
+        // A pause in typing hands the eyes back to the pointer.
+        gazeTimer.current = setTimeout(() => el.removeAttribute('data-gaze'), GAZE_HOLD_MS);
+      },
     }),
     [],
   );
@@ -52,29 +75,49 @@ export function useLoginScene(): [SceneState, SceneActions] {
 }
 
 const FINE = '(hover: hover) and (pointer: fine)';
-const MAX_LEAN = 4;
+/** Smiling, closed eyes for success. */
+const JOY = 'M41.8 44.4q1.7-2.4 3.4 0M50.8 44.4q1.7-2.4 3.4 0';
+const hidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden';
 
-/** Fine pointers: the wallet leans toward the pointer, at most 4°. One rAF-throttled listener. */
-function useLean(ref: { current: HTMLElement | null }) {
+/**
+ * Pauses the scene while the tab is hidden (data-paused stops every animation, so the entrance
+ * and the one idle beat play when the holder is looking) and, on fine pointers, leans the wallet
+ * toward the pointer: --px and --py in -1…1, one rAF-throttled listener, off while hidden.
+ */
+function useScenePointer(ref: { current: HTMLElement | null }) {
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof matchMedia !== 'function' || !matchMedia(FINE).matches) return;
-    if (prefersReducedMotion()) return;
+    if (!el) return;
+    const fine =
+      typeof matchMedia === 'function' && matchMedia(FINE).matches && !prefersReducedMotion();
     let frame = 0;
     const move = (e: PointerEvent) => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const box = el.getBoundingClientRect();
-        const half = Math.max(window.innerWidth / 2, 1);
-        const x = (e.clientX - (box.left + box.width / 2)) / half;
-        const lean = Math.max(-1, Math.min(1, x)) * MAX_LEAN;
-        el.style.setProperty('--lean', `${lean.toFixed(2)}deg`);
+        const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+        const x = clamp((e.clientX - (box.left + box.width / 2)) / Math.max(innerWidth / 3, 1));
+        const y = clamp((e.clientY - (box.top + box.height / 2)) / Math.max(innerHeight / 3, 1));
+        el.style.setProperty('--px', x.toFixed(3));
+        el.style.setProperty('--py', y.toFixed(3));
       });
     };
-    window.addEventListener('pointermove', move, { passive: true });
+    const listen = (on: boolean) => {
+      if (!fine) return;
+      if (on) window.addEventListener('pointermove', move, { passive: true });
+      else window.removeEventListener('pointermove', move);
+    };
+    const sync = () => {
+      const off = hidden();
+      el.toggleAttribute('data-paused', off);
+      listen(!off);
+    };
+    sync();
+    document.addEventListener('visibilitychange', sync);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener('pointermove', move);
+      document.removeEventListener('visibilitychange', sync);
+      listen(false);
     };
   }, [ref]);
 }
@@ -108,20 +151,22 @@ function useFlat(count: number): boolean {
 }
 
 /**
- * "The wallet fills" (motion-and-expression.md, moment 8): the mascot peeks over the sign-in
- * card. Decorative: aria-hidden, no words; every beat is CSS on transform and opacity.
+ * "The wallet fills" (motion-and-expression.md, moment 8): the mascot sits on the sign-in card's
+ * top edge with three passes fanned. Decorative: aria-hidden, no words; every beat is CSS on
+ * transform and opacity (login-scene.css).
  */
 export function LoginScene({ state, className }: { state: SceneState; className?: string }) {
-  const root = useRef<HTMLDivElement>(null);
+  const root = state.root;
   const pocket = useRef<HTMLSpanElement>(null);
   const hourglass = useRef<HTMLSpanElement>(null);
-  useLean(root);
+  useScenePointer(root);
   useOneShot(pocket, 'shake', state.shake);
   useOneShot(hourglass, 'flip', state.expired);
   const flat = useFlat(state.shake);
-  const reduced = prefersReducedMotion();
+  const resting = state.beat === 'rest' || state.beat === 'back';
   // Reduced motion: the letter shows in place, the card never lifts.
-  const lift = Boolean(state.letter) && state.beat === 'rest' && !reduced;
+  const lift = Boolean(state.letter) && resting && !prefersReducedMotion();
+  const mood = state.beat === 'success' ? 'happy' : flat ? 'flat' : undefined;
   return (
     <div
       ref={root}
@@ -131,23 +176,20 @@ export function LoginScene({ state, className }: { state: SceneState; className?
     >
       <span className="wl-login-lean">
         <span ref={pocket} className="wl-login-pocket">
-          <WalletArt state="login" size="xl" lift={lift} {...(flat ? { mood: 'flat' } : {})} />
-          <svg
-            aria-hidden="true"
-            className="wl-art wl-login-letter"
-            data-art="wallet"
-            data-state="login"
-            viewBox="0 0 96 72"
-            focusable="false"
-          >
-            <g data-part="w" data-b="" data-lift={lift ? '' : undefined}>
-              <g data-part="c2" data-i="1" data-on={state.letter ? '' : undefined}>
-                <text x="48" y="23">
-                  {state.letter ?? ''}
+          <WalletArt
+            state="login"
+            size="xl"
+            lift={lift}
+            {...(mood ? { mood } : {})}
+            onCard={
+              state.letter ? (
+                <text key={state.letter} className="wl-login-initial" x="48" y="23">
+                  {state.letter}
                 </text>
-              </g>
-            </g>
-          </svg>
+              ) : null
+            }
+            face={mood === 'happy' ? <path className="m wl-login-joy" d={JOY} /> : null}
+          />
           <span
             ref={hourglass}
             className="wl-login-hourglass"

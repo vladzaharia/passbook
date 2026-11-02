@@ -1,15 +1,20 @@
 import { Link } from '@tanstack/react-router';
 import { WalletCards } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const KEY = 'wallet-wordmark-flipped';
 
-/** True on the first load of this browser session. Read once per page load. */
-function firstThisSession(): boolean {
+/**
+ * True until a wordmark has flipped in this browser session. Read once per page load; the flag
+ * is written only when a flip plays, so /login (no flip) does not use it up.
+ */
+function unflippedThisSession(): boolean {
   if (typeof sessionStorage === 'undefined') return false;
   try {
     if (sessionStorage.getItem(KEY)) return false;
-    sessionStorage.setItem(KEY, '1');
+    // Prove the later write works, so a read-only store cannot flip on every load.
+    sessionStorage.setItem(`${KEY}-probe`, '1');
+    sessionStorage.removeItem(`${KEY}-probe`);
     return true;
   } catch {
     // Storage blocked: never flip, rather than flip on every load.
@@ -17,7 +22,15 @@ function firstThisSession(): boolean {
   }
 }
 
-const flipThisLoad = firstThisSession();
+function markFlipped() {
+  try {
+    sessionStorage.setItem(KEY, '1');
+  } catch {
+    // Writable at load (the probe); at worst the next load flips once more.
+  }
+}
+
+const flipThisLoad = unflippedThisSession();
 let shown = false;
 
 /**
@@ -34,9 +47,12 @@ export function Wordmark({
   flip?: boolean;
   markOnly?: boolean;
 }) {
-  const play = flip && flipThisLoad && !shown;
+  // Latched per instance, so a re-render mid-flip does not cut it short.
+  const [play] = useState(() => flip && flipThisLoad && !shown);
   useEffect(() => {
-    if (play) shown = true;
+    if (!play) return;
+    shown = true;
+    markFlipped();
   }, [play]);
   return (
     <Link

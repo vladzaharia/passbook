@@ -71,7 +71,7 @@ export function LoginPage({
       <div className="flex h-11 items-center justify-center">
         <Wordmark flip={false} />
       </div>
-      <LoginScene state={scene} className="relative z-0 mt-4 -mb-3.5" />
+      <LoginScene state={scene} className="relative z-0 mt-4 -mb-3.5 sm:-mb-4" />
       <div className="relative z-10 w-full">
         <LoginCard
           next={next}
