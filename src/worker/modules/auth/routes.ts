@@ -9,6 +9,7 @@ import { sameOriginOnly } from '../../platform/csrf.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { breakglassForm, breakglassSignIn } from './breakglass-handlers.ts';
 import { confirmMagic, consumeMagic, requestMagic } from './magic-handlers.ts';
+import { clientMetadataDocument } from './oidc-cimd.ts';
 import { callbackOidc, noAccess, startOidc } from './oidc-handlers.ts';
 import { getSession, logout } from './session-handlers.ts';
 
@@ -36,6 +37,16 @@ register(
   'auth',
   { method: 'get', path: '/oidc/callback', summary: 'Pocket ID callback', status: 302 },
   callbackOidc,
+);
+register(
+  authRoutes,
+  'auth',
+  {
+    method: 'get',
+    path: '/oidc/client-metadata.json',
+    summary: 'Client ID Metadata Document for Pocket ID (when OIDC_CLIENT_ID is its URL)',
+  },
+  clientMetadataDocument,
 );
 register(
   authRoutes,

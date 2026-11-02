@@ -46,6 +46,26 @@ describe('predeployProblems', () => {
   });
 });
 
+describe('predeployProblems with a client metadata document', () => {
+  const vars = { PUBLIC_BASE_URL: 'https://wallet.example/', TURNSTILE_SITE_KEY: '0x4AAAAAAAxyz' };
+
+  it('accepts the metadata URL under PUBLIC_BASE_URL as the client id', () => {
+    const config = {
+      ...ready,
+      vars: { ...vars, OIDC_CLIENT_ID: 'https://wallet.example/auth/oidc/client-metadata.json' },
+    };
+    expect(predeployProblems(config)).toEqual([]);
+  });
+
+  it('rejects a URL client id this Worker does not serve', () => {
+    const config = {
+      ...ready,
+      vars: { ...vars, OIDC_CLIENT_ID: 'https://other.example/auth/oidc/client-metadata.json' },
+    };
+    expect(predeployProblems(config).join('\n')).toMatch(/OIDC_CLIENT_ID must be/);
+  });
+});
+
 describe('parseBookmark', () => {
   it('finds a D1 bookmark in wrangler output', () => {
     const b = '00000085-0000024c-00004c6d-8e61117bf38d7adb71b934ebbf891683';

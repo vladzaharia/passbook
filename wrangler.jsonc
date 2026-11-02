@@ -28,7 +28,7 @@
     "PUBLIC_BASE_URL": "https://wallet.plrs.im",
     "EMAIL_FROM": "passes@plrs.im",
     "OIDC_ISSUER": "https://id.plrs.im",
-    "OIDC_CLIENT_ID": "wallet-placeholder-client-id",
+    "OIDC_CLIENT_ID": "https://wallet.plrs.im/auth/oidc/client-metadata.json",
     "OIDC_ADMIN_GROUP": "wallet-admins",
     "OIDC_USER_GROUP": "wallet-users",
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
@@ -40,7 +40,6 @@
   "secrets": {
     "required": [
       "KEK_V1",
-      "OIDC_CLIENT_SECRET",
       "TURNSTILE_SECRET",
       "SIGNER_PLATFORM_CERTIFICATE",
       "SIGNER_PLATFORM_PRIVATE_KEY",

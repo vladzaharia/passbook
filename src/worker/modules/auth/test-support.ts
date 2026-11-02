@@ -62,12 +62,16 @@ export function absorb(jar: Jar, res: Response): void {
 
 export async function harness(
   overrides: Partial<AppEnv> = {},
-  options: { clock?: ManualClock } = {},
+  options: { clock?: ManualClock; publicClient?: boolean } = {},
 ): Promise<TestHarness> {
   await resetOidcClientCaches(ISSUER);
   const mail: SentMail[] = [];
   const clock = options.clock ?? new ManualClock(Date.now());
-  const oidc = await createMockOidc({ issuer: ISSUER, clientId: CLIENT_ID });
+  const oidc = await createMockOidc({
+    issuer: ISSUER,
+    clientId: overrides.OIDC_CLIENT_ID ?? CLIENT_ID,
+    publicClient: options.publicClient,
+  });
   const turnstileOk = { value: true };
   const env = await makeEnv({
     OIDC_ISSUER: ISSUER,

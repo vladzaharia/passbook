@@ -1,10 +1,13 @@
 /** Worker environment. `Env` comes from `wrangler types`; this adds bindings that are optional at runtime. */
-export interface AppEnv extends Omit<Env, 'APNS' | 'BREAKGLASS_TOKEN_SHA256'> {
+export interface AppEnv
+  extends Omit<Env, 'APNS' | 'BREAKGLASS_TOKEN_SHA256' | 'OIDC_CLIENT_SECRET'> {
   /**
    * Absent until the platform certificate is uploaded; treated as "push unavailable".
    * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
    */
   APNS?: Fetcher;
+  /** Only for a registered Pocket ID client; a CIMD client id (oidc-cimd.ts) has no secret. */
+  OIDC_CLIENT_SECRET?: string;
   /** SHA-256 of the break-glass token. Unset turns the route off. */
   BREAKGLASS_TOKEN_SHA256?: string;
   /** Optional ceiling on the daily magic-link volume. */

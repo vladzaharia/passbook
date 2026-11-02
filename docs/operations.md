@@ -21,12 +21,17 @@
 
 Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.jsonc`.
 
-1. **Pocket ID** (`id.plrs.im`)
+1. **Pocket ID** (`id.plrs.im`). Wallet registers itself with a Client ID Metadata Document:
+   `vars.OIDC_CLIENT_ID` is `https://wallet.plrs.im/auth/oidc/client-metadata.json`, which the
+   Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
+   `PUBLIC_BASE_URL`).
    - Groups: `wallet-admins`, `wallet-users`.
-   - OIDC client "Wallet", PKCE on, groups claim included.
-   - Callback `https://wallet.plrs.im/auth/oidc/callback`. Post-logout redirect
-     `https://wallet.plrs.im/login`. For dev add `http://localhost:5173/auth/oidc/callback`.
-   - Put the client id in `vars.OIDC_CLIENT_ID`; keep the secret for step 5.
+   - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
+   - After the first sign-in creates the client, set its allowed groups to both groups. Wallet
+     also checks the groups claim itself.
+   - Metadata changes reach Pocket ID within an hour, or at once with Refresh in its client list.
+   - A registered client still works: set its id in `vars.OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`
+     in step 5.
 2. **Apple certificate**
    - Pass Type ID `pass.im.plrs.wallet`, team `48H7CLBV8Y`. Export the `.p12`.
    - `P12_PASSWORD=… npm run credentials -- Pass.p12` (checks the chain, key match and dates).
@@ -40,7 +45,7 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
 5. **Secrets** (`wrangler secret put <NAME>`, value on stdin)
    - `KEK_V1`: `openssl rand -base64 32`. Back it up outside Cloudflare. Losing it loses every
      stored credential.
-   - `OIDC_CLIENT_SECRET`, `TURNSTILE_SECRET`.
+   - `TURNSTILE_SECRET` (and `OIDC_CLIENT_SECRET` only for a registered Pocket ID client).
    - `SIGNER_PLATFORM_CERTIFICATE` and `SIGNER_PLATFORM_PRIVATE_KEY`: contents of
      `.secrets/platform-certificate.pem` and `.secrets/platform-key.pem`.
    - `BREAKGLASS_TOKEN_SHA256`: run `npm run breakglass`, then paste the printed command. See
@@ -83,9 +88,8 @@ Admin sign-in for when Pocket ID is down.
   30 min idle, 4 h max. Every sign-in is in the audit log; failures are logged and rate limited.
 - Turn it off: disable the "Break-glass admin" user in Users, or set the secret to `off`
   (anything that is not a 64-character hex hash makes the route 404).
-- Deploying while Pocket ID is down: `npm run deploy -- --apply --allow-no-oidc` accepts the
-  placeholder `OIDC_CLIENT_ID`; set a throwaway `OIDC_CLIENT_SECRET` and sign in with break-glass.
-  Pocket ID sign-in shows an error until the real client id is set and deployed.
+- Pocket ID down: deploys still work (the client id is the metadata URL); sign in with
+  break-glass. `--allow-no-oidc` only matters for a placeholder `OIDC_CLIENT_ID`.
 - Keep the token offline (password manager). Rotate it after any use you did not expect.
 
 ## Day two
