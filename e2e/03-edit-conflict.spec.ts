@@ -46,6 +46,8 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
   // Reload path: C edits, B saves again, A's reload drops its draft for the server state.
   await a.getByLabel('Points').fill('5');
   await b.reload();
+  // Typing before the reloaded form has its data loses the edit when the data lands.
+  await expect(b.getByLabel('Points')).toHaveValue('77');
   await b.getByLabel('Name').fill('Saved by B again');
   await b.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(b.getByText('Saved', { exact: true }).first()).toBeVisible();
