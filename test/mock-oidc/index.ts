@@ -13,6 +13,8 @@ export interface MockOidcOptions {
   issuer: string;
   clientId: string;
   clientSecret?: string;
+  /** A CIMD-style public client: the token endpoint refuses any client_secret. */
+  publicClient?: boolean;
   /** Used when /authorize has no `login_hint` matching a known user. */
   defaultUser?: MockOidcUser;
   now?: () => number;
@@ -113,6 +115,8 @@ export async function createMockOidc(options: MockOidcOptions) {
       const form = new URLSearchParams(await request.text());
       const pending = codes.get(form.get('code') ?? '');
       codes.delete(form.get('code') ?? '');
+      if (options.publicClient && form.has('client_secret'))
+        return Response.json({ error: 'invalid_client' }, { status: 401 });
       if (!pending || form.get('redirect_uri') !== pending.redirectUri)
         return Response.json({ error: 'invalid_grant' }, { status: 400 });
       if (pending.challenge) {

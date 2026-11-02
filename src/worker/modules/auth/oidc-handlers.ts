@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { baseUrl, envString } from '../../platform/env.ts';
+import { envString } from '../../platform/env.ts';
 import { AppError, UnavailableError, UpstreamError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
@@ -18,6 +18,7 @@ import {
 } from './cookies.ts';
 import { MAGIC_TTL_MS } from './magic-service.ts';
 import { nextOrHome, safeNext } from './next.ts';
+import { OIDC_SCOPE, oidcRedirectUri, usesCimd } from './oidc-cimd.ts';
 import {
   authorizationUrl,
   discover,
@@ -35,12 +36,12 @@ import { saveOidcFlow, takeOidcFlow } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
 
-/** Null when the Pocket ID client is not configured. */
+/** Null when the Pocket ID client is not configured. A CIMD client is public: it has no secret. */
 export function oidcConfig(env: AppBindings['Bindings']): RelyingParty | null {
   const issuer = envString(env, 'OIDC_ISSUER');
   const clientId = envString(env, 'OIDC_CLIENT_ID');
-  const clientSecret = envString(env, 'OIDC_CLIENT_SECRET');
-  if (!issuer || !clientId || !clientSecret) return null;
+  const clientSecret = usesCimd(env) ? null : envString(env, 'OIDC_CLIENT_SECRET');
+  if (!issuer || !clientId || clientSecret === undefined) return null;
   const host = new URL(env.PUBLIC_BASE_URL).hostname;
   return issuerRelyingParty({
     issuer,
@@ -49,8 +50,6 @@ export function oidcConfig(env: AppBindings['Bindings']): RelyingParty | null {
     allowLoopbackHttp: host === 'localhost' || host === '127.0.0.1',
   });
 }
-
-const redirectUri = (env: AppBindings['Bindings']) => `${baseUrl(env)}/auth/oidc/callback`;
 
 function errorPage(
   c: Context<AppBindings>,
@@ -101,8 +100,8 @@ export async function startOidc(c: Context<AppBindings>) {
   setBindingCookie(c, OIDC_COOKIE, binding, FLOW_TTL_MS / 1000);
   return c.redirect(
     authorizationUrl(discovered, rp, {
-      redirectUri: redirectUri(c.env),
-      scope: 'openid email profile groups',
+      redirectUri: oidcRedirectUri(c.env),
+      scope: OIDC_SCOPE,
       state: secrets.state,
       nonce: secrets.nonce,
       codeChallenge: secrets.challenge,
@@ -135,7 +134,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
       {
         code,
         iss: iss ?? null,
-        redirectUri: redirectUri(c.env),
+        redirectUri: oidcRedirectUri(c.env),
         codeVerifier: flow.code_verifier,
         nonce: flow.nonce,
       },

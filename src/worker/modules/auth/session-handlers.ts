@@ -2,12 +2,12 @@ import type { Context } from 'hono';
 import type { SessionResponse } from '../../../shared/contracts/index.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { baseUrl } from '../../platform/env.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { clearSessionCookie, ipPrefix, readCookie } from './cookies.ts';
+import { postLogoutRedirectUri } from './oidc-cimd.ts';
 import { discover } from './oidc-client.ts';
 import { oidcConfig } from './oidc-handlers.ts';
 import { findUser } from './service.ts';
@@ -48,7 +48,7 @@ async function endSessionUrl(c: Context<AppBindings>): Promise<string | null> {
     if (!endSessionEndpoint) return null;
     const url = new URL(endSessionEndpoint);
     url.searchParams.set('client_id', rp.clientId);
-    url.searchParams.set('post_logout_redirect_uri', `${baseUrl(c.env)}/login`);
+    url.searchParams.set('post_logout_redirect_uri', postLogoutRedirectUri(c.env));
     return url.toString();
   } catch (error) {
     c.var.log.warn('auth.oidc_logout_discovery_failed', { error });
