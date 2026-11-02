@@ -25,7 +25,8 @@ names its trigger, property (transform or opacity), duration, easing and distanc
 
 **No ambient loops.** Only things that carry pending state loop, and only while work is pending:
 spinners, pending rings, the loading rail, the sync rail and the upload buddy's riffle. Art and the login scene get one idle
-beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2).
+beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2), except the My passes search
+walk (8 s, once in view; owner direction; still under reduced motion).
 
 ## Tokens
 
@@ -94,19 +95,49 @@ beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2).
 
 ## Buddy cameos
 
-The mascot turns up at real moments, one per view, decorative (`aria-hidden`). Each is one-shot
-except the riffle, which runs only while an import does.
+The mascot turns up at real moments, one per view, decorative (`aria-hidden`, never focusable).
+Each scene plays once; only the riffle loops, and only while an import runs.
+
+**Scenes** (`src/web/ui/art/scenes/*.css`, in the lazy art chunk; `replay.ts`). A host marks the art
+`data-replay` and `data-scene`; the scene is CSS under `[data-run]`. With `auto` it starts once,
+when the art is 60% in view and has landed (700 ms). A click on a painted part replays it from the
+start (off, a style flush, on) and stops there: no parent link, row or card action sees it. Hover
+(fine pointers) blinks once and shows the pointer cursor. Reduced motion: the final pose, no run,
+a click does nothing. Each scene ends on the rest pose and leaves nothing running. Transform
+(`translate`, `rotate`, `scale`, `transform`) and opacity only. API: `Buddy scene replay`,
+`Cameo scene` (an unseated buddy), `BuddyFace scene`, `useScene(auto, again)`.
+
+| Scene | Where | Beats: anticipation, action, reaction, settle | Time |
+| --- | --- | --- | --- |
+| search | Portal My passes, empty (no dotted pass) | Squash and stand, feet on the edge. Walks the box's top edge within its centre 40% (the box is an inline-size container): steps alternate, the body bobs and rocks, it leans and its eyes lead. At each end it stops on tiptoe, a "?" pops over the leading side and wobbles while the eyes scan out, then a blink and a little hop turn it round. Two laps, then it hops back onto the seat at the centre, squashes and blinks at you | 8 s |
+| inspect | Empty lists (curious) | Glances at the entity art and leans away, then in; the gold pass reaches out and taps it twice; the art bumps and plays its own beat; it tilts its head, brow up, blinks | 2.4 s |
+| sweep | Filtered to nothing | Leans to the lens; the lens grows and sweeps left across the dimmed art and back, eyes following; nothing: a shrug, outer passes out like hands, brow up | 2.8 s |
+| mend | Not found (torn, sad) | Props the torn pass up with its gold pass; the corner lifts, snaps into the tear and holds; eyes widen, brows lift; it wobbles and pops off; a sigh | 3.2 s |
+| tug | Forbidden (lock, sad) | Hooks the padlock with its gold pass and tugs three times, leaning back each time; the lock swings, the shackle rattles and holds; it lets go and sighs | 2.8 s |
+| plug | Error (sad); Retry replays it | Pushes the plug into the socket with its gold pass; a big spark, the socket shudders; the plug pops out and drops; it flinches, eyes squeezed, then sighs | 3 s |
+| flip | Audit log, no entries (flat) | Reaches the log; three flicks scroll the lines up and the same lines come back; it looks at you, unimpressed, and shrugs | 2.8 s |
+| peek | Lost: page or pass not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
+| cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
+| wave | Pass created | Steps out from under the pass on a spring, hops, looks up at it and waves its teal pass twice | 2.2 s |
+| tear | Pass voided (this visit) | Steps out, looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2.4 s |
+| nudge | Portal pass, not on a device yet | Steps out, hops, looks up at the pass, then at you, and points its gold pass to the side twice | 2.4 s |
+| beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
+| hello | Sign-in wallet at rest | Click only: a squash and stretch, the top pass waves like a hand | 1 s |
+| face: wink | Success toast | Pops with the toast and winks at 380 ms; a click pops and winks again | 540 ms |
+| face: post | Holder emailed (`toast.sent`) | The violet pass dips, flies off up-right like a letter, a wink, a new one rises into the pocket | 1.4 s |
+| face: cheer | Status all good | The gold pass rises like a thumb and wiggles, a wink, the smile widens | 1.4 s |
+
+Other cameos, unchanged:
 
 | Moment | What happens | Time | Where |
 | --- | --- | --- | --- |
-| Success toast | The face (`BuddyFace`, 24-unit icon) pops with the toast and winks | 200 ms at 380 ms | `ui/toaster.tsx` |
-| Status all good | The face replaces the check and winks | 200 ms at 640 ms | `admin/status/summary.tsx` |
 | Empty state | The buddy's eyes drop to the action under the pointer or focus | 200 ms | `art-wallet.css` |
-| Palette, no results | The lost buddy with its lens, eyes left and right | Art entrance | `ui/command-palette.tsx` |
-| Template upload | On the drop zone: passes reach up and the mouth opens for a hovering file; a caught file gets the smile and a hop; an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Done, it moves to the result card | 320 ms; 640 ms hop | `admin/templates/upload-*` |
-| Pass created | The happy buddy steps out from behind the new pass (420 ms spring at 520 ms), hops once and stays beside it | ≈1 s | `admin/passes/detail/detail-page.tsx` |
+| Template upload | On the drop zone: passes reach up and the mouth opens for a hovering file; a caught file gets the smile and a hop; an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Done, it cheers on the result card | 320 ms; 640 ms hop | `admin/templates/upload-*` |
 | Signed out | The sign-in scene's top card waves from the pocket once, within two minutes of a sign-out in this tab | 860 ms at 700 ms | `portal/login-*` |
 | Wordmark | Hover (fine pointers): the wallet's pocket curve deepens into a smile, the card line peeks up 1.5 px; SPA and SSR | 160 ms | `kit-verbs.css`, `ssr/theme.ts` |
+
+Considered and left out: the API key reveal (a warning and a form), connection syncing (the sync
+rail carries it; a dense panel), the first organization (a table, no stable moment).
 
 The favicon and `apple-touch-icon.png` (also the sign-in email's header mark and the OIDC logo) are
 the face on the dark tile, in teal with the foil passes.
@@ -157,9 +188,9 @@ System:
   or `beat={false}`.
 - Filtered: the entity art at .6 opacity with the lens at bottom-right (scale .6).
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
-- Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, step-out
-  or wave.
-- Budget: ≤40 SVG nodes per art; all art ≤8 kB gzip. Files `src/web/ui/art/<name>.tsx` (named
+- Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, step-out,
+  wave or scene; a click on the buddy does nothing.
+- Budget: ≤40 SVG nodes per art; the art kit ≤13.5 kB gzip, the lazy buddy scenes ≤7 kB. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
 - API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` or the named component (`PassesArt`…).
@@ -312,6 +343,7 @@ tilt, the sheet drag). No motion library.
 | Tokens, route fade-through, list entrances, loading rail | `src/web/styles/motion.css` |
 | Overlays, controls, skeleton, ring, indicator, verbs, sparks | `src/web/styles/kit-motion.css` (split when it nears 300 lines) |
 | Entity art and the mascot | `src/web/ui/art/*.tsx`, `src/web/ui/art/*.css`, `ART_CSS` for SSR |
+| Buddy scenes and click to replay | `src/web/ui/art/{replay.ts,cameo.tsx}`, `src/web/ui/art/scenes/*.css` (rest sheet first paint; scenes in the registry chunk) |
 | Entity and action registries | `src/web/lib/entities.ts`, `src/web/lib/action-icons.ts` |
 | Hooks | `src/web/lib/motion.ts` |
 | Online state | `src/web/lib/online.ts` |
