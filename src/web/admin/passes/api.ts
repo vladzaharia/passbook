@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { z } from 'zod';
 import { AuditListSchema } from '@/shared/contracts/audit.ts';
 import { OkSchema } from '@/shared/contracts/common.ts';
@@ -67,11 +73,14 @@ export function useBulkPassAction() {
   });
 }
 
-export function usePass(id: string) {
-  return useQuery({
+export const passDetailQuery = (id: string) =>
+  queryOptions({
     queryKey: passKeys.detail(id),
     queryFn: ({ signal }) => api.get(`/api/v1/passes/${id}`, PassDetailSchema, { signal }),
   });
+
+export function usePass(id: string) {
+  return useQuery(passDetailQuery(id));
 }
 
 /** A retained version, for rendering. Disabled while `version` is undefined. */

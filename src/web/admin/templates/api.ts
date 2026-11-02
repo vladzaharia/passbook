@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   ImportStatusSchema,
   PreviewResponseSchema,
@@ -57,12 +63,14 @@ export function useRecentUploads(orgId: string | undefined) {
   });
 }
 
-export function useTemplate(id: string | undefined) {
-  return useQuery({
-    queryKey: templateKeys.detail(id ?? ''),
+export const templateDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: templateKeys.detail(id),
     queryFn: ({ signal }) => api.get(`/api/v1/templates/${id}`, TemplateDetailSchema, { signal }),
-    enabled: Boolean(id),
   });
+
+export function useTemplate(id: string | undefined) {
+  return useQuery({ ...templateDetailQuery(id ?? ''), enabled: Boolean(id) });
 }
 
 import { fetchPreview } from './preview-batch.ts';
