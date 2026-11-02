@@ -181,7 +181,7 @@ describe('per-device APNs handling', () => {
     });
   });
 
-  it('finishes sent with nothing to do when no device is registered', async () => {
+  it('finishes as No devices, not sent, when no device is registered', async () => {
     const pass = await kit.pass();
     await enqueuePush(kit.ctx, pass.id, 'publish');
     await kit.settle();
@@ -191,7 +191,9 @@ describe('per-device APNs handling', () => {
       [pass.id],
     );
     await deliver(row?.id ?? '');
-    expect((await getOutbox(kit.env.DB, row?.id ?? ''))?.state).toBe('sent');
+    const done = await getOutbox(kit.env.DB, row?.id ?? '');
+    expect(done?.state).toBe('cancelled');
+    expect(done?.errorCode).toBe('NO_DEVICES');
   });
 
   it('a duplicate message does not send again while the first holds the lease', async () => {

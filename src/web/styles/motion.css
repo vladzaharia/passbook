@@ -259,6 +259,10 @@ html:active-view-transition-type(theme)::view-transition-old(*) {
 html:active-view-transition-type(theme)::view-transition-new(*) {
   animation: wl-fade 200ms var(--wl-ease-move);
 }
+/* The crossfade is the one change: no per-control colour transitions run inside the new layer. */
+html:active-view-transition-type(theme) :is(*, *::before, *::after) {
+  transition: none !important;
+}
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),

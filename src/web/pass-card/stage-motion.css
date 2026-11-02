@@ -25,7 +25,13 @@
     animation: pc-deal var(--wl-dur-card, 480ms) var(--pc-spring) backwards;
     animation-delay: calc(min(var(--i, 0), 6) * 60ms);
   }
-  .pc-stage[data-enter]::before {
+  /* Voided passes enter quietly: no tip, no glow. */
+  .pc-stage[data-enter="quiet"] .pc-lift {
+    animation-name: pc-quiet;
+    animation-duration: 260ms;
+    animation-timing-function: cubic-bezier(0, 0, 0, 1);
+  }
+  .pc-stage[data-enter]:not([data-enter="quiet"])::before {
     animation: pc-fade var(--wl-dur-card, 480ms) ease-out backwards;
     animation-delay: calc(min(var(--i, 0), 6) * 60ms + 120ms);
   }
@@ -72,6 +78,12 @@
   from {
     opacity: 0;
     transform: translateY(24px) rotateX(20deg) scale(0.94);
+  }
+}
+@keyframes pc-quiet {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 @keyframes pc-fade {

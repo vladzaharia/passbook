@@ -46,6 +46,8 @@ export function CreatedStep({
                     label: 'Endpoint URL',
                     value: url,
                     copyLabel: 'Copy endpoint URL',
+                    // Not a secret: the Webhook tab shows it in full too.
+                    secret: false,
                     sheen: false,
                   },
                 ]

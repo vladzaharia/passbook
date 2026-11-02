@@ -9,7 +9,8 @@ export type Widget =
   | 'url'
   | 'email'
   | 'image'
-  | 'password';
+  | 'password'
+  | 'timezone';
 
 export type FormValues = Record<string, unknown>;
 
@@ -48,6 +49,7 @@ const WIDGETS = new Set<string>([
   'email',
   'image',
   'password',
+  'timezone',
 ]);
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -69,6 +71,7 @@ function typeOf(def: Record<string, unknown>): FieldDef['type'] {
 }
 
 function widgetOf(def: Record<string, unknown>, type: FieldDef['type']): Widget {
+  if (def['x-timeZone'] === true) return 'timezone';
   const hint = str(def['x-widget']);
   if (hint && WIDGETS.has(hint)) return hint as Widget;
   if (Array.isArray(def.enum) && def.enum.length > 0) return 'select';

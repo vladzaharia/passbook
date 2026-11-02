@@ -16,15 +16,18 @@ export interface PassStageProps extends Omit<PassCardProps, 'face'> {
   enter?: boolean;
   /** Light from the pass colour under the card. Off for thumbnails and dense grids. */
   glow?: boolean;
-  /** Change this value to play the mint (new current content). Never for void or versions. */
+  /**
+   * Change this value to play the mint (new current content). Never for void or versions.
+   * Undefined pauses it (a draft preview): the next defined value is compared with the last one.
+   */
   mint?: unknown;
   /** Change this value to dip the card towards the Apple Wallet badge. */
   dip?: unknown;
   /** Change this value to settle the card once (scale 1, .98, 1; void). */
   settle?: unknown;
-  /** The glow fades out (voided passes). */
+  /** Voided: no glow, no tilt, and a quiet entrance (fade and 8 px, no tip). */
   dim?: boolean;
-  /** A 2 px foil rail runs under the card while a refresh is pending. */
+  /** A 2 px foil rail runs under the card while true. Any boolean reserves its height. */
   syncing?: boolean;
   /** view-transition-name, so the card morphs between pages. */
   transitionName?: string;
@@ -138,13 +141,18 @@ function useTilt(ref: { current: unknown }, on: boolean) {
   }, [ref, on]);
 }
 
-/** Replays a one-shot animation (data-<name> on the lift) whenever `value` changes after mount. */
+/**
+ * Replays a one-shot animation (data-<name> on the lift) whenever `value` changes after mount.
+ * Undefined is a pause, not a change: the first defined value after it is compared with the last.
+ */
 function useReplay(ref: { current: unknown }, name: 'mint' | 'dip' | 'settle', value: unknown) {
   // Compare values, not renders: StrictMode runs effects twice on mount.
   const prev = useRef(value);
   useEffect(() => {
-    if (Object.is(prev.current, value)) return;
+    if (value === undefined || Object.is(prev.current, value)) return;
+    const first = prev.current === undefined;
     prev.current = value;
+    if (first) return;
     const lift = el(ref);
     if (!lift) return;
     delete lift.dataset[name];
@@ -177,7 +185,7 @@ export function PassCardStage({
 }: PassStageProps) {
   const stage = useRef<HTMLDivElement>(null);
   const lift = useRef<HTMLDivElement>(null);
-  useTilt(stage, tilt);
+  useTilt(stage, tilt && !dim);
   useReplay(lift, 'mint', mint);
   useReplay(lift, 'dip', dip);
   useReplay(lift, 'settle', settle);
@@ -207,8 +215,8 @@ export function PassCardStage({
       ref={stage}
       className={className ? `pc-stage ${className}` : 'pc-stage'}
       data-face={face}
-      data-tilt={tilt || undefined}
-      data-enter={enter || undefined}
+      data-tilt={(tilt && !dim) || undefined}
+      data-enter={enter ? (dim ? 'quiet' : '') : undefined}
       data-glow={glow ? undefined : 'off'}
       data-dim={dim || undefined}
       data-single={both ? undefined : ''}
@@ -238,7 +246,9 @@ export function PassCardStage({
           )}
         </div>
       </div>
-      {syncing ? <span className="pc-sync-rail wl-essential" aria-hidden /> : null}
+      {syncing === undefined ? null : (
+        <span className="pc-sync-rail wl-essential" data-on={syncing || undefined} aria-hidden />
+      )}
       {toggleId ? (
         <fieldset className="pc-seg">
           <legend className="pc-sr">Side</legend>

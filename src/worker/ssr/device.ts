@@ -1,3 +1,5 @@
+import { isInAppBrowser } from '../../shared/in-app.ts';
+
 /** Which add path a visitor has, from the user agent (ux-principles.md, Apple rules). */
 export type PassDevice = 'iphone' | 'mac' | 'other';
 
@@ -13,7 +15,5 @@ export function passDevice(ua: string | undefined): { device: PassDevice; inApp:
     : /Macintosh/.test(text)
       ? 'mac'
       : 'other';
-  // Google app, Facebook, Instagram and Outlook open links in their own view.
-  const inApp = /\bGSA\/|FBAN|FBAV|Instagram|Outlook/.test(text);
-  return { device, inApp };
+  return { device, inApp: isInAppBrowser(text) };
 }

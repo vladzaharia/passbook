@@ -64,6 +64,14 @@
         "format": "date-time",
         "x-widget": "datetime"
       },
+      "timeZone": {
+        "type": "string",
+        "x-label": "Time zone",
+        "x-group": "Offer",
+        "x-order": 61,
+        "x-timeZone": true,
+        "maxLength": 64
+      },
       "storeLat": {
         "type": "number",
         "minimum": -90,

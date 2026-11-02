@@ -44,6 +44,7 @@ export function ApiKeysPage() {
   const revoked = all.filter((k) => k.revokedAt !== null && !justRevoked.has(k.id));
   const rows = showRevoked ? [...live, ...revoked] : live;
   const empty = !list.isPending && !list.isError && all.length === 0;
+  const withStatus = rows.some((k) => keyState(k, now) !== 'active');
 
   const columns = useMemo<ColumnDef<ApiKey, never>[]>(
     () => [
@@ -77,7 +78,9 @@ export function ApiKeysPage() {
         header: 'Organization',
         id: 'org',
         meta: { nowrap: true, hideBelow: 'lg' },
-        cell: ({ row }) => orgName(row.original.orgId),
+        // A key with no org works across all of them.
+        cell: ({ row }) =>
+          row.original.orgId === null ? 'All organizations' : orgName(row.original.orgId),
       },
       {
         header: 'Scopes',
@@ -117,14 +120,19 @@ export function ApiKeysPage() {
         meta: { hideBelow: 'xl', stackHidden: true, nowrap: true },
         cell: ({ row }) => formatDay(row.original.lastUsedAt, 'Never'),
       },
-      {
-        header: 'Status',
-        id: 'status',
-        cell: ({ row }) => {
-          const s = keyState(row.original, now);
-          return <StatusPill status={s} tone={STATE_TONE[s]} />;
-        },
-      },
+      // Active is what every row says: the column shows only when another state is listed.
+      ...(withStatus
+        ? [
+            {
+              header: 'Status',
+              id: 'status',
+              cell: ({ row }: { row: { original: ApiKey } }) => {
+                const s = keyState(row.original, now);
+                return s === 'active' ? null : <StatusPill status={s} tone={STATE_TONE[s]} />;
+              },
+            } satisfies ColumnDef<ApiKey, never>,
+          ]
+        : []),
       {
         header: () => <span className="sr-only">Actions</span>,
         id: 'actions',
@@ -157,7 +165,7 @@ export function ApiKeysPage() {
         ),
       },
     ],
-    [orgName, justRevoked, now],
+    [orgName, justRevoked, now, withStatus],
   );
 
   const create = (variant: 'primary' | 'outline') => (

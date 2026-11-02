@@ -53,7 +53,7 @@ describe('templates list', () => {
     expect(screen.getByText('2 templates')).toBeInTheDocument();
   });
 
-  it('searches by name and shows a Version column in the table view', async () => {
+  it('searches by name and shows an Updated column in the table view', async () => {
     const user = userEvent.setup();
     const seen: URL[] = [];
     const { router } = await renderApp('/admin/templates?view=table', {
@@ -66,7 +66,7 @@ describe('templates list', () => {
         },
       },
     });
-    expect(await screen.findByRole('columnheader', { name: 'Version' })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: 'Updated' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'Status' })).toBeNull();
     await user.type(screen.getByRole('searchbox', { name: 'Search templates' }), 'henry');
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('q')).toBe('henry'));
@@ -90,6 +90,36 @@ describe('templates list', () => {
     await user.click(await screen.findByRole('option', { name: 'Shown' }));
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('includeArchived')).toBe('true'));
     expect((router.state.location.search as { archived?: boolean }).archived).toBe(true);
+  });
+
+  it('leads with recent uploads while one failed today, else keeps them under the gallery', async () => {
+    const upload = (status: string, createdAt: number) => ({
+      uploadId: '01a19a05-0000-7000-8000-000000000001',
+      name: 'Broken.zip',
+      status,
+      templateId: null,
+      version: null,
+      error: null,
+      issues: 1,
+      createdAt,
+    });
+    let items = [upload('errored', Date.now() - 60_000)];
+    const handlers = {
+      '/api/v1/orgs': orgs,
+      '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
+      '/api/v1/templates/uploads': () => json({ items }),
+    };
+    const first = await renderApp('/admin/templates', { session: 'admin', handlers });
+    const strip = await screen.findByRole('list', { name: 'Recent uploads' });
+    const gallery = screen.getByRole('link', { name: 'Copper card' });
+    // Before the gallery in document order.
+    expect(strip.compareDocumentPosition(gallery) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    first.unmount();
+    items = [upload('errored', Date.now() - 2 * 86_400_000)];
+    await renderApp('/admin/templates', { session: 'admin', handlers });
+    const later = await screen.findByRole('list', { name: 'Recent uploads' });
+    const card = screen.getByRole('link', { name: 'Copper card' });
+    expect(later.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
   it('has no axe violations', async () => {
@@ -527,6 +557,8 @@ describe('template upload', () => {
     });
     await fill(user);
     expect(await screen.findByRole('alert')).toHaveTextContent('File is over 15 MB.');
+    // Refused outright: the drop zone shakes and its header piece slides out.
+    expect(document.querySelector('.wl-drop')).toHaveAttribute('data-rejected');
   });
 
   it('rejects other file types before upload and keeps Upload disabled', async () => {
@@ -540,6 +572,7 @@ describe('template upload', () => {
     await user.upload(input, new File(['x'], 'notes.txt', { type: 'text/plain' }));
     expect(await screen.findByText('Choose a .zip or .pkpasstemplate.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Upload' })).toBeDisabled();
+    expect(document.querySelector('.wl-drop')).toHaveAttribute('data-rejected');
   });
 
   it('has no axe violations', async () => {

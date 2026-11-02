@@ -68,11 +68,14 @@
   object-fit: contain;
 }
 .pc-logo-text {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   margin-inline-end: calc(var(--u) * 6);
+  overflow: hidden;
   font-size: calc(var(--u) * 15);
   font-weight: 600;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .pc-row {
@@ -117,8 +120,7 @@
   overflow-wrap: normal;
 }
 .pc-label {
-  /* Labels never go under 11 px, even on small stills. */
-  font-size: max(11px, calc(var(--u) * 10));
+  font-size: calc(var(--u) * 10);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -145,7 +147,13 @@
   justify-content: space-between;
   gap: calc(var(--u) * 10);
 }
+/* The primary yields to the thumbnail and truncates, as Wallet does. */
+.pc-main > .pc-primary {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .pc-thumb {
+  flex: none;
   height: calc(var(--u) * 90);
   max-width: calc(var(--u) * 90);
   width: auto;
@@ -267,4 +275,12 @@
   max-width: 100%;
   height: auto;
   align-self: center;
+}
+
+/* Labels never go under 11 px on a full-size card. Stills and small stages scale as a whole, so
+   they keep Wallet's proportions. */
+@container (min-width: 260px) {
+  .pc-label {
+    font-size: max(11px, calc(var(--u) * 10));
+  }
 }

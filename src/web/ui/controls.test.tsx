@@ -20,6 +20,15 @@ const noViolations = async (container: HTMLElement) => {
 };
 
 describe('Button', () => {
+  it('swaps its variant without a colour transition, then transitions again', async () => {
+    const { rerender } = render(<Button variant="primary">New pass</Button>);
+    const button = screen.getByRole('button', { name: 'New pass' });
+    expect(button).not.toHaveAttribute('data-instant');
+    rerender(<Button variant="outline">New pass</Button>);
+    expect(button).toHaveAttribute('data-instant');
+    await waitFor(() => expect(button).not.toHaveAttribute('data-instant'));
+  });
+
   it('renders icons around an asChild child', () => {
     render(
       <Button asChild iconStart={<svg data-testid="ic" />}>

@@ -1,13 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Copy,
-  Download,
-  ExternalLink,
-  MoreHorizontal,
-  QrCode as QrIcon,
-  Trash2,
-} from 'lucide-react';
+import { Copy, ExternalLink, MoreHorizontal, QrCode as QrIcon, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { cn } from '../lib/cn.ts';
 import {
   AppleWalletBadge,
   Button,
@@ -22,6 +16,7 @@ import {
   toast,
 } from '../ui/index.ts';
 import { myPassesKey, removePass } from './api.ts';
+import { canAddToWallet, inAppBrowser } from './device.ts';
 import { QrCode } from './qr-code.tsx';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
@@ -41,6 +36,19 @@ export function AddToWalletButton({
   onPress?: () => void;
 }) {
   return <AppleWalletBadge href={downloadUrl} onClick={onPress} />;
+}
+
+/**
+ * Apple's rule for pages with the badge: say how to add where this browser cannot. In-app web
+ * views go to Safari; other devices go to an iPhone or a Mac.
+ */
+export function AddLine({ className }: { className?: string }) {
+  const line = inAppBrowser()
+    ? 'Open in Safari to add to Apple Wallet.'
+    : canAddToWallet()
+      ? null
+      : 'Open on iPhone or Mac to add to Apple Wallet.';
+  return line ? <p className={cn('text-sm text-fg-muted', className)}>{line}</p> : null;
 }
 
 export function QrDialog({
@@ -105,19 +113,16 @@ export interface PassMenuProps {
   passTitle: string;
   /** The public page: Show QR, and on the detail page Copy link and Open public page. */
   publicUrl: string | null;
-  /** The .pkpass, offered again once the pass is in a Wallet (it left Add all). */
-  addAgainHref?: string | null;
   /** Detail page: a labelled outline "More" with the link items. Tiles: a ghost icon. */
   page?: boolean;
   onRemoved?: () => void;
 }
 
-/** More: Show QR, Copy link and Open public page (detail), Add again, then Remove (danger). */
+/** More: Show QR, Copy link and Open public page (detail), then Remove (danger). */
 export function PassMoreMenu({
   passId,
   passTitle,
   publicUrl,
-  addAgainHref,
   page = false,
   onRemoved,
 }: PassMenuProps) {
@@ -146,7 +151,8 @@ export function PassMoreMenu({
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {publicUrl ? (
+          {/* A QR to scan with an iPhone means nothing on the iPhone itself. */}
+          {publicUrl && !canAddToWallet() ? (
             <DropdownMenuItem onSelect={() => setQrOpen(true)}>
               <QrIcon aria-hidden /> Show QR
             </DropdownMenuItem>
@@ -162,13 +168,6 @@ export function PassMoreMenu({
                 </a>
               </DropdownMenuItem>
             </>
-          ) : null}
-          {addAgainHref ? (
-            <DropdownMenuItem asChild>
-              <a href={addAgainHref}>
-                <Download aria-hidden /> Add again
-              </a>
-            </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem destructive onSelect={() => setRemoveOpen(true)}>
             <Trash2 aria-hidden /> Remove

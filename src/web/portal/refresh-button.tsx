@@ -107,7 +107,8 @@ export function RefreshButton({
       onClick={() => mutation.mutate()}
       title={phase === 'pending' ? 'Wallet may take a minute to update' : undefined}
     >
-      {label}
+      {/* Pending keeps the word, so the button holds its width; the spin and aria-busy say it. */}
+      {phase === 'pending' ? 'Refresh' : label}
     </Button>
   );
 }

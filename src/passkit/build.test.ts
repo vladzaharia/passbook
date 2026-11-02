@@ -95,6 +95,35 @@ describe('buildPass', () => {
     expect(JSON.parse(new TextDecoder().decode(files['pass.json']))).toEqual(p);
   });
 
+  it('writes every date in whole seconds', async () => {
+    const dated = {
+      ...passJson,
+      expirationDate: '2030-06-01T20:00:04.263Z',
+      relevantDates: [{ startDate: '2030-06-01T18:00:00.500Z', endDate: '2030-06-01T21:00:00Z' }],
+      semantics: { eventStartDate: '2030-06-01T19:00:00.120-07:00' },
+      generic: {
+        ...(passJson.generic as object),
+        headerFields: [
+          { key: 'when', value: '2030-06-01T19:00:00.987Z', ignoresTimeZone: true },
+          { key: 'at', value: '2030-06-01T19:00:00.321-07:00' },
+        ],
+      },
+    } as unknown as PassJson;
+    const reg = new InMemoryTemplateRegistry();
+    const t = reg.add({ id: 't2', manifest, passJson: dated, assets: { 'icon.png': PNG } });
+    const built = await buildPass({
+      template: t,
+      registry: reg,
+      input: { name: 'Alex', club: 'a' },
+      server: server(material),
+      signing: material,
+    });
+    const files = unzipSync(packagePassBytes(built.signed));
+    const text = new TextDecoder().decode(files['pass.json']);
+    expect(text).toContain('2030-06-01T19:00:00');
+    expect(text).not.toMatch(/\.\d+(Z|[+-])/);
+  });
+
   it('removes conditional fields and omits empty action bindings', async () => {
     const built = await buildPass({
       template,

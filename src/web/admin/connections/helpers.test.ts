@@ -21,7 +21,13 @@ describe('health text', () => {
         c({ consecutiveFailures: 1, lastErrorAt: NOW - 60_000, nextRunAt: NOW + 60_000 }),
         NOW,
       ),
-    ).toBe('Failing since 4:02 AM · 1 failure in a row · next retry in 1 min');
+    ).toBe('Degraded since 4:02 AM · 1 failure in a row · next retry in 1 min');
+    expect(
+      healthSentence(
+        c({ health: 'failing', consecutiveFailures: 1, lastErrorAt: NOW - 60_000 }),
+        NOW,
+      ),
+    ).toMatch(/^Failing since 4:02 AM/);
     expect(
       healthSentence(c({ consecutiveFailures: 0, lastSuccessAt: NOW, nextRunAt: null }), NOW),
     ).toBe('Synced 4:03 AM');

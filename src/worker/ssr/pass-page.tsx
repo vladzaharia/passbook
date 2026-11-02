@@ -35,17 +35,27 @@ export interface PassPageProps {
   support?: { email: string | null; url: string | null };
 }
 
-const ADD_LINE = 'Open on iPhone or Mac to add to Wallet.';
-const SAFARI_LINE = 'Open in Safari to add to Wallet.';
+const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
+const SAFARI_LINE = 'Open in Safari to add to Apple Wallet.';
 
 const svg = (d: string) =>
   `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 
-/** Voided (Ban) and expired (Clock) notes; static markup. */
+/** Voided (Ban) and expired (Clock) notes; `after` is escaped markup (the org contact). */
 const NOTE_HTML = {
-  voided: `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>')}This pass was voided.</p>`,
-  expired: `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')}This pass has expired.</p>`,
+  voided: (after: string) =>
+    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>')}<span>This pass was voided.${after}</span></p>`,
+  expired: (after: string) =>
+    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')}<span>This pass has expired.${after}</span></p>`,
 };
+
+/** A voided pass is not a dead end: one link to the org's support, email first. */
+function contactHtml(props: PassPageProps): string {
+  const email = props.support?.email;
+  const href = email ? `mailto:${email}` : props.support?.url;
+  if (!href) return '';
+  return ` <a href="${escapeHtml(href)}">Contact ${escapeHtml(props.orgName)}</a>`;
+}
 
 const CSS = `
 .pp-head{display:flex;align-items:center;gap:.625rem;min-height:3.5rem;max-width:28rem;margin:0 auto}
@@ -64,12 +74,15 @@ h1 small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(
 .badge img{display:block;height:44px;width:auto}
 .line{margin:0;color:var(--muted)}
 .ipad{display:none}
-.qr{display:flex;align-items:center;gap:1rem;width:100%;margin:0;padding:1rem;border:1px solid var(--line);border-radius:.75rem;background:var(--raised);box-shadow:inset 0 1px 0 var(--edge)}
-.qr img{flex:none;width:7.5rem;height:7.5rem;padding:.25rem;border-radius:.5rem;background:#fff}
+.qr{display:flex;align-items:center;gap:1rem;margin:0}
+.phone{position:relative;flex:none;padding:1.125rem .5rem .875rem;border:2px solid var(--line-strong);border-radius:1.25rem;background:var(--raised)}
+.phone::before{content:"";position:absolute;top:.4375rem;left:50%;width:1.5rem;height:.25rem;margin-left:-.75rem;border-radius:1rem;background:var(--line-strong)}
+.qr img{display:block;width:4.75rem;height:4.75rem;padding:.25rem;border-radius:.375rem;background:#fff}
 .qr p{margin:0;font-weight:500;color:var(--strong)}
+.note a{font-weight:500}
 footer{width:100%;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);overflow-wrap:anywhere}
 .pp .pc-stage{max-width:22rem}
-@media (pointer:coarse){.pp-actions[data-device=mac] .qr{order:-1}.pp-actions[data-device=mac] .ipad{display:block}}
+@media (pointer:coarse){.pp-actions[data-device=mac] .ipad{display:block}}
 @media(min-width:64rem){
 .pp-head{max-width:50rem}
 .pp{grid-template-columns:22rem minmax(0,1fr);grid-template-areas:"pass title" "pass actions";grid-template-rows:auto 1fr;column-gap:4rem;row-gap:1.5rem;max-width:50rem;padding-top:2.5rem}
@@ -90,8 +103,12 @@ function PassBody(props: PassPageProps) {
   const canAdd = props.device === 'iphone' || props.device === 'mac';
   const qr =
     active && props.qrSrc && props.device !== 'iphone' ? (
+      // The add QR sits in a phone, smaller than the pass's own barcode, so the two never pass for
+      // each other.
       <section className="qr">
-        <img src={props.qrSrc} alt="QR code for the pass download" />
+        <div className="phone">
+          <img src={props.qrSrc} alt="QR code for the pass download" />
+        </div>
         <p>Scan with your iPhone.</p>
       </section>
     ) : null;
@@ -116,8 +133,10 @@ function PassBody(props: PassPageProps) {
           </h1>
           {notice ? (
             <div
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: static icon and copy
-              dangerouslySetInnerHTML={{ __html: NOTE_HTML[notice] }}
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: static icon and copy; the contact is escaped
+              dangerouslySetInnerHTML={{
+                __html: NOTE_HTML[notice](voided ? contactHtml(props) : ''),
+              }}
             />
           ) : null}
         </div>
@@ -137,9 +156,9 @@ function PassBody(props: PassPageProps) {
           {active && props.device !== 'other' && props.inApp ? (
             <p className="line">{SAFARI_LINE}</p>
           ) : null}
-          {canAdd ? badge : qr}
-          {canAdd ? qr : badge}
-          {props.support?.email || props.support?.url ? (
+          {badge}
+          {qr}
+          {!voided && (props.support?.email || props.support?.url) ? (
             <footer>
               Help:{' '}
               {props.support.email ? (

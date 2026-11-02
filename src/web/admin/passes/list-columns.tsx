@@ -3,13 +3,11 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { type CSSProperties, createContext, useContext } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
+import type { Swatch } from '../../lib/swatches.ts';
 import { Checkbox, StatusIcon } from '../../ui/index.ts';
 import { PassRowMenu } from './row-menu.tsx';
 
-export interface Swatch {
-  background: string;
-  foreground: string;
-}
+export type { Swatch };
 
 /** What the cells read. Cells are stable components; this context carries what changes. */
 export interface ListContextValue {
@@ -37,9 +35,14 @@ export function PassChip({ swatch, voided }: { swatch: Swatch | undefined; voide
     <span
       aria-hidden
       data-voided={voided || undefined}
+      data-image={swatch?.image ? '' : undefined}
       style={
         swatch
-          ? ({ '--chip-bg': swatch.background, '--chip-fg': swatch.foreground } as CSSProperties)
+          ? ({
+              '--chip-bg': swatch.background,
+              '--chip-fg': swatch.foreground,
+              ...(swatch.image ? { backgroundImage: `url("${swatch.image}")` } : {}),
+            } as CSSProperties)
           : undefined
       }
       className="wl-pass-chip"
@@ -74,7 +77,7 @@ function SelectRow({ pass }: { pass: PassSummaryDto }) {
 function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
   const o = useList();
   return (
-    <span className="flex min-w-0 max-w-72 items-center gap-3">
+    <span className="flex min-w-0 max-w-72 items-center gap-3 contain-inline-size">
       <PassChip swatch={o.swatches.get(p.templateId)} voided={p.status === 'voided'} />
       <Link
         to="/admin/passes/$passId"
@@ -113,15 +116,24 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
       header: () => <SelectAll />,
       cell: ({ row }) => <SelectRow pass={row.original} />,
     },
-    { id: 'title', header: 'Pass', cell: ({ row }) => <TitleCell pass={row.original} /> },
+    {
+      id: 'title',
+      header: 'Pass',
+      meta: { grow: true },
+      cell: ({ row }) => <TitleCell pass={row.original} />,
+    },
     {
       id: 'holder',
       header: 'Holder',
-      meta: { nowrap: true },
+      // From xl, emails up to about 34 characters show in full.
+      meta: { nowrap: 'wide' },
       cell: ({ row }) => (
         <span className="flex min-w-0 items-center gap-2">
           <StatusIcon status={row.original.holderState} />
-          <span className="max-w-44 truncate" title={row.original.holderEmail ?? undefined}>
+          <span
+            className="max-w-44 truncate xl:max-w-72"
+            title={row.original.holderEmail ?? undefined}
+          >
             {row.original.holderEmail ?? <span className="text-fg-subtle">—</span>}
           </span>
         </span>
@@ -140,13 +152,14 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
     {
       id: 'template',
       header: 'Template',
-      meta: { hideBelow: 'lg', nowrap: true, stackHidden: true },
+      // The chip already shows the template's look; the name waits for xl.
+      meta: { hideBelow: 'xl', nowrap: true, stackHidden: true },
       cell: ({ row }) => <TemplateCell pass={row.original} />,
     },
     {
       id: 'devices',
       header: 'On device',
-      meta: { hideBelow: 'lg', numeric: true, stackHidden: true },
+      meta: { hideBelow: '2xl', numeric: true, stackHidden: true },
       cell: ({ row }) =>
         row.original.deviceCount > 0 ? (
           row.original.deviceCount

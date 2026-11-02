@@ -30,6 +30,22 @@ import { DevicesCard } from './devices-card.tsx';
 type Entry = z.infer<typeof DeliveryEntrySchema>;
 const ListSchema = z.object({ items: z.array(DeliveryEntrySchema) });
 
+/**
+ * Why a push went, from its outbox id: `push:<pass>:<version>` is a published version,
+ * `push:<pass>:<reason>:<id>` a forced one (refresh). Emails say nothing more than their kind.
+ */
+export function deliveryReason(entry: Pick<Entry, 'id' | 'kind'>): string | null {
+  if (entry.kind !== 'push') return null;
+  const part = entry.id.split(':')[2] ?? '';
+  if (/^\d+$/.test(part)) return `Version ${part}`;
+  if (part === 'refresh') return 'Refresh';
+  if (part === 'publish') return 'Update';
+  return null;
+}
+
+/** A push with no registered device reached nothing: neutral, never "Sent". */
+const noDevices = (e: Entry) => e.state === 'cancelled' && e.errorCode === 'NO_DEVICES';
+
 function SendEmailCard({
   pass,
   sent,
@@ -153,9 +169,18 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
         },
       },
       {
+        id: 'reason',
+        header: 'Reason',
+        meta: { nowrap: true },
+        cell: ({ row }) =>
+          deliveryReason(row.original) ?? <span className="text-fg-subtle">—</span>,
+      },
+      {
         id: 'state',
         header: 'State',
-        cell: ({ row }) => <StatusPill status={row.original.state} />,
+        cell: ({ row }) => (
+          <StatusPill status={noDevices(row.original) ? 'no_devices' : row.original.state} />
+        ),
       },
       {
         id: 'attempts',
@@ -167,7 +192,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
         id: 'error',
         header: 'Error',
         cell: ({ row }) =>
-          row.original.errorCode ? (
+          row.original.errorCode && !noDevices(row.original) ? (
             <span className="font-mono text-xs text-fg-muted">{row.original.errorCode}</span>
           ) : (
             <span className="text-fg-subtle">—</span>

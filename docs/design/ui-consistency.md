@@ -73,7 +73,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Page | Layout |
 | --- | --- |
 | List, Settings | Full main width |
-| Detail with pass preview (pass, template) | ≥1280: preview column 20rem + tabs. 640–1279: horizontal summary card (pass 220px, status, holder, quick actions) above the tabs. <640: compact row (64px still, title, `Show pass` opens the stage in a bottom sheet) |
+| Detail with pass preview (pass, template) | ≥1024: preview column + tabs (16rem to 1279, 20rem from 1280). 640–1023: horizontal summary card (pass 180px, holder, quick actions; the header carries status and version) above the tabs. <640: compact row (64px still, title, `Show pass` opens the stage in a bottom sheet) |
 | Detail (org, user, identity, connection, status) | `TwoPane`: main column + 20rem aside at ≥1280 (summary, counts, danger actions); stacked below |
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |
@@ -129,7 +129,7 @@ health items):
 | --- | --- |
 | Row | `flex items-center gap-3 min-h-11 py-3`, first `pt-0`, last `pb-0`, inset dividers |
 | Leading | 16px icon or 24px `EntityAvatar`, `shrink-0` |
-| Body | `min-w-0 flex-1`; title `text-sm fg-strong` truncates while its pills stay visible (`shrink-0`); meta `text-xs fg-muted` below |
+| Body | `min-w-0 flex-1`; title `text-sm fg-strong` truncates while its pills stay visible (`shrink-0`); in a list under 24rem a pill that does not fit drops under the title; meta `text-xs fg-muted` below, wrapping up to three lines |
 | Trailing | `ml-auto shrink-0`, right-aligned, vertically centred, never wraps. Holds a pill or the actions |
 
 - Row actions: one safe action is a ghost `sm` button with an icon; one destructive action is a
@@ -291,7 +291,7 @@ Action icons (`src/web/lib/action-icons.ts`):
 - The active tab lives in the URL as `?tab=<id>` (`passDetailSearchSchema` in
   `admin/passes/search.ts`, `validateSearch` in `routes/admin/passes/$passId.tsx`).
 - Changing tab replaces history. An invalid or missing tab falls back to the default.
-- Below 640, more than five tabs render as a select (`Section: Fields`); otherwise a scrolling
+- Below 640, five or more tabs render as a select (`Section: Fields`); otherwise a scrolling
   strip with a 32px edge fade and chevrons.
 - Pass detail tabs: Fields, Holder, Delivery (with devices), Images, Versions, Connection, Activity.
 
@@ -415,7 +415,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   email). Rules in ux-principles.md "Add to Apple Wallet badge".
 - **Device rule**: iPhone, iPod and Mac get the badge. Other devices (iPad included) get the QR
   card (`Scan with your iPhone.`) first, the badge second and `Open on iPhone or Mac to add to
-  Wallet.`
+  Apple Wallet.`
 - **Portal tiles**: the pass (stage), title and org; actions: badge (or `Show QR` + badge),
   `Refresh` (outline), `More` (Show QR, Remove). `In Wallet` pill for registered passes. No
   `Updated` line. Pass heights equal per row.
@@ -458,5 +458,5 @@ The trust and footer lines are the only explanatory text allowed on these pages:
 - Emails: fluid container `width:100%; max-width:480px`; 3px foil line (teal fallback) over the
   org header bar (org accent, text white or near-black by luminance). One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
-  pass` and `Open on iPhone or Mac to add to Wallet.`. The sign-in code is a letter-spaced chip,
+  pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
   not a field. Buttons 44px. Footer note `12px`. Nothing wider than 320px. No animation.

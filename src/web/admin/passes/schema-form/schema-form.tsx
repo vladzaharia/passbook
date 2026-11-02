@@ -52,6 +52,10 @@ export function SchemaForm({
     [schema, hiddenKeys],
   );
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
+  // A template's time zone input sets the zone its date-times are read and written in.
+  const zoneKey = groups.flatMap((g) => g.fields).find((f) => f.widget === 'timezone')?.key;
+  const zoneValue = zoneKey ? value[zoneKey] : undefined;
+  const formZone = typeof zoneValue === 'string' && zoneValue ? zoneValue : undefined;
   const errors = useMemo(() => validateValues(schema, value), [schema, value]);
 
   if (groups.length === 0)
@@ -125,6 +129,7 @@ export function SchemaForm({
                           control={control as unknown as Record<string, unknown>}
                           disabled={disabled || owned}
                           maxImageBytes={maxImageBytes}
+                          zone={formZone}
                         />
                       )}
                     </FormField>

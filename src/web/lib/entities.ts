@@ -65,7 +65,7 @@ export const ENTITY_KINDS = Object.keys(ENTITY) as EntityKind[];
 export const CONNECTOR_ICON: Record<string, LucideIcon> = {
   demo: FlaskConical,
   'http-json': Braces,
-  webhook: Webhook,
+  'webhook-push': Webhook,
 };
 export const connectorIcon = (id: string): LucideIcon => CONNECTOR_ICON[id] ?? Cable;
 

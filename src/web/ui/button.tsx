@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type Ref,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -26,6 +27,8 @@ export const buttonVariants = cva(
     'motion-safe:active:not-disabled:not-aria-disabled:scale-(--pk-motion-scale-press)',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
     'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
+    // Working is not unavailable: a busy button keeps full contrast while its verb plays.
+    'aria-busy:cursor-progress aria-busy:opacity-100',
     '[&_svg]:shrink-0',
   ],
   {
@@ -95,6 +98,30 @@ function useVerbDone(done: unknown) {
   return active;
 }
 
+/**
+ * A variant swap (primary to outline when a list loads empty) is a fact, not a change to animate:
+ * the colour transitions stay off for the frame the swap lands in.
+ */
+function useInstantVariant(own: { current: HTMLElement | null }, variant: unknown) {
+  const prev = useRef(variant);
+  useLayoutEffect(() => {
+    if (prev.current === variant) return;
+    prev.current = variant;
+    const el = own.current;
+    if (!el) return;
+    el.setAttribute('data-instant', '');
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => el.removeAttribute('data-instant'));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+      el.removeAttribute('data-instant');
+    };
+  }, [own, variant]);
+}
+
 export function Button({
   className,
   variant,
@@ -117,6 +144,7 @@ export function Button({
   const blocked = loading || paused || Boolean(disabled);
   const verbDone = useVerbDone(done);
   const own = useRef<HTMLElement | null>(null);
+  useInstantVariant(own, variant);
   // Restart the one-shot animation on every confirmation.
   useEffect(() => {
     const el = own.current;

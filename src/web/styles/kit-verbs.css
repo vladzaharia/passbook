@@ -150,6 +150,12 @@
   animation: wl-spark 640ms var(--wl-ease-out) calc(var(--i) * 40ms) backwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .wl-spark {
+    animation: none;
+  }
+}
+
 /* One foil sheen across a freshly revealed secret (SecretReveal). */
 @keyframes wl-sheen-once {
   from {

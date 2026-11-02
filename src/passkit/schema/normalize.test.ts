@@ -75,6 +75,21 @@ describe('normalizePass', () => {
     expect(out.semantics?.eventName).toBe('tz');
   });
 
+  it('drops fractional seconds from every date', () => {
+    const out = normalizePass(
+      base({
+        expirationDate: '2027-01-31T23:59:04.263Z',
+        relevantDate: '2027-01-31T10:00:00.5+01:00',
+        relevantDates: [{ startDate: '2027-01-31T10:00:00.120Z', endDate: '2027-01-31T11:00:00Z' }],
+        semantics: { eventStartDate: '2027-01-31T10:00:00.999Z' },
+      }),
+    );
+    expect(out.expirationDate).toBe('2027-01-31T23:59:04Z');
+    expect(out.relevantDate).toBe('2027-01-31T10:00:00+01:00');
+    expect(out.relevantDates?.[0]?.startDate).toBe('2027-01-31T10:00:00Z');
+    expect(out.semantics?.eventStartDate).toBe('2027-01-31T10:00:00Z');
+  });
+
   it('writes both single-moment keys and the root relevantDate', () => {
     const out = normalizePass(
       base({

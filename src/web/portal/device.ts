@@ -1,3 +1,5 @@
+import { isInAppBrowser } from '../../shared/in-app.ts';
+
 interface Nav {
   userAgent: string;
   maxTouchPoints?: number;
@@ -16,3 +18,6 @@ export function canAddToWallet(n: Nav = nav()): boolean {
   if (isApplePhone(n)) return true;
   return /Macintosh/.test(n.userAgent) && (n.maxTouchPoints ?? 0) < 2;
 }
+
+/** An app's own web view (Google, Instagram, LinkedIn…): Safari has to open the page to add. */
+export const inAppBrowser = (n: Nav = nav()) => isInAppBrowser(n.userAgent);

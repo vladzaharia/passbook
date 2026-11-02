@@ -21,7 +21,13 @@ import { canAddToWallet } from './device.ts';
 import { type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { RefreshButton } from './refresh-button.tsx';
-import { AddToWalletButton, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
+import {
+  AddLine,
+  AddToWalletButton,
+  PassMoreMenu,
+  publicUrlOf,
+  ShowQrButton,
+} from './wallet-actions.tsx';
 import './portal.css';
 
 const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
@@ -48,7 +54,8 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
       <Link {...link} tabIndex={-1} aria-hidden className="flex flex-1 items-center">
         <PassCardStage
           view={toView(pass)}
-          mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          settle={pass.status}
           dip={dip}
           enter={dealt}
           dim={voided}
@@ -59,10 +66,11 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
       <div className={cn('flex flex-col gap-3', dealt && 'wl-tile-chrome')}>
         <div className="min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="min-w-0 truncate text-sm font-semibold text-fg-strong">
+            <h2 className="min-w-0 text-sm font-semibold text-fg-strong">
+              {/* A block link truncates on its own box, so the 44 px touch padding is not clipped. */}
               <Link
                 {...link}
-                className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="block truncate rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus pointer-coarse:-my-3 pointer-coarse:py-3"
               >
                 {name}
               </Link>
@@ -85,12 +93,7 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           </div>
           <div className="ml-auto flex items-center gap-1">
             {voided ? null : <RefreshButton passId={pass.id} pass={pass} compact />}
-            <PassMoreMenu
-              passId={pass.id}
-              passTitle={name}
-              publicUrl={voided ? null : publicUrl}
-              addAgainHref={pass.inWallet && !voided ? pass.downloadUrl : null}
-            />
+            <PassMoreMenu passId={pass.id} passTitle={name} publicUrl={voided ? null : publicUrl} />
           </div>
         </div>
       </div>
@@ -159,7 +162,12 @@ export function MyPassesPage() {
   } else {
     body = (
       <div className="flex flex-col gap-6">
-        <AddAllLinks count={addable} />
+        {addable > 0 ? (
+          <div className="flex flex-col gap-2">
+            <AddAllLinks count={addable} />
+            <AddLine />
+          </div>
+        ) : null}
         <ul className={GRID}>
           {passes.map((pass, i) => (
             <li key={pass.id} className="flex min-w-0" style={{ '--i': i } as CSSProperties}>

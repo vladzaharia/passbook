@@ -1,6 +1,6 @@
 import { Eye } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
-import { BELOW_XL, PHONE, useMediaQuery } from '../../lib/media.ts';
+import { BELOW_LG, PHONE, useMediaQuery } from '../../lib/media.ts';
 import { Button, Card, Dialog, DialogContent } from '../../ui/index.ts';
 
 export interface PreviewLayoutProps {
@@ -9,23 +9,23 @@ export interface PreviewLayoutProps {
   /** A small still of the pass for the phone row. */
   still: ReactNode;
   title: string;
-  /** Status, holder, version and quick actions beside the card at 640 to 1279. */
+  /** Holder and quick actions beside the card at 640 to 1023 (the header has the rest). */
   summary: ReactNode;
   children: ReactNode;
 }
 
 /**
- * At 1280 and up the stage sits in a 20rem column beside the tabs; from 640 a horizontal summary
- * card (pass at 220 px) sits above them; below 640 a compact row opens the stage in a sheet, so
- * the tabs start in the first screen.
+ * From 1024 the stage sits in a column beside the tabs (16rem, 20rem from 1280); from 640 a
+ * horizontal summary card (pass at 180 px) sits above them; below 640 a compact row opens the
+ * stage in a sheet. The tabs start in the first screen at every width.
  */
 export function PreviewLayout({ stage, still, title, summary, children }: PreviewLayoutProps) {
-  const narrow = useMediaQuery(BELOW_XL);
+  const narrow = useMediaQuery(BELOW_LG);
   const phone = useMediaQuery(PHONE);
   const [open, setOpen] = useState(false);
   if (!narrow) {
     return (
-      <div className="grid min-w-0 grid-cols-[20rem_minmax(0,1fr)] items-start gap-8">
+      <div className="grid min-w-0 grid-cols-[16rem_minmax(0,1fr)] items-start gap-6 xl:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8">
         <aside
           aria-label="Pass preview"
           className="sticky top-[calc(5rem+env(safe-area-inset-top))]"
@@ -64,8 +64,8 @@ export function PreviewLayout({ stage, still, title, summary, children }: Previe
   }
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <Card className="grid grid-cols-[220px_minmax(0,1fr)] items-center gap-6 p-5">
-        <div className="w-[220px]">{stage('card')}</div>
+      <Card className="grid grid-cols-[180px_minmax(0,1fr)] items-center gap-6 p-5">
+        <div className="w-[180px]">{stage('card')}</div>
         <div className="flex min-w-0 flex-col gap-4">{summary}</div>
       </Card>
       {children}

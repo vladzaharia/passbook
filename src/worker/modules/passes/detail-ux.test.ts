@@ -215,6 +215,9 @@ describe('tenant identity', () => {
       description: `${kit.org.name} store card`,
     });
     expect(plain.warnings.map((w) => w.code)).toContain('PLATFORM_BRANDING');
+    expect(plain.warnings.find((w) => w.code === 'PLATFORM_BRANDING')?.message).toBe(
+      "Uses the starter logo and icon. Add the organization's logo and icon in Pass branding.",
+    );
 
     const sha1 = await sha1Hex(ICON_PNG);
     const image = (key: string) => ({ key, sha1, size: ICON_PNG.length, width: 38, height: 38 });

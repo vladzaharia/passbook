@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
@@ -9,10 +9,7 @@ import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Callout,
-  CheckboxField,
   ErrorState,
-  FormField,
-  Input,
   PageHeader,
   SkeletonKeyValue,
   UnsavedChangesDialog,
@@ -23,9 +20,9 @@ import { useTemplate, useTemplates } from '../templates/api.ts';
 import { passKeys } from './api.ts';
 import { markCreated } from './detail/stage-state.ts';
 import { fingerprint, newKey } from './format.ts';
-import { LivePreview, type Preview } from './new-pass-preview.tsx';
+import { LivePreview, ShowPassRow, useLivePreview } from './new-pass-preview.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
-import { OrgStep, TemplateStep } from './new-pass-steps.tsx';
+import { HolderStep, OrgStep, TemplateStep } from './new-pass-steps.tsx';
 import {
   cleanValues,
   defaultValues,
@@ -90,8 +87,6 @@ export function NewPassPage({
   const [send, setSend] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [createdId, setCreatedId] = useState<string>();
-  const [preview, setPreview] = useState<Preview>();
-  const onPreview = useCallback((p: Preview | undefined) => setPreview(p), []);
 
   // Seed schema defaults once per template so the form shows what the server applies.
   const seeded = useRef<string | undefined>(undefined);
@@ -169,15 +164,24 @@ export function NewPassPage({
 
   const go = (to: number) => setStep(Math.max(0, Math.min(ids.length - 1, to)));
   const index = (id: StepId) => ids.indexOf(id);
-  function next() {
-    if (at === 'org' && !orgId) return;
-    if (at === 'template' && !templateId) return;
-    if (at === 'details' && Object.keys(inputErrors).length > 0) return setShowErrors(true);
-    if (at === 'holder' && emailError) return;
-    if (at === 'review') return create.mutate();
-    go(step + 1);
+  /** False keeps the step: the Wizard focuses the first error and announces the count. */
+  function next(): boolean {
+    if ((at === 'org' && !orgId) || (at === 'template' && !templateId)) {
+      setShowErrors(true);
+      return false;
+    }
+    if (at === 'details' && Object.keys(inputErrors).length > 0) {
+      setShowErrors(true);
+      return false;
+    }
+    if (at === 'holder' && emailError) return false;
+    setShowErrors(false);
+    if (at === 'review') create.mutate();
+    else go(step + 1);
+    return true;
   }
   const chooseOrg = (id: string) => {
+    setShowErrors(false);
     if (id !== orgId) {
       setTemplateId(undefined);
       seeded.current = undefined;
@@ -186,6 +190,7 @@ export function NewPassPage({
     setOrgId(id);
   };
   const chooseTemplate = (id: string) => {
+    setShowErrors(false);
     if (id !== templateId) {
       seeded.current = undefined;
       setInput({});
@@ -194,17 +199,12 @@ export function NewPassPage({
   };
 
   const sample = (template.data?.sample ?? {}) as FormValues;
+  const live = useLivePreview({ templateId, orgId, schema, sample, input });
+  const preview = live.preview;
   const aside = (
-    <LivePreview
-      templateId={templateId}
-      orgId={orgId}
-      schema={schema}
-      sample={sample}
-      input={input}
-      transitionName={createdId ? `pass-${createdId}` : undefined}
-      onPreview={onPreview}
-    />
+    <LivePreview state={live} transitionName={createdId ? `pass-${createdId}` : undefined} />
   );
+  const showPass = <ShowPassRow state={live} title={template.data?.name ?? 'Pass'} />;
 
   return (
     <>
@@ -232,6 +232,7 @@ export function NewPassPage({
             loading={orgs.isPending}
             error={orgs.error}
             orgId={orgId}
+            choiceError={showErrors && !orgId ? 'Choose an organization.' : undefined}
             onSelect={chooseOrg}
             onCommit={(id) => {
               chooseOrg(id);
@@ -245,6 +246,7 @@ export function NewPassPage({
             loading={templates.isPending}
             error={templates.error}
             templateId={templateId}
+            choiceError={showErrors && !templateId ? 'Choose a template.' : undefined}
             onSelect={chooseTemplate}
             onCommit={(id) => {
               chooseTemplate(id);
@@ -258,41 +260,30 @@ export function NewPassPage({
           ) : !template.data ? (
             <SkeletonKeyValue label="Loading fields" />
           ) : (
-            <SchemaForm
-              schema={template.data.inputSchema}
-              value={input}
-              onChange={setInput}
-              hiddenKeys={hiddenKeys}
-              showAllErrors={showErrors}
-              serverErrors={fieldErrors}
-            />
+            <>
+              {showPass}
+              <SchemaForm
+                schema={template.data.inputSchema}
+                value={input}
+                onChange={setInput}
+                hiddenKeys={hiddenKeys}
+                showAllErrors={showErrors}
+                serverErrors={fieldErrors}
+              />
+            </>
           )
         ) : null}
         {at === 'holder' ? (
-          <div className="flex flex-col gap-4">
-            <FormField
-              label="Holder email"
-              help="Leave empty to add a holder later."
-              error={emailError}
-            >
-              {(c) => (
-                <Input
-                  {...c}
-                  type="email"
-                  autoComplete="off"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              )}
-            </FormField>
-            <CheckboxField
-              label={validEmail ? `Email the pass to ${email.trim()}` : 'Email the pass'}
-              checked={send && validEmail}
-              disabled={!validEmail}
-              onCheckedChange={(c) => setSend(c === true)}
-            />
-          </div>
+          <HolderStep
+            email={email}
+            onEmail={setEmail}
+            error={emailError}
+            valid={validEmail}
+            send={send}
+            onSend={setSend}
+          />
         ) : null}
+        {at === 'review' ? showPass : null}
         {at === 'review' ? (
           <ReviewStep
             org={org?.name}

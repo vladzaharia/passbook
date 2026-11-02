@@ -65,6 +65,17 @@ describe('pass detail', () => {
     );
   });
 
+  it('keeps the badge on a pass already in Wallet, with no custom add item', async () => {
+    const user = userEvent.setup();
+    await renderApp('/passes/p1', {
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ inWallet: true })) },
+    });
+    expect(await screen.findByText('In Wallet')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(within(await screen.findByRole('menu')).queryByText(/Add again/)).toBeNull();
+  });
+
   it('deals the card on a deep link', async () => {
     const { container } = await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },

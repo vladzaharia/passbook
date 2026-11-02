@@ -36,8 +36,14 @@
   opacity: 0;
   translate: 16px 0;
 }
-.wl-drop[data-shake] {
+.wl-drop[data-shake],
+.wl-drop[data-rejected] {
   animation: wl-shake var(--wl-dur-shake, 240ms) var(--wl-ease-move);
+}
+/* Refused before it started (wrong type, too large, not a zip): the header piece slides out. */
+.wl-drop[data-rejected]:not([data-landed]) [data-part="p"][data-i="0"] {
+  opacity: 0;
+  translate: 16px 0;
 }
 .wl-drop[data-done] [data-part="e"] {
   animation: wl-v-stamp 420ms var(--wl-ease-bounce);
@@ -58,6 +64,7 @@
     animation: none !important;
   }
   .wl-drop[data-shake],
+  .wl-drop[data-rejected],
   .wl-report > * {
     animation: none;
   }

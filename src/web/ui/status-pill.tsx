@@ -1,9 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
+import { COARSE_ONLY, useMediaQuery } from '../lib/media.ts';
 import { useChangeCount } from '../lib/motion.ts';
 import { humanizeStatus, type StatusKey, statusOf, TONE_ICON, type Tone } from '../lib/status.ts';
 import { Badge } from './badge.tsx';
+import { TOUCH_HIT } from './button.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from './popover.tsx';
 import { Tooltip } from './tooltip.tsx';
 
 export interface StatusPillProps {
@@ -51,24 +54,39 @@ export function StatusPill({ status, tone, icon, children, className }: StatusPi
   );
 }
 
-/** A state every row would repeat: the icon alone, with the label and hint in a tooltip. */
+/**
+ * A state every row would repeat: the icon alone, with the label and hint in a tooltip. Touch has
+ * no hover, so there a tap opens the same sentence (44 px hit area around the 16 px icon).
+ */
 export function StatusIcon({ status, tone, icon, className }: Omit<StatusPillProps, 'children'>) {
   const s = resolve(status, tone, icon);
   const text = s.entry?.hint ? `${s.label}. ${s.entry.hint}` : s.label;
+  const touch = useMediaQuery(COARSE_ONLY);
+  const trigger = (
+    <button
+      type="button"
+      aria-label={text}
+      className={cn(
+        'relative inline-flex cursor-default rounded-sm focus-visible:outline-2 focus-visible:outline-focus',
+        TOUCH_HIT,
+        TONE_TEXT[s.tone],
+        className,
+      )}
+    >
+      <s.Icon aria-hidden className={cn('size-4', s.spin)} />
+    </button>
+  );
+  if (!touch) return <Tooltip content={text}>{trigger}</Tooltip>;
   return (
-    <Tooltip content={text}>
-      {/* A button so keyboard users reach the tooltip; it does nothing on press. */}
-      <button
-        type="button"
-        aria-label={text}
-        className={cn(
-          'inline-flex cursor-default rounded-sm focus-visible:outline-2 focus-visible:outline-focus',
-          TONE_TEXT[s.tone],
-          className,
-        )}
+    <Popover>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="center"
+        className="w-auto max-w-xs px-2 py-1 text-xs text-fg-strong"
       >
-        <s.Icon aria-hidden className={cn('size-4', s.spin)} />
-      </button>
-    </Tooltip>
+        {text}
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accentWarnings, imageSizeError, passColorWarnings, pngSize } from './branding.ts';
+import { accentWarnings, hexOf, imageSizeError, passColorWarnings, pngSize } from './branding.ts';
 
 describe('branding checks', () => {
   it('warns on pass colours under 4.5:1 text and 3:1 labels', () => {
@@ -35,5 +35,13 @@ describe('branding checks', () => {
     new DataView(bytes.buffer).setUint32(20, 87);
     expect(pngSize(bytes)).toEqual({ w: 114, h: 87 });
     expect(pngSize(new Uint8Array(24))).toBeUndefined();
+  });
+});
+
+describe('hexOf', () => {
+  it('reads pass.json rgb() and hex, and nothing else', () => {
+    expect(hexOf('rgb(15, 23, 42)')).toBe('#0f172a');
+    expect(hexOf('#ABCDEF')).toBe('#ABCDEF');
+    expect(hexOf('teal')).toBeUndefined();
   });
 });

@@ -22,6 +22,7 @@ import { type AppBindings, requestContext } from './platform/context.ts';
 import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { securityHeaders } from './platform/security-headers.ts';
+import { asBrowserPage } from './ssr/error-response.ts';
 
 export interface AppOptions {
   /** Session and API-key stores. Production wiring lives in stores.ts; tests pass fakes. */
@@ -34,8 +35,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   const app = new OpenAPIHono<AppBindings>();
   app.use('*', requestContext({ stores: options.stores ?? denyAllStores, clock: options.clock }));
   app.use('*', securityHeaders);
-  app.onError(handleError);
-  app.notFound(notFoundHandler);
+  app.onError((error, c) => asBrowserPage(c, handleError(error, c) as Response));
+  app.notFound((c) => asBrowserPage(c, notFoundHandler(c)));
 
   // A missing chunk must not come back as the SPA fallback page (cached immutable under that URL).
   app.get('/assets/*', async (c) => {

@@ -12,6 +12,8 @@ export interface ArtProps {
   className?: string;
   /** false: no idle beat or hover replay. */
   beat?: boolean;
+  /** Final frame only. */
+  still?: boolean;
 }
 
 const DIM = { sm: [64, 48], lg: [96, 72], xl: [112, 84] } as const;
@@ -43,6 +45,7 @@ export function Art({
   size = 'lg',
   className,
   beat = true,
+  still = false,
   state,
   pose,
   children,
@@ -57,6 +60,7 @@ export function Art({
       data-state={state}
       data-pose={pose}
       data-beat={beat ? undefined : 'off'}
+      data-still={still || undefined}
       className={className ? `wl-art ${className}` : 'wl-art'}
       viewBox="0 0 96 72"
       width={w}

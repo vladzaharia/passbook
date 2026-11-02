@@ -15,6 +15,7 @@ import {
   useTemplateOptions,
   useUserSearch,
 } from '../../lib/search.ts';
+import { type Swatch, useSwatches } from '../../lib/swatches.ts';
 import { type ThemePref, useTheme } from '../../lib/theme.tsx';
 import {
   type CommandGroup,
@@ -67,6 +68,7 @@ export function AdminPalette({
   const [mode, setMode] = useState<'all' | 'orgs'>('all');
   const term = useDebounced(open ? query.trim() : '', 200);
   const passes = useRecentPassSearch(term, orgId);
+  const swatches = useSwatches([...new Set((passes.data?.items ?? []).map((p) => p.templateId))]);
   const users = useUserSearch(term);
   const orgs = useOrgOptions(open);
   const templates = useTemplateOptions(open && term.length > 0, term);
@@ -138,7 +140,7 @@ export function AdminPalette({
               ? (passes.data?.items ?? []).map((p) => ({
                   id: `pass:${p.id}`,
                   label: p.title ?? p.serial,
-                  icon: ENTITY.pass.icon,
+                  ...chip(swatches.get(p.templateId)),
                   hint: [orgName.get(p.orgId), p.holderEmail ?? p.serial]
                     .filter(Boolean)
                     .join(', '),
@@ -257,7 +259,7 @@ export function AdminPalette({
       groups={groups}
       query={query}
       onQueryChange={setQuery}
-      placeholder={mode === 'orgs' ? 'Find an organization' : 'Search pages and passes'}
+      placeholder={mode === 'orgs' ? 'Find an organization' : 'Search'}
       empty={
         mode === 'all' ? (
           <PaletteItem item={searchPasses} close={() => onOpenChange(false)} />
@@ -265,4 +267,14 @@ export function AdminPalette({
       }
     />
   );
+}
+
+/** A pass row shows the pass in miniature (its image over its colour), else the pass glyph. */
+function chip(swatch: Swatch | undefined): { swatch: string } | { icon: typeof ENTITY.pass.icon } {
+  if (!swatch) return { icon: ENTITY.pass.icon };
+  return {
+    swatch: swatch.image
+      ? `center / cover url("${swatch.image}"), ${swatch.background}`
+      : swatch.background,
+  };
 }

@@ -159,7 +159,7 @@ const storeStrip: Painter = (u, v, w, h, s) => {
   return [...c, 255];
 };
 
-/** Event poster: night gradient, light beams and a faint date block. */
+/** Event poster: night gradient with light beams. */
 const eventArt: Painter = (u, v, w, h, s) => {
   let c = mixRgb(NIGHT, MAGENTA, v ** 1.2);
   for (const [x, a] of [
@@ -169,20 +169,16 @@ const eventArt: Painter = (u, v, w, h, s) => {
     const beam = Math.abs(u - x - (v - 1) * 0.25) - 0.05 * (1 - v);
     c = over(c, [253, 224, 71], cover(beam * w) * a * (1 - v * 0.6));
   }
-  // The date block sits right of centre, clear of the logo and the header fields.
-  const bx = w - 58 * s;
-  const by = h * 0.3;
-  c = over(c, [255, 255, 255], cover(box(u * w, v * h, bx, by, 30 * s, 34 * s, 8 * s)) * 0.18);
-  c = over(c, MAGENTA, cover(box(u * w, v * h, bx, by - 22 * s, 30 * s, 12 * s, 8 * s)) * 0.45);
   return [...c, 255];
 };
 /** Classic event ticket: the poster colours as a quiet background. */
 const eventBackground: Painter = (u, v) => [...mixRgb(NIGHT, MAGENTA, v ** 1.4 * 0.8 + u * 0.1), 255];
-/** Classic event ticket thumbnail: the date block, rounded on transparent. */
+/** Classic event ticket thumbnail: the poster colours with a bright disc, rounded on transparent. */
 const eventThumb: Painter = (u, v, w, h, s) => {
   const r = cover(box(u * w, v * h, w / 2, h / 2, w / 2, h / 2, 14 * s));
-  const top = v < 0.36 ? MAGENTA : ([255, 255, 255] as Rgb);
-  return [...top, Math.round(r * 255)];
+  let c = mixRgb(NIGHT, MAGENTA, v ** 1.2);
+  c = over(c, [253, 224, 71], cover(Math.hypot(u * w - w / 2, v * h - h * 0.46) - w * 0.2));
+  return [...c, Math.round(r * 255)];
 };
 
 /** Boarding footer: a dashed route with a plane at the trailing end. */
@@ -198,9 +194,10 @@ const routeFooter: Painter = (u, v, w, h, s) => {
   return [255, 255, 255, Math.round(a * 230)];
 };
 
-/** Poster generic: a photo-like dusk landscape. */
+/** Poster generic: a dusk landscape; the top stays dark so white header text reads (4.5:1). */
 const posterArt: Painter = (u, v, w, h, s) => {
-  let c = mixRgb([254, 215, 170], [244, 114, 182], v * 1.4);
+  const sky = clamp((v - 0.12) / 0.7) ** 1.2;
+  let c = mixRgb([49, 46, 129], [244, 114, 182], sky);
   c = over(c, [255, 251, 235], cover(Math.hypot(u * w - w * 0.68, v * h - h * 0.38) - 34 * s));
   const hill = (k: number, a: number, f: number) => v - (k + a * Math.sin(u * f + k * 9));
   c = over(c, [126, 34, 206], clamp(hill(0.58, 0.04, 5) * h) * 0.75);

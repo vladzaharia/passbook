@@ -1,12 +1,15 @@
-import type { CSSProperties } from 'react';
+import { type CSSProperties, type ReactNode, useId } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '../../lib/cn.ts';
 import { useArrival } from '../../lib/motion.ts';
 import {
   Badge,
+  CheckboxField,
   EmptyState,
   EntityAvatar,
   ErrorState,
+  FormField,
+  Input,
   OptionTile,
   Skeleton,
   SkeletonRows,
@@ -22,6 +25,42 @@ export interface OrgOption {
   branding: { accent?: string | undefined };
 }
 
+/** Tiles lay out on their own width: a column drops before a name truncates. */
+const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3';
+
+/** A required choice: the group is invalid and says so under the tiles until one is picked. */
+function ChoiceGroup({
+  label,
+  error,
+  className,
+  children,
+}: {
+  label: string;
+  error?: string | undefined;
+  className?: string;
+  children: ReactNode;
+}) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        role="radiogroup"
+        aria-label={label}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? id : undefined}
+        className={cn(TILE_GRID, className)}
+      >
+        {children}
+      </div>
+      {error ? (
+        <p id={id} className="text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function OrgStep({
   orgs,
   loading,
@@ -29,6 +68,7 @@ export function OrgStep({
   orgId,
   onSelect,
   onCommit,
+  choiceError,
 }: {
   orgs: OrgOption[];
   loading: boolean;
@@ -36,16 +76,14 @@ export function OrgStep({
   orgId: string | undefined;
   onSelect: (id: string) => void;
   onCommit: (id: string) => void;
+  /** Next was pressed with nothing chosen. */
+  choiceError?: string | undefined;
 }) {
   if (loading) return <SkeletonRows rows={3} label="Loading organizations" />;
   if (error) return <ErrorState error={error} />;
   if (orgs.length === 0) return <EmptyState art="building" title="No active organizations" />;
   return (
-    <div
-      role="radiogroup"
-      aria-label="Organization"
-      className="grid gap-3 @container sm:grid-cols-2 xl:grid-cols-3"
-    >
+    <ChoiceGroup label="Organization" error={choiceError}>
       {orgs.map((o) => (
         <OptionTile
           key={o.id}
@@ -61,7 +99,7 @@ export function OrgStep({
           description={o.slug}
         />
       ))}
-    </div>
+    </ChoiceGroup>
   );
 }
 
@@ -91,6 +129,7 @@ export function TemplateStep({
   templateId,
   onSelect,
   onCommit,
+  choiceError,
 }: {
   templates: TemplateSummaryDto[];
   loading: boolean;
@@ -98,6 +137,8 @@ export function TemplateStep({
   templateId: string | undefined;
   onSelect: (id: string) => void;
   onCommit: (id: string) => void;
+  /** Next was pressed with nothing chosen. */
+  choiceError?: string | undefined;
 }) {
   const arrived = useArrival(loading);
   if (loading) return <SkeletonTileGrid label="Loading templates" />;
@@ -105,11 +146,7 @@ export function TemplateStep({
   if (templates.length === 0)
     return <EmptyState art="template" title="No templates for this organization" />;
   return (
-    <div
-      role="radiogroup"
-      aria-label="Template"
-      className={cn('grid gap-3 sm:grid-cols-2 xl:grid-cols-3', arrived && 'wl-stagger')}
-    >
+    <ChoiceGroup label="Template" error={choiceError} className={cn(arrived && 'wl-stagger')}>
       {templates.map((t, i) => (
         <div key={t.id} style={{ '--i': i } as CSSProperties}>
           <OptionTile
@@ -130,6 +167,45 @@ export function TemplateStep({
           />
         </div>
       ))}
+    </ChoiceGroup>
+  );
+}
+
+/** Holder: an optional email, and whether to send the pass there now. */
+export function HolderStep({
+  email,
+  onEmail,
+  error,
+  valid,
+  send,
+  onSend,
+}: {
+  email: string;
+  onEmail: (email: string) => void;
+  error: string | undefined;
+  valid: boolean;
+  send: boolean;
+  onSend: (send: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <FormField label="Holder email" help="Leave empty to add a holder later." error={error}>
+        {(c) => (
+          <Input
+            {...c}
+            type="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => onEmail(e.target.value)}
+          />
+        )}
+      </FormField>
+      <CheckboxField
+        label={valid ? `Email the pass to ${email.trim()}` : 'Email the pass'}
+        checked={send && valid}
+        disabled={!valid}
+        onCheckedChange={(c) => onSend(c === true)}
+      />
     </div>
   );
 }

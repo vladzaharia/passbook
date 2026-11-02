@@ -81,7 +81,10 @@ export function EmailFace({
                 onChange={(e) => {
                   setEmail(e.target.value);
                   const v = e.target.value.trim();
-                  scene.setLetter(EMAIL_RE.test(v) ? v.charAt(0).toUpperCase() : null);
+                  const valid = EMAIL_RE.test(v);
+                  // A shown error goes as soon as the address is valid.
+                  if (valid) setFieldError(undefined);
+                  scene.setLetter(valid ? v.charAt(0).toUpperCase() : null);
                 }}
               />
             )}

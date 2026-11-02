@@ -95,7 +95,7 @@
         "maxLength": 256,
         "default": "Welcome to Henry’s.",
         "x-label": "Message",
-        "x-help": "Shown on the back. Changes notify the member.",
+        "x-help": "Shown on the back.",
         "x-group": "Status",
         "x-order": 70,
         "x-widget": "textarea"
@@ -132,7 +132,7 @@
     "clubs": {
       "capitol-hill": {
         "name": "Capitol Hill",
-        "label": "CAPITOL HILL",
+        "label": "Capitol Hill",
         "street": "1617 Boylston Ave",
         "address": "1617 Boylston Ave, Seattle, WA 98122",
         "lat": 47.615835,
@@ -143,7 +143,7 @@
       },
       "queen-anne": {
         "name": "Queen Anne",
-        "label": "QUEEN ANNE",
+        "label": "Queen Anne",
         "street": "14 Mercer St",
         "address": "14 Mercer St, Seattle, WA 98109",
         "lat": 47.624765,

@@ -56,7 +56,7 @@ export function LocationInput({
               <Input
                 {...c}
                 inputMode="decimal"
-                placeholder="47.6062, -122.3321"
+                placeholder="Lat, long or Maps link"
                 disabled={disabled}
                 value={text}
                 onChange={(e) => {

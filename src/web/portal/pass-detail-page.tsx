@@ -27,7 +27,7 @@ import { type MyPass, passName, toView } from './pass-view.ts';
 import { QrCode } from './qr-code.tsx';
 import { isPendingRefresh } from './refresh.ts';
 import { RefreshButton } from './refresh-button.tsx';
-import { AddToWalletButton, PassMoreMenu, publicUrlOf } from './wallet-actions.tsx';
+import { AddLine, AddToWalletButton, PassMoreMenu, publicUrlOf } from './wallet-actions.tsx';
 import './portal.css';
 
 type Page = typeof MyPassListSchema._output;
@@ -78,7 +78,8 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           flippable
           enter={dealt}
           dim={voided}
-          mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          settle={pass.status}
           dip={dip}
           syncing={isPendingRefresh(pass, Date.now())}
           transitionName={`pass-${pass.id}`}
@@ -93,13 +94,14 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
             <QrCode value={publicUrl} label={`QR code for ${name}`} />
             <div className="flex flex-col gap-1 text-center sm:text-left">
               <p className="text-sm font-medium text-fg-strong">Scan with your iPhone.</p>
-              <p className="text-sm text-fg-muted">Open on iPhone or Mac to add to Wallet.</p>
+              <p className="text-sm text-fg-muted">Open on iPhone or Mac to add to Apple Wallet.</p>
             </div>
           </Card>
         ) : null}
         {/* Refresh and More wrap as a pair, never one alone. */}
         <div className="flex flex-wrap items-center gap-2">
-          {active && !pass.inWallet ? (
+          {/* In Wallet keeps the badge: a holder who removed the pass adds it back here. */}
+          {active ? (
             <AddToWalletButton
               downloadUrl={pass.downloadUrl}
               onPress={() => setDip((n) => n + 1)}
@@ -112,11 +114,12 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
               passId={pass.id}
               passTitle={name}
               publicUrl={voided ? null : publicUrl}
-              addAgainHref={pass.inWallet && active ? pass.downloadUrl : null}
               onRemoved={() => void navigate({ to: '/' })}
             />
           </div>
         </div>
+        {/* Off iPhone the QR card says how to add; an iPhone app's web view needs Safari. */}
+        {active && canAdd ? <AddLine className="-mt-3" /> : null}
         {voided ? (
           <Callout tone="warning" icon={Ban}>
             This pass was voided.

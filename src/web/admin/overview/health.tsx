@@ -64,7 +64,7 @@ export function Health() {
             data-art-host=""
             className="flex flex-1 flex-col items-center justify-center gap-2 py-2 text-center"
           >
-            <EntityArt name="pulse" size="sm" />
+            <EntityArt name="pulse" size="sm" beat={false} />
             <StatusPill status="all_good" />
             {checkedAt > 0 ? (
               <p className="text-xs text-fg-muted">Checked {formatDateTime(checkedAt)}</p>

@@ -2,6 +2,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import type { PassJson } from '@/passkit/types.ts';
 import { normalize, type PassView } from '@/shared/pass-view/index.ts';
 import { cn } from '../../lib/cn.ts';
+import { useChangeCount } from '../../lib/motion.ts';
 import { assetUrlMap } from '../../pass-card/assets.ts';
 import { PassCardStage } from '../../pass-card/index.tsx';
 import {
@@ -129,6 +130,8 @@ export function PassPreviewPanel({
   const differ = view?.hasAlternate ?? false;
   const shown = differ ? target : '27';
   const approximate = view?.layouts[viewTarget(shown)].approximate ?? false;
+  // The crossfade is for browsing versions; on mount the deal is the only entrance.
+  const swapped = useChangeCount(swapKey) > 0;
   return (
     <div className={cn('flex flex-col items-center gap-3', className)}>
       <div className="relative w-full">
@@ -137,7 +140,7 @@ export function PassPreviewPanel({
         </span>
         <LoadingRail show={Boolean(waiting)} />
         <div className="wl-version-wait" data-waiting={waiting || undefined}>
-          <div key={swapKey} className={swapKey === undefined ? undefined : 'wl-version-in'}>
+          <div key={swapKey} className={swapped ? 'wl-version-in' : undefined}>
             <PassPreview {...preview} face={face} target={shown} flippable />
           </div>
         </div>

@@ -33,6 +33,7 @@ export function ConnectorStep({
   orgs,
   orgId,
   onOrg,
+  showErrors,
 }: {
   connectors: readonly Connector[];
   loading: boolean;
@@ -43,11 +44,17 @@ export function ConnectorStep({
   orgs: { id: string; name: string }[] | null;
   orgId: string | undefined;
   onOrg: (id: string) => void;
+  /** Next was pressed with no org or no connector. */
+  showErrors?: boolean;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       {orgs ? (
-        <FormField label="Organization" required>
+        <FormField
+          label="Organization"
+          required
+          error={showErrors && !orgId ? 'Choose an organization.' : undefined}
+        >
           {(c) => (
             <Select
               {...c}
@@ -65,7 +72,13 @@ export function ConnectorStep({
       ) : (
         <fieldset className="min-w-0">
           <legend className="mb-2 text-sm font-medium text-fg">Connector</legend>
-          <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
+          <div
+            role="radiogroup"
+            aria-label="Connector"
+            aria-invalid={showErrors && !type ? true : undefined}
+            aria-describedby={showErrors && !type ? 'connector-error' : undefined}
+            className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-2"
+          >
             {connectors.map((c) => {
               const Icon = connectorIcon(c.type);
               const picked = c.type === type;
@@ -97,6 +110,11 @@ export function ConnectorStep({
               );
             })}
           </div>
+          {showErrors && !type ? (
+            <p id="connector-error" className="mt-2 text-xs text-danger">
+              Choose a connector.
+            </p>
+          ) : null}
         </fieldset>
       )}
     </div>

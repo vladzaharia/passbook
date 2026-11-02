@@ -1,3 +1,4 @@
+import type { PassJson } from '../types.ts';
 import {
   EVENT_TYPES,
   PASSENGER_CAPABILITIES,
@@ -247,7 +248,7 @@ const STYLE_KEYS = [
 ];
 
 /** Wallet reads semantics from the root and from any field; the root wins on conflict. */
-function collectSemantics(pass: Record<string, unknown>): Record<string, unknown> {
+export function collectSemantics(pass: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const style of STYLE_KEYS) {
     const dict = pass[style];
@@ -258,6 +259,12 @@ function collectSemantics(pass: Record<string, unknown>): Record<string, unknown
           if (isObject(field) && isObject(field.semantics)) Object.assign(out, field.semantics);
   }
   return isObject(pass.semantics) ? Object.assign(out, pass.semantics) : out;
+}
+
+/** False when Wallet would fall back from the poster event ticket to the legacy layout. */
+export function hasPosterEventSemantics(pass: PassJson): boolean {
+  const semantics = collectSemantics(pass as unknown as Record<string, unknown>);
+  return PET_REQUIRED.every((key) => semantics[key] !== undefined && semantics[key] !== '');
 }
 
 /** Layout-driving tags. Wallet falls back to the legacy layout when they are missing, so these warn. */

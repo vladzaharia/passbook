@@ -25,7 +25,7 @@ interface TabsState {
 }
 const TabsContext = createContext<TabsState | null>(null);
 
-/** Radix tabs that share their value with the phone select (TabsList, more than five tabs). */
+/** Radix tabs that share their value with the phone select (TabsList, five tabs or more). */
 export function Tabs({
   value,
   defaultValue,
@@ -54,7 +54,7 @@ const textOf = (node: ReactNode): string =>
         ? textOf(node.props.children)
         : '';
 
-/** Below 640 more than five tabs become a Select ("Section: Fields"); else a scrolling strip. */
+/** Below 640 five or more tabs become a Select ("Section: Fields"); else a scrolling strip. */
 export function TabsList({ className, children, ...props }: ComponentProps<typeof Primitive.List>) {
   const state = useContext(TabsContext);
   const phone = useMediaQuery(PHONE);
@@ -62,7 +62,7 @@ export function TabsList({ className, children, ...props }: ComponentProps<typeo
     (c): c is ReactElement<{ value: string; children?: ReactNode; disabled?: boolean }> =>
       isValidElement<{ value?: string }>(c) && typeof c.props.value === 'string',
   );
-  if (phone && state && triggers.length > 5) {
+  if (phone && state && triggers.length >= 5) {
     return (
       <Select
         label="Section"
@@ -126,22 +126,31 @@ function Strip({ className, children, ...props }: ComponentProps<typeof Primitiv
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     });
   };
+  // The chevron sits on solid page colour with the fade beyond it, so no half-clipped label
+  // shows under it. The underline border stays visible.
   const edge = (side: 'start' | 'end') => (
     <div
       className={cn(
-        'pointer-events-none absolute inset-y-0 flex w-8 items-center from-surface-page from-40% to-transparent',
-        side === 'start'
-          ? 'left-0 justify-start bg-gradient-to-r'
-          : 'right-0 justify-end bg-gradient-to-l',
+        'pointer-events-none absolute top-0 bottom-px flex items-stretch',
+        side === 'start' ? 'left-0' : 'right-0 flex-row-reverse',
       )}
     >
-      <IconButton
-        label={side === 'start' ? 'Earlier tabs' : 'More tabs'}
-        size="sm"
-        tabIndex={-1}
-        className="pointer-events-auto size-6"
-        icon={side === 'start' ? <ChevronLeft aria-hidden /> : <ChevronRight aria-hidden />}
-        onClick={() => page(side === 'start' ? -1 : 1)}
+      <span className="flex items-center bg-surface-page">
+        <IconButton
+          label={side === 'start' ? 'Earlier tabs' : 'More tabs'}
+          size="sm"
+          tabIndex={-1}
+          className="pointer-events-auto size-6"
+          icon={side === 'start' ? <ChevronLeft aria-hidden /> : <ChevronRight aria-hidden />}
+          onClick={() => page(side === 'start' ? -1 : 1)}
+        />
+      </span>
+      <span
+        aria-hidden
+        className={cn(
+          'w-8 from-surface-page to-transparent',
+          side === 'start' ? 'bg-gradient-to-r' : 'bg-gradient-to-l',
+        )}
       />
     </div>
   );

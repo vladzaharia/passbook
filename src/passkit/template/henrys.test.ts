@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassBuildError } from '../build.ts';
+import { decodeAlpha, pixelIssues, transparentMargins } from '../schema/image-pixels.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { PassField, Personalization, SigningMaterial } from '../types.ts';
 import { buildBaked as build, freezeNow, loadBaked, stableJson } from './baked-fixtures.ts';
@@ -211,11 +212,36 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
   it('ships the en strings scaffold covering every label and change message', async () => {
     const { pkg } = await loadBaked(slug);
     const strings = new TextDecoder().decode(pkg.bytes['en.lproj/pass.strings']);
-    expect(strings).toContain('"MEMBER NUMBER" = "MEMBER NUMBER";');
+    expect(strings).toContain('"Member number" = "Member number";');
     expect(strings).toContain(
       '"Your membership status is now %@." = "Your membership status is now %@.";',
     );
-    expect(strings).toContain('"FROM HENRY\\U2019S" = "FROM HENRY\\U2019S";');
+    expect(strings).toContain('"From Henry\\U2019s" = "From Henry\\U2019s";');
+  });
+
+  it('has sentence-case labels and no label repeated on the generic front', async () => {
+    const { template } = await loadBaked(slug);
+    const generic = template.passJson.generic as Record<string, PassField[]>;
+    const front = ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields']
+      .flatMap((g) => generic[g] ?? [])
+      .map((f) => f.label)
+      .filter(Boolean);
+    expect(new Set(front).size).toBe(front.length);
+    const all = JSON.stringify(template.passJson).match(/"label":"([^"]*)"/g) ?? [];
+    for (const label of all) expect(label).not.toMatch(/"[^a-z"]*[A-Z]{2}[^a-z"]*"$/);
+    expect(generic.primaryFields?.[0]?.label).toBe('Name');
+  });
+
+  it('ships logos trimmed to the mark', async () => {
+    const { pkg } = await loadBaked(slug);
+    for (const name of ['logo', 'primaryLogo'].flatMap((n) => [`${n}@2x.png`, `${n}@3x.png`])) {
+      const bytes = pkg.bytes[name] as Uint8Array;
+      const map = decodeAlpha(bytes);
+      expect(transparentMargins(map as NonNullable<typeof map>).trailing, name).toBeLessThanOrEqual(
+        0.05,
+      );
+      expect(pixelIssues(name, name.split('@')[0] as string, bytes), name).toEqual([]);
+    }
   });
 
   it('keeps image dimensions at the catalog sizes', async () => {
@@ -226,7 +252,7 @@ describe.each(['henrys-copper', 'henrys-blue'])('%s', (slug) => {
     };
     expect(size('artwork@2x.png')).toEqual([716, 896]);
     expect(size('artwork@3x.png')).toEqual([1074, 1344]);
-    expect(size('primaryLogo@2x.png')).toEqual([252, 60]);
+    expect(size('primaryLogo@2x.png')).toEqual([130, 60]);
     expect(size('icon@3x.png')).toEqual([114, 114]);
   });
 });

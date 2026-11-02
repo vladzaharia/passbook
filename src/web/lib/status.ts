@@ -96,6 +96,7 @@ export const RUN_STATUS = {
   failed: { label: 'Failed', tone: 'danger', icon: XCircle },
   errored: { label: 'Errored', tone: 'danger', icon: XCircle },
   cancelled: { label: 'Cancelled', tone: 'neutral', icon: Ban },
+  no_devices: { label: 'No devices', tone: 'neutral', icon: CircleDashed },
   revoked: { label: 'Revoked', tone: 'neutral', icon: Ban },
   disabled: { label: 'Disabled', tone: 'neutral', icon: Ban },
   unknown: { label: 'Unknown', tone: 'neutral', icon: CircleDashed },

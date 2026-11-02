@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
+import { formatDay } from '../../lib/format.ts';
 import { BELOW_MD, useMediaQuery } from '../../lib/media.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
@@ -19,10 +20,10 @@ import {
   SegmentedControl,
   StatusPill,
 } from '../../ui/index.ts';
-import { useTemplates } from './api.ts';
+import { useRecentUploads, useTemplates } from './api.ts';
 import { originLabel, TemplateGallery, TemplateStill } from './gallery.tsx';
 import { styleList } from './labels.ts';
-import { RecentUploads } from './recent-uploads.tsx';
+import { RecentUploads, uploadsNeedAttention } from './recent-uploads.tsx';
 import type { TemplateListSearch } from './search.ts';
 
 const ALL = 'all';
@@ -67,13 +68,11 @@ function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
       cell: ({ row }) => styleList(row.original.styles),
     },
     {
-      id: 'version',
-      header: 'Version',
-      meta: { hideBelow: 'xl' },
+      id: 'updated',
+      header: 'Updated',
+      meta: { hideBelow: 'xl', nowrap: true },
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-fg-muted">
-          {row.original.activeVersion?.slice(0, 8) ?? '—'}
-        </span>
+        <span className="text-fg-muted tabular-nums">{formatDay(row.original.updatedAt)}</span>
       ),
     },
     {
@@ -102,6 +101,8 @@ export function TemplatesListPage({
   onSearch: (patch: Partial<TemplateListSearch>) => void;
 }) {
   const { orgId } = useOrgScope();
+  const uploads = useRecentUploads(orgId);
+  const uploadsFirst = uploadsNeedAttention(uploads.data?.items ?? [], Date.now());
   const phone = useMediaQuery(BELOW_MD);
   const list = useTemplates({
     orgId,
@@ -182,6 +183,7 @@ export function TemplatesListPage({
   return (
     <>
       <PageHeader title="Templates" actions={upload(truth ? 'outline' : 'primary')} />
+      {uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
       {list.isError ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
       ) : truth ? (
@@ -213,7 +215,7 @@ export function TemplatesListPage({
           footer={footer}
         />
       )}
-      <RecentUploads orgId={orgId} />
+      {uploadsFirst ? null : <RecentUploads orgId={orgId} />}
     </>
   );
 }

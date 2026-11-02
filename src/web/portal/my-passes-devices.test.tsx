@@ -7,6 +7,10 @@ import { passFixture } from './fixtures.ts';
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Version/18.0 Safari/604.1';
 const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/18.0 Safari/605.1.15';
 const WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0 Safari/537.36';
+const GSA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/350.0 Mobile/15E148 Safari/604.1';
+const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
+const SAFARI_LINE = 'Open in Safari to add to Apple Wallet.';
 
 const list = (...items: ReturnType<typeof passFixture>[]) => json({ items, nextCursor: null });
 
@@ -41,6 +45,22 @@ describe('device rule', () => {
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(passFixture()) } });
     expect(await screen.findByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Show QR' }) !== null).toBe(qr);
+    // Where the badge cannot add, the page says how, once.
+    expect(screen.queryAllByText(ADD_LINE)).toHaveLength(qr ? 1 : 0);
+  });
+
+  it('sends an iPhone app web view to Safari, on the list and the pass', async () => {
+    as(GSA);
+    const handlers = {
+      '/api/v1/me/passes': () => list(passFixture({ id: 'p1' })),
+      '/api/v1/me/passes/p1': () => json(passFixture({ id: 'p1' })),
+    };
+    const first = await renderApp('/', { handlers });
+    expect(await screen.findByText(SAFARI_LINE)).toBeInTheDocument();
+    first.unmount();
+    await renderApp('/passes/p1', { handlers });
+    expect(await screen.findByText(SAFARI_LINE)).toBeInTheDocument();
+    expect(screen.queryByText(ADD_LINE)).not.toBeInTheDocument();
   });
 });
 

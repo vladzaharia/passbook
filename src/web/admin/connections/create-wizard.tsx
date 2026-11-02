@@ -67,6 +67,10 @@ export function CreateConnectionWizard() {
   const connectors = useConnectors();
   const [step, setStep] = useState(0);
   const [orgId, setOrgId] = useState<string | undefined>(scoped);
+  // Switching the top-bar scope mid-wizard picks that org; the field hides only once it is set.
+  useEffect(() => {
+    if (scoped) setOrgId(scoped);
+  }, [scoped]);
   const [type, setType] = useState<string>();
   const [draft, setDraft] = useState<ConfigDraft>({ name: '', config: {}, secrets: {} });
   const [test, setTest] = useState<TestOutcome>();
@@ -152,18 +156,25 @@ export function CreateConnectionWizard() {
   const crumbs = [{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }];
   const blockCreate = life.autoCreate && (!life.defaultTemplateId || rows.length === 0);
 
-  function next() {
-    if (step === 0 && (!orgId || !type)) return setShowErrors(true);
+  /** False keeps the step: the Wizard focuses the first error and announces the count. */
+  function next(): boolean {
     const invalid = Object.keys(cfgErrors).length + Object.keys(secErrors).length > 0;
-    if (step === 1 && (!draft.name.trim() || invalid)) return setShowErrors(true);
-    if (step === 2 && Object.keys(mapped.errors).length > 0) return setShowErrors(true);
-    if (step === 3 && lifeError) return setShowErrors(true);
+    const blocked =
+      (step === 0 && (!orgId || !type)) ||
+      (step === 1 && (!draft.name.trim() || invalid)) ||
+      (step === 2 && Object.keys(mapped.errors).length > 0) ||
+      (step === 3 && Boolean(lifeError));
+    if (blocked) {
+      setShowErrors(true);
+      return false;
+    }
     setShowErrors(false);
     if (step === STEPS.length - 1) {
       if (!blockCreate) create.mutate();
-      return;
+      return true;
     }
     setStep((s) => s + 1);
+    return true;
   }
 
   if (created?.secret) {
@@ -210,18 +221,14 @@ export function CreateConnectionWizard() {
               setTest(undefined);
             }}
             onCommit={next}
-            orgs={scoped ? null : orgList}
+            orgs={scoped && orgId === scoped ? null : orgList}
             orgId={orgId}
             onOrg={setOrgId}
+            showErrors={showErrors}
           />
         ) : null}
         {step === 0 && connectors.isError ? (
           <ErrorState error={connectors.error} onRetry={() => void connectors.refetch()} />
-        ) : null}
-        {step === 0 && showErrors && (!orgId || !type) ? (
-          <p className="text-sm text-danger">
-            {!orgId ? 'Choose an organization.' : 'Choose a connector.'}
-          </p>
         ) : null}
         {step === 1 ? (
           info && orgId ? (

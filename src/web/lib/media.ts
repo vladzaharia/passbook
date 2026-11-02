@@ -21,5 +21,6 @@ export function useMediaQuery(query: string): boolean {
 
 export const PHONE = '(max-width: 639.98px)';
 export const BELOW_MD = '(max-width: 767.98px)';
+export const BELOW_LG = '(max-width: 1023.98px)';
 export const BELOW_XL = '(max-width: 1279.98px)';
 export const COARSE_ONLY = '(pointer: coarse) and (not (any-pointer: fine))';

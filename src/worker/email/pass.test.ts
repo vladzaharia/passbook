@@ -40,6 +40,45 @@ describe('passSummary', () => {
     expect(s.fields[2]).toEqual({ label: 'Date', value: 'Nov 16, 2026' });
     expect(s.colors.background).toBe('rgb(40, 30, 120)');
   });
+
+  it('leads with the header date and start time on tickets and boarding passes', () => {
+    const header = [
+      { key: 'date', label: 'Date', value: '2026-11-16T18:00:00Z', dateStyle: 'PKDateStyleMedium' },
+    ];
+    const ctx = { now: new Date('2026-11-01T00:00:00Z'), timeZone: 'UTC' };
+    const event = passSummary(
+      {
+        eventTicket: {
+          headerFields: header,
+          primaryFields: [{ key: 'e', label: 'Event', value: 'Harbor Lights 2026' }],
+          secondaryFields: [
+            {
+              key: 't',
+              label: 'Starts',
+              value: '2026-11-16T18:00:00Z',
+              dateStyle: 'PKDateStyleNone',
+              timeStyle: 'PKDateStyleShort',
+            },
+            { key: 'v', label: 'Venue', value: 'Pier 62' },
+          ],
+        },
+      },
+      ctx,
+    );
+    expect(event.fields.map((f) => f.label)).toEqual(['Date', 'Event', 'Starts', 'Venue']);
+    expect(event.fields[0]?.value).toBe('Nov 16, 2026');
+    expect(event.fields[2]?.value).toBe('6:00 PM');
+    const store = passSummary(
+      {
+        storeCard: {
+          headerFields: header,
+          primaryFields: [{ key: 'b', label: 'Balance', value: '5' }],
+        },
+      },
+      ctx,
+    );
+    expect(store.fields.map((f) => f.label)).toEqual(['Balance', 'Date']);
+  });
 });
 
 describe('pass email', () => {

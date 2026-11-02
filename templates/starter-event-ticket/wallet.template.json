@@ -46,8 +46,15 @@
         "x-group": "Event",
         "x-order": 40,
         "minLength": 1,
-        "maxLength": 60,
-        "x-placeholder": "Main hall"
+        "maxLength": 60
+      },
+      "venueTimeZone": {
+        "type": "string",
+        "x-label": "Time zone",
+        "x-group": "Event",
+        "x-order": 45,
+        "x-timeZone": true,
+        "maxLength": 64
       },
       "startsAt": {
         "type": "string",
@@ -175,6 +182,7 @@
     "eventName": "Sample Event",
     "venueName": "Sample Hall",
     "venueRegion": "Cupertino, CA",
+    "venueTimeZone": "America/Los_Angeles",
     "startsAt": "2030-06-01T19:00:00-07:00",
     "endsAt": "2030-06-01T22:00:00-07:00",
     "venueLat": 37.3349,
@@ -293,6 +301,16 @@
       },
       "value": "{{venueRoom}}",
       "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueRoom"
+      },
+      "value": "{{venueName}}",
+      "when": {
+        "input": "venueRoom",
+        "empty": true
+      }
     },
     {
       "to": {

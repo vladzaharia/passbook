@@ -1,3 +1,4 @@
+import { hasPosterEventSemantics } from '../../passkit/schema/validate-semantics.ts';
 import type { PassField, PassFields, PassJson, PassStyle } from '../../passkit/types.ts';
 import { pickBarcode } from './barcode.ts';
 import { type FormatContext, formatValue } from './format.ts';
@@ -31,11 +32,13 @@ export function chooseStyle(pass: PassJson, target: PassTarget): StyleChoice | u
   const legacy = LEGACY_STYLES.find((s) => pass[s] !== undefined);
   if (legacy) {
     const schemes = Array.isArray(pass.preferredStyleSchemes) ? pass.preferredStyleSchemes : [];
-    // iOS 26 and earlier keep a poster event ticket only when it is an NFC pass.
+    // iOS 26 and earlier keep a poster event ticket only when it is an NFC pass. Missing required
+    // semantics drop Wallet back to the legacy layout on every version.
     const isPoster =
       legacy === 'eventTicket' &&
       schemes.includes('posterEventTicket') &&
-      (target === 'ios27' || (pass.nfc !== undefined && pass.nfc !== null));
+      (target === 'ios27' || (pass.nfc !== undefined && pass.nfc !== null)) &&
+      hasPosterEventSemantics(pass);
     return {
       style: legacy,
       poster: isPoster,
@@ -217,12 +220,13 @@ export function buildLayout(
         : style === 'boardingPass' && schemes.includes('semanticBoardingPass')
           ? flightSemantics(pass, ctx)
           : undefined;
+  const gate = semantic?.kind === 'flight' ? semantic.gate : undefined;
   return {
     target,
     style: choice.degraded ? 'generic' : style,
     poster: choice.poster,
     degraded: choice.degraded,
-    header,
+    header: gate ? header.filter((f) => f.text !== gate) : header,
     primary,
     secondary,
     auxiliary,

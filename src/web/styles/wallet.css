@@ -20,8 +20,11 @@
   --pk-info-on: #060912;
   --pk-info-subtle: #0f1a2e;
   --pk-info-border: #3b82f6;
-  /* Editable fields: sunken in dark, raised in light. */
+  /* Editable fields: sunken in dark, raised in light. Disabled ones lift to the surface. */
   --wl-field: var(--pk-surface-sunken);
+  --wl-field-disabled: transparent;
+  /* Placeholders hint a format at about 3.8:1, well under the value's contrast. */
+  --wl-placeholder: #646b7d;
   /* Org monogram when the org has no accent. */
   --wl-org-fallback: #475569;
 }
@@ -48,6 +51,8 @@
     --pk-info-border: #4f7ae8;
     --pk-success-subtle: #dcf2e2;
     --wl-field: var(--pk-surface-raised);
+    --wl-field-disabled: var(--pk-surface-sunken);
+    --wl-placeholder: #858b9a;
   }
 }
 
@@ -72,4 +77,31 @@
   --pk-info-border: #4f7ae8;
   --pk-success-subtle: #dcf2e2;
   --wl-field: var(--pk-surface-raised);
+  --wl-field-disabled: var(--pk-surface-sunken);
+  --wl-placeholder: #858b9a;
+}
+
+/* Increase Contrast: muted text moves toward the body text and hairlines take the strong edge. */
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme="dark"] {
+    --pk-text-muted: #c3cbe0;
+    --pk-text-subtle: #b5bed3;
+    --pk-border-subtle: #61697b;
+    --wl-placeholder: #8f98ad;
+  }
+  [data-theme="light"] {
+    --pk-text-muted: #333b50;
+    --pk-text-subtle: #48536b;
+    --pk-border-subtle: #7e8699;
+    --wl-placeholder: #5d667b;
+  }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --pk-text-muted: #333b50;
+    --pk-text-subtle: #48536b;
+    --pk-border-subtle: #7e8699;
+    --wl-placeholder: #5d667b;
+  }
 }

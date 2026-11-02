@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import { PreviewBatchSchema, type PreviewResponseSchema } from '@/shared/contracts/templates.ts';
-import { api } from '../../lib/api.ts';
-import { ApiError } from '../../lib/errors.ts';
+import { api } from './api.ts';
+import { ApiError } from './errors.ts';
 
 type Preview = z.infer<typeof PreviewResponseSchema>;
 type Waiter = { resolve: (p: Preview) => void; reject: (e: unknown) => void };

@@ -46,6 +46,13 @@ export function EmailList({
   className,
 }: EmailListProps) {
   const [draft, setDraft] = useState('');
+  // An error belongs to the address that caused it: editing the address clears it.
+  const [editedSinceError, setEdited] = useState(false);
+  const [lastError, setLastError] = useState(addError);
+  if (lastError !== addError) {
+    setLastError(addError);
+    setEdited(false);
+  }
   const fresh = useInsertHighlight(items.map((i) => i.email));
   const actionsFor = (item: EmailItem): RowAction[] => {
     const busy = busyEmail === item.email;
@@ -118,8 +125,11 @@ export function EmailList({
           autoComplete="email"
           placeholder="name@example.com"
           value={draft}
-          onChange={setDraft}
-          error={addError}
+          onChange={(v) => {
+            setDraft(v);
+            setEdited(true);
+          }}
+          error={editedSinceError ? undefined : addError}
           busy={busyEmail === draft.trim() && Boolean(draft.trim())}
           onSubmit={(email) => {
             onAdd(email);

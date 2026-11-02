@@ -3,6 +3,7 @@ import {
   Braces,
   Calendar,
   ChevronRight,
+  Globe,
   Hash,
   Image,
   Link2,
@@ -112,6 +113,7 @@ const TYPE_ICON = {
   email: Mail,
   image: Image,
   password: Type,
+  timezone: Globe,
 } as const;
 const TYPE_LABEL: Record<string, string> = {
   text: 'Text',
@@ -125,6 +127,7 @@ const TYPE_LABEL: Record<string, string> = {
   email: 'Email',
   image: 'Image',
   password: 'Secret',
+  timezone: 'Time zone',
 };
 
 /** Inputs as rows with a type glyph; the raw schema sits behind a disclosure. */

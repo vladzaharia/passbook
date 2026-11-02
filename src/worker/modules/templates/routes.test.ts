@@ -360,6 +360,21 @@ describe('read', () => {
     expect(body.items.map((i) => i.id)).toEqual([templateId]);
     expect((await call('/previews?ids=')).status).toBe(422);
   });
+
+  it('previews a shared starter with no org: no empty back field, no template name as the org', async () => {
+    const res = await post(`/${encodeURIComponent('baked:starter-coupon')}/preview`, {});
+    expect(res.status).toBe(200);
+    const { passJson } = (await res.json()) as {
+      passJson: {
+        organizationName: string;
+        coupon: { backFields: { key: string; value: unknown }[] };
+      };
+    };
+    expect(passJson.organizationName).toBe('Organization');
+    const back = passJson.coupon.backFields;
+    expect(back.every((f) => f.value !== '')).toBe(true);
+    expect(back.find((f) => f.key === 'pass-service')?.value).toBe(env.PUBLIC_BASE_URL);
+  });
 });
 
 describe('upload', () => {

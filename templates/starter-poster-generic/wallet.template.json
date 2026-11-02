@@ -55,7 +55,7 @@
         "x-group": "Holder",
         "x-order": 50,
         "format": "date-time",
-        "x-widget": "datetime"
+        "x-widget": "date"
       },
       "note": {
         "type": "string",

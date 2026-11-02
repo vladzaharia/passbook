@@ -1,13 +1,32 @@
+import { useEffect, useState } from 'react';
 import { Toaster as Sonner, toast as sonner } from 'sonner';
 import { errorMessage } from '../lib/errors.ts';
+import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { useTheme } from '../lib/theme.tsx';
+
+/** True while a modal dialog, sheet or menu holds the page (Radix locks body scroll). */
+function useOverlayOpen(): boolean {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const body = document.body;
+    const read = () => setOpen(body.hasAttribute('data-scroll-locked'));
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(body, { attributes: true, attributeFilter: ['data-scroll-locked'] });
+    return () => observer.disconnect();
+  }, []);
+  return open;
+}
 
 export function Toaster() {
   const { resolved } = useTheme();
+  // Phone sheets rise from the bottom: toasts move to the top so they never cover sheet actions.
+  const phone = useMediaQuery(PHONE);
+  const overlay = useOverlayOpen();
   return (
     <Sonner
       theme={resolved}
-      position="bottom-right"
+      position={phone && overlay ? 'top-center' : 'bottom-right'}
       // Keep toasts clear of the fixed SaveBar; an error toast sits there until dismissed and
       // would otherwise cover Save/Discard.
       offset={{
@@ -15,6 +34,7 @@ export function Toaster() {
         right: 'max(1rem, env(safe-area-inset-right))',
       }}
       mobileOffset={{
+        top: 'calc(0.75rem + env(safe-area-inset-top))',
         bottom: 'calc(5rem + env(safe-area-inset-bottom))',
         left: 'max(1rem, env(safe-area-inset-left))',
         right: 'max(1rem, env(safe-area-inset-right))',

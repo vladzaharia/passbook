@@ -1,4 +1,3 @@
-import { useQueries } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -7,6 +6,7 @@ import { formatDay } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import { humanizeStatus } from '../../lib/status.ts';
+import { useSwatches } from '../../lib/swatches.ts';
 import {
   Button,
   DataTable,
@@ -17,41 +17,15 @@ import {
   PageHeader,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
-import { fetchPreview } from '../templates/preview-batch.ts';
 import { usePassList } from './api.ts';
 import { downloadText, toCsv } from './csv.ts';
-import { PassListContext, passColumns, type Swatch } from './list-columns.tsx';
+import { PassListContext, passColumns } from './list-columns.tsx';
 import { CLEARED, type ListSearch, PassListFilters } from './list-filters.tsx';
 import { SelectionBar } from './selection-bar.tsx';
 import './passes.css';
 
 /** Small lists render plainly; the window only pays off for long ones. */
 const VIRTUALIZE_ABOVE = 100;
-
-/** One template preview per template on the page gives each row its pass colours. */
-function useSwatches(templateIds: string[]): Map<string, Swatch> {
-  return useQueries({
-    queries: templateIds.map((id) => ({
-      queryKey: ['admin', 'templates', 'preview', id, null],
-      queryFn: () => fetchPreview(id),
-      staleTime: Number.POSITIVE_INFINITY,
-      retry: false,
-    })),
-    combine: (results) => {
-      const map = new Map<string, Swatch>();
-      results.forEach((r, i) => {
-        const j = r.data?.passJson as { backgroundColor?: unknown; foregroundColor?: unknown };
-        const id = templateIds[i];
-        if (id && typeof j?.backgroundColor === 'string')
-          map.set(id, {
-            background: j.backgroundColor,
-            foreground: typeof j.foregroundColor === 'string' ? j.foregroundColor : '#fff',
-          });
-      });
-      return map;
-    },
-  });
-}
 
 export function PassesListPage({
   search,

@@ -1,5 +1,5 @@
 import { ArrowRight, Plus, Trash2, WandSparkles } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
 import {
   Button,
@@ -35,7 +35,19 @@ export interface MappingEditorProps {
 
 const NONE = '__none__';
 const GRID =
-  '@[44rem]:grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)_8.5rem_minmax(0,7rem)_2rem] @[44rem]:items-center';
+  '@[36rem]:grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)_8.5rem_minmax(0,7rem)_2rem] @[36rem]:items-center';
+
+/** Below 36rem each control gets a visible caption; the wide grid has one header row instead. */
+function Stacked({ caption, children }: { caption: string; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1 @[36rem]:contents">
+      <span aria-hidden className="text-xs text-fg-muted @[36rem]:hidden">
+        {caption}
+      </span>
+      {children}
+    </div>
+  );
+}
 
 function SourceBox({
   row,
@@ -107,7 +119,7 @@ export function MappingEditor({
           <div
             aria-hidden
             className={cn(
-              'hidden gap-x-3 border-b border-border pb-2 text-xs font-medium text-fg-muted @[44rem]:grid',
+              'hidden gap-x-3 border-b border-border pb-2 text-xs font-medium text-fg-muted @[36rem]:grid',
               GRID,
             )}
           >
@@ -130,62 +142,71 @@ export function MappingEditor({
                   key={row.id}
                   data-row-id={row.id}
                   aria-label={summary}
-                  className="grid grid-cols-1 gap-x-3 gap-y-2 py-3 last:pb-0 @[44rem]:grid-cols-1"
+                  className="grid grid-cols-1 gap-x-3 gap-y-2 py-3 last:pb-0 @[36rem]:grid-cols-1"
                 >
-                  <p className="truncate text-xs text-fg-muted @[44rem]:hidden">{summary}</p>
+                  <p className="truncate text-xs text-fg-muted @[36rem]:hidden">{summary}</p>
                   <div className={cn('grid gap-x-3 gap-y-2', GRID)}>
-                    <SourceBox
-                      row={row}
-                      sources={sources}
-                      disabled={disabled}
-                      invalid={Boolean(errors[row.id] && !row.from)}
-                      onPick={(from) => patch(row.id, { from })}
-                    />
+                    <Stacked caption="Source field">
+                      <SourceBox
+                        row={row}
+                        sources={sources}
+                        disabled={disabled}
+                        invalid={Boolean(errors[row.id] && !row.from)}
+                        onPick={(from) => patch(row.id, { from })}
+                      />
+                    </Stacked>
                     <ArrowRight
                       aria-hidden
-                      className="hidden size-4 text-fg-subtle @[44rem]:block"
+                      className="hidden size-4 text-fg-subtle @[36rem]:block"
                     />
-                    <Select
-                      aria-label="Template field"
-                      disabled={disabled}
-                      value={row.input || NONE}
-                      onValueChange={(v) => patch(row.id, { input: v === NONE ? '' : v })}
-                      options={[
-                        { value: NONE, label: 'Choose a field' },
-                        ...targets.map((t) => ({
-                          value: t.key,
-                          label: t.required ? `${t.label} *` : t.label,
-                        })),
-                        ...(row.input && !targets.some((t) => t.key === row.input)
-                          ? [{ value: row.input, label: row.input }]
-                          : []),
-                      ]}
-                    />
-                    <Select
-                      aria-label="Transform"
-                      disabled={disabled}
-                      value={row.kind}
-                      onValueChange={(v) => patch(row.id, { kind: v as TransformKind | 'none' })}
-                      options={TRANSFORMS.map((t) => ({ value: t.value, label: t.label }))}
-                    />
-                    <output
-                      aria-label="Sample value"
-                      className="min-w-0 truncate text-sm text-fg"
-                      title={preview}
-                    >
-                      {preview === undefined ? (
-                        <span className="text-fg-subtle">—</span>
-                      ) : (
-                        `“${preview}”`
-                      )}
-                    </output>
-                    <IconButton
-                      label={`Remove ${row.input ? labelOf(row.input) : 'mapping'}`}
-                      size="sm"
-                      icon={<Trash2 aria-hidden />}
-                      disabled={disabled}
-                      onClick={() => onChange(rows.filter((r) => r.id !== row.id))}
-                    />
+                    <Stacked caption="Template field">
+                      <Select
+                        aria-label="Template field"
+                        disabled={disabled}
+                        value={row.input || NONE}
+                        onValueChange={(v) => patch(row.id, { input: v === NONE ? '' : v })}
+                        options={[
+                          { value: NONE, label: 'Choose a field' },
+                          ...targets.map((t) => ({
+                            value: t.key,
+                            label: t.required ? `${t.label} *` : t.label,
+                          })),
+                          ...(row.input && !targets.some((t) => t.key === row.input)
+                            ? [{ value: row.input, label: row.input }]
+                            : []),
+                        ]}
+                      />
+                    </Stacked>
+                    <Stacked caption="Transform">
+                      <Select
+                        aria-label="Transform"
+                        disabled={disabled}
+                        value={row.kind}
+                        onValueChange={(v) => patch(row.id, { kind: v as TransformKind | 'none' })}
+                        options={TRANSFORMS.map((t) => ({ value: t.value, label: t.label }))}
+                      />
+                    </Stacked>
+                    {/* Stacked, the sample and Remove share one trailing row. */}
+                    <div className="flex min-w-0 items-center justify-between gap-2 @[36rem]:contents">
+                      <output
+                        aria-label="Sample value"
+                        className="min-w-0 truncate text-sm text-fg"
+                        title={preview}
+                      >
+                        {preview === undefined ? (
+                          <span className="text-fg-subtle">—</span>
+                        ) : (
+                          `“${preview}”`
+                        )}
+                      </output>
+                      <IconButton
+                        label={`Remove ${row.input ? labelOf(row.input) : 'mapping'}`}
+                        size="sm"
+                        icon={<Trash2 aria-hidden />}
+                        disabled={disabled}
+                        onClick={() => onChange(rows.filter((r) => r.id !== row.id))}
+                      />
+                    </div>
                   </div>
                   {wantsOptions ? (
                     <Textarea

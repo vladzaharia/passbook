@@ -199,6 +199,28 @@ describe('Tabs', () => {
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Holder panel');
     expect((await axe(container)).violations).toEqual([]);
   });
+
+  it('turns five tabs into a Section select on phones', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('max-width: 639.98px'),
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    render(
+      <Tabs defaultValue="a">
+        <TabsList aria-label="Sections">
+          {['a', 'b', 'c', 'd', 'e'].map((v) => (
+            <TabsTrigger key={v} value={v}>
+              {v.toUpperCase()}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>,
+    );
+    expect(screen.queryByRole('tab')).toBeNull();
+    expect(screen.getByRole('combobox', { name: 'Section: A' })).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
 });
 
 describe('CommandPalette', () => {

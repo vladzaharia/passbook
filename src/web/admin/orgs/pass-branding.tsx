@@ -1,10 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { PassJson } from '@/passkit/types.ts';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
+import { TemplateListSchema } from '@/shared/contracts/templates.ts';
 import { normalize } from '@/shared/pass-view/index.ts';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
+import { type Swatch, useSwatches } from '@/web/lib/swatches.ts';
 import { PassCardStage } from '@/web/pass-card/index.tsx';
 import {
   Button,
@@ -41,9 +45,26 @@ const SLOT = {
   icon: { label: 'Icon', help: 'PNG at @3x, 114 × 114 px' },
 } as const;
 
+/**
+ * Unset pass colours leave each template's own. The sample then wears the org's first template's
+ * colours (else the first one it can use), so it shows what holders get.
+ */
+function useTemplateColors(orgId: string): Swatch | undefined {
+  const list = useQuery({
+    queryKey: ['admin', 'templates', 'for-org', orgId],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/templates', TemplateListSchema, { query: { orgId, limit: 50 }, signal }),
+    staleTime: 60_000,
+  });
+  const items = list.data?.items ?? [];
+  const pick = items.find((t) => t.orgId === orgId) ?? items[0];
+  return useSwatches(pick ? [pick.id] : []).get(pick?.id ?? '');
+}
+
 /** A membership card in the org's colours and images, for the live preview. */
-export function samplePass(org: Org, d: PassColorsDraft): PassJson {
-  const color = (v: string, fallback: string) => (HEX.test(v) ? v : fallback);
+export function samplePass(org: Org, d: PassColorsDraft, base?: Swatch): PassJson {
+  const color = (v: string, key: 'background' | 'foreground' | 'label') =>
+    HEX.test(v) ? v : (base?.[key] ?? PASS_COLOR_DEFAULTS[key]);
   return {
     formatVersion: 1,
     passTypeIdentifier: 'pass.example',
@@ -52,9 +73,9 @@ export function samplePass(org: Org, d: PassColorsDraft): PassJson {
     organizationName: org.name,
     description: `${org.name} membership card`,
     ...(d.logoHasName ? {} : { logoText: org.name }),
-    backgroundColor: color(d.background, PASS_COLOR_DEFAULTS.background),
-    foregroundColor: color(d.foreground, PASS_COLOR_DEFAULTS.foreground),
-    labelColor: color(d.label, PASS_COLOR_DEFAULTS.label),
+    backgroundColor: color(d.background, 'background'),
+    foregroundColor: color(d.foreground, 'foreground'),
+    labelColor: color(d.label, 'label'),
     generic: {
       primaryFields: [{ key: 'name', label: 'Member', value: 'Maya Chen' }],
       secondaryFields: [
@@ -167,14 +188,15 @@ export function PassBrandingCard({
   errors: Record<string, string>;
 }) {
   const warnings = passColorWarnings(draft);
+  const base = useTemplateColors(org.id);
   const view = useMemo(() => {
     const assets: Record<string, string> = {};
     for (const slot of ['logo', 'icon'] as const) {
       const image = org.branding[slot];
       if (image) assets[`${slot}@2x.png`] = brandingUrl(org.id, slot, image.sha);
     }
-    return normalize(samplePass(org, draft), { assets });
-  }, [org, draft]);
+    return normalize(samplePass(org, draft, base), { assets });
+  }, [org, draft, base]);
   return (
     <Card>
       <CardHeader title="Pass branding" />
@@ -189,21 +211,24 @@ export function PassBrandingCard({
               <ColorField
                 label="Background"
                 value={draft.background}
-                fallback={PASS_COLOR_DEFAULTS.background}
+                fallback={base?.background ?? PASS_COLOR_DEFAULTS.background}
+                empty="Template"
                 error={errors.background}
                 onChange={(background) => onChange({ background })}
               />
               <ColorField
                 label="Text"
                 value={draft.foreground}
-                fallback={PASS_COLOR_DEFAULTS.foreground}
+                fallback={base?.foreground ?? PASS_COLOR_DEFAULTS.foreground}
+                empty="Template"
                 error={errors.foreground}
                 onChange={(foreground) => onChange({ foreground })}
               />
               <ColorField
                 label="Labels"
                 value={draft.label}
-                fallback={PASS_COLOR_DEFAULTS.label}
+                fallback={base?.label ?? PASS_COLOR_DEFAULTS.label}
+                empty="Template"
                 error={errors.label}
                 onChange={(label) => onChange({ label })}
               />

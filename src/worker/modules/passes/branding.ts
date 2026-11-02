@@ -116,7 +116,7 @@ export function brandingWarnings(
     {
       severity: 'warning',
       code: 'PLATFORM_BRANDING',
-      message: `The pass uses the starter ${missing.join(' and ')}. Add the organization's in its branding.`,
+      message: `Uses the starter ${missing.join(' and ')}. Add the organization's ${missing.join(' and ')} in Pass branding.`,
       path: missing[0],
     },
   ];

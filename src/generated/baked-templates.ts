@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "6042fd1ec41afa4e3dc7ddd308e05b6a5aa9be51";
+export const BAKED_BUILD_HASH = "7d806f3ff18eda13d5edd6fcbfda609501dfce71";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "385ef0b7bc50c3f0",
+    "version": "994290705ddb37c7",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -116,7 +116,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "default": "Welcome to Henry’s.",
             "x-label": "Message",
-            "x-help": "Shown on the back. Changes notify the member.",
+            "x-help": "Shown on the back.",
             "x-group": "Status",
             "x-order": 70,
             "x-widget": "textarea"
@@ -153,7 +153,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "clubs": {
           "capitol-hill": {
             "name": "Capitol Hill",
-            "label": "CAPITOL HILL",
+            "label": "Capitol Hill",
             "street": "1617 Boylston Ave",
             "address": "1617 Boylston Ave, Seattle, WA 98122",
             "lat": 47.615835,
@@ -164,7 +164,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "queen-anne": {
             "name": "Queen Anne",
-            "label": "QUEEN ANNE",
+            "label": "Queen Anne",
             "street": "14 Mercer St",
             "address": "14 Mercer St, Seattle, WA 98109",
             "lat": 47.624765,
@@ -359,7 +359,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId-poster",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
@@ -370,7 +370,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           {
             "key": "homeClub-poster",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -385,47 +385,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status-poster",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message-poster",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal-poster",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone-poster",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support-poster",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website-poster",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms-poster",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer-poster",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -435,27 +435,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
         "primaryFields": [
           {
             "key": "memberName",
-            "label": "MEMBER",
+            "label": "Name",
             "value": "Alex Morgan"
           }
         ],
         "secondaryFields": [
           {
             "key": "membership",
-            "label": "MEMBERSHIP",
+            "label": "Membership",
             "value": "All-Inclusive Wellness",
             "changeMessage": "Your membership is now %@."
           },
           {
             "key": "homeClub",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -464,47 +464,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -523,7 +523,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/artwork@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/artwork@2x.png"
         }
       },
       {
@@ -537,7 +537,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/artwork@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/artwork@3x.png"
         }
       },
       {
@@ -545,12 +545,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 743,
-        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df",
-        "crc32": 3740293075,
+        "size": 760,
+        "sha1": "295fd28c415697d0b9b0e2a1854031c4c2840865",
+        "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/994290705ddb37c7/en.lproj/pass.strings"
         }
       },
       {
@@ -564,7 +564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/icon@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/icon@2x.png"
         }
       },
       {
@@ -578,63 +578,63 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/icon@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 13860,
-        "sha1": "34901c151c85f2755fc272070858db3604289658",
-        "crc32": 972620379,
-        "width": 320,
+        "size": 9169,
+        "sha1": "e280423c9e24d980e17bc04f9968f1db4f9b00d5",
+        "crc32": 532407714,
+        "width": 216,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/logo@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 22469,
-        "sha1": "77a189d2293d69ab698fd707f49977a52f8e464b",
-        "crc32": 2517702097,
-        "width": 480,
+        "size": 15430,
+        "sha1": "b260d29069b71a94482bb75ff49d0d28d1180083",
+        "crc32": 2846001471,
+        "width": 324,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/logo@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 8049,
-        "sha1": "778c3e6d4fbde973c61522722ef60997042d7e71",
-        "crc32": 4007933364,
-        "width": 252,
+        "size": 5146,
+        "sha1": "12dbac161a44dbffdca4e47418add9953c62316c",
+        "crc32": 2945709477,
+        "width": 130,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 12698,
-        "sha1": "6d6ea23891fd176738bf8d6c1b9b2dc24d65aabc",
-        "crc32": 1589541587,
-        "width": 378,
+        "size": 8155,
+        "sha1": "84e82b64504bae02137891113b10270d489c61b0",
+        "crc32": 3200501183,
+        "width": 195,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/994290705ddb37c7/primaryLogo@3x.png"
         }
       }
     ],
@@ -643,13 +643,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 86361,
         "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
-        "path": "/templates/henrys-blue/385ef0b7bc50c3f0/background@2x.png"
+        "path": "/templates/henrys-blue/994290705ddb37c7/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 156846,
         "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
-        "path": "/templates/henrys-blue/385ef0b7bc50c3f0/background@3x.png"
+        "path": "/templates/henrys-blue/994290705ddb37c7/background@3x.png"
       }
     ],
     "report": {
@@ -660,7 +660,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "6f8dd6c8bcf78cdf",
+    "version": "01dcec9fd38add9c",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -768,7 +768,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "default": "Welcome to Henry’s.",
             "x-label": "Message",
-            "x-help": "Shown on the back. Changes notify the member.",
+            "x-help": "Shown on the back.",
             "x-group": "Status",
             "x-order": 70,
             "x-widget": "textarea"
@@ -805,7 +805,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "clubs": {
           "capitol-hill": {
             "name": "Capitol Hill",
-            "label": "CAPITOL HILL",
+            "label": "Capitol Hill",
             "street": "1617 Boylston Ave",
             "address": "1617 Boylston Ave, Seattle, WA 98122",
             "lat": 47.615835,
@@ -816,7 +816,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "queen-anne": {
             "name": "Queen Anne",
-            "label": "QUEEN ANNE",
+            "label": "Queen Anne",
             "street": "14 Mercer St",
             "address": "14 Mercer St, Seattle, WA 98109",
             "lat": 47.624765,
@@ -1011,7 +1011,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId-poster",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
@@ -1022,7 +1022,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           {
             "key": "homeClub-poster",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -1037,47 +1037,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status-poster",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message-poster",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal-poster",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone-poster",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support-poster",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website-poster",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms-poster",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer-poster",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -1087,27 +1087,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "headerFields": [
           {
             "key": "memberId",
-            "label": "MEMBER",
+            "label": "Member",
             "value": "DEMO0001"
           }
         ],
         "primaryFields": [
           {
             "key": "memberName",
-            "label": "MEMBER",
+            "label": "Name",
             "value": "Alex Morgan"
           }
         ],
         "secondaryFields": [
           {
             "key": "membership",
-            "label": "MEMBERSHIP",
+            "label": "Membership",
             "value": "All-Inclusive Wellness",
             "changeMessage": "Your membership is now %@."
           },
           {
             "key": "homeClub",
-            "label": "HOME CLUB",
+            "label": "Home club",
             "value": "Capitol Hill",
             "changeMessage": "Your home club is now %@."
           }
@@ -1116,47 +1116,47 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "backFields": [
           {
             "key": "status",
-            "label": "MEMBERSHIP STATUS",
+            "label": "Membership status",
             "value": "Active",
             "changeMessage": "Your membership status is now %@."
           },
           {
             "key": "message",
-            "label": "FROM HENRY’S",
+            "label": "From Henry’s",
             "value": "Welcome to Henry’s."
           },
           {
             "key": "portal",
-            "label": "MANAGE YOUR MEMBERSHIP",
+            "label": "Manage your membership",
             "value": "https://henrysgymnasium.thememberspot.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.thememberspot.com/\">Member portal</a>"
           },
           {
             "key": "phone",
-            "label": "CONTACT THE GYM",
+            "label": "Contact the gym",
             "value": "(206) 644-7797",
             "attributedValue": "<a href=\"tel:+12066447797\">(206) 644-7797</a>"
           },
           {
             "key": "support",
-            "label": "MEMBER SUPPORT",
+            "label": "Member support",
             "value": "epicexperience@henrysgymnasium.com",
             "attributedValue": "<a href=\"mailto:epicexperience@henrysgymnasium.com\">epicexperience@henrysgymnasium.com</a>"
           },
           {
             "key": "website",
-            "label": "HENRY’S GYMNASIUM",
+            "label": "Henry’s Gymnasium",
             "value": "https://henrysgymnasium.com/",
             "attributedValue": "<a href=\"https://henrysgymnasium.com/\">henrysgymnasium.com</a>"
           },
           {
             "key": "terms",
-            "label": "ABOUT THIS PASS",
+            "label": "About this pass",
             "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
           },
           {
             "key": "issuer",
-            "label": "PASS SERVICE",
+            "label": "Pass service",
             "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
             "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
           }
@@ -1175,7 +1175,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/artwork@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/artwork@2x.png"
         }
       },
       {
@@ -1189,7 +1189,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/artwork@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/artwork@3x.png"
         }
       },
       {
@@ -1197,12 +1197,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 743,
-        "sha1": "56b97afcfce96b12eec2cf8bc264e9e4f796b1df",
-        "crc32": 3740293075,
+        "size": 760,
+        "sha1": "295fd28c415697d0b9b0e2a1854031c4c2840865",
+        "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/en.lproj/pass.strings"
         }
       },
       {
@@ -1216,7 +1216,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/icon@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/icon@2x.png"
         }
       },
       {
@@ -1230,63 +1230,63 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/icon@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 13860,
-        "sha1": "34901c151c85f2755fc272070858db3604289658",
-        "crc32": 972620379,
-        "width": 320,
+        "size": 9169,
+        "sha1": "e280423c9e24d980e17bc04f9968f1db4f9b00d5",
+        "crc32": 532407714,
+        "width": 216,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/logo@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 22469,
-        "sha1": "77a189d2293d69ab698fd707f49977a52f8e464b",
-        "crc32": 2517702097,
-        "width": 480,
+        "size": 15430,
+        "sha1": "b260d29069b71a94482bb75ff49d0d28d1180083",
+        "crc32": 2846001471,
+        "width": 324,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/logo@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 8049,
-        "sha1": "778c3e6d4fbde973c61522722ef60997042d7e71",
-        "crc32": 4007933364,
-        "width": 252,
+        "size": 5146,
+        "sha1": "12dbac161a44dbffdca4e47418add9953c62316c",
+        "crc32": 2945709477,
+        "width": 130,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 12698,
-        "sha1": "6d6ea23891fd176738bf8d6c1b9b2dc24d65aabc",
-        "crc32": 1589541587,
-        "width": 378,
+        "size": 8155,
+        "sha1": "84e82b64504bae02137891113b10270d489c61b0",
+        "crc32": 3200501183,
+        "width": 195,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/01dcec9fd38add9c/primaryLogo@3x.png"
         }
       }
     ],
@@ -1295,13 +1295,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 89428,
         "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
-        "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/background@2x.png"
+        "path": "/templates/henrys-copper/01dcec9fd38add9c/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 161342,
         "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
-        "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/background@3x.png"
+        "path": "/templates/henrys-copper/01dcec9fd38add9c/background@3x.png"
       }
     ],
     "report": {
@@ -2176,7 +2176,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-coupon",
     "slug": "starter-coupon",
-    "version": "98a94d5939520548",
+    "version": "ff335b498b209022",
     "name": "Wallet · Coupon",
     "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
     "org": null,
@@ -2248,6 +2248,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 60,
             "format": "date-time",
             "x-widget": "datetime"
+          },
+          "timeZone": {
+            "type": "string",
+            "x-label": "Time zone",
+            "x-group": "Offer",
+            "x-order": 61,
+            "x-timeZone": true,
+            "maxLength": 64
           },
           "storeLat": {
             "type": "number",
@@ -2489,7 +2497,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 1879204991,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/en.lproj/pass.strings"
+          "path": "/templates/starter-coupon/ff335b498b209022/en.lproj/pass.strings"
         }
       },
       {
@@ -2503,7 +2511,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/icon@2x.png"
+          "path": "/templates/starter-coupon/ff335b498b209022/icon@2x.png"
         }
       },
       {
@@ -2517,7 +2525,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/icon@3x.png"
+          "path": "/templates/starter-coupon/ff335b498b209022/icon@3x.png"
         }
       },
       {
@@ -2531,7 +2539,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/logo@2x.png"
+          "path": "/templates/starter-coupon/ff335b498b209022/logo@2x.png"
         }
       },
       {
@@ -2545,7 +2553,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/logo@3x.png"
+          "path": "/templates/starter-coupon/ff335b498b209022/logo@3x.png"
         }
       },
       {
@@ -2559,7 +2567,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/strip@2x.png"
+          "path": "/templates/starter-coupon/ff335b498b209022/strip@2x.png"
         }
       },
       {
@@ -2573,7 +2581,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/98a94d5939520548/strip@3x.png"
+          "path": "/templates/starter-coupon/ff335b498b209022/strip@3x.png"
         }
       }
     ],
@@ -2586,7 +2594,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "6f8b81982866d901",
+    "version": "7f5b346377797b0a",
     "name": "Wallet · Event ticket",
     "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
     "org": null,
@@ -2641,8 +2649,15 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Event",
             "x-order": 40,
             "minLength": 1,
-            "maxLength": 60,
-            "x-placeholder": "Main hall"
+            "maxLength": 60
+          },
+          "venueTimeZone": {
+            "type": "string",
+            "x-label": "Time zone",
+            "x-group": "Event",
+            "x-order": 45,
+            "x-timeZone": true,
+            "maxLength": 64
           },
           "startsAt": {
             "type": "string",
@@ -2770,6 +2785,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "eventName": "Sample Event",
         "venueName": "Sample Hall",
         "venueRegion": "Cupertino, CA",
+        "venueTimeZone": "America/Los_Angeles",
         "startsAt": "2030-06-01T19:00:00-07:00",
         "endsAt": "2030-06-01T22:00:00-07:00",
         "venueLat": 37.3349,
@@ -2888,6 +2904,16 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "value": "{{venueRoom}}",
           "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/semantics/venueRoom"
+          },
+          "value": "{{venueName}}",
+          "when": {
+            "input": "venueRoom",
+            "empty": true
+          }
         },
         {
           "to": {
@@ -3183,28 +3209,28 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 19711,
-        "sha1": "67a5cd8260e95fe542eb5ba0633fdaeaf9b4c939",
-        "crc32": 301892547,
+        "size": 18747,
+        "sha1": "54f4663c0cc6e9cc7044961d8276643cec88b386",
+        "crc32": 2636465397,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 32791,
-        "sha1": "48b5772e207936afbb8389037f125880a98ba2ae",
-        "crc32": 1973081899,
+        "size": 31361,
+        "sha1": "7f460f063599cd1cbc193a8ba2833017786b0ec2",
+        "crc32": 1196895748,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/artwork@3x.png"
         }
       },
       {
@@ -3218,7 +3244,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/background@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/background@2x.png"
         }
       },
       {
@@ -3232,7 +3258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/background@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/background@3x.png"
         }
       },
       {
@@ -3245,7 +3271,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4061939731,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/en.lproj/pass.strings"
         }
       },
       {
@@ -3259,7 +3285,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/icon@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/icon@2x.png"
         }
       },
       {
@@ -3273,7 +3299,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/icon@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/icon@3x.png"
         }
       },
       {
@@ -3287,7 +3313,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/logo@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/logo@2x.png"
         }
       },
       {
@@ -3301,7 +3327,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/logo@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/logo@3x.png"
         }
       },
       {
@@ -3315,7 +3341,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/primaryLogo@2x.png"
         }
       },
       {
@@ -3329,7 +3355,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/primaryLogo@3x.png"
         }
       },
       {
@@ -3343,7 +3369,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/secondaryLogo@2x.png"
         }
       },
       {
@@ -3357,35 +3383,35 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/secondaryLogo@3x.png"
         }
       },
       {
         "name": "thumbnail@2x.png",
         "slot": "thumbnail",
         "scale": 2,
-        "size": 1180,
-        "sha1": "2a0d1e4244e4ab3b8c983f623d22e2789f9645d0",
-        "crc32": 734197820,
+        "size": 2676,
+        "sha1": "d19573ea214ab307ab7438bd7884508f093e3bde",
+        "crc32": 3018627731,
         "width": 180,
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/thumbnail@2x.png"
         }
       },
       {
         "name": "thumbnail@3x.png",
         "slot": "thumbnail",
         "scale": 3,
-        "size": 1912,
-        "sha1": "d4d950ecb9f49093e62672be251e14b3ce683f9f",
-        "crc32": 1302643963,
+        "size": 4279,
+        "sha1": "e357288c9f3917e42dc3c964aa319a8dd2e12c67",
+        "crc32": 531878251,
         "width": 270,
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6f8b81982866d901/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/7f5b346377797b0a/thumbnail@3x.png"
         }
       }
     ],
@@ -3398,7 +3424,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "86cab4441b432583",
+    "version": "333076a4f9a2334a",
     "name": "Wallet · Generic",
     "description": "Membership or ID card with a QR code, relevance and two featured actions.",
     "org": null,
@@ -3462,7 +3488,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Holder",
             "x-order": 50,
             "format": "date-time",
-            "x-widget": "datetime"
+            "x-widget": "date"
           },
           "note": {
             "type": "string",
@@ -3839,7 +3865,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 296311073,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/333076a4f9a2334a/en.lproj/pass.strings"
         }
       },
       {
@@ -3853,7 +3879,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/icon@2x.png"
+          "path": "/templates/starter-generic/333076a4f9a2334a/icon@2x.png"
         }
       },
       {
@@ -3867,7 +3893,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/icon@3x.png"
+          "path": "/templates/starter-generic/333076a4f9a2334a/icon@3x.png"
         }
       },
       {
@@ -3881,7 +3907,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/logo@2x.png"
+          "path": "/templates/starter-generic/333076a4f9a2334a/logo@2x.png"
         }
       },
       {
@@ -3895,7 +3921,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/logo@3x.png"
+          "path": "/templates/starter-generic/333076a4f9a2334a/logo@3x.png"
         }
       },
       {
@@ -3909,7 +3935,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/thumbnail@2x.png"
+          "path": "/templates/starter-generic/333076a4f9a2334a/thumbnail@2x.png"
         }
       },
       {
@@ -3923,7 +3949,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/86cab4441b432583/thumbnail@3x.png"
+          "path": "/templates/starter-generic/333076a4f9a2334a/thumbnail@3x.png"
         }
       }
     ],
@@ -3936,7 +3962,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-poster-generic",
     "slug": "starter-poster-generic",
-    "version": "108c618ec87be4ca",
+    "version": "1b1f0e637e393908",
     "name": "Wallet · Poster",
     "description": "Membership card in the poster style, with a generic fallback.",
     "org": null,
@@ -4001,7 +4027,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Holder",
             "x-order": 50,
             "format": "date-time",
-            "x-widget": "datetime"
+            "x-widget": "date"
           },
           "note": {
             "type": "string",
@@ -4372,28 +4398,28 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 19471,
-        "sha1": "e28754a55c35b76127a1ff90bee76a74dd230b47",
-        "crc32": 2027310014,
+        "size": 20347,
+        "sha1": "78ce2990ca739583dbfa01cf4b27bca81aa3c24b",
+        "crc32": 3922443920,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/artwork@2x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 32565,
-        "sha1": "892381de8b793517c5ed637fb6ca74b8006ed1a2",
-        "crc32": 1720983142,
+        "size": 32737,
+        "sha1": "c6acc5fe6d56d382905359b051cbc9fd965c24d7",
+        "crc32": 3418188137,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/artwork@3x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/artwork@3x.png"
         }
       },
       {
@@ -4406,7 +4432,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2712717624,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/en.lproj/pass.strings"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/en.lproj/pass.strings"
         }
       },
       {
@@ -4420,7 +4446,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/icon@2x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/icon@2x.png"
         }
       },
       {
@@ -4434,7 +4460,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/icon@3x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/icon@3x.png"
         }
       },
       {
@@ -4448,7 +4474,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/logo@2x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/logo@2x.png"
         }
       },
       {
@@ -4462,7 +4488,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/logo@3x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/logo@3x.png"
         }
       },
       {
@@ -4476,7 +4502,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/primaryLogo@2x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/primaryLogo@2x.png"
         }
       },
       {
@@ -4490,7 +4516,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/108c618ec87be4ca/primaryLogo@3x.png"
+          "path": "/templates/starter-poster-generic/1b1f0e637e393908/primaryLogo@3x.png"
         }
       }
     ],

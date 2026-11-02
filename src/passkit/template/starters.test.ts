@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassBuildError } from '../build.ts';
-import { pixelIssues } from '../schema/image-pixels.ts';
+import { decodePixels, headerContrast, parseColor, pixelIssues } from '../schema/image-pixels.ts';
 import { checkImageSize } from '../schema/image-rules.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { PassField, PassJson, Personalization, SigningMaterial } from '../types.ts';
@@ -59,7 +59,7 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
   });
 
   it('ships every image at @2x and @3x, sized and trimmed by the HIG rules', async () => {
-    const { pkg } = await loadBaked(slug);
+    const { pkg, template } = await loadBaked(slug);
     const images = pkg.assets.filter((a) => a.slot !== 'strings' && a.slot !== 'other');
     expect(images.length).toBeGreaterThan(0);
     for (const a of images) {
@@ -68,10 +68,22 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
       });
       const bytes = pkg.bytes[a.name] as Uint8Array;
       expect(pngSize(bytes)).toEqual({ width: a.width, height: a.height });
-      expect(pixelIssues(a.name, a.slot, bytes), a.name).toEqual([]);
+      const fg = parseColor(template.passJson.foregroundColor);
+      expect(pixelIssues(a.name, a.slot, bytes, fg), a.name).toEqual([]);
     }
     for (const slot of new Set(images.map((a) => a.slot)))
       expect(images.filter((a) => a.slot === slot).map((a) => a.scale)).toEqual([2, 3]);
+  });
+
+  it('keeps white header text at 4.5:1 on the artwork', async () => {
+    const { pkg } = await loadBaked(slug);
+    for (const a of pkg.assets.filter((x) => x.slot === 'artwork')) {
+      const map = decodePixels(pkg.bytes[a.name] as Uint8Array);
+      expect(
+        headerContrast(map as NonNullable<typeof map>, [255, 255, 255]),
+        a.name,
+      ).toBeGreaterThan(4.5);
+    }
   });
 
   it('labels in sentence case and localizes every label', async () => {

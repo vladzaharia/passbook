@@ -1,6 +1,7 @@
 import { type DragEvent, useMemo, useRef, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
+import { cn } from '../../../lib/cn.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import {
   Badge,
@@ -58,6 +59,9 @@ function SlotTile({
   const scale = Number(slotOf(file ?? '')?.[2] ?? 2) === 3 ? 3 : 2;
   const size = shown?.width && shown.height ? [shown.width, shown.height] : natural;
   const busy = actions.uploadAsset.isPending;
+  // The thumbnail sits on the pass's own colour, as Wallet draws it (a white logo stays visible).
+  const ground =
+    typeof pass.passJson.backgroundColor === 'string' ? pass.passJson.backgroundColor : undefined;
 
   async function take(f: File | undefined) {
     if (!f) return;
@@ -94,7 +98,13 @@ function SlotTile({
       onDrop={drop}
       className="wl-slot relative flex min-w-0 items-center gap-3 rounded-lg border border-border bg-surface-raised p-3"
     >
-      <div className="wl-checker wl-slot-thumb flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border">
+      <div
+        style={ground ? { background: ground } : undefined}
+        className={cn(
+          'wl-slot-thumb flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border',
+          !ground && 'wl-checker',
+        )}
+      >
         {file ? (
           <img
             src={`${pass.assetBaseUrl.replace(/\/?$/, '/')}${file}`}

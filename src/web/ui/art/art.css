@@ -142,6 +142,9 @@
   .wl-art[data-beat="off"] [data-b] {
     animation-name: var(--k, wl-a-in), none;
   }
+  .wl-art[data-still] [data-part] {
+    animation: none;
+  }
   [data-art="wallet"] :is([data-part="eyes"], [data-part="c2"]) {
     transition: transform 200ms var(--art-sp);
   }

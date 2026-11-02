@@ -1,5 +1,6 @@
-import { type ErrorComponentProps, Link, useRouterState } from '@tanstack/react-router';
-import { LogIn, Search } from 'lucide-react';
+import { type ErrorComponentProps, Link, useRouter, useRouterState } from '@tanstack/react-router';
+import { LogIn, Search, WalletCards } from 'lucide-react';
+import { useEffect } from 'react';
 import { isApiError } from '../../lib/errors.ts';
 import { usePalette } from '../../lib/palette.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
@@ -14,19 +15,31 @@ const useInAdmin = () =>
 
 export function ForbiddenPage() {
   const { authed } = useSession();
+  // A holder who followed an admin link gets a way back to their passes.
+  const holder = authed?.roles.includes('user') === true;
   return (
     <EmptyState
       heading
       art="lock"
       title="You do not have access"
       action={
-        <Button
-          variant="outline"
-          iconStart={<LogIn aria-hidden />}
-          onClick={() => void signOut(authed?.csrfToken)}
-        >
-          Sign in as someone else
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {holder ? (
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <WalletCards aria-hidden />
+                Go to My passes
+              </Link>
+            </Button>
+          ) : null}
+          <Button
+            variant={holder ? 'ghost' : 'outline'}
+            iconStart={<LogIn aria-hidden />}
+            onClick={() => void signOut(authed?.csrfToken)}
+          >
+            Sign in as someone else
+          </Button>
+        </div>
       }
     />
   );
@@ -76,8 +89,25 @@ export function NotFoundPage() {
  * deploy) asks for a reload and keeps the shell; everything else is an ErrorState.
  */
 export function RouteError({ error, reset }: ErrorComponentProps) {
+  const router = useRouter();
+  const chunk = isChunkLoadError(error);
+  // Back online, a page that failed for want of a network loads again with no click. Server
+  // answers (API errors) are not network failures and wait for Retry.
+  const offlineFailure = chunk || !isApiError(error);
+  useEffect(() => {
+    if (!offlineFailure) return;
+    const retry = () => {
+      if (chunk) window.location.reload();
+      else {
+        reset();
+        void router.invalidate();
+      }
+    };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [offlineFailure, chunk, reset, router]);
   if (isApiError(error) && error.isForbidden) return <ForbiddenPage />;
-  if (isChunkLoadError(error)) {
+  if (chunk) {
     return (
       <ErrorState
         title="Could not load this page. Check your connection."

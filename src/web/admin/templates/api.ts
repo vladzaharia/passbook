@@ -73,7 +73,7 @@ export function useTemplate(id: string | undefined) {
   return useQuery({ ...templateDetailQuery(id ?? ''), enabled: Boolean(id) });
 }
 
-import { fetchPreview } from './preview-batch.ts';
+import { fetchPreview } from '../../lib/preview-batch.ts';
 
 export function useTemplatePreview(id: string, version?: string) {
   return useQuery({

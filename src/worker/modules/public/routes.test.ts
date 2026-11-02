@@ -101,7 +101,7 @@ describe('GET /p/:token', () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
     expect(html.includes('Scan with your iPhone.')).toBe(qr);
-    expect(html.includes('Open on iPhone or Mac to add to Wallet.')).toBe(line);
+    expect(html.includes('Open on iPhone or Mac to add to Apple Wallet.')).toBe(line);
     expect(html).toContain('alt="Add to Apple Wallet"');
   });
 
@@ -109,7 +109,7 @@ describe('GET /p/:token', () => {
     const pass = await kit.pass();
     const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148';
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
-    expect(html).toContain('Open in Safari to add to Wallet.');
+    expect(html).toContain('Open in Safari to add to Apple Wallet.');
   });
 
   it('offers a QR hand-off for desktop visitors that points at the pass download', async () => {
@@ -120,6 +120,27 @@ describe('GET /p/:token', () => {
     const svg = atob((qr ?? '').split(',')[1] ?? '');
     expect(svg).toContain('<svg');
     expect(html).toContain('Scan with your iPhone');
+    // The add QR is a phone in the action column, under the badge.
+    expect(html).toMatch(/<div class="phone"><img src="data:image\/svg\+xml/);
+    expect(html.indexOf('Add to Apple Wallet')).toBeLessThan(html.indexOf('class="phone"'));
+  });
+
+  it('links a voided pass to the org support, once', async () => {
+    const pass = await kit.pass();
+    await run(
+      kit.env.DB,
+      'INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, ?, ?, 1)',
+      [`org:${kit.org.id}`, 'support.email', JSON.stringify('help@gym.test')],
+    );
+    clearSettingsCache(kit.env.DB);
+    await voidPass(kit.ctx, actor, pass.id, null);
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const note = /<p class="note"[\s\S]*?<\/p>/.exec(html)?.[0] ?? '';
+    expect(note).toContain('This pass was voided.');
+    expect(note).toContain('href="mailto:help@gym.test"');
+    expect(html.match(/mailto:help@gym.test/g)).toHaveLength(1);
+    await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
+    clearSettingsCache(kit.env.DB);
   });
 
   it('shows a voided banner and no download for a voided pass', async () => {

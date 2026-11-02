@@ -133,7 +133,7 @@ function Secondary({
       <Link
         to={to}
         search={search}
-        className="inline-flex min-h-6 items-baseline gap-1.5 rounded-sm text-fg-muted hover:text-fg-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="inline-flex min-h-6 items-center gap-1.5 rounded-sm text-fg-muted pointer-coarse:min-h-11 hover:text-fg-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         {label}
         <span className="font-semibold text-fg tabular-nums">

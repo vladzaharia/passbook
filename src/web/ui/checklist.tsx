@@ -37,18 +37,22 @@ export function Checklist({
   title,
   steps,
   onDismiss,
+  aside,
   className,
 }: {
   title: string;
   steps: readonly ChecklistStep[];
   onDismiss?: () => void;
+  /** Beside the title (step art); the title always comes first. */
+  aside?: ReactNode;
   className?: string;
 }) {
   const left = steps.filter((s) => !s.done).length;
   return (
     <section aria-label={title} className={cn('flex flex-col gap-3', className)}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-fg-strong">{title}</h2>
+        <h2 className="mr-auto text-sm font-semibold text-fg-strong">{title}</h2>
+        {aside}
         {onDismiss ? (
           <IconButton label="Dismiss" size="sm" icon={<X aria-hidden />} onClick={onDismiss} />
         ) : null}
@@ -66,7 +70,7 @@ export function Checklist({
               {step.label}
               <span className="sr-only">{step.done ? ' (done)' : ''}</span>
             </span>
-            {step.done ? null : step.action}
+            {step.done ? null : <span className="ml-auto shrink-0">{step.action}</span>}
           </li>
         ))}
       </ol>

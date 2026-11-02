@@ -36,7 +36,7 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
     .poll(
       async () => {
         await page.goto(`/auth/oidc/start?next=${encodeURIComponent(next)}`);
-        return !(await page.content()).includes('RATE_LIMITED');
+        return !(await page.content()).includes('Too many requests');
       },
       { intervals: [8_000], timeout: 70_000 },
     )

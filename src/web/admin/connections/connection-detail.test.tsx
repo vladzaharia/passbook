@@ -39,7 +39,8 @@ describe('connection detail', () => {
       session: 'admin',
       handlers: handlers(state),
     });
-    expect(await screen.findByText(/^Failing since .* · 2 failures in a row/)).toBeInTheDocument();
+    // The sentence opens with the pill's word.
+    expect(await screen.findByText(/^Degraded since .* · 2 failures in a row/)).toBeInTheDocument();
     expect(screen.getByText('Paused after repeated failures')).toBeInTheDocument();
     expect(screen.queryByText('Breaker')).toBeNull();
     expect(screen.getByRole('list', { name: 'Recent runs' }).children).toHaveLength(2);
