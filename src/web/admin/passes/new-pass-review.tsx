@@ -22,8 +22,7 @@ export function ReviewStep({
   send,
   steps,
   onEdit,
-  brandingMissing,
-  warnings,
+  warnings: all,
   error,
 }: {
   org: string | undefined;
@@ -34,11 +33,14 @@ export function ReviewStep({
   send: boolean;
   steps: { org?: number; template: number; details: number; holder: number };
   onEdit: (step: number) => void;
-  brandingMissing: boolean;
-  /** The preview's other warnings (lint), one line each. */
-  warnings: readonly string[];
+  /** The preview's: missing branding gets its own callout, the other warnings one line each. */
+  warnings: readonly { code: string; severity: string; message: string }[];
   error: ReactNode;
 }) {
+  const brandingMissing = all.some((w) => w.code === 'PLATFORM_BRANDING');
+  const warnings = all
+    .filter((w) => w.severity === 'warning' && w.code !== 'PLATFORM_BRANDING')
+    .map((w) => w.message);
   const fields = describeSchema(schema)
     .flatMap((g) => g.fields)
     .filter((f) => f.required || shown(input[f.key]) !== null)

@@ -1,9 +1,9 @@
 import { type CSSProperties, type ReactNode, useId } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '../../lib/cn.ts';
+import { useMediaQuery } from '../../lib/media.ts';
 import { useArrival } from '../../lib/motion.ts';
 import {
-  Badge,
   CheckboxField,
   EmptyState,
   EntityAvatar,
@@ -17,6 +17,7 @@ import {
 } from '../../ui/index.ts';
 import { useTemplatePreview } from '../templates/api.ts';
 import { PassPreview } from './pass-preview.tsx';
+import { groupTemplates } from './template-groups.ts';
 
 export interface OrgOption {
   id: string;
@@ -48,7 +49,7 @@ function ChoiceGroup({
         aria-label={label}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? id : undefined}
-        className={cn(TILE_GRID, className)}
+        className={className ?? TILE_GRID}
       >
         {children}
       </div>
@@ -106,7 +107,7 @@ export function OrgStep({
 function TemplateStill({ id }: { id: string }) {
   const preview = useTemplatePreview(id);
   return (
-    <div aria-hidden inert className="pointer-events-none w-14 shrink-0">
+    <div aria-hidden inert className="pointer-events-none w-10 shrink-0">
       {preview.data ? (
         <PassPreview
           passJson={preview.data.passJson}
@@ -115,15 +116,19 @@ function TemplateStill({ id }: { id: string }) {
           still
         />
       ) : (
-        <Skeleton className="aspect-[320/420] w-full rounded-md" />
+        <Skeleton className="aspect-[320/420] w-full rounded-sm" />
       )}
     </div>
   );
 }
 
-/** Template choices as tiles with a still; Shared marks platform templates every org can use. */
+/**
+ * Template tiles grouped by scope: the org's own, then Shared. From 1024 the stage shows the
+ * chosen template's description, so a tile is a still and a name.
+ */
 export function TemplateStep({
   templates,
+  orgName,
   loading,
   error,
   templateId,
@@ -132,6 +137,8 @@ export function TemplateStep({
   choiceError,
 }: {
   templates: TemplateSummaryDto[];
+  /** Names the org's group when a summary lacks it. */
+  orgName?: string | undefined;
   loading: boolean;
   error: unknown;
   templateId: string | undefined;
@@ -141,31 +148,35 @@ export function TemplateStep({
   choiceError?: string | undefined;
 }) {
   const arrived = useArrival(loading);
+  const staged = useMediaQuery('(min-width: 1024px)');
   if (loading) return <SkeletonTileGrid label="Loading templates" />;
   if (error) return <ErrorState error={error} />;
   if (templates.length === 0)
     return <EmptyState art="template" title="No templates for this organization" />;
+  let i = 0;
   return (
-    <ChoiceGroup label="Template" error={choiceError} className={cn(arrived && 'wl-stagger')}>
-      {templates.map((t, i) => (
-        <div key={t.id} style={{ '--i': i } as CSSProperties}>
-          <OptionTile
-            name="template"
-            value={t.id}
-            checked={t.id === templateId}
-            onSelect={onSelect}
-            onCommit={onCommit}
-            media={<TemplateStill id={t.id} />}
-            label={
-              <span className="inline-flex min-w-0 items-center gap-2">
-                <span className="truncate">{t.name}</span>
-                {t.orgId === null ? <Badge>Shared</Badge> : null}
-              </span>
-            }
-            description={t.description ?? undefined}
-            className="h-full"
-          />
-        </div>
+    <ChoiceGroup label="Template" error={choiceError} className="flex flex-col gap-6">
+      {groupTemplates(templates, orgName).map((g) => (
+        <fieldset key={g.key} className="min-w-0">
+          <legend className="mb-3 text-xs font-medium text-fg-muted">{g.label}</legend>
+          <div className={cn(TILE_GRID, arrived && 'wl-stagger')}>
+            {g.items.map(({ template: t, name }) => (
+              <div key={t.id} style={{ '--i': i++ } as CSSProperties}>
+                <OptionTile
+                  name="template"
+                  value={t.id}
+                  checked={t.id === templateId}
+                  onSelect={onSelect}
+                  onCommit={onCommit}
+                  media={<TemplateStill id={t.id} />}
+                  label={name}
+                  description={staged ? undefined : (t.description ?? undefined)}
+                  className="h-full items-center p-3"
+                />
+              </div>
+            ))}
+          </div>
+        </fieldset>
       ))}
     </ChoiceGroup>
   );

@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { type FetchHandler, json, problem, renderApp } from '../../lib/test-utils.tsx';
 import { actionsFor } from './pass-actions.tsx';
@@ -13,6 +13,8 @@ import {
   templateDetail,
   templateSummary,
 } from './test-fixtures.ts';
+
+afterEach(() => vi.unstubAllGlobals());
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 const empty = () => json({ items: [], nextCursor: null });
@@ -207,6 +209,7 @@ describe('new pass wizard', () => {
   function wizardHandlers(
     onPost: (init: RequestInit | undefined) => Response,
     posts: RequestInit[],
+    extra: Record<string, FetchHandler> = {},
   ) {
     return baseHandlers({
       '/api/v1/passes': (_u, init) => {
@@ -218,8 +221,56 @@ describe('new pass wizard', () => {
       },
       '/api/v1/passes/p9': () =>
         json(passDetail({ id: 'p9', serial: 'SER-009', title: 'Created Pass' })),
+      ...extra,
     });
   }
+
+  it('groups templates by scope and shows the choice on the stage from 1024', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: /min-width: 1024px|prefers-reduced-motion: reduce/.test(query),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    const user = userEvent.setup();
+    const generic = {
+      id: 'tpl2',
+      name: 'PassBook · Generic',
+      orgId: null,
+      orgName: null,
+      description: 'Membership card.',
+    };
+    const { container } = await renderApp('/admin/passes/new', {
+      session: 'admin',
+      handlers: wizardHandlers(() => json({}), [], {
+        '/api/v1/templates': () =>
+          json({
+            items: [templateSummary(generic), templateSummary({ name: "Henry's · Copper card" })],
+            nextCursor: null,
+          }),
+        '/api/v1/templates/tpl2': () => json(templateDetail(generic)),
+        '/api/v1/templates/tpl2/preview': () =>
+          json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] }),
+      }),
+    });
+    await screen.findByRole('radio', { name: 'Copper card' });
+    // The org's own first, then Shared; names lose the prefix their group repeats.
+    const groups = screen.getAllByRole('group');
+    expect(groups.map((g) => g.querySelector('legend')?.textContent)).toEqual([
+      "Henry's",
+      'Shared',
+    ]);
+    expect(within(groups[1] as HTMLElement).getByRole('radio', { name: 'Generic' })).toBeVisible();
+    expect(screen.queryByText('PassBook · Generic')).toBeNull();
+    // The stage carries the description, so the tile does not.
+    const stage = screen.getByRole('complementary', { name: 'Preview' });
+    await user.click(screen.getByRole('radio', { name: 'Generic' }));
+    expect(within(stage).getByText('Generic')).toBeInTheDocument();
+    expect(screen.getAllByText('Membership card.')).toHaveLength(1);
+    expect(within(stage).getByText('Membership card.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Template', level: 2 })).toHaveClass('sr-only');
+    expect((await axe(container)).violations).toEqual([]);
+  });
 
   // One active org: the wizard skips the Organization step.
   async function toDetails(user: ReturnType<typeof userEvent.setup>) {
