@@ -16,7 +16,7 @@ export interface ArtProps {
   still?: boolean;
 }
 
-const DIM = { sm: [64, 48], lg: [96, 72], xl: [112, 84] } as const;
+export const DIM = { sm: [64, 48], lg: [96, 72], xl: [112, 84] } as const;
 
 // No DOM lib in the Worker typecheck (SSR renders the wallet).
 type El = { closest(s: string): EventTarget | null; dataset: Record<string, string | undefined> };

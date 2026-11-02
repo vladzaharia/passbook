@@ -40,7 +40,7 @@ export function WorkflowRuns({ orgName }: { orgName: (id: string | null) => stri
         </CardBody>
       ) : runs.isError ? (
         <CardBody>
-          <ErrorState error={runs.error} onRetry={() => runs.refetch()} />
+          <ErrorState inline error={runs.error} onRetry={() => runs.refetch()} />
         </CardBody>
       ) : (
         <DataTable

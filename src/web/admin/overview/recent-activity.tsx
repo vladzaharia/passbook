@@ -33,7 +33,7 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
         {log.isPending ? (
           <SkeletonRows rows={6} label="Loading activity" />
         ) : log.isError ? (
-          <ErrorState error={log.error} onRetry={() => log.refetch()} />
+          <ErrorState inline error={log.error} onRetry={() => log.refetch()} />
         ) : items.length === 0 ? (
           <EmptyState
             inline

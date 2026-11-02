@@ -197,7 +197,7 @@ export function ImagesTab({ pass }: { pass: PassDetailDto }) {
         {assets.isPending ? (
           <SkeletonRows rows={3} label="Loading images" />
         ) : assets.isError ? (
-          <ErrorState error={assets.error} onRetry={() => void assets.refetch()} />
+          <ErrorState inline error={assets.error} onRetry={() => void assets.refetch()} />
         ) : slots.length === 0 ? (
           <EmptyState inline art="frames" title="This template has no images to replace" />
         ) : (

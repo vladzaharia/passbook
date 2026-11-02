@@ -1,58 +1,64 @@
-import { createElement, type ReactNode } from 'react';
-import { ActivityArt } from './activity.tsx';
-import type { ArtProps } from './base.tsx';
-import { BuildingArt } from './building.tsx';
-import { CertificateArt } from './certificate.tsx';
-import { EnvelopeArt } from './envelope.tsx';
-import { FramesArt } from './frames.tsx';
-import { KeyArt } from './key.tsx';
-import { LayersArt } from './layers.tsx';
-import { LensArt } from './lens.tsx';
-import { LockArt } from './lock.tsx';
-import { LogArt } from './log.tsx';
-import { MappingArt } from './mapping.tsx';
-import { PassesArt } from './passes.tsx';
-import { PeopleArt } from './people.tsx';
-import { PhoneArt } from './phone.tsx';
-import { PlugsArt } from './plugs.tsx';
-import { PulseArt } from './pulse.tsx';
-import { RunsArt } from './runs.tsx';
-import { TemplateArt } from './template.tsx';
-import { TornArt } from './torn.tsx';
-import { UnpluggedArt } from './unplugged.tsx';
-import { WalletArt, type WalletState } from './wallet.tsx';
+import { createElement, lazy, type ReactNode, Suspense } from 'react';
+import { type ArtProps, DIM } from './base.tsx';
+import type { WalletState } from './wallet.tsx';
 
 export type { ArtProps, ArtSize } from './base.tsx';
+export { Buddy, type BuddyProps } from './buddy.tsx';
 export { LensOverlay } from './lens.tsx';
-export { WalletArt, type WalletArtProps, type WalletState } from './wallet.tsx';
+export { WalletArt, type WalletArtProps, type WalletMood, type WalletState } from './wallet.tsx';
 
-export const ART = {
-  passes: PassesArt,
-  template: TemplateArt,
-  plugs: PlugsArt,
-  people: PeopleArt,
-  building: BuildingArt,
-  certificate: CertificateArt,
-  key: KeyArt,
-  log: LogArt,
-  activity: ActivityArt,
-  pulse: PulseArt,
-  runs: RunsArt,
-  phone: PhoneArt,
-  envelope: EnvelopeArt,
-  frames: FramesArt,
-  layers: LayersArt,
-  mapping: MappingArt,
-  lens: LensArt,
-  torn: TornArt,
-  lock: LockArt,
-  unplugged: UnpluggedArt,
-  wallet: WalletArt,
-} as const satisfies Record<string, (props: ArtProps) => unknown>;
+export const ART_NAMES = [
+  'passes',
+  'template',
+  'plugs',
+  'people',
+  'building',
+  'certificate',
+  'key',
+  'log',
+  'activity',
+  'pulse',
+  'runs',
+  'phone',
+  'envelope',
+  'frames',
+  'layers',
+  'mapping',
+  'lens',
+  'torn',
+  'lock',
+  'unplugged',
+  'wallet',
+] as const;
+export type ArtName = (typeof ART_NAMES)[number];
+export type EntityArtProps = ArtProps & { name: ArtName; state?: WalletState };
 
-export type ArtName = keyof typeof ART;
-export const ART_NAMES = Object.keys(ART) as ArtName[];
+/** A blank slot the art's size: while the registry loads, or for good if it cannot. */
+function Slot({ size = 'lg' }: EntityArtProps): ReactNode {
+  const [width, height] = DIM[size];
+  return createElement('svg', { className: 'wl-art', width, height, 'aria-hidden': true });
+}
 
-export function EntityArt({ name, ...props }: ArtProps & { name: ArtName; state?: WalletState }) {
-  return createElement(ART[name] as (p: ArtProps & { state?: WalletState }) => ReactNode, props);
+// The registry (registry.ts) is its own chunk, off the initial budget: its load starts with the
+// app and is usually done before a state screen renders. The art is decorative, so a failed load
+// keeps the blank slot instead of failing the page.
+let registry: typeof import('./registry.ts') | undefined;
+export const preloadArt = () =>
+  import('./registry.ts').then(
+    (m) => {
+      registry = m;
+      return m.RegisteredArt;
+    },
+    () => Slot,
+  );
+const Lazy = lazy(() => preloadArt().then((component) => ({ default: component })));
+void preloadArt();
+
+export function EntityArt(props: EntityArtProps): ReactNode {
+  if (registry) return createElement(registry.RegisteredArt, props);
+  return createElement(
+    Suspense,
+    { fallback: createElement(Slot, props) },
+    createElement(Lazy, props),
+  );
 }

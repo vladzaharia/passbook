@@ -228,7 +228,7 @@ export function CreateConnectionWizard() {
           />
         ) : null}
         {step === 0 && connectors.isError ? (
-          <ErrorState error={connectors.error} onRetry={() => void connectors.refetch()} />
+          <ErrorState inline error={connectors.error} onRetry={() => void connectors.refetch()} />
         ) : null}
         {step === 1 ? (
           info && orgId ? (
@@ -246,7 +246,7 @@ export function CreateConnectionWizard() {
               onTest={setTest}
             />
           ) : connector.isError ? (
-            <ErrorState error={connector.error} onRetry={() => void connector.refetch()} />
+            <ErrorState inline error={connector.error} onRetry={() => void connector.refetch()} />
           ) : (
             <SkeletonKeyValue label="Loading connector" />
           )

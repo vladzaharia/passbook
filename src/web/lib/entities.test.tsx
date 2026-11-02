@@ -51,7 +51,8 @@ describe('entity registry', () => {
     const create = CREATE[kind];
     if (create) expect(actionOf(create).icon).toBe(entity.icon);
     const { container } = render(<EmptyState art={entity.art} title="Empty" />);
-    expect(container.querySelector('[data-art]')).toHaveAttribute('data-art', entity.art);
+    // The buddy holds the entity's own art.
+    expect(container.querySelector(`[data-buddy] [data-art="${entity.art}"]`)).not.toBeNull();
   });
 
   it('gives each entity its own art and glyph', () => {

@@ -64,7 +64,7 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
       <CardBody>
         {query.isPending ? <SkeletonRows rows={2} /> : null}
         {query.isError ? (
-          <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+          <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
         ) : null}
         {query.data ? (
           <div className="wl-sessions" data-leaving={leaving || undefined}>

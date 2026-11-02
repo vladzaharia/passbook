@@ -3,8 +3,10 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
-import { ART, ART_NAMES, EntityArt, WalletArt, type WalletState } from './index.ts';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { Buddy } from './buddy.tsx';
+import { ART_NAMES, EntityArt, preloadArt, WalletArt, type WalletState } from './index.ts';
+import { ART } from './registry.ts';
 import type { WalletMood } from './wallet.tsx';
 
 const DIR = join(process.cwd(), 'src/web/ui/art');
@@ -79,6 +81,14 @@ function ms(el: Element, value: string | undefined, fallback: number): number {
 }
 
 describe('entity art', () => {
+  beforeAll(async () => {
+    await preloadArt();
+  });
+
+  it('lists every registered art by name, in order', () => {
+    expect(Object.keys(ART)).toEqual([...ART_NAMES]);
+  });
+
   it.each(ART_NAMES)('%s renders at lg and sm within the SVG rules', (name) => {
     for (const size of ['lg', 'sm'] as const) {
       const { container, unmount } = render(<EntityArt name={name} size={size} />);
@@ -150,6 +160,21 @@ describe('entity art', () => {
     expect(plain.querySelector('[data-seat], [data-part="sd"], [data-part="l1"]')).toBeNull();
   });
 
+  it('seats the buddy with its prop, decorative and still on request', () => {
+    const { container } = render(
+      <Buddy mood="sad" prop={<EntityArt name="unplugged" size="sm" />} still />,
+    );
+    const buddy = container.querySelector('.wl-buddy');
+    expect(buddy).toHaveAttribute('aria-hidden', 'true');
+    expect(buddy).toHaveAttribute('data-prop');
+    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-still');
+    expect(buddy?.querySelector('[data-part="w"]')).toHaveAttribute('data-seat');
+    expect(buddy?.querySelector('.wl-buddy-prop [data-art="unplugged"]')).not.toBeNull();
+    // The perch and the one-beat moods live in the kit CSS.
+    expect(css).toMatch(/\.wl-buddy \{[^}]*translate: -50% -91\.67%/);
+    expect(css).toMatch(/\.wl-art\[data-still\] :is\(\[data-body\], \[data-fan\]\)/);
+  });
+
   it('animates only transform and opacity', () => {
     const keyframes = blocks(css).filter(([sel]) => sel.startsWith('@keyframes'));
     expect(keyframes.length).toBeGreaterThan(3);
@@ -195,12 +220,14 @@ describe('entity art', () => {
     expect(longest).toBe(600);
   });
 
-  it('fits the 9.5 kB gzip budget', () => {
+  // Raised for the buddy (moods, seat, composition) and the lazy registry's name list. The art
+  // left the initial chunk (registry.ts), so the initial budget fell; the rest is CSS.
+  it('fits the 11 kB gzip budget', () => {
     // css.ts is SSR glue: the browser bundle never loads it.
     const files = readdirSync(DIR)
       .filter((f) => !f.includes('.test.') && f !== 'css.ts')
       .sort();
     const all = files.map((f) => readFileSync(join(DIR, f), 'utf8')).join('\n');
-    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(9.5 * 1024);
+    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(11 * 1024);
   });
 });

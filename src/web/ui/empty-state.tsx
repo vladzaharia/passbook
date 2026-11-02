@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { ENTITY, type EntityKind } from '../lib/entities.ts';
-import { type ArtName, EntityArt, LensOverlay, type WalletState } from './art/index.ts';
+import {
+  type ArtName,
+  Buddy,
+  EntityArt,
+  LensOverlay,
+  type WalletMood,
+  type WalletState,
+} from './art/index.ts';
 import { Button } from './button.tsx';
 
 export interface EmptyStateProps {
@@ -9,6 +16,8 @@ export interface EmptyStateProps {
   art: ArtName;
   /** The mascot's pose when art is "wallet". */
   artState?: WalletState;
+  /** The buddy's mood (not inline): sad on a heading (not found, forbidden), else curious. */
+  mood?: WalletMood;
   title: string;
   /** One action: outline for navigation, primary only for create. */
   action?: ReactNode;
@@ -18,16 +27,21 @@ export interface EmptyStateProps {
   variant?: 'empty' | 'filtered';
   /** The art shows its final frame (another art on the screen has the moment). */
   still?: boolean;
-  /** Inside a card: no border, small art, py-6. */
+  /** Inside a card: no border, the small entity art alone (no buddy), py-6. */
   inline?: boolean;
   /** Not-found and forbidden pages: the title is the page h1. */
   heading?: boolean;
   className?: string;
 }
 
+/**
+ * Not inline, the buddy sits on the box's top edge with the entity's art beside it; inline keeps
+ * the entity art alone, so a view never shows more than one buddy.
+ */
 export function EmptyState({
   art,
   artState,
+  mood,
   title,
   action,
   description,
@@ -39,32 +53,47 @@ export function EmptyState({
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
   const Title = heading ? 'h1' : 'p';
+  // Filtered: the art dims under a lens. Not inline, the buddy holds it.
+  const picture = (
+    <>
+      <EntityArt
+        name={art}
+        size="sm"
+        className={filtered ? 'opacity-60' : undefined}
+        still={still}
+        {...(artState ? { state: artState } : {})}
+      />
+      {filtered ? (
+        <LensOverlay
+          size="sm"
+          still={still}
+          className="absolute right-0 bottom-0 origin-bottom-right translate-x-1/4 scale-60"
+        />
+      ) : null}
+    </>
+  );
   return (
     <div
       data-art-host=""
       className={cn(
-        'flex flex-col items-center text-center',
+        'relative flex flex-col items-center text-center',
         inline
           ? 'gap-1.5 px-4 py-6'
-          : 'gap-2 rounded-lg border border-dashed border-border-strong px-6 py-10',
+          : 'mt-18 gap-2 rounded-lg border border-dashed border-border-strong px-6 pt-8 pb-10',
         className,
       )}
     >
-      <div className={cn('relative', inline ? 'mb-1' : 'mb-2')}>
-        <EntityArt
-          name={art}
-          size={inline ? 'sm' : 'lg'}
-          className={filtered ? 'opacity-60' : undefined}
+      {inline ? (
+        <div className="relative mb-1">{picture}</div>
+      ) : (
+        <Buddy
+          mood={mood ?? (heading ? 'sad' : 'curious')}
           still={still}
-          {...(artState ? { state: artState } : {})}
+          {...(art === 'wallet'
+            ? { state: artState ?? 'empty' }
+            : { prop: <span className="relative block">{picture}</span> })}
         />
-        {filtered ? (
-          <LensOverlay
-            size={inline ? 'sm' : 'lg'}
-            className="absolute right-0 bottom-0 origin-bottom-right translate-x-1/4 scale-60"
-          />
-        ) : null}
-      </div>
+      )}
       <Title
         tabIndex={heading ? -1 : undefined}
         className={cn(

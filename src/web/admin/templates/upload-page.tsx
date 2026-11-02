@@ -7,6 +7,7 @@ import { errorMessage } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
+  Buddy,
   Button,
   Callout,
   Card,
@@ -102,7 +103,8 @@ export function TemplateUploadPage({
   const title = version ? `New version of ${version.name}` : 'Upload template';
 
   const left = finished ? (
-    <Card>
+    <Card className="mt-18">
+      <Buddy mood="happy" />
       <CardHeader
         title={
           result.data && result.data.versions.length > 1

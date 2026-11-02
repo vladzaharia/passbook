@@ -47,7 +47,12 @@ describe('route guards in the app', () => {
     expect(
       await screen.findByRole('heading', { name: 'You do not have access', level: 1 }),
     ).toBeInTheDocument();
-    expect(container.querySelector('[data-art]')).toHaveAttribute('data-art', 'lock');
+    // The buddy is sad beside the lock.
+    expect(container.querySelector('[data-buddy] [data-part="w"]')).toHaveAttribute(
+      'data-mood',
+      'sad',
+    );
+    expect(container.querySelector('[data-buddy] [data-art="lock"]')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in as someone else' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Admin' })).toBeNull();
   });
@@ -79,7 +84,8 @@ describe('route guards in the app', () => {
     expect(
       await screen.findByRole('heading', { name: 'Page not found', level: 1 }),
     ).toBeInTheDocument();
-    expect(container.querySelector('main [data-art]')).toHaveAttribute('data-art', 'torn');
+    expect(container.querySelector('main [data-buddy] [data-art="torn"]')).not.toBeNull();
+    expect(container.querySelector('main [data-part="w"]')).toHaveAttribute('data-mood', 'sad');
     expect(screen.getByRole('link', { name: 'Go to Overview' })).toBeInTheDocument();
     await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Search' }));
     expect(await screen.findByRole('combobox', { name: 'Search' })).toBeInTheDocument();

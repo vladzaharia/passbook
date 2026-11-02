@@ -20,7 +20,8 @@ const ACTOR: Record<string, { kind: EntityChipProps['kind']; to?: (id: string) =
 /** The pass's audit trail as a timeline: action glyphs, who did it as an entity chip. */
 export function ActivityTab({ passId, active }: { passId: string; active: boolean }) {
   const audit = usePassAudit(passId, active);
-  if (audit.isError) return <ErrorState error={audit.error} onRetry={() => void audit.refetch()} />;
+  if (audit.isError)
+    return <ErrorState inline error={audit.error} onRetry={() => void audit.refetch()} />;
   const items: TimelineItem[] = (audit.data?.items ?? []).map((e) => {
     const actor = e.actorId ? ACTOR[e.actorType] : undefined;
     return {
