@@ -1,4 +1,4 @@
-import { run, stmt } from './db.ts';
+import { first, run, stmt } from './db.ts';
 
 /** The `workflow_runs` table: every module that starts a workflow records it here. */
 export type WorkflowKind = 'template_import' | 'bulk_reissue' | 'connection_sync';
@@ -52,4 +52,24 @@ export async function finishRun(
 
 export async function deleteRun(db: D1Database, instanceId: string): Promise<void> {
   await run(db, 'DELETE FROM workflow_runs WHERE instance_id = ?', [instanceId]);
+}
+
+export async function runStartedAt(db: D1Database, instanceId: string): Promise<number | null> {
+  const row = await first<{ started_at: number }>(
+    db,
+    'SELECT started_at FROM workflow_runs WHERE instance_id = ?',
+    [instanceId],
+  );
+  return row?.started_at ?? null;
+}
+
+/** Retention: drops runs of one kind that started before `before`. */
+export async function deleteRunsBefore(
+  db: D1Database,
+  kind: string,
+  before: number,
+): Promise<number> {
+  return (
+    await run(db, 'DELETE FROM workflow_runs WHERE kind = ? AND started_at < ?', [kind, before])
+  ).changes;
 }

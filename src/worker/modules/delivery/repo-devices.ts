@@ -12,7 +12,7 @@ export async function devicesForPass(
 ): Promise<DeviceTarget[]> {
   const rows = await all<{ device_id: string; push_token: string }>(
     db,
-    `SELECT d.device_id, d.push_token FROM registrations r
+    `SELECT d.device_id, COALESCE(r.push_token, d.push_token) AS push_token FROM registrations r
      JOIN devices d ON d.device_id = r.device_id AND d.identity_id = r.identity_id
      WHERE r.pass_id = ? AND r.identity_id = ? ORDER BY r.created_at`,
     [passId, identityId],
@@ -56,23 +56,33 @@ export async function savePushResults(
 }
 
 /**
- * A dead token belongs to the device, not the pass: remove the device and all its registrations
- * for this identity. Wallet registers again with a fresh token.
+ * A dead token takes its registrations with it: every registration of that device that holds the
+ * same token. Registrations with other tokens stay, so a bad token registered for one pass cannot
+ * cost the device its other passes. Wallet registers again with a fresh token.
  */
 export async function dropRegistrations(
   db: D1Database,
   identityId: string,
-  deviceIds: string[],
+  dead: { deviceId: string; pushToken: string }[],
 ): Promise<void> {
   await batch(db, [
-    ...deviceIds.map((id) =>
-      stmt(db, 'DELETE FROM registrations WHERE identity_id = ? AND device_id = ?', [
-        identityId,
-        id,
-      ]),
+    ...dead.map((d) =>
+      stmt(
+        db,
+        `DELETE FROM registrations WHERE identity_id = ? AND device_id = ?
+         AND COALESCE(push_token, (SELECT push_token FROM devices
+           WHERE device_id = registrations.device_id AND identity_id = registrations.identity_id)) = ?`,
+        [identityId, d.deviceId, d.pushToken],
+      ),
     ),
-    ...deviceIds.map((id) =>
-      stmt(db, 'DELETE FROM devices WHERE device_id = ? AND identity_id = ?', [id, identityId]),
+    ...dead.map((d) =>
+      stmt(
+        db,
+        `DELETE FROM devices WHERE device_id = ? AND identity_id = ?
+         AND NOT EXISTS (SELECT 1 FROM registrations r
+           WHERE r.device_id = devices.device_id AND r.identity_id = devices.identity_id)`,
+        [d.deviceId, identityId],
+      ),
     ),
   ]);
 }

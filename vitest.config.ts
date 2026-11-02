@@ -1,4 +1,4 @@
-import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-workers';
+import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
 const alias = { '@': new URL('./src', import.meta.url).pathname };
@@ -44,7 +44,11 @@ export default defineConfig({
         test: {
           name: 'worker',
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
-          setupFiles: ['./test/setup/block-network.ts', './test/setup/apply-migrations.ts'],
+          setupFiles: [
+            './test/setup/block-network.ts',
+            './test/setup/check-responses.ts',
+            './test/setup/apply-migrations.ts',
+          ],
         },
       },
       {

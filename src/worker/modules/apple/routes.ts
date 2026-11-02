@@ -6,7 +6,7 @@ import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { servePassFile } from '../passes/file.ts';
-import { type C, svc, valid } from '../passes/http.ts';
+import { svc } from '../passes/http.ts';
 import { personalize } from './personalize.ts';
 import {
   authorizePass,
@@ -26,8 +26,10 @@ export const appleRoutes = createRouter();
 // device and per pass. /log has neither, so it keeps the IP key.
 appleRoutes.use('*', rateLimit('RL_APPLE_IP'));
 const byDevice = (c: Context<AppBindings>) => `device:${c.req.param('deviceId')?.slice(0, 128)}`;
+export const passRateKey = (passTypeId: string | undefined, serial: string | undefined) =>
+  `pass:${passTypeId?.slice(0, 128)}:${serial?.slice(0, 64)}`;
 const byPass = (c: Context<AppBindings>) =>
-  `pass:${c.req.param('passTypeId')}:${c.req.param('serial')}`;
+  passRateKey(c.req.param('passTypeId'), c.req.param('serial'));
 appleRoutes.use('/devices/:deviceId/*', rateLimit('RL_APPLE', byDevice));
 appleRoutes.use('/passes/:passTypeId/:serial', rateLimit('RL_APPLE', byPass));
 appleRoutes.use('/passes/:passTypeId/:serial/personalize', rateLimit('RL_APPLE', byPass));
@@ -54,8 +56,8 @@ register(
     params: serial,
     status: 201,
   },
-  async (c: C) => {
-    const p = valid<z.infer<typeof serial>>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     const body = (await c.req.json().catch(() => null)) as { pushToken?: unknown } | null;
     const outcome = await registerDevice(svc(c), {
       ...p,
@@ -75,9 +77,9 @@ register(
     summary: 'Unregister a device',
     params: serial,
   },
-  async (c: C) => {
+  async (c) => {
     await unregisterDevice(svc(c), {
-      ...valid<z.infer<typeof serial>>(c, 'param'),
+      ...c.req.valid('param'),
       authorization: c.req.header('authorization'),
     });
     return empty(200);
@@ -94,9 +96,9 @@ register(
     params: device,
     query: z.object({ passesUpdatedSince: z.string().optional() }),
   },
-  async (c: C) => {
-    const p = valid<z.infer<typeof device>>(c, 'param');
-    const q = valid<{ passesUpdatedSince?: string }>(c, 'query');
+  async (c) => {
+    const p = c.req.valid('param');
+    const q = c.req.valid('query');
     const result = await updatedSerials(svc(c), { ...p, since: q.passesUpdatedSince });
     return result ? c.json(result) : empty(204);
   },
@@ -111,8 +113,8 @@ register(
     summary: 'Latest pass (If-Modified-Since, 304)',
     params: passParams,
   },
-  async (c: C) => {
-    const p = valid<z.infer<typeof passParams>>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     const { pass } = await authorizePass(
       svc(c),
       p.passTypeId,
@@ -132,9 +134,9 @@ register(
     summary: 'Pass personalization (NFC identities only; no ApplePass header)',
     params: passParams,
   },
-  async (c: C) => {
+  async (c) => {
     const signed = await personalize(svc(c), {
-      ...valid<z.infer<typeof passParams>>(c, 'param'),
+      ...c.req.valid('param'),
       body: await c.req.json().catch(() => null),
     });
     return new Response(signed as BodyInit, {
@@ -153,8 +155,8 @@ register(
     body: z.object({ logs: z.array(z.string().max(10_000)).max(1000) }),
     status: 200,
   },
-  async (c: C) => {
-    await recordDeviceLogs(svc(c), valid<{ logs: string[] }>(c, 'json').logs, clientIp(c));
+  async (c) => {
+    await recordDeviceLogs(svc(c), c.req.valid('json').logs, clientIp(c));
     return empty(200);
   },
 );

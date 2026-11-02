@@ -152,8 +152,6 @@ export function createApiClient(deps: ApiClientDeps) {
   };
 }
 
-export type ApiClient = ReturnType<typeof createApiClient>;
-
 let csrfProvider: () => Promise<string | undefined> = async () => undefined;
 
 /** Wired once at startup (lib/query-client.ts) so api.ts does not import the session. */

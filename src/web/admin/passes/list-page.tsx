@@ -3,8 +3,6 @@ import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
-import { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
-import { api } from '../../lib/api.ts';
 import { formatDay } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
@@ -19,6 +17,7 @@ import {
   PageHeader,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
+import { fetchPreview } from '../templates/preview-batch.ts';
 import { usePassList } from './api.ts';
 import { downloadText, toCsv } from './csv.ts';
 import { PassListContext, passColumns, type Swatch } from './list-columns.tsx';
@@ -34,8 +33,7 @@ function useSwatches(templateIds: string[]): Map<string, Swatch> {
   return useQueries({
     queries: templateIds.map((id) => ({
       queryKey: ['admin', 'templates', 'preview', id, null],
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, {}, { signal }),
+      queryFn: () => fetchPreview(id),
       staleTime: Number.POSITIVE_INFINITY,
       retry: false,
     })),

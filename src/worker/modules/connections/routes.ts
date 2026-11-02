@@ -37,8 +37,6 @@ import { receiveWebhook } from './webhooks.ts';
 type C = Context<AppBindings>;
 const actor = (c: C) => actorOf(c.var.auth);
 const sctx = (c: C) => serviceContext(c);
-const valid = (c: C, target: 'param' | 'query' | 'json') =>
-  (c.req as unknown as { valid(t: string): unknown }).valid(target);
 
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();
@@ -53,11 +51,11 @@ register(
     query: ConnectionListQuerySchema,
     response: ConnectionListSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await service.listAll(
         sctx(c),
-        valid(c, 'query') as z.infer<typeof ConnectionListQuerySchema>,
+        c.req.valid('query') as z.infer<typeof ConnectionListQuerySchema>,
       ),
     ),
 );
@@ -70,7 +68,7 @@ register(
     summary: 'Connection health summary',
     response: ConnectionsSummarySchema,
   },
-  async (c: C) => c.json(await actions.healthSummary(sctx(c))),
+  async (c) => c.json(await actions.healthSummary(sctx(c))),
 );
 register(
   connectionsRoutes,
@@ -83,12 +81,12 @@ register(
     status: 201,
     response: ConnectionCreatedSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await service.create(
         sctx(c),
         actor(c),
-        valid(c, 'json') as z.infer<typeof CreateConnectionSchema>,
+        c.req.valid('json') as z.infer<typeof CreateConnectionSchema>,
       ),
       201,
     ),
@@ -103,8 +101,8 @@ register(
     params: IdParamSchema,
     response: ConnectionDetailSchema,
   },
-  async (c: C) =>
-    c.json(await service.getDetail(sctx(c), (valid(c, 'param') as { id: string }).id)),
+  async (c) =>
+    c.json(await service.getDetail(sctx(c), (c.req.valid('param') as { id: string }).id)),
 );
 register(
   connectionsRoutes,
@@ -117,13 +115,13 @@ register(
     body: UpdateConnectionSchema,
     response: ConnectionCreatedSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await service.update(
         sctx(c),
         actor(c),
-        (valid(c, 'param') as { id: string }).id,
-        valid(c, 'json') as z.infer<typeof UpdateConnectionSchema>,
+        (c.req.valid('param') as { id: string }).id,
+        c.req.valid('json') as z.infer<typeof UpdateConnectionSchema>,
       ),
     ),
 );
@@ -137,8 +135,8 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: C) => {
-    await service.remove(sctx(c), actor(c), (valid(c, 'param') as { id: string }).id);
+  async (c) => {
+    await service.remove(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id);
     return c.json({ ok: true as const });
   },
 );
@@ -157,9 +155,9 @@ register(
     body: TestConfigSchema,
     response: TestConfigResponseSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
-      await testConfig(sctx(c), actor(c), valid(c, 'json') as z.infer<typeof TestConfigSchema>),
+      await testConfig(sctx(c), actor(c), c.req.valid('json') as z.infer<typeof TestConfigSchema>),
     ),
 );
 register(
@@ -172,8 +170,8 @@ register(
     params: IdParamSchema,
     response: TestConnectionResponseSchema,
   },
-  async (c: C) =>
-    c.json(await actions.test(sctx(c), actor(c), (valid(c, 'param') as { id: string }).id)),
+  async (c) =>
+    c.json(await actions.test(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id)),
 );
 register(
   connectionsRoutes,
@@ -186,8 +184,11 @@ register(
     status: 202,
     response: SyncNowResponseSchema,
   },
-  async (c: C) =>
-    c.json(await actions.syncNow(sctx(c), actor(c), (valid(c, 'param') as { id: string }).id), 202),
+  async (c) =>
+    c.json(
+      await actions.syncNow(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id),
+      202,
+    ),
 );
 register(
   connectionsRoutes,
@@ -200,12 +201,12 @@ register(
     query: ConnectionRunsQuerySchema,
     response: ConnectionRunListSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await actions.runs(
         sctx(c),
-        (valid(c, 'param') as { id: string }).id,
-        valid(c, 'query') as z.infer<typeof ConnectionRunsQuerySchema>,
+        (c.req.valid('param') as { id: string }).id,
+        c.req.valid('query') as z.infer<typeof ConnectionRunsQuerySchema>,
       ),
     ),
 );
@@ -219,11 +220,11 @@ register(
     params: IdParamSchema,
     response: ConnectionCreatedSchema,
   },
-  async (c: C) => {
+  async (c) => {
     const { webhookSecret, connection } = await actions.rotateWebhookSecret(
       sctx(c),
       actor(c),
-      (valid(c, 'param') as { id: string }).id,
+      (c.req.valid('param') as { id: string }).id,
     );
     return c.json({ ...connection, webhookSecret });
   },
@@ -248,8 +249,8 @@ register(
     params: z.object({ type: z.string() }),
     response: ConnectorInfoSchema,
   },
-  (c: C) => {
-    const def = connectors.get((valid(c, 'param') as { type: string }).type);
+  (c) => {
+    const def = connectors.get((c.req.valid('param') as { type: string }).type);
     if (!def) throw new NotFoundError('Connector type not found.', 'CONNECTOR_NOT_FOUND');
     return c.json(connectorInfo(def));
   },
@@ -272,8 +273,8 @@ register(
     status: 202,
     response: WebhookAckSchema,
   },
-  async (c: C) => {
-    await receiveWebhook(sctx(c), (valid(c, 'param') as { id: string }).id, c.req.raw);
+  async (c) => {
+    await receiveWebhook(sctx(c), (c.req.valid('param') as { id: string }).id, c.req.raw);
     return c.json({ accepted: true as const }, 202);
   },
 );

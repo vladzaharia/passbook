@@ -1,4 +1,4 @@
-import { all, batch, first, run, stmt } from '../../platform/db.ts';
+import { all, batch, first, stmt } from '../../platform/db.ts';
 
 export interface SettingRow {
   key: string;
@@ -38,8 +38,6 @@ export async function writeScope(
   ]);
 }
 
-export { orgIsReadable as orgExists } from '../orgs/repo.ts';
-
 /** Internal state (cron runs, identity checks). Not exposed through the settings API. */
 export async function readSystemValue(db: D1Database, key: string): Promise<unknown | null> {
   const row = await first<{ value: string }>(
@@ -50,18 +48,27 @@ export async function readSystemValue(db: D1Database, key: string): Promise<unkn
   return row ? JSON.parse(row.value) : null;
 }
 
+export function writeSystemValueStmt(
+  db: D1Database,
+  key: string,
+  value: unknown,
+  now: number,
+): D1PreparedStatement {
+  return stmt(
+    db,
+    `INSERT INTO settings (scope, key, value, updated_at) VALUES ('system', ?, ?, ?)
+     ON CONFLICT (scope, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    [key, JSON.stringify(value), now],
+  );
+}
+
 export async function writeSystemValue(
   db: D1Database,
   key: string,
   value: unknown,
   now: number,
 ): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO settings (scope, key, value, updated_at) VALUES ('system', ?, ?, ?)
-     ON CONFLICT (scope, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-    [key, JSON.stringify(value), now],
-  );
+  await writeSystemValueStmt(db, key, value, now).run();
 }
 
 /**

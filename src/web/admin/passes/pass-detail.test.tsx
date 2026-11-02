@@ -72,6 +72,17 @@ function patchAware(server: Server, onPatch: (init?: RequestInit) => Response) {
   });
 }
 
+describe('pass detail: loading', () => {
+  it('fetches the pass once: the route loader and the page share one query', async () => {
+    const server = newServer();
+    await renderApp('/admin/passes/p1', { session: 'admin', handlers: handlers(server) });
+    await screen.findByLabelText(/Member name/);
+    expect(server.calls.filter((c) => c.path === '/passes/p1' && c.method === 'GET')).toHaveLength(
+      1,
+    );
+  });
+});
+
 describe('pass detail: save and conflicts', () => {
   it('saves only the changed keys with the loaded version in If-Match', async () => {
     const user = userEvent.setup();

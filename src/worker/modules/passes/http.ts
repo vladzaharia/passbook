@@ -2,16 +2,10 @@ import type { Context } from 'hono';
 import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
-import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import type { Actor } from './service.ts';
 
 export type C = Context<AppBindings>;
-
-/** Reads the zod-validated part of a request registered through `register()`. */
-export function valid<T>(c: C, target: 'query' | 'param' | 'json'): T {
-  return (c.req as unknown as { valid(t: string): unknown }).valid(target) as T;
-}
 
 export const svc = serviceContext;
 
@@ -36,8 +30,3 @@ export function actorFor(c: C): Actor {
   if (actor.type === 'device') return { type: 'system', id: actor.id };
   return { type: actor.type, id: actor.id };
 }
-
-export const causeFor = (actor: Actor): 'admin' | 'api' =>
-  actor.type === 'api_key' ? 'api' : 'admin';
-
-export const ipOf = clientIp;

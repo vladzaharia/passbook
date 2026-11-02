@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, fakeRateLimiter } from '../../../../test/helpers/index.ts';
+import { fakeAuth, fakeRateLimiter, makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -7,6 +7,7 @@ import { getPass, type Pass } from '../passes/repo.ts';
 import { updatePass } from '../passes/service.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { dailyApple } from './jobs.ts';
+import { passRateKey } from './routes.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TYPE = 'pass.im.plrs.wallet';
@@ -39,18 +40,41 @@ describe('register', () => {
     const pass = await kit.pass();
     expect((await register(pass, 'dev-1', token('a'))).status).toBe(201);
     expect((await register(pass, 'dev-1', token('b'))).status).toBe(200);
-    const device = await first<{ push_token: string }>(
+    const registration = await first<{ push_token: string }>(
       kit.env.DB,
-      'SELECT push_token FROM devices WHERE device_id = ?',
+      'SELECT push_token FROM registrations WHERE device_id = ?',
       ['dev-1'],
     );
-    expect(device?.push_token).toBe(token('b'));
+    expect(registration?.push_token).toBe(token('b'));
     const count = await first<{ n: number }>(
       kit.env.DB,
       'SELECT count(*) AS n FROM registrations WHERE pass_id = ?',
       [pass.id],
     );
     expect(count?.n).toBe(1);
+  });
+
+  it('keeps a push token per registration: another org’s pass cannot move it', async () => {
+    const a = await kit.pass();
+    const otherOrg = await makeOrg(kit.fx, { name: 'Other Gym' });
+    const b = await kit.pass({ orgId: otherOrg.id });
+    expect((await register(a, 'dev-shared', token('a'))).status).toBe(201);
+    await register(b, 'dev-shared', token('c'));
+    await register(b, 'dev-shared', token('d'));
+    const tokenOf = async (pass: Pass) =>
+      (
+        await first<{ push_token: string }>(
+          kit.env.DB,
+          'SELECT push_token FROM registrations WHERE device_id = ? AND pass_id = ?',
+          ['dev-shared', pass.id],
+        )
+      )?.push_token;
+    expect(await tokenOf(a)).toBe(token('a'));
+    expect(await tokenOf(b)).toBe(token('d'));
+    expect(
+      (await all(kit.env.DB, 'SELECT push_token FROM registrations WHERE pass_id = ?', [a.id]))
+        .length,
+    ).toBe(1);
   });
 
   it('answers 401 for a missing, wrong or differently sized token and for unknown passes alike', async () => {
@@ -340,6 +364,12 @@ describe('retention', () => {
       "SELECT seq FROM sqlite_sequence WHERE name = 'revisions'",
     );
     expect(seq?.seq ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('rate limit keys', () => {
+  it('caps the pass key at 200 characters', () => {
+    expect(passRateKey('t'.repeat(10_000), 's'.repeat(10_000)).length).toBeLessThanOrEqual(200);
   });
 });
 

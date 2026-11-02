@@ -22,7 +22,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
-import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
+import { actorFor, assertOrg, type C, orgScopeOf, svc } from './http.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
 import {
@@ -45,8 +45,6 @@ guard(
   requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
 );
 
-type Params = z.infer<typeof IdParamSchema>;
-
 function ifMatch(c: C): number | undefined {
   const raw = c.req.header('if-match');
   if (raw === undefined) return undefined;
@@ -66,8 +64,8 @@ register(
     query: PassListQuerySchema,
     response: PassListSchema,
   },
-  async (c: C) => {
-    const q = valid<z.infer<typeof PassListQuerySchema>>(c, 'query');
+  async (c) => {
+    const q = c.req.valid('query');
     if (q.orgId) assertOrg(c, q.orgId);
     const holderEmail = q.holderEmail ? strictEmail(q.holderEmail) : undefined;
     if (q.holderEmail && !holderEmail) return c.json({ items: [], nextCursor: null });
@@ -99,8 +97,8 @@ register(
     status: 201,
     response: PassDetailSchema,
   },
-  async (c: C) => {
-    const body = valid<z.infer<typeof CreatePassSchema>>(c, 'json');
+  async (c) => {
+    const body = c.req.valid('json');
     assertOrg(c, body.orgId);
     const key = c.req.header('idempotency-key')?.trim();
     if (key !== undefined && (key.length < 1 || key.length > 200))
@@ -141,8 +139,8 @@ register(
     params: IdParamSchema,
     response: PassDetailSchema,
   },
-  async (c: C) => {
-    const detail = await getPassDetail(svc(c), valid<Params>(c, 'param').id, orgScopeOf(c));
+  async (c) => {
+    const detail = await getPassDetail(svc(c), c.req.valid('param').id, orgScopeOf(c));
     return c.json(detail, 200, { etag: `"${detail.version}"` });
   },
 );
@@ -158,10 +156,10 @@ register(
     body: UpdatePassSchema,
     response: PassDetailSchema,
   },
-  async (c: C) => {
-    const patch = valid<z.infer<typeof UpdatePassSchema>>(c, 'json');
+  async (c) => {
+    const patch = c.req.valid('json');
     const expected = ifMatch(c);
-    const detail = await updatePass(svc(c), actorFor(c), valid<Params>(c, 'param').id, patch, {
+    const detail = await updatePass(svc(c), actorFor(c), c.req.valid('param').id, patch, {
       scope: orgScopeOf(c),
       ...(expected !== undefined ? { ifMatch: expected } : {}),
     });
@@ -180,12 +178,12 @@ register(
     body: BindPassConnectionSchema,
     response: PassDetailSchema,
   },
-  async (c: C) => {
+  async (c) => {
     const detail = await bindPassConnection(
       svc(c),
       actorFor(c),
-      valid<Params>(c, 'param').id,
-      valid<z.infer<typeof BindPassConnectionSchema>>(c, 'json'),
+      c.req.valid('param').id,
+      c.req.valid('json'),
       orgScopeOf(c),
     );
     return c.json(detail, 200, { etag: `"${detail.version}"` });
@@ -202,8 +200,8 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: C) => {
-    await deletePass(svc(c), actorFor(c), valid<Params>(c, 'param').id, orgScopeOf(c));
+  async (c) => {
+    await deletePass(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c));
     return c.json({ ok: true });
   },
 );
@@ -216,8 +214,7 @@ for (const [path, summary, action] of [
     passesRoutes,
     'passes',
     { method: 'post', path, summary, params: IdParamSchema, response: PassActionResponseSchema },
-    async (c: C) =>
-      c.json(await action(svc(c), actorFor(c), valid<Params>(c, 'param').id, orgScopeOf(c))),
+    async (c) => c.json(await action(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
   );
 }
 
@@ -232,8 +229,8 @@ register(
     status: 202,
     response: RefreshPassResponseSchema,
   },
-  async (c: C) => {
-    const id = valid<Params>(c, 'param').id;
+  async (c) => {
+    const id = c.req.valid('param').id;
     await requirePass(svc(c), id, orgScopeOf(c));
     const { requestedAt } = await requestRefresh(svc(c), id, actorFor(c));
     return c.json({ accepted: true as const, requestedAt }, 202);
@@ -250,8 +247,8 @@ register(
     params: IdParamSchema,
     response: RotateLinkResponseSchema,
   },
-  async (c: C) =>
-    c.json(await rotateLink(svc(c), actorFor(c), valid<Params>(c, 'param').id, orgScopeOf(c))),
+  async (c) =>
+    c.json(await rotateLink(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
 );
 
 register(
@@ -266,12 +263,12 @@ register(
     status: 202,
     response: OkSchema,
   },
-  async (c: C) => {
+  async (c) => {
     await resendEmail(
       svc(c),
       actorFor(c),
-      valid<Params>(c, 'param').id,
-      valid<z.infer<typeof ResendEmailSchema>>(c, 'json'),
+      c.req.valid('param').id,
+      c.req.valid('json'),
       orgScopeOf(c),
     );
     return c.json({ ok: true as const }, 202);
@@ -288,8 +285,8 @@ register(
     params: IdParamSchema.extend({ version: z.coerce.number().int() }),
     response: PassDetailSchema,
   },
-  async (c: C) => {
-    const p = valid<Params & { version: number }>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     return c.json(await getVersionDetail(svc(c), p.id, p.version, orgScopeOf(c)));
   },
 );
@@ -307,11 +304,9 @@ register(
       changes: z.array(z.object({ path: z.string(), from: z.unknown(), to: z.unknown() })),
     }),
   },
-  async (c: C) => {
-    const q = valid<z.infer<typeof DiffQuerySchema>>(c, 'query');
-    return c.json(
-      await diffVersions(svc(c), valid<Params>(c, 'param').id, q.from, q.to, orgScopeOf(c)),
-    );
+  async (c) => {
+    const q = c.req.valid('query');
+    return c.json(await diffVersions(svc(c), c.req.valid('param').id, q.from, q.to, orgScopeOf(c)));
   },
 );
 

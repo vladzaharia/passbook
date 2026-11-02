@@ -90,17 +90,6 @@ export function SkeletonTimeline({
   );
 }
 
-/** A chart at its final height (overview): title row, the 640:160 plot, the data disclosure. */
-export function SkeletonChartCard({ label = 'Loading chart' }: { label?: string }) {
-  return (
-    <Loading label={label} className="flex flex-col gap-2">
-      <Skeleton className="h-5 w-32" />
-      <Skeleton className="aspect-[640/160] w-full" />
-      <Skeleton className="h-4 w-28" />
-    </Loading>
-  );
-}
-
 /** A pass tile: the pass at its aspect, then the action row. */
 export function SkeletonPassTile() {
   return (

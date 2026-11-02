@@ -141,8 +141,6 @@ export function signInRows(db: D1Database, w: Window, scope: Scope) {
   );
 }
 
-export { orgIsReadable as orgExists } from '../orgs/repo.ts';
-
 export interface RecentRow {
   at: number;
   action: string;

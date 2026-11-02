@@ -88,7 +88,7 @@ export function getDefaultRow(db: D1Database): Promise<IdentityRow | null> {
   return first<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities WHERE is_default = 1`);
 }
 
-export { orgDefaultIdentityId, orgIsReadable as orgExists } from '../orgs/repo.ts';
+export { orgDefaultIdentityId } from '../orgs/repo.ts';
 
 export function getCredentialBlob(db: D1Database, id: string): Promise<CredentialBlob | null> {
   return first<CredentialBlob>(

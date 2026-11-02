@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { z } from 'zod';
 import {
@@ -40,13 +40,15 @@ export function useConnections(filters: ConnectionFilters, enabled = true) {
   );
 }
 
-export function useConnection(id: string | undefined) {
-  return useQuery({
-    queryKey: connectionKeys.detail(id ?? ''),
+export const connectionDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: connectionKeys.detail(id),
     queryFn: ({ signal }) =>
       api.get(`/api/v1/connections/${id}`, ConnectionDetailSchema, { signal }),
-    enabled: Boolean(id),
   });
+
+export function useConnection(id: string | undefined) {
+  return useQuery({ ...connectionDetailQuery(id ?? ''), enabled: Boolean(id) });
 }
 
 export function useConnectors() {
@@ -70,7 +72,11 @@ export type ConnectionPatch = z.input<typeof UpdateConnectionSchema>;
 
 export function useConnectionActions(id: string) {
   const qc = useQueryClient();
-  const done = () => qc.invalidateQueries({ queryKey: connectionKeys.all });
+  const done = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: connectionKeys.all }),
+      qc.invalidateQueries({ queryKey: ['palette'] }),
+    ]);
   return {
     update: useMutation({
       mutationFn: (patch: ConnectionPatch) =>

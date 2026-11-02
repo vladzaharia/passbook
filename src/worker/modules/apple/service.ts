@@ -82,7 +82,13 @@ export async function registerDevice(
   const db = ctx.env.DB;
   const now = ctx.clock.now();
   if (await registrationExists(db, input.deviceId, identity.id, pass.id)) {
-    await updatePushToken(db, input.deviceId, identity.id, input.pushToken, now);
+    await updatePushToken(db, {
+      deviceId: input.deviceId,
+      identityId: identity.id,
+      passId: pass.id,
+      pushToken: input.pushToken,
+      now,
+    });
     return 'existing';
   }
   const full = new AppError(

@@ -6,7 +6,7 @@ import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { enqueuePassEmail } from '../delivery/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { createPassIdempotent, createPassRow } from './create.ts';
+import { createPassRow } from './create.ts';
 import { detailOf, linksOf, toSummary } from './detail.ts';
 import { type Mutation, publishPass } from './publish.ts';
 import {
@@ -28,8 +28,7 @@ export interface Actor {
 const causeOf = (actor: Actor) => (actor.type === 'api_key' ? 'api' : 'admin');
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-export { getPassDetail } from './detail.ts';
-export { createPassIdempotent, createPassRow };
+export { createPassRow };
 
 export async function listPassSummaries(
   ctx: ServiceContext,

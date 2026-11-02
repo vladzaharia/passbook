@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextOrHome, safeNext } from './next.ts';
+import { safeNextPath as safeNext } from './next.ts';
 
 describe('safeNext', () => {
   it('keeps same-origin relative paths with query and hash', () => {
@@ -16,17 +16,13 @@ describe('safeNext', () => {
     'evil.example',
     '/ /x',
     '/a\nb',
+    '/\t/evil.example',
+    '/a\u00a0b',
     '/../etc',
     '/a/%2e%2e/b',
     '',
     `/${'a'.repeat(600)}`,
   ])('refuses %j', (value) => {
     expect(safeNext(value)).toBeNull();
-    expect(nextOrHome(value)).toBe('/');
-  });
-
-  it('falls back to home for null and undefined', () => {
-    expect(nextOrHome(null)).toBe('/');
-    expect(nextOrHome(undefined)).toBe('/');
   });
 });

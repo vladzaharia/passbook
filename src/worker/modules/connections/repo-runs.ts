@@ -208,16 +208,3 @@ export async function runStats(db: D1Database, connectionId: string) {
   );
   return { rows, passCount: passCount?.n ?? 0 };
 }
-
-export async function recentRunIds(
-  db: D1Database,
-  connectionId: string,
-  limit: number,
-): Promise<string[]> {
-  const rows = await all<{ id: string }>(
-    db,
-    'SELECT id FROM connection_runs WHERE connection_id = ? ORDER BY started_at DESC, id DESC LIMIT ?',
-    [connectionId, limit],
-  );
-  return rows.map((r) => r.id);
-}

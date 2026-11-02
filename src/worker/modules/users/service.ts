@@ -8,6 +8,7 @@ import type {
 } from '../../../shared/contracts/index.ts';
 import type { Role } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { parseJsonArray, parseRoles } from '../../platform/json-column.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { emailsOf } from '../auth/repo.ts';
@@ -26,17 +27,7 @@ const METHOD_LABEL: Record<SignInMethod, string> = {
   breakglass: 'Break-glass',
 };
 
-const asRoles = (raw: string): Role[] => {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((r): r is Role => r === 'admin' || r === 'user')
-      : [];
-  } catch {
-    // Stored by the auth module as JSON; a corrupt value means no roles, not a 500.
-    return [];
-  }
-};
+const asRoles = (raw: string): Role[] => parseRoles(raw);
 
 function toUser(row: repo.UserRow): UserDto {
   return {
@@ -48,16 +39,6 @@ function toUser(row: repo.UserRow): UserDto {
     createdAt: row.created_at,
     lastLoginAt: row.last_login_at,
   };
-}
-
-function groupsOf(raw: string): string[] {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((g): g is string => typeof g === 'string') : [];
-  } catch {
-    // Groups mirror the IdP claim; a corrupt value shows as no groups.
-    return [];
-  }
 }
 
 /** Polaris ID first, then the email link, then break-glass. */
@@ -125,7 +106,7 @@ export async function getUserDetail(
       subject: i.subject,
       emailClaim: i.email_claim,
       emailVerified: i.email_verified === 1,
-      groups: groupsOf(i.groups),
+      groups: parseJsonArray(i.groups, 'groups', (g): g is string => typeof g === 'string'),
       lastUsedAt: i.last_used_at,
     })),
     sessions: sessions.map((s) => ({

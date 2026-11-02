@@ -1,5 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
+import { appleWalletBadgeHtml } from '../../shared/apple-badge.ts';
+import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import cardBase from '../../web/pass-card/pass-card-base.css?raw';
@@ -10,7 +12,7 @@ import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
 import type { PassDevice } from './device.ts';
 import { hostedPage } from './hosted.ts';
-import { escapeHtml, HEAD_HTML, THEME_CSS } from './theme.ts';
+import { HEAD_HTML, THEME_CSS } from './theme.ts';
 
 const cardCss = `${cardBase}\n${cardPoster}\n${cardText}`;
 const stageAllCss = `${stageCss}\n${stageMotion}\n${stageSeg}`;
@@ -32,13 +34,6 @@ export interface PassPageProps {
   /** Org support contacts, already validated; omitted when the org has none. */
   support?: { email: string | null; url: string | null };
 }
-
-/**
- * Apple's badge, unmodified: black on light, outline on dark (the kit's appleWalletBadgeHtml,
- * which the Worker typecheck cannot import). Never animated.
- */
-const badgeHtml = (href: string) =>
-  `<a class="awb" href="${escapeHtml(href)}"><picture><source srcset="/apple/badge/en/outline.svg" media="(prefers-color-scheme: dark)"><img src="/apple/badge/en/black.svg" alt="Add to Apple Wallet" height="44"></picture></a>`;
 
 const ADD_LINE = 'Open on iPhone or Mac to add to Wallet.';
 const SAFARI_LINE = 'Open in Safari to add to Wallet.';
@@ -104,7 +99,7 @@ function PassBody(props: PassPageProps) {
     <div
       className="badge"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: static badge markup, href escaped
-      dangerouslySetInnerHTML={{ __html: badgeHtml(props.downloadHref) }}
+      dangerouslySetInnerHTML={{ __html: appleWalletBadgeHtml({ href: props.downloadHref }) }}
     />
   ) : null;
   return (

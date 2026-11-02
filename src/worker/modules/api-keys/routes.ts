@@ -35,8 +35,8 @@ register(
     status: 201,
     response: CreatedApiKeySchema,
   },
-  async (c: C) => {
-    const input = CreateApiKeySchema.parse(await c.req.json());
+  async (c) => {
+    const input = c.req.valid('json');
     return c.json(await createApiKey(serviceContext(c), currentUserId(c), input), 201);
   },
 );
@@ -50,8 +50,8 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: C) => {
-    await revokeApiKey(serviceContext(c), currentUserId(c), c.req.param('id') ?? '');
+  async (c) => {
+    await revokeApiKey(serviceContext(c), currentUserId(c), c.req.valid('param').id);
     return c.json({ ok: true as const });
   },
 );

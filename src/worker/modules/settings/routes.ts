@@ -9,7 +9,7 @@ import { requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requestActor, valid } from '../audit/http.ts';
+import { requestActor } from '../audit/http.ts';
 import { listSettings, settingsImpact, updateSettings } from './service.ts';
 
 export const settingsRoutes = createRouter();
@@ -33,8 +33,8 @@ register(
     query: SettingsListQuerySchema,
     response: SettingsListSchema,
   },
-  async (c: Context<AppBindings>) => {
-    const { scope } = valid<{ scope: string }>(c, 'query');
+  async (c) => {
+    const { scope } = c.req.valid('query');
     return c.json({ items: await listSettings(serviceContext(c), scope), oidc: oidcInfo(c) });
   },
 );
@@ -49,8 +49,8 @@ register(
     body: UpdateSettingsSchema,
     response: SettingsListSchema,
   },
-  async (c: Context<AppBindings>) => {
-    const input = valid<{ scope: string; values: Record<string, unknown> }>(c, 'json');
+  async (c) => {
+    const input = c.req.valid('json');
     const items = await updateSettings(serviceContext(c), requestActor(c), input);
     return c.json({ items, oidc: oidcInfo(c) });
   },
@@ -65,5 +65,5 @@ register(
     summary: 'Users who sign in by email only',
     response: SettingsImpactSchema,
   },
-  async (c: Context<AppBindings>) => c.json(await settingsImpact(serviceContext(c))),
+  async (c) => c.json(await settingsImpact(serviceContext(c))),
 );

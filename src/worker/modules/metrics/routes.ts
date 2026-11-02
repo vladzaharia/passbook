@@ -1,11 +1,7 @@
-import type { Context } from 'hono';
 import { MetricsOverviewSchema, MetricsQuerySchema } from '../../../shared/contracts/index.ts';
-import type { MetricsQuery } from '../../../shared/contracts/metrics.ts';
 import { requireAdmin } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { valid } from '../audit/http.ts';
 import { getOverview } from './service.ts';
 
 export const metricsRoutes = createRouter();
@@ -21,6 +17,5 @@ register(
     query: MetricsQuerySchema,
     response: MetricsOverviewSchema,
   },
-  async (c: Context<AppBindings>) =>
-    c.json(await getOverview(serviceContext(c), valid<MetricsQuery>(c, 'query'))),
+  async (c) => c.json(await getOverview(serviceContext(c), c.req.valid('query'))),
 );

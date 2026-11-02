@@ -38,7 +38,6 @@ import {
 } from './service.ts';
 
 type C = Context<AppBindings>;
-const id = (c: C) => c.req.param('id') ?? '';
 const sessionId = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
 
 export const meRoutes = createRouter();
@@ -55,10 +54,8 @@ register(
     query: PageQuerySchema,
     response: MyPassListSchema,
   },
-  async (c: C) =>
-    c.json(
-      await listMyPasses(serviceContext(c), currentUserId(c), PageQuerySchema.parse(c.req.query())),
-    ),
+  async (c) =>
+    c.json(await listMyPasses(serviceContext(c), currentUserId(c), c.req.valid('query'))),
 );
 register(
   meRoutes,
@@ -69,8 +66,8 @@ register(
     summary: 'All my active passes as .pkpasses bundles (10 per part)',
     query: MyBundleQuerySchema,
   },
-  async (c: C) => {
-    const { part } = MyBundleQuerySchema.parse(c.req.query());
+  async (c) => {
+    const { part } = c.req.valid('query');
     const bundle = await myPassesBundle(serviceContext(c), currentUserId(c), part);
     return new Response(bundle.body, {
       headers: {
@@ -93,7 +90,8 @@ register(
     params: IdParamSchema,
     response: MyPassSchema,
   },
-  async (c: C) => c.json(await getMyPass(serviceContext(c), currentUserId(c), id(c))),
+  async (c) =>
+    c.json(await getMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
 );
 register(
   meRoutes,
@@ -106,7 +104,8 @@ register(
     status: 202,
     response: RefreshResponseSchema,
   },
-  async (c: C) => c.json(await refreshMyPass(serviceContext(c), currentUserId(c), id(c)), 202),
+  async (c) =>
+    c.json(await refreshMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id), 202),
 );
 register(
   meRoutes,
@@ -118,7 +117,8 @@ register(
     params: IdParamSchema,
     response: RemovePassResponseSchema,
   },
-  async (c: C) => c.json(await removeMyPass(serviceContext(c), currentUserId(c), id(c))),
+  async (c) =>
+    c.json(await removeMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
 );
 register(
   meRoutes,
@@ -137,8 +137,8 @@ register(
     status: 202,
     response: OkSchema,
   },
-  async (c: C) => {
-    const { email } = AddEmailRequestSchema.parse(await c.req.json());
+  async (c) => {
+    const { email } = c.req.valid('json');
     return c.json(await addMyEmail(serviceContext(c), currentUserId(c), email), 202);
   },
 );
@@ -152,8 +152,8 @@ register(
     params: z.object({ email: z.string() }),
     response: MyEmailListSchema,
   },
-  async (c: C) =>
-    c.json(await removeMyEmail(serviceContext(c), currentUserId(c), c.req.param('email') ?? '')),
+  async (c) =>
+    c.json(await removeMyEmail(serviceContext(c), currentUserId(c), c.req.valid('param').email)),
 );
 register(
   meRoutes,
@@ -165,9 +165,9 @@ register(
     params: MyEmailParamSchema,
     response: MyEmailListSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
-      await makeMyEmailPrimary(serviceContext(c), currentUserId(c), c.req.param('email') ?? ''),
+      await makeMyEmailPrimary(serviceContext(c), currentUserId(c), c.req.valid('param').email),
     ),
 );
 register(
@@ -185,7 +185,7 @@ register(
     summary: 'Sign out everywhere',
     response: OkSchema,
   },
-  async (c: C) => {
+  async (c) => {
     const result = await revokeAllMySessions(serviceContext(c), currentUserId(c));
     clearSessionCookie(c);
     return c.json(result);
@@ -201,9 +201,13 @@ register(
     params: IdParamSchema,
     response: OkSchema,
   },
-  async (c: C) => {
-    const result = await revokeMySession(serviceContext(c), currentUserId(c), id(c));
-    if (id(c) === sessionId(c)) clearSessionCookie(c);
+  async (c) => {
+    const result = await revokeMySession(
+      serviceContext(c),
+      currentUserId(c),
+      c.req.valid('param').id,
+    );
+    if (c.req.valid('param').id === sessionId(c)) clearSessionCookie(c);
     return c.json(result);
   },
 );

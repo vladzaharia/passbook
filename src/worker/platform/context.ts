@@ -42,6 +42,9 @@ export interface ContextOptions {
   logger?: (base: Record<string, unknown>) => Logger;
 }
 
+/** Share of successful requests that log `request.done`; every 4xx logs. */
+const SUCCESS_SAMPLE = 0.05;
+
 /** Sets requestId, clock, ids, logger, nonce and auth stores on every request. */
 export function requestContext(options: ContextOptions) {
   return createMiddleware<AppBindings>(async (c, next) => {
@@ -56,6 +59,16 @@ export function requestContext(options: ContextOptions) {
     const base = { requestId, build: c.env.CF_VERSION?.id };
     c.set('log', options.logger ? options.logger(base) : createLogger(base));
     c.header('x-request-id', requestId);
+    const started = clock.now();
     await next();
+    const status = c.res.status;
+    // Route pattern only, never the URL: paths carry capability tokens. 5xx is logged by the error handler.
+    if (status < 500 && (status >= 400 || Math.random() < SUCCESS_SAMPLE))
+      c.var.log.info('request.done', {
+        route: c.req.routePath,
+        method: c.req.method,
+        status,
+        ms: clock.now() - started,
+      });
   });
 }

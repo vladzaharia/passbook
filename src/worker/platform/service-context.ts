@@ -18,6 +18,11 @@ export interface ServiceContext {
   waitUntil(promise: Promise<unknown>): void;
 }
 
+/** A rejected background promise is logged, never dropped. */
+function reportFailure(promise: Promise<unknown>, log: Logger): Promise<unknown> {
+  return promise.catch((error) => log.warn('waituntil.failed', { code: 'WAIT_UNTIL', error }));
+}
+
 export function serviceContext(c: Context<AppBindings>): ServiceContext {
   return {
     env: c.env,
@@ -26,13 +31,11 @@ export function serviceContext(c: Context<AppBindings>): ServiceContext {
     log: c.var.log,
     requestId: c.var.requestId,
     waitUntil: (promise) => {
+      const reported = reportFailure(promise, c.var.log);
       try {
-        c.executionCtx.waitUntil(promise);
+        c.executionCtx.waitUntil(reported);
       } catch {
-        // No execution context (tests, scripts): run detached but report failures.
-        void promise.catch((error) =>
-          c.var.log.warn('waituntil.failed', { code: 'WAIT_UNTIL', error }),
-        );
+        // No execution context (tests, scripts): the promise already runs detached.
       }
     },
   };
@@ -55,11 +58,9 @@ export function createServiceContext(
     ids: createIds(clock),
     log,
     requestId: null,
-    waitUntil: (promise) =>
-      options.ctx
-        ? options.ctx.waitUntil(promise)
-        : void promise.catch((error) =>
-            log.warn('waituntil.failed', { code: 'WAIT_UNTIL', error }),
-          ),
+    waitUntil: (promise) => {
+      const reported = reportFailure(promise, log);
+      options.ctx?.waitUntil(reported);
+    },
   };
 }

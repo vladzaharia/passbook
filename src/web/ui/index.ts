@@ -41,7 +41,6 @@ export * from './option-tile.tsx';
 export * from './page-header.tsx';
 export * from './pagination.tsx';
 export * from './pass-toggles.tsx';
-export * from './pending-note.tsx';
 export * from './popover.tsx';
 export * from './radio-group.tsx';
 export * from './save-bar.tsx';

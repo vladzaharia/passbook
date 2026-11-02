@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { templateDetailQuery } from '../../../admin/templates/api.ts';
 import { TemplateDetailPage } from '../../../admin/templates/detail-page.tsx';
 import { templateDetailSearchSchema } from '../../../admin/templates/search.ts';
 
@@ -10,5 +11,8 @@ function TemplateRoute() {
 
 export const Route = createFileRoute('/admin/templates/$templateId')({
   validateSearch: templateDetailSearchSchema,
+  loader: ({ context, params }) => {
+    void context.queryClient.prefetchQuery(templateDetailQuery(params.templateId));
+  },
   component: TemplateRoute,
 });

@@ -1,4 +1,3 @@
-import type { z } from 'zod';
 import {
   BulkPassActionResponseSchema,
   BulkPassActionSchema,
@@ -9,7 +8,7 @@ import { requireAdmin } from '../../platform/auth.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction } from './bulk-actions.ts';
-import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
+import { actorFor, assertOrg, orgScopeOf, svc } from './http.ts';
 
 /** Many-pass actions: void or email a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
@@ -25,8 +24,8 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
       body: BulkPassActionSchema,
       response: BulkPassActionResponseSchema,
     },
-    async (c: C) => {
-      const body = valid<z.infer<typeof BulkPassActionSchema>>(c, 'json');
+    async (c) => {
+      const body = c.req.valid('json');
       if (body.orgId) assertOrg(c, body.orgId);
       return c.json(await bulkPassAction(svc(c), actorFor(c), body, orgScopeOf(c)));
     },
@@ -43,8 +42,8 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
       status: 202,
       response: BulkReissueResponseSchema,
     },
-    async (c: C) => {
-      const body = valid<z.infer<typeof BulkReissueSchema>>(c, 'json');
+    async (c) => {
+      const body = c.req.valid('json');
       const workflowInstanceId = await startBulkReissue(svc(c), actorFor(c), body);
       return c.json({ workflowInstanceId }, 202);
     },

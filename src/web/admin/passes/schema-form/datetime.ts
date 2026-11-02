@@ -1,25 +1,5 @@
 /** Wall-clock <-> UTC conversion in an explicit IANA zone. */
 
-export function browserZone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
-
-export function zoneList(extra: string): string[] {
-  let zones: string[] = [];
-  try {
-    zones = Intl.supportedValuesOf('timeZone');
-  } catch {
-    zones = [];
-  }
-  const set = new Set(['UTC', ...zones]);
-  set.add(extra);
-  return [...set].sort();
-}
-
 const LOCAL = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
 function wallAsUtc(ms: number, zone: string): number {

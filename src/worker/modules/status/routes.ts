@@ -1,14 +1,11 @@
-import type { Context } from 'hono';
 import {
   StatusQuerySchema,
   StatusResponseSchema,
   WorkflowRunListSchema,
 } from '../../../shared/contracts/index.ts';
 import { requireAdmin } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { valid } from '../audit/http.ts';
 import { getStatus, listWorkflowRuns } from './service.ts';
 
 export const statusRoutes = createRouter();
@@ -24,8 +21,8 @@ register(
     query: StatusQuerySchema,
     response: StatusResponseSchema,
   },
-  async (c: Context<AppBindings>) => {
-    const { fresh } = valid<{ fresh?: '0' | '1' }>(c, 'query');
+  async (c) => {
+    const { fresh } = c.req.valid('query');
     return c.json(await getStatus(serviceContext(c), { fresh: fresh === '1' }));
   },
 );
@@ -38,5 +35,5 @@ register(
     summary: 'Recent workflow runs',
     response: WorkflowRunListSchema,
   },
-  async (c: Context<AppBindings>) => c.json(await listWorkflowRuns(serviceContext(c))),
+  async (c) => c.json(await listWorkflowRuns(serviceContext(c))),
 );

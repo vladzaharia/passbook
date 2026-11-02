@@ -1,7 +1,5 @@
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import type { z } from 'zod';
-import type { TemplateManifest } from '../../../passkit/types.ts';
 import {
   ActivateVersionSchema,
   CloneTemplateSchema,
@@ -29,7 +27,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
-import { registerLifecycle, registerUploadList } from './routes-more.ts';
+import { registerLifecycle, registerPreviewBatch, registerUploadList } from './routes-more.ts';
 import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 
@@ -56,8 +54,6 @@ templatesRoutes.use(
 );
 
 type C = Context<AppBindings>;
-const valid = <T>(c: C, target: 'query' | 'param' | 'json'): T =>
-  (c.req as unknown as { valid(target: string): unknown }).valid(target) as T;
 
 async function archiveBytes(c: C): Promise<Uint8Array> {
   const type = c.req.header('content-type') ?? '';
@@ -79,14 +75,7 @@ register(
     query: TemplateListQuerySchema,
     response: TemplateListSchema,
   },
-  async (c: C) =>
-    c.json(
-      await list(
-        serviceContext(c),
-        c.var.auth,
-        valid<z.infer<typeof TemplateListQuerySchema>>(c, 'query'),
-      ),
-    ),
+  async (c) => c.json(await list(serviceContext(c), c.var.auth, c.req.valid('query'))),
 );
 
 register(
@@ -100,12 +89,12 @@ register(
     status: 202,
     response: UploadTemplateResponseSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await acceptUpload(
         serviceContext(c),
         c.var.auth,
-        valid<z.infer<typeof UploadTemplateQuerySchema>>(c, 'query'),
+        c.req.valid('query'),
         await archiveBytes(c),
       ),
       202,
@@ -122,11 +111,11 @@ register(
     params: IdParamSchema,
     response: ImportStatusSchema,
   },
-  async (c: C) =>
-    c.json(await importStatus(serviceContext(c), c.var.auth, valid<{ id: string }>(c, 'param').id)),
+  async (c) => c.json(await importStatus(serviceContext(c), c.var.auth, c.req.valid('param').id)),
 );
 
 registerUploadList(templatesRoutes);
+registerPreviewBatch(templatesRoutes);
 
 register(
   templatesRoutes,
@@ -138,8 +127,7 @@ register(
     params: IdParamSchema,
     response: TemplateDetailSchema,
   },
-  async (c: C) =>
-    c.json(await detail(serviceContext(c), c.var.auth, valid<{ id: string }>(c, 'param').id)),
+  async (c) => c.json(await detail(serviceContext(c), c.var.auth, c.req.valid('param').id)),
 );
 
 register(
@@ -153,13 +141,13 @@ register(
     body: UpdateTemplateSchema,
     response: TemplateDetailSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await assignOrg(
         serviceContext(c),
         c.var.auth,
-        valid<{ id: string }>(c, 'param').id,
-        valid<z.infer<typeof UpdateTemplateSchema>>(c, 'json').orgId,
+        c.req.valid('param').id,
+        c.req.valid('json').orgId,
       ),
     ),
 );
@@ -174,12 +162,8 @@ register(
     params: IdParamSchema,
     response: DeleteTemplateResponseSchema,
   },
-  async (c: C) => {
-    const outcome = await removeTemplate(
-      serviceContext(c),
-      c.var.auth,
-      valid<{ id: string }>(c, 'param').id,
-    );
+  async (c) => {
+    const outcome = await removeTemplate(serviceContext(c), c.var.auth, c.req.valid('param').id);
     return c.json({ ok: true as const, outcome });
   },
 );
@@ -196,13 +180,13 @@ register(
     status: 201,
     response: TemplateDetailSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await cloneTemplate(
         serviceContext(c),
         c.var.auth,
-        valid<{ id: string }>(c, 'param').id,
-        valid<z.infer<typeof CloneTemplateSchema>>(c, 'json'),
+        c.req.valid('param').id,
+        c.req.valid('json'),
       ),
       201,
     ),
@@ -219,13 +203,13 @@ register(
     body: ActivateVersionSchema,
     response: TemplateDetailSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await activateVersion(
         serviceContext(c),
         c.var.auth,
-        valid<{ id: string }>(c, 'param').id,
-        valid<z.infer<typeof ActivateVersionSchema>>(c, 'json'),
+        c.req.valid('param').id,
+        c.req.valid('json'),
       ),
     ),
 );
@@ -241,13 +225,13 @@ register(
     body: UpdateManifestSchema,
     response: TemplateDetailSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
       await replaceManifest(
         serviceContext(c),
         c.var.auth,
-        valid<{ id: string }>(c, 'param').id,
-        valid<{ manifest: TemplateManifest }>(c, 'json').manifest,
+        c.req.valid('param').id,
+        c.req.valid('json').manifest,
       ),
     ),
 );
@@ -263,14 +247,9 @@ register(
     body: PreviewRequestSchema,
     response: PreviewResponseSchema,
   },
-  async (c: C) =>
+  async (c) =>
     c.json(
-      await preview(
-        serviceContext(c),
-        c.var.auth,
-        valid<{ id: string }>(c, 'param').id,
-        valid<z.infer<typeof PreviewRequestSchema>>(c, 'json'),
-      ),
+      await preview(serviceContext(c), c.var.auth, c.req.valid('param').id, c.req.valid('json')),
     ),
 );
 
@@ -284,8 +263,8 @@ register(
     params: TemplateVersionParamSchema,
     response: TemplateVersionDetailSchema,
   },
-  async (c: C) => {
-    const p = valid<{ id: string; version: string }>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     return c.json(await versionDetail(serviceContext(c), c.var.auth, p.id, p.version));
   },
 );
@@ -299,8 +278,8 @@ register(
     summary: 'Template asset bytes',
     params: TemplateAssetParamSchema,
   },
-  async (c: C) => {
-    const p = valid<{ id: string; version: string; name: string }>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     const asset = await openVersionAsset(serviceContext(c), c.var.auth, p.id, p.version, p.name);
     const etag = asset.sha1 ? `"${asset.sha1}"` : null;
     // Versions are content hashes, so a given URL never changes.

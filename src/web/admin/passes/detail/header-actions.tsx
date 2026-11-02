@@ -1,13 +1,6 @@
 import { Fragment } from 'react';
-import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, MoreMenu } from '../../../ui/index.ts';
-import { type PassActionRunner, usePassActionRunner } from '../pass-actions.tsx';
-
-/** Header: the bar actions as outline buttons (one row), the rest in More (destructive last). */
-export function PassHeaderActions({ pass }: { pass: PassDetailDto }) {
-  const runner = usePassActionRunner(pass, pass);
-  return <HeaderActionsView runner={runner} />;
-}
+import type { PassActionRunner } from '../pass-actions.tsx';
 
 export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
   const bar = runner.defs.filter((d) => d.bar);

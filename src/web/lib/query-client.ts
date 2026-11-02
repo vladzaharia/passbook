@@ -4,7 +4,8 @@ import { isApiError } from './errors.ts';
 import { sessionQuery } from './session.ts';
 
 export function shouldRetry(failureCount: number, error: unknown): boolean {
-  if (isApiError(error) && !error.isTransient) return false;
+  // A malformed body is deterministic; retrying only delays the error state.
+  if (isApiError(error) && (!error.isTransient || error.code === 'invalid_response')) return false;
   return failureCount < 2;
 }
 

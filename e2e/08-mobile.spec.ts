@@ -19,7 +19,11 @@ let adminPassTitle = '';
 test.beforeAll(async () => {
   const api = await apiAs('admin');
   adminPassTitle = `Mobile ${uid('M')}`;
-  // Verified email of the signed-in OIDC user, so the pass is owned immediately.
+  // Sign-in does not verify the email (oidc.trustEmail is off), so an admin does: the pass is then
+  // owned at once. Adding an address that is already verified changes nothing.
+  const { items } = await api.get(`/api/v1/users?q=${encodeURIComponent(USER_EMAIL)}`);
+  const user = items.find((u: { primaryEmail: string }) => u.primaryEmail === USER_EMAIL);
+  await api.send('POST', `/api/v1/users/${user.id}/emails`, { email: USER_EMAIL });
   const pass = await createPass(api, readSeed().org.id, {
     holder: adminPassTitle,
     email: USER_EMAIL,

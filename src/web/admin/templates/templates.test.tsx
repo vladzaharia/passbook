@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '../../lib/test-utils.tsx';
-import { ORG, SAMPLE_PASS_JSON, templateDetail, templateSummary } from '../passes/test-fixtures.ts';
+import {
+  ORG,
+  previewsHandler,
+  SAMPLE_PASS_JSON,
+  templateDetail,
+  templateSummary,
+} from '../passes/test-fixtures.ts';
 import { importPolling } from './api.ts';
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
@@ -107,6 +113,7 @@ describe('template detail', () => {
       handlers: {
         '/api/v1/orgs': orgs,
         '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
@@ -133,6 +140,7 @@ describe('template detail', () => {
       handlers: {
         '/api/v1/orgs': orgs,
         '/api/v1/templates/tpl1': () => json(detail),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': preview,
         '/api/v1/templates/tpl1/activate': (_u, init) => {
           bodies.push(JSON.parse(String(init?.body)));
@@ -159,6 +167,7 @@ describe('template detail', () => {
         '/api/v1/orgs': orgs,
         '/api/v1/templates/b1': () =>
           json(templateDetail({ id: 'b1', origin: 'baked', orgId: null })),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/b1/preview': preview,
         '/api/v1/templates/b1/clone': (_u, init) => {
           bodies.push(JSON.parse(String(init?.body)));
@@ -210,6 +219,7 @@ describe('template detail', () => {
           }
           return json(templateDetail({ id: 'b1', origin: 'baked', orgId: null, orgName: null }));
         },
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/b1/preview': preview,
       },
     });
@@ -248,6 +258,7 @@ describe('template detail', () => {
           archived = false;
           return json(templateDetail({ passCount: 4 }));
         },
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
@@ -269,6 +280,7 @@ describe('template detail', () => {
       handlers: {
         '/api/v1/orgs': orgs,
         '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
@@ -282,6 +294,7 @@ describe('template detail', () => {
     const handlers = {
       '/api/v1/orgs': orgs,
       '/api/v1/templates/tpl1': () => json(templateDetail()),
+      '/api/v1/templates/previews': previewsHandler,
       '/api/v1/templates/tpl1/preview': preview,
     };
     const { router } = await renderApp('/admin/templates/tpl1?tab=bogus', {
@@ -304,6 +317,7 @@ describe('template detail', () => {
       handlers: {
         '/api/v1/orgs': orgs,
         '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': preview,
         '/api/v1/templates/tpl1/manifest': (_u, init) => {
           bodies.push(JSON.parse(String(init?.body)));
@@ -335,6 +349,7 @@ describe('template detail', () => {
       handlers: {
         '/api/v1/orgs': orgs,
         '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': preview,
         '/api/v1/templates/tpl1/manifest': () => {
           calls += 1;

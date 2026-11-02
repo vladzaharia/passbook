@@ -42,9 +42,10 @@ export function useUserSearch(q: string) {
   });
 }
 
+/** Same key and request as useOrgList(), so a page that uses both fetches the list once. */
 export function useOrgOptions(enabled = true) {
   return useQuery({
-    queryKey: ['orgs', 'options'],
+    queryKey: ['orgs', 'list', ''],
     queryFn: ({ signal }) =>
       api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200 }, signal }),
     enabled,
@@ -52,24 +53,32 @@ export function useOrgOptions(enabled = true) {
   });
 }
 
-/** Templates and connections have no ?q=; the palette loads one page and matches names locally. */
-export function useTemplateOptions(enabled: boolean) {
+/** Palette and picker template search (server ?q=). */
+export function useTemplateOptions(enabled: boolean, term = '') {
   return useQuery({
-    queryKey: ['palette', 'templates'],
+    queryKey: ['palette', 'templates', term],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/templates', TemplateListSchema, { query: { limit: 200 }, signal }),
+      api.get('/api/v1/templates', TemplateListSchema, {
+        query: { q: term || undefined, limit: PALETTE_LIMIT },
+        signal,
+      }),
     enabled,
-    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
   });
 }
 
-export function useConnectionOptions(enabled: boolean) {
+export function useConnectionOptions(enabled: boolean, term = '') {
   return useQuery({
-    queryKey: ['palette', 'connections'],
+    queryKey: ['palette', 'connections', term],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/connections', ConnectionListSchema, { query: { limit: 200 }, signal }),
+      api.get('/api/v1/connections', ConnectionListSchema, {
+        query: { q: term || undefined, limit: PALETTE_LIMIT },
+        signal,
+      }),
     enabled,
-    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
   });
 }
 

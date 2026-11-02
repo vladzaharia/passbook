@@ -352,6 +352,14 @@ describe('read', () => {
     expect(await bad.json()).toMatchObject({ code: 'INVALID_INPUT' });
     expect((await post(`/${templateId}/preview`, { version: 'nope' })).status).toBe(404);
   });
+
+  it('previews many templates in one request and skips ids it cannot read', async () => {
+    const res = await call(`/previews?ids=${templateId},missing-template`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: { id: string; assetNames: string[] }[] };
+    expect(body.items.map((i) => i.id)).toEqual([templateId]);
+    expect((await call('/previews?ids=')).status).toBe(422);
+  });
 });
 
 describe('upload', () => {

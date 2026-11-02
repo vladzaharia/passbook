@@ -338,4 +338,14 @@ describe('rate limit', () => {
     expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
     expect((await hit('2.2.2.2')).status).toBe(200);
   });
+
+  it('keeps asset requests out of the page bucket', async () => {
+    const pass = await kit.pass();
+    const page = fakeLimiter(1);
+    const env = { ...kit.env, RL_PUBLIC: page as unknown as RateLimit };
+    for (let i = 0; i < 5; i++)
+      await app.request(`${ORIGIN}/p/${pass.downloadToken}/assets/icon.png`, {}, env);
+    const res = await app.request(`${ORIGIN}/p/${pass.downloadToken}`, {}, env);
+    expect(res.status).toBe(200);
+  });
 });

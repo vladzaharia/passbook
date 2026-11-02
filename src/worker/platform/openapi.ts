@@ -1,11 +1,10 @@
 import type { RouteConfig } from '@hono/zod-openapi';
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
-import type { MiddlewareHandler } from 'hono';
-import type { ZodType } from 'zod';
+import type { Context, MiddlewareHandler } from 'hono';
+import type { ZodType, z } from 'zod';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
-import { NotImplementedError } from './errors.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -38,20 +37,36 @@ export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono
   return router;
 }
 
-/** Declares the route (so OpenAPI and validation are real) with a 501 handler. */
-export function stub(router: OpenAPIHono<AppBindings>, tag: string, spec: RouteSpec): void {
-  register(router, tag, spec, () => {
-    throw new NotImplementedError(
-      `${spec.method.toUpperCase()} ${spec.path} is not implemented yet.`,
-    );
-  });
+type Part<S, K extends string, Target extends string> = S extends {
+  [P in K]: infer T extends ZodType;
+}
+  ? { [P in Target]: z.output<T> }
+  : Record<never, never>;
+
+/** What `c.req.valid()` returns for a spec: only the parts the spec declares. */
+export type ValidInput<S extends RouteSpec> = Part<S, 'params', 'param'> &
+  Part<S, 'query', 'query'> &
+  Part<S, 'body', 'json'>;
+
+/** A handler's context: `c.req.valid('json' | 'query' | 'param')` is typed from the spec. */
+export type RouteContext<S extends RouteSpec> = Context<
+  AppBindings,
+  string,
+  { in: Record<string, never>; out: ValidInput<S> }
+>;
+
+let checkResponses = false;
+
+/** Test hook: a JSON response that violates its spec's `response` schema throws instead of shipping. */
+export function enableResponseChecks(): void {
+  checkResponses = true;
 }
 
-export function register(
+export function register<S extends RouteSpec>(
   router: OpenAPIHono<AppBindings>,
   tag: string,
-  spec: RouteSpec,
-  handler: (c: never) => unknown,
+  spec: S,
+  handler: (c: RouteContext<S>) => Response | Promise<Response>,
 ): void {
   const status = spec.status ?? 200;
   const config = {
@@ -77,7 +92,19 @@ export function register(
       },
     },
   } as unknown as RouteConfig;
-  router.openapi(createRoute(config), handler as never);
+  const checked = async (c: RouteContext<S>) => {
+    const response = await handler(c);
+    const schema = spec.response;
+    if (checkResponses && schema && response.status === status) {
+      const parsed = schema.safeParse(await response.clone().json());
+      if (!parsed.success)
+        throw new Error(
+          `${spec.method.toUpperCase()} ${spec.path} response breaks its contract: ${parsed.error.message}`,
+        );
+    }
+    return response;
+  };
+  router.openapi(createRoute(config), checked as never);
 }
 
 /** Applies a middleware to every route of a router. */

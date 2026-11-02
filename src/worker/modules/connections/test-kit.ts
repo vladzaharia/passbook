@@ -10,7 +10,6 @@ import {
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import { PassBuildError } from '../../../passkit/build.ts';
-import type { Json } from '../../../shared/contracts/common.ts';
 import type { Job } from '../../jobs/types.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
@@ -147,8 +146,6 @@ export function inlineStep(): StepLike & { names: string[]; sleeps: number[] } {
     },
   };
 }
-
-export type { Json };
 
 /** A service context whose CONNECTION_SYNC binding records instead of starting workflows. */
 export function withWorkflow(

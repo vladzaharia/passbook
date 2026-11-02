@@ -10,6 +10,7 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
+import { orgIsReadable } from '../orgs/repo.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
 import { checkIdentityById } from './check.ts';
 import { apnsBindingPresent, clearIdentityKeyCache } from './db-resolver.ts';
@@ -25,7 +26,6 @@ import {
   identityInUse,
   insertIdentity,
   listIdentityRows,
-  orgExists,
   rotateIdentityRows,
   updateIdentityRow,
 } from './repo.ts';
@@ -125,7 +125,7 @@ export async function uploadIdentity(
   input: Upload,
 ): Promise<IdentityDto> {
   const orgId = input.orgId ?? null;
-  if (orgId && !(await orgExists(ctx.env.DB, orgId)))
+  if (orgId && !(await orgIsReadable(ctx.env.DB, orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   if (input.pkcs12Base64 && (input.certificatePem || input.privateKeyPem))
     throw invalid('Send either PEM files or a PKCS#12 file, not both.', 'IDENTITY_INPUT');

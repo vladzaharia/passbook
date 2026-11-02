@@ -5,9 +5,10 @@ import type { AnyConnector } from '../../connectors/types.ts';
 import { type FieldIssue, ValidationError } from '../../platform/errors.ts';
 import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { orgIsActive } from '../orgs/repo.ts';
 import { getDeps, resolverOf } from './deps.ts';
 import type { Mode } from './repo.ts';
-import { orgExists, templateScope } from './repo-passes.ts';
+import { templateScope } from './repo-passes.ts';
 
 export function issuesOf(prefix: string, error: z.ZodError): FieldIssue[] {
   return error.issues.map((i) => ({
@@ -96,7 +97,7 @@ export async function assertTemplateUsable(
 }
 
 export async function assertOrg(sctx: ServiceContext, orgId: string): Promise<void> {
-  if (!(await orgExists(sctx.env.DB, orgId))) {
+  if (!(await orgIsActive(sctx.env.DB, orgId))) {
     throw new ValidationError(
       'Organization not found.',
       [{ path: 'orgId', message: 'Organization not found.' }],

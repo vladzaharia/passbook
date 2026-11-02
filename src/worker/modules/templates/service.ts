@@ -4,6 +4,7 @@ import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
 import type {
   ImportStatusSchema,
+  PreviewBatchSchema,
   PreviewRequestSchema,
   PreviewResponseSchema,
   TemplateDetailSchema,
@@ -15,7 +16,7 @@ import type {
 } from '../../../shared/contracts/index.ts';
 import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingWarnings, readBranding, tenantPassJson } from '../passes/branding.ts';
 import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
@@ -197,6 +198,25 @@ export async function openVersionAsset(
   if (entry)
     return { stream: await registry.openAsset(template, name), contentType, sha1: entry.sha1 };
   return { stream: await registry.openExtra(template, name), contentType, sha1: null };
+}
+
+/** Default-sample previews for several templates; one that fails or is out of reach is skipped. */
+export async function previewMany(
+  ctx: ServiceContext,
+  auth: AuthContext | undefined,
+  ids: string[],
+): Promise<z.infer<typeof PreviewBatchSchema>> {
+  const results = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        return { id, ...(await preview(ctx, auth, id, {})) };
+      } catch (error) {
+        if (error instanceof AppError && error.status < 500) return null;
+        throw error;
+      }
+    }),
+  );
+  return { items: results.filter((r) => r !== null) };
 }
 
 export async function preview(

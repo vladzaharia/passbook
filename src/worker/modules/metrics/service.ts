@@ -5,6 +5,7 @@ import type {
 } from '../../../shared/contracts/metrics.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { orgIsReadable } from '../orgs/repo.ts';
 import { analyticsSql, type EventRow, queryEvents } from './analytics-sql.ts';
 import * as repo from './repo.ts';
 
@@ -174,7 +175,7 @@ export async function getOverview(
   const end = Math.floor(now / range.bucketMs) * range.bucketMs;
   const w: repo.Window = { since: start, bucketMs: range.bucketMs };
 
-  if (query.orgId && !(await repo.orgExists(ctx.env.DB, query.orgId)))
+  if (query.orgId && !(await orgIsReadable(ctx.env.DB, query.orgId)))
     throw new ValidationError(
       'Unknown organization.',
       [{ path: 'orgId', message: 'Not found.' }],

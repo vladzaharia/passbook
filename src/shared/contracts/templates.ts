@@ -157,7 +157,7 @@ export const CloneTemplateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
 });
 export const UpdateTemplateSchema = z.object({ orgId: IdSchema.nullable() });
-export const UpdateManifestSchema = z.object({ manifest: JsonSchema });
+export const UpdateManifestSchema = z.object({ manifest: z.record(z.string(), JsonSchema) });
 export const PreviewRequestSchema = z.object({
   version: z.string().optional(),
   /** Preview as this org's pass: its name, colours, logo and icon. */
@@ -171,6 +171,18 @@ export const PreviewResponseSchema = z.object({
   assetBaseUrl: z.string(),
   /** Image files the preview can load: package files plus preview-only extras. */
   assetNames: z.array(z.string()),
+});
+
+export const PreviewBatchQuerySchema = z.object({
+  /** Comma-separated template ids, at most 50. */
+  ids: z
+    .string()
+    .transform((v) => [...new Set(v.split(',').filter(Boolean))])
+    .pipe(z.array(IdSchema).min(1).max(50)),
+});
+/** Default-sample previews for many templates in one request; ids the caller cannot read are left out. */
+export const PreviewBatchSchema = z.object({
+  items: z.array(PreviewResponseSchema.extend({ id: IdSchema })),
 });
 
 /** One-sentence text for the `error` code of a failed import. */

@@ -1,4 +1,5 @@
 import { UpstreamError, ValidationError } from './errors.ts';
+import { readCapped } from './read-capped.ts';
 
 export interface DnsResolver {
   /** Returns every A and AAAA address for the host. */
@@ -50,7 +51,7 @@ export function isPrivateIp(ip: string): boolean {
   const bare = ip.replace(/^\[|\]$/g, '').toLowerCase();
   const v4 = ipv4ToInt(bare);
   if (v4) {
-    const [a = 0, b = 0] = v4;
+    const [a = 0, b = 0, c = 0] = v4;
     return (
       a === 0 ||
       a === 10 ||
@@ -58,7 +59,10 @@ export function isPrivateIp(ip: string): boolean {
       (a === 100 && b >= 64 && b <= 127) ||
       (a === 169 && b === 254) ||
       (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 0) ||
+      (a === 192 && b === 0) || // 192.0.0.0/24 and 192.0.2.0/24
+      (a === 192 && b === 88 && c === 99) || // 192.88.99.0/24 6to4 relay
+      (a === 198 && b === 51 && c === 100) || // 198.51.100.0/24 documentation
+      (a === 203 && b === 0 && c === 113) || // 203.0.113.0/24 documentation
       (a === 192 && b === 168) ||
       (a === 198 && (b === 18 || b === 19)) ||
       a >= 224
@@ -193,33 +197,6 @@ export async function assertPublicHost(host: string, resolver: DnsResolver): Pro
     throw new ValidationError('The host resolves to a private address.', [], 'UNSAFE_URL');
 }
 
-async function readCapped(response: Response, maxBytes: number): Promise<Uint8Array> {
-  const declared = Number(response.headers.get('content-length') ?? 0);
-  if (declared > maxBytes)
-    throw new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE');
-  if (!response.body) return new Uint8Array();
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE');
-    }
-    chunks.push(value);
-  }
-  const body = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return body;
-}
-
 /** Outbound fetch for tenant-configured URLs: https/443 only, public hosts only, no redirects, capped. */
 export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -244,7 +221,12 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
     if (response.status >= 300 && response.status < 400) {
       throw new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
     }
-    const body = await readCapped(response, maxBytes);
+    const body = await readCapped(
+      response.body,
+      maxBytes,
+      () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
+      Number(response.headers.get('content-length') ?? 0),
+    );
     const decode = () => new TextDecoder().decode(body);
     return {
       status: response.status,

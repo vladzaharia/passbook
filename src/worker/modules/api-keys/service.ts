@@ -7,14 +7,18 @@ import { batch } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
+import { parseJsonArray } from '../../platform/json-column.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
+import { orgIsActive } from '../orgs/repo.ts';
 import * as repo from './repo.ts';
 
 export type ApiKeyDto = z.infer<typeof ApiKeySchema>;
 const KEY_SHAPE = /^wlt_([A-Za-z0-9_-]{8})_([A-Za-z0-9_-]{43})$/;
+const parseScopes = (raw: string): ApiScope[] =>
+  parseJsonArray(raw, 'scopes', (s): s is ApiScope => API_SCOPES.includes(s as ApiScope));
 const TOUCH_EVERY_MS = 5 * 60 * 1000;
 
 function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKeyDto {
@@ -33,17 +37,6 @@ function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKe
   };
 }
 
-function parseScopes(raw: string): ApiScope[] {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((s): s is ApiScope => API_SCOPES.includes(s as ApiScope))
-      : [];
-  } catch {
-    return [];
-  }
-}
-
 export async function listApiKeys(ctx: ServiceContext): Promise<ApiKeyDto[]> {
   return (await repo.listKeys(ctx.env.DB)).map(toDto);
 }
@@ -58,7 +51,7 @@ export async function createApiKey(
   if (input.expiresAt != null && input.expiresAt <= now) {
     throw new ValidationError('Expiry must be in the future.', [], 'EXPIRY_PAST');
   }
-  if (orgId && !(await repo.orgExists(ctx.env.DB, orgId))) {
+  if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
   const prefix = ctx.ids.token(6);

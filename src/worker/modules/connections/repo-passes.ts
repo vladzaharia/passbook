@@ -140,8 +140,6 @@ export async function templateScope(
   return r ? { orgId: r.org_id, status: r.status } : null;
 }
 
-export { orgIsActive as orgExists } from '../orgs/repo.ts';
-
 // Webhook events and inbox
 
 export interface InboxItem {

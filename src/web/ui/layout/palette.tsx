@@ -69,8 +69,8 @@ export function AdminPalette({
   const passes = useRecentPassSearch(term, orgId);
   const users = useUserSearch(term);
   const orgs = useOrgOptions(open);
-  const templates = useTemplateOptions(open && term.length > 0);
-  const connections = useConnectionOptions(open && term.length > 0);
+  const templates = useTemplateOptions(open && term.length > 0, term);
+  const connections = useConnectionOptions(open && term.length > 0, term);
   const orgName = new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name]));
   const go = (to: string, search?: Record<string, string>) => () =>
     void navigate({ to: to, ...(search ? { search: search } : {}) });

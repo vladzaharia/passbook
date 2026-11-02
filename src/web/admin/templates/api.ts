@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   ImportStatusSchema,
   PreviewResponseSchema,
@@ -57,19 +63,30 @@ export function useRecentUploads(orgId: string | undefined) {
   });
 }
 
-export function useTemplate(id: string | undefined) {
-  return useQuery({
-    queryKey: templateKeys.detail(id ?? ''),
+export const templateDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: templateKeys.detail(id),
     queryFn: ({ signal }) => api.get(`/api/v1/templates/${id}`, TemplateDetailSchema, { signal }),
-    enabled: Boolean(id),
   });
+
+export function useTemplate(id: string | undefined) {
+  return useQuery({ ...templateDetailQuery(id ?? ''), enabled: Boolean(id) });
 }
+
+import { fetchPreview } from './preview-batch.ts';
 
 export function useTemplatePreview(id: string, version?: string) {
   return useQuery({
     queryKey: ['admin', 'templates', 'preview', id, version ?? null],
     queryFn: ({ signal }) =>
-      api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, { version }, { signal }),
+      version
+        ? api.post(
+            `/api/v1/templates/${id}/preview`,
+            PreviewResponseSchema,
+            { version },
+            { signal },
+          )
+        : fetchPreview(id),
     staleTime: Number.POSITIVE_INFINITY,
     enabled: Boolean(id),
   });
@@ -77,7 +94,11 @@ export function useTemplatePreview(id: string, version?: string) {
 
 export function useTemplateActions(id: string) {
   const qc = useQueryClient();
-  const done = () => qc.invalidateQueries({ queryKey: templateKeys.all });
+  const done = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: templateKeys.all }),
+      qc.invalidateQueries({ queryKey: ['palette'] }),
+    ]);
   return {
     activate: useMutation({
       mutationFn: (input: { version: string; rebuildPasses: boolean }) =>

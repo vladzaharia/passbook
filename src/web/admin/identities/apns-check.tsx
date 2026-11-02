@@ -35,13 +35,6 @@ export function failureSentence(reason: string | null, status?: number): string 
   return 'Apple gave no clear answer. Try again later.';
 }
 
-/** One line for a result (toasts, the list). */
-export function probeLine(result: Result): string {
-  if (result.health === 'healthy') return 'APNs accepted the certificate.';
-  if (result.health === 'unavailable') return 'No APNs binding to check.';
-  return failureSentence(result.reason, result.status);
-}
-
 function HealthPill({ health, available }: { health: Health; available: boolean }) {
   if (!available || health === 'unavailable')
     return <StatusPill status="not_configured">Push unavailable</StatusPill>;

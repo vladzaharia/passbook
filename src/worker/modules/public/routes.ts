@@ -9,12 +9,15 @@ import { passDevice } from '../../ssr/device.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { qrDataUri } from '../../ssr/qr.ts';
 import { servePassFile } from '../passes/file.ts';
-import { type C, svc, valid } from '../passes/http.ts';
+import { type C, svc } from '../passes/http.ts';
 import { openPublicAsset, pageModel, passForToken, supportContacts } from './service.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
-publicRoutes.use('*', rateLimit('RL_PUBLIC'));
+// A page load fetches its card images through the same IP, so assets get their own, wider bucket.
+publicRoutes.use('/:token/assets/*', rateLimit('RL_PUBLIC_ASSET'));
+publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
+publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 
 const PAGE_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
@@ -40,8 +43,6 @@ function zoneOf(c: C): string | undefined {
   }
 }
 
-type Token = { token: string };
-
 register(
   publicRoutes,
   'public',
@@ -51,11 +52,11 @@ register(
     summary: 'Pass page (server-rendered HTML)',
     params: PublicTokenParamSchema,
   },
-  async (c: C) => {
+  async (c) => {
     const svcCtx = svc(c);
     const nonce = c.var.nonce;
     try {
-      const pass = await passForToken(svcCtx, valid<Token>(c, 'param').token);
+      const pass = await passForToken(svcCtx, c.req.valid('param').token);
       const model = await pageModel(svcCtx, pass);
       const lang = langOf(c.req.header('accept-language'));
       const view = normalize(model.passJson, {
@@ -98,8 +99,8 @@ register(
     summary: 'Download the pass',
     params: PublicTokenParamSchema,
   },
-  async (c: C) => {
-    const pass = await passForToken(svc(c), valid<Token>(c, 'param').token);
+  async (c) => {
+    const pass = await passForToken(svc(c), c.req.valid('param').token);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
     if (response.status === 200)
       writeEvent(c.env, {
@@ -121,8 +122,8 @@ register(
     summary: 'Pass image',
     params: PublicAssetParamSchema,
   },
-  async (c: C) => {
-    const p = valid<{ token: string; name: string }>(c, 'param');
+  async (c) => {
+    const p = c.req.valid('param');
     const ctx = svc(c);
     const pass = await passForToken(ctx, p.token);
     const asset = await openPublicAsset(ctx, pass, p.name);
