@@ -134,6 +134,9 @@ describe('status page', () => {
     const banner = await screen.findByRole('region', { name: 'Overall status' });
     expect(within(banner).getByText('All good')).toBeInTheDocument();
     expect(banner.className).toContain('bg-success-subtle');
+    // The buddy's face stands in for the check: decorative, the headline says it.
+    expect(banner.firstElementChild).toHaveClass('wl-face');
+    expect(banner.firstElementChild).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('opens a connection, shows Polaris ID and keeps details behind a disclosure', async () => {

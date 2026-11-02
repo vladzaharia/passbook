@@ -3,6 +3,7 @@ import { Toaster as Sonner, toast as sonner } from 'sonner';
 import { errorMessage } from '../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { useTheme } from '../lib/theme.tsx';
+import { BuddyFace } from './art/face.tsx';
 
 /** True while a modal dialog, sheet or menu holds the page (Radix locks body scroll). */
 function useOverlayOpen(): boolean {
@@ -40,6 +41,8 @@ export function Toaster() {
         right: 'max(1rem, env(safe-area-inset-right))',
       }}
       closeButton
+      // Success wears the buddy's face: it pops in with the toast and winks once.
+      icons={{ success: <BuddyFace className="size-4" /> }}
       toastOptions={{
         classNames: {
           toast:
