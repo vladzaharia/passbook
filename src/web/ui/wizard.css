@@ -22,6 +22,6 @@
 /* The steps clear the stage plus a 2rem gap. Main is centred at 80rem once the viewport passes
    95rem (sidebar + main), so only the part of the stage inside main's gutter is padded. */
 .wl-wizard[data-staged] {
-  --wl-stage: clamp(20rem, 28vw, 26rem);
+  --wl-stage: clamp(18rem, 28vw, 26rem);
   padding-right: max(0px, calc(var(--wl-stage) + 0.5rem - max(0px, (100vw - 95rem) / 2)));
 }

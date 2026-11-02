@@ -40,7 +40,8 @@ export function groupTemplates(
     const key = template.orgId ?? 'shared';
     let group = groups.get(key);
     if (!group) {
-      const label = template.orgId === null ? 'Shared' : (template.orgName ?? orgName ?? 'Org');
+      const label =
+        template.orgId === null ? 'Shared' : (template.orgName ?? orgName ?? 'Organization');
       group = { key, label, orgId: template.orgId, items: [] };
       groups.set(key, group);
     }

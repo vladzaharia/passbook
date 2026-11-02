@@ -28,6 +28,8 @@ export interface OrgOption {
 
 /** Tiles lay out on their own width: a column drops before a name truncates. */
 const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3';
+/** A still and a name only (the stage has the rest): narrower tiles, more to a row. */
+const NAME_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,12rem),1fr))] gap-3';
 
 /** A required choice: the group is invalid and says so under the tiles until one is picked. */
 function ChoiceGroup({
@@ -159,7 +161,7 @@ export function TemplateStep({
       {groupTemplates(templates, orgName).map((g) => (
         <fieldset key={g.key} className="min-w-0">
           <legend className="mb-3 text-xs font-medium text-fg-muted">{g.label}</legend>
-          <div className={cn(TILE_GRID, arrived && 'wl-stagger')}>
+          <div className={cn(staged ? NAME_GRID : TILE_GRID, arrived && 'wl-stagger')}>
             {g.items.map(({ template: t, name }) => (
               <div key={t.id} style={{ '--i': i++ } as CSSProperties}>
                 <OptionTile

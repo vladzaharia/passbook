@@ -121,7 +121,7 @@ export function StagePreview({
   transitionName?: string | undefined;
 }) {
   return (
-    <div className="my-auto flex w-full flex-col gap-5">
+    <div className="mx-auto my-auto flex w-full max-w-72 flex-col gap-5">
       <LivePreview state={state} transitionName={transitionName} />
       <div
         key={state.templateId}
@@ -129,9 +129,7 @@ export function StagePreview({
       >
         {name ? <p className="text-sm font-medium text-fg-strong">{name}</p> : null}
         {name && description ? (
-          <p className="mx-auto line-clamp-3 max-w-xs text-xs text-pretty text-fg-muted">
-            {description}
-          </p>
+          <p className="line-clamp-3 text-xs text-pretty text-fg-muted">{description}</p>
         ) : null}
       </div>
     </div>
