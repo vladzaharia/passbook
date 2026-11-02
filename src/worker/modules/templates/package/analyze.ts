@@ -1,5 +1,5 @@
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
-import { pixelIssues } from '../../../../passkit/schema/image-pixels.ts';
+import { parseColor, pixelIssues } from '../../../../passkit/schema/image-pixels.ts';
 import type {
   AssetEntry,
   PassJson,
@@ -209,8 +209,9 @@ export async function analyzePackage(
     extras.push({ name: image.path, size: image.bytes.length, sha1: await sha1Hex(image.bytes) });
   }
 
+  const foreground = parseColor((passJson as Record<string, unknown>).foregroundColor);
   for (const image of kept)
-    for (const issue of pixelIssues(image.path, image.slot, image.bytes))
+    for (const issue of pixelIssues(image.path, image.slot, image.bytes, foreground))
       push({ severity: 'warning', ...issue, path: image.path });
 
   if (!kept.some((i) => i.slot === 'icon' && !i.locale))

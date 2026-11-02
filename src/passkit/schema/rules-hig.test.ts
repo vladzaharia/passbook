@@ -163,12 +163,17 @@ describe('HIG lint', () => {
 });
 
 /** RGBA PNG from a pixel function (filter 0 rows). */
-function png(width: number, height: number, alpha: (x: number, y: number) => number): Uint8Array {
+function png(
+  width: number,
+  height: number,
+  alpha: (x: number, y: number) => number,
+  color: [number, number, number] = [40, 80, 120],
+): Uint8Array {
   const raw = new Uint8Array((width * 4 + 1) * height);
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       const at = y * (width * 4 + 1) + 1 + x * 4;
-      raw.set([40, 80, 120, alpha(x, y)], at);
+      raw.set([...color, alpha(x, y)], at);
     }
   const chunk = (type: string, data: Uint8Array) => {
     const out = new Uint8Array(12 + data.length);
@@ -208,6 +213,28 @@ describe('pixel lint', () => {
       'IMAGE_PADDING',
     ]);
     expect(pixelIssues('logo@2x.png', 'logo', tight)).toEqual([]);
+  });
+
+  it('flags a logo with a 33% trailing or a bottom margin', () => {
+    const trailing = png(300, 100, (x) => (x < 200 ? 255 : 0));
+    const bottom = png(100, 100, (_x, y) => (y < 70 ? 255 : 0));
+    expect(pixelIssues('logo@2x.png', 'logo', trailing).map((i) => i.code)).toEqual([
+      'IMAGE_PADDING',
+    ]);
+    expect(pixelIssues('logo@2x.png', 'logo', bottom).map((i) => i.code)).toEqual([
+      'IMAGE_PADDING',
+    ]);
+  });
+
+  it('warns COLOR_CONTRAST with the ratio when artwork is light under the header', () => {
+    const white: [number, number, number] = [255, 255, 255];
+    const pastel = png(100, 200, () => 255, [226, 201, 196]);
+    const [issue] = pixelIssues('artwork@2x.png', 'artwork', pastel, white);
+    expect(issue?.code).toBe('COLOR_CONTRAST');
+    expect(issue?.message).toContain('1.6:1');
+    const dark = png(100, 200, () => 255, [49, 46, 129]);
+    expect(pixelIssues('artwork@2x.png', 'artwork', dark, white)).toEqual([]);
+    expect(pixelIssues('artwork@2x.png', 'artwork', pastel)).toEqual([]);
   });
 
   it('flags a thumbnail with square opaque corners, not a rounded one', () => {
