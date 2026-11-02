@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { useDebounced } from '@/web/lib/debounce.ts';
 import { ENTITY } from '../lib/entities.ts';
 import {
   matchesWords,
   PALETTE_LIMIT,
   useConnectionOptions,
-  useDebounced,
   useOrgOptions,
   useRecentPassSearch,
   useTemplateOptions,

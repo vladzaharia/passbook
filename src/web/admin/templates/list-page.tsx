@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Upload } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
+import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { BELOW_MD, useMediaQuery } from '../../lib/media.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
@@ -18,7 +19,6 @@ import {
   SegmentedControl,
   StatusPill,
 } from '../../ui/index.ts';
-import { useDebouncedText } from '../passes/list-filters.tsx';
 import { useTemplates } from './api.ts';
 import { originLabel, TemplateGallery, TemplateStill } from './gallery.tsx';
 import { styleList } from './labels.ts';
@@ -109,7 +109,9 @@ export function TemplatesListPage({
     includeArchived: search.archived,
     q: search.q,
   });
-  const [q, setQ] = useDebouncedText(search.q ?? '', (next) => onSearch({ q: next || undefined }));
+  const [q, setQ] = useDebouncedCommit(search.q ?? '', (next) =>
+    onSearch({ q: next || undefined }),
+  );
   const items = list.data?.items ?? [];
   const filtered = Boolean(search.q || search.origin || search.archived);
   const view = phone ? 'gallery' : (search.view ?? 'gallery');

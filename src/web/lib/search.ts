@@ -1,5 +1,4 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { ConnectionListSchema } from '@/shared/contracts/connections.ts';
 import { OrgListSchema } from '@/shared/contracts/orgs.ts';
 import { PassListSchema } from '@/shared/contracts/passes.ts';
@@ -10,16 +9,6 @@ import { api } from './api.ts';
 const MIN_QUERY = 2;
 /** Results per palette group. */
 export const PALETTE_LIMIT = 5;
-
-/** The value after it stops changing for `ms`. */
-export function useDebounced<T>(value: T, ms = 200): T {
-  const [settled, setSettled] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setSettled(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return settled;
-}
 
 /** Palette pass search (server ?q=). Disabled until the query has 2+ characters. */
 export function useRecentPassSearch(q: string, orgId?: string) {

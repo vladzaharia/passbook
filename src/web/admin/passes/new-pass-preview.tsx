@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
+import { useDebounced } from '@/web/lib/debounce.ts';
 import { EntityArt, Skeleton } from '../../ui/index.ts';
 import { useDraftPreview } from '../templates/api.ts';
 import { PassPreview } from './pass-preview.tsx';
@@ -12,15 +13,6 @@ import {
 } from './schema-form/index.ts';
 
 export type Preview = z.infer<typeof PreviewResponseSchema>;
-
-function useDebounced<T>(value: T, ms: number): T {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
 
 /** Empty required fields borrow the sample, so the card shows from the first frame. */
 export function withGhosts(schema: unknown, sample: FormValues, input: FormValues): FormValues {

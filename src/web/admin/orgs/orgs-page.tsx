@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
+import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import {
   Button,
@@ -99,14 +100,11 @@ export function OrgsPage({
   search?: { q?: string | undefined };
   onSearch?: (next: { q?: string | undefined }) => void;
 }) {
-  const [text, setText] = useState(search.q ?? '');
-  useEffect(() => setText(search.q ?? ''), [search.q]);
-  useEffect(() => {
-    const trimmed = text.trim();
-    if (trimmed === (search.q ?? '')) return;
-    const t = setTimeout(() => onSearch({ q: trimmed || undefined }), 300);
-    return () => clearTimeout(t);
-  }, [text, search.q, onSearch]);
+  const [text, setText] = useDebouncedCommit(
+    search.q ?? '',
+    (next) => onSearch({ q: next.trim() || undefined }),
+    300,
+  );
   const list = useOrgList(search.q);
   const [creating, setCreating] = useState(false);
   const rows = list.data?.items ?? [];

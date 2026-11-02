@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { FilterBar, type FilterDef } from '../../ui/index.ts';
 import { useConnections } from '../connections/api.ts';
 import type { PassFilters } from './api.ts';
@@ -13,18 +13,6 @@ export const CLEARED: { [K in keyof Required<ListSearch>]: undefined } = {
   holderState: undefined,
   onDevice: undefined,
 };
-
-/** A search field that writes to the URL once per pause, not per key. */
-export function useDebouncedText(value: string, commit: (next: string) => void, ms = 250) {
-  const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
-  useEffect(() => {
-    if (draft === value) return;
-    const t = setTimeout(() => commit(draft), ms);
-    return () => clearTimeout(t);
-  }, [draft, value, commit, ms]);
-  return [draft, setDraft] as const;
-}
 
 const ANY = 'all';
 const pick = <T extends string>(v: string): T | undefined => (v === ANY ? undefined : (v as T));
@@ -42,7 +30,9 @@ export function PassListFilters({
   onChange: (patch: Partial<ListSearch>) => void;
 }) {
   const connections = useConnections({ orgId });
-  const [q, setQ] = useDebouncedText(search.q ?? '', (next) => onChange({ q: next || undefined }));
+  const [q, setQ] = useDebouncedCommit(search.q ?? '', (next) =>
+    onChange({ q: next || undefined }),
+  );
   const filters: FilterDef[] = [
     {
       id: 'status',

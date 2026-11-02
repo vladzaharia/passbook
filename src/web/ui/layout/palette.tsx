@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeftRight, Plus, Upload } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useDebounced } from '@/web/lib/debounce.ts';
 import { THEME_ICON } from '../../lib/action-icons.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
 import { ADMIN_NAV } from '../../lib/nav.ts';
@@ -9,7 +10,6 @@ import {
   matchesWords,
   PALETTE_LIMIT,
   useConnectionOptions,
-  useDebounced,
   useOrgOptions,
   useRecentPassSearch,
   useTemplateOptions,

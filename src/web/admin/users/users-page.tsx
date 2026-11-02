@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { UserSummarySchema } from '@/shared/contracts/users.ts';
+import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import {
   DataTable,
@@ -108,15 +109,12 @@ export function UsersPage({
   search: UsersSearch;
   onSearch: (next: UsersSearch) => void;
 }) {
-  const [text, setText] = useState(search.q ?? '');
-  useEffect(() => setText(search.q ?? ''), [search.q]);
   // Debounced so each keystroke does not hit the API or the history stack.
-  useEffect(() => {
-    const trimmed = text.trim();
-    if (trimmed === (search.q ?? '')) return;
-    const t = setTimeout(() => onSearch({ ...search, q: trimmed || undefined }), 300);
-    return () => clearTimeout(t);
-  }, [text, search, onSearch]);
+  const [text, setText] = useDebouncedCommit(
+    search.q ?? '',
+    (next) => onSearch({ ...search, q: next.trim() || undefined }),
+    300,
+  );
 
   const list = useUserList(search);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
