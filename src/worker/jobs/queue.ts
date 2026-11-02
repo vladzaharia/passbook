@@ -3,16 +3,12 @@ import type { AppEnv } from '../platform/env.ts';
 import { AppError } from '../platform/errors.ts';
 import { createServiceContext } from '../platform/service-context.ts';
 import { estimateQueries, QUEUE_QUERY_BUDGET } from './query-budget.ts';
-import { JOB_HANDLERS } from './registry.ts';
+import { runJob } from './registry.ts';
 import { DLQ_QUEUE, retryDelaySeconds } from './retry.ts';
 import { type Job, JobSchema } from './types.ts';
 
-async function dispatch(job: Job, env: AppEnv, ctx: ExecutionContext): Promise<void> {
-  const handler = JOB_HANDLERS[job.kind] as (
-    job: Job,
-    ctx: ReturnType<typeof createServiceContext>,
-  ) => Promise<void>;
-  await handler(job, createServiceContext(env, { ctx, base: { job: job.kind } }));
+function dispatch(job: Job, env: AppEnv, ctx: ExecutionContext): Promise<void> {
+  return runJob(job, createServiceContext(env, { ctx, base: { job: job.kind } }));
 }
 
 /** Deferred messages come back after this many seconds, in a fresh invocation with a fresh budget. */

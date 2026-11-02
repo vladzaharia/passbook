@@ -1,4 +1,5 @@
 import { strictEmail } from '../../../shared/email.ts';
+import type { Job } from '../../jobs/types.ts';
 import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -22,11 +23,9 @@ const DAY = 86_400_000;
 export const EMAIL_RECIPIENT_HOURLY_CAP = 3;
 export const EMAIL_ORG_DAILY_CAP = 500;
 
-function message(row: { id: string; kind: 'push' | 'email' }) {
-  return {
-    body: { kind: row.kind === 'push' ? 'push.deliver' : 'email.send', outboxId: row.id },
-    contentType: 'json' as const,
-  };
+function message(row: { id: string; kind: 'push' | 'email' }): MessageSendRequest<Job> {
+  const kind = row.kind === 'push' ? ('push.deliver' as const) : ('email.send' as const);
+  return { body: { kind, outboxId: row.id }, contentType: 'json' };
 }
 
 async function sendRows(ctx: ServiceContext, rows: { id: string; kind: 'push' | 'email' }[]) {

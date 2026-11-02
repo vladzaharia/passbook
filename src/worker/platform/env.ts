@@ -1,5 +1,11 @@
+import type { Job } from '../jobs/types.ts';
+
 /** Worker environment. `Env` comes from `wrangler types`; this adds bindings that are optional at runtime. */
-export interface AppEnv extends Omit<Env, 'APNS' | 'BREAKGLASS_TOKEN_SHA256'> {
+export interface AppEnv
+  extends Omit<Env, 'APNS' | 'BREAKGLASS_TOKEN_SHA256' | 'JOBS' | 'JOBS_DLQ'> {
+  /** The generated type is Queue<unknown>; producers are checked against `Job`. */
+  JOBS: Queue<Job>;
+  JOBS_DLQ: Queue<Job>;
   /**
    * Absent until the platform certificate is uploaded; treated as "push unavailable".
    * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
