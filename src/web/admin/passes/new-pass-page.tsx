@@ -169,15 +169,24 @@ export function NewPassPage({
 
   const go = (to: number) => setStep(Math.max(0, Math.min(ids.length - 1, to)));
   const index = (id: StepId) => ids.indexOf(id);
-  function next() {
-    if (at === 'org' && !orgId) return;
-    if (at === 'template' && !templateId) return;
-    if (at === 'details' && Object.keys(inputErrors).length > 0) return setShowErrors(true);
-    if (at === 'holder' && emailError) return;
-    if (at === 'review') return create.mutate();
-    go(step + 1);
+  /** False keeps the step: the Wizard focuses the first error and announces the count. */
+  function next(): boolean {
+    if ((at === 'org' && !orgId) || (at === 'template' && !templateId)) {
+      setShowErrors(true);
+      return false;
+    }
+    if (at === 'details' && Object.keys(inputErrors).length > 0) {
+      setShowErrors(true);
+      return false;
+    }
+    if (at === 'holder' && emailError) return false;
+    setShowErrors(false);
+    if (at === 'review') create.mutate();
+    else go(step + 1);
+    return true;
   }
   const chooseOrg = (id: string) => {
+    setShowErrors(false);
     if (id !== orgId) {
       setTemplateId(undefined);
       seeded.current = undefined;
@@ -186,6 +195,7 @@ export function NewPassPage({
     setOrgId(id);
   };
   const chooseTemplate = (id: string) => {
+    setShowErrors(false);
     if (id !== templateId) {
       seeded.current = undefined;
       setInput({});
@@ -232,6 +242,7 @@ export function NewPassPage({
             loading={orgs.isPending}
             error={orgs.error}
             orgId={orgId}
+            choiceError={showErrors && !orgId ? 'Choose an organization.' : undefined}
             onSelect={chooseOrg}
             onCommit={(id) => {
               chooseOrg(id);
@@ -245,6 +256,7 @@ export function NewPassPage({
             loading={templates.isPending}
             error={templates.error}
             templateId={templateId}
+            choiceError={showErrors && !templateId ? 'Choose a template.' : undefined}
             onSelect={chooseTemplate}
             onCommit={(id) => {
               chooseTemplate(id);

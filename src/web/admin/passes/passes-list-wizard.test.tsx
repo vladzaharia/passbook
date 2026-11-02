@@ -233,10 +233,16 @@ describe('new pass wizard', () => {
       session: 'admin',
       handlers: wizardHandlers(() => json(passDetail({ id: 'p9' }), 201), posts),
     });
-    // Without a template, Next stays on the Template step.
+    // Without a template, Next stays on the Template step, says why and focuses the first tile.
     await user.click(await screen.findByRole('button', { name: 'Next' }));
     expect(screen.getByRole('heading', { name: 'Template' })).toBeInTheDocument();
+    expect(screen.getByText('Choose a template.')).toBeInTheDocument();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getAllByRole('radio')[0]));
+    expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
     await toDetails(user);
+    // Details with a required field empty: focus moves to it.
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(/Member name/)));
     await user.type(screen.getByLabelText(/Member name/), 'Sam Jones');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.type(screen.getByLabelText('Holder email'), 'sam@example.com');

@@ -1,9 +1,11 @@
 import { Check } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
+import { useMediaQuery } from '../lib/media.ts';
 import { prefersReducedMotion, useChangeCount } from '../lib/motion.ts';
 import { ConfirmDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
+import { useBlockedSubmit } from './form.tsx';
 import { TwoPane } from './two-pane.tsx';
 
 export interface WizardStep {
@@ -23,8 +25,12 @@ export interface WizardProps {
   dirty?: boolean;
   onCancel: () => void;
   onBack?: () => void;
-  /** Without formId: Next runs this. With formId: Next submits that form (its validation runs). */
-  onNext?: () => void;
+  /**
+   * Without formId: Next runs this. Returning false means the step is incomplete: once its errors
+   * render, the first invalid control takes focus and one summary is announced.
+   * With formId: Next submits that form (its validation runs).
+   */
+  onNext?: () => boolean | void;
   formId?: string;
   /** "Next" on early steps, "Create" on the last. */
   nextLabel?: string;
@@ -134,6 +140,8 @@ export function WizardBar({
   return (
     <section
       aria-label="Wizard actions"
+      // Part of the page, not a transient bar: it arrives with the route, no slide.
+      data-static=""
       className="wl-bar fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-[env(safe-area-inset-bottom)] shadow-elevation-3 lg:left-60"
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-safe py-3 sm:[--wl-gutter:1.5rem]">
@@ -179,8 +187,11 @@ export function WizardBar({
  * and up, and the WizardBar. A step change scrolls to the top and focuses the step heading; the
  * new step slides 16 px in from the direction of travel (opacity only under reduced motion).
  */
-export function Wizard({ steps, current, onStep, aside, children, ...bar }: WizardProps) {
+export function Wizard({ steps, current, onStep, aside, children, onNext, ...bar }: WizardProps) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const blocked = useBlockedSubmit<HTMLDivElement>();
+  // The aside is a desktop companion; below 1024 it would stack under the step as dead space.
+  const wide = useMediaQuery('(min-width: 1024px)');
   const previous = useRef(current);
   const direction = current >= previous.current ? 1 : -1;
   const changed = useChangeCount(current);
@@ -194,6 +205,7 @@ export function Wizard({ steps, current, onStep, aside, children, ...bar }: Wiza
   const body = (
     <div
       key={current}
+      ref={blocked.ref}
       data-step={step?.id}
       className={cn('flex min-w-0 flex-col gap-6', changed > 0 && 'wl-step')}
       style={{ '--wl-step-x': `${direction * 16}px` } as CSSProperties}
@@ -206,19 +218,25 @@ export function Wizard({ steps, current, onStep, aside, children, ...bar }: Wiza
         {step?.title}
       </h2>
       {children}
+      {blocked.live}
     </div>
   );
+  const next = onNext
+    ? () => {
+        if (onNext() === false) blocked.block();
+      }
+    : undefined;
   return (
     <div className="flex min-w-0 flex-col gap-6 pb-24">
       <Stepper steps={steps} current={current} onStep={onStep} />
-      {aside ? (
+      {aside && wide ? (
         <TwoPane asideFrom="lg" stickyAside aside={aside}>
           {body}
         </TwoPane>
       ) : (
         body
       )}
-      <WizardBar {...bar} />
+      <WizardBar {...bar} onNext={next} />
     </div>
   );
 }
