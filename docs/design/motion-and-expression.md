@@ -24,7 +24,7 @@ names its trigger, property (transform or opacity), duration, easing and distanc
 | Signature | Pass stage (deal, flip, mint), login scene, wizard finish, celebrations | 480–900 ms | spring, 3D |
 
 **No ambient loops.** Only things that carry pending state loop, and only while work is pending:
-spinners, pending rings, the loading rail and the sync rail. Art and the login scene get one idle
+spinners, pending rings, the loading rail, the sync rail and the upload buddy's riffle. Art and the login scene get one idle
 beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2).
 
 ## Tokens
@@ -78,18 +78,38 @@ beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2).
 | Sheet | Slide 260 ms in, 200 ms out; on touch it follows the finger and closes past 40% or 0.5 px/ms, else springs back in 200 ms | Overlay opacity tracks the drag |
 | Tooltip | Opacity plus 2 px from its side, 100 ms in, 80 ms out | No scale; 400 ms delay |
 | Buttons, icon buttons | Press .98 in 80 ms; hover colour 120 ms; dark primary glows on hover | Loading keeps the width and the icon (busy verbs) |
-| Switch, checkbox | Thumb slides on spring 200 ms; the check pops .6 → 1 in 200 ms only when it changes after mount | Never on load |
+| Switch, checkbox | Thumb slides on spring 200 ms and stretches 1.25× toward its travel while pressed; the tick draws, short stroke (90 ms) then long (150 ms), only when it changes after mount | Never on load |
 | Copy, saved | Icon swaps to a check (300 ms bounce), back after 1.5 s | Same label |
-| Toasts | Sonner's slide. Icon: success pops (300 ms bounce), info fades (160 ms), error shakes (240 ms) | Copy unchanged |
+| Toasts | Sonner's slide. Icon: success is the buddy's face, pops (300 ms bounce) and winks at 380 ms (200 ms); info fades (160 ms), error shakes (240 ms) | Copy unchanged |
 | Skeleton → content | Skeleton after 150 ms (`pk-delay-skeleton`), same shape and height; handoff: skeleton fades 120 ms while content rises 4 px in 200 ms | No layout shift |
 | Numbers | Count from the last value shown this session (first visit from 0), 600 ms ease-out, tabular-nums | `CountUp`; nothing counts 0 → 0 |
 | Status change | One ring pulse in the pill's tone (scale 1 → 1.6, fade, 640 ms) | Only when the value changes on screen |
 | Save bar | Slides up on spring 260 ms; on save the button shows a check for 400 ms, then the bar slides down 200 ms; Discard exits at once | Stays mounted while closing |
-| Wizard step | New step enters 16 px from the direction of travel plus opacity, 200 ms; old step fades in 90 ms; done steps pop a check (200 ms spring) | Focus moves to the step heading |
+| Wizard step | New step enters 16 px from the direction of travel plus opacity, 200 ms; old step fades in 90 ms; a done step fills with a bounce (.7 → 1, 320 ms) and its tick draws | Focus moves to the step heading |
+| Drop zone | A file dragged over lifts the art or upload arrow 4 px (200 ms spring) | Settles on leave or drop |
 | Theme change (admin) | Root crossfade 200 ms; the toggle icon rotates out and springs in | View Transition type `theme`; instant under reduced motion |
 | Offline bar | Slides down 200 ms under the top bar, up 160 ms when back online | |
 | Failure | One shake (240 ms) on the thing that failed, only after a user action | Error states never shake on first render |
 | Focus ring | Instant | Never animated |
+
+## Buddy cameos
+
+The mascot turns up at real moments, one per view, decorative (`aria-hidden`). Each is one-shot
+except the riffle, which runs only while an import does.
+
+| Moment | What happens | Time | Where |
+| --- | --- | --- | --- |
+| Success toast | The face (`BuddyFace`, 24-unit icon) pops with the toast and winks | 200 ms at 380 ms | `ui/toaster.tsx` |
+| Status all good | The face replaces the check and winks | 200 ms at 640 ms | `admin/status/summary.tsx` |
+| Empty state | The buddy's eyes drop to the action under the pointer or focus | 200 ms | `art-wallet.css` |
+| Palette, no results | The lost buddy with its lens, eyes left and right | Art entrance | `ui/command-palette.tsx` |
+| Template upload | On the drop zone: passes reach up and the mouth opens for a hovering file; a caught file gets the smile and a hop; an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Done, it moves to the result card | 320 ms; 640 ms hop | `admin/templates/upload-*` |
+| Pass created | The happy buddy steps out from behind the new pass (420 ms spring at 520 ms), hops once and stays beside it | ≈1 s | `admin/passes/detail/detail-page.tsx` |
+| Signed out | The sign-in scene's top card waves from the pocket once, within two minutes of a sign-out in this tab | 860 ms at 700 ms | `portal/login-*` |
+| Wordmark | Hover (fine pointers): the wallet's pocket curve deepens into a smile, the card line peeks up 1.5 px; SPA and SSR | 160 ms | `kit-verbs.css`, `ssr/theme.ts` |
+
+The favicon and `apple-touch-icon.png` (also the sign-in email's header mark and the OIDC logo) are
+the face on the dark tile, in teal with the foil passes.
 
 ## Action verbs
 
@@ -137,7 +157,8 @@ System:
   or `beat={false}`.
 - Filtered: the entity art at .6 opacity with the lens at bottom-right (scale .6).
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
-- Reduced motion: the final frame, no beat.
+- Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, step-out
+  or wave.
 - Budget: ≤40 SVG nodes per art; all art ≤8 kB gzip. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
@@ -224,7 +245,7 @@ or the SSR mascot pages.
 10. **Upload template assembles.** The drop zone holds the `template` art: drag-over lifts its
     pieces 4 px, each server step lands the next piece (360 ms spring), success stamps the seal
     (420 ms bounce) and deals the sample still into the report column; a failure slides the
-    failing piece out and shakes the outline once.
+    failing piece out and shakes the outline once. The buddy rides on the zone (Buddy cameos).
 
 ## Expressive visual language
 
