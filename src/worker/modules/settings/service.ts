@@ -4,14 +4,9 @@ import type { Actor } from '../../platform/context.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
+import { orgIsReadable } from '../orgs/repo.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
-import {
-  countEmailOnlyUsers,
-  orgExists,
-  readScopeRows,
-  type SettingRow,
-  writeScope,
-} from './repo.ts';
+import { countEmailOnlyUsers, readScopeRows, type SettingRow, writeScope } from './repo.ts';
 
 export type PlatformSettings = z.infer<typeof PlatformSettingsSchema>;
 export type OrgSettings = z.infer<typeof OrgSettingsSchema>;
@@ -80,7 +75,7 @@ export interface SettingEntry {
 
 async function assertScope(ctx: ServiceContext, scope: string): Promise<void> {
   const orgId = orgIdOfScope(scope);
-  if (orgId && !(await orgExists(ctx.env.DB, orgId)))
+  if (orgId && !(await orgIsReadable(ctx.env.DB, orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
 }
 

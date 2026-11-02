@@ -12,6 +12,7 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
+import { orgIsActive } from '../orgs/repo.ts';
 import * as repo from './repo.ts';
 
 export type ApiKeyDto = z.infer<typeof ApiKeySchema>;
@@ -50,7 +51,7 @@ export async function createApiKey(
   if (input.expiresAt != null && input.expiresAt <= now) {
     throw new ValidationError('Expiry must be in the future.', [], 'EXPIRY_PAST');
   }
-  if (orgId && !(await repo.orgExists(ctx.env.DB, orgId))) {
+  if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
   const prefix = ctx.ids.token(6);

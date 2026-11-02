@@ -38,8 +38,6 @@ export async function writeScope(
   ]);
 }
 
-export { orgIsReadable as orgExists } from '../orgs/repo.ts';
-
 /** Internal state (cron runs, identity checks). Not exposed through the settings API. */
 export async function readSystemValue(db: D1Database, key: string): Promise<unknown | null> {
   const row = await first<{ value: string }>(

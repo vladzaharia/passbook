@@ -56,8 +56,6 @@ export const findByPrefix = (db: Db, prefix: string) =>
     [prefix],
   );
 
-export { orgIsActive as orgExists } from '../orgs/repo.ts';
-
 export async function revokeKey(db: Db, id: string, now: number): Promise<boolean> {
   const { changes } = await run(
     db,
