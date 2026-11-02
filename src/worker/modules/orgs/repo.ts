@@ -1,4 +1,4 @@
-import { all, chunk, first, likeEscape, placeholders, run } from '../../platform/db.ts';
+import { all, chunk, first, likeEscape, placeholders, run, stmt } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
 
@@ -201,4 +201,17 @@ export function orgForPass(db: D1Database, orgId: string) {
   }>(db, 'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?', [
     orgId,
   ]);
+}
+
+/** Creates a baked org on first sight; an existing slug is left as it is. */
+export function ensureOrgStmt(
+  db: D1Database,
+  o: { id: string; slug: string; name: string; now: number },
+): D1PreparedStatement {
+  return stmt(
+    db,
+    `INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (slug) DO NOTHING`,
+    [o.id, o.slug, o.name, o.now, o.now],
+  );
 }

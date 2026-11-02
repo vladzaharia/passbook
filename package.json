@@ -32,7 +32,7 @@
     "identity:add": "node tools/identity-add.ts",
     "predeploy": "node tools/deploy.ts --check",
     "deploy": "node tools/deploy.ts",
-    "check:rules": "node tools/check-log-codes.ts && node tools/check-sizes.ts && knip",
+    "check:rules": "node tools/check-log-codes.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && knip",
     "check": "npm run gen && npm run ci:lint && npm run check:rules && npm run typecheck && npm run test && npm run build",
     "dev:oidc": "node test/mock-oidc/server.ts 5174"
   },
