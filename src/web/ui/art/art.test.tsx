@@ -3,9 +3,10 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { Buddy } from './buddy.tsx';
-import { ART, ART_NAMES, EntityArt, WalletArt, type WalletState } from './index.ts';
+import { ART_NAMES, EntityArt, preloadArt, WalletArt, type WalletState } from './index.ts';
+import { ART } from './registry.ts';
 import type { WalletMood } from './wallet.tsx';
 
 const DIR = join(process.cwd(), 'src/web/ui/art');
@@ -80,6 +81,14 @@ function ms(el: Element, value: string | undefined, fallback: number): number {
 }
 
 describe('entity art', () => {
+  beforeAll(async () => {
+    await preloadArt();
+  });
+
+  it('lists every registered art by name, in order', () => {
+    expect(Object.keys(ART)).toEqual([...ART_NAMES]);
+  });
+
   it.each(ART_NAMES)('%s renders at lg and sm within the SVG rules', (name) => {
     for (const size of ['lg', 'sm'] as const) {
       const { container, unmount } = render(<EntityArt name={name} size={size} />);
@@ -211,13 +220,14 @@ describe('entity art', () => {
     expect(longest).toBe(600);
   });
 
-  // Raised for the buddy (moods, seat, composition); the initial JS grew ~120 B, the rest is CSS.
-  it('fits the 10.5 kB gzip budget', () => {
+  // Raised for the buddy (moods, seat, composition) and the lazy registry's name list. The art
+  // left the initial chunk (registry.ts), so the initial budget fell; the rest is CSS.
+  it('fits the 11 kB gzip budget', () => {
     // css.ts is SSR glue: the browser bundle never loads it.
     const files = readdirSync(DIR)
       .filter((f) => !f.includes('.test.') && f !== 'css.ts')
       .sort();
     const all = files.map((f) => readFileSync(join(DIR, f), 'utf8')).join('\n');
-    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(10.5 * 1024);
+    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(11 * 1024);
   });
 });
