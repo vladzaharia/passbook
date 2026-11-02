@@ -20,10 +20,10 @@ import {
   SegmentedControl,
   StatusPill,
 } from '../../ui/index.ts';
-import { useTemplates } from './api.ts';
+import { useRecentUploads, useTemplates } from './api.ts';
 import { originLabel, TemplateGallery, TemplateStill } from './gallery.tsx';
 import { styleList } from './labels.ts';
-import { RecentUploads } from './recent-uploads.tsx';
+import { RecentUploads, uploadsNeedAttention } from './recent-uploads.tsx';
 import type { TemplateListSearch } from './search.ts';
 
 const ALL = 'all';
@@ -101,6 +101,8 @@ export function TemplatesListPage({
   onSearch: (patch: Partial<TemplateListSearch>) => void;
 }) {
   const { orgId } = useOrgScope();
+  const uploads = useRecentUploads(orgId);
+  const uploadsFirst = uploadsNeedAttention(uploads.data?.items ?? [], Date.now());
   const phone = useMediaQuery(BELOW_MD);
   const list = useTemplates({
     orgId,
@@ -181,6 +183,7 @@ export function TemplatesListPage({
   return (
     <>
       <PageHeader title="Templates" actions={upload(truth ? 'outline' : 'primary')} />
+      {uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
       {list.isError ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
       ) : truth ? (
@@ -212,7 +215,7 @@ export function TemplatesListPage({
           footer={footer}
         />
       )}
-      <RecentUploads orgId={orgId} />
+      {uploadsFirst ? null : <RecentUploads orgId={orgId} />}
     </>
   );
 }

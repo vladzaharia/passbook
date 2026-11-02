@@ -86,6 +86,36 @@ describe('templates list', () => {
     expect((router.state.location.search as { archived?: boolean }).archived).toBe(true);
   });
 
+  it('leads with recent uploads while one failed today, else keeps them under the gallery', async () => {
+    const upload = (status: string, createdAt: number) => ({
+      uploadId: '01a19a05-0000-7000-8000-000000000001',
+      name: 'Broken.zip',
+      status,
+      templateId: null,
+      version: null,
+      error: null,
+      issues: 1,
+      createdAt,
+    });
+    let items = [upload('errored', Date.now() - 60_000)];
+    const handlers = {
+      '/api/v1/orgs': orgs,
+      '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
+      '/api/v1/templates/uploads': () => json({ items }),
+    };
+    const first = await renderApp('/admin/templates', { session: 'admin', handlers });
+    const strip = await screen.findByRole('list', { name: 'Recent uploads' });
+    const gallery = screen.getByRole('link', { name: 'Copper card' });
+    // Before the gallery in document order.
+    expect(strip.compareDocumentPosition(gallery) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    first.unmount();
+    items = [upload('errored', Date.now() - 2 * 86_400_000)];
+    await renderApp('/admin/templates', { session: 'admin', handlers });
+    const later = await screen.findByRole('list', { name: 'Recent uploads' });
+    const card = screen.getByRole('link', { name: 'Copper card' });
+    expect(later.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
   it('has no axe violations', async () => {
     const { container } = await renderApp('/admin/templates', {
       session: 'admin',
