@@ -55,11 +55,9 @@ describe('client ID metadata document', () => {
       {
         PUBLIC_BASE_URL: 'http://localhost:5173',
         OIDC_CLIENT_ID: 'http://localhost:5173/auth/oidc/client-metadata.json',
-        OIDC_CLIENT_SECRET: '',
       },
       { publicClient: true },
     );
     expect((await h.call('/auth/oidc/client-metadata.json')).status).toBe(404);
-    expect((await h.call('/auth/oidc/start')).status).toBe(503);
   });
 });

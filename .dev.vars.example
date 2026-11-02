@@ -7,7 +7,6 @@ KEK_V1="replace-with-base64-32-bytes"
 # docs/operations.md). Local development uses the mock provider: npm run dev:oidc.
 OIDC_ISSUER="https://id.plrs.im"
 OIDC_CLIENT_ID="replace-with-client-id"
-OIDC_CLIENT_SECRET="replace-with-client-secret"
 
 # Cloudflare Turnstile secret. The always-pass test secret is 1x0000000000000000000000000000000AA.
 TURNSTILE_SECRET="replace-with-turnstile-secret"

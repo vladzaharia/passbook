@@ -36,12 +36,15 @@ import { saveOidcFlow, takeOidcFlow } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
 
-/** Null when the Pocket ID client is not configured. A CIMD client is public: it has no secret. */
+/**
+ * Null when the Pocket ID client is not configured. The secret is optional: a CIMD client is
+ * always public, and a registered client may be public too (PKCE either way).
+ */
 export function oidcConfig(env: AppBindings['Bindings']): RelyingParty | null {
   const issuer = envString(env, 'OIDC_ISSUER');
   const clientId = envString(env, 'OIDC_CLIENT_ID');
-  const clientSecret = usesCimd(env) ? null : envString(env, 'OIDC_CLIENT_SECRET');
-  if (!issuer || !clientId || clientSecret === undefined) return null;
+  if (!issuer || !clientId) return null;
+  const clientSecret = usesCimd(env) ? null : (envString(env, 'OIDC_CLIENT_SECRET') ?? null);
   const host = new URL(env.PUBLIC_BASE_URL).hostname;
   return issuerRelyingParty({
     issuer,

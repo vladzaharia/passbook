@@ -478,7 +478,7 @@ describe('oidc sign-in', () => {
 
   it('is unavailable without client configuration', async () => {
     h.restore();
-    h = await harness({ OIDC_CLIENT_SECRET: '' });
+    h = await harness({ OIDC_CLIENT_ID: '' });
     expect((await h.call('/auth/oidc/start')).status).toBe(503);
     const body = (await session(new Map())) as { oidcEnabled: boolean };
     expect(body.oidcEnabled).toBe(false);

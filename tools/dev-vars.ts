@@ -8,7 +8,6 @@ const file = resolve(import.meta.dirname, '../.dev.vars');
 const have = devVarNames(file);
 const entries: Record<string, string> = {
   KEK_V1: randomBytes(32).toString('base64'),
-  OIDC_CLIENT_SECRET: 'dev-oidc-secret',
   // Cloudflare's always-pass Turnstile test secret.
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
   // Invisible always-pass test key; the production key only works on wallet.plrs.im.

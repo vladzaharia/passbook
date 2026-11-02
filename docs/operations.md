@@ -30,8 +30,9 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    - After the first sign-in creates the client, set its allowed groups to both groups. Wallet
      also checks the groups claim itself.
    - Metadata changes reach Pocket ID within an hour, or at once with Refresh in its client list.
-   - A registered client still works: set its id in `vars.OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`
-     in step 5.
+   - A registered client still works: set its id in `vars.OIDC_CLIENT_ID`; a confidential one also
+     needs `OIDC_CLIENT_SECRET` (step 5). Local dev only loads secrets listed in
+     `secrets.required`, so the mock provider runs as a public client.
 2. **Apple certificate**
    - Pass Type ID `pass.im.plrs.wallet`, team `48H7CLBV8Y`. Export the `.p12`.
    - `P12_PASSWORD=… npm run credentials -- Pass.p12` (checks the chain, key match and dates).

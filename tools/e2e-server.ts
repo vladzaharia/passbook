@@ -16,7 +16,6 @@ rmSync(varsFile, { force: true });
 const fixture = await createFixtureIdentity();
 writeDevVars(varsFile, {
   KEK_V1: randomBytes(32).toString('base64'),
-  OIDC_CLIENT_SECRET: 'e2e-secret',
   OIDC_CLIENT_ID: 'wallet-e2e',
   OIDC_ISSUER: 'http://localhost:5174',
   PUBLIC_BASE_URL: 'http://localhost:5173',
@@ -37,7 +36,6 @@ const env = {
   WALLET_E2E: '1',
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-e2e',
-  OIDC_CLIENT_SECRET: 'e2e-secret',
   PUBLIC_BASE_URL: 'http://localhost:5173',
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
 };
