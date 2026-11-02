@@ -131,14 +131,18 @@ export async function listMyEmails(ctx: ServiceContext, userId: string) {
     repo.getUser(ctx.env.DB, userId),
     repo.emailsOf(ctx.env.DB, userId),
   ]);
-  return {
-    items: emails.map((e) => ({
-      email: e.email,
-      verifiedAt: e.verified_at,
-      verifiedVia: e.verified_via,
-      primary: e.email === user?.primary_email,
-    })),
-  };
+  const items = emails.map((e) => ({
+    email: e.email,
+    verifiedAt: e.verified_at as number | null,
+    verifiedVia: e.verified_via as 'magic_link' | 'oidc' | 'admin' | null,
+    primary: e.email === user?.primary_email,
+  }));
+  // The profile address can be unproven (OIDC without trusted email). Listed so it can be verified;
+  // it is never in user_emails, so nothing that matches on verified emails sees it.
+  if (user && !items.some((e) => e.primary)) {
+    items.push({ email: user.primary_email, verifiedAt: null, verifiedVia: null, primary: true });
+  }
+  return { items };
 }
 
 /**

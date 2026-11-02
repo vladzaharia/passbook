@@ -41,13 +41,14 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
   const [busy, setBusy] = useState<string>();
   const [confirm, setConfirm] = useState<Confirm>(null);
   const root = useRef<HTMLDivElement>(null);
-  const verified = query.data?.items ?? [];
+  const listedAll = query.data?.items ?? [];
+  const verified = listedAll.filter((v) => v.verifiedAt !== null);
 
   // Drop pending rows once the server lists them as verified (the pill fades with the swap).
   const { list, drop } = pending;
   const listed = query.data?.items;
   useEffect(() => {
-    const done = list.filter((e) => listed?.some((v) => v.email === e));
+    const done = list.filter((e) => listed?.some((v) => v.email === e && v.verifiedAt !== null));
     if (done.length) removeWithTransition(() => drop(done));
   }, [list, listed, drop]);
 
@@ -79,22 +80,24 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
 
   async function resend(email: string) {
     try {
+      const again = pending.list.includes(email);
       await send.mutateAsync(email);
-      toast.success('Sent again');
+      pending.add(email);
+      if (again) toast.success('Sent again');
     } catch (error) {
       toast.error(error, 'Could not send');
     }
   }
 
   const items = [
-    ...verified.map((v) => ({
+    ...listedAll.map((v) => ({
       email: v.email,
       primary: v.primary,
       verified: v.verifiedAt !== null,
-      pending: false,
+      pending: v.verifiedAt === null && pending.list.includes(v.email),
     })),
     ...pending.list
-      .filter((e) => !verified.some((v) => v.email === e))
+      .filter((e) => !listedAll.some((v) => v.email === e))
       .map((email) => ({ email, primary: false, verified: false, pending: true })),
   ];
 

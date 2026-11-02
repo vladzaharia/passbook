@@ -56,7 +56,18 @@ export function EmailList({
   const fresh = useInsertHighlight(items.map((i) => i.email));
   const actionsFor = (item: EmailItem): RowAction[] => {
     const busy = busyEmail === item.email;
-    if (item.primary) return [];
+    if (item.primary && item.verified) return [];
+    // An unproven primary can be verified or re-sent, never removed.
+    if (item.primary) {
+      return [
+        {
+          label: item.pending ? 'Resend' : 'Verify',
+          icon: item.pending ? RotateCw : ACTION_ICON.sendEmail,
+          onSelect: () => onResend(item.email),
+          disabled: busy,
+        },
+      ];
+    }
     if (item.pending) {
       return [
         {
@@ -109,7 +120,11 @@ export function EmailList({
                 {item.primary ? <StatusPill status="primary" /> : null}
                 {item.verified ? null : (
                   <StatusPill status="waiting">
-                    {item.pending ? 'Check your inbox' : 'Unverified'}
+                    {item.pending
+                      ? 'Check your inbox'
+                      : item.primary
+                        ? 'Not verified'
+                        : 'Unverified'}
                   </StatusPill>
                 )}
               </>
