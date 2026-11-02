@@ -40,8 +40,8 @@ export interface PassPageProps {
 const badgeHtml = (href: string) =>
   `<a class="awb" href="${escapeHtml(href)}"><picture><source srcset="/apple/badge/en/outline.svg" media="(prefers-color-scheme: dark)"><img src="/apple/badge/en/black.svg" alt="Add to Apple Wallet" height="44"></picture></a>`;
 
-const ADD_LINE = 'Open on iPhone or Mac to add to Wallet.';
-const SAFARI_LINE = 'Open in Safari to add to Wallet.';
+const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
+const SAFARI_LINE = 'Open in Safari to add to Apple Wallet.';
 
 const svg = (d: string) =>
   `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;

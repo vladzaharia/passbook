@@ -84,7 +84,7 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
 - Height 40–48 px (44 on touch); clear space at least 0.1 × height.
 - Next to the pass, and secondary to the pass and the org's identity.
 - iPhone, iPod and Mac can add. Everywhere else (iPad included) show the QR and one line:
-  `Open on iPhone or Mac to add to Wallet.` In-app browsers: `Open in Safari to add to Wallet.`
+  `Open on iPhone or Mac to add to Apple Wallet.` In-app browsers: `Open in Safari to add to Apple Wallet.`
   These are the only added sentences.
 - Never show the bare word "Wallet" as a brand in a view that shows the badge.
 - A pass already registered on a device shows `In Wallet` and leaves the Add all bundle.

@@ -33,7 +33,7 @@ export interface RenderedEmail {
   fromName?: string;
 }
 
-export const ADD_LINE = 'Open on iPhone or Mac to add to Wallet.';
+export const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
 
 const safeColor = (value: string | null | undefined) =>
@@ -101,7 +101,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     `<p class="e-muted" style="margin:${margin};font-size:14px;line-height:20px;color:${c.muted}">${line}</p>`;
   const body = `<p class="e-strong" style="margin:0 0 16px;font-size:20px;line-height:28px;font-weight:600;color:${c.strong}">Your pass is ready</p>
 ${passBlock(input, fields)}
-<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="168" style="display:block;width:168px;height:auto;border:0"></a></p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
 <p style="margin:0 0 16px">${buttonHtml(input.manageUrl, 'Open your pass', false, link)}</p>
 ${muted('0 0 24px', ADD_LINE)}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}

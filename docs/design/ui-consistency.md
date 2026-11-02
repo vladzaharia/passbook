@@ -415,7 +415,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   email). Rules in ux-principles.md "Add to Apple Wallet badge".
 - **Device rule**: iPhone, iPod and Mac get the badge. Other devices (iPad included) get the QR
   card (`Scan with your iPhone.`) first, the badge second and `Open on iPhone or Mac to add to
-  Wallet.`
+  Apple Wallet.`
 - **Portal tiles**: the pass (stage), title and org; actions: badge (or `Show QR` + badge),
   `Refresh` (outline), `More` (Show QR, Remove). `In Wallet` pill for registered passes. No
   `Updated` line. Pass heights equal per row.
@@ -458,5 +458,5 @@ The trust and footer lines are the only explanatory text allowed on these pages:
 - Emails: fluid container `width:100%; max-width:480px`; 3px foil line (teal fallback) over the
   org header bar (org accent, text white or near-black by luminance). One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
-  pass` and `Open on iPhone or Mac to add to Wallet.`. The sign-in code is a letter-spaced chip,
+  pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
   not a field. Buttons 44px. Footer note `12px`. Nothing wider than 320px. No animation.

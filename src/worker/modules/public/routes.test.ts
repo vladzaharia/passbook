@@ -101,7 +101,7 @@ describe('GET /p/:token', () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
     expect(html.includes('Scan with your iPhone.')).toBe(qr);
-    expect(html.includes('Open on iPhone or Mac to add to Wallet.')).toBe(line);
+    expect(html.includes('Open on iPhone or Mac to add to Apple Wallet.')).toBe(line);
     expect(html).toContain('alt="Add to Apple Wallet"');
   });
 
@@ -109,7 +109,7 @@ describe('GET /p/:token', () => {
     const pass = await kit.pass();
     const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148';
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
-    expect(html).toContain('Open in Safari to add to Wallet.');
+    expect(html).toContain('Open in Safari to add to Apple Wallet.');
   });
 
   it('offers a QR hand-off for desktop visitors that points at the pass download', async () => {
