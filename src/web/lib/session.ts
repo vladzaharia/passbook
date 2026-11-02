@@ -30,6 +30,28 @@ export function useInvalidateSession(): () => Promise<void> {
   return () => client.invalidateQueries({ queryKey: sessionQuery.queryKey });
 }
 
+const BYE = 'wallet-signed-out';
+
+/** True if this tab signed out in the last two minutes: the sign-in scene waves goodbye. */
+export function signedOutJustNow(now = Date.now()): boolean {
+  try {
+    const at = Number(sessionStorage.getItem(BYE));
+    return at > 0 && now - at < 120_000;
+  } catch {
+    // Storage blocked: no wave.
+    return false;
+  }
+}
+
+/** Once read, the mark goes: the next sign-in page does not wave again. */
+export function clearSignedOut(): void {
+  try {
+    sessionStorage.removeItem(BYE);
+  } catch {
+    // Storage blocked: nothing was stored.
+  }
+}
+
 /** The server answers {ok, redirect}; the redirect may go through the IdP's end-session endpoint. */
 export async function signOut(csrfToken?: string): Promise<void> {
   let target = '/login';
@@ -43,6 +65,11 @@ export async function signOut(csrfToken?: string): Promise<void> {
     if (typeof body.redirect === 'string' && body.redirect) target = body.redirect;
   } catch {
     // Network or parse failure: the cookie may still be set; /login re-checks the session.
+  }
+  try {
+    sessionStorage.setItem(BYE, String(Date.now()));
+  } catch {
+    // Storage blocked: the sign-in page just skips the wave.
   }
   window.location.assign(target);
 }

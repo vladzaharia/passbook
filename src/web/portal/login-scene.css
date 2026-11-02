@@ -149,6 +149,13 @@
     animation: wl-login-return 360ms var(--wl-ease-spring) backwards;
   }
 
+  /* Just signed out: once landed, the top card waves from the pocket, like a hand. */
+  .wl-login-scene[data-bye]:not([data-beat]) .wl-art [data-part="c2"] {
+    animation:
+      wl-a-in var(--u) var(--e) calc(var(--wl-art-delay, 80ms) + var(--d)) backwards,
+      wl-login-wave 860ms var(--wl-ease-move) 700ms;
+  }
+
   .wl-login-pocket[data-shake] {
     animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
   }
@@ -229,6 +236,20 @@
 @keyframes wl-login-bounce {
   from {
     transform: scale(1.06, 0.9);
+  }
+}
+@keyframes wl-login-wave {
+  20% {
+    transform: rotate(-14deg);
+  }
+  45% {
+    transform: rotate(12deg);
+  }
+  70% {
+    transform: rotate(-7deg);
+  }
+  88% {
+    transform: rotate(3deg);
   }
 }
 @keyframes wl-login-flip {

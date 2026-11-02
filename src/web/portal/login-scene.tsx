@@ -149,15 +149,18 @@ function useOneShot(ref: { current: HTMLElement | null }, name: string, count: n
 /**
  * "The wallet fills" (motion-and-expression.md, moment 8): the mascot sits on the sign-in card's
  * top edge, legs over it, three passes fanned. Decorative: aria-hidden, no words; every beat is
- * CSS on transform and opacity (login-scene.css). `sad` is a failure the page shows on its own.
+ * CSS on transform and opacity (login-scene.css). `sad` is a failure the page shows on its own;
+ * `bye` (just signed out) waves the top card once after the entrance.
  */
 export function LoginScene({
   state,
   sad,
+  bye,
   className,
 }: {
   state: SceneState;
   sad?: boolean;
+  bye?: boolean;
   className?: string;
 }) {
   const root = state.root;
@@ -177,6 +180,7 @@ export function LoginScene({
       className={cn('wl-login-scene', className)}
       data-beat={state.beat === 'rest' ? undefined : state.beat}
       data-sad={why ?? undefined}
+      data-bye={bye || undefined}
       aria-hidden
     >
       <span className="wl-login-lean">
