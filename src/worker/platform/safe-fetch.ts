@@ -1,4 +1,5 @@
 import { UpstreamError, ValidationError } from './errors.ts';
+import { readCapped } from './read-capped.ts';
 
 export interface DnsResolver {
   /** Returns every A and AAAA address for the host. */
@@ -196,33 +197,6 @@ export async function assertPublicHost(host: string, resolver: DnsResolver): Pro
     throw new ValidationError('The host resolves to a private address.', [], 'UNSAFE_URL');
 }
 
-async function readCapped(response: Response, maxBytes: number): Promise<Uint8Array> {
-  const declared = Number(response.headers.get('content-length') ?? 0);
-  if (declared > maxBytes)
-    throw new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE');
-  if (!response.body) return new Uint8Array();
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE');
-    }
-    chunks.push(value);
-  }
-  const body = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return body;
-}
-
 /** Outbound fetch for tenant-configured URLs: https/443 only, public hosts only, no redirects, capped. */
 export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -247,7 +221,12 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
     if (response.status >= 300 && response.status < 400) {
       throw new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
     }
-    const body = await readCapped(response, maxBytes);
+    const body = await readCapped(
+      response.body,
+      maxBytes,
+      () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
+      Number(response.headers.get('content-length') ?? 0),
+    );
     const decode = () => new TextDecoder().decode(body);
     return {
       status: response.status,

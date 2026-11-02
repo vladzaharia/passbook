@@ -1,4 +1,5 @@
 import { toHex } from '../../platform/ids.ts';
+import { readCapped } from '../../platform/read-capped.ts';
 import { ConnectorError } from '../types.ts';
 
 export const SIGNATURE_HEADER = 'x-wallet-signature';
@@ -33,31 +34,6 @@ export async function signWebhook(
   return `v1=${toHex(new Uint8Array(mac))}`;
 }
 
-/** Reads the body through a running byte count; aborts as soon as `max` is exceeded. */
-export async function readCapped(req: Request, max: number): Promise<string> {
-  if (!req.body) return '';
-  const reader = req.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > max) {
-      await reader.cancel().catch(() => undefined);
-      throw new ConnectorError('INVALID_PAYLOAD');
-    }
-    chunks.push(value);
-  }
-  const all = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    all.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder().decode(all);
-}
-
 export interface VerifiedWebhook {
   body: string;
   /** Hex digest; stable across retransmissions of the same delivery. */
@@ -81,7 +57,9 @@ export async function verifySignedRequest(
   if (Number(req.headers.get('content-length') ?? 0) > MAX_WEBHOOK_BYTES) {
     throw new ConnectorError('INVALID_PAYLOAD');
   }
-  const body = await readCapped(req, MAX_WEBHOOK_BYTES);
+  const body = new TextDecoder().decode(
+    await readCapped(req.body, MAX_WEBHOOK_BYTES, () => new ConnectorError('INVALID_PAYLOAD')),
+  );
   if (!sigHeader || !tsHeader || !/^\d{9,12}$/.test(tsHeader)) throw new ConnectorError('AUTH');
   const skew = options.now - Number(tsHeader) * 1000;
   if (skew > REPLAY_WINDOW_MS || skew < -FUTURE_SKEW_MS) throw new ConnectorError('AUTH');

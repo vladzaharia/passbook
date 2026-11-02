@@ -1,3 +1,4 @@
+import { readCapped } from '../../platform/read-capped.ts';
 import { isIpLiteral } from '../../platform/safe-fetch.ts';
 
 /** Shared pieces of the OIDC client: errors, URL gate, capped JSON fetch. */
@@ -85,32 +86,6 @@ export function issuerRelyingParty(cfg: {
   };
 }
 
-export async function readCapped(res: Response): Promise<string> {
-  const declared = Number(res.headers.get('content-length') ?? 0);
-  if (declared > OIDC_MAX_BYTES) throw new OidcNetworkError('response too large');
-  const reader = res.body?.getReader();
-  if (!reader) return '';
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > OIDC_MAX_BYTES) {
-      await reader.cancel();
-      throw new OidcNetworkError('response too large');
-    }
-    chunks.push(value);
-  }
-  const joined = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    joined.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder().decode(joined);
-}
-
 function oauthError(body: string): string | null {
   try {
     const parsed = JSON.parse(body) as { error?: unknown };
@@ -143,7 +118,14 @@ export async function gatedJson(
     await res.body?.cancel();
     throw new OidcNetworkError(`${label} answered a redirect`);
   }
-  const body = await readCapped(res);
+  const body = new TextDecoder().decode(
+    await readCapped(
+      res.body,
+      OIDC_MAX_BYTES,
+      () => new OidcNetworkError('response too large'),
+      Number(res.headers.get('content-length') ?? 0),
+    ),
+  );
   if (res.status < 200 || res.status >= 300) {
     if (res.status === 400 && oauthError(body) === 'invalid_grant') {
       throw new OidcGrantRefusedError(`${label} refused the grant`);
