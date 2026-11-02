@@ -9,9 +9,9 @@ import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { ipPrefix, readCookie, setSessionCookie } from './cookies.ts';
-import { bumpCounter } from './magic-repo.ts';
 import { nextOrHome, safeNext } from './next.ts';
 import { breakglassPage } from './pages.ts';
+import { bumpCounter } from './repo-magic.ts';
 import { signInBreakglass } from './service.ts';
 
 const HASH = /^[0-9a-f]{64}$/;

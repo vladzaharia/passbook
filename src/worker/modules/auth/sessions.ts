@@ -3,7 +3,7 @@ import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import * as repo from './sessions-repo.ts';
+import * as repo from './repo-sessions.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;

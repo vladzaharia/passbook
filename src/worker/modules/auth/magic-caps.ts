@@ -1,7 +1,7 @@
 import { sha256Hex } from '../../platform/ids.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import * as repo from './magic-repo.ts';
+import * as repo from './repo-magic.ts';
 
 export const DEFAULT_DAILY_CAP = 2000;
 export const EMAIL_HOURLY_CAP = 5;

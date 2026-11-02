@@ -2,7 +2,7 @@ import { all, chunk, first, likeEscape, placeholders, run } from '../../platform
 import type { UserRow } from '../auth/repo.ts';
 
 export { getUser, type UserRow } from '../auth/repo.ts';
-export { getSession, listRecentSessions } from '../auth/sessions-repo.ts';
+export { getSession, listRecentSessions } from '../auth/repo-sessions.ts';
 
 type Db = D1Database;
 

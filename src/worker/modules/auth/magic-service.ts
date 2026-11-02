@@ -6,7 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer, type Mailer } from '../delivery/mailer.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { withinCaps, withinDailyCap, withinIpCap } from './magic-caps.ts';
-import * as repo from './magic-repo.ts';
+import * as repo from './repo-magic.ts';
 import {
   type PendingIdentity,
   type SignInContext,

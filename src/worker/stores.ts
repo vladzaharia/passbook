@@ -1,6 +1,6 @@
 import { createApiKeyStore } from './modules/api-keys/service.ts';
 import { recordAudit } from './modules/audit/service.ts';
-import { bumpCounter } from './modules/auth/magic-repo.ts';
+import { bumpCounter } from './modules/auth/repo-magic.ts';
 import { createSessionStore } from './modules/auth/sessions.ts';
 import type { AuthStores } from './platform/auth.ts';
 import type { AppEnv } from './platform/env.ts';

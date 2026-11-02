@@ -12,12 +12,12 @@ import { depsOf } from '../passes/deps.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPassBySerial } from '../passes/repo.ts';
 import { withoutPersonalizationFiles } from './personalize-files.ts';
+import { identityByPassType } from './repo.ts';
 import {
   getPersonalization,
   insertPersonalization,
   markPersonalizationPublished,
-} from './personalize-repo.ts';
-import { identityByPassType } from './repo.ts';
+} from './repo-personalize.ts';
 
 const text = (max: number) => z.string().max(max).optional();
 

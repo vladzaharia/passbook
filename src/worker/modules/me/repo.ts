@@ -3,7 +3,7 @@ import { all, first, run } from '../../platform/db.ts';
 type Db = D1Database;
 
 export { emailsOf, getUser } from '../auth/repo.ts';
-export { getSession, listLiveSessions } from '../auth/sessions-repo.ts';
+export { getSession, listLiveSessions } from '../auth/repo-sessions.ts';
 
 export interface MyPassRow {
   id: string;

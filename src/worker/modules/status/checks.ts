@@ -3,7 +3,7 @@ import type { ComponentStatusSchema } from '../../../shared/contracts/status.ts'
 import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dailyCapOf, dayStart } from '../auth/magic-caps.ts';
-import { readCounter } from '../auth/magic-repo.ts';
+import { readCounter } from '../auth/repo-magic.ts';
 import type { lastIdentityCheck } from '../identities/check.ts';
 import { apnsBindingPresent } from '../identities/db-resolver.ts';
 import type { IdentityRow } from '../identities/repo.ts';

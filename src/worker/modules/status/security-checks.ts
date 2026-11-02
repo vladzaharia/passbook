@@ -3,7 +3,7 @@ import type { ComponentStatusSchema } from '../../../shared/contracts/status.ts'
 import { envString, RATE_LIMITS } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dayStart } from '../auth/magic-caps.ts';
-import { readCounter } from '../auth/magic-repo.ts';
+import { readCounter } from '../auth/repo-magic.ts';
 import { lastBreakglassUse } from './repo.ts';
 
 type Draft = Omit<z.infer<typeof ComponentStatusSchema>, 'checkedAt'>;
