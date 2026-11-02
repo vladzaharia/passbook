@@ -6,7 +6,7 @@ import { prefersReducedMotion, useChangeCount } from '../lib/motion.ts';
 import { ConfirmDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
 import { useBlockedSubmit } from './form.tsx';
-import { TwoPane } from './two-pane.tsx';
+import { WizardStage } from './wizard-stage.tsx';
 
 export interface WizardStep {
   id: string;
@@ -19,8 +19,10 @@ export interface WizardProps {
   current: number;
   /** A done step was clicked: go back to it (its state is kept by the caller). */
   onStep: (index: number) => void;
-  /** Live preview or summary, beside the steps at 1024 and up. */
+  /** Live preview or summary: a stage right of the steps at 1024 and up, hidden below. */
   aside?: ReactNode;
+  /** The stage's visible label and landmark name. */
+  asideLabel?: string;
   /** Unsaved input: Cancel asks first. */
   dirty?: boolean;
   onCancel: () => void;
@@ -183,15 +185,25 @@ export function WizardBar({
 }
 
 /**
- * The wizard shell: Stepper on top, one content width on every step, the aside beside it at 1024
- * and up, and the WizardBar. A step change scrolls to the top and focuses the step heading; the
- * new step slides 16 px in from the direction of travel (opacity only under reduced motion).
+ * The wizard shell: Stepper on top, one content width on every step, the aside as a stage at 1024
+ * and up, and the WizardBar. A step change scrolls to the top and focuses the step heading (for
+ * screen readers; the stepper shows it); the new step slides 16 px in from the direction of travel
+ * (opacity only under reduced motion).
  */
-export function Wizard({ steps, current, onStep, aside, children, onNext, ...bar }: WizardProps) {
+export function Wizard({
+  steps,
+  current,
+  onStep,
+  aside,
+  asideLabel = 'Preview',
+  children,
+  onNext,
+  ...bar
+}: WizardProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const blocked = useBlockedSubmit<HTMLDivElement>();
-  // The aside is a desktop companion; below 1024 it would stack under the step as dead space.
-  const wide = useMediaQuery('(min-width: 1024px)');
+  // The stage is a desktop companion; below 1024 it would stack under the step as dead space.
+  const staged = useMediaQuery('(min-width: 1024px)') && Boolean(aside);
   const previous = useRef(current);
   const direction = current >= previous.current ? 1 : -1;
   const changed = useChangeCount(current);
@@ -210,11 +222,7 @@ export function Wizard({ steps, current, onStep, aside, children, onNext, ...bar
       className={cn('flex min-w-0 flex-col gap-6', changed > 0 && 'wl-step')}
       style={{ '--wl-step-x': `${direction * 16}px` } as CSSProperties}
     >
-      <h2
-        ref={heading}
-        tabIndex={-1}
-        className="text-base font-semibold text-fg-strong outline-none"
-      >
+      <h2 ref={heading} tabIndex={-1} className="sr-only">
         {step?.title}
       </h2>
       {children}
@@ -227,15 +235,10 @@ export function Wizard({ steps, current, onStep, aside, children, onNext, ...bar
       }
     : undefined;
   return (
-    <div className="flex min-w-0 flex-col gap-6 pb-24">
+    <div data-staged={staged || undefined} className="wl-wizard flex min-w-0 flex-col gap-6 pb-24">
       <Stepper steps={steps} current={current} onStep={onStep} />
-      {aside && wide ? (
-        <TwoPane asideFrom="lg" stickyAside aside={aside}>
-          {body}
-        </TwoPane>
-      ) : (
-        body
-      )}
+      {body}
+      {staged ? <WizardStage label={asideLabel}>{aside}</WizardStage> : null}
       <WizardBar {...bar} onNext={next} />
     </div>
   );
