@@ -63,7 +63,9 @@ describe('hosted auth pages', () => {
 
   it('sizes the scene like /login and keeps fields at 16 px or more', () => {
     expect(HOSTED_CSS).toContain(HOSTED_ART_CSS);
-    expect(HOSTED_CSS).toContain('.scene{position:relative;z-index:2;width:128px;height:96px');
+    expect(HOSTED_CSS).toContain(
+      '.scene{position:relative;z-index:2;flex:none;width:128px;height:96px',
+    );
     expect(HOSTED_CSS).toMatch(/input\{[^}]*font-size:max\(16px,1rem\)/);
   });
 
@@ -78,12 +80,22 @@ describe('hosted auth pages', () => {
 
   it('seats the wallet on the card: above it, legs over the edge, a contact shadow', () => {
     // The base (y 66 of 72) meets the card's top edge: 8 px at 128×96, 7 px at 112×84.
-    expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin:1rem 0 -8px;pointer-events:none\}/);
+    expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin-bottom:-8px;pointer-events:none\}/);
     expect(HOSTED_CSS).toMatch(/\.scene\{margin-bottom:-7px\}/);
     expect(HOSTED_CSS).toMatch(/\.card\{position:relative;z-index:1;/);
     const html = noAccessPage(NONCE);
     expect(html).toMatch(/data-part="w"[^>]*data-seat=""/);
     for (const part of ['l1', 'l2', 'sd']) expect(html).toContain(`data-part="${part}"`);
+  });
+
+  it('puts the wordmark left and the wallet right in one band, then the card', () => {
+    const html = expiredPage(NONCE);
+    expect(html).toMatch(
+      /<main class="hosted"><div class="band"><div class="brand"><a class="mark" href="\/"><svg aria-hidden="true"[^>]*>.*?<\/svg>PassBook<\/a><\/div><div class="scene" aria-hidden="true"><svg[^>]*data-art="wallet"/,
+    );
+    expect(html).toMatch(/<\/svg><\/div><\/div><section class="card"/);
+    expect(HOSTED_CSS).toContain('.band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;');
+    expect(HOSTED_CSS).toContain('.band .mark svg{width:1.5rem;height:1.5rem}');
   });
 
   it.each([

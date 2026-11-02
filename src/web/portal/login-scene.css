@@ -2,12 +2,40 @@
    (art-wallet.css); these rules add the sign-in beats: parallax, lift, post, return, shake,
    hourglass and the tuck on success. The wallet sits on the card (seat): its base is y 66 of 72,
    so the scene overlaps the card by 8 px at 128×96 and 7 px at 112×84 (under 640), above it. */
+
+/* Header band: the wordmark's mark on the card's left text inset, centred on the wallet's face
+   (21/72 of the art above its base: 28 px, 24.5 px under 640); the wallet at the right, its
+   pocket's edge on the right text inset. The card border is 1 px; the mark's ink starts 1/12 in. */
+.wl-login-band {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-inline: calc(1px + 1.375rem) calc(1.5rem - 19px);
+}
+.wl-login-brand {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  height: 56px;
+}
+@media (max-width: 39.99rem) {
+  .wl-login-band {
+    padding-inline: calc(1px + 1.125rem) calc(1.25rem - 17px);
+  }
+  .wl-login-brand {
+    height: 49px;
+  }
+}
+
 .wl-login-scene {
   --px: 0;
   --py: 0;
   --gx: 0;
   position: relative;
   z-index: 20;
+  flex: none;
   width: 128px;
   height: 96px;
   margin-bottom: -8px;
@@ -56,11 +84,12 @@
   --d: 0ms;
 }
 
-/* Expired code: an hourglass stands on the card beside the wallet (base at 66/72) and flips once. */
+/* Expired code: an hourglass stands on the card at the wallet's left, the open side of the band
+   (base at 66/72), and flips once. */
 .wl-login-hourglass {
   position: absolute;
   top: calc(91.67% - 17.5px);
-  left: calc(91.67% - 10px);
+  left: calc(8.33% - 10px);
   width: 20px;
   height: 20px;
   opacity: 0;
@@ -119,8 +148,9 @@
     animation: wl-login-stamp 280ms var(--wl-ease-bounce) 60ms backwards;
   }
 
-  /* Send: the card hops out over the pocket's shoulder and drops into the sign-in card's top
-     edge like a letter going out. The two left close up a little; the eyes look down to the code. */
+  /* Send: the card hops out over the pocket's left shoulder (the wallet sits at the card's right)
+     and drops into the sign-in card's top edge like a letter going out. The two left close up a
+     little; the eyes look down to the code. */
   .wl-login-scene[data-beat="sent"] .wl-art [data-part="c2"] {
     --o: 48px 23px;
     animation: wl-login-post 320ms both;
@@ -194,12 +224,12 @@
   }
   28% {
     opacity: 1;
-    transform: translate(10px, -16px) rotate(12deg);
+    transform: translate(-10px, -16px) rotate(-12deg);
     animation-timing-function: linear;
   }
   55% {
     opacity: 1;
-    transform: translate(32px, -8px) rotate(36deg);
+    transform: translate(-32px, -8px) rotate(-36deg);
     animation-timing-function: var(--wl-ease-in);
   }
   85% {
@@ -207,7 +237,7 @@
   }
   100% {
     opacity: 0;
-    transform: translate(44px, 58px) rotate(60deg);
+    transform: translate(-44px, 58px) rotate(-60deg);
   }
 }
 @keyframes wl-login-return {
