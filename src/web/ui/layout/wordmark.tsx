@@ -36,16 +36,19 @@ let shown = false;
 /**
  * The wordmark card flips once per browser session; never on the sign-in scene (flip={false}).
  * `markOnly` drops the word: views that show the Add to Apple Wallet badge never show a bare
- * "PassBook" brand beside it.
+ * "PassBook" brand beside it. `narrow` drops it below 640 px only, where the holder nav needs the
+ * room (and stays put between holder pages).
  */
 export function Wordmark({
   to = '/',
   flip = true,
   markOnly = false,
+  narrow = false,
 }: {
   to?: string;
   flip?: boolean;
   markOnly?: boolean;
+  narrow?: boolean;
 }) {
   // Latched per instance, so a re-render mid-flip does not cut it short.
   const [play] = useState(() => flip && flipThisLoad && !shown);
@@ -64,7 +67,13 @@ export function Wordmark({
         data-flip={play || undefined}
         className="wl-wordmark-icon size-5 text-accent-fg"
       />
-      {markOnly ? <span className="sr-only">Home</span> : 'PassBook'}
+      {markOnly ? (
+        <span className="sr-only">Home</span>
+      ) : narrow ? (
+        <span className="max-sm:sr-only">PassBook</span>
+      ) : (
+        'PassBook'
+      )}
     </Link>
   );
 }
