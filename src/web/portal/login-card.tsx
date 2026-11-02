@@ -40,7 +40,7 @@ function Face({
         {children}
       </div>
       <p className="flex items-start gap-2 border-t border-border px-5 py-4 text-sm text-fg-muted sm:px-6">
-        <Lock aria-hidden className="mt-0.5 size-4 shrink-0" />
+        <Lock aria-hidden className="mt-1 size-4 shrink-0" />
         {FOOTER_LINE}
       </p>
     </section>
