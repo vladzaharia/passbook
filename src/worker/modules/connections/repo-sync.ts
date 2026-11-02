@@ -1,38 +1,37 @@
 import { deleteInBatches } from '../../platform/batched.ts';
 import { first, run } from '../../platform/db.ts';
+import { deleteRun, finishRun, startRun } from '../../platform/workflow-runs.ts';
 
 // Workflow runs
 
-export async function insertWorkflowRun(
+export function insertWorkflowRun(
   db: D1Database,
   w: { instanceId: string; orgId: string; connectionId: string; startedAt: number },
 ): Promise<boolean> {
-  const r = await run(
+  return startRun(
     db,
-    `INSERT OR IGNORE INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-     VALUES (?, 'connection_sync', ?, ?, 'queued', ?)`,
-    [w.instanceId, w.orgId, w.connectionId, w.startedAt],
+    {
+      instanceId: w.instanceId,
+      kind: 'connection_sync',
+      orgId: w.orgId,
+      targetId: w.connectionId,
+      now: w.startedAt,
+    },
+    { ignoreDuplicate: true },
   );
-  return r.changes === 1;
 }
 
 export async function deleteWorkflowRun(db: D1Database, instanceId: string): Promise<void> {
-  await run(db, 'DELETE FROM workflow_runs WHERE instance_id = ?', [instanceId]);
+  await deleteRun(db, instanceId);
 }
 
-export async function setWorkflowStatus(
+export const setWorkflowStatus = (
   db: D1Database,
   instanceId: string,
   status: 'running' | 'complete' | 'errored',
   now: number,
   errorCode: string | null = null,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE workflow_runs SET status = ?, error_code = ?, finished_at = ? WHERE instance_id = ?`,
-    [status, errorCode, status === 'running' ? null : now, instanceId],
-  );
-}
+) => finishRun(db, instanceId, status, now, { errorCode });
 
 export async function workflowStartedAt(
   db: D1Database,

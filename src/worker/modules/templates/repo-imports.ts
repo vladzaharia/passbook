@@ -1,5 +1,6 @@
 import type { ValidationReport } from '../../../passkit/types.ts';
 import { first, run, stmt } from '../../platform/db.ts';
+import { finishRun, type NewRun, startRun, startRunStmt } from '../../platform/workflow-runs.ts';
 
 export interface ImportRow {
   uploadId: string;
@@ -33,12 +34,13 @@ export async function insertImport(
        VALUES (?, ?, ?, ?, 'queued', ?, ?, ?)`,
       [row.uploadId, row.orgId, row.name, row.objectKey, row.createdBy, row.now, row.now],
     ),
-    stmt(
-      db,
-      `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-       VALUES (?, 'template_import', ?, ?, 'queued', ?)`,
-      [row.uploadId, row.orgId, row.uploadId, row.now],
-    ),
+    startRunStmt(db, {
+      instanceId: row.uploadId,
+      kind: 'template_import',
+      orgId: row.orgId,
+      targetId: row.uploadId,
+      now: row.now,
+    }),
   ]);
 }
 
@@ -115,29 +117,9 @@ export async function setWorkflowRun(
   now: number,
   extra: { errorCode?: string | null; targetId?: string | null } = {},
 ): Promise<void> {
-  const done = status === 'complete' || status === 'errored' || status === 'terminated';
-  await run(
-    db,
-    `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ?, target_id = COALESCE(?, target_id)
-     WHERE instance_id = ?`,
-    [status, done ? now : null, extra.errorCode ?? null, extra.targetId ?? null, instanceId],
-  );
+  await finishRun(db, instanceId, status, now, extra);
 }
 
-export async function insertWorkflowRun(
-  db: D1Database,
-  row: {
-    instanceId: string;
-    kind: 'template_import' | 'bulk_reissue' | 'connection_sync';
-    orgId: string | null;
-    targetId: string | null;
-    now: number;
-  },
-): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-     VALUES (?, ?, ?, ?, 'queued', ?)`,
-    [row.instanceId, row.kind, row.orgId, row.targetId, row.now],
-  );
+export async function insertWorkflowRun(db: D1Database, row: NewRun): Promise<void> {
+  await startRun(db, row);
 }

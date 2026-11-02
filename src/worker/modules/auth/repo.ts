@@ -1,4 +1,5 @@
 import { deleteInBatches } from '../../platform/batched.ts';
+import { pruneCounters } from '../../platform/counters.ts';
 import { all, first, run } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -167,7 +168,7 @@ export async function purgeExpired(db: Db, now: number): Promise<Record<string, 
       now - DAY,
       now - 7 * DAY,
     ),
-    counters: await del('counters', 'window_start < ?', now - 2 * DAY),
+    counters: await pruneCounters(db, now - 2 * DAY),
   };
 }
 

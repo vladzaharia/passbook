@@ -1,5 +1,5 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { run } from '../../platform/db.ts';
+import { claim } from '../../platform/counters.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { getDeps } from './deps.ts';
@@ -121,10 +121,5 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
 export async function reconcileConnections(ctx: ServiceContext): Promise<void> {
   await schedule(ctx);
   const day = Math.floor(ctx.clock.now() / DAY_MS) * DAY_MS;
-  const claimed = await run(
-    ctx.env.DB,
-    "INSERT OR IGNORE INTO counters (key, window_start, count) VALUES ('retention:connections', ?, 1)",
-    [day],
-  );
-  if (claimed.changes === 1) await dailyConnections(ctx);
+  if (await claim(ctx.env.DB, 'retention:connections', day)) await dailyConnections(ctx);
 }

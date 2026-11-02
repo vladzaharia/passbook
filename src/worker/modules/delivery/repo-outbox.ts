@@ -306,17 +306,4 @@ export async function orgBranding(db: D1Database, orgId: string): Promise<OrgBra
   return parsed.success ? parsed.data : {};
 }
 
-/** Adds one to the counter for the window and returns the new value. */
-export async function bumpCounter(
-  db: D1Database,
-  key: string,
-  windowStart: number,
-): Promise<number> {
-  const row = await first<{ count: number }>(
-    db,
-    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, 1)
-     ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1 RETURNING count`,
-    [key, windowStart],
-  );
-  return row?.count ?? 1;
-}
+export { bump as bumpCounter } from '../../platform/counters.ts';

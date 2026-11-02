@@ -112,16 +112,7 @@ export async function spendAttempt(db: Db, tokenHash: string, max: number): Prom
   return row !== null;
 }
 
-/** Fixed-window counter in D1. Returns the count after this hit. */
-export async function bumpCounter(db: Db, key: string, windowStart: number): Promise<number> {
-  const row = await first<{ count: number }>(
-    db,
-    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, 1)
-     ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1 RETURNING count`,
-    [key, windowStart],
-  );
-  return row?.count ?? 1;
-}
+export { bump as bumpCounter } from '../../platform/counters.ts';
 
 /** True when another account holds the address as primary or verified. */
 export async function isOwnedByOther(db: Db, email: string, userId: string): Promise<boolean> {
@@ -134,14 +125,7 @@ export async function isOwnedByOther(db: Db, email: string, userId: string): Pro
   return row !== null;
 }
 
-export async function readCounter(db: Db, key: string, windowStart: number): Promise<number> {
-  const row = await first<{ count: number }>(
-    db,
-    'SELECT count FROM counters WHERE key = ? AND window_start = ?',
-    [key, windowStart],
-  );
-  return row?.count ?? 0;
-}
+export { read as readCounter } from '../../platform/counters.ts';
 
 export const primaryEmailOf = async (db: Db, userId: string): Promise<string | null> =>
   (

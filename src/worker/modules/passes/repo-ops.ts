@@ -1,4 +1,5 @@
 import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
+import { finishRun, startRun } from '../../platform/workflow-runs.ts';
 import { listAssets } from './repo-history.ts';
 import { mapPass, type Pass } from './repo-map.ts';
 
@@ -141,27 +142,16 @@ export async function insertWorkflowRun(
     now: number;
   },
 ): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-     VALUES (?, ?, ?, ?, 'queued', ?)`,
-    [row.instanceId, row.kind, row.orgId, row.targetId, row.now],
-  );
+  await startRun(db, row);
 }
 
-export async function setWorkflowStatus(
+export const setWorkflowStatus = (
   db: D1Database,
   instanceId: string,
   status: 'running' | 'complete' | 'errored',
   now: number,
   errorCode: string | null = null,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ? WHERE instance_id = ?`,
-    [status, status === 'running' ? null : now, errorCode, instanceId],
-  );
-}
+) => finishRun(db, instanceId, status, now, { errorCode });
 
 /**
  * Hides the pass from every list and lookup but the device protocol, and unlinks it from its

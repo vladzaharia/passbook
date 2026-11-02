@@ -1,4 +1,5 @@
 import { deleteInBatches } from '../../platform/batched.ts';
+import { bump, prune } from '../../platform/counters.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 
 export interface IdentityRef {
@@ -117,20 +118,8 @@ export async function serialsSince(
 /** Adds `lines` to the hourly window and returns the new total. */
 export const GLOBAL_LOG_KEY = 'apple.log';
 
-export async function bumpLogCounter(
-  db: D1Database,
-  key: string,
-  windowStart: number,
-  lines: number,
-): Promise<number> {
-  const row = await first<{ count: number }>(
-    db,
-    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)
-     ON CONFLICT (key, window_start) DO UPDATE SET count = count + excluded.count RETURNING count`,
-    [key, windowStart, lines],
-  );
-  return row?.count ?? lines;
-}
+export const bumpLogCounter = (db: D1Database, key: string, windowStart: number, lines: number) =>
+  bump(db, key, windowStart, lines);
 
 export async function insertLogs(
   db: D1Database,
@@ -152,11 +141,7 @@ export async function insertLogs(
 
 export async function purgeLogs(db: D1Database, before: number): Promise<number> {
   const logs = await deleteInBatches(db, 'wallet_logs', 'at < ?', [before]);
-  await run(
-    db,
-    `DELETE FROM counters WHERE (key = 'apple.log' OR key LIKE 'apple.log.ip:%') AND window_start < ?`,
-    [before],
-  );
+  await prune(db, 'apple.log%', before);
   return logs;
 }
 
