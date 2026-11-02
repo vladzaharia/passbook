@@ -64,7 +64,7 @@
 }
 .pc-art-top .pc-label {
   font-weight: 700;
-  font-size: max(11px, calc(var(--u) * 12));
+  font-size: calc(var(--u) * 12);
 }
 .pc-art-top .pc-value {
   font-size: calc(var(--u) * 14);
@@ -128,7 +128,7 @@
 }
 .pc-poster-primary .pc-primary .pc-label {
   order: -1;
-  font-size: max(11px, calc(var(--u) * 11));
+  font-size: calc(var(--u) * 11);
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
@@ -141,4 +141,14 @@
 }
 .pc-poster-footer .pc-value {
   font-size: calc(var(--u) * 13);
+}
+
+/* The 11 px label floor applies on full-size cards only (see pass-card-base.css). */
+@container (min-width: 260px) {
+  .pc-art-top .pc-label {
+    font-size: max(11px, calc(var(--u) * 12));
+  }
+  .pc-poster-primary .pc-primary .pc-label {
+    font-size: max(11px, calc(var(--u) * 11));
+  }
 }
