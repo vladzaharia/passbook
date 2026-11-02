@@ -102,6 +102,7 @@ export const SIGN_IN_ERRORS: Record<
     title: 'Check your email',
     message: 'This email belongs to an existing account. Open the link we sent, in this browser.',
     status: 403,
+    art: 'login',
   },
   SESSION_REQUIRED: {
     title: 'Sign in first',

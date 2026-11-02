@@ -24,11 +24,11 @@ function waitLine(seconds: number | null | undefined): string {
 }
 
 function defaults(input: ErrorPageInput): { title: string; line?: string; art: HostedArt } {
-  if (input.status === 404) return { title: 'Page not found', art: 'torn' };
+  if (input.status === 404) return { title: 'Page not found', art: 'lost' };
   if (input.status === 429) {
-    return { title: 'Too many requests', line: waitLine(input.retryAfter), art: 'tired' };
+    return { title: 'Too many requests', line: waitLine(input.retryAfter), art: 'throttled' };
   }
-  return { title: 'Something went wrong', art: 'unplugged' };
+  return { title: 'Something went wrong', art: 'broken' };
 }
 
 export function renderErrorPage(input: ErrorPageInput): string {
