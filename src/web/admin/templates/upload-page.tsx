@@ -104,7 +104,7 @@ export function TemplateUploadPage({
 
   const left = finished ? (
     <Card className="mt-18">
-      <Buddy mood="happy" />
+      <Buddy mood="happy" scene="cheer" />
       <CardHeader
         title={
           result.data && result.data.versions.length > 1

@@ -51,8 +51,9 @@ export function Summary({
       {t.icon === null ? (
         <BuddyFace
           key={popped}
+          scene="cheer"
           className={cn(
-            'size-9 text-success [--wl-face-bg:var(--pk-success-subtle)] [--wl-wink-at:640ms]',
+            'size-9 text-success [--wl-face-bg:var(--pk-success-subtle)]',
             popped > 0 && 'wl-state-pop',
           )}
         />

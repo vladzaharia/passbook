@@ -6,6 +6,7 @@ import { isApiError } from '../../../lib/errors.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Button,
+  Cameo,
   Celebrate,
   EmptyState,
   ErrorState,
@@ -155,12 +156,12 @@ function Loaded({
         swapKey={picked === undefined ? 'current' : showing}
         label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
         className={size === 'card' ? 'gap-2' : undefined}
-        // Just created: the buddy steps out from behind the pass and stays beside it.
+        // Just created: the buddy steps out from behind the pass, waves at it and stays beside it.
         beside={
           size === 'column' && minted ? (
-            <span aria-hidden className="wl-pass-buddy">
+            <Cameo scene="wave" className="wl-pass-buddy">
               <WalletArt state="login" mood="happy" size="sm" beat={false} />
-            </span>
+            </Cameo>
           ) : undefined
         }
       />
