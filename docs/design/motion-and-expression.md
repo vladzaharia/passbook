@@ -25,8 +25,8 @@ names its trigger, property (transform or opacity), duration, easing and distanc
 
 **No ambient loops.** Only things that carry pending state loop, and only while work is pending:
 spinners, pending rings, the loading rail, the sync rail and the upload buddy's riffle. Art and the login scene get one idle
-beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2), except the My passes search
-walk (8 s, once in view; owner direction; still under reduced motion).
+beat; nothing moves on its own more than 5 s after mount (WCAG 2.2.2). Buddy scenes start at 700 ms
+and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 
 ## Tokens
 
@@ -109,7 +109,7 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 
 | Scene | Where | Beats: anticipation, action, reaction, settle | Time |
 | --- | --- | --- | --- |
-| search | Portal My passes, empty (no dotted pass) | Squash and stand, feet on the edge. Walks the box's top edge within its centre 40% (the box is an inline-size container): steps alternate, the body bobs and rocks, it leans and its eyes lead. At each end it stops on tiptoe, a "?" pops over the leading side and wobbles while the eyes scan out, then a blink and a little hop turn it round. Two laps, then it hops back onto the seat at the centre, squashes and blinks at you | 8 s |
+| search | Portal My passes, empty (no dotted pass) | Squash and stand, feet on the edge. Scurries along the box's top edge within its centre 40% (the box is an inline-size container): three steps out, six across, three back, 180 ms each, legs alternating, the body bobbing and rocking, leaning with its eyes in the lead. At the right end, then the left, it stops on tiptoe, a "?" pops over the leading side and wobbles while the eyes scan out, then a blink and a little hop turn it round. Back at the centre it hops onto the seat, squashes and blinks at you | 4 s |
 | inspect | Empty lists (curious) | Glances at the entity art and leans away, then in; the gold pass reaches out and taps it twice; the art bumps and plays its own beat; it tilts its head, brow up, blinks | 2.4 s |
 | sweep | Filtered to nothing | Leans to the lens; the lens grows and sweeps left across the dimmed art and back, eyes following; nothing: a shrug, outer passes out like hands, brow up | 2.8 s |
 | mend | Not found (torn, sad) | Props the torn pass up with its gold pass; the corner lifts, snaps into the tear and holds; eyes widen, brows lift; it wobbles and pops off; a sigh | 3.2 s |
@@ -122,7 +122,7 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 | tear | Pass voided (this visit) | Steps out, looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2.4 s |
 | nudge | Portal pass, not on a device yet | Steps out, hops, looks up at the pass, then at you, and points its gold pass to the side twice | 2.4 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
-| hello | Sign-in wallet at rest | Click only: a squash and stretch, the top pass waves like a hand | 1 s |
+| hello | Sign-in wallet at rest; the auth and error pages' wallet (SSR) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css` | 1 s |
 | face: wink | Success toast | Pops with the toast and winks at 380 ms; a click pops and winks again | 540 ms |
 | face: post | Holder emailed (`toast.sent`) | The violet pass dips, flies off up-right like a letter, a wink, a new one rises into the pocket | 1.4 s |
 | face: cheer | Status all good | The gold pass rises like a thumb and wiggles, a wink, the smile widens | 1.4 s |
@@ -318,8 +318,9 @@ or the SSR mascot pages.
   Wallet.
 - **Copy.** Terse, unchanged. No new words for flair.
 - **Email.** No animation, no GIFs: static foil line only.
-- **SSR and CSP.** Worker pages use CSS only: a checkbox flips the public pass, keyframes run on
-  load. Style nonces; no inline scripts.
+- **SSR and CSP.** Worker pages move in CSS: a checkbox flips the public pass, keyframes run on
+  load. Style nonces; no inline scripts. Same-origin scripts only add to a page that works without
+  them: `pass-tilt.js` (public pass) and `buddy-replay.js` (a click replays the auth pages' wallet).
 - **Budget.** No new dependency. `motion.css` + `stage.css` ≤4 kB gzip; art ≤8 kB gzip; motion
   hooks ≤1.5 kB. One rAF-throttled pointer listener per visible stage.
 
@@ -343,7 +344,7 @@ tilt, the sheet drag). No motion library.
 | Tokens, route fade-through, list entrances, loading rail | `src/web/styles/motion.css` |
 | Overlays, controls, skeleton, ring, indicator, verbs, sparks | `src/web/styles/kit-motion.css` (split when it nears 300 lines) |
 | Entity art and the mascot | `src/web/ui/art/*.tsx`, `src/web/ui/art/*.css`, `ART_CSS` for SSR |
-| Buddy scenes and click to replay | `src/web/ui/art/{replay.ts,cameo.tsx}`, `src/web/ui/art/scenes/*.css` (rest sheet first paint; scenes in the registry chunk) |
+| Buddy scenes and click to replay | `src/web/ui/art/{replay.ts,cameo.tsx}`, `src/web/ui/art/scenes/*.css` (rest sheet first paint; scenes in the registry chunk); SSR: `public/buddy-replay.js` |
 | Entity and action registries | `src/web/lib/entities.ts`, `src/web/lib/action-icons.ts` |
 | Hooks | `src/web/lib/motion.ts` |
 | Online state | `src/web/lib/online.ts` |
