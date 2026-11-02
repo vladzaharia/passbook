@@ -34,7 +34,7 @@ export interface ListRowProps {
   title: ReactNode;
   /** Pills next to the title; they never shrink, the title truncates first. */
   pills?: ReactNode;
-  /** One xs muted line under the title. */
+  /** xs muted text under the title; wraps, up to three lines. */
   meta?: ReactNode;
   /** A pill or the row actions, right-aligned and vertically centred; never wraps. */
   trailing?: ReactNode;
@@ -72,11 +72,13 @@ export function ListRow({
         </span>
       ) : null}
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-2">
+        {/* Narrow rows (phones): a pill that does not fit drops under the title, so the title
+            (an email) shows in full. The meta wraps, up to three lines. */}
+        <div className="flex min-w-0 items-center gap-x-2 gap-y-1 @max-[24rem]:flex-wrap">
           <span className="min-w-0 truncate text-sm text-fg-strong">{title}</span>
           {pills ? <span className="flex shrink-0 items-center gap-1.5">{pills}</span> : null}
         </div>
-        {meta ? <p className="truncate text-xs text-fg-muted">{meta}</p> : null}
+        {meta ? <p className="line-clamp-3 text-xs text-fg-muted">{meta}</p> : null}
       </div>
       {trailing ? (
         <div className="ml-auto flex shrink-0 items-center justify-end gap-1">{trailing}</div>

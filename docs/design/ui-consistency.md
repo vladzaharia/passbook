@@ -129,7 +129,7 @@ health items):
 | --- | --- |
 | Row | `flex items-center gap-3 min-h-11 py-3`, first `pt-0`, last `pb-0`, inset dividers |
 | Leading | 16px icon or 24px `EntityAvatar`, `shrink-0` |
-| Body | `min-w-0 flex-1`; title `text-sm fg-strong` truncates while its pills stay visible (`shrink-0`); meta `text-xs fg-muted` below |
+| Body | `min-w-0 flex-1`; title `text-sm fg-strong` truncates while its pills stay visible (`shrink-0`); in a list under 24rem a pill that does not fit drops under the title; meta `text-xs fg-muted` below, wrapping up to three lines |
 | Trailing | `ml-auto shrink-0`, right-aligned, vertically centred, never wraps. Holds a pill or the actions |
 
 - Row actions: one safe action is a ghost `sm` button with an icon; one destructive action is a
