@@ -84,6 +84,13 @@ describe('oidc sign-in', () => {
     expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['user']);
   });
 
+  it('signs in with the group name Pocket ID generates (wallet_admins)', async () => {
+    const jar: Jar = new Map();
+    const { res } = await oidcSignIn(h, jar, person(['wallet_admins']));
+    expect(res.status).toBe(302);
+    expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['admin', 'user']);
+  });
+
   it('refuses users in neither group and creates nothing', async () => {
     const jar: Jar = new Map();
     const user = person(['other']);

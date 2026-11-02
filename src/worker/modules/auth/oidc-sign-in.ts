@@ -59,7 +59,11 @@ export async function signInOidc(
 ): Promise<SignInResult> {
   const db = ctx.env.DB;
   const roles = rolesFromGroups(ctx.env, claims.groups);
-  if (roles.length === 0) throw new ForbiddenError('No access.', 'NO_ACCESS');
+  if (roles.length === 0) {
+    // Group names, not people: what arrived is what an operator needs to fix the mapping.
+    ctx.log.warn('auth.oidc_no_access', { code: 'NO_ACCESS', groups: claims.groups.slice(0, 20) });
+    throw new ForbiddenError('No access.', 'NO_ACCESS');
+  }
   const email = strictEmail(claims.email);
   if (!email) throw new ForbiddenError('The account has no usable email.', 'NO_EMAIL');
   const { 'oidc.trustEmail': setting } = await getPlatformSettings(ctx);

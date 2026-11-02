@@ -46,12 +46,25 @@ export interface SignInResult {
   session: NewSession;
 }
 
+/**
+ * Pocket ID fills a group's name from its display name (lowercase, other characters to `_`), so
+ * `wallet-admins` typed there arrives as `wallet_admins`. Both sides compare in that form.
+ */
+const groupKey = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_');
+
 /** Unset group variables grant nothing. */
 export function rolesFromGroups(env: object, groups: readonly string[]): Role[] {
-  const admin = envString(env, 'OIDC_ADMIN_GROUP');
-  const user = envString(env, 'OIDC_USER_GROUP');
-  if (admin && groups.includes(admin)) return ['admin', 'user'];
-  if (user && groups.includes(user)) return ['user'];
+  const keys = new Set(groups.map(groupKey));
+  const has = (name: string | undefined) => {
+    const key = groupKey(name ?? '');
+    return key !== '' && keys.has(key);
+  };
+  if (has(envString(env, 'OIDC_ADMIN_GROUP'))) return ['admin', 'user'];
+  if (has(envString(env, 'OIDC_USER_GROUP'))) return ['user'];
   return [];
 }
 

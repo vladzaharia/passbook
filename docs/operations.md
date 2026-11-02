@@ -25,7 +25,8 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    `vars.OIDC_CLIENT_ID` is `https://wallet.plrs.im/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups: `wallet-admins`, `wallet-users`.
+   - Groups: `wallet-admins`, `wallet-users`. Pocket ID's generated names (`wallet_admins`) match
+     too. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. Wallet
      also checks the groups claim itself.
