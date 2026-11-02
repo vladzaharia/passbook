@@ -19,9 +19,8 @@ export function PortalLayout() {
     <div className="wl-portal flex min-h-dvh flex-col">
       <header className="border-b border-border bg-surface-raised pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-safe sm:gap-4">
-          {/* Pass views show the Apple Wallet badge: the mark goes without its word there, and on
-              phones everywhere, so the nav fits at holder text sizes. */}
-          <Wordmark markOnly={pathname === '/' || pathname.startsWith('/passes')} narrow />
+          {/* Pass views show the Apple Wallet badge: the mark goes without its word there. */}
+          <Wordmark markOnly={pathname === '/' || pathname.startsWith('/passes')} />
           <nav aria-label="Main" className="relative mr-auto flex min-w-0 gap-1 overflow-x-auto">
             <ActiveIndicator />
             {PORTAL_NAV.map((item) => {

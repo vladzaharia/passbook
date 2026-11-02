@@ -50,11 +50,7 @@ export function Callout({
       role={tone === 'danger' ? 'alert' : undefined}
       className={cn('flex gap-3 rounded-lg border px-4 py-3 text-sm', t.box, className)}
     >
-      {/* Centred on the first line at either type scale (console 20 px, holder 24 px lines). */}
-      <Icon
-        aria-hidden
-        className={cn('mt-[calc(var(--pk-line-height-sm)/2-0.5rem)] size-4 shrink-0', t.text)}
-      />
+      <Icon aria-hidden className={cn('mt-0.5 size-4 shrink-0', t.text)} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {title ? <p className="font-medium text-fg-strong">{title}</p> : null}
         {children ? <div className="max-w-[65ch] text-fg">{children}</div> : null}

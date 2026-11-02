@@ -1,7 +1,6 @@
 import { type ErrorComponentProps, Link, useRouter, useRouterState } from '@tanstack/react-router';
 import { LogIn, Search, WalletCards } from 'lucide-react';
 import { useEffect } from 'react';
-import { cn } from '../../lib/cn.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { usePalette } from '../../lib/palette.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
@@ -122,10 +121,8 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
 
 /** For errors thrown above any layout (guards): brings its own header and main. */
 export function StandaloneError(props: ErrorComponentProps) {
-  // Off the console it is a holder page: holder type scale and Dynamic Type (wl-portal).
-  const holder = !useInAdmin();
   return (
-    <div className={cn('flex min-h-dvh flex-col', holder && 'wl-portal')}>
+    <div className="flex min-h-dvh flex-col">
       <header className="flex h-14 items-center px-safe pt-[env(safe-area-inset-top)]">
         <Wordmark />
       </header>

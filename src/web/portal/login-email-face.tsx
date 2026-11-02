@@ -87,7 +87,7 @@ export function EmailFace({
                 spellCheck={false}
                 autoFocus
                 value={email}
-                className="h-11"
+                className="h-11 text-base"
                 onBlur={() => scene.gaze(null)}
                 onChange={(e) => {
                   setEmail(e.target.value);

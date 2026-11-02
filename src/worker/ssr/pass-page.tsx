@@ -60,16 +60,16 @@ function contactHtml(props: PassPageProps): string {
 const CSS = `
 .pp-head{display:flex;align-items:center;gap:.625rem;min-height:3.5rem;max-width:28rem;margin:0 auto}
 .pp-head img{width:1.75rem;height:1.75rem;border-radius:.375rem;object-fit:contain}
-.pp-head span{min-width:0;overflow:hidden;font-size:var(--pk-font-size-base);line-height:var(--pk-line-height-base);font-weight:600;color:var(--strong);text-overflow:ellipsis;white-space:nowrap}
+.pp-head span{min-width:0;overflow:hidden;font-size:1rem;font-weight:600;color:var(--strong);text-overflow:ellipsis;white-space:nowrap}
 .pp{display:grid;grid-template-areas:"title" "pass" "actions";gap:1.5rem;max-width:28rem;margin:0 auto;padding:.5rem 0 3rem}
 .pp>*{min-width:0}
 .pp-title{grid-area:title;display:flex;flex-direction:column;gap:1rem}
 .pp-pass{grid-area:pass;clip-path:inset(-24px)}
 .pp-actions{grid-area:actions;display:flex;flex-direction:column;align-items:flex-start;gap:1rem}
-h1{margin:0;font-size:var(--pk-font-size-2xl);line-height:var(--pk-line-height-2xl);font-weight:600;letter-spacing:-.015em;color:var(--strong);overflow-wrap:anywhere}
+h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.015em;color:var(--strong);overflow-wrap:anywhere}
 h1 small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .note{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--warn-line);border-radius:.625rem;background:var(--warn-subtle);color:var(--fg)}
-.note svg{flex:none;width:1rem;height:1rem;margin-top:.25rem;color:var(--warn)}
+.note svg{flex:none;width:1rem;height:1rem;margin-top:.1875rem;color:var(--warn)}
 .badge .awb{display:block;padding:4.4px;border-radius:.5rem}
 .badge img{display:block;height:44px;width:auto}
 .line{margin:0;color:var(--muted)}
@@ -82,12 +82,11 @@ h1 small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(
 .note a{font-weight:500}
 footer{width:100%;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);overflow-wrap:anywhere}
 .pp .pc-stage{max-width:22rem}
-.pp .pc-seg{font-size:var(--pk-font-size-xs);line-height:var(--pk-line-height-xs)}
 @media (pointer:coarse){.pp-actions[data-device=mac] .ipad{display:block}}
 @media(min-width:64rem){
 .pp-head{max-width:50rem}
 .pp{grid-template-columns:22rem minmax(0,1fr);grid-template-areas:"pass title" "pass actions";grid-template-rows:auto 1fr;column-gap:4rem;row-gap:1.5rem;max-width:50rem;padding-top:2.5rem}
-h1 small{position:static;display:block;width:auto;height:auto;margin-bottom:.25rem;clip-path:none;font-size:var(--pk-font-size-sm);line-height:var(--pk-line-height-sm);font-weight:400;letter-spacing:0;color:var(--muted)}
+h1 small{position:static;display:block;width:auto;height:auto;margin-bottom:.25rem;clip-path:none;font-size:.875rem;line-height:1.25rem;font-weight:400;letter-spacing:0;color:var(--muted)}
 }
 @media (prefers-reduced-motion:no-preference){
 .pp-title,.pp-actions>:not(.badge){animation:wl-rise 260ms cubic-bezier(0,0,0,1) 240ms backwards}
@@ -180,7 +179,7 @@ export function renderPassPage(props: PassPageProps): string {
   const active = !voided && !props.view.expired;
   const title = `${props.passTitle} · ${props.orgName}`;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body class="wl-portal">${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /** An unknown, rotated or expired link: the hosted card with one way on. */

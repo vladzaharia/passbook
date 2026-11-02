@@ -36,9 +36,6 @@ describe('GET /p/:token', () => {
     expect(html).toContain('rel="apple-touch-icon"');
     expect(html).toContain('<meta name="theme-color"');
     expect(html).not.toContain('theme-toggle');
-    // The holder type scale (public-type.css), as the portal.
-    expect(html).toContain('<body class="wl-portal">');
-    expect(html).toContain('h1{margin:0;font-size:var(--pk-font-size-2xl)');
     expect(html).toMatch(
       /<input id="pc-flip" type="radio" class="pc-flip-toggle pc-sr" name="pc-flip"/,
     );

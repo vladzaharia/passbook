@@ -25,17 +25,17 @@ ${HOSTED_ART_CSS}
 .card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--line);border-radius:1.125rem;background:var(--raised);box-shadow:inset 0 1px 0 var(--edge),var(--shadow)}
 .card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(115deg,var(--foil-1),var(--foil-2) 55%,var(--foil-3))}
 .body{display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem}
-h1{margin:0;font-size:var(--pk-font-size-2xl);line-height:var(--pk-line-height-2xl);font-weight:600;letter-spacing:-.015em;color:var(--strong)}
-.lede{margin:.25rem 0 0;font-size:var(--pk-font-size-sm);line-height:var(--pk-line-height-sm);color:var(--muted);overflow-wrap:anywhere}
+h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.015em;color:var(--strong)}
+.lede{margin:.25rem 0 0;font-size:.875rem;line-height:1.25rem;color:var(--muted);overflow-wrap:anywhere}
 .lede b{font-weight:500;color:var(--strong)}
 .stack{display:flex;flex-direction:column;gap:1rem;margin:0}
-.callout{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--danger-line);border-radius:.625rem;background:var(--danger-subtle);color:var(--fg);font-size:var(--pk-font-size-sm);line-height:var(--pk-line-height-sm)}
-.callout svg{flex:none;width:1rem;height:1rem;margin-top:.25rem;color:var(--danger)}
-label{display:block;margin:0 0 .5rem;font-size:var(--pk-font-size-sm);line-height:var(--pk-line-height-sm);font-weight:500;color:var(--fg)}
+.callout{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--danger-line);border-radius:.625rem;background:var(--danger-subtle);color:var(--fg);font-size:.875rem;line-height:1.25rem}
+.callout svg{flex:none;width:1rem;height:1rem;margin-top:.125rem;color:var(--danger)}
+label{display:block;margin:0 0 .5rem;font-size:.875rem;line-height:1.25rem;font-weight:500;color:var(--fg)}
 input{display:block;width:100%;height:2.75rem;padding:0 .75rem;border:1px solid var(--line-strong);border-radius:.375rem;background:var(--field);color:var(--fg);font:inherit;font-size:max(16px,1rem)}
 input:focus-visible{outline-offset:1px}
-.foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:var(--pk-font-size-sm);line-height:var(--pk-line-height-sm);color:var(--muted)}
-.foot svg{flex:none;width:1rem;height:1rem;margin-top:.25rem}
+.foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:.875rem;line-height:1.25rem;color:var(--muted)}
+.foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
 @media(min-width:40rem){.hosted{padding-top:3.5rem}.body{padding:1.5rem}.foot{padding:1rem 1.5rem}}
 @media(max-width:39.99rem){.scene{margin-bottom:-7px}.scene,.scene .wl-art{width:112px;height:84px}}`;
 
@@ -66,5 +66,5 @@ export function hostedPage(input: HostedPageInput): string {
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body class="wl-portal"><main class="hosted"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main></body></html>`;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main></body></html>`;
 }

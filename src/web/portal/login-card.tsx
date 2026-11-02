@@ -40,7 +40,7 @@ function Face({
         {children}
       </div>
       <p className="flex items-start gap-2 border-t border-border px-5 py-4 text-sm text-fg-muted sm:px-6">
-        <Lock aria-hidden className="mt-1 size-4 shrink-0" />
+        <Lock aria-hidden className="mt-0.5 size-4 shrink-0" />
         {FOOTER_LINE}
       </p>
     </section>
@@ -54,12 +54,12 @@ export function EmailFaceSkeleton({ notice }: { notice: string | null }) {
       {notice ? <Callout tone="danger">{notice}</Callout> : null}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-6 w-12" />
+          <Skeleton className="h-5 w-12" />
           <Skeleton className="h-11" />
         </div>
         <Skeleton className="h-11" />
       </div>
-      <Skeleton className="h-5" />
+      <Skeleton className="h-4" />
       <Skeleton className="h-11" />
     </div>
   );

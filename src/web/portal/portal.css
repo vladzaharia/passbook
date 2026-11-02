@@ -65,18 +65,3 @@
     transform: translateY(11.5rem);
   }
 }
-
-/* Phones: a session's pill or Revoke drops under the device and its times, so both read in full at
-   holder sizes. 2.25rem lines it up with the text (24 px icon, 12 px gap). */
-@container (max-width: 26rem) {
-  .wl-sessions li[data-row-id] {
-    flex-wrap: wrap;
-    row-gap: 0.5rem;
-  }
-  .wl-sessions li[data-row-id] > :nth-child(2) {
-    flex-basis: calc(100% - 2.25rem);
-  }
-  .wl-sessions li[data-row-id] > :nth-child(3) {
-    margin-inline-start: 2.25rem;
-  }
-}

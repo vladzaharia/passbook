@@ -127,7 +127,7 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
           />
           {fieldError ? (
             <p id={noteId} className="mt-1 flex items-start gap-1.5 text-xs text-danger">
-              <CircleAlert aria-hidden className="mt-0.75 size-3.5 shrink-0" />
+              <CircleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
               {fieldError}
             </p>
           ) : null}
