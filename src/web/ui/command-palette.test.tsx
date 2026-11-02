@@ -40,3 +40,14 @@ describe('CommandPalette selection', () => {
     expect(selected()).toBe('B');
   });
 });
+
+describe('CommandPalette empty', () => {
+  it('shows the buddy searching with its lens when nothing matches', async () => {
+    render(<Palette groups={[{ heading: 'Organizations', items: [] }]} query="zzz" />);
+    expect(await screen.findByText('No results')).toBeInTheDocument();
+    const art = document.querySelector('[role="dialog"] svg[data-art="wallet"]');
+    expect(art).toHaveAttribute('data-state', 'lost');
+    expect(art).toHaveAttribute('aria-hidden', 'true');
+    expect(art?.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'curious');
+  });
+});

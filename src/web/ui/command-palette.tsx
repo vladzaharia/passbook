@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Search } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { ActiveIndicator } from './active-indicator.tsx';
-import { LensArt } from './art/lens.tsx';
+import { WalletArt } from './art/wallet.tsx';
 import { DialogOverlay } from './dialog.tsx';
 
 export interface CommandItem {
@@ -140,7 +140,8 @@ export function CommandPalette({
               <ActiveIndicator variant="list" />
               {nothing && query.trim() ? (
                 <div data-art-host="" className="flex flex-col items-center gap-2 px-3 pt-4 pb-1">
-                  <LensArt size="sm" />
+                  {/* The buddy searches with its lens, eyes left and right. */}
+                  <WalletArt state="lost" mood="curious" size="sm" />
                   <p className="text-sm text-fg-muted">No results</p>
                 </div>
               ) : null}
