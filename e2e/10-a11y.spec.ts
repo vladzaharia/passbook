@@ -41,13 +41,23 @@ test.describe('admin', () => {
     ['pass detail', () => `/admin/passes/${passId}`, /Member|Name|Holder/],
     ['templates', () => '/admin/templates', /Templates/],
     ['connections', () => '/admin/connections', /Connections/],
+    ['status', () => '/admin/status', /Status/],
+    ['settings', () => '/admin/settings', /Settings/],
+    ['audit', () => '/admin/audit', /Audit/],
+    ['users', () => '/admin/users', /Users/],
+    ['orgs', () => '/admin/orgs', /Orgs|Organizations/],
+    ['identities', () => '/admin/identities', /Identities|Signing/],
+    ['api keys', () => '/admin/api-keys', /API keys/],
   ];
-  for (const [name, path, heading] of pages) {
-    test(`${name} has no serious or critical violations`, async ({ page }) => {
-      await page.goto(path());
-      await settle(page, () => expect(page.getByText(heading).first()).toBeVisible());
-      expect(await seriousViolations(page)).toEqual([]);
-    });
+  for (const scheme of ['light', 'dark'] as const) {
+    for (const [name, path, heading] of pages) {
+      test(`${name} has no serious or critical violations (${scheme})`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.goto(path());
+        await settle(page, () => expect(page.getByText(heading).first()).toBeVisible());
+        expect(await seriousViolations(page)).toEqual([]);
+      });
+    }
   }
 });
 
