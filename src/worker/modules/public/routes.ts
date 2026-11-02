@@ -14,7 +14,10 @@ import { openPublicAsset, pageModel, passForToken, supportContacts } from './ser
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
-publicRoutes.use('*', rateLimit('RL_PUBLIC'));
+// A page load fetches its card images through the same IP, so assets get their own, wider bucket.
+publicRoutes.use('/:token/assets/*', rateLimit('RL_PUBLIC_ASSET'));
+publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
+publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 
 const PAGE_HEADERS = {
   'content-type': 'text/html; charset=utf-8',

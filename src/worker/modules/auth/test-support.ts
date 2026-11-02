@@ -84,6 +84,7 @@ export async function harness(
     RL_LOGIN: fakeLimiter(1000) as unknown as RateLimit,
     RL_MAGIC_LINK: fakeLimiter(1000) as unknown as RateLimit,
     RL_API_KEY: fakeLimiter(1000) as unknown as RateLimit,
+    RL_PUBLIC_ASSET: fakeLimiter(1000) as unknown as RateLimit,
     RL_REFRESH: fakeLimiter(1000) as unknown as RateLimit,
     ...overrides,
   });
