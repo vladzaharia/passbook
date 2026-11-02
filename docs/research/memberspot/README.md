@@ -1,13 +1,13 @@
 # MemberSpot investigation
 
-Target: <https://henrysgymnasium.thememberspot.com/>. This directory is isolated from the Wallet runtime. No live connector is registered yet.
+Target: <https://henrysgymnasium.thememberspot.com/>. This directory is isolated from the PassBook runtime. No live connector is registered yet.
 
 ## What is known
 
 - The public portal identifies itself as Twin Oaks Software and links to signup, trainer booking, location reservations and classes (public page inspected on 2026-10-30; these are not authenticated API evidence).
 - The user reports that additional logins and different IP addresses can trigger verification, and has clarified that sessions do not coexist reliably. Treat non-coexistence as a product constraint; a separate background member session is not a viable design. Exact session lifetime and revocation mechanics have not been measured.
 - The user must be able to connect from a phone and continue using MemberSpot on that phone. A desktop-only setup is not an acceptable product flow.
-- The Wallet project already has an `UpdateSource` interface in `src/sources/types.ts`, a registered example `membership-api` adapter, and source attachment/sync routes. There is no verified MemberSpot endpoint or payload mapping in this project.
+- The PassBook project already has an `UpdateSource` interface in `src/sources/types.ts`, a registered example `membership-api` adapter, and source attachment/sync routes. There is no verified MemberSpot endpoint or payload mapping in this project.
 - Shell requests in the investigation session failed DNS resolution for both the portal and an unrelated public host. The web reader could inspect the public landing page but could not provide the login scripts or authenticated network traffic. No login attempt, verification request, or member-data retrieval was made.
 
 ## Decision: no competing background member session
@@ -26,7 +26,7 @@ Remaining candidates, pending provider and payload evidence:
 | Approach | Product behavior | Remaining condition |
 | --- | --- | --- |
 | Supported club API, feed, webhook or separately scoped authorization | Retrieve and refresh member details independently of the phone login | Confirm actual availability, club authorization, member binding and independence from member-session revocation |
-| Explicit import through the existing phone session | Read the open member page and transfer only the required fields to Wallet when the member requests it | Identify fields and an acceptable phone extraction mechanism; this is a snapshot, not unattended synchronization |
+| Explicit import through the existing phone session | Read the open member page and transfer only the required fields to PassBook when the member requests it | Identify fields and an acceptable phone extraction mechanism; this is a snapshot, not unattended synchronization |
 | Explicit one-time backend login/import | Retrieve details once, then stop using the provider session | Phone-only login/challenges must work; the import can still displace the existing phone session and must make that consequence clear |
 
 For an import through the current phone session, investigate a Safari Shortcut or an explicitly installed browser extension that reads the currently open MemberSpot page. Apple's [Run JavaScript on Webpage action](https://support.apple.com/en-asia/guide/shortcuts/apdb71a01d93/ios) can retrieve page data from a shortcut invoked in Safari's share sheet. This establishes a platform capability, not that MemberSpot exposes all required fields in the page. Shortcut installation adds onboarding steps and would need product evaluation. No Shortcut or extension is implemented here yet.
@@ -38,12 +38,12 @@ Phone: existing MemberSpot session → member requests import
                                       ↓ extract required fields on the phone
                               Member reviews captured details
                                       ↓ explicitly submit the snapshot
-                               Wallet pass creation or update
+                               PassBook pass creation or update
 ```
 
-Our website alone cannot read the MemberSpot page or adopt its Safari/Chrome session. Browser origin isolation prevents reading another site's storage; HttpOnly cookies are also unavailable to page JavaScript. A normal redirect back to Wallet does not transfer those credentials. The explicit Shortcut/extension route operates on the existing page instead of exporting its cookies. See [MDN's same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Same-origin_policy) and [Set-Cookie / HttpOnly](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#httponly).
+Our website alone cannot read the MemberSpot page or adopt its Safari/Chrome session. Browser origin isolation prevents reading another site's storage; HttpOnly cookies are also unavailable to page JavaScript. A normal redirect back to PassBook does not transfer those credentials. The explicit Shortcut/extension route operates on the existing page instead of exporting its cookies. See [MDN's same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Same-origin_policy) and [Set-Cookie / HttpOnly](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#httponly).
 
-An import transfers data, not login credentials. Preserve key-tag strings including leading zeroes, record when the snapshot was obtained, and make future refresh an explicit user action. A phone-submitted snapshot is user-supplied data; validation of its shape does not prove current membership eligibility. Do not use it as authoritative access status without independent provider/club verification. A new import endpoint would require its own member authentication and account binding; never place the existing Wallet administrator token in a Shortcut.
+An import transfers data, not login credentials. Preserve key-tag strings including leading zeroes, record when the snapshot was obtained, and make future refresh an explicit user action. A phone-submitted snapshot is user-supplied data; validation of its shape does not prove current membership eligibility. Do not use it as authoritative access status without independent provider/club verification. A new import endpoint would require its own member authentication and account binding; never place the existing PassBook administrator token in a Shortcut.
 
 Do not attach a polling `UpdateSource` to snapshot-only imports. Register a `memberspot` update source only if an integration independent of the member's interactive session is demonstrated. Preserve the existing pass on retrieval failure and never interpret an authentication failure as a suspended membership.
 

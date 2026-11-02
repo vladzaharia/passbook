@@ -73,7 +73,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
 
   app.doc31('/api/v1/openapi.json', {
     openapi: '3.1.0',
-    info: { title: 'Wallet API', version: '1.0.0' },
+    info: { title: 'PassBook API', version: '1.0.0' },
     servers: [{ url: '/' }],
   });
 

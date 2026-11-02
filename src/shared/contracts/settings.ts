@@ -14,7 +14,7 @@ function isHttpsUrl(value: string): boolean {
 export const PlatformSettingsSchema = z.object({
   'oidc.trustEmail': z.boolean().default(false),
   'auth.magicLinkEnabled': z.boolean().default(true),
-  'email.senderName': PlainLineSchema(80).default('Wallet'),
+  'email.senderName': PlainLineSchema(80).default('PassBook'),
   'refresh.userCooldownSeconds': z.number().int().min(5).max(3600).default(30),
   'retention.passVersionsKeep': z.number().int().min(1).max(50).default(3),
   'retention.auditDays': z.number().int().min(30).max(3650).default(365),

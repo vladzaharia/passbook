@@ -93,7 +93,7 @@ describe('oidc sign-in', () => {
     expect(jar.has('__Host-wallet_sid')).toBe(false);
     const page = await h.call('/auth/no-access');
     const html = await page.text();
-    expect(html).toContain('This Polaris ID account cannot use Wallet.');
+    expect(html).toContain('This Polaris ID account cannot use PassBook.');
     expect(html).toContain('href="/login?focus=email"');
     expect(html).toContain('href="/auth/oidc/start?prompt=login"');
     expect(html).toContain('class="card" data-state="no-access"');

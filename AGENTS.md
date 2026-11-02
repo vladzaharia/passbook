@@ -1,4 +1,4 @@
-# Wallet platform: agent rules
+# PassBook platform: agent rules
 
 Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`. This file wins on conventions.
 

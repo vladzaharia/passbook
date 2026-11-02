@@ -73,7 +73,7 @@ function errorPage(
   );
 }
 
-/** GET /auth/no-access: where a Polaris ID without Wallet access lands (a clean URL). */
+/** GET /auth/no-access: where a Polaris ID without PassBook access lands (a clean URL). */
 export function noAccess(c: Context<AppBindings>) {
   return c.html(noAccessPage(c.var.nonce));
 }

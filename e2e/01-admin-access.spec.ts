@@ -19,7 +19,7 @@ test('a user-group account cannot open /admin', async ({ page }) => {
 
 test('an account with no group is refused with the short page', async ({ page }) => {
   await startOidcAs(page, 'nobody', '/');
-  await expect(page.getByText('This Polaris ID account cannot use Wallet.')).toBeVisible();
+  await expect(page.getByText('This Polaris ID account cannot use PassBook.')).toBeVisible();
   const session = await page.evaluate(
     async () => (await (await fetch('/api/v1/session')).json()).authenticated,
   );

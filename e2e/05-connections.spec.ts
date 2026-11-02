@@ -27,7 +27,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByRole('combobox', { name: 'Template', exact: true }).click();
-  await page.getByRole('option', { name: 'Wallet · Generic' }).click();
+  await page.getByRole('option', { name: 'PassBook · Generic' }).click();
   const mappings: [string, string][] = [
     ['Name *', '/memberName'],
     ['ID *', '/memberId'],

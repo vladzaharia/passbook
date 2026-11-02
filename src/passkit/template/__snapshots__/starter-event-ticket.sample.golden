@@ -104,7 +104,7 @@
     }
   ],
   "logoText": "Organization",
-  "organizationName": "Wallet",
+  "organizationName": "PassBook",
   "passTypeIdentifier": "pass.im.plrs.wallet",
   "preferredStyleSchemes": [
     "posterEventTicket",

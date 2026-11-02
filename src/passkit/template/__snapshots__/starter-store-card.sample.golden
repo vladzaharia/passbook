@@ -15,7 +15,7 @@
   "formatVersion": 1,
   "labelColor": "rgb(199,210,254)",
   "logoText": "Organization",
-  "organizationName": "Wallet",
+  "organizationName": "PassBook",
   "passTypeIdentifier": "pass.im.plrs.wallet",
   "semantics": {
     "balance": {

@@ -36,7 +36,7 @@ let shown = false;
 /**
  * The wordmark card flips once per browser session; never on the sign-in scene (flip={false}).
  * `markOnly` drops the word: views that show the Add to Apple Wallet badge never show a bare
- * "Wallet" brand beside it.
+ * "PassBook" brand beside it.
  */
 export function Wordmark({
   to = '/',
@@ -64,7 +64,7 @@ export function Wordmark({
         data-flip={play || undefined}
         className="wl-wordmark-icon size-5 text-accent-fg"
       />
-      {markOnly ? <span className="sr-only">Home</span> : 'Wallet'}
+      {markOnly ? <span className="sr-only">Home</span> : 'PassBook'}
     </Link>
   );
 }

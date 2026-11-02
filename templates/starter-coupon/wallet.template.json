@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "Wallet · Coupon",
+  "name": "PassBook · Coupon",
   "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
   "inputs": {
     "type": "object",

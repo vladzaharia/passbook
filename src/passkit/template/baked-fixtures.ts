@@ -78,7 +78,7 @@ export async function buildBaked(slug: string, signing: SigningMaterial, input?:
       serial: 'SNAPSHOT-SERIAL',
       authToken: 'a'.repeat(32),
       webServiceURL: 'https://wallet.example/wallet',
-      organizationName: template.manifest.org?.name ?? 'Wallet',
+      organizationName: template.manifest.org?.name ?? 'PassBook',
       identity: FIXTURE_IDENTITY,
     },
     signing,

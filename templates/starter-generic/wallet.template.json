@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "Wallet · Generic",
+  "name": "PassBook · Generic",
   "description": "Membership or ID card with a QR code, relevance and two featured actions.",
   "inputs": {
     "type": "object",

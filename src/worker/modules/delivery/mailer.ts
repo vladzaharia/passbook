@@ -11,7 +11,7 @@ export interface MailMessage {
   subject: string;
   html: string;
   text: string;
-  /** Defaults to "Wallet <EMAIL_FROM>". */
+  /** Defaults to "PassBook <EMAIL_FROM>". */
   fromName?: string;
   replyTo?: string;
   headers?: Record<string, string>;
@@ -32,7 +32,7 @@ export function createEmailBindingMailer(env: AppEnv): Mailer {
   return {
     async send(message) {
       const result = await env.EMAIL.send({
-        from: { name: oneLine(message.fromName ?? 'Wallet'), email: env.EMAIL_FROM },
+        from: { name: oneLine(message.fromName ?? 'PassBook'), email: env.EMAIL_FROM },
         to: message.to,
         subject: oneLine(message.subject),
         html: message.html,

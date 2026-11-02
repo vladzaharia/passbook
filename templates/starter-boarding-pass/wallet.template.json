@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "Wallet · Boarding pass",
+  "name": "PassBook · Boarding pass",
   "description": "Air boarding pass with the semantic layout and a classic fallback.",
   "inputs": {
     "type": "object",

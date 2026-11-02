@@ -72,7 +72,7 @@ export function buttonHtml(
 export interface ShellInput {
   lang: string;
   title: string;
-  /** Header bar label, e.g. `Wallet` or the org name. */
+  /** Header bar label, e.g. `PassBook` or the org name. */
   header: string;
   /** Header bar colour (`#rrggbb`); the label is white or near-black by luminance. */
   headerColor: string;
@@ -82,7 +82,7 @@ export interface ShellInput {
   body: string;
 }
 
-/** Foil line over the header: Wallet teal, Polaris violet, Polaris gold. No gradient support: teal. */
+/** Foil line over the header: PassBook teal, Polaris violet, Polaris gold. No gradient support: teal. */
 const FOIL = ['#2dd4bf', '#9a5cff', '#ffc24d'];
 const RADIUS = 12;
 

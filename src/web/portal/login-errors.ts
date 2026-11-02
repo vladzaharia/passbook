@@ -1,5 +1,5 @@
 const MESSAGES: Record<string, string> = {
-  not_in_group: 'Your Polaris ID is not allowed to use Wallet.',
+  not_in_group: 'Your Polaris ID is not allowed to use PassBook.',
   expired_link: 'That link expired. Request a new one.',
   invalid_link: 'That link is invalid or already used. Request a new one.',
   used_link: 'That link was already used. Request a new one.',

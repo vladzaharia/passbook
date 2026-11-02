@@ -21,13 +21,13 @@
 
 Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.jsonc`.
 
-1. **Pocket ID** (`id.plrs.im`). Wallet registers itself with a Client ID Metadata Document:
+1. **Pocket ID** (`id.plrs.im`). PassBook registers itself with a Client ID Metadata Document:
    `vars.OIDC_CLIENT_ID` is `https://wallet.plrs.im/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
    - Groups: `wallet-admins`, `wallet-users`.
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
-   - After the first sign-in creates the client, set its allowed groups to both groups. Wallet
+   - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.
    - Metadata changes reach Pocket ID within an hour, or at once with Refresh in its client list.
    - A registered client still works: set its id in `vars.OIDC_CLIENT_ID`; a confidential one also

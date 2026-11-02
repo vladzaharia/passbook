@@ -25,7 +25,7 @@ describe('renderSignInEmail', () => {
     });
     expect(mail.html).toContain('max-width:480px');
     expect(mail.html).not.toContain('width="420"');
-    expect(mail.html).toContain('Sign in to Wallet');
+    expect(mail.html).toContain('Sign in to PassBook');
     expect(mail.html).toContain('<meta name="color-scheme" content="light dark">');
     expect(mail.html).toContain('prefers-color-scheme:dark');
   });

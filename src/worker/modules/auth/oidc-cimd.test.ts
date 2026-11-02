@@ -14,7 +14,7 @@ beforeEach(async () => {
 afterEach(() => h.restore());
 
 describe('client ID metadata document', () => {
-  it('describes Wallet as a public client with exact redirect URIs', async () => {
+  it('describes PassBook as a public client with exact redirect URIs', async () => {
     const res = await h.call('/auth/oidc/client-metadata.json');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('application/json');
