@@ -243,13 +243,22 @@ describe('entity art', () => {
 
   // Raised for the buddy (moods, seat, composition) and the lazy registry's name list. The art
   // left the initial chunk (registry.ts), so the initial budget fell; the rest is CSS. Then by
-  // 0.5 kB for the face (toasts, status) and the buddy's glance at an action.
-  it('fits the 11.5 kB gzip budget', () => {
+  // 0.5 kB for the face (toasts, status) and the buddy's glance at an action; then by 2 kB for
+  // click-to-replay (replay.ts, cameo.tsx) and the scenes' rest sheet (scenes/rest.css).
+  it('fits the 13.5 kB gzip budget; the lazy scenes fit 7 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it.
     const files = readdirSync(DIR)
-      .filter((f) => !f.includes('.test.') && f !== 'css.ts')
-      .sort();
-    const all = files.map((f) => readFileSync(join(DIR, f), 'utf8')).join('\n');
-    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(11.5 * 1024);
+      .filter((f) => !f.includes('.test.') && f !== 'css.ts' && f.includes('.'))
+      .sort()
+      .map((f) => join(DIR, f));
+    const kit = [...files, join(DIR, 'scenes/rest.css')];
+    const gz = (paths: string[]) =>
+      gzipSync(paths.map((f) => readFileSync(f, 'utf8')).join('\n'), { level: 9 }).length;
+    expect(gz(kit)).toBeLessThanOrEqual(13.5 * 1024);
+    // The scenes ride in the registry chunk (registry.ts imports each one).
+    const scenes = readdirSync(join(DIR, 'scenes')).filter((f) => f !== 'rest.css');
+    const registry = readFileSync(join(DIR, 'registry.ts'), 'utf8');
+    for (const f of scenes) expect(registry).toContain(`import './scenes/${f}';`);
+    expect(gz(scenes.map((f) => join(DIR, 'scenes', f)))).toBeLessThanOrEqual(7 * 1024);
   });
 });

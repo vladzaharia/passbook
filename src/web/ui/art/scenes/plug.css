@@ -1,0 +1,186 @@
+/* Plug (error, sad): it pushes the plug into the socket with its gold pass; a spark, the plug
+   pops back out, it flinches and sighs. Retry plays it again. 3 s, once; 1% = 30 ms. The plug
+   moves in the unplugged art's own units. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="plug"][data-run] .wl-art [data-body] {
+    animation: wl-s-plug-body 3s ease-in-out;
+  }
+  .wl-buddy[data-scene="plug"][data-run] .wl-art [data-look] {
+    animation: wl-s-plug-look 3s ease-in-out;
+  }
+  .wl-buddy[data-scene="plug"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-plug-arm 3s ease-in-out;
+  }
+  .wl-buddy[data-scene="plug"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-plug-eyes 3s ease-in-out;
+  }
+  .wl-buddy[data-scene="plug"][data-run] [data-art="unplugged"] [data-part="p"] {
+    animation: wl-s-plug-in 3s ease-in-out;
+  }
+  .wl-buddy[data-scene="plug"][data-run] [data-art="unplugged"] [data-part="s"] {
+    animation: wl-s-plug-socket 3s ease-in-out;
+  }
+  .wl-buddy[data-scene="plug"][data-run] [data-art="unplugged"] [data-part="k"] {
+    animation: wl-s-plug-spark 3s linear;
+  }
+}
+
+@keyframes wl-s-plug-body {
+  6% {
+    rotate: 0deg;
+  }
+  16%,
+  36% {
+    rotate: 5deg;
+    translate: 0 0;
+    scale: 1;
+  }
+  /* Flinch as it sparks. */
+  44% {
+    rotate: -2deg;
+    translate: 0 -3px;
+    scale: 0.96 1.06;
+  }
+  52% {
+    rotate: 0deg;
+    translate: 0 0;
+    scale: 1.03 0.96;
+  }
+  58% {
+    scale: 1;
+    translate: 0 0;
+  }
+  70% {
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+  84% {
+    translate: 0 0.5px;
+    scale: 1.02 0.96;
+  }
+}
+@keyframes wl-s-plug-look {
+  6%,
+  18% {
+    translate: 1.2px 1.4px;
+  }
+  32%,
+  40% {
+    translate: 2px 0.6px;
+  }
+  48% {
+    translate: -0.6px -0.4px;
+  }
+  62% {
+    translate: 1.2px 1.4px;
+  }
+  76% {
+    translate: 0 0.6px;
+  }
+}
+@keyframes wl-s-plug-arm {
+  6% {
+    rotate: 0deg;
+  }
+  16% {
+    rotate: 32deg;
+  }
+  34% {
+    rotate: 42deg;
+  }
+  38% {
+    rotate: 40deg;
+  }
+  46% {
+    rotate: 8deg;
+  }
+  54% {
+    rotate: 0deg;
+  }
+}
+/* Squeezed shut at the spark, then wide. */
+@keyframes wl-s-plug-eyes {
+  38%,
+  50% {
+    scale: 1;
+  }
+  42% {
+    scale: 1.1 0.15;
+  }
+  46% {
+    scale: 1.15;
+  }
+}
+@keyframes wl-s-plug-in {
+  16% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  34% {
+    translate: 15px -11px;
+    rotate: -6deg;
+  }
+  38% {
+    translate: 16px -11px;
+    rotate: -6deg;
+  }
+  /* Out it pops, and drops back to the floor. */
+  44% {
+    translate: 6px -16px;
+    rotate: 14deg;
+  }
+  52% {
+    translate: -1px 1px;
+    rotate: -4deg;
+  }
+  58% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-plug-socket {
+  37%,
+  45% {
+    translate: 0 0;
+  }
+  39% {
+    translate: 1.5px 0;
+  }
+  41% {
+    translate: -1.5px 0;
+  }
+  43% {
+    translate: 1px 0;
+  }
+}
+@keyframes wl-s-plug-spark {
+  0%,
+  36% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  38% {
+    opacity: 1;
+    scale: 2.2;
+  }
+  40% {
+    opacity: 0.2;
+  }
+  42% {
+    opacity: 1;
+    scale: 1.8;
+  }
+  46% {
+    opacity: 0;
+    scale: 1;
+  }
+  60% {
+    opacity: 0;
+    scale: 0.8;
+  }
+  66%,
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}

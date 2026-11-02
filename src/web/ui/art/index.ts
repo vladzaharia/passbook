@@ -3,7 +3,8 @@ import { type ArtProps, DIM } from './base.tsx';
 import type { WalletState } from './wallet.tsx';
 
 export type { ArtProps, ArtSize } from './base.tsx';
-export { Buddy, type BuddyProps } from './buddy.tsx';
+export { Buddy, type BuddyProps, type BuddyScene } from './buddy.tsx';
+export { Cameo } from './cameo.tsx';
 export { BuddyFace } from './face.tsx';
 export { LensOverlay } from './lens.tsx';
 export { WalletArt, type WalletArtProps, type WalletMood, type WalletState } from './wallet.tsx';

@@ -1,0 +1,122 @@
+/* Tug (forbidden, sad): it hooks the padlock with its gold pass and tugs three times; the lock
+   rattles and holds. It lets go and sighs. 2.8 s, once; 1% = 28 ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="tug"][data-run] .wl-art [data-body] {
+    animation: wl-s-tug-body 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="tug"][data-run] .wl-art [data-look] {
+    animation: wl-s-tug-look 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="tug"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-tug-arm 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="tug"][data-run] [data-art="lock"] [data-part="k"] {
+    animation: wl-s-tug-lock 2.8s ease-in-out;
+  }
+  .wl-buddy[data-scene="tug"][data-run] [data-art="lock"] [data-part="s"] {
+    animation: wl-s-tug-shackle 2.8s ease-in-out;
+  }
+}
+
+/* Leans in, pulls back on each tug, then slumps with a sigh. */
+@keyframes wl-s-tug-body {
+  8% {
+    rotate: 0deg;
+  }
+  16% {
+    rotate: 5deg;
+  }
+  22%,
+  34%,
+  46% {
+    rotate: -2deg;
+  }
+  28%,
+  40% {
+    rotate: 5deg;
+  }
+  56% {
+    rotate: 3deg;
+    translate: 0 0;
+    scale: 1;
+  }
+  68% {
+    rotate: 0deg;
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+  82% {
+    translate: 0 0.5px;
+    scale: 1.02 0.96;
+  }
+}
+@keyframes wl-s-tug-look {
+  6%,
+  52% {
+    translate: 1.6px 1.2px;
+  }
+  60% {
+    translate: 0.8px 1.6px;
+  }
+  74% {
+    translate: 0 0.6px;
+  }
+}
+@keyframes wl-s-tug-arm {
+  8% {
+    rotate: 0deg;
+  }
+  16% {
+    rotate: 46deg;
+  }
+  22%,
+  34%,
+  46% {
+    rotate: 38deg;
+  }
+  28%,
+  40% {
+    rotate: 46deg;
+  }
+  54% {
+    rotate: 44deg;
+  }
+  64% {
+    rotate: 0deg;
+  }
+}
+/* Pulled toward the buddy on each tug, back on its own. */
+@keyframes wl-s-tug-lock {
+  16% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  22%,
+  34%,
+  46% {
+    translate: -4px 1px;
+    rotate: -12deg;
+  }
+  28%,
+  40% {
+    translate: 0 0;
+    rotate: 3deg;
+  }
+  52% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-tug-shackle {
+  20%,
+  32%,
+  44%,
+  52% {
+    translate: 0 0;
+  }
+  23%,
+  35%,
+  47% {
+    translate: 0 -1.5px;
+  }
+}

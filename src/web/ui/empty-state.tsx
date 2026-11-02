@@ -4,6 +4,7 @@ import { ENTITY, type EntityKind } from '../lib/entities.ts';
 import {
   type ArtName,
   Buddy,
+  type BuddyScene,
   EntityArt,
   LensOverlay,
   type WalletMood,
@@ -34,6 +35,16 @@ export interface EmptyStateProps {
   className?: string;
 }
 
+/** What the buddy acts out over each kind of empty box (art/buddy.tsx). */
+function sceneFor(art: ArtName, artState: WalletState | undefined, filtered: boolean): BuddyScene {
+  if (art === 'wallet') return artState === 'lost' ? 'peek' : 'search';
+  if (filtered) return 'sweep';
+  if (art === 'torn') return 'mend';
+  if (art === 'lock') return 'tug';
+  if (art === 'log') return 'flip';
+  return 'inspect';
+}
+
 /**
  * Not inline, the buddy sits on the box's top edge with the entity's art beside it; inline keeps
  * the entity art alone, so a view never shows more than one buddy.
@@ -53,6 +64,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
   const Title = heading ? 'h1' : 'p';
+  const scene = sceneFor(art, artState, filtered);
   // Filtered: the art dims under a lens. Not inline, the buddy holds it.
   const picture = (
     <>
@@ -80,6 +92,8 @@ export function EmptyState({
         inline
           ? 'gap-1.5 px-4 py-6'
           : 'mt-18 gap-2 rounded-lg border border-dashed border-border-strong px-6 pt-8 pb-10',
+        // The search walk spans a share of the box's width.
+        !inline && scene === 'search' && '[container-type:inline-size]',
         className,
       )}
     >
@@ -89,6 +103,7 @@ export function EmptyState({
         <Buddy
           mood={mood ?? (heading ? 'sad' : 'curious')}
           still={still}
+          scene={scene}
           {...(art === 'wallet'
             ? { state: artState ?? 'empty' }
             : { prop: <span className="relative block">{picture}</span> })}

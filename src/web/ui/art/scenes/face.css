@@ -1,0 +1,72 @@
+/* The face (face.tsx). wink (toasts, on a click): pops and winks again. cheer (status all good,
+   once in view): the gold pass rises like a thumb, the right eye winks, the smile widens; the
+   thumb wiggles and drops. 1.4 s; 1% = 14 ms. */
+.wl-face [data-thumb] {
+  transform-box: view-box;
+  transform-origin: 16.2px 12.6px;
+}
+.wl-face [data-smile] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-face[data-scene="wink"][data-run] {
+    animation: wl-s-face-pop 300ms var(--art-bo, ease-out);
+  }
+  .wl-face[data-replay][data-scene="wink"][data-run] [data-wink] {
+    animation: wl-s-face-wink 200ms var(--art-mv, ease-in-out) 240ms;
+  }
+  .wl-face[data-replay][data-scene="cheer"][data-run] [data-thumb] {
+    animation: wl-s-face-thumb 1.4s ease-in-out;
+  }
+  .wl-face[data-replay][data-scene="cheer"][data-run] [data-wink] {
+    animation: wl-s-face-wink 220ms var(--art-mv, ease-in-out) 300ms;
+  }
+  .wl-face[data-replay][data-scene="cheer"][data-run] [data-smile] {
+    animation: wl-s-face-smile 1.4s ease-in-out;
+  }
+}
+
+@keyframes wl-s-face-pop {
+  0% {
+    scale: 0.7;
+  }
+}
+@keyframes wl-s-face-wink {
+  50% {
+    scale: 1 0.12;
+  }
+}
+@keyframes wl-s-face-thumb {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  14% {
+    translate: 0.6px -3px;
+    rotate: 18deg;
+  }
+  20%,
+  56% {
+    translate: 0.4px -2.4px;
+    rotate: 14deg;
+  }
+  38% {
+    rotate: 20deg;
+  }
+  47% {
+    rotate: 10deg;
+  }
+  76%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-face-smile {
+  18%,
+  56% {
+    scale: 1.25 1.2;
+  }
+}
