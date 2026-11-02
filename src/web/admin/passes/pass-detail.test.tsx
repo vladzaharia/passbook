@@ -428,6 +428,28 @@ describe('pass detail: tabs', () => {
     expect(within(devices).getByText('No push yet')).toBeInTheDocument();
   });
 
+  it('says why each push went, and that a push with no device reached nothing', async () => {
+    const push = { kind: 'push' as const, attempts: 1, createdAt: 4, finishedAt: 4 };
+    const server = newServer({
+      deliveries: [
+        { ...push, id: 'push:p1:3', state: 'cancelled', errorCode: 'NO_DEVICES' },
+        { ...push, id: 'push:p1:refresh:x9', state: 'sent', errorCode: null },
+      ],
+    });
+    await renderApp('/admin/passes/p1?tab=delivery', {
+      session: 'admin',
+      handlers: handlers(server),
+    });
+    const table = await screen.findByRole('table', { name: 'Delivery history' });
+    const [, first, second] = within(table).getAllByRole('row');
+    expect(first).toHaveTextContent('Version 3');
+    expect(first).toHaveTextContent('No devices');
+    expect(first).not.toHaveTextContent('NO_DEVICES');
+    expect(first).not.toHaveTextContent('Sent');
+    expect(second).toHaveTextContent('Refresh');
+    expect(second).toHaveTextContent('Sent');
+  });
+
   it('titles the email card by whether it was sent, prefilled with the holder', async () => {
     const never = newServer({ deliveries: [] });
     await renderApp('/admin/passes/p1?tab=delivery', {

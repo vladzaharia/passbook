@@ -121,10 +121,14 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     return;
   }
 
+  const registered = await devicesForPass(db, pass.id, pass.identityId);
+  // Nothing to reach: not "sent" (the delivery list would claim a device got it).
+  if (registered.length === 0) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'NO_DEVICES');
+    return;
+  }
   const delivered = await deliveredDevices(db, row.id);
-  const devices = (await devicesForPass(db, pass.id, pass.identityId)).filter(
-    (d) => !delivered.has(d.deviceId),
-  );
+  const devices = registered.filter((d) => !delivered.has(d.deviceId));
   if (devices.length === 0) {
     await finishOutbox(db, row.id, lease, 'sent', now, null);
     return;
