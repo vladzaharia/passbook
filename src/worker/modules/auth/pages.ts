@@ -46,13 +46,13 @@ export function expiredPage(nonce: string): string {
   });
 }
 
-/** Polaris ID worked but the account may not use Wallet: the fan closes under a padlock. */
+/** Polaris ID worked but the account may not use PassBook: the fan closes under a padlock. */
 export function noAccessPage(nonce: string): string {
   return hostedPage({
     nonce,
     title: 'No access',
     art: 'no-access',
-    lede: 'This Polaris ID account cannot use Wallet.',
+    lede: 'This Polaris ID account cannot use PassBook.',
     footer: true,
     body: `<div class="stack">${link('/login?focus=email', 'Sign in with email instead')}${link('/auth/oidc/start?prompt=login', 'Use another Polaris ID', true)}</div>`,
   });
@@ -78,7 +78,7 @@ export const SIGN_IN_ERRORS: Record<
 > = {
   NO_ACCESS: {
     title: 'No access',
-    message: 'This Polaris ID account cannot use Wallet.',
+    message: 'This Polaris ID account cannot use PassBook.',
     status: 403,
     art: 'no-access',
   },

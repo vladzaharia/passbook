@@ -83,7 +83,7 @@ describe('hosted auth pages', () => {
 
   it('offers email and another Polaris ID on no access', () => {
     const html = noAccessPage(NONCE);
-    expect(html).toContain('This Polaris ID account cannot use Wallet.');
+    expect(html).toContain('This Polaris ID account cannot use PassBook.');
     expect(html).toMatch(/<a class="btn" href="\/login\?focus=email">Sign in with email instead/);
     expect(html).toMatch(/<a class="btn outline" href="[^"]*prompt=login">Use another Polaris ID/);
   });

@@ -1,4 +1,4 @@
-# Wallet
+# PassBook
 
 Multi-tenant Apple Wallet pass platform on Cloudflare Workers (Hono API, React admin and portal).
 

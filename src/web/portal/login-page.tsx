@@ -30,7 +30,7 @@ export function LoginPage({
     if (authedAlready) goTo(next);
   }, [authedAlready, next]);
   useEffect(() => {
-    document.title = 'Sign in · Wallet';
+    document.title = 'Sign in · PassBook';
   }, []);
 
   let front: ReactNode;

@@ -4,7 +4,7 @@ const DARK =
   'color-scheme:dark;--page:#060912;--raised:#0d111b;--sunken:#020408;--field:#020408;--strong:#fff;--fg:#dbe4ff;--muted:#b5bed3;--line:#212633;--line-strong:#61697b;--hover:rgb(255 255 255/.06);--accent:#2dd4bf;--accent-hover:#4cdbc9;--accent-on:#04201c;--danger:#f2513f;--danger-line:#c83b2c;--danger-subtle:#221217;--warn:#c38d18;--warn-subtle:#1d1913;--warn-line:#896100;--focus:#5eead4;--foil-1:#2dd4bf;--foil-2:#9a5cff;--foil-3:#ffc24d;--edge:rgb(255 255 255/.05);--shadow:0 1px 2px 0 rgb(0 0 0/.4)';
 
 /**
- * Token values from @polaris-key/brand plus the Wallet teal; SSR pages cannot import the app CSS.
+ * Token values from @polaris-key/brand plus the PassBook teal; SSR pages cannot import the app CSS.
  * Holder pages follow the system appearance: no toggle, no stored theme.
  */
 export const THEME_CSS = `@font-face{font-family:Rubik;font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/rubik-var-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -34,7 +34,7 @@ const ICON =
   '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3.75a2 2 0 0 1 1.6.8l.45.6a4 4 0 0 0 6.4 0l.45-.6a2 2 0 0 1 1.6-.8H21"/><path d="M3 7h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
 
 /** Same wordmark as the console, as static markup. Never flips on SSR pages. */
-export const wordmarkHtml = (href = '/') => `<a class="mark" href="${href}">${ICON}Wallet</a>`;
+export const wordmarkHtml = (href = '/') => `<a class="mark" href="${href}">${ICON}PassBook</a>`;
 
 /** Head tags every holder page carries (the caller adds the nonce'd style). */
 export const HEAD_HTML =

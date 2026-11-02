@@ -56,7 +56,7 @@ describe('login page', () => {
   });
 
   it.each([
-    ['not_in_group', 'Your Polaris ID is not allowed to use Wallet.'],
+    ['not_in_group', 'Your Polaris ID is not allowed to use PassBook.'],
     ['expired_link', 'That link expired. Request a new one.'],
     ['weird', 'Sign-in failed. Try again.'],
   ])('shows one line for ?error=%s', async (code, text) => {

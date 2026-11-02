@@ -52,7 +52,7 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const canAdd = canAddToWallet();
   const active = !voided && !view.expired;
   useEffect(() => {
-    document.title = `${name} · Wallet`;
+    document.title = `${name} · PassBook`;
   }, [name]);
 
   return (

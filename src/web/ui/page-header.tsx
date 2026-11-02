@@ -82,7 +82,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn('mb-6 flex min-w-0 flex-col gap-3', PAGE_WIDTH[width], className)}>
-      <title>{`${title} · Wallet`}</title>
+      <title>{`${title} · PassBook`}</title>
       {breadcrumbs?.length ? <Breadcrumbs items={breadcrumbs} /> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">

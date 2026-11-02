@@ -1,6 +1,6 @@
 /**
  * Client ID Metadata Document (draft-ietf-oauth-client-id-metadata-document). When
- * OIDC_CLIENT_ID is this deployment's metadata URL, Polaris ID registers Wallet itself by
+ * OIDC_CLIENT_ID is this deployment's metadata URL, Polaris ID registers PassBook itself by
  * fetching the document: a public client (PKCE, no secret), so no client to create by hand.
  */
 import type { Context } from 'hono';
@@ -27,7 +27,7 @@ export function clientMetadata(env: UrlEnv) {
   const base = baseUrl(env);
   return {
     client_id: cimdClientId(env),
-    client_name: 'Wallet',
+    client_name: 'PassBook',
     client_uri: base,
     logo_uri: `${base}/apple-touch-icon.png`,
     redirect_uris: [oidcRedirectUri(env)],

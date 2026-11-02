@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "Wallet · Event ticket",
+  "name": "PassBook · Event ticket",
   "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
   "inputs": {
     "type": "object",

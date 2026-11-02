@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "Wallet · Poster",
+  "name": "PassBook · Poster",
   "description": "Membership card in the poster style, with a generic fallback.",
   "inputs": {
     "type": "object",

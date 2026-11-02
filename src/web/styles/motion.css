@@ -46,7 +46,7 @@
   --wl-stagger-cards: calc(var(--pk-stagger-step) * 2);
   --wl-tilt: 7deg;
 
-  /* Foil: Wallet teal, Polaris violet, Polaris gold. Light only, never a fill. */
+  /* Foil: PassBook teal, Polaris violet, Polaris gold. Light only, never a fill. */
   --wl-foil-1: #2dd4bf;
   --wl-foil-2: var(--polaris-key-violet-dark);
   --wl-foil-3: var(--polaris-key-gold-dark);

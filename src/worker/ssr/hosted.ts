@@ -66,5 +66,5 @@ export function hostedPage(input: HostedPageInput): string {
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · Wallet</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main></body></html>`;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main></body></html>`;
 }

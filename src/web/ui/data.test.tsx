@@ -374,6 +374,6 @@ describe('PageHeader', () => {
       'tabindex',
       '-1',
     );
-    expect(document.title).toBe('Templates · Wallet');
+    expect(document.title).toBe('Templates · PassBook');
   });
 });

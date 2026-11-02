@@ -46,7 +46,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   ]);
   const passJson = parseStoredPassJson(rawPassJson);
   const email = renderPassEmail({
-    orgName: org?.name ?? 'Wallet',
+    orgName: org?.name ?? 'PassBook',
     // The org form writes orgs.branding; the settings keys are the fallback.
     accent: branding.accent ?? orgSettings['branding.accent'],
     supportEmail: orgSettings['support.email'] ?? branding.supportEmail,

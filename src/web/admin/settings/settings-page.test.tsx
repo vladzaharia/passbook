@@ -9,7 +9,7 @@ const entries = (over: Record<string, unknown> = {}) => {
   const base: Record<string, unknown> = {
     'oidc.trustEmail': true,
     'auth.magicLinkEnabled': true,
-    'email.senderName': 'Wallet',
+    'email.senderName': 'PassBook',
     'refresh.userCooldownSeconds': 30,
     'retention.passVersionsKeep': 3,
     'retention.auditDays': 365,
@@ -42,7 +42,7 @@ describe('field parsing', () => {
     expect(parseField(accent, '#0f766e').value).toBe('#0f766e');
   });
   it('sends only changed keys', () => {
-    const initial = toDraft(PLATFORM_FIELDS, { 'email.senderName': 'Wallet' });
+    const initial = toDraft(PLATFORM_FIELDS, { 'email.senderName': 'PassBook' });
     const draft = { ...initial, 'email.senderName': 'Acme' };
     expect(changedValues(PLATFORM_FIELDS, draft, initial).values).toEqual({
       'email.senderName': 'Acme',
@@ -56,7 +56,7 @@ describe('settings page', () => {
       session: 'admin',
       handlers: { '/api/v1/settings': () => json(entries()) },
     });
-    expect(await screen.findByLabelText('Email sender name')).toHaveValue('Wallet');
+    expect(await screen.findByLabelText('Email sender name')).toHaveValue('PassBook');
     expect(screen.getByLabelText('Refresh cooldown')).toHaveValue(30);
     expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
     expect(screen.getByRole('region', { name: 'Sign-in' })).toBeInTheDocument();

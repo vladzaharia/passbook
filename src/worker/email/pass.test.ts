@@ -29,7 +29,7 @@ const render = (over: Partial<Parameters<typeof renderPassEmail>[0]> = {}) =>
     attached: false,
     passTitle: 'Harbor Lights 2026',
     summary: passSummary(PASS_JSON, { now: new Date('2026-11-01T00:00:00Z'), timeZone: 'UTC' }),
-    senderName: 'Wallet',
+    senderName: 'PassBook',
     ...over,
   });
 
@@ -122,7 +122,7 @@ describe('pass email', () => {
   });
 
   it('sends from "<Org> via <sender>"', () => {
-    expect(render().fromName).toBe('Harbor Lights Festival via Wallet');
+    expect(render().fromName).toBe('Harbor Lights Festival via PassBook');
     expect(render({ senderName: '' }).fromName).toBeUndefined();
   });
 
@@ -146,6 +146,6 @@ describe('sign-in email', () => {
     expect(html).toContain('src="https://w.test/apple-touch-icon.png"');
     expect(html).toMatch(/class="e-btn"[^>]*padding:12px 24px/);
     expect(html).not.toMatch(/@keyframes|\.gif/i);
-    expect(text.split('\n\n')[0]).toBe('Sign in to Wallet');
+    expect(text.split('\n\n')[0]).toBe('Sign in to PassBook');
   });
 });

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "Wallet · Store card",
+  "name": "PassBook · Store card",
   "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
   "inputs": {
     "type": "object",

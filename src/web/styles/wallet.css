@@ -1,4 +1,4 @@
-/* Wallet accent (teal) replaces the Polaris core violet. Same token names, so kit utilities follow. */
+/* PassBook accent (teal) replaces the Polaris core violet. Same token names, so kit utilities follow. */
 :root,
 [data-theme="dark"] {
   --pk-accent: #2dd4bf;

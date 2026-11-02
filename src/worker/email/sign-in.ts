@@ -16,7 +16,7 @@ export interface RenderedEmail {
   text: string;
 }
 
-/** The Wallet mark for the header: the app icon PNG next to the link's origin. */
+/** The PassBook mark for the header: the app icon PNG next to the link's origin. */
 function markUrl(link: string): string | undefined {
   try {
     return `${new URL(link).origin}/apple-touch-icon.png`;
@@ -29,7 +29,7 @@ function markUrl(link: string): string | undefined {
 export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
   const verify = input.purpose === 'verify_email';
   const subject = verify ? 'Confirm your email' : 'Your sign-in link';
-  const title = verify ? 'Confirm your email' : 'Sign in to Wallet';
+  const title = verify ? 'Confirm your email' : 'Sign in to PassBook';
   const action = verify ? 'Confirm email' : 'Sign in';
   const expiry = `Expires in ${input.expiresMinutes} minutes. Ignore this email if you did not ask for it.`;
   const codeLine = input.code ? `Code: ${input.code}` : '';
@@ -57,7 +57,7 @@ ${chip}
     html: emailShell({
       lang: 'en',
       title: subject,
-      header: 'Wallet',
+      header: 'PassBook',
       headerColor: '#060912',
       ...(mark ? { headerMark: mark } : {}),
       body,
