@@ -4,7 +4,7 @@ Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`.
 
 ## Commands
 
-- `npm run check` = gen, biome ci, typecheck, all tests, build (vite + `wrangler deploy --dry-run`). Must pass before you finish.
+- `npm run check` = gen, biome ci (warnings fail), `check:rules` (log codes, file sizes, knip), typecheck, all tests, build (vite, bundle budget, `wrangler deploy --dry-run`). Must pass before you finish. Rules and where they bite: `docs/engineering-standards.md`.
 - `npm run format` fixes style. `npm run test:unit|worker|web` run one project. `npm run test:e2e` needs `npm run dev:vars` once.
 - `npm run dev` starts vite with the Worker and local D1 (`npm run db:local` first). `npm run dev:oidc` starts the mock Pocket ID.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
@@ -22,7 +22,8 @@ Spec: `docs/design/platform-architecture.md`. Audits: `docs/audits/2026-10-31/`.
 - Logs: `ctx.log.info('event.name', { orgId, code })`. Never log emails, tokens, personalization or capability URLs (the logger redacts by key, but do not rely on it).
 - No silent `catch`. Classify, log with a stable code, or rethrow.
 - Registries (behaviors, connectors, baked templates) come from `npm run gen`. Add a folder; never edit a shared index.
-- Files under ~300 lines, named exports, kebab-case, tests beside code (`*.test.ts`). No Henry's-specific code outside `templates/`.
+- Files under ~300 lines (hard limit 330, `tools/check-sizes.ts`), named exports, kebab-case, tests beside code (`*.test.ts`). Split a repo as `repo-<topic>.ts`. No Henry's-specific code outside `templates/`.
+- Classify D1 errors with `classifyD1Error`; log errors as `error` with a `code`; no import cycles; routes call services, never repos.
 
 ## Ports (build against these)
 
