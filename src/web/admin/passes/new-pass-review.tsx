@@ -77,20 +77,23 @@ export function ReviewStep({
                 className="flex min-h-11 items-center gap-3 py-2 first:pt-0 last:pb-0"
               >
                 <dt className="w-32 shrink-0 text-sm text-fg-muted">{r.label}</dt>
-                <dd className="min-w-0 flex-1 truncate text-sm text-fg">
-                  {r.value ?? <span className="text-fg-subtle">—</span>}
+                {/* A dl row holds only dt and dd, so Edit sits inside the dd. */}
+                <dd className="flex min-w-0 flex-1 items-center gap-3 text-sm text-fg">
+                  <span className="min-w-0 flex-1 truncate">
+                    {r.value ?? <span className="text-fg-subtle">—</span>}
+                  </span>
+                  {r.step !== undefined ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      iconStart={<Pencil aria-hidden />}
+                      aria-label={`Edit ${r.label.toLowerCase()}`}
+                      onClick={() => onEdit(r.step as number)}
+                    >
+                      <span className="max-sm:sr-only">Edit</span>
+                    </Button>
+                  ) : null}
                 </dd>
-                {r.step !== undefined ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconStart={<Pencil aria-hidden />}
-                    aria-label={`Edit ${r.label.toLowerCase()}`}
-                    onClick={() => onEdit(r.step as number)}
-                  >
-                    <span className="max-sm:sr-only">Edit</span>
-                  </Button>
-                ) : null}
               </div>
             ))}
           </dl>

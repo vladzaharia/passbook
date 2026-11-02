@@ -282,7 +282,7 @@ describe('new pass wizard', () => {
   it('walks org, template, details and holder, then creates with an idempotency key', async () => {
     const user = userEvent.setup();
     const posts: RequestInit[] = [];
-    const { router } = await renderApp('/admin/passes/new', {
+    const { router, container } = await renderApp('/admin/passes/new', {
       session: 'admin',
       handlers: wizardHandlers(() => json(passDetail({ id: 'p9' }), 201), posts),
     });
@@ -306,7 +306,8 @@ describe('new pass wizard', () => {
       screen.getByRole('checkbox', { name: 'Email the pass to sam@example.com' }),
     ).toBeChecked();
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    // Review: an Edit link per row keeps the state.
+    // Review: rows are a valid dl; an Edit link per row keeps the state.
+    expect((await axe(container)).violations).toEqual([]);
     await user.click(screen.getByRole('button', { name: 'Edit member name' }));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Sam Jones');
     await user.click(screen.getByRole('button', { name: 'Next' }));
