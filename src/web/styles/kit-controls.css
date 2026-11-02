@@ -132,6 +132,33 @@
   animation: wl-step-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
 }
 
+/* Wizard stage (ui/wizard-stage.tsx): a fixed slice at the right edge, under the top bar; the
+   wizard bar (z-30) covers its foot. It arrives with the route, no motion of its own. Here, not
+   in a file of its own, so the lazy wizard chunk adds no CSS asset to the entry's preload map. */
+.wl-stage {
+  position: fixed;
+  top: calc(3.5rem + env(safe-area-inset-top));
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  width: var(--wl-stage);
+  border-left: 1px solid var(--pk-border-subtle);
+  background: var(--pk-surface-sunken);
+  padding-right: env(safe-area-inset-right);
+}
+/* Stage content that changes with a choice (a template's caption) fades in; opacity only. */
+.wl-stage-swap {
+  animation: wl-fade-in 120ms var(--wl-ease-out) backwards;
+}
+/* The steps clear the stage plus a 2rem gap. Main is centred at 80rem once the viewport passes
+   95rem (sidebar + main), so only the part of the stage inside main's gutter is padded. */
+.wl-wizard[data-staged] {
+  --wl-stage: clamp(18rem, 28vw, 26rem);
+  padding-right: max(0px, calc(var(--wl-stage) + 0.5rem - max(0px, (100vw - 95rem) / 2)));
+}
+
 /* Tab panels fade in (kept under reduced motion: an opacity swap under 150 ms). */
 .wl-panel[data-state="active"] {
   animation: wl-fade-in 120ms var(--wl-ease-out) backwards;

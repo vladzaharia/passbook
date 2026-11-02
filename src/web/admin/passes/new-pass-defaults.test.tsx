@@ -86,16 +86,17 @@ describe('new pass template step', () => {
     return user;
   }
 
-  it('marks templates every org can use as Shared', async () => {
+  it('files templates every org can use under Shared', async () => {
     await openTemplates([
       templateSummary({ id: 'tpl2', name: 'Plain card', orgId: null, orgName: null }),
       templateSummary(),
     ]);
     const plain = await screen.findByRole('radio', { name: /Plain card/ });
-    expect(plain.closest('label')).toHaveTextContent('Shared');
+    expect(plain.closest('fieldset')).toHaveAccessibleName('Shared');
+    expect(plain.closest('label')).not.toHaveTextContent('Shared');
     expect(
-      screen.getByRole('radio', { name: /Copper card/ }).closest('label'),
-    ).not.toHaveTextContent('Shared');
+      screen.getByRole('radio', { name: /Copper card/ }).closest('fieldset'),
+    ).toHaveAccessibleName("Henry's");
   });
 
   it('advances on Enter from a focused template', async () => {

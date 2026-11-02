@@ -22,8 +22,7 @@ export function ReviewStep({
   send,
   steps,
   onEdit,
-  brandingMissing,
-  warnings,
+  warnings: all,
   error,
 }: {
   org: string | undefined;
@@ -34,11 +33,14 @@ export function ReviewStep({
   send: boolean;
   steps: { org?: number; template: number; details: number; holder: number };
   onEdit: (step: number) => void;
-  brandingMissing: boolean;
-  /** The preview's other warnings (lint), one line each. */
-  warnings: readonly string[];
+  /** The preview's: missing branding gets its own callout, the other warnings one line each. */
+  warnings: readonly { code: string; severity: string; message: string }[];
   error: ReactNode;
 }) {
+  const brandingMissing = all.some((w) => w.code === 'PLATFORM_BRANDING');
+  const warnings = all
+    .filter((w) => w.severity === 'warning' && w.code !== 'PLATFORM_BRANDING')
+    .map((w) => w.message);
   const fields = describeSchema(schema)
     .flatMap((g) => g.fields)
     .filter((f) => f.required || shown(input[f.key]) !== null)
@@ -75,20 +77,23 @@ export function ReviewStep({
                 className="flex min-h-11 items-center gap-3 py-2 first:pt-0 last:pb-0"
               >
                 <dt className="w-32 shrink-0 text-sm text-fg-muted">{r.label}</dt>
-                <dd className="min-w-0 flex-1 truncate text-sm text-fg">
-                  {r.value ?? <span className="text-fg-subtle">—</span>}
+                {/* A dl row holds only dt and dd, so Edit sits inside the dd. */}
+                <dd className="flex min-w-0 flex-1 items-center gap-3 text-sm text-fg">
+                  <span className="min-w-0 flex-1 truncate">
+                    {r.value ?? <span className="text-fg-subtle">—</span>}
+                  </span>
+                  {r.step !== undefined ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      iconStart={<Pencil aria-hidden />}
+                      aria-label={`Edit ${r.label.toLowerCase()}`}
+                      onClick={() => onEdit(r.step as number)}
+                    >
+                      <span className="max-sm:sr-only">Edit</span>
+                    </Button>
+                  ) : null}
                 </dd>
-                {r.step !== undefined ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconStart={<Pencil aria-hidden />}
-                    aria-label={`Edit ${r.label.toLowerCase()}`}
-                    onClick={() => onEdit(r.step as number)}
-                  >
-                    <span className="max-sm:sr-only">Edit</span>
-                  </Button>
-                ) : null}
               </div>
             ))}
           </dl>

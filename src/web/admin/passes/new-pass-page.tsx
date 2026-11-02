@@ -20,7 +20,7 @@ import { useTemplate, useTemplates } from '../templates/api.ts';
 import { passKeys } from './api.ts';
 import { markCreated } from './detail/stage-state.ts';
 import { fingerprint, newKey } from './format.ts';
-import { LivePreview, ShowPassRow, useLivePreview } from './new-pass-preview.tsx';
+import { ShowPassRow, StagePreview, useLivePreview } from './new-pass-preview.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
 import { HolderStep, OrgStep, TemplateStep } from './new-pass-steps.tsx';
 import {
@@ -31,6 +31,7 @@ import {
   SchemaForm,
   validateValues,
 } from './schema-form/index.ts';
+import { displayName } from './template-groups.ts';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type StepId = 'org' | 'template' | 'details' | 'holder' | 'review';
@@ -200,11 +201,18 @@ export function NewPassPage({
 
   const sample = (template.data?.sample ?? {}) as FormValues;
   const live = useLivePreview({ templateId, orgId, schema, sample, input });
-  const preview = live.preview;
+  // The list's summary names the choice at once; a deep link waits for the detail.
+  const chosen = usable.find((t) => t.id === templateId) ?? template.data;
+  const name = chosen ? displayName(chosen) : undefined;
   const aside = (
-    <LivePreview state={live} transitionName={createdId ? `pass-${createdId}` : undefined} />
+    <StagePreview
+      state={live}
+      name={name}
+      description={at === 'template' ? chosen?.description : undefined}
+      transitionName={createdId ? `pass-${createdId}` : undefined}
+    />
   );
-  const showPass = <ShowPassRow state={live} title={template.data?.name ?? 'Pass'} />;
+  const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} />;
 
   return (
     <>
@@ -243,6 +251,7 @@ export function NewPassPage({
         {at === 'template' ? (
           <TemplateStep
             templates={usable}
+            orgName={org?.name}
             loading={templates.isPending}
             error={templates.error}
             templateId={templateId}
@@ -256,7 +265,7 @@ export function NewPassPage({
         ) : null}
         {at === 'details' ? (
           template.isError ? (
-            <ErrorState error={template.error} onRetry={() => void template.refetch()} />
+            <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />
           ) : !template.data ? (
             <SkeletonKeyValue label="Loading fields" />
           ) : (
@@ -287,7 +296,7 @@ export function NewPassPage({
         {at === 'review' ? (
           <ReviewStep
             org={org?.name}
-            template={template.data?.name}
+            template={name}
             schema={schema}
             input={input}
             email={email}
@@ -299,10 +308,7 @@ export function NewPassPage({
               holder: index('holder'),
             }}
             onEdit={go}
-            brandingMissing={Boolean(preview?.warnings.some((w) => w.code === 'PLATFORM_BRANDING'))}
-            warnings={(preview?.warnings ?? [])
-              .filter((w) => w.severity === 'warning' && w.code !== 'PLATFORM_BRANDING')
-              .map((w) => w.message)}
+            warnings={live.preview?.warnings ?? []}
             error={
               create.isError ? (
                 <Callout tone="danger">

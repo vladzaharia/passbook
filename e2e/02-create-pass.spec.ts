@@ -18,7 +18,7 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
     .first()
     .click();
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByText('Henry’s · Blue Entrance', { exact: true }).click();
+  await page.getByText('Blue Entrance', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByLabel('Member name').fill(memberName);

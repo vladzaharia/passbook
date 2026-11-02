@@ -141,7 +141,10 @@ export function ReviewStep({
   );
 }
 
-/** The wizard aside: the connector, then the first record from Test (plugs until there is one). */
+/**
+ * The wizard stage: the connector, then the first record from Test (plugs, centred in the stage,
+ * until there is one).
+ */
 export function WizardAside({
   connector,
   sample,
@@ -151,29 +154,36 @@ export function WizardAside({
 }) {
   const Icon = connectorIcon(connector?.type ?? '');
   return (
-    <Card>
-      <CardHeader title={connector?.displayName ?? 'Connector'} />
-      <CardBody className="flex flex-col gap-4">
-        {connector ? (
-          <p className="flex items-start gap-2 text-sm text-fg-muted">
-            <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
-            {connector.description || connector.displayName}
-          </p>
-        ) : null}
-        {sample.length ? (
-          <div className="flex min-w-0 flex-col gap-2 border-t border-border pt-4">
-            <p className="text-xs font-medium text-fg-muted">Sample record</p>
-            <KeyValue
-              items={sample.slice(0, 8).map((f) => ({ label: f.pointer, value: f.preview ?? '—' }))}
-            />
+    <div className="flex min-w-0 flex-1 flex-col gap-5">
+      {connector ? (
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-raised text-fg-muted"
+          >
+            <Icon className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-fg-strong">{connector.displayName}</p>
+            {connector.description ? (
+              <p className="mt-0.5 text-xs text-fg-muted">{connector.description}</p>
+            ) : null}
           </div>
-        ) : (
-          <div data-art-host="" className="flex flex-col items-center gap-2 py-2 text-center">
-            <EntityArt name={ENTITY.connection.art} size="sm" />
-            <p className="text-xs text-fg-muted">Test shows a sample record here.</p>
-          </div>
-        )}
-      </CardBody>
-    </Card>
+        </div>
+      ) : null}
+      {sample.length ? (
+        <div className="flex min-w-0 flex-col gap-3 border-t border-border pt-5">
+          <p className="text-xs font-medium text-fg-muted">Sample record</p>
+          <KeyValue
+            items={sample.slice(0, 8).map((f) => ({ label: f.pointer, value: f.preview ?? '—' }))}
+          />
+        </div>
+      ) : (
+        <div data-art-host="" className="my-auto flex flex-col items-center gap-2 text-center">
+          <EntityArt name={ENTITY.connection.art} size="sm" />
+          <p className="text-xs text-fg-muted">Test shows a sample record here.</p>
+        </div>
+      )}
+    </div>
   );
 }

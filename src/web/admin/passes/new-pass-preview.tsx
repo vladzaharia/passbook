@@ -105,6 +105,38 @@ export function LivePreview({
 }
 
 /**
+ * The wizard stage's content: the live card centred in the slice, the template's name under it
+ * and, while choosing, its description. The caption keeps its room on every step, so the card
+ * never moves; a new template's caption fades in.
+ */
+export function StagePreview({
+  state,
+  name,
+  description,
+  transitionName,
+}: {
+  state: LivePreviewState;
+  name: string | undefined;
+  description?: string | null | undefined;
+  transitionName?: string | undefined;
+}) {
+  return (
+    <div className="mx-auto my-auto flex w-full max-w-72 flex-col gap-5">
+      <LivePreview state={state} transitionName={transitionName} />
+      <div
+        key={state.templateId}
+        className="wl-stage-swap flex min-h-18 flex-col gap-1 text-center"
+      >
+        {name ? <p className="text-sm font-medium text-fg-strong">{name}</p> : null}
+        {name && description ? (
+          <p className="line-clamp-3 text-xs text-pretty text-fg-muted">{description}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Below 1024 the wizard has no aside: Details and Review offer the card as a compact row with
  * Show pass, as the pass detail page does on phones.
  */

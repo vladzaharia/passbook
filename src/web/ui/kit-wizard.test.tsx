@@ -104,6 +104,36 @@ describe('Wizard and OptionTile', () => {
     expect(await screen.findByText('Template step')).toBeInTheDocument();
   });
 
+  it('shows the aside as a labelled stage from 1024 and hides it below', () => {
+    const wizard = (
+      <Wizard
+        steps={[{ id: 'a', title: 'Template' }]}
+        current={0}
+        onStep={() => {}}
+        aside={<p>Card</p>}
+        asideLabel="Connector"
+        onCancel={() => {}}
+      >
+        <p>Step</p>
+      </Wizard>
+    );
+    const narrow = render(wizard);
+    expect(screen.queryByRole('complementary')).toBeNull();
+    // The step heading stays the focus target for screen readers; the stepper shows it.
+    expect(screen.getByRole('heading', { name: 'Template' })).toHaveClass('sr-only');
+    narrow.unmount();
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('min-width: 1024px'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    const { container } = render(wizard);
+    const stage = screen.getByRole('complementary', { name: 'Connector' });
+    expect(stage).toHaveTextContent('Card');
+    expect(container.firstElementChild).toHaveAttribute('data-staged');
+  });
+
   it('places the aside beside the main column at 1024 when asked', () => {
     const { container } = render(
       <TwoPane asideFrom="lg" stickyAside aside={<p>Aside</p>}>
