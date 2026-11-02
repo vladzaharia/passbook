@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, FileDrop, Input, Select, Switch, Textarea } from '../../../ui/index.ts';
+import { zoneOptions } from '../../../lib/timezones.ts';
+import { Button, Combobox, FileDrop, Input, Select, Switch, Textarea } from '../../../ui/index.ts';
 import { DateTimeInput } from './datetime-input.tsx';
 import type { FieldDef } from './schema.ts';
 
@@ -79,10 +80,21 @@ export function Control({
           onChange={(e) => onValue(e.target.value === '' ? undefined : Number(e.target.value))}
         />
       );
-    case 'date':
+    case 'date': {
+      // A calendar date stored in a date-time input is midnight UTC, which ignoresTimeZone shows as is.
+      const instant = field.schema.format === 'date-time';
       return (
-        <Input {...common} type="date" value={text} onChange={(e) => onValue(e.target.value)} />
+        <Input
+          {...common}
+          type="date"
+          value={instant ? text.slice(0, 10) : text}
+          onChange={(e) => {
+            const day = e.target.value;
+            onValue(instant ? (day ? `${day}T00:00:00Z` : undefined) : day);
+          }}
+        />
       );
+    }
     case 'datetime':
       return (
         <DateTimeInput
@@ -90,6 +102,21 @@ export function Control({
           value={text}
           onValue={onValue}
           clearLabel={field.required ? undefined : field.noneLabel}
+        />
+      );
+    case 'timezone':
+      return (
+        <Combobox
+          id={control.id as string}
+          searchPlaceholder="Find a city"
+          placeholder="Choose a time zone"
+          disabled={disabled === true}
+          options={zoneOptions()}
+          value={text || undefined}
+          onValueChange={(z) => {
+            onValue(z);
+            onBlur();
+          }}
         />
       );
     case 'image':

@@ -122,6 +122,7 @@ export function demoPlans(ids: {
           eventName: 'Harbor Lights 2026',
           venueName: 'Pier 62',
           venueRegion: 'Seattle, WA',
+          venueTimeZone: 'America/Los_Angeles',
           startsAt: iso(14 + (i % 3)),
           endsAt: iso(14.25 + (i % 3)),
           attendee: name,
@@ -144,6 +145,7 @@ export function demoPlans(ids: {
               code: `GEAR-${n}`,
               validFor: 'One purchase',
               expirationDate: iso(3 + i),
+              timeZone: 'America/Los_Angeles',
             }
           : { holder: name, memberId: `CREW-${n}`, tier: 'Plus', points: 40 },
         holder,
@@ -168,6 +170,7 @@ export function demoPlans(ids: {
         eventName: 'Harbor Lights 2026',
         venueName: 'Pier 62',
         venueRegion: 'Seattle, WA',
+        venueTimeZone: 'America/Los_Angeles',
         startsAt: iso(15),
         endsAt: iso(15.25),
         attendee: 'Maya Chen',

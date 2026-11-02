@@ -130,6 +130,23 @@ describe('HIG lint', () => {
     expect(codes(pet, () => {})).toContain('info:COLOR_CONTRAST');
   });
 
+  it('rejects a UTC time shown as local, and warns for a UTC date that is not midnight', () => {
+    const field = (value: string, timeStyle: string) =>
+      codes('generic', (p) => {
+        p.generic.secondaryFields.push({
+          key: 'doors',
+          label: 'Doors',
+          value,
+          dateStyle: 'PKDateStyleMedium',
+          timeStyle,
+          ignoresTimeZone: true,
+        });
+      });
+    expect(field('2026-11-17T01:00:00Z', 'PKDateStyleShort')).toContain('error:LOCAL_TIME');
+    expect(field('2026-11-17T01:00:00Z', 'PKDateStyleNone')).toContain('warning:LOCAL_TIME');
+    expect(field('2026-01-01T00:00:00Z', 'PKDateStyleNone').join()).not.toContain('LOCAL_TIME');
+  });
+
   it('accepts a local offset with ignoresTimeZone', () => {
     const out = codes('generic', (p) => {
       p.locations = [{ latitude: 47.6, longitude: -122.3 }];

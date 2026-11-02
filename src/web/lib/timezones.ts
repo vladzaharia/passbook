@@ -31,7 +31,10 @@ export function zoneOptions(): ZoneOption[] {
   if (cached) return cached;
   const ids =
     typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['UTC'];
-  cached = ids.map((value) => ({ value, label: zoneLabel(value) }));
+  cached = (ids.includes('UTC') ? ids : ['UTC', ...ids]).map((value) => ({
+    value,
+    label: zoneLabel(value),
+  }));
   return cached;
 }
 

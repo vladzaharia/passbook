@@ -413,6 +413,16 @@ describe('truthful previews', () => {
     expect(facesDiffer(v)).toBe(true);
   });
 
+  it('falls back to the legacy event ticket when poster semantics are missing', () => {
+    const { venueRoom: _room, ...semantics } = posterEventTicket.semantics as Record<
+      string,
+      unknown
+    >;
+    const pass = { ...posterEventTicket, semantics };
+    expect(normalize(pass, opts).layouts.ios27.poster).toBe(false);
+    expect(normalize(posterEventTicket, opts).layouts.ios27.poster).toBe(true);
+  });
+
   it('keeps an NFC poster event ticket a poster on iOS 26 and earlier', () => {
     const nfc = { ...posterEventTicket, nfc: { message: 'X', encryptionPublicKey: 'K' } };
     expect(normalize(nfc, { ...opts, target: 'legacy' }).layout.poster).toBe(true);
@@ -453,7 +463,13 @@ describe('truthful previews', () => {
   it('lays a poster event ticket out from semantics, approximately', () => {
     const p = {
       ...posterEventTicket,
-      semantics: { eventName: 'Harbor Lights', venueName: 'Pier 62', admissionLevel: 'VIP' },
+      semantics: {
+        eventName: 'Harbor Lights',
+        venueName: 'Pier 62',
+        venueRegionName: 'Seattle, WA',
+        venueRoom: 'Main stage',
+        admissionLevel: 'VIP',
+      },
     } as PassJson;
     const l = normalize(p, opts).layout;
     expect(l.semantic).toMatchObject({ kind: 'event', title: 'Harbor Lights', venue: 'Pier 62' });

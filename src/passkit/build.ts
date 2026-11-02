@@ -1,5 +1,6 @@
 import { cachedAssetBytes } from './asset-cache.ts';
 import type { BehaviorRegistry } from './behaviors/registry.ts';
+import { inputTimeZone, isTimeZone, localizeDates, localZones } from './build-local-time.ts';
 import { normalizePass } from './schema/normalize.ts';
 import type { SignedPass } from './sign/index.ts';
 import { sha1Hex, signPass } from './sign/index.ts';
@@ -239,6 +240,11 @@ export function planPass(args: BuildPassInput): PlannedPass {
       fail('BEHAVIOR', `${use.use} failed: ${(error as Error).message}`);
     }
   }
+
+  const zoneInput = inputTimeZone(template.manifest.inputs, full);
+  if (zoneInput?.zone !== undefined && !isTimeZone(zoneInput.zone))
+    fail('INVALID_INPUT', `${zoneInput.zone} is not a time zone.`, zoneInput.key);
+  localizeDates(pass, localZones(pass, zoneInput?.zone));
 
   pass = normalizePass(pass);
   pass.formatVersion = 1;

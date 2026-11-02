@@ -24,8 +24,10 @@ interface Props {
 function zoneFor(iso: string): string {
   const here = localZone();
   const ms = Date.parse(iso);
-  const written = writtenOffset(iso);
+  // A UTC value reads as UTC: ignoresTimeZone shows the written wall clock, not the browser's.
+  const written = /Z$/i.test(iso) ? 0 : writtenOffset(iso);
   if (Number.isNaN(ms) || written === undefined || zoneOffset(ms, here) === written) return here;
+  if (written === 0) return 'UTC';
   return zoneOptions().find((z) => zoneOffset(ms, z.value) === written)?.value ?? here;
 }
 

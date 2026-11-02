@@ -110,6 +110,12 @@ export const eventTicket: PassJson = {
 export const posterEventTicket: PassJson = {
   ...eventTicket,
   preferredStyleSchemes: ['posterEventTicket', 'eventTicket'],
+  semantics: {
+    eventName: 'Concert',
+    venueName: 'Hall',
+    venueRegionName: 'Cupertino, CA',
+    venueRoom: 'Main',
+  },
   featuredActions: [
     { identifier: 'a1', type: 'viewSchedule', url: 'https://example.com/schedule' },
   ],

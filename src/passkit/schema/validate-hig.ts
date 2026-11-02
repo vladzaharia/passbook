@@ -154,20 +154,27 @@ function checkSizes(ctx: ValidationContext, assets: ValidatableAsset[]): void {
 }
 
 const PLACE_KEYS = /venue|airport|departure|arrival|location/i;
+/** Midnight UTC with no time shown is a calendar date, the one honest use of Z with ignoresTimeZone. */
+const isCalendarDate = (field: Record<string, unknown>, value: string) =>
+  field.timeStyle === 'PKDateStyleNone' && /T00:00(?::00(?:\.0+)?)?Z$/.test(value);
 function checkLocalTime(ctx: ValidationContext): void {
   const semantics = isObject(ctx.pass.semantics) ? Object.keys(ctx.pass.semantics) : [];
   const located =
     (Array.isArray(ctx.pass.locations) && ctx.pass.locations.length > 0) ||
     semantics.some((k) => PLACE_KEYS.test(k));
-  if (!located) return;
   for (const { field, path } of eachField(ctx)) {
     const dated = 'dateStyle' in field || 'timeStyle' in field;
-    if (
-      dated &&
-      typeof field.value === 'string' &&
-      /Z$/.test(field.value) &&
-      !field.ignoresTimeZone
-    )
+    if (!dated || typeof field.value !== 'string' || !/Z$/.test(field.value)) continue;
+    if (field.ignoresTimeZone) {
+      if (isCalendarDate(field, field.value)) continue;
+      // Wallet shows the written wall clock, so a UTC value reads as the UTC day and time.
+      const report = field.timeStyle === 'PKDateStyleNone' ? ctx.warn : ctx.error;
+      report(
+        'LOCAL_TIME',
+        'This time is in UTC but shown as local; write it with the local offset or set a time zone.',
+        `${path}.value`,
+      );
+    } else if (located)
       ctx.warn(
         'LOCAL_TIME',
         'This time is in UTC; use the local offset and ignoresTimeZone so it reads in local time.',
