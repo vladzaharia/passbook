@@ -173,6 +173,18 @@ export const PreviewResponseSchema = z.object({
   assetNames: z.array(z.string()),
 });
 
+export const PreviewBatchQuerySchema = z.object({
+  /** Comma-separated template ids, at most 50. */
+  ids: z
+    .string()
+    .transform((v) => [...new Set(v.split(',').filter(Boolean))])
+    .pipe(z.array(IdSchema).min(1).max(50)),
+});
+/** Default-sample previews for many templates in one request; ids the caller cannot read are left out. */
+export const PreviewBatchSchema = z.object({
+  items: z.array(PreviewResponseSchema.extend({ id: IdSchema })),
+});
+
 /** One-sentence text for the `error` code of a failed import. */
 export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
   IMPORT_INVALID: 'The package has errors. Fix them and upload again.',

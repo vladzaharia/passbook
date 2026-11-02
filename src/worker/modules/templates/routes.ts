@@ -29,7 +29,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
-import { registerLifecycle, registerUploadList } from './routes-more.ts';
+import { registerLifecycle, registerPreviewBatch, registerUploadList } from './routes-more.ts';
 import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 
@@ -117,6 +117,7 @@ register(
 );
 
 registerUploadList(templatesRoutes);
+registerPreviewBatch(templatesRoutes);
 
 register(
   templatesRoutes,

@@ -5,6 +5,7 @@ import { json, renderApp } from '../../lib/test-utils.tsx';
 import {
   INPUT_SCHEMA,
   ORG,
+  previewsHandler,
   SAMPLE_PASS_JSON,
   templateDetail,
   templateSummary,
@@ -29,6 +30,7 @@ describe('new pass details step', () => {
         '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
         '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
         '/api/v1/templates/tpl1': () => json(templateDetail({ inputSchema: schema })),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': (_u, init) => {
           if (method(init) === 'POST') {
             const body = JSON.parse(String(init?.body)) as { input?: unknown };
@@ -75,6 +77,7 @@ describe('new pass template step', () => {
       handlers: {
         '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
         '/api/v1/templates': () => json({ items, nextCursor: null }),
+        '/api/v1/templates/previews': previewsHandler,
         '/api/v1/templates/tpl1/preview': previewOk,
         '/api/v1/templates/tpl2/preview': previewOk,
         '/api/v1/templates/tpl1': () => json(templateDetail()),

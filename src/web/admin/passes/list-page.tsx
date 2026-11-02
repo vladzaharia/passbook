@@ -19,6 +19,7 @@ import {
   PageHeader,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
+import { fetchPreview } from '../templates/preview-batch.ts';
 import { usePassList } from './api.ts';
 import { downloadText, toCsv } from './csv.ts';
 import { PassListContext, passColumns, type Swatch } from './list-columns.tsx';
@@ -34,8 +35,7 @@ function useSwatches(templateIds: string[]): Map<string, Swatch> {
   return useQueries({
     queries: templateIds.map((id) => ({
       queryKey: ['admin', 'templates', 'preview', id, null],
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, {}, { signal }),
+      queryFn: () => fetchPreview(id),
       staleTime: Number.POSITIVE_INFINITY,
       retry: false,
     })),

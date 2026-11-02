@@ -289,3 +289,20 @@ export const CONNECTOR = {
   outputFields: { name: { type: 'string' }, email: { type: 'string' } },
   defaults: { intervalSeconds: 3600, maxConcurrency: 2, requestsPerMinute: 60, timeoutMs: 15000 },
 };
+
+/** GET /templates/previews: the sample preview for every requested id. */
+export function previewsHandler(url: URL): Response {
+  const items = (url.searchParams.get('ids') ?? '')
+    .split(',')
+    .filter(Boolean)
+    .map((id) => ({
+      id,
+      passJson: SAMPLE_PASS_JSON,
+      warnings: [],
+      assetBaseUrl: '/a',
+      assetNames: [],
+    }));
+  return new Response(JSON.stringify({ items }), {
+    headers: { 'content-type': 'application/json' },
+  });
+}

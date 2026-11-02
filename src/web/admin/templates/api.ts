@@ -65,11 +65,20 @@ export function useTemplate(id: string | undefined) {
   });
 }
 
+import { fetchPreview } from './preview-batch.ts';
+
 export function useTemplatePreview(id: string, version?: string) {
   return useQuery({
     queryKey: ['admin', 'templates', 'preview', id, version ?? null],
     queryFn: ({ signal }) =>
-      api.post(`/api/v1/templates/${id}/preview`, PreviewResponseSchema, { version }, { signal }),
+      version
+        ? api.post(
+            `/api/v1/templates/${id}/preview`,
+            PreviewResponseSchema,
+            { version },
+            { signal },
+          )
+        : fetchPreview(id),
     staleTime: Number.POSITIVE_INFINITY,
     enabled: Boolean(id),
   });

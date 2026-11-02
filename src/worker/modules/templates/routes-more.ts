@@ -2,6 +2,8 @@ import type { Context } from 'hono';
 import type { z } from 'zod';
 import {
   IdParamSchema,
+  PreviewBatchQuerySchema,
+  PreviewBatchSchema,
   TemplateDetailSchema,
   TemplateReissueResponseSchema,
   UploadListQuerySchema,
@@ -11,7 +13,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { reissueTemplate, setArchived, templatePackage } from './lifecycle.ts';
-import { recentUploads } from './service.ts';
+import { previewMany, recentUploads } from './service.ts';
 
 type C = Context<AppBindings>;
 type Router = ReturnType<typeof createRouter>;
@@ -29,6 +31,22 @@ export function registerUploadList(router: Router): void {
       response: UploadListSchema,
     },
     async (c) => c.json(await recentUploads(serviceContext(c), c.var.auth, c.req.valid('query'))),
+  );
+}
+
+/** GET /previews; registered before GET /{id} so "previews" is not read as an id. */
+export function registerPreviewBatch(router: Router): void {
+  register(
+    router,
+    'templates',
+    {
+      method: 'get',
+      path: '/previews',
+      summary: 'Sample previews for several templates',
+      query: PreviewBatchQuerySchema,
+      response: PreviewBatchSchema,
+    },
+    async (c) => c.json(await previewMany(serviceContext(c), c.var.auth, c.req.valid('query').ids)),
   );
 }
 
