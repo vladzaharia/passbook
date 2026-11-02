@@ -11,7 +11,7 @@ import { loginErrorMessage } from './login-errors.ts';
 import { LoginScene, useLoginScene } from './login-scene.tsx';
 
 /**
- * The hosted sign-in page: wordmark, the wallet scene on the card's top edge, then the card.
+ * The hosted sign-in page: wordmark, the wallet seated on the card's top edge, then the card.
  * The worker's SSR auth pages (src/worker/ssr/hosted.ts) mirror these metrics exactly.
  */
 export function LoginPage({
@@ -24,7 +24,7 @@ export function LoginPage({
   const { session, isPending, isError, error: loadError, refetch } = useSession();
   const next = safeNext(rawNext);
   const authedAlready = session?.authenticated === true;
-  const [scene, sceneActions] = useLoginScene();
+  const [scene, sceneActions] = useLoginScene(Boolean(error));
 
   useEffect(() => {
     if (authedAlready) goTo(next);
@@ -34,10 +34,12 @@ export function LoginPage({
   }, []);
 
   let front: ReactNode;
+  let failed = false;
   let methods: { oidc: boolean; magic: boolean; siteKey: string } | null = null;
   if (isPending || authedAlready) {
     front = undefined;
   } else if (isError || !session) {
+    failed = true;
     front = (
       <Callout
         tone="danger"
@@ -56,6 +58,7 @@ export function LoginPage({
     );
   } else if (!session.authenticated) {
     if (!session.oidcEnabled && !session.magicLinkEnabled) {
+      failed = true;
       front = <p className="text-sm text-fg-muted">Sign-in is unavailable.</p>;
     } else {
       methods = {
@@ -71,7 +74,7 @@ export function LoginPage({
       <div className="flex h-11 items-center justify-center">
         <Wordmark flip={false} />
       </div>
-      <LoginScene state={scene} className="relative z-0 mt-4 -mb-3.5 sm:-mb-4" />
+      <LoginScene state={scene} sad={failed} className="mt-4" />
       <div className="relative z-10 w-full">
         <LoginCard
           next={next}

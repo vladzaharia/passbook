@@ -65,7 +65,7 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
         return;
       }
       setError(errorMessage(e));
-      if (isApiError(e) && e.status === 429) scene.fail();
+      scene.fail({ shake: isApiError(e) && e.status === 429 });
     },
   });
 
@@ -87,9 +87,12 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
       setFieldError(undefined);
       return;
     }
-    if ('challenge' in result) return setError(CHALLENGE_FAILED);
+    if ('challenge' in result) {
+      scene.fail({ shake: false });
+      return setError(CHALLENGE_FAILED);
+    }
     setError(errorMessage(result.error));
-    if (isApiError(result.error) && result.error.status === 429) scene.fail();
+    scene.fail({ shake: isApiError(result.error) && result.error.status === 429 });
   }
 
   const noteId = `${id}-note`;

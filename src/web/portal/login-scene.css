@@ -1,14 +1,17 @@
 /* Sign-in scene (motion-and-expression.md, moment 8). The art parts come from the kit wallet
    (art-wallet.css); these rules add the sign-in beats: parallax, lift, post, return, shake,
-   hourglass and the tuck on success. The sign-in card's top edge cuts the art at y 60 of 72:
-   128×96 covers the pocket's bottom 16 px, 112×84 under 640 its bottom 14 px. */
+   hourglass and the tuck on success. The wallet sits on the card (seat): its base is y 66 of 72,
+   so the scene overlaps the card by 8 px at 128×96 and 7 px at 112×84 (under 640), above it. */
 .wl-login-scene {
   --px: 0;
   --py: 0;
   --gx: 0;
   position: relative;
+  z-index: 20;
   width: 128px;
   height: 96px;
+  margin-bottom: -8px;
+  pointer-events: none;
 }
 .wl-login-scene .wl-art {
   width: 128px;
@@ -20,6 +23,9 @@
     width: 112px;
     height: 84px;
   }
+  .wl-login-scene {
+    margin-bottom: -7px;
+  }
 }
 .wl-login-lean,
 .wl-login-pocket {
@@ -27,10 +33,10 @@
   display: block;
   width: 100%;
   height: 100%;
-  transform-origin: 50% 90%;
+  transform-origin: 50% 91.67%;
 }
-.wl-login-scene .wl-art [data-part="w"] {
-  --o: 50% 100%;
+.wl-login-scene .wl-art [data-fan] {
+  clip-path: url(#wl-login-slot);
 }
 .wl-login-scene .wl-login-initial {
   stroke: none;
@@ -39,15 +45,22 @@
   text-anchor: middle;
   dominant-baseline: central;
 }
-.wl-login-scene [data-mood="happy"] [data-part="eyes"] {
-  opacity: 0;
+/* Success: the smile lands with the bounce. A failed attempt sighs once the shake is done. */
+.wl-login-scene .wl-art [data-part="joy"] {
+  --d: 140ms;
+}
+.wl-login-scene[data-sad="fail"] {
+  --wl-sigh-delay: 200ms;
+}
+.wl-login-scene[data-sad="fail"] .wl-art [data-part="br"] {
+  --d: 0ms;
 }
 
-/* Expired code: an hourglass beside the fan flips once. */
+/* Expired code: an hourglass stands on the card beside the wallet (base at 66/72) and flips once. */
 .wl-login-hourglass {
   position: absolute;
-  top: 6%;
-  left: 80%;
+  top: calc(91.67% - 17.5px);
+  left: calc(91.67% - 10px);
   width: 20px;
   height: 20px;
   opacity: 0;
@@ -106,8 +119,8 @@
     animation: wl-login-stamp 280ms var(--wl-ease-bounce) 60ms backwards;
   }
 
-  /* Send: the card hops out over the pocket's shoulder and drops behind the sign-in card like a
-     letter going out. The two left close up a little; the eyes look down to the code. */
+  /* Send: the card hops out over the pocket's shoulder and drops into the sign-in card's top
+     edge like a letter going out. The two left close up a little; the eyes look down to the code. */
   .wl-login-scene[data-beat="sent"] .wl-art [data-part="c2"] {
     --o: 48px 23px;
     animation: wl-login-post 320ms both;
@@ -117,6 +130,12 @@
   }
   .wl-login-scene[data-beat="sent"] .wl-art [data-part="c3"] {
     --t: rotate(10deg);
+  }
+  .wl-login-scene[data-beat="sent"] .wl-art [data-mood="sad"] [data-part="c1"] {
+    --t: rotate(-17deg) translateY(1px);
+  }
+  .wl-login-scene[data-beat="sent"] .wl-art [data-mood="sad"] [data-part="c3"] {
+    --t: rotate(17deg) translateY(1px);
   }
   .wl-login-scene[data-beat="sent"] .wl-art [data-look] {
     transform: translate(calc(var(--px) * 1.5px), 1.2px);
@@ -147,11 +166,6 @@
   }
   .wl-login-scene[data-beat="success"] .wl-art [data-part="w"] {
     animation: wl-login-bounce 360ms var(--wl-ease-bounce) 220ms backwards;
-  }
-  .wl-login-scene .wl-art .wl-login-joy {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: wl-login-joy 240ms var(--wl-ease-bounce) 220ms backwards;
   }
   /* The open eyes stay until the smiling ones pop in. */
   .wl-login-scene .wl-art [data-mood="happy"] [data-part="eyes"] {
@@ -215,12 +229,6 @@
 @keyframes wl-login-bounce {
   from {
     transform: scale(1.06, 0.9);
-  }
-}
-@keyframes wl-login-joy {
-  from {
-    opacity: 0;
-    transform: scaleY(0);
   }
 }
 @keyframes wl-login-flip {
