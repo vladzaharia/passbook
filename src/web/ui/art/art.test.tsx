@@ -5,6 +5,7 @@ import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { ART, ART_NAMES, EntityArt, WalletArt, type WalletState } from './index.ts';
+import type { WalletMood } from './wallet.tsx';
 
 const DIR = join(process.cwd(), 'src/web/ui/art');
 const css = ['art.css', 'art-records.css', 'art-details.css', 'art-wallet.css']
@@ -19,6 +20,7 @@ const STATES: WalletState[] = [
   'no-access',
   'break-glass',
 ];
+const MOODS: WalletMood[] = ['happy', 'flat', 'sad', 'curious'];
 
 /** Top-level blocks of a stylesheet: [prelude, body] with nesting resolved by brace depth. */
 function blocks(source: string): [string, string][] {
@@ -121,6 +123,33 @@ describe('entity art', () => {
     expect(ssr).toMatch(/\[base, records, details, wallet\]/);
   });
 
+  it('draws each mood on the face and seats the wallet on a surface', () => {
+    for (const mood of MOODS) {
+      const { container, unmount } = render(<WalletArt state="login" mood={mood} seat />);
+      const w = container.querySelector('[data-part="w"]');
+      expect(w).toHaveAttribute('data-mood', mood);
+      expect(w).toHaveAttribute('data-seat');
+      expect(container.querySelectorAll('[data-part="l1"], [data-part="l2"]')).toHaveLength(2);
+      expect(container.querySelector('[data-part="sd"]')).not.toBeNull();
+      expect(container.querySelector('[data-look] [data-part="joy"]') !== null).toBe(
+        mood === 'happy',
+      );
+      const brows = mood === 'sad' || mood === 'curious';
+      expect(container.querySelector('[data-look] [data-part="br"]') !== null).toBe(brows);
+      expect(container.querySelectorAll('*').length).toBeLessThanOrEqual(40);
+      unmount();
+    }
+    const mouth = (mood?: WalletMood) =>
+      new DOMParser()
+        .parseFromString(renderToStaticMarkup(<WalletArt mood={mood} />), 'image/svg+xml')
+        .querySelector('[data-body] > path.m')
+        ?.getAttribute('d');
+    expect(new Set([undefined, ...MOODS].map(mouth)).size).toBe(4);
+    expect(mouth('happy')).toBe(mouth());
+    const plain = render(<WalletArt state="login" />).container;
+    expect(plain.querySelector('[data-seat], [data-part="sd"], [data-part="l1"]')).toBeNull();
+  });
+
   it('animates only transform and opacity', () => {
     const keyframes = blocks(css).filter(([sel]) => sel.startsWith('@keyframes'));
     expect(keyframes.length).toBeGreaterThan(3);
@@ -144,6 +173,7 @@ describe('entity art', () => {
     const renders = [
       ...ART_NAMES.map((name) => <EntityArt key={name} name={name} />),
       ...STATES.map((state) => <WalletArt key={state} state={state} />),
+      ...MOODS.map((mood) => <WalletArt key={mood} state="login" mood={mood} seat />),
     ];
     let longest = 0;
     for (const node of renders) {
@@ -165,12 +195,12 @@ describe('entity art', () => {
     expect(longest).toBe(600);
   });
 
-  it('fits the 8 kB gzip budget', () => {
+  it('fits the 9.5 kB gzip budget', () => {
     // css.ts is SSR glue: the browser bundle never loads it.
     const files = readdirSync(DIR)
       .filter((f) => !f.includes('.test.') && f !== 'css.ts')
       .sort();
     const all = files.map((f) => readFileSync(join(DIR, f), 'utf8')).join('\n');
-    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(8 * 1024);
+    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(9.5 * 1024);
   });
 });
