@@ -13,7 +13,10 @@ export function passDevice(ua: string | undefined): { device: PassDevice; inApp:
     : /Macintosh/.test(text)
       ? 'mac'
       : 'other';
-  // Google app, Facebook, Instagram and Outlook open links in their own view.
-  const inApp = /\bGSA\/|FBAN|FBAV|Instagram|Outlook/.test(text);
+  // Google app, Facebook, Instagram and Outlook open links in their own view. Other web views on
+  // iPhone and iPad (LinkedIn, X, TikTok, Snapchat) are WKWebView and omit the `Safari/` token.
+  const apple = /iPhone|iPod|iPad|Macintosh/.test(text);
+  const inApp =
+    /\bGSA\/|FBAN|FBAV|Instagram|Outlook/.test(text) || (apple && !/Safari\//.test(text));
   return { device, inApp };
 }
