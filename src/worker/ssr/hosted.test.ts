@@ -192,7 +192,19 @@ describe('renderErrorPage', () => {
   });
 });
 
-describe('holder text size', () => {
+describe('holder type scale', () => {
+  // public-type.css is inlined through ?raw, which the test build leaves empty; the web project
+  // tests its values (src/web/styles/public-type.test.tsx).
+  it('sets every SSR page in the scale the portal and /login use', () => {
+    for (const html of [noAccessPage(NONCE), renderErrorPage({ status: 404, nonce: NONCE })]) {
+      expect(html).toContain('<body class="wl-portal">');
+    }
+    // Sizes read the scale; fields keep the 16 px floor so iOS never zooms.
+    const sizes = HOSTED_CSS.match(/font-size:[^;}]+/g) ?? [];
+    expect(sizes.length).toBeGreaterThan(5);
+    expect(sizes.filter((s) => !/var\(--pk-font-size-|max\(16px,1rem\)/.test(s))).toEqual([]);
+  });
+
   it('follows Dynamic Type on iOS only (macOS Safari would set a 13 px root)', () => {
     expect(THEME_CSS).toContain(
       '@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body;',
