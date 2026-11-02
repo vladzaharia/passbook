@@ -27,7 +27,7 @@ span[data-replay] .wl-art > :not([data-part="sd"], defs) {
     cursor: pointer;
   }
   /* The scene owns the mood's beat and the face's wink. */
-  [data-replay]:not([data-scene="beat"]) :is([data-body], [data-fan]),
+  [data-replay]:not([data-scene="beat"], [data-scene="hello"]) :is([data-body], [data-fan]),
   .wl-face[data-replay]:is([data-scene="cheer"], [data-scene="post"]) [data-wink] {
     animation: none;
   }
