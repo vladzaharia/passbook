@@ -83,7 +83,7 @@ export function OrgStep({
   choiceError?: string | undefined;
 }) {
   if (loading) return <SkeletonRows rows={3} label="Loading organizations" />;
-  if (error) return <ErrorState error={error} />;
+  if (error) return <ErrorState inline error={error} />;
   if (orgs.length === 0) return <EmptyState art="building" title="No active organizations" />;
   return (
     <ChoiceGroup label="Organization" error={choiceError}>
@@ -152,7 +152,7 @@ export function TemplateStep({
   const arrived = useArrival(loading);
   const staged = useMediaQuery('(min-width: 1024px)');
   if (loading) return <SkeletonTileGrid label="Loading templates" />;
-  if (error) return <ErrorState error={error} />;
+  if (error) return <ErrorState inline error={error} />;
   if (templates.length === 0)
     return <EmptyState art="template" title="No templates for this organization" />;
   let i = 0;

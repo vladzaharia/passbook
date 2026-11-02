@@ -265,7 +265,7 @@ export function NewPassPage({
         ) : null}
         {at === 'details' ? (
           template.isError ? (
-            <ErrorState error={template.error} onRetry={() => void template.refetch()} />
+            <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />
           ) : !template.data ? (
             <SkeletonKeyValue label="Loading fields" />
           ) : (
