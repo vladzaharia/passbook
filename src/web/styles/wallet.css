@@ -27,6 +27,8 @@
   --wl-placeholder: #646b7d;
   /* Org monogram when the org has no accent. */
   --wl-org-fallback: #475569;
+  /* Filled buttons lighten on hover in dark and darken in light, away from their text. */
+  --wl-hover-mix: white;
 }
 
 @media (prefers-color-scheme: light) {
@@ -53,10 +55,12 @@
     --wl-field: var(--pk-surface-raised);
     --wl-field-disabled: var(--pk-surface-sunken);
     --wl-placeholder: #858b9a;
+    --wl-hover-mix: black;
   }
 }
 
 [data-theme="light"] {
+  --wl-hover-mix: black;
   --pk-accent: #0f766e;
   --pk-accent-fg: #0f766e;
   --pk-accent-on: #ffffff;

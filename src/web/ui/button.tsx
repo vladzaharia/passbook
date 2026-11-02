@@ -35,7 +35,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),white_12%)] hover:not-disabled:not-aria-disabled:shadow-[var(--wl-glow-accent)] focus-visible:shadow-[var(--wl-glow-accent)]',
+          'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),var(--wl-hover-mix)_12%)] hover:not-disabled:not-aria-disabled:shadow-[var(--wl-glow-accent)] focus-visible:shadow-[var(--wl-glow-accent)]',
         secondary:
           'bg-state-hover-tint text-fg-strong hover:not-disabled:not-aria-disabled:bg-surface-sunken',
         outline:
@@ -43,7 +43,7 @@ export const buttonVariants = cva(
         ghost:
           'bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong',
         danger:
-          'bg-danger text-danger-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-danger),white_12%)]',
+          'bg-danger text-danger-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-danger),var(--wl-hover-mix)_12%)]',
         link: 'min-h-6 min-w-0 px-0 text-accent-fg underline-offset-4 hover:underline',
       },
       size: {
