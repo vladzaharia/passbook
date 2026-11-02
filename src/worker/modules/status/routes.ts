@@ -1,11 +1,9 @@
-import type { Context } from 'hono';
 import {
   StatusQuerySchema,
   StatusResponseSchema,
   WorkflowRunListSchema,
 } from '../../../shared/contracts/index.ts';
 import { requireAdmin } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getStatus, listWorkflowRuns } from './service.ts';

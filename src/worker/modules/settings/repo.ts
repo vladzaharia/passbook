@@ -1,4 +1,4 @@
-import { all, batch, first, run, stmt } from '../../platform/db.ts';
+import { all, batch, first, stmt } from '../../platform/db.ts';
 
 export interface SettingRow {
   key: string;

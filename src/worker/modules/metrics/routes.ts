@@ -1,8 +1,5 @@
-import type { Context } from 'hono';
 import { MetricsOverviewSchema, MetricsQuerySchema } from '../../../shared/contracts/index.ts';
-import type { MetricsQuery } from '../../../shared/contracts/metrics.ts';
 import { requireAdmin } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOverview } from './service.ts';

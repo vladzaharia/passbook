@@ -1,7 +1,5 @@
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import type { z } from 'zod';
-import type { TemplateManifest } from '../../../passkit/types.ts';
 import {
   ActivateVersionSchema,
   CloneTemplateSchema,

@@ -1,5 +1,4 @@
 import type { Context } from 'hono';
-import type { z } from 'zod';
 import {
   ApnsProbeResultSchema,
   IdentityListSchema,

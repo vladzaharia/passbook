@@ -1,4 +1,3 @@
-import type { Context } from 'hono';
 import { z } from 'zod';
 import {
   BrandingSlotParamSchema,
@@ -16,7 +15,6 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
@@ -27,8 +25,6 @@ export const orgsRoutes = createRouter();
 guard(orgsRoutes, requireAdmin);
 // Two base64 PNGs of at most 200 KB each, plus JSON overhead.
 orgsRoutes.use('*', limitBody(1024 * 1024));
-
-type Ctx = Context<AppBindings>;
 
 register(
   orgsRoutes,

@@ -2,7 +2,6 @@ import type { Context } from 'hono';
 import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
-import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import type { Actor } from './service.ts';
 

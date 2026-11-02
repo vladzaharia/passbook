@@ -3,8 +3,6 @@ import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
-import { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
-import { api } from '../../lib/api.ts';
 import { formatDay } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';

@@ -1,5 +1,3 @@
-import type { Context } from 'hono';
-import type { z } from 'zod';
 import {
   IdParamSchema,
   PreviewBatchQuerySchema,
@@ -9,13 +7,11 @@ import {
   UploadListQuerySchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { reissueTemplate, setArchived, templatePackage } from './lifecycle.ts';
 import { previewMany, recentUploads } from './service.ts';
 
-type C = Context<AppBindings>;
 type Router = ReturnType<typeof createRouter>;
 
 /** GET /uploads; registered before GET /{id} so "uploads" is not read as an id. */

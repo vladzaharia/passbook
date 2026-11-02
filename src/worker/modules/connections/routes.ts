@@ -37,8 +37,6 @@ import { receiveWebhook } from './webhooks.ts';
 type C = Context<AppBindings>;
 const actor = (c: C) => actorOf(c.var.auth);
 const sctx = (c: C) => serviceContext(c);
-const valid = (c: C, target: 'param' | 'query' | 'json') =>
-  (c.req as unknown as { valid(t: string): unknown }).valid(target);
 
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();

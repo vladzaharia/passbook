@@ -43,8 +43,6 @@ function zoneOf(c: C): string | undefined {
   }
 }
 
-type Token = { token: string };
-
 register(
   publicRoutes,
   'public',

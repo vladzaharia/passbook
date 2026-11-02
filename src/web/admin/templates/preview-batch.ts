@@ -42,6 +42,6 @@ async function flush(): Promise<void> {
 export function fetchPreview(id: string): Promise<Preview> {
   return new Promise((resolve, reject) => {
     waiting.set(id, [...(waiting.get(id) ?? []), { resolve, reject }]);
-    timer ??= setTimeout(() => void flush(), WINDOW_MS);
+    if (timer === undefined) timer = setTimeout(() => void flush(), WINDOW_MS);
   });
 }

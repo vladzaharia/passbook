@@ -1,5 +1,5 @@
 import { deleteInBatches } from '../../platform/batched.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import {
   deleteRun,
   deleteRunsBefore,

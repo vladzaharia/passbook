@@ -10,7 +10,6 @@ import {
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import { PassBuildError } from '../../../passkit/build.ts';
-import type { Json } from '../../../shared/contracts/common.ts';
 import type { Job } from '../../jobs/types.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';

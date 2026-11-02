@@ -45,8 +45,6 @@ guard(
   requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
 );
 
-type Params = z.infer<typeof IdParamSchema>;
-
 function ifMatch(c: C): number | undefined {
   const raw = c.req.header('if-match');
   if (raw === undefined) return undefined;

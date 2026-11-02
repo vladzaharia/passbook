@@ -1,7 +1,6 @@
 import { Fragment } from 'react';
-import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, MoreMenu } from '../../../ui/index.ts';
-import { type PassActionRunner, usePassActionRunner } from '../pass-actions.tsx';
+import type { PassActionRunner } from '../pass-actions.tsx';
 
 export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
   const bar = runner.defs.filter((d) => d.bar);

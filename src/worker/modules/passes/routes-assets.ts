@@ -1,5 +1,4 @@
 import { bodyLimit } from 'hono/body-limit';
-import type { z } from 'zod';
 import {
   IdParamSchema,
   OkSchema,
@@ -11,9 +10,7 @@ import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { deletePassAsset, listPassAssets, putPassAsset } from './asset-service.ts';
 import { MAX_ASSET_BYTES } from './assets.ts';
-import { actorFor, type C, orgScopeOf, svc } from './http.ts';
-
-type Params = z.infer<typeof IdParamSchema>;
+import { actorFor, orgScopeOf, svc } from './http.ts';
 
 /** Per-pass image overrides. */
 export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
