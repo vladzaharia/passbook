@@ -1,5 +1,6 @@
-import { type ErrorComponentProps, Link, useRouterState } from '@tanstack/react-router';
+import { type ErrorComponentProps, Link, useRouter, useRouterState } from '@tanstack/react-router';
 import { LogIn, Search, WalletCards } from 'lucide-react';
+import { useEffect } from 'react';
 import { isApiError } from '../../lib/errors.ts';
 import { usePalette } from '../../lib/palette.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
@@ -88,8 +89,25 @@ export function NotFoundPage() {
  * deploy) asks for a reload and keeps the shell; everything else is an ErrorState.
  */
 export function RouteError({ error, reset }: ErrorComponentProps) {
+  const router = useRouter();
+  const chunk = isChunkLoadError(error);
+  // Back online, a page that failed for want of a network loads again with no click. Server
+  // answers (API errors) are not network failures and wait for Retry.
+  const offlineFailure = chunk || !isApiError(error);
+  useEffect(() => {
+    if (!offlineFailure) return;
+    const retry = () => {
+      if (chunk) window.location.reload();
+      else {
+        reset();
+        void router.invalidate();
+      }
+    };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [offlineFailure, chunk, reset, router]);
   if (isApiError(error) && error.isForbidden) return <ForbiddenPage />;
-  if (isChunkLoadError(error)) {
+  if (chunk) {
     return (
       <ErrorState
         title="Could not load this page. Check your connection."
