@@ -6,7 +6,6 @@ import {
   messagePage,
   noAccessPage,
 } from '../modules/auth/pages.ts';
-import { passDevice } from './device.ts';
 import { renderErrorPage } from './error-page.tsx';
 
 const NONCE = 'n0nce';
