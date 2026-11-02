@@ -49,9 +49,13 @@ function fixRemoteImages(entry: Record<string, unknown>): void {
 
 const LOWER_ISO = /^\d{4}-\d{2}-\d{2}[tT]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:[zZ]|[+-]\d{2}:\d{2})$/;
 
-/** RFC 3339 allows lowercase `t` and `z`; Wallet's parser wants ISO 8601 capitals. */
+/**
+ * RFC 3339 allows lowercase `t` and `z`; Wallet's parser wants ISO 8601 capitals. Apple documents
+ * dates down to whole seconds, so fractional seconds are dropped.
+ */
 export function upperIso(value: unknown): unknown {
-  return typeof value === 'string' && LOWER_ISO.test(value) ? value.toUpperCase() : value;
+  if (typeof value !== 'string' || !LOWER_ISO.test(value)) return value;
+  return value.toUpperCase().replace(/(:\d{2})\.\d+/, '$1');
 }
 
 function upperIsoIn(target: Record<string, unknown>, keys?: string[]): void {
