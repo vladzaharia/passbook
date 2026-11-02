@@ -31,6 +31,9 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.
    - Metadata changes reach Pocket ID within an hour, or at once with Refresh in its client list.
+   - Emails: Settings → "Trust Polaris ID emails" links and verifies an address only when Pocket ID
+     sends `email_verified: true` (the user verified it in Pocket ID, or an admin ticked "Email
+     verified"). Never set Pocket ID's `EMAILS_VERIFIED=true`: a user could then claim any address.
    - A registered client still works: set its id in `vars.OIDC_CLIENT_ID`; a confidential one also
      needs `OIDC_CLIENT_SECRET` (step 5). Local dev only loads secrets listed in
      `secrets.required`, so the mock provider runs as a public client.
