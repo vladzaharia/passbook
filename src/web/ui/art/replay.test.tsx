@@ -216,7 +216,8 @@ describe('scene stylesheets', () => {
     }
   });
 
-  it('never loop and settle within 9 s of starting', () => {
+  // Scenes start once the art has landed (700 ms); nothing moves on its own past 5 s (WCAG 2.2.2).
+  it('never loop and settle within 5 s of the page', () => {
     for (const [f, text] of all) {
       expect(text, f).not.toMatch(/\binfinite\b/);
       for (const m of text.matchAll(/animation:\s*([^;]+);/g)) {
@@ -224,9 +225,9 @@ describe('scene stylesheets', () => {
           const times = [...item.matchAll(/(\d+(?:\.\d+)?)(ms|s)\b/g)].map(
             ([, n, unit]) => Number(n) * (unit === 's' ? 1000 : 1),
           );
-          const count = Number(item.trim().match(/\s(\d+)$/)?.[1] ?? 1);
+          const count = Number(item.trim().match(/\s(\d+(?:\.\d+)?)$/)?.[1] ?? 1);
           const [duration = 0, delay = 0] = times;
-          expect(delay + duration * count, `${f}: ${item.trim()}`).toBeLessThanOrEqual(8000);
+          expect(700 + delay + duration * count, `${f}: ${item.trim()}`).toBeLessThanOrEqual(5000);
         }
       }
     }
@@ -239,7 +240,7 @@ describe('scene stylesheets', () => {
       return blocks(body).at(-1) ?? ['', ''];
     };
     expect(last('wl-s-search-go')).toEqual([
-      '90%,\n  100%',
+      '86%,\n  100%',
       expect.stringMatching(/transform: none/),
     ]);
     expect(last('wl-s-search-body')[1]).toMatch(/translate: 0 0;\s*scale: 1;\s*rotate: 0deg/);
