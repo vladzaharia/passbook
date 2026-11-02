@@ -77,6 +77,8 @@ export function OverviewPage({
   const [dismissed, dismiss] = useGetStartedDismissed();
   const data = metrics.data;
   const checklist = data !== undefined && !dismissed && !setupDone(data.setup);
+  // Before the first pass every count is zero: the checklist leads and the numbers wait.
+  const firstRun = checklist && data.setup.passes === 0;
   const picker = (
     <Select
       aria-label="Range"
@@ -88,7 +90,7 @@ export function OverviewPage({
   );
   return (
     <>
-      <PageHeader title="Overview" actions={picker} />
+      <PageHeader title="Overview" actions={firstRun ? undefined : picker} />
       <div className="flex flex-col gap-6">
         {metrics.isPending ? (
           <MetricsSkeleton />
@@ -96,12 +98,10 @@ export function OverviewPage({
           <ErrorState error={metrics.error} onRetry={() => metrics.refetch()} />
         ) : (
           <>
-            <Kpis data={data} range={range} enter={arrived} />
+            {firstRun ? null : <Kpis data={data} range={range} enter={arrived} />}
             {checklist ? <GetStarted setup={data.setup} onDismiss={dismiss} /> : null}
             {/* With no passes yet the checklist stands in for the (empty) charts. */}
-            {checklist && data.setup.passes === 0 ? null : (
-              <ChartsCard data={data} range={range} enter={arrived} busy={busy} />
-            )}
+            {firstRun ? null : <ChartsCard data={data} range={range} enter={arrived} busy={busy} />}
           </>
         )}
         <div className="grid gap-6 xl:grid-cols-3">

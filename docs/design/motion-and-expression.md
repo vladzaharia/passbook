@@ -131,13 +131,17 @@ System:
 - Entrance: once on mount after 80 ms; each part ≤480 ms, the whole art ≤600 ms.
 - Idle: one beat (≤400 ms) at 2.4 s after mount. On fine pointers, hovering the empty block replays
   the beat once per hover. No loops.
+- One active art per screen. A checklist plays only the current step's art (entrance and beat);
+  done steps hold the final frame with a check, later steps wait at .45. A step that turns current
+  enters 120 ms after the previous check pops. Other arts on that screen pass `still` (final frame)
+  or `beat={false}`.
 - Filtered: the entity art at .6 opacity with the lens at bottom-right (scale .6).
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
 - Reduced motion: the final frame, no beat.
 - Budget: ≤40 SVG nodes per art; all art ≤8 kB gzip. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
-- API: `<EntityArt name size="lg"|"sm"|"xl" beat?>` or the named component (`PassesArt`…).
+- API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` or the named component (`PassesArt`…).
   `LayersArt compare` splits the top two sheets. `WalletArt state mood="flat" lift` (states
   `login`, `empty`, `lost`, `confirm`, `expired`, `no-access`, `break-glass`) renders through
   `renderToStaticMarkup`; SSR pages inline `ART_CSS` (`art/css.ts`, every art sheet in cascade

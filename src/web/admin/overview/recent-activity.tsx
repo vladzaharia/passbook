@@ -38,6 +38,7 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
           <EmptyState
             inline
             art="activity"
+            still
             title="No activity yet"
             className="flex-1 justify-center"
           />

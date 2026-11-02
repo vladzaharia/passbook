@@ -228,7 +228,13 @@ describe('get started', () => {
       '/admin/passes/new',
     );
     expect(screen.queryByRole('img', { name: /Issued/ })).not.toBeInTheDocument();
-    expect(container.querySelector('[data-art="building"]')).not.toBeNull();
+    // Before the first pass the checklist leads: no zero tiles, no range.
+    expect(screen.queryByRole('combobox', { name: 'Range' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Push failures')).not.toBeInTheDocument();
+    // One active art: the current step's; the done one holds still, the activity art is static.
+    expect(container.querySelector('[data-art="template"]')).not.toHaveAttribute('data-still');
+    expect(container.querySelector('[data-art="building"]')).toHaveAttribute('data-still');
+    expect(container.querySelector('[data-art="passes"]')).toHaveAttribute('data-still');
     expect((await axe(container)).violations).toEqual([]);
   });
 

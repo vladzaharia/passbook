@@ -47,34 +47,31 @@ interface Step {
   art?: ArtName;
 }
 
-function StepArt({
-  name,
-  state,
-  index,
-}: {
-  name: ArtName;
-  state: 'done' | 'next' | 'later';
-  index: number;
-}) {
-  const changed = useChangeCount(state === 'done');
+/**
+ * One active art per screen: only the current step's art enters and beats. Done steps hold their
+ * final frame with a check; later steps wait dimmed. A step that becomes current after mount
+ * enters 120 ms after the previous step's check pops.
+ */
+function StepArt({ name, state }: { name: ArtName; state: 'done' | 'next' | 'later' }) {
+  const moved = useChangeCount(state);
+  const checked = useChangeCount(state === 'done');
   return (
     <li
       data-state={state}
-      // The three pictures play in turn: building, template, passes (80 / 200 / 320 ms).
-      style={{ '--wl-art-delay': `${80 + index * 120}ms` } as CSSProperties}
+      style={moved > 0 ? ({ '--wl-art-delay': '120ms' } as CSSProperties) : undefined}
       className={cn(
-        'relative grid place-items-center rounded-lg border p-2 transition-opacity duration-(--wl-dur-hover)',
+        'relative grid place-items-center rounded-lg border p-1.5 transition-opacity duration-(--wl-dur-hover)',
         state === 'next' ? 'border-accent bg-accent-subtle' : 'border-border bg-surface-sunken',
-        state === 'later' && 'opacity-50',
+        state === 'later' && 'opacity-45',
       )}
     >
-      <EntityArt name={name} size="sm" />
+      <EntityArt name={name} size="sm" still={state !== 'next'} />
       {state === 'done' ? (
         <span
           aria-hidden
-          className="absolute -top-2 -right-2 grid size-5 place-items-center rounded-full bg-accent text-accent-on shadow-elevation-1"
+          className="absolute -right-1.5 -bottom-1.5 grid size-5 place-items-center rounded-full bg-accent text-accent-on shadow-elevation-1"
         >
-          <Check key={changed} className={cn('size-3', changed > 0 && 'wl-check')} />
+          <Check key={checked} className={cn('size-3', checked > 0 && 'wl-check')} />
         </span>
       ) : null}
     </li>
@@ -143,10 +140,25 @@ export function GetStarted({
   );
   return (
     <Card>
-      <CardBody className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:gap-10">
+      <CardBody>
         <Checklist
           title="Get started"
           onDismiss={onDismiss}
+          aside={
+            <ol aria-hidden className="flex items-center gap-3 max-sm:hidden">
+              {steps.flatMap((s, i) =>
+                s.art ? (
+                  <StepArt
+                    key={s.id}
+                    name={s.art}
+                    state={s.done ? 'done' : i === next ? 'next' : 'later'}
+                  />
+                ) : (
+                  []
+                ),
+              )}
+            </ol>
+          }
           steps={steps.map((s, i) => ({
             id: s.id,
             label: s.label,
@@ -154,20 +166,6 @@ export function GetStarted({
             action: trailing(s, i),
           }))}
         />
-        <ol aria-hidden className="flex items-center justify-center gap-3 max-md:order-first">
-          {steps.flatMap((s, i) =>
-            s.art ? (
-              <StepArt
-                key={s.id}
-                name={s.art}
-                index={i}
-                state={s.done ? 'done' : i === next ? 'next' : 'later'}
-              />
-            ) : (
-              []
-            ),
-          )}
-        </ol>
       </CardBody>
     </Card>
   );

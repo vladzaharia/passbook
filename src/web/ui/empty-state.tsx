@@ -16,6 +16,8 @@ export interface EmptyStateProps {
   description?: ReactNode;
   /** filtered: the art dims under a lens ("No passes match", Clear filters). */
   variant?: 'empty' | 'filtered';
+  /** The art shows its final frame (another art on the screen has the moment). */
+  still?: boolean;
   /** Inside a card: no border, small art, py-6. */
   inline?: boolean;
   /** Not-found and forbidden pages: the title is the page h1. */
@@ -32,6 +34,7 @@ export function EmptyState({
   variant = 'empty',
   inline = false,
   heading = false,
+  still = false,
   className,
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
@@ -52,6 +55,7 @@ export function EmptyState({
           name={art}
           size={inline ? 'sm' : 'lg'}
           className={filtered ? 'opacity-60' : undefined}
+          still={still}
           {...(artState ? { state: artState } : {})}
         />
         {filtered ? (
