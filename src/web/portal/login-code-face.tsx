@@ -135,7 +135,8 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
         <Button type="submit" size="lg" className="w-full" loading={consume.isPending}>
           Sign in
         </Button>
-        <div className="flex flex-wrap items-center justify-between gap-x-2">
+        {/* Ghost labels line up with the card text; on a phone the pair stacks. */}
+        <div className="-mx-3 flex flex-wrap items-center justify-between gap-x-2">
           <Button
             variant="ghost"
             size="lg"
