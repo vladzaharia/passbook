@@ -1,9 +1,9 @@
 import { type MouseEventHandler, useSyncExternalStore } from 'react';
+import { APPLE_BADGE_ALT, appleBadgeSrc } from '../../shared/apple-badge.ts';
 import { cn } from '../lib/cn.ts';
 
-const ALT = 'Add to Apple Wallet';
-const src = (locale: string, variant: 'black' | 'outline') =>
-  `/apple/badge/${locale}/${variant}.svg`;
+const ALT = APPLE_BADGE_ALT;
+const src = appleBadgeSrc;
 
 /** html[data-theme] (admin choice): undefined follows the system through <picture>. */
 function useDocTheme(): string | undefined {
@@ -67,27 +67,4 @@ export function AppleWalletBadge({
       {label ? <span>{label}</span> : null}
     </a>
   );
-}
-
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-/**
- * The same badge as static HTML: SSR pages (picture, SVG) and email (PNG at @2x, absolute URL,
- * width 168, no animation).
- */
-export function appleWalletBadgeHtml({
-  href,
-  locale = 'en',
-  email,
-}: {
-  href: string;
-  locale?: string;
-  /** Absolute origin for email: the PNG export is used, sized for mail clients. */
-  email?: { origin: string };
-}): string {
-  if (email) {
-    const png = `${email.origin}/apple/badge/${locale}/black@2x.png`;
-    return `<a href="${escapeHtml(href)}" style="display:inline-block;padding:4px;text-decoration:none"><img src="${escapeHtml(png)}" alt="${ALT}" width="168" style="display:block;width:168px;height:auto;border:0"></a>`;
-  }
-  return `<a class="awb" href="${escapeHtml(href)}"><picture><source srcset="${src(locale, 'outline')}" media="(prefers-color-scheme: dark)"><img src="${src(locale, 'black')}" alt="${ALT}" height="44"></picture></a>`;
 }

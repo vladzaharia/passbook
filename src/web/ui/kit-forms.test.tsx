@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AppleWalletBadge, appleWalletBadgeHtml } from './apple-wallet-badge.tsx';
+import { AppleWalletBadge } from './apple-wallet-badge.tsx';
 import { JsonViewer } from './code-block.tsx';
 import { DATE_RANGES, FilterBar, rangeStart } from './filter-bar.tsx';
 import { CopyField, middle, SecretReveal } from './secret-reveal.tsx';
@@ -125,13 +125,6 @@ describe('AppleWalletBadge', () => {
       '/apple/badge/en/outline.svg',
     );
     expect(screen.getByText('All passes (3)')).toBeInTheDocument();
-  });
-
-  it('renders the same badge as HTML for SSR and email', () => {
-    expect(appleWalletBadgeHtml({ href: '/p/a"b' })).toContain('href="/p/a&#34;b"');
-    expect(appleWalletBadgeHtml({ href: '/x', email: { origin: 'https://w.example' } })).toContain(
-      'https://w.example/apple/badge/en/black@2x.png',
-    );
   });
 });
 

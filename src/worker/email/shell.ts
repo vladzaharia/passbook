@@ -1,10 +1,6 @@
-export const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+import { escapeHtml } from '../../shared/html.ts';
+
+export { escapeHtml };
 
 /** Token values for emails: inline light styles, class overrides for dark clients. */
 export const EMAIL_LIGHT = {

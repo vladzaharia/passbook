@@ -2,6 +2,7 @@ import type { Amr, Role, SessionAuth, SessionStore } from '../../platform/auth.t
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { parseRoles } from '../../platform/json-column.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import * as repo from './repo-sessions.ts';
 
@@ -62,17 +63,6 @@ export async function createSession(
     userAgent: input.userAgent?.slice(0, 256) ?? null,
   });
   return { cookieValue, idHash, csrfSecret, maxAgeSeconds: Math.floor(life.absoluteMs / 1000) };
-}
-
-function parseRoles(raw: string): Role[] {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((r): r is Role => r === 'admin' || r === 'user')
-      : [];
-  } catch {
-    return [];
-  }
 }
 
 export interface ResolvedSession extends SessionAuth {
