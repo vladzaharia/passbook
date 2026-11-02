@@ -121,6 +121,22 @@ describe('login page', () => {
     expect(screen.queryByRole('button', { name: /theme/i })).toBeNull();
   });
 
+  it('puts the wordmark left and the wallet right in one band straight above the card', async () => {
+    const { container } = await renderApp('/login', { session: 'anon' });
+    await screen.findByLabelText('Email');
+    const band = container.querySelector('.wl-login-band') as HTMLElement;
+    const [brand, scene, ...rest] = band.children;
+    expect(rest).toHaveLength(0);
+    expect(brand).toHaveClass('wl-login-brand');
+    expect(scene).toHaveClass('wl-login-scene');
+    // The brand mark: still the home link with its name, 20 px with a 24 px mark.
+    const mark = within(brand as HTMLElement).getByRole('link', { name: 'PassBook' });
+    expect(mark).toHaveAttribute('href', '/');
+    expect(mark).toHaveClass('text-xl', 'font-semibold');
+    expect(mark.querySelector('svg')).toHaveClass('size-6');
+    expect(band.nextElementSibling?.querySelector('.wl-login-card')).not.toBeNull();
+  });
+
   it('leaves the once-per-session wordmark flip for the first page that plays it', async () => {
     const { container, unmount } = await renderApp('/login', { session: 'anon' });
     await screen.findByLabelText('Email');
@@ -154,6 +170,9 @@ describe('login page', () => {
       handlers: { '/api/v1/session': () => new Promise<Response>(() => {}) },
     });
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+    // The band is final from the first paint: the skeleton sits where the form will.
+    expect(container.querySelector('.wl-login-band > .wl-login-scene')).not.toBeNull();
+    expect(screen.getByRole('link', { name: 'PassBook' })).toBeInTheDocument();
     const card = container.querySelector('.wl-login-flipper');
     expect(card?.querySelectorAll('[data-side]')).toHaveLength(2);
     expect(card?.querySelector('[aria-busy="true"]')).not.toBeNull();

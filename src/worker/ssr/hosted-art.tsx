@@ -45,11 +45,11 @@ const KEY = (
   </>
 );
 
-/** An hourglass on the card beside the wallet: wait, then try again. */
+/** An hourglass on the card at the wallet's left, the open side of the band: wait, then retry. */
 const HOURGLASS = (
   <g data-part="hg">
-    <path d="M84 52h8M84 65.5h8M85 52v2.5l3 4.25-3 4.25v2.5M91 52v2.5l-3 4.25 3 4.25v2.5" />
-    <path className="n" d="M86.4 64.6h3.2L88 62.2Z" />
+    <path d="M4 52h8M4 65.5h8M5 52v2.5l3 4.25-3 4.25v2.5M11 52v2.5l-3 4.25 3 4.25v2.5" />
+    <path className="n" d="M6.4 64.6h3.2L8 62.2Z" />
   </g>
 );
 

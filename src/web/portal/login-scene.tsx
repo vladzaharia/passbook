@@ -34,11 +34,18 @@ export interface SceneActions {
   /** Sad; `shake` (default) for a wrong code or rate limit, not for a network or server error. */
   fail: (opts?: { expired?: boolean; shake?: boolean }) => void;
   succeed: () => void;
-  /** The eyes follow typing: 0…1 across the field; null (blur) or 1.5 s idle lets go. */
-  gaze: (at: number | null) => void;
+  /** The eyes follow typing: the caret's viewport x; null (blur) or 1.5 s idle lets go. */
+  gaze: (x: number | null) => void;
 }
 
 const GAZE_HOLD_MS = 1500;
+/** The eyes turn fully toward a caret this far to either side of the wallet's centre. */
+const GAZE_REACH = 160;
+
+/** -1…1: how far left or right of the wallet's centre a viewport x is, for the eyes. */
+export function lookAt(x: number, scene: { left: number; width: number }): number {
+  return Math.min(1, Math.max(-1, (x - (scene.left + scene.width / 2)) / GAZE_REACH));
+}
 
 /** Scene state for the sign-in page; the card drives it through the actions. */
 export function useLoginScene(sadOnLoad = false): [SceneState, SceneActions] {
@@ -66,15 +73,16 @@ export function useLoginScene(sadOnLoad = false): [SceneState, SceneActions] {
           expired: opts?.expired ? s.expired + 1 : s.expired,
         })),
       succeed: () => setState((s) => ({ ...s, beat: 'success', sad: null })),
-      gaze: (at) => {
+      gaze: (x) => {
         const el = root.current;
         clearTimeout(gazeTimer.current);
         // Typing again cheers it up.
-        if (at !== null) setState((s) => (s.sad ? { ...s, sad: null } : s));
+        if (x !== null) setState((s) => (s.sad ? { ...s, sad: null } : s));
         if (!el) return;
-        el.toggleAttribute('data-gaze', at !== null);
-        if (at === null) return;
-        el.style.setProperty('--gx', (Math.min(1, Math.max(0, at)) * 2 - 1).toFixed(3));
+        el.toggleAttribute('data-gaze', x !== null);
+        if (x === null) return;
+        // The wallet sits at the card's right, so most of the field is to its left.
+        el.style.setProperty('--gx', lookAt(x, el.getBoundingClientRect()).toFixed(3));
         // A pause in typing hands the eyes back to the pointer.
         gazeTimer.current = setTimeout(() => el.removeAttribute('data-gaze'), GAZE_HOLD_MS);
       },
