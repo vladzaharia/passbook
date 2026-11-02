@@ -126,7 +126,9 @@ describe('audit page', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Load more' }));
+    // The first page must be in before Load more can ask for the next one.
+    await screen.findByRole('link', { name: 'Pass 1' });
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByRole('link', { name: 'Pass 2' })).toBeInTheDocument();
     expect(auditCalls(fetchMock).some((u) => u.includes('cursor=c1'))).toBe(true);
     await user.click(screen.getAllByRole('button', { name: 'Pass voided' })[0] as HTMLElement);
