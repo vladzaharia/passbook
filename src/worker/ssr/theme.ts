@@ -22,7 +22,8 @@ a{color:var(--accent)}
 .mark svg{width:1.25rem;height:1.25rem;color:var(--accent)}
 @media(pointer:coarse){.mark{min-height:2.75rem}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:2.75rem;padding:.5rem 1.5rem;border:1px solid transparent;border-radius:.375rem;background:var(--accent);color:var(--accent-on);font:inherit;font-size:.875rem;font-weight:500;line-height:1.25rem;text-align:center;text-decoration:none;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:2.25rem;padding:.375rem 1rem;border:1px solid transparent;border-radius:.375rem;background:var(--accent);color:var(--accent-on);font:inherit;font-size:.875rem;font-weight:500;line-height:1.25rem;text-align:center;text-decoration:none;cursor:pointer}
+@media(pointer:coarse){.btn{min-height:2.75rem}}
 .btn:hover{background:var(--accent-hover)}
 .btn.outline{border-color:var(--line-strong);background:transparent;color:var(--fg)}
 .btn.outline:hover{background:var(--hover);color:var(--strong)}

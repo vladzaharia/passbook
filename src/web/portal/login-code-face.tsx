@@ -137,14 +137,13 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
             </p>
           ) : null}
         </div>
-        <Button type="submit" size="lg" className="w-full" loading={consume.isPending}>
+        <Button type="submit" className="w-full" loading={consume.isPending}>
           Sign in
         </Button>
         {/* Ghost labels line up with the card text; on a phone the pair stacks. */}
         <div className="-mx-3 flex flex-wrap items-center justify-between gap-x-2">
           <Button
             variant="ghost"
-            size="lg"
             className="px-3"
             disabled={left > 0 || sentAgain || request.phase !== 'idle'}
             loading={request.phase !== 'idle'}
@@ -155,7 +154,7 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
           >
             {resendLabel}
           </Button>
-          <Button variant="ghost" size="lg" className="px-3" onClick={onBack}>
+          <Button variant="ghost" className="px-3" onClick={onBack}>
             Use a different email
           </Button>
         </div>

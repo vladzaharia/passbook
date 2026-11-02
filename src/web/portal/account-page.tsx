@@ -22,7 +22,6 @@ export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
   return (
     <div className="max-w-3xl">
       <PageHeader
-        size="lg"
         title="Account"
         actions={
           <Button variant="outline" iconStart={<LogOut aria-hidden />} onClick={doSignOut}>

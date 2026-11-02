@@ -192,7 +192,7 @@ export function MyPassesPage() {
 
   return (
     <>
-      <PageHeader title="My passes" size="lg" />
+      <PageHeader title="My passes" />
       {body}
     </>
   );

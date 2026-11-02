@@ -50,7 +50,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | --- | --- | --- | --- |
 | `sm` | 32 (`h-8`) | 32 visual, 44 × 44 hit area | Card-header actions, row actions, inline secondary actions |
 | `md` | 36 (`h-9`) | 44 (`h-11`) | Default: inputs, selects, combobox, search, page actions, toolbars, dialogs |
-| `lg` | 44 (`h-11`) | 44 | Customer primary actions (portal, login, SSR pages) |
+| `lg` | 44 (`h-11`) | 44 | Actions beside the Add to Apple Wallet badge, to match its height |
 
 - Everything in one row shares one height. Fields are always `md`.
 - Under `pointer: coarse`: tabs, menu items, nav links and icon buttons are at least 44 px; inline
@@ -317,7 +317,7 @@ Action icons (`src/web/lib/action-icons.ts`):
 
 | Role | Class |
 | --- | --- |
-| Page title | `text-2xl font-semibold tracking-[-0.015em]`; customer pages `sm:text-3xl` (`size="lg"`) |
+| Page title | `text-2xl font-semibold tracking-[-0.015em]` |
 | Section heading (no card) | `text-base font-semibold` |
 | Card / dialog title | `text-sm font-semibold` (dialog `text-base`) |
 | Form group heading | `text-sm font-semibold fg-strong` |
@@ -327,8 +327,9 @@ Action icons (`src/web/lib/action-icons.ts`):
 | Stat value | `CountUp`, `text-3xl font-semibold tabular-nums` |
 | Code, ids, hashes, JSON | `font-mono text-xs`; JSON tinted by token (keys, strings, numbers) |
 
-Brand sans everywhere, including SSR pages (served font, system fallback). Customer pages set
-`font: -apple-system-body` under `@supports` with rem sizing, so iOS text size applies. Emails use
+Brand sans everywhere, including SSR pages (served font, system fallback). Every page uses this one
+scale. Customer pages set `font: -apple-system-body` on iOS only (`-webkit-touch-callout`), so the
+iOS text size applies; macOS Safari would read it as 13 px. Emails use
 the system stack.
 
 ## Icons, focus, motion

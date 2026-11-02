@@ -61,7 +61,8 @@ export function CodeField({
         aria-describedby={describedBy}
         className={cn(
           'wl-code-input h-14 w-full min-w-0 rounded-md border border-border-strong bg-(--wl-field) wl-colors',
-          'hover:not-disabled:border-fg-muted aria-[invalid=true]:border-danger',
+          // The text is transparent (the slots draw it), but iOS zooms into any field under 16 px.
+          'hover:not-disabled:border-fg-muted aria-[invalid=true]:border-danger pointer-coarse:text-[max(16px,1rem)]',
           'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
         )}
       />

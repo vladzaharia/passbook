@@ -31,7 +31,7 @@ export interface EmailFaceProps {
 /** Polaris ID, outline; a foil sweep runs along its border on fine-pointer hover. */
 function PolarisButton({ next, primary }: { next: string; primary: boolean }) {
   return (
-    <Button asChild size="lg" variant={primary ? 'primary' : 'outline'} className="wl-sweep w-full">
+    <Button asChild variant={primary ? 'primary' : 'outline'} className="wl-sweep w-full">
       <a href={`/auth/oidc/start?next=${encodeURIComponent(next)}`}>
         <span aria-hidden className="wl-sweep-ring" />
         Sign in with Polaris ID
@@ -94,7 +94,6 @@ export function EmailFace({
                 spellCheck={false}
                 autoFocus
                 value={email}
-                className="h-11 text-base"
                 onBlur={() => scene.gaze(null)}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -110,7 +109,6 @@ export function EmailFace({
           </FormField>
           <Button
             type="submit"
-            size="lg"
             className="w-full"
             loading={busy}
             iconEnd={busy ? null : <ArrowRight aria-hidden />}

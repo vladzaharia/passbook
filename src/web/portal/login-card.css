@@ -59,11 +59,6 @@
   }
 }
 
-/* 16 px or more at any iOS text size, so focusing a field never zooms. */
-.wl-login-card input {
-  font-size: max(16px, 1rem);
-}
-
 /* The 6-digit code: the input holds the value, the slots draw it (grouped 123 456). */
 .wl-code {
   position: relative;

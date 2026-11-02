@@ -61,8 +61,6 @@ export interface PageHeaderProps {
   actions?: ReactNode;
   /** Match the page body so actions sit next to the content they act on. */
   width?: PageWidth;
-  /** Customer pages use a larger title at >=640. */
-  size?: 'md' | 'lg';
   /** A 40 px EntityAvatar left of the h1 (users, orgs). */
   avatar?: ReactNode;
   className?: string;
@@ -76,7 +74,6 @@ export function PageHeader({
   meta,
   actions,
   width = 'full',
-  size = 'md',
   avatar,
   className,
 }: PageHeaderProps) {
@@ -88,13 +85,7 @@ export function PageHeader({
         <div className="flex min-w-0 items-start gap-3">
           {avatar}
           <div className="min-w-0">
-            <h1
-              tabIndex={-1}
-              className={cn(
-                'text-2xl font-semibold tracking-[-0.015em] text-fg-strong',
-                size === 'lg' && 'sm:text-3xl',
-              )}
-            >
+            <h1 tabIndex={-1} className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong">
               {title}
             </h1>
             {description ? (

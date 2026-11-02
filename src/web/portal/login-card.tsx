@@ -55,12 +55,12 @@ export function EmailFaceSkeleton({ notice }: { notice: string | null }) {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-5 w-12" />
-          <Skeleton className="h-11" />
+          <Skeleton className="h-9 pointer-coarse:h-11" />
         </div>
-        <Skeleton className="h-11" />
+        <Skeleton className="h-9 pointer-coarse:h-11" />
       </div>
       <Skeleton className="h-4" />
-      <Skeleton className="h-11" />
+      <Skeleton className="h-9 pointer-coarse:h-11" />
     </div>
   );
 }

@@ -36,7 +36,8 @@ h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.0
 .callout{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--danger-line);border-radius:.625rem;background:var(--danger-subtle);color:var(--fg);font-size:.875rem;line-height:1.25rem}
 .callout svg{flex:none;width:1rem;height:1rem;margin-top:.125rem;color:var(--danger)}
 label{display:block;margin:0 0 .5rem;font-size:.875rem;line-height:1.25rem;font-weight:500;color:var(--fg)}
-input{display:block;width:100%;height:2.75rem;padding:0 .75rem;border:1px solid var(--line-strong);border-radius:.375rem;background:var(--field);color:var(--fg);font:inherit;font-size:max(16px,1rem)}
+input{display:block;width:100%;height:2.25rem;padding:0 .75rem;border:1px solid var(--line-strong);border-radius:.375rem;background:var(--field);color:var(--fg);font:inherit;font-size:.875rem}
+@media (pointer:coarse){input{height:2.75rem;font-size:max(16px,1rem)}}
 input:focus-visible{outline-offset:1px}
 .foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:.875rem;line-height:1.25rem;color:var(--muted)}
 .foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
