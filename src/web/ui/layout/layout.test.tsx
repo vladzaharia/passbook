@@ -83,7 +83,7 @@ describe('route guards in the app', () => {
     expect(screen.getByRole('link', { name: 'Go to Overview' })).toBeInTheDocument();
     await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Search' }));
     expect(
-      await screen.findByRole('combobox', { name: 'Search pages and passes' }),
+      await screen.findByRole('combobox', { name: 'Search', exact: true }),
     ).toBeInTheDocument();
   });
 
@@ -125,7 +125,7 @@ describe('admin layout', () => {
     const { router } = await renderApp('/admin', { session: 'admin' });
     await screen.findByRole('navigation', { name: 'Admin' });
     await user.keyboard('{Control>}k{/Control}');
-    const input = await screen.findByRole('combobox', { name: 'Search pages and passes' });
+    const input = await screen.findByRole('combobox', { name: 'Search', exact: true });
     await user.type(input, 'audit');
     await user.keyboard('{Enter}');
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/audit'));
@@ -169,7 +169,7 @@ describe('admin layout', () => {
     });
     await screen.findByRole('navigation', { name: 'Admin' });
     await user.keyboard('{Control>}k{/Control}');
-    const input = await screen.findByRole('combobox', { name: 'Search pages and passes' });
+    const input = await screen.findByRole('combobox', { name: 'Search', exact: true });
     await user.type(input, 'a');
     expect(seen).toEqual([]);
     await user.type(input, 'da');

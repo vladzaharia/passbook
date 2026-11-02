@@ -20,8 +20,20 @@ function firstThisSession(): boolean {
 const flipThisLoad = firstThisSession();
 let shown = false;
 
-/** The wordmark card flips once per browser session; never on the sign-in scene (flip={false}). */
-export function Wordmark({ to = '/', flip = true }: { to?: string; flip?: boolean }) {
+/**
+ * The wordmark card flips once per browser session; never on the sign-in scene (flip={false}).
+ * `markOnly` drops the word: views that show the Add to Apple Wallet badge never show a bare
+ * "Wallet" brand beside it.
+ */
+export function Wordmark({
+  to = '/',
+  flip = true,
+  markOnly = false,
+}: {
+  to?: string;
+  flip?: boolean;
+  markOnly?: boolean;
+}) {
   const play = flip && flipThisLoad && !shown;
   useEffect(() => {
     if (play) shown = true;
@@ -29,14 +41,14 @@ export function Wordmark({ to = '/', flip = true }: { to?: string; flip?: boolea
   return (
     <Link
       to={to}
-      className="inline-flex min-h-8 items-center gap-2 rounded-md text-base font-semibold text-fg-strong pointer-coarse:min-h-11"
+      className="inline-flex min-h-8 min-w-8 items-center justify-center gap-2 rounded-md text-base font-semibold text-fg-strong pointer-coarse:min-h-11 pointer-coarse:min-w-11"
     >
       <WalletCards
         aria-hidden
         data-flip={play || undefined}
         className="wl-wordmark-icon size-5 text-accent-fg"
       />
-      Wallet
+      {markOnly ? <span className="sr-only">Home</span> : 'Wallet'}
     </Link>
   );
 }

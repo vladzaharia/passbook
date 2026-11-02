@@ -18,8 +18,9 @@ const METHOD = { oidc: 'Polaris ID', magic_link: 'Email link', breakglass: 'Brea
 export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
   const { authed } = useSession();
   const doSignOut = () => void signOut(authed?.csrfToken);
+  // Header and cards share one column, so Sign out ends where the cards end.
   return (
-    <>
+    <div className="max-w-3xl">
       <PageHeader
         size="lg"
         title="Account"
@@ -29,7 +30,7 @@ export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
           </Button>
         }
       />
-      <div className="flex max-w-3xl flex-col gap-6">
+      <div className="flex flex-col gap-6">
         {authed ? (
           <Card>
             <CardHeader title="Profile" />
@@ -57,6 +58,6 @@ export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
         <EmailsSection focusAdd={focusAdd} />
         <SessionsSection onSignedOutEverywhere={doSignOut} />
       </div>
-    </>
+    </div>
   );
 }

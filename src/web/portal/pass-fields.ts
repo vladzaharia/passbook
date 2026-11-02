@@ -18,16 +18,37 @@ export function sentenceCase(label: string): string {
     .join(' ');
 }
 
-/** The front fields as label/value rows, values formatted by each field's date or number style. */
+/** "memberId" -> "Member ID". */
+function humanizeKey(key: string): string {
+  const words = key
+    .replace(/-poster$/, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean);
+  return words
+    .map((w, i) => {
+      const upper = w.toUpperCase();
+      if (ABBREVIATIONS.has(upper)) return upper;
+      const lower = w.toLowerCase();
+      return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    })
+    .join(' ');
+}
+
+/**
+ * The front fields as label/value rows, values formatted by each field's date or number style.
+ * Two fields sharing a label ("Member" for the ID and the name) read by their keys instead.
+ */
 export function fieldRows(
   passJson: Record<string, unknown>,
   locale = navigator.language,
   now = new Date(),
-): { label: string; value: string }[] {
+): { id: string; label: string; value: string }[] {
   const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
   if (!style) return [];
   const block = passJson[style] as Record<string, unknown>;
-  const rows: { label: string; value: string }[] = [];
+  const rows: { id: string; label: string; value: string }[] = [];
   for (const group of GROUPS) {
     const list = block[group];
     if (!Array.isArray(list)) continue;
@@ -37,10 +58,13 @@ export function fieldRows(
       const { label, key, value } = spec;
       if (value === undefined || value === null || typeof value === 'object') continue;
       const text = formatValue(value as Json, spec, { locale, now }).text;
-      rows.push({ label: sentenceCase(String(label ?? key ?? '')), value: text });
+      const id = String(key ?? label ?? rows.length);
+      rows.push({ id, label: sentenceCase(String(label ?? key ?? '')), value: text });
     }
   }
-  return rows;
+  const count = new Map<string, number>();
+  for (const r of rows) count.set(r.label, (count.get(r.label) ?? 0) + 1);
+  return rows.map((r) => ((count.get(r.label) ?? 0) > 1 ? { ...r, label: humanizeKey(r.id) } : r));
 }
 
 const SHORT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });

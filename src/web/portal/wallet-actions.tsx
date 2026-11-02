@@ -22,6 +22,7 @@ import {
   toast,
 } from '../ui/index.ts';
 import { myPassesKey, removePass } from './api.ts';
+import { canAddToWallet } from './device.ts';
 import { QrCode } from './qr-code.tsx';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
@@ -146,7 +147,8 @@ export function PassMoreMenu({
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {publicUrl ? (
+          {/* A QR to scan with an iPhone means nothing on the iPhone itself. */}
+          {publicUrl && !canAddToWallet() ? (
             <DropdownMenuItem onSelect={() => setQrOpen(true)}>
               <QrIcon aria-hidden /> Show QR
             </DropdownMenuItem>

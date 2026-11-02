@@ -1,5 +1,5 @@
 import { type ErrorComponentProps, Link, useRouterState } from '@tanstack/react-router';
-import { LogIn, Search } from 'lucide-react';
+import { LogIn, Search, WalletCards } from 'lucide-react';
 import { isApiError } from '../../lib/errors.ts';
 import { usePalette } from '../../lib/palette.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
@@ -14,19 +14,31 @@ const useInAdmin = () =>
 
 export function ForbiddenPage() {
   const { authed } = useSession();
+  // A holder who followed an admin link gets a way back to their passes.
+  const holder = authed?.roles.includes('user') === true;
   return (
     <EmptyState
       heading
       art="lock"
       title="You do not have access"
       action={
-        <Button
-          variant="outline"
-          iconStart={<LogIn aria-hidden />}
-          onClick={() => void signOut(authed?.csrfToken)}
-        >
-          Sign in as someone else
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {holder ? (
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <WalletCards aria-hidden />
+                Go to My passes
+              </Link>
+            </Button>
+          ) : null}
+          <Button
+            variant={holder ? 'ghost' : 'outline'}
+            iconStart={<LogIn aria-hidden />}
+            onClick={() => void signOut(authed?.csrfToken)}
+          >
+            Sign in as someone else
+          </Button>
+        </div>
       }
     />
   );
