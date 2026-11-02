@@ -138,9 +138,15 @@
   --e: var(--art-out);
   stroke: none;
 }
-/* A shadow darkens in both themes: border grey on light, the sunken ground on dark. */
+/* A shadow darkens in both themes: border grey on light, the sunken ground on dark. Guarded:
+   with var() inside, an unsupported light-dark() would compute to black, not fall back. */
 .wl-art .sd {
-  stop-color: light-dark(color-mix(in srgb, var(--art-l) 45%, transparent), var(--art-s));
+  stop-color: var(--art-s);
+}
+@supports (color: light-dark(#000, #fff)) {
+  .wl-art .sd {
+    stop-color: light-dark(color-mix(in srgb, var(--art-l) 45%, transparent), var(--art-s));
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
