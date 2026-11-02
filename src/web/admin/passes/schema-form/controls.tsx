@@ -23,6 +23,8 @@ export interface InputProps {
   control: Record<string, unknown>;
   disabled?: boolean | undefined;
   maxImageBytes: number;
+  /** The template's time zone input, when it has one. */
+  zone?: string | undefined;
 }
 
 export function Control({
@@ -33,6 +35,7 @@ export function Control({
   control,
   disabled,
   maxImageBytes,
+  zone,
 }: InputProps) {
   const text = typeof value === 'string' ? value : value == null ? '' : String(value);
   const common = { ...control, disabled, onBlur, placeholder: field.placeholder };
@@ -101,6 +104,7 @@ export function Control({
           {...common}
           value={text}
           onValue={onValue}
+          zone={zone}
           clearLabel={field.required ? undefined : field.noneLabel}
         />
       );

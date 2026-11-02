@@ -46,8 +46,7 @@
         "x-group": "Event",
         "x-order": 40,
         "minLength": 1,
-        "maxLength": 60,
-        "x-placeholder": "Main hall"
+        "maxLength": 60
       },
       "venueTimeZone": {
         "type": "string",

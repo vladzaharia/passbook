@@ -95,7 +95,7 @@
         "maxLength": 256,
         "default": "Welcome to Henry’s.",
         "x-label": "Message",
-        "x-help": "Shown on the back. Changes notify the member.",
+        "x-help": "Shown on the back.",
         "x-group": "Status",
         "x-order": 70,
         "x-widget": "textarea"

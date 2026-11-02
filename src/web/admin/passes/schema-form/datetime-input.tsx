@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn.ts';
 import { localZone, zoneLabel, zoneOptions } from '../../../lib/timezones.ts';
 import {
@@ -17,6 +17,8 @@ interface Props {
   onBlur: () => void;
   /** Optional fields: "No date" or "Never expires" hides the controls and clears the value. */
   clearLabel?: string | undefined;
+  /** The venue zone from the template's time zone input: values show in it. */
+  zone?: string | undefined;
   [key: string]: unknown;
 }
 
@@ -35,8 +37,20 @@ function zoneFor(iso: string): string {
  * A date and time in a named zone ("Los Angeles (PT)"). Stores ISO with that zone's offset, so
  * the pass shows local time; the value is spelled out below.
  */
-export function DateTimeInput({ value, onValue, disabled, onBlur, clearLabel, ...control }: Props) {
-  const [zone, setZone] = useState(() => (value ? zoneFor(value) : localZone()));
+export function DateTimeInput({
+  value,
+  onValue,
+  disabled,
+  onBlur,
+  clearLabel,
+  zone: venueZone,
+  ...control
+}: Props) {
+  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value) : localZone()));
+  // The signed pass shows times in the venue zone, so the editor follows it.
+  useEffect(() => {
+    if (venueZone) setZone(venueZone);
+  }, [venueZone]);
   const zones = useMemo(() => zoneOptions(), []);
   const [draft, setDraft] = useState<string>();
   const [none, setNone] = useState(value === '' && clearLabel !== undefined);

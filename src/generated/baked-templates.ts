@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "594a815eb475c8105395894471b364d3c059dfcf";
+export const BAKED_BUILD_HASH = "4376d3dd648b3cad933fc99402aafb59337bf242";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "385ef0b7bc50c3f0",
+    "version": "5219c55fcd8f2b0c",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -116,7 +116,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "default": "Welcome to Henry’s.",
             "x-label": "Message",
-            "x-help": "Shown on the back. Changes notify the member.",
+            "x-help": "Shown on the back.",
             "x-group": "Status",
             "x-order": 70,
             "x-widget": "textarea"
@@ -523,7 +523,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/artwork@2x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/artwork@2x.png"
         }
       },
       {
@@ -537,7 +537,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/artwork@3x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/artwork@3x.png"
         }
       },
       {
@@ -550,7 +550,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3740293075,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/en.lproj/pass.strings"
         }
       },
       {
@@ -564,7 +564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/icon@2x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/icon@2x.png"
         }
       },
       {
@@ -578,7 +578,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/icon@3x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/icon@3x.png"
         }
       },
       {
@@ -592,7 +592,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/logo@2x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/logo@2x.png"
         }
       },
       {
@@ -606,7 +606,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/logo@3x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/logo@3x.png"
         }
       },
       {
@@ -620,7 +620,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/primaryLogo@2x.png"
         }
       },
       {
@@ -634,7 +634,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/385ef0b7bc50c3f0/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/5219c55fcd8f2b0c/primaryLogo@3x.png"
         }
       }
     ],
@@ -643,13 +643,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 86361,
         "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
-        "path": "/templates/henrys-blue/385ef0b7bc50c3f0/background@2x.png"
+        "path": "/templates/henrys-blue/5219c55fcd8f2b0c/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 156846,
         "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
-        "path": "/templates/henrys-blue/385ef0b7bc50c3f0/background@3x.png"
+        "path": "/templates/henrys-blue/5219c55fcd8f2b0c/background@3x.png"
       }
     ],
     "report": {
@@ -660,7 +660,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "6f8dd6c8bcf78cdf",
+    "version": "a0bf9fe90cb2d9e1",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -768,7 +768,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "default": "Welcome to Henry’s.",
             "x-label": "Message",
-            "x-help": "Shown on the back. Changes notify the member.",
+            "x-help": "Shown on the back.",
             "x-group": "Status",
             "x-order": 70,
             "x-widget": "textarea"
@@ -1175,7 +1175,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/artwork@2x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/artwork@2x.png"
         }
       },
       {
@@ -1189,7 +1189,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/artwork@3x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/artwork@3x.png"
         }
       },
       {
@@ -1202,7 +1202,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3740293075,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/en.lproj/pass.strings"
         }
       },
       {
@@ -1216,7 +1216,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/icon@2x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/icon@2x.png"
         }
       },
       {
@@ -1230,7 +1230,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/icon@3x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/icon@3x.png"
         }
       },
       {
@@ -1244,7 +1244,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/logo@2x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/logo@2x.png"
         }
       },
       {
@@ -1258,7 +1258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/logo@3x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/logo@3x.png"
         }
       },
       {
@@ -1272,7 +1272,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/primaryLogo@2x.png"
         }
       },
       {
@@ -1286,7 +1286,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/primaryLogo@3x.png"
         }
       }
     ],
@@ -1295,13 +1295,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 89428,
         "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
-        "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/background@2x.png"
+        "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 161342,
         "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
-        "path": "/templates/henrys-copper/6f8dd6c8bcf78cdf/background@3x.png"
+        "path": "/templates/henrys-copper/a0bf9fe90cb2d9e1/background@3x.png"
       }
     ],
     "report": {
@@ -2594,7 +2594,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "3cfb06432ecdf634",
+    "version": "389c7c58d96dcb9a",
     "name": "Wallet · Event ticket",
     "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
     "org": null,
@@ -2649,8 +2649,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Event",
             "x-order": 40,
             "minLength": 1,
-            "maxLength": 60,
-            "x-placeholder": "Main hall"
+            "maxLength": 60
           },
           "venueTimeZone": {
             "type": "string",
@@ -3217,7 +3216,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/artwork@2x.png"
         }
       },
       {
@@ -3231,7 +3230,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/artwork@3x.png"
         }
       },
       {
@@ -3245,7 +3244,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/background@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/background@2x.png"
         }
       },
       {
@@ -3259,7 +3258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/background@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/background@3x.png"
         }
       },
       {
@@ -3272,7 +3271,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4061939731,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/en.lproj/pass.strings"
         }
       },
       {
@@ -3286,7 +3285,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/icon@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/icon@2x.png"
         }
       },
       {
@@ -3300,7 +3299,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/icon@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/icon@3x.png"
         }
       },
       {
@@ -3314,7 +3313,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/logo@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/logo@2x.png"
         }
       },
       {
@@ -3328,7 +3327,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/logo@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/logo@3x.png"
         }
       },
       {
@@ -3342,7 +3341,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/primaryLogo@2x.png"
         }
       },
       {
@@ -3356,7 +3355,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/primaryLogo@3x.png"
         }
       },
       {
@@ -3370,7 +3369,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/secondaryLogo@2x.png"
         }
       },
       {
@@ -3384,7 +3383,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/secondaryLogo@3x.png"
         }
       },
       {
@@ -3398,7 +3397,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/thumbnail@2x.png"
         }
       },
       {
@@ -3412,7 +3411,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/3cfb06432ecdf634/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/389c7c58d96dcb9a/thumbnail@3x.png"
         }
       }
     ],
