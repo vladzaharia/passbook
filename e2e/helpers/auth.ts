@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 export type Role = 'admin' | 'user' | 'nobody';
 
@@ -30,8 +30,17 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
       headers: { ...response.headers(), location: location.toString() },
     });
   });
-  // The e2e server raises RL_LOGIN (vite.config.ts), so starts never bunch up against the limit.
-  await page.goto(`/auth/oidc/start?next=${encodeURIComponent(next)}`);
+  // RL_LOGIN allows 10 starts a minute per IP and is enforced locally too. Poll until the window
+  // reopens instead of failing when a run's logins bunch up.
+  await expect
+    .poll(
+      async () => {
+        await page.goto(`/auth/oidc/start?next=${encodeURIComponent(next)}`);
+        return !(await page.content()).includes('RATE_LIMITED');
+      },
+      { intervals: [8_000], timeout: 70_000 },
+    )
+    .toBe(true);
 }
 
 export async function signInAs(page: Page, role: Role, next = '/') {
