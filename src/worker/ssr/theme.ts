@@ -14,7 +14,7 @@ export const THEME_CSS = `@font-face{font-family:Rubik;font-style:normal;font-we
 @media(prefers-contrast:more) and (prefers-color-scheme:dark){:root{--muted:#c3cbe0;--line:#61697b}}
 *{box-sizing:border-box}
 html{font-family:Rubik,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-@supports (font:-apple-system-body){html{font:-apple-system-body;font-family:Rubik,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}}
+@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body;font-family:Rubik,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}}
 body{margin:0;min-height:100dvh;background:var(--page);color:var(--fg);font-size:.875rem;line-height:1.5;-webkit-text-size-adjust:100%;padding:env(safe-area-inset-top) max(1rem,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(1rem,env(safe-area-inset-left))}
 a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}

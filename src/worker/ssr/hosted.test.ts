@@ -11,6 +11,7 @@ import { renderErrorPage } from './error-page.tsx';
 import { HOSTED_CSS } from './hosted.ts';
 import { HOSTED_ART_CSS } from './hosted-art.tsx';
 import { renderNotFoundPage } from './pass-page.tsx';
+import { THEME_CSS } from './theme.ts';
 
 const NONCE = 'n0nce';
 const primaries = (html: string) => html.match(/class="btn"/g)?.length ?? 0;
@@ -188,5 +189,14 @@ describe('renderErrorPage', () => {
     expect(renderErrorPage({ status: 429, nonce: NONCE, retryAfter: 600 })).toContain(
       'Try again in 10 minutes.',
     );
+  });
+});
+
+describe('holder text size', () => {
+  it('follows Dynamic Type on iOS only (macOS Safari would set a 13 px root)', () => {
+    expect(THEME_CSS).toContain(
+      '@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body;',
+    );
+    expect(THEME_CSS.match(/-apple-system-body/g)).toHaveLength(2);
   });
 });
