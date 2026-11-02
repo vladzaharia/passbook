@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { lazyRouteComponent } from '@tanstack/react-router';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isChunkLoadError } from '../ui/error-state.tsx';
@@ -47,5 +48,26 @@ describe('offline route chunks', () => {
     expect(route.options.errorComponent).toBe(plain);
     await (route.options.component as Lazy).preload?.();
     expect(preload).toHaveBeenCalledOnce();
+  });
+});
+
+describe('with the real lazyRouteComponent', () => {
+  const chunk = () =>
+    Promise.resolve({
+      default: () => <p>Real chunk</p>,
+    });
+
+  it('throws offline before the chunk loads, and renders once it has loaded', async () => {
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const real = lazyRouteComponent(chunk);
+    const Safe = offlineSafe(real as unknown as Lazy);
+    expect(() => render(<Safe />)).toThrow(OfflineChunkError);
+    // Online, the router preloads the chunk; the guard then lets the route render offline too.
+    online.mockReturnValue(true);
+    await real.preload?.();
+    online.mockReturnValue(false);
+    render(<Safe />);
+    await waitFor(() => expect(screen.getByText('Real chunk')).toBeInTheDocument());
   });
 });
