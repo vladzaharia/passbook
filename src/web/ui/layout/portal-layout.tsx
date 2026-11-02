@@ -50,7 +50,11 @@ export function PortalLayout() {
         </div>
       </header>
       <OfflineBanner />
-      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-safe py-6">
+      <main
+        id={MAIN_ID}
+        tabIndex={-1}
+        className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+      >
         <Outlet />
       </main>
     </div>
