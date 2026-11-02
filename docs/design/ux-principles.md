@@ -58,7 +58,7 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
    - Pass and template previews collapse below 1024 so tabs and fields sit in the first screen.
    - Customer actions are 44 px; console controls are 44 px on touch.
    - Phone confirms and menus open as bottom sheets.
-   - More than five tabs become a select below 640.
+   - Five or more tabs become a select below 640.
    - Next and Save stay on screen (sticky bars).
 7. **The holder is a person with an email.**
    - `/login` leads with the email path; Polaris ID is the alternative.

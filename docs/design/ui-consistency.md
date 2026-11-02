@@ -291,7 +291,7 @@ Action icons (`src/web/lib/action-icons.ts`):
 - The active tab lives in the URL as `?tab=<id>` (`passDetailSearchSchema` in
   `admin/passes/search.ts`, `validateSearch` in `routes/admin/passes/$passId.tsx`).
 - Changing tab replaces history. An invalid or missing tab falls back to the default.
-- Below 640, more than five tabs render as a select (`Section: Fields`); otherwise a scrolling
+- Below 640, five or more tabs render as a select (`Section: Fields`); otherwise a scrolling
   strip with a 32px edge fade and chevrons.
 - Pass detail tabs: Fields, Holder, Delivery (with devices), Images, Versions, Connection, Activity.
 
