@@ -26,7 +26,7 @@ export interface OrgOption {
 }
 
 /** Tiles lay out on their own width: a column drops before a name truncates. */
-const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),1fr))] gap-3';
+const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3';
 
 /** A required choice: the group is invalid and says so under the tiles until one is picked. */
 function ChoiceGroup({
