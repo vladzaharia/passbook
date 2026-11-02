@@ -131,7 +131,7 @@ describe('entity art', () => {
     const ssr = readFileSync(join(DIR, 'css.ts'), 'utf8');
     const sheets = readdirSync(DIR).filter((f) => f.endsWith('.css'));
     for (const f of sheets) expect(ssr).toContain(`./${f}?raw`);
-    expect(ssr).toMatch(/\[base, records, details, wallet\]/);
+    expect(ssr).toMatch(/\[base, records, details, wallet, rest, hello\]/);
   });
 
   it('draws each mood on the face and seats the wallet on a surface', () => {

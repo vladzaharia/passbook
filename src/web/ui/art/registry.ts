@@ -24,6 +24,7 @@ import { UnpluggedArt } from './unplugged.tsx';
 import { WalletArt } from './wallet.tsx';
 // Buddy scenes ride in this chunk: they start after the art lands, never in the first paint.
 import './scenes/common.css';
+import './scenes/hello.css';
 import './scenes/search.css';
 import './scenes/search-beats.css';
 import './scenes/inspect.css';

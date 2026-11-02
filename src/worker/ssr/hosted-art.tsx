@@ -53,18 +53,23 @@ const HOURGLASS = (
   </g>
 );
 
-/** The static markup for a page's art; `failed` makes any state sad (a refused form). */
+/**
+ * The static markup for a page's art; `failed` makes any state sad (a refused form). A click
+ * replays its hello (art/scenes/hello.css) through public/buddy-replay.js.
+ */
 export function artHtml(art: HostedArt, failed = false): string {
   const state: WalletState = art === 'throttled' || art === 'broken' ? 'login' : art;
   return renderToStaticMarkup(
-    <WalletArt
-      state={state}
-      size="xl"
-      beat={false}
-      seat
-      {...(failed || SAD.has(art) ? { mood: 'sad' as const } : {})}
-      onCard={art === 'confirm' ? CHECK : art === 'no-access' ? LOCK : undefined}
-      front={art === 'break-glass' ? KEY : art === 'throttled' ? HOURGLASS : undefined}
-    />,
+    <span data-replay="" data-scene="hello">
+      <WalletArt
+        state={state}
+        size="xl"
+        beat={false}
+        seat
+        {...(failed || SAD.has(art) ? { mood: 'sad' as const } : {})}
+        onCard={art === 'confirm' ? CHECK : art === 'no-access' ? LOCK : undefined}
+        front={art === 'break-glass' ? KEY : art === 'throttled' ? HOURGLASS : undefined}
+      />
+    </span>,
   );
 }
