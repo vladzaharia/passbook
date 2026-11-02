@@ -100,6 +100,28 @@ describe('login page', () => {
     expect(screen.queryByRole('button', { name: /theme/i })).toBeNull();
   });
 
+  it('leaves the once-per-session wordmark flip for the first page that plays it', async () => {
+    const { container, unmount } = await renderApp('/login', { session: 'anon' });
+    await screen.findByLabelText('Email');
+    expect(container.querySelector('[data-flip]')).toBeNull();
+    expect(sessionStorage.getItem('wallet-wordmark-flipped')).toBeNull();
+    unmount();
+    const admin = await renderApp('/admin', { session: 'admin' });
+    await waitFor(() => expect(admin.container.querySelector('[data-flip]')).not.toBeNull());
+    expect(sessionStorage.getItem('wallet-wordmark-flipped')).toBe('1');
+  });
+
+  it('sits the wallet on the card: fanned cards, eyes in a look group, decorative', async () => {
+    const { container } = await renderApp('/login', { session: 'anon' });
+    await screen.findByLabelText('Email');
+    const scene = container.querySelector('.wl-login-scene');
+    expect(scene).toHaveAttribute('aria-hidden', 'true');
+    expect(scene).not.toHaveAttribute('data-beat');
+    expect(scene?.querySelectorAll('[data-fan] [data-part^="c"]')).toHaveLength(3);
+    expect(scene?.querySelector('[data-look] [data-part="eyes"]')).not.toBeNull();
+    expect(scene?.querySelector('text')).toBeNull();
+  });
+
   it('keeps the card height while the session loads', async () => {
     const { container } = await renderApp('/login', {
       session: 'anon',

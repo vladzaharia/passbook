@@ -6,6 +6,8 @@ import type { SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** About how many characters fill the field: the eyes reach its right edge there. */
+const GAZE_CHARS = 30;
 
 export interface EmailFaceProps {
   oidc: boolean;
@@ -78,6 +80,7 @@ export function EmailFace({
                 autoFocus
                 value={email}
                 className="h-11 text-base"
+                onBlur={() => scene.gaze(null)}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   const v = e.target.value.trim();
@@ -85,6 +88,7 @@ export function EmailFace({
                   // A shown error goes as soon as the address is valid.
                   if (valid) setFieldError(undefined);
                   scene.setLetter(valid ? v.charAt(0).toUpperCase() : null);
+                  scene.gaze(e.target.value.length / GAZE_CHARS);
                 }}
               />
             )}

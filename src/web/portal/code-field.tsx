@@ -7,6 +7,7 @@ export interface CodeFieldProps {
   id: string;
   value: string;
   onChange: (digits: string) => void;
+  onBlur?: () => void;
   invalid?: boolean;
   describedBy?: string | undefined;
   inputRef?: Ref<HTMLInputElement>;
@@ -31,6 +32,7 @@ export function CodeField({
   id,
   value,
   onChange,
+  onBlur,
   invalid,
   describedBy,
   inputRef,
@@ -49,6 +51,7 @@ export function CodeField({
           setChange((c) => ({ from: samePrefix(value, next), n: c.n + 1 }));
           onChange(next);
         }}
+        onBlur={onBlur}
         inputMode="numeric"
         autoComplete="one-time-code"
         pattern="[0-9]*"

@@ -23,16 +23,21 @@
   visibility: hidden;
 }
 
+/* To the code face the turn waits 120 ms while the posted card leaves the pocket. */
 @media (prefers-reduced-motion: no-preference) {
   .wl-login-flipper {
-    transition: transform var(--wl-dur-flip) var(--wl-ease-spring);
+    --wl-flip-wait: 0ms;
+    transition: transform var(--wl-dur-flip) var(--wl-ease-spring) var(--wl-flip-wait);
+  }
+  .wl-login-flipper[data-face="code"] {
+    --wl-flip-wait: 120ms;
   }
   .wl-login-face {
     transition: visibility 0s;
   }
   .wl-login-flipper[data-face="email"] > [data-side="code"],
   .wl-login-flipper[data-face="code"] > [data-side="email"] {
-    transition-delay: var(--wl-dur-flip);
+    transition-delay: calc(var(--wl-dur-flip) + var(--wl-flip-wait));
   }
 }
 
@@ -54,6 +59,11 @@
   }
 }
 
+/* 16 px or more at any iOS text size, so focusing a field never zooms. */
+.wl-login-card input {
+  font-size: max(16px, 1rem);
+}
+
 /* The 6-digit code: the input holds the value, the slots draw it (grouped 123 456). */
 .wl-code {
   position: relative;
@@ -61,7 +71,6 @@
 .wl-code-input {
   color: transparent;
   caret-color: transparent;
-  font-size: 16px;
   text-align: center;
 }
 .wl-code-input::selection {

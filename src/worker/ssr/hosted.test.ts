@@ -7,6 +7,8 @@ import {
   noAccessPage,
 } from '../modules/auth/pages.ts';
 import { renderErrorPage } from './error-page.tsx';
+import { HOSTED_CSS } from './hosted.ts';
+import { HOSTED_ART_CSS } from './hosted-art.tsx';
 
 const NONCE = 'n0nce';
 const primaries = (html: string) => html.match(/class="btn"/g)?.length ?? 0;
@@ -31,6 +33,52 @@ describe('hosted auth pages', () => {
     expect(html).toContain('<html lang="en">');
     expect(html).toContain('rel="apple-touch-icon"');
     expect(primaries(html)).toBe(1);
+  });
+
+  it.each([
+    [
+      'confirm',
+      confirmPage(NONCE, { token: 't'.repeat(20), email: 'a@b.co', purpose: 'sign_in' }),
+      ['ck'],
+    ],
+    ['expired', expiredPage(NONCE), []],
+    ['no-access', noAccessPage(NONCE), ['lk', 'sh']],
+    ['break-glass', breakglassPage(NONCE, {}), ['key', 'kt']],
+  ])('gives %s its own beat on the fanned wallet', (_state, html, parts) => {
+    expect(html.match(/data-part="c[123]"/g)).toHaveLength(3);
+    expect(html).toContain('data-fan=""');
+    expect(html).toContain('data-look=""');
+    for (const part of parts) expect(html).toContain(`data-part="${part}"`);
+    if (_state === 'expired') expect(html).toContain('class="dim"');
+  });
+
+  it('sizes the scene like /login and keeps fields at 16 px or more', () => {
+    expect(HOSTED_CSS).toContain(HOSTED_ART_CSS);
+    expect(HOSTED_CSS).toContain('.scene{position:relative;z-index:0;width:128px;height:96px');
+    expect(HOSTED_CSS).toMatch(/input\{[^}]*font-size:max\(16px,1rem\)/);
+  });
+
+  it('animates the auth states once, on transform and opacity, within the art budget', () => {
+    const css = HOSTED_ART_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const ms = (v: string | undefined) => (v ? Number(/(\d+)ms/.exec(v)?.[1] ?? 0) : 0);
+    for (const [, body] of css.matchAll(/[^{}]+\{([^{}]*)\}/g)) {
+      const u = /--u:\s*([^;]+)/.exec(body ?? '')?.[1];
+      if (!u) continue;
+      expect(ms(u)).toBeLessThanOrEqual(480);
+      expect(ms(/--d:\s*([^;]+)/.exec(body ?? '')?.[1]) + ms(u)).toBeLessThanOrEqual(600);
+    }
+    for (const [, frames] of css.matchAll(/@keyframes[^{]+\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g)) {
+      for (const [, decls] of (frames ?? '').matchAll(/\{([^{}]*)\}/g)) {
+        for (const prop of (decls ?? '').matchAll(/([a-z-]+)\s*:/g))
+          expect(['transform', 'opacity']).toContain(prop[1]);
+      }
+    }
+    // Animations run only when motion is allowed; reduce shows the final frame.
+    const outside = css.replace(
+      /@media \(prefers-reduced-motion: no-preference\)\s*\{[^{}]*\{[^{}]*\}\s*\}/g,
+      '',
+    );
+    expect(outside).not.toMatch(/(^|[\s;{])(animation|transition)(-[a-z]+)?\s*:/);
   });
 
   it('offers email and another Polaris ID on no access', () => {

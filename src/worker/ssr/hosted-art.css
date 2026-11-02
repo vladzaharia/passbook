@@ -1,0 +1,85 @@
+/* Auth page states on the wallet (hosted-art.tsx), on the art engine in ART_CSS. */
+[data-state="confirm"] [data-part="ck"] {
+  --f: scale(0);
+  --d: 300ms;
+  --u: 300ms;
+  --e: var(--art-bo);
+}
+/* Link expired: the gold card pops out with the others, then greys and slips 18° further. */
+[data-state="expired"] [data-part="c3"] {
+  --k: wl-w-droop;
+  --t: rotate(36deg) translateY(3px);
+  --d: 100ms;
+  --u: 480ms;
+  --e: var(--art-sp);
+}
+[data-state="expired"] [data-look] {
+  transform: translateX(1px);
+}
+/* No access: the fan closes under a padlock whose shackle drops. */
+[data-state="no-access"] :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+  --t: translateY(3px);
+}
+[data-state="no-access"] [data-part="c2"] {
+  --f: translateY(3px);
+}
+[data-state="no-access"] :is([data-part="c1"], [data-part="c3"]) {
+  --d: 0ms;
+  --u: 300ms;
+  --e: var(--art-sp);
+}
+[data-state="no-access"] [data-part="c1"] {
+  --f: rotate(-18deg);
+}
+[data-state="no-access"] [data-part="c3"] {
+  --f: rotate(18deg);
+}
+[data-state="no-access"] [data-part="lk"] {
+  --f: translateY(-4px);
+  --fo: 0;
+  --d: 200ms;
+  --u: 200ms;
+}
+[data-state="no-access"] [data-part="sh"] {
+  --f: translateY(-4px);
+  --fo: 1;
+  --d: 340ms;
+  --u: 200ms;
+  --e: var(--art-bo);
+}
+/* Break-glass: the key slides into the keyhole, then turns (the bow goes edge-on). */
+[data-state="break-glass"] [data-part="key"] {
+  --f: translateX(10px);
+  --d: 120ms;
+  --u: 200ms;
+  --e: var(--art-out);
+}
+[data-state="break-glass"] [data-part="kt"] {
+  --t: scaleY(0.45);
+  --f: none;
+  --fo: 1;
+  --d: 320ms;
+  --u: 280ms;
+}
+[data-state="break-glass"] [data-look] {
+  transform: translateX(1.5px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is([data-state="break-glass"], [data-state="expired"]) [data-look] {
+    animation: wl-w-glance 200ms var(--art-mv) calc(var(--wl-art-delay, 80ms) + 400ms) backwards;
+  }
+}
+@keyframes wl-w-droop {
+  0% {
+    transform: translateY(16px);
+  }
+  40% {
+    transform: rotate(18deg);
+  }
+}
+@keyframes wl-w-glance {
+  from {
+    transform: none;
+  }
+}
