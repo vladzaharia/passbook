@@ -78,7 +78,8 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           flippable
           enter={dealt}
           dim={voided}
-          mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          settle={pass.status}
           dip={dip}
           syncing={isPendingRefresh(pass, Date.now())}
           transitionName={`pass-${pass.id}`}

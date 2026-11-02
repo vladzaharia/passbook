@@ -99,6 +99,11 @@
   margin-top: 0.5rem;
   overflow: hidden;
   border-radius: 1px;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.pc-sync-rail[data-on] {
+  opacity: 1;
 }
 .pc-sync-rail::before {
   content: "";
@@ -106,6 +111,8 @@
   inset: 0 auto 0 0;
   width: 30%;
   background: var(--wl-foil, linear-gradient(115deg, #2dd4bf, #9a5cff 55%, #ffc24d));
+}
+.pc-sync-rail[data-on]::before {
   animation: pc-rail 900ms linear infinite;
 }
 

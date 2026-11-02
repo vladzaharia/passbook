@@ -12,21 +12,20 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The tile's title and actions rise 8 px after its card deals in. */
-  .wl-tile-chrome {
+  /* The tile's title and actions rise 8 px after its card deals in. Apple's badge never
+     animates: only the pieces that do not hold it rise. */
+  .wl-tile-chrome > :not(:has([data-awb])),
+  .wl-tile-chrome > :has([data-awb]) > :not([data-awb], :has([data-awb])) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
     animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards) + 160ms);
   }
-  /* Deep link: the details panel rises after the card (240 ms). */
-  .wl-after-card {
+  /* Deep link: the details panel rises after the card (240 ms), badge excepted. */
+  .wl-after-card > :not(:has([data-awb])),
+  .wl-after-card > :has([data-awb]) > :not([data-awb], :has([data-awb])) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
   }
   .wl-qr-scan {
     animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
-  }
-  /* A new email row rises (the kit adds the insert highlight). */
-  .wl-account-emails li[data-new] {
-    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
   }
   /* Sign out everywhere: the other devices leave 30 ms apart before the redirect. */
   .wl-sessions[data-leaving] li:has(button) {

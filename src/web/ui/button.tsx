@@ -26,6 +26,8 @@ export const buttonVariants = cva(
     'motion-safe:active:not-disabled:not-aria-disabled:scale-(--pk-motion-scale-press)',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
     'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
+    // Working is not unavailable: a busy button keeps full contrast while its verb plays.
+    'aria-busy:cursor-progress aria-busy:opacity-100',
     '[&_svg]:shrink-0',
   ],
   {

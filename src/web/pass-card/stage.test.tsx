@@ -59,10 +59,32 @@ describe('PassCardStage', () => {
     expect(stage?.style.getPropertyValue('--pc-glow')).toBe('rgb(220, 120, 40)');
   });
 
-  it('runs the sync rail only while syncing', () => {
+  it('reserves the sync rail and only runs it while syncing', () => {
     const { container, rerender } = render(<PassCardStage view={view} syncing />);
-    expect(container.querySelector('.pc-sync-rail')).not.toBeNull();
+    const rail = () => container.querySelector('.pc-sync-rail');
+    expect(rail()).toHaveAttribute('data-on');
+    rerender(<PassCardStage view={view} syncing={false} />);
+    expect(rail()).not.toBeNull();
+    expect(rail()).not.toHaveAttribute('data-on');
     rerender(<PassCardStage view={view} />);
-    expect(container.querySelector('.pc-sync-rail')).toBeNull();
+    expect(rail()).toBeNull();
+  });
+
+  it('does not mint across a paused (undefined) value, and mints on a new one', () => {
+    const lift = (c: HTMLElement) => c.querySelector('.pc-lift') as HTMLElement;
+    const { container, rerender } = render(<PassCardStage view={view} mint={1} />);
+    rerender(<PassCardStage view={view} mint={undefined} />);
+    rerender(<PassCardStage view={view} mint={1} />);
+    expect(lift(container).dataset.mint).toBeUndefined();
+    rerender(<PassCardStage view={view} mint={undefined} />);
+    rerender(<PassCardStage view={view} mint={2} />);
+    expect(lift(container).dataset.mint).toBe('');
+  });
+
+  it('enters voided passes quietly and without tilt', () => {
+    const { container } = render(<PassCardStage view={view} enter dim />);
+    const stage = container.querySelector('.pc-stage');
+    expect(stage).toHaveAttribute('data-enter', 'quiet');
+    expect(stage).not.toHaveAttribute('data-tilt');
   });
 });

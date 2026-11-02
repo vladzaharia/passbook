@@ -48,7 +48,8 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
       <Link {...link} tabIndex={-1} aria-hidden className="flex flex-1 items-center">
         <PassCardStage
           view={toView(pass)}
-          mint={`${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          settle={pass.status}
           dip={dip}
           enter={dealt}
           dim={voided}
