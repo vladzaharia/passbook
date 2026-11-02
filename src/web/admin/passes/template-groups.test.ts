@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { displayName, groupTemplates } from './template-groups.ts';
 import { templateSummary } from './test-fixtures.ts';
 
+const summary = (over: Record<string, unknown>) => templateSummary(over) as TemplateSummaryDto;
 const shared = (name: string, id = name) =>
-  templateSummary({ id, name, orgId: null, orgName: null, origin: 'baked' });
+  summary({ id, name, orgId: null, orgName: null, origin: 'baked' });
 const own = (name: string, id = name) =>
-  templateSummary({ id, name, orgId: 'org1', orgName: 'Acme Fitness' });
+  summary({ id, name, orgId: 'org1', orgName: 'Acme Fitness' });
 
 describe('displayName', () => {
   it('drops a prefix that repeats the group', () => {
@@ -15,7 +17,7 @@ describe('displayName', () => {
   });
 
   it('matches curly and straight apostrophes', () => {
-    const t = templateSummary({ name: 'Joe’s · Blue', orgName: "Joe's Gym" });
+    const t = summary({ name: 'Joe’s · Blue', orgName: "Joe's Gym" });
     expect(displayName(t)).toBe('Blue');
   });
 
@@ -44,7 +46,7 @@ describe('groupTemplates', () => {
   });
 
   it('falls back to the given org name', () => {
-    const [group] = groupTemplates([templateSummary({ orgName: null })], 'Acme Fitness');
+    const [group] = groupTemplates([summary({ orgName: null })], 'Acme Fitness');
     expect(group?.label).toBe('Acme Fitness');
   });
 });
