@@ -37,7 +37,7 @@ export function PassWarnings({ pass }: { pass: PassDetailDto }) {
           type="button"
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
-          className="inline-flex items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-focus"
+          className="inline-flex items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-focus pointer-coarse:-my-3 pointer-coarse:min-h-11"
         >
           Pass warnings ({list.length})
           <ChevronDown

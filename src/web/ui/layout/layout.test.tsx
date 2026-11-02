@@ -82,9 +82,7 @@ describe('route guards in the app', () => {
     expect(container.querySelector('main [data-art]')).toHaveAttribute('data-art', 'torn');
     expect(screen.getByRole('link', { name: 'Go to Overview' })).toBeInTheDocument();
     await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Search' }));
-    expect(
-      await screen.findByRole('combobox', { name: 'Search' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Search' })).toBeInTheDocument();
   });
 
   it('shows a session fetch failure instead of the page', async () => {
