@@ -210,17 +210,19 @@ export function FieldsTab({
         sourceName={connection.data?.name}
         onResetField={pass.connectionId ? (k) => void reset(k) : undefined}
       />
-      {voided ? null : (
-        <CheckboxField
-          label="Notify holders"
-          checked={notify}
-          disabled={!dirty || saving}
-          onCheckedChange={(c) => setNotify(c === true)}
-        />
-      )}
       <SaveBar
         dirty={dirty}
         saving={saving}
+        extra={
+          voided ? null : (
+            <CheckboxField
+              label="Notify holders"
+              checked={notify}
+              disabled={!dirty || saving}
+              onCheckedChange={(c) => setNotify(c === true)}
+            />
+          )
+        }
         onSave={() => void save()}
         onDiscard={() => {
           setDraft(baseline.values);

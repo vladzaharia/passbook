@@ -1,6 +1,6 @@
 import { useBlocker } from '@tanstack/react-router';
 import { Check, Save } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { ConfirmDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
@@ -13,6 +13,8 @@ export interface SaveBarProps {
   onSave: () => void;
   onDiscard: () => void;
   saveLabel?: string;
+  /** A save option beside the buttons (Notify holders). */
+  extra?: ReactNode;
 }
 
 type Phase = 'hidden' | 'shown' | 'saved' | 'closing';
@@ -28,6 +30,7 @@ export function SaveBar({
   onSave,
   onDiscard,
   saveLabel = 'Save',
+  extra,
 }: SaveBarProps) {
   const [phase, setPhase] = useState<Phase>(dirty ? 'shown' : 'hidden');
   const wasSaving = useRef(false);
@@ -68,19 +71,22 @@ export function SaveBar({
         <p className="text-sm text-fg-strong" role="status">
           {done ? 'Saved' : 'Unsaved changes'}
         </p>
-        <div className="flex gap-2">
-          <Button variant="outline" disabled={saving || paused || done} onClick={onDiscard}>
-            Discard
-          </Button>
-          <Button
-            loading={saving && !paused}
-            paused={paused}
-            disabled={done}
-            iconStart={done ? <Check aria-hidden className="wl-check" /> : <Save aria-hidden />}
-            onClick={onSave}
-          >
-            {saveLabel}
-          </Button>
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+          {extra}
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={saving || paused || done} onClick={onDiscard}>
+              Discard
+            </Button>
+            <Button
+              loading={saving && !paused}
+              paused={paused}
+              disabled={done}
+              iconStart={done ? <Check aria-hidden className="wl-check" /> : <Save aria-hidden />}
+              onClick={onSave}
+            >
+              {saveLabel}
+            </Button>
+          </div>
         </div>
       </div>
     </section>
