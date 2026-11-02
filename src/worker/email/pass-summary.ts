@@ -11,6 +11,9 @@ export interface PassSummary {
 
 const STYLES = ['eventTicket', 'boardingPass', 'storeCard', 'coupon', 'generic', 'posterGeneric'];
 const GROUPS = ['primaryFields', 'secondaryFields', 'auxiliaryFields', 'headerFields'];
+// Date and time live in the header on tickets and boarding passes; the email leads with them.
+const HEADER_FIRST = ['eventTicket', 'boardingPass'];
+const HEADER_FIRST_GROUPS = ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields'];
 // One spare: the email drops a field that repeats the pass title.
 const MAX_FIELDS = 4;
 
@@ -22,7 +25,7 @@ export function passSummary(
   const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
   const block = (style ? passJson[style] : {}) as Record<string, unknown>;
   const fields: PassSummary['fields'] = [];
-  for (const group of GROUPS) {
+  for (const group of style && HEADER_FIRST.includes(style) ? HEADER_FIRST_GROUPS : GROUPS) {
     const list = block[group];
     if (!Array.isArray(list)) continue;
     for (const f of list) {
