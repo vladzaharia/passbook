@@ -142,7 +142,7 @@ System:
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
 - API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` or the named component (`PassesArt`…).
-  `LayersArt compare` splits the top two sheets. `WalletArt state mood="flat" lift` (states
+  `LayersArt compare` splits the top two sheets. `WalletArt state mood lift onCard face front` (states
   `login`, `empty`, `lost`, `confirm`, `expired`, `no-access`, `break-glass`) renders through
   `renderToStaticMarkup`; SSR pages inline `ART_CSS` (`art/css.ts`, every art sheet in cascade
   order; tokens fall back to the SSR names) and
@@ -205,16 +205,16 @@ or the SSR mascot pages.
 
    | Beat | Motion |
    | --- | --- |
-   | Scene | The `wallet` mascot (112×84; 96×72 under 640) sits on the hosted card's top edge; three mini passes in foil teal, violet and gold are tucked in the pocket, peeking over the edge |
-   | Load | Pocket rises 8 px and fades in (0–200 ms). Cards pop out (bounce, 60 ms apart) and fan to −12°, 0°, 12° from the bottom centre (100–540 ms). Eyes open (scaleY 0 → 1, 120 ms) at 480 ms. Done by 600 ms, inside the art budget. The form works from 0 ms |
-   | Idle | One bob (±3 px, ±1°, one cycle) and one blink at 2.4 s (scaleY 1 → .1 → 1, 140 ms). Fine pointers: the fan tilts towards the pointer, at most 4°. Nothing moves on its own after 5 s |
-   | Email | When the address is valid, the top card lifts 6 px and shows its first letter (200 ms spring) |
-   | Send link | The top card slides out of the pocket and drops behind the card like a letter going out (260 ms ease-in); the card flips (640 ms spring) to the code face, the far face inert; focus moves to the code field |
+   | Scene | The `wallet` mascot (128×96; 112×84 under 640) sits behind the hosted card's top edge, which hides the pocket's bottom; three mini passes in foil teal, violet and gold fan out of the pocket from one pivot at its bottom centre |
+   | Load | Pocket rises 8 px and fades in (0–200 ms). Cards pop out (bounce, 60 ms apart) and fan to −18°, 0°, 18° (100–540 ms). Eyes open (scaleY 0 → 1, 120 ms) at 480 ms. Done by 600 ms, inside the art budget. The form works from 0 ms. A hidden tab holds every animation (`data-paused`), so the entrance and the idle beat play when someone looks |
+   | Idle | One bob (±3 px, ±1°, one cycle) and one blink at 2.4 s (scaleY 1 → .1 → 1, 140 ms). Fine pointers: the wallet sways 1.5° and the fan 2.5° more towards the pointer (4° in all) and the eyes look at it (±1.5 px). Typing: the eyes look down at the field and follow the text across it, back to the pointer on blur or after 1.5 s. Nothing moves on its own after 5 s |
+   | Email | When the address is valid, the top card lifts 6 px (200 ms spring) and its first letter stamps on (1.9 → 1, 280 ms bounce) |
+   | Send link | The top card hops out over the pocket's right shoulder and drops behind the card like a letter going out (320 ms: ease-out up, ease-in down, fading at the end); the other two close to ±10° and the eyes look down. After 120 ms the card flips (640 ms spring) to the code face, the far face inert; focus moves to the code field at 500 ms |
    | Code | Each digit pops into its slot (.6 → 1, 140 ms spring), grouped `123 456`. Complete: the field glows teal once (300 ms). Wrong or expired: the pocket shakes once (240 ms) and the eyes go flat for 600 ms; border and icon carry the error. Expired: an hourglass flips once |
-   | Success | Cards drop into the pocket (18 px, 200 ms ease-in) and the pocket nods (scaleY .94 → 1, 120 ms). Navigation starts at once; nothing delays it more than 320 ms |
+   | Success | The posted card comes home from above and the fan slides into the pocket (18 px, 200–260 ms ease-in), then the pocket bounces (squash 1.06 × .9 → 1, 360 ms bounce) and the eyes close into a smile (240 ms bounce). Navigation starts at once; nothing delays it |
    | Polaris ID | Fine-pointer hover: one foil sweep along the button border (480 ms) |
-   | Worker pages | Same scene, CSS only, static after load. Confirm: a check pops on the top card (300 ms bounce). Link expired: one card greys and droops 18° (480 ms spring). No access: the fan closes under a padlock whose shackle drops (200 ms). Break-glass: a key on the clasp turns 90° (360 ms spring) |
-   | Reduced motion | The fanned frame, eyes open; faces and states swap with a fade of 150 ms or less; no bob, blink, lift, drop or shake |
+   | Worker pages | Same scene, CSS only, static after load (`src/worker/ssr/hosted-art.*`: these states never ship in the app bundle). Confirm: a check pops on the top card (300 ms bounce). Link expired: the gold card pops out, greys and slips 18° further (480 ms spring); the eyes glance at it. No access: the fan closes under a padlock on the top card whose shackle drops (200 ms bounce). Break-glass: a key slides into a keyhole right of the clasp (200 ms) and turns, its bow going edge-on (280 ms spring); the eyes glance at it |
+   | Reduced motion | The fanned frame, eyes open; faces and states swap with a fade of 150 ms or less (the letter shows on the resting card, the posted card fades, the smile fades in); no bob, blink, lift, drop, shake, sway or look |
 
    SVG and CSS on tokens, transform and opacity only, no library. The badge never appears here.
    Copy stays as terse as the reference: the fun is all in the motion.
@@ -299,6 +299,6 @@ tilt, the sheet drag). No motion library.
 | Wizard, stepper | `src/web/ui/wizard.tsx` |
 | Route transition types, chunk-load errors (offline chunks: `lib/offline-routes.ts`) | `src/web/router.tsx` |
 | Sign-in scene | `src/web/portal/login-*.tsx` on `src/web/ui/art/wallet.tsx` |
-| SSR scene, error pages | `src/worker/ssr/theme.ts`, `src/worker/ssr/error-page.tsx`, `src/worker/modules/auth/pages.ts` |
+| SSR scene, error pages | `src/worker/ssr/{theme,hosted,hosted-art}.*`, `src/worker/ssr/error-page.tsx`, `src/worker/modules/auth/pages.ts` |
 | Public page tilt (fine pointers) | `public/pass-tilt.js` |
 | e2e with reduced motion | `playwright.config.ts` |
