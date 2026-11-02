@@ -214,6 +214,29 @@ describe('Checkbox, Switch, RadioGroup', () => {
     await noViolations(container);
   });
 
+  it('draws the tick only after a change, never on load', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [on, setOn] = useState(true);
+      return <Checkbox aria-label="Pick" checked={on} onCheckedChange={(v) => setOn(v === true)} />;
+    }
+    const { container } = render(<Harness />);
+    const tick = () => container.querySelector('button svg');
+    expect(tick()).toHaveAttribute('aria-hidden', 'true');
+    expect(tick()).not.toHaveClass('wl-tick');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('checkbox'));
+    expect(tick()).toHaveClass('wl-tick');
+    expect(tick()?.querySelectorAll('path')).toHaveLength(2);
+  });
+
+  it('switch thumb stretches while pressed, only with motion allowed', () => {
+    render(<Switch aria-label="On" />);
+    const thumb = screen.getByRole('switch').firstElementChild;
+    expect(thumb?.className).toMatch(/motion-safe:group-enabled:group-active:scale-x-125/);
+    expect(thumb?.className).toMatch(/data-\[state=checked\]:origin-right/);
+  });
+
   it('checkbox reports indeterminate state', () => {
     render(<Checkbox checked="indeterminate" aria-label="All" />);
     expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'mixed');

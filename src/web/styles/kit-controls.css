@@ -8,6 +8,16 @@
     transform: scale(0.6);
   }
 }
+@keyframes wl-draw {
+  from {
+    transform: scale(0);
+  }
+}
+@keyframes wl-step-pop {
+  from {
+    transform: scale(0.7);
+  }
+}
 @keyframes wl-pulse {
   from {
     opacity: 0.5;
@@ -73,9 +83,20 @@
 .wl-check {
   animation: wl-check 300ms var(--wl-ease-bounce) backwards;
 }
-/* Checkbox ticks: only after a change (checkbox.tsx keys the icon by the change count). */
-.wl-tick {
-  animation: wl-check 200ms var(--wl-ease-spring) backwards;
+/* Ticks draw: each stroke grows from where a pen starts it, short then long (checkbox.tsx Tick).
+   Only after a change: callers key the tick by the change count. */
+.wl-tick path {
+  transform-box: view-box;
+  transform-origin: 5px 12.5px;
+  animation: wl-draw 90ms var(--wl-ease-in) backwards;
+}
+.wl-tick path + path {
+  transform-origin: 9.5px 17px;
+  animation: wl-draw 150ms var(--wl-ease-out) 80ms backwards;
+}
+/* A step that completes fills with a small bounce while its tick draws. */
+.wl-step-done {
+  animation: wl-step-pop 320ms var(--wl-ease-bounce) backwards;
 }
 
 /* Skeletons only show for slow loads (150 ms), then pulse; the content takes over with a fade. */
@@ -219,7 +240,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .wl-check,
-  .wl-tick,
+  .wl-tick path,
+  .wl-tick path + path,
+  .wl-step-done,
   .wl-ring,
   .wl-shake,
   .wl-wordmark-icon,

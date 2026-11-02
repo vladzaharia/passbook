@@ -1,7 +1,8 @@
-import { Check, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useChangeCount } from '../lib/motion.ts';
+import { Tick } from './checkbox.tsx';
 import { IconButton } from './icon-button.tsx';
 
 export interface ChecklistStep {
@@ -21,13 +22,10 @@ function Mark({ index, done }: { index: number; done: boolean }) {
       className={cn(
         'inline-flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums',
         done ? 'border-accent bg-accent text-accent-on' : 'border-border-strong text-fg-muted',
+        done && changed > 0 && 'wl-step-done',
       )}
     >
-      {done ? (
-        <Check key={changed} className={cn('size-3.5', changed > 0 && 'wl-check')} />
-      ) : (
-        index + 1
-      )}
+      {done ? <Tick key={changed} draw={changed > 0} className="size-3.5" /> : index + 1}
     </span>
   );
 }
