@@ -110,10 +110,18 @@ describe('magic link', () => {
     const { container } = await renderApp('/login', { session: 'anon' });
     const email = await screen.findByLabelText('Email');
     const scene = container.querySelector('.wl-login-scene') as HTMLElement;
+    // At 1440 the field spans x 553–887 and the wallet's box 779–907, at the card's right.
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      const [left, width] = this === scene ? [779, 128] : this === email ? [553, 334] : [0, 0];
+      return DOMRect.fromRect({ x: left, y: 0, width, height: 0 });
+    });
     expect(scene).not.toHaveAttribute('data-gaze');
     await user.type(email, 'ada@example.com');
     expect(scene).toHaveAttribute('data-gaze');
-    expect(Number(scene.style.getPropertyValue('--gx'))).toBeCloseTo((15 / 30) * 2 - 1);
+    // 15 characters in, the caret is left of the wallet: the eyes look left.
+    expect(Number(scene.style.getPropertyValue('--gx'))).toBeCloseTo((565 + 15 * 8.3 - 843) / 160);
     await user.tab();
     expect(scene).not.toHaveAttribute('data-gaze');
   });

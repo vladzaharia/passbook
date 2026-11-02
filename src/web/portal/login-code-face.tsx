@@ -118,7 +118,12 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
             onChange={(v) => {
               setCode(v);
               setFieldError(undefined);
-              scene.gaze(v.length / CODE_LENGTH);
+              // The eyes follow the slot the next digit goes in.
+              const slots = document
+                .getElementById(id)
+                ?.parentElement?.querySelectorAll('.wl-code-slot');
+              const slot = slots?.[Math.min(v.length, CODE_LENGTH - 1)]?.getBoundingClientRect();
+              if (slot) scene.gaze(slot.left + slot.width / 2);
             }}
             onBlur={() => scene.gaze(null)}
             inputRef={codeRef}

@@ -14,8 +14,9 @@ import { LoginScene, useLoginScene } from './login-scene.tsx';
 let bye: boolean | undefined;
 
 /**
- * The hosted sign-in page: wordmark, the wallet seated on the card's top edge, then the card.
- * The worker's SSR auth pages (src/worker/ssr/hosted.ts) mirror these metrics exactly.
+ * The hosted sign-in page: one header band (the wordmark left, the wallet seated on the card's top
+ * edge at the right), then the card. The worker's SSR auth pages (src/worker/ssr/hosted.ts)
+ * mirror these metrics exactly.
  */
 export function LoginPage({
   next: rawNext,
@@ -75,11 +76,13 @@ export function LoginPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col items-center pt-8 pb-10 sm:pt-14">
-      <div className="flex h-11 items-center justify-center">
-        <Wordmark flip={false} />
+    <div className="mx-auto flex w-full max-w-sm flex-col pt-8 pb-10 sm:pt-14">
+      <div className="wl-login-band">
+        <div className="wl-login-brand">
+          <Wordmark flip={false} size="lg" />
+        </div>
+        <LoginScene state={scene} sad={failed} bye={bye} />
       </div>
-      <LoginScene state={scene} sad={failed} bye={bye} className="mt-4" />
       <div className="relative z-10 w-full">
         <LoginCard
           next={next}
