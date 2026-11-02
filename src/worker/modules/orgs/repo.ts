@@ -146,3 +146,59 @@ export async function countsFor(db: D1Database, orgIds: string[]): Promise<Map<s
   }
   return out;
 }
+
+export type OrgState = OrgRow['status'];
+
+/** The one lookup behind every "does this org exist / may it be used" question. */
+export async function orgState(db: D1Database, id: string): Promise<OrgState | null> {
+  const row = await first<{ status: OrgState }>(db, 'SELECT status FROM orgs WHERE id = ?', [id]);
+  return row?.status ?? null;
+}
+
+/** Creating anything needs an active org. */
+export async function orgIsActive(db: D1Database, id: string): Promise<boolean> {
+  return (await orgState(db, id)) === 'active';
+}
+
+/** Reads exclude deleted orgs; a suspended one is still readable. */
+export async function orgIsReadable(db: D1Database, id: string): Promise<boolean> {
+  const state = await orgState(db, id);
+  return state !== null && state !== 'deleted';
+}
+
+export async function orgDefaultIdentityId(db: D1Database, orgId: string): Promise<string | null> {
+  const row = await first<{ default_identity_id: string | null }>(
+    db,
+    "SELECT default_identity_id FROM orgs WHERE id = ? AND status != 'deleted'",
+    [orgId],
+  );
+  return row?.default_identity_id ?? null;
+}
+
+export function orgIdentity(
+  db: D1Database,
+  orgId: string,
+): Promise<{ id: string; name: string; slug: string } | null> {
+  return first(db, "SELECT id, name, slug FROM orgs WHERE id = ? AND status != 'deleted'", [orgId]);
+}
+
+/** orgs.branding as stored (JSON text), or null when the org is gone. */
+export async function orgBrandingJson(db: D1Database, orgId: string): Promise<string | null> {
+  const row = await first<{ branding: string }>(db, 'SELECT branding FROM orgs WHERE id = ?', [
+    orgId,
+  ]);
+  return row?.branding ?? null;
+}
+
+export function orgForPass(db: D1Database, orgId: string) {
+  return first<{
+    id: string;
+    slug: string;
+    name: string;
+    status: string;
+    default_identity_id: string | null;
+    branding: string | null;
+  }>(db, 'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?', [
+    orgId,
+  ]);
+}

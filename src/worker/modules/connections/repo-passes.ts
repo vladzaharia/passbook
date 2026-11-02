@@ -140,9 +140,7 @@ export async function templateScope(
   return r ? { orgId: r.org_id, status: r.status } : null;
 }
 
-export async function orgExists(db: D1Database, orgId: string): Promise<boolean> {
-  return (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ?', [orgId])) !== null;
-}
+export { orgIsActive as orgExists } from '../orgs/repo.ts';
 
 // Webhook events and inbox
 

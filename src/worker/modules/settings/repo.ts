@@ -38,12 +38,7 @@ export async function writeScope(
   ]);
 }
 
-export async function orgExists(db: D1Database, orgId: string): Promise<boolean> {
-  return (
-    (await first(db, "SELECT 1 AS x FROM orgs WHERE id = ? AND status != 'deleted'", [orgId])) !==
-    null
-  );
-}
+export { orgIsReadable as orgExists } from '../orgs/repo.ts';
 
 /** Internal state (cron runs, identity checks). Not exposed through the settings API. */
 export async function readSystemValue(db: D1Database, key: string): Promise<unknown | null> {

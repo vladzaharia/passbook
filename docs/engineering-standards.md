@@ -21,6 +21,8 @@ Rules `npm run check` enforces, and where.
 - `routes.ts` and `*-handlers.ts` never import a repo; they call the module's service.
 - Auth stores are built per request from `c.env`; the module-level app holds no request state.
 - Barcode encoders come through `shared/pass-view/barcode-svg.ts`. Never import `bwip-js` elsewhere.
+- One module owns each shared table: `platform/counters.ts` (`counters`), `platform/workflow-runs.ts` (`workflow_runs`), `orgs/repo.ts` (org state: `orgIsActive` to create, `orgIsReadable` to read).
+- A mutation and its audit row go in one `db.batch` with `auditStmt` (`audit/repo.ts`); `recordAudit` is for audits that follow an external call.
 - Router links use typed `to` and `params`. No `as never`.
 
 ## Indexes

@@ -1,4 +1,5 @@
 import { all, first, run } from '../../platform/db.ts';
+import { orgForPass } from '../orgs/repo.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 
 export * from './repo-map.ts';
@@ -93,16 +94,7 @@ export interface PassOrg {
 }
 
 export async function getOrg(db: D1Database, orgId: string): Promise<PassOrg | null> {
-  const row = await first<{
-    id: string;
-    slug: string;
-    name: string;
-    status: string;
-    default_identity_id: string | null;
-    branding: string | null;
-  }>(db, 'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?', [
-    orgId,
-  ]);
+  const row = await orgForPass(db, orgId);
   if (!row) return null;
   let branding: unknown = {};
   try {

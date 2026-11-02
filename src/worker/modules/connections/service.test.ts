@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import * as actions from './actions.ts';
 import { setDeps } from './deps.ts';
@@ -162,6 +162,15 @@ describe('create', () => {
       [kit.org.id],
     );
     expect(count?.n).toBe(0);
+  });
+
+  it('refuses a deleted or suspended org with ORG_NOT_FOUND', async () => {
+    for (const status of ['deleted', 'suspended']) {
+      await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
+      const err = await createDemo(kit).catch((e: ValidationError) => e);
+      expect(err, status).toBeInstanceOf(ValidationError);
+      expect((err as ValidationError).code).toBe('ORG_NOT_FOUND');
+    }
   });
 
   it('reports invalid secrets by field', async () => {

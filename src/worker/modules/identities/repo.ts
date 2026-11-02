@@ -88,21 +88,7 @@ export function getDefaultRow(db: D1Database): Promise<IdentityRow | null> {
   return first<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities WHERE is_default = 1`);
 }
 
-export async function orgDefaultIdentityId(db: D1Database, orgId: string): Promise<string | null> {
-  const row = await first<{ default_identity_id: string | null }>(
-    db,
-    "SELECT default_identity_id FROM orgs WHERE id = ? AND status != 'deleted'",
-    [orgId],
-  );
-  return row?.default_identity_id ?? null;
-}
-
-export async function orgExists(db: D1Database, orgId: string): Promise<boolean> {
-  return (
-    (await first(db, "SELECT 1 AS x FROM orgs WHERE id = ? AND status != 'deleted'", [orgId])) !==
-    null
-  );
-}
+export { orgDefaultIdentityId, orgIsReadable as orgExists } from '../orgs/repo.ts';
 
 export function getCredentialBlob(db: D1Database, id: string): Promise<CredentialBlob | null> {
   return first<CredentialBlob>(

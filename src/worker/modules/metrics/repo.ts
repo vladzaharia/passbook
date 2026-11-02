@@ -141,9 +141,7 @@ export function signInRows(db: D1Database, w: Window, scope: Scope) {
   );
 }
 
-export async function orgExists(db: D1Database, orgId: string): Promise<boolean> {
-  return (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ?', [orgId])) !== null;
-}
+export { orgIsReadable as orgExists } from '../orgs/repo.ts';
 
 export interface RecentRow {
   at: number;

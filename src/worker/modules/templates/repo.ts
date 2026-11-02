@@ -316,12 +316,7 @@ export async function deleteTemplate(db: D1Database, id: string): Promise<void> 
   await run(db, 'DELETE FROM templates WHERE id = ?', [id]);
 }
 
-export async function getOrgName(
-  db: D1Database,
-  orgId: string,
-): Promise<{ id: string; name: string; slug: string } | null> {
-  return first(db, "SELECT id, name, slug FROM orgs WHERE id = ? AND status != 'deleted'", [orgId]);
-}
+export { orgIdentity as getOrgName } from '../orgs/repo.ts';
 
 // Import progress
 

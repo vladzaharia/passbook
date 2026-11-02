@@ -1,6 +1,7 @@
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
+import { orgBrandingJson } from '../orgs/repo.ts';
 
 export type OutboxState =
   | 'pending'
@@ -298,11 +299,9 @@ export interface OrgBranding {
 
 /** orgs.branding as written by the org form. Invalid JSON reads as empty. */
 export async function orgBranding(db: D1Database, orgId: string): Promise<OrgBranding> {
-  const row = await first<{ branding: string }>(db, 'SELECT branding FROM orgs WHERE id = ?', [
-    orgId,
-  ]);
-  if (!row) return {};
-  const parsed = OrgBrandingSchema.safeParse(JSON.parse(row.branding));
+  const branding = await orgBrandingJson(db, orgId);
+  if (branding === null) return {};
+  const parsed = OrgBrandingSchema.safeParse(JSON.parse(branding));
   return parsed.success ? parsed.data : {};
 }
 
