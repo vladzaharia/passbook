@@ -47,7 +47,7 @@ describe('templates list', () => {
     expect(screen.getByText('2 templates')).toBeInTheDocument();
   });
 
-  it('searches by name and shows a Version column in the table view', async () => {
+  it('searches by name and shows an Updated column in the table view', async () => {
     const user = userEvent.setup();
     const seen: URL[] = [];
     const { router } = await renderApp('/admin/templates?view=table', {
@@ -60,7 +60,7 @@ describe('templates list', () => {
         },
       },
     });
-    expect(await screen.findByRole('columnheader', { name: 'Version' })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: 'Updated' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'Status' })).toBeNull();
     await user.type(screen.getByRole('searchbox', { name: 'Search templates' }), 'henry');
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('q')).toBe('henry'));

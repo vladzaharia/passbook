@@ -112,6 +112,10 @@ function Loaded({
   const orgId = t.orgId ?? scope;
   const newPass = { ...(orgId ? { orgId } : {}), templateId: t.id };
   const passes = `${t.passCount} ${t.passCount === 1 ? 'pass' : 'passes'}`;
+  // Hashes stay in the Versions tab; elsewhere the active version is its number.
+  const byAge = [...t.versions].sort((a, b) => a.createdAt - b.createdAt);
+  const activeAt = byAge.findIndex((v) => v.version === t.activeVersion);
+  const versionLabel = activeAt >= 0 ? `Version ${activeAt + 1}` : null;
 
   const stage = (size: 'column' | 'card' | 'sheet') =>
     preview.data ? (
@@ -121,11 +125,7 @@ function Loaded({
         assetNames={preview.data.assetNames}
         enter={size !== 'sheet' && !minted && deal}
         mint={mint}
-        label={
-          t.activeVersion ? (
-            <span className="font-mono">{t.activeVersion.slice(0, 8)}</span>
-          ) : undefined
-        }
+        label={versionLabel ?? undefined}
       />
     ) : preview.isError ? (
       <ErrorState error={preview.error} onRetry={() => void preview.refetch()} />
@@ -231,7 +231,7 @@ function Loaded({
             items={[
               { label: 'Organization', value: t.orgName ?? 'All organizations' },
               { label: 'Passes', value: passes },
-              { label: 'Version', value: t.activeVersion?.slice(0, 8) ?? null, mono: true },
+              { label: 'Version', value: versionLabel },
             ]}
           />
         }

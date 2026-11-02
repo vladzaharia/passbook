@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
+import { formatDay } from '../../lib/format.ts';
 import { BELOW_MD, useMediaQuery } from '../../lib/media.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
@@ -67,13 +68,11 @@ function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
       cell: ({ row }) => styleList(row.original.styles),
     },
     {
-      id: 'version',
-      header: 'Version',
-      meta: { hideBelow: 'xl' },
+      id: 'updated',
+      header: 'Updated',
+      meta: { hideBelow: 'xl', nowrap: true },
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-fg-muted">
-          {row.original.activeVersion?.slice(0, 8) ?? '—'}
-        </span>
+        <span className="text-fg-muted tabular-nums">{formatDay(row.original.updatedAt)}</span>
       ),
     },
     {
