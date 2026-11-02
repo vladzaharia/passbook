@@ -220,12 +220,13 @@ export function buildLayout(
         : style === 'boardingPass' && schemes.includes('semanticBoardingPass')
           ? flightSemantics(pass, ctx)
           : undefined;
+  const gate = semantic?.kind === 'flight' ? semantic.gate : undefined;
   return {
     target,
     style: choice.degraded ? 'generic' : style,
     poster: choice.poster,
     degraded: choice.degraded,
-    header,
+    header: gate ? header.filter((f) => f.text !== gate) : header,
     primary,
     secondary,
     auxiliary,
