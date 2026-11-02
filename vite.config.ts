@@ -48,6 +48,8 @@ function radixNoInlineStyles(): Plugin {
 const e2eConfig =
   process.env.WALLET_E2E === '1'
     ? {
+        // tools/e2e-server.ts migrates a fresh database here on every start.
+        persistState: { path: '.wrangler/e2e-state' },
         config: (c: { vars?: Record<string, unknown> }) => ({
           vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
           env: { e2e: {} },

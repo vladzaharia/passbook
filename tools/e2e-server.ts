@@ -41,10 +41,15 @@ const env = {
 };
 
 execFileSync('node', ['tools/build-templates.ts'], { cwd: root, stdio: 'inherit' });
-execFileSync('npx', ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local'], {
-  cwd: root,
-  stdio: 'inherit',
-});
+// A fresh database every run: day-scoped caps (magic links per IP) would otherwise carry over
+// from earlier runs and refuse sign-in mail. vite.config.ts points the e2e Worker here too.
+const state = resolve(root, '.wrangler/e2e-state');
+rmSync(state, { recursive: true, force: true });
+execFileSync(
+  'npx',
+  ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
+  { cwd: root, stdio: 'inherit' },
+);
 
 children.push(
   spawn('node', ['test/mock-oidc/server.ts', '5174'], { cwd: root, stdio: 'inherit', env }),
