@@ -126,6 +126,20 @@ export function viewTransitionOption() {
   return typed ? { types: routeTransitionTypes } : false;
 }
 
+/** True once `pending` has lasted `ms`: loading states and waiting beats that would only flash stay off. */
+export function useLasting(pending: boolean, ms = 150): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!pending) {
+      setOn(false);
+      return;
+    }
+    const t = setTimeout(() => setOn(true), ms);
+    return () => clearTimeout(t);
+  }, [pending, ms]);
+  return on;
+}
+
 /** Counts renders where `value` changed after mount: a key that replays a one-shot animation. */
 export function useChangeCount(value: unknown): number {
   const prev = useRef(value);

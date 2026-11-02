@@ -469,6 +469,9 @@ describe('template upload', () => {
     await fill(user);
     expect(await screen.findByText('Checking files and images')).toBeInTheDocument();
     expect(await screen.findByText('New template')).toBeInTheDocument();
+    // One buddy: it leaves the drop zone for the done card.
+    expect(document.querySelectorAll('[data-buddy]')).toHaveLength(1);
+    expect(document.querySelector('.wl-drop [data-buddy]')).toBeNull();
     expect(screen.getByText('Dropped unused slot.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open template' })).toHaveAttribute(
       'href',

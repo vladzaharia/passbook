@@ -99,7 +99,30 @@
   border-color: var(--pk-accent);
 }
 
+/* After a create, the buddy stands at the card's bottom-right corner, under its layer (z -1 in
+   the sticky column), and looks up at the pass. */
+.wl-pass-buddy {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: -1;
+  --wl-sigh-delay: 900ms;
+  pointer-events: none;
+}
+.wl-pass-buddy [data-look] {
+  transform: translate(-1px, -0.5px);
+}
+@keyframes wl-step-out {
+  from {
+    transform: translateY(-44px);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  /* It steps out from behind the pass once the card has landed, then hops (its happy beat). */
+  .wl-pass-buddy {
+    animation: wl-step-out 420ms var(--wl-ease-spring) 520ms backwards;
+  }
   .wl-chevron {
     transition: transform 200ms var(--wl-ease-out);
   }
@@ -118,6 +141,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .wl-pass-buddy,
   .wl-unsaved,
   .wl-diff-rise > * {
     transform: none;
