@@ -136,6 +136,7 @@ export function CreateConnectionWizard() {
     },
     onSuccess: async ({ connection, webhookSecret }) => {
       await qc.invalidateQueries({ queryKey: connectionKeys.all });
+      void qc.invalidateQueries({ queryKey: ['palette'] });
       setCreated({ id: connection.id, url: connection.webhookUrl, secret: webhookSecret });
     },
   });

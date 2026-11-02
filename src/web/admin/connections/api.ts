@@ -70,7 +70,11 @@ export type ConnectionPatch = z.input<typeof UpdateConnectionSchema>;
 
 export function useConnectionActions(id: string) {
   const qc = useQueryClient();
-  const done = () => qc.invalidateQueries({ queryKey: connectionKeys.all });
+  const done = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: connectionKeys.all }),
+      qc.invalidateQueries({ queryKey: ['palette'] }),
+    ]);
   return {
     update: useMutation({
       mutationFn: (patch: ConnectionPatch) =>

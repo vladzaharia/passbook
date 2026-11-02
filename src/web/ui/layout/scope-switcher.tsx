@@ -12,8 +12,9 @@ const ALL = 'all';
 export function ScopeSwitcher() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { orgId, setOrgId } = useOrgScope();
-  const { data } = useOrgOptions();
-  if (!isOrgScoped(pathname)) return null;
+  const scoped = isOrgScoped(pathname);
+  const { data } = useOrgOptions(scoped);
+  if (!scoped) return null;
   const options = [
     {
       value: ALL,

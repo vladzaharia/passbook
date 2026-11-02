@@ -47,8 +47,8 @@ export function EntityPicker({
   const users = useUserSearch(kind === 'user' ? term : '');
   const passes = useRecentPassSearch(kind === 'pass' ? term : '');
   const orgs = useOrgOptions(kind === 'org');
-  const templates = useTemplateOptions(kind === 'template');
-  const connections = useConnectionOptions(kind === 'connection');
+  const templates = useTemplateOptions(kind === 'template', term);
+  const connections = useConnectionOptions(kind === 'connection', term);
   const Icon = ENTITY[kind].icon;
   const icon = <Icon aria-hidden className="size-4 shrink-0 text-fg-muted" />;
   const named = <T extends { id: string; name: string }>(list: readonly T[] | undefined) =>

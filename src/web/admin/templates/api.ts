@@ -77,7 +77,11 @@ export function useTemplatePreview(id: string, version?: string) {
 
 export function useTemplateActions(id: string) {
   const qc = useQueryClient();
-  const done = () => qc.invalidateQueries({ queryKey: templateKeys.all });
+  const done = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: templateKeys.all }),
+      qc.invalidateQueries({ queryKey: ['palette'] }),
+    ]);
   return {
     activate: useMutation({
       mutationFn: (input: { version: string; rebuildPasses: boolean }) =>
