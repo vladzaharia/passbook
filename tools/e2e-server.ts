@@ -25,6 +25,8 @@ writeDevVars(varsFile, {
   SIGNER_PLATFORM_CERTIFICATE: fixture.certificate,
   SIGNER_PLATFORM_PRIVATE_KEY: fixture.privateKey,
   SIGNER_PLATFORM_INTERMEDIATE: fixture.intermediate,
+  // A short admin sync window, so e2e/05-connections.spec.ts need not wait out 30 s.
+  ADMIN_SYNC_BUCKET_MS: '2000',
   // Token used by e2e/11-breakglass.spec.ts.
   BREAKGLASS_TOKEN_SHA256: createHash('sha256').update('wbg_e2e-breakglass-token').digest('hex'),
 });

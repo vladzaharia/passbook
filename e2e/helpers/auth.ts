@@ -30,14 +30,8 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
       headers: { ...response.headers(), location: location.toString() },
     });
   });
-  // RL_LOGIN allows 10 starts a minute per IP and is enforced locally too. Wait out the window
-  // instead of failing when a run's logins bunch up.
-  for (let attempt = 0; attempt < 8; attempt++) {
-    await page.goto(`/auth/oidc/start?next=${encodeURIComponent(next)}`);
-    if (!(await page.content()).includes('RATE_LIMITED')) return;
-    await page.waitForTimeout(8_000);
-  }
-  throw new Error('OIDC start stayed rate limited');
+  // The e2e server raises RL_LOGIN (vite.config.ts), so starts never bunch up against the limit.
+  await page.goto(`/auth/oidc/start?next=${encodeURIComponent(next)}`);
 }
 
 export async function signInAs(page: Page, role: Role, next = '/') {

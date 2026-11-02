@@ -48,8 +48,20 @@ function radixNoInlineStyles(): Plugin {
 const e2eConfig =
   process.env.WALLET_E2E === '1'
     ? {
-        config: (c: { vars?: Record<string, unknown> }) => ({
-          vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '' },
+        config: (c: {
+          vars?: Record<string, unknown>;
+          ratelimits?: {
+            name: string;
+            namespace_id: string;
+            simple: { limit: number; period: 10 | 60 };
+          }[];
+        }) => ({
+          vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
+          // A suite signs in many times from one IP; production limits stay in wrangler.jsonc.
+          ratelimits: c.ratelimits?.map((r) => ({
+            ...r,
+            simple: { ...r.simple, limit: 100_000 },
+          })),
           env: { e2e: {} },
         }),
       }

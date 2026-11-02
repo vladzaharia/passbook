@@ -14,7 +14,7 @@ import { toDto } from './dto.ts';
 import { patchConnection, summary } from './repo.ts';
 import { finishRun, insertRun, listRuns } from './repo-runs.ts';
 import { classify, prepare } from './runtime.ts';
-import { adminInstanceId, startSync } from './schedule.ts';
+import { adminBucketMs, adminInstanceId, startSync } from './schedule.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import { auditActor, requireConnection } from './service.ts';
 import { firstRecord, sampleFields } from './test-config.ts';
@@ -90,7 +90,7 @@ export async function syncNow(
   if (!(await isOrgActive(sctx, conn.orgId))) {
     throw new ConflictError('The organization is not active.', 'ORG_INACTIVE');
   }
-  const instanceId = adminInstanceId(id, sctx.clock.now());
+  const instanceId = adminInstanceId(id, sctx.clock.now(), adminBucketMs(sctx.env));
   const started = await startSync(sctx, conn, 'admin', instanceId, actor.id);
   await recordAudit(sctx, {
     orgId: conn.orgId,

@@ -5,7 +5,8 @@ import { readSeed } from './helpers/seed.ts';
 test.use({ storageState: 'e2e/.auth/admin.json' });
 test.setTimeout(120_000);
 
-const SYNC_BUCKET_MS = 30_000;
+/** ADMIN_SYNC_BUCKET_MS in tools/e2e-server.ts. */
+const SYNC_BUCKET_MS = 2_000;
 
 test('demo connection: create, test, sync creates passes, resync updates them', async ({
   page,
@@ -85,9 +86,8 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await api.send('PATCH', `/api/v1/connections/${connectionId}`, {
     config: { count: 3, holderDomain: domain, revision: 1 },
   });
-  // Admin syncs in the same 30 s bucket share one workflow instance (by design), so wait it out.
-  const wait = (firstBucket + 1) * SYNC_BUCKET_MS - Date.now();
-  if (wait > 0) await page.waitForTimeout(wait + 500);
+  // Admin syncs in the same bucket share one workflow instance (by design): wait for the next one.
+  await expect.poll(() => Math.floor(Date.now() / SYNC_BUCKET_MS) > firstBucket).toBe(true);
   await page.getByRole('button', { name: 'Sync now' }).click();
   await expect
     .poll(

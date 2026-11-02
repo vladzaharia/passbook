@@ -1,4 +1,5 @@
 import { connectors } from '../../connectors/registry.ts';
+import { envString } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { schedules } from './health.ts';
 import { type ConnectionRow, listDueConnections, patchConnection } from './repo.ts';
@@ -15,6 +16,12 @@ const DUE_BATCH = 100;
 const STUCK_MS = 30 * 60_000;
 const ADMIN_BUCKET_MS = 30_000;
 
+/** `ADMIN_SYNC_BUCKET_MS` shortens the window for e2e runs; unset or invalid keeps 30 s. */
+export function adminBucketMs(env: object): number {
+  const n = Number(envString(env, 'ADMIN_SYNC_BUCKET_MS'));
+  return Number.isInteger(n) && n >= 100 ? n : ADMIN_BUCKET_MS;
+}
+
 function alreadyExists(error: unknown): boolean {
   return error instanceof Error && /already.?exist|instance.*exists/i.test(error.message);
 }
@@ -24,8 +31,8 @@ export function scheduledInstanceId(conn: Pick<ConnectionRow, 'id' | 'nextRunAt'
 }
 
 /** Same-bucket requests share an instance, so a double click is one run. */
-export function adminInstanceId(connectionId: string, now: number): string {
-  return `sync-${connectionId}-admin-${Math.floor(now / ADMIN_BUCKET_MS)}`;
+export function adminInstanceId(connectionId: string, now: number, bucketMs: number): string {
+  return `sync-${connectionId}-admin-${Math.floor(now / bucketMs)}`;
 }
 
 /** Records the tracking rows, then creates the workflow instance (an existing id counts as started). */

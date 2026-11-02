@@ -23,7 +23,7 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
 
   await page.getByLabel('Member name').fill(memberName);
   await page.getByLabel('Member number').fill(memberId);
-  await page.getByLabel('Membership').fill('E2E Plan');
+  await page.getByRole('textbox', { name: 'Membership' }).fill('E2E Plan');
   // Live preview follows the form (debounced).
   const preview = page.getByRole('region', { name: /preview/i }).or(page.locator('main'));
   await expect(preview.getByText(memberName).first()).toBeVisible();
