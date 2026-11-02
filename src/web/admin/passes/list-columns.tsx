@@ -3,13 +3,11 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { type CSSProperties, createContext, useContext } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
+import type { Swatch } from '../../lib/swatches.ts';
 import { Checkbox, StatusIcon } from '../../ui/index.ts';
 import { PassRowMenu } from './row-menu.tsx';
 
-export interface Swatch {
-  background: string;
-  foreground: string;
-}
+export type { Swatch };
 
 /** What the cells read. Cells are stable components; this context carries what changes. */
 export interface ListContextValue {
@@ -37,9 +35,14 @@ export function PassChip({ swatch, voided }: { swatch: Swatch | undefined; voide
     <span
       aria-hidden
       data-voided={voided || undefined}
+      data-image={swatch?.image ? '' : undefined}
       style={
         swatch
-          ? ({ '--chip-bg': swatch.background, '--chip-fg': swatch.foreground } as CSSProperties)
+          ? ({
+              '--chip-bg': swatch.background,
+              '--chip-fg': swatch.foreground,
+              ...(swatch.image ? { backgroundImage: `url("${swatch.image}")` } : {}),
+            } as CSSProperties)
           : undefined
       }
       className="wl-pass-chip"

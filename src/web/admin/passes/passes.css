@@ -32,6 +32,14 @@
   width: 11px;
   opacity: 0.35;
 }
+.wl-pass-chip[data-image] {
+  background-position: center;
+  background-size: cover;
+}
+.wl-pass-chip[data-image]::before,
+.wl-pass-chip[data-image]::after {
+  display: none;
+}
 .wl-pass-chip[data-voided] {
   opacity: 0.4;
 }
