@@ -6,6 +6,7 @@ import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { createServiceContext, type ServiceContext } from '../platform/service-context.ts';
 import { CRON_QUERY_BUDGET, countQueries } from './query-counter.ts';
@@ -20,6 +21,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   [MINUTE_CRON]: [
     { name: 'delivery.sweep', run: sweepDelivery },
     { name: 'connections.schedule', run: reconcileConnections },
+    { name: 'templates.sync', run: syncBakedOnDeploy },
   ],
   [DAILY_CRON]: [
     { name: 'passes.retention', run: dailyPasses },

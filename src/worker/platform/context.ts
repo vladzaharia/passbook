@@ -37,7 +37,8 @@ export function actorOf(auth: AuthContext | undefined): Actor {
 
 export interface ContextOptions {
   clock?: Clock;
-  stores: AuthStores;
+  /** A factory is called per request with that request's env, so nothing outlives the request. */
+  stores: AuthStores | ((env: AppEnv) => AuthStores);
   logger?: (base: Record<string, unknown>) => Logger;
 }
 
@@ -51,7 +52,7 @@ export function requestContext(options: ContextOptions) {
     c.set('clock', clock);
     c.set('ids', ids);
     c.set('nonce', btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))));
-    c.set('stores', options.stores);
+    c.set('stores', typeof options.stores === 'function' ? options.stores(c.env) : options.stores);
     const base = { requestId, build: c.env.CF_VERSION?.id };
     c.set('log', options.logger ? options.logger(base) : createLogger(base));
     c.header('x-request-id', requestId);

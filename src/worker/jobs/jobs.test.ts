@@ -2,7 +2,10 @@ import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test'
 import { env } from 'cloudflare:workers';
 import { describe, expect, it, vi } from 'vitest';
 import { makeEnv } from '../../../test/helpers/index.ts';
+import { resetBakedSync, syncBakedTemplates } from '../modules/templates/sync.ts';
+import { first } from '../platform/db.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { createServiceContext } from '../platform/service-context.ts';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled, MINUTE_CRON } from './cron.ts';
 import { CRON_QUERY_BUDGET } from './query-counter.ts';
 import { handleQueue } from './queue.ts';
@@ -220,5 +223,34 @@ describe('cron dispatcher', () => {
       hooks.splice(0, hooks.length, ...original);
       warn.mockRestore();
     }
+  });
+});
+
+describe('baked template sync', () => {
+  it('runs on the minute cron so the first template request copies nothing', async () => {
+    resetBakedSync();
+    const appEnv = await makeEnv();
+    const ctx = createExecutionContext();
+    await handleScheduled(
+      {
+        cron: MINUTE_CRON,
+        scheduledTime: Date.now(),
+        type: 'scheduled',
+        noRetry() {},
+      } as unknown as ScheduledController,
+      appEnv,
+      ctx,
+    );
+    await waitOnExecutionContext(ctx);
+    expect(
+      await first<{ value: string }>(
+        env.DB,
+        "SELECT value FROM settings WHERE scope = 'system' AND key = 'templates.baked_hash'",
+      ),
+    ).not.toBeNull();
+    resetBakedSync();
+    const puts = vi.spyOn(appEnv.BUCKET, 'put');
+    await syncBakedTemplates(createServiceContext(appEnv));
+    expect(puts).not.toHaveBeenCalled();
   });
 });

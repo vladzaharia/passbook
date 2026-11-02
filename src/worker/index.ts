@@ -8,11 +8,12 @@ export { BulkReissue } from './workflows/bulk-reissue.ts';
 export { ConnectionSync } from './workflows/connection-sync.ts';
 export { TemplateImport } from './workflows/template-import.ts';
 
+/** Holds routes only. Stores are built from each request's env inside the app. */
 let app: ReturnType<typeof createApp> | undefined;
 
 export default {
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
-    app ??= createApp({ stores: createAuthStores(env) });
+    app ??= createApp({ stores: createAuthStores });
     return app.fetch(request, env, ctx);
   },
   queue: (batch: MessageBatch<unknown>, env: AppEnv, ctx: ExecutionContext) =>

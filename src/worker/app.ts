@@ -21,6 +21,7 @@ import { usersRoutes } from './modules/users/routes.ts';
 import { type AuthStores, denyAllStores } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
+import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { securityHeaders } from './platform/security-headers.ts';
 
@@ -33,7 +34,7 @@ const defaultBodyLimit: MiddlewareHandler = (c, next) =>
 
 export interface AppOptions {
   /** Session and API-key stores. Production wiring lives in stores.ts; tests pass fakes. */
-  stores?: AuthStores;
+  stores?: AuthStores | ((env: AppEnv) => AuthStores);
   clock?: Clock;
 }
 

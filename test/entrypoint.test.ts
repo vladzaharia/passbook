@@ -35,6 +35,39 @@ describe('worker entrypoint', () => {
     expect(await anon.json()).toMatchObject({ authenticated: false });
   });
 
+  it('resolves sessions against the env of each request, not the first one seen', async () => {
+    const f = fixtures(await makeEnv({ DB: env.DB }), new ManualClock(Date.now()));
+    const user = await makeUser(f);
+    const session = await makeSession(f, { userId: user.id });
+    const request = () =>
+      new Request('https://wallet.test/api/v1/session', {
+        headers: { cookie: session.headers.cookie ?? '' },
+      });
+    const run = async (e: Awaited<ReturnType<typeof makeEnv>>) => {
+      const ctx = createExecutionContext();
+      const res = await worker.fetch(request(), e, ctx);
+      await waitOnExecutionContext(ctx);
+      return res;
+    };
+    await run(await makeEnv({ DB: env.DB }));
+    let prepared = 0;
+    const counting = new Proxy(env.DB, {
+      get(target, prop) {
+        if (prop === 'prepare') {
+          return (sql: string) => {
+            prepared++;
+            return target.prepare(sql);
+          };
+        }
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const second = await run(await makeEnv({ DB: counting }));
+    expect(await second.json()).toMatchObject({ authenticated: true });
+    expect(prepared).toBeGreaterThan(0);
+  });
+
   it('exports a queue consumer that acks invalid messages', async () => {
     const batch = createMessageBatch('wallet-jobs', [
       { id: 'm1', timestamp: new Date(), attempts: 1, body: { kind: 'nope' } },

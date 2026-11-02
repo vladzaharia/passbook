@@ -3,7 +3,7 @@
   "name": "wallet",
   "main": "src/worker/index.ts",
   "account_id": "07a2eb0d4916b220da1f9c1387b5f6d8",
-  "compatibility_date": "2026-07-30",
+  "compatibility_date": "2026-08-14",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
