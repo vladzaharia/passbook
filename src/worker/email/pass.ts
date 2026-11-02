@@ -12,7 +12,10 @@ export interface PassEmailInput {
   downloadUrl: string;
   /** The public pass page. */
   manageUrl: string;
-  /** Apple's badge PNG at @2x (absolute URL). */
+  /**
+   * Apple's black badge PNG at @2x (absolute URL). It sits on a white cell that dark mail clients
+   * keep, so it never lands on a dark card until the outline artwork ships.
+   */
   badgeUrl: string;
   attached: boolean;
   /** The pass's title (display title, else its description). */
@@ -101,7 +104,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     `<p class="e-muted" style="margin:${margin};font-size:14px;line-height:20px;color:${c.muted}">${line}</p>`;
   const body = `<p class="e-strong" style="margin:0 0 16px;font-size:20px;line-height:28px;font-weight:600;color:${c.strong}">Your pass is ready</p>
 ${passBlock(input, fields)}
-<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;padding:4px;border-radius:12px;background:#ffffff;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
 <p style="margin:0 0 16px">${buttonHtml(input.manageUrl, 'Open your pass', false, link)}</p>
 ${muted('0 0 24px', ADD_LINE)}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
