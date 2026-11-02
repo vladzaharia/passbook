@@ -18,7 +18,12 @@ describe('isInAppBrowser', () => {
     expect(isInAppBrowser(SAFARI)).toBe(false);
     expect(isInAppBrowser(SAFARI.replace('Version/18.0', 'CriOS/126.0'))).toBe(false);
     expect(
-      isInAppBrowser('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15'),
+      isInAppBrowser(
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+      ),
+    ).toBe(false);
+    expect(
+      isInAppBrowser('Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36'),
     ).toBe(false);
   });
 });
