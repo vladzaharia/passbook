@@ -68,4 +68,4 @@ Org names and the sender name reject controls, line separators and bidi marks at
 
 ## Dev advisories
 
-`npm audit` and `npm audit --omit=dev` report 0. Overrides in `package.json` pin `undici` 7.30.1 and `sharp` 0.35.5 inside `miniflare`, and `zod` 4.6.7 inside `@cloudflare/vitest-pool-workers`. Drop them once the Cloudflare packages ship fixed ranges. `@cloudflare/vite-plugin` stays at 1.64.0: the fixed 1.66.0 is under 14 days old.
+`npm audit` and `npm audit --omit=dev` report 0. Overrides in `package.json` pin `undici` 7.30.1 and `sharp` 0.35.5 inside `miniflare`, and `zod` 4.6.7 inside `@cloudflare/vitest-plugin`. Drop them once the Cloudflare packages ship fixed ranges. `@cloudflare/vite-plugin` stays at 1.64.0: the fixed 1.66.0 is under 14 days old.

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2023"],
     "jsx": "react-jsx",
-    "types": ["node", "@cloudflare/vitest-pool-workers/types"]
+    "types": ["node", "@cloudflare/vitest-plugin/types"]
   },
   "include": [
     "src/worker",
