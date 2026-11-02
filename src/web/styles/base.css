@@ -48,8 +48,10 @@ html[data-modality="pointer"]
   outline: none;
 }
 
-/* Holder pages honour the iOS text size (Dynamic Type); Tailwind sizes are rem. */
-@supports (font: -apple-system-body) {
+/* Holder pages honour the iOS text size (Dynamic Type); Tailwind sizes are rem. iOS only
+   (-webkit-touch-callout): macOS Safari also knows -apple-system-body, as 13 px, which shrank
+   every rem on the page to 81%. */
+@supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
   html:has(.wl-portal) {
     /* biome-ignore lint/a11y/useGenericFontNames: a system text style (Dynamic Type), not a family */
     font: -apple-system-body;
