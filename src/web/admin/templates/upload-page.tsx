@@ -86,12 +86,15 @@ export function TemplateUploadPage({
     setInfo(read);
     if (!version && read.name && !name) setName(read.name);
   }
+  // A file the server refuses outright never starts an import; the drop zone shows the refusal.
+  const [rejected, setRejected] = useState(0);
   async function send(f: File | undefined = file) {
     if (!f) return;
     const res = await upload
       .mutateAsync({ file: f, orgId, name: name.trim() || undefined })
       .catch(() => undefined);
     if (res) setUploadId(res.uploadId);
+    else setRejected((n) => n + 1);
   }
 
   const working = Boolean(uploadId) && !finished && !failed && !status.isError;
@@ -139,6 +142,7 @@ export function TemplateUploadPage({
         disabled={working || upload.isPending}
         landed={landed}
         failed={failed ? failedPiece(s?.error ?? null) : undefined}
+        rejected={rejected}
         onFile={(f) => {
           void choose(f);
           // After a failure the fix goes straight up, with the same org and name.

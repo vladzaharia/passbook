@@ -542,6 +542,8 @@ describe('template upload', () => {
     });
     await fill(user);
     expect(await screen.findByRole('alert')).toHaveTextContent('File is over 15 MB.');
+    // Refused outright: the drop zone shakes and its header piece slides out.
+    expect(document.querySelector('.wl-drop')).toHaveAttribute('data-rejected');
   });
 
   it('rejects other file types before upload and keeps Upload disabled', async () => {
@@ -555,6 +557,7 @@ describe('template upload', () => {
     await user.upload(input, new File(['x'], 'notes.txt', { type: 'text/plain' }));
     expect(await screen.findByText('Choose a .zip or .pkpasstemplate.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Upload' })).toBeDisabled();
+    expect(document.querySelector('.wl-drop')).toHaveAttribute('data-rejected');
   });
 
   it('has no axe violations', async () => {

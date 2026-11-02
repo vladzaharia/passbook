@@ -1,5 +1,5 @@
 import { unzip } from 'fflate';
-import { type DragEvent, useId, useRef, useState } from 'react';
+import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
 import { Button, EntityArt } from '../../ui/index.ts';
@@ -61,6 +61,7 @@ export function UploadDrop({
   disabled,
   landed,
   failed,
+  rejected = 0,
   done,
   compact,
 }: {
@@ -70,25 +71,43 @@ export function UploadDrop({
   disabled?: boolean;
   landed?: number | undefined;
   failed?: number | undefined;
+  /** Bump when the server refuses the file outright: the header piece slides out, one shake. */
+  rejected?: number;
   done?: boolean;
   compact?: boolean;
 }) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
+  const zone = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState(false);
   const [error, setError] = useState<string>();
+  const [refused, setRefused] = useState(0);
+  // Every refusal, ours or the server's, replays the slide-out and the shake.
+  const rejections = refused + rejected;
+  useEffect(() => {
+    const el = zone.current;
+    if (!el || rejections === 0) return;
+    el.removeAttribute('data-rejected');
+    void el.offsetWidth;
+    el.setAttribute('data-rejected', '');
+  }, [rejections]);
   const take = (f: File | undefined) => {
     if (!f) return;
-    if (!/\.(zip|pkpasstemplate)$/i.test(f.name))
-      return setError('Choose a .zip or .pkpasstemplate.');
-    if (f.size > MAX_BYTES) return setError('The archive is larger than 15 MB.');
-    setError(undefined);
+    const problem = !/\.(zip|pkpasstemplate)$/i.test(f.name)
+      ? 'Choose a .zip or .pkpasstemplate.'
+      : f.size > MAX_BYTES
+        ? 'The archive is larger than 15 MB.'
+        : undefined;
+    setError(problem);
+    if (problem) return setRefused((n) => n + 1);
+    zone.current?.removeAttribute('data-rejected');
     onFile(f);
   };
   return (
     <div className="flex flex-col gap-1">
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the button inside is the control */}
       <div
+        ref={zone}
         data-drag={drag || undefined}
         data-landed={landed}
         data-failed={failed}
