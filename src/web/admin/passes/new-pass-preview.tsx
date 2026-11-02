@@ -1,8 +1,10 @@
+import { Eye } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
-import { EntityArt, Skeleton } from '../../ui/index.ts';
+import { useMediaQuery } from '../../lib/media.ts';
+import { Button, Card, Dialog, DialogContent, EntityArt, Skeleton } from '../../ui/index.ts';
 import { useDraftPreview } from '../templates/api.ts';
 import { PassPreview } from './pass-preview.tsx';
 import {
@@ -28,27 +30,32 @@ export function withGhosts(schema: unknown, sample: FormValues, input: FormValue
   return out;
 }
 
-/**
- * The wizard's live card, as the org's pass. Until the details are valid it shows sample values,
- * muted; it deals in once when they first are, then follows edits without motion.
- */
-export function LivePreview({
-  templateId,
-  orgId,
-  schema,
-  sample,
-  input,
-  transitionName,
-  onPreview,
-}: {
+export interface LivePreviewInput {
   templateId: string | undefined;
   orgId: string | undefined;
   schema: unknown;
   sample: FormValues;
   input: FormValues;
-  transitionName?: string | undefined;
-  onPreview?: (preview: Preview | undefined) => void;
-}) {
+}
+
+export interface LivePreviewState {
+  templateId: string | undefined;
+  preview: Preview | undefined;
+  /** The details were valid once: the card dealt in and stops looking like a sample. */
+  dealt: boolean;
+}
+
+/**
+ * The wizard's live preview data. Runs whether or not the card is on screen, so Review can list
+ * the preview's warnings at every width.
+ */
+export function useLivePreview({
+  templateId,
+  orgId,
+  schema,
+  sample,
+  input,
+}: LivePreviewInput): LivePreviewState {
   const valid = useMemo(
     () =>
       schema !== undefined && Object.keys(validateValues(schema, cleanValues(input))).length === 0,
@@ -61,26 +68,78 @@ export function LivePreview({
   useEffect(() => {
     if (valid && !dealt) setDealt(true);
   }, [valid, dealt]);
-  useEffect(() => onPreview?.(preview.data), [preview.data, onPreview]);
+  return { templateId, preview: preview.data, dealt };
+}
 
+/**
+ * The wizard's live card, as the org's pass. Until the details are valid it shows sample values,
+ * muted; it deals in once when they first are, then follows edits without motion.
+ */
+export function LivePreview({
+  state,
+  transitionName,
+}: {
+  state: LivePreviewState;
+  transitionName?: string | undefined;
+}) {
+  const { templateId, preview, dealt } = state;
   if (!templateId)
     return (
       <div className="flex aspect-[320/420] w-full max-w-xs flex-col items-center justify-center gap-2 self-center rounded-xl border border-dashed border-border-strong">
         <EntityArt name="passes" size="sm" />
       </div>
     );
-  if (!preview.data)
-    return <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />;
+  if (!preview) return <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />;
   return (
     <div className={dealt ? undefined : 'opacity-55'} data-ghost={dealt ? undefined : ''}>
       <PassPreview
         key={dealt ? 'live' : 'ghost'}
-        passJson={preview.data.passJson}
-        assetBaseUrl={preview.data.assetBaseUrl}
-        assetNames={preview.data.assetNames}
+        passJson={preview.passJson}
+        assetBaseUrl={preview.assetBaseUrl}
+        assetNames={preview.assetNames}
         enter={dealt}
         {...(transitionName ? { transitionName } : {})}
       />
     </div>
+  );
+}
+
+/**
+ * Below 1024 the wizard has no aside: Details and Review offer the card as a compact row with
+ * Show pass, as the pass detail page does on phones.
+ */
+export function ShowPassRow({ state, title }: { state: LivePreviewState; title: string }) {
+  const wide = useMediaQuery('(min-width: 1024px)');
+  const [open, setOpen] = useState(false);
+  if (wide || !state.preview) return null;
+  return (
+    <>
+      <Card className="flex items-center gap-4 p-3">
+        <div aria-hidden inert className="pointer-events-none w-12 shrink-0">
+          <PassPreview
+            passJson={state.preview.passJson}
+            assetBaseUrl={state.preview.assetBaseUrl}
+            assetNames={state.preview.assetNames}
+            still
+          />
+        </div>
+        <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg-strong">{title}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          iconStart={<Eye aria-hidden />}
+          onClick={() => setOpen(true)}
+        >
+          Show pass
+        </Button>
+      </Card>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent title={title} size="sm">
+          <div className="py-2">
+            <LivePreview state={state} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

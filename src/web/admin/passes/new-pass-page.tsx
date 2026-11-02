@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
@@ -23,7 +23,7 @@ import { useTemplate, useTemplates } from '../templates/api.ts';
 import { passKeys } from './api.ts';
 import { markCreated } from './detail/stage-state.ts';
 import { fingerprint, newKey } from './format.ts';
-import { LivePreview, type Preview } from './new-pass-preview.tsx';
+import { LivePreview, ShowPassRow, useLivePreview } from './new-pass-preview.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
 import { OrgStep, TemplateStep } from './new-pass-steps.tsx';
 import {
@@ -90,8 +90,6 @@ export function NewPassPage({
   const [send, setSend] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [createdId, setCreatedId] = useState<string>();
-  const [preview, setPreview] = useState<Preview>();
-  const onPreview = useCallback((p: Preview | undefined) => setPreview(p), []);
 
   // Seed schema defaults once per template so the form shows what the server applies.
   const seeded = useRef<string | undefined>(undefined);
@@ -204,17 +202,12 @@ export function NewPassPage({
   };
 
   const sample = (template.data?.sample ?? {}) as FormValues;
+  const live = useLivePreview({ templateId, orgId, schema, sample, input });
+  const preview = live.preview;
   const aside = (
-    <LivePreview
-      templateId={templateId}
-      orgId={orgId}
-      schema={schema}
-      sample={sample}
-      input={input}
-      transitionName={createdId ? `pass-${createdId}` : undefined}
-      onPreview={onPreview}
-    />
+    <LivePreview state={live} transitionName={createdId ? `pass-${createdId}` : undefined} />
   );
+  const showPass = <ShowPassRow state={live} title={template.data?.name ?? 'Pass'} />;
 
   return (
     <>
@@ -270,14 +263,17 @@ export function NewPassPage({
           ) : !template.data ? (
             <SkeletonKeyValue label="Loading fields" />
           ) : (
-            <SchemaForm
-              schema={template.data.inputSchema}
-              value={input}
-              onChange={setInput}
-              hiddenKeys={hiddenKeys}
-              showAllErrors={showErrors}
-              serverErrors={fieldErrors}
-            />
+            <>
+              {showPass}
+              <SchemaForm
+                schema={template.data.inputSchema}
+                value={input}
+                onChange={setInput}
+                hiddenKeys={hiddenKeys}
+                showAllErrors={showErrors}
+                serverErrors={fieldErrors}
+              />
+            </>
           )
         ) : null}
         {at === 'holder' ? (
@@ -305,6 +301,7 @@ export function NewPassPage({
             />
           </div>
         ) : null}
+        {at === 'review' ? showPass : null}
         {at === 'review' ? (
           <ReviewStep
             org={org?.name}
