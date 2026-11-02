@@ -77,7 +77,7 @@ export function Stepper({
           const circle = (
             <span
               className={cn(
-                'relative inline-flex size-5 items-center justify-center rounded-full border text-[11px] font-semibold tabular-nums',
+                'relative inline-flex size-5 items-center justify-center rounded-full border text-[0.6875rem] font-semibold tabular-nums',
                 done && 'wl-step-done border-accent bg-accent text-accent-on',
                 here && 'border-accent bg-surface-page text-accent-fg',
                 !done && !here && 'border-border-strong bg-surface-page text-fg-muted',

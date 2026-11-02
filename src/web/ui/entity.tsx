@@ -36,7 +36,7 @@ export function onColor(hex: string): string {
 }
 
 const SIZE = {
-  24: 'size-6 text-[10px]',
+  24: 'size-6 text-[0.625rem]',
   40: 'size-10 text-sm',
   48: 'size-12 text-base',
 } as const;
