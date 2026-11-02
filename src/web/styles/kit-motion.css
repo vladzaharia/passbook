@@ -194,17 +194,29 @@
   animation: wl-slide-out 160ms var(--wl-ease-in) forwards;
 }
 
+/* Reduce: selectors repeat the base rules' attribute parts so they win on specificity. Dialogs and
+   sheets fade (opacity only, 150 ms or less); everything else stops. */
 @media (prefers-reduced-motion: reduce) {
-  .wl-overlay,
-  .wl-dialog,
-  .wl-action-sheet,
-  .wl-pop,
-  .wl-tip,
-  .wl-sheet-left,
-  .wl-sheet-right,
+  .wl-overlay[data-state],
+  .wl-dialog[data-state],
+  .wl-pop[data-state],
+  .wl-pop.wl-action-sheet[data-state],
+  .wl-tip[data-state],
+  :is(.wl-sheet-left, .wl-sheet-right)[data-state],
   .wl-bar,
-  [data-sonner-toast] [data-icon] {
+  .wl-bar[data-closing],
+  [data-sonner-toast][data-type] [data-icon] {
     animation: none;
+  }
+  .wl-dialog[data-state="open"],
+  .wl-pop.wl-action-sheet[data-state="open"],
+  :is(.wl-sheet-left, .wl-sheet-right)[data-state="open"] {
+    animation: wl-fade-in 150ms linear backwards;
+  }
+  .wl-dialog[data-state="closed"],
+  .wl-pop.wl-action-sheet[data-state="closed"],
+  :is(.wl-sheet-left, .wl-sheet-right)[data-state="closed"] {
+    animation: wl-fade-out 120ms linear forwards;
   }
   .wl-offline {
     animation: wl-fade-in 120ms linear backwards;

@@ -196,6 +196,7 @@
   .wl-ring,
   .wl-shake,
   .wl-wordmark-icon,
+  .wl-wordmark-icon[data-flip],
   .wl-turn,
   .wl-seg-icon,
   .wl-rail-draw,
