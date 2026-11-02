@@ -66,6 +66,15 @@ describe('hosted auth pages', () => {
     expect(HOSTED_CSS).toMatch(/input\{[^}]*font-size:max\(16px,1rem\)/);
   });
 
+  it('lets the wordmark smile on hover, fine pointers and motion allowed only', () => {
+    const block =
+      /@media \(hover:hover\) and \(pointer:fine\) and \(prefers-reduced-motion:no-preference\)\{(.*)\}/.exec(
+        HOSTED_CSS,
+      )?.[1];
+    expect(block).toContain('.mark:hover path:first-child{transform:scaleY(1.6)}');
+    expect(HOSTED_CSS.replace(block ?? '', '')).not.toContain('.mark:hover');
+  });
+
   it('seats the wallet on the card: above it, legs over the edge, a contact shadow', () => {
     // The base (y 66 of 72) meets the card's top edge: 8 px at 128×96, 7 px at 112×84.
     expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin:1rem 0 -8px;pointer-events:none\}/);

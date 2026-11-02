@@ -60,6 +60,13 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* A file dragged over a drop zone: its art or upload arrow rises to meet it. */
+  .wl-file-drop > svg {
+    transition: translate 200ms var(--wl-ease-spring);
+  }
+  .wl-file-drop[data-over] > svg {
+    translate: 0 -4px;
+  }
   [data-verb-done] > svg.lucide-rotate-cw {
     animation: wl-v-turn 400ms var(--wl-ease-out);
   }
@@ -86,7 +93,8 @@
         .lucide-upload,
         .lucide-send,
         .lucide-mail,
-        .lucide-plus
+        .lucide-plus,
+        .lucide-wallet-cards
       )
       :is(path, rect),
     :is(button, a) svg.lucide-plus {
@@ -125,6 +133,14 @@
     }
     :is(button, a):hover:not(:disabled) svg.lucide-plus {
       transform: rotate(90deg);
+    }
+    /* The wordmark's wallet smiles: the pocket's curve deepens and the card line peeks up. */
+    :is(button, a):hover svg.lucide-wallet-cards path:nth-child(1) {
+      transform-origin: 50% 0;
+      transform: scaleY(1.6);
+    }
+    :is(button, a):hover svg.lucide-wallet-cards path:nth-child(2) {
+      transform: translateY(-1.5px);
     }
   }
 }

@@ -68,6 +68,7 @@ export function FileDrop({
       {/* biome-ignore lint/a11y/noStaticElementInteractions: drag target only; the file input inside is the keyboard path */}
       <div
         data-art-host={art ? '' : undefined}
+        data-over={over || undefined}
         onDragOver={(e) => {
           e.preventDefault();
           if (!disabled) setOver(true);
@@ -75,7 +76,7 @@ export function FileDrop({
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
         className={cn(
-          'relative flex flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong px-6 py-8 text-center text-sm text-fg-muted wl-colors',
+          'wl-file-drop relative flex flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong px-6 py-8 text-center text-sm text-fg-muted wl-colors',
           'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
           over && 'border-accent bg-accent-subtle',
           disabled && 'opacity-50',

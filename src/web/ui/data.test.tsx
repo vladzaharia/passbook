@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -355,6 +355,15 @@ describe('FileDrop', () => {
     expect(onFiles).toHaveBeenCalledOnce();
     expect(onFiles.mock.calls[0]?.[0]).toHaveLength(1);
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('lifts its art toward a file dragged over it', () => {
+    const { container } = render(<FileDrop onFiles={() => {}} label="Choose" />);
+    const zone = container.querySelector('.wl-file-drop') as HTMLElement;
+    fireEvent.dragOver(zone);
+    expect(zone).toHaveAttribute('data-over');
+    fireEvent.dragLeave(zone);
+    expect(zone).not.toHaveAttribute('data-over');
   });
 
   it('rejects an unsupported type with an alert', async () => {

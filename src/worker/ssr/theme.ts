@@ -28,12 +28,13 @@ a{color:var(--accent)}
 .btn.outline:hover{background:var(--hover);color:var(--strong)}
 .btn svg{width:1rem;height:1rem;flex:none}
 @keyframes wl-rise{from{opacity:0;transform:translateY(8px)}}
-@media (prefers-reduced-motion:no-preference){.btn{transition:background-color 120ms,color 120ms,transform 80ms}.btn:active{transform:scale(.98)}}`;
+@media (prefers-reduced-motion:no-preference){.btn{transition:background-color 120ms,color 120ms,transform 80ms}.btn:active{transform:scale(.98)}}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){.mark path{transform-box:fill-box;transform-origin:50% 0;transition:transform 160ms cubic-bezier(0,0,0,1)}.mark:hover path:first-child{transform:scaleY(1.6)}.mark:hover path+path{transform:translateY(-1.5px)}}`;
 
 const ICON =
   '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3.75a2 2 0 0 1 1.6.8l.45.6a4 4 0 0 0 6.4 0l.45-.6a2 2 0 0 1 1.6-.8H21"/><path d="M3 7h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
 
-/** Same wordmark as the console, as static markup. Never flips on SSR pages. */
+/** Same wordmark as the console, as static markup. Never flips on SSR pages; smiles on hover. */
 export const wordmarkHtml = (href = '/') => `<a class="mark" href="${href}">${ICON}PassBook</a>`;
 
 /** Head tags every holder page carries (the caller adds the nonce'd style). */
