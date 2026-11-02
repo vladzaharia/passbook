@@ -55,8 +55,8 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 - Everything in one row shares one height. Fields are always `md`.
 - Under `pointer: coarse`: tabs, menu items, nav links and icon buttons are at least 44 px; inline
   text links get padding to a 44 px hit height.
-- Text inputs, selects and textareas are 16 px on customer pages and under `pointer: coarse` (iOS
-  zooms below that); 14 px in the console on fine pointers. Never `maximum-scale`.
+- Text inputs, selects and textareas are at least 16 px under `pointer: coarse` (iOS zooms below
+  that); on fine pointers they follow the body size (15 px on customer pages, 14 px in the console). Never `maximum-scale`.
 - Buttons use `min-height`, so a label can wrap to two lines at large text sizes.
 - Top bar: ghost icon buttons; search is a field at ≥640 and an icon button below. The shortcut
   hint reads `⌘K` on Apple platforms, `Ctrl K` elsewhere, and hides when the only pointer is coarse.
@@ -317,15 +317,15 @@ Action icons (`src/web/lib/action-icons.ts`):
 
 | Role | Class | Console | Customer |
 | --- | --- | --- | --- |
-| Page title | `text-2xl font-semibold tracking-[-0.015em]`; customer pages `sm:text-3xl` (`size="lg"`) | 1.5rem | 1.75rem, 1.875rem at ≥640 |
-| Section heading (no card) | `text-base font-semibold` | 1rem | 1.125rem |
-| Card / dialog title | `text-sm font-semibold` (dialog `text-base`) | 0.875rem | 1rem |
-| Form group heading | `text-sm font-semibold fg-strong` | 0.875rem | 1rem |
-| Field label | `text-sm font-medium fg` | 0.875rem | 1rem |
-| Body, table cells, values | `text-sm` | 0.875rem | 1rem |
-| Meta, help, secondary lines | `text-xs fg-muted`; always below the title, never larger than meta | 0.75rem | 0.875rem |
+| Page title | `text-2xl font-semibold tracking-[-0.015em]`; customer pages `sm:text-3xl` (`size="lg"`) | 1.5rem | 1.625rem, 1.875rem at ≥640 |
+| Section heading (no card) | `text-base font-semibold` | 1rem | 1.0625rem |
+| Card / dialog title | `text-sm font-semibold` (dialog `text-base`) | 0.875rem | 0.9375rem |
+| Form group heading | `text-sm font-semibold fg-strong` | 0.875rem | 0.9375rem |
+| Field label | `text-sm font-medium fg` | 0.875rem | 0.9375rem |
+| Body, table cells, values | `text-sm` | 0.875rem | 0.9375rem |
+| Meta, help, secondary lines | `text-xs fg-muted`; always below the title, never larger than meta | 0.75rem | 0.8125rem |
 | Stat value | `CountUp`, `text-3xl font-semibold tabular-nums` | 1.875rem | — |
-| Code, ids, hashes, JSON | `font-mono text-xs`; JSON tinted by token (keys, strings, numbers) | 0.75rem | 0.875rem |
+| Code, ids, hashes, JSON | `font-mono text-xs`; JSON tinted by token (keys, strings, numbers) | 0.75rem | 0.8125rem |
 
 Customer pages (portal, `/login`, SSR auth, pass and error pages) use the same classes on a reading
 scale: `src/web/styles/public-type.css` resets the `--pk-font-size-*` and `--pk-line-height-*`

@@ -29,16 +29,15 @@ const ACCOUNT = {
 };
 
 /**
- * jsdom does not substitute var() into font-size, so: kit fields use text-sm, which reads
- * --pk-font-size-sm, at 16 px or more here; sign-in card fields are pinned by login-card.css.
+ * Body text is under 16 px, so fields must not follow it on touch (iOS zooms into smaller fields):
+ * kit fields carry the coarse-pointer floor; sign-in card fields are pinned by login-card.css.
  */
 function expectFieldsAtLeast16px() {
   const fields = [...document.querySelectorAll('input:not([type=hidden]), select, textarea')];
   expect(fields.length).toBeGreaterThan(0);
   for (const field of fields) {
     if (field.closest('.wl-login-card')) continue;
-    expect(field.className).toMatch(/\btext-sm\b/);
-    expect(px(field, '--pk-font-size-sm')).toBeGreaterThanOrEqual(16);
+    expect(field.className).toContain('pointer-coarse:text-[max(16px,1rem)]');
   }
 }
 const CARD_FIELDS = /\.wl-login-card input \{\s*font-size: max\(16px, 1rem\);/;
@@ -50,16 +49,16 @@ describe('holder type scale', () => {
     await screen.findByLabelText('Add email');
     expect(screen.getByRole('main').closest('.wl-portal')).not.toBeNull();
     // On the root, so menus, dialogs and toasts portalled to <body> match the page.
-    expect(px(root(), '--pk-font-size-sm')).toBe(16);
-    expect(px(root(), '--pk-font-size-xs')).toBe(14);
-    expect(px(root(), '--pk-font-size-2xl')).toBe(28);
+    expect(px(root(), '--pk-font-size-sm')).toBe(15);
+    expect(px(root(), '--pk-font-size-xs')).toBe(13);
+    expect(px(root(), '--pk-font-size-2xl')).toBe(26);
     expectFieldsAtLeast16px();
   });
 
   it('sets the sign-in page in the holder scale', async () => {
     await renderApp('/login', { session: 'anon' });
     await screen.findByRole('heading', { name: 'Sign in', level: 1 });
-    expect(px(root(), '--pk-font-size-sm')).toBe(16);
+    expect(px(root(), '--pk-font-size-sm')).toBe(15);
     expect((await screen.findByLabelText('Email')).closest('.wl-login-card')).not.toBeNull();
     expectFieldsAtLeast16px();
     expect(read('src/web/portal/login-card.css')).toMatch(CARD_FIELDS);

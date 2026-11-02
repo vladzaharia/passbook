@@ -1,22 +1,22 @@
-/* Holder pages (portal, sign-in, SSR auth and pass pages) read at consumer sizes: body 1rem,
-   secondary 0.875rem, page titles 1.75rem. The console keeps the brand scale. Tailwind's text-*
+/* Holder pages (portal, sign-in, SSR auth and pass pages) read a step above the console: body
+   0.9375rem, secondary 0.8125rem, page titles 1.625rem. Fields keep their own 16 px floor on touch. The console keeps the brand scale. Tailwind's text-*
    utilities read these variables (theme.css is @theme inline), so the subtree rescales, and so does
    anything portalled to <body> (menus, dialogs, toasts) while a holder page is mounted. The pass
    card sizes in its own container units and is untouched. The SSR pages inline this file. */
 :root:has(.wl-portal),
 .wl-portal {
-  --pk-font-size-xs: 0.875rem;
-  --pk-line-height-xs: 1.25rem;
-  --pk-font-size-sm: 1rem;
-  --pk-line-height-sm: 1.5rem;
-  --pk-font-size-base: 1.125rem;
-  --pk-line-height-base: 1.75rem;
+  --pk-font-size-xs: 0.8125rem;
+  --pk-line-height-xs: 1.125rem;
+  --pk-font-size-sm: 0.9375rem;
+  --pk-line-height-sm: 1.375rem;
+  --pk-font-size-base: 1.0625rem;
+  --pk-line-height-base: 1.625rem;
   --pk-font-size-lg: 1.25rem;
   --pk-line-height-lg: 1.75rem;
   --pk-font-size-xl: 1.375rem;
   --pk-line-height-xl: 1.875rem;
-  --pk-font-size-2xl: 1.75rem;
-  --pk-line-height-2xl: 2.25rem;
+  --pk-font-size-2xl: 1.625rem;
+  --pk-line-height-2xl: 2.125rem;
   --pk-font-size-3xl: 1.875rem;
   --pk-line-height-3xl: 2.25rem;
 }
