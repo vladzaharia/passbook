@@ -208,3 +208,8 @@
     animation: wl-fade-in 120ms linear backwards;
   }
 }
+
+/* A button whose variant just swapped (Button useInstantVariant): no colour transition. */
+[data-instant] {
+  transition: none !important;
+}
