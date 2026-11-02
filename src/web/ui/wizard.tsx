@@ -26,11 +26,11 @@ export interface WizardProps {
   onCancel: () => void;
   onBack?: () => void;
   /**
-   * Without formId: Next runs this. Returning false means the step is incomplete: once its errors
+   * Without formId: Next runs this. Returning false (exactly) means the step is incomplete: once its errors
    * render, the first invalid control takes focus and one summary is announced.
    * With formId: Next submits that form (its validation runs).
    */
-  onNext?: () => boolean | void;
+  onNext?: () => unknown;
   formId?: string;
   /** "Next" on early steps, "Create" on the last. */
   nextLabel?: string;
