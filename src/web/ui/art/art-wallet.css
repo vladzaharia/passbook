@@ -52,8 +52,119 @@
   --u: 360ms;
   --e: var(--art-mv);
 }
+
+/* Moods (data-mood on w). Sad slumps the body about its base and droops the fan; state rules
+   (hosted-art.css) still win on the cards. */
 [data-art="wallet"] [data-mood="flat"] [data-part="eyes"] {
   --t: scaleY(0.25);
+}
+[data-art="wallet"] [data-mood="happy"] [data-part="eyes"] {
+  opacity: 0;
+}
+[data-art="wallet"] [data-part="joy"] {
+  --f: scaleY(0);
+  --fo: 1;
+  --d: 480ms;
+  --u: 120ms;
+  --e: var(--art-bo);
+}
+/* Brows knit in as the eyes open. */
+[data-art="wallet"] [data-part="br"] {
+  --f: scaleY(0);
+  --d: 440ms;
+  --u: 160ms;
+  --e: var(--art-out);
+}
+[data-art="wallet"] [data-mood="sad"] [data-part="eyes"] {
+  --t: translateY(0.7px) scaleY(0.8);
+}
+[data-art="wallet"] [data-mood="curious"] [data-part="eyes"] {
+  --t: translate(0.8px, -0.8px);
+}
+[data-art="wallet"] [data-body] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+[data-art="wallet"] [data-mood="sad"] > [data-body] {
+  transform: scale(1.02, 0.95);
+}
+[data-art="wallet"] [data-part="w"][data-mood="sad"] {
+  --b: translateY(0);
+}
+[data-mood="sad"] [data-part="c1"] {
+  --t: rotate(-27deg) translateY(1px);
+}
+[data-mood="sad"] [data-part="c2"] {
+  --t: translateY(2.5px);
+}
+[data-mood="sad"] [data-part="c3"] {
+  --t: rotate(27deg) translateY(1px);
+}
+
+/* Seat: lands on the surface's edge with its legs over it; the shadow spreads under. */
+[data-art="wallet"] [data-part="w"][data-seat] {
+  --f: translateY(-10px);
+  --o: 48px 66px;
+  --u: 360ms;
+  --e: var(--art-sp);
+  transform-box: view-box;
+}
+/* The legs hang over the edge and swing once as it lands. */
+[data-art="wallet"] :is([data-part="l1"], [data-part="l2"]) {
+  --o: 50% 0;
+  --fo: 1;
+  --d: 200ms;
+  --u: 400ms;
+  --e: var(--art-sp);
+}
+[data-art="wallet"] [data-part="l1"] {
+  --f: rotate(24deg);
+}
+[data-art="wallet"] [data-part="l2"] {
+  --f: rotate(-16deg);
+  --d: 240ms;
+  --u: 360ms;
+}
+[data-mood="sad"] [data-part="l1"] {
+  --t: rotate(-7deg);
+}
+[data-mood="sad"] [data-part="l2"] {
+  --t: rotate(7deg);
+}
+[data-art="wallet"] [data-part="sd"] {
+  --f: scaleX(0.3);
+  --d: 140ms;
+  --u: 300ms;
+  --e: var(--art-out);
+  stroke: none;
+}
+/* A shadow darkens in both themes: border grey on light, the sunken ground on dark. Guarded:
+   with var() inside, an unsupported light-dark() would compute to black, not fall back. */
+.wl-art .sd {
+  stop-color: var(--art-s);
+}
+@supports (color: light-dark(#000, #fff)) {
+  .wl-art .sd {
+    stop-color: light-dark(color-mix(in srgb, var(--art-l) 45%, transparent), var(--art-s));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-art="wallet"] [data-body] {
+    transition: transform 240ms var(--art-sp);
+  }
+  /* One sigh once the art has landed: a breath in, then down into the slump. */
+  [data-art="wallet"] [data-mood="sad"] > [data-body] {
+    animation: wl-w-sigh 640ms var(--art-mv) var(--wl-sigh-delay, 680ms) backwards;
+  }
+}
+@keyframes wl-w-sigh {
+  0% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-1.5px) scale(0.98, 1.04);
+  }
 }
 [data-art="wallet"] [data-lift] [data-part="c2"] {
   --t: translateY(-6px);

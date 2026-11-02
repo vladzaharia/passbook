@@ -1,18 +1,25 @@
 /**
- * The auth pages' art: the kit wallet plus each state's extra parts, rendered static. Their
- * motion is CSS on load (hosted-art.css, after ART_CSS); only these pages use these states, so
- * none of it ships in the app bundle.
+ * The auth pages' art: the kit wallet seated on the card, plus each state's extra parts, rendered
+ * static. Their motion is CSS on load (hosted-art.css, after ART_CSS); only these pages use these
+ * states, so none of it ships in the app bundle.
  */
 import { renderToStaticMarkup } from 'react-dom/server';
-import { TornArt } from '../../web/ui/art/torn.tsx';
-import { UnpluggedArt } from '../../web/ui/art/unplugged.tsx';
 import { WalletArt, type WalletState } from '../../web/ui/art/wallet.tsx';
 import css from './hosted-art.css?raw';
 
 export const HOSTED_ART_CSS = css;
 
-/** The mascot's states, a tired mascot (flat eyes) for rate limits, or an error art. */
-export type HostedArt = WalletState | 'tired' | 'torn' | 'unplugged';
+/** The mascot's states, plus a rate limit (throttled) and a server error (broken). */
+export type HostedArt = WalletState | 'throttled' | 'broken';
+
+/** Every refusal or failure: the wallet is sad. */
+const SAD: ReadonlySet<HostedArt> = new Set([
+  'expired',
+  'no-access',
+  'lost',
+  'throttled',
+  'broken',
+]);
 
 const CHECK = <path data-part="ck" className="ck" d="M43.5 20l3 3 6-6.5" />;
 
@@ -38,19 +45,26 @@ const KEY = (
   </>
 );
 
-export function artHtml(art: HostedArt): string {
-  const size = 'xl' as const;
-  if (art === 'torn') return renderToStaticMarkup(<TornArt size={size} beat={false} />);
-  if (art === 'unplugged') return renderToStaticMarkup(<UnpluggedArt size={size} beat={false} />);
-  const state = art === 'tired' ? 'login' : art;
+/** An hourglass on the card beside the wallet: wait, then try again. */
+const HOURGLASS = (
+  <g data-part="hg">
+    <path d="M84 52h8M84 65.5h8M85 52v2.5l3 4.25-3 4.25v2.5M91 52v2.5l-3 4.25 3 4.25v2.5" />
+    <path className="n" d="M86.4 64.6h3.2L88 62.2Z" />
+  </g>
+);
+
+/** The static markup for a page's art; `failed` makes any state sad (a refused form). */
+export function artHtml(art: HostedArt, failed = false): string {
+  const state: WalletState = art === 'throttled' || art === 'broken' ? 'login' : art;
   return renderToStaticMarkup(
     <WalletArt
       state={state}
-      size={size}
+      size="xl"
       beat={false}
-      {...(art === 'tired' ? { mood: 'flat' as const } : {})}
+      seat
+      {...(failed || SAD.has(art) ? { mood: 'sad' as const } : {})}
       onCard={art === 'confirm' ? CHECK : art === 'no-access' ? LOCK : undefined}
-      front={art === 'break-glass' ? KEY : undefined}
+      front={art === 'break-glass' ? KEY : art === 'throttled' ? HOURGLASS : undefined}
     />,
   );
 }

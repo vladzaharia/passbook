@@ -1,7 +1,7 @@
 /**
  * The hosted shell shared by the SSR auth and error pages. Same metrics as /login
  * (src/web/portal/login-page.tsx, login-scene.css): wordmark, the 128×96 wallet scene (112×84
- * under 640) on the card's top edge, then the card, so the h1 and card sit at identical
+ * under 640) seated on the card's top edge, then the card, so the h1 and card sit at identical
  * positions. Script-free; the art moves in CSS only, once on load.
  */
 import { ART_CSS } from '../../web/ui/art/css.ts';
@@ -20,7 +20,7 @@ ${ART_CSS}
 ${HOSTED_ART_CSS}
 .hosted{display:flex;flex-direction:column;align-items:center;width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
 .brand{display:flex;align-items:center;justify-content:center;height:2.75rem}
-.scene{position:relative;z-index:0;width:128px;height:96px;margin:1rem 0 -16px}
+.scene{position:relative;z-index:2;width:128px;height:96px;margin:1rem 0 -8px;pointer-events:none}
 .scene .wl-art{width:128px;height:96px}
 .card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--line);border-radius:1.125rem;background:var(--raised);box-shadow:inset 0 1px 0 var(--edge),var(--shadow)}
 .card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(115deg,var(--foil-1),var(--foil-2) 55%,var(--foil-3))}
@@ -37,7 +37,7 @@ input:focus-visible{outline-offset:1px}
 .foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:.875rem;line-height:1.25rem;color:var(--muted)}
 .foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
 @media(min-width:40rem){.hosted{padding-top:3.5rem}.body{padding:1.5rem}.foot{padding:1rem 1.5rem}}
-@media(max-width:39.99rem){.scene{margin-bottom:-14px}.scene,.scene .wl-art{width:112px;height:84px}}`;
+@media(max-width:39.99rem){.scene{margin-bottom:-7px}.scene,.scene .wl-art{width:112px;height:84px}}`;
 
 export type { HostedArt };
 
@@ -62,7 +62,7 @@ export const calloutHtml = (message: string) =>
 
 /** A full hosted page: wordmark, wallet scene, card with an h1 and the body. */
 export function hostedPage(input: HostedPageInput): string {
-  const art = artHtml(input.art);
+  const art = artHtml(input.art, Boolean(input.error));
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';

@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { type FormEvent, type Ref, useState } from 'react';
+import { type FormEvent, type Ref, useEffect, useState } from 'react';
 import { errorMessage, isApiError } from '../lib/errors.ts';
 import { Button, Callout, FormField, Input } from '../ui/index.ts';
 import type { SceneActions } from './login-scene.tsx';
@@ -56,10 +56,18 @@ export function EmailFace({
     if (!EMAIL_RE.test(value)) return setFieldError('Enter a valid email.');
     const result = await request.send(value);
     if (result.ok) return onSent(value);
-    if ('challenge' in result) return setError(CHALLENGE_FAILED);
+    if ('challenge' in result) {
+      scene.fail({ shake: false });
+      return setError(CHALLENGE_FAILED);
+    }
     setError(errorMessage(result.error));
-    if (isApiError(result.error) && result.error.status === 429) scene.fail();
+    scene.fail({ shake: isApiError(result.error) && result.error.status === 429 });
   }
+
+  const { challengeFailed } = request;
+  useEffect(() => {
+    if (challengeFailed) scene.fail({ shake: false });
+  }, [challengeFailed, scene]);
 
   const callout = error ?? (request.challengeFailed ? CHALLENGE_FAILED : notice);
   const busy = request.phase !== 'idle';

@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, renderApp, sessionFixture } from '../lib/test-utils.tsx';
+import { json, problem, renderApp, sessionFixture } from '../lib/test-utils.tsx';
 import { goTo } from './goto.ts';
 
 vi.mock('./goto.ts', () => ({ goTo: vi.fn() }));
@@ -59,9 +59,30 @@ describe('login page', () => {
     ['not_in_group', 'Your Polaris ID is not allowed to use PassBook.'],
     ['expired_link', 'That link expired. Request a new one.'],
     ['weird', 'Sign-in failed. Try again.'],
-  ])('shows one line for ?error=%s', async (code, text) => {
-    await renderApp(`/login?error=${code}`, { session: 'anon' });
+  ])('shows one line for ?error=%s, the wallet sad', async (code, text) => {
+    const { container } = await renderApp(`/login?error=${code}`, { session: 'anon' });
     expect(await screen.findByRole('alert')).toHaveTextContent(text);
+    expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-sad', 'load');
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+  });
+
+  it('is sad when the session fails to load or no method is enabled', async () => {
+    const failed = await renderApp('/login', {
+      session: 'anon',
+      handlers: { '/api/v1/session': () => problem(500, 'INTERNAL', 'Something went wrong.') },
+    });
+    expect(await screen.findByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(failed.container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    failed.unmount();
+    const off = await renderApp('/login', {
+      handlers: {
+        '/api/v1/session': () =>
+          json({ ...sessionFixture('anon'), oidcEnabled: false, magicLinkEnabled: false }),
+      },
+      session: 'anon',
+    });
+    await screen.findByText('Sign-in is unavailable.');
+    expect(off.container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
   });
 
   it('does not follow a next that URL parsing turns into another origin', async () => {
@@ -117,6 +138,10 @@ describe('login page', () => {
     const scene = container.querySelector('.wl-login-scene');
     expect(scene).toHaveAttribute('aria-hidden', 'true');
     expect(scene).not.toHaveAttribute('data-beat');
+    expect(scene).not.toHaveAttribute('data-sad');
+    expect(scene?.querySelector('[data-part="w"]')).toHaveAttribute('data-seat');
+    expect(scene?.querySelectorAll('[data-part="l1"], [data-part="l2"]')).toHaveLength(2);
+    expect(scene?.querySelector('#wl-login-slot')).not.toBeNull();
     expect(scene?.querySelectorAll('[data-fan] [data-part^="c"]')).toHaveLength(3);
     expect(scene?.querySelector('[data-look] [data-part="eyes"]')).not.toBeNull();
     expect(scene?.querySelector('text')).toBeNull();

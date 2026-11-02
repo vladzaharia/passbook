@@ -5,13 +5,21 @@ import {
   expiredPage,
   messagePage,
   noAccessPage,
+  SIGN_IN_ERRORS,
 } from '../modules/auth/pages.ts';
 import { renderErrorPage } from './error-page.tsx';
 import { HOSTED_CSS } from './hosted.ts';
 import { HOSTED_ART_CSS } from './hosted-art.tsx';
+import { renderNotFoundPage } from './pass-page.tsx';
 
 const NONCE = 'n0nce';
 const primaries = (html: string) => html.match(/class="btn"/g)?.length ?? 0;
+const mood = (html: string) => /data-part="w"[^>]*data-mood="([a-z]+)"/.exec(html)?.[1];
+const back = (code: string) => {
+  const e = SIGN_IN_ERRORS[code];
+  if (!e) throw new Error(code);
+  return messagePage(NONCE, { ...e, href: '/login', action: 'Back to sign in' });
+};
 
 describe('hosted auth pages', () => {
   it.each([
@@ -54,8 +62,47 @@ describe('hosted auth pages', () => {
 
   it('sizes the scene like /login and keeps fields at 16 px or more', () => {
     expect(HOSTED_CSS).toContain(HOSTED_ART_CSS);
-    expect(HOSTED_CSS).toContain('.scene{position:relative;z-index:0;width:128px;height:96px');
+    expect(HOSTED_CSS).toContain('.scene{position:relative;z-index:2;width:128px;height:96px');
     expect(HOSTED_CSS).toMatch(/input\{[^}]*font-size:max\(16px,1rem\)/);
+  });
+
+  it('seats the wallet on the card: above it, legs over the edge, a contact shadow', () => {
+    // The base (y 66 of 72) meets the card's top edge: 8 px at 128×96, 7 px at 112×84.
+    expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin:1rem 0 -8px;pointer-events:none\}/);
+    expect(HOSTED_CSS).toMatch(/\.scene\{margin-bottom:-7px\}/);
+    expect(HOSTED_CSS).toMatch(/\.card\{position:relative;z-index:1;/);
+    const html = noAccessPage(NONCE);
+    expect(html).toMatch(/data-part="w"[^>]*data-seat=""/);
+    for (const part of ['l1', 'l2', 'sd']) expect(html).toContain(`data-part="${part}"`);
+  });
+
+  it.each([
+    ['no access', noAccessPage(NONCE)],
+    ['an expired or used link', expiredPage(NONCE)],
+    ['sign-in failed', messagePage(NONCE, { title: 'Sign-in failed', message: 'Try again.' })],
+    ['provider unavailable', messagePage(NONCE, { title: 'Sign-in unavailable', message: 'x' })],
+    ['an email conflict', back('EMAIL_CONFLICT')],
+    ['an email taken', back('EMAIL_TAKEN')],
+    ['no email', back('NO_EMAIL')],
+    ['a missing session', back('SESSION_REQUIRED')],
+    ['a disabled account', back('ACCOUNT_DISABLED')],
+    ['a wrong break-glass token', breakglassPage(NONCE, { error: 'Wrong token.' })],
+    ['a dead pass link', renderNotFoundPage(NONCE)],
+    ['a 404', renderErrorPage({ status: 404, nonce: NONCE })],
+    ['a rate limit', renderErrorPage({ status: 429, nonce: NONCE })],
+    ['a server error', renderErrorPage({ status: 500, nonce: NONCE })],
+  ])('makes the wallet sad on %s', (_case, html) => {
+    expect(mood(html)).toBe('sad');
+    expect(html).toContain('data-part="br"');
+  });
+
+  it.each([
+    ['confirm', confirmPage(NONCE, { token: 't'.repeat(20), email: 'a@b.co', purpose: 'sign_in' })],
+    ['break-glass', breakglassPage(NONCE, {})],
+    ['proof sent', back('EMAIL_PROOF_SENT')],
+  ])('keeps the wallet content on %s', (_case, html) => {
+    expect(mood(html)).toBeUndefined();
+    expect(html).not.toContain('data-part="br"');
   });
 
   it('animates the auth states once, on transform and opacity, within the art budget', () => {
@@ -113,14 +160,15 @@ describe('hosted auth pages', () => {
 
 describe('renderErrorPage', () => {
   it.each([
-    [404, 'Page not found', 'Go home', 'torn'],
-    [429, 'Too many requests', 'Retry', 'wallet'],
-    [500, 'Something went wrong', 'Retry', 'unplugged'],
-  ])('renders %i as a hosted card with one action', (status, title, action, art) => {
+    [404, 'Page not found', 'Go home', 'lost'],
+    [429, 'Too many requests', 'Retry', 'login'],
+    [500, 'Something went wrong', 'Retry', 'login'],
+  ])('renders %i as a hosted card with one action', (status, title, action, state) => {
     const html = renderErrorPage({ status, nonce: NONCE });
     expect(html).toContain('<section class="card"');
     expect(html).toContain(`<h1>${title}</h1>`);
-    expect(html).toContain(`data-art="${art}"`);
+    expect(html).toContain(`data-art="wallet" data-state="${state}"`);
+    expect(html.includes('data-part="hg"')).toBe(status === 429);
     expect(primaries(html)).toBe(1);
     expect(html).toMatch(new RegExp(`<a class="btn" href="[^"]*">${action}</a>`));
     expect(html).not.toMatch(/<script/);

@@ -75,7 +75,7 @@ describe('magic link', () => {
     expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'success');
     // The wallet fills: the eyes smile.
     expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'happy');
-    expect(container.querySelector('[data-look] .wl-login-joy')).not.toBeNull();
+    expect(container.querySelector('[data-look] [data-part="joy"]')).not.toBeNull();
   });
 
   it('shows the first letter of a valid address on the top card, in place under reduced motion', async () => {
@@ -153,7 +153,7 @@ describe('magic link', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('shows a rate limit in a callout, shakes the wallet and gets a fresh challenge', async () => {
+  it('shows a rate limit in a callout, shakes the wallet sad and gets a fresh challenge', async () => {
     const user = userEvent.setup();
     const { container } = await renderApp('/login', {
       session: 'anon',
@@ -167,8 +167,31 @@ describe('magic link', () => {
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Too many requests. Try later.');
     expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    // Sad drops the lifted card back into the fan.
+    expect(container.querySelector('[data-lift]')).toBeNull();
     await waitFor(() => expect(render).toHaveBeenCalledTimes(2));
     expect(screen.getByLabelText('Email')).toBeVisible();
+  });
+
+  it('goes sad without a shake when the network fails, and perks up on typing', async () => {
+    const user = userEvent.setup();
+    const { container } = await renderApp('/login', {
+      session: 'anon',
+      handlers: { '/auth/magic/request': () => Promise.reject(new TypeError('Failed to fetch')) },
+    });
+    await user.type(await screen.findByLabelText('Email'), 'sam@example.com');
+    await waitFor(() => expect(callbacks.callback).toBeDefined());
+    token('tok-1');
+    await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    const scene = container.querySelector('.wl-login-scene');
+    expect(scene).toHaveAttribute('data-sad', 'fail');
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    expect(container.querySelector('.wl-login-pocket[data-shake]')).toBeNull();
+    await user.type(screen.getByLabelText('Email'), 'm');
+    expect(scene).not.toHaveAttribute('data-sad');
+    expect(container.querySelector('[data-part="w"]')).not.toHaveAttribute('data-mood');
   });
 
   it('says a wrong code is wrong or expired, without mentioning links', async () => {
@@ -187,10 +210,15 @@ describe('magic link', () => {
     const error = await screen.findByText('That code is wrong or expired.');
     expect(error.textContent).not.toMatch(/link/i);
     expect(screen.getByLabelText('Code')).toHaveAttribute('aria-invalid', 'true');
+    // The shake settles into sad: brows up, a frown, the fan droops.
     expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
-    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'flat');
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    expect(container.querySelector('[data-look] [data-part="br"]')).not.toBeNull();
     expect(container.querySelector('.wl-login-hourglass')).not.toHaveAttribute('data-on');
     expect(goTo).not.toHaveBeenCalled();
+    // Another try cheers it up.
+    await user.type(screen.getByLabelText('Code'), '{Backspace}');
+    expect(container.querySelector('[data-part="w"]')).not.toHaveAttribute('data-mood');
   });
 
   it('flips the hourglass when the code has run out', async () => {
