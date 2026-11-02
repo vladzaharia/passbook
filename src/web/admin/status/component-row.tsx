@@ -5,7 +5,7 @@ import { cn } from '@/web/lib/cn.ts';
 import { Button, buttonVariants, EntityIcon, KeyValue, StatusPill } from '@/web/ui/index.ts';
 import type { DataItem } from './data-items.ts';
 import { type Component, componentLink, pillStatus, summaryLine } from './groups.ts';
-import { COMPONENT_ICON } from './icons.ts';
+import { componentIcon } from './icons.ts';
 import './status.css';
 
 const EDGE: Partial<Record<Component['state'], string>> = {
@@ -35,7 +35,7 @@ export function ComponentRow({ component: c, items }: { component: Component; it
   return (
     <li className={cn('border-l-2 border-l-transparent', EDGE[c.state])}>
       <div className="flex items-center gap-3 py-3 pr-2 pl-4">
-        <EntityIcon icon={COMPONENT_ICON[c.kind]} className="max-sm:hidden" />
+        <EntityIcon icon={componentIcon(c)} className="max-sm:hidden" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-fg-strong">{label}</p>
           {line ? <p className="truncate text-xs text-fg-muted">{line}</p> : null}

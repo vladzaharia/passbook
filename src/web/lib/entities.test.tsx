@@ -6,7 +6,13 @@ import { ART_NAMES } from '../ui/art/index.ts';
 import { EmptyState } from '../ui/empty-state.tsx';
 import { PALETTE_GROUPS } from '../ui/layout/palette.tsx';
 import { ACTIONS, actionOf } from './actions.ts';
-import { ENTITY, ENTITY_KINDS, type EntityKind } from './entities.ts';
+import {
+  CONNECTOR_ICON,
+  connectorIcon,
+  ENTITY,
+  ENTITY_KINDS,
+  type EntityKind,
+} from './entities.ts';
 import { ADMIN_NAV } from './nav.ts';
 
 const WEB = join(process.cwd(), 'src/web');
@@ -84,5 +90,28 @@ describe('web sources', () => {
       }
     }
     expect(items).toBeGreaterThan(5);
+  });
+});
+
+describe('connector icons', () => {
+  it('gives every registered connector its own glyph', () => {
+    const dir = join(process.cwd(), 'src/worker/connectors');
+    const types = readdirSync(dir)
+      .filter((name) => statSync(join(dir, name)).isDirectory())
+      .flatMap((name) => {
+        const file = join(dir, name, 'index.ts');
+        try {
+          // The definition's own type sits at the object's top level (two-space indent).
+          return [/^ {2}type: '([a-z0-9-]+)',$/m.exec(readFileSync(file, 'utf8'))?.[1]];
+        } catch {
+          return [];
+        }
+      })
+      .filter((t): t is string => Boolean(t));
+    expect(types).toContain('webhook-push');
+    for (const type of types) expect(CONNECTOR_ICON[type], type).toBeDefined();
+    const glyphs = new Set(types.map(connectorIcon));
+    expect(glyphs.size).toBe(types.length);
+    expect(glyphs.has(ENTITY.connection.icon)).toBe(false);
   });
 });
