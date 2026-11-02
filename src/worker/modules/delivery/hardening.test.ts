@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { renderPassEmail } from '../../email/pass.ts';
+import { deleteInBatches } from '../../platform/batched.ts';
 import { first, run } from '../../platform/db.ts';
 import { purgeLogs } from '../apple/repo.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { createMtlsApnsTransport } from './apns.ts';
-import { deleteInBatches } from './batched.ts';
 import { handleEmailSend, handlePushDeliver, sweepDelivery } from './jobs.ts';
 import { classifyApns } from './push.ts';
 import { dropRegistrations, failExhausted, getOutbox } from './repo.ts';

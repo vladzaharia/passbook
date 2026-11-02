@@ -10,7 +10,7 @@ import { getPlatformSettings } from '../settings/service.ts';
 import { clearSessionCookie, ipPrefix, readCookie } from './cookies.ts';
 import { discover } from './oidc-client.ts';
 import { oidcConfig } from './oidc-handlers.ts';
-import * as repo from './repo.ts';
+import { findUser } from './service.ts';
 import { revokeOne } from './sessions.ts';
 
 /** GET /api/v1/session. Never 401: signed-out callers get what the login page needs. */
@@ -18,7 +18,7 @@ export async function getSession(c: Context<AppBindings>): Promise<SessionRespon
   const ctx = serviceContext(c);
   const cookie = readCookie(c, SESSION_COOKIE);
   const auth = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
-  const user = auth ? await repo.getUser(c.env.DB, auth.userId) : null;
+  const user = auth ? await findUser(ctx, auth.userId) : null;
   if (auth && user) {
     const expiresAt = 'expiresAt' in auth ? Number(auth.expiresAt) : ctx.clock.now();
     return {

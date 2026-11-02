@@ -3,6 +3,7 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { MiddlewareHandler } from 'hono';
 import type { ZodType } from 'zod';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
+import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { NotImplementedError } from './errors.ts';
 
@@ -22,13 +23,19 @@ export interface RouteSpec {
   status?: 200 | 201 | 202 | 204 | 302;
 }
 
-/** Router whose validation failures surface as problem+json (422). */
-export function createRouter(): OpenAPIHono<AppBindings> {
-  return new OpenAPIHono<AppBindings>({
+/**
+ * Router whose validation failures surface as problem+json (422). Request bodies are capped at
+ * DEFAULT_BODY_BYTES; a module with larger uploads passes `{ bodyLimit: false }` and applies
+ * `defaultBodyLimit(pathOfTheUpload)` plus its own cap.
+ */
+export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono<AppBindings> {
+  const router = new OpenAPIHono<AppBindings>({
     defaultHook: (result) => {
       if (!result.success) throw result.error;
     },
   });
+  if (options.bodyLimit !== false) router.use('*', defaultBodyLimit());
+  return router;
 }
 
 /** Declares the route (so OpenAPI and validation are real) with a 501 handler. */

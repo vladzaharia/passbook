@@ -1,6 +1,6 @@
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
+import { deleteInBatches } from '../../platform/batched.ts';
 import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
-import { deleteInBatches } from './batched.ts';
 
 export type OutboxState =
   | 'pending'

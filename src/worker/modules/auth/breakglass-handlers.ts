@@ -6,13 +6,11 @@ import { envString } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
-import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
+import { serviceContext } from '../../platform/service-context.ts';
 import { ipPrefix, readCookie, setSessionCookie } from './cookies.ts';
 import { nextOrHome, safeNext } from './next.ts';
 import { breakglassPage } from './pages.ts';
-import { bumpCounter } from './repo-magic.ts';
-import { signInBreakglass } from './service.ts';
+import { recordBreakglassFailure, signInBreakglass } from './service.ts';
 
 const HASH = /^[0-9a-f]{64}$/;
 
@@ -22,28 +20,6 @@ function configuredHash(c: Context<AppBindings>): string {
   const hash = value.trim().toLowerCase();
   if (!HASH.test(hash)) throw new NotFoundError();
   return hash;
-}
-
-const HOUR = 3_600_000;
-const DAY = 24 * HOUR;
-const FAILURE_ROWS_PER_HOUR = 100;
-
-/** Audits a wrong token, capped per hour so guessing cannot flood the log; the day count is exact. */
-async function recordFailure(ctx: ServiceContext, prefix: string | null): Promise<void> {
-  const now = ctx.clock.now();
-  await bumpCounter(ctx.env.DB, 'breakglass:fail', now - (now % DAY));
-  const rows = await bumpCounter(ctx.env.DB, 'audit:breakglass_failed', now - (now % HOUR));
-  if (rows > FAILURE_ROWS_PER_HOUR + 1) return;
-  if (rows === FAILURE_ROWS_PER_HOUR + 1) {
-    ctx.log.error('auth.breakglass_failed_capped', { code: 'BREAKGLASS_FAILURE_CAP' });
-    return;
-  }
-  await recordAudit(ctx, {
-    actorType: 'system',
-    action: 'auth.breakglass_failed',
-    ipPrefix: prefix,
-    detail: { reason: 'wrong_token' },
-  });
 }
 
 /** GET /auth/breakglass */
@@ -66,7 +42,7 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
     token.length > 0 && token.length <= 256 && (await safeEqual(await sha256Hex(token), expected));
   if (!ok) {
     ctx.log.warn('auth.breakglass_failed', { code: 'BREAKGLASS_FAILED', ipPrefix: ipPrefix(ip) });
-    await recordFailure(ctx, ipPrefix(ip));
+    await recordBreakglassFailure(ctx, ipPrefix(ip));
     writeEvent(c.env, { event: 'auth.sign_in', outcome: 'breakglass_failed' });
     return c.html(breakglassPage(c.var.nonce, { error: 'Wrong token.', next }), 401);
   }

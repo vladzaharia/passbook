@@ -1,4 +1,4 @@
-import { run, type SqlValue } from '../../platform/db.ts';
+import { run, type SqlValue } from './db.ts';
 
 export const DELETE_BATCH = 1000;
 const MAX_BATCHES = 50;

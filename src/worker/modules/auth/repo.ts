@@ -1,5 +1,5 @@
+import { deleteInBatches } from '../../platform/batched.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { deleteInBatches } from '../delivery/batched.ts';
 
 type Db = D1Database;
 

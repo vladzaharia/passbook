@@ -22,6 +22,7 @@ import {
   UploadTemplateResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, requireAdmin, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -32,7 +33,9 @@ import { registerLifecycle, registerUploadList } from './routes-more.ts';
 import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 
-export const templatesRoutes = createRouter();
+export const templatesRoutes = createRouter({ bodyLimit: false });
+/** The archive upload has its own cap below. */
+templatesRoutes.use('*', defaultBodyLimit(/\/uploads$/));
 // Reads accept an API key (templates:read); writes are admin only.
 templatesRoutes.use('*', async (c, next) =>
   c.req.method === 'GET'

@@ -250,3 +250,13 @@ export async function requestRefresh(
 }
 
 export * from './connection-passes.ts';
+
+/** Throws PASS_NOT_FOUND unless the pass exists inside the scope. */
+export async function requirePass(
+  ctx: ServiceContext,
+  id: string,
+  scope: string | null,
+): Promise<void> {
+  if (!(await getPass(ctx.env.DB, id, scope)))
+    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+}

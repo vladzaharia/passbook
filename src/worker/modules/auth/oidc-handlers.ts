@@ -31,7 +31,7 @@ import {
 } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
 import { messagePage, noAccessPage, SIGN_IN_ERRORS } from './pages.ts';
-import * as repo from './repo.ts';
+import { saveOidcFlow, takeOidcFlow } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
 
@@ -90,7 +90,7 @@ export async function startOidc(c: Context<AppBindings>) {
   }
   const secrets = await newFlowSecrets();
   const binding = ctx.ids.token(32);
-  await repo.insertFlow(c.env.DB, {
+  await saveOidcFlow(ctx, {
     stateHash: await sha256Hex(secrets.state),
     nonce: secrets.nonce,
     verifier: secrets.verifier,
@@ -125,12 +125,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
   const rp = oidcConfig(c.env);
   if (!rp) throw new UnavailableError('Sign-in is not configured.', 'OIDC_UNCONFIGURED');
 
-  const flow = await repo.consumeFlow(
-    c.env.DB,
-    await sha256Hex(state),
-    await sha256Hex(binding),
-    ctx.clock.now(),
-  );
+  const flow = await takeOidcFlow(ctx, await sha256Hex(state), await sha256Hex(binding));
   if (!flow) return errorPage(c, 'Sign-in expired', 'Start again.', 400);
 
   let claims: Record<string, unknown>;

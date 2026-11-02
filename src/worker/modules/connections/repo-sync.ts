@@ -1,5 +1,5 @@
+import { deleteInBatches } from '../../platform/batched.ts';
 import { first, run } from '../../platform/db.ts';
-import { deleteInBatches } from '../delivery/batched.ts';
 
 // Workflow runs
 

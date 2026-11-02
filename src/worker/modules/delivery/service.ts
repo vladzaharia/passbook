@@ -6,6 +6,7 @@ import { getPass } from '../passes/repo.ts';
 import {
   bumpCounter,
   insertOutbox,
+  listOutboxForPass,
   lostEnqueues,
   markDueEnqueued,
   revertEnqueued,
@@ -140,3 +141,6 @@ export async function enqueuePassEmail(
   ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
   return { outboxId };
 }
+
+export const listPassDeliveries = (ctx: ServiceContext, passId: string) =>
+  listOutboxForPass(ctx.env.DB, passId, 50);

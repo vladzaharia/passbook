@@ -17,10 +17,10 @@ import {
   RemovePassResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, requireSession } from '../../platform/auth.ts';
+import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { limitBody } from '../auth/body-limit.ts';
 import { clearSessionCookie } from '../auth/cookies.ts';
 import {
   addMyEmail,

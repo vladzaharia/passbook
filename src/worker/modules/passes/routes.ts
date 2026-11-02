@@ -16,19 +16,20 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { methodScope, requireApiKeyOrAdmin } from '../../platform/auth.ts';
-import { BadRequestError, NotFoundError } from '../../platform/errors.ts';
+import { defaultBodyLimit } from '../../platform/body-limit.ts';
+import { BadRequestError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
 import { actorFor, assertOrg, type C, orgScopeOf, svc, valid } from './http.ts';
-import { getPass } from './repo.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
 import {
   deletePass,
   listPassSummaries,
   requestRefresh,
+  requirePass,
   resendEmail,
   rotateLink,
   unvoidPass,
@@ -36,7 +37,9 @@ import {
   voidPass,
 } from './service.ts';
 
-export const passesRoutes = createRouter();
+export const passesRoutes = createRouter({ bodyLimit: false });
+/** Image overrides have their own cap (routes-assets.ts). */
+passesRoutes.use('*', defaultBodyLimit(/\/assets\/[^/]+$/));
 guard(
   passesRoutes,
   requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
@@ -231,8 +234,7 @@ register(
   },
   async (c: C) => {
     const id = valid<Params>(c, 'param').id;
-    if (!(await getPass(c.env.DB, id, orgScopeOf(c))))
-      throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    await requirePass(svc(c), id, orgScopeOf(c));
     const { requestedAt } = await requestRefresh(svc(c), id, actorFor(c));
     return c.json({ accepted: true as const, requestedAt }, 202);
   },

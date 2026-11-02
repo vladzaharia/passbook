@@ -15,11 +15,11 @@ import {
   UploadBrandingImageSchema,
 } from '../../../shared/contracts/index.ts';
 import { requireAdmin } from '../../platform/auth.ts';
+import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor, valid } from '../audit/http.ts';
-import { limitBody } from '../auth/body-limit.ts';
 import { deleteBrandingImage, getBrandingImage, putBrandingImage } from './branding.ts';
 import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus, updateOrg } from './service.ts';
 

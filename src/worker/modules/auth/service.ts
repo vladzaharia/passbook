@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service.ts';
 import * as repo from './repo.ts';
+import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
 
 export const OIDC_PROVIDER = 'pocketid';
@@ -203,3 +204,40 @@ export async function signInBreakglass(
   });
   return result;
 }
+
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+const FAILURE_ROWS_PER_HOUR = 100;
+
+/** Audits a wrong token, capped per hour so guessing cannot flood the log; the day count is exact. */
+export async function recordBreakglassFailure(
+  ctx: ServiceContext,
+  prefix: string | null,
+): Promise<void> {
+  const now = ctx.clock.now();
+  await bumpCounter(ctx.env.DB, 'breakglass:fail', now - (now % DAY));
+  const rows = await bumpCounter(ctx.env.DB, 'audit:breakglass_failed', now - (now % HOUR));
+  if (rows > FAILURE_ROWS_PER_HOUR + 1) return;
+  if (rows === FAILURE_ROWS_PER_HOUR + 1) {
+    ctx.log.error('auth.breakglass_failed_capped', { code: 'BREAKGLASS_FAILURE_CAP' });
+    return;
+  }
+  await recordAudit(ctx, {
+    actorType: 'system',
+    action: 'auth.breakglass_failed',
+    ipPrefix: prefix,
+    detail: { reason: 'wrong_token' },
+  });
+}
+
+export type NewOidcFlow = Parameters<typeof repo.insertFlow>[1];
+
+/** Stores the secrets of one sign-in attempt until its callback arrives. */
+export const saveOidcFlow = (ctx: ServiceContext, flow: NewOidcFlow) =>
+  repo.insertFlow(ctx.env.DB, flow);
+
+/** One-shot: a flow can be consumed once, from the browser that started it, before it expires. */
+export const takeOidcFlow = (ctx: ServiceContext, stateHash: string, bindingHash: string) =>
+  repo.consumeFlow(ctx.env.DB, stateHash, bindingHash, ctx.clock.now());
+
+export const findUser = (ctx: ServiceContext, userId: string) => repo.getUser(ctx.env.DB, userId);

@@ -1,5 +1,5 @@
+import { deleteInBatches } from '../../platform/batched.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
-import { deleteInBatches } from '../delivery/batched.ts';
 
 export interface IdentityRef {
   id: string;

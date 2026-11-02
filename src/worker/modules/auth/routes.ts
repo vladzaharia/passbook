@@ -4,9 +4,9 @@ import {
   OkSchema,
   SessionResponseSchema,
 } from '../../../shared/contracts/index.ts';
+import { limitBody } from '../../platform/body-limit.ts';
 import { sameOriginOnly } from '../../platform/csrf.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { limitBody } from './body-limit.ts';
 import { breakglassForm, breakglassSignIn } from './breakglass-handlers.ts';
 import { confirmMagic, consumeMagic, requestMagic } from './magic-handlers.ts';
 import { callbackOidc, noAccess, startOidc } from './oidc-handlers.ts';
