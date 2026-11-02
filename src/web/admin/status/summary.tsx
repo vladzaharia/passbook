@@ -1,8 +1,8 @@
-import { AlertTriangle, CheckCircle2, RefreshCw, XCircle } from 'lucide-react';
+import { AlertTriangle, RefreshCw, XCircle } from 'lucide-react';
 import { cn } from '@/web/lib/cn.ts';
 import { useChangeCount } from '@/web/lib/motion.ts';
 import { statusOf } from '@/web/lib/status.ts';
-import { Button, StatusPill } from '@/web/ui/index.ts';
+import { BuddyFace, Button, StatusPill } from '@/web/ui/index.ts';
 import { formatDateTime } from '../overview/format.ts';
 import { type Component, countStates, headline, leaves, problems, type State } from './groups.ts';
 import './status.css';
@@ -16,16 +16,13 @@ const TONE = {
     icon: AlertTriangle,
     text: 'text-warning',
   },
-  success: {
-    box: 'border-success-border bg-success-subtle',
-    icon: CheckCircle2,
-    text: 'text-success',
-  },
+  success: { box: 'border-success-border bg-success-subtle', icon: null, text: 'text-success' },
 } as const;
 
 /**
  * The banner: what is wrong in one line (leaves only, so one failing connection reads "1
- * connection failing"), when it was checked, and Recheck. Healthy reads "All good" in success.
+ * connection failing"), when it was checked, and Recheck. Healthy reads "All good" in success,
+ * with the buddy's face for the icon (it winks once).
  */
 export function Summary({
   components,
@@ -51,11 +48,21 @@ export function Summary({
       aria-label="Overall status"
       className={cn('flex flex-wrap items-center gap-x-5 gap-y-4 rounded-lg border p-5', t.box)}
     >
-      <t.icon
-        key={popped}
-        aria-hidden
-        className={cn('size-9 shrink-0', t.text, popped > 0 && 'wl-state-pop')}
-      />
+      {t.icon === null ? (
+        <BuddyFace
+          key={popped}
+          className={cn(
+            'size-9 text-success [--wl-face-bg:var(--pk-success-subtle)] [--wl-wink-at:640ms]',
+            popped > 0 && 'wl-state-pop',
+          )}
+        />
+      ) : (
+        <t.icon
+          key={popped}
+          aria-hidden
+          className={cn('size-9 shrink-0', t.text, popped > 0 && 'wl-state-pop')}
+        />
+      )}
       <div className="min-w-0 flex-1 basis-60">
         <p className="text-xl font-semibold text-fg-strong">{headline(components)}</p>
         <p className="mt-0.5 text-sm text-fg" aria-live="polite">

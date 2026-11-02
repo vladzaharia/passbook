@@ -80,6 +80,8 @@ describe('pass detail: loading', () => {
     expect(server.calls.filter((c) => c.path === '/passes/p1' && c.method === 'GET')).toHaveLength(
       1,
     );
+    // A visit, not a create: no buddy beside the pass.
+    expect(document.querySelector('.wl-pass-buddy')).toBeNull();
   });
 });
 

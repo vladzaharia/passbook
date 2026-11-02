@@ -219,6 +219,55 @@
 .wl-buddy[data-prop] [data-look] {
   transform: translateX(1.5px);
 }
+/* It watches the action you reach for. */
+[data-art-host]:has(:is(a, button):is(:hover, :focus-visible)) .wl-buddy [data-look] {
+  transform: translateY(1.6px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy [data-look] {
+    transition: transform 200ms var(--art-mv);
+  }
+}
 [data-art="wallet"] [data-lift] [data-part="c2"] {
   --t: translateY(-6px);
+}
+
+/* Face (face.tsx): an icon in currentColor with foil passes; one wink after its host pops in. */
+.wl-face {
+  flex: none;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.wl-face .o {
+  fill: var(--wl-face-bg, var(--pk-surface-overlay));
+}
+.wl-face :is(.c1, .c2, .c3, [data-eye]) {
+  stroke: none;
+}
+.wl-face .c1 {
+  fill: var(--wl-foil-1);
+}
+.wl-face .c2 {
+  fill: var(--wl-foil-2);
+}
+.wl-face .c3 {
+  fill: var(--wl-foil-3);
+}
+.wl-face [data-eye] {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-face [data-wink] {
+    animation: wl-wink 200ms var(--art-mv, ease-in-out) var(--wl-wink-at, 380ms);
+  }
+}
+@keyframes wl-wink {
+  50% {
+    transform: scaleY(0.12);
+  }
 }

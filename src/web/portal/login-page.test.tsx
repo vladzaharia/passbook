@@ -139,6 +139,7 @@ describe('login page', () => {
     expect(scene).toHaveAttribute('aria-hidden', 'true');
     expect(scene).not.toHaveAttribute('data-beat');
     expect(scene).not.toHaveAttribute('data-sad');
+    expect(scene).not.toHaveAttribute('data-bye');
     expect(scene?.querySelector('[data-part="w"]')).toHaveAttribute('data-seat');
     expect(scene?.querySelectorAll('[data-part="l1"], [data-part="l2"]')).toHaveLength(2);
     expect(scene?.querySelector('#wl-login-slot')).not.toBeNull();

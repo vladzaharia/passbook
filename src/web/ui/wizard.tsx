@@ -1,10 +1,10 @@
-import { Check } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useMediaQuery } from '../lib/media.ts';
 import { prefersReducedMotion, useChangeCount } from '../lib/motion.ts';
 import { ConfirmDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
+import { Tick } from './checkbox.tsx';
 import { useBlockedSubmit } from './form.tsx';
 import { WizardStage } from './wizard-stage.tsx';
 
@@ -78,12 +78,12 @@ export function Stepper({
             <span
               className={cn(
                 'relative inline-flex size-5 items-center justify-center rounded-full border text-[11px] font-semibold tabular-nums',
-                done && 'border-accent bg-accent text-accent-on',
+                done && 'wl-step-done border-accent bg-accent text-accent-on',
                 here && 'border-accent bg-surface-page text-accent-fg',
                 !done && !here && 'border-border-strong bg-surface-page text-fg-muted',
               )}
             >
-              {done ? <Check aria-hidden className="wl-tick size-3" /> : i + 1}
+              {done ? <Tick draw className="size-3" /> : i + 1}
             </span>
           );
           return (

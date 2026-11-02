@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { isApiError } from '../../../lib/errors.ts';
-import { useMintedOnArrival } from '../../../lib/motion.ts';
+import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Button,
   Celebrate,
@@ -17,6 +17,7 @@ import {
   TabsList,
   TabsTrigger,
   toast,
+  WalletArt,
 } from '../../../ui/index.ts';
 import { useDraftPreview, useTemplate } from '../../templates/api.ts';
 import { usePass, usePassActions, usePassVersion } from '../api.ts';
@@ -28,7 +29,7 @@ import type { passDetailSearchSchema } from '../search.ts';
 import { CreatedCallout, PassWarnings, VoidedCallout } from './callouts.tsx';
 import { HeaderActionsView } from './header-actions.tsx';
 import { PassTabs } from './pass-tabs.tsx';
-import { useCreated, useLasting, useStageMotion } from './stage-state.ts';
+import { useCreated, useStageMotion } from './stage-state.ts';
 import '../passes.css';
 
 type Search = z.infer<typeof passDetailSearchSchema>;
@@ -154,6 +155,14 @@ function Loaded({
         swapKey={picked === undefined ? 'current' : showing}
         label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
         className={size === 'card' ? 'gap-2' : undefined}
+        // Just created: the buddy steps out from behind the pass and stays beside it.
+        beside={
+          size === 'column' && minted ? (
+            <span aria-hidden className="wl-pass-buddy">
+              <WalletArt state="login" mood="happy" size="sm" beat={false} />
+            </span>
+          ) : undefined
+        }
       />
     </div>
   );

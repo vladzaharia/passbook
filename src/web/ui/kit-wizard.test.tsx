@@ -34,9 +34,16 @@ describe('Celebrate and Checklist', () => {
     const { rerender } = render(<Checklist title="Get started" steps={steps} />);
     expect(screen.getByText('Assign a template')).toHaveTextContent('(done)');
     expect(screen.getByRole('link', { name: 'Issue' })).toBeInTheDocument();
+    const marks = () => [...document.querySelectorAll('li > span[aria-hidden]')];
+    // Done on load: the tick shows still, the mark does not pop.
+    expect(marks()[0]?.querySelector('svg.wl-tick')).toBeNull();
     rerender(<Checklist title="Get started" steps={steps.map((s) => ({ ...s, done: true }))} />);
     expect(screen.queryByRole('link', { name: 'Issue' })).toBeNull();
     expect(screen.getByText('All steps done')).toBeInTheDocument();
+    // Done from data after mount: the mark fills with a bounce and the tick draws.
+    expect(marks()[1]).toHaveClass('wl-step-done');
+    expect(marks()[1]?.querySelector('svg.wl-tick')).not.toBeNull();
+    expect(marks()[0]).not.toHaveClass('wl-step-done');
   });
 });
 
@@ -86,6 +93,9 @@ describe('Wizard and OptionTile', () => {
     await user.click(screen.getByLabelText('Org b'));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('Template step')).toBeInTheDocument();
+    // The finished step fills with a bounce and its tick draws.
+    const done = screen.getByRole('button', { name: /Organization/ });
+    expect(done.querySelector('.wl-step-done svg.wl-tick')).not.toBeNull();
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Template' })).toHaveFocus());
     await user.click(screen.getByRole('button', { name: /Organization/ }));
     expect(screen.getByLabelText('Org b')).toBeChecked();

@@ -5,6 +5,7 @@ import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Buddy } from './buddy.tsx';
+import { BuddyFace } from './face.tsx';
 import { ART_NAMES, EntityArt, preloadArt, WalletArt, type WalletState } from './index.ts';
 import { ART } from './registry.ts';
 import type { WalletMood } from './wallet.tsx';
@@ -175,6 +176,26 @@ describe('entity art', () => {
     expect(css).toMatch(/\.wl-art\[data-still\] :is\(\[data-body\], \[data-fan\]\)/);
   });
 
+  it('draws the face as a decorative icon that winks once', () => {
+    const { container } = render(<BuddyFace className="size-4" />);
+    const svg = container.querySelector('svg.wl-face');
+    expect(svg).toHaveAttribute('aria-hidden', 'true');
+    expect(svg).toHaveAttribute('focusable', 'false');
+    expect(svg).toHaveClass('size-4');
+    expect(svg?.querySelectorAll('[data-eye]')).toHaveLength(2);
+    expect(svg?.querySelectorAll('[data-wink]')).toHaveLength(1);
+    expect(svg?.querySelector('text')).toBeNull();
+    // One wink, never a loop; the media test below keeps it under no-preference.
+    expect(css).toMatch(/\.wl-face \[data-wink\] \{\s*animation: wl-wink 200ms/);
+    expect(css).not.toMatch(/wl-wink[^;]*infinite/);
+  });
+
+  it('turns the buddy toward an action under the pointer or focus', () => {
+    expect(css).toMatch(
+      /\[data-art-host\]:has\(:is\(a, button\):is\(:hover, :focus-visible\)\) \.wl-buddy \[data-look\]/,
+    );
+  });
+
   it('animates only transform and opacity', () => {
     const keyframes = blocks(css).filter(([sel]) => sel.startsWith('@keyframes'));
     expect(keyframes.length).toBeGreaterThan(3);
@@ -221,13 +242,14 @@ describe('entity art', () => {
   });
 
   // Raised for the buddy (moods, seat, composition) and the lazy registry's name list. The art
-  // left the initial chunk (registry.ts), so the initial budget fell; the rest is CSS.
-  it('fits the 11 kB gzip budget', () => {
+  // left the initial chunk (registry.ts), so the initial budget fell; the rest is CSS. Then by
+  // 0.5 kB for the face (toasts, status) and the buddy's glance at an action.
+  it('fits the 11.5 kB gzip budget', () => {
     // css.ts is SSR glue: the browser bundle never loads it.
     const files = readdirSync(DIR)
       .filter((f) => !f.includes('.test.') && f !== 'css.ts')
       .sort();
     const all = files.map((f) => readFileSync(join(DIR, f), 'utf8')).join('\n');
-    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(11 * 1024);
+    expect(gzipSync(all, { level: 9 }).length).toBeLessThanOrEqual(11.5 * 1024);
   });
 });

@@ -315,6 +315,14 @@ describe('new pass wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
+    // Just created: the happy buddy stands beside the pass, decorative.
+    const buddy = await waitFor(() => {
+      const el = document.querySelector('.wl-pass-buddy');
+      expect(el).not.toBeNull();
+      return el;
+    });
+    expect(buddy).toHaveAttribute('aria-hidden', 'true');
+    expect(buddy?.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'happy');
     expect(posts).toHaveLength(1);
     const headers = posts[0]?.headers as Record<string, string>;
     expect(headers['idempotency-key']).toBeTruthy();

@@ -42,17 +42,3 @@ export function useStageMotion(version: number, status: string, mintedOnArrival:
   }, [version, status]);
   return { mint, settle, stamp };
 }
-
-/** True while `pending` has lasted 150 ms: loading states that would only flash stay hidden. */
-export function useLasting(pending: boolean, ms = 150): boolean {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    if (!pending) {
-      setOn(false);
-      return;
-    }
-    const t = setTimeout(() => setOn(true), ms);
-    return () => clearTimeout(t);
-  }, [pending, ms]);
-  return on;
-}

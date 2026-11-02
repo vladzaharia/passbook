@@ -2,7 +2,8 @@ import { unzip } from 'fflate';
 import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
-import { Button, EntityArt } from '../../ui/index.ts';
+import { useLasting } from '../../lib/motion.ts';
+import { Buddy, Button, EntityArt, type WalletMood } from '../../ui/index.ts';
 
 export const MAX_BYTES = 15 * 1024 * 1024;
 
@@ -53,6 +54,8 @@ export function readPackage(file: File): Promise<PackageInfo> {
 /**
  * The drop zone, first and largest: the template art lifts while a file hovers and settles on
  * drop. While importing, `landed` pieces show; `failed` slides that piece out and shakes once.
+ * Not compact, the buddy sits on its top edge: it reaches up for a hovering file, cheers a caught
+ * one, riffles its passes while an import runs past 600 ms and sighs at a refusal.
  */
 export function UploadDrop({
   label,
@@ -82,6 +85,7 @@ export function UploadDrop({
   const [drag, setDrag] = useState(false);
   const [error, setError] = useState<string>();
   const [refused, setRefused] = useState(0);
+  const [sad, setSad] = useState(false);
   // Every refusal, ours or the server's, replays the slide-out and the shake.
   const rejections = refused + rejected;
   useEffect(() => {
@@ -90,7 +94,17 @@ export function UploadDrop({
     el.removeAttribute('data-rejected');
     void el.offsetWidth;
     el.setAttribute('data-rejected', '');
+    setSad(true);
   }, [rejections]);
+  const importing = landed !== undefined && landed < 4 && failed === undefined;
+  const riffle = useLasting(importing, 600);
+  const mood: WalletMood | undefined = drag
+    ? 'curious'
+    : sad || failed !== undefined
+      ? 'sad'
+      : file && !importing
+        ? 'happy'
+        : undefined;
   const take = (f: File | undefined) => {
     if (!f) return;
     const problem = !/\.(zip|pkpasstemplate)$/i.test(f.name)
@@ -100,11 +114,12 @@ export function UploadDrop({
         : undefined;
     setError(problem);
     if (problem) return setRefused((n) => n + 1);
+    setSad(false);
     zone.current?.removeAttribute('data-rejected');
     onFile(f);
   };
   return (
-    <div className="flex flex-col gap-1">
+    <div className={cn('flex flex-col gap-1', !compact && 'mt-18')}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the button inside is the control */}
       <div
         ref={zone}
@@ -113,6 +128,7 @@ export function UploadDrop({
         data-failed={failed}
         data-shake={failed !== undefined || undefined}
         data-done={done || undefined}
+        data-riffle={riffle || undefined}
         data-art-host=""
         onDragOver={(e: DragEvent) => {
           e.preventDefault();
@@ -125,12 +141,13 @@ export function UploadDrop({
           if (!disabled) take(e.dataTransfer.files[0]);
         }}
         className={cn(
-          'wl-drop flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 text-center wl-colors',
+          'wl-drop relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 text-center wl-colors',
           compact ? 'min-h-40 py-6' : 'min-h-60 py-8',
           drag ? 'border-accent bg-accent-subtle' : 'border-border-strong bg-surface-raised',
           disabled && 'opacity-80',
         )}
       >
+        {compact ? null : <Buddy mood={mood} />}
         <EntityArt name="template" size={compact ? 'sm' : 'lg'} beat={landed === undefined} />
         <p className="text-sm font-medium text-fg-strong">{file ? file.name : label}</p>
         <input

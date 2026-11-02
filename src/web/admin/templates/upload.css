@@ -10,7 +10,7 @@
 }
 
 /* Assembling: the entrance is off; each server step lands the next piece. */
-.wl-drop[data-landed] [data-part] {
+.wl-drop[data-landed] [data-art="template"] [data-part] {
   animation: none;
 }
 .wl-drop[data-landed] [data-part="p"],
@@ -47,6 +47,62 @@
 }
 .wl-drop[data-done] [data-part="e"] {
   animation: wl-v-stamp 420ms var(--wl-ease-bounce);
+}
+
+/* The buddy on the zone (upload-drop.tsx). A hovering file: passes reach up and spread, eyes up,
+   mouth open. A caught file: the smile and the hop come at once, not after the usual pause. */
+.wl-drop [data-buddy] {
+  --wl-sigh-delay: 120ms;
+}
+.wl-drop [data-buddy] :is([data-part="joy"], [data-part="br"]) {
+  --d: 0ms;
+}
+.wl-drop[data-drag] [data-buddy] [data-fan] {
+  transform: none;
+  animation: none;
+}
+.wl-drop[data-drag] [data-buddy] [data-part="c1"] {
+  --t: rotate(-28deg) translateY(-3px);
+}
+.wl-drop[data-drag] [data-buddy] [data-part="c2"] {
+  --t: translateY(-8px);
+}
+.wl-drop[data-drag] [data-buddy] [data-part="c3"] {
+  --t: rotate(28deg) translateY(-3px);
+}
+.wl-drop[data-drag] [data-buddy] [data-part="eyes"] {
+  --t: translateY(-1.4px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-drop [data-buddy] :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+    transition: transform 320ms var(--wl-ease-spring);
+  }
+  /* An import past 600 ms: the passes riffle left to right and the eyes follow, until it ends. */
+  .wl-drop[data-riffle] [data-buddy] :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+    animation: wl-riffle 900ms var(--wl-ease-move) calc(var(--i, 0) * 150ms) infinite;
+  }
+  .wl-drop[data-riffle] [data-buddy] [data-look] {
+    animation: wl-riffle-look 900ms var(--wl-ease-move) infinite;
+  }
+}
+@keyframes wl-riffle {
+  0%,
+  55%,
+  100% {
+    transform: var(--t,) translateY(0);
+  }
+  25% {
+    transform: var(--t,) translateY(-6px);
+  }
+}
+@keyframes wl-riffle-look {
+  0%,
+  100% {
+    transform: translateX(-1.2px);
+  }
+  45% {
+    transform: translateX(1.2px);
+  }
 }
 
 /* Report items rise 4 px, 30 ms apart, capped at six. */

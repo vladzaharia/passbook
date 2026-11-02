@@ -2,13 +2,16 @@ import { RefreshCw } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
 import { errorMessage } from '../lib/errors.ts';
 import { safeNext } from '../lib/redirect.ts';
-import { useSession } from '../lib/session.ts';
+import { clearSignedOut, signedOutJustNow, useSession } from '../lib/session.ts';
 import { Button, Callout } from '../ui/index.ts';
 import { Wordmark } from '../ui/layout/wordmark.tsx';
 import { goTo } from './goto.ts';
 import { LoginCard } from './login-card.tsx';
 import { loginErrorMessage } from './login-errors.ts';
 import { LoginScene, useLoginScene } from './login-scene.tsx';
+
+// Read once per page load (a remount while the session loads still waves); cleared after mount.
+let bye: boolean | undefined;
 
 /**
  * The hosted sign-in page: wordmark, the wallet seated on the card's top edge, then the card.
@@ -25,6 +28,8 @@ export function LoginPage({
   const next = safeNext(rawNext);
   const authedAlready = session?.authenticated === true;
   const [scene, sceneActions] = useLoginScene(Boolean(error));
+  bye ??= signedOutJustNow();
+  useEffect(clearSignedOut, []);
 
   useEffect(() => {
     if (authedAlready) goTo(next);
@@ -74,7 +79,7 @@ export function LoginPage({
       <div className="flex h-11 items-center justify-center">
         <Wordmark flip={false} />
       </div>
-      <LoginScene state={scene} sad={failed} className="mt-4" />
+      <LoginScene state={scene} sad={failed} bye={bye} className="mt-4" />
       <div className="relative z-10 w-full">
         <LoginCard
           next={next}
