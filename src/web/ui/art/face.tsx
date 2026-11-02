@@ -11,9 +11,10 @@ export function BuddyFace({
   scene = 'wink',
 }: {
   className?: string;
-  scene?: 'wink' | 'cheer';
+  /** post: the violet pass flies out like a letter (a holder emailed). */
+  scene?: 'wink' | 'cheer' | 'post';
 }) {
-  const { ref } = useScene<SVGSVGElement>(scene === 'cheer');
+  const { ref } = useScene<SVGSVGElement>(scene !== 'wink');
   return (
     <svg
       ref={ref}
@@ -44,7 +45,7 @@ export function BuddyFace({
           transform="rotate(18 16.2 12.6)"
         />
       </g>
-      <rect className="c2" x="8.8" y="2" width="6.4" height="9" rx="1.4" />
+      <rect data-letter="" className="c2" x="8.8" y="2" width="6.4" height="9" rx="1.4" />
       <rect className="o" x="2.5" y="9" width="19" height="13" rx="4" />
       <circle data-eye="" cx="9" cy="14.7" r="1.4" />
       <circle data-eye="" data-wink="" cx="15" cy="14.7" r="1.4" />

@@ -76,7 +76,7 @@ function SendEmailCard({
       });
       key.current = newKey();
       setDone((n) => n + 1);
-      toast.success(`Email queued to ${address || pass.holderEmail}`);
+      toast.sent(`Email queued to ${address || pass.holderEmail}`);
       onSent();
     } catch (cause) {
       setError(errorMessage(cause));

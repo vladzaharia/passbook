@@ -38,7 +38,7 @@ export function RotatedLinkDialog({
                     .mutateAsync({ key: key.current })
                     .then(() => {
                       key.current = newKey();
-                      toast.success(`New link emailed to ${holderEmail}`);
+                      toast.sent(`New link emailed to ${holderEmail}`);
                       onClose();
                     })
                     .catch((error: unknown) => toast.error(error))

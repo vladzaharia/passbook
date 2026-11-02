@@ -1,9 +1,14 @@
 /* The face (face.tsx). wink (toasts, on a click): pops and winks again. cheer (status all good,
    once in view): the gold pass rises like a thumb, the right eye winks, the smile widens; the
-   thumb wiggles and drops. 1.4 s; 1% = 14 ms. */
+   thumb wiggles and drops. post (a holder emailed): the violet pass dips, flies off up-right like
+   a letter, the face winks, and a new one rises into the pocket. 1.4 s; 1% = 14 ms. */
 .wl-face [data-thumb] {
   transform-box: view-box;
   transform-origin: 16.2px 12.6px;
+}
+.wl-face [data-letter] {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
 .wl-face [data-smile] {
   transform-box: fill-box;
@@ -25,6 +30,12 @@
   }
   .wl-face[data-replay][data-scene="cheer"][data-run] [data-smile] {
     animation: wl-s-face-smile 1.4s ease-in-out;
+  }
+  .wl-face[data-replay][data-scene="post"][data-run] [data-letter] {
+    animation: wl-s-face-post 1.4s ease-in-out;
+  }
+  .wl-face[data-replay][data-scene="post"][data-run] [data-wink] {
+    animation: wl-s-face-wink 220ms var(--art-mv, ease-in-out) 560ms;
   }
 }
 
@@ -62,6 +73,34 @@
   100% {
     translate: 0 0;
     rotate: 0deg;
+  }
+}
+@keyframes wl-s-face-post {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    opacity: 1;
+  }
+  14% {
+    translate: 0 1.5px;
+    rotate: 0deg;
+    opacity: 1;
+  }
+  36% {
+    translate: 7px -8px;
+    rotate: 30deg;
+    opacity: 0;
+  }
+  36.1%,
+  52% {
+    translate: 0 5px;
+    rotate: 0deg;
+    opacity: 0;
+  }
+  72%,
+  100% {
+    translate: 0 0;
+    opacity: 1;
   }
 }
 @keyframes wl-s-face-smile {

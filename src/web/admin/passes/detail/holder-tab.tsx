@@ -53,7 +53,8 @@ function ChangeHolderDialog({
       if (owned) await actions.reassign.mutateAsync(trimmed);
       else await actions.assign.mutateAsync(trimmed);
       if (send) await actions.resendEmail.mutateAsync({ to: trimmed, key: newKey() });
-      toast.success(send ? `Pass sent to ${trimmed}` : 'Holder changed');
+      if (send) toast.sent(`Pass sent to ${trimmed}`);
+      else toast.success('Holder changed');
       onOpenChange(false);
     } catch (cause) {
       setError(errorMessage(cause));

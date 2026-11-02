@@ -28,12 +28,12 @@ span[data-replay] .wl-art > :not([data-part="sd"], defs) {
   }
   /* The scene owns the mood's beat and the face's wink. */
   [data-replay]:not([data-scene="beat"]) :is([data-body], [data-fan]),
-  .wl-face[data-replay][data-scene="cheer"] [data-wink] {
+  .wl-face[data-replay]:is([data-scene="cheer"], [data-scene="post"]) [data-wink] {
     animation: none;
   }
-  /* Pass created: behind the pass until its scene steps it out. */
-  [data-scene="wave"]:not([data-run]) {
-    transform: translateY(-44px);
+  /* Beside a pass: behind it until its scene steps it out. */
+  :is([data-scene="wave"], [data-scene="tear"], [data-scene="nudge"]):not([data-run]) {
+    transform: translateY(-50px);
   }
   /* A pointer over it: one blink, so it reads as alive. */
   @media (hover: hover) {

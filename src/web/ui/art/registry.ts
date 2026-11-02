@@ -35,6 +35,7 @@ import './scenes/peek.css';
 import './scenes/flip.css';
 import './scenes/cheer.css';
 import './scenes/wave.css';
+import './scenes/beside.css';
 import './scenes/face.css';
 
 /** Every entity art by name; loaded beside the app (index.ts), not in its first chunk. */
