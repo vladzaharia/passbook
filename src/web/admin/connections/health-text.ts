@@ -34,14 +34,16 @@ export function healthLine(c: Connection, now: number): string | null {
 }
 
 /**
- * The health card's opening sentence: "Failing since 4:02 AM · 1 failure in a row · next retry in
+ * The health card's opening sentence: "Degraded since 4:02 AM · 1 failure in a row · next retry in
  * 1 min". Healthy connections say when they last synced and when they run next.
  */
 export function healthSentence(c: Connection, now: number, failingSince?: number): string {
   if (!c.enabled) return 'Disabled. Nothing syncs until it is enabled.';
   const parts: string[] = [];
   if (c.consecutiveFailures > 0) {
-    parts.push(`Failing since ${clock(failingSince ?? c.lastErrorAt ?? now, now)}`);
+    // Same word as the header pill: one state, one name.
+    const word = c.health === 'degraded' ? 'Degraded' : 'Failing';
+    parts.push(`${word} since ${clock(failingSince ?? c.lastErrorAt ?? now, now)}`);
     parts.push(`${failures(c.consecutiveFailures)} in a row`);
     if (c.breakerOpenUntil && c.breakerOpenUntil > now)
       parts.push(`paused until ${clock(c.breakerOpenUntil, now)}`);

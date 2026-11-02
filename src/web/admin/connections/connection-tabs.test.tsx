@@ -52,7 +52,9 @@ describe('mapping tab', () => {
       }),
     });
     await screen.findByRole('list', { name: 'Mappings' });
-    expect(screen.getAllByText('Source field')).toHaveLength(1);
+    // One header row; per-row captions show only when the row stacks.
+    const headers = screen.getAllByText('Source field').filter((el) => !el.closest('li'));
+    expect(headers).toHaveLength(1);
     expect(document.querySelector('fieldset legend')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Load sample' }));
     expect(
