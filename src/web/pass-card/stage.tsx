@@ -2,6 +2,8 @@ import { type CSSProperties, useEffect, useRef } from 'react';
 import { isDarkBackground } from '../../shared/pass-view/index.ts';
 import { PassCard, type PassCardProps } from './PassCard.tsx';
 import './stage.css';
+import './stage-motion.css';
+import './stage-seg.css';
 
 /** SSR-safe: no window access outside effects. */
 export interface PassStageProps extends Omit<PassCardProps, 'face'> {

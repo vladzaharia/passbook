@@ -1,6 +1,5 @@
 import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
-import { isAllowedPointer, parsePointer } from '../../../../passkit/template/pointer.ts';
 import type {
   Json,
   PassField,
@@ -8,6 +7,7 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../../../../passkit/types.ts';
+import { ALLOWED_KEYWORDS, pointerAllowed } from './manifest-rules.ts';
 import { isSafePattern, needsInputBound, PATTERN_INPUT_MAX } from './safe-regex.ts';
 import { stylesOf } from './slots.ts';
 
@@ -22,81 +22,6 @@ const GROUPS = [
 ] as const;
 
 export const MAX_MANIFEST_BYTES = 64 * 1024;
-
-/**
- * Schema keywords uploaded manifests may use. `pattern` is checked separately (safe regex and a
- * bounded maxLength); no references.
- */
-const ALLOWED_KEYWORDS = new Set([
-  'type',
-  'properties',
-  'required',
-  'enum',
-  'const',
-  'title',
-  'description',
-  'default',
-  'examples',
-  'minLength',
-  'maxLength',
-  'minimum',
-  'maximum',
-  'exclusiveMinimum',
-  'exclusiveMaximum',
-  'multipleOf',
-  'minItems',
-  'maxItems',
-  'uniqueItems',
-  'items',
-  'additionalProperties',
-  'format',
-  'oneOf',
-  'anyOf',
-  'allOf',
-  'not',
-  'dependentRequired',
-  'pattern',
-  '$schema',
-]);
-
-/** Pass.json roots whose contents are per-pass data. Server-owned keys stay denied by the engine. */
-const DATA_ROOTS = new Set([
-  'relevantDates',
-  'semantics',
-  'locations',
-  'beacons',
-  'userInfo',
-  'nfc',
-  'upcomingPassInformation',
-  'preferredStyleSchemes',
-  'maxDistance',
-]);
-
-const POINTERS = new Set([
-  '/logoText',
-  '/relevantDate',
-  '/expirationDate',
-  '/voided',
-  '/foregroundColor',
-  '/backgroundColor',
-  '/labelColor',
-  '/stripColor',
-  '/description',
-  '/groupingIdentifier',
-  '/eventLogoText',
-  '/directionsInformationURL',
-  '/parkingInformationURL',
-  '/managementURL',
-  '/changeSeatURL',
-]);
-
-function pointerAllowed(pointer: unknown): boolean {
-  if (typeof pointer !== 'string') return false;
-  if (POINTERS.has(pointer)) return true;
-  if (isAllowedPointer(pointer) !== null) return false;
-  const root = parsePointer(pointer)?.[0] ?? '';
-  return DATA_ROOTS.has(root) || /^\/[A-Za-z]+\/transitType$/.test(pointer);
-}
 
 export function fieldsOf(pass: PassJson): PassField[] {
   const out: PassField[] = [];

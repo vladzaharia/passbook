@@ -2,11 +2,18 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
-import cardCss from '../../web/pass-card/pass-card.css?raw';
+import cardBase from '../../web/pass-card/pass-card-base.css?raw';
+import cardPoster from '../../web/pass-card/pass-card-poster.css?raw';
+import cardText from '../../web/pass-card/pass-card-text.css?raw';
 import stageCss from '../../web/pass-card/stage.css?raw';
+import stageMotion from '../../web/pass-card/stage-motion.css?raw';
+import stageSeg from '../../web/pass-card/stage-seg.css?raw';
 import type { PassDevice } from './device.ts';
 import { hostedPage } from './hosted.ts';
 import { escapeHtml, HEAD_HTML, THEME_CSS } from './theme.ts';
+
+const cardCss = `${cardBase}\n${cardPoster}\n${cardText}`;
+const stageAllCss = `${stageCss}\n${stageMotion}\n${stageSeg}`;
 
 export interface PassPageProps {
   view: PassView;
@@ -158,7 +165,7 @@ export function renderPassPage(props: PassPageProps): string {
   const active = !voided && !props.view.expired;
   const title = `${props.passTitle} · ${props.orgName}`;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /** An unknown, rotated or expired link: the hosted card with one way on. */

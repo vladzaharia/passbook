@@ -1,0 +1,144 @@
+/* posterGeneric and poster event ticket: 358x500 card, art 358x448 anchored top */
+.pc-root[data-style="posterGeneric"] .pc-card,
+.pc-root[data-poster] .pc-card {
+  padding: 0;
+  gap: 0;
+}
+.pc-root[data-style="posterGeneric"][data-face="front"] .pc-card,
+.pc-root[data-poster][data-face="front"] .pc-card {
+  aspect-ratio: auto;
+  min-height: calc(100cqw * 500 / 358);
+}
+.pc-root[data-style="posterGeneric"][data-face="back"] .pc-card,
+.pc-root[data-poster][data-face="back"] .pc-card {
+  aspect-ratio: 358 / 600;
+}
+.pc-root .pc-card > .pc-poster-blur {
+  position: absolute;
+  inset: calc(var(--u) * -30);
+  width: calc(100% + var(--u) * 60);
+  height: calc(100% + var(--u) * 60);
+  max-width: none;
+  object-fit: cover;
+  filter: blur(calc(var(--u) * 28)) brightness(0.45) saturate(1.2);
+  z-index: 0;
+}
+.pc-root .pc-card > .pc-art-img {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 358 / 448;
+  object-fit: cover;
+  z-index: 0;
+  mask-image: linear-gradient(#000 80%, transparent);
+}
+.pc-root .pc-card > .pc-poster-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(transparent 55%, rgb(0 0 0 / 0.55));
+}
+.pc-root .pc-card > .pc-poster-shade[data-darken] {
+  background:
+    linear-gradient(rgb(0 0 0 / 0.55), transparent 22%),
+    linear-gradient(transparent 55%, rgb(0 0 0 / 0.55));
+}
+.pc-root .pc-card > .pc-poster-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: calc(var(--u) * 12);
+  padding: calc(var(--u) * 18);
+}
+.pc-art-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: calc(var(--u) * 8);
+}
+.pc-art-top .pc-header .pc-field {
+  align-items: flex-end;
+  text-align: end;
+}
+.pc-art-top .pc-label {
+  font-weight: 700;
+  font-size: max(11px, calc(var(--u) * 12));
+}
+.pc-art-top .pc-value {
+  font-size: calc(var(--u) * 14);
+}
+.pc-poster-low {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 14);
+}
+.pc-poster-low .pc-code {
+  margin: 0;
+}
+.pc-poster-low .pc-barcode {
+  padding: calc(var(--u) * 12) calc(var(--u) * 20);
+  border-radius: calc(var(--u) * 10);
+  width: 100%;
+  box-sizing: border-box;
+}
+.pc-poster-low .pc-barcode-svg {
+  height: calc(var(--u) * 54);
+  max-width: 100%;
+}
+.pc-poster-low .pc-barcode[data-square="true"] {
+  width: auto;
+}
+.pc-poster-low .pc-barcode[data-square="true"] .pc-barcode-svg {
+  height: calc(var(--u) * 100);
+  max-width: calc(var(--u) * 100);
+}
+.pc-poster-primary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: calc(var(--u) * 12);
+}
+.pc-title {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: calc(var(--u) * 26);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  overflow-wrap: break-word;
+}
+.pc-poster-primary .pc-primary {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: calc(var(--u) * 12);
+}
+.pc-poster-primary .pc-primary .pc-field {
+  align-items: flex-end;
+  text-align: end;
+  white-space: nowrap;
+}
+.pc-poster-primary .pc-primary .pc-value {
+  font-size: calc(var(--u) * 16);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.pc-poster-primary .pc-primary .pc-label {
+  order: -1;
+  font-size: max(11px, calc(var(--u) * 11));
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.pc-poster-footer {
+  justify-content: flex-start;
+}
+.pc-poster-footer .pc-label {
+  display: none;
+}
+.pc-poster-footer .pc-value {
+  font-size: calc(var(--u) * 13);
+}

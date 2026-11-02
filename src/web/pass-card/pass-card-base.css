@@ -1,0 +1,270 @@
+/* Pass colors come from inline --pc-* vars only; no app tokens, so light and dark app themes match. */
+.pc-root {
+  container-type: inline-size;
+  width: 100%;
+  font-family: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+.pc-card {
+  --u: calc(100cqw / 320);
+  --pc-pad: calc(var(--u) * 16);
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 320 / 460;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 10);
+  padding: var(--pc-pad);
+  overflow: hidden;
+  border-radius: calc(var(--u) * 14);
+  background: var(--pc-bg);
+  color: var(--pc-fg);
+  font-size: calc(var(--u) * 15);
+  line-height: 1.25;
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 10) rgb(0 0 0 / 0.25);
+}
+
+.pc-card a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.pc-card a:focus-visible,
+.pc-flip-btn:focus-visible,
+.pc-back-body:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.pc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 8);
+  min-height: calc(var(--u) * 34);
+}
+.pc-logo {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 8);
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.pc-logo-img {
+  height: calc(var(--u) * 34);
+  max-width: calc(var(--u) * 140);
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  object-fit: contain;
+}
+.pc-logo-text {
+  flex: 0 0 auto;
+  margin-inline-end: calc(var(--u) * 6);
+  font-size: calc(var(--u) * 15);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 6) calc(var(--u) * 14);
+  justify-content: space-between;
+}
+/* Header fields wrap between words, never inside one; the logo image gives way first. */
+.pc-header {
+  flex: 0 1 auto;
+  min-width: min-content;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: calc(var(--u) * 12);
+}
+.pc-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: start;
+}
+.pc-field[data-align="center"] {
+  text-align: center;
+  align-items: center;
+}
+.pc-field[data-align="right"] {
+  text-align: end;
+  align-items: flex-end;
+}
+.pc-field[data-align="left"] {
+  text-align: left;
+  align-items: flex-start;
+}
+.pc-header .pc-field {
+  flex: 0 1 auto;
+  min-width: min-content;
+  white-space: normal;
+}
+.pc-header .pc-label,
+.pc-header .pc-value {
+  overflow-wrap: normal;
+}
+.pc-label {
+  /* Labels never go under 11 px, even on small stills. */
+  font-size: max(11px, calc(var(--u) * 10));
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--pc-label);
+  overflow-wrap: anywhere;
+}
+.pc-value {
+  font-size: calc(var(--u) * 15);
+  overflow-wrap: anywhere;
+}
+.pc-primary {
+  flex: 1;
+  justify-content: flex-start;
+}
+.pc-primary .pc-value {
+  font-size: calc(var(--u) * 30);
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+.pc-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 10);
+}
+.pc-thumb {
+  height: calc(var(--u) * 90);
+  max-width: calc(var(--u) * 90);
+  width: auto;
+  border-radius: calc(var(--u) * 6);
+  object-fit: cover;
+}
+
+.pc-strip {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: calc(var(--u) * 100);
+  margin-inline: calc(var(--pc-pad) * -1);
+  padding: calc(var(--u) * 8) var(--pc-pad);
+  background: var(--pc-strip, transparent);
+}
+.pc-strip-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pc-strip > .pc-primary {
+  position: relative;
+}
+
+.pc-code {
+  margin-top: auto;
+  display: flex;
+  flex: none;
+  justify-content: center;
+}
+.pc-barcode {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 4);
+  padding: calc(var(--u) * 10);
+  border-radius: calc(var(--u) * 8);
+  background: #fff;
+  color: #000;
+  max-width: 100%;
+}
+.pc-barcode-pending {
+  background: rgb(127 127 127 / 0.15);
+  width: calc(var(--u) * 110);
+}
+.pc-barcode-svg {
+  display: block;
+  height: calc(var(--u) * 60);
+  width: auto;
+  max-width: calc(var(--u) * 260);
+}
+.pc-barcode[data-square="true"] .pc-barcode-svg {
+  height: calc(var(--u) * 110);
+  max-width: calc(var(--u) * 110);
+}
+.pc-barcode[data-format="pdf417"] .pc-barcode-svg {
+  height: calc(var(--u) * 70);
+}
+.pc-barcode-caption {
+  font-size: calc(var(--u) * 11);
+}
+.pc-barcode-error {
+  margin: 0;
+  font-size: calc(var(--u) * 12);
+}
+
+/* eventTicket */
+.pc-root[data-style="eventTicket"] .pc-card {
+  mask: radial-gradient(circle calc(var(--u) * 9) at 50% 0, #0000 98%, #000);
+}
+.pc-bg-blur {
+  position: absolute;
+  inset: calc(var(--u) * -20);
+  width: calc(100% + var(--u) * 40);
+  height: calc(100% + var(--u) * 40);
+  object-fit: cover;
+  filter: blur(calc(var(--u) * 14)) brightness(0.8);
+  z-index: 0;
+  max-width: none;
+}
+.pc-card > *:not(.pc-bg-blur):not(.pc-void) {
+  position: relative;
+  z-index: 1;
+}
+
+/* coupon */
+.pc-root[data-style="coupon"] .pc-card {
+  mask:
+    radial-gradient(circle calc(var(--u) * 8) at 0 40%, #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle calc(var(--u) * 8) at 100% 40%, #0000 98%, #000) right / 51% 100%
+    no-repeat;
+}
+
+/* boardingPass */
+.pc-route {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: calc(var(--u) * 8);
+}
+.pc-route .pc-field:last-child {
+  text-align: end;
+  align-items: flex-end;
+}
+.pc-route .pc-value {
+  font-size: calc(var(--u) * 38);
+  font-weight: 300;
+}
+.pc-transit svg {
+  width: calc(var(--u) * 28);
+  height: calc(var(--u) * 28);
+  display: block;
+}
+.pc-footer-img {
+  max-width: 100%;
+  height: auto;
+  align-self: center;
+}

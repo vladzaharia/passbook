@@ -2,7 +2,9 @@ import { type CSSProperties, useState } from 'react';
 import type { PassTarget, PassView } from '../../shared/pass-view/index.ts';
 import { Back } from './back.tsx';
 import { Front } from './front.tsx';
-import './pass-card.css';
+import './pass-card-base.css';
+import './pass-card-poster.css';
+import './pass-card-text.css';
 
 /** Workstream b owns this module. Keep `PassCard` and `PassCardProps` exported; must be SSR-safe. */
 export interface PassCardProps {
