@@ -181,7 +181,7 @@ describe('buddy scenes', () => {
     // The search scene's "?" is drawn, never written.
     expect(container.querySelector('[data-q]')?.tagName).toBe('path');
     expect(container.textContent).toBe('');
-    expect(await axe(container)).toHaveNoViolations();
+    expect((await axe(container)).violations).toEqual([]);
   });
 });
 

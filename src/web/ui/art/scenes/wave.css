@@ -19,7 +19,7 @@
 /* Out from under the pass on a spring. */
 @keyframes wl-s-wave-out {
   0% {
-    transform: translateY(-44px);
+    transform: translateY(-50px);
     animation-timing-function: linear(
       0,
       0.035 2.1%,

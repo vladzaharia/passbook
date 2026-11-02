@@ -83,13 +83,13 @@
     rotate: 0deg;
   }
   16% {
-    rotate: 32deg;
+    rotate: 26deg;
   }
   34% {
-    rotate: 42deg;
+    rotate: 36deg;
   }
   38% {
-    rotate: 40deg;
+    rotate: 34deg;
   }
   46% {
     rotate: 8deg;
@@ -154,7 +154,7 @@
   }
 }
 @keyframes wl-s-plug-spark {
-  0%,
+  10%,
   36% {
     opacity: 0;
     scale: 0.6;
