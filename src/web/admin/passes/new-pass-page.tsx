@@ -9,10 +9,7 @@ import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Callout,
-  CheckboxField,
   ErrorState,
-  FormField,
-  Input,
   PageHeader,
   SkeletonKeyValue,
   UnsavedChangesDialog,
@@ -25,7 +22,7 @@ import { markCreated } from './detail/stage-state.ts';
 import { fingerprint, newKey } from './format.ts';
 import { LivePreview, ShowPassRow, useLivePreview } from './new-pass-preview.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
-import { OrgStep, TemplateStep } from './new-pass-steps.tsx';
+import { HolderStep, OrgStep, TemplateStep } from './new-pass-steps.tsx';
 import {
   cleanValues,
   defaultValues,
@@ -277,29 +274,14 @@ export function NewPassPage({
           )
         ) : null}
         {at === 'holder' ? (
-          <div className="flex flex-col gap-4">
-            <FormField
-              label="Holder email"
-              help="Leave empty to add a holder later."
-              error={emailError}
-            >
-              {(c) => (
-                <Input
-                  {...c}
-                  type="email"
-                  autoComplete="off"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              )}
-            </FormField>
-            <CheckboxField
-              label={validEmail ? `Email the pass to ${email.trim()}` : 'Email the pass'}
-              checked={send && validEmail}
-              disabled={!validEmail}
-              onCheckedChange={(c) => setSend(c === true)}
-            />
-          </div>
+          <HolderStep
+            email={email}
+            onEmail={setEmail}
+            error={emailError}
+            valid={validEmail}
+            send={send}
+            onSend={setSend}
+          />
         ) : null}
         {at === 'review' ? showPass : null}
         {at === 'review' ? (

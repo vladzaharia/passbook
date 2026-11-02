@@ -4,9 +4,12 @@ import { cn } from '../../lib/cn.ts';
 import { useArrival } from '../../lib/motion.ts';
 import {
   Badge,
+  CheckboxField,
   EmptyState,
   EntityAvatar,
   ErrorState,
+  FormField,
+  Input,
   OptionTile,
   Skeleton,
   SkeletonRows,
@@ -165,5 +168,44 @@ export function TemplateStep({
         </div>
       ))}
     </ChoiceGroup>
+  );
+}
+
+/** Holder: an optional email, and whether to send the pass there now. */
+export function HolderStep({
+  email,
+  onEmail,
+  error,
+  valid,
+  send,
+  onSend,
+}: {
+  email: string;
+  onEmail: (email: string) => void;
+  error: string | undefined;
+  valid: boolean;
+  send: boolean;
+  onSend: (send: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <FormField label="Holder email" help="Leave empty to add a holder later." error={error}>
+        {(c) => (
+          <Input
+            {...c}
+            type="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => onEmail(e.target.value)}
+          />
+        )}
+      </FormField>
+      <CheckboxField
+        label={valid ? `Email the pass to ${email.trim()}` : 'Email the pass'}
+        checked={send && valid}
+        disabled={!valid}
+        onCheckedChange={(c) => onSend(c === true)}
+      />
+    </div>
   );
 }
