@@ -28,7 +28,7 @@ export function Health() {
         {status.isPending ? (
           <SkeletonRows rows={2} label="Loading health" />
         ) : status.isError ? (
-          <ErrorState error={status.error} onRetry={() => status.refetch()} />
+          <ErrorState inline error={status.error} onRetry={() => status.refetch()} />
         ) : bad.length > 0 ? (
           <>
             <ListRows label="Needs attention">

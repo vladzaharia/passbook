@@ -33,7 +33,7 @@ export function PassTabs({
     <>
       <TabsContent value="fields" forceMount hidden={tab !== 'fields'}>
         {template.isError ? (
-          <ErrorState error={template.error} onRetry={() => void template.refetch()} />
+          <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />
         ) : template.data ? (
           <FieldsTab
             key={pass.id}

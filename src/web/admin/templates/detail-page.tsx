@@ -128,7 +128,7 @@ function Loaded({
         label={versionLabel ?? undefined}
       />
     ) : preview.isError ? (
-      <ErrorState error={preview.error} onRetry={() => void preview.refetch()} />
+      <ErrorState inline error={preview.error} onRetry={() => void preview.refetch()} />
     ) : (
       <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
     );
