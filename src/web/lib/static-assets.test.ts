@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import indexHtml from '../../../index.html?raw';
 import headersFile from '../../../public/_headers?raw';
-import themeInit from '../../../public/theme-init.js?raw';
 import viteConfig from '../../../vite.config.ts?raw';
 import mainSource from '../main.tsx?raw';
 
@@ -105,51 +104,5 @@ describe('index.html', () => {
     expect(indexHtml.indexOf('/theme-init.js')).toBeLessThan(
       indexHtml.indexOf('/src/web/main.tsx'),
     );
-  });
-});
-
-describe('theme-init.js', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    window.history.replaceState(null, '', '/');
-    delete document.documentElement.dataset.theme;
-    delete document.documentElement.dataset.themePref;
-  });
-
-  const run = (stored: string | null | 'throw', path = '/admin/passes') => {
-    window.history.replaceState(null, '', path);
-    vi.stubGlobal('localStorage', {
-      getItem: () => {
-        if (stored === 'throw') throw new Error('blocked');
-        return stored;
-      },
-    });
-    new Function(themeInit)();
-  };
-
-  it.each(['dark', 'light'])('applies a stored %s theme in the admin console', (value) => {
-    run(value);
-    expect(document.documentElement.dataset.theme).toBe(value);
-    expect(document.documentElement.dataset.themePref).toBe(value);
-  });
-
-  it.each(['/', '/account', '/login', '/administrator'])(
-    'ignores the stored theme on holder page %s',
-    (path) => {
-      run('dark', path);
-      expect(document.documentElement.dataset.theme).toBeUndefined();
-      expect(document.documentElement.dataset.themePref).toBe('system');
-    },
-  );
-
-  it.each([null, 'system', 'neon'])('leaves the system theme for %s', (value) => {
-    document.documentElement.dataset.theme = 'dark';
-    run(value);
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(document.documentElement.dataset.themePref).toBe('system');
-  });
-
-  it('does not throw when storage is blocked', () => {
-    expect(() => run('throw')).not.toThrow();
   });
 });

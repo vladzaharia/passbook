@@ -1,11 +1,12 @@
 import * as Menu from '@radix-ui/react-dropdown-menu';
-import { Link } from '@tanstack/react-router';
-import { LayoutDashboard, LogOut, Ticket, UserRound } from 'lucide-react';
-import { THEME_ICON } from '../../lib/action-icons.ts';
+import { Link, useRouterState } from '@tanstack/react-router';
+import { Check, LayoutDashboard, LogOut, type LucideIcon, Ticket, UserRound } from 'lucide-react';
 import { cn } from '../../lib/cn.ts';
+import { isAdminPath } from '../../lib/guards.ts';
 import { useChangeCount } from '../../lib/motion.ts';
+import { accountPath, isActivePath } from '../../lib/nav.ts';
 import { isAdmin, signOut, useSession } from '../../lib/session.ts';
-import { type ThemePref, useTheme } from '../../lib/theme.tsx';
+import { THEME_OPTIONS, type ThemePref, useTheme } from '../../lib/theme.tsx';
 import { ActiveIndicator } from '../active-indicator.tsx';
 import {
   DropdownMenu,
@@ -17,12 +18,6 @@ import {
 } from '../dropdown-menu.tsx';
 import { EntityAvatar } from '../entity.tsx';
 import { IconButton } from '../icon-button.tsx';
-
-const THEMES = [
-  { value: 'system', label: 'System', icon: THEME_ICON.system },
-  { value: 'light', label: 'Light', icon: THEME_ICON.light },
-  { value: 'dark', label: 'Dark', icon: THEME_ICON.dark },
-] as const;
 
 /** A segmented control made of menu radio items, so arrow keys and focus stay in the menu. */
 function ThemeChoice() {
@@ -40,7 +35,7 @@ function ThemeChoice() {
         className="relative flex rounded-md border border-border bg-surface-sunken p-0.5"
       >
         <ActiveIndicator variant="thumb" />
-        {THEMES.map((t) => {
+        {THEME_OPTIONS.map((t) => {
           const on = t.value === pref;
           return (
             <Menu.RadioItem
@@ -67,14 +62,46 @@ function ThemeChoice() {
   );
 }
 
+type Face = 'passes' | 'account' | 'admin';
+
+/** Which face of the app the page belongs to: My passes, Account or the console. */
+function faceOf(pathname: string): Face {
+  if (isActivePath(pathname, accountPath(pathname))) return 'account';
+  return isAdminPath(pathname) ? 'admin' : 'passes';
+}
+
+function FaceItem({
+  to,
+  icon: Icon,
+  label,
+  current,
+}: {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  current: boolean;
+}) {
+  return (
+    <DropdownMenuItem asChild>
+      <Link to={to} aria-current={current ? 'page' : undefined}>
+        <Icon aria-hidden />
+        {label}
+        {current ? <Check aria-hidden className="ml-auto text-accent-fg!" /> : null}
+      </Link>
+    </DropdownMenuItem>
+  );
+}
+
 /**
- * Account menu. The admin console adds My passes and the theme (System, Light, Dark); the portal
- * adds Admin for admins, the only way there on phones, where the header has no room for it.
+ * The account menu, the same on every page: who is signed in; My passes, Account and, for admins,
+ * Admin, with a check on the current one; the theme; Sign out. Account opens in the current shell.
  */
-export function UserMenu({ admin = false }: { admin?: boolean }) {
+export function UserMenu() {
   const { authed, session } = useSession();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (!authed) return null;
   const { user } = authed;
+  const face = faceOf(pathname);
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
@@ -91,34 +118,18 @@ export function UserMenu({ admin = false }: { admin?: boolean }) {
           ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {admin ? (
-          <DropdownMenuItem asChild>
-            <Link to="/">
-              <Ticket aria-hidden />
-              My passes
-            </Link>
-          </DropdownMenuItem>
+        <FaceItem to="/" icon={Ticket} label="My passes" current={face === 'passes'} />
+        <FaceItem
+          to={accountPath(pathname)}
+          icon={UserRound}
+          label="Account"
+          current={face === 'account'}
+        />
+        {isAdmin(session) ? (
+          <FaceItem to="/admin" icon={LayoutDashboard} label="Admin" current={face === 'admin'} />
         ) : null}
-        <DropdownMenuItem asChild>
-          <Link to="/account">
-            <UserRound aria-hidden />
-            Account
-          </Link>
-        </DropdownMenuItem>
-        {!admin && isAdmin(session) ? (
-          <DropdownMenuItem asChild>
-            <Link to="/admin">
-              <LayoutDashboard aria-hidden />
-              Admin
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
-        {admin ? (
-          <>
-            <DropdownMenuSeparator />
-            <ThemeChoice />
-          </>
-        ) : null}
+        <DropdownMenuSeparator />
+        <ThemeChoice />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut(authed.csrfToken)}>
           <LogOut aria-hidden />

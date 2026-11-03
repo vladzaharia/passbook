@@ -2,16 +2,16 @@ import { type ErrorComponentProps, Link, useRouter, useRouterState } from '@tans
 import { LogIn, Search, WalletCards } from 'lucide-react';
 import { useEffect } from 'react';
 import { isApiError } from '../../lib/errors.ts';
+import { isAdminPath } from '../../lib/guards.ts';
 import { usePalette } from '../../lib/palette.ts';
-import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { signOut, useSession } from '../../lib/session.ts';
 import { Button } from '../button.tsx';
 import { EmptyState } from '../empty-state.tsx';
 import { ErrorState, isChunkLoadError } from '../error-state.tsx';
-import { Wordmark } from './wordmark.tsx';
+import { AppShell } from './app-shell.tsx';
+import { PortalBar } from './portal-layout.tsx';
 
-const useInAdmin = () =>
-  useRouterState({ select: (s) => s.location.pathname.startsWith('/admin') });
+const useInAdmin = () => useRouterState({ select: (s) => isAdminPath(s.location.pathname) });
 
 export function ForbiddenPage() {
   const { authed } = useSession();
@@ -119,16 +119,14 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
   return <ErrorState error={error} onRetry={reset} />;
 }
 
-/** For errors thrown above any layout (guards): brings its own header and main. */
+/**
+ * For errors thrown above any layout (guards, such as a holder on /admin): the holder shell, so a
+ * signed-in visitor keeps My passes, Account and the account menu.
+ */
 export function StandaloneError(props: ErrorComponentProps) {
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex h-14 items-center px-safe pt-[env(safe-area-inset-top)]">
-        <Wordmark />
-      </header>
-      <main id={MAIN_ID} tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-safe py-10">
-        <RouteError {...props} />
-      </main>
-    </div>
+    <AppShell bar={<PortalBar />} width="holder" holder>
+      <RouteError {...props} />
+    </AppShell>
   );
 }
