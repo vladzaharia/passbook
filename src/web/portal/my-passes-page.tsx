@@ -159,10 +159,13 @@ export function MyPassesPage() {
   let body: ReactNode;
   if (query.isPending) {
     body = (
-      <div className={GRID} aria-busy="true">
-        <Skeleton className="h-[34rem]" />
-        <Skeleton className="h-[34rem] max-sm:hidden" />
-        <Skeleton className="h-[34rem] max-lg:hidden" />
+      // A flex box like the list's, so the grid's margin adds to the header's instead of collapsing.
+      <div className="flex flex-col">
+        <div className={GRID} aria-busy="true">
+          <Skeleton className="h-[34rem]" />
+          <Skeleton className="h-[34rem] max-sm:hidden" />
+          <Skeleton className="h-[34rem] max-lg:hidden" />
+        </div>
       </div>
     );
   } else if (query.isError) {

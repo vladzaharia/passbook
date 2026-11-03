@@ -65,9 +65,12 @@ describe('my passes buddy', () => {
       handlers: { '/api/v1/me/passes': () => gate.then(() => list(out('a'))) },
     });
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toHaveClass('mt-8'));
+    // In a flex box both times, so the margin never collapses into the header's.
+    expect(document.querySelector('[aria-busy="true"]')?.parentElement).toHaveClass('flex');
     release();
     await screen.findByRole('heading', { name: 'a', level: 2 });
     expect(screen.getByRole('list')).toHaveClass('mt-8');
+    expect(document.querySelector('.wl-passes')).toHaveClass('flex');
     // One pass to add on a Mac: no bundle and no line, so nothing sits between header and grid.
     expect(document.querySelector('.wl-passes')?.firstElementChild).toContainElement(
       screen.getByRole('list'),
