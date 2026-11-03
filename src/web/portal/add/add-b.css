@@ -98,3 +98,8 @@
 .wl-dir-add:not(:has(> :not(.wl-b-dock))) {
   display: contents;
 }
+/* Opened again from In Apple Wallet: the ways under the line, a hairline between. */
+.wl-b-side > .wl-b-ways:not(:first-child, [hidden]) {
+  border-top: 1px solid var(--pk-border-subtle);
+  padding-top: 1rem;
+}

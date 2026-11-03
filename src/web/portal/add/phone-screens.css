@@ -31,7 +31,7 @@
   height: 9rem;
 }
 
-/* Already added: the pass on top of the stack, three more peeking at the foot. */
+/* Already added: the pass open over the stack, as Wallet shows it; the rest folded at the foot. */
 .wl-ph-wallet {
   position: absolute;
   inset: 0;
@@ -40,7 +40,7 @@
   padding: 2.75rem 0.625rem 0;
 }
 .wl-ph-wallet .wl-mp {
-  height: 12.5rem;
+  height: 18.75rem;
 }
 .wl-ph-tab {
   position: absolute;
