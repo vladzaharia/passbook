@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
+import { useDocumentTitle } from '../lib/route-focus.tsx';
 import { TOUCH_HIT } from './button.tsx';
 
 export interface Crumb {
@@ -40,17 +41,6 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
   );
 }
 
-export type PageWidth = 'full' | 'detail';
-
-/**
- * Every admin page uses the full main width; width is capped per block (FormGrid, prose, dialogs),
- * never per page (docs/design/ui-consistency.md "Layout"). Kept for callers that still pass it.
- */
-export const PAGE_WIDTH: Record<PageWidth, string> = {
-  full: '',
-  detail: '',
-};
-
 export interface PageHeaderProps {
   title: string;
   description?: ReactNode;
@@ -59,27 +49,27 @@ export interface PageHeaderProps {
   meta?: ReactNode;
   /** At most three visible; the rest go in a More menu. */
   actions?: ReactNode;
-  /** Match the page body so actions sit next to the content they act on. */
-  width?: PageWidth;
   /** A 40 px EntityAvatar left of the h1 (users, orgs). */
   avatar?: ReactNode;
   className?: string;
 }
 
-/** The page h1. Route changes move focus here (see lib/route-focus.tsx). */
+/**
+ * The page h1 and the tab title. Route changes move focus here (lib/route-focus.tsx). Pages use the
+ * full main width; blocks cap their own (FormGrid, prose, dialogs).
+ */
 export function PageHeader({
   title,
   description,
   breadcrumbs,
   meta,
   actions,
-  width = 'full',
   avatar,
   className,
 }: PageHeaderProps) {
+  useDocumentTitle(title);
   return (
-    <header className={cn('mb-6 flex min-w-0 flex-col gap-3', PAGE_WIDTH[width], className)}>
-      <title>{`${title} · PassBook`}</title>
+    <header className={cn('mb-6 flex min-w-0 flex-col gap-3', className)}>
       {breadcrumbs?.length ? <Breadcrumbs items={breadcrumbs} /> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
