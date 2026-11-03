@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../shared/html.ts';
+import { buddyImg, EMAIL_BUDDY, type EmailMood } from './buddy.ts';
 
 export { escapeHtml };
 
@@ -78,6 +79,8 @@ export interface ShellInput {
   headerColor: string;
   /** Optional 20 px image before the header label (absolute URL). */
   headerMark?: string;
+  /** The mascot at the header's right, standing on its bottom edge. `base`: PUBLIC_BASE_URL. */
+  buddy?: { base: string; mood: EmailMood };
   /** Content of the 24px padded body cell, already escaped. */
   body: string;
 }
@@ -93,6 +96,15 @@ export function emailShell(input: ShellInput): string {
   const mark = input.headerMark
     ? `<img src="${escapeHtml(input.headerMark)}" alt="" width="20" height="20" style="display:inline-block;width:20px;height:20px;border:0;border-radius:5px;vertical-align:-4px;margin-right:8px">`
     : '';
+  const label = `color:${ink};font-size:18px;line-height:24px;font-weight:600`;
+  const buddy = input.buddy;
+  const w = EMAIL_BUDDY.width;
+  // With the buddy, the label keeps its 20 px bottom inset, the buddy's base meets the body's top
+  // edge and its pocket (4 px inside the image) lines up with the 24 px inset. Blocked, the cell
+  // keeps the header's height; dropped, the header is its plain 64 px again.
+  const header = buddy
+    ? `<tr><td style="background:${input.headerColor};padding:0 20px 0 24px;color:${ink}"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td valign="bottom" style="padding:20px 0;${label};vertical-align:bottom">${mark}${escapeHtml(input.header)}</td><td valign="bottom" align="right" width="${w}" style="width:${w}px;padding:12px 0 0 12px;vertical-align:bottom;font-size:0;line-height:0">${buddyImg(buddy.base, buddy.mood)}</td></tr></table></td></tr>`
+    : `<tr><td style="background:${input.headerColor};padding:20px 24px;${label}">${mark}${escapeHtml(input.header)}</td></tr>`;
   return `<!doctype html>
 <html lang="${escapeHtml(input.lang)}">
 <head>
@@ -108,7 +120,7 @@ export function emailShell(input: ShellInput): string {
 <tr><td align="center" style="padding:24px 16px">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="e-card" style="width:100%;max-width:480px;background:${c.card};border-radius:${RADIUS}px;border-collapse:separate;overflow:hidden">
 <tr><td style="height:3px;line-height:3px;font-size:0;background:${FOIL[0]};background-image:linear-gradient(115deg,${FOIL.join(',')});border-radius:${RADIUS}px ${RADIUS}px 0 0">&nbsp;</td></tr>
-<tr><td style="background:${input.headerColor};padding:20px 24px;color:${ink};font-size:18px;line-height:24px;font-weight:600">${mark}${escapeHtml(input.header)}</td></tr>
+${header}
 <tr><td class="e-text" style="padding:24px;color:${c.text};border-radius:0 0 ${RADIUS}px ${RADIUS}px">
 ${input.body}
 </td></tr>
