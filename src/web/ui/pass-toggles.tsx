@@ -23,15 +23,7 @@ export function PassSideToggle({
   value: PassSide;
   onChange: (side: PassSide) => void;
 }) {
-  return (
-    <SegmentedControl
-      label="Side"
-      size="sm"
-      options={SIDES}
-      value={value}
-      onValueChange={onChange}
-    />
-  );
+  return <SegmentedControl label="Side" options={SIDES} value={value} onValueChange={onChange} />;
 }
 
 /** True when iOS 27 and iOS 26 and earlier draw different faces for this pass.json. */
@@ -57,7 +49,6 @@ export function PassTargetToggle({
   return (
     <SegmentedControl
       label="iOS version"
-      size="sm"
       options={TARGETS}
       value={value}
       onValueChange={onChange}

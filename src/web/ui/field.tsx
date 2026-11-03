@@ -26,11 +26,12 @@ export function FormField({ label, help, error, required, className, children }:
   const helpId = help && !error ? `${id}-help` : undefined;
   const describedBy = errorId ?? helpId;
   return (
-    <div className={cn('flex flex-col', className)}>
+    // data-field: a read-only or disabled control hides the required mark (kit-controls.css).
+    <div data-field="" className={cn('flex flex-col', className)}>
       <Label htmlFor={id} className="mb-2">
         {label}
         {required ? (
-          <span aria-hidden className="ml-0.5 text-danger">
+          <span aria-hidden data-required-mark="" className="ml-0.5 text-danger">
             *
           </span>
         ) : null}

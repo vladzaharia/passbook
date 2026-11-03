@@ -46,9 +46,14 @@ export const buttonVariants = cva(
           'bg-danger text-danger-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-danger),var(--wl-hover-mix)_12%)]',
         link: 'min-h-6 min-w-0 px-0 text-accent-fg underline-offset-4 hover:underline',
       },
+      // Text is 14 px at every size; on touch every size is 44 tall (ui-consistency.md).
       size: {
-        sm: cn('min-h-8 min-w-8 px-3 py-1 text-xs [&_svg]:size-4', TOUCH_HIT),
+        /** Card-header actions, row actions, list footers: 32, so a 48 px header or row holds it. */
+        sm: 'min-h-8 min-w-8 px-3 py-1 text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11 [&_svg]:size-4',
         md: 'min-h-9 min-w-9 px-4 py-1.5 text-sm pointer-coarse:min-h-11 [&_svg]:size-4',
+        /** Beside the Add to Apple Wallet badge: the badge art's height, 40 (44 on touch). */
+        badge:
+          'min-h-10 min-w-10 px-4 py-1.5 text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11 [&_svg]:size-4',
         lg: 'min-h-11 min-w-11 px-6 py-2 text-sm [&_svg]:size-4',
       },
     },
