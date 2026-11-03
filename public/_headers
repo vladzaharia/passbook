@@ -15,3 +15,12 @@
   Cache-Control: public, max-age=86400
   ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
+
+/email/*
+  Cache-Control: public, max-age=86400
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
+/apple-touch-icon.png
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
