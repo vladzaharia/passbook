@@ -1,3 +1,4 @@
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import type { PassSummary } from './pass-summary.ts';
 import { safeMail, safeUrl } from './safe.ts';
 import {
@@ -42,7 +43,7 @@ export interface RenderedEmail {
   fromName?: string;
 }
 
-export const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
+export const ADD_LINE = HOLDER_COPY.openOnApple;
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
 
 /** The pass, drawn small in its own colours: logo, title and two or three fields. */
