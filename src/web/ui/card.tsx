@@ -3,13 +3,18 @@ import { ArrowUpRight, ChevronRight } from 'lucide-react';
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { Button } from './button.tsx';
+import { InCardContext } from './in-card.ts';
 
 /** The card surface: raised, hairline border, lit top edge in dark, elevation 1. Tables share it. */
 export const CARD_SURFACE =
   'rounded-lg border border-border bg-surface-raised shadow-[var(--wl-edge),var(--pk-elevation-1)]';
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('relative min-w-0', CARD_SURFACE, className)} {...props} />;
+  return (
+    <InCardContext.Provider value>
+      <div className={cn('relative min-w-0', CARD_SURFACE, className)} {...props} />
+    </InCardContext.Provider>
+  );
 }
 
 export interface CardHeaderProps {

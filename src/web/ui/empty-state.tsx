@@ -1,4 +1,7 @@
+import { Link } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { backTo, notFoundTitle } from '@/shared/copy/states.ts';
 import { cn } from '../lib/cn.ts';
 import { ENTITY, type EntityKind } from '../lib/entities.ts';
 import {
@@ -145,6 +148,40 @@ export function FilteredEmpty({
       action={
         <Button variant="ghost" onClick={onClear}>
           Clear filters
+        </Button>
+      }
+    />
+  );
+}
+
+export interface DetailNotFoundProps {
+  entity: EntityKind;
+  /** The list the way back leads to. */
+  to: string;
+  /** The way back's words when the list is not the entity's plural: "My passes". */
+  back?: string;
+  /** No PageHeader above it: the title is the page h1. */
+  heading?: boolean;
+}
+
+/**
+ * An item that is not there (deleted, mistyped link): the torn pass the buddy mends, "{Entity} not
+ * found" and one way back to its list.
+ */
+export function DetailNotFound({ entity, to, back, heading = false }: DetailNotFoundProps) {
+  const { label, plural } = ENTITY[entity];
+  return (
+    <EmptyState
+      art="torn"
+      mood="sad"
+      heading={heading}
+      title={notFoundTitle(label)}
+      action={
+        <Button asChild variant="outline">
+          <Link to={to}>
+            <ArrowLeft aria-hidden />
+            {backTo(back ?? plural)}
+          </Link>
         </Button>
       }
     />
