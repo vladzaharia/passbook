@@ -127,9 +127,9 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 | face: post | Holder emailed (`toast.sent`) | The violet pass dips, flies off up-right like a letter, a wink, a new one rises into the pocket | 1.4 s |
 | face: cheer | Status all good | The gold pass rises like a thumb and wiggles, a wink, the smile widens | 1.4 s |
 
-Search walk beats (`scenes/search*.css`; R is the reach, 75 px on a wide screen). It starts 700 ms
-after the art lands and ends by 4.7 s. Each walk starts and stops on an eased half step; the
-planted foot moves against the body with the same keyframes and easing, so it stays put.
+Search walk beats (`scenes/search*.css`; R is the reach, 75 px on a wide screen). It starts once
+the art has landed (700 ms) and ends by 4.7 s. Each walk starts and stops on an eased half step;
+the planted foot moves against the body with the same keyframes and easing, so it stays put.
 
 | ms | Beat |
 | --- | --- |
