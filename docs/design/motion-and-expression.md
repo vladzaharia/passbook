@@ -81,14 +81,14 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 | Buttons, icon buttons | Press .98 in 80 ms; hover colour 120 ms; dark primary glows on hover | Loading keeps the width and the icon (busy verbs) |
 | Switch, checkbox | Thumb slides on spring 200 ms and stretches 1.25× toward its travel while pressed; the tick draws, short stroke (90 ms) then long (150 ms), only when it changes after mount | Never on load |
 | Copy, saved | Icon swaps to a check (300 ms bounce), back after 1.5 s | Same label |
-| Toasts | Sonner's slide. Icon: success is the buddy's face, pops (300 ms bounce) and winks at 380 ms (200 ms); info fades (160 ms), error shakes (240 ms) | Copy unchanged |
+| Toasts | Sonner's slide. Icon: success is the buddy's face, pops (300 ms bounce) and winks at 380 ms (200 ms), or a check while a page buddy is in view; info fades (160 ms), error shakes (240 ms) | Copy unchanged |
 | Skeleton → content | Skeleton after 150 ms (`pk-delay-skeleton`), same shape and height; handoff: skeleton fades 120 ms while content rises 4 px in 200 ms | No layout shift |
 | Numbers | Count from the last value shown this session (first visit from 0), 600 ms ease-out, tabular-nums | `CountUp`; nothing counts 0 → 0 |
 | Status change | One ring pulse in the pill's tone (scale 1 → 1.6, fade, 640 ms) | Only when the value changes on screen |
 | Save bar | Slides up on spring 260 ms; on save the button shows a check for 400 ms, then the bar slides down 200 ms; Discard exits at once | Stays mounted while closing |
 | Wizard step | New step enters 16 px from the direction of travel plus opacity, 200 ms; old step fades in 90 ms; a done step fills with a bounce (.7 → 1, 320 ms) and its tick draws | Focus moves to the step heading |
 | Drop zone | A file dragged over lifts the art or upload arrow 4 px (200 ms spring) | Settles on leave or drop |
-| Theme change (admin) | Root crossfade 200 ms; the toggle icon rotates out and springs in | View Transition type `theme`; instant under reduced motion |
+| Theme change | Root crossfade 200 ms on every page; the menu's thumb slides to the choice | View Transition type `theme`; instant under reduced motion |
 | Offline bar | Slides down 200 ms under the top bar, up 160 ms when back online | |
 | Failure | One shake (240 ms) on the thing that failed, only after a user action | Error states never shake on first render |
 | Focus ring | Instant | Never animated |
@@ -136,7 +136,7 @@ lines (`.f`, `.h`, the check) scale with it. A prop is 2/3 of its buddy.
   the torn pass, mend; forbidden is the lock, tug; expired is the gold pass greying and drooping
   18° past the fan; a rate limit is the hourglass, which flips in on the surface at the wallet's
   left. Confirm puts a check on the top card; break-glass turns a key in the clasp.
-- **Scenes.** At most one buddy in view, toast faces included. A scene plays once, 700 ms after the
+- **Scenes.** At most one buddy in view, toast faces included (a page `Buddy` registers in `ui/art/presence.ts`; while one is mounted a success toast shows a check). A scene plays once, 700 ms after the
   landing and when 60% in view; 1.8–3.2 s (search 4 s); done within 5 s; it ends on the rest pose.
   Painted parts take the click that replays it. Reduced motion: the final pose. SSR pages render
   the same React to static markup and mark the buddy `data-run="load"`, so the scene plays once,

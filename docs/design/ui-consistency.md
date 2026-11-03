@@ -11,7 +11,7 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Role | Token / utility | Use |
 | --- | --- | --- |
 | Page | `surface-page` | App background, SSR pages, public page |
-| Raised | `surface-raised` | Cards, sidebar, portal header, table header; editable fields in light |
+| Raised | `surface-raised` | Cards, sidebar, table header; editable fields in light. Top bars use the page surface |
 | Sunken | `surface-sunken` | Code, art slots, read-only and disabled fields in light. Never an editable field in light |
 | Overlay | `surface-overlay` | Dialogs, menus, sheets, save and wizard bars |
 | Lines | `border` (dividers), `border-strong` (controls, art strokes) | Never raw greys |
@@ -19,9 +19,13 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Accent | `accent` (#2dd4bf dark, #0f766e light) | Selection and the one primary action per view. Never origin, role or health |
 | States | `success`, `warning`, `danger`, `info` + `-subtle`/`-border` | `success` only for healthy or working; `info` is blue (not Polaris violet, not foil) |
 
-- No hex values in components. Exception: pass art (pass.json colours). SSR pages inline the
-  generated tokens and kit controls; emails inline the resolved values (`npm run gen`,
-  `tools/ssr-parity.test.ts`).
+- No hex values in components. Exception: pass art (pass.json colours).
+- One source for the SPA, SSR pages and emails. `npm run gen` compiles the SPA's tokens, kit
+  controls (Button, Input, Label, Callout), fonts and holder CSS into `src/generated/ssr-*.css`
+  and `resolved-tokens.ts` (`tools/build-ssr-{tokens,kit,holder}.ts`); SSR pages inline them and
+  emails use the resolved values. `tools/ssr-parity.test.ts` and `tools/ssr-holder.test.ts` fail
+  on drift. SSR icons come from `iconHtml(Icon)` (`ssr/icon.ts`), the SPA's Lucide markup. Words
+  shared with SSR live in `src/shared/copy/*` (`states`, `holder`, `sign-in`).
 - Fields: white (`surface-raised`) in light with `border-strong`; hover darkens the border.
 - Neutral pills: a hover tint over raised, lighter than the card in dark. Light `success-subtle`
   reads green (hue 120–160, saturation ≥25 %). Every subtle fill reads tinted, border ≥3:1.
@@ -41,7 +45,7 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Group heading in a form | 6 (24px) above, hairline |
 | Between cards / sections | 6 (24px) |
 | Page header to content | 6 (24px) |
-| Main gutters | `max(1rem, safe area)` (<640), `px-6` (≥640); `py-6` |
+| Gutters | One `--wl-gutter` for the top bar and main: 1rem (<640), 1.5rem (≥640), plus the safe area. Main: `pt-6`, bottom `max(1.5rem, inset)` |
 
 No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 
@@ -54,24 +58,32 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | `badge` | 40 (`h-10`) | 44 (`h-11`) | Buttons and icon buttons beside the Add to Apple Wallet badge, the art's height |
 | `lg` | 44 (`h-11`) | 44 | Not beside the badge (use `badge`) |
 
-- Text is 14 px at every size. Icon buttons follow the same table (`sm` 32, `md` 36, `badge` 40,
+- Text is 14 px at every size, 44 px tall on touch. Badges (`Badge`, status pills) are `min-h-6`,
+  `text-xs`, `size-3.5` icons. Icon buttons follow the same table (`sm` 32, `md` 36, `badge` 40,
   44 on touch).
 - One segmented control size: 36 (44 on touch), 14 px text. The SSR side toggle (`.pc-seg`) and
   the kit `SegmentedControl` (`.wl-seg`) share `pass-card/stage-seg.css`.
 - Everything in one row shares one height. Fields are always `md`.
 - Under `pointer: coarse`: tabs, menu items, nav links and icon buttons are at least 44 px; inline
   text links get padding to a 44 px hit height.
-- Text inputs, selects and textareas are 16 px under `pointer: coarse` and on SSR pages (iOS
-  zooms below that); 14 px on fine pointers. Never `maximum-scale`.
+- Text inputs, selects and textareas are 16 px under `pointer: coarse` (iOS zooms below that);
+  14 px on fine pointers. Never `maximum-scale`.
 - Buttons use `min-height`, so a label can wrap to two lines at large text sizes.
 - Top bar: ghost icon buttons; search is a field at ≥640 and an icon button below. The shortcut
   hint reads `⌘K` on Apple platforms, `Ctrl K` elsewhere, and hides when the only pointer is coarse.
-- SSR pages and emails: 44 px buttons and inputs, 6px radius.
+- SSR pages use the kit's classes, so they match the app: same heights (36, 44 on touch), 14 px
+  text, `md` radius. Emails: a 44 px link block, the Button's 14/500 type and `md` radius.
+- Every screen, customer pages included, uses this scale. The one larger thing is the sign-in
+  wordmark (`Wordmark size="lg"`, 20 px).
 
 ## Layout
 
-- Admin shell: sidebar 15rem at ≥1024 (sheet below), top bar `h-14` sticky, main `max-w-7xl`.
-- Sidebar background and border belong to the grid column, so they span the full page height.
+- One `AppShell` frames every page (admin, portal, `/login`, error and not-found pages). Sticky top
+  bar, 56 px with its border, on the page surface (not raised); the offline bar sits in the same
+  sticky block and pushes the page down; then `main`. `width`: `holder` `max-w-5xl`, `console`
+  `max-w-7xl`. Admin adds the sidebar, 15rem at ≥1024 (sheet below); its background and border
+  belong to the grid column, so they span the full page height.
+- The portal bar: wordmark, My passes, Account, Admin (admins, from 640), account menu.
 - **Every admin page uses the full main width.** Width is capped per block (form grids, prose,
   dialogs), never per page: no page-level `max-w-*`. Header actions end at the main content's
   right edge on every page.
@@ -173,7 +185,9 @@ health items):
 
 ## Filters
 
-- The top-bar scope switcher is the only org control. No page-level Org select.
+- The top-bar scope switcher is the only org control. No page-level Org select. The scope is
+  `?orgId=` in the URL (`useOrgScope()`), carried between admin pages; pages it does not apply to
+  (Users, Identities, Status, Account) strip it with `UNSCOPED_SEARCH` and the switcher hides.
 - One toolbar row above the table: search (`w-64` at ≥640), then selects that always read
   `Label: value` (`Status: Voided`) and get an `accent-subtle` fill when set, then `Clear`.
 - Below 1280: the first two filters inline, the rest in `Filters (n)` with `Clear` in its footer.
@@ -293,11 +307,28 @@ Action icons (`src/web/lib/action-icons.ts`):
 - Filtered: the entity art dimmed with the lens over it, `No <things> match`, `Clear filters`.
 - Truly empty list: the empty state holds the only primary; the header create turns outline and
   the toolbar hides.
-- Not found: an `EmptyState` (art `torn`, or the mascot on holder pages) whose `h1` names the
-  thing (`Pass not found`) and one way back. Forbidden: art `lock`. Never a red box.
+- One state language in the SPA and on SSR pages (`StateArt`, `ui/art/state-art.tsx`); ways back
+  are outline buttons:
+
+  | State | Buddy and prop | Title, way back |
+  | --- | --- | --- |
+  | Route not found | lost, peeks through the lens | `Page not found`; `Go to My passes` / `Go to Overview` (+ `Search` in admin) |
+  | Entity not found | sad, mends the torn pass | `{Entity} not found`; `Back to {plural}` |
+  | Forbidden | sad, tugs the lock | `You do not have access`; `Sign in as someone else` |
+  | Error | sad, plugs the cable | `Something went wrong`, one sentence, Retry |
+  | Expired link or pass | the gold pass droops | `Link expired`; `Go to My passes` |
+  | Rate limit | sad, the hourglass | `Too many requests`, when to retry |
+
+  Never a red box. The words are in `src/shared/copy/states.ts` (`STATE_COPY`, `notFoundTitle`,
+  `backTo`).
+- Detail pages: `detailError(query, { entity, to, back?, header? })` renders the failed load: 404
+  is `DetailNotFound` under the page's header (breadcrumbs, `<title>`), other errors `ErrorState`
+  with Retry, and a 403 is thrown to the route's error page (`RouteError`, Forbidden). Page code
+  never imports `ui/layout/error-pages.tsx` (it would pull the shell out of the entry chunk).
 - Error: `ErrorState` is a neutral card with a danger icon tile and the `unplugged` art, one
   sentence (what happened, what to do), Retry (outline). The request id hides under `Details` in
-  `xs` muted mono. Unreadable responses: `Could not read the response. Reload.`
+  `xs` muted mono. Unreadable responses: `Could not read the response. Reload.` Inside a card it is
+  `inline`.
 - Offline: a slim `Offline` bar under the top bar; paused actions read `Waiting for connection`;
   a page that cannot load shows `Could not load this page. Check your connection.` with Reload.
   The shell stays.
@@ -305,6 +336,41 @@ Action icons (`src/web/lib/action-icons.ts`):
   `Spinner` only inside buttons and polling rows. A refetch keeps the old rows, adds a 2px
   loading rail and `aria-busy`.
 - Worker HTML routes never return problem+json to a browser: the SSR error page renders instead.
+
+## Feedback
+
+- **Toasts** (`toast` from `ui/toaster.tsx`; no direct `sonner` import):
+
+  | Call | Use |
+  | --- | --- |
+  | `toast.success(msg)`, `.info(msg)` | A confirmation, 4 s |
+  | `toast.sent(msg)` | A holder was emailed: the buddy posts its pass |
+  | `toast.error(error, 'Could not {verb}')` | A failed action: the title names it, the line under it is the error's sentence. Stays until dismissed |
+  | `toast.undo(msg, onUndo)` | A reversible change; a failed undo is its own error toast |
+  | `toast.action(msg, { label, onClick })` | One follow-up (`View run`) |
+  | `toast.dismiss(id)` | The offer no longer applies |
+
+  Toasts clear the SaveBar; on phones they move to the top while a sheet is open. Success wears
+  the buddy's face, unless a page buddy is in view (one buddy per view, `ui/art/presence.ts`):
+  then a check.
+- **Copy**: `CopyButton` for a value on screen, `copyText(value, what)` (`lib/clipboard.ts`) from
+  a menu item (toast `Link copied`). The check resets after 1.5 s. Never `navigator.clipboard`.
+- **Confirms** (`lib/confirms.ts`): `deleteConfirm(entity, name)`, `voidConfirm(count)`,
+  `archiveConfirm`, `clearHolderConfirm`, `removeEmailConfirm(email, self)`, `revokeSessionsConfirm`,
+  `revokeKeyConfirm`
+  give every dialog for one act the same title (`Delete {name}?`), verb, and consequence line,
+  plus `This cannot be undone.` when it cannot. Blast radius decides typing: type the name only
+  when the act cannot be undone and takes more than the item (org, pass, connection). Template and
+  identity deletes and API key revokes are plain: revoking a leaked key stays one click.
+- Done checks on buttons use `Button done`, not hand-rolled icons.
+
+## Create and delete flows
+
+- A create flow marks what it made (`markCreated`) and opens the new page, replacing itself in
+  history. The page leads, once, with a `CreatedCallout` (`Pass created`, next steps as small
+  buttons, dismissible). A reload or second visit does not show it.
+- A delete navigates to the list with `replace`, so Back does not return to a missing page.
+- A list with no remaining items shows the truly-empty state.
 
 ## Tabbed detail pages
 
@@ -395,8 +461,9 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Action glyph | `ACTION_ICON.refresh`, `.rotate`, `.void`, `.delete`, `.signOut`… (`lib/action-icons.ts`); `THEME_ICON` |
 | Audit or activity line | `actionOf(code)` → `{ label, icon, tone }`; `actionLabel(code)` |
 | Status | `StatusPill status icon?`; `StatusIcon` for a state every row repeats (tooltip carries the hint) |
-| Empty | `EmptyState art title action? description? variant? inline? heading?`; `FilteredEmpty entity onClear` |
-| Error | `ErrorState error? title? onRetry? retryLabel?` (Retry spins `RefreshCw`; a failed retry shakes) |
+| Empty | `EmptyState art title action? description? variant? inline? heading?`; `FilteredEmpty entity onClear`; `DetailNotFound entity to back? heading?` |
+| Error | `ErrorState error? title? onRetry? retryLabel? inline?` (Retry spins `RefreshCw`; a failed retry shakes); `detailError(query, { entity, to, back?, header? })` for detail pages |
+| Feedback | `toast.success/info/sent/error(error, 'Could not …')/undo/action/dismiss`; `copyText(value, what)`; `CopyButton`; the confirm helpers in `lib/confirms.ts` |
 | Lists | `DataTable … loading fetching filtered empty emptyFiltered toolbar footer` (rows carry `data-row-id`, new rows `data-new`); `FilterBar search filters onClear` (`DATE_RANGES`, `rangeStart`); `LoadMore query={infiniteQuery} shown noun={['pass','passes']} scoped`; queries use `listQuery({...})`; `RowLink to params inactive?`, `CountLink count noun? icon? to search`, `MetaLink to icon?` |
 | Rows | `ListRows` + `ListRow leading title pills meta trailing rowId isNew` (the trailing control drops under the body below a 16rem list); `RowActions label actions` |
 | Account rows | `EmailList`, `SessionList`, `InlineAddField` (presentational; the page owns mutations) |
@@ -415,23 +482,27 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
-| Org scope | `useOrgScope()` (`lib/org-filter.tsx`); `isOrgScoped(path)` hides the switcher |
+| Org scope | `useOrgScope()` reads `?orgId=` (`lib/org-filter.tsx`); `isOrgScoped(path)` hides the switcher; `UNSCOPED_SEARCH` (`lib/route-search.ts`) on routes it does not apply to |
+| Shell | `AppShell bar sidebar? width holder` (`ui/layout/app-shell.tsx`); `UserMenu` (the one account menu); `useDocumentTitle` (`lib/route-focus.tsx`) |
+| Theme | `useTheme()`; `THEME_OPTIONS` (menu and palette), `THEME_ICON`; `readPref`/`writePref` (`lib/theme.tsx`) |
 | Palette | `usePalette()?.open()` opens the admin palette (null outside the shell) |
 
 ## Light and dark
 
 - Both themes from the same tokens; dark is the default. Check every page in both.
-- The admin account menu offers System / Light / Dark; that choice applies inside the admin shell
-  only. Holder surfaces (portal, `/p`, login, SSR auth, email) follow the system appearance and
-  have no toggle.
-- Pass art ignores the theme. SSR pages and emails use token values
-  (`<meta name="color-scheme" content="light dark">`).
+- One theme setting for every page. The account menu (the same on every page) offers System /
+  Light / Dark, with the current face of the app (My passes, Account, Admin) checked above it.
+  The choice is saved in the `wallet-theme` cookie (`system|light|dark`, 1 year, read by
+  `/theme-init.js` before first paint). SSR pages (`/p`, auth, error) read the cookie, stamp
+  `data-theme` and one matching `theme-color`; without a choice they follow the system
+  (`color-scheme: light dark`, `theme-color` per scheme).
+- Pass art ignores the theme. Emails ship both schemes (dark via `prefers-color-scheme`).
 
 ## Breakpoints
 
 | Width | Rules |
 | --- | --- |
-| <640 (phone, 390) | Sheet nav; compact scope switcher; actions one row + `More`; stacked list rows; filter grid; bottom-sheet dialogs and menus; tabs >5 as a select; compact pass row |
+| <640 (phone, 390) | Sheet nav; Admin moves into the account menu on the portal; actions one row + `More`; stacked list rows; filter grid; bottom-sheet dialogs and menus; tabs >5 as a select; compact pass row |
 | 640–1023 (tablet portrait, 768) | Sheet nav; search field `w-64`; tables show title + 2–3 key columns; horizontal pass summary card |
 | 1024–1279 (tablet landscape) | Sidebar visible; wizard and upload asides; two filters inline + `Filters (n)`; tables hide low-value columns |
 | ≥1280 | Full layouts: detail asides, pass preview column, three-column short fields |
@@ -481,19 +552,35 @@ Same brand tokens; Wallet keeps its own wordmark and teal.
 | Fields | Label above; full-width input. The 6-digit code is one large mono field, centred and letter-spaced, grouped `123 456`, `autocomplete="one-time-code"` |
 | Errors | A callout at the top of the card body (danger border, icon, one sentence: what happened and what to do); field errors under the field |
 | Trust | At most one `hosted-note` (shield icon, muted) before the action where it prevents a mistake |
-| Action | Email first: full-width primary `Email me a sign-in link →`. Polaris ID outline below an "or" divider. The code face: `Sign in`, `Resend code` (30 s), `Use a different email` |
+| Action | Email first: full-width primary `Email me a sign-in link →`; in an installed app (standalone display mode) `Email me a code →`, since a link would open in the browser. Polaris ID outline below an "or" divider. The code face: `Sign in`, `Resend code` (30 s), `Use a different email` |
 | Footer | Lock icon plus one line on what signing in does |
-| Below | `Help · Privacy` links, centred |
 | Motion | "The wallet fills" (motion-and-expression.md, Signature moment 8), reduced-motion safe |
 
 The trust and footer lines are the only explanatory text allowed on these pages: one line each.
+
+- Landing: `homeFor(roles, next)` (`src/shared/next.ts`) for every way in (email link, code,
+  Polaris ID, break-glass, an already signed-in `/login`): a safe `next`, else `/admin` for admins
+  and My passes for holders. Every way back from an SSR page (error, expired, no access) links
+  `/login?next=…`; `next` survives a plain sign-out. A switch through Polaris ID's end-session
+  loses the query, so logout keeps `next` in the short-lived `wallet-next` cookie and `/login`
+  reads it once.
+- `/login?reason=expired` (a session that ended mid-use) shows one line above the form.
+- Link flows: an email link opens a confirm page (SSR, no script) so scanners cannot use it. An
+  add-email link asks the right account: the requester confirms, a signed-out browser gets `Sign
+  in to confirm`, another account gets `Switch account`. A dead link says what it was for. Success
+  lands on `/account?verified=<email>`, which toasts `Email added` and drops the parameter.
+- `POST /auth/logout?all=1` ends every session; `Sign out everywhere` is on the Sessions card
+  only, the account menu owns `Sign out`.
 
 - Public pass page: the app shell's bar (56 px with its border, sticky) with the org's icon and
   name; a 24 px h1; then the portal's pass view (deals in, flips with a no-script `Details`
   toggle, tilts on fine pointers through `/pass-tilt.js`, dips in CSS when the badge is pressed).
   A dead link uses the hosted card (`Link expired`, outline `Go to My passes`).
-- Emails: fluid container `width:100%; max-width:480px`; 3px foil line (teal fallback) over the
-  org header bar (org accent, text white or near-black by luminance). One title line. The pass
+- Emails match the hosted card: the card's colours, `xl` radius and foil top edge, the kit
+  button's type and radius, tokens from `npm run gen`. The sign-in email carries the seated buddy
+  cut in two slices at the card seam (top in the header band, legs over the foil; static PNGs,
+  `public/email/`); the pass email is the org's, with no buddy. Fluid container `width:100%;
+  max-width:480px`; 3px foil line (teal fallback) over the header bar. One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
   pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
   not a field. Buttons 44px. Footer note `12px`. Nothing wider than 320px. No animation.
