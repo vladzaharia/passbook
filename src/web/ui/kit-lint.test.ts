@@ -44,6 +44,44 @@ describe('kit lint', () => {
     }
   });
 
+  it('toasts only through the kit toast (ui/toaster.tsx)', () => {
+    for (const { path, text } of files) {
+      if (path === 'ui/toaster.tsx') continue;
+      expect(text, path).not.toMatch(/from 'sonner'/);
+    }
+  });
+
+  it('copies through CopyButton or copyText, never the clipboard directly', () => {
+    const allowed = new Set(['ui/copy-button.tsx', 'lib/clipboard.ts']);
+    for (const { path, text } of files) {
+      if (allowed.has(path)) continue;
+      expect(text, path).not.toMatch(/navigator\.clipboard/);
+    }
+  });
+
+  // One locale for dates and numbers: lib/format.ts. Zone math (ids, names, wall-clock offsets)
+  // needs Intl too but formats nothing a person reads as a date or number; pass-card renders
+  // the pass's own locale.
+  it('formats dates and numbers only in lib/format.ts', () => {
+    const allowed = new Set([
+      'lib/format.ts',
+      'lib/timezones.ts',
+      'admin/passes/schema-form/datetime.ts',
+    ]);
+    for (const { path, text } of files) {
+      if (allowed.has(path) || path.startsWith('pass-card/')) continue;
+      expect(text, path).not.toMatch(/\bIntl\.|\.toLocale\w*\(/);
+    }
+  });
+
+  // pass-card only spots addresses in pass text to break them; it validates nothing.
+  it('checks emails with strictEmail (shared/email.ts), not a regex of its own', () => {
+    for (const { path, text } of files) {
+      if (path.startsWith('pass-card/')) continue;
+      expect(text, path).not.toMatch(/\[\^\\s@\]\+@/);
+    }
+  });
+
   it('sinks only text fields when read-only (buttons match :read-only too)', () => {
     for (const { path, text } of files) {
       expect(text, path).not.toMatch(/(^|[\s'"`:])read-only:/);

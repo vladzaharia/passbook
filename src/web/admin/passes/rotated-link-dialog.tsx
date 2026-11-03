@@ -41,7 +41,7 @@ export function RotatedLinkDialog({
                       toast.sent(`New link emailed to ${holderEmail}`);
                       onClose();
                     })
-                    .catch((error: unknown) => toast.error(error))
+                    .catch((error: unknown) => toast.error(error, 'Could not send'))
                 }
               >
                 Email new link to holder

@@ -1,15 +1,15 @@
 import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
+import { isApiError } from '@/web/lib/errors.ts';
 import {
   Card,
   ConfirmDialog,
   ErrorState,
   SaveBar,
   SkeletonRows,
+  toast,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
@@ -100,7 +100,7 @@ export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
       }
       setErrors(server);
       if (Object.keys(server).length > 0) block(server);
-      else toast.error(errorMessage(cause));
+      else toast.error(cause, 'Could not save');
     }
   }
 

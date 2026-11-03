@@ -2,6 +2,9 @@ import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { IconButton } from './icon-button.tsx';
 
+/** The check holds this long, like Button's done state. */
+const RESET_MS = 1500;
+
 export interface CopyButtonProps {
   value: string;
   label?: string;
@@ -22,7 +25,7 @@ export function CopyButton({ value, label = 'Copy', className }: CopyButtonProps
       setState('failed');
     }
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setState('idle'), 2000);
+    timer.current = setTimeout(() => setState('idle'), RESET_MS);
   }
 
   return (

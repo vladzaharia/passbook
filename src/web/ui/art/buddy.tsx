@@ -1,4 +1,5 @@
 import { BuddyArt, type BuddyProps } from './buddy-art.tsx';
+import { useRegisterBuddy } from './presence.ts';
 import { useScene } from './replay.ts';
 
 export type { BuddyProps, BuddyScene } from './buddy-art.tsx';
@@ -13,5 +14,6 @@ export function Buddy({ replay, ...props }: BuddyProps) {
     !props.still && (props.scene ?? 'beat') !== 'beat',
     replay,
   );
+  useRegisterBuddy();
   return <BuddyArt ref={ref} {...props} />;
 }

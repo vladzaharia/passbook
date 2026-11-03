@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
+import { isApiError } from '@/web/lib/errors.ts';
 import {
   Callout,
   Card,
@@ -97,7 +97,7 @@ export function OrgForm({ org }: { org: Org }) {
       toast.success('Organization saved');
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
-      else toast.error(errorMessage(cause));
+      else toast.error(cause, 'Could not save');
     }
   }
 

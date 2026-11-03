@@ -54,7 +54,7 @@ export function RefreshButton({
       setActive(true);
       void client.invalidateQueries({ queryKey: myPassesKey });
     },
-    onError: (error) => toast.error(error, 'Refresh failed'),
+    onError: (error) => toast.error(error, 'Could not refresh'),
   });
 
   useEffect(() => {

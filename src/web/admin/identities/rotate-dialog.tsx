@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { Button, Dialog, DialogContent } from '@/web/ui/index.ts';
+import { Button, Dialog, DialogContent, toast } from '@/web/ui/index.ts';
 import { CertificateFields } from './certificate-fields.tsx';
 import { useRotateIdentity } from './queries.ts';
 import {

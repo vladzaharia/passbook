@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ChevronDown, Copy, KeyRound, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { copyText } from '@/web/lib/clipboard.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
@@ -144,10 +145,7 @@ export function ApiKeysPage() {
                 {
                   label: 'Copy prefix',
                   icon: Copy,
-                  onSelect: () =>
-                    void navigator.clipboard
-                      .writeText(`wlt_${row.original.prefix}`)
-                      .then(() => toast.success('Prefix copied'), toast.error),
+                  onSelect: () => void copyText(`wlt_${row.original.prefix}`, 'prefix'),
                 },
                 ...(row.original.revokedAt === null
                   ? [

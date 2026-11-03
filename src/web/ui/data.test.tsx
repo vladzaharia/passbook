@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -225,7 +225,7 @@ describe('states', () => {
         onRetry={onRetry}
       />,
     );
-    expect(screen.getByRole('alert')).toHaveTextContent('Server error. Try again.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong. Try again.');
     expect(screen.getByText('Request req-9')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
@@ -331,6 +331,28 @@ describe('CopyButton, CodeBlock, JsonViewer', () => {
     expect(writeText).toHaveBeenCalledWith('secret-link');
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Copied');
+  });
+
+  it('holds Copied for 1.5 s, like a button done state', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: async () => {} } });
+      render(
+        <TooltipProvider>
+          <CopyButton value="x" />
+        </TooltipProvider>,
+      );
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+      });
+      expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1499));
+      expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('reports failure when the clipboard is unavailable', async () => {

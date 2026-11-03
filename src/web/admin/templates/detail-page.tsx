@@ -203,7 +203,7 @@ function Loaded({
                 actions.archive
                   .mutateAsync(false)
                   .then(() => toast.success('Template restored'))
-                  .catch((error: unknown) => toast.error(error))
+                  .catch((error: unknown) => toast.error(error, 'Could not restore'))
               }
             >
               Restore

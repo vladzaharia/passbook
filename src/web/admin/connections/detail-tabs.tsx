@@ -81,7 +81,7 @@ export function MappingTab({
       });
       toast.success('Mapping saved');
     } catch (error) {
-      toast.error(error);
+      toast.error(error, 'Could not save');
     }
   }
 
@@ -150,7 +150,7 @@ export function SettingsTab({ c }: { c: Detail }) {
       setShowError(false);
       toast.success('Settings saved');
     } catch (cause) {
-      toast.error(cause);
+      toast.error(cause, 'Could not save');
     }
   }
 

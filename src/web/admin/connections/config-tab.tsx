@@ -121,7 +121,7 @@ export function ConfigTab({ c }: { c: Detail }) {
       reset();
       toast.success('Configuration saved');
     } catch (cause) {
-      toast.error(cause);
+      toast.error(cause, 'Could not save');
     }
   }
 

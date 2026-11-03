@@ -151,7 +151,7 @@ function ImageSlot({ org, slot }: { org: Org; slot: BrandingSlot }) {
               onClick={() =>
                 remove.mutateAsync(slot).then(
                   () => toast.success(`${SLOT[slot].label} removed`),
-                  (cause) => toast.error(cause),
+                  (cause) => toast.error(cause, 'Could not remove'),
                 )
               }
             />

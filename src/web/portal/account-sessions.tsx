@@ -37,7 +37,7 @@ export function SessionsSection() {
       );
       toast.success('Session revoked');
     },
-    onError: (e) => toast.error(e, 'Revoke failed'),
+    onError: (e) => toast.error(e, 'Could not revoke'),
   });
 
   // The other rows leave 30 ms apart, then the browser signs out (at most 320 ms of motion).

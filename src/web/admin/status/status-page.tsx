@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
-import { errorMessage } from '@/web/lib/errors.ts';
 import {
   Card,
   CardHeader,
@@ -8,6 +6,7 @@ import {
   ErrorState,
   PageHeader,
   SkeletonRows,
+  toast,
 } from '@/web/ui/index.ts';
 import { useOrgList } from '../orgs/queries.ts';
 import { ComponentRow } from './component-row.tsx';
@@ -27,7 +26,7 @@ export function StatusPage() {
   const onRecheck = () =>
     recheck.mutate(undefined, {
       onSuccess: () => setChecks((n) => n + 1),
-      onError: (cause) => toast.error(errorMessage(cause)),
+      onError: (cause) => toast.error(cause, 'Could not recheck'),
     });
   return (
     <>

@@ -211,7 +211,7 @@ function Loaded({
                   toast.sent(`Pass emailed to ${p.holderEmail}`);
                   created.dismiss();
                 })
-                .catch((error: unknown) => toast.error(error))
+                .catch((error: unknown) => toast.error(error, 'Could not send'))
             }
           />
         ) : null}
