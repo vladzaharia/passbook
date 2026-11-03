@@ -164,6 +164,7 @@ describe('orgs list', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o2'));
     // The new org says so once, with the next steps; no toast.
     expect(await screen.findByText('Organization created')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add branding' })).toBeInTheDocument();
     expect(screen.queryByRole('status', { name: /Organization created/ })).toBeNull();
   });
 

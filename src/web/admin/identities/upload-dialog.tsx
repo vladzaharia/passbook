@@ -12,8 +12,8 @@ import {
   Select,
   useFormErrors,
 } from '@/web/ui/index.ts';
-import { markCreated } from '../orgs/just-created.tsx';
 import { useOrgList } from '../orgs/queries.ts';
+import { markCreated } from '../passes/created.tsx';
 import { CertificateFields } from './certificate-fields.tsx';
 import { useUploadIdentity } from './queries.ts';
 import {
@@ -66,7 +66,7 @@ export function UploadIdentityDialog({
       const body = await buildUploadBody(draft, org === PLATFORM ? null : org, nfc);
       const created = await upload.mutateAsync(body);
       close();
-      markCreated(created.id);
+      markCreated(`identity:${created.id}`);
       void navigate({ to: '/admin/identities/$identityId', params: { identityId: created.id } });
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);

@@ -1,9 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Pause, Play } from 'lucide-react';
+import { Palette, Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { deleteConfirm } from '@/web/lib/confirms.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
+import { prefersReducedMotion } from '@/web/lib/motion.ts';
 import {
   Button,
   Callout,
@@ -19,12 +20,13 @@ import {
   TypedConfirmDialog,
   toast,
 } from '@/web/ui/index.ts';
+import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { ORG_FIELDS } from '../settings/fields.ts';
 import { SettingsForm } from '../settings/settings-form.tsx';
-import { CreatedCallout, useJustCreated } from './just-created.tsx';
 import { CountsCard, OrgChecklist, OverviewCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
+import { PASS_BRANDING_ID } from './pass-branding.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
 
 // Accent lives in the org form; settings here cover support contacts.
@@ -56,7 +58,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
   const query = useOrg(orgId);
   const remove = useDeleteOrg(orgId);
   const status = useStatusToggle(orgId);
-  const created = useJustCreated(orgId);
+  const created = useCreated(`org:${orgId}`);
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
   const crumbs = [
@@ -134,9 +136,24 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
         }
       >
         {created.shown ? (
-          <CreatedCallout title="Organization created" onDismiss={created.dismiss}>
-            Add its logo and colours below, then follow Get started.
-          </CreatedCallout>
+          // Branding first; the Get started checklist below carries template, pass and source.
+          <CreatedCallout
+            title="Organization created"
+            onDismiss={created.dismiss}
+            actions={
+              <Button
+                size="sm"
+                iconStart={<Palette aria-hidden />}
+                onClick={() => {
+                  const card = document.getElementById(PASS_BRANDING_ID);
+                  card?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+                  card?.querySelector<HTMLElement>('input, button')?.focus({ preventScroll: true });
+                }}
+              >
+                Add branding
+              </Button>
+            }
+          />
         ) : null}
         {suspended ? (
           <Callout tone="warning">

@@ -312,6 +312,10 @@ describe('identity detail', () => {
     await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/identities/i9'));
     expect(await screen.findByText('Identity uploaded')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Use in an organization' })).toHaveAttribute(
+      'href',
+      '/admin/orgs',
+    );
     await ui.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByText('Identity uploaded')).toBeNull();
   });

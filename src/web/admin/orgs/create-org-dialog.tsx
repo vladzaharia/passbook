@@ -10,7 +10,7 @@ import {
   Input,
   useFormErrors,
 } from '@/web/ui/index.ts';
-import { markCreated } from './just-created.tsx';
+import { markCreated } from '../passes/created.tsx';
 import { useCreateOrg } from './queries.ts';
 
 export function slugify(name: string): string {
@@ -68,7 +68,7 @@ export function CreateOrgDialog({
     try {
       const org = await create.mutateAsync({ name: name.trim(), slug });
       close();
-      markCreated(org.id);
+      markCreated(`org:${org.id}`);
       void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Copy, FileSignature } from 'lucide-react';
+import { ChevronRight, Copy, FileSignature } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
@@ -17,8 +17,8 @@ import {
   TwoPane,
   toast,
 } from '@/web/ui/index.ts';
-import { CreatedCallout, useJustCreated } from '../orgs/just-created.tsx';
 import { useOrgNames } from '../orgs/queries.ts';
+import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { CertificateCard, OverviewCard, PushSetupCard, SettingsCard } from './identity-cards.tsx';
 import { useDeleteIdentity, useIdentity, useResignIdentityPasses } from './queries.ts';
 import { RotateIdentityDialog } from './rotate-dialog.tsx';
@@ -31,7 +31,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const orgName = useOrgNames();
   const navigate = useNavigate();
   const resign = useResignIdentityPasses(identityId);
-  const created = useJustCreated(identityId);
+  const created = useCreated(`identity:${identityId}`);
   const [confirm, setConfirm] = useState<'delete' | 'resign'>();
   const [rotating, setRotating] = useState(false);
   const crumbs = [
@@ -100,23 +100,22 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
       />
       <TwoPane aside={<OverviewCard identity={identity} orgName={orgName} />}>
         {created.shown ? (
+          // Next: pick it as an org's signing identity (org detail, Details).
           <CreatedCallout
             title="Identity uploaded"
             onDismiss={created.dismiss}
             actions={
-              identity.orgId ? (
-                <Button asChild variant="outline" size="sm">
+              <Button asChild size="sm" iconEnd={<ChevronRight aria-hidden />}>
+                {identity.orgId ? (
                   <Link to="/admin/orgs/$orgId" params={{ orgId: identity.orgId }}>
-                    Open {orgName(identity.orgId)}
+                    Use in {orgName(identity.orgId)}
                   </Link>
-                </Button>
-              ) : null
+                ) : (
+                  <Link to="/admin/orgs">Use in an organization</Link>
+                )}
+              </Button>
             }
-          >
-            {identity.orgId
-              ? 'Choose it as the organization’s signing identity to sign its passes.'
-              : 'Make it the default below, or choose it as an organization’s signing identity.'}
-          </CreatedCallout>
+          />
         ) : null}
         <CertificateCard identity={identity} now={Date.now()} />
         <PushSetupCard identity={identity} />
