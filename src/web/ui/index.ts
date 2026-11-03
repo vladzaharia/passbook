@@ -44,6 +44,7 @@ export * from './pagination.tsx';
 export * from './pass-toggles.tsx';
 export * from './popover.tsx';
 export * from './radio-group.tsx';
+export * from './row-link.tsx';
 export * from './save-bar.tsx';
 export * from './secret-reveal.tsx';
 export * from './segmented-control.tsx';

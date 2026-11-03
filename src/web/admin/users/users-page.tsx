@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { z } from 'zod';
@@ -6,6 +5,7 @@ import type { UserSummarySchema } from '@/shared/contracts/users.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import {
+  CountLink,
   DataTable,
   EmptyState,
   EntityAvatar,
@@ -14,6 +14,7 @@ import {
   FilteredEmpty,
   LoadMore,
   PageHeader,
+  RowLink,
   StatusPill,
 } from '@/web/ui/index.ts';
 import { methodsLabel } from './labels.ts';
@@ -35,13 +36,9 @@ const COLUMNS: ColumnDef<UserRow, never>[] = [
         <div className="flex min-h-10 min-w-0 items-center gap-3">
           <EntityAvatar kind="user" id={u.id} name={name} />
           <div className="min-w-0">
-            <Link
-              to="/admin/users/$userId"
-              params={{ userId: u.id }}
-              className="block truncate font-medium text-accent-fg hover:underline"
-            >
+            <RowLink to="/admin/users/$userId" params={{ userId: u.id }}>
               {name}
-            </Link>
+            </RowLink>
             {u.name ? (
               <span className="block truncate text-xs text-fg-muted">{u.primaryEmail}</span>
             ) : null}
@@ -80,19 +77,14 @@ const COLUMNS: ColumnDef<UserRow, never>[] = [
     header: 'Passes',
     id: 'passes',
     meta: { numeric: true },
-    cell: ({ row }) =>
-      row.original.passCount > 0 ? (
-        <Link
-          to="/admin/passes"
-          search={{ q: row.original.primaryEmail }}
-          aria-label={`${row.original.passCount} passes held by ${row.original.primaryEmail}`}
-          className="rounded-sm text-accent-fg tabular-nums hover:underline"
-        >
-          {row.original.passCount}
-        </Link>
-      ) : (
-        <span className="text-fg-muted tabular-nums">0</span>
-      ),
+    cell: ({ row }) => (
+      <CountLink
+        count={row.original.passCount}
+        to="/admin/passes"
+        search={{ q: row.original.primaryEmail }}
+        aria-label={`${row.original.passCount} passes held by ${row.original.primaryEmail}`}
+      />
+    ),
   },
   {
     header: 'Last sign-in',
