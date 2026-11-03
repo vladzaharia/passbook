@@ -1,8 +1,11 @@
+import type { EmailMood } from './buddy.ts';
 import { buttonHtml, EMAIL_LIGHT as c, emailShell, escapeHtml, MONO } from './shell.ts';
 
 export interface SignInEmailInput {
   purpose: 'sign_in' | 'verify_email';
   link: string;
+  /** PUBLIC_BASE_URL without the trailing slash: the header images live under it. */
+  base: string;
   /** Present for sign_in only. */
   code?: string;
   expiresMinutes: number;
@@ -16,15 +19,14 @@ export interface RenderedEmail {
   text: string;
 }
 
-/** The PassBook mark for the header: the app icon PNG next to the link's origin. */
-function markUrl(link: string): string | undefined {
-  try {
-    return `${new URL(link).origin}/apple-touch-icon.png`;
-  } catch {
-    // A relative or malformed link: the header shows the word alone.
-    return undefined;
-  }
-}
+/** A link sent: happy. Confirming an address someone added: curious. */
+export const SIGN_IN_MOOD: Record<SignInEmailInput['purpose'], EmailMood> = {
+  sign_in: 'happy',
+  verify_email: 'curious',
+};
+
+// Images need an absolute URL; without one the header shows the word alone.
+const absolute = (base: string) => /^https?:\/\/[^\s"'<>]+$/i.test(base);
 
 export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
   const verify = input.purpose === 'verify_email';
@@ -51,7 +53,7 @@ ${askedBy ? `<p class="e-text" style="margin:0 0 20px;font-size:14px;line-height
 ${chip}
 <p class="e-muted" style="margin:0;font-size:12px;line-height:18px;color:${c.muted}">${expiry}</p>`;
 
-  const mark = markUrl(input.link);
+  const images = absolute(input.base);
   return {
     subject,
     html: emailShell({
@@ -59,7 +61,12 @@ ${chip}
       title: subject,
       header: 'PassBook',
       headerColor: '#060912',
-      ...(mark ? { headerMark: mark } : {}),
+      ...(images
+        ? {
+            headerMark: `${input.base}/apple-touch-icon.png`,
+            buddy: { base: input.base, mood: SIGN_IN_MOOD[input.purpose] },
+          }
+        : {}),
       body,
     }),
     text,

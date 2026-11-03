@@ -61,9 +61,11 @@ export async function issueMagicLink(
     now,
     expiresAt: now + MAGIC_TTL_MS,
   });
+  const base = baseUrl(ctx.env);
   const mail = renderSignInEmail({
     purpose: input.purpose,
-    link: `${baseUrl(ctx.env)}/auth/magic?t=${token}`,
+    link: `${base}/auth/magic?t=${token}`,
+    base,
     code: code ?? undefined,
     expiresMinutes: MAGIC_TTL_MS / 60_000,
     ...(input.requester ? { requester: input.requester } : {}),

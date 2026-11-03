@@ -126,6 +126,21 @@ describe('pass email', () => {
     expect(render({ senderName: '' }).fromName).toBeUndefined();
   });
 
+  it("leaves the buddy out: the org's pass, under the org's name and colour", () => {
+    const { html } = render();
+    expect(html).not.toContain('/email/buddy-');
+    expect(html).not.toContain('apple-touch-icon');
+    expect(html).toMatch(
+      /background:#d97706;padding:20px 24px;color:#[0-9a-f]{6}[^"]*">Harbor Lights/,
+    );
+  });
+
+  it('keeps the plain-text part word for word', () => {
+    expect(render().text).toBe(
+      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen on iPhone or Mac to add to Apple Wallet.\n\nKeep this email private. Its links open your pass.',
+    );
+  });
+
   it('still renders without a pass summary', () => {
     const { html } = render({ summary: null, passTitle: null });
     expect(html).toContain('alt="Add to Apple Wallet"');
@@ -137,6 +152,7 @@ describe('sign-in email', () => {
     const { html, text } = renderSignInEmail({
       purpose: 'sign_in',
       link: 'https://w.test/auth/magic?t=abc',
+      base: 'https://w.test',
       code: '123456',
       expiresMinutes: 15,
     });
