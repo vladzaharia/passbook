@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -9,6 +9,14 @@ import { passFixture } from './fixtures.ts';
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Version/18.0 Safari/604.1';
 const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/18.0 Safari/605.1.15';
 const QR = 'QR code for Gym membership';
+
+/** The encoder's image (it replaces a placeholder with the same name once loaded). */
+const qrImage = () =>
+  waitFor(() => {
+    const img = document.querySelector<HTMLImageElement>(`img[alt="${QR}"]`);
+    expect(img).not.toBeNull();
+    return img as HTMLImageElement;
+  });
 
 afterEach(() => {
   window.history.replaceState(null, '', '/');
@@ -39,7 +47,7 @@ describe('pass page explorations (?add=)', () => {
     expect(within(header).getByRole('button', { name: 'Refresh' })).toBeVisible();
     expect(within(header).getByRole('button', { name: 'More' })).toBeVisible();
     const add = screen.getByRole('region', { name: 'Add to Apple Wallet' });
-    expect(await within(add).findByRole('img', { name: QR })).toBeVisible();
+    expect(add.contains(await qrImage())).toBe(true);
     expect(within(add).getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
     // The add block only adds; the old nudge is gone.
     expect(within(add).queryByRole('button')).toBeNull();
@@ -52,15 +60,13 @@ describe('pass page explorations (?add=)', () => {
     expect(h1).toHaveTextContent(/^Membership$/);
     expect(within(header).getByText('Henrys')).toBeVisible();
     expect(within(header).getByRole('button', { name: 'More actions' })).toBeVisible();
-    const qr = await screen.findByRole('img', { name: QR });
-    expect(qr.closest('.wl-ph')).not.toBeNull();
+    expect((await qrImage()).closest('.wl-ph')).not.toBeNull();
     expect(container.querySelector('.wl-b-dock')).toBeNull();
   });
 
   it('c: the buddy sits on the QR’s sign and points at it', async () => {
     const { container } = await open('c', MAC);
-    const qr = await screen.findByRole('img', { name: QR });
-    const sign = qr.closest('.wl-c-sign') as HTMLElement;
+    const sign = (await qrImage()).closest('.wl-c-sign') as HTMLElement;
     expect(sign.querySelector('[data-scene="nudge"]')).not.toBeNull();
     expect(container.querySelectorAll('[data-buddy]')).toHaveLength(1);
   });
@@ -76,7 +82,7 @@ describe('pass page explorations (?add=)', () => {
       const show = within(add).getByRole('button', { name: 'Show QR' });
       expect(show).toHaveAttribute('aria-expanded', 'false');
       await userEvent.click(show);
-      expect(await screen.findByRole('img', { name: QR })).toBeVisible();
+      expect(await qrImage()).toBeVisible();
       expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
       expect(within(add).getByRole('button', { name: 'Hide QR' })).toHaveAttribute(
         'aria-expanded',

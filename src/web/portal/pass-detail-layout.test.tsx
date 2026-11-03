@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
@@ -47,8 +47,12 @@ describe('pass page add block', () => {
     // More keeps its word in the column, phones included.
     expect(screen.getByText('More')).not.toHaveClass('max-sm:sr-only');
     const phone = stack.previousElementSibling as HTMLElement;
-    const qr = await screen.findByRole('img', { name: HOLDER_COPY.qrAlt('Gym membership') });
-    expect(phone.contains(qr)).toBe(true);
+    // The encoder's image replaces its placeholder: wait for the image itself, in the phone.
+    await waitFor(() =>
+      expect(
+        phone.querySelector(`img[alt="${HOLDER_COPY.qrAlt('Gym membership')}"]`),
+      ).not.toBeNull(),
+    );
     expect(phone.lastElementChild).toHaveTextContent(HOLDER_COPY.scanQr);
     expect((await axe(container)).violations).toEqual([]);
   });
