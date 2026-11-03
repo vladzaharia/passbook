@@ -72,6 +72,21 @@ export function listIdentityRows(db: D1Database): Promise<IdentityRow[]> {
   return all<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities ORDER BY created_at, id`);
 }
 
+/** Oldest first, one page after the `after` id (the last row of the previous page). */
+export function pageIdentityRows(
+  db: D1Database,
+  after: string | undefined,
+  limit: number,
+): Promise<IdentityRow[]> {
+  return all<IdentityRow>(
+    db,
+    `SELECT ${COLUMNS} FROM signing_identities
+     ${after ? 'WHERE (created_at, id) > (SELECT created_at, id FROM signing_identities WHERE id = ?)' : ''}
+     ORDER BY created_at, id LIMIT ?`,
+    after ? [after, limit] : [limit],
+  );
+}
+
 export function getIdentityRow(db: D1Database, id: string): Promise<IdentityRow | null> {
   return first<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities WHERE id = ?`, [id]);
 }

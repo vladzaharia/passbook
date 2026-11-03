@@ -17,6 +17,8 @@ describe('SaveBar phases', () => {
     rerender(<SaveBar dirty saving onSave={noop} onDiscard={noop} />);
     rerender(<SaveBar dirty={false} saving={false} onSave={noop} onDiscard={noop} />);
     expect(bar()).toHaveTextContent('Saved');
+    // The shell pads the end of main while the bar is mounted (app-shell.tsx).
+    expect(bar()).toHaveAttribute('data-save-bar');
     expect(bar()?.querySelector('.wl-check')).not.toBeNull();
     act(() => {
       vi.advanceTimersByTime(399);

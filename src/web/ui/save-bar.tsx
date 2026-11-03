@@ -68,6 +68,8 @@ export function SaveBar({
   return (
     <section
       aria-label="Unsaved changes"
+      // The shell pads the end of main while a bar is up (app-shell.tsx), so nothing hides under it.
+      data-save-bar=""
       data-closing={phase === 'closing' || undefined}
       onAnimationEnd={(e) => {
         if (e.target === e.currentTarget && phase === 'closing') setPhase('hidden');

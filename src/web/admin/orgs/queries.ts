@@ -17,12 +17,13 @@ export const orgKeys = {
 
 const orgPath = (id: string) => `/api/v1/orgs/${encodeURIComponent(id)}`;
 
-export function useOrgList(q?: string) {
+/** Names and pickers: one request for up to 200 orgs, shared with lib/search useOrgOptions. */
+export function useOrgList() {
   return useQuery(
     listQuery({
-      queryKey: [...orgKeys.list, q ?? ''],
+      queryKey: [...orgKeys.list, ''],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200, q }, signal }),
+        api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200 }, signal }),
     }),
   );
 }

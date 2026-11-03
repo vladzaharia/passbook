@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accentWarnings, hexOf, imageSizeError, passColorWarnings, pngSize } from './branding.ts';
+import { hexOf, imageSizeError, passColorWarnings, pngSize } from './branding.ts';
 
 describe('branding checks', () => {
   it('warns on pass colours under 4.5:1 text and 3:1 labels', () => {
@@ -9,14 +9,6 @@ describe('branding checks', () => {
     expect(
       passColorWarnings({ background: '#0f172a', foreground: '#ffffff', label: '#94a3b8' }),
     ).toEqual([]);
-  });
-
-  it('warns when the accent is weak on the white email ground', () => {
-    expect(accentWarnings('#d97706')).toEqual([
-      'Links in emails are 3.2:1 on white; aim for 4.5:1.',
-    ]);
-    expect(accentWarnings('#0f766e')).toEqual([]);
-    expect(accentWarnings('#ffff00')).toHaveLength(1);
   });
 
   it('checks @3x sizes against the passkit rules', () => {

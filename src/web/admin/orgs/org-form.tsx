@@ -3,10 +3,10 @@ import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import {
-  Callout,
   Card,
   CardBody,
   CardHeader,
+  Form,
   FormField,
   FormGrid,
   Input,
@@ -14,10 +14,11 @@ import {
   Select,
   toast,
   UnsavedChangesDialog,
+  useFormErrors,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
-import { useIdentities } from '../identities/queries.ts';
-import { accentWarnings, HEX } from './branding.ts';
+import { useIdentityOptions } from '../identities/queries.ts';
+import { HEX } from './branding.ts';
 import { ColorField } from './color-field.tsx';
 import { PassBrandingCard, type PassColorsDraft } from './pass-branding.tsx';
 import { useUpdateOrg } from './queries.ts';
@@ -77,42 +78,40 @@ export function orgPatch(d: OrgDraft, org: Org) {
   };
 }
 
+const FORM_ID = 'org-form';
+
 export function OrgForm({ org }: { org: Org }) {
   const update = useUpdateOrg(org.id);
-  const identities = useIdentities();
+  const identities = useIdentityOptions();
   const initial = orgToDraft(org);
   const [draft, setDraft] = useState(initial);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [server, setServer] = useState<Record<string, string>>({});
+  const check = useFormErrors(validateOrg(draft));
+  const errors = { ...server, ...check.errors } as Record<string, string>;
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
   const guard = useUnsavedChangesGuard(dirty);
-  const patch = (p: Partial<OrgDraft>) => setDraft((d) => ({ ...d, ...p }));
-  const accentNotes = accentWarnings(draft.accent || DEFAULT_ACCENT);
+  const patch = (p: Partial<OrgDraft>) => {
+    setDraft((d) => ({ ...d, ...p }));
+    setServer({});
+  };
 
   async function save() {
-    const found = validateOrg(draft);
-    setErrors(found);
-    if (Object.keys(found).length > 0) return;
     try {
       await update.mutateAsync(orgPatch(draft, org));
       toast.success('Organization saved');
     } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
+      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
       else toast.error(cause, 'Could not save');
     }
   }
 
+  // Both cards are one form: Save checks the pass colours too and focuses the first error.
   return (
-    <>
+    <Form id={FORM_ID} className="flex flex-col gap-6" {...check.form} onValid={() => void save()}>
       <Card>
         <CardHeader title="Details" />
         <CardBody>
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void save();
-            }}
-          >
+          <div className="flex flex-col gap-4">
             <FormGrid>
               <FormField label="Name" required error={errors.name}>
                 {(p) => (
@@ -145,12 +144,11 @@ export function OrgForm({ org }: { org: Org }) {
                 fallback={DEFAULT_ACCENT}
                 empty="Teal"
                 error={errors.accent}
-                help="Email header and links. Empty uses teal."
+                help="The organization's avatar in the console. Empty uses teal."
                 onChange={(accent) => patch({ accent })}
               />
             </FormGrid>
-            {accentNotes.length ? <Callout tone="warning" items={accentNotes} /> : null}
-          </form>
+          </div>
         </CardBody>
       </Card>
       <PassBrandingCard org={org} draft={draft} errors={errors} onChange={patch} />
@@ -158,13 +156,14 @@ export function OrgForm({ org }: { org: Org }) {
         dirty={dirty}
         saving={update.isPending}
         paused={update.isPaused}
-        onSave={() => void save()}
+        formId={FORM_ID}
         onDiscard={() => {
           setDraft(initial);
-          setErrors({});
+          setServer({});
+          check.reset();
         }}
       />
       <UnsavedChangesDialog blocker={guard} />
-    </>
+    </Form>
   );
 }

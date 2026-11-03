@@ -8,11 +8,13 @@ import {
   Checkbox,
   Dialog,
   DialogContent,
+  Form,
   FormField,
   Input,
   Label,
   SecretReveal,
   Select,
+  useFormErrors,
 } from '@/web/ui/index.ts';
 import { useOrgList } from '../orgs/queries.ts';
 import { SCOPE_LABEL, useCreateKey } from './queries.ts';
@@ -53,12 +55,16 @@ function ScopeRows({
         </span>
       </legend>
       <ul className="divide-y divide-border rounded-md border border-border-strong">
-        {SCOPES.map((s) => {
+        {SCOPES.map((s, i) => {
           const id = `scope-${s.replace(':', '-')}`;
+          // The first box carries the group's error, so a blocked submit focuses it once.
+          const flagged = Boolean(error) && i === 0;
           return (
             <li key={s} className="flex min-h-11 items-center gap-3 px-3 py-2">
               <Checkbox
                 id={id}
+                aria-invalid={flagged || undefined}
+                aria-describedby={flagged ? 'scopes-error' : undefined}
                 checked={value.includes(s)}
                 onCheckedChange={(c) =>
                   onChange(c === true ? [...value, s] : value.filter((x) => x !== s))
@@ -89,9 +95,14 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
   const [org, setOrg] = useState(scoped ?? PLATFORM);
   const [scopes, setScopes] = useState<string[]>([]);
   const [expiry, setExpiry] = useState('90');
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [secret, setSecret] = useState<string>();
+  const check = useFormErrors({
+    ...(name.trim() ? {} : { name: 'Required.' }),
+    ...(scopes.length ? {} : { scopes: 'Pick at least one scope.' }),
+  });
+  const errors: Record<string, string | undefined> = { ...server, ...check.errors };
 
   function close() {
     onOpenChange(false);
@@ -99,18 +110,14 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
     setOrg(scoped ?? PLATFORM);
     setScopes([]);
     setExpiry('90');
-    setErrors({});
+    setServer({});
+    check.reset();
     setFormError(undefined);
     setSecret(undefined);
   }
 
   async function submit() {
-    const next: Record<string, string> = {};
-    if (!name.trim()) next.name = 'Required.';
-    if (scopes.length === 0) next.scopes = 'Pick at least one scope.';
-    setErrors(next);
     setFormError(undefined);
-    if (Object.keys(next).length > 0) return;
     try {
       const created = await create.mutateAsync({
         name: name.trim(),
@@ -120,7 +127,7 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
       });
       setSecret(created.secret);
     } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
+      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
       else setFormError(errorMessage(cause));
     }
   }
@@ -172,14 +179,11 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
           </>
         }
       >
-        <form
+        <Form
           id="new-key"
-          noValidate
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
+          {...check.form}
+          onValid={() => void submit()}
         >
           <FormField label="Name" required error={errors.name}>
             {(p) => (
@@ -189,7 +193,10 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
                 autoComplete="off"
                 placeholder="Box office sync"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setServer({});
+                }}
               />
             )}
           </FormField>
@@ -213,7 +220,7 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
           </div>
           <ScopeRows value={scopes} onChange={setScopes} error={errors.scopes} />
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
@@ -13,21 +12,22 @@ import {
   ErrorState,
   LoadMore,
   PageHeader,
+  RowLink,
   StatusPill,
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
-import { useIdentities } from './queries.ts';
+import { useIdentityPages } from './queries.ts';
 import { UploadIdentityDialog } from './upload-dialog.tsx';
 
 type Identity = z.infer<typeof IdentitySchema>;
 const Icon = ENTITY.identity.icon;
 
 export function IdentitiesPage() {
-  const list = useIdentities();
+  const list = useIdentityPages();
   const orgName = useOrgNames();
   const [uploading, setUploading] = useState(false);
-  const rows = list.data?.items ?? [];
+  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const empty = !list.isPending && !list.isError && rows.length === 0;
   const upload = (variant: 'primary' | 'outline') => (
     <Button
@@ -49,13 +49,12 @@ export function IdentitiesPage() {
             <Icon aria-hidden className="size-4 shrink-0 text-fg-muted" />
             <div className="min-w-0">
               <span className="flex min-w-0 items-center gap-2">
-                <Link
+                <RowLink
                   to="/admin/identities/$identityId"
                   params={{ identityId: row.original.id }}
-                  className="truncate font-medium text-accent-fg hover:underline"
                 >
                   {row.original.label}
-                </Link>
+                </RowLink>
                 {row.original.isDefault ? <StatusPill status="default" /> : null}
               </span>
               <span className="block truncate font-mono text-xs text-fg-muted">
@@ -88,23 +87,17 @@ export function IdentitiesPage() {
   return (
     <>
       <PageHeader title="Apple identities" actions={upload(empty ? 'outline' : 'primary')} />
-      {list.isError ? (
+      {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (
         <DataTable
           caption="Apple identities"
           loading={list.isPending}
+          fetching={list.isFetching && !list.isFetchingNextPage}
           data={rows}
           getRowId={(i) => i.id}
           empty={<EmptyState art="certificate" title="No identities" action={upload('primary')} />}
-          footer={
-            <LoadMore
-              hasMore={false}
-              onLoadMore={() => undefined}
-              shown={rows.length}
-              noun={['identity', 'identities']}
-            />
-          }
+          footer={<LoadMore query={list} shown={rows.length} noun={['identity', 'identities']} />}
           columns={columns}
         />
       )}

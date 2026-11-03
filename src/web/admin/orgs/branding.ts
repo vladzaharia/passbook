@@ -13,10 +13,6 @@ export function hexOf(color: string): string | undefined {
     .join('')}`;
 }
 
-/** Light and dark email grounds (email shell). */
-const EMAIL_LIGHT = '#ffffff';
-const EMAIL_DARK = '#060912';
-
 const ratio = (a: string, b: string) => {
   const x = parseColor(a);
   const y = parseColor(b);
@@ -38,20 +34,6 @@ export function passColorWarnings(c: {
   const label = ratio(c.label, c.background);
   if (label !== undefined && label < 3)
     out.push(`Labels on the background are ${fmt(label)}; Apple asks for 3:1.`);
-  return out;
-}
-
-/**
- * The accent is link text on the white email ground and the header bar behind white or near-black
- * text. Warn when links fall under 4.5:1 on white, or when neither header text colour reaches it.
- */
-export function accentWarnings(accent: string): string[] {
-  if (!HEX.test(accent)) return [];
-  const light = ratio(accent, EMAIL_LIGHT) ?? 21;
-  const dark = ratio(accent, EMAIL_DARK) ?? 21;
-  const out: string[] = [];
-  if (light < 4.5) out.push(`Links in emails are ${fmt(light)} on white; aim for 4.5:1.`);
-  if (Math.max(light, dark) < 4.5) out.push('No header text colour reaches 4.5:1 on this accent.');
   return out;
 }
 

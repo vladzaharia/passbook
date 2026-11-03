@@ -1,14 +1,15 @@
-import { useNavigate } from '@tanstack/react-router';
-import { Copy, FileSignature } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { ChevronRight, Copy, FileSignature } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
-import { isApiError } from '@/web/lib/errors.ts';
+import { deleteConfirm } from '@/web/lib/confirms.ts';
 import { formatCount } from '@/web/lib/format.ts';
 import {
+  Button,
   ConfirmDialog,
   DropdownMenuItem,
-  ErrorState,
+  detailError,
   MoreMenu,
   PageHeader,
   SkeletonDetail,
@@ -17,6 +18,7 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
+import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { CertificateCard, OverviewCard, PushSetupCard, SettingsCard } from './identity-cards.tsx';
 import { useDeleteIdentity, useIdentity, useResignIdentityPasses } from './queries.ts';
 import { RotateIdentityDialog } from './rotate-dialog.tsx';
@@ -29,6 +31,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const orgName = useOrgNames();
   const navigate = useNavigate();
   const resign = useResignIdentityPasses(identityId);
+  const created = useCreated(`identity:${identityId}`);
   const [confirm, setConfirm] = useState<'delete' | 'resign'>();
   const [rotating, setRotating] = useState(false);
   const crumbs = [
@@ -45,18 +48,11 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
     );
   }
   if (query.isError) {
-    return (
-      <>
-        <PageHeader title="Identity" breadcrumbs={crumbs} />
-        <ErrorState
-          error={query.error}
-          title={
-            isApiError(query.error) && query.error.isNotFound ? 'Identity not found' : undefined
-          }
-          onRetry={() => query.refetch()}
-        />
-      </>
-    );
+    return detailError(query, {
+      entity: 'identity',
+      to: '/admin/identities',
+      header: <PageHeader title="Identity" breadcrumbs={crumbs} />,
+    });
   }
   const identity = query.data;
   const uploaded = identity.source === 'db';
@@ -103,6 +99,24 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         }
       />
       <TwoPane aside={<OverviewCard identity={identity} orgName={orgName} />}>
+        {created.shown ? (
+          // Next: pick it as an org's signing identity (org detail, Details).
+          <CreatedCallout
+            title="Identity uploaded"
+            onDismiss={created.dismiss}
+            actions={
+              <Button asChild size="sm" iconEnd={<ChevronRight aria-hidden />}>
+                {identity.orgId ? (
+                  <Link to="/admin/orgs/$orgId" params={{ orgId: identity.orgId }}>
+                    Use in {orgName(identity.orgId)}
+                  </Link>
+                ) : (
+                  <Link to="/admin/orgs">Use in an organization</Link>
+                )}
+              </Button>
+            }
+          />
+        ) : null}
         <CertificateCard identity={identity} now={Date.now()} />
         <PushSetupCard identity={identity} />
         <SettingsCard
@@ -126,14 +140,12 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
       <ConfirmDialog
         open={confirm === 'delete'}
         onOpenChange={(o) => !o && setConfirm(undefined)}
-        title={`Delete ${identity.label}?`}
-        description="Templates and orgs using this identity fall back to the default."
-        confirmLabel="Delete"
+        {...deleteConfirm('identity', identity.label)}
         destructive
         onConfirm={async () => {
           await remove.mutateAsync();
           toast.success('Identity deleted');
-          await navigate({ to: '/admin/identities' });
+          await navigate({ to: '/admin/identities', replace: true });
         }}
       />
     </>

@@ -167,7 +167,7 @@ describe('user detail', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('marks this device on your own page and hides Disable', async () => {
+  it('on your own page says This is you, links Account and drops self-harming actions', async () => {
     await renderApp('/admin/users/u1', {
       session: 'admin',
       handlers: {
@@ -176,7 +176,14 @@ describe('user detail', () => {
       },
     });
     expect(await screen.findByText('This device')).toBeInTheDocument();
+    expect(screen.getByText(/This is you\./)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Account' })).toHaveAttribute(
+      'href',
+      '/admin/account',
+    );
+    // Other devices can still be revoked one by one; Revoke all would end this session too.
     expect(screen.getAllByRole('button', { name: /^Revoke Safari on iOS/ })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Revoke all' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Disable' })).toBeNull();
   });
 
@@ -201,29 +208,28 @@ describe('user detail', () => {
     );
   });
 
-  it('disables a user only after a danger confirm', async () => {
-    const patches: unknown[] = [];
+  it('disables at once and Undo enables again', async () => {
+    const patches: { status: string }[] = [];
+    let status = 'active';
     await renderApp('/admin/users/u2', {
       session: 'admin',
       handlers: {
         '/api/v1/users/u2': (_u, init) => {
           if (init?.method === 'PATCH') {
             patches.push(JSON.parse(String(init.body)));
-            return json(user({ status: 'disabled' }));
+            status = patches.at(-1)?.status ?? status;
+            return json(user({ status }));
           }
-          return json(detail());
+          return json(detail({ status }));
         },
       },
     });
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Disable' }));
-    const dialog = await screen.findByRole('alertdialog');
-    expect(within(dialog).getByText('They are signed out at their next request.')).toBeVisible();
-    expect(patches).toEqual([]);
-    const confirm = within(dialog).getByRole('button', { name: 'Disable' });
-    expect(confirm.className).toContain('bg-danger');
-    await ui.click(confirm);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     await waitFor(() => expect(patches).toEqual([{ status: 'disabled' }]));
+    await ui.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(patches).toEqual([{ status: 'disabled' }, { status: 'active' }]));
   });
 
   it('offers Enable for a disabled user', async () => {
@@ -248,10 +254,36 @@ describe('user detail', () => {
     });
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Revoke all' }));
-    await ui.click(
-      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Revoke all' }),
-    );
+    const dialog = await screen.findByRole('alertdialog', {
+      name: 'Sign Ada Lovelace out everywhere?',
+    });
+    await ui.click(within(dialog).getByRole('button', { name: 'Revoke all' }));
     await waitFor(() => expect(revoked).toBe(1));
+  });
+
+  it('asks before removing an email, in the shared words', async () => {
+    let removed = '';
+    await renderApp('/admin/users/u2', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users/u2': () => json(detail()),
+        '/api/v1/users/u2/emails/ada%40work.example': (url, init) => {
+          removed = `${init?.method} ${url.pathname}`;
+          return json({ ok: true });
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Actions for ada@work.example' }));
+    await ui.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Remove ada@work.example?' });
+    expect(
+      within(dialog).getByText(
+        'They can no longer sign in with it, and passes sent to it leave their list.',
+      ),
+    ).toBeVisible();
+    await ui.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(removed).toBe('DELETE /api/v1/users/u2/emails/ada%40work.example'));
   });
 
   it('makes a verified email primary after confirming', async () => {
@@ -288,7 +320,7 @@ describe('user detail', () => {
     expect(screen.queryByRole('link', { name: /Polaris ID/ })).toBeNull();
   });
 
-  it('shows the API error when adding an email fails', async () => {
+  it('shows the API error when adding an email fails and keeps the address typed', async () => {
     await renderApp('/admin/users/u2', {
       session: 'admin',
       handlers: {
@@ -298,13 +330,20 @@ describe('user detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.type(await screen.findByLabelText('Add verified email'), 'x@example.com');
+    const field = await screen.findByLabelText('Add verified email');
+    await ui.type(field, 'x@example.com');
     await ui.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Email belongs to another user.')).toBeInTheDocument();
+    expect(field).toHaveValue('x@example.com');
   });
 
-  it('shows not found', async () => {
+  it('shows not found under the page header, with the way back', async () => {
     await renderApp('/admin/users/nope', { session: 'admin' });
     expect(await screen.findByText('User not found')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'User' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to users' })).toHaveAttribute(
+      'href',
+      '/admin/users',
+    );
   });
 });

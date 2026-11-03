@@ -104,6 +104,7 @@ describe('identities list', () => {
                 apnsHealth: 'failing',
               }),
             ],
+            nextCursor: null,
           }),
       },
     });
@@ -119,7 +120,7 @@ describe('identities list', () => {
   it('shows the certificate empty state and the certificate drop in the upload dialog', async () => {
     const { container } = await renderApp('/admin/identities', {
       session: 'admin',
-      handlers: { '/api/v1/identities': () => json({ items: [] }) },
+      handlers: { '/api/v1/identities': () => json({ items: [], nextCursor: null }) },
     });
     expect(await screen.findByText('No identities')).toBeInTheDocument();
     expect(container.querySelector('[data-art="certificate"]')).not.toBeNull();
@@ -150,7 +151,7 @@ describe('identities list', () => {
               { path: 'privateKeyPem', message: 'Key does not match the certificate.' },
             ]);
           }
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
       },
     });
@@ -159,6 +160,10 @@ describe('identities list', () => {
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
     expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();
+    // Label and file: the first is focused and the count announced.
+    expect(dialog.querySelector('input[type="file"]')).toHaveAttribute('aria-invalid', 'true');
+    await waitFor(() => expect(within(dialog).getByLabelText(/Label/)).toHaveFocus());
+    expect(await within(dialog).findByText('2 fields need attention')).toBeInTheDocument();
     expect(posted).toBe(0);
 
     await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
@@ -256,12 +261,12 @@ describe('identity detail', () => {
     expect(body).toEqual({ label: 'Platform', nfcEnabled: true, isDefault: true });
   });
 
-  it('deletes after confirmation', async () => {
+  it('deletes after confirmation and replaces the page in history', async () => {
     let deleted = false;
-    await renderApp('/admin/identities/i1', {
+    const { router } = await renderApp('/admin/identities/i1', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': () => json({ items: [] }),
+        '/api/v1/identities': () => json({ items: [], nextCursor: null }),
         '/api/v1/identities/i1': (_u, init) => {
           if (init?.method === 'DELETE') {
             deleted = true;
@@ -279,6 +284,40 @@ describe('identity detail', () => {
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
     );
     await waitFor(() => expect(deleted).toBe(true));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/identities'));
+    expect(router.history.length).toBe(1);
+  });
+
+  it('opens a new upload on its page with the next steps', async () => {
+    const { router } = await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities': (_u, init) =>
+          init?.method === 'POST'
+            ? json(identity({ id: 'i9', label: 'Acme', isDefault: false }), 201)
+            : json({ items: [], nextCursor: null }),
+        '/api/v1/identities/i9': () =>
+          json(identity({ id: 'i9', label: 'Acme', isDefault: false })),
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click((await screen.findAllByRole('button', { name: 'Upload' }))[0]!);
+    const dialog = await screen.findByRole('dialog');
+    await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
+    await ui.type(within(dialog).getByLabelText(/Label/), 'Acme');
+    await ui.click(within(dialog).getByLabelText('Certificate (PEM)'));
+    await ui.paste('-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----');
+    await ui.click(within(dialog).getByLabelText('Private key (PEM)'));
+    await ui.paste('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----');
+    await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/identities/i9'));
+    expect(await screen.findByText('Identity uploaded')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Use in an organization' })).toHaveAttribute(
+      'href',
+      '/admin/orgs',
+    );
+    await ui.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText('Identity uploaded')).toBeNull();
   });
 
   it('re-signs all passes of the identity after confirmation', async () => {
@@ -379,8 +418,13 @@ describe('identity detail', () => {
     );
   });
 
-  it('shows not found', async () => {
+  it('shows not found with the way back to the list', async () => {
     await renderApp('/admin/identities/zzz', { session: 'admin' });
-    expect(await screen.findByText('Identity not found')).toBeInTheDocument();
+    expect(await screen.findByText('Apple identity not found')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Identity' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Apple identities' })).toHaveAttribute(
+      'href',
+      '/admin/identities',
+    );
   });
 });

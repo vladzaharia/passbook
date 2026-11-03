@@ -1,5 +1,9 @@
 import type { z } from 'zod';
-import type { ApiKeySchema, CreateApiKeySchema } from '../../../shared/contracts/index.ts';
+import type {
+  ApiKeyListQuerySchema,
+  ApiKeySchema,
+  CreateApiKeySchema,
+} from '../../../shared/contracts/index.ts';
 import type { ApiKeyStore } from '../../platform/auth.ts';
 import { API_SCOPES, type ApiKeyAuth, type ApiScope } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
@@ -37,8 +41,21 @@ function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKe
   };
 }
 
-export async function listApiKeys(ctx: ServiceContext): Promise<ApiKeyDto[]> {
-  return (await repo.listKeys(ctx.env.DB)).map(toDto);
+/** One page, plus how many revoked keys the same org filter holds. */
+export async function listApiKeys(
+  ctx: ServiceContext,
+  query: z.infer<typeof ApiKeyListQuerySchema>,
+): Promise<{ items: ApiKeyDto[]; nextCursor: string | null; revokedCount: number }> {
+  const [rows, revokedCount] = await Promise.all([
+    repo.listKeys(ctx.env.DB, { ...query, limit: query.limit + 1 }),
+    repo.countRevoked(ctx.env.DB, query.orgId),
+  ]);
+  const page = rows.slice(0, query.limit);
+  return {
+    items: page.map(toDto),
+    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
+    revokedCount,
+  };
 }
 
 export async function createApiKey(

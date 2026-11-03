@@ -168,15 +168,7 @@ export function UsersPage({
               description="Users appear after their first sign-in."
             />
           }
-          footer={
-            <LoadMore
-              hasMore={Boolean(list.hasNextPage)}
-              loading={list.isFetchingNextPage}
-              onLoadMore={() => list.fetchNextPage()}
-              shown={rows.length}
-              noun={['user', 'users']}
-            />
-          }
+          footer={<LoadMore query={list} shown={rows.length} noun={['user', 'users']} />}
           columns={COLUMNS}
         />
       )}

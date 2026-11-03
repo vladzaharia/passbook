@@ -1,8 +1,8 @@
-import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { UserDetailSchema } from '@/shared/contracts/users.ts';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { removeEmailConfirm, revokeSessionsConfirm } from '@/web/lib/confirms.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardLink,
   ConfirmDialog,
+  CountLink,
   EmailList,
   EmptyState,
   KeyValue,
@@ -29,7 +30,7 @@ import { useUserMutations } from './queries.ts';
 
 export type UserDetail = z.infer<typeof UserDetailSchema>;
 
-export function EmailsCard({ user }: { user: UserDetail }) {
+export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) {
   const { addEmail, removeEmail, makePrimary } = useUserMutations(user.id);
   const [addError, setAddError] = useState<string>();
   const [removing, setRemoving] = useState<string>();
@@ -40,13 +41,16 @@ export function EmailsCard({ user }: { user: UserDetail }) {
       ? makePrimary.variables
       : undefined;
 
-  async function add(email: string) {
+  /** False keeps the typed address in the field when the server refuses it. */
+  async function add(email: string): Promise<boolean> {
     setAddError(undefined);
     try {
       await addEmail.mutateAsync(email);
       toast.success('Email added');
+      return true;
     } catch (cause) {
       setAddError(errorMessage(cause));
+      return false;
     }
   }
 
@@ -64,7 +68,7 @@ export function EmailsCard({ user }: { user: UserDetail }) {
           }))}
           busyEmail={busyEmail}
           addError={addError}
-          onAdd={(email) => void add(email)}
+          onAdd={add}
           onRemove={setRemoving}
           onMakePrimary={setPromoting}
           onResend={() => undefined}
@@ -74,9 +78,7 @@ export function EmailsCard({ user }: { user: UserDetail }) {
       <ConfirmDialog
         open={removing !== undefined}
         onOpenChange={(o) => !o && setRemoving(undefined)}
-        title={`Remove ${removing ?? 'email'}?`}
-        description="They can no longer sign in with this address."
-        confirmLabel="Remove"
+        {...removeEmailConfirm(removing ?? 'email', self)}
         destructive
         onConfirm={async () => {
           if (!removing) return;
@@ -100,7 +102,16 @@ export function EmailsCard({ user }: { user: UserDetail }) {
   );
 }
 
-export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
+/** `self`: your own sessions; Revoke all would end this one too, so Account owns that. */
+export function SessionsCard({
+  user,
+  self,
+  now,
+}: {
+  user: UserDetail;
+  self: boolean;
+  now: number;
+}) {
   const { revokeSessions, revokeSession } = useUserMutations(user.id);
   const [confirm, setConfirm] = useState(false);
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
@@ -124,7 +135,7 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
       <CardHeader
         title="Sessions"
         actions={
-          others.length > 0 ? (
+          others.length > 0 && !self ? (
             <Button
               variant="ghost"
               size="sm"
@@ -150,9 +161,7 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
-        title="Revoke all sessions?"
-        description="They are signed out everywhere."
-        confirmLabel="Revoke all"
+        {...revokeSessionsConfirm(user.name ?? user.primaryEmail)}
         destructive
         onConfirm={async () => {
           await revokeSessions.mutateAsync();
@@ -214,19 +223,15 @@ export function AccountCard({ user }: { user: UserDetail }) {
             { label: 'Signs in with', value: methodsLabel(user.signInMethods) },
             {
               label: 'Passes',
-              value:
-                user.passCount > 0 ? (
-                  <Link
-                    to="/admin/passes"
-                    search={{ q: user.primaryEmail }}
-                    className="inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums hover:underline"
-                  >
-                    <ENTITY.pass.icon aria-hidden className="size-4" />
-                    {user.passCount} {user.passCount === 1 ? 'pass' : 'passes'}
-                  </Link>
-                ) : (
-                  'None'
-                ),
+              value: (
+                <CountLink
+                  count={user.passCount}
+                  noun={['pass', 'passes']}
+                  icon={ENTITY.pass.icon}
+                  to="/admin/passes"
+                  search={{ q: user.primaryEmail }}
+                />
+              ),
             },
             { label: 'Created', value: formatDateTime(user.createdAt) },
             { label: 'Last sign-in', value: formatDateTime(user.lastLoginAt, '—') },

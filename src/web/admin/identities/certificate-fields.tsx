@@ -31,6 +31,7 @@ export function CertificateFields({
               accept=".p12,.pfx"
               maxBytes={MAX_P12_BYTES}
               label={draft.p12 ? draft.p12.name : 'Choose a .p12 file'}
+              invalid={Boolean(errors.p12 || errors.pkcs12Base64)}
               onFiles={([file]) => patch({ p12: file })}
             />
             {errors.p12 || errors.pkcs12Base64 ? (

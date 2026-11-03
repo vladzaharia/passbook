@@ -1,7 +1,16 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { Button, Dialog, DialogContent, Form, FormField, Input, toast } from '@/web/ui/index.ts';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  Form,
+  FormField,
+  Input,
+  useFormErrors,
+} from '@/web/ui/index.ts';
+import { markCreated } from '../passes/created.tsx';
 import { useCreateOrg } from './queries.ts';
 
 export function slugify(name: string): string {
@@ -23,7 +32,10 @@ function validate(name: string, slug: string): Record<string, string> {
   return found;
 }
 
-/** Creates the org and opens it, where the checklist shows the next steps. */
+/**
+ * Creates the org and opens it, where a Created callout and the checklist carry the next steps.
+ * The dialog has no history entry of its own, so Back from the new org returns to the list.
+ */
 export function CreateOrgDialog({
   open,
   onOpenChange,
@@ -36,19 +48,17 @@ export function CreateOrgDialog({
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
-  // Once shown, errors follow the values: a fix clears its message on the same keystroke.
-  const [shown, setShown] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
-  const local = validate(name, slug);
-  const errors = { ...serverErrors, ...(shown ? local : {}) };
+  const check = useFormErrors(validate(name, slug));
+  const errors = { ...serverErrors, ...check.errors };
 
   function close() {
     onOpenChange(false);
     setName('');
     setSlug('');
     setSlugEdited(false);
-    setShown(false);
+    check.reset();
     setServerErrors({});
     setFormError(undefined);
   }
@@ -58,7 +68,7 @@ export function CreateOrgDialog({
     try {
       const org = await create.mutateAsync({ name: name.trim(), slug });
       close();
-      toast.success('Organization created');
+      markCreated(`org:${org.id}`);
       void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);
@@ -90,8 +100,7 @@ export function CreateOrgDialog({
         <Form
           id="new-org"
           className="flex flex-col gap-4"
-          invalid={Object.keys(local).length > 0}
-          onInvalid={() => setShown(true)}
+          {...check.form}
           onValid={() => void submit()}
         >
           <FormField label="Name" required error={errors.name}>

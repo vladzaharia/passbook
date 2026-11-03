@@ -34,6 +34,9 @@ export interface PassColorsDraft {
   logoHasName: boolean;
 }
 
+/** The card a new org's "Add branding" scrolls to. */
+export const PASS_BRANDING_ID = 'pass-branding';
+
 export const PASS_COLOR_DEFAULTS = {
   background: '#0f172a',
   foreground: '#ffffff',
@@ -198,7 +201,7 @@ export function PassBrandingCard({
     return normalize(samplePass(org, draft, base), { assets });
   }, [org, draft, base]);
   return (
-    <Card>
+    <Card id={PASS_BRANDING_ID} className="scroll-mt-24">
       <CardHeader title="Pass branding" />
       <CardBody className="@container">
         <div className="grid gap-6 @[44rem]:grid-cols-[minmax(0,1fr)_16rem]">

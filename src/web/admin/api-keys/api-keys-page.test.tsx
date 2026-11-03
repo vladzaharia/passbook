@@ -31,13 +31,18 @@ describe('keyState', () => {
   });
 });
 
+const page = (items: unknown[], extra: Record<string, unknown> = {}) =>
+  json({ items, nextCursor: null, revokedCount: 0, ...extra });
+
 describe('api keys page', () => {
   it('lists keys, accessible', async () => {
     const { container } = await renderApp('/admin/api-keys', {
       session: 'admin',
       handlers: {
-        '/api/v1/api-keys': () =>
-          json({ items: [key(), key({ id: 'k2', name: 'Old', revokedAt: 5 })] }),
+        '/api/v1/api-keys': (url) =>
+          url.searchParams.get('state') === 'revoked'
+            ? page([key({ id: 'k2', name: 'Old', revokedAt: 5 })])
+            : page([key()], { revokedCount: 1 }),
       },
     });
     expect(await screen.findByText('CI key')).toBeInTheDocument();
@@ -62,15 +67,19 @@ describe('api keys page', () => {
       removeItem: () => {},
     });
     try {
+      const seen: string[] = [];
       await renderApp('/admin/api-keys', {
         session: 'admin',
         handlers: {
-          '/api/v1/api-keys': () =>
-            json({ items: [key({ orgId: 'o1' }), key({ id: 'k2', name: 'Other', orgId: 'o2' })] }),
+          '/api/v1/api-keys': (url) => {
+            seen.push(url.searchParams.get('orgId') ?? '');
+            return page([key({ orgId: 'o1' })]);
+          },
         },
       });
       expect(await screen.findByText('CI key')).toBeInTheDocument();
-      expect(screen.queryByText('Other')).not.toBeInTheDocument();
+      // The remembered scope lands in the URL and the server filters by it.
+      await waitFor(() => expect(seen.at(-1)).toBe('o1'));
     } finally {
       vi.unstubAllGlobals();
     }
@@ -79,7 +88,7 @@ describe('api keys page', () => {
   it('shows the key empty state', async () => {
     const { container } = await renderApp('/admin/api-keys', {
       session: 'admin',
-      handlers: { '/api/v1/api-keys': () => json({ items: [] }) },
+      handlers: { '/api/v1/api-keys': () => page([]) },
     });
     expect(await screen.findByText('No API keys')).toBeInTheDocument();
     expect(container.querySelector('[data-art="key"]')).not.toBeNull();
@@ -103,7 +112,7 @@ describe('api keys page', () => {
             body = JSON.parse(String(init.body));
             return json({ ...key(), secret: 'wlt_abc123_SECRETVALUE' }, 201);
           }
-          return json({ items: [] });
+          return page([]);
         },
       },
     });
@@ -141,7 +150,7 @@ describe('api keys page', () => {
         '/api/v1/api-keys': (_u, init) =>
           init?.method === 'POST'
             ? problem(409, 'conflict', 'A key with this name exists.')
-            : json({ items: [] }),
+            : page([]),
       },
     });
     const user = userEvent.setup();
@@ -158,7 +167,7 @@ describe('api keys page', () => {
     const { container } = await renderApp('/admin/api-keys', {
       session: 'admin',
       handlers: {
-        '/api/v1/api-keys': () => json({ items: [key({ revokedAt: revoked ? 9 : null })] }),
+        '/api/v1/api-keys': () => page([key({ revokedAt: revoked ? 9 : null })]),
         '/api/v1/api-keys/k1': (_u, init) => {
           if (init?.method === 'DELETE') revoked = true;
           return json({ ok: true });
@@ -176,5 +185,22 @@ describe('api keys page', () => {
       expect(container.querySelector('[data-row-id="k1"] [data-revoked]')).not.toBeNull(),
     );
     expect(container.querySelector('[data-verb-done="undo"]')).not.toBeNull();
+  });
+
+  it('pages live keys with Load more', async () => {
+    await renderApp('/admin/api-keys', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/api-keys': (url) =>
+          url.searchParams.get('cursor') === 'k1'
+            ? page([key({ id: 'k2', name: 'Second' })])
+            : page([key()], { nextCursor: 'k1' }),
+      },
+    });
+    expect(await screen.findByText('CI key')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Load more' }));
+    expect(await screen.findByText('Second')).toBeInTheDocument();
+    expect(screen.getByText('2 API keys')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
   });
 });

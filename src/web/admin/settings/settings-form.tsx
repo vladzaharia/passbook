@@ -1,16 +1,19 @@
 import { type ReactNode, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
-import { cn } from '@/web/lib/cn.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import {
   Card,
+  CardHeader,
   ConfirmDialog,
   ErrorState,
+  Form,
   SaveBar,
   SkeletonRows,
   toast,
   UnsavedChangesDialog,
+  useBlockedSubmit,
+  useFormErrors,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { changedValues, type Draft, type SettingField, toDraft } from './fields.ts';
@@ -53,6 +56,10 @@ export interface SettingsFormProps {
   guard?: (values: Record<string, unknown>) => SaveGuard | null;
 }
 
+/**
+ * Grouped fields are cards with a header (like org detail), label left and control right;
+ * ungrouped ones stack inside the caller's card. Errors show on Save and follow the values.
+ */
 export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
   const query = useSettings(scope);
   const save = useSaveSettings(scope);
@@ -61,106 +68,93 @@ export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
     [query.data, fields],
   );
   const [edits, setEdits] = useState<Draft>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [server, setServer] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<{ guard: SaveGuard; values: Record<string, unknown> }>();
-  const [summary, setSummary] = useState('');
-  const form = useRef<HTMLFormElement>(null);
   const confirmed = useRef(false);
   const draft: Draft = { ...initial, ...edits };
+  const changed = initial ? changedValues(fields, draft, initial) : undefined;
+  const check = useFormErrors(changed?.errors ?? {});
+  // A value the server refused: shown on its field and focused like a blocked save.
+  const refused = useBlockedSubmit<HTMLDivElement>();
+  const errors: Record<string, string | undefined> = { ...server, ...check.errors };
   const dirty = Boolean(initial) && fields.some((f) => draft[f.key] !== initial?.[f.key]);
   const blocker = useUnsavedChangesGuard(dirty);
+  const formId = `settings-${scope}`;
 
   if (query.isPending) return <SkeletonRows rows={4} label="Loading settings" />;
-  if (query.isError || !initial)
+  if (query.isError || !initial || !changed)
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
-
-  /** Blocked submit: focus the first invalid field and say how many need attention. */
-  function block(local: Record<string, string>) {
-    const n = Object.keys(local).length;
-    setSummary(`${n} ${n === 1 ? 'field needs' : 'fields need'} attention`);
-    requestAnimationFrame(() => {
-      const el = form.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
-      el?.focus();
-      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    });
-  }
 
   async function commit(values: Record<string, unknown>) {
     try {
       await save.mutateAsync(values);
       setEdits({});
+      check.reset();
       toast.success('Settings saved');
     } catch (cause) {
-      const server: Record<string, string> = {};
+      const found: Record<string, string> = {};
       if (isApiError(cause)) {
         for (const f of fields) {
           const msg = cause.fields[f.key] ?? cause.fields[`values.${f.key}`];
-          if (msg) server[f.key] = msg;
+          if (msg) found[f.key] = msg;
         }
       }
-      setErrors(server);
-      if (Object.keys(server).length > 0) block(server);
+      setServer(found);
+      if (Object.keys(found).length > 0) refused.block();
       else toast.error(cause, 'Could not save');
     }
   }
 
-  async function onSave() {
-    if (!initial) return;
-    const { values, errors: local } = changedValues(fields, draft, initial);
-    setErrors(local);
-    if (Object.keys(local).length > 0) return block(local);
-    setSummary('');
-    const g = guard?.(values);
-    if (g) return setPending({ guard: g, values });
-    await commit(values);
+  function onValid() {
+    if (!changed) return;
+    const g = guard?.(changed.values);
+    if (g) setPending({ guard: g, values: changed.values });
+    else void commit(changed.values);
   }
 
+  const edit = (key: string, v: string | boolean) => {
+    setEdits((prev) => ({ ...prev, [key]: v }));
+    setServer(({ [key]: _fixed, ...rest }) => rest);
+  };
+
   return (
-    <form
-      ref={form}
-      noValidate
-      className={cn('flex flex-col gap-8', dirty && 'pb-20')}
-      onSubmit={(e) => {
-        e.preventDefault();
-        void onSave();
-      }}
-    >
-      <p className="sr-only" aria-live="polite">
-        {summary}
-      </p>
-      {sections(fields).map((section) => {
-        const rows = section.fields.map((f) => (
-          <SettingRow
-            key={f.key}
-            field={f}
-            flat={!section.title}
-            value={draft[f.key] ?? ''}
-            error={errors[f.key]}
-            onChange={(v) => setEdits((prev) => ({ ...prev, [f.key]: v }))}
-          />
-        ));
-        if (!section.title)
+    <Form id={formId} {...check.form} onValid={onValid}>
+      <div ref={refused.ref} className="flex flex-col gap-6">
+        {sections(fields).map((section) => {
+          const rows = section.fields.map((f) => (
+            <SettingRow
+              key={f.key}
+              field={f}
+              flat={!section.title}
+              value={draft[f.key] ?? ''}
+              error={errors[f.key]}
+              onChange={(v) => edit(f.key, v)}
+            />
+          ));
+          if (!section.title)
+            return (
+              <div key="flat" className="flex flex-col gap-4">
+                {rows}
+              </div>
+            );
           return (
-            <div key="flat" className="flex flex-col gap-4">
-              {rows}
-            </div>
+            <Card key={section.title}>
+              <CardHeader title={section.title} />
+              <div className="divide-y divide-border">{rows}</div>
+            </Card>
           );
-        return (
-          <section key={section.title} aria-label={section.title} className="flex flex-col gap-2">
-            <h2 className="text-base font-semibold text-fg-strong">{section.title}</h2>
-            <Card className="divide-y divide-border">{rows}</Card>
-          </section>
-        );
-      })}
+        })}
+      </div>
+      {refused.live}
       <SaveBar
         dirty={dirty}
         saving={save.isPending}
         paused={save.isPaused}
-        onSave={() => void onSave()}
+        formId={formId}
         onDiscard={() => {
           setEdits({});
-          setErrors({});
-          setSummary('');
+          setServer({});
+          check.reset();
         }}
       />
       <ConfirmDialog
@@ -183,6 +177,6 @@ export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
         }}
       />
       <UnsavedChangesDialog blocker={blocker} />
-    </form>
+    </Form>
   );
 }

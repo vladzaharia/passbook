@@ -1,38 +1,66 @@
-import { Link, useNavigate } from '@tanstack/react-router';
-import { Pause, Play } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { Palette, Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { deleteConfirm } from '@/web/lib/confirms.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
+import { prefersReducedMotion } from '@/web/lib/motion.ts';
 import {
   Button,
+  Callout,
   Card,
   CardBody,
   CardHeader,
-  ConfirmDialog,
   detailError,
   EntityAvatar,
+  MetaLink,
   PageHeader,
   SkeletonDetail,
   TwoPane,
   TypedConfirmDialog,
   toast,
 } from '@/web/ui/index.ts';
+import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { ORG_FIELDS } from '../settings/fields.ts';
 import { SettingsForm } from '../settings/settings-form.tsx';
 import { CountsCard, OrgChecklist, OverviewCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
+import { PASS_BRANDING_ID } from './pass-branding.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
 
 // Accent lives in the org form; settings here cover support contacts.
 const SUPPORT_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('support.'));
 
+/** Suspend is undone from its toast; Reactivate just runs. Neither asks first. */
+function useStatusToggle(orgId: string) {
+  const setStatus = useSetOrgStatus(orgId);
+  const suspend = async () => {
+    try {
+      await setStatus.mutateAsync('suspended');
+      toast.undo('Organization suspended', () => setStatus.mutateAsync('active'));
+    } catch (cause) {
+      toast.error(cause, 'Could not suspend');
+    }
+  };
+  const reactivate = async () => {
+    try {
+      await setStatus.mutateAsync('active');
+      toast.success('Organization reactivated');
+    } catch (cause) {
+      toast.error(cause, 'Could not reactivate');
+    }
+  };
+  return { suspend, reactivate, pending: setStatus.isPending };
+}
+
 export function OrgDetailPage({ orgId }: { orgId: string }) {
   const query = useOrg(orgId);
   const remove = useDeleteOrg(orgId);
-  const setStatus = useSetOrgStatus(orgId);
+  const status = useStatusToggle(orgId);
+  const created = useCreated(`org:${orgId}`);
   const navigate = useNavigate();
-  const [confirm, setConfirm] = useState<'status' | 'delete'>();
+  const [deleting, setDeleting] = useState(false);
   const crumbs = [
     { label: 'Organizations', to: '/admin/orgs' },
     { label: query.data?.name ?? 'Organization' },
@@ -55,6 +83,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
   }
   const org = query.data;
   const suspended = org.status === 'suspended';
+  const { typed: _typed, ...confirmCopy } = deleteConfirm('org', org.name);
   return (
     <>
       <PageHeader
@@ -73,29 +102,25 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
           <>
             <OrgStatus status={org.status} />
             <span className="font-mono text-xs">{org.slug}</span>
-            <Link
-              to="/admin/audit"
-              search={{ orgId: org.id }}
-              className="inline-flex min-h-6 items-center gap-1.5 rounded-sm hover:text-fg-strong hover:underline"
-            >
-              <ENTITY.audit.icon aria-hidden className="size-4" />
+            <MetaLink to="/admin/audit" search={{ orgId: org.id }} icon={ENTITY.audit.icon}>
               Audit log
-            </Link>
+            </MetaLink>
           </>
         }
         actions={
           <>
             <Button
               variant="outline"
+              loading={status.pending}
               iconStart={suspended ? <Play aria-hidden /> : <Pause aria-hidden />}
-              onClick={() => setConfirm('status')}
+              onClick={() => void (suspended ? status.reactivate() : status.suspend())}
             >
               {suspended ? 'Reactivate' : 'Suspend'}
             </Button>
             <Button
               variant="outline"
               iconStart={<ACTION_ICON.delete aria-hidden />}
-              onClick={() => setConfirm('delete')}
+              onClick={() => setDeleting(true)}
             >
               Delete
             </Button>
@@ -110,6 +135,31 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
           </>
         }
       >
+        {created.shown ? (
+          // Branding first; the Get started checklist below carries template, pass and source.
+          <CreatedCallout
+            title="Organization created"
+            onDismiss={created.dismiss}
+            actions={
+              <Button
+                size="sm"
+                iconStart={<Palette aria-hidden />}
+                onClick={() => {
+                  const card = document.getElementById(PASS_BRANDING_ID);
+                  card?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+                  card?.querySelector<HTMLElement>('input, button')?.focus({ preventScroll: true });
+                }}
+              >
+                Add branding
+              </Button>
+            }
+          />
+        ) : null}
+        {suspended ? (
+          <Callout tone="warning">
+            Suspended: passes do not update and its API keys do not work.
+          </Callout>
+        ) : null}
         {org.counts.passes === 0 ? <OrgChecklist org={org} /> : null}
         <OrgForm key={`${org.updatedAt}`} org={org} />
         <Card>
@@ -119,33 +169,16 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
           </CardBody>
         </Card>
       </TwoPane>
-      <ConfirmDialog
-        open={confirm === 'status'}
-        onOpenChange={(o) => !o && setConfirm(undefined)}
-        title={suspended ? `Reactivate ${org.name}?` : `Suspend ${org.name}?`}
-        description={
-          suspended
-            ? `Passes update and API keys work again for ${org.name}.`
-            : `Passes stop updating and API keys stop working for ${org.name}.`
-        }
-        confirmLabel={suspended ? 'Reactivate' : 'Suspend'}
-        destructive={!suspended}
-        onConfirm={async () => {
-          await setStatus.mutateAsync(suspended ? 'active' : 'suspended');
-          toast.success(suspended ? 'Organization reactivated' : 'Organization suspended');
-        }}
-      />
       <TypedConfirmDialog
-        open={confirm === 'delete'}
-        onOpenChange={(o) => !o && setConfirm(undefined)}
-        title={`Delete ${org.name}?`}
-        description="Its templates, passes and connections stop working. This cannot be undone."
+        open={deleting}
+        onOpenChange={setDeleting}
+        {...confirmCopy}
         word={org.slug}
-        confirmLabel="Delete"
         onConfirm={async () => {
           await remove.mutateAsync();
           toast.success('Organization deleted');
-          await navigate({ to: '/admin/orgs' });
+          // The deleted org's page leaves history: Back lands on the list, not on Not found.
+          await navigate({ to: '/admin/orgs', replace: true });
         }}
       />
     </>

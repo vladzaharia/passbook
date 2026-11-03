@@ -5,6 +5,7 @@ import {
   deleteConfirm,
   removeEmailConfirm,
   revokeKeyConfirm,
+  revokeSessionsConfirm,
   voidConfirm,
 } from './confirms.ts';
 
@@ -62,6 +63,15 @@ describe('confirm copy', () => {
       title: 'Revoke CI?',
       confirmLabel: 'Revoke',
       description: 'Requests using this key fail at once. This cannot be undone.',
+      typed: false,
+    });
+  });
+
+  it('signs someone else out everywhere with a plain confirm', () => {
+    expect(revokeSessionsConfirm('Maya')).toEqual({
+      title: 'Sign Maya out everywhere?',
+      confirmLabel: 'Revoke all',
+      description: 'Every session ends. They can sign in again.',
       typed: false,
     });
   });

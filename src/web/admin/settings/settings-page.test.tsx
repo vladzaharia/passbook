@@ -59,7 +59,9 @@ describe('settings page', () => {
     expect(await screen.findByLabelText('Email sender name')).toHaveValue('PassBook');
     expect(screen.getByLabelText('Refresh cooldown')).toHaveValue(30);
     expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
-    expect(screen.getByRole('region', { name: 'Sign-in' })).toBeInTheDocument();
+    // Sections are cards with a header, like org detail.
+    expect(screen.getByRole('heading', { name: 'Sign-in' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Polaris ID/ })).toBeInTheDocument();
     expect(await screen.findByText('wallet-admins')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -75,7 +77,7 @@ describe('settings page', () => {
           }),
       },
     });
-    const link = await screen.findByRole('link', { name: 'Polaris ID' });
+    const link = await screen.findByRole('link', { name: 'Open Polaris ID' });
     expect(link).toHaveAttribute('href', 'https://id.staging.test');
   });
 
@@ -210,6 +212,11 @@ describe('settings page', () => {
     await user.type(input, 'x');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Too long.')).toBeInTheDocument();
+    // Refused by the server: focused like a blocked save; the next keystroke clears it.
+    await waitFor(() => expect(input).toHaveFocus());
+    expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
+    await user.type(input, 'y');
+    expect(screen.queryByText('Too long.')).toBeNull();
   });
 
   it('shows an error state when loading fails', async () => {

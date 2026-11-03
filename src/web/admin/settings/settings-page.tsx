@@ -1,4 +1,12 @@
-import { Badge, Card, CardLink, KeyValue, PageHeader } from '@/web/ui/index.ts';
+import {
+  Badge,
+  Card,
+  CardBody,
+  CardHeader,
+  CardLink,
+  KeyValue,
+  PageHeader,
+} from '@/web/ui/index.ts';
 import { PLATFORM_FIELDS } from './fields.ts';
 import { MagicLinkImpact } from './magic-link-impact.tsx';
 import { useSettings } from './queries.ts';
@@ -20,17 +28,16 @@ function OidcSection() {
   if (!data) return null;
   const { oidc } = data;
   return (
-    <section aria-labelledby="oidc-heading" className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 id="oidc-heading" className="text-base font-semibold text-fg-strong">
-            Polaris ID
-          </h2>
-          <Badge>Read-only</Badge>
-        </div>
-        <CardLink href={oidc.issuer}>Polaris ID</CardLink>
-      </div>
-      <Card className="p-4">
+    <Card>
+      <CardHeader
+        title={
+          <span className="flex items-center gap-2">
+            Polaris ID <Badge>Read-only</Badge>
+          </span>
+        }
+        actions={<CardLink href={oidc.issuer}>Open Polaris ID</CardLink>}
+      />
+      <CardBody>
         <KeyValue
           items={[
             { label: 'Issuer', value: oidc.issuer, mono: true },
@@ -38,16 +45,17 @@ function OidcSection() {
             { label: 'User group', value: oidc.userGroup, mono: true },
           ]}
         />
-      </Card>
-    </section>
+      </CardBody>
+    </Card>
   );
 }
 
+/** Card sections like org detail; a dirty form's SaveBar room is at the end of main (AppShell). */
 export function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" />
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <SettingsForm scope="platform" fields={PLATFORM_FIELDS} guard={guardMagicLink} />
         <OidcSection />
       </div>

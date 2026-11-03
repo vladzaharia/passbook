@@ -35,14 +35,52 @@ export function insertKeyStmt(db: Db, key: ApiKeyRow): D1PreparedStatement {
   );
 }
 
+export interface KeyFilter {
+  orgId?: string | undefined;
+  state?: 'live' | 'revoked' | undefined;
+  /** The last id of the previous page. */
+  cursor?: string | undefined;
+  limit: number;
+}
+
+function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state'>) {
+  const where: string[] = [];
+  const params: string[] = [];
+  if (f.orgId) {
+    where.push('k.org_id = ?');
+    params.push(f.orgId);
+  }
+  if (f.state === 'live') where.push('k.revoked_at IS NULL');
+  if (f.state === 'revoked') where.push('k.revoked_at IS NOT NULL');
+  return { where, params };
+}
+
 /** Newest first, with the creator's name (or email) for the actor chip. */
-export const listKeys = (db: Db) =>
-  all<ApiKeyRow & { created_by_name: string | null }>(
+export function listKeys(db: Db, f: KeyFilter) {
+  const { where, params } = keyWhere(f);
+  if (f.cursor) {
+    where.push('(k.created_at, k.id) < (SELECT created_at, id FROM api_keys WHERE id = ?)');
+    params.push(f.cursor);
+  }
+  return all<ApiKeyRow & { created_by_name: string | null }>(
     db,
     `SELECT k.*, coalesce(u.name, u.primary_email) AS created_by_name
      FROM api_keys k LEFT JOIN users u ON u.id = k.created_by
-     ORDER BY k.created_at DESC, k.id DESC LIMIT 500`,
+     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+     ORDER BY k.created_at DESC, k.id DESC LIMIT ?`,
+    [...params, f.limit],
   );
+}
+
+export async function countRevoked(db: Db, orgId: string | undefined): Promise<number> {
+  const { where, params } = keyWhere({ orgId, state: 'revoked' });
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM api_keys k WHERE ${where.join(' AND ')}`,
+    params,
+  );
+  return row?.n ?? 0;
+}
 
 export const getKey = (db: Db, id: string) =>
   first<ApiKeyRow>(db, 'SELECT * FROM api_keys WHERE id = ?', [id]);

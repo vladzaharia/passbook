@@ -75,7 +75,11 @@ describe('orgs list', () => {
       'href',
       '/admin/orgs/o1',
     );
-    expect(screen.getByText('12')).toBeInTheDocument();
+    // Counts open each list scoped to the org.
+    expect(screen.getByRole('link', { name: '12 passes in Acme Gym' })).toHaveAttribute(
+      'href',
+      '/admin/passes?orgId=o1',
+    );
     expect(screen.getByText('1 organization')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -88,6 +92,21 @@ describe('orgs list', () => {
     expect(await screen.findByText('No organizations match')).toBeInTheDocument();
     expect(container.querySelector('[data-art="building"]')).not.toBeNull();
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('q=zzz'))).toBe(true);
+  });
+
+  it('pages with Load more', async () => {
+    await renderApp('/admin/orgs', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': (url) =>
+          url.searchParams.get('cursor') === 'o1'
+            ? json({ items: [summary({ id: 'o2', name: 'Bolt Club' })], nextCursor: null })
+            : json({ items: [summary()], nextCursor: 'o1' }),
+      },
+    });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Load more' }));
+    expect(await screen.findByRole('link', { name: 'Bolt Club' })).toBeInTheDocument();
+    expect(screen.getByText('2 organizations')).toBeInTheDocument();
   });
 
   it('shows the empty state with the building', async () => {
@@ -121,6 +140,9 @@ describe('orgs list', () => {
             nextCursor: null,
           });
         },
+        '/api/v1/orgs/o2': () => json(summary({ id: 'o2', name: 'Acme Gym' })),
+        '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+        '/api/v1/settings': () => json(settingsEmpty),
       },
     });
     const ui = userEvent.setup();
@@ -140,6 +162,10 @@ describe('orgs list', () => {
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o2'));
+    // The new org says so once, with the next steps; no toast.
+    expect(await screen.findByText('Organization created')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add branding' })).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: /Organization created/ })).toBeNull();
   });
 
   it('shows a slug conflict from the server', async () => {
@@ -167,7 +193,7 @@ describe('orgs list', () => {
 describe('org detail', () => {
   const handlers = (extra: Record<string, never> = {}) => ({
     '/api/v1/orgs/o1': () => json(summary()),
-    '/api/v1/identities': () => json({ items: [] }),
+    '/api/v1/identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/settings': () => json(settingsEmpty),
     ...extra,
   });
@@ -218,28 +244,29 @@ describe('org detail', () => {
     expect(within(list).getByRole('link', { name: /New pass/ })).toBeInTheDocument();
   });
 
-  it('suspends after a danger confirm', async () => {
-    const posts: unknown[] = [];
+  it('suspends at once and Undo reactivates', async () => {
+    const posts: { status: string }[] = [];
+    let status = 'active';
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: {
         ...handlers(),
+        '/api/v1/orgs/o1': () => json(summary({ status })),
         '/api/v1/orgs/o1/status': (_u, init) => {
           posts.push(JSON.parse(String(init?.body)));
-          return json(summary({ status: 'suspended' }));
+          status = posts.at(-1)?.status ?? status;
+          return json(summary({ status }));
         },
       },
     });
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Suspend' }));
-    const dialog = await screen.findByRole('alertdialog');
-    expect(
-      within(dialog).getByText('Passes stop updating and API keys stop working for Acme Gym.'),
-    ).toBeVisible();
-    const confirm = within(dialog).getByRole('button', { name: 'Suspend' });
-    expect(confirm.className).toContain('bg-danger');
-    await ui.click(confirm);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     await waitFor(() => expect(posts).toEqual([{ status: 'suspended' }]));
+    expect(await screen.findByText(/passes do not update/)).toBeInTheDocument();
+    await ui.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(posts).toEqual([{ status: 'suspended' }, { status: 'active' }]));
+    expect(await screen.findByRole('button', { name: 'Suspend' })).toBeInTheDocument();
   });
 
   it('saves the form with a PATCH and no status', async () => {
@@ -271,7 +298,7 @@ describe('org detail', () => {
     );
   });
 
-  it('warns about a low-contrast accent and rejects a bad one without calling the API', async () => {
+  it('rejects a bad accent on Save, focusing it, without calling the API', async () => {
     let patched = false;
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
@@ -286,18 +313,19 @@ describe('org detail', () => {
     const ui = userEvent.setup();
     const accent = await screen.findByLabelText('Accent colour');
     await ui.clear(accent);
-    await ui.type(accent, '#d97706');
-    expect(await screen.findByText(/Links in emails are 3.2:1/)).toBeInTheDocument();
-    await ui.clear(accent);
     await ui.type(accent, 'teal');
+    // No error while typing; Save shows it, focuses the field and says how many.
+    expect(screen.queryByText('Use a 6-digit hex like #0f766e.')).toBeNull();
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Use a 6-digit hex like #0f766e.')).toBeInTheDocument();
+    await waitFor(() => expect(document.activeElement).toBe(accent));
+    expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
     expect(patched).toBe(false);
   });
 
-  it('requires typing the slug before delete', async () => {
+  it('requires typing the slug before delete, then replaces the page in history', async () => {
     let deleted = false;
-    await renderApp('/admin/orgs/o1', {
+    const { router } = await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: {
         ...handlers(),
@@ -316,9 +344,12 @@ describe('org detail', () => {
     const dialog = await screen.findByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete' });
     expect(confirm).toBeDisabled();
+    expect(within(dialog).getByText(/This cannot be undone\./)).toBeInTheDocument();
     await ui.type(within(dialog).getByLabelText('Type acme to confirm'), 'acme');
     await ui.click(confirm);
     await waitFor(() => expect(deleted).toBe(true));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs'));
+    expect(router.history.length).toBe(1);
   });
 
   it('shows not found', async () => {

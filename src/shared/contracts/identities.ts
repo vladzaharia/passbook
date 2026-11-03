@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, TimestampSchema } from './common.ts';
+import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const IdentitySchema = z.object({
   id: IdSchema,
@@ -27,7 +27,8 @@ export const IdentitySchema = z.object({
   createdAt: TimestampSchema,
 });
 export type IdentityDto = z.infer<typeof IdentitySchema>;
-export const IdentityListSchema = z.object({ items: z.array(IdentitySchema) });
+/** Oldest first (the platform identity leads); `cursor` is the last id of the previous page. */
+export const IdentityListSchema = pageOf(IdentitySchema);
 
 export const UploadIdentitySchema = z.object({
   orgId: IdSchema.nullable().optional(),

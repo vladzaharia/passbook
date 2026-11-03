@@ -347,7 +347,7 @@ describe('identity update and delete', () => {
     const b = (await (await upload(g)).json()) as Dto;
     await call('PATCH', `/${a.id}`, { isDefault: true, label: 'Renamed', nfcEnabled: true });
     await call('PATCH', `/${b.id}`, { isDefault: true });
-    const list = (await (await call('GET', '')).json()) as { items: Dto[] };
+    const list = (await (await call('GET', '?limit=200')).json()) as { items: Dto[] };
     expect(list.items.filter((i) => i.isDefault).map((i) => i.id)).toEqual([b.id]);
     expect(list.items.find((i) => i.id === a.id)).toMatchObject({
       label: 'Renamed',
@@ -377,6 +377,28 @@ describe('identity update and delete', () => {
     ).toBeNull();
     expect((await call('GET', `/${dto.id}`)).status).toBe(404);
     expect((await call('DELETE', `/${dto.id}`)).status).toBe(404);
+  });
+});
+
+describe('identity list', () => {
+  it('pages oldest first by cursor', async () => {
+    const made: string[] = [];
+    for (let i = 0; i < 3; i++) made.push(((await (await upload(await acme())).json()) as Dto).id);
+    type Page = { items: Dto[]; nextCursor: string | null };
+    const whole = (await (await call('GET', '?limit=200')).json()) as Page;
+    expect(whole.nextCursor).toBeNull();
+    const paged: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const page = (await (
+        await call('GET', `?limit=2${cursor ? `&cursor=${cursor}` : ''}`)
+      ).json()) as Page;
+      expect(page.items.length).toBeLessThanOrEqual(2);
+      paged.push(...page.items.map((i) => i.id));
+      cursor = page.nextCursor;
+    } while (cursor);
+    expect(paged).toEqual(whole.items.map((i) => i.id));
+    expect(paged.slice(-3)).toEqual(made);
   });
 });
 

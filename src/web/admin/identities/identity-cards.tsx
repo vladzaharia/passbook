@@ -9,6 +9,7 @@ import {
   CardBody,
   CardHeader,
   CodeBlock,
+  Form,
   FormField,
   Input,
   KeyValue,
@@ -17,6 +18,7 @@ import {
   Tooltip,
   toast,
   UnsavedChangesDialog,
+  useFormErrors,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { ApnsRow } from './apns-check.tsx';
@@ -94,13 +96,17 @@ export function SettingsCard({ identity }: { identity: Identity }) {
     binding: identity.apnsBinding ?? '',
   };
   const [draft, setDraft] = useState(initial);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [server, setServer] = useState<Record<string, string>>({});
+  const check = useFormErrors(draft.label.trim() ? {} : { label: 'Required.' });
+  const errors: Record<string, string | undefined> = { ...server, ...check.errors };
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
   const guard = useUnsavedChangesGuard(dirty);
+  const edit = (p: Partial<typeof initial>) => {
+    setDraft({ ...draft, ...p });
+    setServer({});
+  };
 
   async function save() {
-    setErrors({});
-    if (!draft.label.trim()) return setErrors({ label: 'Required.' });
     try {
       await update.mutateAsync({
         label: draft.label.trim(),
@@ -112,21 +118,21 @@ export function SettingsCard({ identity }: { identity: Identity }) {
       });
       toast.success('Identity saved');
     } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
+      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
       else toast.error(cause, 'Could not save');
     }
   }
+  const formId = `identity-${identity.id}`;
 
   return (
     <Card>
       <CardHeader title="Settings" />
       <CardBody>
-        <form
+        <Form
+          id={formId}
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void save();
-          }}
+          {...check.form}
+          onValid={() => void save()}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField label="Label" required error={errors.label}>
@@ -134,7 +140,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
                 <Input
                   {...p}
                   value={draft.label}
-                  onChange={(e) => setDraft({ ...draft, label: e.target.value })}
+                  onChange={(e) => edit({ label: e.target.value })}
                 />
               )}
             </FormField>
@@ -148,7 +154,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
                     spellCheck={false}
                     autoCapitalize="characters"
                     value={draft.binding}
-                    onChange={(e) => setDraft({ ...draft, binding: e.target.value })}
+                    onChange={(e) => edit({ binding: e.target.value })}
                   />
                 )}
               </FormField>
@@ -159,7 +165,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
               label="NFC"
               help="The pass type ID has Apple's NFC entitlement."
               checked={draft.nfc}
-              onCheckedChange={(c) => setDraft({ ...draft, nfc: c })}
+              onCheckedChange={(c) => edit({ nfc: c })}
             />
             <Locked locked={env}>
               <SwitchRow
@@ -167,20 +173,21 @@ export function SettingsCard({ identity }: { identity: Identity }) {
                 help={env ? 'Set in the environment' : 'Signs passes of orgs without their own.'}
                 checked={draft.isDefault}
                 disabled={env || identity.isDefault}
-                onCheckedChange={(c) => setDraft({ ...draft, isDefault: c })}
+                onCheckedChange={(c) => edit({ isDefault: c })}
               />
             </Locked>
           </div>
-        </form>
+        </Form>
       </CardBody>
       <SaveBar
         dirty={dirty}
         saving={update.isPending}
         paused={update.isPaused}
-        onSave={() => void save()}
+        formId={formId}
         onDiscard={() => {
           setDraft(initial);
-          setErrors({});
+          setServer({});
+          check.reset();
         }}
       />
       <UnsavedChangesDialog blocker={guard} />

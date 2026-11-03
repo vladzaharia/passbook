@@ -123,7 +123,7 @@ describe('entity identity', () => {
       </>,
     );
     expect(container.querySelector('[data-initials="AL"]')).not.toBeNull();
-    expect(container.querySelector('.size-9 svg.size-5')).not.toBeNull();
+    expect(container.querySelector('.size-8 svg.size-4')).not.toBeNull();
     expect(screen.getByText('ff0001')).toHaveClass('font-mono');
   });
 });
