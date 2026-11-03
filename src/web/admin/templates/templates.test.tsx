@@ -53,6 +53,31 @@ describe('templates list', () => {
     expect(screen.getByText('2 templates')).toBeInTheDocument();
   });
 
+  it('pages by cursor, 50 at a time, with Load more', async () => {
+    const user = userEvent.setup();
+    const seen: URL[] = [];
+    await renderApp('/admin/templates', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates/previews': previewsHandler,
+        '/api/v1/templates': (url) => {
+          seen.push(url);
+          return url.searchParams.get('cursor') === 'next'
+            ? json({ items: [templateSummary({ id: 't2', name: 'Second' })], nextCursor: null })
+            : json({ items: [templateSummary()], nextCursor: 'next' });
+        },
+      },
+    });
+    expect(await screen.findByText('1 template')).toBeInTheDocument();
+    expect(seen[0]?.searchParams.get('limit')).toBe('50');
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(await screen.findByRole('link', { name: 'Second' })).toBeInTheDocument();
+    expect(seen.at(-1)?.searchParams.get('cursor')).toBe('next');
+    expect(screen.getByText('2 templates')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
+  });
+
   it('searches by name and shows an Updated column in the table view', async () => {
     const user = userEvent.setup();
     const seen: URL[] = [];
@@ -269,7 +294,7 @@ describe('template detail', () => {
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1' }, { orgId: 'org1' }]));
   });
 
-  it('archives with the count sentence and restores', async () => {
+  it('archives with the count sentence, then Undo restores it', async () => {
     const user = userEvent.setup();
     const calls: string[] = [];
     let archived = false;
@@ -298,11 +323,47 @@ describe('template detail', () => {
     // Passes use it: Archive, not Delete.
     expect(screen.queryByRole('menuitem', { name: 'Delete' })).toBeNull();
     await user.click(await screen.findByRole('menuitem', { name: 'Archive' }));
-    const dialog = await screen.findByRole('alertdialog');
+    const dialog = await screen.findByRole('alertdialog', { name: /^Archive .+\?$/ });
     expect(dialog).toHaveTextContent('New passes cannot use it. 4 existing passes keep working.');
     await user.click(within(dialog).getByRole('button', { name: 'Archive' }));
-    await user.click(await screen.findByRole('button', { name: 'Restore' }));
+    expect(await screen.findByRole('button', { name: 'Restore' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(calls).toEqual(['archive', 'restore']));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Restore' })).toBeNull());
+  });
+
+  it('restores at once; Undo archives again through the same confirm', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    let archived = true;
+    await renderApp('/admin/templates/tpl1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates': () => json({ items: [], nextCursor: null }),
+        '/api/v1/templates/tpl1': () =>
+          json(templateDetail({ passCount: 4, status: archived ? 'archived' : 'active' })),
+        '/api/v1/templates/tpl1/archive': () => {
+          calls.push('archive');
+          archived = true;
+          return json(templateDetail({ passCount: 4, status: 'archived' }));
+        },
+        '/api/v1/templates/tpl1/restore': () => {
+          calls.push('restore');
+          archived = false;
+          return json(templateDetail({ passCount: 4 }));
+        },
+        '/api/v1/templates/previews': previewsHandler,
+        '/api/v1/templates/tpl1/preview': preview,
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Restore' }));
+    await waitFor(() => expect(calls).toEqual(['restore']));
+    await user.click(await screen.findByRole('button', { name: 'Undo' }));
+    const ask = await screen.findByRole('alertdialog', { name: /^Archive .+\?$/ });
+    expect(calls).toEqual(['restore']);
+    await user.click(within(ask).getByRole('button', { name: 'Archive' }));
+    await waitFor(() => expect(calls).toEqual(['restore', 'archive']));
   });
 
   it('shows the manifest', async () => {
@@ -406,7 +467,9 @@ describe('template detail', () => {
         '/api/v1/templates/nope': () => problem(404, 'not_found', 'Template not found.'),
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Template not found' })).toBeInTheDocument();
+    expect(await screen.findByText('Template not found')).toBeInTheDocument();
+    // The page keeps its header: title and the way up.
+    expect(screen.getByRole('heading', { level: 1, name: 'Template' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to templates' })).toHaveAttribute(
       'href',
       '/admin/templates',
@@ -431,11 +494,24 @@ describe('template upload', () => {
     await user.click(screen.getByRole('button', { name: 'Upload' }));
   }
 
-  it('uploads, polls the workflow, shows the report and links the template', async () => {
+  const complete = {
+    uploadId: 'up1',
+    status: 'complete',
+    step: null,
+    templateId: 'tpl7',
+    version: 'abc',
+    error: null,
+    report: {
+      ok: true,
+      issues: [{ severity: 'warning', code: 'IMG', message: 'Dropped unused slot.' }],
+    },
+  };
+
+  it('uploads, polls the workflow, then opens the new template in its place', async () => {
     const user = userEvent.setup();
     let polls = 0;
     const posted: { url: URL; init?: RequestInit }[] = [];
-    await renderApp('/admin/templates/upload', {
+    const { router } = await renderApp('/admin/templates/upload', {
       session: 'admin',
       handlers: {
         '/api/v1/orgs': orgs,
@@ -445,31 +521,45 @@ describe('template upload', () => {
         },
         '/api/v1/templates/uploads/up1': () => {
           polls += 1;
-          const base = {
-            uploadId: 'up1',
-            templateId: null,
-            version: null,
-            report: null,
-            error: null,
-          };
-          if (polls === 1) return json({ ...base, status: 'queued', step: null });
+          const base = { ...complete, templateId: null, version: null, report: null };
+          if (polls === 1) return json({ ...base, status: 'queued' });
           if (polls < 4) return json({ ...base, status: 'running', step: 'analyze' });
-          return json({
-            ...base,
-            status: 'complete',
-            step: null,
-            templateId: 'tpl7',
-            version: 'abc',
-            report: {
-              ok: true,
-              issues: [{ severity: 'warning', code: 'IMG', message: 'Dropped unused slot.' }],
-            },
-          });
+          return json(complete);
         },
+        '/api/v1/templates/tpl7': () => json(templateDetail({ id: 'tpl7', name: 'Card' })),
+        '/api/v1/templates/previews': previewsHandler,
+        '/api/v1/templates/tpl7/preview': preview,
       },
     });
+    const entries = router.history.length;
     await fill(user);
     expect(await screen.findByText('Checking files and images')).toBeInTheDocument();
+    // Done: the template's page replaces the upload and says what happened.
+    expect(await screen.findByText('Template imported')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/templates/tpl7');
+    expect(router.history.length).toBe(entries);
+    expect(screen.getByRole('heading', { level: 1, name: 'Card' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Upload another' })).toHaveAttribute(
+      'href',
+      '/admin/templates/upload',
+    );
+    expect(posted[0]?.url.searchParams.get('orgId')).toBe('org1');
+    const headers = (posted[0]?.init?.headers ?? {}) as Record<string, string>;
+    expect(headers['content-type']).toBe('application/zip');
+    // Polling stops at the final state.
+    const settled = polls;
+    await new Promise((r) => setTimeout(r, 80));
+    expect(polls).toBe(settled);
+  });
+
+  it('keeps a finished report reopened from Recent uploads on the page', async () => {
+    await renderApp('/admin/templates/upload?upload=up1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/templates/uploads/up1': () => json(complete),
+      },
+    });
     expect(await screen.findByText('New template')).toBeInTheDocument();
     // One buddy: it leaves the drop zone for the done card.
     expect(document.querySelectorAll('[data-buddy]')).toHaveLength(1);
@@ -479,13 +569,6 @@ describe('template upload', () => {
       'href',
       '/admin/templates/tpl7',
     );
-    expect(posted[0]?.url.searchParams.get('orgId')).toBe('org1');
-    const headers = (posted[0]?.init?.headers ?? {}) as Record<string, string>;
-    expect(headers['content-type']).toBe('application/zip');
-    // Polling stops at the final state.
-    const settled = polls;
-    await new Promise((r) => setTimeout(r, 80));
-    expect(polls).toBe(settled);
   });
 
   it('shows the failure and takes a fixed file without asking again', async () => {

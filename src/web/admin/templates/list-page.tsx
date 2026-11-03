@@ -10,6 +10,7 @@ import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Badge,
   Button,
+  CountLink,
   DataTable,
   EmptyState,
   ErrorState,
@@ -17,10 +18,11 @@ import {
   FilteredEmpty,
   LoadMore,
   PageHeader,
+  RowLink,
   SegmentedControl,
   StatusPill,
 } from '../../ui/index.ts';
-import { useRecentUploads, useTemplates } from './api.ts';
+import { useRecentUploads, useTemplatePages } from './api.ts';
 import { originLabel, TemplateGallery, TemplateStill } from './gallery.tsx';
 import { styleList } from './labels.ts';
 import { RecentUploads, uploadsNeedAttention } from './recent-uploads.tsx';
@@ -40,13 +42,13 @@ function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
       cell: ({ row }) => (
         <span className="flex min-w-0 max-w-80 items-center gap-3">
           <TemplateStill template={row.original} className="w-7 shrink-0" />
-          <Link
+          <RowLink
             to="/admin/templates/$templateId"
             params={{ templateId: row.original.id }}
-            className="truncate font-medium text-fg-strong hover:text-accent-fg hover:underline"
+            inactive={row.original.status === 'archived'}
           >
             {row.original.name}
-          </Link>
+          </RowLink>
         </span>
       ),
     },
@@ -79,7 +81,14 @@ function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
       id: 'passes',
       header: 'Passes',
       meta: { numeric: true },
-      cell: ({ row }) => row.original.passCount,
+      cell: ({ row }) => (
+        <CountLink
+          count={row.original.passCount}
+          to="/admin/passes"
+          search={{ templateId: row.original.id }}
+          aria-label={`${row.original.passCount} passes from ${row.original.name}`}
+        />
+      ),
     },
     ...(archived
       ? [
@@ -104,7 +113,7 @@ export function TemplatesListPage({
   const uploads = useRecentUploads(orgId);
   const uploadsFirst = uploadsNeedAttention(uploads.data?.items ?? [], Date.now());
   const phone = useMediaQuery(BELOW_MD);
-  const list = useTemplates({
+  const list = useTemplatePages({
     orgId,
     origin: search.origin,
     includeArchived: search.archived,
@@ -113,7 +122,7 @@ export function TemplatesListPage({
   const [q, setQ] = useDebouncedCommit(search.q ?? '', (next) =>
     onSearch({ q: next || undefined }),
   );
-  const items = list.data?.items ?? [];
+  const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.origin || search.archived);
   const view = phone ? 'gallery' : (search.view ?? 'gallery');
   const cols = useMemo(() => columns(Boolean(search.archived)), [search.archived]);
@@ -172,8 +181,7 @@ export function TemplatesListPage({
   );
   const footer = (
     <LoadMore
-      hasMore={false}
-      onLoadMore={() => {}}
+      query={list}
       shown={items.length || undefined}
       noun={['template', 'templates']}
       scoped
@@ -190,7 +198,7 @@ export function TemplatesListPage({
         <EmptyState art="template" title="No templates yet" action={upload('primary')} />
       ) : view === 'gallery' ? (
         <div
-          aria-busy={(list.isFetching && !list.isPending) || undefined}
+          aria-busy={(list.isFetching && !list.isPending && !list.isFetchingNextPage) || undefined}
           className="flex flex-col"
         >
           {toolbar}
@@ -208,7 +216,7 @@ export function TemplatesListPage({
           data={items}
           getRowId={(r) => r.id}
           loading={list.isPending}
-          fetching={list.isFetching}
+          fetching={list.isFetching && !list.isFetchingNextPage}
           filtered={filtered}
           toolbar={toolbar}
           emptyFiltered={<FilteredEmpty entity="template" onClear={clear} />}

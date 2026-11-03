@@ -22,7 +22,17 @@ describe('browser error pages', () => {
     const html = await res.text();
     expect(html).toContain('<section class="card"');
     expect(html).toMatch(/<h1[^>]*>Page not found<\/h1>/);
-    expect(html).toContain('href="/"');
+    expect(html).toMatch(/<a class="btn outline" href="\/">.*Go to My passes<\/a>/);
+  });
+
+  // wrangler.jsonc runs the Worker first for file-like paths public/ does not ship, so a stray
+  // *.html is not the SPA (which would show Sign in to a signed-out visitor).
+  it('answers an unknown file-like path with the same 404, not the app', async () => {
+    for (const path of ['/no/such/page.html', '/sitemap.xml']) {
+      const res = await call(path);
+      expect(res.status).toBe(404);
+      expect(await res.text()).toMatch(/<h1[^>]*>Page not found<\/h1>/);
+    }
   });
 
   it('keeps problem+json for the API and for clients that do not ask for HTML', async () => {

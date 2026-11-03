@@ -6,12 +6,13 @@ import { errorMessage } from '../../lib/errors.ts';
 import { markMinted } from '../../lib/motion.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import { Button, Dialog, DialogContent, FormField, Input, Select, toast } from '../../ui/index.ts';
+import { markCreated } from '../passes/created.tsx';
 import { useTemplateActions } from './api.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 const ALL = 'all';
 
-/** An uploaded copy for one org; its page mints the card on arrival. */
+/** An uploaded copy for one org; its page mints the card on arrival and says what happened. */
 export function DuplicateDialog({
   template,
   open,
@@ -33,7 +34,7 @@ export function DuplicateDialog({
     try {
       const copy = await actions.clone.mutateAsync({ orgId, name: name.trim() || undefined });
       markMinted(`template:${copy.id}`);
-      toast.success('Template duplicated');
+      markCreated(`template:${copy.id}`, 'duplicated');
       onOpenChange(false);
       void navigate({ to: '/admin/templates/$templateId', params: { templateId: copy.id } });
     } catch (cause) {

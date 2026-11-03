@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import '../../../lib/test-utils.tsx';
-import { TooltipProvider } from '../../../ui/index.ts';
+import { Card, TooltipProvider } from '../../../ui/index.ts';
 import { describeSchema, type FormValues, validateValues } from './schema.ts';
 import { SchemaForm } from './schema-form.tsx';
 
@@ -142,6 +142,19 @@ describe('SchemaForm', () => {
     expect(screen.getByText('Full name').parentElement?.textContent).toMatch(/^Full name\s*\*/);
     expect(screen.getByLabelText(/Full name/)).toBeInTheDocument();
     expect(screen.getByText('As printed.')).toBeInTheDocument();
+  });
+
+  it('sections groups as cards on a page and as headings inside a card', () => {
+    const { unmount } = render(<Harness />);
+    // A card's header (h2), distinct from the 14/500 field labels.
+    expect(screen.getByRole('heading', { name: 'Member' }).tagName).toBe('H2');
+    unmount();
+    render(
+      <Card>
+        <Harness />
+      </Card>,
+    );
+    expect(screen.getByRole('heading', { name: 'Member' }).tagName).toBe('H3');
   });
 
   it('edits text, number and boolean values and drops emptied ones', async () => {

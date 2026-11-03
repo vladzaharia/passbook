@@ -1,6 +1,18 @@
 import { Lock, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Button, FieldGroup, FormField, FormGrid, FormSpan, Tooltip } from '../../../ui/index.ts';
+import { cn } from '../../../lib/cn.ts';
+import { useInCard } from '../../../ui/in-card.ts';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  FieldGroup,
+  FormField,
+  FormGrid,
+  FormSpan,
+  Tooltip,
+} from '../../../ui/index.ts';
 import { Control } from './controls.tsx';
 import { locationPairs } from './location.ts';
 import { LocationInput } from './location-input.tsx';
@@ -29,7 +41,10 @@ export interface SchemaFormProps {
   maxImageBytes?: number;
 }
 
-/** Form generated from a template input schema, in FieldGroups on a FormGrid. */
+/**
+ * Form generated from a template input schema, one section per group: a Card with its CardHeader
+ * on a page (the org detail pattern), a FieldGroup heading when it already sits in a card.
+ */
 export function SchemaForm({
   schema,
   value,
@@ -51,6 +66,7 @@ export function SchemaForm({
         .filter((g) => g.fields.length > 0),
     [schema, hiddenKeys],
   );
+  const inCard = useInCard();
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   // A template's time zone input sets the zone its date-times are read and written in.
   const zoneKey = groups.flatMap((g) => g.fields).find((f) => f.widget === 'timezone')?.key;
@@ -72,7 +88,7 @@ export function SchemaForm({
   const touch = (key: string) => setTouched((t) => (t.has(key) ? t : new Set(t).add(key)));
 
   return (
-    <div className="flex flex-col" data-prefix={idPrefix}>
+    <div className={cn('flex flex-col', !inCard && 'gap-6')} data-prefix={idPrefix}>
       {groups.map((group) => {
         const pairs = locationPairs(group.fields);
         const paired = new Set(
@@ -80,74 +96,91 @@ export function SchemaForm({
         );
         const visible = group.fields.filter((f) => !paired.has(f.key));
         const only = visible.length === 1 && pairs.length === 0 ? visible[0]?.label : undefined;
+        const title = group.name || 'Details';
+        const grid = (
+          <FormGrid>
+            {visible.map((field) => {
+              const error =
+                serverErrors?.[field.key] ??
+                (showAllErrors || touched.has(field.key) ? errors[field.key] : undefined);
+              const owned = fieldSources?.[field.key] === 'connection';
+              const wide = WIDE.has(field.widget);
+              return (
+                <FormSpan key={field.key} full={wide}>
+                  <FormField
+                    label={field.label}
+                    help={
+                      owned ? (
+                        <SourceChip name={sourceName} />
+                      ) : fieldSources?.[field.key] === 'manual' && onResetField ? (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0"
+                          iconStart={<RotateCcw aria-hidden />}
+                          disabled={disabled}
+                          onClick={() => onResetField(field.key)}
+                          aria-label={`Use the connection's value for ${field.label}`}
+                        >
+                          Use the connection's value
+                        </Button>
+                      ) : (
+                        (field.help ??
+                        (field.widget === 'textarea' ? 'Shown on the back.' : undefined))
+                      )
+                    }
+                    error={error}
+                    required={field.required}
+                  >
+                    {(control) => (
+                      <Control
+                        field={field}
+                        value={value[field.key]}
+                        onValue={(v) => patch({ [field.key]: v })}
+                        onBlur={() => touch(field.key)}
+                        control={control as unknown as Record<string, unknown>}
+                        disabled={disabled || owned}
+                        maxImageBytes={maxImageBytes}
+                        zone={formZone}
+                      />
+                    )}
+                  </FormField>
+                </FormSpan>
+              );
+            })}
+            {pairs.map((pair) => (
+              <LocationInput
+                key={pair.prefix}
+                pair={pair}
+                value={value}
+                onChange={patch}
+                disabled={disabled || fieldSources?.[pair.lat.key] === 'connection'}
+                serverError={serverErrors?.[pair.lat.key] ?? serverErrors?.[pair.lng.key]}
+              />
+            ))}
+          </FormGrid>
+        );
+        if (inCard)
+          return (
+            <FieldGroup
+              key={group.name || '_'}
+              title={title}
+              onlyFieldLabel={group.name ? only : 'Details'}
+            >
+              {grid}
+            </FieldGroup>
+          );
+        // A heading that would repeat the only field's label, or name ungrouped fields, is left out.
+        const heading = group.name && group.name.trim() !== only?.trim();
         return (
-          <FieldGroup
+          <Card
             key={group.name || '_'}
-            title={group.name || 'Details'}
-            onlyFieldLabel={group.name ? only : 'Details'}
+            role={heading ? 'region' : undefined}
+            aria-label={heading ? title : undefined}
           >
-            <FormGrid>
-              {visible.map((field) => {
-                const error =
-                  serverErrors?.[field.key] ??
-                  (showAllErrors || touched.has(field.key) ? errors[field.key] : undefined);
-                const owned = fieldSources?.[field.key] === 'connection';
-                const wide = WIDE.has(field.widget);
-                return (
-                  <FormSpan key={field.key} full={wide}>
-                    <FormField
-                      label={field.label}
-                      help={
-                        owned ? (
-                          <SourceChip name={sourceName} />
-                        ) : fieldSources?.[field.key] === 'manual' && onResetField ? (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0"
-                            iconStart={<RotateCcw aria-hidden />}
-                            disabled={disabled}
-                            onClick={() => onResetField(field.key)}
-                            aria-label={`Use the connection's value for ${field.label}`}
-                          >
-                            Use the connection's value
-                          </Button>
-                        ) : (
-                          (field.help ??
-                          (field.widget === 'textarea' ? 'Shown on the back.' : undefined))
-                        )
-                      }
-                      error={error}
-                      required={field.required}
-                    >
-                      {(control) => (
-                        <Control
-                          field={field}
-                          value={value[field.key]}
-                          onValue={(v) => patch({ [field.key]: v })}
-                          onBlur={() => touch(field.key)}
-                          control={control as unknown as Record<string, unknown>}
-                          disabled={disabled || owned}
-                          maxImageBytes={maxImageBytes}
-                          zone={formZone}
-                        />
-                      )}
-                    </FormField>
-                  </FormSpan>
-                );
-              })}
-              {pairs.map((pair) => (
-                <LocationInput
-                  key={pair.prefix}
-                  pair={pair}
-                  value={value}
-                  onChange={patch}
-                  disabled={disabled || fieldSources?.[pair.lat.key] === 'connection'}
-                  serverError={serverErrors?.[pair.lat.key] ?? serverErrors?.[pair.lng.key]}
-                />
-              ))}
-            </FormGrid>
-          </FieldGroup>
+            {heading ? <CardHeader title={title} /> : null}
+            <CardBody>{grid}</CardBody>
+          </Card>
         );
       })}
     </div>

@@ -1,5 +1,13 @@
 const BASE = 'http://next.invalid';
 
+/**
+ * Pocket ID's end-session returns to a bare /login, so a sign-out-to-switch leaves its next here:
+ * set by the logout POST, read once by the sign-in page (web/lib/session.ts), then cleared.
+ */
+export const NEXT_COOKIE = 'wallet-next';
+export const NEXT_COOKIE_PATH = '/login';
+export const NEXT_COOKIE_MAX_AGE_S = 300;
+
 /** Same-origin relative path or null, shared by the Worker and the SPA. Absolute, protocol-relative and backslash forms are refused. */
 export function safeNextPath(raw: string | null | undefined): string | null {
   if (!raw || raw.length > 512 || !raw.startsWith('/')) return null;

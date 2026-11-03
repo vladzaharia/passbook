@@ -1,22 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-const created = new Map<string, { sent: boolean; first: boolean }>();
-/** The wizard marks a pass it just created, so its page offers the next steps once. */
-export const markCreated = (id: string, sent: boolean, first: boolean) =>
-  void created.set(id, { sent, first });
-/**
- * Once per created pass: whether to offer the next steps (created without sending) and whether
- * it was the org's first pass (a celebration).
- */
-export function useCreated(id: string): { unsent: boolean; first: boolean; dismiss: () => void } {
-  const [mark] = useState(() => created.get(id));
-  const [show, setShow] = useState(mark?.sent === false);
-  useEffect(() => {
-    created.delete(id);
-  }, [id]);
-  return { unsent: show, first: mark?.first === true, dismiss: () => setShow(false) };
-}
-
 /**
  * Stage motion from data: mint when the version goes up on an active pass (or once on arrival
  * from the wizard), settle and stamp when it turns void. Browsing versions never mints.

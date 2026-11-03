@@ -1,7 +1,13 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { endSession, signedOutJustNow, signedOutNext, signOut } from '../lib/session.ts';
+import {
+  clearSignedOut,
+  endSession,
+  signedOutJustNow,
+  signedOutNext,
+  signOut,
+} from '../lib/session.ts';
 import { renderApp } from '../lib/test-utils.tsx';
 
 const MARK = 'wallet-signed-out';
@@ -81,6 +87,26 @@ describe('sign out to switch', () => {
     );
     await waitFor(() => expect(sessionStorage.getItem(NEXT_MARK)).toBeNull());
     window.turnstile = undefined;
+  });
+
+  it('reads, once, the next an SSR switch left in the cookie through Pocket ID', () => {
+    window.history.replaceState(null, '', '/login');
+    try {
+      // biome-ignore lint/suspicious/noDocumentCookie: the cookie the logout POST sets
+      document.cookie = `wallet-next=${encodeURIComponent('/auth/magic?t=abc')}; Path=/login`;
+      // No goodbye mark in this tab: the server's cookie is enough.
+      expect(signedOutNext()).toBe('/auth/magic?t=abc');
+      clearSignedOut();
+      expect(document.cookie).not.toContain('wallet-next=');
+      expect(signedOutNext()).toBeNull();
+      // biome-ignore lint/suspicious/noDocumentCookie: a forged value is not a same-origin path
+      document.cookie = 'wallet-next=https%3A%2F%2Fevil.example; Path=/login';
+      expect(signedOutNext()).toBeNull();
+      clearSignedOut();
+      expect(document.cookie).not.toContain('wallet-next=');
+    } finally {
+      window.history.replaceState(null, '', '/');
+    }
   });
 
   it('"Sign in as someone else" on the forbidden page keeps the page as next', async () => {

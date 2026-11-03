@@ -43,9 +43,9 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
     buffer: variantZip(name),
   });
   await page.getByRole('button', { name: 'Upload', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Open template' })).toBeVisible({
-    timeout: 60_000,
-  });
+  // A finished import opens the new template, which says so.
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText('Template imported')).toBeVisible();
 
   await page.goto('/admin/templates');
   await expect(page.getByRole('link', { name })).toBeVisible();

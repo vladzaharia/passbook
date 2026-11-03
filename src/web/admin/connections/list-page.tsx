@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionSummarySchema } from '@/shared/contracts/connections.ts';
 import { connectorIcon } from '../../lib/entities.ts';
-import { formatCount, formatDateTime } from '../../lib/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Button,
+  CountLink,
   DataTable,
   EmptyState,
   ErrorState,
@@ -17,8 +18,9 @@ import {
   FilteredEmpty,
   LoadMore,
   PageHeader,
+  RowLink,
 } from '../../ui/index.ts';
-import { useConnections, useConnectorNames } from './api.ts';
+import { useConnectionPages, useConnectorNames } from './api.ts';
 import { HealthPill } from './health.tsx';
 import { healthLine } from './health-text.ts';
 import { HEALTH_FILTERS, modeLabel } from './labels.ts';
@@ -49,8 +51,8 @@ export function ConnectionsListPage({
     const t = setTimeout(() => onSearch({ q: trimmed || undefined }), 300);
     return () => clearTimeout(t);
   }, [text, search.q, onSearch]);
-  const list = useConnections({ orgId, health: search.health, q: search.q });
-  const rows = list.data?.items ?? [];
+  const list = useConnectionPages({ orgId, health: search.health, q: search.q });
+  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.health);
   const orgNames = useMemo(
     () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
@@ -64,13 +66,12 @@ export function ConnectionsListPage({
         header: 'Connection',
         cell: ({ row }) => (
           <div className="min-w-0 max-w-72">
-            <Link
+            <RowLink
               to="/admin/connections/$connectionId"
               params={{ connectionId: row.original.id }}
-              className="block truncate font-medium text-accent-fg hover:underline"
             >
               {row.original.name}
-            </Link>
+            </RowLink>
             {orgId ? null : (
               <span
                 className="block truncate text-xs text-fg-muted"
@@ -120,19 +121,14 @@ export function ConnectionsListPage({
         id: 'passes',
         header: 'Passes',
         meta: { numeric: true },
-        cell: ({ row }) =>
-          row.original.passCount > 0 ? (
-            <Link
-              to="/admin/passes"
-              search={{ connectionId: row.original.id }}
-              aria-label={`${row.original.passCount} passes from ${row.original.name}`}
-              className="rounded-sm text-accent-fg tabular-nums hover:underline"
-            >
-              {formatCount(row.original.passCount)}
-            </Link>
-          ) : (
-            <span className="text-fg-muted tabular-nums">0</span>
-          ),
+        cell: ({ row }) => (
+          <CountLink
+            count={row.original.passCount}
+            to="/admin/passes"
+            search={{ connectionId: row.original.id }}
+            aria-label={`${row.original.passCount} passes from ${row.original.name}`}
+          />
+        ),
       },
       {
         id: 'last',
@@ -166,7 +162,7 @@ export function ConnectionsListPage({
           data={rows}
           getRowId={(r) => r.id}
           loading={list.isPending}
-          fetching={list.isFetching}
+          fetching={list.isFetching && !list.isFetchingNextPage}
           filtered={filtered}
           toolbar={
             <FilterBar
@@ -191,9 +187,8 @@ export function ConnectionsListPage({
           empty={<EmptyState art="plugs" title="No connections" action={create('primary')} />}
           footer={
             <LoadMore
-              hasMore={false}
-              onLoadMore={() => undefined}
-              shown={rows.length}
+              query={list}
+              shown={rows.length || undefined}
               noun={['connection', 'connections']}
               scoped
             />

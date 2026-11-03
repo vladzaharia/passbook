@@ -112,6 +112,25 @@ describe('connections', () => {
     expect((await call('GET', `/api/v1/connections/${id}`)).status).toBe(404);
   });
 
+  it('pages the list by cursor without repeats or gaps', async () => {
+    const ids: string[] = [];
+    for (const name of ['A', 'B', 'C']) ids.push((await create({ name })).json.id as string);
+    const list = (cursor?: string) =>
+      call(
+        'GET',
+        `/api/v1/connections?orgId=${kit.org.id}&limit=2${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+      );
+    const one = await list();
+    expect(one.json.items).toHaveLength(2);
+    expect(one.json.nextCursor).toEqual(expect.any(String));
+    const two = await list(one.json.nextCursor as string);
+    expect(two.json.nextCursor).toBeNull();
+    const seen = [...one.json.items, ...two.json.items].map((c: { id: string }) => c.id);
+    expect([...seen].sort()).toEqual([...ids].sort());
+    // Newest first, the same order as the first page.
+    expect(seen).toEqual([...seen].sort().reverse());
+  });
+
   it('PATCH edits config, secrets, rate limit and concurrency; config and secrets bump generation', async () => {
     const created = await create();
     const id = created.json.id as string;

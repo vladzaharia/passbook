@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { copyText } from '../../lib/clipboard.ts';
+import { clearHolderConfirm, deleteConfirm, voidConfirm } from '../../lib/confirms.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
 import { usePassActions } from './api.ts';
 import { absoluteUrl } from './format.ts';
@@ -169,9 +170,7 @@ export function usePassActionRunner(
       <ConfirmDialog
         open={ask === 'void'}
         onOpenChange={close}
-        title="Void pass?"
-        description="Wallet shows it as void on the holder's device. You can unvoid it later."
-        confirmLabel="Void"
+        {...voidConfirm()}
         destructive
         onConfirm={async () => {
           await actions.setVoided.mutateAsync(true);
@@ -182,13 +181,9 @@ export function usePassActionRunner(
       <ConfirmDialog
         open={ask === 'clear'}
         onOpenChange={close}
-        title="Clear holder?"
-        description={
-          pass.holderState === 'owned'
-            ? `${pass.holderEmail ?? 'The owner'} loses the pass in their account.`
-            : 'The pass goes back to having no holder.'
-        }
-        confirmLabel="Clear holder"
+        {...clearHolderConfirm(
+          pass.holderState === 'owned' ? (pass.holderEmail ?? 'The owner') : null,
+        )}
         destructive
         onConfirm={async () => {
           await actions.unassign.mutateAsync();
@@ -211,15 +206,13 @@ export function usePassActionRunner(
       <TypedConfirmDialog
         open={ask === 'delete'}
         onOpenChange={close}
-        title="Delete pass?"
-        description="Voids it on every device, then removes it with its versions and images."
+        {...deleteConfirm('pass', name)}
         word={confirmWord({ title: pass.title, slug: pass.serial })}
-        confirmLabel="Delete pass"
         onConfirm={async () => {
           await actions.remove.mutateAsync();
           toast.success(`${name} deleted`);
           if (options.onDeleted) options.onDeleted();
-          else void navigate({ to: '/admin/passes' });
+          else void navigate({ to: '/admin/passes', replace: true });
         }}
       />
       <RotatedLinkDialog

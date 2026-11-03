@@ -154,9 +154,7 @@ export function PassesListPage({
             emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}
             footer={
               <LoadMore
-                hasMore={Boolean(list.hasNextPage)}
-                loading={list.isFetchingNextPage}
-                onLoadMore={() => void list.fetchNextPage()}
+                query={list}
                 shown={rows.length || undefined}
                 noun={['pass', 'passes']}
                 scoped

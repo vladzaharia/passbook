@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import {
   Braces,
   Calendar,
@@ -22,6 +21,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CountLink,
   EntityAvatar,
   JsonViewer,
   KeyValue,
@@ -70,14 +70,12 @@ export function TemplateOverview({ template: t }: { template: Template }) {
               {
                 label: 'Passes',
                 value: (
-                  <Link
+                  <CountLink
+                    count={t.passCount}
+                    noun={['pass', 'passes']}
                     to="/admin/passes"
                     search={{ templateId: t.id }}
-                    className="inline-flex items-center gap-1 underline-offset-2 hover:text-fg-strong hover:underline"
-                  >
-                    {passes(t.passCount)}
-                    <ChevronRight aria-hidden className="size-3.5" />
-                  </Link>
+                  />
                 ),
               },
               ...(t.passesOnOlderVersions > 0

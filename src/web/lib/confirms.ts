@@ -45,6 +45,45 @@ export function deleteConfirm(entity: DeletableEntity, name: string): ConfirmCop
   };
 }
 
+/** Voiding passes: holders see them as void at once, and Unvoid brings them back. */
+export function voidConfirm(count = 1): ConfirmCopy {
+  const one = count === 1;
+  return {
+    title: one ? 'Void pass?' : `Void ${count} passes?`,
+    confirmLabel: 'Void',
+    description: one
+      ? "Wallet shows it as void on the holder's device. You can unvoid it later."
+      : "Wallet shows them as void on every holder's device. You can unvoid them later.",
+    typed: false,
+  };
+}
+
+/** Taking a pass from its holder; `owner` names who loses it from their account. */
+export function clearHolderConfirm(owner: string | null): ConfirmCopy {
+  return {
+    title: 'Clear holder?',
+    confirmLabel: 'Clear holder',
+    description: owner
+      ? `${owner} loses the pass in their account.`
+      : 'The pass goes back to having no holder.',
+    typed: false,
+  };
+}
+
+/** Archiving a template: new passes cannot use it; the ones it has keep working. */
+export function archiveConfirm(name: string, passCount: number): ConfirmCopy {
+  const kept =
+    passCount === 1
+      ? '1 existing pass keeps working.'
+      : `${passCount} existing passes keep working.`;
+  return {
+    title: `Archive ${name}?`,
+    confirmLabel: 'Archive',
+    description: `New passes cannot use it. ${kept}`,
+    typed: false,
+  };
+}
+
 /** Removing an address from an account: `self` on the holder's own Account page. */
 export function removeEmailConfirm(email: string, self: boolean): ConfirmCopy {
   return {

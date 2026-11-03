@@ -4,6 +4,8 @@ import { cn } from '../../lib/cn.ts';
 import { useMediaQuery } from '../../lib/media.ts';
 import { useArrival } from '../../lib/motion.ts';
 import {
+  Card,
+  CardBody,
   CheckboxField,
   EmptyState,
   EntityAvatar,
@@ -201,24 +203,26 @@ export function HolderStep({
   onSend: (send: boolean) => void;
 }) {
   return (
-    <div className="flex flex-col gap-4">
-      <FormField label="Holder email" help="Leave empty to add a holder later." error={error}>
-        {(c) => (
-          <Input
-            {...c}
-            type="email"
-            autoComplete="off"
-            value={email}
-            onChange={(e) => onEmail(e.target.value)}
-          />
-        )}
-      </FormField>
-      <CheckboxField
-        label={valid ? `Email the pass to ${email.trim()}` : 'Email the pass'}
-        checked={send && valid}
-        disabled={!valid}
-        onCheckedChange={(c) => onSend(c === true)}
-      />
-    </div>
+    <Card>
+      <CardBody className="flex flex-col gap-4">
+        <FormField label="Holder email" help="Leave empty to add a holder later." error={error}>
+          {(c) => (
+            <Input
+              {...c}
+              type="email"
+              autoComplete="off"
+              value={email}
+              onChange={(e) => onEmail(e.target.value)}
+            />
+          )}
+        </FormField>
+        <CheckboxField
+          label={valid ? `Email the pass to ${email.trim()}` : 'Email the pass'}
+          checked={send && valid}
+          disabled={!valid}
+          onCheckedChange={(c) => onSend(c === true)}
+        />
+      </CardBody>
+    </Card>
   );
 }

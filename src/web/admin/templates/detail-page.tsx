@@ -3,17 +3,16 @@ import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
-import { isApiError } from '../../lib/errors.ts';
 import { useMintedOnArrival } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Badge,
+  Buddy,
   Button,
-  Callout,
-  ConfirmDialog,
+  CountLink,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  EmptyState,
+  detailError,
   ErrorState,
   JsonViewer,
   KeyValue,
@@ -26,15 +25,20 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  toast,
 } from '../../ui/index.ts';
+import { useCreated } from '../passes/created.tsx';
 import { PassPreview, PassPreviewPanel } from '../passes/pass-preview.tsx';
 import { PreviewLayout } from '../passes/preview-layout.tsx';
-import { useTemplate, useTemplateActions, useTemplatePreview } from './api.ts';
+import { useTemplate, useTemplatePreview } from './api.ts';
 import { originLabel } from './gallery.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
 import { DuplicateDialog } from './template-dialogs.tsx';
+import {
+  type TemplateCreated,
+  TemplateCreatedCallout,
+  useTemplateLifecycle,
+} from './template-lifecycle.tsx';
 import { TemplateInputs, TemplateOverview } from './template-overview.tsx';
 import { VersionsPanel } from './versions-panel.tsx';
 import '../passes/passes.css';
@@ -50,26 +54,11 @@ export function TemplateDetailPage({ templateId, search }: { templateId: string;
     { label: template.data?.name ?? 'Template' },
   ];
   if (template.isError) {
-    if (isApiError(template.error) && template.error.isNotFound)
-      return (
-        <EmptyState
-          heading
-          art="torn"
-          title="Template not found"
-          className="mt-6"
-          action={
-            <Button asChild variant="outline">
-              <Link to="/admin/templates">Back to templates</Link>
-            </Button>
-          }
-        />
-      );
-    return (
-      <>
-        <PageHeader title="Template" breadcrumbs={crumbs} />
-        <ErrorState error={template.error} onRetry={() => void template.refetch()} />
-      </>
-    );
+    return detailError(template, {
+      entity: 'template',
+      to: '/admin/templates',
+      header: <PageHeader title="Template" breadcrumbs={crumbs} />,
+    });
   }
   if (!template.data)
     return (
@@ -93,7 +82,8 @@ function Loaded({
   const navigate = useNavigate();
   const scope = useOrgScope().orgId;
   const preview = useTemplatePreview(t.id);
-  const actions = useTemplateActions(t.id);
+  const life = useTemplateLifecycle(t);
+  const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const minted = useMintedOnArrival(`template:${t.id}`);
   // A duplicate mints once on arrival (the value must change after mount); a hard load deals once.
   const [mint, setMint] = useState(0);
@@ -106,12 +96,18 @@ function Loaded({
     if (minted) setMint(1);
   }, [minted]);
   const [duplicate, setDuplicate] = useState(false);
-  const [ask, setAsk] = useState<'archive' | 'delete' | null>(null);
   const baked = t.origin === 'baked';
   const archived = t.status === 'archived';
   const orgId = t.orgId ?? scope;
   const newPass = { ...(orgId ? { orgId } : {}), templateId: t.id };
-  const passes = `${t.passCount} ${t.passCount === 1 ? 'pass' : 'passes'}`;
+  const passCount = (
+    <CountLink
+      count={t.passCount}
+      noun={['pass', 'passes']}
+      to="/admin/passes"
+      search={{ templateId: t.id }}
+    />
+  );
   // Hashes stay in the Versions tab; elsewhere the active version is its number.
   const byAge = [...t.versions].sort((a, b) => a.createdAt - b.createdAt);
   const activeAt = byAge.findIndex((v) => v.version === t.activeVersion);
@@ -126,6 +122,12 @@ function Loaded({
         enter={size !== 'sheet' && !minted && deal}
         mint={mint}
         label={versionLabel ?? undefined}
+        // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
+        beside={
+          minted ? (
+            <Buddy size="sm" at="end" mood="happy" scene="wave" className="wl-pass-buddy" />
+          ) : undefined
+        }
       />
     ) : preview.isError ? (
       <ErrorState inline error={preview.error} onRetry={() => void preview.refetch()} />
@@ -143,7 +145,9 @@ function Loaded({
           <>
             <Badge>{originLabel(t.origin)}</Badge>
             {archived ? <StatusPill status="archived" /> : null}
-            <span>{passes}</span>
+            <span>
+              {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}
+            </span>
           </>
         }
         actions={
@@ -171,47 +175,22 @@ function Loaded({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {archived ? null : (
-                  <DropdownMenuItem destructive onSelect={() => setAsk('archive')}>
-                    <ACTION_ICON.void aria-hidden />
-                    Archive
-                  </DropdownMenuItem>
-                )}
-                {t.passCount === 0 ? (
-                  <DropdownMenuItem destructive onSelect={() => setAsk('delete')}>
-                    <ACTION_ICON.delete aria-hidden />
-                    Delete
-                  </DropdownMenuItem>
-                ) : null}
+                {life.menu}
               </MoreMenu>
             )}
           </>
         }
       />
-      {archived ? (
-        <Callout
-          tone="warning"
-          className="mb-6"
-          title="Archived"
-          actions={
-            <Button
-              size="sm"
-              variant="outline"
-              iconStart={<ACTION_ICON.unvoid aria-hidden />}
-              loading={actions.archive.isPending}
-              onClick={() =>
-                actions.archive
-                  .mutateAsync(false)
-                  .then(() => toast.success('Template restored'))
-                  .catch((error: unknown) => toast.error(error, 'Could not restore'))
-              }
-            >
-              Restore
-            </Button>
-          }
-        >
-          New passes cannot use it. Existing passes keep working.
-        </Callout>
+      {life.notice}
+      {created.shown && created.mark ? (
+        <div className="mb-6">
+          <TemplateCreatedCallout
+            template={t}
+            how={created.mark}
+            versionLabel={versionLabel}
+            onDismiss={created.dismiss}
+          />
+        </div>
       ) : null}
       <PreviewLayout
         title={t.name}
@@ -230,7 +209,7 @@ function Loaded({
           <KeyValue
             items={[
               { label: 'Organization', value: t.orgName ?? 'All organizations' },
-              { label: 'Passes', value: passes },
+              { label: 'Passes', value: passCount },
               { label: 'Version', value: versionLabel },
             ]}
           />
@@ -273,31 +252,7 @@ function Loaded({
         open={duplicate}
         onOpenChange={setDuplicate}
       />
-      <ConfirmDialog
-        open={ask === 'archive'}
-        onOpenChange={(o) => !o && setAsk(null)}
-        title="Archive template?"
-        description={`New passes cannot use it. ${t.passCount} existing ${t.passCount === 1 ? 'pass keeps' : 'passes keep'} working.`}
-        confirmLabel="Archive"
-        destructive
-        onConfirm={async () => {
-          await actions.archive.mutateAsync(true);
-          toast.success('Template archived');
-        }}
-      />
-      <ConfirmDialog
-        open={ask === 'delete'}
-        onOpenChange={(o) => !o && setAsk(null)}
-        title="Delete template?"
-        description="Deletes the template and its versions."
-        confirmLabel="Delete"
-        destructive
-        onConfirm={async () => {
-          await actions.remove.mutateAsync();
-          toast.success('Template deleted');
-          void navigate({ to: '/admin/templates' });
-        }}
-      />
+      {life.dialogs}
     </>
   );
 }
