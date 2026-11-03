@@ -5,6 +5,8 @@ import type { AppBindings } from '../../platform/context.ts';
 import { csrfGuard } from '../../platform/csrf.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { wantsHtml } from '../../ssr/error-response.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { clearSessionCookie, ipPrefix, readCookie, setNextCookie } from './cookies.ts';
@@ -12,6 +14,7 @@ import { loginPath, safeNext } from './next.ts';
 import { postLogoutRedirectUri } from './oidc-cimd.ts';
 import { discover } from './oidc-client.ts';
 import { oidcConfig } from './oidc-handlers.ts';
+import { leavingPage } from './pages.ts';
 import { findUser } from './service.ts';
 import { revokeAllForUser, revokeOne } from './sessions.ts';
 
@@ -92,6 +95,10 @@ export async function logout(c: Context<AppBindings>) {
   clearSessionCookie(c);
   if (c.req.header('accept')?.includes('application/json')) {
     return c.json({ ok: true as const, redirect: target });
+  }
+  // A form post may not redirect off-site (CSP form-action 'self'): Pocket ID gets a page.
+  if (wantsHtml(c) && !target.startsWith('/')) {
+    return c.html(leavingPage(c.var.nonce, target, requestTheme(c)));
   }
   return c.redirect(target, 303);
 }

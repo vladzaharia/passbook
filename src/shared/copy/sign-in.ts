@@ -93,6 +93,8 @@ export const AUTH_PAGE_COPY = {
   otherPolarisId: 'Use another Polaris ID',
   breakglass: 'Break-glass sign-in',
   token: 'Token',
+  signingOut: 'Signing out',
+  continue: 'Continue',
 } as const;
 
 /** A dead link, by what it was for: an add-email link is no way to sign in. */

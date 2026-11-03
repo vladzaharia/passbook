@@ -193,6 +193,21 @@ export function oidcFailurePage(
   );
 }
 
+/**
+ * Leaving for Pocket ID's end-session after a form post: the CSP's form-action 'self' blocks a
+ * redirect off-site, so this page moves on by itself (Continue, if refresh is off).
+ */
+export function leavingPage(nonce: string, href: string, theme?: PageTheme): string {
+  return hostedPage({
+    nonce,
+    theme,
+    title: COPY.signingOut,
+    art: 'login',
+    refresh: href,
+    body: actionHtml({ label: COPY.continue, href, primary: true }),
+  });
+}
+
 /** Admin break-glass: a key on the clasp turns. */
 export function breakglassPage(
   nonce: string,

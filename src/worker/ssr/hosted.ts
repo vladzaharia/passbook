@@ -63,6 +63,8 @@ export interface HostedPageInput {
   body: string;
   /** The lock line under the card body (sign-in pages). */
   footer?: boolean;
+  /** Moves on to this URL at once (meta refresh), as a page rather than a redirect. */
+  refresh?: string;
 }
 
 /**
@@ -91,5 +93,8 @@ export function hostedPage(input: HostedPageInput): string {
   const footer = input.footer
     ? `<p class="foot">${iconHtml(Lock)}${escapeHtml(HOLDER_COPY.signInFooter)}</p>`
     : '';
-  return `${documentStart(input.theme)}${appPageHead(input.title)}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
+  const refresh = input.refresh
+    ? `<meta http-equiv="refresh" content="0;url=${escapeHtml(input.refresh)}">`
+    : '';
+  return `${documentStart(input.theme)}${appPageHead(input.title)}${refresh}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
 }
