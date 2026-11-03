@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
+import { showsAddQr } from '../../shared/device.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
@@ -12,22 +13,17 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  LoadMore,
   PageHeader,
   Skeleton,
   StatusPill,
 } from '../ui/index.ts';
 import { myPassesQuery } from './api.ts';
-import { canAddToWallet } from './device.ts';
+import { browserDevice } from './device.ts';
 import { type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { RefreshButton } from './refresh-button.tsx';
-import {
-  AddLine,
-  AddToWalletButton,
-  PassMoreMenu,
-  publicUrlOf,
-  ShowQrButton,
-} from './wallet-actions.tsx';
+import { AddLine, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
 import './portal.css';
 
 const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
@@ -37,15 +33,20 @@ export function InWalletPill() {
   return <StatusPill status="in_wallet" />;
 }
 
+/**
+ * A flex column: the card takes the free height, so the title, org and actions sit at the bottom
+ * on one line across a row of tiles. The actions beside the badge are badge-sized outline buttons.
+ */
 function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const name = passName(pass);
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const voided = pass.status === 'voided';
-  const canAdd = canAddToWallet();
+  const [qr] = useState(() => showsAddQr(browserDevice().device));
   const [dip, setDip] = useState(0);
   const link = { to: '/passes/$passId', params: { passId: pass.id } } as const;
   return (
-    <Card className="flex h-full w-full flex-col gap-4 p-4">
+    // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
+    <Card className="flex h-full w-full flex-col gap-4 rounded-xl p-4">
       {/* The card is a second way into the pass; the title link is the one in the tab order. */}
       <Link {...link} tabIndex={-1} aria-hidden className="flex flex-1 items-center">
         <PassCardStage
@@ -59,9 +60,9 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           transitionName={`pass-${pass.id}`}
         />
       </Link>
-      <div className={cn('flex flex-col gap-3', dealt && 'wl-tile-chrome')}>
+      <div className={cn('mt-auto flex flex-col gap-3', dealt && 'wl-tile-chrome')}>
         <div className="min-w-0">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex min-h-6 items-center justify-between gap-2">
             <h2 className="min-w-0 text-sm font-semibold text-fg-strong">
               {/* A block link truncates on its own box, so the 44 px touch padding is not clipped. */}
               <Link
@@ -75,19 +76,14 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           </div>
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 pointer-coarse:min-h-11">
           <div className="flex flex-wrap items-center gap-2">
-            {!voided && !canAdd && publicUrl ? (
-              <ShowQrButton passTitle={name} url={publicUrl} />
-            ) : null}
+            {!voided && qr && publicUrl ? <ShowQrButton passTitle={name} url={publicUrl} /> : null}
             {voided || pass.inWallet ? null : (
-              <AddToWalletButton
-                downloadUrl={pass.downloadUrl}
-                onPress={() => setDip((n) => n + 1)}
-              />
+              <AppleWalletBadge href={pass.downloadUrl} onClick={() => setDip((n) => n + 1)} />
             )}
           </div>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-2">
             {voided ? null : <RefreshButton passId={pass.id} pass={pass} compact />}
             <PassMoreMenu passId={pass.id} passTitle={name} publicUrl={voided ? null : publicUrl} />
           </div>
@@ -164,24 +160,16 @@ export function MyPassesPage() {
             <AddLine />
           </div>
         ) : null}
-        <ul className={GRID}>
-          {passes.map((pass, i) => (
-            <li key={pass.id} className="flex min-w-0" style={{ '--i': i } as CSSProperties}>
-              <PassTile pass={pass} dealt={dealt} />
-            </li>
-          ))}
-        </ul>
-        {query.hasNextPage ? (
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              loading={query.isFetchingNextPage}
-              onClick={() => void query.fetchNextPage()}
-            >
-              Load more
-            </Button>
-          </div>
-        ) : null}
+        <div>
+          <ul className={GRID}>
+            {passes.map((pass, i) => (
+              <li key={pass.id} className="flex min-w-0" style={{ '--i': i } as CSSProperties}>
+                <PassTile pass={pass} dealt={dealt} />
+              </li>
+            ))}
+          </ul>
+          <LoadMore query={query} />
+        </div>
       </div>
     );
   }

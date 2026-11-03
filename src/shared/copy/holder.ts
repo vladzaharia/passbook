@@ -6,4 +6,18 @@ export const HOLDER_COPY = {
   openOnApple: 'Open on iPhone or Mac to add to Apple Wallet.',
   /** In an in-app web view, which cannot add to Wallet. */
   openInSafari: 'Open in Safari to add to Apple Wallet.',
+  /** Beside the add QR. */
+  scanQr: 'Scan with your iPhone.',
+  qrAlt: (pass: string) => `QR code for ${pass}`,
+  qrFailed: 'Could not draw the QR code. Reload.',
+  voided: 'This pass was voided.',
+  expired: 'This pass has expired.',
+  /** After the voided line: the org's support, email first. */
+  contact: (org: string) => `Contact ${org}`,
+  /** The org's support contacts under the add block. */
+  help: 'Help',
+  /** /p: the holder's own page in the portal (Refresh, Remove), through sign-in. */
+  openInPortal: 'Open in My passes',
+  /** /p link previews. */
+  previewActive: 'Add it to Apple Wallet.',
 } as const;

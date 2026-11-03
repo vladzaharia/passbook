@@ -18,6 +18,7 @@ import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
 import { removePassFromUser } from '../holders/service.ts';
 import { assetNamesOf } from '../passes/detail.ts';
 import { requestRefresh } from '../passes/service.ts';
+import { supportContacts } from '../public/service.ts';
 import * as repo from './repo.ts';
 
 export type MyPassDto = z.infer<typeof MyPassSchema>;
@@ -87,7 +88,9 @@ async function ownedRow(ctx: ServiceContext, userId: string, passId: string) {
 }
 
 export async function getMyPass(ctx: ServiceContext, userId: string, passId: string) {
-  return await toPass(ctx, await ownedRow(ctx, userId, passId));
+  const row = await ownedRow(ctx, userId, passId);
+  const [pass, support] = await Promise.all([toPass(ctx, row), supportContacts(ctx, row.org_id)]);
+  return { ...pass, support };
 }
 
 export async function refreshMyPass(

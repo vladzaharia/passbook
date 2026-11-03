@@ -139,6 +139,31 @@ describe('passes', () => {
     expect(body.passJson).toEqual({});
   });
 
+  it("gives one pass the org's checked support contacts; the list carries none", async () => {
+    const { session, org, own } = await setup();
+    const mine = await own();
+    await run(
+      h.env.DB,
+      'INSERT INTO settings (scope, key, value, updated_at) VALUES (?, ?, ?, 1), (?, ?, ?, 1)',
+      [
+        `org:${org.id}`,
+        'support.email',
+        JSON.stringify('help@acme.test'),
+        `org:${org.id}`,
+        'support.url',
+        JSON.stringify('javascript:alert(1)'),
+      ],
+    );
+    const one = (await (await get(`/api/v1/me/passes/${mine.id}`, session.headers)).json()) as {
+      support: unknown;
+    };
+    expect(one.support).toEqual({ email: 'help@acme.test', url: null });
+    const list = (await (await get('/api/v1/me/passes', session.headers)).json()) as {
+      items: { support?: unknown }[];
+    };
+    expect(list.items[0]?.support).toBeUndefined();
+  });
+
   it('requires a session', async () => {
     expect((await h.call('/api/v1/me/passes')).status).toBe(401);
   });

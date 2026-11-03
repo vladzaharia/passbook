@@ -86,7 +86,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors; bottom sheets <640 |
 | Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024; account cards cap at 48rem |
 | Login and SSR auth pages | `max-w-sm` card, centred |
-| Public pass page | `max-w-md` column; two columns at ≥1024 (pass, then identity, badge, QR, Details) |
+| Public pass page | `max-w-5xl` like the portal; the portal's pass view (`HolderPassView`): one column, two at ≥1024 (pass left; notice, QR, badge, help right) |
 
 - `FormGrid` (container query on its own width): 1 column; 2 at ≥40rem; 3 short fields at
   ≥64rem. Long fields (textarea, URL, JSON, lists) span all columns. With an aside the grid drops
@@ -411,7 +411,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
 | Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
-| Badge | `AppleWalletBadge href label?`; `appleWalletBadgeHtml({ href, email? })` for SSR and email |
+| Badge | `AppleWalletBadge href label? theme?` (`theme`: the stamped page theme when server-rendered on `/p`) |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
@@ -440,14 +440,23 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 
 - **Badge**: the kit `AppleWalletBadge` everywhere (`/p`, portal tiles and detail, Add all,
   email). Rules in ux-principles.md "Add to Apple Wallet badge".
-- **Device rule**: iPhone, iPod and Mac get the badge. Other devices (iPad included) get the QR
-  card (`Scan with your iPhone.`) first, the badge second and `Open on iPhone or Mac to add to
-  Apple Wallet.`
-- **Portal tiles**: the pass (stage), title and org; actions: badge (or `Show QR` + badge),
-  `Refresh` (outline), `More` (Show QR, Remove). `In Wallet` pill for registered passes. No
-  `Updated` line. Pass heights equal per row.
-- **Portal pass detail**: card left, title + `Updated Nov 1`, the badge next to the card (or the
-  QR), Refresh, `More` (Show QR, Copy link, Open public page, Remove). No `.pkpass` download.
+- **Device rule** (`src/shared/device.ts`, portal and `/p`): every device gets the badge;
+  iPhone, iPod and Mac can add with it. Wherever this is not the phone (Mac included) the add QR
+  leads, then the badge: the QR encodes the pass's `/p` page, so the iPhone that scans it opens the
+  page in Safari and adds with the badge there (a Mac's own add needs Safari and iCloud's Wallet
+  sync; the scan needs neither). Devices that cannot add (iPad included) add `Open on iPhone or
+  Mac to add to Apple Wallet.`; an in-app web view on one that can, `Open in Safari…`.
+- **Portal tiles**: a flex column: the pass (stage) takes the free height, then title, org and
+  actions pinned to the bottom, so they line up across a row. Actions: `Show QR` (off the phone)
+  and the badge, then `Refresh` and `More` (Show QR, Remove) as badge-sized outline icon buttons.
+  `In Wallet` pill for registered passes. No `Updated` line. Tile radius 18 px (the pass's ~14).
+- **Portal pass detail** and **`/p`** are one view (`portal/holder-pass-view.tsx`; `/p` renders
+  it to static markup with the same CSS, `npm run gen`): the card left; right, the voided or
+  expired notice (voided names the org's support: `Contact <org>`), the QR per the device rule,
+  the badge with the portal's `Refresh` and `More` (Copy link, Open public page in a new tab,
+  Remove) beside it at badge size, the add line, the portal's Details card, then the org's help.
+  The portal's PageHeader carries the org and `Updated Nov 1` as meta. `/p` adds one quiet link,
+  `Open in My passes`, to the holder's portal page (sign-in first). No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.
 - **Org first**: `/p` and the pass email show the org's logo or name, not the PassBook mark. The
@@ -478,9 +487,9 @@ Same brand tokens; Wallet keeps its own wordmark and teal.
 
 The trust and footer lines are the only explanatory text allowed on these pages: one line each.
 
-- Public pass page: org logo or name in the header; pass centred (deals in, flips with a no-script
-  `Details` toggle, tilts on fine pointers through `/pass-tilt.js`); the badge next to it, static;
-  the QR card per the device rule; voided banner in `warning` with `Ban`. Two columns at ≥1024.
+- Public pass page: the app shell's bar (56 px with its border, sticky) with the org's icon and
+  name; a 24 px h1; then the portal's pass view (deals in, flips with a no-script `Details`
+  toggle, tilts on fine pointers through `/pass-tilt.js`, dips in CSS when the badge is pressed).
   An expired link uses the hosted card (`Link expired`, `Sign in`).
 - Emails: fluid container `width:100%; max-width:480px`; 3px foil line (teal fallback) over the
   org header bar (org accent, text white or near-black by luminance). One title line. The pass

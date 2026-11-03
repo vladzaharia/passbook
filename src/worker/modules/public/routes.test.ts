@@ -59,7 +59,7 @@ describe('GET /p/:token', () => {
     await put('support.url', 'https://gym.test/help');
     clearSettingsCache(kit.env.DB);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).toContain('<footer>');
+    expect(html).toContain('Help: ');
     expect(html).toContain('href="mailto:help@gym.test"');
     expect(html).toContain('href="https://gym.test/help"');
     await put('support.url', 'javascript:alert(1)');
@@ -68,7 +68,7 @@ describe('GET /p/:token', () => {
     expect(unsafe).not.toContain('javascript:');
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
     clearSettingsCache(kit.env.DB);
-    expect(await (await get(`/p/${pass.downloadToken}`)).text()).not.toContain('<footer>');
+    expect(await (await get(`/p/${pass.downloadToken}`)).text()).not.toContain('Help: ');
   });
 
   it('sets the privacy headers and a nonce that matches the inline style', async () => {
@@ -88,20 +88,33 @@ describe('GET /p/:token', () => {
   it('leads with the org, never the platform wordmark', async () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    const head = /<header class="pp-head">(.*?)<\/header>/.exec(html)?.[1] ?? '';
+    // The app shell's bar: 56 px with its border, sticky, on the page surface.
+    const head =
+      /<header class="sticky top-0 z-20 border-b border-border bg-surface-page[^"]*">(.*?)<\/header>/.exec(
+        html,
+      )?.[1];
+    expect(head).toContain('h-[calc(3.5rem-1px)]');
     expect(head).toContain(kit.org.name);
     expect(html).not.toContain('class="mark"');
   });
 
   it.each([
-    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, false],
-    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, true],
-    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, true],
-  ])('follows the device rule on %s', async (_name, ua, qr, line) => {
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, 0],
+    // A Mac adds too, but the scan reaches the phone without iCloud; an iPad (Mac agent) gets its
+    // line from a coarse pointer.
+    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, 'ipad'],
+    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, 1],
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, 1],
+  ])('follows the shared device rule on %s', async (_name, ua, qr, line) => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
     expect(html.includes('Scan with your iPhone.')).toBe(qr);
-    expect(html.includes('Open on iPhone or Mac to add to Apple Wallet.')).toBe(line);
+    const lines =
+      html.match(/<p class="[^"]*">Open on iPhone or Mac to add to Apple Wallet\.<\/p>/g) ?? [];
+    if (line === 'ipad') {
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toContain('wl-ipad-line');
+    } else expect(lines).toHaveLength(line);
     expect(html).toContain('alt="Add to Apple Wallet"');
   });
 
@@ -112,17 +125,28 @@ describe('GET /p/:token', () => {
     expect(html).toContain('Open in Safari to add to Apple Wallet.');
   });
 
-  it('offers a QR hand-off for desktop visitors that points at the pass download', async () => {
+  it('leads with a QR of this page for desktop visitors, then the badge', async () => {
+    const pass = await kit.pass();
+    const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36';
+    const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
+    const qr = /<img src="(data:image\/svg\+xml;base64,[^"]+)" alt="QR code for ([^"]+)"/.exec(
+      html,
+    );
+    expect(qr?.[2]).toBeTruthy();
+    const svg = atob((qr?.[1] ?? '').split(',')[1] ?? '');
+    expect(svg).toContain('<svg');
+    expect(html).toContain('Scan with your iPhone.');
+    // In a phone frame, before the badge: the scan opens this page on the iPhone, whose badge adds.
+    expect(html).toMatch(/class="wl-qr-phone [^"]*"><span class="wl-qr [^"]*"><img src="data:/);
+    expect(html.indexOf('wl-qr-phone')).toBeLessThan(html.indexOf('alt="Add to Apple Wallet"'));
+  });
+
+  it('links the holder to the pass in the portal, quietly, once', async () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    const qr = /<img src="(data:image\/svg\+xml;base64,[^"]+)" alt="QR code/.exec(html)?.[1];
-    expect(qr).toBeTruthy();
-    const svg = atob((qr ?? '').split(',')[1] ?? '');
-    expect(svg).toContain('<svg');
-    expect(html).toContain('Scan with your iPhone');
-    // The add QR is a phone in the action column, under the badge.
-    expect(html).toMatch(/<div class="phone"><img src="data:image\/svg\+xml/);
-    expect(html.indexOf('Add to Apple Wallet')).toBeLessThan(html.indexOf('class="phone"'));
+    expect(html.match(/<a [^>]*>Open in My passes<\/a>/g)).toEqual([
+      expect.stringContaining(`href="/passes/${pass.id}"`),
+    ]);
   });
 
   it('links a voided pass to the org support, once', async () => {
@@ -135,9 +159,9 @@ describe('GET /p/:token', () => {
     clearSettingsCache(kit.env.DB);
     await voidPass(kit.ctx, actor, pass.id, null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    const note = /<p class="note"[\s\S]*?<\/p>/.exec(html)?.[0] ?? '';
+    const note = /<div role="status">[\s\S]*?<\/div><\/div><\/div>/.exec(html)?.[0] ?? '';
     expect(note).toContain('This pass was voided.');
-    expect(note).toContain('href="mailto:help@gym.test"');
+    expect(note).toMatch(/href="mailto:help@gym.test"[^>]*>Contact /);
     expect(html.match(/mailto:help@gym.test/g)).toHaveLength(1);
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
     clearSettingsCache(kit.env.DB);
@@ -150,8 +174,8 @@ describe('GET /p/:token', () => {
     expect(html).toContain('This pass was voided.');
     expect(html).not.toContain('Add to Apple Wallet');
     expect(html).not.toContain('QR code');
-    // Quiet: no deal, glow or tilt (and no tilt script).
-    expect(html).not.toContain('data-enter');
+    // Quiet: a fade in, no deal, glow or tilt (and no tilt script).
+    expect(html).toContain('data-enter="quiet"');
     expect(html).not.toContain('data-tilt');
     expect(html).toContain('data-glow="off"');
     expect(html).not.toContain('pass-tilt.js');
@@ -220,7 +244,8 @@ describe('GET /p/:token', () => {
   it('has a heading, and its only inline styles are pass colour variables', async () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).toMatch(/<h1><small>[^<]+<\/small>[^<]+<\/h1>/);
+    // The app's 24 px page title.
+    expect(html).toMatch(/<h1 class="[^"]*text-2xl font-semibold[^"]*">[^<]+<\/h1>/);
     const styles = [...html.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1] ?? '');
     expect(styles.length).toBeGreaterThan(0);
     for (const v of styles)

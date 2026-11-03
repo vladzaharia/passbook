@@ -1,0 +1,66 @@
+/* The holder pass page (holder-pass-view.tsx): the portal imports it, /p inlines it. The add QR's
+   phone and its scan line, the iPad line, and the side column rising after the card. Transform and
+   opacity only; reduced motion keeps nothing moving. */
+.wl-qr-phone::before {
+  content: "";
+  position: absolute;
+  top: 0.4375rem;
+  left: 50%;
+  width: 1.5rem;
+  height: 0.25rem;
+  margin-left: -0.75rem;
+  border-radius: 1rem;
+  background: var(--pk-border-strong);
+}
+/* A box the code's height; its top edge is the line, so the sweep is a translate of 100%. */
+.wl-qr-scan {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.wl-qr-scan::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--wl-foil);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--wl-foil-1) 60%, transparent);
+}
+/* /p says `mac` for an iPad too (its user agent); a touch screen shows the iPad its line. */
+.wl-ipad-line {
+  display: none;
+}
+@media (pointer: coarse) {
+  .wl-ipad-line {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-qr-scan {
+    animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
+  }
+  /* The side column rises after the card (240 ms). Apple's badge never animates: only the pieces
+     that do not hold it rise. */
+  .wl-after-card > :not(:has([data-awb])),
+  .wl-after-card > :has([data-awb]) > :not([data-awb], :has([data-awb])),
+  .wl-after-card > :has([data-awb]) > :has([data-awb]) > :not([data-awb]) {
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
+  }
+}
+
+@keyframes wl-qr-scan {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(100% - 3px));
+  }
+}

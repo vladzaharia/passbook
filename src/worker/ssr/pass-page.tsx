@@ -1,7 +1,8 @@
-import { Ban, Clock } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
-import { appleWalletBadgeHtml } from '../../shared/apple-badge.ts';
+import holderCss from '../../generated/ssr-holder.css?raw';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import type { DeviceInfo } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
@@ -11,174 +12,99 @@ import cardText from '../../web/pass-card/pass-card-text.css?raw';
 import stageCss from '../../web/pass-card/stage.css?raw';
 import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
-import type { PassDevice } from './device.ts';
+import holderPassCss from '../../web/portal/holder-pass.css?raw';
+import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { documentStart, type PageTheme } from './head.ts';
 import { hostedPage } from './hosted.ts';
-import { iconHtml } from './icon.ts';
 import { THEME_CSS } from './theme.ts';
 
-const cardCss = `${cardBase}\n${cardPoster}\n${cardText}`;
-const stageAllCss = `${stageCss}\n${stageMotion}\n${stageSeg}`;
+/**
+ * The SSR base sheet, then the SPA's preflight and the utilities /p's markup names
+ * (ssr-holder.css), then the card's and the holder page's own sheets, as the SPA's cascade orders
+ * them. The body loses the hosted pages' padding: the header and main pad themselves, like AppShell.
+ * Without script, pressing the badge dips the card in CSS (the portal sets `dip`).
+ */
+const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${holderPassCss}
+body{padding:0}
+@media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;
 
 export interface PassPageProps {
   view: PassView;
   nonce: string;
   /** The visitor's theme choice (requestTheme); undefined follows the OS. */
   theme?: PageTheme;
-  /** The org's name for the header and h1 (never the platform's). */
+  /** The org's name for the header and the voided note (never the platform's). */
   orgName: string;
   /** The org record's name, for link previews and the home-screen label: never a pass field. */
   orgLabel: string;
   /** The pass's own title (display title, else its description). */
   passTitle: string;
   downloadHref: string;
-  /** Data URI of a QR for the download URL; omitted for voided passes. */
-  qrSrc: string | null;
+  /** The absolute URL of this page: the add QR encodes it. */
+  publicUrl: string;
+  /** The holder's page in the portal (sign-in first when needed). */
+  portalHref: string;
   voided: boolean;
-  device: PassDevice;
-  /** An in-app browser (Google app, Facebook, Instagram, Outlook): Safari can add, it cannot. */
-  inApp: boolean;
+  device: DeviceInfo;
   /** Org support contacts, already validated; omitted when the org has none. */
-  support?: { email: string | null; url: string | null };
+  support?: HolderSupport;
 }
 
-const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
-const VOIDED_LINE = 'This pass was voided.';
-const EXPIRED_LINE = 'This pass has expired.';
-const SAFARI_LINE = 'Open in Safari to add to Apple Wallet.';
-
-/** Voided (Ban) and expired (Clock) notes; `after` is escaped markup (the org contact). */
-const NOTE_HTML = {
-  voided: (after: string) =>
-    `<p class="note" role="status">${iconHtml(Ban)}<span>${VOIDED_LINE}${after}</span></p>`,
-  expired: (after: string) =>
-    `<p class="note" role="status">${iconHtml(Clock)}<span>${EXPIRED_LINE}${after}</span></p>`,
-};
-
-/** A voided pass is not a dead end: one link to the org's support, email first. */
-function contactHtml(props: PassPageProps): string {
-  const email = props.support?.email;
-  const href = email ? `mailto:${email}` : props.support?.url;
-  if (!href) return '';
-  return ` <a href="${escapeHtml(href)}">Contact ${escapeHtml(props.orgName)}</a>`;
-}
-
-const CSS = `
-.pp-head{display:flex;align-items:center;gap:.625rem;min-height:3.5rem;max-width:28rem;margin:0 auto}
-.pp-head img{width:1.75rem;height:1.75rem;border-radius:.375rem;object-fit:contain}
-.pp-head span{min-width:0;overflow:hidden;font-size:1rem;font-weight:600;color:var(--pk-text-strong);text-overflow:ellipsis;white-space:nowrap}
-.pp{display:grid;grid-template-areas:"title" "pass" "actions";gap:1.5rem;max-width:28rem;margin:0 auto;padding:.5rem 0 3rem}
-.pp>*{min-width:0}
-.pp-title{grid-area:title;display:flex;flex-direction:column;gap:1rem}
-.pp-pass{grid-area:pass;clip-path:inset(-24px)}
-.pp-actions{grid-area:actions;display:flex;flex-direction:column;align-items:flex-start;gap:1rem}
-h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.015em;color:var(--pk-text-strong);overflow-wrap:anywhere}
-h1 small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.note{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--pk-warning-border);border-radius:.625rem;background:var(--pk-warning-subtle);color:var(--pk-text-default)}
-.note svg{flex:none;width:1rem;height:1rem;margin-top:.1875rem;color:var(--pk-warning)}
-.badge .awb{display:block;padding:4.4px;border-radius:.5rem}
-.badge img{display:block;height:44px;width:auto}
-.line{margin:0;color:var(--pk-text-muted)}
-.ipad{display:none}
-.qr{display:flex;align-items:center;gap:1rem;margin:0}
-.phone{position:relative;flex:none;padding:1.125rem .5rem .875rem;border:2px solid var(--pk-border-strong);border-radius:1.25rem;background:var(--pk-surface-raised)}
-.phone::before{content:"";position:absolute;top:.4375rem;left:50%;width:1.5rem;height:.25rem;margin-left:-.75rem;border-radius:1rem;background:var(--pk-border-strong)}
-.qr img{display:block;width:4.75rem;height:4.75rem;padding:.25rem;border-radius:.375rem;background:#fff}
-.qr p{margin:0;font-weight:500;color:var(--pk-text-strong)}
-.note a{font-weight:500}
-footer{width:100%;padding-top:1rem;border-top:1px solid var(--pk-border-subtle);color:var(--pk-text-muted);overflow-wrap:anywhere}
-.pp .pc-stage{max-width:22rem}
-@media (pointer:coarse){.pp-actions[data-device=mac] .ipad{display:block}}
-@media(min-width:64rem){
-.pp-head{max-width:50rem}
-.pp{grid-template-columns:22rem minmax(0,1fr);grid-template-areas:"pass title" "pass actions";grid-template-rows:auto 1fr;column-gap:4rem;row-gap:1.5rem;max-width:50rem;padding-top:2.5rem}
-h1 small{position:static;display:block;width:auto;height:auto;margin-bottom:.25rem;clip-path:none;font-size:.875rem;line-height:1.25rem;font-weight:400;letter-spacing:0;color:var(--pk-text-muted)}
-}
-@media (prefers-reduced-motion:no-preference){
-.pp-title,.pp-actions>:not(.badge){animation:wl-rise 260ms cubic-bezier(0,0,0,1) 240ms backwards}
-.pp-pass[data-quiet] .pc-stage{animation:wl-rise 260ms cubic-bezier(0,0,0,1) backwards}
-.pp:has(.awb:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}
-}`;
-
+/**
+ * The org's bar (AppShell's: 56 px with its border, sticky, page surface), then the h1 and the
+ * portal's HolderPassView. The org leads; the platform's wordmark never shows.
+ */
 function PassBody(props: PassPageProps) {
   const { view } = props;
   const voided = props.voided || view.voided;
-  const notice = voided ? 'voided' : view.expired ? 'expired' : null;
-  const active = notice === null;
+  const state = voided ? 'voided' : view.expired ? 'expired' : 'active';
+  const active = state === 'active';
   const icon = view.images.icon;
-  const canAdd = props.device === 'iphone' || props.device === 'mac';
-  const qr =
-    active && props.qrSrc && props.device !== 'iphone' ? (
-      // The add QR sits in a phone, smaller than the pass's own barcode, so the two never pass for
-      // each other.
-      <section className="qr">
-        <div className="phone">
-          <img src={props.qrSrc} alt="QR code for the pass download" />
-        </div>
-        <p>Scan with your iPhone.</p>
-      </section>
-    ) : null;
-  const badge = active ? (
-    <div
-      className="badge"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: static badge markup, href escaped
-      dangerouslySetInnerHTML={{
-        __html: appleWalletBadgeHtml({ href: props.downloadHref, theme: props.theme }),
-      }}
-    />
-  ) : null;
   return (
-    <>
-      <header className="pp-head">
-        {icon ? <img src={icon.src} srcSet={icon.srcset} alt="" /> : null}
-        <span>{props.orgName}</span>
-      </header>
-      <main className="pp">
-        <div className="pp-title">
-          <h1>
-            <small>{props.orgName}</small>
-            {props.passTitle}
-          </h1>
-          {notice ? (
-            <div
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: static icon and copy; the contact is escaped
-              dangerouslySetInnerHTML={{
-                __html: NOTE_HTML[notice](voided ? contactHtml(props) : ''),
-              }}
+    <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
+      <header className="sticky top-0 z-20 border-b border-border bg-surface-page pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-[calc(3.5rem-1px)] w-full max-w-5xl items-center gap-2.5 px-safe">
+          {icon ? (
+            <img
+              src={icon.src}
+              srcSet={icon.srcset}
+              alt=""
+              className="size-7 shrink-0 rounded-md object-contain"
             />
           ) : null}
+          <span className="min-w-0 truncate text-base font-semibold text-fg-strong">
+            {props.orgName}
+          </span>
         </div>
-        <div className="pp-pass" data-quiet={active ? undefined : ''}>
-          <PassCardStage
-            view={view}
-            enter={active}
-            tilt={active}
-            glow={active}
-            dim={!active}
-            toggleId="pc-flip"
-          />
-        </div>
-        <div className="pp-actions" data-device={props.device}>
-          {active && !canAdd ? <p className="line">{ADD_LINE}</p> : null}
-          {active && props.device === 'mac' ? <p className="line ipad">{ADD_LINE}</p> : null}
-          {active && props.device !== 'other' && props.inApp ? (
-            <p className="line">{SAFARI_LINE}</p>
-          ) : null}
-          {badge}
-          {qr}
-          {!voided && (props.support?.email || props.support?.url) ? (
-            <footer>
-              Help:{' '}
-              {props.support.email ? (
-                <a href={`mailto:${props.support.email}`}>{props.support.email}</a>
-              ) : null}
-              {props.support.email && props.support.url ? ' | ' : null}
-              {props.support.url ? <a href={props.support.url}>{props.support.url}</a> : null}
-            </footer>
-          ) : null}
-        </div>
+      </header>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <h1 className="mb-6 text-2xl font-semibold tracking-[-0.015em] text-fg-strong [overflow-wrap:anywhere]">
+          {props.passTitle}
+        </h1>
+        <HolderPassView
+          pass={
+            <PassCardStage
+              view={view}
+              enter
+              tilt={active}
+              glow={active}
+              dim={!active}
+              toggleId="pc-flip"
+            />
+          }
+          passTitle={props.passTitle}
+          orgName={props.orgName}
+          state={state}
+          device={props.device}
+          downloadHref={props.downloadHref}
+          publicUrl={props.publicUrl}
+          support={props.support}
+          portalHref={props.portalHref}
+          theme={props.theme}
+          rise
+        />
       </main>
-    </>
+    </div>
   );
 }
 
@@ -198,8 +124,12 @@ export function renderPassPage(props: PassPageProps): string {
   const active = !voided && !props.view.expired;
   const title = `${props.passTitle} · ${props.orgName}`;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
-  const line = voided ? VOIDED_LINE : active ? 'Add it to Apple Wallet.' : EXPIRED_LINE;
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  const line = voided
+    ? HOLDER_COPY.voided
+    : active
+      ? HOLDER_COPY.previewActive
+      : HOLDER_COPY.expired;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${PAGE_CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /** An unknown, rotated or expired link: the hosted card with one way on. */
