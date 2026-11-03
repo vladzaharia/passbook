@@ -27,6 +27,7 @@ import './scenes/common.css';
 import './scenes/hello.css';
 import './scenes/search.css';
 import './scenes/search-beats.css';
+import './scenes/search-steps.css';
 import './scenes/inspect.css';
 import './scenes/sweep.css';
 import './scenes/mend.css';

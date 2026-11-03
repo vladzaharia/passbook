@@ -1,0 +1,280 @@
+/* Search, continued (search.css): the steps and the trunk. A foot in stance is planted: it moves
+   against the body, with the same keyframes and easing as wl-s-search-go, so it stays put on the
+   edge while the body passes over it. In swing it lifts and passes the body to its next spot. */
+@keyframes wl-s-search-r-lead {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0.333);
+  }
+  33.333% {
+    translate: calc(var(--wl-reach) * -0.25) 0;
+    rotate: 5deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  50% {
+    translate: -3px -3.5px;
+    rotate: -12.7deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  66.667% {
+    translate: calc(var(--wl-reach) * 0.25 - 6px) 0;
+    rotate: -18.5deg;
+    animation-timing-function: cubic-bezier(0.333, 0.667, 0.667, 1);
+  }
+  100% {
+    translate: -6px 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-search-r-trail {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  16.667% {
+    translate: calc(var(--wl-reach) * 0.125 + 6px) -3.5px;
+    rotate: -8.5deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  33.333% {
+    translate: calc(var(--wl-reach) * 0.25 + 12px) 0;
+    rotate: -14deg;
+    animation-timing-function: linear;
+  }
+  66.667% {
+    translate: calc(var(--wl-reach) * -0.25 + 12px) 0;
+    rotate: 14deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  83.333% {
+    translate: calc(var(--wl-reach) * -0.125 + 9px) -3.5px;
+    rotate: 3.2deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  100% {
+    translate: 6px 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-search-l-lead {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0.333);
+  }
+  20% {
+    translate: calc(var(--wl-reach) * 0.25) 0;
+    rotate: -5deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  30% {
+    translate: 6px -3.5px;
+    rotate: 10.5deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  40% {
+    translate: calc(var(--wl-reach) * -0.25 + 12px) 0;
+    rotate: 14deg;
+    animation-timing-function: linear;
+  }
+  60% {
+    translate: calc(var(--wl-reach) * 0.25 + 12px) 0;
+    rotate: -14deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  70% {
+    translate: 9px -3.5px;
+    rotate: 8.2deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  80% {
+    translate: calc(var(--wl-reach) * -0.25 + 6px) 0;
+    rotate: 18.5deg;
+    animation-timing-function: cubic-bezier(0.333, 0.667, 0.667, 1);
+  }
+  100% {
+    translate: 6px 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-search-l-trail {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  10% {
+    translate: calc(var(--wl-reach) * -0.125 - 6px) -3.5px;
+    rotate: 8.5deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  20% {
+    translate: calc(var(--wl-reach) * -0.25 - 12px) 0;
+    rotate: 14deg;
+    animation-timing-function: linear;
+  }
+  40% {
+    translate: calc(var(--wl-reach) * 0.25 - 12px) 0;
+    rotate: -14deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  50% {
+    translate: -12px -3.5px;
+    rotate: 6deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  60% {
+    translate: calc(var(--wl-reach) * -0.25 - 12px) 0;
+    rotate: 14deg;
+    animation-timing-function: linear;
+  }
+  80% {
+    translate: calc(var(--wl-reach) * 0.25 - 12px) 0;
+    rotate: -14deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  90% {
+    translate: calc(var(--wl-reach) * 0.125 - 9px) -3.5px;
+    rotate: -3.2deg;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  100% {
+    translate: -6px 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-search-l1-hop {
+  0% {
+    translate: 6px 0;
+    rotate: 0deg;
+    animation-timing-function: ease-out;
+  }
+  50% {
+    translate: 0 -1.5px;
+    animation-timing-function: ease-in;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-search-l2-hop {
+  0% {
+    translate: -6px 0;
+    rotate: 0deg;
+    animation-timing-function: ease-out;
+  }
+  50% {
+    translate: 0 -1.5px;
+    animation-timing-function: ease-in;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+/* Lean into the walk; at each end a tiptoe, a crouch, a stretch in the hop and a landing. */
+@keyframes wl-s-search-trunk {
+  0%,
+  5% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+  10.5%,
+  21.5% {
+    rotate: 5deg;
+  }
+  22.75% {
+    translate: 0 0;
+    rotate: -1.5deg;
+  }
+  24% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  25% {
+    translate: 0 -1.5px;
+  }
+  29% {
+    translate: 0 -1.5px;
+    scale: 1;
+  }
+  30% {
+    translate: 0 0;
+    scale: 1.04 0.95;
+  }
+  31% {
+    scale: 0.98 1.03;
+  }
+  32% {
+    scale: 1.03 0.96;
+  }
+  32.5% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+  38%,
+  60% {
+    rotate: -5deg;
+  }
+  61.25% {
+    translate: 0 0;
+    rotate: 1.5deg;
+  }
+  62.5% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  63.5% {
+    translate: 0 -1.5px;
+  }
+  67.5% {
+    translate: 0 -1.5px;
+    scale: 1;
+  }
+  68.5% {
+    translate: 0 0;
+    scale: 1.04 0.95;
+  }
+  69.5% {
+    scale: 0.98 1.03;
+  }
+  70.5% {
+    scale: 1.03 0.96;
+  }
+  71% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+  76.5%,
+  87.5% {
+    rotate: 5deg;
+  }
+  88.5% {
+    rotate: -1.5deg;
+  }
+  89.25%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
+@keyframes wl-s-search-sway {
+  0%,
+  50%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: translateY(-2px) rotate(1.5deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-1.5deg);
+  }
+}

@@ -234,18 +234,94 @@ describe('scene stylesheets', () => {
   });
 
   it('end the search walk where it began: seated at the centre, the "?" gone', () => {
-    const text = css('search.css') + css('search-beats.css');
-    const last = (name: string) => {
-      const body = blocks(text).find(([sel]) => sel === `@keyframes ${name}`)?.[1] ?? '';
-      return blocks(body).at(-1) ?? ['', ''];
-    };
+    const last = (name: string) => blocks(keyframes(name)).at(-1) ?? ['', ''];
     expect(last('wl-s-search-go')).toEqual([
-      '86%,\n  100%',
+      '87.5%,\n  100%',
       expect.stringMatching(/transform: none/),
     ]);
-    expect(last('wl-s-search-body')[1]).toMatch(/translate: 0 0;\s*scale: 1;\s*rotate: 0deg/);
+    expect(last('wl-s-search-body')[1]).toMatch(/translate: 0 0;\s*scale: 1/);
+    expect(last('wl-s-search-trunk')[1]).toMatch(/translate: 0 0;\s*rotate: 0deg;\s*scale: 1/);
+    for (const leg of ['l1', 'l2'])
+      expect(last(`wl-s-search-${leg}-hop`)[1]).toMatch(/translate: 0 0;\s*rotate: 0deg/);
     expect(last('wl-s-search-look')[1]).toMatch(/translate: 0 0/);
     expect(last('wl-s-search-ask')[1]).toMatch(/opacity: 0/);
     expect(last('wl-s-search-shadow')[1]).toMatch(/scale: 1/);
   });
+
+  // The owner asked for 300-400 px of walking in all (out, across, back: four reaches).
+  it('cap the search walk in px, and narrow it in a narrow box', () => {
+    const terms =
+      css('search.css')
+        .match(/--wl-reach:\s*min\(([^;]+)\);/)?.[1]
+        ?.split(',') ?? [];
+    const reach = (contentWidth: number) =>
+      Math.min(
+        ...terms.map((term) =>
+          [...term.matchAll(/([+-]?)\s*(\d+(?:\.\d+)?)(cqw|px)/g)].reduce(
+            (sum, [, sign, n, unit]) =>
+              sum + (sign === '-' ? -1 : 1) * Number(n) * (unit === 'cqw' ? contentWidth / 100 : 1),
+            0,
+          ),
+        ),
+      );
+    expect(terms.length).toBeGreaterThan(1);
+    for (const wide of [942, 1400, 4000]) {
+      expect(4 * reach(wide)).toBeGreaterThanOrEqual(300);
+      expect(4 * reach(wide)).toBeLessThanOrEqual(400);
+    }
+    // A phone's box (390 px viewport): a shorter walk that keeps the buddy inside the box.
+    expect(reach(308)).toBeLessThan(reach(942));
+    expect(reach(308) + 48).toBeLessThan(308 / 2);
+  });
+
+  // A foot in stance moves against the travel between the same two keyframes with the same easing,
+  // so it stays put on the edge while the body passes over it.
+  it('plant the feet of the search walk', () => {
+    const at = (decl: string, prop: string) => decl.match(new RegExp(`${prop}: ([^;]+);`))?.[1];
+    const reachOf = (v = '') => Number(v.match(/var\(--wl-reach\) \* (-?[\d.]+)/)?.[1] ?? 0);
+    const go = blocks(keyframes('wl-s-search-go')).flatMap(([sel, decl]) =>
+      sel.split(',').map((p) => ({
+        ms: Number.parseFloat(p) * 40,
+        r: reachOf(at(decl, 'transform')),
+        fn: at(decl, 'animation-timing-function') ?? 'linear',
+      })),
+    );
+    const rule = css('search.css').match(/\[data-part="l1"\] \{\s*animation:([^;]+);/)?.[1] ?? '';
+    let stances = 0;
+    for (const item of rule.split(',').filter((x) => !x.includes('-hop'))) {
+      const [name = '', dur = '', , delay = ''] = item.trim().split(/\s+/);
+      for (const leg of [
+        name,
+        name.replace(/lead|trail/, (m) => (m === 'lead' ? 'trail' : 'lead')),
+      ]) {
+        const frames = blocks(keyframes(leg)).map(([sel, decl]) => {
+          const [x = '', y = ''] = (at(decl, 'translate') ?? '').split(/ (?![^(]*\))/);
+          return {
+            ms: Number.parseFloat(delay) + (Number.parseFloat(sel) / 100) * Number.parseFloat(dur),
+            r: reachOf(x),
+            px: Number(x.match(/(-?[\d.]+)px\)?$/)?.[1] ?? 0) * (/ - [\d.]+px\)$/.test(x) ? -1 : 1),
+            y,
+            fn: at(decl, 'animation-timing-function') ?? 'linear',
+          };
+        });
+        for (let i = 1; i < frames.length; i++) {
+          const [a, b] = [frames[i - 1], frames[i]];
+          // On the ground at both ends and moving against the body: a stance.
+          if (a?.y !== '0' || b?.y !== '0' || a.r === b.r) continue;
+          const g = go.findIndex((k) => Math.abs(k.ms - a.ms) < 0.1);
+          const h = go[g + 1];
+          expect(h && Math.abs(h.ms - b.ms) < 0.1, `${leg} at ${a.ms} ms`).toBe(true);
+          expect(b.r - a.r).toBeCloseTo(-((h?.r ?? 0) - (go[g]?.r ?? 0)), 6);
+          expect([b.px, a.fn]).toEqual([a.px, go[g]?.fn]);
+          stances++;
+        }
+      }
+    }
+    expect(stances).toBe(11);
+  });
 });
+
+const keyframes = (name: string) =>
+  blocks(['search.css', 'search-beats.css', 'search-steps.css'].map(css).join('\n')).find(
+    ([sel]) => sel === `@keyframes ${name}`,
+  )?.[1] ?? '';

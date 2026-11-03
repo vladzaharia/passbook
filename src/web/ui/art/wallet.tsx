@@ -91,41 +91,44 @@ export function WalletArt({
         data-seat={seat ? '' : undefined}
       >
         <g data-body="">
-          {cards ? (
-            <g data-fan="">
-              {card(1)}
-              {card(3, state === 'expired' ? 'dim' : undefined)}
-              {card(2, undefined, onCard)}
-            </g>
-          ) : (
-            <path data-part="gh" data-b="" className="dash" d={CARD} />
-          )}
+          {/* Below the trunk, which can lean and bob over planted feet (scenes/search.css). */}
           {seat ? (
             <>
               <path data-part="l1" className="o" d={LEG_L} />
               <path data-part="l2" className="o" d={LEG_R} />
             </>
           ) : null}
-          <rect className="o" x="16" y="30" width="64" height="36" rx="9" />
-          <rect className="st" x="20" y="34" width="56" height="28" rx="6" />
-          <rect className="a" x="36" y="37" width="24" height="16" rx="7" />
-          <g data-look="">
-            <g data-part="eyes" data-b="">
-              <ellipse className="e" cx="43.5" cy="43.5" rx="1.7" ry="2.1" />
-              <ellipse className="e" cx="52.5" cy="43.5" rx="1.7" ry="2.1" />
+          <g data-trunk="">
+            {cards ? (
+              <g data-fan="">
+                {card(1)}
+                {card(3, state === 'expired' ? 'dim' : undefined)}
+                {card(2, undefined, onCard)}
+              </g>
+            ) : (
+              <path data-part="gh" data-b="" className="dash" d={CARD} />
+            )}
+            <rect className="o" x="16" y="30" width="64" height="36" rx="9" />
+            <rect className="st" x="20" y="34" width="56" height="28" rx="6" />
+            <rect className="a" x="36" y="37" width="24" height="16" rx="7" />
+            <g data-look="">
+              <g data-part="eyes" data-b="">
+                <ellipse className="e" cx="43.5" cy="43.5" rx="1.7" ry="2.1" />
+                <ellipse className="e" cx="52.5" cy="43.5" rx="1.7" ry="2.1" />
+              </g>
+              {mood === 'happy' ? <path data-part="joy" className="m" d={JOY} /> : null}
+              {brows ? <path data-part="br" className="m" d={brows} /> : null}
+              {face}
             </g>
-            {mood === 'happy' ? <path data-part="joy" className="m" d={JOY} /> : null}
-            {brows ? <path data-part="br" className="m" d={brows} /> : null}
-            {face}
+            <path className="m" d={(mood && MOUTH[mood]) ?? SMILE} />
+            {front}
+            {state === 'lost' ? (
+              <g data-part="ln">
+                <path className="h" d="M71 30l6 6" />
+                <circle className="o" cx="66" cy="25" r="7" />
+              </g>
+            ) : null}
           </g>
-          <path className="m" d={(mood && MOUTH[mood]) ?? SMILE} />
-          {front}
-          {state === 'lost' ? (
-            <g data-part="ln">
-              <path className="h" d="M71 30l6 6" />
-              <circle className="o" cx="66" cy="25" r="7" />
-            </g>
-          ) : null}
         </g>
       </g>
     </Art>
