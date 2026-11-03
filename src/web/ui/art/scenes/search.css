@@ -1,9 +1,18 @@
-/* Search (portal My passes, empty): the buddy stands, scurries along the box's top edge within its
-   centre 40% (the box is an inline-size container), stops at the right end with a "?" and looks
-   out, turns, crosses to the left end for another "?", turns and comes back to sit at the centre.
-   4 s, once, so it is still within 5 s of the page (WCAG 2.2.2). One timeline: 1% = 40 ms. */
+/* Search (portal My passes, empty): the buddy stands and walks the box's top edge, at most
+   75 px each way (less in a narrow box; the box is an inline-size container): 3 steps to the right
+   end, a "?" and a look out, a hop to turn, 5 steps to the left end, the same, 3 steps back and it
+   sits. Its feet plant and the body passes over them (search-steps.css). 4 s, once, so it is still
+   within 5 s of the page (WCAG 2.2.2). One timeline: 1% = 40 ms. */
 .wl-buddy[data-scene="search"] {
-  --wl-reach: min(20cqw, 50cqw - 60px);
+  --wl-reach: min(75px, 20cqw, 50cqw - 60px);
+}
+.wl-buddy[data-scene="search"] [data-trunk] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+/* A planted foot pivots on its sole. */
+.wl-buddy[data-scene="search"][data-run] .wl-art :is([data-part="l1"], [data-part="l2"]) {
+  transform-origin: 50% 100%;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -12,6 +21,14 @@
   }
   .wl-buddy[data-scene="search"][data-run] .wl-art [data-body] {
     animation: wl-s-search-body 4s ease-in-out;
+  }
+  /* Lean, tiptoe and hops on the trunk; a bob and a rock onto the planted foot each step. */
+  .wl-buddy[data-scene="search"][data-run] .wl-art [data-trunk] {
+    animation:
+      wl-s-search-trunk 4s ease-in-out,
+      wl-s-search-sway 440ms ease-in-out 200ms 1.5,
+      wl-s-search-sway 440ms ease-in-out 1300ms reverse 2.5,
+      wl-s-search-sway 440ms ease-in-out 2840ms 1.5;
   }
   .wl-buddy[data-scene="search"][data-run] .wl-art [data-look] {
     animation: wl-s-search-look 4s ease-in-out;
@@ -28,163 +45,136 @@
   .wl-buddy[data-scene="search"][data-run] .wl-art [data-part="sd"] {
     animation: wl-s-search-shadow 4s ease-in-out;
   }
-  /* Steps: two per 360 ms cycle, the right foot half a cycle after the left; the body bobs and
-     rocks onto the planted foot. Walks at 240 (3 steps), 1300 (6) and 2900 ms (3). */
-  .wl-buddy[data-scene="search"][data-run] .wl-art [data-part="w"] {
-    animation:
-      wl-s-bob 360ms ease-in-out 240ms 1.5,
-      wl-s-bob 360ms ease-in-out 1300ms 3,
-      wl-s-bob 360ms ease-in-out 2900ms 1.5;
-  }
+  /* Steps of 220 ms: the foot on the walking side stands first while the other crosses in
+     front; the last step brings them in under it; each hop sets them back at rest. */
   .wl-buddy[data-scene="search"][data-run] .wl-art [data-part="l1"] {
     animation:
-      wl-s-step-r 360ms ease-in-out 240ms 1.5,
-      wl-s-step-l 360ms ease-in-out 1300ms 3,
-      wl-s-step-r 360ms ease-in-out 2900ms 1.5;
+      wl-s-search-r-trail 660ms linear 200ms forwards,
+      wl-s-search-l1-hop 76ms linear 1203ms forwards,
+      wl-s-search-l-lead 1100ms linear 1300ms forwards,
+      wl-s-search-l1-hop 76ms linear 2743ms forwards,
+      wl-s-search-r-trail 660ms linear 2840ms forwards,
+      wl-s-search-l1-hop 99ms linear 3580ms forwards;
   }
   .wl-buddy[data-scene="search"][data-run] .wl-art [data-part="l2"] {
     animation:
-      wl-s-step-r 360ms ease-in-out 420ms 1,
-      wl-s-step-l 360ms ease-in-out 1480ms 3,
-      wl-s-step-r 360ms ease-in-out 3080ms 1;
+      wl-s-search-r-lead 660ms linear 200ms forwards,
+      wl-s-search-l2-hop 76ms linear 1203ms forwards,
+      wl-s-search-l-trail 1100ms linear 1300ms forwards,
+      wl-s-search-l2-hop 76ms linear 2743ms forwards,
+      wl-s-search-r-lead 660ms linear 2840ms forwards,
+      wl-s-search-l2-hop 99ms linear 3580ms forwards;
   }
 }
 
-/* Centre, right end (19.5%-32.5%), left end (59.5%-72.5%), centre. */
+/* Centre, right end, left end, centre: an eased half step to start and to stop, full steps between
+   (the steps match it keyframe for keyframe). */
 @keyframes wl-s-search-go {
   0%,
-  6% {
+  5% {
     transform: none;
-    animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+    animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0.333);
   }
-  19.5%,
+  10.5% {
+    transform: translateX(calc(var(--wl-reach) * 0.25));
+    animation-timing-function: linear;
+  }
+  16% {
+    transform: translateX(calc(var(--wl-reach) * 0.75));
+    animation-timing-function: cubic-bezier(0.333, 0.667, 0.667, 1);
+  }
+  21.5%,
   32.5% {
-    transform: translateX(var(--wl-reach));
-    animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+    transform: translateX(calc(var(--wl-reach) * 1));
+    animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0.333);
   }
-  59.5%,
-  72.5% {
-    transform: translateX(calc(-1 * var(--wl-reach)));
-    animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  38% {
+    transform: translateX(calc(var(--wl-reach) * 0.75));
+    animation-timing-function: linear;
   }
-  86%,
+  43.5% {
+    transform: translateX(calc(var(--wl-reach) * 0.25));
+    animation-timing-function: linear;
+  }
+  49% {
+    transform: translateX(calc(var(--wl-reach) * -0.25));
+    animation-timing-function: linear;
+  }
+  54.5% {
+    transform: translateX(calc(var(--wl-reach) * -0.75));
+    animation-timing-function: cubic-bezier(0.333, 0.667, 0.667, 1);
+  }
+  60%,
+  71% {
+    transform: translateX(calc(var(--wl-reach) * -1));
+    animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0.333);
+  }
+  76.5% {
+    transform: translateX(calc(var(--wl-reach) * -0.75));
+    animation-timing-function: linear;
+  }
+  82% {
+    transform: translateX(calc(var(--wl-reach) * -0.25));
+    animation-timing-function: cubic-bezier(0.333, 0.667, 0.667, 1);
+  }
+  87.5%,
   100% {
     transform: none;
   }
 }
-/* Squash, stand (feet on the edge), lean into the walk, tiptoe to look out, a hop to turn; at the
-   end a hop and a squashed landing back on the seat. */
+/* Squash and stand (feet on the edge); a hop to turn at each end; a hop back onto the seat. */
 @keyframes wl-s-search-body {
   0% {
     translate: 0 0;
     scale: 1;
-    rotate: 0deg;
   }
-  2% {
+  1.75% {
     translate: 0 0;
     scale: 1.06 0.9;
   }
-  4.5% {
+  3.75% {
     translate: 0 -8.5px;
     scale: 0.97 1.05;
   }
-  6% {
+  5% {
     translate: 0 -7px;
     scale: 1;
-    rotate: 0deg;
   }
-  8%,
-  19.5% {
-    rotate: 5deg;
-  }
-  21% {
-    rotate: -1.5deg;
-  }
-  22.5% {
+  30% {
     translate: 0 -7px;
-    rotate: 0deg;
   }
-  23.5%,
-  28.5% {
-    translate: 0 -8.5px;
-  }
-  29% {
-    rotate: 0deg;
-  }
-  29.5% {
-    translate: 0 -7px;
-    scale: 1.04 0.95;
-  }
-  30.75% {
+  31% {
     translate: 0 -10px;
-    scale: 0.98 1.03;
   }
   32% {
     translate: 0 -7px;
-    scale: 1.03 0.96;
   }
-  33% {
-    scale: 1;
-  }
-  33.5%,
-  59.5% {
-    rotate: -5deg;
-  }
-  61% {
-    rotate: 1.5deg;
-  }
-  62.5% {
-    translate: 0 -7px;
-    rotate: 0deg;
-  }
-  63.5%,
   68.5% {
-    translate: 0 -8.5px;
-  }
-  69% {
-    rotate: 0deg;
+    translate: 0 -7px;
   }
   69.5% {
-    translate: 0 -7px;
-    scale: 1.04 0.95;
-  }
-  70.75% {
     translate: 0 -10px;
-    scale: 0.98 1.03;
   }
-  72% {
+  70.5% {
     translate: 0 -7px;
-    scale: 1.03 0.96;
   }
-  73% {
+  89.25% {
+    translate: 0 -7px;
     scale: 1;
   }
-  73.5%,
-  86% {
-    rotate: 5deg;
-  }
-  87% {
-    rotate: -1.5deg;
-  }
-  88% {
-    translate: 0 -7px;
-    rotate: 0deg;
-    scale: 1;
-  }
-  90% {
+  91% {
     translate: 0 -9px;
     scale: 0.97 1.04;
   }
-  92.5% {
+  93.25% {
     translate: 0 0;
     scale: 1.07 0.9;
   }
-  95% {
+  95.5% {
     scale: 0.98 1.03;
   }
   100% {
     translate: 0 0;
     scale: 1;
-    rotate: 0deg;
   }
 }

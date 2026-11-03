@@ -1,54 +1,54 @@
-/* Search, continued (search.css): the face, the "?", the shadow and the steps. 1% = 40 ms. */
+/* Search, continued (search.css): the face, the "?" and the shadow. 1% = 40 ms. */
 
 /* Eyes lead the walk; at each end they look out and scan, then swing through you to turn. */
 @keyframes wl-s-search-look {
   0%,
-  5% {
+  4.25% {
     translate: 0 0;
   }
-  7%,
-  19.5% {
+  6.25%,
+  21.5% {
     translate: 2px 0;
   }
-  22.5% {
+  24% {
     translate: 2.4px -1.4px;
   }
-  25% {
+  26.25% {
     translate: 2.8px -0.4px;
   }
-  27% {
+  27.75% {
     translate: 1.4px -1.8px;
   }
-  28.5% {
+  29% {
     translate: 2.6px -1px;
   }
-  30% {
+  30.5% {
     translate: 0 0;
   }
   32%,
-  59.5% {
+  60% {
     translate: -2px 0;
   }
   62.5% {
     translate: -2.4px -1.4px;
   }
-  65% {
+  64.75% {
     translate: -2.8px -0.4px;
   }
-  67% {
+  66.25% {
     translate: -1.4px -1.8px;
   }
-  68.5% {
+  67.5% {
     translate: -2.6px -1px;
   }
-  70% {
+  69% {
     translate: 0 0;
   }
-  72%,
-  86% {
+  70.5%,
+  87.5% {
     translate: 2px 0;
   }
-  88%,
+  89.25%,
   100% {
     translate: 0 0;
   }
@@ -56,77 +56,77 @@
 /* A blink on each turn and one when it has sat down. */
 @keyframes wl-s-search-blink {
   0%,
-  29%,
-  30.5%,
-  69%,
-  70.5%,
-  97%,
+  29.5%,
+  30.75%,
+  68%,
+  69.25%,
+  97.25%,
   99.5% {
     scale: 1;
   }
-  29.75%,
-  69.75%,
-  98.25% {
+  30.25%,
+  68.75%,
+  98.5% {
     scale: 1 0.1;
   }
 }
 @keyframes wl-s-search-brow {
   0%,
-  19.5%,
-  30%,
-  59.5%,
-  70%,
+  21.5%,
+  30.5%,
+  60%,
+  69%,
   100% {
     translate: 0 0;
   }
-  21%,
-  28.5%,
-  61%,
-  68.5% {
+  22.75%,
+  29%,
+  61.25%,
+  67.5% {
     translate: 0 -1.2px;
   }
 }
 /* The "?" pops over the leading side, wobbles while it looks, and floats off as it turns. */
 @keyframes wl-s-search-ask {
   0%,
-  19.5% {
+  21.5% {
     opacity: 0;
     scale: 0.3;
     translate: 8px 3px;
     rotate: 0deg;
   }
-  21% {
+  22.75% {
     opacity: 1;
     scale: 1.2;
     translate: 8px -1px;
   }
-  22.5% {
+  24% {
     scale: 1;
     translate: 8px 0;
   }
-  24.5% {
+  25.75% {
     rotate: -10deg;
   }
-  27% {
+  27.75% {
     rotate: 8deg;
   }
-  28.5% {
+  29% {
     opacity: 1;
     rotate: 0deg;
     scale: 1;
     translate: 8px 0;
   }
-  31% {
+  31.25% {
     opacity: 0;
     scale: 0.7;
     translate: 8px -4px;
   }
-  59.5% {
+  60% {
     opacity: 0;
     scale: 0.3;
     translate: -8px 3px;
   }
-  61% {
+  61.25% {
     opacity: 1;
     scale: 1.2;
     translate: -8px -1px;
@@ -135,19 +135,19 @@
     scale: 1;
     translate: -8px 0;
   }
-  64.5% {
+  64.25% {
     rotate: 10deg;
   }
-  67% {
+  66.25% {
     rotate: -8deg;
   }
-  68.5% {
+  67.5% {
     opacity: 1;
     rotate: 0deg;
     scale: 1;
     translate: -8px 0;
   }
-  71%,
+  69.75%,
   100% {
     opacity: 0;
     scale: 0.7;
@@ -156,75 +156,34 @@
 }
 @keyframes wl-s-search-shadow {
   0%,
-  2% {
+  1.75% {
     scale: 1;
   }
-  6%,
-  22.5% {
+  5%,
+  24% {
     scale: 0.82 1;
   }
-  23.5%,
-  28.5% {
+  25%,
+  29% {
     scale: 0.76 1;
   }
-  30%,
+  30.5%,
   62.5% {
     scale: 0.82 1;
   }
   63.5%,
-  68.5% {
+  67.5% {
     scale: 0.76 1;
   }
-  70%,
-  88% {
+  69%,
+  89.25% {
     scale: 0.82 1;
   }
-  90% {
+  91% {
     scale: 0.74 1;
   }
-  92.5%,
+  93.25%,
   100% {
     scale: 1;
-  }
-}
-@keyframes wl-s-bob {
-  0%,
-  50%,
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  25% {
-    translate: 0 -2px;
-    rotate: 2.5deg;
-  }
-  75% {
-    translate: 0 -2px;
-    rotate: -2.5deg;
-  }
-}
-/* A foot lifts behind the pocket and swings toward the walk. */
-@keyframes wl-s-step-r {
-  0%,
-  50%,
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  25% {
-    translate: 0 -3.5px;
-    rotate: -20deg;
-  }
-}
-@keyframes wl-s-step-l {
-  0%,
-  50%,
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  25% {
-    translate: 0 -3.5px;
-    rotate: 20deg;
   }
 }
