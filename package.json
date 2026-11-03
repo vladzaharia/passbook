@@ -15,7 +15,7 @@
     "dev": "node tools/build-templates.ts && node tools/dev-vars.ts && vite dev",
     "dev:vars": "node tools/dev-vars.ts",
     "build": "node tools/build-templates.ts && vite build && node tools/check-bundle.ts && wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "gen": "node tools/build-templates.ts && node tools/build-ssr-tokens.ts && node tools/build-ssr-kit.ts && wrangler types --strict-vars=false",
+    "gen": "node tools/build-templates.ts && node tools/build-ssr-tokens.ts && node tools/build-ssr-kit.ts && node tools/build-ssr-holder.ts && wrangler types --strict-vars=false",
     "format": "biome check --write .",
     "lint": "biome check .",
     "ci:lint": "biome ci --error-on-warnings .",

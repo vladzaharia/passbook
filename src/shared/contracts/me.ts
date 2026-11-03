@@ -18,6 +18,8 @@ export const MyPassSchema = z.object({
   assetNames: z.array(z.string()),
   /** A device has registered the pass: it is in someone's Wallet (and leaves Add all). */
   inWallet: z.boolean(),
+  /** One pass only: the org's checked support contacts (the voided note names them). */
+  support: z.object({ email: z.string().nullable(), url: z.string().nullable() }).optional(),
 });
 export const MyPassListSchema = pageOf(MyPassSchema);
 

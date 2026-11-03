@@ -32,6 +32,26 @@ describe('my passes', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('lines tiles up as three rows of the grid, with one outline icon-button variant', async () => {
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () =>
+          list(passFixture(), passFixture({ id: 'p2', title: 'Old', status: 'voided' })),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Old', level: 2 });
+    for (const li of screen.getAllByRole('listitem')) {
+      // The card, title and org, actions: subgrid rows, so a row of tiles aligns them.
+      expect(li).toHaveClass('row-span-3', 'grid-rows-subgrid');
+      expect(li.firstElementChild).toHaveClass('row-span-3', 'grid-rows-subgrid', 'rounded-xl');
+    }
+    const icons = [
+      ...screen.getAllByRole('button', { name: 'More actions' }),
+      screen.getByRole('button', { name: 'Refresh' }),
+    ];
+    for (const b of icons) expect(b).toHaveClass('border', 'size-10', 'pointer-coarse:size-11');
+  });
+
   it('offers a bundle link only with two or more active passes, in chunks of 10', async () => {
     await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => list(passFixture()) },

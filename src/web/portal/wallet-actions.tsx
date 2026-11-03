@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, ExternalLink, MoreHorizontal, QrCode as QrIcon, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
+import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
 import {
-  AppleWalletBadge,
   Button,
   ConfirmDialog,
   Dialog,
@@ -18,8 +18,8 @@ import {
   toast,
 } from '../ui/index.ts';
 import { myPassesKey, removePass } from './api.ts';
-import { canAddToWallet, inAppBrowser } from './device.ts';
-import { QrCode } from './qr-code.tsx';
+import { browserDevice } from './device.ts';
+import { HolderQr } from './holder-qr.tsx';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
 export function publicUrlOf(downloadUrl: string, origin = window.location.origin): string | null {
@@ -28,28 +28,9 @@ export function publicUrlOf(downloadUrl: string, origin = window.location.origin
   return new URL(m[1], origin).toString();
 }
 
-/** Apple's badge (the kit AppleWalletBadge); never a custom button. */
-export function AddToWalletButton({
-  downloadUrl,
-  onPress,
-}: {
-  downloadUrl: string;
-  /** Runs as the download starts (the card dips towards the badge). */
-  onPress?: () => void;
-}) {
-  return <AppleWalletBadge href={downloadUrl} onClick={onPress} />;
-}
-
-/**
- * Apple's rule for pages with the badge: say how to add where this browser cannot. In-app web
- * views go to Safari; other devices go to an iPhone or a Mac.
- */
+/** Apple's rule for pages with the badge: say how to add where this browser cannot. */
 export function AddLine({ className }: { className?: string }) {
-  const line = inAppBrowser()
-    ? HOLDER_COPY.openInSafari
-    : canAddToWallet()
-      ? null
-      : HOLDER_COPY.openOnApple;
+  const line = addLine(browserDevice());
   return line ? <p className={cn('text-sm text-fg-muted', className)}>{line}</p> : null;
 }
 
@@ -66,21 +47,26 @@ export function QrDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent title="Scan with your iPhone" description={passTitle} size="sm">
+      <DialogContent title={HOLDER_COPY.scanQr} description={passTitle} size="sm">
         <div className="flex justify-center">
-          {open ? <QrCode value={url} label={`QR code for ${passTitle}`} /> : null}
+          {open ? <HolderQr value={url} label={HOLDER_COPY.qrAlt(passTitle)} /> : null}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-/** "Show QR" as a button: the lead action where the device cannot add passes. */
+/** "Show QR" beside the badge on a tile, where this is not the phone (shared/device.ts). */
 export function ShowQrButton({ passTitle, url }: { passTitle: string; url: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant="outline" iconStart={<QrIcon aria-hidden />} onClick={() => setOpen(true)}>
+      <Button
+        variant="outline"
+        size="badge"
+        iconStart={<QrIcon aria-hidden />}
+        onClick={() => setOpen(true)}
+      >
         Show QR
       </Button>
       <QrDialog passTitle={passTitle} url={url} open={open} setOpen={setOpen} />
@@ -103,14 +89,14 @@ function useRemovePass(passId: string, onRemoved?: () => void) {
 export interface PassMenuProps {
   passId: string;
   passTitle: string;
-  /** The public page: Show QR, and on the detail page Copy link and Open public page. */
+  /** The public page: Show QR on a tile; on the detail page Copy link and Open public page. */
   publicUrl: string | null;
-  /** Detail page: a labelled outline "More" with the link items. Tiles: a ghost icon. */
+  /** Detail page: a labelled "More" with the link items (its QR is on the page). Tiles: an icon. */
   page?: boolean;
   onRemoved?: () => void;
 }
 
-/** More: Show QR, Copy link and Open public page (detail), then Remove (danger). */
+/** More beside the badge: Show QR (tiles), Copy link and Open public page (detail), then Remove. */
 export function PassMoreMenu({
   passId,
   passTitle,
@@ -121,6 +107,7 @@ export function PassMoreMenu({
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const mutation = useRemovePass(passId, onRemoved);
+  const qr = !page && publicUrl && showsAddQr(browserDevice().device);
   return (
     <>
       <DropdownMenu>
@@ -128,7 +115,7 @@ export function PassMoreMenu({
           {page ? (
             <Button
               variant="outline"
-              size="lg"
+              size="badge"
               className="max-sm:px-3"
               iconStart={<MoreHorizontal aria-hidden />}
             >
@@ -137,14 +124,14 @@ export function PassMoreMenu({
           ) : (
             <IconButton
               label="More actions"
+              variant="outline"
+              size="badge"
               icon={<MoreHorizontal aria-hidden />}
-              className="pointer-coarse:size-11"
             />
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* A QR to scan with an iPhone means nothing on the iPhone itself. */}
-          {publicUrl && !canAddToWallet() ? (
+          {qr ? (
             <DropdownMenuItem onSelect={() => setQrOpen(true)}>
               <QrIcon aria-hidden /> Show QR
             </DropdownMenuItem>
@@ -155,7 +142,7 @@ export function PassMoreMenu({
                 <Copy aria-hidden /> Copy link
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href={publicUrl}>
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink aria-hidden /> Open public page
                 </a>
               </DropdownMenuItem>
@@ -166,7 +153,7 @@ export function PassMoreMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {publicUrl ? (
+      {qr ? (
         <QrDialog passTitle={passTitle} url={publicUrl} open={qrOpen} setOpen={setQrOpen} />
       ) : null}
       <ConfirmDialog

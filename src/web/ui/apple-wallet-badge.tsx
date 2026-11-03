@@ -5,15 +5,26 @@ import { cn } from '../lib/cn.ts';
 const ALT = APPLE_BADGE_ALT;
 const src = appleBadgeSrc;
 
-/** html[data-theme] (admin choice): undefined follows the system through <picture>. */
+// /p renders the badge in the Worker, whose typecheck has no DOM lib: type the two globals used.
+const dom = globalThis as unknown as {
+  document: { documentElement: { dataset: Record<string, string | undefined> } };
+  MutationObserver: new (
+    notify: () => void,
+  ) => { observe(node: unknown, options: object): void; disconnect(): void };
+};
+
+/** html[data-theme] (the account menu's choice): undefined follows the system through <picture>. */
 function useDocTheme(): string | undefined {
   return useSyncExternalStore(
     (notify) => {
-      const mo = new MutationObserver(notify);
-      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      const mo = new dom.MutationObserver(notify);
+      mo.observe(dom.document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      });
       return () => mo.disconnect();
     },
-    () => document.documentElement.dataset.theme,
+    () => dom.document.documentElement.dataset.theme,
     () => undefined,
   );
 }
@@ -26,6 +37,8 @@ export interface AppleWalletBadgeProps {
   locale?: string;
   /** Runs as the download starts (the pass card dips towards the badge; the badge never moves). */
   onClick?: MouseEventHandler<HTMLAnchorElement>;
+  /** Server rendering (/p): the page's stamped theme, which the document cannot report yet. */
+  theme?: 'light' | 'dark' | undefined;
   className?: string;
 }
 
@@ -39,9 +52,10 @@ export function AppleWalletBadge({
   label,
   locale = 'en',
   onClick,
+  theme: stamped,
   className,
 }: AppleWalletBadgeProps) {
-  const theme = useDocTheme();
+  const theme = useDocTheme() ?? stamped;
   const forced = theme === 'dark' ? 'outline' : theme === 'light' ? 'black' : undefined;
   return (
     <a

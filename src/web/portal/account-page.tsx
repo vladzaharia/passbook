@@ -1,33 +1,44 @@
-import { LogOut } from 'lucide-react';
-import { signOut, useSession } from '../lib/session.ts';
+import { useEffect, useRef } from 'react';
+import { useSession } from '../lib/session.ts';
 import { signInMethodLabel } from '../lib/status.ts';
 import {
-  Button,
   Card,
   CardBody,
   CardHeader,
   EntityAvatar,
   KeyValue,
   PageHeader,
+  toast,
 } from '../ui/index.ts';
 import { EmailsSection } from './account-emails.tsx';
 import { SessionsSection } from './account-sessions.tsx';
 import './portal.css';
 
-export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
+export interface AccountPageProps {
+  /** ?add=email (from the empty My passes): focus the add-email row. */
+  focusAdd?: boolean;
+  /** ?verified=<email>: the add-email link just confirmed it. */
+  verified?: string;
+  /** Drops ?verified= from the URL once the toast is up (a reload must not repeat it). */
+  onVerifiedShown?: () => void;
+}
+
+/**
+ * One Account page for the person, in whichever shell it is opened from (portal /account, console
+ * /admin/account). Signing out lives in the account menu; ending every session, on Sessions.
+ */
+export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: AccountPageProps) {
   const { authed } = useSession();
-  const doSignOut = () => void signOut(authed?.csrfToken);
-  // Header and cards share one column, so Sign out ends where the cards end.
+  const confirmed = useRef(false);
+  useEffect(() => {
+    if (!verified || confirmed.current) return;
+    confirmed.current = true;
+    toast.success('Email added');
+    onVerifiedShown?.();
+  }, [verified, onVerifiedShown]);
   return (
     <div className="max-w-3xl">
-      <PageHeader
-        title="Account"
-        actions={
-          <Button variant="outline" iconStart={<LogOut aria-hidden />} onClick={doSignOut}>
-            Sign out
-          </Button>
-        }
-      />
+      <PageHeader title="Account" />
       <div className="flex flex-col gap-6">
         {authed ? (
           <Card>
