@@ -1,4 +1,7 @@
-/** The emails' seated buddy art (tools/build-email-art.ts writes it to public/email). */
+/**
+ * The emails' seated buddy art (tools/build-email-art.ts writes it to public/email), shared by the
+ * email renderer and the console's preview of the pass email.
+ */
 
 /** The moods the emails use: happy for a link sent, curious for "is this you?". */
 export const EMAIL_MOODS = ['happy', 'curious'] as const;
@@ -10,6 +13,9 @@ export type EmailScheme = (typeof EMAIL_SCHEMES)[number];
 
 export const BUDDY_SLICES = ['top', 'legs'] as const;
 export type BuddySlice = (typeof BUDDY_SLICES)[number];
+
+/** The pass is ready: happy, when the org opts in (`email.buddy`). */
+export const PASS_EMAIL_MOOD: EmailMood = 'happy';
 
 /**
  * The seated mascot over the email card, from tools/build-email-art.ts: the wallet art at the

@@ -58,6 +58,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       pass.displayTitle ?? (typeof passJson.description === 'string' ? passJson.description : null),
     summary: passSummary(passJson, { now: new Date(now) }),
     senderName: platform['email.senderName'],
+    buddyBase: orgSettings['email.buddy'] ? base : null,
   });
   const event = (outcome: 'ok' | 'failed') =>
     writeEvent(ctx.env, {

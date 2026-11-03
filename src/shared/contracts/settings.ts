@@ -34,6 +34,8 @@ export const OrgSettingsSchema = z.object({
     .max(500)
     .refine(isHttpsUrl, 'Use an https URL without credentials.')
     .optional(),
+  /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
+  'email.buddy': z.boolean().default(false),
 });
 
 export const SettingScopeSchema = z.union([z.literal('platform'), z.string().regex(/^org:.+$/)]);
