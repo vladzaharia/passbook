@@ -1,6 +1,7 @@
 import { EMAIL_TOKENS as T } from '../../generated/resolved-tokens.ts';
+import { EMAIL_BUDDY, type EmailMood } from '../../shared/email-art.ts';
 import { escapeHtml } from '../../shared/html.ts';
-import { buddySliceHtml, EMAIL_BUDDY, type EmailMood } from './buddy.ts';
+import { buddySliceHtml } from './buddy.ts';
 
 export { escapeHtml };
 

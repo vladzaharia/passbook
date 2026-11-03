@@ -8,7 +8,7 @@ import {
   EMAIL_MOODS,
   EMAIL_SCHEMES,
   sliceHeight,
-} from '../src/worker/email/buddy.ts';
+} from '../src/shared/email-art.ts';
 import { decodePng } from './lib/png.ts';
 
 const root = resolve(import.meta.dirname, '..');

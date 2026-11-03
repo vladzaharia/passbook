@@ -1,4 +1,4 @@
-import type { EmailMood } from './buddy.ts';
+import type { EmailMood } from '../../shared/email-art.ts';
 import {
   buttonHtml,
   EMAIL_LIGHT as c,

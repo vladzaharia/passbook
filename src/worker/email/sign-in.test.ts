@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import headersFile from '../../../public/_headers?raw';
-import { EMAIL_BUDDY, emailAssetUrl } from './buddy.ts';
+import { EMAIL_BUDDY } from '../../shared/email-art.ts';
+import { emailAssetUrl } from './buddy.ts';
 import { EMAIL_LIGHT, FONT } from './shell.ts';
 import { renderSignInEmail, SIGN_IN_MOOD, type SignInEmailInput } from './sign-in.ts';
 
