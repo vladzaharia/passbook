@@ -175,10 +175,19 @@ export async function peekMagicLink(
   };
 }
 
-/** Where a link, live or not, meant to return, so an expired page can keep it. */
-export async function magicLinkNext(ctx: ServiceContext, token: string): Promise<string | null> {
+export interface LinkTrace {
+  next: string | null;
+  purpose: repo.MagicPurpose;
+}
+
+/** What a link, live or not, was for and where it meant to return: its expired page says so. */
+export async function magicLinkTrace(
+  ctx: ServiceContext,
+  token: string,
+): Promise<LinkTrace | null> {
   if (token.length < 16 || token.length > 256) return null;
-  return repo.linkRedirectPath(ctx.env.DB, await sha256Hex(token));
+  const row = await repo.linkTrace(ctx.env.DB, await sha256Hex(token));
+  return row ? { next: row.redirect_path, purpose: row.purpose } : null;
 }
 
 export async function isEmailSignInEnabled(ctx: ServiceContext): Promise<boolean> {

@@ -2,19 +2,24 @@
 
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ArrowRight } from 'lucide-react';
-import { SIGN_IN_ERROR_COPY, type SignInErrorCode } from '../../../shared/copy/sign-in.ts';
+import {
+  AUTH_PAGE_COPY as COPY,
+  EXPIRED_LINK_COPY,
+  OIDC_FAILURE_COPY,
+  type OidcFailure,
+  SIGN_IN_ERROR_COPY,
+  type SignInErrorCode,
+} from '../../../shared/copy/sign-in.ts';
+import { STATE_COPY } from '../../../shared/copy/states.ts';
+import { backToSignIn } from '../../ssr/error-page.tsx';
 import type { PageTheme } from '../../ssr/head.ts';
-import { type HostedArt, hostedPage } from '../../ssr/hosted.ts';
+import { actionHtml, type HostedArt, hostedPage, type PageAction } from '../../ssr/hosted.ts';
 import { iconHtml } from '../../ssr/icon.ts';
 import { escapeHtml } from '../../ssr/theme.ts';
+import type { LinkTrace } from './magic-service.ts';
 import { loginPath, safeNext } from './next.ts';
 
-export { escapeHtml };
-
 const ARROW = iconHtml(ArrowRight);
-
-const link = (href: string, label: string, outline = false) =>
-  `<a class="btn${outline ? ' outline' : ''}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 
 const postButton = (action: string, label: string, fields: Record<string, string> = {}) =>
   `<form method="post" action="${escapeHtml(action)}">${Object.entries(fields)
@@ -24,29 +29,27 @@ const postButton = (action: string, label: string, fields: Record<string, string
 /** The confirm link itself, as a path sign-in can return to. */
 export const confirmPath = (token: string) => `/auth/magic?t=${encodeURIComponent(token)}`;
 
-/** Sign-in link: one button posts the token. An add-email link shows its requester's Confirm. */
+/** A signed-out browser on an add-email link: sign in, then come back to Confirm. */
+export const signInToConfirm = (token: string): PageAction => ({
+  label: COPY.signInToConfirm,
+  href: loginPath(confirmPath(token)),
+  primary: true,
+});
+
+/** Sign-in link: one button posts the token. */
 export function confirmPage(
   nonce: string,
-  input: {
-    token: string;
-    email: string;
-    purpose?: 'sign_in' | 'verify_email';
-    requester?: string | null;
-  },
+  input: { token: string; email: string },
   theme?: PageTheme,
 ): string {
-  if (input.purpose === 'verify_email') {
-    const verify = { ...input, requester: input.requester ?? null, viewer: 'requester' } as const;
-    return verifyPage(nonce, verify, theme);
-  }
   return hostedPage({
     nonce,
     theme,
-    title: 'Sign in',
+    title: COPY.signIn,
     art: 'confirm',
     lede: `As <b>${escapeHtml(input.email)}</b>`,
     footer: true,
-    body: postButton('/auth/magic/consume', `Sign in${ARROW}`, { token: input.token }),
+    body: postButton('/auth/magic/consume', `${COPY.signIn}${ARROW}`, { token: input.token }),
   });
 }
 
@@ -69,107 +72,125 @@ export function verifyPage(
   const adds = `Adds <b>${escapeHtml(input.email)}</b>${input.requester ? ` to ${escapeHtml(input.requester)}` : ''}.`;
   const body =
     input.viewer === 'requester'
-      ? postButton('/auth/magic/consume', 'Confirm', { token: input.token })
+      ? postButton('/auth/magic/consume', COPY.confirm, { token: input.token })
       : input.viewer === 'signed-out'
-        ? link(loginPath(back), 'Sign in to confirm')
-        : postButton(`/auth/logout?next=${encodeURIComponent(back)}`, 'Switch account');
+        ? actionHtml(signInToConfirm(input.token))
+        : postButton(`/auth/logout?next=${encodeURIComponent(back)}`, STATE_COPY.switchAccount);
   return hostedPage({
     nonce,
     theme,
-    title: 'Confirm email',
+    title: COPY.confirmEmail,
     art: input.viewer === 'requester' ? 'confirm' : 'login',
-    lede: input.viewer === 'other' ? `${adds} This browser is signed in to another account.` : adds,
+    lede: input.viewer === 'other' ? `${adds} ${COPY.otherAccount}` : adds,
     body,
   });
 }
 
-/** Link or code no longer valid: one card greys and droops. */
-export function expiredPage(nonce: string, next: string | null = null, theme?: PageTheme): string {
+/**
+ * A dead link: the gold pass droops. A sign-in link leads back to sign-in (keeping its next); an
+ * add-email link leads to Account, where the address is added again.
+ */
+export function expiredPage(
+  nonce: string,
+  link: LinkTrace | null = null,
+  theme?: PageTheme,
+): string {
+  const verify = link?.purpose === 'verify_email';
+  const copy = EXPIRED_LINK_COPY[verify ? 'verify_email' : 'sign_in'];
   return hostedPage({
     nonce,
     theme,
-    title: 'Link expired',
+    title: copy.title,
     art: 'expired',
-    lede: 'Request a new one to sign in.',
-    footer: true,
-    body: link(loginPath(next), 'Back to sign in'),
+    lede: escapeHtml(copy.message),
+    footer: !verify,
+    body: actionHtml(
+      verify ? { label: copy.action, href: '/account' } : backToSignIn(loginPath(link?.next)),
+    ),
   });
 }
 
-/** Polaris ID worked but the account may not use PassBook: the fan closes under a padlock. */
+/** Polaris ID worked but the account may not use PassBook: the buddy tugs at the padlock. */
 export function noAccessPage(nonce: string, next: string | null = null, theme?: PageTheme): string {
   const keep = safeNext(next) ? `&next=${encodeURIComponent(safeNext(next) ?? '')}` : '';
+  const copy = SIGN_IN_ERROR_COPY.NO_ACCESS;
   return hostedPage({
     nonce,
     theme,
-    title: 'No access',
+    title: copy.title,
     art: 'no-access',
-    lede: escapeHtml(SIGN_IN_ERROR_COPY.NO_ACCESS.message),
+    lede: escapeHtml(copy.message),
     footer: true,
-    body: `<div class="stack">${link(loginPath(next, 'focus=email'), 'Sign in with email instead')}${link(`/auth/oidc/start?prompt=login${keep}`, 'Use another Polaris ID', true)}</div>`,
+    body: `<div class="stack">${actionHtml({ label: COPY.emailInstead, href: loginPath(next, 'focus=email'), primary: true })}${actionHtml({ label: COPY.otherPolarisId, href: `/auth/oidc/start?prompt=login${keep}` })}</div>`,
   });
 }
 
-export function messagePage(
+function messagePage(
   nonce: string,
-  input: { title: string; message: string; href?: string; action?: string; art?: HostedArt },
+  input: { title: string; message: string; action: PageAction; art: HostedArt },
   theme?: PageTheme,
 ): string {
   return hostedPage({
     nonce,
     theme,
     title: input.title,
-    art: input.art ?? 'expired',
+    art: input.art,
     lede: escapeHtml(input.message),
     footer: true,
-    body: input.href ? link(input.href, input.action ?? 'Continue') : '',
+    body: actionHtml(input.action),
   });
 }
 
-const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art?: HostedArt }> = {
+/**
+ * Each refusal's status and meaning (the buddy spec): sad, with forbidden's padlock, an error's
+ * plug, expired's drooping pass or a rate limit's hourglass. A sent proof waits for you instead.
+ */
+const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedArt }> = {
   NO_ACCESS: { status: 403, art: 'no-access' },
   ACCOUNT_DISABLED: { status: 403, art: 'no-access' },
-  NO_EMAIL: { status: 403 },
-  EMAIL_CONFLICT: { status: 403 },
+  NO_EMAIL: { status: 403, art: 'no-access' },
+  EMAIL_CONFLICT: { status: 403, art: 'no-access' },
   EMAIL_PROOF_SENT: { status: 403, art: 'login' },
-  SESSION_REQUIRED: { status: 403 },
-  LINK_INVALID: { status: 400 },
-  EMAIL_TAKEN: { status: 403 },
+  SESSION_REQUIRED: { status: 403, art: 'no-access' },
+  LINK_INVALID: { status: 400, art: 'expired' },
+  EMAIL_TAKEN: { status: 403, art: 'no-access' },
   MAGIC_LINK_DISABLED: { status: 503, art: 'no-access' },
   RATE_LIMITED: { status: 429, art: 'throttled' },
-  VALIDATION: { status: 422 },
+  VALIDATION: { status: 422, art: 'broken' },
 };
-
-/** A refused sign-in by code: the shared copy, its status and art. */
-export const SIGN_IN_ERRORS: Record<
-  string,
-  { title: string; message: string; status: ContentfulStatusCode; art?: HostedArt }
-> = Object.fromEntries(
-  Object.entries(PAGE).map(([code, page]) => [
-    code,
-    { ...SIGN_IN_ERROR_COPY[code as SignInErrorCode], ...page },
-  ]),
-);
 
 /** The page for a refused sign-in: the shared copy, a status and a way back that keeps next. */
 export function signInErrorPage(
   nonce: string,
   code: SignInErrorCode,
-  opts: { next?: string | null; href?: string; action?: string } = {},
+  opts: { next?: string | null; action?: PageAction } = {},
   theme?: PageTheme,
 ): { html: string; status: ContentfulStatusCode } {
   const { status, art } = PAGE[code];
-  const html = messagePage(
+  const action = opts.action ?? backToSignIn(loginPath(opts.next));
+  return { html: messagePage(nonce, { ...SIGN_IN_ERROR_COPY[code], action, art }, theme), status };
+}
+
+const OIDC_ART: Record<OidcFailure, HostedArt> = {
+  cancelled: 'broken',
+  expired: 'expired',
+  unverified: 'broken',
+  unavailable: 'broken',
+};
+
+/** A Polaris ID round trip that did not finish: one line and a way back that keeps next. */
+export function oidcFailurePage(
+  nonce: string,
+  failure: OidcFailure,
+  next: string | null,
+  theme?: PageTheme,
+): string {
+  const action = backToSignIn(loginPath(next));
+  return messagePage(
     nonce,
-    {
-      ...SIGN_IN_ERROR_COPY[code],
-      href: opts.href ?? loginPath(opts.next),
-      action: opts.action ?? 'Back to sign in',
-      ...(art ? { art } : {}),
-    },
+    { ...OIDC_FAILURE_COPY[failure], action, art: OIDC_ART[failure] },
     theme,
   );
-  return { html, status };
 }
 
 /** Admin break-glass: a key on the clasp turns. */
@@ -184,9 +205,9 @@ export function breakglassPage(
   return hostedPage({
     nonce,
     theme,
-    title: 'Break-glass sign-in',
+    title: COPY.breakglass,
     art: 'break-glass',
     ...(input.error ? { error: input.error } : {}),
-    body: `<form class="stack" method="post" action="/auth/breakglass"><div><label for="t">Token</label><input id="t" name="token" type="password" autocomplete="off" required${input.error ? ' aria-invalid="true"' : ''}></div>${next}<button class="btn" type="submit">Sign in</button></form>`,
+    body: `<form class="stack" method="post" action="/auth/breakglass"><div><label for="t">${COPY.token}</label><input id="t" name="token" type="password" autocomplete="off" required${input.error ? ' aria-invalid="true"' : ''}></div>${next}<button class="btn" type="submit">${COPY.signIn}</button></form>`,
   });
 }

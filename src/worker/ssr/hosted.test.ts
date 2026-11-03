@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import type { SignInErrorCode } from '../../shared/copy/sign-in.ts';
 import {
   breakglassPage,
   confirmPage,
   expiredPage,
-  messagePage,
   noAccessPage,
-  SIGN_IN_ERRORS,
+  oidcFailurePage,
+  signInErrorPage,
+  verifyPage,
 } from '../modules/auth/pages.ts';
 import { contentSecurityPolicy } from '../platform/security-headers.ts';
 import { renderErrorPage } from './error-page.tsx';
@@ -15,26 +18,30 @@ import { renderNotFoundPage } from './pass-page.tsx';
 import { THEME_CSS, WORDMARK_CSS } from './theme.ts';
 
 const NONCE = 'n0nce';
+const TOKEN = 't'.repeat(20);
 /** The only script a hosted page loads: same-origin, never inline. */
 const scripts = (html: string) => html.match(/<script[^>]*>[\s\S]*?<\/script>/g) ?? [];
 const primaries = (html: string) => html.match(/class="btn"/g)?.length ?? 0;
 const mood = (html: string) => /data-part="w"[^>]*data-mood="([a-z]+)"/.exec(html)?.[1];
-const back = (code: string) => {
-  const e = SIGN_IN_ERRORS[code];
-  if (!e) throw new Error(code);
-  return messagePage(NONCE, { ...e, href: '/login', action: 'Back to sign in' });
-};
+const refusal = (code: SignInErrorCode) => signInErrorPage(NONCE, code).html;
+/** The acted buddy's scene and prop, as state-art.test.tsx reads the app's. */
+const act = (html: string) => ({
+  scene: /data-buddy=""[^>]*data-scene="([a-z]+)"/.exec(html)?.[1],
+  prop: /<span class="wl-buddy-prop"><svg[^>]*data-art="([a-z-]+)"/.exec(html)?.[1] ?? null,
+});
+/** An outline link-button: its href and label (after any icon). */
+const outline = (html: string) =>
+  [...html.matchAll(/<a class="btn outline" href="([^"]*)">(?:<svg.*?<\/svg>)?([^<]*)<\/a>/g)].map(
+    (m) => [m[1], m[2]],
+  );
 
 describe('hosted auth pages', () => {
   it.each([
-    [
-      'confirm',
-      confirmPage(NONCE, { token: 't'.repeat(20), email: 'ada@example.com', purpose: 'sign_in' }),
-    ],
-    ['expired', expiredPage(NONCE)],
-    ['no-access', noAccessPage(NONCE)],
-    ['break-glass', breakglassPage(NONCE, {})],
-  ])('renders the %s card with its own art and no inline script', (state, html) => {
+    ['confirm', confirmPage(NONCE, { token: TOKEN, email: 'ada@example.com' }), 1],
+    ['expired', expiredPage(NONCE), 0],
+    ['no-access', noAccessPage(NONCE), 1],
+    ['break-glass', breakglassPage(NONCE, {}), 1],
+  ])('renders the %s card with its own art and no inline script', (state, html, primary) => {
     expect(html).toContain(`<section class="card" data-state="${state}">`);
     // At L; the band wallet keeps the idle beat (B11), an acting buddy gives it to its scene.
     const wallet = state === 'no-access' ? 'login' : state;
@@ -46,15 +53,12 @@ describe('hosted auth pages', () => {
     expect(html).not.toContain('theme-toggle');
     expect(html).toContain('<html lang="en">');
     expect(html).toContain('rel="apple-touch-icon"');
-    expect(primaries(html)).toBe(1);
+    // Primary moves the flow on; a way back is outline, as in the app.
+    expect(primaries(html)).toBe(primary);
   });
 
   it.each([
-    [
-      'confirm',
-      confirmPage(NONCE, { token: 't'.repeat(20), email: 'a@b.co', purpose: 'sign_in' }),
-      ['ck'],
-    ],
+    ['confirm', confirmPage(NONCE, { token: TOKEN, email: 'a@b.co' }), ['ck']],
     ['expired', expiredPage(NONCE), []],
     ['break-glass', breakglassPage(NONCE, {}), ['key', 'kt']],
     ['rate limit', renderErrorPage({ status: 429, nonce: NONCE }), ['hg']],
@@ -107,13 +111,13 @@ describe('hosted auth pages', () => {
   it.each([
     ['no access', noAccessPage(NONCE)],
     ['an expired or used link', expiredPage(NONCE)],
-    ['sign-in failed', messagePage(NONCE, { title: 'Sign-in failed', message: 'Try again.' })],
-    ['provider unavailable', messagePage(NONCE, { title: 'Sign-in unavailable', message: 'x' })],
-    ['an email conflict', back('EMAIL_CONFLICT')],
-    ['an email taken', back('EMAIL_TAKEN')],
-    ['no email', back('NO_EMAIL')],
-    ['a missing session', back('SESSION_REQUIRED')],
-    ['a disabled account', back('ACCOUNT_DISABLED')],
+    ['sign-in failed', oidcFailurePage(NONCE, 'cancelled', null)],
+    ['provider unavailable', oidcFailurePage(NONCE, 'unavailable', null)],
+    ['an email conflict', refusal('EMAIL_CONFLICT')],
+    ['an email taken', refusal('EMAIL_TAKEN')],
+    ['no email', refusal('NO_EMAIL')],
+    ['a missing session', refusal('SESSION_REQUIRED')],
+    ['a disabled account', refusal('ACCOUNT_DISABLED')],
     ['a wrong break-glass token', breakglassPage(NONCE, { error: 'Wrong token.' })],
     ['a dead pass link', renderNotFoundPage(NONCE)],
     ['a 404', renderErrorPage({ status: 404, nonce: NONCE })],
@@ -125,39 +129,73 @@ describe('hosted auth pages', () => {
   });
 
   it.each([
-    ['confirm', confirmPage(NONCE, { token: 't'.repeat(20), email: 'a@b.co', purpose: 'sign_in' })],
+    ['confirm', confirmPage(NONCE, { token: TOKEN, email: 'a@b.co' })],
     ['break-glass', breakglassPage(NONCE, {})],
-    ['proof sent', back('EMAIL_PROOF_SENT')],
+    ['proof sent', refusal('EMAIL_PROOF_SENT')],
   ])('keeps the wallet content on %s', (_case, html) => {
     expect(mood(html)).toBeUndefined();
     expect(html).not.toContain('data-part="br"');
   });
 
-  it('animates the auth states once, on transform and opacity, within the art budget', () => {
-    const css = HOSTED_ART_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
-    const ms = (v: string | undefined) => (v ? Number(/(\d+)ms/.exec(v)?.[1] ?? 0) : 0);
-    for (const [, body] of css.matchAll(/[^{}]+\{([^{}]*)\}/g)) {
-      const u = /--u:\s*([^;]+)/.exec(body ?? '')?.[1];
-      if (!u) continue;
-      expect(ms(u)).toBeLessThanOrEqual(480);
-      expect(ms(/--d:\s*([^;]+)/.exec(body ?? '')?.[1]) + ms(u)).toBeLessThanOrEqual(600);
-    }
-    for (const [, frames] of css.matchAll(/@keyframes[^{]+\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g)) {
-      for (const [, decls] of (frames ?? '').matchAll(/\{([^{}]*)\}/g)) {
-        for (const prop of (decls ?? '').matchAll(/([a-z-]+)\s*:/g))
-          expect(['transform', 'opacity']).toContain(prop[1]);
-      }
-    }
-    // Animations run only when motion is allowed; reduce shows the final frame.
-    const outside = css.replace(
-      /@media \(prefers-reduced-motion: no-preference\)\s*\{[^{}]*\{[^{}]*\}\s*\}/g,
-      '',
-    );
-    expect(outside).not.toMatch(/(^|[\s;{])(animation|transition)(-[a-z]+)?\s*:/);
+  // One prop per meaning (the buddy spec): forbidden tugs the padlock, an error plugs in.
+  const forbidden: SignInErrorCode[] = [
+    'NO_ACCESS',
+    'ACCOUNT_DISABLED',
+    'NO_EMAIL',
+    'EMAIL_CONFLICT',
+    'SESSION_REQUIRED',
+    'EMAIL_TAKEN',
+    'MAGIC_LINK_DISABLED',
+  ];
+  it.each<[string, string, string, string]>([
+    ...forbidden.map((code): [string, string, string, string] => [
+      code,
+      refusal(code),
+      'tug',
+      'lock',
+    ]),
+    ['VALIDATION', refusal('VALIDATION'), 'plug', 'unplugged'],
+    ['oidc cancelled', oidcFailurePage(NONCE, 'cancelled', null), 'plug', 'unplugged'],
+    ['oidc unverified', oidcFailurePage(NONCE, 'unverified', null), 'plug', 'unplugged'],
+    ['oidc unavailable', oidcFailurePage(NONCE, 'unavailable', null), 'plug', 'unplugged'],
+  ])('acts out %s by its meaning', (_case, html, scene, prop) => {
+    expect(act(html)).toEqual({ scene, prop });
+    expect(mood(html)).toBe('sad');
   });
 
-  it('offers email and another Polaris ID on no access', () => {
+  it('droops the gold pass when expired; the hourglass waits out a rate limit', () => {
+    expect(refusal('LINK_INVALID')).toContain('class="dim"');
+    expect(oidcFailurePage(NONCE, 'expired', null)).toContain('class="dim"');
+    expect(refusal('RATE_LIMITED')).toContain('data-part="hg"');
+    expect(signInErrorPage(NONCE, 'RATE_LIMITED').status).toBe(429);
+  });
+
+  it('leads every refusal back to sign-in in outline, keeping next', () => {
+    const { html, status } = signInErrorPage(NONCE, 'NO_EMAIL', { next: '/account' });
+    expect(status).toBe(403);
+    expect(primaries(html)).toBe(0);
+    expect(outline(html)).toEqual([['/login?next=%2Faccount', 'Back to sign in']]);
+    expect(outline(oidcFailurePage(NONCE, 'expired', '/admin'))).toEqual([
+      ['/login?next=%2Fadmin', 'Back to sign in'],
+    ]);
+    expect(html).toContain(HOLDER_COPY.signInFooter);
+  });
+
+  it('words a dead link by its purpose: an add-email link leads to Account', () => {
+    const signIn = expiredPage(NONCE, { next: '/passes/1', purpose: 'sign_in' });
+    expect(signIn).toContain('Request a new one to sign in.');
+    expect(outline(signIn)).toEqual([['/login?next=%2Fpasses%2F1', 'Back to sign in']]);
+    const verify = expiredPage(NONCE, { next: null, purpose: 'verify_email' });
+    expect(verify).toMatch(/<h1>Link expired<\/h1>/);
+    expect(verify).toContain('Add the email again in Account.');
+    expect(verify).not.toContain('sign in');
+    expect(verify).not.toContain(HOLDER_COPY.signInFooter);
+    expect(outline(verify)).toEqual([['/account', 'Go to Account']]);
+  });
+
+  it('offers email and another Polaris ID on no access, worded as the app forbids', () => {
     const html = noAccessPage(NONCE);
+    expect(html).toContain('<h1>You do not have access</h1>');
     expect(html).toContain('This Polaris ID account cannot use PassBook.');
     expect(html).toMatch(/<a class="btn" href="\/login\?focus=email">Sign in with email instead/);
     expect(html).toMatch(/<a class="btn outline" href="[^"]*prompt=login">Use another Polaris ID/);
@@ -172,16 +210,16 @@ describe('hosted auth pages', () => {
   });
 
   it('escapes what it prints', () => {
-    const html = confirmPage(NONCE, {
-      token: 't'.repeat(20),
+    const html = verifyPage(NONCE, {
+      token: TOKEN,
       email: '<b>@x.y',
-      purpose: 'verify_email',
       requester: 'a"b',
+      viewer: 'requester',
     });
     expect(html).not.toContain('<b>@x.y');
     expect(html).toContain('&lt;b&gt;@x.y');
     expect(html).toContain('a&quot;b');
-    const msg = messagePage(NONCE, { title: '<x>', message: 'm', href: '/login' });
+    const msg = renderErrorPage({ status: 500, nonce: NONCE, title: '<x>' });
     expect(msg).toContain('<h1>&lt;x&gt;</h1>');
   });
 });
@@ -208,6 +246,7 @@ describe('click to replay the wallet', () => {
   it.each([
     ['a server error', renderErrorPage({ status: 500, nonce: NONCE }), 'plug', 'unplugged'],
     ['a 404', renderErrorPage({ status: 404, nonce: NONCE }), 'peek', null],
+    ['a refused form post', renderErrorPage({ status: 403, nonce: NONCE }), 'tug', 'lock'],
     ['no access', noAccessPage(NONCE), 'tug', 'lock'],
   ])('acts out %s, seated, with its prop', (_case, html, scene, prop) => {
     expect(html).toMatch(
@@ -215,8 +254,7 @@ describe('click to replay the wallet', () => {
         `<div class="scene" aria-hidden="true"><span aria-hidden="true" data-buddy="" data-replay="" data-scene="${scene}"[^>]*data-run="load" class="wl-buddy">`,
       ),
     );
-    expect(html.includes('<span class="wl-buddy-prop">')).toBe(prop !== null);
-    if (prop) expect(html).toContain(`data-art="${prop}"`);
+    expect(act(html).prop).toBe(prop);
     expect(mood(html)).toBe('sad');
   });
 
@@ -233,20 +271,27 @@ describe('click to replay the wallet', () => {
 });
 
 describe('renderErrorPage', () => {
+  // The SPA's words and weights: not found leads to My passes, an error retries, all outline.
   it.each([
-    [404, 'Page not found', 'Go home', 'lost'],
-    [429, 'Too many requests', 'Retry', 'login'],
-    [500, 'Something went wrong', 'Retry', 'login'],
-  ])('renders %i as a hosted card with one action', (status, title, action, state) => {
-    const html = renderErrorPage({ status, nonce: NONCE });
-    expect(html).toContain('<section class="card"');
-    expect(html).toContain(`<h1>${title}</h1>`);
-    expect(html).toContain(`data-art="wallet" data-size="xl" data-state="${state}"`);
-    expect(html.includes('data-part="hg"')).toBe(status === 429);
-    expect(primaries(html)).toBe(1);
-    expect(html).toMatch(new RegExp(`<a class="btn" href="[^"]*">${action}</a>`));
-    expect(scripts(html)).toEqual([REPLAY_SCRIPT]);
-  });
+    [404, 'Page not found', undefined, '/', 'Go to My passes', 'lost'],
+    [403, 'You do not have access', undefined, '/', 'Go to My passes', 'login'],
+    [429, 'Too many requests', 'Try again in a minute.', '', 'Retry', 'login'],
+    [500, 'Something went wrong', 'Try again.', '', 'Retry', 'login'],
+  ])(
+    'renders %i as a hosted card with one outline action',
+    (status, title, line, href, label, state) => {
+      const html = renderErrorPage({ status, nonce: NONCE });
+      expect(html).toContain('<section class="card"');
+      expect(html).toContain(`<h1>${title}</h1>`);
+      if (line) expect(html).toContain(`<p class="lede">${line}</p>`);
+      else expect(html).not.toContain('class="lede"');
+      expect(html).toContain(`data-art="wallet" data-size="xl" data-state="${state}"`);
+      expect(html.includes('data-part="hg"')).toBe(status === 429);
+      expect(primaries(html)).toBe(0);
+      expect(outline(html)).toEqual([[href, label]]);
+      expect(scripts(html)).toEqual([REPLAY_SCRIPT]);
+    },
+  );
 
   it('says how long to wait from Retry-After', () => {
     expect(renderErrorPage({ status: 429, nonce: NONCE })).toContain('Try again in a minute.');

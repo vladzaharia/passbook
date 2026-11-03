@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { isSignInErrorCode, OIDC_FAILURE_COPY } from '../../../shared/copy/sign-in.ts';
+import { isSignInErrorCode, type OidcFailure } from '../../../shared/copy/sign-in.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { envString } from '../../platform/env.ts';
@@ -18,7 +18,7 @@ import {
   setSessionCookie,
 } from './cookies.ts';
 import { MAGIC_TTL_MS } from './magic-service.ts';
-import { homeFor, loginPath, safeNext } from './next.ts';
+import { homeFor, safeNext } from './next.ts';
 import { OIDC_SCOPE, oidcRedirectUri, usesCimd } from './oidc-cimd.ts';
 import {
   authorizationUrl,
@@ -32,7 +32,7 @@ import {
   redeemAuthorizationCode,
 } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
-import { messagePage, noAccessPage, signInErrorPage } from './pages.ts';
+import { noAccessPage, oidcFailurePage, signInErrorPage } from './pages.ts';
 import { saveOidcFlow, takeOidcFlow } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
@@ -58,18 +58,11 @@ export function oidcConfig(env: AppBindings['Bindings']): RelyingParty | null {
 /** A failed round trip: one line and a way back to sign-in that keeps next. */
 function errorPage(
   c: Context<AppBindings>,
-  copy: { title: string; message: string },
+  failure: OidcFailure,
   status: 400 | 502,
   next: string | null,
 ) {
-  return c.html(
-    messagePage(
-      c.var.nonce,
-      { ...copy, href: loginPath(next), action: 'Back to sign in' },
-      requestTheme(c),
-    ),
-    status,
-  );
+  return c.html(oidcFailurePage(c.var.nonce, failure, next, requestTheme(c)), status);
 }
 
 /** GET /auth/no-access: where a Polaris ID without PassBook access lands (a clean URL). */
@@ -120,14 +113,14 @@ export async function callbackOidc(c: Context<AppBindings>) {
   const { code, state, iss, error } = c.req.query();
   const binding = readCookie(c, OIDC_COOKIE);
   clearCookie(c, OIDC_COOKIE);
-  if (!state || !binding) return errorPage(c, OIDC_FAILURE_COPY.cancelled, 400, null);
+  if (!state || !binding) return errorPage(c, 'cancelled', 400, null);
   const rp = oidcConfig(c.env);
   if (!rp) throw new UnavailableError('Sign-in is not configured.', 'OIDC_UNCONFIGURED');
 
   const flow = await takeOidcFlow(ctx, await sha256Hex(state), await sha256Hex(binding));
-  if (!flow) return errorPage(c, OIDC_FAILURE_COPY.expired, 400, null);
+  if (!flow) return errorPage(c, 'expired', 400, null);
   const next = flow.redirect_path;
-  if (error || !code) return errorPage(c, OIDC_FAILURE_COPY.cancelled, 400, next);
+  if (error || !code) return errorPage(c, 'cancelled', 400, next);
 
   let claims: Record<string, unknown>;
   try {
@@ -145,11 +138,11 @@ export async function callbackOidc(c: Context<AppBindings>) {
   } catch (cause) {
     if (cause instanceof OidcNetworkError) {
       ctx.log.error('auth.oidc_network', { error: cause });
-      return errorPage(c, OIDC_FAILURE_COPY.unavailable, 502, next);
+      return errorPage(c, 'unavailable', 502, next);
     }
     if (cause instanceof OidcVerifyError || cause instanceof OidcGrantRefusedError) {
       ctx.log.warn('auth.oidc_rejected', { code: 'OIDC_REJECTED', error: cause });
-      return errorPage(c, OIDC_FAILURE_COPY.unverified, 400, next);
+      return errorPage(c, 'unverified', 400, next);
     }
     throw cause;
   }

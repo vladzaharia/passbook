@@ -1,9 +1,13 @@
 /**
  * HTML error pages for worker routes a browser opens (never problem+json there). Built on the
- * hosted shell with static art; one h1, one line, one primary action.
+ * hosted shell with the app's state art; one h1, one line, one action. The words and the action's
+ * weight are the SPA's (shared/copy/states.ts, ui/layout/error-pages.tsx, ui/error-state.tsx).
  */
+import { ArrowLeft, RefreshCw, WalletCards } from 'lucide-react';
+import { AUTH_PAGE_COPY } from '../../shared/copy/sign-in.ts';
+import { STATE_COPY, waitLine } from '../../shared/copy/states.ts';
 import type { PageTheme } from './head.ts';
-import { type HostedArt, hostedPage } from './hosted.ts';
+import { actionHtml, type HostedArt, hostedPage, type PageAction } from './hosted.ts';
 import { escapeHtml } from './theme.ts';
 
 export interface ErrorPageInput {
@@ -15,30 +19,48 @@ export interface ErrorPageInput {
   title?: string;
   line?: string;
   /** The one action. Retry defaults to the current URL (`href` "" reloads the page). */
-  action?: { label: string; href: string };
+  action?: PageAction;
   /** Seconds from a 429's Retry-After header. */
   retryAfter?: number | null;
 }
 
-function waitLine(seconds: number | null | undefined): string {
-  if (!seconds || seconds <= 60) return 'Try again in a minute.';
-  const minutes = Math.ceil(seconds / 60);
-  return `Try again in ${minutes} minutes.`;
-}
+/** Not found and forbidden lead home, as the app's pages do. */
+export const GO_TO_MY_PASSES: PageAction = {
+  label: STATE_COPY.goToMyPasses,
+  href: '/',
+  icon: WalletCards,
+};
 
-function defaults(input: ErrorPageInput): { title: string; line?: string; art: HostedArt } {
-  if (input.status === 404) return { title: 'Page not found', art: 'lost' };
-  if (input.status === 429) {
-    return { title: 'Too many requests', line: waitLine(input.retryAfter), art: 'throttled' };
+export const backToSignIn = (href = '/login'): PageAction => ({
+  label: AUTH_PAGE_COPY.backToSignIn,
+  href,
+  icon: ArrowLeft,
+});
+
+const RETRY: PageAction = { label: STATE_COPY.retry, href: '', icon: RefreshCw };
+
+/** Each status's meaning: its words, its art (a sad buddy with the prop) and its way on. */
+function defaults(input: ErrorPageInput): {
+  title: string;
+  line?: string;
+  art: HostedArt;
+  action: PageAction;
+} {
+  if (input.status === 404) {
+    return { title: STATE_COPY.pageNotFound, art: 'lost', action: GO_TO_MY_PASSES };
   }
-  return { title: 'Something went wrong', art: 'broken' };
+  if (input.status === 403) {
+    return { title: STATE_COPY.forbidden, art: 'no-access', action: GO_TO_MY_PASSES };
+  }
+  if (input.status === 429) {
+    const line = waitLine(input.retryAfter);
+    return { title: STATE_COPY.rateLimited, line, art: 'throttled', action: RETRY };
+  }
+  return { title: STATE_COPY.errorTitle, line: STATE_COPY.tryAgain, art: 'broken', action: RETRY };
 }
 
 export function renderErrorPage(input: ErrorPageInput): string {
   const d = defaults(input);
-  const action =
-    input.action ??
-    (input.status === 404 ? { label: 'Go home', href: '/' } : { label: 'Retry', href: '' });
   const line = input.line ?? d.line;
   return hostedPage({
     nonce: input.nonce,
@@ -46,6 +68,6 @@ export function renderErrorPage(input: ErrorPageInput): string {
     title: input.title ?? d.title,
     art: d.art,
     ...(line ? { lede: escapeHtml(line) } : {}),
-    body: `<a class="btn" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>`,
+    body: actionHtml(input.action ?? d.action),
   });
 }

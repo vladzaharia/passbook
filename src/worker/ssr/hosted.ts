@@ -6,14 +6,13 @@
  * The art moves in CSS only, once on load; one same-origin script (public/buddy-replay.js) replays
  * its scene on a click. No inline script.
  */
-import { Lock, OctagonX } from 'lucide-react';
+import { Lock, type LucideIcon, OctagonX } from 'lucide-react';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { ART_CSS } from '../../web/ui/art/css.ts';
 import { appPageHead, documentStart, type PageTheme } from './head.ts';
 import { HOSTED_ART_CSS, type HostedArt, stateArtHtml } from './hosted-art.tsx';
 import { iconHtml } from './icon.ts';
 import { escapeHtml, THEME_CSS, WORDMARK_CSS, wordmarkHtml } from './theme.ts';
-
-export const HOSTED_FOOTER = 'Signing in shows the passes sent to your email.';
 
 /** Click to replay the buddy's scene; same-origin, so `script-src 'self'` covers it. */
 export const REPLAY_SCRIPT = '<script src="/buddy-replay.js" defer></script>';
@@ -66,6 +65,21 @@ export interface HostedPageInput {
   footer?: boolean;
 }
 
+/**
+ * One link-styled action. Primary moves the flow on (Sign in, Confirm); a way back or a retry is
+ * outline, as in the app's state boxes.
+ */
+export interface PageAction {
+  label: string;
+  /** "" reloads the page (Retry). */
+  href: string;
+  icon?: LucideIcon;
+  primary?: boolean;
+}
+
+export const actionHtml = ({ label, href, icon, primary }: PageAction) =>
+  `<a class="btn${primary ? '' : ' outline'}" href="${escapeHtml(href)}">${icon ? iconHtml(icon) : ''}${escapeHtml(label)}</a>`;
+
 export const calloutHtml = (message: string) =>
   `<p class="callout" role="alert">${iconHtml(OctagonX)}<span>${escapeHtml(message)}</span></p>`;
 
@@ -75,7 +89,7 @@ export function hostedPage(input: HostedPageInput): string {
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer
-    ? `<p class="foot">${iconHtml(Lock)}${escapeHtml(HOSTED_FOOTER)}</p>`
+    ? `<p class="foot">${iconHtml(Lock)}${escapeHtml(HOLDER_COPY.signInFooter)}</p>`
     : '';
   return `${documentStart(input.theme)}${appPageHead(input.title)}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
 }
