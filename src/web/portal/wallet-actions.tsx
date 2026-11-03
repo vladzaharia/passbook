@@ -93,6 +93,8 @@ export interface PassMenuProps {
   publicUrl: string | null;
   /** Detail page: a labelled "More" with the link items (its QR is on the page). Tiles: an icon. */
   page?: boolean;
+  /** Detail page, in the column beside the QR: the label stays on phones too (a row drops it). */
+  stacked?: boolean;
   onRemoved?: () => void;
 }
 
@@ -102,6 +104,7 @@ export function PassMoreMenu({
   passTitle,
   publicUrl,
   page = false,
+  stacked = false,
   onRemoved,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
@@ -116,10 +119,10 @@ export function PassMoreMenu({
             <Button
               variant="outline"
               size="badge"
-              className="max-sm:px-3"
+              className={stacked ? undefined : 'max-sm:px-3'}
               iconStart={<MoreHorizontal aria-hidden />}
             >
-              <span className="max-sm:sr-only">More</span>
+              <span className={stacked ? undefined : 'max-sm:sr-only'}>More</span>
             </Button>
           ) : (
             <IconButton
