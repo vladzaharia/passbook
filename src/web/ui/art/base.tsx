@@ -4,11 +4,7 @@ import './art-records.css';
 import './art-details.css';
 import './art-wallet.css';
 
-/**
- * The scale (motion-and-expression.md, The buddy): sm is S, 64×48 (cards, tabs, the palette, the
- * pass stage); lg is M, 96×72 (state boxes); xl is L, 128×96 and 112×84 under 640 (the sign-in
- * and SSR bands). Each tier draws its own line: 1.25, 1.5 and 1.75 px (art.css).
- */
+/** S, M and L (motion-and-expression.md, The buddy); each draws its own line (art.css). */
 export type ArtSize = 'sm' | 'lg' | 'xl';
 
 export interface ArtProps {
