@@ -1,6 +1,14 @@
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { buildUrl, createApiClient } from './api.ts';
+import {
+  buildUrl,
+  createApiClient,
+  endSession,
+  resetSessionEnded,
+  sessionEndedHref,
+  useSessionEnded,
+} from './api.ts';
 import { ApiError, errorMessage, problemToError } from './errors.ts';
 
 const Item = z.object({ id: z.string() });
@@ -125,7 +133,7 @@ describe('api client', () => {
     expect(error.status).toBe(502);
     expect(error.code).toBe('server_error');
     expect(error.isTransient).toBe(true);
-    expect(errorMessage(error)).toBe('Server error. Try again.');
+    expect(errorMessage(error)).toBe('Something went wrong. Try again.');
   });
 
   it('maps a network failure to status 0', async () => {
@@ -194,10 +202,40 @@ describe('problemToError', () => {
 });
 
 describe('errorMessage', () => {
+  it('passes a written sentence through, so it never wraps twice', () => {
+    expect(errorMessage('Allow clipboard access and try again.')).toBe(
+      'Allow clipboard access and try again.',
+    );
+    const conflict = new ApiError({ status: 409, code: 'x', detail: 'Taken.' });
+    expect(errorMessage(errorMessage(conflict))).toBe('Taken.');
+  });
+
   it('never leaks unknown errors', () => {
     expect(errorMessage(new Error('secret stack'))).toBe('Something went wrong. Try again.');
     expect(errorMessage(new ApiError({ status: 403, code: 'forbidden' }))).toBe(
       'You do not have access.',
     );
+  });
+});
+
+describe('session end', () => {
+  afterEach(() => resetSessionEnded());
+
+  it('flips once, however many requests come back 401', () => {
+    const { result } = renderHook(() => useSessionEnded());
+    expect(result.current).toBe(false);
+    act(() => {
+      endSession();
+      endSession();
+    });
+    expect(result.current).toBe(true);
+  });
+
+  it('builds a sign-in that returns here and says why', () => {
+    expect(sessionEndedHref('/admin/orgs/o1?tab=settings')).toBe(
+      '/login?next=%2Fadmin%2Forgs%2Fo1%3Ftab%3Dsettings&reason=expired',
+    );
+    expect(sessionEndedHref('/')).toBe('/login?reason=expired');
+    expect(sessionEndedHref('//evil.example')).toBe('/login?reason=expired');
   });
 });
