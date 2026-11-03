@@ -1,14 +1,19 @@
 import { act, fireEvent, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import '../../lib/test-utils.tsx';
+import { preloadArt } from '../../ui/index.ts';
 import { UploadDrop } from './upload-drop.tsx';
 
 const zone = () => document.querySelector('.wl-drop') as HTMLElement;
 const mood = () =>
   document.querySelector('[data-buddy] [data-part="w"]')?.getAttribute('data-mood');
 
+beforeAll(async () => {
+  await preloadArt();
+});
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 describe('upload drop buddy', () => {
@@ -16,6 +21,9 @@ describe('upload drop buddy', () => {
     render(<UploadDrop label="Drop a template package" file={undefined} onFile={() => {}} />);
     const buddy = document.querySelector('.wl-drop > [data-buddy]');
     expect(buddy).toHaveAttribute('aria-hidden', 'true');
+    // One active art (B13): the template art is the buddy's prop, nothing else enters.
+    expect(document.querySelectorAll('.wl-drop svg.wl-art')).toHaveLength(2);
+    expect(buddy?.querySelector('.wl-buddy-prop [data-art="template"]')).not.toBeNull();
     expect(mood()).toBeNull();
     fireEvent.dragOver(zone());
     expect(zone()).toHaveAttribute('data-drag');
@@ -24,10 +32,16 @@ describe('upload drop buddy', () => {
     expect(mood()).toBeNull();
   });
 
-  it('cheers a caught file and sighs at a refusal', () => {
+  it('catches a file without cheering (happy waits for the result card) and sighs at a refusal', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: false, media: q }) as MediaQueryList);
     const file = new File(['zip'], 'card.zip', { type: 'application/zip' });
-    const { rerender } = render(<UploadDrop label="Drop" file={file} onFile={() => {}} />);
-    expect(mood()).toBe('happy');
+    const { rerender } = render(<UploadDrop label="Drop" file={undefined} onFile={() => {}} />);
+    const input = document.querySelector('input[type=file]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+    // A squash as it catches it (the beat scene runs), still neutral (B4a).
+    expect(document.querySelector('[data-buddy]')).toHaveAttribute('data-run');
+    rerender(<UploadDrop label="Drop" file={file} onFile={() => {}} />);
+    expect(mood()).toBeNull();
     rerender(<UploadDrop label="Drop" file={file} onFile={() => {}} rejected={1} />);
     expect(mood()).toBe('sad');
     rerender(<UploadDrop label="Drop" file={file} onFile={() => {}} failed={1} landed={2} />);
@@ -63,5 +77,6 @@ describe('upload drop buddy', () => {
   it('leaves the buddy to the done card when compact', () => {
     render(<UploadDrop label="Done" file={undefined} onFile={() => {}} compact done landed={4} />);
     expect(document.querySelector('[data-buddy]')).toBeNull();
+    expect(document.querySelector('.wl-drop [data-art="template"]')).not.toBeNull();
   });
 });

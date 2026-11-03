@@ -54,8 +54,10 @@ export function readPackage(file: File): Promise<PackageInfo> {
 /**
  * The drop zone, first and largest: the template art lifts while a file hovers and settles on
  * drop. While importing, `landed` pieces show; `failed` slides that piece out and shakes once.
- * Not compact, the buddy sits on its top edge: it reaches up for a hovering file, cheers a caught
- * one, riffles its passes while an import runs past 600 ms and sighs at a refusal.
+ * Not compact, the buddy sits on its top edge with the template art as its prop (one active art):
+ * it reaches up for a hovering file, catches a chosen one with a squash (still neutral: nothing
+ * is imported yet), riffles its passes while an import runs past 600 ms and sighs at a refusal.
+ * Happy waits for the result card.
  */
 export function UploadDrop({
   label,
@@ -86,6 +88,7 @@ export function UploadDrop({
   const [error, setError] = useState<string>();
   const [refused, setRefused] = useState(0);
   const [sad, setSad] = useState(false);
+  const [caught, setCaught] = useState(0);
   // Every refusal, ours or the server's, replays the slide-out and the shake.
   const rejections = refused + rejected;
   useEffect(() => {
@@ -102,9 +105,7 @@ export function UploadDrop({
     ? 'curious'
     : sad || failed !== undefined
       ? 'sad'
-      : file && !importing
-        ? 'happy'
-        : undefined;
+      : undefined;
   const take = (f: File | undefined) => {
     if (!f) return;
     const problem = !/\.(zip|pkpasstemplate)$/i.test(f.name)
@@ -115,6 +116,7 @@ export function UploadDrop({
     setError(problem);
     if (problem) return setRefused((n) => n + 1);
     setSad(false);
+    setCaught((n) => n + 1);
     zone.current?.removeAttribute('data-rejected');
     onFile(f);
   };
@@ -147,8 +149,15 @@ export function UploadDrop({
           disabled && 'opacity-80',
         )}
       >
-        {compact ? null : <Buddy mood={mood} />}
-        <EntityArt name="template" size={compact ? 'sm' : 'lg'} beat={landed === undefined} />
+        {compact ? (
+          <EntityArt name="template" size="sm" beat={landed === undefined} />
+        ) : (
+          <Buddy
+            mood={mood}
+            replay={caught}
+            prop={<EntityArt name="template" size="sm" beat={landed === undefined} />}
+          />
+        )}
         <p className="text-sm font-medium text-fg-strong">{file ? file.name : label}</p>
         <input
           ref={input}
