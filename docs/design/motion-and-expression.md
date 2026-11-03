@@ -119,18 +119,21 @@ lines (`.f`, `.h`, the check) scale with it. A prop is 2/3 of its buddy.
   border line (`--wl-seat-border`, 1 px; the upload zone's is 2 px), legs over the edge, a contact
   shadow, the border behind. Only faces go without legs. Centred on state boxes; at the end of a
   card or band with a title at its left (`at="end"`, `--wl-buddy-inset`; `at="start"` for the
-  start).
+  start). On My passes with passes: the first tile's top edge at its start, under the bundle badge
+  (the grid keeps 56 px clear above it from the skeleton on; never on pass art).
 - **Entrance.** One for all: it falls onto the surface. 36 units from above (so the drop scales
   with the tier), fading in over the first 60 ms, gravity to the impact at 216 ms, a squash
   (1.12 × .86) and a rebound, settled by 480 ms; the shadow grows under it, the legs swing once on
   the impact, the passes pop out of the pocket as it lands (220 ms, 60 ms apart) and the eyes open
-  at 480 ms. The nudge, unseen until it runs, falls in its own scene.
+  at 480 ms. Only the body takes the fall; the parts inside it keep their own entrance (`art.css`
+  resets `--k` on nested parts). The nudge, unseen until it runs, falls in its own scene.
 - **Moods.** Neutral: waiting for you (sign-in, the idle upload zone, a chosen file, the nudge,
-  SSR confirm and break-glass). Curious: nothing here yet (empty, filtered, palette no results,
-  drag-over). Flat: nothing worth showing or a small slip (an empty audit log, a wrong code, an
-  invalid email). Sad: a failure or a refusal (error, not found, forbidden, expired, rate limit,
-  voided, refused file). Happy: confirmed success only (signed in, imported, created, success
-  toasts, Status all good); the face's eyes smile shut like the seated buddy's.
+  My passes with passes to add, SSR confirm and break-glass). Curious: nothing here yet (empty,
+  filtered, palette no results, drag-over). Flat: nothing worth showing or a small slip (an empty
+  audit log, a wrong code, an invalid email). Sad: a failure or a refusal (error, not found,
+  forbidden, expired, rate limit, voided, only voided passes on My passes, refused file). Happy:
+  confirmed success only (signed in, imported, created, every pass on My passes in a Wallet,
+  success toasts, Status all good); the face's eyes smile shut like the seated buddy's.
 - **One meaning per state, app and SSR** (`art/state-art.tsx`, `art/wallet-states.tsx`): error is
   the plug beside the unplugged art; a route not found is the lens, peek; an entity not found is
   the torn pass, mend; forbidden is the lock, tug; expired is the gold pass greying and drooping
@@ -166,7 +169,9 @@ scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's co
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
 | wave | Pass created; S, seated on the Front / Details control's top edge at its right end, in every stage layout (the row leaves room above it) | Has fallen on; hops, looks up at the pass and waves its teal pass twice, then smiles at you | 1.8 s |
 | tear | Pass voided (this visit); seated like wave | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
-| nudge | Portal pass, not on a device yet; S, seated on the Details card's top edge at its left end, under the badge (the card keeps 56 px clear above it: never on the actions) | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in, lifts its teal pass out of the pocket and aims it up-left at the badge twice, then looks back at you and blinks | 2.6 s |
+| nudge | Portal pass, not on a device yet; S, seated on the Details card's top edge at its left end, under the badge (the card keeps 56 px clear above it: never on the actions). My passes with two or more passes to add, seated on the first tile under the bundle badge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in, lifts its teal pass out of the pocket and aims it up-left at the badge twice, then looks back at you and blinks | 2.6 s |
+| tuck | My passes with one pass to add (so no bundle badge); S, seated like the list's nudge | Has fallen on. Peeks down over the edge at the passes under it, looks back, lifts its teal pass high out of the pocket and holds it up with a wiggle, eyes on it; drops it back in, faster all the way, a thunk (squash 1.08 × .9, the other passes jolt, a blink); looks at you and blinks | 2.4 s |
+| count | My passes, every live pass in a Wallet (happy); S, seated like the list's nudge | Has fallen on. Counts its passes: teal, violet, gold each pop up 8–9 units as it leans and looks to each; then a crouch, a hop with the outer passes spread ±14° and the violet one raised, the smile widening; lands in a squash | 2.2 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
 | hello | Sign-in wallet at rest; the SSR band's wallet (sign-in, confirm, break-glass, expired, rate limit) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css`. SSR error, not-found and forbidden pages act out plug, peek and tug instead (`STATE_SCENE_CSS`) | 1 s |
 | face: wink | Success toast (the miniature, sm) | Pops with the toast and winks at 380 ms; a click pops and winks again | 580 ms |
@@ -201,6 +206,21 @@ view, and ends by 3.3 s. The buddy is S (64 × 48) at every width. He falls `--w
 | 2180–2600 | A blink; eyes centred; still at 2600 |
 
 Hovering or focusing the badge turns his eyes to it (`portal.css`).
+
+**My passes with passes** (`portal/my-passes-page.tsx`, `listAct`; `scenes/{tuck,count}.css`).
+One buddy, on the first tile whatever its state, so a change of state never moves it; a new act
+re-enters (it falls again and plays). Only voided passes: sad, the sigh as it lands (`beat`, click
+to replay). Hovering or focusing the bundle badge turns his eyes up to it; a tile's badge, down.
+
+| Scene | ms (from 700 ms after landing) | Beat |
+| --- | --- | --- |
+| tuck | 0–480 | Eyes and trunk down over the edge, back up |
+| tuck | 480–1200 | Teal pass up 17 units, 7 left, upright; a wiggle; eyes on it, trunk leans 4° |
+| tuck | 1200–1730 | The drop (ease-in) to 3 units into the pocket at 1340: squash, jolt, blink; settled by 1730 |
+| tuck | 1730–2400 | Eyes on you (back by 1490), a blink at 2110 |
+| count | 0–1170 | Teal (130–460), violet (440–810), gold (790–1170) pop up 8–9 units; trunk leans −4°, 0°, 4°, eyes follow |
+| count | 1170–1890 | Crouch, hop 7 units with the fan spread, joy eyes 1.15 × 1.25, land in a squash by 1740 |
+| count | 1890–2200 | Still |
 
 **The miniature** (`BuddyFace`, `art/face.tsx`): the wallet art itself cropped to its head (no
 legs): the same pocket, dashed stitch, screen-face and fanned passes, from the parts `wallet.tsx`
@@ -287,7 +307,7 @@ System:
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
 - Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, fall,
   wave or scene (every buddy is seated from the first frame); a click on the buddy does nothing.
-- Budget: ≤40 SVG nodes per art; the art kit ≤13.5 kB gzip, the lazy buddy scenes ≤8 kB. Files `src/web/ui/art/<name>.tsx` (named
+- Budget: ≤40 SVG nodes per art; the art kit ≤14.75 kB gzip, the lazy buddy scenes ≤8.75 kB. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
 - API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` (M, S, L: The buddy) or the named
