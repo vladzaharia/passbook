@@ -257,6 +257,13 @@ describe('entity art', () => {
     }
   });
 
+  // The seated buddy falls as one (wl-w-fall on w); the parts inside it keep their own entrance.
+  it('resets every motion variable on nested parts, the keyframes too', () => {
+    const reset = RULES.find((rule) => rule.sel === '.wl-art [data-part]')?.d ?? {};
+    for (const v of ['--f', '--t', '--o', '--d', '--u', '--e', '--b', '--k'])
+      expect(reset[v], v).toBe('initial');
+  });
+
   it('keeps each part under 480 ms, the art under 600 ms and the beat under 400 ms', () => {
     const renders = [
       ...ART_NAMES.map((name) => <EntityArt key={name} name={name} />),
