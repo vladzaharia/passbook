@@ -1,0 +1,75 @@
+/* The PassBook mark (brand-mark.tsx), in the SPA and inlined on SSR pages (worker/ssr/theme.ts),
+   where --foil-* stand in for --wl-foil-*. Lines in currentColor, passes in foil. */
+.wl-mark {
+  flex: none;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.wl-mark [data-p] {
+  stroke: none;
+}
+.wl-mark [data-p="1"] {
+  fill: var(--wl-foil-1, var(--foil-1));
+}
+.wl-mark [data-p="2"] {
+  fill: var(--wl-foil-2, var(--foil-2));
+}
+.wl-mark [data-p="3"] {
+  fill: var(--wl-foil-3, var(--foil-3));
+}
+.wl-mark circle {
+  stroke: none;
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.wl-mark path {
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+
+/* Hello, once per session (wordmark.tsx): the passes pop out of the pocket left to right, then a
+   wink. SSR pages never play it. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-mark[data-hello] [data-p] {
+    animation: wl-mark-pop 420ms var(--wl-ease-bounce, ease-out) 120ms backwards;
+  }
+  .wl-mark[data-hello] [data-p="2"] {
+    animation-delay: 180ms;
+  }
+  .wl-mark[data-hello] [data-p="3"] {
+    animation-delay: 240ms;
+  }
+  .wl-mark[data-hello] [data-wink] {
+    animation: wl-mark-wink 200ms var(--wl-ease-move, ease-in-out) 640ms;
+  }
+}
+
+/* Hover, fine pointers: the passes perk up and the smile widens. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .wl-mark :is([data-p], path) {
+    transition: 160ms var(--wl-ease-out, cubic-bezier(0, 0, 0, 1));
+    transition-property: translate, scale;
+  }
+  a:hover > .wl-mark [data-p] {
+    translate: 0 -1px;
+  }
+  a:hover > .wl-mark path {
+    scale: 1.2 1.4;
+  }
+}
+
+@keyframes wl-mark-pop {
+  from {
+    translate: 0 8px;
+  }
+}
+@keyframes wl-mark-wink {
+  50% {
+    scale: 1 0.12;
+  }
+}
