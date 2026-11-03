@@ -19,14 +19,22 @@ function bandMetrics(css: string, band: string, brand: string): string[] {
 
 describe('sign-in band', () => {
   it('puts the mark on the card text inset and the pocket on the right inset', () => {
-    // Left: the card's border and padding, less the mark's 1/12 inset ink. Right: the padding,
+    // Left: the card's border and padding (the mark's ink fills its box). Right: the padding,
     // less the space between the pocket's ink and the art's edge (20 px; 17 px under 640).
     expect(bandMetrics(spa, '\\.wl-login-band', '\\.wl-login-brand')).toEqual([
-      'calc(1px+1.375rem)calc(1.5rem-19px)',
+      'calc(1px+1.5rem)calc(1.5rem-19px)',
       '56px',
-      'calc(1px+1.125rem)calc(1.25rem-17px)',
+      'calc(1px+1.25rem)calc(1.25rem-17px)',
       '49px',
     ]);
+  });
+
+  it('draws the mark edge to edge: the pocket line ends on the box', () => {
+    const mark = readFileSync(join(ROOT, 'src/web/ui/layout/brand-mark.tsx'), 'utf8');
+    const css = squash(readFileSync(join(ROOT, 'src/web/ui/layout/brand-mark.css'), 'utf8'));
+    expect(mark).toContain('viewBox="0 0 20 20"');
+    expect(mark).toContain('<rect x="1" y="7" width="18" height="12"');
+    expect(css).toMatch(/^\.wl-mark\{[^}]*stroke-width:2;/);
   });
 
   it('matches the worker pages: insets, the face line and the seat', () => {
@@ -47,7 +55,7 @@ describe('sign-in band', () => {
     expect(ssr).toContain(
       '.band.mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;letter-spacing:-.015em}',
     );
-    expect(ssr).toContain('.band.marksvg{width:1.5rem;height:1.5rem}');
+    expect(ssr).toContain('.band.mark>svg{width:1.5rem;height:1.5rem}');
   });
 
   it('posts the pass and stands the hourglass on the open side, left of the wallet', () => {

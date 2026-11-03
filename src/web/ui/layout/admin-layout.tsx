@@ -85,7 +85,7 @@ export function AdminLayout() {
           <SheetContent
             side="left"
             title="Navigation"
-            header={<Wordmark to="/admin" flip={false} />}
+            header={<Wordmark to="/admin" hello={false} />}
           >
             <SidebarNav onNavigate={() => setNavOpen(false)} />
           </SheetContent>

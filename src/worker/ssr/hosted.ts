@@ -8,7 +8,7 @@
  */
 import { ART_CSS } from '../../web/ui/art/css.ts';
 import { artHtml, HOSTED_ART_CSS, type HostedArt } from './hosted-art.tsx';
-import { escapeHtml, HEAD_HTML, THEME_CSS, wordmarkHtml } from './theme.ts';
+import { escapeHtml, HEAD_HTML, THEME_CSS, WORDMARK_CSS, wordmarkHtml } from './theme.ts';
 
 export const HOSTED_FOOTER = 'Signing in shows the passes sent to your email.';
 
@@ -21,13 +21,14 @@ const OCTAGON_X =
   '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z"/><path d="m15 9-6 6M9 9l6 6"/></svg>';
 
 export const HOSTED_CSS = `${THEME_CSS}
+${WORDMARK_CSS}
 ${ART_CSS}
 ${HOSTED_ART_CSS}
 .hosted{display:flex;flex-direction:column;width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
-.band{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding-inline:calc(1px + 1.375rem) calc(1.5rem - 19px)}
+.band{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding-inline:calc(1px + 1.5rem) calc(1.5rem - 19px)}
 .brand{display:flex;align-items:center;height:56px}
 .band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;letter-spacing:-.015em}
-.band .mark svg{width:1.5rem;height:1.5rem}
+.band .mark>svg{width:1.5rem;height:1.5rem}
 .scene{position:relative;z-index:2;flex:none;width:128px;height:96px;margin-bottom:-8px;pointer-events:none}
 .scene .wl-art{width:128px;height:96px}
 .scene>[data-replay]{display:block}
@@ -47,7 +48,7 @@ input:focus-visible{outline-offset:1px}
 .foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:.875rem;line-height:1.25rem;color:var(--muted)}
 .foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
 @media(min-width:40rem){.hosted{padding-top:3.5rem}.body{padding:1.5rem}.foot{padding:1rem 1.5rem}}
-@media(max-width:39.99rem){.band{padding-inline:calc(1px + 1.125rem) calc(1.25rem - 17px)}.brand{height:49px}.scene{margin-bottom:-7px}.scene,.scene .wl-art{width:112px;height:84px}}`;
+@media(max-width:39.99rem){.band{padding-inline:calc(1px + 1.25rem) calc(1.25rem - 17px)}.brand{height:49px}.scene{margin-bottom:-7px}.scene,.scene .wl-art{width:112px;height:84px}}`;
 
 export type { HostedArt };
 

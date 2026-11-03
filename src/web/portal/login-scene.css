@@ -5,13 +5,13 @@
 
 /* Header band: the wordmark's mark on the card's left text inset, centred on the wallet's face
    (21/72 of the art above its base: 28 px, 24.5 px under 640); the wallet at the right, its
-   pocket's edge on the right text inset. The card border is 1 px; the mark's ink starts 1/12 in. */
+   pocket's edge on the right text inset. The card border is 1 px; the mark's ink fills its box. */
 .wl-login-band {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
-  padding-inline: calc(1px + 1.375rem) calc(1.5rem - 19px);
+  padding-inline: calc(1px + 1.5rem) calc(1.5rem - 19px);
 }
 .wl-login-brand {
   position: relative;
@@ -22,7 +22,7 @@
 }
 @media (max-width: 39.99rem) {
   .wl-login-band {
-    padding-inline: calc(1px + 1.125rem) calc(1.25rem - 17px);
+    padding-inline: calc(1px + 1.25rem) calc(1.25rem - 17px);
   }
   .wl-login-brand {
     height: 49px;

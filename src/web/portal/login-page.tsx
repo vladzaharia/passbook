@@ -79,7 +79,7 @@ export function LoginPage({
     <div className="mx-auto flex w-full max-w-sm flex-col pt-8 pb-10 sm:pt-14">
       <div className="wl-login-band">
         <div className="wl-login-brand">
-          <Wordmark flip={false} size="lg" />
+          <Wordmark hello={false} size="lg" />
         </div>
         <LoginScene state={scene} sad={failed} bye={bye} />
       </div>

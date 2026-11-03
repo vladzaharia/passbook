@@ -116,7 +116,7 @@ describe('login page', () => {
     const { container } = await renderApp('/login', { session: 'anon' });
     await screen.findByLabelText('Email');
     expect(container.querySelector('.wl-login-scene .wl-art[data-art="wallet"]')).not.toBeNull();
-    expect(container.querySelector('[data-flip]')).toBeNull();
+    expect(container.querySelector('[data-hello]')).toBeNull();
     expect(screen.queryByAltText('Add to Apple Wallet')).toBeNull();
     expect(screen.queryByRole('button', { name: /theme/i })).toBeNull();
   });
@@ -129,23 +129,23 @@ describe('login page', () => {
     expect(rest).toHaveLength(0);
     expect(brand).toHaveClass('wl-login-brand');
     expect(scene).toHaveClass('wl-login-scene');
-    // The brand mark: still the home link with its name, 20 px with a 24 px mark.
+    // The brand mark: still the home link with its name, 20 px with the 24 px face.
     const mark = within(brand as HTMLElement).getByRole('link', { name: 'PassBook' });
     expect(mark).toHaveAttribute('href', '/');
     expect(mark).toHaveClass('text-xl', 'font-semibold');
-    expect(mark.querySelector('svg')).toHaveClass('size-6');
+    expect(mark.querySelector('svg.wl-mark')).toHaveClass('size-6');
     expect(band.nextElementSibling?.querySelector('.wl-login-card')).not.toBeNull();
   });
 
-  it('leaves the once-per-session wordmark flip for the first page that plays it', async () => {
+  it('leaves the once-per-session hello for the first page that plays it', async () => {
     const { container, unmount } = await renderApp('/login', { session: 'anon' });
     await screen.findByLabelText('Email');
-    expect(container.querySelector('[data-flip]')).toBeNull();
-    expect(sessionStorage.getItem('wallet-wordmark-flipped')).toBeNull();
+    expect(container.querySelector('[data-hello]')).toBeNull();
+    expect(sessionStorage.getItem('wallet-wordmark-hello')).toBeNull();
     unmount();
     const admin = await renderApp('/admin', { session: 'admin' });
-    await waitFor(() => expect(admin.container.querySelector('[data-flip]')).not.toBeNull());
-    expect(sessionStorage.getItem('wallet-wordmark-flipped')).toBe('1');
+    await waitFor(() => expect(admin.container.querySelector('[data-hello]')).not.toBeNull());
+    expect(sessionStorage.getItem('wallet-wordmark-hello')).toBe('1');
   });
 
   it('sits the wallet on the card: fanned cards, eyes in a look group, decorative', async () => {

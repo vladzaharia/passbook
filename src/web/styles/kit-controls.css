@@ -23,11 +23,6 @@
     opacity: 0.5;
   }
 }
-@keyframes wl-flip-in {
-  from {
-    transform: perspective(600px) rotateY(-180deg);
-  }
-}
 @keyframes wl-turn {
   from {
     opacity: 0;
@@ -127,11 +122,6 @@
 .wl-turn {
   transform-origin: 0 50%;
   animation: wl-turn var(--wl-dur-card) var(--wl-ease-spring) backwards;
-}
-
-/* Wordmark card flips once per browser session (wordmark.tsx sets data-flip). */
-.wl-wordmark-icon[data-flip] {
-  animation: wl-flip-in var(--wl-dur-flip) var(--wl-ease-spring) 120ms backwards;
 }
 
 /* The theme segment's icon rotates in when it becomes the choice. */
@@ -245,8 +235,6 @@
   .wl-step-done,
   .wl-ring,
   .wl-shake,
-  .wl-wordmark-icon,
-  .wl-wordmark-icon[data-flip],
   .wl-turn,
   .wl-seg-icon,
   .wl-rail-draw,

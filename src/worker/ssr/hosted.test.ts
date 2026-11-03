@@ -12,7 +12,7 @@ import { renderErrorPage } from './error-page.tsx';
 import { HOSTED_CSS, REPLAY_SCRIPT } from './hosted.ts';
 import { HOSTED_ART_CSS } from './hosted-art.tsx';
 import { renderNotFoundPage } from './pass-page.tsx';
-import { THEME_CSS } from './theme.ts';
+import { THEME_CSS, WORDMARK_CSS } from './theme.ts';
 
 const NONCE = 'n0nce';
 /** The only script a hosted page loads: same-origin, never inline. */
@@ -72,13 +72,13 @@ describe('hosted auth pages', () => {
     expect(HOSTED_CSS).toMatch(/input\{[^}]*font-size:max\(16px,1rem\)/);
   });
 
-  it('lets the wordmark smile on hover, fine pointers and motion allowed only', () => {
-    const block =
-      /@media \(hover:hover\) and \(pointer:fine\) and \(prefers-reduced-motion:no-preference\)\{(.*)\}/.exec(
-        HOSTED_CSS,
-      )?.[1];
-    expect(block).toContain('.mark:hover path:first-child{transform:scaleY(1.6)}');
-    expect(HOSTED_CSS.replace(block ?? '', '')).not.toContain('.mark:hover');
+  it('wears the console mark and its sheet (brand-mark.test.ts), never the hello', () => {
+    // Raw CSS imports are empty under test; the sheet is checked from the file.
+    expect(HOSTED_CSS).toContain(WORDMARK_CSS);
+    const html = expiredPage(NONCE);
+    expect(html).toContain('<a class="mark" href="/"><svg viewBox="0 0 20 20" class="wl-mark"');
+    expect(html.match(/data-p="[123]"/g)).toHaveLength(3);
+    expect(html).not.toContain('data-hello');
   });
 
   it('seats the wallet on the card: above it, legs over the edge, a contact shadow', () => {
@@ -94,11 +94,11 @@ describe('hosted auth pages', () => {
   it('puts the wordmark left and the wallet right in one band, then the card', () => {
     const html = expiredPage(NONCE);
     expect(html).toMatch(
-      /<main class="hosted"><div class="band"><div class="brand"><a class="mark" href="\/"><svg aria-hidden="true"[^>]*>.*?<\/svg>PassBook<\/a><\/div><div class="scene" aria-hidden="true"><span data-replay="" data-scene="hello"><svg[^>]*data-art="wallet"/,
+      /<main class="hosted"><div class="band"><div class="brand"><a class="mark" href="\/"><svg viewBox="0 0 20 20" class="wl-mark" aria-hidden="true">.*?<\/svg>PassBook<\/a><\/div><div class="scene" aria-hidden="true"><span data-replay="" data-scene="hello"><svg[^>]*data-art="wallet"/,
     );
     expect(html).toMatch(/<\/svg><\/span><\/div><\/div><section class="card"/);
     expect(HOSTED_CSS).toContain('.band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;');
-    expect(HOSTED_CSS).toContain('.band .mark svg{width:1.5rem;height:1.5rem}');
+    expect(HOSTED_CSS).toContain('.band .mark>svg{width:1.5rem;height:1.5rem}');
   });
 
   it.each([

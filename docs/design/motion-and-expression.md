@@ -134,13 +134,16 @@ Other cameos, unchanged:
 | Empty state | The buddy's eyes drop to the action under the pointer or focus | 200 ms | `art-wallet.css` |
 | Template upload | On the drop zone: passes reach up and the mouth opens for a hovering file; a caught file gets the smile and a hop; an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Done, it cheers on the result card | 320 ms; 640 ms hop | `admin/templates/upload-*` |
 | Signed out | The sign-in scene's top card waves from the pocket once, within two minutes of a sign-out in this tab | 860 ms at 700 ms | `portal/login-*` |
-| Wordmark | Hover (fine pointers): the wallet's pocket curve deepens into a smile, the card line peeks up 1.5 px; SPA and SSR | 160 ms | `kit-verbs.css`, `ssr/theme.ts` |
+| Wordmark | Hello, once per browser session (SPA): the passes pop out of the pocket left to right (420 ms bounce, 60 ms apart, from 120 ms), then a wink at 640 ms. Hover (fine pointers, SPA and SSR): the passes perk up 1 unit and the smile widens | 840 ms; 160 ms | `ui/layout/brand-mark.css` |
 
 Considered and left out: the API key reveal (a warning and a form), connection syncing (the sync
 rail carries it; a dense panel), the first organization (a table, no stable moment).
 
 The favicon and `apple-touch-icon.png` (also the sign-in email's header mark and the OIDC logo) are
-the face on the dark tile, in teal with the foil passes.
+the face on the dark tile, in teal with the foil passes. In the app and on SSR pages the same face is
+the PassBook mark (`BrandMark`, `ui/layout/brand-mark.tsx`): no tile, theme tokens (accent lines,
+foil passes), redrawn on a 20-unit grid with 2-unit lines so the pocket's edges land on whole pixels
+at 20 px. The pocket is open; the passes are cut at its top line.
 
 **Email buddy.** Static PNGs of the `wallet` art in its dark palette (`public/email/`, 96×76 at 2×
 and 3×; `node tools/build-email-art.ts` after an art change). It stands on the bottom edge of the
@@ -234,8 +237,8 @@ System:
 
 ## Signature moments
 
-One per screen. The wordmark flips once per browser session in the SPA and never on `/p`, `/login`
-or the SSR mascot pages.
+One per screen. The wordmark says hello once per browser session in the SPA and never on `/p`,
+`/login` or the SSR mascot pages.
 
 1. **Pass stage** (`PassCardStage`, every pass on every surface). The pass lights the surface
    under it in its own background colour (a radial gradient, no blur filter); in dark a 1 px rim
