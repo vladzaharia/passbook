@@ -7,9 +7,9 @@ import { isApiError } from '../lib/errors.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Breadcrumbs,
+  Buddy,
   Button,
   Callout,
-  Cameo,
   Card,
   CardBody,
   CardHeader,
@@ -19,7 +19,6 @@ import {
   PassSideToggle,
   Skeleton,
   StatusPill,
-  WalletArt,
 } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { canAddToWallet } from './device.ts';
@@ -53,6 +52,7 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const canAdd = canAddToWallet();
   const active = !voided && !view.expired;
+  const nudge = active && !pass.inWallet;
   useEffect(() => {
     document.title = `${name} · PassBook`;
   }, [name]);
@@ -87,17 +87,11 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
             syncing={isPendingRefresh(pass, Date.now())}
             transitionName={`pass-${pass.id}`}
           />
-          {/* Not on a device yet: the buddy steps out from behind the card and points: add it. */}
-          {active && !pass.inWallet ? (
-            <Cameo scene="nudge" className="absolute top-[calc(100%+2px)] right-0 -z-1">
-              <WalletArt state="login" mood="happy" size="sm" beat={false} />
-            </Cameo>
-          ) : null}
         </div>
         <PassSideToggle value={face} onChange={setFace} />
       </div>
       <div
-        className={`flex min-w-0 flex-col gap-6 [grid-area:side] ${dealt ? 'wl-after-card' : ''}`}
+        className={`wl-pass-side flex min-w-0 flex-col gap-6 [grid-area:side] ${dealt ? 'wl-after-card' : ''}`}
       >
         {active && !canAdd && publicUrl ? (
           <Card className="flex flex-col items-center gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
@@ -127,9 +121,11 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
               onRemoved={() => void navigate({ to: '/' })}
             />
           </div>
+          {/* Room for the buddy's head beside the actions; it wraps under them when narrow. */}
+          {nudge ? <span aria-hidden className="ml-auto h-5 w-18 self-end lg:h-8 lg:w-22" /> : null}
         </div>
         {/* Off iPhone the QR card says how to add; an iPhone app's web view needs Safari. */}
-        {active && canAdd ? <AddLine className="-mt-3" /> : null}
+        {active && canAdd ? <AddLine className={nudge ? '-mt-3 pr-20' : '-mt-3'} /> : null}
         {voided ? (
           <Callout tone="warning" icon={Ban}>
             This pass was voided.
@@ -140,6 +136,8 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           </Callout>
         ) : null}
         <Card>
+          {/* Not on a device yet: the buddy falls onto the card and points at the badge. */}
+          {nudge ? <Buddy scene="nudge" size="sm" className="wl-nudge" /> : null}
           <CardHeader title="Details" />
           <CardBody>
             <KeyValue
