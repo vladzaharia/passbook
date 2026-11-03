@@ -22,5 +22,33 @@
   Cross-Origin-Resource-Policy: cross-origin
 
 /apple-touch-icon.png
+  Cache-Control: public, max-age=86400
   ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
+
+/favicon.ico
+  Cache-Control: public, max-age=86400
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
+/favicon.svg
+  Cache-Control: public, max-age=86400
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
+/icons/*
+  Cache-Control: public, max-age=86400
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
+/og-image.png
+  Cache-Control: public, max-age=86400
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=86400

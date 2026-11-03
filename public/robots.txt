@@ -1,0 +1,10 @@
+# PassBook is private. Crawlers may read the sign-in page and the images a search result or a
+# link preview shows; pass links, sign-in links, the API and the signed-in pages stay out.
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /favicon
+Allow: /apple-touch-icon.png
+Allow: /icons/
+Allow: /og-image.png
+Disallow: /
