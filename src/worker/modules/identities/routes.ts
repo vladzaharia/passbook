@@ -1,16 +1,15 @@
-import type { Context } from 'hono';
 import {
   ApnsProbeResultSchema,
   IdentityListSchema,
   IdentitySchema,
   IdParamSchema,
   OkSchema,
+  PageQuerySchema,
   RotateIdentitySchema,
   UpdateIdentitySchema,
   UploadIdentitySchema,
 } from '../../../shared/contracts/index.ts';
 import { requireAdmin } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -28,13 +27,17 @@ import {
 export const identitiesRoutes = createRouter();
 guard(identitiesRoutes, requireAdmin);
 
-type Ctx = Context<AppBindings>;
-
 register(
   identitiesRoutes,
   'identities',
-  { method: 'get', path: '/', summary: 'List Apple identities', response: IdentityListSchema },
-  async (c: Ctx) => c.json(await listIdentities(serviceContext(c))),
+  {
+    method: 'get',
+    path: '/',
+    summary: 'List Apple identities',
+    query: PageQuerySchema,
+    response: IdentityListSchema,
+  },
+  async (c) => c.json(await listIdentities(serviceContext(c), c.req.valid('query'))),
 );
 register(
   identitiesRoutes,

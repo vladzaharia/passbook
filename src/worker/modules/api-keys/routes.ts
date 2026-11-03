@@ -1,5 +1,5 @@
-import type { Context } from 'hono';
 import {
+  ApiKeyListQuerySchema,
   ApiKeyListSchema,
   CreateApiKeySchema,
   CreatedApiKeySchema,
@@ -8,12 +8,9 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, requireAdmin } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { createApiKey, listApiKeys, revokeApiKey } from './service.ts';
-
-type C = Context<AppBindings>;
 
 export const apiKeysRoutes = createRouter();
 guard(apiKeysRoutes, requireAdmin);
@@ -21,8 +18,14 @@ apiKeysRoutes.use('*', limitBody(64 * 1024));
 register(
   apiKeysRoutes,
   'api-keys',
-  { method: 'get', path: '/', summary: 'List API keys', response: ApiKeyListSchema },
-  async (c: C) => c.json({ items: await listApiKeys(serviceContext(c)) }),
+  {
+    method: 'get',
+    path: '/',
+    summary: 'List API keys',
+    query: ApiKeyListQuerySchema,
+    response: ApiKeyListSchema,
+  },
+  async (c) => c.json(await listApiKeys(serviceContext(c), c.req.valid('query'))),
 );
 register(
   apiKeysRoutes,

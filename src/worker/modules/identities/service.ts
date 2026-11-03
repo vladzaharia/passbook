@@ -13,19 +13,18 @@ import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
 import { checkIdentityById } from './check.ts';
-import { apnsBindingPresent, clearIdentityKeyCache } from './db-resolver.ts';
+import { clearIdentityKeyCache } from './db-resolver.ts';
+import { toDto } from './dto.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
-import { daysRemaining } from './expiry.ts';
 import { readPkcs12 } from './pkcs12.ts';
 import {
   deleteIdentityRows,
   findByPassType,
   getIdentityRow,
   type IdentityRow,
-  identityFacts,
   identityInUse,
   insertIdentity,
-  listIdentityRows,
+  pageIdentityRows,
   rotateIdentityRows,
   updateIdentityRow,
 } from './repo.ts';
@@ -37,65 +36,22 @@ type Rotation = z.infer<typeof RotateIdentitySchema>;
 /** Only APNS_* bindings: the name is looked up on env, so it must never reach DB, KEK_* or ASSETS. */
 const BINDING_NAME = /^APNS_[A-Z0-9_]{1,59}$/;
 
-/** Apple's reason code from a probe's audit detail; null when it passed or none was given. */
-function probeReason(detail: string | null): string | null {
-  if (!detail) return null;
-  try {
-    const parsed = JSON.parse(detail) as { reason?: unknown };
-    return typeof parsed.reason === 'string' ? parsed.reason : null;
-  } catch {
-    // Audit detail is written as JSON by probeRow; anything else carries no reason.
-    return null;
-  }
-}
-
-export async function toDto(ctx: ServiceContext, row: IdentityRow): Promise<IdentityDto> {
-  const facts = await identityFacts(ctx.env.DB, row.id);
-  let subject: string | null = null;
-  let serial: string | null = null;
-  if (row.cert_pem) {
-    try {
-      const details = await certDetails(row.cert_pem);
-      subject = details.subject;
-      serial = details.serial;
-    } catch (error) {
-      ctx.log.warn('identity.cert_unreadable', { identityId: row.id, error });
-    }
-  }
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    label: row.label,
-    passTypeIdentifier: row.pass_type_identifier,
-    teamIdentifier: row.team_identifier,
-    source: row.source,
-    certSha256: row.cert_sha256,
-    certSubject: subject,
-    certSerial: serial,
-    notBefore: row.not_before,
-    notAfter: row.not_after,
-    daysRemaining: daysRemaining(row.not_after, ctx.clock.now()),
-    apnsBinding: row.apns_binding,
-    apnsAvailable: apnsBindingPresent(ctx.env, row.apns_binding),
-    apnsHealth: row.apns_health,
-    apnsCheckedAt: facts.checked_at,
-    apnsReason: probeReason(facts.detail),
-    passCount: facts.pass_count,
-    nfcEnabled: row.nfc_enabled === 1,
-    isDefault: row.is_default === 1,
-    createdAt: row.created_at,
-  };
-}
-
 async function requireRow(ctx: ServiceContext, id: string): Promise<IdentityRow> {
   const row = await getIdentityRow(ctx.env.DB, id);
   if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
   return row;
 }
 
-export async function listIdentities(ctx: ServiceContext): Promise<{ items: IdentityDto[] }> {
-  const rows = await listIdentityRows(ctx.env.DB);
-  return { items: await Promise.all(rows.map((row) => toDto(ctx, row))) };
+export async function listIdentities(
+  ctx: ServiceContext,
+  query: { cursor?: string | undefined; limit: number },
+): Promise<{ items: IdentityDto[]; nextCursor: string | null }> {
+  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1);
+  const page = rows.slice(0, query.limit);
+  return {
+    items: await Promise.all(page.map((row) => toDto(ctx, row))),
+    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
+  };
 }
 
 export async function getIdentity(ctx: ServiceContext, id: string): Promise<IdentityDto> {

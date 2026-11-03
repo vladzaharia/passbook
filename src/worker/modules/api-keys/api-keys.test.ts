@@ -123,6 +123,48 @@ describe('create', () => {
   });
 });
 
+describe('list', () => {
+  interface Page {
+    items: { id: string; name: string; orgId: string | null; revokedAt: number | null }[];
+    nextCursor: string | null;
+    revokedCount: number;
+  }
+  const list = async (headers: Record<string, string>, query: string) =>
+    (await (await h.call(`/api/v1/api-keys?${query}`, { headers })).json()) as Page;
+
+  it('pages newest first by cursor and filters by org and state', async () => {
+    const org = await makeOrg(f());
+    const other = await makeOrg(f());
+    const made: string[] = [];
+    for (const name of ['a', 'b', 'c']) {
+      h.clock.advance(1000);
+      made.push((await makeApiKey(f(), { orgId: org.id, name })).id);
+    }
+    h.clock.advance(1000);
+    await makeApiKey(f(), { orgId: other.id, name: 'elsewhere' });
+    await makeApiKey(f(), { name: 'platform' });
+    await run(h.env.DB, 'UPDATE api_keys SET revoked_at = 1 WHERE id = ?', [made[0]]);
+    const { headers } = await adminHeaders();
+
+    const one = await list(headers, `orgId=${org.id}&state=live&limit=1`);
+    expect(one.items.map((k) => k.name)).toEqual(['c']);
+    expect(one.revokedCount).toBe(1);
+    const two = await list(headers, `orgId=${org.id}&state=live&limit=1&cursor=${one.nextCursor}`);
+    expect(two.items.map((k) => k.name)).toEqual(['b']);
+    expect(two.nextCursor).toBeNull();
+
+    const revoked = await list(headers, `orgId=${org.id}&state=revoked`);
+    expect(revoked.items.map((k) => k.name)).toEqual(['a']);
+    expect(revoked.nextCursor).toBeNull();
+
+    // No filters: every org, platform keys, live and revoked.
+    const all = await list(headers, 'limit=200');
+    const names = all.items.map((k) => k.name);
+    for (const name of ['a', 'b', 'c', 'elsewhere', 'platform']) expect(names).toContain(name);
+    expect(all.revokedCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe('use', () => {
   const probe = (headers: Record<string, string>, method = 'GET') =>
     h.call('/api/v1/passes', { method, headers }).then((r) => r.status);
