@@ -41,8 +41,8 @@ export function Toaster() {
         right: 'max(1rem, env(safe-area-inset-right))',
       }}
       closeButton
-      // Success wears the buddy's face: it pops in with the toast and winks once.
-      icons={{ success: <BuddyFace className="size-4" /> }}
+      // Success wears the buddy in miniature: it pops in with the toast and winks once.
+      icons={{ success: <BuddyFace className="h-5 w-6" /> }}
       toastOptions={{
         classNames: {
           toast:
@@ -58,11 +58,11 @@ export function Toaster() {
 
 export const toast = {
   success: (message: string) => sonner.success(message, { duration: 4000 }),
-  /** A holder emailed: the face posts its pass like a letter. */
+  /** A holder emailed: the buddy posts its pass like a letter. */
   sent: (message: string) =>
     sonner.success(message, {
       duration: 4000,
-      icon: <BuddyFace scene="post" className="size-4" />,
+      icon: <BuddyFace scene="post" className="h-5 w-6" />,
     }),
   info: (message: string) => sonner.info(message, { duration: 4000 }),
   /** Errors stay until dismissed. Accepts an ApiError or any value. */

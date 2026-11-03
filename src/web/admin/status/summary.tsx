@@ -22,7 +22,7 @@ const TONE = {
 /**
  * The banner: what is wrong in one line (leaves only, so one failing connection reads "1
  * connection failing"), when it was checked, and Recheck. Healthy reads "All good" in success,
- * with the buddy's face for the icon (it winks once).
+ * with the buddy for the icon (it gives a thumbs-up once).
  */
 export function Summary({
   components,
@@ -52,10 +52,8 @@ export function Summary({
         <BuddyFace
           key={popped}
           scene="cheer"
-          className={cn(
-            'size-9 text-success [--wl-face-bg:var(--pk-success-subtle)]',
-            popped > 0 && 'wl-state-pop',
-          )}
+          size="md"
+          className={cn('h-11 w-12', popped > 0 && 'wl-state-pop')}
         />
       ) : (
         <t.icon
