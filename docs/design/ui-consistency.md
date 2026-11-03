@@ -438,7 +438,7 @@ Same brand tokens; Wallet keeps its own wordmark and teal.
 
 | Part | Rule |
 | --- | --- |
-| Brand | One band above the card: the wordmark (20 px, 24 px mark) at the left, its mark on the card's text inset and centred on the mascot's face |
+| Brand | One band above the card: the wordmark (20 px, the 24 px face) at the left, the face's ink on the card's text inset and centred on the mascot's face |
 | Scene | The wallet mascot sits on the card's top edge at the right of the band, its pocket on the right text inset, its cards peeking over (motion-and-expression.md, Signature moment 8) |
 | Card | One raised card, large radius, generous padding; body, then a footer split off by a divider. Two faces: sign-in and code |
 | Title | `h1` names the task ("Sign in", "Enter the code from your email"); at most one short lede ("Sent to ada@…") |
