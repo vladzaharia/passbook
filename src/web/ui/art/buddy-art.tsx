@@ -16,6 +16,8 @@ export type BuddyScene =
   | 'wave'
   | 'tear'
   | 'nudge'
+  | 'tuck'
+  | 'count'
   | 'beat';
 
 export interface BuddyProps {

@@ -3,12 +3,14 @@ import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
-import { canAddToWallet } from '../../shared/device.ts';
+import { addLine, canAddToWallet } from '../../shared/device.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   AppleWalletBadge,
+  Buddy,
+  type BuddyScene,
   Button,
   Card,
   EmptyState,
@@ -17,6 +19,7 @@ import {
   PageHeader,
   Skeleton,
   StatusPill,
+  type WalletMood,
 } from '../ui/index.ts';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
@@ -26,7 +29,29 @@ import { RefreshButton } from './refresh-button.tsx';
 import { AddLine, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
 import './portal.css';
 
-const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
+// mt-8: the buddy's room over the first tile (56 px with the 24 px above), skeleton included.
+const GRID = 'mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
+
+/**
+ * What the list's buddy acts out (motion-and-expression.md, The buddy). Passes to add: it aims at
+ * the bundle badge above it (nudge) or, with one and no bundle, lifts a pass and drops it into its
+ * pocket (tuck). Every live pass in a Wallet: it counts its own, happy. Only voided: a sigh.
+ */
+export function listAct(passes: readonly MyPass[]): { mood?: WalletMood; scene: BuddyScene } {
+  const live = passes.filter((p) => p.status !== 'voided');
+  const out = live.filter((p) => !p.inWallet).length;
+  if (live.length === 0) return { mood: 'sad', scene: 'beat' };
+  if (out === 0) return { mood: 'happy', scene: 'count' };
+  return { scene: out > 1 ? 'nudge' : 'tuck' };
+}
+
+/** Seated on the first tile's top edge at its start, under the bundle badge; a new act re-enters. */
+function ListBuddy({ passes }: { passes: readonly MyPass[] }) {
+  const { mood, scene } = listAct(passes);
+  return (
+    <Buddy key={scene} size="sm" at="start" mood={mood} scene={scene} className="wl-list-buddy" />
+  );
+}
 
 /** A pass that is already in a Wallet: the badge gives way to this pill. */
 export function InWalletPill() {
@@ -38,7 +63,7 @@ export function InWalletPill() {
  * row of tiles lines them up however their actions wrap. The actions beside the badge are
  * badge-sized outline buttons.
  */
-function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
+function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?: ReactNode }) {
   const name = passName(pass);
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const voided = pass.status === 'voided';
@@ -49,6 +74,7 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   return (
     // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
     <Card className="row-span-3 grid grid-rows-subgrid gap-y-3 rounded-xl p-4">
+      {buddy}
       {/* The card is a second way into the pass; the title link is the one in the tab order. */}
       <Link {...link} tabIndex={-1} aria-hidden className="mb-1 flex items-center">
         <PassCardStage
@@ -128,14 +154,18 @@ export function MyPassesPage() {
   const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
   const dealt = useArrival(query.isPending);
   const addable = passes.filter((p) => p.status !== 'voided' && !p.inWallet).length;
+  const [device] = useState(browserDevice);
 
   let body: ReactNode;
   if (query.isPending) {
     body = (
-      <div className={GRID} aria-busy="true">
-        <Skeleton className="h-[34rem]" />
-        <Skeleton className="h-[34rem] max-sm:hidden" />
-        <Skeleton className="h-[34rem] max-lg:hidden" />
+      // A flex box like the list's, so the grid's margin adds to the header's instead of collapsing.
+      <div className="flex flex-col">
+        <div className={GRID} aria-busy="true">
+          <Skeleton className="h-[34rem]" />
+          <Skeleton className="h-[34rem] max-sm:hidden" />
+          <Skeleton className="h-[34rem] max-lg:hidden" />
+        </div>
       </div>
     );
   } else if (query.isError) {
@@ -158,9 +188,9 @@ export function MyPassesPage() {
     );
   } else {
     body = (
-      <div className="flex flex-col gap-6">
-        {addable > 0 ? (
-          <div className="flex flex-col gap-2">
+      <div className="wl-passes flex flex-col gap-6">
+        {addable > 1 || (addable > 0 && addLine(device)) ? (
+          <div className="wl-bundle flex flex-col gap-2">
             <AddAllLinks count={addable} />
             <AddLine />
           </div>
@@ -173,7 +203,11 @@ export function MyPassesPage() {
                 className="row-span-3 grid min-w-0 grid-rows-subgrid"
                 style={{ '--i': i } as CSSProperties}
               >
-                <PassTile pass={pass} dealt={dealt} />
+                <PassTile
+                  pass={pass}
+                  dealt={dealt}
+                  buddy={i === 0 ? <ListBuddy passes={passes} /> : undefined}
+                />
               </li>
             ))}
           </ul>

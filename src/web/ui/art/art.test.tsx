@@ -257,6 +257,13 @@ describe('entity art', () => {
     }
   });
 
+  // The seated buddy falls as one (wl-w-fall on w); the parts inside it keep their own entrance.
+  it('resets every motion variable on nested parts, the keyframes too', () => {
+    const reset = RULES.find((rule) => rule.sel === '.wl-art [data-part]')?.d ?? {};
+    for (const v of ['--f', '--t', '--o', '--d', '--u', '--e', '--b', '--k'])
+      expect(reset[v], v).toBe('initial');
+  });
+
   it('keeps each part under 480 ms, the art under 600 ms and the beat under 400 ms', () => {
     const renders = [
       ...ART_NAMES.map((name) => <EntityArt key={name} name={name} />),
@@ -290,8 +297,9 @@ describe('entity art', () => {
   // by 1 kB for the search walk's planted steps (scenes/search-steps.css). Then by 1 kB for the
   // canonical buddy: the fall onto the edge, the size tiers' lines and placement, the face's happy
   // eyes and the SSR-safe markup (buddy-art.tsx); Cameo went. Then by 0.25 kB for presence.ts:
-  // one buddy per view, so toasts know when a page buddy is mounted.
-  it('fits the 14.75 kB gzip budget; the lazy scenes fit 8 kB; the state parts 2.5 kB', () => {
+  // one buddy per view, so toasts know when a page buddy is mounted. The lazy scenes rose by 0.75 kB
+  // for My passes' buddy with passes: tuck and count (nudge is shared with the pass page).
+  it('fits the 14.75 kB gzip budget; the lazy scenes fit 8.75 kB; the state parts 2.5 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
     // with the sign-in page and on SSR pages only.
     const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
@@ -314,6 +322,6 @@ describe('entity art', () => {
     const scenes = readdirSync(join(DIR, 'scenes')).filter((f) => f !== 'rest.css');
     const registry = readFileSync(join(DIR, 'registry.ts'), 'utf8');
     for (const f of scenes) expect(registry).toContain(`import './scenes/${f}';`);
-    expect(gz(scenes.map((f) => join(DIR, 'scenes', f)))).toBeLessThanOrEqual(8 * 1024);
+    expect(gz(scenes.map((f) => join(DIR, 'scenes', f)))).toBeLessThanOrEqual(8.75 * 1024);
   });
 });

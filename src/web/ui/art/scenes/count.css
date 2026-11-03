@@ -1,0 +1,185 @@
+/* count (every pass in a Wallet; happy): seated on the first tile, it counts its passes, teal,
+   violet, gold, each popping up as it nods to it, then hops with the fan spread wide and lands.
+   2.2 s, once; 1% = 22 ms. */
+[data-scene="count"] [data-trunk] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene="count"][data-run] .wl-art [data-trunk] {
+    animation: wl-s-count-nod 2.2s ease-in-out;
+  }
+  [data-scene="count"][data-run] .wl-art [data-body] {
+    animation: wl-s-count-hop 2.2s ease-in-out;
+  }
+  [data-scene="count"][data-run] .wl-art [data-look] {
+    animation: wl-s-count-look 2.2s ease-in-out;
+  }
+  [data-scene="count"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-count-c1 2.2s ease-in-out;
+  }
+  [data-scene="count"][data-run] .wl-art [data-part="c2"] {
+    animation: wl-s-count-c2 2.2s ease-in-out;
+  }
+  [data-scene="count"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-count-c3 2.2s ease-in-out;
+  }
+  [data-scene="count"][data-run] .wl-art [data-part="joy"] {
+    animation: wl-s-count-joy 2.2s ease-in-out;
+  }
+}
+
+/* One, two, three: it leans to each pass as it pops. */
+@keyframes wl-s-count-nod {
+  0%,
+  4% {
+    rotate: 0deg;
+  }
+  12%,
+  16% {
+    rotate: -4deg;
+  }
+  26%,
+  30% {
+    rotate: 0deg;
+    translate: 0 1px;
+  }
+  40%,
+  46% {
+    rotate: 4deg;
+    translate: 0 0;
+  }
+  56%,
+  100% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-count-look {
+  6%,
+  18% {
+    translate: -1.6px -1.4px;
+  }
+  24%,
+  32% {
+    translate: 0 -1.8px;
+  }
+  40%,
+  48% {
+    translate: 1.6px -1.4px;
+  }
+  58%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-count-c1 {
+  6% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  11%,
+  14% {
+    translate: 0 -8px;
+  }
+  21%,
+  58% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  66%,
+  74% {
+    rotate: -14deg;
+  }
+  86%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-count-c2 {
+  20% {
+    translate: 0 0;
+  }
+  27%,
+  30% {
+    translate: 0 -9px;
+  }
+  37%,
+  58% {
+    translate: 0 0;
+  }
+  66%,
+  74% {
+    translate: 0 -6px;
+  }
+  86%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-count-c3 {
+  36% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  43%,
+  46% {
+    translate: 0 -8px;
+  }
+  53%,
+  58% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  66%,
+  74% {
+    rotate: 14deg;
+  }
+  86%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+/* All there: a crouch, a hop with the fan spread, a landing squash. */
+@keyframes wl-s-count-hop {
+  54% {
+    translate: 0 0;
+    scale: 1;
+  }
+  60% {
+    translate: 0 0;
+    scale: 1.06 0.9;
+  }
+  67% {
+    translate: 0 -7px;
+    scale: 0.96 1.05;
+  }
+  72% {
+    translate: 0 -7px;
+    scale: 1;
+  }
+  79% {
+    translate: 0 0;
+    scale: 1.06 0.92;
+  }
+  86%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes wl-s-count-joy {
+  58% {
+    scale: 1;
+  }
+  66%,
+  76% {
+    scale: 1.15 1.25;
+  }
+  86%,
+  100% {
+    scale: 1;
+  }
+}

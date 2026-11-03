@@ -108,7 +108,7 @@
   stroke-width: calc(var(--art-w) * 4 / 3);
 }
 
-/* Nested parts must not inherit motion. */
+/* Nested parts never inherit motion. */
 .wl-art [data-part] {
   --f: initial;
   --t: initial;
@@ -117,6 +117,7 @@
   --u: initial;
   --e: initial;
   --b: initial;
+  --k: initial;
   transform-box: fill-box;
   transform-origin: var(--o, center);
   transform: var(--t, none);

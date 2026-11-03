@@ -31,10 +31,10 @@ const keyframes = (f: string) =>
   );
 const REST: Record<string, string> = { translate: '0 0', rotate: '0deg', scale: '1', opacity: '1' };
 
-describe('nudge, stage and miniature scenes', () => {
+describe('nudge, list, stage and miniature scenes', () => {
   // Each one ends on the pose that rest.css and the art draw, so nothing jumps when it stops.
   it('end every animation at rest', () => {
-    for (const f of ['nudge.css', 'face.css', 'wave.css']) {
+    for (const f of ['nudge.css', 'tuck.css', 'count.css', 'face.css', 'wave.css']) {
       for (const [name, frames] of keyframes(f)) {
         const end = frames.find(([sel]) => sel.split(',').some((s) => s.trim() === '100%'));
         if (!end) continue;

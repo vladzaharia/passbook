@@ -39,6 +39,8 @@ import './scenes/cheer.css';
 import './scenes/wave.css';
 import './scenes/tear.css';
 import './scenes/nudge.css';
+import './scenes/tuck.css';
+import './scenes/count.css';
 import './scenes/face.css';
 
 /** Every entity art by name; loaded beside the app (index.ts), not in its first chunk. */
