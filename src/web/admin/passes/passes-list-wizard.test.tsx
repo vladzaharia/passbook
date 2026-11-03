@@ -407,7 +407,7 @@ describe('new pass wizard', () => {
     await user.type(screen.getByLabelText('Holder email'), 'nope');
     expect(screen.getByRole('checkbox', { name: 'Email the pass' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(await screen.findByText('Enter a valid email.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Holder' })).toBeInTheDocument();
   });
 

@@ -115,7 +115,7 @@ describe('validateValues', () => {
       name: 'At least 2 characters.',
       level: 'Choose one of the listed values.',
       points: 'At most 100.',
-      email: 'Enter a valid email.',
+      email: 'Enter a valid email address.',
       site: 'Enter an http(s) URL.',
       joined: 'Use YYYY-MM-DD.',
     });

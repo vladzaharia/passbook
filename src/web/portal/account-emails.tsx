@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { removeWithTransition } from '../lib/motion.ts';
 import { useInvalidateSession } from '../lib/session.ts';
@@ -22,8 +23,6 @@ import {
   removeEmail,
 } from './api.ts';
 import { usePendingEmails } from './pending-emails.ts';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Confirm = { kind: 'remove' | 'primary'; email: string } | null;
 
@@ -65,8 +64,8 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
 
   async function add(raw: string) {
     setAddError(undefined);
-    const email = raw.trim().toLowerCase();
-    if (!EMAIL_RE.test(email)) return setAddError('Enter a valid email.');
+    const email = strictEmail(raw);
+    if (!email) return setAddError(EMAIL_INVALID_MESSAGE);
     if (verified.some((v) => v.email === email)) {
       return setAddError('That email is already on your account.');
     }

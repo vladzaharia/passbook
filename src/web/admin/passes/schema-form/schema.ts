@@ -1,3 +1,5 @@
+import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
+
 export type Widget =
   | 'text'
   | 'textarea'
@@ -140,8 +142,6 @@ export function flatFields(groups: FieldGroup[]): FieldDef[] {
   return groups.flatMap((g) => g.fields);
 }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 function validateField(field: FieldDef, value: unknown): string | undefined {
   const empty = value === undefined || value === null || value === '';
   if (empty) return field.required ? 'Required.' : undefined;
@@ -166,7 +166,7 @@ function validateField(field: FieldDef, value: unknown): string | undefined {
   if (typeof s.maxLength === 'number' && value.length > s.maxLength) {
     return `At most ${s.maxLength} characters.`;
   }
-  if (field.widget === 'email' && !EMAIL.test(value)) return 'Enter a valid email.';
+  if (field.widget === 'email' && !strictEmail(value)) return EMAIL_INVALID_MESSAGE;
   if (field.widget === 'url') {
     try {
       const u = new URL(value);
