@@ -1,6 +1,6 @@
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type SessionResponse, SessionResponseSchema } from '@/shared/contracts/session.ts';
-import { safeNextPath } from '@/shared/next.ts';
+import { NEXT_COOKIE, NEXT_COOKIE_PATH, safeNextPath } from '@/shared/next.ts';
 import { api } from './api.ts';
 import { problemToError } from './errors.ts';
 import { loginHref } from './redirect.ts';
@@ -48,11 +48,25 @@ export function signedOutJustNow(now = Date.now()): boolean {
   }
 }
 
+/** The next the logout POST left for a switch through Pocket ID (shared/next.ts). */
+function cookieNext(): string | null {
+  const raw = new RegExp(`(?:^|;\\s*)${NEXT_COOKIE}=([^;]*)`).exec(document.cookie)?.[1];
+  if (!raw) return null;
+  try {
+    return safeNextPath(decodeURIComponent(raw));
+  } catch {
+    // Malformed escape: not a path the server wrote.
+    return null;
+  }
+}
+
 /**
  * The next a sign-out-to-switch asked for. Pocket ID's end-session returns to a bare /login, so
- * this tab keeps it for two minutes.
+ * the server left it in a cookie, and this tab kept it for two minutes.
  */
 export function signedOutNext(now = Date.now()): string | null {
+  const kept = cookieNext();
+  if (kept) return kept;
   if (!signedOutJustNow(now)) return null;
   try {
     return safeNextPath(sessionStorage.getItem(BYE_NEXT));
@@ -64,6 +78,10 @@ export function signedOutNext(now = Date.now()): string | null {
 
 /** Once read, the marks go: the next sign-in page does not wave again. */
 export function clearSignedOut(): void {
+  if (document.cookie.includes(`${NEXT_COOKIE}=`)) {
+    // biome-ignore lint/suspicious/noDocumentCookie: drops the single-use cookie the server set
+    document.cookie = `${NEXT_COOKIE}=; Path=${NEXT_COOKIE_PATH}; Max-Age=0; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+  }
   try {
     sessionStorage.removeItem(BYE);
     sessionStorage.removeItem(BYE_NEXT);
