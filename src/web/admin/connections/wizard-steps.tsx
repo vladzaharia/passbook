@@ -10,6 +10,8 @@ import { api } from '../../lib/api.ts';
 import { connectorIcon } from '../../lib/entities.ts';
 import {
   Button,
+  Card,
+  CardBody,
   FormField,
   Input,
   OptionTile,
@@ -194,96 +196,99 @@ export function ConfigStep({
   });
   const set = (patch: Partial<ConfigDraft>) => onChange({ ...draft, ...patch });
 
+  // One card for the step, like Review: the schema's groups take headings inside it.
   return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <FormField
-        label="Name"
-        required
-        error={showErrors && !draft.name.trim() ? 'Required.' : undefined}
-      >
-        {(c) => (
-          <Input
-            {...c}
-            className="sm:max-w-md"
-            maxLength={120}
-            placeholder="Member sync"
-            value={draft.name}
-            onChange={(e) => set({ name: e.target.value })}
-          />
-        )}
-      </FormField>
-      <SchemaForm
-        schema={flat}
-        value={draft.config}
-        onChange={(config) => set({ config })}
-        hiddenKeys={mainHidden}
-        showAllErrors={showErrors}
-        serverErrors={serverErrors.config}
-      />
-      {auth ? (
-        <RadioGroup
-          legend="Authentication"
-          orientation="horizontal"
-          options={auth}
-          value={authType}
-          onValueChange={(v) => set({ config: { ...draft.config, 'auth.type': v } })}
-        />
-      ) : null}
-      {authFields ? (
+    <Card>
+      <CardBody className="flex min-w-0 flex-col gap-6">
+        <FormField
+          label="Name"
+          required
+          error={showErrors && !draft.name.trim() ? 'Required.' : undefined}
+        >
+          {(c) => (
+            <Input
+              {...c}
+              className="sm:max-w-md"
+              maxLength={120}
+              placeholder="Member sync"
+              value={draft.name}
+              onChange={(e) => set({ name: e.target.value })}
+            />
+          )}
+        </FormField>
         <SchemaForm
-          schema={authSchema}
+          schema={flat}
           value={draft.config}
           onChange={(config) => set({ config })}
-          hiddenKeys={authHidden}
+          hiddenKeys={mainHidden}
           showAllErrors={showErrors}
           serverErrors={serverErrors.config}
-          idPrefix="auth-"
         />
-      ) : null}
-      {secretsFlat &&
-      hiddenSecrets.size < Object.keys(flattenSchema(secretsFlat)?.properties ?? {}).length ? (
-        <SchemaForm
-          schema={secretsFlat}
-          value={draft.secrets}
-          onChange={(secrets) => set({ secrets })}
-          hiddenKeys={hiddenSecrets}
-          showAllErrors={showErrors}
-          serverErrors={serverErrors.secrets}
-          idPrefix="secret-"
-        />
-      ) : null}
-      <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="outline"
-            iconStart={<ACTION_ICON.test aria-hidden />}
-            busy="pulse"
-            loading={run.isPending}
-            onClick={() =>
-              run.mutateAsync().then(
-                (r) => onTest({ kind: 'result', result: r, at: Date.now() }),
-                (error: unknown) => onTest({ kind: 'error', error, at: Date.now() }),
-              )
-            }
-          >
-            Test
-          </Button>
-          <TestResult outcome={test} />
-        </div>
-        {test?.kind === 'result' && test.result.sample?.length ? (
-          <ul aria-label="Fields in the first record" className="flex flex-wrap gap-1.5">
-            {test.result.sample.map((f) => (
-              <li
-                key={f.pointer}
-                title={f.preview}
-                className="rounded-md border border-border bg-surface-sunken px-2 py-0.5 font-mono text-xs text-fg"
-              >
-                {f.pointer}
-              </li>
-            ))}
-          </ul>
+        {auth ? (
+          <RadioGroup
+            legend="Authentication"
+            orientation="horizontal"
+            options={auth}
+            value={authType}
+            onValueChange={(v) => set({ config: { ...draft.config, 'auth.type': v } })}
+          />
         ) : null}
-      </div>
-    </div>
+        {authFields ? (
+          <SchemaForm
+            schema={authSchema}
+            value={draft.config}
+            onChange={(config) => set({ config })}
+            hiddenKeys={authHidden}
+            showAllErrors={showErrors}
+            serverErrors={serverErrors.config}
+            idPrefix="auth-"
+          />
+        ) : null}
+        {secretsFlat &&
+        hiddenSecrets.size < Object.keys(flattenSchema(secretsFlat)?.properties ?? {}).length ? (
+          <SchemaForm
+            schema={secretsFlat}
+            value={draft.secrets}
+            onChange={(secrets) => set({ secrets })}
+            hiddenKeys={hiddenSecrets}
+            showAllErrors={showErrors}
+            serverErrors={serverErrors.secrets}
+            idPrefix="secret-"
+          />
+        ) : null}
+        <div className="flex flex-col gap-3 border-t border-border pt-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              iconStart={<ACTION_ICON.test aria-hidden />}
+              busy="pulse"
+              loading={run.isPending}
+              onClick={() =>
+                run.mutateAsync().then(
+                  (r) => onTest({ kind: 'result', result: r, at: Date.now() }),
+                  (error: unknown) => onTest({ kind: 'error', error, at: Date.now() }),
+                )
+              }
+            >
+              Test
+            </Button>
+            <TestResult outcome={test} />
+          </div>
+          {test?.kind === 'result' && test.result.sample?.length ? (
+            <ul aria-label="Fields in the first record" className="flex flex-wrap gap-1.5">
+              {test.result.sample.map((f) => (
+                <li
+                  key={f.pointer}
+                  title={f.preview}
+                  className="rounded-md border border-border bg-surface-sunken px-2 py-0.5 font-mono text-xs text-fg"
+                >
+                  {f.pointer}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </CardBody>
+    </Card>
   );
 }

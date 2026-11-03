@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, renderApp } from '../../lib/test-utils.tsx';
@@ -52,6 +53,34 @@ describe('connections list', () => {
     expect(seen[0]?.searchParams.get('health')).toBe('degraded');
     expect(screen.getByText('2 connections')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('pages by cursor, 50 at a time, with Load more', async () => {
+    const user = userEvent.setup();
+    const seen: URL[] = [];
+    await renderApp('/admin/connections', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': orgs,
+        '/api/v1/connectors': () => json({ items: [] }),
+        '/api/v1/connections': (url) => {
+          seen.push(url);
+          return url.searchParams.get('cursor') === 'c1'
+            ? json({
+                items: [{ ...connection({ id: 'c2', name: 'Second' }), passCount: 0 }],
+                nextCursor: null,
+              })
+            : json({ items: [{ ...connection(), passCount: 0 }], nextCursor: 'c1' });
+        },
+      },
+    });
+    await screen.findByRole('link', { name: 'MemberSpot sync' });
+    expect(seen[0]?.searchParams.get('limit')).toBe('50');
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(await screen.findByRole('link', { name: 'Second' })).toBeInTheDocument();
+    expect(seen.at(-1)?.searchParams.get('cursor')).toBe('c1');
+    expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
+    expect(screen.getByText('2 connections')).toBeInTheDocument();
   });
 
   it('shows the filtered empty state with Clear filters', async () => {

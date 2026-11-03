@@ -15,6 +15,7 @@ import {
   useUnsavedChangesGuard,
   Wizard,
 } from '../../ui/index.ts';
+import { markCreated } from '../passes/created.tsx';
 import {
   cleanValues,
   describeSchema,
@@ -144,8 +145,15 @@ export function CreateConnectionWizard() {
       setCreated({ id: connection.id, url: connection.webhookUrl, secret: webhookSecret });
     },
   });
-  const open = (id: string) =>
-    void navigate({ to: '/admin/connections/$connectionId', params: { connectionId: id } });
+  // The new connection's page replaces the wizard in history and leads with its next steps.
+  const open = (id: string) => {
+    markCreated(`connection:${id}`);
+    void navigate({
+      to: '/admin/connections/$connectionId',
+      params: { connectionId: id },
+      replace: true,
+    });
+  };
   // Without a secret to show, the new connection opens at once.
   // biome-ignore lint/correctness/useExhaustiveDependencies: navigate once per creation
   useEffect(() => {
