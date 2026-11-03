@@ -7,9 +7,11 @@ export const MAIN_ID = 'main';
 export function useDocumentTitle(title: string): void {
   useEffect(() => {
     const previous = document.title;
-    document.title = `${title} · PassBook`;
+    const mine = `${title} · PassBook`;
+    document.title = mine;
     return () => {
-      document.title = previous;
+      // A page that mounted after this one keeps its own title.
+      if (document.title === mine) document.title = previous;
     };
   }, [title]);
 }
