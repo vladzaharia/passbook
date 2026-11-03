@@ -15,6 +15,7 @@ import {
   EntityAvatar,
   MetaLink,
   PageHeader,
+  SaveBarGroup,
   SkeletonDetail,
   TwoPane,
   TypedConfirmDialog,
@@ -86,8 +87,9 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
   const org = query.data;
   const suspended = org.status === 'suspended';
   const { typed: _typed, ...confirmCopy } = deleteConfirm('org', org.name);
+  // Details, pass email and support contacts are separate forms under one Save.
   return (
-    <>
+    <SaveBarGroup>
       <PageHeader
         title={org.name}
         breadcrumbs={crumbs}
@@ -195,6 +197,6 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
           await navigate({ to: '/admin/orgs', replace: true });
         }}
       />
-    </>
+    </SaveBarGroup>
   );
 }

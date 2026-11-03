@@ -1,6 +1,14 @@
 import { useBlocker } from '@tanstack/react-router';
 import { Check, Save } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { DiscardDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
@@ -10,8 +18,8 @@ export interface SaveBarProps {
   saving?: boolean;
   /** The save mutation is waiting for the network (TanStack paused it offline). */
   paused?: boolean;
-  /** Without formId: Save runs this. */
-  onSave?: () => void;
+  /** Without formId: Save runs this. In a SaveBarGroup it may resolve how the save ended. */
+  onSave?: SaveHandler;
   /**
    * Save submits this kit Form instead, so a blocked save focuses the first invalid field and
    * announces one summary (form.tsx).
@@ -23,13 +31,72 @@ export interface SaveBarProps {
   extra?: ReactNode;
 }
 
+/** How one form's save ended. 'refused': field errors show. 'failed': the form already said why. */
+export type SaveResult = 'saved' | 'refused' | 'failed';
+
+/** A save that resolves its result lets Form and SaveBarGroup follow up (focus, one "Saved"). */
+export type SaveHandler = (() => void) | (() => Promise<SaveResult | undefined>);
+
+/** A kit Form as its group sees it (form.tsx). */
+export interface GroupedForm {
+  invalid: boolean;
+  onInvalid?: () => void;
+  onValid: SaveHandler;
+  /** Focus the first invalid field and announce one summary. */
+  block: () => void;
+}
+
+/** A grouped SaveBar's state. `props` stays current without re-rendering the group. */
+export interface SaveBarMember {
+  dirty: boolean;
+  saving: boolean;
+  paused: boolean;
+  extra?: ReactNode;
+  props: { readonly current: SaveBarProps };
+}
+
+export interface SaveBarGroupApi {
+  member: (id: string, state: SaveBarMember | null) => void;
+  form: (id: string, form: { readonly current: GroupedForm } | null) => void;
+  guard: (id: string, dirty: boolean | null) => void;
+  /** A grouped SaveBar submits this form. */
+  has: (formId: string) => boolean;
+  save: () => void;
+}
+
+/** Provided by SaveBarGroup (save-bar-group.tsx). */
+export const SaveBarGroupContext = createContext<SaveBarGroupApi | null>(null);
+
+/**
+ * Appears while there are unsaved changes. Inside a SaveBarGroup it reports to the group, which
+ * shows one bar for the page.
+ */
+export function SaveBar(props: SaveBarProps) {
+  const group = useContext(SaveBarGroupContext);
+  return group ? <GroupedSaveBar group={group} {...props} /> : <SaveBarView {...props} />;
+}
+
+function GroupedSaveBar({ group, ...props }: SaveBarProps & { group: SaveBarGroupApi }) {
+  const fallback = useId();
+  const id = props.formId ?? fallback;
+  const latest = useRef(props);
+  latest.current = props;
+  const { dirty, saving = false, paused = false, extra } = props;
+  useEffect(
+    () => group.member(id, { dirty, saving, paused, extra, props: latest }),
+    [group, id, dirty, saving, paused, extra],
+  );
+  useEffect(() => () => group.member(id, null), [group, id]);
+  return null;
+}
+
 type Phase = 'hidden' | 'shown' | 'saved' | 'closing';
 
 /**
- * Appears while there are unsaved changes. After a save the Save icon turns into a check for
- * 400 ms, then the bar slides down (200 ms); Discard leaves at once. It stays mounted while closing.
+ * After a save the Save icon turns into a check for 400 ms, then the bar slides down (200 ms);
+ * Discard leaves at once. It stays mounted while closing.
  */
-export function SaveBar({
+function SaveBarView({
   dirty,
   saving,
   paused,
@@ -93,7 +160,7 @@ export function SaveBar({
               paused={paused}
               disabled={done}
               iconStart={done ? <Check aria-hidden className="wl-check" /> : <Save aria-hidden />}
-              onClick={formId ? undefined : onSave}
+              onClick={formId || !onSave ? undefined : () => void onSave()}
             >
               {saveLabel}
             </Button>
@@ -104,17 +171,25 @@ export function SaveBar({
   );
 }
 
-/** Blocks in-app navigation (confirm dialog) and tab close (browser prompt) while dirty. */
+/**
+ * Blocks in-app navigation (confirm dialog) and tab close (browser prompt) while dirty. Inside a
+ * SaveBarGroup it hands its state to the group, which asks once for the page.
+ */
 export function useUnsavedChangesGuard(dirty: boolean) {
+  const group = useContext(SaveBarGroupContext);
+  const id = useId();
+  const own = dirty && !group;
   const blocker = useBlocker({
-    shouldBlockFn: () => dirty,
-    enableBeforeUnload: () => dirty,
+    shouldBlockFn: () => own,
+    enableBeforeUnload: () => own,
     withResolver: true,
-    disabled: !dirty,
+    disabled: !own,
   });
+  useEffect(() => group?.guard(id, dirty), [group, id, dirty]);
+  useEffect(() => () => group?.guard(id, null), [group, id]);
   useEffect(() => {
-    if (!dirty && blocker.status === 'blocked') blocker.reset();
-  }, [dirty, blocker]);
+    if (!own && blocker.status === 'blocked') blocker.reset();
+  }, [own, blocker]);
   return blocker;
 }
 

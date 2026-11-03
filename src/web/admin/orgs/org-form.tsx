@@ -11,10 +11,12 @@ import {
   FormGrid,
   Input,
   SaveBar,
+  type SaveResult,
   Select,
   toast,
   UnsavedChangesDialog,
   useFormErrors,
+  useSavedToast,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { useIdentityOptions } from '../identities/queries.ts';
@@ -90,24 +92,30 @@ export function OrgForm({ org }: { org: Org }) {
   const errors = { ...server, ...check.errors } as Record<string, string>;
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
   const guard = useUnsavedChangesGuard(dirty);
+  const saved = useSavedToast();
   const patch = (p: Partial<OrgDraft>) => {
     setDraft((d) => ({ ...d, ...p }));
     setServer({});
   };
 
-  async function save() {
+  async function save(): Promise<SaveResult> {
     try {
       await update.mutateAsync(orgPatch(draft, org));
-      toast.success('Organization saved');
+      saved('Organization saved');
+      return 'saved';
     } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
-      else toast.error(cause, 'Could not save');
+      if (isApiError(cause) && Object.keys(cause.fields).length > 0) {
+        setServer(cause.fields);
+        return 'refused';
+      }
+      toast.error(cause, 'Could not save');
+      return 'failed';
     }
   }
 
   // Both cards are one form: Save checks the pass colours too and focuses the first error.
   return (
-    <Form id={FORM_ID} className="flex flex-col gap-6" {...check.form} onValid={() => void save()}>
+    <Form id={FORM_ID} className="flex flex-col gap-6" {...check.form} onValid={save}>
       <Card>
         <CardHeader title="Details" />
         <CardBody>

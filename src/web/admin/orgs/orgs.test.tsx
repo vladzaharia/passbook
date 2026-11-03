@@ -1,8 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { toast } from '@/web/ui/index.ts';
 import { orgPatch, orgToDraft, validateOrg } from './org-form.tsx';
 import { slugify } from './orgs-page.tsx';
 
@@ -351,8 +352,62 @@ describe('org detail', () => {
     await waitFor(() =>
       expect(puts).toEqual([{ scope: 'org:o1', values: { 'email.buddy': true } }]),
     );
-    expect(await screen.findByText('Settings saved')).toBeInTheDocument();
+    expect(await screen.findByText('Saved', { selector: '[data-title]' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Buddy in pass emails' })).toBeChecked();
+  });
+
+  it('saves details, pass email and support contacts from one bar', async () => {
+    const sent: string[] = [];
+    const success = vi.spyOn(toast, 'success');
+    let org = summary();
+    const values: Record<string, unknown> = {};
+    const item = (key: string) => ({
+      scope: 'org:o1',
+      key,
+      value: values[key] ?? null,
+      default: key === 'email.buddy' ? false : null,
+      updatedAt: null,
+      updatedBy: null,
+    });
+    await renderApp('/admin/orgs/o1', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/orgs/o1': (_u, init) => {
+          if (init?.method === 'PATCH') {
+            sent.push('org');
+            org = summary({ name: JSON.parse(String(init.body)).name, updatedAt: 2 });
+          }
+          return json(org);
+        },
+        '/api/v1/settings': (_u, init) => {
+          if (init?.method === 'PUT') {
+            const put = JSON.parse(String(init.body)).values;
+            sent.push(...Object.keys(put));
+            Object.assign(values, put);
+          }
+          return json({
+            ...settingsEmpty,
+            items: ['email.buddy', 'support.email', 'support.url'].map(item),
+          });
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    const name = await screen.findByLabelText(/^Name/);
+    await ui.type(name, ' 2');
+    await ui.click(await screen.findByRole('switch', { name: 'Buddy in pass emails' }));
+    await ui.type(await screen.findByLabelText(/Support email/), 'help@acme.test');
+    expect(screen.getAllByRole('region', { name: 'Unsaved changes' })).toHaveLength(1);
+    await ui.click(screen.getByRole('button', { name: 'Save' }));
+    // Top to bottom, one after another.
+    await waitFor(() => expect(sent).toEqual(['org', 'email.buddy', 'support.email']));
+    await waitFor(() => expect(success).toHaveBeenCalledOnce());
+    expect(success).toHaveBeenCalledWith('Saved');
+    success.mockRestore();
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'Unsaved changes' })).toBeNull(),
+    );
   });
 
   it('rejects a bad accent on Save, focusing it, without calling the API', async () => {
