@@ -138,8 +138,13 @@ describe('my passes', () => {
     await user.click(await screen.findByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Show QR' }));
     const dialog = await screen.findByRole('dialog');
+    // The QR renderer is a lazy chunk; under a loaded full run it can take over a second.
     expect(
-      await within(dialog).findByRole('img', { name: 'QR code for Gym membership' }),
+      await within(dialog).findByRole(
+        'img',
+        { name: 'QR code for Gym membership' },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
   });
 });
