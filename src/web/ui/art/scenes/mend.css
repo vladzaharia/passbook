@@ -3,23 +3,23 @@
    1% = 32 ms. */
 @media (prefers-reduced-motion: no-preference) {
   .wl-buddy[data-scene="mend"][data-run] .wl-art [data-body] {
-    animation: wl-s-mend-body 3.2s ease-in-out;
+    animation: wl-s-mend-body 3.2s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="mend"][data-run] .wl-art [data-look] {
-    animation: wl-s-mend-look 3.2s ease-in-out;
+    animation: wl-s-mend-look 3.2s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="mend"][data-run] .wl-art [data-part="c3"] {
-    animation: wl-s-mend-hold 3.2s ease-in-out;
+    animation: wl-s-mend-hold 3.2s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="mend"][data-run] .wl-art :is([data-part="eyes"], [data-part="br"]) {
-    animation: wl-s-mend-hope 3.2s ease-in-out;
+    animation: wl-s-mend-hope 3.2s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="mend"][data-run] .wl-buddy-prop {
     transform-origin: 30% 100%;
-    animation: wl-s-mend-lift 3.2s ease-in-out;
+    animation: wl-s-mend-lift 3.2s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="mend"][data-run] [data-art="torn"] [data-part="c"] {
-    animation: wl-s-mend-corner 3.2s ease-in-out;
+    animation: wl-s-mend-corner 3.2s ease-in-out var(--wl-at, 0s);
   }
 }
 

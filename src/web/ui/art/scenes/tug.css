@@ -2,19 +2,19 @@
    rattles and holds. It lets go and sighs. 2.8 s, once; 1% = 28 ms. */
 @media (prefers-reduced-motion: no-preference) {
   .wl-buddy[data-scene="tug"][data-run] .wl-art [data-body] {
-    animation: wl-s-tug-body 2.8s ease-in-out;
+    animation: wl-s-tug-body 2.8s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="tug"][data-run] .wl-art [data-look] {
-    animation: wl-s-tug-look 2.8s ease-in-out;
+    animation: wl-s-tug-look 2.8s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="tug"][data-run] .wl-art [data-part="c3"] {
-    animation: wl-s-tug-arm 2.8s ease-in-out;
+    animation: wl-s-tug-arm 2.8s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="tug"][data-run] [data-art="lock"] [data-part="k"] {
-    animation: wl-s-tug-lock 2.8s ease-in-out;
+    animation: wl-s-tug-lock 2.8s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="tug"][data-run] [data-art="lock"] [data-part="s"] {
-    animation: wl-s-tug-shackle 2.8s ease-in-out;
+    animation: wl-s-tug-shackle 2.8s ease-in-out var(--wl-at, 0s);
   }
 }
 

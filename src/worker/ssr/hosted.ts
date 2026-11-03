@@ -3,17 +3,17 @@
  * (src/web/portal/login-page.tsx, login-scene.css): one header band, the 20 px wordmark at the
  * card's left text inset and the 128×96 wallet scene (112×84 under 640) seated on the card's top
  * edge at the right, then the card, so the h1 and card sit at identical positions. The art moves in
- * CSS only, once on load; one same-origin script (public/buddy-replay.js) replays its hello on a
+ * CSS only, once on load; one same-origin script (public/buddy-replay.js) replays its scene on a
  * click. No inline script.
  */
 import { ART_CSS } from '../../web/ui/art/css.ts';
 import { appPageHead, HEAD_HTML } from './head.ts';
-import { artHtml, HOSTED_ART_CSS, type HostedArt } from './hosted-art.tsx';
+import { HOSTED_ART_CSS, type HostedArt, stateArtHtml } from './hosted-art.tsx';
 import { escapeHtml, THEME_CSS, WORDMARK_CSS, wordmarkHtml } from './theme.ts';
 
 export const HOSTED_FOOTER = 'Signing in shows the passes sent to your email.';
 
-/** Click to replay the wallet's hello; same-origin, so `script-src 'self'` covers it. */
+/** Click to replay the buddy's scene; same-origin, so `script-src 'self'` covers it. */
 export const REPLAY_SCRIPT = '<script src="/buddy-replay.js" defer></script>';
 
 const LOCK =
@@ -74,7 +74,7 @@ export const calloutHtml = (message: string) =>
 
 /** A full hosted page: the band (wordmark, wallet scene), then the card with an h1 and the body. */
 export function hostedPage(input: HostedPageInput): string {
-  const art = artHtml(input.art, Boolean(input.error));
+  const art = stateArtHtml(input.art, Boolean(input.error));
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';

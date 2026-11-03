@@ -7,16 +7,16 @@
 
 @media (prefers-reduced-motion: no-preference) {
   [data-scene="peek"][data-run] .wl-art [data-part="ln"] {
-    animation: wl-s-peek-lens 2.6s ease-in-out;
+    animation: wl-s-peek-lens 2.6s ease-in-out var(--wl-at, 0s);
   }
   [data-scene="peek"][data-run] .wl-art [data-look] {
-    animation: wl-s-peek-look 2.6s ease-in-out;
+    animation: wl-s-peek-look 2.6s ease-in-out var(--wl-at, 0s);
   }
   [data-scene="peek"][data-run] .wl-art .e:last-child {
-    animation: wl-s-peek-eye 2.6s ease-in-out;
+    animation: wl-s-peek-eye 2.6s ease-in-out var(--wl-at, 0s);
   }
   [data-scene="peek"][data-run] .wl-art [data-body] {
-    animation: wl-s-peek-body 2.6s ease-in-out;
+    animation: wl-s-peek-body 2.6s ease-in-out var(--wl-at, 0s);
   }
 }
 
