@@ -27,7 +27,7 @@ describe('theme choice', () => {
     ['dark', THEME_COLOR.dark],
   ] as const)('stamps %s on hosted, error and dead-link pages, one theme-color', (theme, color) => {
     for (const html of [
-      expiredPage(NONCE, theme),
+      expiredPage(NONCE, null, theme),
       renderErrorPage({ status: 500, nonce: NONCE, theme }),
       renderNotFoundPage(NONCE, theme),
     ]) {
