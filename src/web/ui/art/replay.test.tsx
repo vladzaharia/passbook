@@ -4,9 +4,7 @@ import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { Buddy } from './buddy.tsx';
-import { Cameo } from './cameo.tsx';
 import { BuddyFace } from './face.tsx';
-import { WalletArt } from './wallet.tsx';
 
 const SCENES = join(process.cwd(), 'src/web/ui/art/scenes');
 const sheets = readdirSync(SCENES).filter((f) => f.endsWith('.css'));
@@ -139,16 +137,12 @@ describe('buddy scenes', () => {
         <a href="#next">
           <Buddy mood="curious" scene="inspect" />
           <BuddyFace className="size-4" />
-          <Cameo scene="peek">
-            <WalletArt state="lost" mood="curious" size="sm" />
-          </Cameo>
         </a>
       </div>,
     );
     const targets = [
       painted(container.querySelector('[data-buddy]') as Element),
       container.querySelector('svg.wl-face') as Element,
-      painted(container.querySelector('[data-scene="peek"]') as Element),
     ];
     for (const target of targets) {
       const click = new MouseEvent('click', { bubbles: true, cancelable: true });
@@ -164,9 +158,7 @@ describe('buddy scenes', () => {
       <main>
         <Buddy mood="curious" state="empty" scene="search" />
         <BuddyFace scene="cheer" />
-        <Cameo scene="wave">
-          <WalletArt state="login" mood="happy" size="sm" />
-        </Cameo>
+        <Buddy mood="happy" size="sm" at="end" scene="wave" />
       </main>,
     );
     const hosts = container.querySelectorAll('[data-replay]');

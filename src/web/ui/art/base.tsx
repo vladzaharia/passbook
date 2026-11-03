@@ -4,10 +4,14 @@ import './art-records.css';
 import './art-details.css';
 import './art-wallet.css';
 
+/**
+ * The scale (motion-and-expression.md, The buddy): sm is S, 64×48 (cards, tabs, the palette, the
+ * pass stage); lg is M, 96×72 (state boxes); xl is L, 128×96 and 112×84 under 640 (the sign-in
+ * and SSR bands). Each tier draws its own line: 1.25, 1.5 and 1.75 px (art.css).
+ */
 export type ArtSize = 'sm' | 'lg' | 'xl';
 
 export interface ArtProps {
-  /** lg 96×72, sm 64×48, xl 112×84 (sign-in). */
   size?: ArtSize;
   className?: string;
   /** false: no idle beat or hover replay. */
@@ -16,7 +20,7 @@ export interface ArtProps {
   still?: boolean;
 }
 
-export const DIM = { sm: [64, 48], lg: [96, 72], xl: [112, 84] } as const;
+export const DIM = { sm: [64, 48], lg: [96, 72], xl: [128, 96] } as const;
 
 // No DOM lib in the Worker typecheck (SSR renders the wallet).
 type El = { closest(s: string): EventTarget | null; dataset: Record<string, string | undefined> };
@@ -57,6 +61,7 @@ export function Art({
     <svg
       ref={ref}
       data-art={name}
+      data-size={size}
       data-state={state}
       data-pose={pose}
       data-beat={beat ? undefined : 'off'}

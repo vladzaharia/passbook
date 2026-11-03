@@ -1,14 +1,7 @@
 import type { ReactNode } from 'react';
 import { Art, type ArtProps, useFoilId } from './base.tsx';
 
-export type WalletState =
-  | 'login'
-  | 'empty'
-  | 'lost'
-  | 'confirm'
-  | 'expired'
-  | 'no-access'
-  | 'break-glass';
+export type WalletState = 'login' | 'empty' | 'lost' | 'confirm' | 'expired' | 'break-glass';
 
 /**
  * happy: eyes smile shut. flat: half-shut eyes, straight mouth. sad: worried brows, frown, a
@@ -30,6 +23,8 @@ export interface WalletArtProps extends ArtProps {
   onCard?: ReactNode;
   face?: ReactNode;
   front?: ReactNode;
+  /** On the surface beside it, outside the body (wallet-states.tsx: the hourglass). */
+  aside?: ReactNode;
 }
 
 const CARD = 'M40 9h16a3 3 0 0 1 3 3v25a3 3 0 0 1-3 3H40a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3Z';
@@ -56,7 +51,8 @@ const BROWS: Partial<Record<WalletMood, string>> = {
 /** Legs hang over the surface's edge, feet turned out. */
 const LEG_L = 'M35 60h5v10.5a2.5 2.5 0 0 1-2.5 2.5h-3a2 2 0 0 1 0-4h.5Z';
 const LEG_R = 'M56 60h5v9h.5a2 2 0 0 1 0 4h-3a2.5 2.5 0 0 1-2.5-2.5Z';
-const JOY = 'M41.8 44.4q1.7-2.4 3.4 0M50.8 44.4q1.7-2.4 3.4 0';
+/** The happy eyes, smiling shut: left, right (the miniature winks the right one). */
+export const JOY = ['M41.8 44.4q1.7-2.4 3.4 0', 'M50.8 44.4q1.7-2.4 3.4 0'] as const;
 
 const card = (n: 1 | 2 | 3, extra?: string, children?: ReactNode) => (
   <g data-part={`c${n}`} data-i={n - 1} className={extra}>
@@ -74,6 +70,7 @@ export function WalletArt({
   onCard,
   face,
   front,
+  aside,
   ...props
 }: WalletArtProps) {
   const shade = useFoilId();
@@ -92,6 +89,7 @@ export function WalletArt({
           <ellipse data-part="sd" fill={`url(#${shade})`} cx="48" cy="68" rx="34" ry="3.2" />
         </>
       ) : null}
+      {aside}
       <g
         data-part="w"
         data-b=""
@@ -125,7 +123,7 @@ export function WalletArt({
                 <ellipse className="e" cx="43.5" cy="43.5" rx="1.7" ry="2.1" />
                 <ellipse className="e" cx="52.5" cy="43.5" rx="1.7" ry="2.1" />
               </g>
-              {mood === 'happy' ? <path data-part="joy" className="m" d={JOY} /> : null}
+              {mood === 'happy' ? <path data-part="joy" className="m" d={JOY.join('')} /> : null}
               {brows ? <path data-part="br" className="m" d={brows} /> : null}
               {face}
             </g>

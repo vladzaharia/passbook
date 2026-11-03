@@ -4,7 +4,6 @@ import type { WalletState } from './wallet.tsx';
 
 export type { ArtProps, ArtSize } from './base.tsx';
 export { Buddy, type BuddyProps, type BuddyScene } from './buddy.tsx';
-export { Cameo } from './cameo.tsx';
 export { BuddyFace } from './face.tsx';
 export { LensOverlay } from './lens.tsx';
 export { useScene } from './replay.ts';
