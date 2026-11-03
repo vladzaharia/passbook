@@ -109,7 +109,7 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 
 | Scene | Where | Beats: anticipation, action, reaction, settle | Time |
 | --- | --- | --- | --- |
-| search | Portal My passes, empty (no dotted pass) | Squash and stand, feet on the edge. Scurries along the box's top edge within its centre 40% (the box is an inline-size container): three steps out, six across, three back, 180 ms each, legs alternating, the body bobbing and rocking, leaning with its eyes in the lead. At the right end, then the left, it stops on tiptoe, a "?" pops over the leading side and wobbles while the eyes scan out, then a blink and a little hop turn it round. Back at the centre it hops onto the seat, squashes and blinks at you | 4 s |
+| search | Portal My passes, empty (no dotted pass) | Squash and stand, feet on the edge. Walks the box's top edge, at most 75 px each way (`20cqw` in a narrow box; the box is an inline-size container): three steps out, five across, three back, 220 ms each. A planted foot holds still on the edge while the body passes over it; the free foot lifts and crosses to its next spot. The trunk leans into the walk, bobs and rocks onto the planted foot, eyes in the lead. At the right end, then the left, the feet come in under it, it rises on tiptoe, a "?" pops over the leading side and wobbles while the eyes scan out, then a blink and a hop turn it round, feet back at rest in the air. Back at the centre it hops onto the seat, squashes and blinks at you | 4 s |
 | inspect | Empty lists (curious) | Glances at the entity art and leans away, then in; the gold pass reaches out and taps it twice; the art bumps and plays its own beat; it tilts its head, brow up, blinks | 2.4 s |
 | sweep | Filtered to nothing | Leans to the lens; the lens grows and sweeps left across the dimmed art and back, eyes following; nothing: a shrug, outer passes out like hands, brow up | 2.8 s |
 | mend | Not found (torn, sad) | Props the torn pass up with its gold pass; the corner lifts, snaps into the tear and holds; eyes widen, brows lift; it wobbles and pops off; a sigh | 3.2 s |
@@ -126,6 +126,20 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 | face: wink | Success toast | Pops with the toast and winks at 380 ms; a click pops and winks again | 540 ms |
 | face: post | Holder emailed (`toast.sent`) | The violet pass dips, flies off up-right like a letter, a wink, a new one rises into the pocket | 1.4 s |
 | face: cheer | Status all good | The gold pass rises like a thumb and wiggles, a wink, the smile widens | 1.4 s |
+
+Search walk beats (`scenes/search*.css`; R is the reach, 75 px on a wide screen). It starts 700 ms
+after the art lands and ends by 4.7 s. Each walk starts and stops on an eased half step; the
+planted foot moves against the body with the same keyframes and easing, so it stays put.
+
+| ms | Beat |
+| --- | --- |
+| 0–200 | Squash, stand on the edge |
+| 200–860 | 3 steps right, R (peak 170 px/s) |
+| 860–1300 | Feet in, tiptoe, "?", look out, blink, hop turn |
+| 1300–2400 | 5 steps left, 2R |
+| 2400–2840 | Feet in, tiptoe, "?", look out, blink, hop turn |
+| 2840–3500 | 3 steps right, back to the centre |
+| 3500–4000 | Hop onto the seat, squash, blink |
 
 Other cameos, unchanged:
 
