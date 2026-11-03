@@ -67,7 +67,5 @@ export const removeEmail = (email: string) =>
 export const makePrimaryEmail = (email: string) =>
   api.post(`/api/v1/me/emails/${encodeURIComponent(email)}/primary`, MyEmailListSchema);
 
-export const revokeAllSessions = () => api.action('POST', '/api/v1/me/sessions/revoke-all');
-
 export const revokeSession = (id: string) =>
   api.delete(`/api/v1/me/sessions/${encodeURIComponent(id)}`);

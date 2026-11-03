@@ -29,9 +29,11 @@ describe('requireSession', () => {
     });
   });
 
-  it('sanitizes an off-site next', async () => {
-    const error = await requireSession(clientWith('anon'), '//evil.com').catch((e: unknown) => e);
-    expect((error as { options: { search: unknown } }).options.search).toEqual({ next: '/' });
+  it('drops an off-site next and home, so signing in picks the landing', async () => {
+    for (const next of ['//evil.com', '/']) {
+      const error = await requireSession(clientWith('anon'), next).catch((e: unknown) => e);
+      expect((error as { options: { search: unknown } }).options.search).toEqual({});
+    }
   });
 });
 

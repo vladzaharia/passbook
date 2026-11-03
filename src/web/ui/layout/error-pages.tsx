@@ -15,6 +15,8 @@ const useInAdmin = () =>
 
 export function ForbiddenPage() {
   const { authed } = useSession();
+  // Switching accounts comes back here.
+  const here = useRouterState({ select: (s) => s.location.href });
   // A holder who followed an admin link gets a way back to their passes.
   const holder = authed?.roles.includes('user') === true;
   return (
@@ -35,7 +37,7 @@ export function ForbiddenPage() {
           <Button
             variant={holder ? 'ghost' : 'outline'}
             iconStart={<LogIn aria-hidden />}
-            onClick={() => void signOut(authed?.csrfToken)}
+            onClick={() => void signOut(authed?.csrfToken, { next: here })}
           >
             Sign in as someone else
           </Button>
