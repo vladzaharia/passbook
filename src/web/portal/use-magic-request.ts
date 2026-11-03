@@ -75,7 +75,7 @@ function useChallenge() {
  * POST /auth/magic/request behind the challenge. `phase` is 'checking' while an early submit
  * waits for Turnstile and 'sending' while the request runs.
  */
-export function useMagicRequest(next: string) {
+export function useMagicRequest(next: string | null) {
   const challenge = useChallenge();
   const [phase, setPhase] = useState<'idle' | 'checking' | 'sending'>('idle');
   const { takeNow, wait } = challenge;
@@ -93,7 +93,11 @@ export function useMagicRequest(next: string) {
       }
       setPhase('sending');
       try {
-        await api.post('/auth/magic/request', OkSchema, { email, turnstileToken: token, next });
+        await api.post('/auth/magic/request', OkSchema, {
+          email,
+          turnstileToken: token,
+          ...(next ? { next } : {}),
+        });
         return { ok: true };
       } catch (error) {
         return { ok: false, error };

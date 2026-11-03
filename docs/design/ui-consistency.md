@@ -441,7 +441,7 @@ Same brand tokens; Wallet keeps its own wordmark and teal.
 | Brand | One band above the card: the wordmark (20 px, the 24 px face) at the left, the face's ink on the card's text inset and centred on the mascot's face |
 | Scene | The wallet mascot sits on the card's top edge at the right of the band, its pocket on the right text inset, its cards peeking over (motion-and-expression.md, Signature moment 8) |
 | Card | One raised card, large radius, generous padding; body, then a footer split off by a divider. Two faces: sign-in and code |
-| Title | `h1` names the task ("Sign in", "Enter the code from your email"); at most one short lede ("Sent to ada@…") |
+| Title | `h1` names the task ("Sign in", "Enter the code"); at most one short lede ("Check ada@… for a code.") |
 | Fields | Label above; full-width input. The 6-digit code is one large mono field, centred and letter-spaced, grouped `123 456`, `autocomplete="one-time-code"` |
 | Errors | A callout at the top of the card body (danger border, icon, one sentence: what happened and what to do); field errors under the field |
 | Trust | At most one `hosted-note` (shield icon, muted) before the action where it prevents a mistake |

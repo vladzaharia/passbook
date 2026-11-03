@@ -1,18 +1,21 @@
 import { useMutation } from '@tanstack/react-query';
 import { Check, CircleAlert, Mail } from 'lucide-react';
 import { type FormEvent, type Ref, useEffect, useId, useState } from 'react';
+import { MagicConsumeResultSchema } from '@/shared/contracts/session.ts';
+import { WRONG_CODE } from '@/shared/copy/sign-in.ts';
 import { api } from '../lib/api.ts';
-import { errorMessage, isApiError } from '../lib/errors.ts';
+import { isApiError } from '../lib/errors.ts';
+import { safeNext } from '../lib/redirect.ts';
 import { Button, Callout, Label } from '../ui/index.ts';
 import { CODE_LENGTH, CodeField } from './code-field.tsx';
 import { goTo } from './goto.ts';
+import { type SignInError, signInError } from './login-errors.ts';
 import type { SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
 /** Matches the server's magic-link lifetime (auth MAGIC_TTL_MS, "Expires in 15 minutes"). */
 export const CODE_TTL_MS = 15 * 60_000;
 export const RESEND_COOLDOWN_MS = 30_000;
-export const WRONG_CODE = 'That code is wrong or expired.';
 
 function useNow(active: boolean): number {
   const [now, setNow] = useState(() => Date.now());
@@ -27,7 +30,6 @@ function useNow(active: boolean): number {
 
 export interface CodeFaceProps {
   email: string;
-  next: string;
   sentAt: number;
   request: MagicRequest;
   scene: SceneActions;
@@ -36,11 +38,11 @@ export interface CodeFaceProps {
 }
 
 /** Back face: the 6-digit code from the email, resend with a cooldown, or a different email. */
-export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack }: CodeFaceProps) {
+export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: CodeFaceProps) {
   const id = useId();
   const [code, setCode] = useState('');
   const [fieldError, setFieldError] = useState<string>();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<SignInError>();
   const [cooldownUntil, setCooldownUntil] = useState(sentAt + RESEND_COOLDOWN_MS);
   const [sentAgain, setSentAgain] = useState(false);
   const now = useNow(Boolean(email));
@@ -53,10 +55,11 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
   }, [sentAgain]);
 
   const consume = useMutation({
-    mutationFn: () => api.action('POST', '/auth/magic/consume', { email, code }),
-    onSuccess: () => {
+    mutationFn: () => api.post('/auth/magic/consume', MagicConsumeResultSchema, { email, code }),
+    // The server applies the landing rule to the next it stored with the request.
+    onSuccess: (result) => {
       scene.succeed();
-      goTo(next);
+      goTo(safeNext(result.next));
     },
     onError: (e) => {
       if (isApiError(e) && e.status === 400) {
@@ -64,7 +67,7 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
         scene.fail({ expired: Date.now() - sentAt > CODE_TTL_MS });
         return;
       }
-      setError(errorMessage(e));
+      setError(signInError(e));
       scene.fail({ shake: isApiError(e) && e.status === 429 });
     },
   });
@@ -89,9 +92,9 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
     }
     if ('challenge' in result) {
       scene.fail({ shake: false });
-      return setError(CHALLENGE_FAILED);
+      return setError({ message: CHALLENGE_FAILED });
     }
-    setError(errorMessage(result.error));
+    setError(signInError(result.error));
     scene.fail({ shake: isApiError(result.error) && result.error.status === 429 });
   }
 
@@ -106,7 +109,11 @@ export function CodeFace({ email, next, sentAt, request, scene, codeRef, onBack 
           : 'Resend code';
   return (
     <div className="flex flex-col gap-6">
-      {error ? <Callout tone="danger">{error}</Callout> : null}
+      {error ? (
+        <Callout tone="danger" title={error.title}>
+          {error.message}
+        </Callout>
+      ) : null}
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col">
           <Label htmlFor={id} className="mb-2">

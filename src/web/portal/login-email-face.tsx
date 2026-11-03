@@ -1,11 +1,26 @@
 import { ArrowRight } from 'lucide-react';
 import { type FormEvent, type Ref, useEffect, useState } from 'react';
-import { errorMessage, isApiError } from '../lib/errors.ts';
+import { INVALID_EMAIL } from '@/shared/copy/sign-in.ts';
+import { strictEmail } from '@/shared/email.ts';
+import { isApiError } from '../lib/errors.ts';
 import { Button, Callout, FormField, Input } from '../ui/index.ts';
+import { type SignInError, signInError } from './login-errors.ts';
 import type { SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (value: string) => strictEmail(value) !== null;
+
+/**
+ * Installed to the home screen: a link in the email opens Safari, not this app, so the code
+ * leads.
+ */
+export function isStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return (
+    window.matchMedia?.('(display-mode: standalone)').matches === true || nav.standalone === true
+  );
+}
 /** An average address character at the field's 16 px, and the field's side padding. */
 const CHAR_PX = 8.3;
 const PAD_PX = 12;
@@ -19,8 +34,8 @@ function caretX(field: HTMLInputElement, chars: number): number {
 export interface EmailFaceProps {
   oidc: boolean;
   magic: boolean;
-  next: string;
-  /** A sentence from an auth redirect (?error=). */
+  next: string | null;
+  /** One line from ?reason=, shown until something goes wrong. */
   notice: string | null;
   request: MagicRequest;
   scene: SceneActions;
@@ -29,10 +44,11 @@ export interface EmailFaceProps {
 }
 
 /** Polaris ID, outline; a foil sweep runs along its border on fine-pointer hover. */
-function PolarisButton({ next, primary }: { next: string; primary: boolean }) {
+function PolarisButton({ next, primary }: { next: string | null; primary: boolean }) {
+  const href = next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
   return (
     <Button asChild variant={primary ? 'primary' : 'outline'} className="wl-sweep w-full">
-      <a href={`/auth/oidc/start?next=${encodeURIComponent(next)}`}>
+      <a href={href}>
         <span aria-hidden className="wl-sweep-ring" />
         Sign in with Polaris ID
       </a>
@@ -53,21 +69,26 @@ export function EmailFace({
 }: EmailFaceProps) {
   const [email, setEmail] = useState('');
   const [fieldError, setFieldError] = useState<string>();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<SignInError>();
+  const [standalone] = useState(isStandalone);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setFieldError(undefined);
     setError(undefined);
     const value = email.trim();
-    if (!EMAIL_RE.test(value)) return setFieldError('Enter a valid email.');
+    if (!isEmail(value)) return setFieldError(INVALID_EMAIL);
     const result = await request.send(value);
     if (result.ok) return onSent(value);
     if ('challenge' in result) {
       scene.fail({ shake: false });
-      return setError(CHALLENGE_FAILED);
+      return setError({ message: CHALLENGE_FAILED });
     }
-    setError(errorMessage(result.error));
+    if (isApiError(result.error) && result.error.status === 422) {
+      scene.fail({ shake: false });
+      return setFieldError(INVALID_EMAIL);
+    }
+    setError(signInError(result.error));
     scene.fail({ shake: isApiError(result.error) && result.error.status === 429 });
   }
 
@@ -76,11 +97,17 @@ export function EmailFace({
     if (challengeFailed) scene.fail({ shake: false });
   }, [challengeFailed, scene]);
 
-  const callout = error ?? (request.challengeFailed ? CHALLENGE_FAILED : notice);
+  const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);
   const busy = request.phase !== 'idle';
   return (
     <div className="flex flex-col gap-6">
-      {callout ? <Callout tone="danger">{callout}</Callout> : null}
+      {callout ? (
+        <Callout tone="danger" title={callout.title}>
+          {callout.message}
+        </Callout>
+      ) : notice ? (
+        <Callout>{notice}</Callout>
+      ) : null}
       {magic ? (
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <FormField label="Email" error={fieldError}>
@@ -98,7 +125,7 @@ export function EmailFace({
                 onChange={(e) => {
                   setEmail(e.target.value);
                   const v = e.target.value.trim();
-                  const valid = EMAIL_RE.test(v);
+                  const valid = isEmail(v);
                   // A shown error goes as soon as the address is valid.
                   if (valid) setFieldError(undefined);
                   scene.setLetter(valid ? v.charAt(0).toUpperCase() : null);
@@ -113,7 +140,11 @@ export function EmailFace({
             loading={busy}
             iconEnd={busy ? null : <ArrowRight aria-hidden />}
           >
-            {request.phase === 'checking' ? 'Checking…' : 'Email me a sign-in link'}
+            {request.phase === 'checking'
+              ? 'Checking…'
+              : standalone
+                ? 'Email me a code'
+                : 'Email me a sign-in link'}
           </Button>
         </form>
       ) : null}

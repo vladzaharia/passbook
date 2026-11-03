@@ -47,4 +47,19 @@ describe('useMagicRequest', () => {
       next: '/next',
     });
   });
+
+  it('sends no next without one, so the server picks the landing', async () => {
+    const fetchMock = vi.fn(async () => Response.json({ ok: true }, { status: 202 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { result } = renderHook(() => useMagicRequest(null));
+    act(() => result.current.widget.onToken('tok-1'));
+    await act(async () => {
+      await result.current.send('sam@example.com');
+    });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      email: 'sam@example.com',
+      turnstileToken: 'tok-1',
+    });
+  });
 });

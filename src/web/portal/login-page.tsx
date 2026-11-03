@@ -1,17 +1,18 @@
 import { RefreshCw } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
+import { LOGIN_REASONS, type LoginReason } from '@/shared/copy/sign-in.ts';
+import { homeFor, safeNextPath } from '@/shared/next.ts';
 import { errorMessage } from '../lib/errors.ts';
-import { safeNext } from '../lib/redirect.ts';
-import { clearSignedOut, signedOutJustNow, useSession } from '../lib/session.ts';
+import { clearSignedOut, signedOutJustNow, signedOutNext, useSession } from '../lib/session.ts';
 import { Button, Callout } from '../ui/index.ts';
 import { Wordmark } from '../ui/layout/wordmark.tsx';
 import { goTo } from './goto.ts';
 import { LoginCard } from './login-card.tsx';
-import { loginErrorMessage } from './login-errors.ts';
 import { LoginScene, useLoginScene } from './login-scene.tsx';
 
 // Read once per page load (a remount while the session loads still waves); cleared after mount.
 let bye: boolean | undefined;
+let byeNext: string | null | undefined;
 
 /**
  * The hosted sign-in page: one header band (the wordmark left, the wallet seated on the card's top
@@ -20,21 +21,23 @@ let bye: boolean | undefined;
  */
 export function LoginPage({
   next: rawNext,
-  error,
+  reason,
 }: {
   next?: string | undefined;
-  error?: string | undefined;
+  reason?: LoginReason | undefined;
 }) {
   const { session, isPending, isError, error: loadError, refetch } = useSession();
-  const next = safeNext(rawNext);
-  const authedAlready = session?.authenticated === true;
-  const [scene, sceneActions] = useLoginScene(Boolean(error));
   bye ??= signedOutJustNow();
+  byeNext ??= signedOutNext();
+  // A switch through Pocket ID's end-session comes back without ?next=; this tab kept it.
+  const next = safeNextPath(rawNext) ?? byeNext;
+  const [scene, sceneActions] = useLoginScene();
   useEffect(clearSignedOut, []);
 
+  const roles = session?.authenticated ? session.roles : null;
   useEffect(() => {
-    if (authedAlready) goTo(next);
-  }, [authedAlready, next]);
+    if (roles) goTo(homeFor(roles, next));
+  }, [roles, next]);
   useEffect(() => {
     document.title = 'Sign in · PassBook';
   }, []);
@@ -42,7 +45,7 @@ export function LoginPage({
   let front: ReactNode;
   let failed = false;
   let methods: { oidc: boolean; magic: boolean; siteKey: string } | null = null;
-  if (isPending || authedAlready) {
+  if (isPending || roles) {
     front = undefined;
   } else if (isError || !session) {
     failed = true;
@@ -86,7 +89,7 @@ export function LoginPage({
       <div className="relative z-10 w-full">
         <LoginCard
           next={next}
-          notice={loginErrorMessage(error)}
+          notice={reason ? LOGIN_REASONS[reason] : null}
           methods={methods}
           front={front}
           scene={sceneActions}

@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp, sessionFixture } from '../lib/test-utils.tsx';
@@ -16,6 +16,7 @@ beforeEach(() => {
 afterEach(() => {
   window.turnstile = undefined;
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('login page', () => {
@@ -26,10 +27,10 @@ describe('login page', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('drops an unsafe next', async () => {
+  it('drops an unsafe next, leaving the landing to the server', async () => {
     await renderApp('/login?next=https%3A%2F%2Fevil.test', { session: 'anon' });
     const link = await screen.findByRole('link', { name: 'Sign in with Polaris ID' });
-    expect(link).toHaveAttribute('href', '/auth/oidc/start?next=%2F');
+    expect(link).toHaveAttribute('href', '/auth/oidc/start');
   });
 
   it('hides disabled methods', async () => {
@@ -55,15 +56,36 @@ describe('login page', () => {
     expect(await screen.findByText('Sign-in is unavailable.')).toBeInTheDocument();
   });
 
-  it.each([
-    ['not_in_group', 'Your Polaris ID is not allowed to use PassBook.'],
-    ['expired_link', 'That link expired. Request a new one.'],
-    ['weird', 'Sign-in failed. Try again.'],
-  ])('shows one line for ?error=%s, the wallet sad', async (code, text) => {
-    const { container } = await renderApp(`/login?error=${code}`, { session: 'anon' });
-    expect(await screen.findByRole('alert')).toHaveTextContent(text);
-    expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-sad', 'load');
-    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+  it('says in one line that the session ended, without a sad wallet', async () => {
+    const { container } = await renderApp('/login?next=%2Faccount&reason=expired', {
+      session: 'anon',
+    });
+    await screen.findByLabelText('Email');
+    expect(screen.getByText('Your session ended. Sign in again.')).toBeVisible();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(container.querySelector('.wl-login-scene')).not.toHaveAttribute('data-sad');
+    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
+      'href',
+      '/auth/oidc/start?next=%2Faccount',
+    );
+  });
+
+  it('ignores an unknown reason and the old ?error=', async () => {
+    await renderApp('/login?reason=weird&error=not_in_group', { session: 'anon' });
+    await screen.findByLabelText('Email');
+    expect(screen.queryByText(/session ended/)).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('leads with the code when installed to the home screen', async () => {
+    const original = window.matchMedia;
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      ...original(query),
+      matches: query.includes('display-mode: standalone') || original(query).matches,
+    }));
+    await renderApp('/login', { session: 'anon' });
+    expect(await screen.findByRole('button', { name: 'Email me a code' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Email me a sign-in link' })).toBeNull();
   });
 
   it('is sad when the session fails to load or no method is enabled', async () => {
@@ -94,6 +116,15 @@ describe('login page', () => {
   it('sends a signed-in visitor on to next', async () => {
     await renderApp('/login?next=%2Faccount', { session: 'user' });
     await waitFor(() => expect(goTo).toHaveBeenCalledWith('/account'));
+  });
+
+  it('lands a signed-in admin in the console without next, a holder on My passes', async () => {
+    const admin = await renderApp('/login', { session: 'admin' });
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith('/admin'));
+    admin.unmount();
+    vi.mocked(goTo).mockClear();
+    await renderApp('/login', { session: 'user' });
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith('/'));
   });
 
   it('leads with the email path: Email first, one primary button', async () => {
@@ -182,5 +213,18 @@ describe('login page', () => {
     await renderApp('/login', { session: 'anon' });
     await waitFor(() => expect(render).toHaveBeenCalled());
     expect(render.mock.calls[0]?.[1]).toMatchObject({ sitekey: '1x00000000000000000000AA' });
+  });
+
+  it('keeps the challenge slot collapsed unless Turnstile asks for the visitor', async () => {
+    await renderApp('/login', { session: 'anon' });
+    await waitFor(() => expect(render).toHaveBeenCalled());
+    const slot = screen.getByTestId('turnstile').parentElement as HTMLElement;
+    expect(slot).toHaveClass('h-0', 'overflow-hidden');
+    const options = render.mock.calls[0]?.[1] as Record<string, () => void>;
+    act(() => options['before-interactive-callback']?.());
+    expect(slot).toHaveAttribute('data-shown');
+    expect(slot).not.toHaveClass('h-0');
+    act(() => options['after-interactive-callback']?.());
+    expect(slot).toHaveClass('h-0');
   });
 });

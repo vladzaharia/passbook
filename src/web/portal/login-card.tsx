@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { SIGN_IN_FOOTER } from '@/shared/copy/sign-in.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { Callout, Skeleton } from '../ui/index.ts';
 import { CodeFace } from './login-code-face.tsx';
@@ -8,8 +9,6 @@ import type { SceneActions } from './login-scene.tsx';
 import { Turnstile } from './turnstile.tsx';
 import { useMagicRequest } from './use-magic-request.ts';
 import './login-card.css';
-
-export const FOOTER_LINE = 'Signing in shows the passes sent to your email.';
 
 /** One face of the hosted card: body, then the footer split off by a divider. */
 function Face({
@@ -41,7 +40,7 @@ function Face({
       </div>
       <p className="flex items-start gap-2 border-t border-border px-5 py-4 text-sm text-fg-muted sm:px-6">
         <Lock aria-hidden className="mt-0.5 size-4 shrink-0" />
-        {FOOTER_LINE}
+        {SIGN_IN_FOOTER}
       </p>
     </section>
   );
@@ -51,7 +50,7 @@ function Face({
 export function EmailFaceSkeleton({ notice }: { notice: string | null }) {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
-      {notice ? <Callout tone="danger">{notice}</Callout> : null}
+      {notice ? <Callout>{notice}</Callout> : null}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-5 w-12" />
@@ -66,7 +65,9 @@ export function EmailFaceSkeleton({ notice }: { notice: string | null }) {
 }
 
 export interface LoginCardProps {
-  next: string;
+  /** A safe path to return to, or null for the landing rule. */
+  next: string | null;
+  /** One line from ?reason= above the form. */
   notice: string | null;
   /** Null while the session loads. */
   methods: { oidc: boolean; magic: boolean; siteKey: string } | null;
@@ -82,6 +83,8 @@ export interface LoginCardProps {
  */
 export function LoginCard({ next, notice, methods, front, scene }: LoginCardProps) {
   const request = useMagicRequest(next);
+  // The challenge slot stays collapsed unless Turnstile needs the visitor (managed fallback).
+  const [challengeShown, setChallengeShown] = useState(false);
   const [sent, setSent] = useState<{ email: string; at: number } | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
@@ -128,17 +131,17 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
         <Face
           side="code"
           hidden={face !== 'code'}
-          title="Enter the code from your email"
+          title="Enter the code"
           lede={
             <>
-              Sent to <span className="font-medium text-fg-strong">{sent?.email ?? ''}</span>
+              Check <span className="font-medium text-fg-strong">{sent?.email ?? ''}</span> for a
+              code.
             </>
           }
         >
           <CodeFace
             key={sent?.at ?? 0}
             email={sent?.email ?? ''}
-            next={next}
             sentAt={sent?.at ?? 0}
             request={request}
             scene={scene}
@@ -151,8 +154,15 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
         </Face>
       </div>
       {methods?.magic ? (
-        <div className="flex justify-center pt-4">
-          <Turnstile siteKey={methods.siteKey} {...request.widget} />
+        <div
+          className={challengeShown ? 'flex justify-center pt-4' : 'h-0 overflow-hidden'}
+          data-shown={challengeShown || undefined}
+        >
+          <Turnstile
+            siteKey={methods.siteKey}
+            {...request.widget}
+            onInteractive={setChallengeShown}
+          />
         </div>
       ) : null}
     </div>
