@@ -65,7 +65,21 @@ describe('route guards in the app', () => {
 
   it('shows an Admin link to admins in the portal', async () => {
     await renderApp('/', { session: 'admin' });
-    expect(await screen.findByRole('link', { name: 'Admin' })).toBeInTheDocument();
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    // Hidden on phones, where the header has no room; the account menu carries it there.
+    expect(within(nav).getByRole('link', { name: 'Admin' })).toHaveClass('max-sm:hidden');
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+    expect(await screen.findByRole('menuitem', { name: 'Admin' })).toHaveAttribute(
+      'href',
+      '/admin',
+    );
+  });
+
+  it("keeps Admin out of a plain user's account menu", async () => {
+    await renderApp('/', { session: 'user' });
+    await userEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await screen.findByRole('menuitem', { name: 'Account' });
+    expect(screen.queryByRole('menuitem', { name: 'Admin' })).toBeNull();
   });
 
   it('renders the holder not found page with the lost wallet', async () => {

@@ -1,10 +1,10 @@
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import { Link } from '@tanstack/react-router';
-import { LogOut, Ticket, UserRound } from 'lucide-react';
+import { LayoutDashboard, LogOut, Ticket, UserRound } from 'lucide-react';
 import { THEME_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
 import { useChangeCount } from '../../lib/motion.ts';
-import { signOut, useSession } from '../../lib/session.ts';
+import { isAdmin, signOut, useSession } from '../../lib/session.ts';
 import { type ThemePref, useTheme } from '../../lib/theme.tsx';
 import { ActiveIndicator } from '../active-indicator.tsx';
 import {
@@ -67,9 +67,12 @@ function ThemeChoice() {
   );
 }
 
-/** Account menu. The admin console adds My passes and the theme (System, Light, Dark). */
+/**
+ * Account menu. The admin console adds My passes and the theme (System, Light, Dark); the portal
+ * adds Admin for admins, the only way there on phones, where the header has no room for it.
+ */
 export function UserMenu({ admin = false }: { admin?: boolean }) {
-  const { authed } = useSession();
+  const { authed, session } = useSession();
   if (!authed) return null;
   const { user } = authed;
   return (
@@ -102,6 +105,14 @@ export function UserMenu({ admin = false }: { admin?: boolean }) {
             Account
           </Link>
         </DropdownMenuItem>
+        {!admin && isAdmin(session) ? (
+          <DropdownMenuItem asChild>
+            <Link to="/admin">
+              <LayoutDashboard aria-hidden />
+              Admin
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         {admin ? (
           <>
             <DropdownMenuSeparator />

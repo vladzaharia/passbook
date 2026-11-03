@@ -9,7 +9,7 @@ import { UserMenu } from './user-menu.tsx';
 import { Wordmark } from './wordmark.tsx';
 
 const NAV_LINK =
-  'relative inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-3 text-sm wl-colors pointer-coarse:min-h-11';
+  'relative inline-flex min-h-8 items-center whitespace-nowrap rounded-md px-2 text-sm wl-colors pointer-coarse:min-h-11 sm:px-3';
 
 /** Holder pages follow the system appearance: no theme toggle here. */
 export function PortalLayout() {
@@ -18,7 +18,7 @@ export function PortalLayout() {
   return (
     <div className="wl-portal flex min-h-dvh flex-col">
       <header className="border-b border-border bg-surface-raised pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-safe sm:gap-4">
+        <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-1 px-safe sm:gap-4">
           <Wordmark />
           <nav aria-label="Main" className="relative mr-auto flex min-w-0 gap-1 overflow-x-auto">
             <ActiveIndicator />
@@ -40,7 +40,10 @@ export function PortalLayout() {
               );
             })}
             {hasAdmin(session) ? (
-              <Link to="/admin" className={cn(NAV_LINK, 'text-fg-muted hover:text-fg-strong')}>
+              <Link
+                to="/admin"
+                className={cn(NAV_LINK, 'text-fg-muted hover:text-fg-strong max-sm:hidden')}
+              >
                 Admin
               </Link>
             ) : null}
