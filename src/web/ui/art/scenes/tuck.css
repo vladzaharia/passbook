@@ -1,0 +1,145 @@
+/* tuck (one pass not in a Wallet yet; neutral): seated on the first tile, it peeks down at the
+   passes under it, lifts its teal pass high out of the pocket and holds it up, then drops it back
+   in with a thunk, the way a pass goes into Wallet, and blinks at you. 2.4 s, once; 1% = 24 ms. */
+[data-scene="tuck"] [data-trunk] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene="tuck"][data-run] .wl-art [data-trunk] {
+    animation: wl-s-tuck-lean 2.4s ease-in-out;
+  }
+  [data-scene="tuck"][data-run] .wl-art [data-body] {
+    animation: wl-s-tuck-thunk 2.4s ease-out;
+  }
+  [data-scene="tuck"][data-run] .wl-art [data-look] {
+    animation: wl-s-tuck-look 2.4s ease-in-out;
+  }
+  [data-scene="tuck"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-tuck-blink 2.4s ease-in-out;
+  }
+  [data-scene="tuck"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-tuck-lift 2.4s ease-in-out;
+  }
+  [data-scene="tuck"][data-run] .wl-art :is([data-part="c2"], [data-part="c3"]) {
+    animation: wl-s-tuck-jolt 2.4s ease-out;
+  }
+}
+
+@keyframes wl-s-tuck-lean {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  8%,
+  14% {
+    translate: 0 1.5px;
+    rotate: 0deg;
+  }
+  20% {
+    translate: 0 0;
+  }
+  30%,
+  48% {
+    rotate: -4deg;
+  }
+  58%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+/* Down over the edge, back, up at the pass it holds, back to you. */
+@keyframes wl-s-tuck-look {
+  6%,
+  14% {
+    translate: 0 2.2px;
+  }
+  20% {
+    translate: 0 0;
+  }
+  28%,
+  50% {
+    translate: -2px -1.8px;
+  }
+  62%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-tuck-lift {
+  20% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+  32% {
+    translate: -7px -17px;
+    rotate: 12deg;
+  }
+  38% {
+    rotate: 5deg;
+  }
+  44% {
+    rotate: 12deg;
+  }
+  /* The drop: faster all the way into the pocket. */
+  50% {
+    translate: -7px -17px;
+    rotate: 12deg;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  56% {
+    translate: 0 3px;
+    rotate: 0deg;
+  }
+  64%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+/* The thunk as it lands in the pocket: a squash and a rebound. */
+@keyframes wl-s-tuck-thunk {
+  55% {
+    scale: 1;
+  }
+  58% {
+    scale: 1.08 0.9;
+  }
+  65% {
+    scale: 0.97 1.04;
+  }
+  72%,
+  100% {
+    scale: 1;
+  }
+}
+@keyframes wl-s-tuck-jolt {
+  55% {
+    translate: 0 0;
+  }
+  58% {
+    translate: 0 2px;
+  }
+  66%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-tuck-blink {
+  0%,
+  55%,
+  61%,
+  84%,
+  92%,
+  100% {
+    scale: 1;
+  }
+  58% {
+    scale: 1 0.15;
+  }
+  88% {
+    scale: 1 0.1;
+  }
+}
