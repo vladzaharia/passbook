@@ -123,8 +123,7 @@
     rotate: 0deg;
   }
 }
-/* The teal pass lifts out of the pocket and aims up-left at the badge, twice. A seat steeper below
-   its badge turns it less (--wl-aim) and looks higher (--wl-look): portal.css. */
+/* The teal pass lifts out of the pocket and aims up-left at the badge, twice. */
 @keyframes wl-s-nudge-point {
   0%,
   11% {
