@@ -19,7 +19,7 @@ const postButton = (action: string, label: string, fields: Record<string, string
     .join('')}<button class="btn" type="submit">${label}</button></form>`;
 
 /** The confirm link itself, as a path sign-in can return to. */
-export const confirmPath = (token: string) => `/auth/magic?t=${token}`;
+export const confirmPath = (token: string) => `/auth/magic?t=${encodeURIComponent(token)}`;
 
 /** Sign-in link: one button posts the token. An add-email link shows its requester's Confirm. */
 export function confirmPage(

@@ -63,6 +63,13 @@ describe('sign out to switch', () => {
     expect(signedOutNext()).toBeNull();
   });
 
+  it('a plain sign-out drops a next kept by an earlier switch', async () => {
+    vi.stubGlobal('fetch', answer({ ok: true, redirect: 'https://id.test/end-session' }));
+    sessionStorage.setItem(NEXT_MARK, '/admin/users');
+    await signOut('csrf');
+    expect(signedOutNext()).toBeNull();
+  });
+
   it('the sign-in page picks the kept next up when the URL has none', async () => {
     window.turnstile = { render: vi.fn(() => 'w1'), reset: vi.fn(), remove: vi.fn() };
     sessionStorage.setItem(MARK, String(Date.now()));

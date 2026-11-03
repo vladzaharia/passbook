@@ -115,6 +115,7 @@ export function leaveSignedOut(target: string, next?: string): void {
     sessionStorage.setItem(BYE, String(Date.now()));
     const safe = safeNextPath(next);
     if (safe) sessionStorage.setItem(BYE_NEXT, safe);
+    else sessionStorage.removeItem(BYE_NEXT);
   } catch {
     // Storage blocked: the sign-in page just skips the wave.
   }
