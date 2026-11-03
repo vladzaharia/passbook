@@ -199,11 +199,28 @@ describe('account page', () => {
     await user.type(screen.getByLabelText('Add email'), 'work@example.com');
     await user.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('That email is already on your account.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add email')).toHaveValue('work@example.com');
+    await user.clear(screen.getByLabelText('Add email'));
     await user.type(screen.getByLabelText('Add email'), 'taken@example.com');
     await user.click(screen.getByRole('button', { name: 'Add' }));
     expect(
       await screen.findByText('Too many requests. Try again in a minute.'),
     ).toBeInTheDocument();
+    // The server refused it: the address stays to retry or fix.
+    expect(screen.getByLabelText('Add email')).toHaveValue('taken@example.com');
+  });
+
+  it('confirms an address the add-email link verified, then drops it from the URL', async () => {
+    const { router } = await renderApp('/account?verified=new%40example.com', {
+      handlers: {
+        '/api/v1/me/emails': () => json(emails()),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    expect(await screen.findByText('Email added')).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.search).toEqual({}));
+    expect(router.state.location.href).toBe('/account');
+    expect(screen.getAllByText('Email added')).toHaveLength(1);
   });
 
   it('removes a non-primary email after confirming; primary has no actions', async () => {
@@ -333,16 +350,35 @@ describe('account page', () => {
     expect(leaveSignedOut).not.toHaveBeenCalled();
   });
 
-  it('signs out this session', async () => {
-    const user = userEvent.setup();
+  it('leaves sign-out to the account menu: Sign out everywhere only on Sessions', async () => {
     await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
         '/api/v1/me/sessions': () => json(sessions()),
       },
     });
-    const buttons = await screen.findAllByRole('button', { name: 'Sign out' });
-    await user.click(buttons[buttons.length - 1] as HTMLElement);
-    expect(signOut).toHaveBeenCalledWith('csrf-test');
+    await screen.findByText('work@example.com');
+    const main = screen.getByRole('main');
+    expect(within(main).queryByRole('button', { name: 'Sign out' })).toBeNull();
+    const everywhere = within(main).getAllByRole('button', { name: 'Sign out everywhere' });
+    expect(everywhere).toHaveLength(1);
+    const sessionsCard = screen.getByRole('heading', { name: 'Sessions' }).parentElement
+      ?.parentElement as HTMLElement;
+    expect(sessionsCard).toContainElement(everywhere[0] as HTMLElement);
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it('renders inside the console shell at /admin/account', async () => {
+    await renderApp('/admin/account', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/me/emails': () => json(emails()),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Account' })).toBeInTheDocument();
+    expect(await screen.findByText('work@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sessions' })).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).queryByRole('button', { name: 'Sign out' })).toBeNull();
   });
 });

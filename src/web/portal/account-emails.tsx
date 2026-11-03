@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
+import { strictEmail } from '@/shared/email.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { removeWithTransition } from '../lib/motion.ts';
 import { useInvalidateSession } from '../lib/session.ts';
@@ -62,18 +62,21 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
     onSettled: () => setBusy(undefined),
   });
 
-  async function add(raw: string) {
+  /** EmailList has checked the format; false keeps a refused address in the field. */
+  async function add(raw: string): Promise<boolean> {
     setAddError(undefined);
-    const email = strictEmail(raw);
-    if (!email) return setAddError(EMAIL_INVALID_MESSAGE);
+    const email = strictEmail(raw) ?? raw;
     if (verified.some((v) => v.email === email)) {
-      return setAddError('That email is already on your account.');
+      setAddError('That email is already on your account.');
+      return false;
     }
     try {
       await send.mutateAsync(email);
       pending.add(email);
+      return true;
     } catch (error) {
       setAddError(errorMessage(error));
+      return false;
     }
   }
 
@@ -112,7 +115,7 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
           {query.data ? (
             <EmailList
               items={items}
-              onAdd={(email) => void add(email)}
+              onAdd={add}
               onResend={(email) => void resend(email)}
               onCancelPending={(email) => removeWithTransition(() => pending.drop([email]))}
               onRemove={(email) => setConfirm({ kind: 'remove', email })}
