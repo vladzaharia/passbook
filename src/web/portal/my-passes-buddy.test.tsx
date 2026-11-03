@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, renderApp } from '../lib/test-utils.tsx';
@@ -53,6 +55,16 @@ describe('my passes buddy', () => {
     await screen.findByRole('heading', { name: 'a', level: 2 });
     expect(document.querySelector('[data-buddy]')).toHaveAttribute('data-scene', 'count');
     expect(onScreen).toBe(true);
+  });
+
+  // WebKit does not restyle :has(… :is(:hover, :focus-visible)) when the pointer moves.
+  it('glances at the badge you reach for, with selectors WebKit restyles', () => {
+    const css = readFileSync(join(process.cwd(), 'src/web/portal/portal.css'), 'utf8');
+    expect(css).not.toMatch(/:has\([^{]*:is\(:hover/);
+    for (const state of ['hover', 'focus-visible']) {
+      expect(css).toContain(`.wl-passes:has(.wl-bundle [data-awb]:${state}) .wl-list-buddy`);
+      expect(css).toContain(`.wl-passes:has(li [data-awb]:${state}) .wl-list-buddy`);
+    }
   });
 
   it('keeps its room above the grid from the skeleton on, with no empty row above it', async () => {
