@@ -146,4 +146,29 @@ Customer pages always; the console on touch devices.
 - Holder surfaces follow the system appearance; no app theme toggle.
 - `prefers-reduced-motion` respected; transform and opacity only; nothing moves on the badge.
 - Errors render as HTML pages.
-- `apple-touch-icon` (180 × 180), `theme-color` per scheme, `format-detection: telephone=no`.
+- `theme-color` per scheme, `format-detection: telephone=no`, icons and previews as below.
+
+### Head, icons and previews
+
+- One set, from `node tools/build-icons.ts` (`tools/lib/icon-art.ts` and the wallet art):
+  `favicon.svg` (the mark redrawn on a 32 px grid), `favicon.ico` (16 drawn per pixel, 32, 48),
+  `apple-touch-icon.png` (180, opaque), `icons/icon-{192,512}.png` (any, rounded tile),
+  `icons/icon-maskable-512.png` (mark inside the 80 % circle), `og-image.png` (1200 × 630).
+- Tile `#0d111b`, the dark raised surface. It holds on light and dark tab strips, wallpapers and
+  launchers, so the SVG does not switch on `prefers-color-scheme`. No `mask-icon`: Safari uses the
+  favicon for pinned tabs, and a mask icon would replace the colour one.
+- Install: `manifest.webmanifest`, standalone at `/`, `#060912`. No service worker: Chrome
+  installs without one (108 Android, 112 desktop; no installability errors on Chrome 156). No
+  shortcuts: My passes is the start URL and Admin refuses holders.
+- iOS status bar `default`: opaque, in each scheme's `theme-color`. `black-translucent` puts white
+  text on the light page.
+- Search: `robots.txt` opens `/`, `/login` and the preview images only. The Worker sends
+  `X-Robots-Tag: noindex, nofollow` on all but `/assets/*`; `/p` and auth pages also carry the
+  meta. No sitemap (two public URLs), no canonical (one SPA shell serves every route).
+- Previews: the SPA's OG URLs are absolute on `PUBLIC_BASE_URL` (`tools/site-meta.test.ts`). Auth
+  and error pages preview their title and the fixed description; their body can hold an email.
+  `/p` previews `<org> pass` and its state, no image, no URL: never the holder or a pass field.
+  Its `<title>` can name the holder, so previews must not fall back to it. No manifest on `/p`:
+  saved to the home screen, a pass opens itself, labelled with the org.
+- Standalone keeps `/p` links in the app window. Unverified on iPhone: Add to Apple Wallet from
+  the installed app, and the way back from Open public page.

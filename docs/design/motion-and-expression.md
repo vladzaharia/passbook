@@ -153,11 +153,12 @@ Other cameos, unchanged:
 Considered and left out: the API key reveal (a warning and a form), connection syncing (the sync
 rail carries it; a dense panel), the first organization (a table, no stable moment).
 
-The favicon and `apple-touch-icon.png` (also the sign-in email's header mark and the OIDC logo) are
-the face on the dark tile, in teal with the foil passes. In the app and on SSR pages the same face is
-the PassBook mark (`BrandMark`, `ui/layout/brand-mark.tsx`): no tile, theme tokens (accent lines,
-foil passes), redrawn on a 20-unit grid with 2-unit lines so the pocket's edges land on whole pixels
-at 20 px. The pocket is open; the passes are cut at its top line.
+The icons (`apple-touch-icon.png` is also the sign-in email's header mark and the OIDC logo) are
+the face on the dark tile, in teal with the foil passes (ux-principles.md, Head, icons and
+previews). In the app and on SSR pages the same face is the PassBook mark (`BrandMark`,
+`ui/layout/brand-mark.tsx`): no tile, theme tokens (accent lines, foil passes), redrawn on a
+20-unit grid with 2-unit lines so the pocket's edges land on whole pixels at 20 px. The pocket is
+open; the passes are cut at its top line.
 
 **Email buddy.** Static PNGs of the `wallet` art in its dark palette (`public/email/`, 96×76 at 2×
 and 3×; `node tools/build-email-art.ts` after an art change). It stands on the bottom edge of the

@@ -111,6 +111,8 @@ Admin sign-in for when Pocket ID is down.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
+- **Icons and social image**: `node tools/build-icons.ts` after the mark or the wallet art changes,
+  then commit `public/`. `tools/site-meta.test.ts` checks sizes, the manifest and the heads.
 
 ## Runtime decisions
 
