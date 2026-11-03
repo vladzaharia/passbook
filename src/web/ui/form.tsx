@@ -60,6 +60,28 @@ export function useBlockedSubmit<T extends HTMLElement = HTMLElement>() {
   };
 }
 
+/**
+ * Errors appear on submit, then follow the values: none show while the user types into a fresh
+ * form; after a refused submit each message clears on the keystroke that fixes it (and comes back
+ * if the value breaks again). Spread `form` on the kit Form and read `errors` for the fields:
+ *
+ *   const check = useFormErrors(validate(values));
+ *   <Form {...check.form} onValid={save}><FormField error={check.errors.name}>…
+ */
+export function useFormErrors<E extends Partial<Record<string, string>>>(found: E) {
+  const [shown, setShown] = useState(false);
+  return {
+    /** The errors to render: empty until a submit is refused. */
+    errors: shown ? found : ({} as Partial<E>),
+    form: {
+      invalid: Object.values(found).some(Boolean),
+      onInvalid: () => setShown(true),
+    },
+    /** After a successful submit or a reset, hide them again. */
+    reset: () => setShown(false),
+  };
+}
+
 export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'onSubmit'> {
   /** The form has errors: submit shows them, focuses the first and announces the count. */
   invalid: boolean;
@@ -69,7 +91,11 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
   children: ReactNode;
 }
 
-/** A form whose blocked submit focuses the first invalid field and announces one summary. */
+/**
+ * A form whose blocked submit focuses the first invalid field and announces one summary. Pair it
+ * with useFormErrors. A Save or Next button outside the form submits it with `form={id}`
+ * (SaveBar and Wizard take a formId).
+ */
 export function Form({ invalid, onValid, onInvalid, children, ...props }: FormProps) {
   const blocked = useBlockedSubmit<HTMLFormElement>();
   const submit = (e: FormEvent<HTMLFormElement>) => {

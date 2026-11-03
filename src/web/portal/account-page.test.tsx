@@ -190,6 +190,9 @@ describe('account page', () => {
     await user.type(input, 'bad');
     await user.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Enter a valid email.')).toBeInTheDocument();
+    // A refused address stays in the field to be fixed.
+    expect(screen.getByLabelText('Add email')).toHaveValue('bad');
+    await user.clear(screen.getByLabelText('Add email'));
     await user.type(screen.getByLabelText('Add email'), 'work@example.com');
     await user.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('That email is already on your account.')).toBeInTheDocument();

@@ -2,7 +2,7 @@ import { useBlocker } from '@tanstack/react-router';
 import { Check, Save } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion } from '../lib/motion.ts';
-import { ConfirmDialog } from './alert-dialog.tsx';
+import { DiscardDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
 
 export interface SaveBarProps {
@@ -10,7 +10,13 @@ export interface SaveBarProps {
   saving?: boolean;
   /** The save mutation is waiting for the network (TanStack paused it offline). */
   paused?: boolean;
-  onSave: () => void;
+  /** Without formId: Save runs this. */
+  onSave?: () => void;
+  /**
+   * Save submits this kit Form instead, so a blocked save focuses the first invalid field and
+   * announces one summary (form.tsx).
+   */
+  formId?: string;
   onDiscard: () => void;
   saveLabel?: string;
   /** A save option beside the buttons (Notify holders). */
@@ -28,6 +34,7 @@ export function SaveBar({
   saving,
   paused,
   onSave,
+  formId,
   onDiscard,
   saveLabel = 'Save',
   extra,
@@ -78,11 +85,13 @@ export function SaveBar({
               Discard
             </Button>
             <Button
+              type={formId ? 'submit' : 'button'}
+              form={formId}
               loading={saving && !paused}
               paused={paused}
               disabled={done}
               iconStart={done ? <Check aria-hidden className="wl-check" /> : <Save aria-hidden />}
-              onClick={onSave}
+              onClick={formId ? undefined : onSave}
             >
               {saveLabel}
             </Button>
@@ -114,16 +123,12 @@ export function UnsavedChangesDialog({
   blocker: ReturnType<typeof useUnsavedChangesGuard>;
 }) {
   return (
-    <ConfirmDialog
+    <DiscardDialog
       open={blocker.status === 'blocked'}
       onOpenChange={(open) => {
         if (!open && blocker.status === 'blocked') blocker.reset();
       }}
-      title="Discard unsaved changes?"
-      confirmLabel="Discard"
-      cancelLabel="Keep editing"
-      destructive
-      onConfirm={() => {
+      onDiscard={() => {
         if (blocker.status === 'blocked') blocker.proceed();
       }}
     />
