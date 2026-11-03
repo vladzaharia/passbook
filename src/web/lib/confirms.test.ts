@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { deleteConfirm, removeEmailConfirm, revokeKeyConfirm } from './confirms.ts';
+import {
+  archiveConfirm,
+  clearHolderConfirm,
+  deleteConfirm,
+  removeEmailConfirm,
+  revokeKeyConfirm,
+  voidConfirm,
+} from './confirms.ts';
 
 describe('confirm copy', () => {
   it('asks "Delete {name}?" and says it cannot be undone', () => {
@@ -17,6 +24,27 @@ describe('confirm copy', () => {
     expect(deleteConfirm('template', 'a').typed).toBe(false);
     expect(deleteConfirm('identity', 'a').typed).toBe(false);
     expect(revokeKeyConfirm('CI').typed).toBe(false);
+  });
+
+  it('words void, clear holder and archive the same wherever they are asked', () => {
+    expect(voidConfirm()).toMatchObject({
+      title: 'Void pass?',
+      confirmLabel: 'Void',
+      typed: false,
+    });
+    expect(voidConfirm(3).title).toBe('Void 3 passes?');
+    expect(voidConfirm(3).description).toMatch(/them as void on every holder's device/);
+    expect(clearHolderConfirm('maya@example.com').description).toBe(
+      'maya@example.com loses the pass in their account.',
+    );
+    expect(clearHolderConfirm(null).description).toBe('The pass goes back to having no holder.');
+    expect(archiveConfirm('Member', 1)).toEqual({
+      title: 'Archive Member?',
+      confirmLabel: 'Archive',
+      description: 'New passes cannot use it. 1 existing pass keeps working.',
+      typed: false,
+    });
+    expect(archiveConfirm('Member', 4).description).toMatch(/4 existing passes keep working/);
   });
 
   it('words removing an email for the holder and for an admin', () => {
