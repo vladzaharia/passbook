@@ -105,7 +105,7 @@ start (off, a style flush, on) and stops there: no parent link, row or card acti
 (fine pointers) blinks once and shows the pointer cursor. Reduced motion: the final pose, no run,
 a click does nothing. Each scene ends on the rest pose and leaves nothing running. Transform
 (`translate`, `rotate`, `scale`, `transform`) and opacity only. API: `Buddy scene replay`,
-`Cameo scene` (an unseated buddy), `BuddyFace scene`, `useScene(auto, again)`.
+`Cameo scene` (an unseated buddy), `BuddyFace scene size`, `useScene(auto, again)`.
 
 | Scene | Where | Beats: anticipation, action, reaction, settle | Time |
 | --- | --- | --- | --- |
@@ -120,12 +120,12 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
 | wave | Pass created | Steps out from under the pass on a spring, hops, looks up at it and waves its teal pass twice | 2.2 s |
 | tear | Pass voided (this visit) | Steps out, looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2.4 s |
-| nudge | Portal pass, not on a device yet | Steps out, hops, looks up at the pass, then at you, and points its gold pass to the side twice | 2.4 s |
+| nudge | Portal pass, not on a device yet; seated on the Details card's top edge at its right end, under the actions | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in and points its teal pass at it twice, then looks back at you and blinks | 2.6 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
 | hello | Sign-in wallet at rest; the auth and error pages' wallet (SSR) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css` | 1 s |
-| face: wink | Success toast | Pops with the toast and winks at 380 ms; a click pops and winks again | 540 ms |
-| face: post | Holder emailed (`toast.sent`) | The violet pass dips, flies off up-right like a letter, a wink, a new one rises into the pocket | 1.4 s |
-| face: cheer | Status all good | The gold pass rises like a thumb and wiggles, a wink, the smile widens | 1.4 s |
+| face: wink | Success toast (the miniature, sm) | Pops with the toast and winks at 380 ms; a click pops and winks again | 580 ms |
+| face: post | Holder emailed (`toast.sent`; sm) | The violet pass dips into the pocket, flies off up-right like a letter and fades, a wink, a new one rises into the pocket | 1.4 s |
+| face: cheer | Status all good (md) | A squash and a small hop as the gold pass rises out of the pocket like a thumb and wiggles, a wink, the smile widens; the thumb drops back | 1.4 s |
 
 Search walk beats (`scenes/search*.css`; R is the reach, 75 px on a wide screen). It starts once
 the art has landed (700 ms) and ends by 4.7 s. Each walk starts and stops on an eased half step;
@@ -140,6 +140,31 @@ the planted foot moves against the body with the same keyframes and easing, so i
 | 2400–2840 | Feet in, tiptoe, "?", look out, blink, hop turn |
 | 2840–3500 | 3 steps right, back to the centre |
 | 3500–4000 | Hop onto the seat, squash, blink |
+
+Nudge beats (`scenes/nudge.css`, 1% = 26 ms). It starts once the art has landed and is 60% in
+view, and ends by 3.3 s. The buddy is 80 × 60 beside the columns' actions (1024 px and up), 64 × 48
+when they stack. The actions row ends with an empty slot the buddy's size (`ml-auto`, aria-hidden)
+that keeps the buttons out of his head's way; when the row has no room it wraps under the actions
+(phones), and he sits there. He falls `--wl-drop`: 48 units (40 px at 80 × 60), or 20 units on
+phones so he never crosses the buttons above.
+
+| ms | Beat |
+| --- | --- |
+| 0–290 | Falls, ease-in, stretched (.93 × 1.08); fades in over the first 80 ms; legs splayed; the shadow grows from .3 to full width under him |
+| 290–550 | Impact: squash 1.14 × .83 at 350 ms, rebound, settle by 810 ms; the shadow spreads to 1.14 and back; the passes dip 3 units and splay ±8°; the legs fling out (30°), swing back under and still by 940 ms; a blink at 325 ms |
+| 880–1250 | Eyes to Add to Apple Wallet (left, up) by 1040; the trunk leans 5° toward it by 1200 |
+| 1250–1610 | The teal pass points at it twice (−32°, back to −20°, −32°, held) |
+| 1610–1980 | Pass down by 1820, upright by 1870, eyes back to you by 1980 |
+| 2180–2600 | A blink; eyes centred; still at 2600 |
+
+Hovering or focusing the badge turns his eyes to it (`portal.css`).
+
+**The miniature** (`BuddyFace`, `art/face.tsx`): the wallet art itself cropped to its head (no
+legs): the same pocket, dashed stitch, screen-face and fanned passes, from the parts `wallet.tsx`
+exports, on the art's tokens, so it follows the theme as the seated buddy does. `md` (status
+banner, 48 × 44) draws everything at the art's proportions. `sm` (toasts, 24 × 20) is its optical
+size: no stitch, no pass shine, 1.25 px lines, the screen-face 1.3× with larger eyes and a wider
+smile, and the fan's tips drawn over the box, so a toast keeps its height.
 
 Other cameos, unchanged:
 
@@ -212,8 +237,9 @@ System:
 - Filtered: the entity art at .6 opacity with the lens at bottom-right (scale .6).
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
 - Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, step-out,
-  wave or scene; a click on the buddy does nothing.
-- Budget: ≤40 SVG nodes per art; the art kit ≤13.5 kB gzip, the lazy buddy scenes ≤7 kB. Files `src/web/ui/art/<name>.tsx` (named
+  fall, wave or scene (the nudge buddy is seated from the first frame); a click on the buddy does
+  nothing.
+- Budget: ≤40 SVG nodes per art; the art kit ≤13.5 kB gzip, the lazy buddy scenes ≤8 kB. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
 - API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` or the named component (`PassesArt`…).
