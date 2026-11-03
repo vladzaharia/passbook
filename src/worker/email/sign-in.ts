@@ -1,4 +1,6 @@
+import type { MagicPrefer } from '../../shared/contracts/session.ts';
 import type { EmailMood } from '../../shared/email-art.ts';
+import { safeUrl } from './safe.ts';
 import {
   buttonHtml,
   EMAIL_LIGHT as c,
@@ -20,6 +22,8 @@ export interface SignInEmailInput {
   expiresMinutes: number;
   /** verify_email: the account that asked for this address. */
   requester?: string;
+  /** sign_in: `code` leads with the code (asked from the installed app). Layout only. */
+  prefer?: MagicPrefer;
 }
 
 export interface RenderedEmail {
@@ -34,35 +38,56 @@ export const SIGN_IN_MOOD: Record<SignInEmailInput['purpose'], EmailMood> = {
   verify_email: 'curious',
 };
 
-// Images need an absolute URL; without one the band shows the word alone.
-const absolute = (base: string) => /^https?:\/\/[^\s"'<>]+$/i.test(base);
+/**
+ * The code is a letter-spaced chip, not a field: easy to read, nothing to type into. Leading, it
+ * is the email's action: larger, and a block as wide as the button it stands in for.
+ */
+function chipHtml(code: string, lead: boolean): string {
+  // Centred, the left padding gains the letter-spacing the last digit trails.
+  const look = lead
+    ? 'display:block;padding:14px 16px 14px 24px;text-align:center'
+    : 'display:inline-block;padding:10px 16px';
+  const size = lead
+    ? 'font-size:32px;line-height:40px;font-weight:600;letter-spacing:8px'
+    : 'font-size:24px;line-height:28px;font-weight:600;letter-spacing:6px';
+  return `<p style="margin:0 0 24px"><span class="e-chip e-strong" style="${look};border-radius:${RADIUS.md}px;background:${c.sunken};font-family:${MONO};${size};color:${c.strong}">${escapeHtml(code)}</span></p>`;
+}
+
+const orLine = (line: string) =>
+  `<p class="e-muted" style="margin:0 0 8px;${type('sm')};color:${c.muted}">${line}</p>`;
 
 export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
   const verify = input.purpose === 'verify_email';
-  const subject = verify ? 'Confirm your email' : 'Your sign-in link';
-  const title = verify ? 'Confirm your email' : 'Sign in to PassBook';
+  // From the installed app a link opens the browser, not the app, so the code leads.
+  const codeFirst = !verify && input.code !== undefined && input.prefer === 'code';
+  const subject = verify
+    ? 'Confirm your email'
+    : codeFirst
+      ? 'Your sign-in code'
+      : 'Your sign-in link';
+  const title = verify ? 'Confirm your email' : codeFirst ? subject : 'Sign in to PassBook';
   const action = verify ? 'Confirm email' : 'Sign in';
   const expiry = `Expires in ${input.expiresMinutes} minutes. Ignore this email if you did not ask for it.`;
-  const codeLine = input.code ? `Code: ${input.code}` : '';
   const askedBy =
     verify && input.requester ? `Adds this address to the account of ${input.requester}.` : '';
 
-  const text = [title, askedBy, `${action}: ${input.link}`, codeLine, expiry]
-    .filter(Boolean)
-    .join('\n\n');
+  const lines = codeFirst
+    ? [title, input.code, `Or open this link: ${input.link}`, expiry]
+    : [title, askedBy, `${action}: ${input.link}`, input.code ? `Code: ${input.code}` : '', expiry];
+  const text = lines.filter(Boolean).join('\n\n');
 
-  // The code is a letter-spaced chip, not a field: easy to read, nothing to type into.
-  const chip = input.code
-    ? `<p class="e-muted" style="margin:0 0 8px;${type('sm')};color:${c.muted}">Or enter this code</p>
-<p style="margin:0 0 24px"><span class="e-chip e-strong" style="display:inline-block;padding:10px 16px;border-radius:${RADIUS.md}px;background:${c.sunken};font-family:${MONO};font-size:24px;line-height:28px;font-weight:600;letter-spacing:6px;color:${c.strong}">${escapeHtml(input.code)}</span></p>`
-    : '';
+  const button = (primary: boolean) =>
+    `<p style="margin:0 0 24px">${buttonHtml(input.link, action, primary)}</p>`;
+  const actions = codeFirst
+    ? `${chipHtml(input.code ?? '', true)}\n${orLine('Or open this link')}\n${button(false)}`
+    : `${button(true)}\n${input.code ? `${orLine('Or enter this code')}\n${chipHtml(input.code, false)}` : ''}`;
   const body = `${titleHtml(title, `0 0 ${askedBy ? '8' : '24'}px`)}
 ${askedBy ? `<p class="e-text" style="margin:0 0 24px;${type('sm')};color:${c.text}">${escapeHtml(askedBy)}</p>` : ''}
-<p style="margin:0 0 24px">${buttonHtml(input.link, action, true)}</p>
-${chip}
+${actions}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${expiry}</p>`;
 
-  const images = absolute(input.base);
+  // Images need an absolute URL; without one the band shows the word alone.
+  const images = safeUrl(input.base) !== null;
   return {
     subject,
     html: emailShell({

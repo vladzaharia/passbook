@@ -68,6 +68,62 @@ describe('renderSignInEmail', () => {
   });
 });
 
+describe('code first (asked from the installed app)', () => {
+  const codeFirst = () => signIn({ prefer: 'code' });
+  const chipStyle = (html: string) =>
+    /<span class="e-chip[^"]*" style="([^"]*)">123456<\/span>/.exec(html)?.[1] ?? '';
+
+  it('titles the code and puts it first, large, then the link as the outline button', () => {
+    const { subject, html } = codeFirst();
+    expect(subject).toBe('Your sign-in code');
+    expect(html).toContain('<title>Your sign-in code</title>');
+    expect(html).toMatch(/font-weight:600;letter-spacing:-0\.015em;[^"]*">Your sign-in code<\/p>/);
+    const chip = html.indexOf('>123456</span>');
+    const or = html.indexOf('>Or open this link</p>');
+    const button = html.indexOf('class="e-block"');
+    expect(chip).toBeGreaterThan(-1);
+    expect(chip).toBeLessThan(or);
+    expect(or).toBeLessThan(button);
+    expect(button).toBeLessThan(html.indexOf('Expires in 15 minutes.'));
+    expect(chipStyle(html)).toContain('display:block');
+    expect(chipStyle(html)).toContain('font-size:32px;line-height:40px');
+    expect(html).not.toContain('class="e-btn"');
+    expect(html).not.toContain('Or enter this code');
+    expect(html).toMatch(
+      /class="e-block" href="https:\/\/wallet\.test\/auth\/magic\?t=abc"[^>]*>Sign in<\/a>/,
+    );
+  });
+
+  it('keeps the seated buddy, the mark and the expiry line', () => {
+    const { html } = codeFirst();
+    expect(buddyTag(html)).toContain('buddy-happy-light-top-2x.png');
+    expect(html).toContain('apple-touch-icon.png');
+    expect(html).toContain(
+      'Expires in 15 minutes. Ignore this email if you did not ask for it.</p>',
+    );
+  });
+
+  it('writes the plain-text part code first, word for word', () => {
+    expect(codeFirst().text).toBe(
+      'Your sign-in code\n\n123456\n\nOr open this link: https://wallet.test/auth/magic?t=abc\n\nExpires in 15 minutes. Ignore this email if you did not ask for it.',
+    );
+  });
+
+  it('changes nothing for link, no preference, or an address confirmation', () => {
+    expect(signIn({ prefer: 'link' })).toEqual(signIn());
+    expect(verify({ prefer: 'code' })).toEqual(verify());
+    expect(signIn({ prefer: 'code', code: undefined })).toEqual(signIn({ code: undefined }));
+    const chip = chipStyle(signIn().html);
+    expect(chip).toContain('display:inline-block');
+    expect(chip).toContain('font-size:24px;line-height:28px');
+  });
+
+  it('escapes the link and code', () => {
+    const { html } = signIn({ prefer: 'code', link: 'https://wallet.test/?a="><script>' });
+    expect(html).not.toContain('<script>');
+  });
+});
+
 describe('seated buddy', () => {
   const top = (mood: string, scheme: string, d: number) =>
     `${BASE}/email/buddy-${mood}-${scheme}-top-${d}x.png`;

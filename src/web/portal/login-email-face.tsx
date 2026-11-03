@@ -4,23 +4,13 @@ import { INVALID_EMAIL } from '@/shared/copy/sign-in.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { isApiError } from '../lib/errors.ts';
 import { Button, Callout, FormField, Input } from '../ui/index.ts';
+import { isStandalone } from './device.ts';
 import { type SignInError, signInError } from './login-errors.ts';
 import { failure, type SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
 const isEmail = (value: string) => strictEmail(value) !== null;
 
-/**
- * Installed to the home screen: a link in the email opens Safari, not this app, so the code
- * leads.
- */
-export function isStandalone(): boolean {
-  if (typeof window === 'undefined') return false;
-  const nav = navigator as Navigator & { standalone?: boolean };
-  return (
-    window.matchMedia?.('(display-mode: standalone)').matches === true || nav.standalone === true
-  );
-}
 /** An average address character at the field's 16 px, and the field's side padding. */
 const CHAR_PX = 8.3;
 const PAD_PX = 12;

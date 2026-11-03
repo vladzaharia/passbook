@@ -1,3 +1,4 @@
+import type { MagicPrefer } from '../../../shared/contracts/session.ts';
 import { renderSignInEmail } from '../../email/sign-in.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { BadRequestError, ForbiddenError, UnavailableError } from '../../platform/errors.ts';
@@ -37,6 +38,8 @@ export interface IssueInput {
   requester?: string | null;
   /** Pocket ID identity to link when this sign_in link is consumed. */
   pendingIdentity?: PendingIdentity | null;
+  /** sign_in: what the email leads with. Layout only; the link and the code grant the same. */
+  prefer?: MagicPrefer;
 }
 
 /** Creates the link and sends it. Callers decide whether the address is eligible. */
@@ -69,6 +72,7 @@ export async function issueMagicLink(
     code: code ?? undefined,
     expiresMinutes: MAGIC_TTL_MS / 60_000,
     ...(input.requester ? { requester: input.requester } : {}),
+    ...(input.prefer ? { prefer: input.prefer } : {}),
   });
   const { 'email.senderName': fromName } = await getPlatformSettings(ctx);
   await mailer.send({ to: input.email, fromName, ...mail });
@@ -80,7 +84,13 @@ export async function issueMagicLink(
  */
 export async function processSignInRequest(
   ctx: ServiceContext,
-  input: { email: string; bindingHash: string; next: string | null; ipPrefix?: string | null },
+  input: {
+    email: string;
+    bindingHash: string;
+    next: string | null;
+    ipPrefix?: string | null;
+    prefer?: MagicPrefer;
+  },
 ): Promise<void> {
   try {
     // Unknown addresses are dropped first so they never spend a victim's or the global budget.
@@ -103,6 +113,7 @@ export async function processSignInRequest(
       next: input.next,
       purpose: 'sign_in',
       userId: null,
+      ...(input.prefer ? { prefer: input.prefer } : {}),
     });
     ctx.log.info('auth.magic_sent', { purpose: 'sign_in' });
   } catch (error) {

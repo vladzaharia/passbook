@@ -63,6 +63,7 @@ export async function requestMagic(c: Context<AppBindings>) {
           bindingHash: await sha256Hex(binding),
           next: safeNext(input.next),
           ipPrefix: ipPrefix(ip),
+          prefer: input.prefer ?? 'link',
         }))(),
     );
   }
