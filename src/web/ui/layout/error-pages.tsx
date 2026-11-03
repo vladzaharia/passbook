@@ -40,7 +40,7 @@ export function ForbiddenPage() {
         <div className="flex flex-wrap items-center justify-center gap-2">
           {holder ? <ToMyPasses /> : null}
           <Button
-            variant={holder ? 'ghost' : 'outline'}
+            variant="outline"
             iconStart={<LogIn aria-hidden />}
             onClick={() => void signOut(authed?.csrfToken, { next: here })}
           >

@@ -53,7 +53,7 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
                 />
                 <div className="min-w-0">
                   {authed.user.name ? (
-                    <p className="truncate text-base font-semibold text-fg-strong">
+                    <p className="truncate text-sm font-semibold text-fg-strong">
                       {authed.user.name}
                     </p>
                   ) : null}
