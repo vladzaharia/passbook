@@ -170,19 +170,17 @@ export interface DetailNotFoundProps {
   back?: string;
   /** No PageHeader above it: the title is the page h1. */
   heading?: boolean;
-  /** A holder's own pass that is gone: the buddy looks for it with its lens (lost, peek). */
-  lost?: boolean;
 }
 
 /**
  * An item that is not there (deleted, mistyped link): the torn pass the buddy mends, "{Entity} not
  * found" and one way back to its list.
  */
-export function DetailNotFound({ entity, to, back, heading = false, lost }: DetailNotFoundProps) {
+export function DetailNotFound({ entity, to, back, heading = false }: DetailNotFoundProps) {
   const { label, plural } = ENTITY[entity];
   return (
     <EmptyState
-      {...(lost ? { art: 'wallet' as const, artState: 'lost' as const } : { art: 'torn' as const })}
+      art="torn"
       mood="sad"
       heading={heading}
       title={notFoundTitle(label)}

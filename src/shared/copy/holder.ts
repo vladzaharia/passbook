@@ -20,4 +20,7 @@ export const HOLDER_COPY = {
   openInPortal: 'Open in My passes',
   /** /p link previews. */
   previewActive: 'Add it to Apple Wallet.',
+  /** An unknown, rotated or expired /p link; its way on is My passes (STATE_COPY.goToMyPasses). */
+  deadLinkTitle: 'Link expired',
+  deadLinkLine: 'Sign in to see your passes.',
 } as const;

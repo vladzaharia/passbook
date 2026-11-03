@@ -491,7 +491,7 @@ The trust and footer lines are the only explanatory text allowed on these pages:
 - Public pass page: the app shell's bar (56 px with its border, sticky) with the org's icon and
   name; a 24 px h1; then the portal's pass view (deals in, flips with a no-script `Details`
   toggle, tilts on fine pointers through `/pass-tilt.js`, dips in CSS when the badge is pressed).
-  An expired link uses the hosted card (`Link expired`, `Sign in`).
+  A dead link uses the hosted card (`Link expired`, outline `Go to My passes`).
 - Emails: fluid container `width:100%; max-width:480px`; 3px foil line (teal fallback) over the
   org header bar (org accent, text white or near-black by luminance). One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your

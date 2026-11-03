@@ -270,7 +270,11 @@ describe('GET /p/:token', () => {
     expect(body).toContain('<h1>Link expired</h1>');
     expect(body).toContain('Sign in to see your passes.');
     expect(body).toContain('class="card" data-state="expired"');
-    expect(body).toMatch(/<a class="btn" href="\/login">Sign in<\/a>/);
+    // The way on is outline, as on every hosted page: My passes, through sign-in when needed.
+    expect(body).toMatch(
+      /<a class="btn outline" href="\/"><svg[\s\S]*?<\/svg>Go to My passes<\/a>/,
+    );
+    expect(body).not.toMatch(/class="btn"/);
     await rotateLink(kit.ctx, actor, pass.id, null);
     expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
     expect((await get(`/p/${pass.downloadToken}/pass.pkpass`)).status).toBe(404);

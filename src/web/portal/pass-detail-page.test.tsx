@@ -145,14 +145,13 @@ describe('pass detail', () => {
     expect(document.querySelector('[data-scene="nudge"]')).toBeNull();
   });
 
-  it('shows not found under the page header, the buddy peeking for it, with a way back', async () => {
+  it('shows not found under the page header, the buddy mending the torn pass', async () => {
     const { container } = await renderApp('/passes/nope', {});
     expect(await screen.findByText('Pass not found')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Pass' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to My passes' })).toHaveAttribute('href', '/');
-    expect(
-      container.querySelector('[data-scene="peek"] [data-art="wallet"][data-state="lost"]'),
-    ).not.toBeNull();
+    // An entity not found (buddy spec): torn and mend; lost and peek are for unknown routes.
+    expect(container.querySelector('[data-scene="mend"] [data-art="torn"]')).not.toBeNull();
     expect(screen.queryByText(/request/i)).toBeNull();
   });
 

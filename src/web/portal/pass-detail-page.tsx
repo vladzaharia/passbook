@@ -152,7 +152,8 @@ export function PassDetailPage({ passId }: { passId: string }) {
     );
   }
   if (query.isError) {
-    return detailError(query, { entity: 'pass', to: '/', back: 'My passes', lost: true, header });
+    // A pass that is not there is an entity not found: the torn pass the buddy mends.
+    return detailError(query, { entity: 'pass', to: '/', back: 'My passes', header });
   }
   return (
     <>

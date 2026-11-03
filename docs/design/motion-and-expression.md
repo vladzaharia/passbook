@@ -162,7 +162,7 @@ scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's co
 | tug | Forbidden (lock, sad) | Hooks the padlock with its gold pass and tugs three times, leaning back each time; the lock swings, the shackle rattles and holds; it lets go and sighs | 2.8 s |
 | plug | Error (sad); Retry replays it | Pushes the plug into the socket with its gold pass; a big spark, the socket shudders; the plug pops out and drops; it flinches, eyes squeezed, then sighs | 3 s |
 | flip | Audit log, no entries (flat) | Reaches the log; three flicks scroll the lines up and the same lines come back; it looks at you, unimpressed, and shrugs | 2.8 s |
-| peek | Lost: page or pass not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
+| peek | Lost: page not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
 | wave | Pass created; S, seated on the Front / Details control's top edge at its right end, in every stage layout (the row leaves room above it) | Has fallen on; hops, looks up at the pass and waves its teal pass twice, then smiles at you | 1.8 s |
 | tear | Pass voided (this visit); seated like wave | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
