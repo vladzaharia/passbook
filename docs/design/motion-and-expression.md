@@ -98,14 +98,60 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 The mascot turns up at real moments, one per view, decorative (`aria-hidden`, never focusable).
 Each scene plays once; only the riffle loops, and only while an import runs.
 
+### The buddy
+
+One spec for every buddy in the app, on SSR pages and in the icons. `BrandMark` (the logo) is a
+stylized face of its own and stays as it is.
+
+| Tier | Size | Line | Where |
+| --- | --- | --- | --- |
+| Face XS | 24 × 20 | 1.25 px | Toasts (`BuddyFace size="sm"`) |
+| Face S | 48 × 44 | 1.5 px | Banners, Status (`BuddyFace size="md"`) |
+| S | 64 × 48 | 1.25 px | Dense chrome: the palette, the pass stage, the nudge (`size="sm"`) |
+| M | 96 × 72 | 1.5 px | State boxes and cards (`size="lg"`) |
+| L | 128 × 96, 112 × 84 under 640 | 1.75 px | Hero bands: sign-in, SSR (`size="xl"`; the art steps itself) |
+| Poster | 1.5 × L | 1.75 px | The social image |
+
+Nothing else. Lines are non-scaling, so each tier sets its own (`--art-w`, `art.css`); the heavier
+lines (`.f`, `.h`, the check) scale with it. A prop is 2/3 of its buddy.
+
+- **Seat.** Every full-body buddy sits on a real bordered surface: its base (y 66 of 72) on the
+  border line (`--wl-seat-border`, 1 px; the upload zone's is 2 px), legs over the edge, a contact
+  shadow, the border behind. Only faces go without legs. Centred on state boxes; at the end of a
+  card or band with a title at its left (`at="end"`, `--wl-buddy-inset`; `at="start"` for the
+  start).
+- **Entrance.** One for all: it falls onto the surface. 36 units from above (so the drop scales
+  with the tier), fading in over the first 60 ms, gravity to the impact at 216 ms, a squash
+  (1.12 × .86) and a rebound, settled by 480 ms; the shadow grows under it, the legs swing once on
+  the impact, the passes pop out of the pocket as it lands (220 ms, 60 ms apart) and the eyes open
+  at 480 ms. The nudge, unseen until it runs, falls in its own scene.
+- **Moods.** Neutral: waiting for you (sign-in, the idle upload zone, a chosen file, the nudge,
+  SSR confirm and break-glass). Curious: nothing here yet (empty, filtered, palette no results,
+  drag-over). Flat: nothing worth showing or a small slip (an empty audit log, a wrong code, an
+  invalid email). Sad: a failure or a refusal (error, not found, forbidden, expired, rate limit,
+  voided, refused file). Happy: confirmed success only (signed in, imported, created, success
+  toasts, Status all good); the face's eyes smile shut like the seated buddy's.
+- **One meaning per state, app and SSR** (`art/state-art.tsx`, `art/wallet-states.tsx`): error is
+  the plug beside the unplugged art; a route not found is the lens, peek; an entity not found is
+  the torn pass, mend; forbidden is the lock, tug; expired is the gold pass greying and drooping
+  18° past the fan; a rate limit is the hourglass, which flips in on the surface at the wallet's
+  left. Confirm puts a check on the top card; break-glass turns a key in the clasp.
+- **Scenes.** At most one buddy in view, toast faces included. A scene plays once, 700 ms after the
+  landing and when 60% in view; 1.8–3.2 s (search 4 s); done within 5 s; it ends on the rest pose.
+  Painted parts take the click that replays it. Reduced motion: the final pose. SSR pages render
+  the same React to static markup and mark the buddy `data-run="load"`, so the scene plays once,
+  700 ms after load, with no script; `public/buddy-replay.js` adds the click.
+
 **Scenes** (`src/web/ui/art/scenes/*.css`, in the lazy art chunk; `replay.ts`). A host marks the art
 `data-replay` and `data-scene`; the scene is CSS under `[data-run]`. With `auto` it starts once,
 when the art is 60% in view and has landed (700 ms). A click on a painted part replays it from the
 start (off, a style flush, on) and stops there: no parent link, row or card action sees it. Hover
 (fine pointers) blinks once and shows the pointer cursor. Reduced motion: the final pose, no run,
 a click does nothing. Each scene ends on the rest pose and leaves nothing running. Transform
-(`translate`, `rotate`, `scale`, `transform`) and opacity only. API: `Buddy scene replay`,
-`Cameo scene` (an unseated buddy), `BuddyFace scene size`, `useScene(auto, again)`.
+(`translate`, `rotate`, `scale`, `transform`) and opacity only. API: `Buddy mood state prop size at
+scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's composition),
+`BuddyFace scene size mood`, `useScene(auto, again)`. A cameo in dense chrome is a seated
+`Buddy size="sm"` (the nudge: `<Buddy size="sm" scene="nudge" at="start" />` on the Details card).
 
 | Scene | Where | Beats: anticipation, action, reaction, settle | Time |
 | --- | --- | --- | --- |
@@ -118,11 +164,11 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 | flip | Audit log, no entries (flat) | Reaches the log; three flicks scroll the lines up and the same lines come back; it looks at you, unimpressed, and shrugs | 2.8 s |
 | peek | Lost: page or pass not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
-| wave | Pass created | Steps out from under the pass on a spring, hops, looks up at it and waves its teal pass twice | 2.2 s |
-| tear | Pass voided (this visit) | Steps out, looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2.4 s |
-| nudge | Portal pass, not on a device yet; seated on the Details card's top edge at its right end, under the actions | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in and points its teal pass at it twice, then looks back at you and blinks | 2.6 s |
+| wave | Pass created; S, seated on the Front / Details control's top edge at its right end, in every stage layout (the row leaves room above it) | Has fallen on; hops, looks up at the pass and waves its teal pass twice, then smiles at you | 1.8 s |
+| tear | Pass voided (this visit); seated like wave | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
+| nudge | Portal pass, not on a device yet; S, seated on the Details card's top edge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in, lifts its teal pass out of the pocket and aims it up-left at the badge twice, then looks back at you and blinks | 2.6 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
-| hello | Sign-in wallet at rest; the auth and error pages' wallet (SSR) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css` | 1 s |
+| hello | Sign-in wallet at rest; the SSR band's wallet (sign-in, confirm, break-glass, expired, rate limit) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css`. SSR error, not-found and forbidden pages act out plug, peek and tug instead (`STATE_SCENE_CSS`) | 1 s |
 | face: wink | Success toast (the miniature, sm) | Pops with the toast and winks at 380 ms; a click pops and winks again | 580 ms |
 | face: post | Holder emailed (`toast.sent`; sm) | The violet pass dips into the pocket, flies off up-right like a letter and fades, a wink, a new one rises into the pocket | 1.4 s |
 | face: cheer | Status all good (md) | A squash and a small hop as the gold pass rises out of the pocket like a thumb and wiggles, a wink, the smile widens; the thumb drops back | 1.4 s |
@@ -142,18 +188,15 @@ the planted foot moves against the body with the same keyframes and easing, so i
 | 3500–4000 | Hop onto the seat, squash, blink |
 
 Nudge beats (`scenes/nudge.css`, 1% = 26 ms). It starts once the art has landed and is 60% in
-view, and ends by 3.3 s. The buddy is 80 × 60 beside the columns' actions (1024 px and up), 64 × 48
-when they stack. The actions row ends with an empty slot the buddy's size (`ml-auto`, aria-hidden)
-that keeps the buttons out of his head's way; when the row has no room it wraps under the actions
-(phones), and he sits there. He falls `--wl-drop`: 48 units (40 px at 80 × 60), or 20 units on
-phones so he never crosses the buttons above.
+view, and ends by 3.3 s. The buddy is S (64 × 48) at every width. He falls `--wl-drop`: 48 units
+(32 px at S), or 20 units on phones so he never crosses the buttons above.
 
 | ms | Beat |
 | --- | --- |
 | 0–290 | Falls, ease-in, stretched (.93 × 1.08); fades in over the first 80 ms; legs splayed; the shadow grows from .3 to full width under him |
 | 290–550 | Impact: squash 1.14 × .83 at 350 ms, rebound, settle by 810 ms; the shadow spreads to 1.14 and back; the passes dip 3 units and splay ±8°; the legs fling out (30°), swing back under and still by 940 ms; a blink at 325 ms |
 | 880–1250 | Eyes to Add to Apple Wallet (left, up) by 1040; the trunk leans 5° toward it by 1200 |
-| 1250–1610 | The teal pass points at it twice (−32°, back to −20°, −32°, held) |
+| 1250–1610 | The teal pass lifts out of the pocket and aims up-left at it twice (up 10 units and −24° past the fan, back to 7 units and −16°, again, held) |
 | 1610–1980 | Pass down by 1820, upright by 1870, eyes back to you by 1980 |
 | 2180–2600 | A blink; eyes centred; still at 2600 |
 
@@ -164,14 +207,16 @@ legs): the same pocket, dashed stitch, screen-face and fanned passes, from the p
 exports, on the art's tokens, so it follows the theme as the seated buddy does. `md` (status
 banner, 48 × 44) draws everything at the art's proportions. `sm` (toasts, 24 × 20) is its optical
 size: no stitch, no pass shine, 1.25 px lines, the screen-face 1.3× with larger eyes and a wider
-smile, and the fan's tips drawn over the box, so a toast keeps its height.
+smile, and the fan's tips drawn over the box, so a toast keeps its height. It marks a success, so
+its eyes are the seated buddy's happy arcs (`mood="neutral"` opens them); the wink closes the
+right arc.
 
 Other cameos, unchanged:
 
 | Moment | What happens | Time | Where |
 | --- | --- | --- | --- |
 | Empty state | The buddy's eyes drop to the action under the pointer or focus | 200 ms | `art-wallet.css` |
-| Template upload | On the drop zone: passes reach up and the mouth opens for a hovering file; a caught file gets the smile and a hop; an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Done, it cheers on the result card | 320 ms; 640 ms hop | `admin/templates/upload-*` |
+| Template upload | Seated on the drop zone's 2 px border with the template art as its prop (one active art). Passes reach up and the mouth opens for a hovering file (curious); a chosen file gets a squash and stays neutral (nothing is imported yet); an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Happy only on the result card, where it cheers | 320 ms; 640 ms squash | `admin/templates/upload-*` |
 | Signed out | The sign-in scene's top card waves from the pocket once, within two minutes of a sign-out in this tab | 860 ms at 700 ms | `portal/login-*` |
 | Wordmark | Hello, once per browser session (SPA): the passes pop out of the pocket left to right (420 ms bounce, 60 ms apart, from 120 ms), then a wink at 640 ms. Hover (fine pointers, SPA and SSR): the passes perk up 1 unit and the smile widens | 840 ms; 160 ms | `ui/layout/brand-mark.css` |
 
@@ -223,7 +268,8 @@ Passes keep the pass art; everything else gets its own picture and verb.
 System:
 
 - Inline SVG, `viewBox 0 0 96 72`: 96×72 on pages, 64×48 inside cards, tabs and the palette.
-- Strokes 1.5 px non-scaling in `border-strong`, round caps and joins. Objects fill
+- Strokes non-scaling in `border-strong` (1.5 px at M, 1.25 at S, 1.75 at L), round caps and
+  joins. Objects fill
   `surface-raised`; slots fill `surface-sunken`.
 - Exactly one accent part (accent stroke, accent fill at 20%). Foil only as a 2 px top edge on the
   hero object. No text. Faces only on the holder mascot (`wallet`).
@@ -237,13 +283,13 @@ System:
   or `beat={false}`.
 - Filtered: the entity art at .6 opacity with the lens at bottom-right (scale .6).
 - Decorative: `aria-hidden`, adds no words. The title and single action stay as they are.
-- Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, step-out,
-  fall, wave or scene (the nudge buddy is seated from the first frame); a click on the buddy does
-  nothing.
+- Reduced motion: the final frame, no beat. Cameos swap pose at once: no wink, hop, riffle, fall,
+  wave or scene (every buddy is seated from the first frame); a click on the buddy does nothing.
 - Budget: ≤40 SVG nodes per art; the art kit ≤13.5 kB gzip, the lazy buddy scenes ≤8 kB. Files `src/web/ui/art/<name>.tsx` (named
   exports, under 300 lines); `art.css` (tokens, part engine, keyframes) plus the part rules in
   `art-records.css`, `art-details.css` and `art-wallet.css`; the map in `src/web/ui/art/index.ts`.
-- API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` or the named component (`PassesArt`…).
+- API: `<EntityArt name size="lg"|"sm"|"xl" beat? still?>` (M, S, L: The buddy) or the named
+  component (`PassesArt`…).
   `LayersArt compare` splits the top two sheets. `WalletArt state mood lift onCard face front` (states
   `login`, `empty`, `lost`, `confirm`, `expired`, `no-access`, `break-glass`) renders through
   `renderToStaticMarkup`; SSR pages inline `ART_CSS` (`art/css.ts`, every art sheet in cascade
@@ -308,14 +354,14 @@ One per screen. The wordmark says hello once per browser session in the SPA and 
    | Beat | Motion |
    | --- | --- |
    | Scene | One header band over the card: the wordmark at the left, the `wallet` mascot (128×96; 112×84 under 640) seated on the card's top edge at the right, legs over it; three mini passes in foil teal, violet and gold fan out of the pocket from one pivot at its bottom centre |
-   | Load | Pocket rises 8 px and fades in (0–200 ms). Cards pop out (bounce, 60 ms apart) and fan to −18°, 0°, 18° (100–540 ms). Eyes open (scaleY 0 → 1, 120 ms) at 480 ms. Done by 600 ms, inside the art budget. The form works from 0 ms. A hidden tab holds every animation (`data-paused`), so the entrance and the idle beat play when someone looks |
+   | Load | The buddy's one entrance (The buddy): it falls onto the card and lands in a squash; the cards pop out on the impact (bounce, 60 ms apart) and fan to −18°, 0°, 18° (300–600 ms). Eyes open (scaleY 0 → 1, 120 ms) at 480 ms. Done by 600 ms, inside the art budget. The form works from 0 ms. A hidden tab holds every animation (`data-paused`), so the entrance and the idle beat play when someone looks |
    | Idle | One bob (±3 px, ±1°, one cycle) and one blink at 2.4 s (scaleY 1 → .1 → 1, 140 ms). Fine pointers: the wallet sways 1.5° and the fan 2.5° more towards the pointer (4° in all) and the eyes look at it (±1.5 px). Typing: the eyes look down at the field and follow the text across it, back to the pointer on blur or after 1.5 s. Nothing moves on its own after 5 s |
    | Email | When the address is valid, the top card lifts 6 px (200 ms spring) and its first letter stamps on (1.9 → 1, 280 ms bounce) |
    | Send link | The top card hops out over the pocket's left shoulder (the open side of the band) and drops into the card's top edge like a letter going out (320 ms: ease-out up, ease-in down, fading at the end); the other two close to ±10° and the eyes look down. After 120 ms the card flips (640 ms spring) to the code face, the far face inert; focus moves to the code field at 500 ms |
-   | Code | Each digit pops into its slot (.6 → 1, 140 ms spring), grouped `123 456`. Complete: the field glows teal once (300 ms). Wrong or expired: the pocket shakes once (240 ms) and the eyes go flat for 600 ms; border and icon carry the error. Expired: an hourglass at the wallet's left flips once |
+   | Code | Each digit pops into its slot (.6 → 1, 140 ms spring), grouped `123 456`. Complete: the field glows teal once (300 ms). A wrong code or an invalid address is a slip: the pocket shakes once (240 ms) and the face goes flat, never sad; border and icon carry the error. Expired: sad, the gold pass greys and droops 18° past the fan. A rate limit: sad, the hourglass flips in at the wallet's left. A network or server error: sad. Typing again clears it |
    | Success | The posted card comes home from above and the fan slides into the pocket (18 px, 200–260 ms ease-in), then the pocket bounces (squash 1.06 × .9 → 1, 360 ms bounce) and the eyes close into a smile (240 ms bounce). Navigation starts at once; nothing delays it |
    | Polaris ID | Fine-pointer hover: one foil sweep along the button border (480 ms) |
-   | Worker pages | Same scene, CSS only, static after load (`src/worker/ssr/hosted-art.*`: these states never ship in the app bundle). Confirm: a check pops on the top card (300 ms bounce). Link expired: the gold card pops out, greys and slips 18° further (480 ms spring); the eyes glance at it. No access: the fan closes under a padlock on the top card whose shackle drops (200 ms bounce). Break-glass: a key slides into a keyhole right of the clasp (200 ms) and turns, its bow going edge-on (280 ms spring); the eyes glance at it |
+   | Worker pages | The same React rendered static (`src/worker/ssr/hosted-art.tsx` on `art/state-art.tsx`), CSS only, with the same idle beat at 2.4 s. After the landing: confirm pops a check on the top card (160 ms bounce); link expired greys the gold pass and droops it 18° further (300 ms spring), the eyes glance at it; break-glass slides a key into a keyhole right of the clasp (160 ms) and turns it, its bow going edge-on; a rate limit flips the hourglass in. Error, not found and forbidden act out plug, peek and tug with their props, once, 700 ms after load |
    | Reduced motion | The fanned frame, eyes open; faces and states swap with a fade of 150 ms or less (the letter shows on the resting card, the posted card fades, the smile fades in); no bob, blink, lift, drop, shake, sway or look |
 
    SVG and CSS on tokens, transform and opacity only, no library. The badge never appears here.
@@ -369,8 +415,9 @@ One per screen. The wordmark says hello once per browser session in the SPA and 
 - **Copy.** Terse, unchanged. No new words for flair.
 - **Email.** No animation, no GIFs: the static foil line and the static email buddy only.
 - **SSR and CSP.** Worker pages move in CSS: a checkbox flips the public pass, keyframes run on
-  load. Style nonces; no inline scripts. Same-origin scripts only add to a page that works without
-  them: `pass-tilt.js` (public pass) and `buddy-replay.js` (a click replays the auth pages' wallet).
+  load, the buddy's scene too (`data-run="load"`). Style nonces; no inline scripts. Same-origin
+  scripts only add to a page that works without them: `pass-tilt.js` (public pass) and
+  `buddy-replay.js` (a click replays the buddy's scene).
 - **Budget.** No new dependency. `motion.css` + `stage.css` ≤4 kB gzip; art ≤8 kB gzip; motion
   hooks ≤1.5 kB. One rAF-throttled pointer listener per visible stage.
 
@@ -394,7 +441,8 @@ tilt, the sheet drag). No motion library.
 | Tokens, route fade-through, list entrances, loading rail | `src/web/styles/motion.css` |
 | Overlays, controls, skeleton, ring, indicator, verbs, sparks | `src/web/styles/kit-motion.css` (split when it nears 300 lines) |
 | Entity art and the mascot | `src/web/ui/art/*.tsx`, `src/web/ui/art/*.css`, `ART_CSS` for SSR |
-| Buddy scenes and click to replay | `src/web/ui/art/{replay.ts,cameo.tsx}`, `src/web/ui/art/scenes/*.css` (rest sheet first paint; scenes in the registry chunk); SSR: `public/buddy-replay.js` |
+| Buddy, scenes and click to replay | `src/web/ui/art/{buddy,buddy-art}.tsx`, `src/web/ui/art/replay.ts`, `src/web/ui/art/scenes/*.css` (rest sheet first paint; scenes in the registry chunk); SSR: `public/buddy-replay.js` |
+| State parts and compositions (sign-in, SSR) | `src/web/ui/art/{wallet-states,state-art}.*`; SSR CSS `ART_CSS`, `STATE_SCENE_CSS` (`art/css.ts`) |
 | Entity and action registries | `src/web/lib/entities.ts`, `src/web/lib/action-icons.ts` |
 | Hooks | `src/web/lib/motion.ts` |
 | Online state | `src/web/lib/online.ts` |
