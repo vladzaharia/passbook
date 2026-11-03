@@ -221,6 +221,10 @@ health items):
 - Examples are placeholders (`x-placeholder`); a default is a real value or nothing.
 - Page forms save through `SaveBar` (fixed bottom, offset by the sidebar at ≥1024, Discard
   outline + Save primary). Dialog forms use footer buttons. No inline Save buttons on pages.
+- One page, one bar: a page with two or more forms wraps them in `SaveBarGroup`. Save submits
+  every dirty form top to bottom, Discard resets them all, the route guard asks once and success
+  says `Saved` once (`useSavedToast` for a form's own message). A refused form takes focus while
+  the others save; a failed one stays dirty. `onValid` resolves `SaveResult` for this.
 
 ### Wizards
 
@@ -476,7 +480,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
 | Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
-| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
+| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
 | Badge | `AppleWalletBadge href label? theme?` (`theme`: the stamped page theme when server-rendered on `/p`) |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
