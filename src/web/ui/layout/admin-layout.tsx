@@ -2,6 +2,7 @@ import { Outlet } from '@tanstack/react-router';
 import { Menu, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
+import { useOrgScopeUrl } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
 import { Button } from '../button.tsx';
 import { IconButton } from '../icon-button.tsx';
@@ -19,6 +20,7 @@ export function shortcutHint(ua = typeof navigator === 'undefined' ? '' : naviga
 }
 
 export function AdminLayout() {
+  useOrgScopeUrl();
   const [navOpen, setNavOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const touchOnly = useMediaQuery(COARSE_ONLY);

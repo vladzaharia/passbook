@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { accountSearchSchema } from '../lib/nav.ts';
+import { accountSearchSchema } from '../lib/route-search.ts';
 import { AccountPage } from '../portal/account-page.tsx';
 
 export const Route = createFileRoute('/account')({

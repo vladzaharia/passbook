@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { UserDetailPage } from '../../../admin/users/user-detail.tsx';
-import { UNSCOPED_SEARCH } from '../../../lib/org-filter.tsx';
+import { UNSCOPED_SEARCH } from '../../../lib/route-search.ts';
 
 export const Route = createFileRoute('/admin/users/$userId')({
   search: UNSCOPED_SEARCH,

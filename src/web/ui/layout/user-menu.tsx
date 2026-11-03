@@ -1,6 +1,7 @@
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Check, LayoutDashboard, LogOut, type LucideIcon, Ticket, UserRound } from 'lucide-react';
+import { THEME_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
 import { isAdminPath } from '../../lib/guards.ts';
 import { useChangeCount } from '../../lib/motion.ts';
@@ -37,6 +38,7 @@ function ThemeChoice() {
         <ActiveIndicator variant="thumb" />
         {THEME_OPTIONS.map((t) => {
           const on = t.value === pref;
+          const Icon = THEME_ICON[t.value];
           return (
             <Menu.RadioItem
               key={t.value}
@@ -48,7 +50,7 @@ function ThemeChoice() {
                 on ? 'text-fg-strong' : 'text-fg-muted',
               )}
             >
-              <t.icon
+              <Icon
                 key={on ? changed : 'idle'}
                 aria-hidden
                 className={cn('size-3.5', on && changed > 0 && 'wl-seg-icon')}

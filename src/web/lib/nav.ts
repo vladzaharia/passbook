@@ -1,5 +1,4 @@
 import { LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
-import { z } from 'zod';
 import { ENTITY, type EntityKind } from './entities.ts';
 import { isAdminPath } from './guards.ts';
 
@@ -79,8 +78,3 @@ export function isOrgScoped(pathname: string): boolean {
 export function accountPath(pathname: string): '/account' | '/admin/account' {
   return isAdminPath(pathname) ? '/admin/account' : '/account';
 }
-
-/** Both Account routes: ?add=email (from the empty My passes) focuses the add-email row. */
-export const accountSearchSchema = z.object({
-  add: z.enum(['email']).optional().catch(undefined),
-});

@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { accountSearchSchema } from '../../lib/nav.ts';
-import { UNSCOPED_SEARCH } from '../../lib/org-filter.tsx';
+import { accountSearchSchema, UNSCOPED_SEARCH } from '../../lib/route-search.ts';
 import { AccountPage } from '../../portal/account-page.tsx';
 
 /** The holder's Account page inside the console: the account menu opens it here from /admin. */

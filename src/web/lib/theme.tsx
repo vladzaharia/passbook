@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
 import {
   createContext,
   type ReactNode,
@@ -9,7 +8,6 @@ import {
   useState,
 } from 'react';
 import { flushSync } from 'react-dom';
-import { THEME_ICON } from './action-icons.ts';
 import { prefersReducedMotion } from './motion.ts';
 
 export type ThemePref = 'system' | 'light' | 'dark';
@@ -20,12 +18,12 @@ const ONE_YEAR_S = 31_536_000;
 /** The browser chrome per theme: the page surface. index.html carries the same pair by media. */
 export const THEME_COLOR = { light: '#f6f8ff', dark: '#060912' } as const;
 
-/** The account menu and the palette offer these, in this order. */
+/** The account menu and the palette offer these, in this order; icons are THEME_ICON. */
 export const THEME_OPTIONS = [
-  { value: 'system', label: 'System', icon: THEME_ICON.system },
-  { value: 'light', label: 'Light', icon: THEME_ICON.light },
-  { value: 'dark', label: 'Dark', icon: THEME_ICON.dark },
-] as const satisfies readonly { value: ThemePref; label: string; icon: LucideIcon }[];
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+] as const satisfies readonly { value: ThemePref; label: string }[];
 
 function isPref(value: unknown): value is ThemePref {
   return value === 'system' || value === 'light' || value === 'dark';
