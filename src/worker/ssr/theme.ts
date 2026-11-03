@@ -1,3 +1,8 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import markCss from '../../web/ui/layout/brand-mark.css?raw';
+import { BrandMark } from '../../web/ui/layout/brand-mark.tsx';
+
 const LIGHT =
   '--page:#f6f8ff;--raised:#fff;--sunken:#ebeef8;--field:#fff;--strong:#060912;--fg:#262d40;--muted:#48536b;--line:#dadee9;--line-strong:#7e8699;--hover:rgb(6 9 18/.05);--accent:#0f766e;--accent-hover:#2f857e;--accent-on:#fff;--danger:#be2323;--danger-line:#db423c;--danger-subtle:#f0e3e9;--warn:#814d00;--warn-subtle:#fdf0c8;--warn-line:#a15c07;--focus:#0f766e;--foil-1:#0f766e;--foil-2:#7a2fff;--foil-3:#d07a00;--edge:transparent;--shadow:0 1px 2px 0 rgb(6 9 18/.06)';
 const DARK =
@@ -18,9 +23,6 @@ html{font-family:Rubik,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,A
 body{margin:0;min-height:100dvh;background:var(--page);color:var(--fg);font-size:.875rem;line-height:1.5;-webkit-text-size-adjust:100%;padding:env(safe-area-inset-top) max(1rem,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(1rem,env(safe-area-inset-left))}
 a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.mark{display:inline-flex;align-items:center;gap:.5rem;min-height:2rem;border-radius:.375rem;font-size:1rem;font-weight:600;color:var(--strong);text-decoration:none}
-.mark svg{width:1.25rem;height:1.25rem;color:var(--accent)}
-@media(pointer:coarse){.mark{min-height:2.75rem}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:2.25rem;padding:.375rem 1rem;border:1px solid transparent;border-radius:.375rem;background:var(--accent);color:var(--accent-on);font:inherit;font-size:.875rem;font-weight:500;line-height:1.25rem;text-align:center;text-decoration:none;cursor:pointer}
 @media(pointer:coarse){.btn{min-height:2.75rem}}
@@ -29,14 +31,18 @@ a{color:var(--accent)}
 .btn.outline:hover{background:var(--hover);color:var(--strong)}
 .btn svg{width:1rem;height:1rem;flex:none}
 @keyframes wl-rise{from{opacity:0;transform:translateY(8px)}}
-@media (prefers-reduced-motion:no-preference){.btn{transition:background-color 120ms,color 120ms,transform 80ms}.btn:active{transform:scale(.98)}}
-@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){.mark path{transform-box:fill-box;transform-origin:50% 0;transition:transform 160ms cubic-bezier(0,0,0,1)}.mark:hover path:first-child{transform:scaleY(1.6)}.mark:hover path+path{transform:translateY(-1.5px)}}`;
+@media (prefers-reduced-motion:no-preference){.btn{transition:background-color 120ms,color 120ms,transform 80ms}.btn:active{transform:scale(.98)}}`;
 
-const ICON =
-  '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3.75a2 2 0 0 1 1.6.8l.45.6a4 4 0 0 0 6.4 0l.45-.6a2 2 0 0 1 1.6-.8H21"/><path d="M3 7h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
+/** The md Wordmark's box (wordmark.tsx) plus the mark's own sheet, shared with the SPA. */
+export const WORDMARK_CSS = `.mark{display:inline-flex;align-items:center;gap:.5rem;min-height:2rem;border-radius:.375rem;font-size:1rem;font-weight:600;color:var(--strong);text-decoration:none}
+.mark>svg{width:1.25rem;height:1.25rem;color:var(--accent)}
+@media(pointer:coarse){.mark{min-height:2.75rem}}
+${markCss}`;
 
-/** Same wordmark as the console, as static markup. Never flips on SSR pages; smiles on hover. */
-export const wordmarkHtml = (href = '/') => `<a class="mark" href="${href}">${ICON}PassBook</a>`;
+const MARK = renderToStaticMarkup(createElement(BrandMark));
+
+/** Same wordmark as the console, as static markup. No hello on SSR pages; it smiles on hover. */
+export const wordmarkHtml = (href = '/') => `<a class="mark" href="${href}">${MARK}PassBook</a>`;
 
 /** Head tags every holder page carries (the caller adds the nonce'd style). */
 export const HEAD_HTML =
