@@ -38,6 +38,46 @@ describe('browser error pages', () => {
     expect(await res.text()).toMatch(/<h1[^>]*>Link expired<\/h1>/);
   });
 
+  it('pages every refused browser form post, with a way back to sign-in', async () => {
+    const form = { 'content-type': 'application/x-www-form-urlencoded' };
+    for (const headers of [
+      { ...form, 'sec-fetch-site': 'cross-site' },
+      { ...HTML, 'content-type': 'text/plain', 'sec-fetch-site': 'cross-site' },
+    ]) {
+      const res = await app.request(
+        `${ORIGIN}/auth/magic/consume`,
+        { method: 'POST', headers, body: 'token=x' },
+        await makeEnv(),
+      );
+      expect(res.status).toBe(403);
+      expect(res.headers.get('content-type')).toContain('text/html');
+      const html = await res.text();
+      expect(html).toContain('Cross-origin requests are not allowed.');
+      expect(html).toContain('href="/login"');
+      expect(html).not.toContain('href=""');
+    }
+  });
+
+  it('keeps problem+json for script posts and API form uploads', async () => {
+    const env = await makeEnv();
+    const json = await app.request(
+      `${ORIGIN}/auth/magic/consume`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'sec-fetch-site': 'cross-site' },
+        body: '{}',
+      },
+      env,
+    );
+    expect(json.headers.get('content-type')).toBe('application/problem+json');
+    const api = await app.request(
+      `${ORIGIN}/api/v1/templates/import`,
+      { method: 'POST', headers: { 'content-type': 'multipart/form-data; boundary=x' }, body: '' },
+      env,
+    );
+    expect(api.headers.get('content-type')).toBe('application/problem+json');
+  });
+
   it('renders 429 with the wait line and keeps Retry-After', async () => {
     const env = await makeEnv({ RL_LOGIN: fakeRateLimiter({ limit: 0 }) });
     const res = await call('/auth/oidc/start', HTML, env);
