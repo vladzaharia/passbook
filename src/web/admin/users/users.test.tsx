@@ -320,7 +320,7 @@ describe('user detail', () => {
     expect(screen.queryByRole('link', { name: /Polaris ID/ })).toBeNull();
   });
 
-  it('shows the API error when adding an email fails', async () => {
+  it('shows the API error when adding an email fails and keeps the address typed', async () => {
     await renderApp('/admin/users/u2', {
       session: 'admin',
       handlers: {
@@ -330,9 +330,11 @@ describe('user detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.type(await screen.findByLabelText('Add verified email'), 'x@example.com');
+    const field = await screen.findByLabelText('Add verified email');
+    await ui.type(field, 'x@example.com');
     await ui.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Email belongs to another user.')).toBeInTheDocument();
+    expect(field).toHaveValue('x@example.com');
   });
 
   it('shows not found under the page header, with the way back', async () => {

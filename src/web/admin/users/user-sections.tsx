@@ -41,13 +41,16 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
       ? makePrimary.variables
       : undefined;
 
-  async function add(email: string) {
+  /** False keeps the typed address in the field when the server refuses it. */
+  async function add(email: string): Promise<boolean> {
     setAddError(undefined);
     try {
       await addEmail.mutateAsync(email);
       toast.success('Email added');
+      return true;
     } catch (cause) {
       setAddError(errorMessage(cause));
+      return false;
     }
   }
 
@@ -65,7 +68,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
           }))}
           busyEmail={busyEmail}
           addError={addError}
-          onAdd={(email) => void add(email)}
+          onAdd={add}
           onRemove={setRemoving}
           onMakePrimary={setPromoting}
           onResend={() => undefined}
