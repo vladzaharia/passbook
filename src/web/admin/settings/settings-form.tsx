@@ -9,11 +9,12 @@ import {
   ErrorState,
   Form,
   SaveBar,
+  type SaveResult,
   SkeletonRows,
   toast,
   UnsavedChangesDialog,
-  useBlockedSubmit,
   useFormErrors,
+  useSavedToast,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { changedValues, type Draft, type SettingField, toDraft } from './fields.ts';
@@ -73,11 +74,12 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   const [server, setServer] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<{ guard: SaveGuard; values: Record<string, unknown> }>();
   const confirmed = useRef(false);
+  // A guarded save waits for the confirm; this settles it.
+  const settle = useRef<(result: SaveResult) => void>(undefined);
+  const saved = useSavedToast();
   const draft: Draft = { ...initial, ...edits };
   const changed = initial ? changedValues(fields, draft, initial) : undefined;
   const check = useFormErrors(changed?.errors ?? {});
-  // A value the server refused: shown on its field and focused like a blocked save.
-  const refused = useBlockedSubmit<HTMLDivElement>();
   const errors: Record<string, string | undefined> = { ...server, ...check.errors };
   const dirty = Boolean(initial) && fields.some((f) => draft[f.key] !== initial?.[f.key]);
   const blocker = useUnsavedChangesGuard(dirty);
@@ -89,12 +91,14 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   if (query.isError || !initial || !changed)
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
 
-  async function commit(values: Record<string, unknown>) {
+  // A value the server refused shows on its field; Form focuses it like a blocked save.
+  async function commit(values: Record<string, unknown>): Promise<SaveResult> {
     try {
       await save.mutateAsync(values);
       setEdits({});
       check.reset();
-      toast.success('Settings saved');
+      saved('Settings saved');
+      return 'saved';
     } catch (cause) {
       const found: Record<string, string> = {};
       if (isApiError(cause)) {
@@ -104,17 +108,26 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
         }
       }
       setServer(found);
-      if (Object.keys(found).length > 0) refused.block();
-      else toast.error(cause, 'Could not save');
+      if (Object.keys(found).length > 0) return 'refused';
+      toast.error(cause, 'Could not save');
+      return 'failed';
     }
   }
 
-  function onValid() {
+  function onValid(): Promise<SaveResult> | undefined {
     if (!changed) return;
     const g = guard?.(changed.values);
-    if (g) setPending({ guard: g, values: changed.values });
-    else void commit(changed.values);
+    if (!g) return commit(changed.values);
+    setPending({ guard: g, values: changed.values });
+    return new Promise((resolve) => {
+      settle.current = resolve;
+    });
   }
+
+  const settled = (result: SaveResult) => {
+    settle.current?.(result);
+    settle.current = undefined;
+  };
 
   const edit = (key: string, v: string | boolean) => {
     setEdits((prev) => ({ ...prev, [key]: v }));
@@ -128,7 +141,7 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
       {...check.form}
       onValid={onValid}
     >
-      <div ref={refused.ref} className="flex min-w-0 flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         {sections(fields).map((section) => {
           const rows = section.fields.map((f) => (
             <SettingRow
@@ -155,7 +168,6 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
         })}
       </div>
       {aside?.(draft)}
-      {refused.live}
       <SaveBar
         dirty={dirty}
         saving={save.isPending}
@@ -173,7 +185,10 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
           if (open) return;
           // Cancel: the guarded setting goes back to what is saved.
           const key = pending?.guard.key;
-          if (!confirmed.current && key) setEdits(({ [key]: _dropped, ...rest }) => rest);
+          if (!confirmed.current && key) {
+            setEdits(({ [key]: _dropped, ...rest }) => rest);
+            settled('failed');
+          }
           confirmed.current = false;
           setPending(undefined);
         }}
@@ -183,7 +198,7 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
         confirmLabel={pending?.guard.confirmLabel}
         onConfirm={async () => {
           confirmed.current = true;
-          if (pending) await commit(pending.values);
+          if (pending) settled(await commit(pending.values));
         }}
       />
       <UnsavedChangesDialog blocker={blocker} />
