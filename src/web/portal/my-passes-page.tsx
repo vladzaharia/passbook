@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Plus, WalletCards } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { cn } from '../lib/cn.ts';
@@ -34,11 +34,7 @@ const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 
 /** A pass that is already in a Wallet: the badge gives way to this pill. */
 export function InWalletPill() {
-  return (
-    <StatusPill status="in_wallet" tone="success" icon={WalletCards}>
-      In Wallet
-    </StatusPill>
-  );
+  return <StatusPill status="in_wallet" />;
 }
 
 function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {

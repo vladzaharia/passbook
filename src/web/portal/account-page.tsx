@@ -1,5 +1,6 @@
 import { LogOut } from 'lucide-react';
 import { signOut, useSession } from '../lib/session.ts';
+import { signInMethodLabel } from '../lib/status.ts';
 import {
   Button,
   Card,
@@ -12,8 +13,6 @@ import {
 import { EmailsSection } from './account-emails.tsx';
 import { SessionsSection } from './account-sessions.tsx';
 import './portal.css';
-
-const METHOD = { oidc: 'Polaris ID', magic_link: 'Email link', breakglass: 'Break-glass' } as const;
 
 export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
   const { authed } = useSession();
@@ -50,7 +49,9 @@ export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
                   <p className="truncate text-sm text-fg-muted">{authed.user.primaryEmail}</p>
                 </div>
               </div>
-              <KeyValue items={[{ label: 'Signed in with', value: METHOD[authed.amr] }]} />
+              <KeyValue
+                items={[{ label: 'Signed in with', value: signInMethodLabel(authed.amr) }]}
+              />
             </CardBody>
           </Card>
         ) : null}

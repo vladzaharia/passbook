@@ -144,7 +144,7 @@ health items):
 - Sessions (`SessionList`, portal and admin): leading device icon, title from the user agent
   (`Chrome on macOS`), meta `Last active … · Signed in …`. Trailing: the `This device` pill, or
   `Revoke` (ghost, `LogOut`). The pill sits exactly where `Revoke` sits on other rows.
-- Emails (`EmailList`, portal and admin): title is the address plus `Primary` / `Unverified`
+- Emails (`EmailList`, portal and admin): title is the address plus `Primary` / `Not verified`
   pills; trailing actions. The add row is the list's last row, with the same divider and `py-3`.
   An empty list is one muted line, then the add row.
 - `InlineAddField`: label above; input and button in one row (`grid-cols-[minmax(0,1fr)_auto]`),

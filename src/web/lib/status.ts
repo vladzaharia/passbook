@@ -4,6 +4,7 @@ import {
   Ban,
   CheckCircle2,
   CircleDashed,
+  CirclePause,
   Clock,
   Eye,
   Loader2,
@@ -15,8 +16,11 @@ import {
   Upload,
   User,
   UserCheck,
+  WalletCards,
   XCircle,
 } from 'lucide-react';
+import type { z } from 'zod';
+import type { SignInMethodSchema } from '@/shared/contracts/users.ts';
 
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'accent';
 
@@ -42,6 +46,20 @@ export const HEALTH_STATUS = {
 export const PASS_STATUS = {
   active: { label: 'Active', tone: 'success', icon: CheckCircle2 },
   voided: { label: 'Voided', tone: 'neutral', icon: Ban },
+  /** On the holder's own list: the pass is already in a Wallet. */
+  in_wallet: { label: 'In Wallet', tone: 'success', icon: WalletCards },
+} as const satisfies Record<string, StatusEntry>;
+
+/** An organization paused by an admin: its passes stop updating until reactivated. */
+export const ORG_STATUS = {
+  suspended: { label: 'Suspended', tone: 'warning', icon: CirclePause },
+} as const satisfies Record<string, StatusEntry>;
+
+/** An account email that has not proven it reaches its owner. */
+export const EMAIL_STATUS = {
+  unverified: { label: 'Not verified', tone: 'neutral', icon: CircleDashed },
+  /** A verification link is on its way. */
+  check_inbox: { label: 'Check your inbox', tone: 'neutral', icon: Clock },
 } as const satisfies Record<string, StatusEntry>;
 
 /** Holder states: owned, waiting, unassigned on the wire. */
@@ -103,17 +121,22 @@ export const RUN_STATUS = {
   not_checked: { label: 'Not checked', tone: 'neutral', icon: CircleDashed },
 } as const satisfies Record<string, StatusEntry>;
 
-/** Selection or primary markers. this_device takes the device's icon (StatusPill icon prop). */
+/**
+ * Selection or primary markers: attributes, not health, so neutral (teal is for actions and
+ * links); the icon tells them apart. this_device takes the device's icon (StatusPill icon prop).
+ */
 export const MARKER_STATUS = {
-  primary: { label: 'Primary', tone: 'accent', icon: Star },
-  showing: { label: 'Showing', tone: 'accent', icon: Eye },
-  this_device: { label: 'This device', tone: 'accent', icon: Smartphone },
-  default: { label: 'Default', tone: 'accent', icon: BadgeCheck },
+  primary: { label: 'Primary', tone: 'neutral', icon: Star },
+  showing: { label: 'Showing', tone: 'neutral', icon: Eye },
+  this_device: { label: 'This device', tone: 'neutral', icon: Smartphone },
+  default: { label: 'Default', tone: 'neutral', icon: BadgeCheck },
 } as const satisfies Record<string, StatusEntry>;
 
 export const STATUS_VOCAB = {
   ...HEALTH_STATUS,
   ...PASS_STATUS,
+  ...ORG_STATUS,
+  ...EMAIL_STATUS,
   ...HOLDER_STATUS,
   ...ORIGIN_STATUS,
   ...ROLE_STATUS,
@@ -152,6 +175,20 @@ const CAUSE_LABEL: Record<string, string> = {
 };
 
 const DELIVERY_KIND_LABEL: Record<string, string> = { push: 'Push', email: 'Email' };
+
+type SignInMethod = z.infer<typeof SignInMethodSchema>;
+
+/**
+ * How someone signs in. Label by context: a session was "Signed in with" one method; a user
+ * "Signs in with" the methods on their account.
+ */
+export const SIGN_IN_METHOD: Record<SignInMethod, string> = {
+  oidc: 'Polaris ID',
+  magic_link: 'Email link',
+  breakglass: 'Break-glass',
+};
+export const signInMethodLabel = (key: string): string =>
+  SIGN_IN_METHOD[key as SignInMethod] ?? humanizeStatus(key);
 
 export const causeLabel = (key: string): string => CAUSE_LABEL[key] ?? humanizeStatus(key);
 export const deliveryKindLabel = (key: string): string =>
