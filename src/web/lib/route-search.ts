@@ -13,7 +13,11 @@ export const UNSCOPED_SEARCH = {
   middlewares: [stripSearchParams<{ orgId?: string | undefined }>(['orgId'])],
 };
 
-/** Both Account routes: ?add=email (from the empty My passes) focuses the add-email row. */
+/**
+ * Both Account routes: ?add=email (from the empty My passes) focuses the add-email row;
+ * ?verified=<email> (the add-email link) toasts "Email added" and leaves the URL.
+ */
 export const accountSearchSchema = z.object({
   add: z.enum(['email']).optional().catch(undefined),
+  verified: z.string().max(254).optional().catch(undefined),
 });

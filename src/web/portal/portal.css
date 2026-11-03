@@ -1,48 +1,25 @@
-/* Portal motion (motion-and-expression.md): tile chrome after the deal, the QR scan line, the
-   detail panel after the card. Transform and opacity only; reduced motion keeps nothing moving. */
-/* Not on a device yet: the buddy sits on the Details card's top edge at its right end, base on
-   the edge, his head in the slot the actions row keeps clear (pass-detail-page.tsx). He looks at
-   Add to Apple Wallet while it is pointed at or focused. */
-.wl-buddy.wl-nudge {
-  left: auto;
-  right: 8px;
-  translate: 0 -91.67%;
-}
-/* A phone's buddy sits under the actions (its slot wraps), so it falls from just under them. */
-@media (max-width: 39.99rem) {
-  .wl-nudge {
-    --wl-drop: 20px;
-  }
+/* Portal motion (motion-and-expression.md): tile chrome after the deal, the nudge, the sessions
+   leaving. The holder pass page's own sheet is holder-pass.css. Transform and opacity only;
+   reduced motion keeps nothing moving. */
+/* Not on a device yet: the buddy (S, at="start") sits on the Details card's top edge at its left
+   end, under Add to Apple Wallet; the card keeps 56 px clear above it (44 for the buddy, 12 for
+   its fall), so it never reaches the actions. It looks up at the badge while that is pointed at or
+   focused. */
+.wl-nudge {
+  --wl-drop: 18px;
 }
 .wl-pass-side:has([data-awb]:is(:hover, :focus-visible)) .wl-nudge [data-look] {
   transform: translate(-2.2px, -1.2px);
-}
-.wl-qr-scan {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--wl-foil);
-  box-shadow: 0 0 12px color-mix(in oklab, var(--wl-foil-1) 60%, transparent);
-  opacity: 0;
-  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   /* The tile's title and actions rise 8 px after its card deals in. Apple's badge never
      animates: only the pieces that do not hold it rise. */
   .wl-tile-chrome > :not(:has([data-awb])),
-  .wl-tile-chrome > :has([data-awb]) > :not([data-awb], :has([data-awb])) {
+  .wl-tile-chrome > :has([data-awb]) > :not([data-awb], :has([data-awb])),
+  .wl-tile-chrome > :has([data-awb]) > :has([data-awb]) > :not([data-awb]) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
     animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards) + 160ms);
-  }
-  /* Deep link: the details panel rises after the card (240 ms), badge excepted. */
-  .wl-after-card > :not(:has([data-awb])),
-  .wl-after-card > :has([data-awb]) > :not([data-awb], :has([data-awb])) {
-    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
-  }
-  .wl-qr-scan {
-    animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
   }
   /* Sign out everywhere: the other devices leave 30 ms apart before the redirect. */
   .wl-sessions[data-leaving] li:has(button) {
@@ -66,19 +43,5 @@
   .wl-sessions[data-leaving] li:has(button) {
     opacity: 0;
     transition: opacity 120ms linear;
-  }
-}
-
-@keyframes wl-qr-scan {
-  0% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(11.5rem);
   }
 }

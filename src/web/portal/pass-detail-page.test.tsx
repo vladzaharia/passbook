@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -50,7 +50,7 @@ describe('pass detail', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('keeps links and Remove in More', async () => {
+  it('keeps links and Remove in More; the public page opens in a new tab', async () => {
     const user = userEvent.setup();
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
@@ -60,11 +60,12 @@ describe('pass detail', () => {
     const items = within(menu)
       .getAllByRole('menuitem')
       .map((i) => i.textContent?.trim());
-    expect(items).toEqual(['Show QR', 'Copy link', 'Open public page', 'Remove']);
-    expect(within(menu).getByRole('menuitem', { name: 'Open public page' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/\/p\/abcdefghijklmnopqrst$/),
-    );
+    // The page shows its QR itself; Show QR is the tiles' item.
+    expect(items).toEqual(['Copy link', 'Open public page', 'Remove']);
+    const open = within(menu).getByRole('menuitem', { name: 'Open public page' });
+    expect(open).toHaveAttribute('href', expect.stringMatching(/\/p\/abcdefghijklmnopqrst$/));
+    expect(open).toHaveAttribute('target', '_blank');
+    expect(open).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('keeps the badge on a pass already in Wallet, with no custom add item', async () => {
@@ -80,30 +81,29 @@ describe('pass detail', () => {
     expect(within(await screen.findByRole('menu')).queryByText(/Add again/)).toBeNull();
   });
 
-  it('seats the buddy on the Details card, its head in a slot the actions keep clear', async () => {
+  it('seats the S buddy on the Details card under the badge, clear of the actions', async () => {
     const { container } = await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
     });
     await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
     const card = screen.getByRole('heading', { name: 'Details' }).parentElement?.parentElement;
     const buddy = container.querySelector('[data-scene="nudge"]');
-    // On the card's top edge (the card is its host), seated: legs and a shadow; decorative.
+    // On the card's top edge (the card is its host), at its left end: S, seated, decorative.
     expect(buddy?.parentElement).toBe(card);
     expect(buddy).toHaveClass('wl-buddy', 'wl-nudge');
+    expect(buddy).toHaveAttribute('data-at', 'start');
+    expect(buddy?.querySelector('svg')).toHaveAttribute('width', '64');
     expect(buddy).toHaveAttribute('aria-hidden', 'true');
     expect(
       buddy?.querySelectorAll('[data-part="l1"], [data-part="l2"], [data-part="sd"]'),
     ).toHaveLength(3);
-    // The actions row ends with the slot, which wraps under the actions when they need the room.
-    const row = screen.getByRole('link', { name: 'Add to Apple Wallet' }).parentElement;
-    expect(row?.lastElementChild).toHaveAttribute('aria-hidden', 'true');
-    expect(row?.lastElementChild).toHaveClass('ml-auto', 'self-end', 'h-5', 'w-18');
-    // Right end of the edge, base on it (66 of 72); a phone's falls from under the actions.
+    // The card follows the badge's block and keeps 56 px clear above it: 44 for the seated
+    // buddy, 12 for its fall (18 of the art's 72 units), so it never reaches the actions.
+    const badge = screen.getByRole('link', { name: 'Add to Apple Wallet' });
+    expect(badge.parentElement?.parentElement?.nextElementSibling).toBe(card);
+    expect(card).toHaveClass('mt-8');
     const css = readFileSync(join(process.cwd(), 'src/web/portal/portal.css'), 'utf8');
-    expect(css).toMatch(
-      /\.wl-buddy\.wl-nudge \{\s*left: auto;\s*right: 8px;\s*translate: 0 -91\.67%;/,
-    );
-    expect(css).toMatch(/max-width: 39\.99rem\) \{\s*\.wl-nudge \{\s*--wl-drop: 20px;/);
+    expect(css).toMatch(/\.wl-nudge \{\s*--wl-drop: 18px;/);
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -125,30 +125,50 @@ describe('pass detail', () => {
     expect(container.querySelector('.pc-sync-rail')).not.toBeNull();
   });
 
-  it('shows a voided note and no wallet actions', async () => {
+  it('shows a voided note with the org contact and no wallet actions', async () => {
     await renderApp('/passes/p1', {
-      handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ status: 'voided' })) },
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(passFixture({ status: 'voided', support: { email: 'help@gym.test', url: null } })),
+      },
     });
     expect(await screen.findByText('This pass was voided.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Contact Henrys' })).toHaveAttribute(
+      'href',
+      'mailto:help@gym.test',
+    );
+    // The help line gives way to the note: the address is linked once.
+    expect(document.querySelectorAll('a[href="mailto:help@gym.test"]')).toHaveLength(1);
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Refresh/ })).toBeNull();
     expect(screen.getAllByText('Voided').length).toBeGreaterThan(0);
     expect(document.querySelector('[data-scene="nudge"]')).toBeNull();
   });
 
-  it('shows not found with a way back', async () => {
+  it('shows not found under the page header, the buddy mending the torn pass', async () => {
     const { container } = await renderApp('/passes/nope', {});
-    expect(await screen.findByRole('heading', { name: 'Pass not found' })).toBeInTheDocument();
+    expect(await screen.findByText('Pass not found')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Pass' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to My passes' })).toHaveAttribute('href', '/');
-    expect(container.querySelector('[data-art="wallet"][data-state="lost"]')).not.toBeNull();
+    // An entity not found (buddy spec): torn and mend; lost and peek are for unknown routes.
+    expect(container.querySelector('[data-scene="mend"] [data-art="torn"]')).not.toBeNull();
     expect(screen.queryByText(/request/i)).toBeNull();
   });
 
-  it('shows a retry on server errors', async () => {
+  it('shows a retry on server errors, under the page header', async () => {
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => problem(500, 'server_error', 'x') },
     });
     expect(await screen.findByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Pass' })).toBeInTheDocument();
+  });
+
+  it('names the tab after the pass', async () => {
+    await renderApp('/passes/p1', {
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
+    });
+    await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
+    await waitFor(() => expect(document.title).toBe('Gym membership · PassBook'));
   });
 
   it('removes from More and returns to the list', async () => {

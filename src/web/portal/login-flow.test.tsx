@@ -298,7 +298,9 @@ describe('magic link', () => {
     const resend = await screen.findByRole('button', { name: 'Resend code' }, { timeout: 2500 });
     token('tok-2');
     await user.click(resend);
-    expect(await screen.findByRole('button', { name: 'Sent again' })).toBeInTheDocument();
+    // Button done: the envelope flies once and the countdown starts over.
+    const again = await screen.findByRole('button', { name: 'Resend in 30s' });
+    await waitFor(() => expect(again).toHaveAttribute('data-verb-done'));
     expect(requests).toHaveLength(2);
     spy.mockRestore();
   });

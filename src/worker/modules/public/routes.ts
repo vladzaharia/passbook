@@ -1,14 +1,13 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
+import { passDevice } from '../../../shared/device.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { rateLimit } from '../../platform/rate-limit.ts';
-import { passDevice } from '../../ssr/device.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
-import { qrDataUri } from '../../ssr/qr.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
 import { openPublicAsset, pageModel, passForToken, supportContacts } from './service.ts';
@@ -67,8 +66,7 @@ register(
         now: new Date(svcCtx.clock.now()),
         timeZone: zoneOf(c) ?? 'UTC',
       });
-      const base = baseUrl(c.env);
-      const downloadHref = `/p/${pass.downloadToken}/pass.pkpass`;
+      const page = `/p/${pass.downloadToken}`;
       const html = renderPassPage({
         view,
         nonce,
@@ -76,10 +74,12 @@ register(
         orgName: view.organizationName || model.orgName,
         orgLabel: model.orgName,
         passTitle: pass.displayTitle ?? view.description ?? model.orgName,
-        downloadHref,
-        qrSrc: pass.status === 'active' ? qrDataUri(`${base}${downloadHref}`) : null,
+        downloadHref: `${page}/pass.pkpass`,
+        // The add QR opens this page on the phone, where the badge adds the pass.
+        publicUrl: `${baseUrl(c.env)}${page}`,
+        portalHref: `/passes/${pass.id}`,
         voided: pass.status === 'voided',
-        ...passDevice(c.req.header('user-agent')),
+        device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
       });
       return new Response(html, { headers: PAGE_HEADERS });

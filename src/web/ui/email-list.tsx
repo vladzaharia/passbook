@@ -18,7 +18,8 @@ export interface EmailItem {
 export interface EmailListProps {
   items: readonly EmailItem[];
   addLabel?: string;
-  onAdd: (email: string) => void;
+  /** Return (or resolve) false when the add is refused: the address stays in the field. */
+  onAdd: (email: string) => unknown;
   onRemove: (email: string) => void;
   onMakePrimary: (email: string) => void;
   onResend: (email: string) => void;
@@ -59,6 +60,11 @@ export function EmailList({
     setEdited(false);
   }
   const fresh = useInsertHighlight(items.map((i) => i.email));
+  // Clear the field once the add is through, unless the user has typed on since.
+  const add = async (email: string) => {
+    if ((await onAdd(email)) === false) return;
+    setDraft((now) => (now.trim() === email ? '' : now));
+  };
   const actionsFor = (item: EmailItem): RowAction[] => {
     const busy = busyEmail === item.email;
     if (item.primary && item.verified) return [];
@@ -151,10 +157,7 @@ export function EmailList({
           }}
           error={editedSinceError ? undefined : addError}
           busy={busyEmail === draft.trim() && Boolean(draft.trim())}
-          onSubmit={(email) => {
-            onAdd(email);
-            setDraft('');
-          }}
+          onSubmit={(email) => void add(email)}
         />
       </li>
     </ListRows>

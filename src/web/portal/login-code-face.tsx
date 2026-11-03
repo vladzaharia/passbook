@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { Check, CircleAlert, Mail } from 'lucide-react';
+import { CircleAlert, Mail } from 'lucide-react';
 import { type FormEvent, type Ref, useEffect, useId, useState } from 'react';
 import { MagicConsumeResultSchema } from '@/shared/contracts/session.ts';
 import { WRONG_CODE } from '@/shared/copy/sign-in.ts';
@@ -44,15 +44,9 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
   const [fieldError, setFieldError] = useState<string>();
   const [error, setError] = useState<SignInError>();
   const [cooldownUntil, setCooldownUntil] = useState(sentAt + RESEND_COOLDOWN_MS);
-  const [sentAgain, setSentAgain] = useState(false);
+  const [resent, setResent] = useState(0);
   const now = useNow(Boolean(email));
   const left = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
-
-  useEffect(() => {
-    if (!sentAgain) return;
-    const t = setTimeout(() => setSentAgain(false), 2000);
-    return () => clearTimeout(t);
-  }, [sentAgain]);
 
   const consume = useMutation({
     mutationFn: () => api.post('/auth/magic/consume', MagicConsumeResultSchema, { email, code }),
@@ -85,7 +79,7 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
     const result = await request.send(email);
     if (result.ok) {
       setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS);
-      setSentAgain(true);
+      setResent((n) => n + 1);
       setCode('');
       setFieldError(undefined);
       return;
@@ -100,13 +94,7 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
 
   const noteId = `${id}-note`;
   const resendLabel =
-    request.phase === 'checking'
-      ? 'Checking…'
-      : sentAgain
-        ? 'Sent again'
-        : left > 0
-          ? `Resend in ${left}s`
-          : 'Resend code';
+    request.phase === 'checking' ? 'Checking…' : left > 0 ? `Resend in ${left}s` : 'Resend code';
   return (
     <div className="flex flex-col gap-6">
       {error ? (
@@ -152,11 +140,11 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
           <Button
             variant="ghost"
             className="px-3"
-            disabled={left > 0 || sentAgain || request.phase !== 'idle'}
+            disabled={left > 0 || request.phase !== 'idle'}
             loading={request.phase !== 'idle'}
-            iconStart={
-              sentAgain ? <Check aria-hidden className="wl-check" /> : <Mail aria-hidden />
-            }
+            // The envelope flies once the new code is on its way; the countdown says it went.
+            done={resent || undefined}
+            iconStart={<Mail aria-hidden />}
             onClick={() => void resend()}
           >
             {resendLabel}

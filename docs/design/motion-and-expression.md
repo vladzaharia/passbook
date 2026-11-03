@@ -162,11 +162,11 @@ scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's co
 | tug | Forbidden (lock, sad) | Hooks the padlock with its gold pass and tugs three times, leaning back each time; the lock swings, the shackle rattles and holds; it lets go and sighs | 2.8 s |
 | plug | Error (sad); Retry replays it | Pushes the plug into the socket with its gold pass; a big spark, the socket shudders; the plug pops out and drops; it flinches, eyes squeezed, then sighs | 3 s |
 | flip | Audit log, no entries (flat) | Reaches the log; three flicks scroll the lines up and the same lines come back; it looks at you, unimpressed, and shrugs | 2.8 s |
-| peek | Lost: page or pass not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
+| peek | Lost: page not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
 | wave | Pass created; S, seated on the Front / Details control's top edge at its right end, in every stage layout (the row leaves room above it) | Has fallen on; hops, looks up at the pass and waves its teal pass twice, then smiles at you | 1.8 s |
 | tear | Pass voided (this visit); seated like wave | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
-| nudge | Portal pass, not on a device yet; S, seated on the Details card's top edge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in, lifts its teal pass out of the pocket and aims it up-left at the badge twice, then looks back at you and blinks | 2.6 s |
+| nudge | Portal pass, not on a device yet; S, seated on the Details card's top edge at its left end, under the badge (the card keeps 56 px clear above it: never on the actions) | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in, lifts its teal pass out of the pocket and aims it up-left at the badge twice, then looks back at you and blinks | 2.6 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
 | hello | Sign-in wallet at rest; the SSR band's wallet (sign-in, confirm, break-glass, expired, rate limit) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css`. SSR error, not-found and forbidden pages act out plug, peek and tug instead (`STATE_SCENE_CSS`) | 1 s |
 | face: wink | Success toast (the miniature, sm) | Pops with the toast and winks at 380 ms; a click pops and winks again | 580 ms |
@@ -347,8 +347,8 @@ One per screen. The wordmark says hello once per browser session in the SPA and 
    detail page preview, then it mints. The org's first pass also celebrates.
 5. **Portal Add and Refresh.** The badge never moves. Pressing it dips the card 6 px towards it
    (420 ms) as the download starts; nothing claims success. Refresh runs a 2 px foil sync rail
-   under the card while pending, then the card mints and the existing toast shows. The QR dialog
-   sweeps a scan line over the code once (900 ms).
+   under the card while pending, then the card mints and the existing toast shows. The add QR (pass
+   page, /p and the dialog) sweeps a scan line over the code once (900 ms).
 6. **Sliding indicators.** Sidebar, portal nav, tabs and segmented controls share one indicator.
 7. **Entity art.** See above.
 8. **Sign-in: "the wallet fills"** (owner direction 2026-11-01, R5: cute, playful, short).

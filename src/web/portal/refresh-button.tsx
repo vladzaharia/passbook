@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button, type ButtonProps, IconButton, toast } from '../ui/index.ts';
 import { myPassesKey, requestRefresh } from './api.ts';
@@ -16,17 +16,19 @@ function useNow(active: boolean): number {
   return active ? now : Date.now();
 }
 
+/**
+ * Refresh beside the badge, badge-sized. While pending the foil rail runs under the card; when the
+ * pass lands the card mints, "Pass updated" toasts and the button's `done` changes.
+ */
 export function RefreshButton({
   passId,
   pass,
-  size = 'md',
-  variant = 'outline',
+  size = 'badge',
   compact = false,
 }: {
   passId: string;
   pass: RefreshFields;
   size?: ButtonProps['size'];
-  variant?: ButtonProps['variant'];
   /** Tiles: an outline icon button; the label (and countdown) is its name and tooltip. */
   compact?: boolean;
 }) {
@@ -34,15 +36,10 @@ export function RefreshButton({
   const [localRequestedAt, setLocal] = useState<number | null>(null);
   const [cooldownMs, setCooldownMs] = useState<number | undefined>(undefined);
   const [active, setActive] = useState(false);
+  const [updated, setUpdated] = useState(0);
   const now = useNow(active);
   const { phase, secondsLeft } = refreshPhase(pass, now, localRequestedAt, cooldownMs);
   const prev = useRef(phase);
-  const [justDone, setJustDone] = useState(false);
-  useEffect(() => {
-    if (!justDone) return;
-    const t = setTimeout(() => setJustDone(false), 1500);
-    return () => clearTimeout(t);
-  }, [justDone]);
 
   const mutation = useMutation({
     mutationFn: async () => ({ clickedAt: Date.now(), res: await requestRefresh(passId) }),
@@ -64,7 +61,7 @@ export function RefreshButton({
     const done = (pass.lastRefreshedAt ?? 0) >= requested;
     if (prev.current === 'pending' && phase !== 'pending' && done) {
       toast.success('Pass updated');
-      setJustDone(true);
+      setUpdated((n) => n + 1);
     }
     prev.current = phase;
   }, [phase, pass.lastRefreshedAt, pass.refreshRequestedAt, localRequestedAt]);
@@ -82,27 +79,22 @@ export function RefreshButton({
       <IconButton
         label={label}
         variant="outline"
-        className="pointer-coarse:size-11"
+        size="badge"
         aria-busy={pending || undefined}
         disabled={pending || phase === 'cooldown'}
-        icon={
-          justDone ? (
-            <Check aria-hidden className="wl-check" />
-          ) : (
-            <RefreshCw aria-hidden className={pending ? 'wl-spin wl-essential' : undefined} />
-          )
-        }
+        icon={<RefreshCw aria-hidden className={pending ? 'wl-spin wl-essential' : undefined} />}
         onClick={() => mutation.mutate()}
       />
     );
   }
   return (
     <Button
-      variant={variant}
+      variant="outline"
       size={size}
-      iconStart={justDone ? <Check aria-hidden className="wl-check" /> : <RefreshCw aria-hidden />}
+      iconStart={<RefreshCw aria-hidden />}
       loading={pending}
       busy="spin"
+      done={updated || undefined}
       disabled={phase === 'cooldown'}
       onClick={() => mutation.mutate()}
       title={phase === 'pending' ? 'Wallet may take a minute to update' : undefined}

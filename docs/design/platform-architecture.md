@@ -230,7 +230,7 @@ Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 obj
 
 **Apple web service** (`modules/apple`, under `webServiceURL = https://wallet.plrs.im/wallet`): register (201/200, cap per pass), unregister, serials with `passesUpdatedSince`, latest pass with `If-Modified-Since`/`Last-Modified` and 304, log (redacted, capped, rate-limited), personalize endpoint when the template uses personalization (requires an NFC-entitled identity; the platform identity has none, so personalization and NFC are schema/validator/endpoint support without device tests). `Authorization: ApplePass <token>` compared in constant time. Reads use the D1 primary (no replica lag).
 
-**Public pass page** (`modules/public`, `/p/:token`): server-rendered React using the shared `<PassCard>` (front + back toggle without JS via `<details>`), Add to Apple Wallet button, QR hand-off to iPhone for desktop visitors, voided/expired banner, `Referrer-Policy: no-referrer`, `noindex`. Assets under `/p/:token/assets/:name` (immutable cache). Download `/p/:token/pass.pkpass` (ETag/Last-Modified; `application/vnd.apple.pkpass`). Rate-limited. No sign-in required.
+**Public pass page** (`modules/public`, `/p/:token`): the portal's `HolderPassView` rendered to static markup with the SPA's CSS for it (`tools/build-ssr-holder.ts`): the shared `<PassCard>` (front + back toggle without JS), Add to Apple Wallet badge, a QR of the page for visitors off the phone, voided/expired notice with the org's support, a quiet link to the holder's portal page, `Referrer-Policy: no-referrer`, `noindex`. Assets under `/p/:token/assets/:name` (immutable cache). Download `/p/:token/pass.pkpass` (ETag/Last-Modified; `application/vnd.apple.pkpass`). Rate-limited. No sign-in required.
 
 ---
 
