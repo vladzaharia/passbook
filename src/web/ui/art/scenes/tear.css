@@ -1,90 +1,72 @@
-/* tear (admin, a pass just voided; sad): beside the pass, behind it until it runs (rest.css). It
-   steps out from under the card on a spring (420 ms), looks up at the dimmed pass, a tear rolls
-   down its face and it sighs. 2.4 s; 1% = 24 ms. */
+/* tear (a pass just voided, this visit; sad): seated on the Front / Details control under the
+   dimmed pass, it looks up at it, a tear rolls down its face, a sob and a sigh. 2 s, once;
+   1% = 20 ms. */
+[data-scene="tear"] [data-tear] {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
 @media (prefers-reduced-motion: no-preference) {
-  [data-scene="tear"][data-run] {
-    animation: wl-s-out 2.4s linear;
-  }
   [data-scene="tear"][data-run] .wl-art [data-body] {
-    animation: wl-s-tear-body 2.4s ease-in-out;
+    animation: wl-s-tear-body 2s ease-in-out;
   }
   [data-scene="tear"][data-run] .wl-art [data-look] {
-    animation: wl-s-tear-look 2.4s ease-in-out;
+    animation: wl-s-tear-look 2s ease-in-out;
   }
   [data-scene="tear"][data-run] .wl-art [data-tear] {
-    animation: wl-s-tear-drop 2.4s ease-in;
+    animation: wl-s-tear-drop 2s ease-in;
   }
 }
 
-@keyframes wl-s-out {
-  0% {
-    transform: translateY(-50px);
-    animation-timing-function: linear(
-      0,
-      0.035 2.1%,
-      0.141 4.4%,
-      0.723 12.9%,
-      1.017 20.5%,
-      1.043 24.5%,
-      1.007 36%,
-      1
-    );
-  }
-  17.5%,
-  100% {
-    transform: none;
-  }
-}
 @keyframes wl-s-tear-body {
-  44% {
+  33% {
     translate: 0 0;
     scale: 1;
   }
   /* A sob as the tear wells, then the sigh. */
-  50% {
+  40% {
     translate: 0 -1px;
     scale: 0.98 1.03;
   }
-  56% {
+  47% {
     translate: 0 0;
     scale: 1.01 0.98;
   }
-  72% {
+  66% {
     translate: 0 -1.5px;
     scale: 0.98 1.04;
   }
-  86% {
+  83% {
     translate: 0 0.5px;
     scale: 1.02 0.96;
   }
 }
 @keyframes wl-s-tear-look {
-  20%,
-  46% {
+  4%,
+  35% {
     translate: -1.4px -1.6px;
   }
-  58% {
+  50% {
     translate: 0 0.4px;
   }
 }
 /* Wells under the left eye, rolls down the pocket and fades. */
 @keyframes wl-s-tear-drop {
   0%,
-  44% {
+  33% {
     opacity: 0;
     scale: 0.2;
     translate: 0 0;
   }
-  52% {
+  42% {
     opacity: 1;
     scale: 1;
     translate: 0 0;
   }
-  80% {
+  76% {
     opacity: 1;
     translate: 0 9px;
   }
-  90%,
+  88%,
   100% {
     opacity: 0;
     translate: 0 12px;

@@ -31,10 +31,10 @@ const keyframes = (f: string) =>
   );
 const REST: Record<string, string> = { translate: '0 0', rotate: '0deg', scale: '1', opacity: '1' };
 
-describe('nudge and miniature scenes', () => {
+describe('nudge, stage and miniature scenes', () => {
   // Each one ends on the pose that rest.css and the art draw, so nothing jumps when it stops.
   it('end every animation at rest', () => {
-    for (const f of ['nudge.css', 'face.css']) {
+    for (const f of ['nudge.css', 'face.css', 'wave.css']) {
       for (const [name, frames] of keyframes(f)) {
         const end = frames.find(([sel]) => sel.split(',').some((s) => s.trim() === '100%'));
         if (!end) continue;
@@ -63,8 +63,11 @@ describe('nudge and miniature scenes', () => {
     expect(at('wl-s-nudge-land', '13.5%')).toMatch(/scale: 1\.14 0\.83/);
     expect(at('wl-s-nudge-shadow', '13.5%')).toMatch(/scale: 1\.14 1/);
     expect(at('wl-s-nudge-blink', '12.5%')).toMatch(/scale: 1 0\.15/);
-    // Then the teal pass points at the badge twice (48% and 56%).
-    expect(at('wl-s-nudge-point', '48%, 56%, 62%')).toMatch(/rotate: -32deg/);
+    // Then the teal pass lifts out of the pocket and aims up-left at the badge, twice (B3).
+    expect(at('wl-s-nudge-point', '48%, 56%, 62%')).toMatch(
+      /translate: -3px -10px; rotate: -24deg/,
+    );
+    expect(at('wl-s-nudge-point', '52%')).toMatch(/translate: -2px -7px; rotate: -16deg/);
     // 2.6 s from the landed art (700 ms): still by 3.3 s.
     const runs = [...css('nudge.css').matchAll(/animation: wl-s-nudge-\w+ ([\d.]+)s/g)];
     expect(runs.length).toBe(11);
