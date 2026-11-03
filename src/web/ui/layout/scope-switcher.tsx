@@ -8,7 +8,10 @@ import { EntityAvatar } from '../entity.tsx';
 
 const ALL = 'all';
 
-/** The only org control: a compact combobox in the top bar, hidden where the scope does not apply. */
+/**
+ * The only org control: a combobox in the top bar, hidden where the scope does not apply. It
+ * writes `?orgId=` (useOrgScope). Shows the full name; truncates only when the bar runs out of room.
+ */
 export function ScopeSwitcher() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { orgId, setOrgId } = useOrgScope();
@@ -18,7 +21,7 @@ export function ScopeSwitcher() {
   const options = [
     {
       value: ALL,
-      label: 'All orgs',
+      label: 'All organizations',
       icon: <Building2 aria-hidden className="size-4 shrink-0 text-fg-muted" />,
     },
     ...(data?.items ?? []).map((o) => ({
@@ -31,7 +34,7 @@ export function ScopeSwitcher() {
     <Combobox
       aria-label="Organization scope"
       searchPlaceholder="Find an organization"
-      className="w-auto max-w-44 shrink-0 gap-1.5 px-2.5"
+      className="w-auto min-w-0 gap-1.5 px-2.5"
       options={options}
       value={orgId ?? ALL}
       onValueChange={(v) => setOrgId(v === ALL ? undefined : v)}

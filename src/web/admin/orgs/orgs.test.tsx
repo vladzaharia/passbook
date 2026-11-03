@@ -179,7 +179,8 @@ describe('org detail', () => {
     });
     expect(await screen.findByRole('heading', { level: 1, name: 'Acme Gym' })).toBeInTheDocument();
     const passes = screen.getByRole('link', { name: '12 passes in Acme Gym' });
-    expect(passes).toHaveAttribute('href', '/admin/passes');
+    // The link carries the org as the list scope.
+    expect(passes).toHaveAttribute('href', '/admin/passes?orgId=o1');
     expect(screen.getByRole('link', { name: '3 API keys in Acme Gym' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^View / })).toBeNull();
     expect(screen.queryByLabelText('Status')).toBeNull();

@@ -1,5 +1,7 @@
 import { LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
+import { z } from 'zod';
 import { ENTITY, type EntityKind } from './entities.ts';
+import { isAdminPath } from './guards.ts';
 
 export interface NavItem {
   label: string;
@@ -46,9 +48,17 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
 
 export const ADMIN_NAV: readonly NavItem[] = ADMIN_NAV_GROUPS.flat();
 
-export const PORTAL_NAV: readonly Pick<NavItem, 'label' | 'to'>[] = [
+export interface PortalNavItem {
+  label: string;
+  to: string;
+  /** Admins only; hidden on phones, where the account menu carries it. */
+  admin?: true;
+}
+
+export const PORTAL_NAV: readonly PortalNavItem[] = [
   { label: 'My passes', to: '/' },
   { label: 'Account', to: '/account' },
+  { label: 'Admin', to: '/admin', admin: true },
 ];
 
 export function isActivePath(pathname: string, to: string): boolean {
@@ -57,10 +67,20 @@ export function isActivePath(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-/** False on pages the org scope does not apply to (users, settings, status, identities). */
+/** False on pages the org scope does not apply to (users, settings, status, identities, account). */
 export function isOrgScoped(pathname: string): boolean {
   const item = [...ADMIN_NAV]
     .sort((x, y) => y.to.length - x.to.length)
     .find((i) => isActivePath(pathname, i.to));
-  return item?.orgScoped ?? true;
+  return item?.orgScoped ?? false;
 }
+
+/** Account opens inside the shell it was opened from: the console keeps its sidebar. */
+export function accountPath(pathname: string): '/account' | '/admin/account' {
+  return isAdminPath(pathname) ? '/admin/account' : '/account';
+}
+
+/** Both Account routes: ?add=email (from the empty My passes) focuses the add-email row. */
+export const accountSearchSchema = z.object({
+  add: z.enum(['email']).optional().catch(undefined),
+});
