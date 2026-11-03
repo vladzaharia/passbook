@@ -11,8 +11,9 @@ import stageCss from '../../web/pass-card/stage.css?raw';
 import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
 import type { PassDevice } from './device.ts';
+import { HEAD_HTML } from './head.ts';
 import { hostedPage } from './hosted.ts';
-import { HEAD_HTML, THEME_CSS } from './theme.ts';
+import { THEME_CSS } from './theme.ts';
 
 const cardCss = `${cardBase}\n${cardPoster}\n${cardText}`;
 const stageAllCss = `${stageCss}\n${stageMotion}\n${stageSeg}`;
@@ -22,6 +23,8 @@ export interface PassPageProps {
   nonce: string;
   /** The org's name for the header and h1 (never the platform's). */
   orgName: string;
+  /** The org record's name, for link previews and the home-screen label: never a pass field. */
+  orgLabel: string;
   /** The pass's own title (display title, else its description). */
   passTitle: string;
   downloadHref: string;
@@ -36,6 +39,8 @@ export interface PassPageProps {
 }
 
 const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
+const VOIDED_LINE = 'This pass was voided.';
+const EXPIRED_LINE = 'This pass has expired.';
 const SAFARI_LINE = 'Open in Safari to add to Apple Wallet.';
 
 const svg = (d: string) =>
@@ -44,9 +49,9 @@ const svg = (d: string) =>
 /** Voided (Ban) and expired (Clock) notes; `after` is escaped markup (the org contact). */
 const NOTE_HTML = {
   voided: (after: string) =>
-    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>')}<span>This pass was voided.${after}</span></p>`,
+    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>')}<span>${VOIDED_LINE}${after}</span></p>`,
   expired: (after: string) =>
-    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')}<span>This pass has expired.${after}</span></p>`,
+    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')}<span>${EXPIRED_LINE}${after}</span></p>`,
 };
 
 /** A voided pass is not a dead end: one link to the org's support, email first. */
@@ -174,12 +179,24 @@ function PassBody(props: PassPageProps) {
   );
 }
 
+/**
+ * A shared link's preview names the org and the pass's state, never the holder or a pass field
+ * (the title can carry the holder's name). No og:image or og:url: the org's art lives behind the
+ * token. No manifest either: a pass saved to the home screen opens itself, not the portal.
+ */
+function previewHead(org: string, line: string): string {
+  const label = escapeHtml(org || 'Pass');
+  const title = org ? `${escapeHtml(org)} pass` : 'Pass';
+  return `<meta name="description" content="${line}"><meta property="og:type" content="website"><meta property="og:title" content="${title}"><meta property="og:description" content="${line}"><meta name="apple-mobile-web-app-title" content="${label}">`;
+}
+
 export function renderPassPage(props: PassPageProps): string {
   const voided = props.voided || props.view.voided;
   const active = !voided && !props.view.expired;
   const title = `${props.passTitle} · ${props.orgName}`;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  const line = voided ? VOIDED_LINE : active ? 'Add it to Apple Wallet.' : EXPIRED_LINE;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /** An unknown, rotated or expired link: the hosted card with one way on. */

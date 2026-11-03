@@ -71,6 +71,7 @@ register(
         view,
         nonce,
         orgName: view.organizationName || model.orgName,
+        orgLabel: model.orgName,
         passTitle: pass.displayTitle ?? view.description ?? model.orgName,
         downloadHref,
         qrSrc: pass.status === 'active' ? qrDataUri(`${base}${downloadHref}`) : null,
