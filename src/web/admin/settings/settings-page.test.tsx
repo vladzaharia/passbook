@@ -217,6 +217,6 @@ describe('settings page', () => {
       session: 'admin',
       handlers: { '/api/v1/settings': () => problem(500, 'x', 'x') },
     });
-    expect(await screen.findAllByText('Server error. Try again.')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Something went wrong. Try again.')).not.toHaveLength(0);
   });
 });

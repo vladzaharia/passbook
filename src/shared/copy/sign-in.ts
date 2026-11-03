@@ -1,9 +1,12 @@
-/** Sign-in copy, shared by /login (SPA) and the worker's SSR auth pages. */
+import { EMAIL_INVALID_MESSAGE } from '../email.ts';
+import { HOLDER_COPY } from './holder.ts';
+
+// Sign-in copy, shared by /login (SPA) and the worker's SSR auth pages.
 
 /** The lock line under the sign-in card. */
-export const SIGN_IN_FOOTER = 'Signing in shows the passes sent to your email.';
+export const SIGN_IN_FOOTER = HOLDER_COPY.signInFooter;
 
-export const INVALID_EMAIL = 'Enter a valid email address.';
+export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;
 export const WRONG_CODE = 'That code is wrong or expired.';
 
 /** One line on /login for `?reason=`. */

@@ -3,6 +3,9 @@ const EMAIL_ADDR_SPEC = new RegExp(
   `^[a-z0-9!#$%&'*+/=?^_\`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@${EMAIL_LABEL}(?:\\.${EMAIL_LABEL})+$`,
 );
 
+/** The one message for an address strictEmail refuses, client and server. */
+export const EMAIL_INVALID_MESSAGE = 'Enter a valid email address.';
+
 /** The one matching key for emails: trim, lower-case, NFC. No plus or dot folding. */
 export function normalizeEmail(raw: string): string {
   return raw.trim().toLowerCase().normalize('NFC');

@@ -90,7 +90,7 @@ describe('api keys page', () => {
       session: 'admin',
       handlers: { '/api/v1/api-keys': () => problem(500, 'x', 'x') },
     });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
   });
 
   it('creates a key and shows the secret once', async () => {

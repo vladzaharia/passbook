@@ -135,7 +135,7 @@ describe('identities list', () => {
       session: 'admin',
       handlers: { '/api/v1/identities': () => problem(500, 'x', 'x') },
     });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
   });
 
   it('validates before upload and shows the server error', async () => {

@@ -182,7 +182,7 @@ describe('overview page', () => {
       session: 'admin',
       handlers: { ...ok, '/api/v1/metrics/overview': () => problem(500, 'x', 'x') },
     });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
     expect(await screen.findByText('Box office feed')).toBeInTheDocument();
   });
 

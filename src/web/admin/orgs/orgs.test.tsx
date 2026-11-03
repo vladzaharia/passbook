@@ -101,7 +101,7 @@ describe('orgs list', () => {
       session: 'admin',
       handlers: { '/api/v1/orgs': () => problem(500, 'x', 'x') },
     });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
   });
 
   it('creates an org in an md dialog, clears fixed errors and opens the new org', async () => {
