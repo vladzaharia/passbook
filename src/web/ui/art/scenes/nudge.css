@@ -1,0 +1,220 @@
+/* nudge: falls onto the card, then points at Add to Apple Wallet (motion spec). 1% = 26 ms. */
+.wl-buddy[data-scene="nudge"] [data-trunk] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="w"] {
+    animation: wl-s-nudge-fall 2.6s linear;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="sd"] {
+    animation: wl-s-nudge-shadow 2.6s linear;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-body] {
+    animation: wl-s-nudge-land 2.6s ease-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-trunk] {
+    animation: wl-s-nudge-lean 2.6s ease-in-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-fan] {
+    animation: wl-s-nudge-jolt 2.6s ease-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-nudge-point 2.6s ease-in-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-nudge-splay 2.6s ease-in-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="l1"] {
+    animation: wl-s-nudge-leg 2.6s ease-in-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="l2"] {
+    --wl-leg: -0.85;
+    animation: wl-s-nudge-leg 2.6s ease-in-out 26ms backwards;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-nudge-blink 2.6s ease-in-out;
+  }
+  .wl-buddy[data-scene="nudge"][data-run] .wl-art [data-look] {
+    animation: wl-s-nudge-look 2.6s ease-in-out;
+  }
+}
+
+/* Gravity: faster all the way down to the impact (11%). */
+@keyframes wl-s-nudge-fall {
+  0% {
+    translate: 0 calc(var(--wl-drop, 48px) * -1);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  3% {
+    opacity: 1;
+  }
+  11%,
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+@keyframes wl-s-nudge-shadow {
+  0% {
+    scale: 0.3 1;
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  11% {
+    scale: 1;
+    opacity: 1;
+  }
+  13.5% {
+    scale: 1.14 1;
+  }
+  22%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+}
+@keyframes wl-s-nudge-land {
+  0%,
+  11% {
+    scale: 0.93 1.08;
+  }
+  13.5% {
+    scale: 1.14 0.83;
+  }
+  19% {
+    scale: 0.96 1.06;
+  }
+  25% {
+    scale: 1.03 0.97;
+  }
+  31%,
+  100% {
+    scale: 1;
+  }
+}
+@keyframes wl-s-nudge-jolt {
+  0%,
+  11% {
+    translate: 0 -3px;
+  }
+  13.5% {
+    translate: 0 3px;
+  }
+  21%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-nudge-lean {
+  0%,
+  38% {
+    rotate: 0deg;
+  }
+  46%,
+  64% {
+    rotate: -5deg;
+  }
+  72%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-nudge-point {
+  0%,
+  11% {
+    rotate: 0deg;
+  }
+  14% {
+    rotate: -8deg;
+  }
+  21% {
+    rotate: 2deg;
+  }
+  27%,
+  42% {
+    rotate: 0deg;
+  }
+  48%,
+  56%,
+  62% {
+    rotate: -32deg;
+  }
+  52% {
+    rotate: -20deg;
+  }
+  70%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-nudge-splay {
+  0%,
+  11% {
+    rotate: 0deg;
+  }
+  14% {
+    rotate: 8deg;
+  }
+  21% {
+    rotate: -2deg;
+  }
+  27%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-nudge-leg {
+  0%,
+  9% {
+    rotate: calc(var(--wl-leg, 1) * 16deg);
+  }
+  14% {
+    rotate: calc(var(--wl-leg, 1) * 30deg);
+  }
+  21% {
+    rotate: calc(var(--wl-leg, 1) * -12deg);
+  }
+  28% {
+    rotate: calc(var(--wl-leg, 1) * 6deg);
+  }
+  35%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-nudge-blink {
+  0%,
+  10%,
+  18%,
+  84%,
+  92%,
+  100% {
+    scale: 1;
+  }
+  12.5% {
+    scale: 1 0.15;
+  }
+  88% {
+    scale: 1 0.1;
+  }
+}
+@keyframes wl-s-nudge-look {
+  0%,
+  34% {
+    translate: 0 0;
+  }
+  40%,
+  68% {
+    translate: -2.2px -1.2px;
+  }
+  76%,
+  92% {
+    translate: 0.4px 0.6px;
+  }
+  100% {
+    translate: 0 0;
+  }
+}

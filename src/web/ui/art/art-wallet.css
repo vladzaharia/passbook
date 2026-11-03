@@ -232,42 +232,15 @@
   --t: translateY(-6px);
 }
 
-/* Face (face.tsx): an icon in currentColor with foil passes; one wink after its host pops in. */
-.wl-face {
-  flex: none;
-  overflow: visible;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
+/* Face (face.tsx): one wink after its host pops in (rest.css's blink); sm thins its lines. */
+.wl-face[data-size="sm"] {
+  stroke-width: 1.25;
 }
-.wl-face .o {
-  fill: var(--wl-face-bg, var(--pk-surface-overlay));
-}
-.wl-face :is(.c1, .c2, .c3, [data-eye]) {
-  stroke: none;
-}
-.wl-face .c1 {
-  fill: var(--wl-foil-1);
-}
-.wl-face .c2 {
-  fill: var(--wl-foil-2);
-}
-.wl-face .c3 {
-  fill: var(--wl-foil-3);
-}
-.wl-face [data-eye] {
-  fill: currentColor;
-  transform-box: fill-box;
-  transform-origin: center;
+.wl-face[data-size="sm"] .hl {
+  display: none;
 }
 @media (prefers-reduced-motion: no-preference) {
   .wl-face [data-wink] {
-    animation: wl-wink 200ms var(--art-mv, ease-in-out) var(--wl-wink-at, 380ms);
-  }
-}
-@keyframes wl-wink {
-  50% {
-    transform: scaleY(0.12);
+    animation: wl-r-blink 200ms var(--art-mv) 380ms;
   }
 }

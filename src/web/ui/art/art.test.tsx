@@ -176,18 +176,48 @@ describe('entity art', () => {
     expect(css).toMatch(/\.wl-art\[data-still\] :is\(\[data-body\], \[data-fan\]\)/);
   });
 
-  it('draws the face as a decorative icon that winks once', () => {
-    const { container } = render(<BuddyFace className="size-4" />);
-    const svg = container.querySelector('svg.wl-face');
+  // The owner: the all-good face "doesn't look like the rest". It is the buddy, cropped to its head.
+  it('draws the face as the buddy in miniature, from its own parts', () => {
+    const real = render(<WalletArt state="login" />).container;
+    const md = render(<BuddyFace size="md" scene="cheer" />).container.querySelector('svg');
+    const parts = ['rect.o', 'rect.st', 'rect.a', 'ellipse.e', 'path.c1', 'path.c2', 'path.c3'];
+    for (const part of [...parts, 'path.hl'])
+      expect(md?.querySelector(part)?.outerHTML, part).toBe(real.querySelector(part)?.outerHTML);
+    expect(md?.querySelector('[data-smile]')?.getAttribute('d')).toBe(
+      real.querySelector('[data-trunk] > path.m')?.getAttribute('d'),
+    );
+    // Fanned like the seated buddy's passes, from the same pivot; the gold one is the thumb.
+    const fan = [...(md?.querySelectorAll('g[transform^="rotate"]') ?? [])];
+    expect(fan.map((g) => g.getAttribute('transform'))).toEqual([
+      'rotate(-18 48 64)',
+      'rotate(18 48 64)',
+      'rotate(0 48 64)',
+    ]);
+    expect(md?.querySelector('[data-thumb] path.c3')).not.toBeNull();
+    expect(md?.querySelector('[data-letter] path.c2')).not.toBeNull();
+  });
+
+  it('gives the miniature an optical size for toasts, decorative, winking once', () => {
+    const svg = render(<BuddyFace className="h-5 w-6" />).container.querySelector('svg');
+    expect(svg).toHaveClass('wl-art', 'wl-face', 'h-5', 'w-6');
     expect(svg).toHaveAttribute('aria-hidden', 'true');
     expect(svg).toHaveAttribute('focusable', 'false');
-    expect(svg).toHaveClass('size-4');
-    expect(svg?.querySelectorAll('[data-eye]')).toHaveLength(2);
+    // sm: no stitch, the face 1.3x with larger eyes, the fan's tips drawn over a 24 x 20 box.
+    expect(svg).toHaveAttribute('data-size', 'sm');
+    expect(svg).toHaveAttribute('viewBox', '14 12 68 56');
+    expect(svg?.querySelector('rect.st')).toBeNull();
+    expect(svg?.querySelector('rect.a')?.parentElement?.getAttribute('transform')).toMatch(
+      /^matrix\(1\.3 0 0 1\.3 /,
+    );
+    expect(svg?.querySelector('ellipse.e')).toHaveAttribute('rx', '2.1');
+    expect(svg?.querySelectorAll('.e')).toHaveLength(2);
     expect(svg?.querySelectorAll('[data-wink]')).toHaveLength(1);
+    expect(svg?.querySelectorAll('*').length).toBeLessThanOrEqual(40);
     expect(svg?.querySelector('text')).toBeNull();
-    // One wink, never a loop; the media test below keeps it under no-preference.
-    expect(css).toMatch(/\.wl-face \[data-wink\] \{\s*animation: wl-wink 200ms/);
-    expect(css).not.toMatch(/wl-wink[^;]*infinite/);
+    // One wink as its host pops in, never a loop; the media test below keeps it under
+    // no-preference.
+    expect(css).toMatch(/\.wl-face \[data-wink\] \{\s*animation: wl-r-blink 200ms [^;]* 380ms;/);
+    expect(css).toMatch(/\.wl-face\[data-size="sm"\] \.hl \{\s*display: none;/);
   });
 
   it('turns the buddy toward an action under the pointer or focus', () => {

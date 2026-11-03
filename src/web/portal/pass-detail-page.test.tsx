@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -72,8 +74,37 @@ describe('pass detail', () => {
     });
     expect(await screen.findByText('In Wallet')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
+    // On a device already: no buddy nudging, no slot kept for it.
+    expect(document.querySelector('[data-scene="nudge"], .wl-nudge')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'More' }));
     expect(within(await screen.findByRole('menu')).queryByText(/Add again/)).toBeNull();
+  });
+
+  it('seats the buddy on the Details card, its head in a slot the actions keep clear', async () => {
+    const { container } = await renderApp('/passes/p1', {
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
+    });
+    await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
+    const card = screen.getByRole('heading', { name: 'Details' }).parentElement?.parentElement;
+    const buddy = container.querySelector('[data-scene="nudge"]');
+    // On the card's top edge (the card is its host), seated: legs and a shadow; decorative.
+    expect(buddy?.parentElement).toBe(card);
+    expect(buddy).toHaveClass('wl-buddy', 'wl-nudge');
+    expect(buddy).toHaveAttribute('aria-hidden', 'true');
+    expect(
+      buddy?.querySelectorAll('[data-part="l1"], [data-part="l2"], [data-part="sd"]'),
+    ).toHaveLength(3);
+    // The actions row ends with the slot, which wraps under the actions when they need the room.
+    const row = screen.getByRole('link', { name: 'Add to Apple Wallet' }).parentElement;
+    expect(row?.lastElementChild).toHaveAttribute('aria-hidden', 'true');
+    expect(row?.lastElementChild).toHaveClass('ml-auto', 'self-end', 'h-5', 'w-18');
+    // Right end of the edge, base on it (66 of 72); a phone's falls from under the actions.
+    const css = readFileSync(join(process.cwd(), 'src/web/portal/portal.css'), 'utf8');
+    expect(css).toMatch(
+      /\.wl-buddy\.wl-nudge \{\s*left: auto;\s*right: 8px;\s*translate: 0 -91\.67%;/,
+    );
+    expect(css).toMatch(/max-width: 39\.99rem\) \{\s*\.wl-nudge \{\s*--wl-drop: 20px;/);
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('deals the card on a deep link', async () => {
@@ -102,6 +133,7 @@ describe('pass detail', () => {
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Refresh/ })).toBeNull();
     expect(screen.getAllByText('Voided').length).toBeGreaterThan(0);
+    expect(document.querySelector('[data-scene="nudge"]')).toBeNull();
   });
 
   it('shows not found with a way back', async () => {

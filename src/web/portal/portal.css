@@ -1,5 +1,29 @@
 /* Portal motion (motion-and-expression.md): tile chrome after the deal, the QR scan line, the
    detail panel after the card. Transform and opacity only; reduced motion keeps nothing moving. */
+/* Not on a device yet: the buddy sits on the Details card's top edge at its right end, base on
+   the edge, his head in the slot the actions row keeps clear (pass-detail-page.tsx). He looks at
+   Add to Apple Wallet while it is pointed at or focused. */
+.wl-buddy.wl-nudge {
+  left: auto;
+  right: 8px;
+  translate: 0 -91.67%;
+}
+/* A phone's buddy sits under the actions (its slot wraps), so it falls from just under them. */
+@media (max-width: 39.99rem) {
+  .wl-nudge {
+    --wl-drop: 20px;
+  }
+}
+/* Beside the columns' actions, 80 × 60 (64 × 48 stacked). */
+@media (min-width: 64rem) {
+  .wl-nudge .wl-art {
+    width: 80px;
+    height: 60px;
+  }
+}
+.wl-pass-side:has([data-awb]:is(:hover, :focus-visible)) .wl-nudge [data-look] {
+  transform: translate(-2.2px, -1.2px);
+}
 .wl-qr-scan {
   position: absolute;
   inset: 0 0 auto;

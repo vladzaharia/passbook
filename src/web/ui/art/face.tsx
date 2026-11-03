@@ -1,55 +1,52 @@
 import { useScene } from './replay.ts';
+import { BODY, pass, SCREEN, SMILE, STITCH } from './wallet.tsx';
+
+const fan = (n: 1 | 2 | 3, angle: number, tag = 'data-c') => (
+  <g transform={`rotate(${angle} 48 64)`}>
+    <g {...{ [tag]: '' }}>{pass(n)}</g>
+  </g>
+);
 
 /**
- * The mascot's face on a 24-unit icon grid (art-wallet.css): the pocket, its fanned passes and a
- * smile. For icon slots: success toasts and the all-good status banner. It pops in with its host
- * and winks once; the pocket fills with --wl-face-bg, the host's surface. A click replays its
- * scene (scenes/face.css); cheer also plays once in view.
+ * The wallet art cropped to its head, for icon slots. sm (toasts, 24 px): no stitch, a larger
+ * face. Scenes: scenes/face.css; cheer and post play once in view, a click replays.
  */
 export function BuddyFace({
   className,
   scene = 'wink',
+  size = 'sm',
 }: {
   className?: string;
-  /** post: the violet pass flies out like a letter (a holder emailed). */
   scene?: 'wink' | 'cheer' | 'post';
+  size?: 'sm' | 'md';
 }) {
   const { ref } = useScene<SVGSVGElement>(scene !== 'wink');
+  const sm = size === 'sm';
+  const eye = sm ? { rx: 2.1, ry: 2.5 } : { rx: 1.7, ry: 2.1 };
   return (
     <svg
       ref={ref}
-      viewBox="0 0 24 24"
-      className={className ? `wl-face ${className}` : 'wl-face'}
+      viewBox={sm ? '14 12 68 56' : '14 7 68 61'}
+      className={className ? `wl-art wl-face ${className}` : 'wl-art wl-face'}
       data-replay=""
       data-scene={scene}
+      data-size={size}
       aria-hidden="true"
       focusable="false"
     >
-      <rect
-        className="c1"
-        x="4.6"
-        y="3.6"
-        width="6.4"
-        height="9"
-        rx="1.4"
-        transform="rotate(-18 7.8 12.6)"
-      />
-      <g data-thumb="">
-        <rect
-          className="c3"
-          x="13"
-          y="3.6"
-          width="6.4"
-          height="9"
-          rx="1.4"
-          transform="rotate(18 16.2 12.6)"
-        />
+      <g data-body="">
+        {fan(1, -18)}
+        {fan(3, 18, 'data-thumb')}
+        {fan(2, 0, 'data-letter')}
+        {BODY}
+        {sm ? null : STITCH}
+        <g transform={sm ? 'matrix(1.3 0 0 1.3 -14.4 -13.5)' : undefined}>
+          {SCREEN}
+          <ellipse className="e" cx="43.5" cy="43.5" {...eye} />
+          <ellipse className="e" data-wink="" cx="52.5" cy="43.5" {...eye} />
+          <path className="m" data-smile="" d={sm ? 'M44.6 47.4q3.4 2.6 6.8 0' : SMILE} />
+        </g>
       </g>
-      <rect data-letter="" className="c2" x="8.8" y="2" width="6.4" height="9" rx="1.4" />
-      <rect className="o" x="2.5" y="9" width="19" height="13" rx="4" />
-      <circle data-eye="" cx="9" cy="14.7" r="1.4" />
-      <circle data-eye="" data-wink="" cx="15" cy="14.7" r="1.4" />
-      <path data-smile="" d="M10.1 17.7q1.9 1.5 3.8 0" />
     </svg>
   );
 }

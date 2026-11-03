@@ -167,7 +167,12 @@
   transition: transform 200ms var(--wl-ease-spring);
 }
 
-/* Toast icons: success pops, info fades, errors shake once. */
+/* Toast icons: success pops, info fades, errors shake once. The buddy (24 × 20) is wider than an
+   icon; its slot fits it. */
+[data-sonner-toast][data-styled] [data-icon]:has(> .wl-face) {
+  width: auto;
+  height: auto;
+}
 [data-sonner-toast][data-type="success"] [data-icon] {
   animation: wl-check 300ms var(--wl-ease-bounce) backwards;
 }

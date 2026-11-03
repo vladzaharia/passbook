@@ -31,9 +31,12 @@ span[data-replay] .wl-art > :not([data-part="sd"], defs) {
   .wl-face[data-replay]:is([data-scene="cheer"], [data-scene="post"]) [data-wink] {
     animation: none;
   }
-  /* Beside a pass: behind it until its scene steps it out. */
-  :is([data-scene="wave"], [data-scene="tear"], [data-scene="nudge"]):not([data-run]) {
+  /* Beside a pass: behind it until its scene steps it out; nudge falls in. */
+  :is([data-scene="wave"], [data-scene="tear"]):not([data-run]) {
     transform: translateY(-50px);
+  }
+  [data-scene="nudge"]:not([data-run]) {
+    opacity: 0;
   }
 }
 /* A pointer over it: one blink, so it reads as alive. */

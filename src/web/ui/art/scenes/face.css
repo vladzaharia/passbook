@@ -1,14 +1,7 @@
-/* The face (face.tsx). wink (toasts, on a click): pops and winks again. cheer (status all good,
-   once in view): the gold pass rises like a thumb, the right eye winks, the smile widens; the
-   thumb wiggles and drops. post (a holder emailed): the violet pass dips, flies off up-right like
-   a letter, the face winks, and a new one rises into the pocket. 1.4 s; 1% = 14 ms. */
-.wl-face [data-thumb] {
+/* The miniature (face.tsx), in the wallet art's units: wink, cheer, post (motion spec). */
+.wl-face :is([data-body], [data-thumb], [data-letter]) {
   transform-box: view-box;
-  transform-origin: 16.2px 12.6px;
-}
-.wl-face [data-letter] {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+  transform-origin: 48px 64px;
 }
 .wl-face [data-smile] {
   transform-box: fill-box;
@@ -17,16 +10,20 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .wl-face[data-scene="wink"][data-run] {
-    animation: wl-s-face-pop 300ms var(--art-bo, ease-out);
+    animation: wl-check 300ms var(--art-bo);
   }
+  /* Its own name: the mount wink's would not restart. */
   .wl-face[data-replay][data-scene="wink"][data-run] [data-wink] {
-    animation: wl-s-face-wink 200ms var(--art-mv, ease-in-out) 240ms;
+    animation: wl-s-face-wink 200ms var(--art-mv) 240ms;
+  }
+  .wl-face[data-replay][data-scene="cheer"][data-run] [data-body] {
+    animation: wl-s-face-bob 1.4s ease-in-out;
   }
   .wl-face[data-replay][data-scene="cheer"][data-run] [data-thumb] {
     animation: wl-s-face-thumb 1.4s ease-in-out;
   }
   .wl-face[data-replay][data-scene="cheer"][data-run] [data-wink] {
-    animation: wl-s-face-wink 220ms var(--art-mv, ease-in-out) 300ms;
+    animation: wl-r-blink 220ms var(--art-mv) 300ms;
   }
   .wl-face[data-replay][data-scene="cheer"][data-run] [data-smile] {
     animation: wl-s-face-smile 1.4s ease-in-out;
@@ -35,18 +32,33 @@
     animation: wl-s-face-post 1.4s ease-in-out;
   }
   .wl-face[data-replay][data-scene="post"][data-run] [data-wink] {
-    animation: wl-s-face-wink 220ms var(--art-mv, ease-in-out) 560ms;
+    animation: wl-r-blink 220ms var(--art-mv) 560ms;
   }
 }
 
-@keyframes wl-s-face-pop {
-  0% {
-    scale: 0.7;
-  }
-}
 @keyframes wl-s-face-wink {
   50% {
-    scale: 1 0.12;
+    scale: 1 0.1;
+  }
+}
+@keyframes wl-s-face-bob {
+  0%,
+  44%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+  8% {
+    translate: 0 0;
+    scale: 1.04 0.94;
+  }
+  20% {
+    translate: 0 -4px;
+    scale: 0.98 1.03;
+  }
+  32% {
+    translate: 0 0;
+    scale: 1.03 0.96;
   }
 }
 @keyframes wl-s-face-thumb {
@@ -55,24 +67,30 @@
     rotate: 0deg;
   }
   14% {
-    translate: 0.6px -3px;
-    rotate: 18deg;
+    translate: 0 -12px;
+    rotate: 12deg;
   }
   20%,
   56% {
-    translate: 0.4px -2.4px;
-    rotate: 14deg;
+    translate: 0 -10px;
+    rotate: 8deg;
   }
   38% {
-    rotate: 20deg;
+    rotate: 14deg;
   }
   47% {
-    rotate: 10deg;
+    rotate: 3deg;
   }
   76%,
   100% {
     translate: 0 0;
     rotate: 0deg;
+  }
+}
+@keyframes wl-s-face-smile {
+  18%,
+  56% {
+    scale: 1.25 1.2;
   }
 }
 @keyframes wl-s-face-post {
@@ -82,18 +100,18 @@
     opacity: 1;
   }
   14% {
-    translate: 0 1.5px;
+    translate: 0 5px;
     rotate: 0deg;
     opacity: 1;
   }
   36% {
-    translate: 7px -8px;
-    rotate: 30deg;
+    translate: 28px -26px;
+    rotate: 24deg;
     opacity: 0;
   }
   36.1%,
   52% {
-    translate: 0 5px;
+    translate: 0 24px;
     rotate: 0deg;
     opacity: 0;
   }
@@ -101,11 +119,5 @@
   100% {
     translate: 0 0;
     opacity: 1;
-  }
-}
-@keyframes wl-s-face-smile {
-  18%,
-  56% {
-    scale: 1.25 1.2;
   }
 }
