@@ -1,3 +1,4 @@
+import { Ban, Clock } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import { appleWalletBadgeHtml } from '../../shared/apple-badge.ts';
@@ -11,8 +12,9 @@ import stageCss from '../../web/pass-card/stage.css?raw';
 import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
 import type { PassDevice } from './device.ts';
-import { HEAD_HTML } from './head.ts';
+import { documentStart, type PageTheme } from './head.ts';
 import { hostedPage } from './hosted.ts';
+import { iconHtml } from './icon.ts';
 import { THEME_CSS } from './theme.ts';
 
 const cardCss = `${cardBase}\n${cardPoster}\n${cardText}`;
@@ -21,6 +23,8 @@ const stageAllCss = `${stageCss}\n${stageMotion}\n${stageSeg}`;
 export interface PassPageProps {
   view: PassView;
   nonce: string;
+  /** The visitor's theme choice (requestTheme); undefined follows the OS. */
+  theme?: PageTheme;
   /** The org's name for the header and h1 (never the platform's). */
   orgName: string;
   /** The org record's name, for link previews and the home-screen label: never a pass field. */
@@ -43,15 +47,12 @@ const VOIDED_LINE = 'This pass was voided.';
 const EXPIRED_LINE = 'This pass has expired.';
 const SAFARI_LINE = 'Open in Safari to add to Apple Wallet.';
 
-const svg = (d: string) =>
-  `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-
 /** Voided (Ban) and expired (Clock) notes; `after` is escaped markup (the org contact). */
 const NOTE_HTML = {
   voided: (after: string) =>
-    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>')}<span>${VOIDED_LINE}${after}</span></p>`,
+    `<p class="note" role="status">${iconHtml(Ban)}<span>${VOIDED_LINE}${after}</span></p>`,
   expired: (after: string) =>
-    `<p class="note" role="status">${svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')}<span>${EXPIRED_LINE}${after}</span></p>`,
+    `<p class="note" role="status">${iconHtml(Clock)}<span>${EXPIRED_LINE}${after}</span></p>`,
 };
 
 /** A voided pass is not a dead end: one link to the org's support, email first. */
@@ -65,33 +66,33 @@ function contactHtml(props: PassPageProps): string {
 const CSS = `
 .pp-head{display:flex;align-items:center;gap:.625rem;min-height:3.5rem;max-width:28rem;margin:0 auto}
 .pp-head img{width:1.75rem;height:1.75rem;border-radius:.375rem;object-fit:contain}
-.pp-head span{min-width:0;overflow:hidden;font-size:1rem;font-weight:600;color:var(--strong);text-overflow:ellipsis;white-space:nowrap}
+.pp-head span{min-width:0;overflow:hidden;font-size:1rem;font-weight:600;color:var(--pk-text-strong);text-overflow:ellipsis;white-space:nowrap}
 .pp{display:grid;grid-template-areas:"title" "pass" "actions";gap:1.5rem;max-width:28rem;margin:0 auto;padding:.5rem 0 3rem}
 .pp>*{min-width:0}
 .pp-title{grid-area:title;display:flex;flex-direction:column;gap:1rem}
 .pp-pass{grid-area:pass;clip-path:inset(-24px)}
 .pp-actions{grid-area:actions;display:flex;flex-direction:column;align-items:flex-start;gap:1rem}
-h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.015em;color:var(--strong);overflow-wrap:anywhere}
+h1{margin:0;font-size:1.5rem;line-height:2rem;font-weight:600;letter-spacing:-.015em;color:var(--pk-text-strong);overflow-wrap:anywhere}
 h1 small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.note{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--warn-line);border-radius:.625rem;background:var(--warn-subtle);color:var(--fg)}
-.note svg{flex:none;width:1rem;height:1rem;margin-top:.1875rem;color:var(--warn)}
+.note{display:flex;gap:.75rem;margin:0;padding:.75rem 1rem;border:1px solid var(--pk-warning-border);border-radius:.625rem;background:var(--pk-warning-subtle);color:var(--pk-text-default)}
+.note svg{flex:none;width:1rem;height:1rem;margin-top:.1875rem;color:var(--pk-warning)}
 .badge .awb{display:block;padding:4.4px;border-radius:.5rem}
 .badge img{display:block;height:44px;width:auto}
-.line{margin:0;color:var(--muted)}
+.line{margin:0;color:var(--pk-text-muted)}
 .ipad{display:none}
 .qr{display:flex;align-items:center;gap:1rem;margin:0}
-.phone{position:relative;flex:none;padding:1.125rem .5rem .875rem;border:2px solid var(--line-strong);border-radius:1.25rem;background:var(--raised)}
-.phone::before{content:"";position:absolute;top:.4375rem;left:50%;width:1.5rem;height:.25rem;margin-left:-.75rem;border-radius:1rem;background:var(--line-strong)}
+.phone{position:relative;flex:none;padding:1.125rem .5rem .875rem;border:2px solid var(--pk-border-strong);border-radius:1.25rem;background:var(--pk-surface-raised)}
+.phone::before{content:"";position:absolute;top:.4375rem;left:50%;width:1.5rem;height:.25rem;margin-left:-.75rem;border-radius:1rem;background:var(--pk-border-strong)}
 .qr img{display:block;width:4.75rem;height:4.75rem;padding:.25rem;border-radius:.375rem;background:#fff}
-.qr p{margin:0;font-weight:500;color:var(--strong)}
+.qr p{margin:0;font-weight:500;color:var(--pk-text-strong)}
 .note a{font-weight:500}
-footer{width:100%;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);overflow-wrap:anywhere}
+footer{width:100%;padding-top:1rem;border-top:1px solid var(--pk-border-subtle);color:var(--pk-text-muted);overflow-wrap:anywhere}
 .pp .pc-stage{max-width:22rem}
 @media (pointer:coarse){.pp-actions[data-device=mac] .ipad{display:block}}
 @media(min-width:64rem){
 .pp-head{max-width:50rem}
 .pp{grid-template-columns:22rem minmax(0,1fr);grid-template-areas:"pass title" "pass actions";grid-template-rows:auto 1fr;column-gap:4rem;row-gap:1.5rem;max-width:50rem;padding-top:2.5rem}
-h1 small{position:static;display:block;width:auto;height:auto;margin-bottom:.25rem;clip-path:none;font-size:.875rem;line-height:1.25rem;font-weight:400;letter-spacing:0;color:var(--muted)}
+h1 small{position:static;display:block;width:auto;height:auto;margin-bottom:.25rem;clip-path:none;font-size:.875rem;line-height:1.25rem;font-weight:400;letter-spacing:0;color:var(--pk-text-muted)}
 }
 @media (prefers-reduced-motion:no-preference){
 .pp-title,.pp-actions>:not(.badge){animation:wl-rise 260ms cubic-bezier(0,0,0,1) 240ms backwards}
@@ -121,7 +122,9 @@ function PassBody(props: PassPageProps) {
     <div
       className="badge"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: static badge markup, href escaped
-      dangerouslySetInnerHTML={{ __html: appleWalletBadgeHtml({ href: props.downloadHref }) }}
+      dangerouslySetInnerHTML={{
+        __html: appleWalletBadgeHtml({ href: props.downloadHref, theme: props.theme }),
+      }}
     />
   ) : null;
   return (
@@ -196,13 +199,14 @@ export function renderPassPage(props: PassPageProps): string {
   const title = `${props.passTitle} · ${props.orgName}`;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
   const line = voided ? VOIDED_LINE : active ? 'Add it to Apple Wallet.' : EXPIRED_LINE;
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${THEME_CSS}${cardCss}${stageAllCss}${CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /** An unknown, rotated or expired link: the hosted card with one way on. */
-export function renderNotFoundPage(nonce: string): string {
+export function renderNotFoundPage(nonce: string, theme?: PageTheme): string {
   return hostedPage({
     nonce,
+    theme,
     title: 'Link expired',
     art: 'expired',
     lede: 'Sign in to see your passes.',

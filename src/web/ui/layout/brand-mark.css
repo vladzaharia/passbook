@@ -1,5 +1,5 @@
 /* The PassBook mark (brand-mark.tsx), in the SPA and inlined on SSR pages (worker/ssr/theme.ts),
-   where --foil-* stand in for --wl-foil-*. Lines in currentColor, passes in foil. */
+   which carry the same tokens. Lines in currentColor, passes in foil. */
 .wl-mark {
   flex: none;
   overflow: visible;
@@ -12,13 +12,13 @@
   stroke: none;
 }
 .wl-mark [data-p="1"] {
-  fill: var(--wl-foil-1, var(--foil-1));
+  fill: var(--wl-foil-1);
 }
 .wl-mark [data-p="2"] {
-  fill: var(--wl-foil-2, var(--foil-2));
+  fill: var(--wl-foil-2);
 }
 .wl-mark [data-p="3"] {
-  fill: var(--wl-foil-3, var(--foil-3));
+  fill: var(--wl-foil-3);
 }
 .wl-mark circle {
   stroke: none;

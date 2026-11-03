@@ -7,6 +7,7 @@ import { AppError, UnavailableError, UpstreamError } from '../../platform/errors
 import { sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import {
   clearCookie,
   ipPrefix,
@@ -62,14 +63,18 @@ function errorPage(
   next: string | null,
 ) {
   return c.html(
-    messagePage(c.var.nonce, { ...copy, href: loginPath(next), action: 'Back to sign in' }),
+    messagePage(
+      c.var.nonce,
+      { ...copy, href: loginPath(next), action: 'Back to sign in' },
+      requestTheme(c),
+    ),
     status,
   );
 }
 
 /** GET /auth/no-access: where a Polaris ID without PassBook access lands (a clean URL). */
 export function noAccess(c: Context<AppBindings>) {
-  return c.html(noAccessPage(c.var.nonce, safeNext(c.req.query('next'))));
+  return c.html(noAccessPage(c.var.nonce, safeNext(c.req.query('next')), requestTheme(c)));
 }
 
 export async function startOidc(c: Context<AppBindings>) {
@@ -183,7 +188,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
       const keep = safeNext(next);
       return c.redirect(`/auth/no-access${keep ? `?next=${encodeURIComponent(keep)}` : ''}`, 303);
     }
-    const page = signInErrorPage(c.var.nonce, cause.code, { next });
+    const page = signInErrorPage(c.var.nonce, cause.code, { next }, requestTheme(c));
     return c.html(page.html, page.status);
   }
 }

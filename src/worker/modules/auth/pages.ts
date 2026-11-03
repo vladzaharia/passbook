@@ -1,6 +1,7 @@
 /** Script-free SSR pages for the auth flows, on the hosted shell shared with /login. */
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { SIGN_IN_ERROR_COPY, type SignInErrorCode } from '../../../shared/copy/sign-in.ts';
+import type { PageTheme } from '../../ssr/head.ts';
 import { type HostedArt, hostedPage } from '../../ssr/hosted.ts';
 import { escapeHtml } from '../../ssr/theme.ts';
 import { loginPath, safeNext } from './next.ts';
@@ -30,12 +31,15 @@ export function confirmPage(
     purpose?: 'sign_in' | 'verify_email';
     requester?: string | null;
   },
+  theme?: PageTheme,
 ): string {
   if (input.purpose === 'verify_email') {
-    return verifyPage(nonce, { ...input, requester: input.requester ?? null, viewer: 'requester' });
+    const verify = { ...input, requester: input.requester ?? null, viewer: 'requester' } as const;
+    return verifyPage(nonce, verify, theme);
   }
   return hostedPage({
     nonce,
+    theme,
     title: 'Sign in',
     art: 'confirm',
     lede: `As <b>${escapeHtml(input.email)}</b>`,
@@ -57,6 +61,7 @@ export function verifyPage(
     requester: string | null;
     viewer: 'requester' | 'signed-out' | 'other';
   },
+  theme?: PageTheme,
 ): string {
   const back = confirmPath(input.token);
   const adds = `Adds <b>${escapeHtml(input.email)}</b>${input.requester ? ` to ${escapeHtml(input.requester)}` : ''}.`;
@@ -68,6 +73,7 @@ export function verifyPage(
         : postButton(`/auth/logout?next=${encodeURIComponent(back)}`, 'Switch account');
   return hostedPage({
     nonce,
+    theme,
     title: 'Confirm email',
     art: input.viewer === 'requester' ? 'confirm' : 'login',
     lede: input.viewer === 'other' ? `${adds} This browser is signed in to another account.` : adds,
@@ -76,9 +82,10 @@ export function verifyPage(
 }
 
 /** Link or code no longer valid: one card greys and droops. */
-export function expiredPage(nonce: string, next: string | null = null): string {
+export function expiredPage(nonce: string, next: string | null = null, theme?: PageTheme): string {
   return hostedPage({
     nonce,
+    theme,
     title: 'Link expired',
     art: 'expired',
     lede: 'Request a new one to sign in.',
@@ -88,10 +95,11 @@ export function expiredPage(nonce: string, next: string | null = null): string {
 }
 
 /** Polaris ID worked but the account may not use PassBook: the fan closes under a padlock. */
-export function noAccessPage(nonce: string, next: string | null = null): string {
+export function noAccessPage(nonce: string, next: string | null = null, theme?: PageTheme): string {
   const keep = safeNext(next) ? `&next=${encodeURIComponent(safeNext(next) ?? '')}` : '';
   return hostedPage({
     nonce,
+    theme,
     title: 'No access',
     art: 'no-access',
     lede: escapeHtml(SIGN_IN_ERROR_COPY.NO_ACCESS.message),
@@ -103,9 +111,11 @@ export function noAccessPage(nonce: string, next: string | null = null): string 
 export function messagePage(
   nonce: string,
   input: { title: string; message: string; href?: string; action?: string; art?: HostedArt },
+  theme?: PageTheme,
 ): string {
   return hostedPage({
     nonce,
+    theme,
     title: input.title,
     art: input.art ?? 'expired',
     lede: escapeHtml(input.message),
@@ -144,24 +154,34 @@ export function signInErrorPage(
   nonce: string,
   code: SignInErrorCode,
   opts: { next?: string | null; href?: string; action?: string } = {},
+  theme?: PageTheme,
 ): { html: string; status: ContentfulStatusCode } {
   const { status, art } = PAGE[code];
-  const html = messagePage(nonce, {
-    ...SIGN_IN_ERROR_COPY[code],
-    href: opts.href ?? loginPath(opts.next),
-    action: opts.action ?? 'Back to sign in',
-    ...(art ? { art } : {}),
-  });
+  const html = messagePage(
+    nonce,
+    {
+      ...SIGN_IN_ERROR_COPY[code],
+      href: opts.href ?? loginPath(opts.next),
+      action: opts.action ?? 'Back to sign in',
+      ...(art ? { art } : {}),
+    },
+    theme,
+  );
   return { html, status };
 }
 
 /** Admin break-glass: a key on the clasp turns. */
-export function breakglassPage(nonce: string, input: { error?: string; next?: string }): string {
+export function breakglassPage(
+  nonce: string,
+  input: { error?: string; next?: string },
+  theme?: PageTheme,
+): string {
   const next = input.next
     ? `<input type="hidden" name="next" value="${escapeHtml(input.next)}">`
     : '';
   return hostedPage({
     nonce,
+    theme,
     title: 'Break-glass sign-in',
     art: 'break-glass',
     ...(input.error ? { error: input.error } : {}),
