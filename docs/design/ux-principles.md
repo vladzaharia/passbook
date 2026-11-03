@@ -23,13 +23,14 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
    | Pass created or reassigned | Send email, Copy link |
    | Link rotated | The new link with Copy and Email |
 
-2. **One scope control.** The top-bar org switcher is the only org scope. Lists, overview, audit,
+2. **One scope control.** The top-bar org switcher is the only org scope; it lives in the URL (`?orgId=`), so a link keeps it. Lists, overview, audit,
    wizards and list footers read it; wizards prefill it and skip steps with one choice. It hides
    on pages it does not scope (Users, Settings, Status, Apple identities). No page-level Org select.
 3. **Guard by blast radius, the same way everywhere.**
    - Anything that reaches a holder's device or many records (void, bulk actions, suspend org,
      disable user, disable magic link, rotate link, reissue) confirms with the consequence and a
      count, in a danger button.
+   - Wording and typing come from `lib/confirms.ts`. Type the name only when the act cannot be undone and takes more than the item (org, pass, connection); template and identity deletes and API key revokes are plain confirms.
    - Typed confirms use a human word: the title (up to 24 characters), the slug, else `delete`.
      Case-insensitive, trimmed. Never a UUID.
    - Row menus, bulk bars and palette actions use the guard the header uses.
@@ -52,17 +53,18 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
 
 5. **Specific, quiet states.** Every entity has its own art (ui-consistency.md "Entity identity").
    Filtered-empty differs from truly empty. Inside cards, empty is one inline line with small art.
-   Not found names the thing and offers a way back. Errors are one sentence plus Retry, never raw
+   Not found names the thing and offers a way back: a route is the lost buddy, an entity the torn pass, forbidden the lock, an error the plug, an expired link the drooping pass, a rate limit the hourglass, with the same art and words on SSR pages. Ways back are outline buttons. Errors are one sentence plus Retry, never raw
    JSON on any surface, worker HTML routes included. Offline is visible and the app stays put.
 6. **Mobile is content-first.**
    - Pass and template previews collapse below 1024 so tabs and fields sit in the first screen.
-   - Customer actions are 44 px; console controls are 44 px on touch.
+   - Every control is 44 px on touch, customer pages included; the same sizes as the console on a fine pointer.
    - Phone confirms and menus open as bottom sheets.
    - Five or more tabs become a select below 640.
    - Next and Save stay on screen (sticky bars).
 7. **The holder is a person with an email.**
    - `/login` leads with the email path; Polaris ID is the alternative.
    - Off iPhone the QR leads ("Scan with your iPhone.").
+   - In an installed app the sign-in code leads: an email link would open Safari.
    - Emails show what the pass is before the badge.
    - Account email flows never dead-end: a pending address shows with Resend and Cancel.
    - Holder views lead with the org's identity, not the platform's.
@@ -144,7 +146,7 @@ Customer pages always; the console on touch devices.
 - Reflow at 200 %: no horizontal scroll, key-value pairs stack, buttons wrap, no min widths.
 - Dynamic Type on customer pages through `-apple-system-body`.
 - `<html lang>` matches the copy (`en` today).
-- Holder surfaces follow the system appearance; no app theme toggle.
+- One theme setting for every page, in the account menu, saved in the `wallet-theme` cookie that SSR pages honour; without a choice, the system appearance.
 - `prefers-reduced-motion` respected; transform and opacity only; nothing moves on the badge.
 - Errors render as HTML pages.
 - `theme-color` per scheme, `format-detection: telephone=no`, icons and previews as below.
