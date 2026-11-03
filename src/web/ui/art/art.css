@@ -1,15 +1,15 @@
-/* Entity art engine; parts in art-{records,details,wallet}.css. SSR inlines ART_CSS (css.ts), so
-   tokens fall back to SSR names. Parts set --f/--fo (from), --t (rest), --o, --d, --u, --e, --k
+/* Entity art engine; parts in art-{records,details,wallet}.css. SSR inlines ART_CSS (css.ts) after
+   the generated tokens (src/generated/ssr-tokens.css), so the names are the SPA's. Parts set --f/--fo (from), --t (rest), --o, --d, --u, --e, --k
    and the beat --b/--bo/--bd/--bu/--bk. */
 .wl-art {
-  --art-o: var(--pk-surface-raised, var(--raised, #fff));
-  --art-s: var(--pk-surface-sunken, var(--sunken, #ebeef8));
-  --art-l: var(--pk-border-strong, var(--line-strong, #7e8699));
-  --art-a: var(--pk-accent, var(--accent, #0f766e));
-  --art-k: var(--pk-text-strong, var(--strong, #060912));
-  --art-f1: var(--wl-foil-1, var(--foil-1, #2dd4bf));
-  --art-f2: var(--wl-foil-2, var(--foil-2, #9a5cff));
-  --art-f3: var(--wl-foil-3, var(--foil-3, #ffc24d));
+  --art-o: var(--pk-surface-raised);
+  --art-s: var(--pk-surface-sunken);
+  --art-l: var(--pk-border-strong);
+  --art-a: var(--pk-accent);
+  --art-k: var(--pk-text-strong);
+  --art-f1: var(--wl-foil-1);
+  --art-f2: var(--wl-foil-2);
+  --art-f3: var(--wl-foil-3);
   --art-sp: var(
     --wl-ease-spring,
     linear(0, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 1.017 20.5%, 1.043 24.5%, 1.007 36%, 1)
@@ -59,7 +59,7 @@
   fill: color-mix(in srgb, var(--art-a) 20%, transparent);
 }
 .wl-art .x {
-  stroke: var(--pk-danger, var(--danger, #be2323));
+  stroke: var(--pk-danger);
 }
 .wl-art .n {
   stroke: none;
@@ -104,7 +104,7 @@
   stroke: var(--art-k);
 }
 .wl-art .ck {
-  stroke: var(--pk-accent-on, var(--accent-on, #fff));
+  stroke: var(--pk-accent-on);
   stroke-width: calc(var(--art-w) * 4 / 3);
 }
 

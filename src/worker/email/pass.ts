@@ -1,11 +1,17 @@
 import type { PassSummary } from './pass-summary.ts';
 import { safeMail, safeUrl } from './safe.ts';
-import { buttonHtml, EMAIL_LIGHT as c, emailShell, escapeHtml, linkColor } from './shell.ts';
+import {
+  buttonHtml,
+  EMAIL_LIGHT as c,
+  emailShell,
+  escapeHtml,
+  RADIUS,
+  titleHtml,
+  type,
+} from './shell.ts';
 
 export interface PassEmailInput {
   orgName: string;
-  /** `#rrggbb`; falls back to a neutral dark. */
-  accent?: string | null;
   supportEmail?: string | null;
   supportUrl?: string | null;
   lang?: string;
@@ -39,9 +45,6 @@ export interface RenderedEmail {
 export const ADD_LINE = 'Open on iPhone or Mac to add to Apple Wallet.';
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
 
-const safeColor = (value: string | null | undefined) =>
-  value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#1f2937';
-
 /** The pass, drawn small in its own colours: logo, title and two or three fields. */
 function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string {
   const s = input.summary;
@@ -64,7 +67,7 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
   const table = rows
     ? `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse">${rows}</table>`
     : '';
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:separate"><tr><td style="background:${bg};border-radius:12px;padding:16px 18px">${logo}${title}${table}</td></tr></table>`;
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:separate"><tr><td style="background:${bg};border-radius:${RADIUS.lg}px;padding:16px 18px">${logo}${title}${table}</td></tr></table>`;
 }
 
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
@@ -81,8 +84,6 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   ]
     .filter(Boolean)
     .join(' | ');
-  const accent = safeColor(input.accent);
-  const link = linkColor(accent);
   const subject = `Your ${input.orgName} pass`;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
@@ -101,20 +102,19 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     ...(supportText ? [`Questions: ${supportText}`] : []),
   ].join('\n');
   const muted = (margin: string, line: string) =>
-    `<p class="e-muted" style="margin:${margin};font-size:14px;line-height:20px;color:${c.muted}">${line}</p>`;
-  const body = `<p class="e-strong" style="margin:0 0 16px;font-size:20px;line-height:28px;font-weight:600;color:${c.strong}">Your pass is ready</p>
+    `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
+  const body = `${titleHtml('Your pass is ready', '0 0 16px')}
 ${passBlock(input, fields)}
-<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;padding:4px;border-radius:12px;background:#ffffff;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
-<p style="margin:0 0 16px">${buttonHtml(input.manageUrl, 'Open your pass', false, link)}</p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;padding:4px;border-radius:${RADIUS.lg}px;background:#ffffff;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
+<p style="margin:0 0 16px">${buttonHtml(input.manageUrl, 'Open your pass', false)}</p>
 ${muted('0 0 24px', ADD_LINE)}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
-<p class="e-muted" style="margin:0;font-size:12px;line-height:18px;color:${c.muted}">${PRIVATE_LINE}</p>
-${supportHtml ? `<p class="e-muted" style="margin:12px 0 0;font-size:12px;line-height:18px;color:${c.muted}">Questions: ${supportHtml}</p>` : ''}`;
+<p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
+${supportHtml ? `<p class="e-muted" style="margin:12px 0 0;${type('xs')};color:${c.muted}">Questions: ${supportHtml}</p>` : ''}`;
   const html = emailShell({
     lang: input.lang ?? 'en',
     title: subject,
     header: input.orgName,
-    headerColor: accent,
     body,
   });
   const sender = input.senderName?.trim();

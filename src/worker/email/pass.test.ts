@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ADD_LINE, renderPassEmail } from './pass.ts';
 import { passSummary } from './pass-summary.ts';
-import { contrast, EMAIL_LIGHT, linkColor, textOn } from './shell.ts';
+import { EMAIL_LIGHT } from './shell.ts';
 import { renderSignInEmail } from './sign-in.ts';
 
 const PASS_JSON = {
@@ -22,7 +22,6 @@ const PASS_JSON = {
 const render = (over: Partial<Parameters<typeof renderPassEmail>[0]> = {}) =>
   renderPassEmail({
     orgName: 'Harbor Lights Festival',
-    accent: '#d97706',
     downloadUrl: 'https://w.test/p/t/pass.pkpass',
     manageUrl: 'https://w.test/p/t',
     badgeUrl: 'https://w.test/apple/badge/en/black@2x.png',
@@ -100,25 +99,24 @@ describe('pass email', () => {
     expect(text).toContain(ADD_LINE);
     expect(text).toContain('Venue: Pier 62');
     expect(html.match(/class="e-btn"/g) ?? []).toHaveLength(0);
-    expect(html).toContain('padding:12px 24px');
+    // The kit Button at 44 px: 11 + 20 + 11 and the 1 px border.
+    expect(html).toMatch(/class="e-block"[^>]*line-height:20px;font-weight:500;padding:11px 24px;/);
   });
 
-  it('is static and keeps one radius on every corner', () => {
+  it('is static and keeps the card radius on every corner', () => {
     const { html } = render();
     expect(html).not.toMatch(/@keyframes|\.gif/i);
-    expect(html).toContain('border-radius:12px 12px 0 0');
-    expect(html).toContain('border-radius:0 0 12px 12px');
+    expect(html).toContain('border-radius:18px 18px 0 0');
+    expect(html).toContain('border-radius:0 0 18px 18px');
   });
 
-  it('keeps header text and links at 4.5:1 with a light accent', () => {
-    const { html } = render({ accent: '#d97706' });
-    const header = /background:#d97706;padding:20px 24px;color:(#[0-9a-f]{6})/.exec(html)?.[1];
-    expect(header).toBeTruthy();
-    expect(contrast(header as string, '#d97706')).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(linkColor('#d97706'), EMAIL_LIGHT.card)).toBeGreaterThanOrEqual(4.5);
-    expect(html).toContain(`color:${linkColor('#d97706')}`);
-    expect(textOn('#1f2937')).toBe('#ffffff');
-    expect(linkColor('#1e3a8a')).toBe('#1e3a8a');
+  it('keeps the outline action in neutral text, like the hosted card', () => {
+    const { html } = render();
+    expect(html).toMatch(
+      new RegExp(
+        `class="e-block"[^>]*color:${EMAIL_LIGHT.text};border:1px solid ${EMAIL_LIGHT.lineStrong}`,
+      ),
+    );
   });
 
   it('sends from "<Org> via <sender>"', () => {
@@ -126,12 +124,12 @@ describe('pass email', () => {
     expect(render({ senderName: '' }).fromName).toBeUndefined();
   });
 
-  it("leaves the buddy out: the org's pass, under the org's name and colour", () => {
+  it("leaves the buddy out: the org's pass, under the org's name on the page", () => {
     const { html } = render();
     expect(html).not.toContain('/email/buddy-');
     expect(html).not.toContain('apple-touch-icon');
     expect(html).toMatch(
-      /background:#d97706;padding:20px 24px;color:#[0-9a-f]{6}[^"]*">Harbor Lights/,
+      /padding:14px 0 14px 25px;font-size:20px;line-height:28px;font-weight:600;[^"]*">Harbor Lights/,
     );
   });
 
@@ -160,7 +158,7 @@ describe('sign-in email', () => {
     expect(chip).toContain('letter-spacing:6px');
     expect(chip).not.toContain('border:');
     expect(html).toContain('src="https://w.test/apple-touch-icon.png"');
-    expect(html).toMatch(/class="e-btn"[^>]*padding:12px 24px/);
+    expect(html).toMatch(/class="e-btn"[^>]*padding:11px 24px/);
     expect(html).not.toMatch(/@keyframes|\.gif/i);
     expect(text.split('\n\n')[0]).toBe('Sign in to PassBook');
   });

@@ -1,42 +1,33 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import controlsCss from '../../generated/ssr-controls.css?raw';
+import tokensCss from '../../generated/ssr-tokens.css?raw';
 import markCss from '../../web/ui/layout/brand-mark.css?raw';
 import { BrandMark } from '../../web/ui/layout/brand-mark.tsx';
 
-const LIGHT =
-  '--page:#f6f8ff;--raised:#fff;--sunken:#ebeef8;--field:#fff;--strong:#060912;--fg:#262d40;--muted:#48536b;--line:#dadee9;--line-strong:#7e8699;--hover:rgb(6 9 18/.05);--accent:#0f766e;--accent-hover:#2f857e;--accent-on:#fff;--danger:#be2323;--danger-line:#db423c;--danger-subtle:#f0e3e9;--warn:#814d00;--warn-subtle:#fdf0c8;--warn-line:#a15c07;--focus:#0f766e;--foil-1:#0f766e;--foil-2:#7a2fff;--foil-3:#d07a00;--edge:transparent;--shadow:0 1px 2px 0 rgb(6 9 18/.06)';
-const DARK =
-  'color-scheme:dark;--page:#060912;--raised:#0d111b;--sunken:#020408;--field:#020408;--strong:#fff;--fg:#dbe4ff;--muted:#b5bed3;--line:#212633;--line-strong:#61697b;--hover:rgb(255 255 255/.06);--accent:#2dd4bf;--accent-hover:#4cdbc9;--accent-on:#04201c;--danger:#f2513f;--danger-line:#c83b2c;--danger-subtle:#221217;--warn:#c38d18;--warn-subtle:#1d1913;--warn-line:#896100;--focus:#5eead4;--foil-1:#2dd4bf;--foil-2:#9a5cff;--foil-3:#ffc24d;--edge:rgb(255 255 255/.05);--shadow:0 1px 2px 0 rgb(0 0 0/.4)';
-
 /**
- * Token values from @polaris-key/brand plus the PassBook teal; SSR pages cannot import the app CSS.
- * Holder pages follow the system appearance: no toggle, no stored theme.
+ * The SSR pages' base sheet: the SPA's fonts and tokens (ssr-tokens.css), its base layer, then the
+ * kit's controls (ssr-controls.css), all generated from the SPA's own sources by `npm run gen`.
+ * A stamped data-theme (the SPA's theme cookie, ssrTheme) picks a scheme; else the OS does.
  */
-export const THEME_CSS = `@font-face{font-family:Rubik;font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/rubik-var-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-:root{color-scheme:light;${LIGHT}}
-@media(prefers-color-scheme:dark){:root{${DARK}}}
-@media(prefers-contrast:more){:root{--muted:#333b50;--line:#7e8699}}
-@media(prefers-contrast:more) and (prefers-color-scheme:dark){:root{--muted:#c3cbe0;--line:#61697b}}
-*{box-sizing:border-box}
-html{font-family:Rubik,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body;font-family:Rubik,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}}
-body{margin:0;min-height:100dvh;background:var(--page);color:var(--fg);font-size:.875rem;line-height:1.5;-webkit-text-size-adjust:100%;padding:env(safe-area-inset-top) max(1rem,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(1rem,env(safe-area-inset-left))}
-a{color:var(--accent)}
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+export const THEME_CSS = `${tokensCss}
+*,::before,::after{box-sizing:border-box}
+html{font-family:var(--pk-font-sans);-webkit-text-size-adjust:100%}
+@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body;font-family:var(--pk-font-sans)}}
+body{margin:0;min-height:100dvh;background:var(--pk-surface-page);color:var(--pk-text-default);font-size:.875rem;line-height:1.5;padding:env(safe-area-inset-top) max(1rem,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(1rem,env(safe-area-inset-left))}
+a{color:var(--pk-accent-fg)}
+:focus-visible{outline:2px solid var(--pk-focus);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:2.25rem;padding:.375rem 1rem;border:1px solid transparent;border-radius:.375rem;background:var(--accent);color:var(--accent-on);font:inherit;font-size:.875rem;font-weight:500;line-height:1.25rem;text-align:center;text-decoration:none;cursor:pointer}
-@media(pointer:coarse){.btn{min-height:2.75rem}}
-.btn:hover{background:var(--accent-hover)}
-.btn.outline{border-color:var(--line-strong);background:transparent;color:var(--fg)}
-.btn.outline:hover{background:var(--hover);color:var(--strong)}
-.btn svg{width:1rem;height:1rem;flex:none}
-@keyframes wl-rise{from{opacity:0;transform:translateY(8px)}}
-@media (prefers-reduced-motion:no-preference){.btn{transition:background-color 120ms,color 120ms,transform 80ms}.btn:active{transform:scale(.98)}}`;
+button,input{margin:0;font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer}
+.btn{width:100%;text-decoration:none}
+@keyframes wl-rise{from{opacity:0;transform:translateY(var(--wl-rise))}}
+${controlsCss}`;
 
-/** The md Wordmark's box (wordmark.tsx) plus the mark's own sheet, shared with the SPA. */
-export const WORDMARK_CSS = `.mark{display:inline-flex;align-items:center;gap:.5rem;min-height:2rem;border-radius:.375rem;font-size:1rem;font-weight:600;color:var(--strong);text-decoration:none}
-.mark>svg{width:1.25rem;height:1.25rem;color:var(--accent)}
-@media(pointer:coarse){.mark{min-height:2.75rem}}
+/** The md Wordmark's box (wordmark.tsx; parity in ssr-parity.test.ts) plus the mark's own sheet. */
+export const WORDMARK_CSS = `.mark{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-width:2rem;min-height:2rem;border-radius:var(--pk-radius-md);font-size:var(--pk-font-size-base);line-height:var(--pk-line-height-base);font-weight:var(--pk-font-weight-semibold);color:var(--pk-text-strong);text-decoration:none}
+.mark>svg{width:1.25rem;height:1.25rem;color:var(--pk-accent-fg)}
+@media(pointer:coarse){.mark{min-width:2.75rem;min-height:2.75rem}}
 ${markCss}`;
 
 const MARK = renderToStaticMarkup(createElement(BrandMark));

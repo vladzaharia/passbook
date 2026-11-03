@@ -66,12 +66,13 @@ describe('hosted auth pages', () => {
     if (_state === 'expired') expect(html).toContain('class="dim"');
   });
 
-  it('sizes the scene like /login and keeps fields at 16 px or more', () => {
+  it('sizes the scene like /login and wears the kit controls', () => {
     expect(HOSTED_CSS).toContain(HOSTED_ART_CSS);
     expect(HOSTED_CSS).toContain(
       '.scene{position:relative;z-index:2;flex:none;width:128px;height:96px',
     );
-    expect(HOSTED_CSS).toMatch(/input\{[^}]*font-size:max\(16px,1rem\)/);
+    // The controls themselves (16 px fields on touch) are generated: tools/ssr-parity.test.ts.
+    expect(HOSTED_CSS.startsWith(THEME_CSS)).toBe(true);
   });
 
   it('wears the console mark and its sheet (brand-mark.test.ts), never the hello', () => {

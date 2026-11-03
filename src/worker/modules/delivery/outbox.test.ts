@@ -27,7 +27,6 @@ describe('pass email', () => {
   it('renders links, badge and a text part, escaping the organization name', () => {
     const email = renderPassEmail({
       orgName: 'A&B <Gym>',
-      accent: '#112233',
       downloadUrl: 'https://w.test/p/t/pass.pkpass',
       manageUrl: 'https://w.test/p/t',
       badgeUrl: 'https://w.test/apple/add-to-apple-wallet.png',
@@ -39,21 +38,8 @@ describe('pass email', () => {
     expect(email.html).toContain('A&amp;B &lt;Gym&gt;');
     expect(email.html).toContain('href="https://w.test/p/t/pass.pkpass"');
     expect(email.html).toContain('alt="Add to Apple Wallet"');
-    expect(email.html).toContain('#112233');
     expect(email.text).toContain('Open your pass: https://w.test/p/t');
     expect(email.text).toContain('attached');
-  });
-
-  it('ignores an accent that is not a hex color', () => {
-    const email = renderPassEmail({
-      orgName: 'Gym',
-      accent: 'red;background:url(x)',
-      downloadUrl: 'd',
-      manageUrl: 'm',
-      badgeUrl: 'b',
-      attached: false,
-    });
-    expect(email.html).not.toContain('url(x)');
   });
 
   it('sends to the holder with direct links and an optional attachment', async () => {

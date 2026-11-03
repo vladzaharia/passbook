@@ -2,12 +2,15 @@
  * HTML error pages for worker routes a browser opens (never problem+json there). Built on the
  * hosted shell with static art; one h1, one line, one primary action.
  */
+import type { PageTheme } from './head.ts';
 import { type HostedArt, hostedPage } from './hosted.ts';
 import { escapeHtml } from './theme.ts';
 
 export interface ErrorPageInput {
   status: number;
   nonce: string;
+  /** The visitor's theme choice (requestTheme). */
+  theme?: PageTheme;
   /** Overrides the status default. */
   title?: string;
   line?: string;
@@ -39,6 +42,7 @@ export function renderErrorPage(input: ErrorPageInput): string {
   const line = input.line ?? d.line;
   return hostedPage({
     nonce: input.nonce,
+    theme: input.theme,
     title: input.title ?? d.title,
     art: d.art,
     ...(line ? { lede: escapeHtml(line) } : {}),

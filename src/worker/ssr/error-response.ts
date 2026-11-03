@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import type { AppBindings } from '../platform/context.ts';
 import { renderErrorPage } from './error-page.tsx';
+import { requestTheme } from './head.ts';
 import { renderNotFoundPage } from './pass-page.tsx';
 
 /** Machine routes keep problem+json whatever the client accepts. */
@@ -51,14 +52,16 @@ export async function asBrowserPage(c: Context<AppBindings>, res: Response): Pro
   if (!wantsHtml(c) || !paged(c, res.status)) return res;
   if (!(res.headers.get('content-type') ?? '').startsWith('application/problem+json')) return res;
   const nonce = c.var.nonce;
+  const theme = requestTheme(c);
   let html: string;
   if (res.status === 404 && PASS_LINK.test(c.req.path)) {
-    html = renderNotFoundPage(nonce);
+    html = renderNotFoundPage(nonce, theme);
   } else {
     const line = isNavigation(c) ? undefined : await detailOf(res);
     html = renderErrorPage({
       status: res.status,
       nonce,
+      theme,
       retryAfter: retryAfterOf(res),
       ...(line ? { line } : {}),
       ...(isNavigation(c)

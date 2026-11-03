@@ -7,6 +7,7 @@ import { AppError, NotFoundError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import { ipPrefix, readCookie, setSessionCookie } from './cookies.ts';
 import { homeFor, safeNext } from './next.ts';
 import { breakglassPage } from './pages.ts';
@@ -26,7 +27,7 @@ function configuredHash(c: Context<AppBindings>): string {
 export function breakglassForm(c: Context<AppBindings>) {
   configuredHash(c);
   const next = safeNext(c.req.query('next')) ?? undefined;
-  return c.html(breakglassPage(c.var.nonce, { next }));
+  return c.html(breakglassPage(c.var.nonce, { next }, requestTheme(c)));
 }
 
 /** POST /auth/breakglass (form post from the page above). */
@@ -44,7 +45,10 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
     ctx.log.warn('auth.breakglass_failed', { code: 'BREAKGLASS_FAILED', ipPrefix: ipPrefix(ip) });
     await recordBreakglassFailure(ctx, ipPrefix(ip));
     writeEvent(c.env, { event: 'auth.sign_in', outcome: 'breakglass_failed' });
-    return c.html(breakglassPage(c.var.nonce, { error: 'Wrong token.', next }), 401);
+    return c.html(
+      breakglassPage(c.var.nonce, { error: 'Wrong token.', next }, requestTheme(c)),
+      401,
+    );
   }
   try {
     const result = await signInBreakglass(ctx, {
@@ -64,7 +68,7 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
   } catch (cause) {
     if (cause instanceof AppError && cause.code === 'BREAKGLASS_DISABLED') {
       return c.html(
-        breakglassPage(c.var.nonce, { error: 'Break-glass sign-in is disabled.' }),
+        breakglassPage(c.var.nonce, { error: 'Break-glass sign-in is disabled.' }, requestTheme(c)),
         403,
       );
     }

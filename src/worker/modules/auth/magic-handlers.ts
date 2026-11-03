@@ -13,6 +13,7 @@ import {
 import { sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import {
   clearCookie,
   ipPrefix,
@@ -79,19 +80,22 @@ async function currentSession(c: Context<AppBindings>) {
 export async function confirmMagic(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
   const nonce = c.var.nonce;
+  const theme = requestTheme(c);
   const token = c.req.query('t') ?? '';
   const link = token.length >= 16 && token.length <= 256 ? await peekMagicLink(ctx, token) : null;
-  if (!link) return c.html(expiredPage(nonce, await magicLinkNext(ctx, token)), 400);
+  if (!link) return c.html(expiredPage(nonce, await magicLinkNext(ctx, token), theme), 400);
   if (link.purpose === 'sign_in') {
     if (link.needsEmailSignIn && !(await isEmailSignInEnabled(ctx))) {
-      const page = signInErrorPage(nonce, 'MAGIC_LINK_DISABLED', { next: link.next });
+      const page = signInErrorPage(nonce, 'MAGIC_LINK_DISABLED', { next: link.next }, theme);
       return c.html(page.html, page.status);
     }
-    return c.html(confirmPage(nonce, { token, email: link.email }));
+    return c.html(confirmPage(nonce, { token, email: link.email }, theme));
   }
   const { session } = await currentSession(c);
   const viewer = !session ? 'signed-out' : session.userId === link.userId ? 'requester' : 'other';
-  return c.html(verifyPage(nonce, { token, email: link.email, requester: link.requester, viewer }));
+  return c.html(
+    verifyPage(nonce, { token, email: link.email, requester: link.requester, viewer }, theme),
+  );
 }
 
 async function readConsumeBody(c: Context<AppBindings>, isForm: boolean): Promise<unknown> {
@@ -133,18 +137,21 @@ async function consumeErrorPage(
   body: unknown,
 ) {
   const nonce = c.var.nonce;
+  const theme = requestTheme(c);
   const field = (body as Record<string, unknown> | null)?.token;
   const token = typeof field === 'string' ? field : '';
   const next = await magicLinkNext(serviceContext(c), token);
-  if (code === 'LINK_INVALID') return c.html(expiredPage(nonce, next), 400);
+  if (code === 'LINK_INVALID') return c.html(expiredPage(nonce, next, theme), 400);
   for (const [name, value] of Object.entries(error.headers ?? {})) c.header(name, value);
   const page =
     code === 'SESSION_REQUIRED' && token
-      ? signInErrorPage(nonce, 'SESSION_REQUIRED', {
-          href: loginPath(confirmPath(token)),
-          action: 'Sign in to confirm',
-        })
-      : signInErrorPage(nonce, code, { next });
+      ? signInErrorPage(
+          nonce,
+          'SESSION_REQUIRED',
+          { href: loginPath(confirmPath(token)), action: 'Sign in to confirm' },
+          theme,
+        )
+      : signInErrorPage(nonce, code, { next }, theme);
   return c.html(page.html, page.status);
 }
 

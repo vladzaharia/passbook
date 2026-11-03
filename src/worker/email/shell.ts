@@ -1,110 +1,97 @@
+import { EMAIL_TOKENS as T } from '../../generated/resolved-tokens.ts';
 import { escapeHtml } from '../../shared/html.ts';
-import { buddyImg, EMAIL_BUDDY, type EmailMood } from './buddy.ts';
+import { buddySliceHtml, EMAIL_BUDDY, type EmailMood } from './buddy.ts';
 
 export { escapeHtml };
 
-/** Token values for emails: inline light styles, class overrides for dark clients. */
-export const EMAIL_LIGHT = {
-  page: '#f6f8ff',
-  card: '#ffffff',
-  sunken: '#ebeef8',
-  strong: '#060912',
-  text: '#262d40',
-  muted: '#48536b',
-  line: '#dadee9',
-  accent: '#0f766e',
-  accentOn: '#ffffff',
-};
+/** The SPA's light tokens, inlined; dark clients get the dark ones through DARK_CSS classes. */
+export const EMAIL_LIGHT = T.light;
 
+const D = T.dark;
 /** Static only: no @keyframes, no GIFs (motion-and-expression.md, Email). */
 const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light dark}
 @media (prefers-color-scheme:dark){
-.e-page{background:#060912!important}
-.e-card{background:#0d111b!important}
-.e-text{color:#dbe4ff!important}
-.e-strong{color:#ffffff!important}
-.e-muted,.e-muted a{color:#b5bed3!important}
-.e-btn{background:#2dd4bf!important;color:#04201c!important}
-.e-link{color:#2dd4bf!important}
-.e-block{border-color:#61697b!important;color:#2dd4bf!important}
-.e-chip{background:#020408!important;color:#ffffff!important}
+.e-page{background:${D.page}!important}
+.e-card{background:${D.card}!important;border-color:${D.line}!important}
+.e-seam{background-color:${D.card}!important;background-image:linear-gradient(115deg,${D.foil1},${D.foil2} 55%,${D.foil3})!important}
+.e-text{color:${D.text}!important}
+.e-strong{color:${D.strong}!important}
+.e-muted,.e-muted a{color:${D.muted}!important}
+.e-btn{background:${D.accent}!important;border-color:${D.accent}!important;color:${D.accentOn}!important}
+.e-block{border-color:${D.lineStrong}!important;color:${D.text}!important}
+.e-chip{background:${D.sunken}!important;color:${D.strong}!important}
 }`;
 
-export const FONT =
-  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
+/** The SPA's sans stack (Rubik first, then its metric fallback and the system faces). */
+export const FONT = T.font.sans;
+/** The kit radii in px: md for controls and chips, lg for tiles, xl for the card. */
+export const RADIUS = T.radius;
 export const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace";
 
-const channel = (v: number) => {
-  const c = v / 255;
-  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-};
-const luminance = (hex: string) => {
-  const n = Number.parseInt(hex.slice(1), 16);
-  return 0.2126 * channel(n >> 16) + 0.7152 * channel((n >> 8) & 255) + 0.0722 * channel(n & 255);
-};
+/** `font-size` and `line-height` of a type step, in px. */
+export const type = (step: keyof typeof T.text) =>
+  `font-size:${T.text[step].size}px;line-height:${T.text[step].line}px`;
 
-/** WCAG contrast ratio of two `#rrggbb` colours. */
-export function contrast(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
-  return (hi + 0.05) / (lo + 0.05);
-}
+/** The card's h1: 24/32, semibold, tight, as the hosted card. */
+export const titleHtml = (text: string, margin: string) =>
+  `<p class="e-strong" style="margin:${margin};${type('2xl')};font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${EMAIL_LIGHT.strong}">${text}</p>`;
 
-/** White or near-black, whichever reads better on `bg`. */
-export const textOn = (bg: string) =>
-  contrast('#ffffff', bg) >= contrast(EMAIL_LIGHT.strong, bg) ? '#ffffff' : EMAIL_LIGHT.strong;
-
-/** The org accent for links when it reaches 4.5:1 on the white card, else the token accent. */
-export const linkColor = (accent: string) =>
-  contrast(accent, EMAIL_LIGHT.card) >= 4.5 ? accent : EMAIL_LIGHT.accent;
-
-/** A 44 px link block (12 × 24 padding, 20 px line). `primary` fills it; else it is outlined. */
-export function buttonHtml(
-  href: string,
-  label: string,
-  primary: boolean,
-  color = EMAIL_LIGHT.accent,
-) {
-  const fill = primary
-    ? `background:${EMAIL_LIGHT.accent};color:${EMAIL_LIGHT.accentOn}`
-    : `background:transparent;color:${color};border:1px solid ${EMAIL_LIGHT.line}`;
-  return `<a class="${primary ? 'e-btn' : 'e-block'}" href="${escapeHtml(href)}" style="display:inline-block;${fill};text-decoration:none;font-size:15px;font-weight:600;line-height:20px;padding:12px 24px;border-radius:8px">${escapeHtml(label)}</a>`;
+/**
+ * A full-width 44 px link block (12 px padding, 20 px line): the kit Button's 14/500 type and
+ * radius. `primary` fills it with the accent; else it is the outline variant, in neutral text.
+ */
+export function buttonHtml(href: string, label: string, primary: boolean) {
+  const c = EMAIL_LIGHT;
+  const look = primary
+    ? `background:${c.accent};color:${c.accentOn};border:1px solid ${c.accent}`
+    : `background:transparent;color:${c.text};border:1px solid ${c.lineStrong}`;
+  return `<a class="${primary ? 'e-btn' : 'e-block'}" href="${escapeHtml(href)}" style="display:block;${look};text-align:center;text-decoration:none;${type('sm')};font-weight:${T.weight.medium};padding:11px 24px;border-radius:${T.radius.md}px">${escapeHtml(label)}</a>`;
 }
 
 export interface ShellInput {
   lang: string;
   title: string;
-  /** Header bar label, e.g. `PassBook` or the org name. */
+  /** The band's name, at the wordmark's size: `PassBook` or the org name. */
   header: string;
-  /** Header bar colour (`#rrggbb`); the label is white or near-black by luminance. */
-  headerColor: string;
-  /** Optional 20 px image before the header label (absolute URL). */
+  /** Optional 24 px image before the name (absolute URL). */
   headerMark?: string;
-  /** The mascot at the header's right, standing on its bottom edge. `base`: PUBLIC_BASE_URL. */
+  /** The mascot seated on the card's top edge at the right. `base`: PUBLIC_BASE_URL. */
   buddy?: { base: string; mood: EmailMood };
-  /** Content of the 24px padded body cell, already escaped. */
+  /** Content of the card body, already escaped. */
   body: string;
 }
 
-/** Foil line over the header: PassBook teal, Polaris violet, Polaris gold. No gradient support: teal. */
-const FOIL = ['#2dd4bf', '#9a5cff', '#ffc24d'];
-const RADIUS = 12;
+/** Body padding; the band's left text inset matches it, like the hosted card. */
+const PAD = 24;
+const FOIL = 2;
+/** The pocket's ink ends 20 px inside the art's right edge, so it lines up with the body inset. */
+const ART_RIGHT_SPACE = 20;
 
-/** Shared by the sign-in and pass emails: fluid 480px card, header bar, padded body. */
+/**
+ * Shared by the sign-in and pass emails, laid out as the hosted card (src/worker/ssr/hosted.ts):
+ * the band on the page (wordmark left, the buddy right), then the card with its foil edge, the
+ * buddy's legs over it, and the body. A fluid 480 px column.
+ */
 export function emailShell(input: ShellInput): string {
   const c = EMAIL_LIGHT;
-  const ink = textOn(input.headerColor);
+  const r = T.radius.xl;
   const mark = input.headerMark
-    ? `<img src="${escapeHtml(input.headerMark)}" alt="" width="20" height="20" style="display:inline-block;width:20px;height:20px;border:0;border-radius:5px;vertical-align:-4px;margin-right:8px">`
+    ? `<img src="${escapeHtml(input.headerMark)}" alt="" width="24" height="24" style="display:inline-block;width:24px;height:24px;border:0;border-radius:${T.radius.md}px;vertical-align:-5px;margin-right:10px">`
     : '';
-  const label = `color:${ink};font-size:18px;line-height:24px;font-weight:600`;
   const buddy = input.buddy;
-  const w = EMAIL_BUDDY.width;
-  // With the buddy, the label keeps its 20 px bottom inset, the buddy's base meets the body's top
-  // edge and its pocket (4 px inside the image) lines up with the 24 px inset. Blocked, the cell
-  // keeps the header's height; dropped, the header is its plain 64 px again.
-  const header = buddy
-    ? `<tr><td style="background:${input.headerColor};padding:0 20px 0 24px;color:${ink}"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td valign="bottom" style="padding:20px 0;${label};vertical-align:bottom">${mark}${escapeHtml(input.header)}</td><td valign="bottom" align="right" width="${w}" style="width:${w}px;padding:12px 0 0 12px;vertical-align:bottom;font-size:0;line-height:0">${buddyImg(buddy.base, buddy.mood)}</td></tr></table></td></tr>`
-    : `<tr><td style="background:${input.headerColor};padding:20px 24px;${label}">${mark}${escapeHtml(input.header)}</td></tr>`;
+  const name = `${type('xl')};font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${c.strong}`;
+  // The wordmark's centre lines up with the buddy's face, 28 px above the card; alone, the band is
+  // the hosted 56 px.
+  const inset = PAD - ART_RIGHT_SPACE;
+  const band = buddy
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" valign="bottom" style="padding:0 0 14px ${PAD + 1}px;${name};vertical-align:bottom">${mark}${escapeHtml(input.header)}</td><td valign="bottom" align="right" width="${EMAIL_BUDDY.width}" style="width:${EMAIL_BUDDY.width}px;padding:0 ${inset}px 0 0;vertical-align:bottom;font-size:0;line-height:0">${buddySliceHtml(buddy.base, buddy.mood, 'top')}</td></tr></table>`
+    : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" style="padding:14px 0 14px ${PAD + 1}px;${name}">${mark}${escapeHtml(input.header)}</td></tr></table>`;
+  const foil = `background-color:${c.card};background-image:linear-gradient(115deg,${c.foil1},${c.foil2} 55%,${c.foil3});background-size:100% ${FOIL}px;background-repeat:no-repeat;border-radius:${r}px ${r}px 0 0`;
+  // The seam row: the foil along its top, the buddy's legs and shadow over it, flush with the band.
+  const seam = buddy
+    ? `<tr><td class="e-seam" align="right" valign="top" style="height:${EMAIL_BUDDY.legs}px;padding:0 ${inset - 1}px 0 0;${foil};font-size:0;line-height:0">${buddySliceHtml(buddy.base, buddy.mood, 'legs')}</td></tr>`
+    : `<tr><td class="e-seam" style="height:${FOIL}px;${foil};font-size:0;line-height:0">&nbsp;</td></tr>`;
+  const top = buddy ? PAD - EMAIL_BUDDY.legs : PAD - FOIL;
   return `<!doctype html>
 <html lang="${escapeHtml(input.lang)}">
 <head>
@@ -117,12 +104,16 @@ export function emailShell(input: ShellInput): string {
 </head>
 <body class="e-page" style="margin:0;padding:0;background:${c.page};color:${c.text};font-family:${FONT}">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="e-page" style="background:${c.page}">
-<tr><td align="center" style="padding:24px 16px">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="e-card" style="width:100%;max-width:480px;background:${c.card};border-radius:${RADIUS}px;border-collapse:separate;overflow:hidden">
-<tr><td style="height:3px;line-height:3px;font-size:0;background:${FOIL[0]};background-image:linear-gradient(115deg,${FOIL.join(',')});border-radius:${RADIUS}px ${RADIUS}px 0 0">&nbsp;</td></tr>
-${header}
-<tr><td class="e-text" style="padding:24px;color:${c.text};border-radius:0 0 ${RADIUS}px ${RADIUS}px">
+<tr><td align="center" style="padding:${PAD}px 16px">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:480px">
+<tr><td>${band}</td></tr>
+<tr><td>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="e-card" style="width:100%;background:${c.card};border:1px solid ${c.line};border-top:0;border-radius:${r}px;border-collapse:separate;overflow:hidden">
+${seam}
+<tr><td class="e-text" style="padding:${top}px ${PAD}px ${PAD}px;color:${c.text};font-family:${FONT};border-radius:0 0 ${r}px ${r}px">
 ${input.body}
+</td></tr>
+</table>
 </td></tr>
 </table>
 </td></tr>

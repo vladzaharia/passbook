@@ -76,7 +76,7 @@ describe('email.result events', () => {
 });
 
 describe('email content', () => {
-  it('uses the org form accent and the support contacts', async () => {
+  it('uses the support contacts; the band is page-tone, not the accent', async () => {
     await run(kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [
       JSON.stringify({
         accent: '#123abc',
@@ -88,7 +88,7 @@ describe('email content', () => {
     const pass = await kit.pass();
     await handleEmailSend({ kind: 'email.send', outboxId: await emailFor(pass) }, kit.ctx);
     const sent = kit.mailer.sent.at(-1);
-    expect(sent?.html).toContain('background:#123abc');
+    expect(sent?.html).not.toContain('#123abc');
     expect(sent?.html).toContain('help@gym.test');
     expect(sent?.html).toContain('https://gym.test/help');
     expect(sent?.text).toContain('help@gym.test');

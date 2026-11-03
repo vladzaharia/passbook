@@ -63,7 +63,7 @@ describe('brand mark sheet', () => {
     const theme = read('src/worker/ssr/theme.ts');
     expect(theme).toContain("import markCss from '../../web/ui/layout/brand-mark.css?raw';");
     expect(theme).toContain('renderToStaticMarkup(createElement(BrandMark))');
-    // Foil from either renderer's tokens.
-    for (const n of [1, 2, 3]) expect(css).toContain(`var(--wl-foil-${n}, var(--foil-${n}))`);
+    // One set of foil tokens: SSR pages carry the SPA's (src/generated/ssr-tokens.css).
+    for (const n of [1, 2, 3]) expect(css).toContain(`fill: var(--wl-foil-${n});`);
   });
 });

@@ -6,6 +6,7 @@ import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { rateLimit } from '../../platform/rate-limit.ts';
 import { passDevice } from '../../ssr/device.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { qrDataUri } from '../../ssr/qr.ts';
 import { servePassFile } from '../passes/file.ts';
@@ -55,6 +56,7 @@ register(
   async (c) => {
     const svcCtx = svc(c);
     const nonce = c.var.nonce;
+    const theme = requestTheme(c);
     try {
       const pass = await passForToken(svcCtx, c.req.valid('param').token);
       const model = await pageModel(svcCtx, pass);
@@ -70,6 +72,7 @@ register(
       const html = renderPassPage({
         view,
         nonce,
+        theme,
         orgName: view.organizationName || model.orgName,
         orgLabel: model.orgName,
         passTitle: pass.displayTitle ?? view.description ?? model.orgName,
@@ -82,7 +85,7 @@ register(
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
-        return new Response(renderNotFoundPage(nonce), {
+        return new Response(renderNotFoundPage(nonce, theme), {
           status: 404,
           headers: PAGE_HEADERS,
         });

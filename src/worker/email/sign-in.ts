@@ -1,5 +1,14 @@
 import type { EmailMood } from './buddy.ts';
-import { buttonHtml, EMAIL_LIGHT as c, emailShell, escapeHtml, MONO } from './shell.ts';
+import {
+  buttonHtml,
+  EMAIL_LIGHT as c,
+  emailShell,
+  escapeHtml,
+  MONO,
+  RADIUS,
+  titleHtml,
+  type,
+} from './shell.ts';
 
 export interface SignInEmailInput {
   purpose: 'sign_in' | 'verify_email';
@@ -25,7 +34,7 @@ export const SIGN_IN_MOOD: Record<SignInEmailInput['purpose'], EmailMood> = {
   verify_email: 'curious',
 };
 
-// Images need an absolute URL; without one the header shows the word alone.
+// Images need an absolute URL; without one the band shows the word alone.
 const absolute = (base: string) => /^https?:\/\/[^\s"'<>]+$/i.test(base);
 
 export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
@@ -44,14 +53,14 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
 
   // The code is a letter-spaced chip, not a field: easy to read, nothing to type into.
   const chip = input.code
-    ? `<p class="e-muted" style="margin:0 0 8px;font-size:14px;line-height:20px;color:${c.muted}">Or enter this code</p>
-<p style="margin:0 0 24px"><span class="e-chip e-strong" style="display:inline-block;padding:10px 16px;border-radius:8px;background:${c.sunken};font-family:${MONO};font-size:24px;line-height:28px;font-weight:600;letter-spacing:6px;color:${c.strong}">${escapeHtml(input.code)}</span></p>`
+    ? `<p class="e-muted" style="margin:0 0 8px;${type('sm')};color:${c.muted}">Or enter this code</p>
+<p style="margin:0 0 24px"><span class="e-chip e-strong" style="display:inline-block;padding:10px 16px;border-radius:${RADIUS.md}px;background:${c.sunken};font-family:${MONO};font-size:24px;line-height:28px;font-weight:600;letter-spacing:6px;color:${c.strong}">${escapeHtml(input.code)}</span></p>`
     : '';
-  const body = `<p class="e-strong" style="margin:0 0 ${askedBy ? '8' : '20'}px;font-size:20px;line-height:28px;font-weight:600;color:${c.strong}">${title}</p>
-${askedBy ? `<p class="e-text" style="margin:0 0 20px;font-size:14px;line-height:20px;color:${c.text}">${escapeHtml(askedBy)}</p>` : ''}
+  const body = `${titleHtml(title, `0 0 ${askedBy ? '8' : '24'}px`)}
+${askedBy ? `<p class="e-text" style="margin:0 0 24px;${type('sm')};color:${c.text}">${escapeHtml(askedBy)}</p>` : ''}
 <p style="margin:0 0 24px">${buttonHtml(input.link, action, true)}</p>
 ${chip}
-<p class="e-muted" style="margin:0;font-size:12px;line-height:18px;color:${c.muted}">${expiry}</p>`;
+<p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${expiry}</p>`;
 
   const images = absolute(input.base);
   return {
@@ -60,7 +69,6 @@ ${chip}
       lang: 'en',
       title: subject,
       header: 'PassBook',
-      headerColor: '#060912',
       ...(images
         ? {
             headerMark: `${input.base}/apple-touch-icon.png`,
