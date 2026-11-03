@@ -11,6 +11,18 @@
 .wl-pass-side:has([data-awb]:is(:hover, :focus-visible)) .wl-nudge [data-look] {
   transform: translate(-2.2px, -1.2px);
 }
+/* My passes: the buddy (S, at="start") sits on the first tile's top edge, under the bundle badge;
+   the grid keeps 56 px clear above the tiles. It looks up at the bundle badge and down at a tile's
+   badge while one is pointed at or focused. */
+.wl-list-buddy {
+  --wl-drop: 18px;
+}
+.wl-passes:has(li [data-awb]:is(:hover, :focus-visible)) .wl-list-buddy [data-look] {
+  transform: translateY(1.6px);
+}
+.wl-passes:has(.wl-bundle [data-awb]:is(:hover, :focus-visible)) .wl-list-buddy [data-look] {
+  transform: translate(-2.2px, -1.2px);
+}
 
 @media (prefers-reduced-motion: no-preference) {
   /* The tile's title and actions rise 8 px after its card deals in. Apple's badge never
