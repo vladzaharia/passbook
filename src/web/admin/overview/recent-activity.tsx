@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { actionOf } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
 import {
@@ -10,6 +9,7 @@ import {
   ErrorState,
   ListRow,
   ListRows,
+  RowLink,
   SkeletonRows,
 } from '@/web/ui/index.ts';
 import { formatDateTime, formatRelative } from '../../lib/format.ts';
@@ -56,14 +56,16 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
                   className="relative"
                   leading={<action.icon aria-hidden className={cn(TONE_TEXT[action.tone])} />}
                   title={
-                    <Link
+                    <RowLink
                       to={link.to}
                       search={link.search}
-                      className="rounded-sm after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      className="after:absolute after:inset-0"
                     >
                       {action.label}
-                      {target ? <span className="ml-2 text-fg-muted">{target.name}</span> : null}
-                    </Link>
+                      {target ? (
+                        <span className="ml-2 font-normal text-fg-muted">{target.name}</span>
+                      ) : null}
+                    </RowLink>
                   }
                   trailing={
                     <time

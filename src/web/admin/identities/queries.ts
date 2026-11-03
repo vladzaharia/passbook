@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
   ApnsProbeResultSchema,
@@ -9,15 +9,33 @@ import {
   type UploadIdentitySchema,
 } from '@/shared/contracts/identities.ts';
 import { BulkReissueResponseSchema } from '@/shared/contracts/passes.ts';
-import { api } from '@/web/lib/api.ts';
+import { api, listQuery } from '@/web/lib/api.ts';
 
 const KEY = ['identities'] as const;
 const path = (id: string) => `/api/v1/identities/${encodeURIComponent(id)}`;
 
-export function useIdentities() {
+/** The Apple identities page: oldest first (the platform identity leads), 50 at a time. */
+export function useIdentityPages() {
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: [...KEY, 'pages'],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get('/api/v1/identities', IdentityListSchema, {
+          query: { cursor: pageParam, limit: 50 },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+    }),
+  );
+}
+
+/** Pickers (an org's signing identity): up to 200. */
+export function useIdentityOptions() {
   return useQuery({
-    queryKey: [...KEY, 'list'],
-    queryFn: ({ signal }) => api.get('/api/v1/identities', IdentityListSchema, { signal }),
+    queryKey: [...KEY, 'options'],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/identities', IdentityListSchema, { query: { limit: 200 }, signal }),
   });
 }
 

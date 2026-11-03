@@ -164,9 +164,7 @@ export function AuditPage({
       )}
       {log.isError || rows.length === 0 ? null : (
         <LoadMore
-          hasMore={Boolean(log.hasNextPage)}
-          loading={log.isFetchingNextPage}
-          onLoadMore={() => log.fetchNextPage()}
+          query={log}
           shown={rows.length}
           noun={['entry', 'entries']}
           scoped={!filters.orgId}

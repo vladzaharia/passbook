@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
@@ -5,11 +6,13 @@ import {
   CheckboxField,
   Dialog,
   DialogContent,
+  Form,
   FormField,
   Input,
   Select,
-  toast,
+  useFormErrors,
 } from '@/web/ui/index.ts';
+import { markCreated } from '../orgs/just-created.tsx';
 import { useOrgList } from '../orgs/queries.ts';
 import { CertificateFields } from './certificate-fields.tsx';
 import { useUploadIdentity } from './queries.ts';
@@ -22,7 +25,9 @@ import {
 } from './upload-input.ts';
 
 const PLATFORM = 'platform';
+const FORM_ID = 'upload-identity';
 
+/** Uploads and opens the new identity, whose page says what to do next. */
 export function UploadIdentityDialog({
   open,
   onOpenChange,
@@ -32,39 +37,40 @@ export function UploadIdentityDialog({
 }) {
   const orgs = useOrgList();
   const upload = useUploadIdentity();
+  const navigate = useNavigate();
   const [draft, setDraft] = useState<UploadDraft>(EMPTY);
   const [org, setOrg] = useState(PLATFORM);
   const [nfc, setNfc] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
-  const patch = (p: Partial<UploadDraft>) => setDraft((d) => ({ ...d, ...p }));
+  const check = useFormErrors(validateUpload(draft));
+  const errors = { ...server, ...check.errors } as Record<string, string>;
+  const patch = (p: Partial<UploadDraft>) => {
+    setDraft((d) => ({ ...d, ...p }));
+    setServer({});
+  };
 
   function close() {
     onOpenChange(false);
     setDraft(EMPTY);
     setOrg(PLATFORM);
     setNfc(false);
-    setErrors({});
+    setServer({});
+    check.reset();
     setFormError(undefined);
   }
 
   async function submit() {
-    const found = validateUpload(draft);
-    setErrors(found);
     setFormError(undefined);
-    if (Object.keys(found).length > 0) return;
     try {
       const body = await buildUploadBody(draft, org === PLATFORM ? null : org, nfc);
-      await upload.mutateAsync(body);
-      toast.success('Identity uploaded');
+      const created = await upload.mutateAsync(body);
       close();
+      markCreated(created.id);
+      void navigate({ to: '/admin/identities/$identityId', params: { identityId: created.id } });
     } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) {
-        setErrors(cause.fields);
-        setFormError(cause.message);
-      } else {
-        setFormError(errorMessage(cause));
-      }
+      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
+      setFormError(errorMessage(cause));
     }
   }
 
@@ -82,18 +88,17 @@ export function UploadIdentityDialog({
             <Button variant="outline" onClick={close}>
               Cancel
             </Button>
-            <Button loading={upload.isPending} onClick={() => void submit()}>
+            <Button type="submit" form={FORM_ID} loading={upload.isPending}>
               Upload
             </Button>
           </>
         }
       >
-        <form
+        <Form
+          id={FORM_ID}
           className="flex flex-col gap-4 overflow-y-auto"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
+          {...check.form}
+          onValid={() => void submit()}
         >
           <FormField label="Label" required error={errors.label}>
             {(p) => (
@@ -128,7 +133,7 @@ export function UploadIdentityDialog({
               {formError}
             </p>
           ) : null}
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

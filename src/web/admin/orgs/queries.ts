@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
   type CreateOrgSchema,
@@ -17,12 +17,29 @@ export const orgKeys = {
 
 const orgPath = (id: string) => `/api/v1/orgs/${encodeURIComponent(id)}`;
 
-export function useOrgList(q?: string) {
+/** The Organizations page: newest first, 50 at a time. */
+export function useOrgPages(q?: string) {
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: ['orgs', 'pages', q ?? ''],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get('/api/v1/orgs', OrgListSchema, {
+          query: { q, cursor: pageParam, limit: 50 },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+    }),
+  );
+}
+
+/** Names and pickers: one request for up to 200 orgs, shared with lib/search useOrgOptions. */
+export function useOrgList() {
   return useQuery(
     listQuery({
-      queryKey: [...orgKeys.list, q ?? ''],
+      queryKey: [...orgKeys.list, ''],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200, q }, signal }),
+        api.get('/api/v1/orgs', OrgListSchema, { query: { limit: 200 }, signal }),
     }),
   );
 }

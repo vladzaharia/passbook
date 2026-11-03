@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import type { z } from 'zod';
 import type { WorkflowRunSchema } from '@/shared/contracts/status.ts';
 import {
@@ -8,6 +7,7 @@ import {
   DataTable,
   EmptyState,
   ErrorState,
+  RowLink,
   SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
@@ -59,15 +59,11 @@ export function WorkflowRuns({ orgName }: { orgName: (id: string | null) => stri
                 const link = runLink(row.original);
                 const label = workflowKindLabel(row.original.kind);
                 return link ? (
-                  <Link
-                    to={link.to}
-                    search={link.search}
-                    className="font-medium text-accent-fg hover:underline"
-                  >
+                  <RowLink to={link.to} search={link.search}>
                     {label}
-                  </Link>
+                  </RowLink>
                 ) : (
-                  label
+                  <span className="font-medium text-fg-strong">{label}</span>
                 );
               },
             },

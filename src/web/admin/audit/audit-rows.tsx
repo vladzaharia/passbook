@@ -17,7 +17,10 @@ export const TONE_TEXT: Record<Tone, string> = {
   neutral: 'text-fg-muted',
 };
 
-/** The Action cell: its glyph in its tone, the label as the button that opens the entry. */
+/**
+ * The Action cell, the row's title: its glyph in its tone, the label as the button that opens the
+ * entry, styled like a RowLink (strong; teal and underlined on hover).
+ */
 export function ActionButton({
   entry,
   onOpen,
@@ -37,7 +40,7 @@ export function ActionButton({
         onOpen();
       }}
       className={cn(
-        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm text-left text-sm font-medium text-fg-strong hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm text-left text-sm font-medium text-fg-strong wl-colors hover:text-accent-fg hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         className,
       )}
     >

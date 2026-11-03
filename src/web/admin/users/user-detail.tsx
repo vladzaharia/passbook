@@ -1,15 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { UserCheck } from 'lucide-react';
-import { useState } from 'react';
+import { UserCheck, UserRound } from 'lucide-react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
-import { isApiError } from '@/web/lib/errors.ts';
 import { useSession } from '@/web/lib/session.ts';
 import {
   Button,
-  ConfirmDialog,
+  Callout,
+  detailError,
   EntityAvatar,
-  ErrorState,
+  MetaLink,
   PageHeader,
   SkeletonDetail,
   StatusPill,
@@ -21,9 +20,8 @@ import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-se
 
 export function UserDetailPage({ userId }: { userId: string }) {
   const query = useUser(userId);
-  const session = useSession();
+  const { authed } = useSession();
   const { setStatus } = useUserMutations(userId);
-  const [confirm, setConfirm] = useState(false);
   const crumbs = [
     { label: 'Users', to: '/admin/users' },
     { label: query.data?.name ?? query.data?.primaryEmail ?? 'User' },
@@ -38,22 +36,31 @@ export function UserDetailPage({ userId }: { userId: string }) {
     );
   }
   if (query.isError) {
-    return (
-      <>
-        <PageHeader title="User" breadcrumbs={crumbs} />
-        <ErrorState
-          error={query.error}
-          title={isApiError(query.error) && query.error.isNotFound ? 'User not found' : undefined}
-          onRetry={() => query.refetch()}
-        />
-      </>
-    );
+    return detailError(query, {
+      entity: 'user',
+      to: '/admin/users',
+      header: <PageHeader title="User" breadcrumbs={crumbs} />,
+    });
   }
 
   const user = query.data;
   const disabled = user.status === 'disabled';
-  const self = session.data?.authenticated === true && session.data.user.id === user.id;
+  const self = authed?.user.id === user.id;
   const name = user.name ?? user.primaryEmail;
+  // Disable is undone from its toast (it also ends their sessions); Enable just runs.
+  const toggle = async () => {
+    try {
+      if (disabled) {
+        await setStatus.mutateAsync('active');
+        toast.success('User enabled');
+      } else {
+        await setStatus.mutateAsync('disabled');
+        toast.undo('User disabled', () => setStatus.mutateAsync('active'));
+      }
+    } catch (cause) {
+      toast.error(cause, disabled ? 'Could not enable' : 'Could not disable');
+    }
+  };
   return (
     <>
       <PageHeader
@@ -66,26 +73,31 @@ export function UserDetailPage({ userId }: { userId: string }) {
             {user.lastRoles.map((r) => (
               <StatusPill key={r} status={r} />
             ))}
-            <Link
+            <MetaLink
               to="/admin/audit"
               search={{ targetType: 'user', targetId: user.id }}
-              className="inline-flex min-h-6 items-center gap-1.5 rounded-sm text-fg-muted hover:text-fg-strong hover:underline"
+              icon={ENTITY.audit.icon}
             >
-              <ENTITY.audit.icon aria-hidden className="size-4" />
               Audit log
-            </Link>
+            </MetaLink>
           </>
         }
         actions={
-          disabled ? (
-            <Button iconStart={<UserCheck aria-hidden />} onClick={() => setConfirm(true)}>
+          // Your own account is not disabled from here (the server refuses it too).
+          self ? null : disabled ? (
+            <Button
+              loading={setStatus.isPending}
+              iconStart={<UserCheck aria-hidden />}
+              onClick={() => void toggle()}
+            >
               Enable
             </Button>
-          ) : self ? null : (
+          ) : (
             <Button
               variant="outline"
+              loading={setStatus.isPending}
               iconStart={<ACTION_ICON.void aria-hidden />}
-              onClick={() => setConfirm(true)}
+              onClick={() => void toggle()}
             >
               Disable
             </Button>
@@ -93,24 +105,22 @@ export function UserDetailPage({ userId }: { userId: string }) {
         }
       />
       <TwoPane aside={<AccountCard user={user} />}>
-        <EmailsCard user={user} />
-        <SessionsCard user={user} now={Date.now()} />
+        {self ? (
+          <Callout
+            icon={UserRound}
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/account">Open Account</Link>
+              </Button>
+            }
+          >
+            This is you. Manage your own sign-in and sessions in Account.
+          </Callout>
+        ) : null}
+        <EmailsCard user={user} self={self} />
+        <SessionsCard user={user} self={self} now={Date.now()} />
         <IdentitiesCard user={user} />
       </TwoPane>
-      <ConfirmDialog
-        open={confirm}
-        onOpenChange={setConfirm}
-        title={disabled ? `Enable ${name}?` : `Disable ${name}?`}
-        description={
-          disabled ? 'They can sign in again.' : 'They are signed out at their next request.'
-        }
-        confirmLabel={disabled ? 'Enable' : 'Disable'}
-        destructive={!disabled}
-        onConfirm={async () => {
-          await setStatus.mutateAsync(disabled ? 'active' : 'disabled');
-          toast.success(disabled ? 'User enabled' : 'User disabled');
-        }}
-      />
     </>
   );
 }

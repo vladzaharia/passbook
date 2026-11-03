@@ -77,10 +77,7 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
         )}
       >
         <span className="flex min-w-0 items-center gap-2.5">
-          <EntityIcon
-            icon={kpi.icon}
-            className={cn('size-8 [&>svg]:size-4', bad && 'border-danger-border text-danger')}
-          />
+          <EntityIcon icon={kpi.icon} className={cn(bad && 'border-danger-border text-danger')} />
           <span className="min-w-0 truncate text-sm text-fg-muted">{kpi.label}</span>
           {kpi.ranged ? (
             <span className="ml-auto hidden shrink-0 text-xs text-fg-muted sm:inline">
