@@ -20,7 +20,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { CreateOrgDialog } from './create-org-dialog.tsx';
-import { useOrgPages } from './queries.ts';
+import { useOrgPages } from './org-pages.ts';
 
 export { slugify } from './create-org-dialog.tsx';
 
