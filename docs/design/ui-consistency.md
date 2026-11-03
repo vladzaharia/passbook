@@ -579,8 +579,10 @@ The trust and footer lines are the only explanatory text allowed on these pages:
 - Emails match the hosted card: the card's colours, `xl` radius and foil top edge, the kit
   button's type and radius, tokens from `npm run gen`. The sign-in email carries the seated buddy
   cut in two slices at the card seam (top in the header band, legs over the foil; static PNGs,
-  `public/email/`); the pass email is the org's, with no buddy. Fluid container `width:100%;
+  `public/email/`); the pass email is the org's, with no buddy unless the org opts in
+  (`email.buddy`, org page `Pass email` card with a sample). Fluid container `width:100%;
   max-width:480px`; 3px foil line (teal fallback) over the header bar. One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
   pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
-  not a field. Buttons 44px. Footer note `12px`. Nothing wider than 320px. No animation.
+  not a field; asked from the installed app (`prefer: 'code'`) the email is `Your sign-in code`:
+  the chip first, large and full width, then `Or open this link` and an outline `Sign in`. Buttons 44px. Footer note `12px`. Nothing wider than 320px. No animation.
