@@ -7,8 +7,9 @@
  * click. No inline script.
  */
 import { ART_CSS } from '../../web/ui/art/css.ts';
+import { appPageHead, HEAD_HTML } from './head.ts';
 import { artHtml, HOSTED_ART_CSS, type HostedArt } from './hosted-art.tsx';
-import { escapeHtml, HEAD_HTML, THEME_CSS, WORDMARK_CSS, wordmarkHtml } from './theme.ts';
+import { escapeHtml, THEME_CSS, WORDMARK_CSS, wordmarkHtml } from './theme.ts';
 
 export const HOSTED_FOOTER = 'Signing in shows the passes sent to your email.';
 
@@ -77,5 +78,5 @@ export function hostedPage(input: HostedPageInput): string {
   const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer ? `<p class="foot">${LOCK}${escapeHtml(HOSTED_FOOTER)}</p>` : '';
-  return `<!doctype html><html lang="en"><head>${HEAD_HTML}<meta name="robots" content="noindex"><title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
+  return `<!doctype html><html lang="en"><head>${HEAD_HTML}${appPageHead(input.title)}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
 }

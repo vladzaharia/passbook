@@ -44,8 +44,4 @@ const MARK = renderToStaticMarkup(createElement(BrandMark));
 /** Same wordmark as the console, as static markup. No hello on SSR pages; it smiles on hover. */
 export const wordmarkHtml = (href = '/') => `<a class="mark" href="${href}">${MARK}PassBook</a>`;
 
-/** Head tags every holder page carries (the caller adds the nonce'd style). */
-export const HEAD_HTML =
-  '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f6f8ff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#060912" media="(prefers-color-scheme: dark)"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">';
-
 export { escapeHtml } from '../../shared/html.ts';
