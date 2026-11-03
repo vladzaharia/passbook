@@ -2,16 +2,18 @@ import type { Context } from 'hono';
 import type { SessionResponse } from '../../../shared/contracts/index.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { csrfGuard } from '../../platform/csrf.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { clearSessionCookie, ipPrefix, readCookie } from './cookies.ts';
+import { loginPath } from './next.ts';
 import { postLogoutRedirectUri } from './oidc-cimd.ts';
 import { discover } from './oidc-client.ts';
 import { oidcConfig } from './oidc-handlers.ts';
 import { findUser } from './service.ts';
-import { revokeOne } from './sessions.ts';
+import { revokeAllForUser, revokeOne } from './sessions.ts';
 
 /** GET /api/v1/session. Never 401: signed-out callers get what the login page needs. */
 export async function getSession(c: Context<AppBindings>): Promise<SessionResponse> {
@@ -56,21 +58,30 @@ async function endSessionUrl(c: Context<AppBindings>): Promise<string | null> {
   }
 }
 
-/** POST /auth/logout. Revokes the session, then leaves via Pocket ID when it supports it. */
+/**
+ * POST /auth/logout[?all=1][&next=]. Revokes this session, or with all=1 every session of the
+ * account (CSRF token required, as for any account change), then leaves via Pocket ID when it
+ * supports it. Without Pocket ID the sign-in page keeps a safe next.
+ */
 export async function logout(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
   const cookie = readCookie(c, SESSION_COOKIE);
   const auth = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
-  let target = '/login';
+  let target = loginPath(c.req.query('next'));
   if (auth) {
-    await revokeOne(ctx, auth.sessionId);
+    const everywhere = c.req.query('all') === '1';
+    if (everywhere) await csrfGuard(c, auth);
+    const count = everywhere
+      ? await revokeAllForUser(ctx, auth.userId)
+      : await revokeOne(ctx, auth.sessionId);
     await recordAudit(ctx, {
       actorType: 'user',
       actorId: auth.userId,
-      action: 'auth.sign_out',
+      action: everywhere ? 'user.sessions_revoke' : 'auth.sign_out',
       targetType: 'user',
       targetId: auth.userId,
       ipPrefix: ipPrefix(clientIp(c)),
+      ...(everywhere ? { detail: { count } } : {}),
     });
     if (auth.amr === 'oidc') target = (await endSessionUrl(c)) ?? target;
   }

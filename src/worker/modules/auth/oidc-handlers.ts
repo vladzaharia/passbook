@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { isSignInErrorCode, OIDC_FAILURE_COPY } from '../../../shared/copy/sign-in.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { envString } from '../../platform/env.ts';
@@ -6,7 +7,6 @@ import { AppError, UnavailableError, UpstreamError } from '../../platform/errors
 import { sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import type { HostedArt } from '../../ssr/hosted.ts';
 import {
   clearCookie,
   ipPrefix,
@@ -17,7 +17,7 @@ import {
   setSessionCookie,
 } from './cookies.ts';
 import { MAGIC_TTL_MS } from './magic-service.ts';
-import { nextOrHome, safeNext } from './next.ts';
+import { homeFor, loginPath, safeNext } from './next.ts';
 import { OIDC_SCOPE, oidcRedirectUri, usesCimd } from './oidc-cimd.ts';
 import {
   authorizationUrl,
@@ -31,7 +31,7 @@ import {
   redeemAuthorizationCode,
 } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
-import { messagePage, noAccessPage, SIGN_IN_ERRORS } from './pages.ts';
+import { messagePage, noAccessPage, signInErrorPage } from './pages.ts';
 import { saveOidcFlow, takeOidcFlow } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
@@ -54,28 +54,22 @@ export function oidcConfig(env: AppBindings['Bindings']): RelyingParty | null {
   });
 }
 
+/** A failed round trip: one line and a way back to sign-in that keeps next. */
 function errorPage(
   c: Context<AppBindings>,
-  title: string,
-  message: string,
-  status: 400 | 403 | 502,
-  art?: HostedArt,
+  copy: { title: string; message: string },
+  status: 400 | 502,
+  next: string | null,
 ) {
   return c.html(
-    messagePage(c.var.nonce, {
-      title,
-      message,
-      href: '/login',
-      action: 'Back to sign in',
-      ...(art ? { art } : {}),
-    }),
+    messagePage(c.var.nonce, { ...copy, href: loginPath(next), action: 'Back to sign in' }),
     status,
   );
 }
 
 /** GET /auth/no-access: where a Polaris ID without PassBook access lands (a clean URL). */
 export function noAccess(c: Context<AppBindings>) {
-  return c.html(noAccessPage(c.var.nonce));
+  return c.html(noAccessPage(c.var.nonce, safeNext(c.req.query('next'))));
 }
 
 export async function startOidc(c: Context<AppBindings>) {
@@ -121,14 +115,14 @@ export async function callbackOidc(c: Context<AppBindings>) {
   const { code, state, iss, error } = c.req.query();
   const binding = readCookie(c, OIDC_COOKIE);
   clearCookie(c, OIDC_COOKIE);
-  if (error || !code || !state || !binding) {
-    return errorPage(c, 'Sign-in failed', 'Sign-in was cancelled or refused. Try again.', 400);
-  }
+  if (!state || !binding) return errorPage(c, OIDC_FAILURE_COPY.cancelled, 400, null);
   const rp = oidcConfig(c.env);
   if (!rp) throw new UnavailableError('Sign-in is not configured.', 'OIDC_UNCONFIGURED');
 
   const flow = await takeOidcFlow(ctx, await sha256Hex(state), await sha256Hex(binding));
-  if (!flow) return errorPage(c, 'Sign-in expired', 'Start again.', 400);
+  if (!flow) return errorPage(c, OIDC_FAILURE_COPY.expired, 400, null);
+  const next = flow.redirect_path;
+  if (error || !code) return errorPage(c, OIDC_FAILURE_COPY.cancelled, 400, next);
 
   let claims: Record<string, unknown>;
   try {
@@ -146,11 +140,11 @@ export async function callbackOidc(c: Context<AppBindings>) {
   } catch (cause) {
     if (cause instanceof OidcNetworkError) {
       ctx.log.error('auth.oidc_network', { error: cause });
-      return errorPage(c, 'Sign-in unavailable', 'The sign-in provider failed. Try again.', 502);
+      return errorPage(c, OIDC_FAILURE_COPY.unavailable, 502, next);
     }
     if (cause instanceof OidcVerifyError || cause instanceof OidcGrantRefusedError) {
       ctx.log.warn('auth.oidc_rejected', { code: 'OIDC_REJECTED', error: cause });
-      return errorPage(c, 'Sign-in failed', 'The sign-in could not be verified. Try again.', 400);
+      return errorPage(c, OIDC_FAILURE_COPY.unverified, 400, next);
     }
     throw cause;
   }
@@ -174,19 +168,22 @@ export async function callbackOidc(c: Context<AppBindings>) {
         userAgent: c.req.header('user-agent') ?? null,
         previousCookie: readCookie(c, SESSION_COOKIE),
         bindingHash: await sha256Hex(proofBinding),
-        next: flow.redirect_path,
+        next,
       },
     );
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);
-    return c.redirect(nextOrHome(flow.redirect_path), 302);
+    return c.redirect(homeFor(result.roles, next), 302);
   } catch (cause) {
-    const known = cause instanceof AppError ? SIGN_IN_ERRORS[cause.code] : undefined;
-    if (!known) throw cause;
-    ctx.log.info('auth.oidc_refused', { code: (cause as AppError).code });
-    if ((cause as AppError).code === 'EMAIL_PROOF_SENT') {
+    if (!(cause instanceof AppError) || !isSignInErrorCode(cause.code)) throw cause;
+    ctx.log.info('auth.oidc_refused', { code: cause.code });
+    if (cause.code === 'EMAIL_PROOF_SENT') {
       setBindingCookie(c, MAGIC_COOKIE, proofBinding, MAGIC_TTL_MS / 1000);
     }
-    if ((cause as AppError).code === 'NO_ACCESS') return c.redirect('/auth/no-access', 303);
-    return errorPage(c, known.title, known.message, known.status, known.art);
+    if (cause.code === 'NO_ACCESS') {
+      const keep = safeNext(next);
+      return c.redirect(`/auth/no-access${keep ? `?next=${encodeURIComponent(keep)}` : ''}`, 303);
+    }
+    const page = signInErrorPage(c.var.nonce, cause.code, { next });
+    return c.html(page.html, page.status);
   }
 }

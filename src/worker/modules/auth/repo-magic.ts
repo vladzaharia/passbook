@@ -83,6 +83,16 @@ export const peekLink = (db: Db, tokenHash: string, now: number) =>
     [tokenHash, now],
   );
 
+/** The stored next of any link, live, used or expired. */
+export const linkRedirectPath = async (db: Db, tokenHash: string): Promise<string | null> =>
+  (
+    await first<{ redirect_path: string | null }>(
+      db,
+      'SELECT redirect_path FROM magic_links WHERE token_hash = ?',
+      [tokenHash],
+    )
+  )?.redirect_path ?? null;
+
 export const consumeLink = (db: Db, tokenHash: string, now: number) =>
   first<MagicLinkRow>(
     db,

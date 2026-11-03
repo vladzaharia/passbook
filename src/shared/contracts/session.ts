@@ -35,4 +35,11 @@ export const MagicLinkConsumeSchema = z.union([
   z.object({ token: z.string().min(16).max(256) }),
   z.object({ email: EmailSchema, code: z.string().regex(/^\d{6}$/) }),
 ]);
+/** JSON answer of a consume: where to go (the shared landing rule, or /account?verified=). */
+export const MagicConsumeResultSchema = z.object({ ok: z.literal(true), next: z.string() });
 export const OidcStartQuerySchema = z.object({ next: z.string().max(512).optional() });
+/** all=1 ends every session of the account; next is kept for the sign-in page. */
+export const LogoutQuerySchema = z.object({
+  all: z.enum(['1']).optional(),
+  next: z.string().max(512).optional(),
+});

@@ -144,25 +144,56 @@ export async function processVerifyRequest(
   }
 }
 
-export async function peekMagicLink(ctx: ServiceContext, token: string) {
+export interface PeekedLink {
+  email: string;
+  purpose: repo.MagicPurpose;
+  /** verify_email: the account that asked, and its primary email. */
+  userId: string | null;
+  requester: string | null;
+  /** A plain sign-in link: refused while email sign-in is off. */
+  needsEmailSignIn: boolean;
+  next: string | null;
+}
+
+export async function peekMagicLink(
+  ctx: ServiceContext,
+  token: string,
+): Promise<PeekedLink | null> {
   const link = await repo.peekLink(ctx.env.DB, await sha256Hex(token), ctx.clock.now());
   if (!link) return null;
   const requester =
     link.purpose === 'verify_email' && link.user_id
       ? await repo.primaryEmailOf(ctx.env.DB, link.user_id)
       : null;
-  return { email: link.email, purpose: link.purpose, requester };
+  return {
+    email: link.email,
+    purpose: link.purpose,
+    userId: link.user_id,
+    requester,
+    needsEmailSignIn: link.purpose === 'sign_in' && !link.pending_identity,
+    next: link.redirect_path,
+  };
+}
+
+/** Where a link, live or not, meant to return, so an expired page can keep it. */
+export async function magicLinkNext(ctx: ServiceContext, token: string): Promise<string | null> {
+  if (token.length < 16 || token.length > 256) return null;
+  return repo.linkRedirectPath(ctx.env.DB, await sha256Hex(token));
+}
+
+export async function isEmailSignInEnabled(ctx: ServiceContext): Promise<boolean> {
+  return (await getPlatformSettings(ctx))['auth.magicLinkEnabled'];
 }
 
 async function requireSignInEnabled(ctx: ServiceContext) {
-  if (!(await getPlatformSettings(ctx))['auth.magicLinkEnabled']) {
+  if (!(await isEmailSignInEnabled(ctx))) {
     throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
   }
 }
 
 export type MagicOutcome =
   | { kind: 'signed_in'; result: SignInResult; next: string | null }
-  | { kind: 'verified'; next: string | null };
+  | { kind: 'verified'; email: string };
 
 async function finish(
   ctx: ServiceContext,
@@ -172,7 +203,7 @@ async function finish(
   if (link.purpose === 'verify_email') {
     if (!link.user_id) throw invalid();
     await verifyEmailForUser(ctx, link.user_id, link.email);
-    return { kind: 'verified', next: link.redirect_path };
+    return { kind: 'verified', email: link.email };
   }
   const pending = link.pending_identity
     ? (JSON.parse(link.pending_identity) as PendingIdentity)
