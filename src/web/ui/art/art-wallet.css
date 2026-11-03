@@ -256,8 +256,9 @@
 .wl-buddy[data-prop] [data-look] {
   transform: translateX(1.5px);
 }
-/* It watches the action you reach for. */
-[data-art-host]:has(:is(a, button):is(:hover, :focus-visible)) .wl-buddy [data-look] {
+/* It watches the action you reach for (split selectors: WebKit). */
+[data-art-host]:has(a:hover, button:hover) .wl-buddy [data-look],
+[data-art-host]:has(a:focus-visible, button:focus-visible) .wl-buddy [data-look] {
   transform: translateY(1.6px);
 }
 @media (prefers-reduced-motion: no-preference) {
