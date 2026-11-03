@@ -91,7 +91,7 @@ export function EntityAvatar({ kind, id, name, accent, size = 24, className }: E
   );
 }
 
-/** A size-9 tile holding the entity's size-5 icon. */
+/** The one icon tile: 32 px holding a 16 px icon (Overview tiles, Status rows). */
 export function EntityIcon({
   kind,
   icon,
@@ -106,11 +106,11 @@ export function EntityIcon({
     <span
       aria-hidden
       className={cn(
-        'inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-sunken text-fg-muted',
+        'inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-surface-sunken text-fg-muted',
         className,
       )}
     >
-      <Icon className="size-5" />
+      <Icon className="size-4" />
     </span>
   );
 }

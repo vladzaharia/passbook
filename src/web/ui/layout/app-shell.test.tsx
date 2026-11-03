@@ -26,6 +26,8 @@ describe('AppShell', () => {
     const main = screen.getByRole('main');
     expect(main).toHaveAttribute('id', MAIN_ID);
     expect(main).toHaveClass('px-safe', 'pb-[max(1.5rem,env(safe-area-inset-bottom))]');
+    // A fixed SaveBar's room sits at the end of the page, not inside the form that shows it.
+    expect(main).toHaveClass('has-[[data-save-bar]]:pb-[calc(6rem+env(safe-area-inset-bottom))]');
     const frame = container.querySelector('.min-h-dvh') as HTMLElement;
     expect(frame).toHaveClass('[--wl-gutter:1rem]', 'sm:[--wl-gutter:1.5rem]');
     expect(container.querySelector('.wl-portal') !== null).toBe(shell.holder);

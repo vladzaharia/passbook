@@ -57,6 +57,16 @@ export function removeEmailConfirm(email: string, self: boolean): ConfirmCopy {
   };
 }
 
+/** An admin ending someone else's sessions; they sign in again. Your own: Account's Sign out everywhere. */
+export function revokeSessionsConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Sign ${name} out everywhere?`,
+    confirmLabel: 'Revoke all',
+    description: 'Every session ends. They can sign in again.',
+    typed: false,
+  };
+}
+
 /** Revoking an API key: requests with it fail at once. */
 export function revokeKeyConfirm(name: string): ConfirmCopy {
   return {

@@ -47,6 +47,8 @@ export function AppShell({ bar, sidebar, width, holder, children }: AppShellProp
         tabIndex={-1}
         className={cn(
           'mx-auto w-full flex-1 px-safe pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+          // A SaveBar is fixed over the bottom: its room goes at the end of the page.
+          'has-[[data-save-bar]]:pb-[calc(6rem+env(safe-area-inset-bottom))]',
           bar ? 'pt-6' : 'pt-[env(safe-area-inset-top)]',
           WIDTH[width],
         )}

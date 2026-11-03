@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { deleteConfirm, removeEmailConfirm, revokeKeyConfirm } from './confirms.ts';
+import {
+  deleteConfirm,
+  removeEmailConfirm,
+  revokeKeyConfirm,
+  revokeSessionsConfirm,
+} from './confirms.ts';
 
 describe('confirm copy', () => {
   it('asks "Delete {name}?" and says it cannot be undone', () => {
@@ -34,6 +39,15 @@ describe('confirm copy', () => {
       title: 'Revoke CI?',
       confirmLabel: 'Revoke',
       description: 'Requests using this key fail at once. This cannot be undone.',
+      typed: false,
+    });
+  });
+
+  it('signs someone else out everywhere with a plain confirm', () => {
+    expect(revokeSessionsConfirm('Maya')).toEqual({
+      title: 'Sign Maya out everywhere?',
+      confirmLabel: 'Revoke all',
+      description: 'Every session ends. They can sign in again.',
       typed: false,
     });
   });

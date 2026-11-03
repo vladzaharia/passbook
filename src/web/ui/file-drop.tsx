@@ -13,6 +13,8 @@ export interface FileDropProps {
   disabled?: boolean;
   /** The entity's art (sm) in place of the upload glyph: certificate, template. */
   art?: ArtName;
+  /** A form error about the file: the input is aria-invalid, so a blocked submit focuses it. */
+  invalid?: boolean;
   className?: string;
 }
 
@@ -39,6 +41,7 @@ export function FileDrop({
   label = 'Drop files or choose',
   disabled,
   art,
+  invalid,
   className,
 }: FileDropProps) {
   const id = useId();
@@ -79,6 +82,7 @@ export function FileDrop({
           'wl-file-drop relative flex flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong px-6 py-8 text-center text-sm text-fg-muted wl-colors',
           'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
           over && 'border-accent bg-accent-subtle',
+          invalid && !over && 'border-danger',
           disabled && 'opacity-50',
         )}
       >
@@ -97,6 +101,7 @@ export function FileDrop({
           accept={accept}
           multiple={multiple}
           disabled={disabled}
+          aria-invalid={invalid || undefined}
           onChange={(e) => {
             take(e.target.files);
             e.target.value = '';
