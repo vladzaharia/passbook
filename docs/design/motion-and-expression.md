@@ -142,6 +142,12 @@ rail carries it; a dense panel), the first organization (a table, no stable mome
 The favicon and `apple-touch-icon.png` (also the sign-in email's header mark and the OIDC logo) are
 the face on the dark tile, in teal with the foil passes.
 
+**Email buddy.** Static PNGs of the `wallet` art in its dark palette (`public/email/`, 96×76 at 2×
+and 3×; `node tools/build-email-art.ts` after an art change). It stands on the bottom edge of the
+dark PassBook header at the right, beside the wordmark: happy in the sign-in link, curious in
+Confirm your email. Decorative (`alt=""`); blocked, the header keeps its height. The pass email is
+the org's (its name, colour and pass), so no buddy there.
+
 ## Action verbs
 
 Icons act out the action they label (`Button busy="verb"` keeps the icon while pending). Transform
@@ -317,7 +323,7 @@ or the SSR mascot pages.
 - **Pass fidelity.** Faces keep their own size; the back fills the front's box and scrolls, as in
   Wallet.
 - **Copy.** Terse, unchanged. No new words for flair.
-- **Email.** No animation, no GIFs: static foil line only.
+- **Email.** No animation, no GIFs: the static foil line and the static email buddy only.
 - **SSR and CSP.** Worker pages use CSS only: a checkbox flips the public pass, keyframes run on
   load. Style nonces; no inline scripts.
 - **Budget.** No new dependency. `motion.css` + `stage.css` ≤4 kB gzip; art ≤8 kB gzip; motion
