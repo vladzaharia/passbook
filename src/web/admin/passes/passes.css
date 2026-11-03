@@ -99,13 +99,11 @@
   border-color: var(--pk-accent);
 }
 
-/* After a create, the buddy stands at the card's bottom-right corner, under its layer (z -1 in
-   the sticky column), and looks up at the pass. It steps out in its wave scene (art/scenes). */
+/* After a create or a void, the buddy sits on the Front / Details control's top edge at its right
+   end (the row leaves room above it, pass-preview.tsx), legs over the edge, and looks up at the
+   pass. It falls on, then waves or cries (art/scenes). */
 .wl-pass-buddy {
-  position: absolute;
-  top: calc(100% + 2px);
-  right: 0;
-  z-index: -1;
+  --wl-buddy-inset: -12px;
 }
 .wl-pass-buddy [data-look] {
   transform: translate(-1px, -0.5px);
@@ -130,7 +128,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wl-pass-buddy,
   .wl-unsaved,
   .wl-diff-rise > * {
     transform: none;

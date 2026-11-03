@@ -1,4 +1,5 @@
-/* nudge: falls onto the card, then points at Add to Apple Wallet (motion spec). 1% = 26 ms. */
+/* nudge: falls onto the card, then lifts its teal pass and aims it up-left at Add to Apple Wallet
+   (motion spec). S (64×48) at every width. 1% = 26 ms. */
 .wl-buddy[data-scene="nudge"] [data-trunk] {
   transform-box: view-box;
   transform-origin: 48px 66px;
@@ -122,12 +123,15 @@
     rotate: 0deg;
   }
 }
+/* The teal pass lifts out of the pocket and aims up-left at the badge, twice. */
 @keyframes wl-s-nudge-point {
   0%,
   11% {
+    translate: 0 0;
     rotate: 0deg;
   }
   14% {
+    translate: 0 0;
     rotate: -8deg;
   }
   21% {
@@ -135,18 +139,22 @@
   }
   27%,
   42% {
+    translate: 0 0;
     rotate: 0deg;
   }
   48%,
   56%,
   62% {
-    rotate: -32deg;
+    translate: -3px -10px;
+    rotate: -24deg;
   }
   52% {
-    rotate: -20deg;
+    translate: -2px -7px;
+    rotate: -16deg;
   }
   70%,
   100% {
+    translate: 0 0;
     rotate: 0deg;
   }
 }

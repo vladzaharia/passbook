@@ -21,13 +21,13 @@ const MARK_20 = `<clipPath id="p"><rect y="-3" width="20" height="10"/></clipPat
 
 /**
  * The mark redrawn on a 32-unit grid for tabs: pocket edges and eyes on even units, so it is sharp
- * at 32 px and at 16 px on 1× screens (1 px lines, 2 px eyes). The passes stand taller over a
- * shorter pocket than in the 20-unit mark, so the foil still reads in a tab.
+ * at 32 px and at 16 px on 1× screens (1 px lines, 2 px eyes). Round eyes and passes at ±18°, as
+ * in the 20-unit mark; the passes stand taller over a shorter pocket, so the foil reads in a tab.
  */
-const MARK_32 = `<clipPath id="p"><rect width="32" height="13"/></clipPath><g clip-path="url(#p)"><rect fill="${F1}" x="5" y="4" width="8" height="12" rx="1.5" transform="rotate(-16 9 16)"/><rect fill="${F3}" x="19" y="4" width="8" height="12" rx="1.5" transform="rotate(16 23 16)"/><rect fill="${F2}" x="12" y="2" width="8" height="12" rx="1.5"/></g><rect x="5" y="13" width="22" height="14" rx="4" fill="none" stroke="${L}" stroke-width="2"/><rect fill="${L}" x="10" y="16" width="4" height="4" rx="1.5"/><rect fill="${L}" x="18" y="16" width="4" height="4" rx="1.5"/><path d="M13.5 22.5q2.5 2 5 0" fill="none" stroke="${L}" stroke-width="2" stroke-linecap="round"/>`;
+const MARK_32 = `<clipPath id="p"><rect width="32" height="13"/></clipPath><g clip-path="url(#p)"><rect fill="${F1}" x="5" y="4" width="8" height="12" rx="1.5" transform="rotate(-18 9 16)"/><rect fill="${F3}" x="19" y="4" width="8" height="12" rx="1.5" transform="rotate(18 23 16)"/><rect fill="${F2}" x="12" y="2" width="8" height="12" rx="1.5"/></g><rect x="5" y="13" width="22" height="14" rx="4" fill="none" stroke="${L}" stroke-width="2"/><circle fill="${L}" cx="12" cy="18" r="2"/><circle fill="${L}" cx="20" cy="18" r="2"/><path d="M13.5 22.5q2.5 2 5 0" fill="none" stroke="${L}" stroke-width="2" stroke-linecap="round"/>`;
 
 /** The 16 px frame, pixel by pixel: 2 px eyes and a four-pixel smile a scaled curve cannot draw. */
-const MARK_16 = `<clipPath id="p"><rect width="16" height="6.5"/></clipPath><g clip-path="url(#p)"><rect fill="${F1}" x="2.5" y="2" width="4" height="6" rx=".75" transform="rotate(-16 4.5 8)"/><rect fill="${F3}" x="9.5" y="2" width="4" height="6" rx=".75" transform="rotate(16 11.5 8)"/><rect fill="${F2}" x="6" y="1" width="4" height="6" rx=".75"/></g><rect x="2.5" y="6.5" width="11" height="8" rx="2" fill="none" stroke="${L}"/><path fill="${L}" d="M5 8h2v2H5zM9 8h2v2H9zM6 11h1v1H6zM9 11h1v1H9zM7 12h2v1H7z"/>`;
+const MARK_16 = `<clipPath id="p"><rect width="16" height="6.5"/></clipPath><g clip-path="url(#p)"><rect fill="${F1}" x="2.5" y="2" width="4" height="6" rx=".75" transform="rotate(-18 4.5 8)"/><rect fill="${F3}" x="9.5" y="2" width="4" height="6" rx=".75" transform="rotate(18 11.5 8)"/><rect fill="${F2}" x="6" y="1" width="4" height="6" rx=".75"/></g><rect x="2.5" y="6.5" width="11" height="8" rx="2" fill="none" stroke="${L}"/><path fill="${L}" d="M5 8h2v2H5zM9 8h2v2H9zM6 11h1v1H6zM9 11h1v1H9zM7 12h2v1H7z"/>`;
 
 /** favicon.svg and the 32 and 48 px ICO frames. */
 export const tabIconSvg = () =>

@@ -1,5 +1,9 @@
 /* Shared scene pieces. While a scene runs, the prop's idle beat gives way to it; a scene that
-   wants the prop's own beat plays wl-s-tap (the engine's beat under a name of its own). */
+   wants the prop's own beat plays wl-s-tap (the engine's beat under a name of its own). An SSR page
+   marks its buddy data-run="load": the scene starts once the art has landed, with no script. */
+[data-run="load"] {
+  --wl-at: 700ms;
+}
 @media (prefers-reduced-motion: no-preference) {
   .wl-buddy[data-run] .wl-buddy-prop [data-b] {
     animation: none;

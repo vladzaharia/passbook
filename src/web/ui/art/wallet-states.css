@@ -1,0 +1,65 @@
+/* Wallet states (wallet-states.tsx), on the art engine; after art-wallet.css, so a state wins over
+   a mood on the cards. Each beat follows the landing (art-wallet.css, the seat). One meaning each:
+   the hourglass is a wait, the drooping gold pass is expired. */
+
+/* Confirm: a check pops onto the top card. */
+[data-art="wallet"][data-state="confirm"] [data-part="ck"] {
+  --f: scale(0);
+  --d: 440ms;
+  --u: 160ms;
+  --e: var(--art-bo);
+}
+
+/* Expired: the gold pass greys (dim) and droops 18° past the fan. */
+[data-art="wallet"][data-state="expired"] [data-part="c3"] {
+  --k: wl-w-droop;
+  --t: rotate(36deg) translateY(3px);
+  --d: 300ms;
+  --u: 300ms;
+  --e: var(--art-sp);
+}
+[data-state="expired"] [data-look] {
+  transform: translateX(1px);
+}
+
+/* Break-glass: the key slides into the keyhole, then turns (the bow goes edge-on). */
+[data-art="wallet"][data-state="break-glass"] [data-part="key"] {
+  --f: translateX(10px);
+  --d: 280ms;
+  --u: 160ms;
+  --e: var(--art-out);
+}
+[data-art="wallet"][data-state="break-glass"] [data-part="kt"] {
+  --t: scaleY(0.45);
+  --f: none;
+  --fo: 1;
+  --d: 440ms;
+  --u: 160ms;
+}
+[data-state="break-glass"] [data-look] {
+  transform: translateX(1.5px);
+}
+
+/* Wait: the hourglass flips in on the surface. */
+[data-art="wallet"] [data-part="hg"] {
+  --f: rotate(-180deg);
+  --d: 200ms;
+  --u: 400ms;
+  --e: var(--art-sp);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is([data-state="break-glass"], [data-state="expired"]) [data-look] {
+    animation: wl-w-glance 200ms var(--art-mv) calc(var(--wl-art-delay, 80ms) + 400ms) backwards;
+  }
+}
+@keyframes wl-w-droop {
+  from {
+    transform: rotate(18deg);
+  }
+}
+@keyframes wl-w-glance {
+  from {
+    transform: none;
+  }
+}

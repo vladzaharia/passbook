@@ -5,7 +5,7 @@ import { strictEmail } from '@/shared/email.ts';
 import { isApiError } from '../lib/errors.ts';
 import { Button, Callout, FormField, Input } from '../ui/index.ts';
 import { type SignInError, signInError } from './login-errors.ts';
-import type { SceneActions } from './login-scene.tsx';
+import { failure, type SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
 const isEmail = (value: string) => strictEmail(value) !== null;
@@ -77,24 +77,27 @@ export function EmailFace({
     setFieldError(undefined);
     setError(undefined);
     const value = email.trim();
-    if (!isEmail(value)) return setFieldError(INVALID_EMAIL);
+    if (!isEmail(value)) {
+      scene.fail('slip');
+      return setFieldError(INVALID_EMAIL);
+    }
     const result = await request.send(value);
     if (result.ok) return onSent(value);
     if ('challenge' in result) {
-      scene.fail({ shake: false });
+      scene.fail('error');
       return setError({ message: CHALLENGE_FAILED });
     }
     if (isApiError(result.error) && result.error.status === 422) {
-      scene.fail({ shake: false });
+      scene.fail('slip');
       return setFieldError(INVALID_EMAIL);
     }
     setError(signInError(result.error));
-    scene.fail({ shake: isApiError(result.error) && result.error.status === 429 });
+    scene.fail(failure(result.error));
   }
 
   const { challengeFailed } = request;
   useEffect(() => {
-    if (challengeFailed) scene.fail({ shake: false });
+    if (challengeFailed) scene.fail('error');
   }, [challengeFailed, scene]);
 
   const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);

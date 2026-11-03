@@ -31,10 +31,7 @@ span[data-replay] .wl-art > :not([data-part="sd"], defs) {
   .wl-face[data-replay]:is([data-scene="cheer"], [data-scene="post"]) [data-wink] {
     animation: none;
   }
-  /* Beside a pass: behind it until its scene steps it out; nudge falls in. */
-  :is([data-scene="wave"], [data-scene="tear"]):not([data-run]) {
-    transform: translateY(-50px);
-  }
+  /* Nudge: unseen until its scene drops it in. */
   [data-scene="nudge"]:not([data-run]) {
     opacity: 0;
   }

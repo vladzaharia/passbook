@@ -36,8 +36,10 @@ describe('hosted auth pages', () => {
     ['break-glass', breakglassPage(NONCE, {})],
   ])('renders the %s card with its own art and no inline script', (state, html) => {
     expect(html).toContain(`<section class="card" data-state="${state}">`);
-    expect(html).toContain(`data-art="wallet" data-state="${state}"`);
-    expect(html).toContain('data-beat="off"');
+    // At L; the band wallet keeps the idle beat (B11), an acting buddy gives it to its scene.
+    const wallet = state === 'no-access' ? 'login' : state;
+    expect(html).toContain(`data-art="wallet" data-size="xl" data-state="${wallet}"`);
+    expect(html.includes('data-beat="off"')).toBe(state === 'no-access');
     expect(html).toContain(`<style nonce="${NONCE}">`);
     expect(scripts(html)).toEqual([REPLAY_SCRIPT]);
     expect(html).not.toMatch(/\sstyle="/);
@@ -54,8 +56,8 @@ describe('hosted auth pages', () => {
       ['ck'],
     ],
     ['expired', expiredPage(NONCE), []],
-    ['no-access', noAccessPage(NONCE), ['lk', 'sh']],
     ['break-glass', breakglassPage(NONCE, {}), ['key', 'kt']],
+    ['rate limit', renderErrorPage({ status: 429, nonce: NONCE }), ['hg']],
   ])('gives %s its own beat on the fanned wallet', (_state, html, parts) => {
     expect(html.match(/data-part="c[123]"/g)).toHaveLength(3);
     expect(html).toContain('data-fan=""');
@@ -192,13 +194,29 @@ describe('click to replay the wallet', () => {
   ];
 
   it('wraps the art in the replay hooks, decorative', () => {
-    for (const html of pages) {
+    for (const html of [expiredPage(NONCE), renderNotFoundPage(NONCE)]) {
       expect(html).toMatch(
         /<div class="scene" aria-hidden="true"><span data-replay="" data-scene="hello"><svg data-art="wallet"/,
       );
-      expect(html).not.toMatch(/data-replay[^>]*tabindex/);
     }
+    for (const html of pages) expect(html).not.toMatch(/data-replay[^>]*tabindex/);
     expect(HOSTED_CSS).toContain('.scene>[data-replay]{display:block}');
+  });
+
+  // The app's compositions (state-art.test.tsx), played once on load with no script (F7).
+  it.each([
+    ['a server error', renderErrorPage({ status: 500, nonce: NONCE }), 'plug', 'unplugged'],
+    ['a 404', renderErrorPage({ status: 404, nonce: NONCE }), 'peek', null],
+    ['no access', noAccessPage(NONCE), 'tug', 'lock'],
+  ])('acts out %s, seated, with its prop', (_case, html, scene, prop) => {
+    expect(html).toMatch(
+      new RegExp(
+        `<div class="scene" aria-hidden="true"><span aria-hidden="true" data-buddy="" data-replay="" data-scene="${scene}"[^>]*data-run="load" class="wl-buddy">`,
+      ),
+    );
+    expect(html.includes('<span class="wl-buddy-prop">')).toBe(prop !== null);
+    if (prop) expect(html).toContain(`data-art="${prop}"`);
+    expect(mood(html)).toBe('sad');
   });
 
   it('loads one same-origin deferred script the CSP already allows, nothing inline', () => {
@@ -222,7 +240,7 @@ describe('renderErrorPage', () => {
     const html = renderErrorPage({ status, nonce: NONCE });
     expect(html).toContain('<section class="card"');
     expect(html).toContain(`<h1>${title}</h1>`);
-    expect(html).toContain(`data-art="wallet" data-state="${state}"`);
+    expect(html).toContain(`data-art="wallet" data-size="xl" data-state="${state}"`);
     expect(html.includes('data-part="hg"')).toBe(status === 429);
     expect(primaries(html)).toBe(1);
     expect(html).toMatch(new RegExp(`<a class="btn" href="[^"]*">${action}</a>`));

@@ -1,6 +1,8 @@
-import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
+import { isApiError } from '../lib/errors.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
+import { HOURGLASS } from '../ui/art/wallet-states.tsx';
 import { useScene, WalletArt } from '../ui/index.ts';
 import './login-scene.css';
 
@@ -10,19 +12,24 @@ import './login-scene.css';
  */
 export type SceneBeat = 'rest' | 'sent' | 'back' | 'success';
 
-/** Why the wallet is sad: the page arrived with a failure (load) or an attempt failed (fail). */
-export type SceneSad = 'load' | 'fail' | null;
+/**
+ * Why the wallet is down, until the holder types again or the beat moves on. load: the page
+ * arrived with a failure; error: an attempt failed (network, server); slip: a wrong code or address
+ * (flat, one shake); wait: a rate limit (the hourglass flips in); expired: the code ran out (the
+ * gold pass greys and droops). All but slip are sad.
+ */
+export type SceneSad = 'load' | 'error' | 'slip' | 'wait' | 'expired' | null;
+export type SceneFail = Exclude<SceneSad, 'load' | null>;
 
 export interface SceneState {
   beat: SceneBeat;
   /** First letter of a valid address: the top card lifts and shows it. */
   letter: string | null;
-  /** Bumped per wrong code or rate limit: one shake. */
+  /** Bumped per slip: one shake. */
   shake: number;
-  /** Sad until the holder types again or the beat moves on. */
   sad: SceneSad;
-  /** Bumped when a code turns out to be expired: the hourglass flips. */
-  expired: number;
+  /** Bumped per rate limit: the hourglass flips in again. */
+  waits: number;
   /** The scene root, for gaze (set per keystroke without a render). */
   root: RefObject<HTMLDivElement | null>;
 }
@@ -31,11 +38,17 @@ export interface SceneActions {
   setLetter: (letter: string | null) => void;
   send: () => void;
   back: () => void;
-  /** Sad; `shake` (default) for a wrong code or rate limit, not for a network or server error. */
-  fail: (opts?: { expired?: boolean; shake?: boolean }) => void;
+  fail: (why: SceneFail) => void;
   succeed: () => void;
   /** The eyes follow typing: the caret's viewport x; null (blur) or 1.5 s idle lets go. */
   gaze: (x: number | null) => void;
+}
+
+/** A failed request: a rate limit waits, refused input slips, anything else is an error. */
+export function failure(error: unknown): SceneFail {
+  if (!isApiError(error)) return 'error';
+  if (error.status === 429) return 'wait';
+  return error.status === 400 || error.status === 422 ? 'slip' : 'error';
 }
 
 const GAZE_HOLD_MS = 1500;
@@ -57,7 +70,7 @@ export function useLoginScene(sadOnLoad = false): [SceneState, SceneActions] {
     letter: null,
     shake: 0,
     sad: sadOnLoad ? 'load' : null,
-    expired: 0,
+    waits: 0,
     root,
   });
   const actions = useMemo<SceneActions>(
@@ -65,12 +78,12 @@ export function useLoginScene(sadOnLoad = false): [SceneState, SceneActions] {
       setLetter: (letter) => setState((s) => (s.letter === letter ? s : { ...s, letter })),
       send: () => setState((s) => ({ ...s, beat: 'sent', sad: null })),
       back: () => setState((s) => ({ ...s, beat: 'back', sad: null })),
-      fail: (opts) =>
+      fail: (why) =>
         setState((s) => ({
           ...s,
-          sad: 'fail',
-          shake: opts?.shake === false ? s.shake : s.shake + 1,
-          expired: opts?.expired ? s.expired + 1 : s.expired,
+          sad: why,
+          shake: why === 'slip' ? s.shake + 1 : s.shake,
+          waits: why === 'wait' ? s.waits + 1 : s.waits,
         })),
       succeed: () => setState((s) => ({ ...s, beat: 'success', sad: null })),
       gaze: (x) => {
@@ -157,8 +170,9 @@ function useOneShot(ref: { current: HTMLElement | null }, name: string, count: n
 /**
  * "The wallet fills" (motion-and-expression.md, moment 8): the mascot sits on the sign-in card's
  * top edge, legs over it, three passes fanned. Decorative: aria-hidden, no words; every beat is
- * CSS on transform and opacity (login-scene.css). `sad` is a failure the page shows on its own;
- * `bye` (just signed out) waves the top card once after the entrance.
+ * CSS on transform and opacity (login-scene.css); the state parts are the SSR band's
+ * (art/wallet-states.tsx). `sad` is a failure the page shows on its own; `bye` (just signed out)
+ * waves the top card once after the entrance.
  */
 export function LoginScene({
   state,
@@ -173,17 +187,16 @@ export function LoginScene({
 }) {
   const root = state.root;
   const pocket = useRef<HTMLSpanElement>(null);
-  const hourglass = useRef<HTMLSpanElement>(null);
   // A click waves hello at rest (art/scenes/common.css).
   const { ref: hello } = useScene<HTMLSpanElement>(false);
   useScenePointer(root);
   useOneShot(pocket, 'shake', state.shake);
-  useOneShot(hourglass, 'flip', state.expired);
   const why = state.sad ?? (sad ? 'load' : null);
   const resting = state.beat === 'rest' || state.beat === 'back';
   // Reduced motion: the letter shows in place, the card never lifts.
   const lift = Boolean(state.letter) && resting && !why && !prefersReducedMotion();
-  const mood = state.beat === 'success' ? 'happy' : why ? 'sad' : undefined;
+  const mood =
+    state.beat === 'success' ? 'happy' : why === 'slip' ? 'flat' : why ? 'sad' : undefined;
   return (
     <div
       ref={root}
@@ -196,7 +209,7 @@ export function LoginScene({
       <span ref={hello} className="wl-login-lean" data-replay="" data-scene="hello">
         <span ref={pocket} className="wl-login-pocket">
           <WalletArt
-            state="login"
+            state={why === 'expired' ? 'expired' : 'login'}
             size="xl"
             seat
             lift={lift}
@@ -209,18 +222,8 @@ export function LoginScene({
               ) : null
             }
             front={SLOT}
+            aside={why === 'wait' ? <Fragment key={state.waits}>{HOURGLASS}</Fragment> : null}
           />
-          <span
-            ref={hourglass}
-            className="wl-login-hourglass"
-            data-on={state.expired ? '' : undefined}
-          >
-            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <path d="M7 3h10M7 21h10" />
-              <path d="M8 3v3.5L12 12l4-5.5V3M8 21v-3.5L12 12l4 5.5V21" />
-              <path className="sand" d="M10 19.5h4l-2-2.8Z" />
-            </svg>
-          </span>
         </span>
       </span>
     </div>

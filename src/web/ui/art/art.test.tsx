@@ -11,18 +11,10 @@ import { ART } from './registry.ts';
 import type { WalletMood } from './wallet.tsx';
 
 const DIR = join(process.cwd(), 'src/web/ui/art');
-const css = ['art.css', 'art-records.css', 'art-details.css', 'art-wallet.css']
+const css = ['art.css', 'art-records.css', 'art-details.css', 'art-wallet.css', 'wallet-states.css']
   .map((f) => readFileSync(join(DIR, f), 'utf8'))
   .join('\n');
-const STATES: WalletState[] = [
-  'login',
-  'empty',
-  'lost',
-  'confirm',
-  'expired',
-  'no-access',
-  'break-glass',
-];
+const STATES: WalletState[] = ['login', 'empty', 'lost', 'confirm', 'expired', 'break-glass'];
 const MOODS: WalletMood[] = ['happy', 'flat', 'sad', 'curious'];
 
 /** Top-level blocks of a stylesheet: [prelude, body] with nesting resolved by brace depth. */
@@ -131,7 +123,7 @@ describe('entity art', () => {
     const ssr = readFileSync(join(DIR, 'css.ts'), 'utf8');
     const sheets = readdirSync(DIR).filter((f) => f.endsWith('.css'));
     for (const f of sheets) expect(ssr).toContain(`./${f}?raw`);
-    expect(ssr).toMatch(/\[base, records, details, wallet, rest, hello\]/);
+    expect(ssr).toMatch(/\[base, records, details, wallet, states, rest, hello\]/);
   });
 
   it('draws each mood on the face and seats the wallet on a surface', () => {
@@ -179,7 +171,9 @@ describe('entity art', () => {
   // The owner: the all-good face "doesn't look like the rest". It is the buddy, cropped to its head.
   it('draws the face as the buddy in miniature, from its own parts', () => {
     const real = render(<WalletArt state="login" />).container;
-    const md = render(<BuddyFace size="md" scene="cheer" />).container.querySelector('svg');
+    const md = render(<BuddyFace size="md" scene="cheer" mood="neutral" />).container.querySelector(
+      'svg',
+    );
     const parts = ['rect.o', 'rect.st', 'rect.a', 'ellipse.e', 'path.c1', 'path.c2', 'path.c3'];
     for (const part of [...parts, 'path.hl'])
       expect(md?.querySelector(part)?.outerHTML, part).toBe(real.querySelector(part)?.outerHTML);
@@ -197,8 +191,26 @@ describe('entity art', () => {
     expect(md?.querySelector('[data-letter] path.c2')).not.toBeNull();
   });
 
+  // A success face looks like the page buddy's success: the eyes smile shut (B4c).
+  it('smiles the miniature shut by default, with the happy arcs of the seated buddy', () => {
+    const happy = render(<WalletArt state="login" mood="happy" />).container;
+    const joy = happy.querySelector('[data-part="joy"]')?.getAttribute('d');
+    for (const size of ['sm', 'md'] as const) {
+      const svg = render(<BuddyFace size={size} />).container.querySelector('svg');
+      expect(svg).toHaveAttribute('data-mood', 'happy');
+      expect(svg?.querySelector('.e')).toBeNull();
+      const arcs = [...(svg?.querySelectorAll('path.m:not([data-smile])') ?? [])];
+      expect(arcs.map((a) => a.getAttribute('d')).join('')).toBe(joy);
+      // The wink is the right arc.
+      expect(arcs[1]).toHaveAttribute('data-wink');
+    }
+    expect(css).toMatch(/\.wl-face \[data-wink\] \{\s*transform-box: fill-box;/);
+  });
+
   it('gives the miniature an optical size for toasts, decorative, winking once', () => {
-    const svg = render(<BuddyFace className="h-5 w-6" />).container.querySelector('svg');
+    const svg = render(<BuddyFace className="h-5 w-6" mood="neutral" />).container.querySelector(
+      'svg',
+    );
     expect(svg).toHaveClass('wl-art', 'wl-face', 'h-5', 'w-6');
     expect(svg).toHaveAttribute('aria-hidden', 'true');
     expect(svg).toHaveAttribute('focusable', 'false');
@@ -232,7 +244,7 @@ describe('entity art', () => {
     for (const [, body] of keyframes) {
       for (const [, frame] of blocks(body)) {
         for (const prop of Object.keys(decls(frame)))
-          expect(['opacity', 'transform']).toContain(prop);
+          expect(['opacity', 'transform', 'animation-timing-function']).toContain(prop);
       }
     }
   });
@@ -274,18 +286,29 @@ describe('entity art', () => {
   // Raised for the buddy (moods, seat, composition) and the lazy registry's name list. The art
   // left the initial chunk (registry.ts), so the initial budget fell; the rest is CSS. Then by
   // 0.5 kB for the face (toasts, status) and the buddy's glance at an action; then by 2 kB for
-  // click-to-replay (replay.ts, cameo.tsx) and the scenes' rest sheet (scenes/rest.css). The lazy
-  // scenes rose by 1 kB for the search walk's planted steps (scenes/search-steps.css).
-  it('fits the 13.5 kB gzip budget; the lazy scenes fit 8 kB', () => {
-    // css.ts is SSR glue: the browser bundle never loads it.
+  // click-to-replay (replay.ts) and the scenes' rest sheet (scenes/rest.css). The lazy scenes rose
+  // by 1 kB for the search walk's planted steps (scenes/search-steps.css). Then by 1 kB for the
+  // canonical buddy: the fall onto the edge, the size tiers' lines and placement, the face's happy
+  // eyes and the SSR-safe markup (buddy-art.tsx); Cameo went.
+  it('fits the 14.5 kB gzip budget; the lazy scenes fit 8 kB; the state parts 2.5 kB', () => {
+    // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
+    // with the sign-in page and on SSR pages only.
+    const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
     const files = readdirSync(DIR)
       .filter((f) => !f.includes('.test.') && f !== 'css.ts' && f.includes('.'))
+      .filter((f) => !states.includes(f))
       .sort()
       .map((f) => join(DIR, f));
     const kit = [...files, join(DIR, 'scenes/rest.css')];
     const gz = (paths: string[]) =>
       gzipSync(paths.map((f) => readFileSync(f, 'utf8')).join('\n'), { level: 9 }).length;
-    expect(gz(kit)).toBeLessThanOrEqual(13.5 * 1024);
+    expect(gz(kit)).toBeLessThanOrEqual(14.5 * 1024);
+    expect(gz(states.map((f) => join(DIR, f)))).toBeLessThanOrEqual(2.5 * 1024);
+    // Nothing in the kit's entry pulls them in.
+    for (const f of ['index.ts', 'buddy.tsx', 'buddy-art.tsx', 'wallet.tsx'])
+      expect(readFileSync(join(DIR, f), 'utf8')).not.toMatch(
+        /import[^;]*(wallet-states|state-art)/,
+      );
     // The scenes ride in the registry chunk (registry.ts imports each one).
     const scenes = readdirSync(join(DIR, 'scenes')).filter((f) => f !== 'rest.css');
     const registry = readFileSync(join(DIR, 'registry.ts'), 'utf8');

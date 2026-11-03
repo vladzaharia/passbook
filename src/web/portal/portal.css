@@ -14,13 +14,6 @@
     --wl-drop: 20px;
   }
 }
-/* Beside the columns' actions, 80 × 60 (64 × 48 stacked). */
-@media (min-width: 64rem) {
-  .wl-nudge .wl-art {
-    width: 80px;
-    height: 60px;
-  }
-}
 .wl-pass-side:has([data-awb]:is(:hover, :focus-visible)) .wl-nudge [data-look] {
   transform: translate(-2.2px, -1.2px);
 }

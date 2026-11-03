@@ -24,14 +24,29 @@
   display: block;
   flex: none;
   overflow: visible;
+  --art-w: 1.5;
   fill: none;
   stroke: var(--art-l);
-  stroke-width: 1.5;
+  stroke-width: var(--art-w);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .wl-art * {
   vector-effect: non-scaling-stroke;
+}
+/* Line weight per tier (base.tsx): the lines are non-scaling, so a smaller art draws thinner. L steps
+   to 112×84 under 640. */
+.wl-art[data-size="sm"] {
+  --art-w: 1.25;
+}
+.wl-art[data-size="xl"] {
+  --art-w: 1.75;
+}
+@media (max-width: 39.99rem) {
+  .wl-art[data-size="xl"] {
+    width: 112px;
+    height: 84px;
+  }
 }
 .wl-art .o {
   fill: var(--art-o);
@@ -51,10 +66,10 @@
   fill: var(--art-l);
 }
 .wl-art .f {
-  stroke-width: 2;
+  stroke-width: calc(var(--art-w) * 4 / 3);
 }
 .wl-art .h {
-  stroke-width: 3;
+  stroke-width: calc(var(--art-w) * 2);
 }
 .wl-art .dash {
   stroke-dasharray: 3 3;
@@ -90,7 +105,7 @@
 }
 .wl-art .ck {
   stroke: var(--pk-accent-on, var(--accent-on, #fff));
-  stroke-width: 2;
+  stroke-width: calc(var(--art-w) * 4 / 3);
 }
 
 /* Nested parts must not inherit motion. */

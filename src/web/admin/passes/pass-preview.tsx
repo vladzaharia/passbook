@@ -124,7 +124,7 @@ export function PassPreviewPanel({
   waiting?: boolean;
   /** Changes when another version shows: the new face crossfades in the same box. */
   swapKey?: string | number;
-  /** Beside the card's bottom-right corner, behind it (the buddy after a create). */
+  /** Seated on the Front / Details row's top edge, which leaves room for it (the stage buddy). */
   beside?: ReactNode;
 }) {
   const [face, setFace] = useState<PassSide>('front');
@@ -147,11 +147,16 @@ export function PassPreviewPanel({
             <PassPreview {...preview} face={face} target={shown} flippable />
           </div>
         </div>
-        {beside}
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div
+        className={cn(
+          'relative flex flex-wrap items-center justify-center gap-2',
+          Boolean(beside) && 'mt-8',
+        )}
+      >
         <PassSideToggle value={face} onChange={setFace} />
         {differ ? <PassTargetToggle value={target} onChange={setTarget} /> : null}
+        {beside}
       </div>
       {label || approximate ? (
         <p className="flex items-center gap-2 text-xs text-fg-muted">

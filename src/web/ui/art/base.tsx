@@ -4,10 +4,10 @@ import './art-records.css';
 import './art-details.css';
 import './art-wallet.css';
 
+/** S, M and L (motion-and-expression.md, The buddy); each draws its own line (art.css). */
 export type ArtSize = 'sm' | 'lg' | 'xl';
 
 export interface ArtProps {
-  /** lg 96×72, sm 64×48, xl 112×84 (sign-in). */
   size?: ArtSize;
   className?: string;
   /** false: no idle beat or hover replay. */
@@ -16,7 +16,7 @@ export interface ArtProps {
   still?: boolean;
 }
 
-export const DIM = { sm: [64, 48], lg: [96, 72], xl: [112, 84] } as const;
+export const DIM = { sm: [64, 48], lg: [96, 72], xl: [128, 96] } as const;
 
 // No DOM lib in the Worker typecheck (SSR renders the wallet).
 type El = { closest(s: string): EventTarget | null; dataset: Record<string, string | undefined> };
@@ -57,6 +57,7 @@ export function Art({
     <svg
       ref={ref}
       data-art={name}
+      data-size={size}
       data-state={state}
       data-pose={pose}
       data-beat={beat ? undefined : 'off'}

@@ -3,25 +3,25 @@
    moves in the unplugged art's own units. */
 @media (prefers-reduced-motion: no-preference) {
   .wl-buddy[data-scene="plug"][data-run] .wl-art [data-body] {
-    animation: wl-s-plug-body 3s ease-in-out;
+    animation: wl-s-plug-body 3s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="plug"][data-run] .wl-art [data-look] {
-    animation: wl-s-plug-look 3s ease-in-out;
+    animation: wl-s-plug-look 3s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="plug"][data-run] .wl-art [data-part="c3"] {
-    animation: wl-s-plug-arm 3s ease-in-out;
+    animation: wl-s-plug-arm 3s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="plug"][data-run] .wl-art [data-part="eyes"] {
-    animation: wl-s-plug-eyes 3s ease-in-out;
+    animation: wl-s-plug-eyes 3s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="plug"][data-run] [data-art="unplugged"] [data-part="p"] {
-    animation: wl-s-plug-in 3s ease-in-out;
+    animation: wl-s-plug-in 3s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="plug"][data-run] [data-art="unplugged"] [data-part="s"] {
-    animation: wl-s-plug-socket 3s ease-in-out;
+    animation: wl-s-plug-socket 3s ease-in-out var(--wl-at, 0s);
   }
   .wl-buddy[data-scene="plug"][data-run] [data-art="unplugged"] [data-part="k"] {
-    animation: wl-s-plug-spark 3s linear;
+    animation: wl-s-plug-spark 3s linear var(--wl-at, 0s);
   }
 }
 

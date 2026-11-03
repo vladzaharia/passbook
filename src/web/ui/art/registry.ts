@@ -37,7 +37,7 @@ import './scenes/peek.css';
 import './scenes/flip.css';
 import './scenes/cheer.css';
 import './scenes/wave.css';
-import './scenes/beside.css';
+import './scenes/tear.css';
 import './scenes/nudge.css';
 import './scenes/face.css';
 

@@ -1,7 +1,8 @@
 /* Sign-in scene (motion-and-expression.md, moment 8). The art parts come from the kit wallet
-   (art-wallet.css); these rules add the sign-in beats: parallax, lift, post, return, shake,
-   hourglass and the tuck on success. The wallet sits on the card (seat): its base is y 66 of 72,
-   so the scene overlaps the card by 8 px at 128×96 and 7 px at 112×84 (under 640), above it. */
+   (art-wallet.css, wallet-states.css: the hourglass, the drooping pass); these rules add the
+   sign-in beats: parallax, lift, post, return, shake and the tuck on success. The wallet sits on
+   the card (seat): its base is y 66 of 72, so the scene overlaps the card by 8 px at L, 128×96,
+   and 7 px at 112×84 (under 640), above it. */
 
 /* Header band: the wordmark's mark on the card's left text inset, centred on the wallet's face
    (21/72 of the art above its base: 28 px, 24.5 px under 640); the wallet at the right, its
@@ -41,17 +42,10 @@
   margin-bottom: -8px;
   pointer-events: none;
 }
-.wl-login-scene .wl-art {
-  width: 128px;
-  height: 96px;
-}
 @media (max-width: 39.99rem) {
-  .wl-login-scene,
-  .wl-login-scene .wl-art {
+  .wl-login-scene {
     width: 112px;
     height: 84px;
-  }
-  .wl-login-scene {
     margin-bottom: -7px;
   }
 }
@@ -73,43 +67,19 @@
   text-anchor: middle;
   dominant-baseline: central;
 }
-/* Success: the smile lands with the bounce. A failed attempt sighs once the shake is done. */
+/* Success: the smile lands with the bounce. A failed attempt sighs at once; its parts (the
+   hourglass, the drooping pass) come in without waiting for a landing. */
 .wl-login-scene .wl-art [data-part="joy"] {
   --d: 140ms;
 }
-.wl-login-scene[data-sad="fail"] {
+.wl-login-scene[data-sad]:not([data-sad="load"]) {
   --wl-sigh-delay: 200ms;
 }
-.wl-login-scene[data-sad="fail"] .wl-art [data-part="br"] {
+.wl-login-scene[data-sad]:not([data-sad="load"]) .wl-art :is([data-part="br"], [data-part="hg"]) {
   --d: 0ms;
 }
-
-/* Expired code: an hourglass stands on the card at the wallet's left, the open side of the band
-   (base at 66/72), and flips once. */
-.wl-login-hourglass {
-  position: absolute;
-  top: calc(91.67% - 17.5px);
-  left: calc(8.33% - 10px);
-  width: 20px;
-  height: 20px;
-  opacity: 0;
-}
-.wl-login-hourglass[data-on] {
-  opacity: 1;
-}
-.wl-login-hourglass svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: var(--pk-border-strong);
-  stroke-width: 1.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.wl-login-hourglass .sand {
-  stroke: none;
-  fill: var(--pk-accent);
+.wl-login-scene[data-sad="expired"] .wl-art [data-part="c3"] {
+  --d: 0ms;
 }
 
 /* The posted card stays out while the code face shows. */
@@ -167,6 +137,10 @@
   .wl-login-scene[data-beat="sent"] .wl-art [data-mood="sad"] [data-part="c3"] {
     --t: rotate(17deg) translateY(1px);
   }
+  /* An expired code: the gold pass droops past the closed-up fan all the same. */
+  .wl-login-scene[data-sad="expired"] .wl-art [data-mood="sad"] [data-part="c3"] {
+    --t: rotate(36deg) translateY(3px);
+  }
   .wl-login-scene[data-beat="sent"] .wl-art [data-look] {
     transform: translate(calc(var(--px) * 1.5px), 1.2px);
   }
@@ -188,9 +162,6 @@
 
   .wl-login-pocket[data-shake] {
     animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
-  }
-  .wl-login-hourglass[data-flip] {
-    animation: wl-login-flip 480ms var(--wl-ease-spring);
   }
 
   /* Success: the card comes home, the fan slides into the pocket, the pocket bounces and the
@@ -282,16 +253,10 @@
     transform: rotate(3deg);
   }
 }
-@keyframes wl-login-flip {
-  from {
-    transform: rotate(-180deg);
-  }
-}
 
 /* Reduced motion: the fanned frame; faces and states swap with a short fade. */
 @media (prefers-reduced-motion: reduce) {
-  .wl-login-scene .wl-art :is([data-part="c2"], [data-part="eyes"]),
-  .wl-login-hourglass {
+  .wl-login-scene .wl-art :is([data-part="c2"], [data-part="eyes"]) {
     transition: opacity 150ms linear;
   }
 }

@@ -58,10 +58,16 @@ describe('sign-in band', () => {
     expect(ssr).toContain('.band.mark>svg{width:1.5rem;height:1.5rem}');
   });
 
-  it('posts the pass and stands the hourglass on the open side, left of the wallet', () => {
+  it('posts the pass; its states are the SSR band parts (art/wallet-states.tsx)', () => {
     expect(spa).toContain('100%{opacity:0;transform:translate(-44px,58px)rotate(-60deg);}');
-    expect(spa).toMatch(/\.wl-login-hourglass\{[^}]*left:calc\(8\.33%-10px\);/);
-    const art = readFileSync(join(ROOT, 'src/worker/ssr/hosted-art.tsx'), 'utf8');
-    expect(art).toContain('<path d="M4 52h8M4 65.5h8');
+    const scene = readFileSync(join(ROOT, 'src/web/portal/login-scene.tsx'), 'utf8');
+    expect(scene).toContain("import { HOURGLASS } from '../ui/art/wallet-states.tsx';");
+    expect(scene).toContain("state={why === 'expired' ? 'expired' : 'login'}");
+    const states = readFileSync(join(ROOT, 'src/web/ui/art/state-art.tsx'), 'utf8');
+    expect(states).toContain("import { CHECK, HOURGLASS, KEY } from './wallet-states.tsx';");
+    // No drawing of its own: the hourglass stands on the card at the wallet's left in both.
+    expect(spa).not.toContain('hourglass');
+    const parts = readFileSync(join(ROOT, 'src/web/ui/art/wallet-states.tsx'), 'utf8');
+    expect(parts).toContain('<path d="M4 52h8M4 65.5h8');
   });
 });

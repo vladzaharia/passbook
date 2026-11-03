@@ -4,8 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Search } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { ActiveIndicator } from './active-indicator.tsx';
-import { Cameo } from './art/cameo.tsx';
-import { WalletArt } from './art/wallet.tsx';
+import { Buddy } from './art/buddy.tsx';
 import { DialogOverlay } from './overlay.tsx';
 
 export interface CommandItem {
@@ -140,11 +139,12 @@ export function CommandPalette({
             <Command.List className="min-h-0 flex-1 overflow-auto p-1 [&_[cmdk-list-sizer]]:relative">
               <ActiveIndicator variant="list" />
               {nothing && query.trim() ? (
-                <div data-art-host="" className="flex flex-col items-center gap-2 px-3 pt-4 pb-1">
-                  {/* The buddy peeks through its lens. */}
-                  <Cameo scene="peek">
-                    <WalletArt state="lost" mood="curious" size="sm" />
-                  </Cameo>
+                <div
+                  data-art-host=""
+                  className="relative mx-2 mt-13 mb-1 rounded-md border border-dashed border-border-strong px-3 pt-4 pb-3 text-center"
+                >
+                  {/* The buddy sits on the empty block and peeks through its lens. */}
+                  <Buddy size="sm" state="lost" mood="curious" scene="peek" />
                   <p className="text-sm text-fg-muted">No results</p>
                 </div>
               ) : null}

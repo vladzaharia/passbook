@@ -49,8 +49,12 @@
   animation: wl-v-stamp 420ms var(--wl-ease-bounce);
 }
 
-/* The buddy on the zone (upload-drop.tsx). A hovering file: passes reach up and spread, eyes up,
-   mouth open. A caught file: the smile and the hop come at once, not after the usual pause. */
+/* The buddy on the zone (upload-drop.tsx), seated on its 2 px border with the template art as its
+   prop. A hovering file: passes reach up and spread, eyes up, mouth open. A refusal: the sigh comes
+   at once, not after the usual pause. */
+.wl-drop {
+  --wl-seat-border: 2px;
+}
 .wl-drop [data-buddy] {
   --wl-sigh-delay: 120ms;
 }

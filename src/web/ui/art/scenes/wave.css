@@ -1,85 +1,61 @@
-/* Wave (a pass just created): the buddy steps out from behind the new pass, hops, looks up at
-   it and waves its teal pass twice, then smiles at you. 2.2 s, once; 1% = 22 ms. Behind the pass
-   until it runs (rest.css). */
+/* Wave (a pass just created): seated on the Front / Details control under the new pass, it hops,
+   looks up at the pass and waves its teal pass twice, then smiles at you. 1.8 s, once; 1% = 18 ms. */
 @media (prefers-reduced-motion: no-preference) {
-  [data-scene="wave"][data-run] {
-    animation: wl-s-wave-out 2.2s linear;
-  }
   [data-scene="wave"][data-run] .wl-art [data-body] {
-    animation: wl-s-wave-hop 2.2s ease-in-out;
+    animation: wl-s-wave-hop 1.8s ease-in-out;
   }
   [data-scene="wave"][data-run] .wl-art [data-look] {
-    animation: wl-s-wave-look 2.2s ease-in-out;
+    animation: wl-s-wave-look 1.8s ease-in-out;
   }
   [data-scene="wave"][data-run] .wl-art [data-part="c1"] {
-    animation: wl-s-wave-hand 2.2s ease-in-out;
+    animation: wl-s-wave-hand 1.8s ease-in-out;
   }
 }
 
-/* Out from under the pass on a spring. */
-@keyframes wl-s-wave-out {
-  0% {
-    transform: translateY(-50px);
-    animation-timing-function: linear(
-      0,
-      0.035 2.1%,
-      0.141 4.4%,
-      0.723 12.9%,
-      1.017 20.5%,
-      1.043 24.5%,
-      1.007 36%,
-      1
-    );
-  }
-  19%,
-  100% {
-    transform: none;
-  }
-}
 @keyframes wl-s-wave-hop {
-  20% {
+  4% {
     translate: 0 0;
     scale: 1;
   }
-  26% {
+  11% {
     translate: 0 0;
     scale: 1.05 0.92;
   }
-  33% {
+  20% {
     translate: 0 -6px;
     scale: 0.97 1.04;
   }
-  41% {
+  29% {
     translate: 0 0;
     scale: 1.05 0.93;
   }
-  47% {
+  36% {
     translate: 0 0;
     scale: 1;
   }
 }
 @keyframes wl-s-wave-look {
-  44%,
-  82% {
+  32%,
+  78% {
     translate: -1.6px -1.4px;
   }
-  92% {
+  90% {
     translate: 0 0;
   }
 }
 @keyframes wl-s-wave-hand {
-  46% {
+  34% {
     rotate: 0deg;
   }
-  53%,
-  67% {
+  42%,
+  60% {
     rotate: -34deg;
   }
-  60%,
-  74% {
+  51%,
+  69% {
     rotate: -10deg;
   }
-  82% {
+  78% {
     rotate: 0deg;
   }
 }
