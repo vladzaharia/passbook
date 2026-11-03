@@ -19,8 +19,9 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Accent | `accent` (#2dd4bf dark, #0f766e light) | Selection and the one primary action per view. Never origin, role or health |
 | States | `success`, `warning`, `danger`, `info` + `-subtle`/`-border` | `success` only for healthy or working; `info` is blue (not Polaris violet, not foil) |
 
-- No hex values in components. Exceptions: pass art (pass.json colours) and email inline styles,
-  which copy the token values.
+- No hex values in components. Exception: pass art (pass.json colours). SSR pages inline the
+  generated tokens and kit controls; emails inline the resolved values (`npm run gen`,
+  `tools/ssr-parity.test.ts`).
 - Fields: white (`surface-raised`) in light with `border-strong`; hover darkens the border.
 - Neutral pills: a hover tint over raised, lighter than the card in dark. Light `success-subtle`
   reads green (hue 120–160, saturation ≥25 %). Every subtle fill reads tinted, border ≥3:1.

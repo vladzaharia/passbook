@@ -185,11 +185,13 @@ previews). In the app and on SSR pages the same face is the PassBook mark (`Bran
 20-unit grid with 2-unit lines so the pocket's edges land on whole pixels at 20 px. The pocket is
 open; the passes are cut at its top line.
 
-**Email buddy.** Static PNGs of the `wallet` art in its dark palette (`public/email/`, 96×76 at 2×
-and 3×; `node tools/build-email-art.ts` after an art change). It stands on the bottom edge of the
-dark PassBook header at the right, beside the wordmark: happy in the sign-in link, curious in
-Confirm your email. Decorative (`alt=""`); blocked, the header keeps its height. The pass email is
-the org's (its name, colour and pass), so no buddy there.
+**Email buddy.** Static PNGs of the seated `wallet` art at L (128×96) in each scheme's tokens
+(`public/email/`, 2× and 3×; `node tools/build-email-art.ts` after an art or token change). Mail
+clients cannot overlap cells, so it is cut at its seam: the top stands in the band at the right,
+beside the wordmark; the legs and contact shadow sit in the card's first row, over the foil. Dark
+clients that honour `<picture>` media get the dark art. Happy in the sign-in link, curious in
+Confirm your email. Decorative (`alt=""`); blocked, the band keeps its height. The pass email is
+the org's (its name and pass), so no buddy there.
 
 ## Action verbs
 
@@ -404,5 +406,5 @@ tilt, the sheet drag). No motion library.
 | Route transition types, chunk-load errors (offline chunks: `lib/offline-routes.ts`) | `src/web/router.tsx` |
 | Sign-in scene | `src/web/portal/login-*.tsx` on `src/web/ui/art/wallet.tsx` |
 | SSR scene, error pages | `src/worker/ssr/{theme,hosted,hosted-art}.*`, `src/worker/ssr/error-page.tsx`, `src/worker/modules/auth/pages.ts` |
-| Public page tilt (fine pointers) | `public/pass-tilt.js` |
+| Public page tilt (the app's, bundled) | `src/web/pass-card/tilt.ts` → `public/pass-tilt.js` (`npm run gen`) |
 | e2e with reduced motion | `playwright.config.ts` |
