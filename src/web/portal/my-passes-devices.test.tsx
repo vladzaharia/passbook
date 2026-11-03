@@ -26,11 +26,12 @@ afterEach(() => {
 describe('device rule (shared/device.ts)', () => {
   it.each([
     ['iPhone', IPHONE, 0, false, false],
-    ['Mac', MAC, 0, true, false],
+    // A Mac adds with the badge; its QR waits in More (the pass page shows it).
+    ['Mac', MAC, 0, false, false],
     ['iPad', MAC, 5, true, true],
     ['Chrome on Windows', WINDOWS, 0, true, true],
   ])(
-    '%s: badge always, Show QR off the phone, the line where it cannot add',
+    '%s: badge always; Show QR and the line where it cannot add',
     async (_n, ua, touch, qr, line) => {
       as(ua, touch);
       await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(passFixture()) } });

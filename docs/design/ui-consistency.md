@@ -447,8 +447,8 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   sync; the scan needs neither). Devices that cannot add (iPad included) add `Open on iPhone or
   Mac to add to Apple Wallet.`; an in-app web view on one that can, `Open in Safari…`.
 - **Portal tiles**: a flex column: the pass (stage) takes the free height, then title, org and
-  actions pinned to the bottom, so they line up across a row. Actions: `Show QR` (off the phone)
-  and the badge, then `Refresh` and `More` (Show QR, Remove) as badge-sized outline icon buttons.
+  actions pinned to the bottom, so they line up across a row. Actions: `Show QR` where the badge
+  cannot add (a Mac finds it in More) and the badge, then `Refresh` and `More` (Show QR, Remove) as badge-sized outline icon buttons.
   `In Wallet` pill for registered passes. No `Updated` line. Tile radius 18 px (the pass's ~14).
 - **Portal pass detail** and **`/p`** are one view (`portal/holder-pass-view.tsx`; `/p` renders
   it to static markup with the same CSS, `npm run gen`): the card left; right, the voided or

@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
-import { showsAddQr } from '../../shared/device.ts';
+import { canAddToWallet } from '../../shared/device.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
@@ -41,7 +41,8 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const name = passName(pass);
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const voided = pass.status === 'voided';
-  const [qr] = useState(() => showsAddQr(browserDevice().device));
+  // Where the badge cannot add, Show QR leads; elsewhere off the phone it waits in More.
+  const [qr] = useState(() => !canAddToWallet(browserDevice().device));
   const [dip, setDip] = useState(0);
   const link = { to: '/passes/$passId', params: { passId: pass.id } } as const;
   return (
@@ -78,7 +79,9 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
         </div>
         <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 pointer-coarse:min-h-11">
           <div className="flex flex-wrap items-center gap-2">
-            {!voided && qr && publicUrl ? <ShowQrButton passTitle={name} url={publicUrl} /> : null}
+            {voided || pass.inWallet || !qr || !publicUrl ? null : (
+              <ShowQrButton passTitle={name} url={publicUrl} />
+            )}
             {voided || pass.inWallet ? null : (
               <AppleWalletBadge href={pass.downloadUrl} onClick={() => setDip((n) => n + 1)} />
             )}

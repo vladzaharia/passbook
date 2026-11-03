@@ -36,6 +36,11 @@
   .wl-ipad-line {
     display: block;
   }
+  /* base.css gives the app's text links a 44 px touch height; /p has no base.css. */
+  .wl-holder p > a {
+    padding-block: calc((2.75rem - 1.2em) / 2);
+    margin-block: calc((1.2em - 2.75rem) / 2);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

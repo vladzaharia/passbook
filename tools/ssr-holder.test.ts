@@ -4,10 +4,14 @@ import { describe, expect, it } from 'vitest';
 import type { DeviceInfo } from '../src/shared/device.ts';
 import { assets, fixtures } from '../src/shared/pass-view/fixtures/index.ts';
 import { normalize } from '../src/shared/pass-view/index.ts';
-import { type PassPageProps, renderPassPage } from '../src/worker/ssr/pass-page.tsx';
 import { candidatesOf, ssrHolderCss } from './lib/ssr-holder.ts';
 
 const root = resolve(import.meta.dirname, '..');
+// A JSX module: the Node typecheck has no JSX, so it is loaded untyped.
+const PAGE_MODULE = '../src/worker/ssr/pass-page.tsx';
+const { renderPassPage } = (await import(PAGE_MODULE)) as {
+  renderPassPage: (props: Record<string, unknown>) => string;
+};
 const read = (path: string) => readFileSync(resolve(root, path), 'utf8');
 const generated = read('src/generated/ssr-holder.css');
 
@@ -30,7 +34,7 @@ const view = (over: Record<string, unknown> = {}) =>
     { ...fixtures.generic, ...over },
     { assets, now: new Date('2026-10-31T12:00:00Z'), timeZone: 'UTC' },
   );
-const page = (over: Partial<PassPageProps> = {}) =>
+const page = (over: Record<string, unknown> = {}) =>
   renderPassPage({
     view: view(),
     nonce: 'n0nce',
