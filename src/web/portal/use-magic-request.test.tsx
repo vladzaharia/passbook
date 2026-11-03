@@ -48,6 +48,48 @@ describe('useMagicRequest', () => {
     });
   });
 
+  describe('prefer', () => {
+    async function bodyOf() {
+      const fetchMock = vi.fn(async () => Response.json({ ok: true }, { status: 202 }));
+      vi.stubGlobal('fetch', fetchMock);
+      const { result } = renderHook(() => useMagicRequest(null));
+      act(() => result.current.widget.onToken('tok-1'));
+      await act(async () => {
+        await result.current.send('sam@example.com');
+      });
+      const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+      return JSON.parse(String(init.body)) as Record<string, unknown>;
+    }
+    const standalone = (on: boolean) =>
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        media: query,
+        matches: on && query === '(display-mode: standalone)',
+      }));
+    afterEach(() => {
+      delete (navigator as Navigator & { standalone?: boolean }).standalone;
+    });
+
+    it('asks for a code-first email when installed to the home screen', async () => {
+      standalone(true);
+      expect(await bodyOf()).toEqual({
+        email: 'sam@example.com',
+        turnstileToken: 'tok-1',
+        prefer: 'code',
+      });
+    });
+
+    it('also on iOS, where navigator.standalone says so', async () => {
+      standalone(false);
+      Object.defineProperty(navigator, 'standalone', { value: true, configurable: true });
+      expect((await bodyOf()).prefer).toBe('code');
+    });
+
+    it('sends no preference in the browser', async () => {
+      standalone(false);
+      expect(await bodyOf()).not.toHaveProperty('prefer');
+    });
+  });
+
   it('sends no next without one, so the server picks the landing', async () => {
     const fetchMock = vi.fn(async () => Response.json({ ok: true }, { status: 202 }));
     vi.stubGlobal('fetch', fetchMock);

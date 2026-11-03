@@ -137,6 +137,33 @@ describe('settings api', () => {
     expect(audit.map((r) => r.org_id)).toEqual([a.id]);
   });
 
+  it('resolves the pass email buddy per org: off by default, audited when turned on', async () => {
+    const f = fixtures(appEnv);
+    const a = await makeOrg(f);
+    const b = await makeOrg(f);
+    const list = (await (await call('GET', `?scope=org:${a.id}`)).json()) as List;
+    expect(list.items.find((i) => i.key === 'email.buddy')).toMatchObject({
+      value: false,
+      default: false,
+    });
+    const ctx = createServiceContext(appEnv);
+    expect((await getOrgSettings(ctx, a.id))['email.buddy']).toBe(false);
+    const put = (values: object) => call('PUT', '', { scope: `org:${a.id}`, values });
+    expect((await put({ 'email.buddy': 'yes' })).status).toBe(422);
+    expect((await put({ 'email.buddy': true })).status).toBe(200);
+    expect((await getOrgSettings(ctx, a.id))['email.buddy']).toBe(true);
+    expect((await getOrgSettings(ctx, b.id))['email.buddy']).toBe(false);
+    const audit = await all<{ org_id: string; detail: string }>(
+      env.DB,
+      "SELECT org_id, detail FROM audit_log WHERE action = 'settings.update'",
+    );
+    expect(audit).toHaveLength(1);
+    expect(audit[0]?.org_id).toBe(a.id);
+    expect(JSON.parse(audit[0]?.detail ?? '{}')).toEqual({
+      changes: { 'email.buddy': { from: false, to: true } },
+    });
+  });
+
   it('requires an admin', async () => {
     expect((await call('GET', '', undefined, fake.user())).status).toBe(403);
     expect((await call('PUT', '', { values: {} }, fake.user())).status).toBe(403);

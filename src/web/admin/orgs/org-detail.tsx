@@ -27,10 +27,12 @@ import { CountsCard, OrgChecklist, OverviewCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { PASS_BRANDING_ID } from './pass-branding.tsx';
+import { PassEmailPreview } from './pass-email-preview.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
 
-// Accent lives in the org form; settings here cover support contacts.
+// Accent lives in the org form; settings here cover support contacts and the pass email.
 const SUPPORT_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('support.'));
+const EMAIL_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('email.'));
 
 /** Suspend is undone from its toast; Reactivate just runs. Neither asks first. */
 function useStatusToggle(orgId: string) {
@@ -162,6 +164,18 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
         ) : null}
         {org.counts.passes === 0 ? <OrgChecklist org={org} /> : null}
         <OrgForm key={`${org.updatedAt}`} org={org} />
+        <Card>
+          <CardHeader title="Pass email" />
+          <CardBody className="@container">
+            <SettingsForm
+              scope={`org:${org.id}`}
+              fields={EMAIL_FIELDS}
+              aside={(draft) => (
+                <PassEmailPreview orgName={org.name} buddy={draft['email.buddy'] === true} />
+              )}
+            />
+          </CardBody>
+        </Card>
         <Card>
           <CardHeader title="Support contacts" />
           <CardBody>

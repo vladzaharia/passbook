@@ -94,6 +94,13 @@ export const ORG_FIELDS: readonly SettingField[] = [
     optional: true,
     schema: O['support.url'],
   },
+  {
+    key: 'email.buddy',
+    label: 'Buddy in pass emails',
+    kind: 'boolean',
+    help: "The PassBook buddy sits beside the organization's name.",
+    schema: O['email.buddy'],
+  },
 ];
 
 /** Draft strings hold what the inputs show; null clears an optional org setting. */

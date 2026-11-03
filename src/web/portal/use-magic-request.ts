@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import type { z } from 'zod';
 import { OkSchema } from '@/shared/contracts/common.ts';
+import type { MagicLinkRequestSchema } from '@/shared/contracts/session.ts';
 import { api } from '../lib/api.ts';
+import { isStandalone } from './device.ts';
 
 /** How long an early submit waits for the Turnstile token. */
 export const CHALLENGE_WAIT_MS = 10_000;
@@ -93,11 +96,14 @@ export function useMagicRequest(next: string | null) {
       }
       setPhase('sending');
       try {
-        await api.post('/auth/magic/request', OkSchema, {
+        const body: z.input<typeof MagicLinkRequestSchema> = {
           email,
           turnstileToken: token,
           ...(next ? { next } : {}),
-        });
+          // The email leads with the code too: a link would open the browser, not the app.
+          ...(isStandalone() ? { prefer: 'code' } : {}),
+        };
+        await api.post('/auth/magic/request', OkSchema, body);
         return { ok: true };
       } catch (error) {
         return { ok: false, error };

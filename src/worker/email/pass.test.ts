@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
 import { ADD_LINE, renderPassEmail } from './pass.ts';
 import { passSummary } from './pass-summary.ts';
 import { EMAIL_LIGHT } from './shell.ts';
@@ -124,13 +125,67 @@ describe('pass email', () => {
     expect(render({ senderName: '' }).fromName).toBeUndefined();
   });
 
-  it("leaves the buddy out: the org's pass, under the org's name on the page", () => {
+  it("leaves the buddy out by default: the org's pass, under the org's name on the page", () => {
     const { html } = render();
     expect(html).not.toContain('/email/buddy-');
     expect(html).not.toContain('apple-touch-icon');
     expect(html).toMatch(
       /padding:14px 0 14px 25px;font-size:20px;line-height:28px;font-weight:600;[^"]*">Harbor Lights/,
     );
+    expect(render({ buddyBase: null })).toEqual(render());
+  });
+
+  describe('with the buddy (org opted in)', () => {
+    const BASE = 'https://w.test';
+    const withBuddy = () => render({ buddyBase: BASE });
+
+    it('seats the happy buddy as in the sign-in email: top in the band, legs over the foil', () => {
+      expect(PASS_EMAIL_MOOD).toBe('happy');
+      const { html } = withBuddy();
+      const top = html.indexOf(`src="${BASE}/email/buddy-happy-light-top-2x.png"`);
+      const legs = html.indexOf(`src="${BASE}/email/buddy-happy-light-legs-2x.png"`);
+      // The org's name leads the band; the buddy sits at its right end.
+      expect(html.indexOf('Harbor Lights Festival</td>')).toBeLessThan(top);
+      expect(top).toBeLessThan(html.indexOf('class="e-card"'));
+      expect(html.indexOf('class="e-seam"')).toBeLessThan(legs);
+      expect(legs).toBeLessThan(html.indexOf('Your pass is ready</p>'));
+      expect(html).toContain(
+        `<source srcset="${BASE}/email/buddy-happy-dark-top-2x.png 2x, ${BASE}/email/buddy-happy-dark-top-3x.png 3x" media="(prefers-color-scheme: dark)">`,
+      );
+      expect(html).not.toContain('buddy-curious');
+      // Org-first: no PassBook mark beside the org's name.
+      expect(html).not.toContain('apple-touch-icon');
+    });
+
+    it('is the sign-in email band, from the same shell', () => {
+      const band = (html: string) =>
+        /<tr><td><table role="presentation"[\s\S]*?<\/table><\/td><\/tr>/.exec(html)?.[0] ?? '';
+      const signIn = renderSignInEmail({
+        purpose: 'sign_in',
+        link: `${BASE}/auth/magic?t=abc`,
+        base: BASE,
+        code: '123456',
+        expiresMinutes: 15,
+      });
+      const strip = (html: string) =>
+        band(html)
+          .replace(/<img src="[^"]*apple-touch-icon[^>]*>/, '')
+          .replace(/>(PassBook|Harbor Lights Festival)</, '><');
+      expect(strip(withBuddy().html)).toBe(strip(signIn.html));
+    });
+
+    it('keeps the plain-text part, subject and sender unchanged', () => {
+      const plain = render();
+      const buddy = withBuddy();
+      expect(buddy.text).toBe(plain.text);
+      expect(buddy.subject).toBe(plain.subject);
+      expect(buddy.fromName).toBe(plain.fromName);
+    });
+
+    it('needs an absolute base URL, as the sign-in email does', () => {
+      expect(render({ buddyBase: '/relative' }).html).toBe(render().html);
+      expect(render({ buddyBase: 'javascript:alert(1)' }).html).toBe(render().html);
+    });
   });
 
   it('keeps the plain-text part word for word', () => {

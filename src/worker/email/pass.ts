@@ -1,4 +1,5 @@
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import { PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
 import type { PassSummary } from './pass-summary.ts';
 import { safeMail, safeUrl } from './safe.ts';
 import {
@@ -33,6 +34,11 @@ export interface PassEmailInput {
   logoUrl?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
+  /**
+   * PUBLIC_BASE_URL when the org opted in (`email.buddy`): the buddy sits at the band's right end,
+   * as in the sign-in email. Absent, the band is the org's name alone.
+   */
+  buddyBase?: string | null;
 }
 
 export interface RenderedEmail {
@@ -90,7 +96,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     .filter((f) => f.value !== input.passTitle)
     .slice(0, 3);
   const text = [
-    'Your pass is ready',
+    HOLDER_COPY.passReady,
     ...(input.passTitle ? ['', input.passTitle] : []),
     ...fields.map((f) => `${f.label ? `${f.label}: ` : ''}${f.value}`),
     '',
@@ -104,7 +110,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   ].join('\n');
   const muted = (margin: string, line: string) =>
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
-  const body = `${titleHtml('Your pass is ready', '0 0 16px')}
+  const body = `${titleHtml(HOLDER_COPY.passReady, '0 0 16px')}
 ${passBlock(input, fields)}
 <p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;padding:4px;border-radius:${RADIUS.lg}px;background:#ffffff;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
 <p style="margin:0 0 16px">${buttonHtml(input.manageUrl, 'Open your pass', false)}</p>
@@ -112,10 +118,13 @@ ${muted('0 0 24px', ADD_LINE)}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${supportHtml ? `<p class="e-muted" style="margin:12px 0 0;${type('xs')};color:${c.muted}">Questions: ${supportHtml}</p>` : ''}`;
+  // Images need an absolute URL, as in the sign-in email.
+  const buddyBase = safeUrl(input.buddyBase);
   const html = emailShell({
     lang: input.lang ?? 'en',
     title: subject,
     header: input.orgName,
+    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD } } : {}),
     body,
   });
   const sender = input.senderName?.trim();

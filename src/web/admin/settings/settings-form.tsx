@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useId, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { isApiError } from '@/web/lib/errors.ts';
@@ -54,13 +54,15 @@ export interface SettingsFormProps {
   fields: readonly SettingField[];
   /** Asked with the changed values before saving. */
   guard?: (values: Record<string, unknown>) => SaveGuard | null;
+  /** Beside the fields in a wide container (`@container` on the caller), under them when narrow. */
+  aside?: (draft: Draft) => ReactNode;
 }
 
 /**
  * Grouped fields are cards with a header (like org detail), label left and control right;
  * ungrouped ones stack inside the caller's card. Errors show on Save and follow the values.
  */
-export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
+export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps) {
   const query = useSettings(scope);
   const save = useSaveSettings(scope);
   const initial = useMemo(
@@ -79,9 +81,11 @@ export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
   const errors: Record<string, string | undefined> = { ...server, ...check.errors };
   const dirty = Boolean(initial) && fields.some((f) => draft[f.key] !== initial?.[f.key]);
   const blocker = useUnsavedChangesGuard(dirty);
-  const formId = `settings-${scope}`;
+  // Org detail has two forms on one scope (support contacts, pass email): ids must differ.
+  const formId = `settings-${useId()}`;
 
-  if (query.isPending) return <SkeletonRows rows={4} label="Loading settings" />;
+  if (query.isPending)
+    return <SkeletonRows rows={Math.min(4, fields.length)} label="Loading settings" />;
   if (query.isError || !initial || !changed)
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
 
@@ -118,8 +122,13 @@ export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
   };
 
   return (
-    <Form id={formId} {...check.form} onValid={onValid}>
-      <div ref={refused.ref} className="flex flex-col gap-6">
+    <Form
+      id={formId}
+      className={aside ? 'grid gap-6 @[36rem]:grid-cols-[minmax(0,1fr)_16rem]' : undefined}
+      {...check.form}
+      onValid={onValid}
+    >
+      <div ref={refused.ref} className="flex min-w-0 flex-col gap-6">
         {sections(fields).map((section) => {
           const rows = section.fields.map((f) => (
             <SettingRow
@@ -145,6 +154,7 @@ export function SettingsForm({ scope, fields, guard }: SettingsFormProps) {
           );
         })}
       </div>
+      {aside?.(draft)}
       {refused.live}
       <SaveBar
         dirty={dirty}

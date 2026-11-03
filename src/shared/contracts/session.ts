@@ -25,10 +25,16 @@ export const SessionResponseSchema = z.discriminatedUnion('authenticated', [
 ]);
 export type SessionResponse = z.infer<typeof SessionResponseSchema>;
 
+/** Which the sign-in email leads with. Layout only: the link and the code both work either way. */
+export const MagicPreferSchema = z.enum(['link', 'code']);
+export type MagicPrefer = z.infer<typeof MagicPreferSchema>;
+
 export const MagicLinkRequestSchema = z.object({
   email: EmailSchema,
   turnstileToken: z.string().min(1).max(4096),
   next: z.string().max(512).optional(),
+  /** `code` from the installed app, where a link would open the browser instead. */
+  prefer: MagicPreferSchema.optional(),
 });
 /** Consume with the link token (confirm click) or with email + 6-digit code (same browser only). */
 export const MagicLinkConsumeSchema = z.union([

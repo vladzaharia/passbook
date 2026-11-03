@@ -298,6 +298,63 @@ describe('org detail', () => {
     );
   });
 
+  it('turns the buddy on in pass emails with Save: one org setting, nothing else', async () => {
+    const puts: unknown[] = [];
+    let buddy = false;
+    const entries = () => ({
+      ...settingsEmpty,
+      items: [
+        {
+          scope: 'org:o1',
+          key: 'email.buddy',
+          value: buddy,
+          default: false,
+          updatedAt: null,
+          updatedBy: null,
+        },
+      ],
+    });
+    const { container } = await renderApp('/admin/orgs/o1', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/settings': (_u, init) => {
+          if (init?.method === 'PUT') {
+            puts.push(JSON.parse(String(init.body)));
+            buddy = true;
+          }
+          return json(entries());
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    expect(await screen.findByRole('heading', { name: 'Pass email' })).toBeInTheDocument();
+    const toggle = await screen.findByRole('switch', { name: 'Buddy in pass emails' });
+    expect(toggle).not.toBeChecked();
+    expect(
+      screen.getByText("The PassBook buddy sits beside the organization's name."),
+    ).toBeInTheDocument();
+    // The sample email follows the switch before Save, with the email's own art.
+    const art = () =>
+      [...container.querySelectorAll('img')]
+        .map((img) => img.getAttribute('src') ?? '')
+        .filter((src) => src.startsWith('/email/'));
+    expect(screen.getByText('Sample email')).toBeInTheDocument();
+    expect(art()).toEqual([]);
+    await ui.click(toggle);
+    expect(art()).toEqual([
+      expect.stringMatching(/^\/email\/buddy-happy-(light|dark)-top-2x\.png$/),
+      expect.stringMatching(/^\/email\/buddy-happy-(light|dark)-legs-2x\.png$/),
+    ]);
+    const bar = await screen.findByRole('region', { name: 'Unsaved changes' });
+    await ui.click(within(bar).getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(puts).toEqual([{ scope: 'org:o1', values: { 'email.buddy': true } }]),
+    );
+    expect(await screen.findByText('Settings saved')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Buddy in pass emails' })).toBeChecked();
+  });
+
   it('rejects a bad accent on Save, focusing it, without calling the API', async () => {
     let patched = false;
     await renderApp('/admin/orgs/o1', {

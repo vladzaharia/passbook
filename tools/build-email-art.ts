@@ -14,7 +14,7 @@ import {
   EMAIL_MOODS,
   EMAIL_SCHEMES,
   sliceHeight,
-} from '../src/worker/email/buddy.ts';
+} from '../src/shared/email-art.ts';
 import { decodePng, encodePng } from './lib/png.ts';
 import { quantize } from './lib/quantize.ts';
 
