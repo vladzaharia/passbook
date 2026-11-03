@@ -10,6 +10,9 @@ Rules `npm run check` enforces, and where.
 | No unused files, dependencies or binaries | `knip` (`knip.json`) |
 | Initial web load stays under its gzip budget and carries no table, virtual or cmdk code | `tools/check-bundle.ts`, after `vite build` |
 | List and search queries use an index | `test/query-plans.test.ts` |
+| Web code uses the kit: toasts (`ui/toaster.tsx`), copying (`CopyButton`, `lib/clipboard.ts`), dates and numbers (`lib/format.ts`), emails (`strictEmail`), motion tokens, `Spinner` only in buttons | `src/web/ui/kit-lint.test.ts` |
+| SSR tokens, controls, fonts and holder CSS equal the SPA's (`npm run gen` output is current) | `tools/ssr-parity.test.ts`, `tools/ssr-holder.test.ts` |
+| `run_worker_first` negations match `public/` | `tools/wrangler-config.test.ts` |
 
 ## Code
 
