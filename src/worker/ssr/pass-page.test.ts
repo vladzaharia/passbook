@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { assets, fixtures } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
+import { explores } from './pass-explore.ts';
 import { type PassPageProps, renderPassPage } from './pass-page.tsx';
 
 const view = (over: Record<string, unknown> = {}) =>
@@ -65,6 +66,26 @@ describe('/p renders the portal HolderPassView', () => {
         `<div class="flex flex-wrap items-center gap-2"><a [^>]*data-awb=""[\\s\\S]*?</a><div class="flex items-center gap-2">${PORTAL_LINK.source}</div></div>`,
       ),
     );
+  });
+
+  it('draws an exploration from the same view: its header holds the h1 and the portal link', () => {
+    const html = page({ direction: 'a', device: { device: 'mac', inApp: false } });
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toMatch(/<h1[^>]*>Example Org example pass<\/h1>/);
+    expect(html).toContain('class="wl-dir wl-holder"');
+    expect(html).toContain('class="wl-vf"');
+    expect(html).toContain(HOLDER_COPY.openInPortal);
+    // c's buddy plays once on load, without script.
+    expect(page({ direction: 'c', device: { device: 'mac', inApp: false } })).toContain(
+      'data-run="load"',
+    );
+    expect(page({ direction: 'b' })).toMatch(/<h1[^>]*>Example pass<\/h1>/);
+  });
+
+  it('reads ?add= only where the Worker serves localhost', () => {
+    expect(explores('http://localhost:5173')).toBe(true);
+    expect(explores('https://wallet.plrs.im')).toBe(false);
+    expect(explores('http://localhost.evil.test')).toBe(false);
   });
 
   it('keeps the portal link on a voided pass, without the badge', () => {

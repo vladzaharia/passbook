@@ -3,7 +3,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import { canAddToWallet } from '@/shared/device.ts';
+import type { AddDirection } from '../../shared/add-direction.ts';
 import { cn } from '../lib/cn.ts';
+import { useDocumentTitle } from '../lib/route-focus.tsx';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Buddy,
@@ -21,6 +23,7 @@ import { myPassesKey, myPassQuery } from './api.ts';
 import { browserDevice } from './device.ts';
 import { HolderPassView, showsQr } from './holder-pass-view.tsx';
 import { InWalletPill } from './my-passes-page.tsx';
+import { exploreOf, portalDirection } from './pass-explore.tsx';
 import { fieldRows, updatedLine } from './pass-fields.ts';
 import { type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
@@ -69,7 +72,15 @@ function DetailsCard({ pass, nudge }: { pass: MyPass; nudge: NudgeSeat | null })
   );
 }
 
-function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
+function Detail({
+  pass,
+  dealt,
+  direction,
+}: {
+  pass: MyPass;
+  dealt: boolean;
+  direction: AddDirection | null;
+}) {
   const navigate = useNavigate();
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [dip, setDip] = useState(0);
@@ -80,14 +91,18 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const state = voided ? 'voided' : view.expired ? 'expired' : 'active';
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const stacked = showsQr(state, device, publicUrl);
+  const explore = direction ? exploreOf(direction, pass, view, state, name) : null;
   // In Wallet keeps the badge (a holder who removed the pass adds it back) but not the nudge;
-  // nor does a device whose badge cannot add (its line says where to go instead).
+  // nor does a device whose badge cannot add (its line says where to go instead). An
+  // exploration seats its own art.
   const nudge =
-    state === 'active' && !pass.inWallet && canAddToWallet(device.device)
+    !explore && state === 'active' && !pass.inWallet && canAddToWallet(device.device)
       ? stacked
         ? 'beside'
         : 'under'
       : null;
+  // Explorations put Refresh and More in the header: page-sized, More as an icon in b.
+  const header = explore !== null;
   return (
     <HolderPassView
       pass={
@@ -116,10 +131,20 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
       rise={dealt}
       actions={
         <>
-          {voided ? null : <RefreshButton passId={pass.id} pass={pass} size="badge" />}
+          {explore ? <DocumentTitle title={explore.heading.title} /> : null}
+          {voided ? null : (
+            <RefreshButton
+              passId={pass.id}
+              pass={pass}
+              size={header ? 'md' : 'badge'}
+              compact={explore?.direction === 'b'}
+            />
+          )}
           <PassMoreMenu
             page
-            stacked={stacked}
+            stacked={stacked && !header}
+            size={header ? 'md' : 'badge'}
+            icon={explore?.direction === 'b'}
             passId={pass.id}
             passTitle={name}
             publicUrl={voided ? null : publicUrl}
@@ -128,8 +153,15 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
         </>
       }
       details={<DetailsCard pass={pass} nudge={nudge} />}
+      explore={explore}
     />
   );
+}
+
+/** An exploration has no PageHeader: its header names the tab. */
+function DocumentTitle({ title }: { title: string }) {
+  useDocumentTitle(title);
+  return null;
 }
 
 /** Org, last update and In Wallet under the h1. */
@@ -146,6 +178,7 @@ function Meta({ pass }: { pass: MyPass }) {
 export function PassDetailPage({ passId }: { passId: string }) {
   const client = useQueryClient();
   const [seed] = useState(() => fromList(client, passId));
+  const [direction] = useState(portalDirection);
   const query = useQuery({
     ...myPassQuery(passId),
     ...(seed
@@ -167,11 +200,12 @@ export function PassDetailPage({ passId }: { passId: string }) {
     />
   );
   if (pass) {
-    // Arriving from the grid, the card morphs in; a deep link deals it instead.
+    // Arriving from the grid, the card morphs in; a deep link deals it instead. An exploration
+    // draws its own header.
     return (
       <>
-        {header}
-        <Detail pass={pass} dealt={!seed} />
+        {direction ? null : header}
+        <Detail pass={pass} dealt={!seed} direction={direction} />
       </>
     );
   }

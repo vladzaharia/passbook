@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
+import type { AddDirection } from '../../shared/add-direction.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import type { DeviceInfo } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
@@ -12,11 +13,13 @@ import cardText from '../../web/pass-card/pass-card-text.css?raw';
 import stageCss from '../../web/pass-card/stage.css?raw';
 import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
+import { passHeading } from '../../web/portal/add/heading.ts';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { GO_TO_MY_PASSES } from './error-page.tsx';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage } from './hosted.ts';
+import { EXPLORE_CSS } from './pass-explore.ts';
 import { THEME_CSS } from './theme.ts';
 
 /**
@@ -49,6 +52,8 @@ export interface PassPageProps {
   device: DeviceInfo;
   /** Org support contacts, already validated; omitted when the org has none. */
   support?: HolderSupport;
+  /** An exploration of the page (`?add=`, localhost only; pass-explore.ts). */
+  direction?: AddDirection | null;
 }
 
 /**
@@ -61,6 +66,18 @@ function PassBody(props: PassPageProps) {
   const state = voided ? 'voided' : view.expired ? 'expired' : 'active';
   const active = state === 'active';
   const icon = view.images.icon;
+  // An exploration's header (its own h1) is part of the shared view.
+  const explore = props.direction
+    ? {
+        direction: props.direction,
+        heading: passHeading(
+          view.description,
+          [view.organizationName, props.orgLabel],
+          props.passTitle,
+        ),
+        view,
+      }
+    : null;
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
       <header className="sticky top-0 z-20 border-b border-border bg-surface-page pt-[env(safe-area-inset-top)]">
@@ -79,9 +96,11 @@ function PassBody(props: PassPageProps) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <h1 className="mb-6 text-2xl font-semibold tracking-[-0.015em] text-fg-strong [overflow-wrap:anywhere]">
-          {props.passTitle}
-        </h1>
+        {explore ? null : (
+          <h1 className="mb-6 text-2xl font-semibold tracking-[-0.015em] text-fg-strong [overflow-wrap:anywhere]">
+            {props.passTitle}
+          </h1>
+        )}
         <HolderPassView
           pass={
             <PassCardStage
@@ -103,6 +122,7 @@ function PassBody(props: PassPageProps) {
           portalHref={props.portalHref}
           theme={props.theme}
           rise
+          explore={explore}
         />
       </main>
     </div>
@@ -130,7 +150,7 @@ export function renderPassPage(props: PassPageProps): string {
     : active
       ? HOLDER_COPY.previewActive
       : HOLDER_COPY.expired;
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${PAGE_CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}<style nonce="${props.nonce}">${PAGE_CSS}${props.direction ? EXPLORE_CSS[props.direction] : ''}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /**

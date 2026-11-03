@@ -28,6 +28,19 @@ const SHEETS = [
 ]
   .map(read)
   .join('\n');
+/** An exploration's sheets (pass-explore.ts EXPLORE_CSS): the add block's, then c's buddy art. */
+const EXPLORE_SHEETS = [
+  'src/web/portal/add/add.css',
+  'src/web/portal/add/add-a.css',
+  'src/web/portal/add/add-b.css',
+  'src/web/portal/add/add-c.css',
+  'src/web/portal/add/phone.css',
+  'src/web/portal/add/phone-screens.css',
+  'src/web/ui/art/art.css',
+  'src/web/ui/art/art-wallet.css',
+]
+  .map(read)
+  .join('\n');
 
 const view = (over: Record<string, unknown> = {}) =>
   normalize(
@@ -60,6 +73,11 @@ const PAGES = [
   page({ voided: true }),
   page({ view: view({ expirationDate: '2020-01-01T00:00:00Z' }) }),
 ];
+/** `?add=a|b|c` on localhost: the same view with an exploration's header and add block. */
+const EXPLORED = ['a', 'b', 'c'].flatMap((direction) => [
+  ...DEVICES.map((device) => page({ device, direction })),
+  page({ voided: true, direction }),
+]);
 
 /** Tailwind's selector for a class name: every character outside [\w-] escaped. */
 const selector = (cls: string) => `.${cls.replace(/[^\w-]/g, (c) => `\\${c}`)}`;
@@ -77,6 +95,9 @@ describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
       'lg:grid-cols-[22rem_minmax(0,1fr)]',
       'pointer-fine:h-10',
       'bg-warning-subtle',
+      // An exploration's header and add block.
+      'tracking-[-0.015em]',
+      'pointer-coarse:min-h-11',
     ])
       expect(words).toContain(cls);
   });
@@ -87,14 +108,15 @@ describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
   });
 
   it('has a rule for every class /p names, on every device and state', () => {
-    for (const html of PAGES) {
+    for (const html of [...PAGES, ...EXPLORED]) {
       const body = html.slice(html.indexOf('<body>'));
       const classes = new Set(
         [...body.matchAll(/class="([^"]*)"/g)].flatMap((m) => (m[1] ?? '').split(' ')),
       );
       for (const cls of classes) {
         if (!cls || cls.startsWith('lucide') || HOOKS.has(cls)) continue;
-        expect([cls, SHEETS.includes(selector(cls))]).toEqual([cls, true]);
+        const sheets = PAGES.includes(html) ? SHEETS : `${SHEETS}${EXPLORE_SHEETS}`;
+        expect([cls, sheets.includes(selector(cls))]).toEqual([cls, true]);
       }
     }
   });

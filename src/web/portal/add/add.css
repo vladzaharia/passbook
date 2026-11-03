@@ -1,0 +1,166 @@
+/* The pass page's explorations (direction.ts): one grid for the header, the pass, the add block,
+   the details and the help. Phone: one column in that order. From 1024 the pass holds the left
+   column (sticky under the bar) and the rest stacks at its right, top edges level; a and c keep
+   the header across both columns, b seats it beside the pass. Transform and opacity only. */
+.wl-dir {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "pass" "add" "details" "help";
+  row-gap: 1.5rem;
+}
+.wl-dir-head {
+  grid-area: head;
+  min-width: 0;
+}
+/* b: the breadcrumbs over both columns, 12 px above the header as in every page header. */
+.wl-dir[data-dir="b"] {
+  grid-template-areas: "crumbs" "head" "pass" "add" "details" "help";
+}
+.wl-dir-crumbs {
+  grid-area: crumbs;
+  min-width: 0;
+  margin-bottom: -0.75rem;
+}
+.wl-dir-pass {
+  grid-area: pass;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.wl-dir-add {
+  grid-area: add;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+}
+.wl-dir-details {
+  grid-area: details;
+  min-width: 0;
+}
+.wl-dir-help {
+  grid-area: help;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .wl-dir {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto 1fr;
+    grid-template-areas:
+      "head head"
+      "pass add"
+      "pass details"
+      "pass help"
+      "pass .";
+    column-gap: 3rem;
+  }
+  .wl-dir[data-dir="b"] {
+    grid-template-rows: auto auto auto auto auto 1fr;
+    grid-template-areas:
+      "crumbs crumbs"
+      "pass head"
+      "pass add"
+      "pass details"
+      "pass help"
+      "pass .";
+  }
+  .wl-dir-crumbs {
+    margin-bottom: 0;
+  }
+  .wl-dir-pass {
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
+  /* The header ends a row above the pass: the gap under it is the page header's (24 px). */
+  .wl-dir[data-dir="b"] .wl-dir-head {
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Header (holder-heading.tsx). The pass's icon is a 29 pt square drawn for notifications: an app
+   icon's corner and a hairline keep a light icon off a light page. */
+.wl-hh-icon,
+.wl-hh-icon-sm {
+  flex: none;
+  object-fit: contain;
+  box-shadow: 0 0 0 1px var(--pk-border-subtle);
+}
+.wl-hh-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+}
+.wl-hh-icon-sm {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.3125rem;
+}
+.wl-hh-org {
+  margin-bottom: 0.125rem;
+}
+
+/* In Apple Wallet: the success check, as the status pill draws it, larger. */
+.wl-added-mark {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--pk-success-border);
+  border-radius: 999px;
+  background: var(--pk-success-subtle);
+  color: var(--pk-success);
+}
+.wl-added-mark svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* /p says mac for an iPad too: on a touch screen the badge beside the QR goes. */
+@media (pointer: coarse) {
+  .wl-dir .wl-mac-only {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The column rises after the card (240 ms); Apple's badge never animates, so what holds it
+     rises as a whole only where it is not in it. */
+  .wl-dir[data-rise] :is(.wl-dir-head, .wl-dir-details, .wl-dir-help),
+  .wl-dir[data-rise] .wl-dir-add > :not(:has([data-awb])) {
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
+  }
+}
+
+/* The ways to add (ways.tsx): the iPhone's scan, then the Mac's badge under a hairline. */
+.wl-ways {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+}
+.wl-way + .wl-way {
+  border-top: 1px solid var(--pk-border-subtle);
+  padding-top: 1rem;
+}
+.wl-way [data-awb] {
+  margin-top: 0.75rem;
+}
+.wl-way-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.125rem;
+  color: var(--pk-text-strong);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.wl-way-label svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--pk-text-muted);
+}

@@ -95,6 +95,10 @@ export interface PassMenuProps {
   page?: boolean;
   /** Detail page, in the column beside the QR: the label stays on phones too (a row drops it). */
   stacked?: boolean;
+  /** badge beside the badge; md in a page header. */
+  size?: 'badge' | 'md';
+  /** The detail page's items behind an icon trigger (an exploration's header). */
+  icon?: boolean;
   onRemoved?: () => void;
 }
 
@@ -105,6 +109,8 @@ export function PassMoreMenu({
   publicUrl,
   page = false,
   stacked = false,
+  size = 'badge',
+  icon = false,
   onRemoved,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
@@ -115,10 +121,10 @@ export function PassMoreMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {page ? (
+          {page && !icon ? (
             <Button
               variant="outline"
-              size="badge"
+              size={size}
               className={stacked ? undefined : 'max-sm:px-3'}
               iconStart={<MoreHorizontal aria-hidden />}
             >
@@ -128,7 +134,7 @@ export function PassMoreMenu({
             <IconButton
               label="More actions"
               variant="outline"
-              size="badge"
+              size={size}
               icon={<MoreHorizontal aria-hidden />}
             />
           )}

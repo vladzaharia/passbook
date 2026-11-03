@@ -79,7 +79,7 @@ export function RefreshButton({
       <IconButton
         label={label}
         variant="outline"
-        size="badge"
+        size={size === 'md' ? 'md' : 'badge'}
         aria-busy={pending || undefined}
         disabled={pending || phase === 'cooldown'}
         icon={<RefreshCw aria-hidden className={pending ? 'wl-spin wl-essential' : undefined} />}

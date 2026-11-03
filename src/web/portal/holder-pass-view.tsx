@@ -1,18 +1,14 @@
-import { Ban, Clock } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, type DeviceInfo, showsAddQr } from '../../shared/device.ts';
 import { cn } from '../lib/cn.ts';
 import { AppleWalletBadge } from '../ui/apple-wallet-badge.tsx';
-import { Callout } from '../ui/callout.tsx';
+import { DirectionView, type Explore } from './add/direction-view.tsx';
+import { Help, type HolderSupport, Notice, PortalLink } from './holder-parts.tsx';
 import { HolderQr } from './holder-qr.tsx';
 import './holder-pass.css';
 
-/** The org's support contacts, already checked (public/service.ts supportContacts). */
-export interface HolderSupport {
-  email: string | null;
-  url: string | null;
-}
+export type { HolderSupport } from './holder-parts.tsx';
 
 export interface HolderPassViewProps {
   /** The pass stage: the portal's flippable card; /p's script-free one with its own toggle. */
@@ -39,54 +35,8 @@ export interface HolderPassViewProps {
   theme?: 'light' | 'dark';
   /** Deal the side column in after the card (a deep link). */
   rise?: boolean;
-}
-
-const LINK = 'font-medium text-accent-fg underline-offset-4 hover:underline';
-
-/** Voided or expired, one line; a voided pass names the org's support so it is not a dead end. */
-function Notice({
-  state,
-  orgName,
-  support,
-}: Pick<HolderPassViewProps, 'state' | 'orgName' | 'support'>) {
-  if (state === 'active') return null;
-  const voided = state === 'voided';
-  const href = support?.email ? `mailto:${support.email}` : support?.url;
-  return (
-    <div role="status">
-      <Callout tone="warning" icon={voided ? Ban : Clock}>
-        {voided ? HOLDER_COPY.voided : HOLDER_COPY.expired}
-        {voided && href ? (
-          <>
-            {' '}
-            <a href={href} className={LINK}>
-              {HOLDER_COPY.contact(orgName)}
-            </a>
-          </>
-        ) : null}
-      </Callout>
-    </div>
-  );
-}
-
-/** The org's support contacts while the pass is live (the voided note carries its own). */
-function Help({ support }: { support: HolderSupport }) {
-  return (
-    <p className="text-sm text-fg-muted [overflow-wrap:anywhere]">
-      {HOLDER_COPY.help}:{' '}
-      {support.email ? (
-        <a href={`mailto:${support.email}`} className={LINK}>
-          {support.email}
-        </a>
-      ) : null}
-      {support.email && support.url ? ' · ' : null}
-      {support.url ? (
-        <a href={support.url} className={LINK}>
-          {support.url}
-        </a>
-      ) : null}
-    </p>
-  );
+  /** An exploration of the header and add block (shared/add-direction.ts); without one, this layout. */
+  explore?: Explore | null;
 }
 
 /** The add QR shows: a live pass with a public page, wherever this is not the phone. */
@@ -98,17 +48,6 @@ export function showsQr(
   return state === 'active' && publicUrl !== null && showsAddQr(device.device);
 }
 
-/** /p's quiet way to the holder's page: muted until pointed at. Signed out, sign-in comes first. */
-function PortalLink({ href }: { href: string }) {
-  return (
-    <p className="text-sm">
-      <a href={href} className="text-fg-muted underline underline-offset-4 hover:text-fg-strong">
-        {HOLDER_COPY.openInPortal}
-      </a>
-    </p>
-  );
-}
-
 /**
  * The holder's pass page, one composition for the portal (/passes/:id) and the public link (/p,
  * rendered to static markup with the same CSS): the card, then the notice, the add block, the
@@ -117,6 +56,7 @@ function PortalLink({ href }: { href: string }) {
  * follow the badge in a row. The add line closes the block.
  */
 export function HolderPassView(props: HolderPassViewProps) {
+  if (props.explore) return <DirectionView {...props} explore={props.explore} />;
   const { state, device, publicUrl, support } = props;
   const active = state === 'active';
   const qr = showsQr(state, device, publicUrl);

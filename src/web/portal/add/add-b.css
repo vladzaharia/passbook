@@ -1,0 +1,100 @@
+/* b: the iPhone shows how (phone-add.tsx): the drawn phone (phone.css) on its stage, the ways to
+   add beside it; on the iPhone itself, the badge in a dock. */
+.wl-b {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 1.5rem;
+}
+.wl-b-side {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+}
+.wl-b-ways[hidden] {
+  display: none;
+}
+@media (max-width: 639.98px) {
+  .wl-b:not(.wl-b-flat) .wl-b-side {
+    align-items: center;
+    text-align: center;
+  }
+  .wl-b:not(.wl-b-flat) .wl-way-label {
+    justify-content: center;
+  }
+}
+@media (min-width: 640px) {
+  .wl-b:not(.wl-b-flat) {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    justify-items: stretch;
+    column-gap: 2rem;
+  }
+}
+.wl-b-flat {
+  justify-items: stretch;
+  gap: 1rem;
+}
+.wl-b-again:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* The stage: a halo of the accent behind the phone and its shadow on the floor. */
+.wl-b-stage {
+  position: relative;
+  isolation: isolate;
+  padding: 0.5rem 1rem 1.5rem;
+}
+.wl-b-stage::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 10% -10% 15%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--pk-accent) 16%, transparent),
+    transparent
+  );
+}
+.wl-b-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: 0.75rem;
+  left: 50%;
+  width: 11rem;
+  height: 1.25rem;
+  margin-left: -5.5rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.45), transparent);
+}
+
+/* iPhone: the badge in a dock at the foot of the screen, in the page's frosted surface. */
+.wl-b-dock {
+  position: fixed;
+  z-index: 30;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--pk-border-subtle);
+  background: color-mix(in oklab, var(--pk-surface-page) 82%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+}
+/* The page's end stays clear of the dock; the add area holding only the dock takes no row. */
+.wl-dir:has(.wl-b-dock) {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+.wl-dir-add:not(:has(> :not(.wl-b-dock))) {
+  display: contents;
+}

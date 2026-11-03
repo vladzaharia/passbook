@@ -1,0 +1,282 @@
+/* b's iPhone (phone.tsx): 200 × 412 (the iPhone's 1 : 2.06), a 3 px titanium edge, a 6 px bezel,
+   the Dynamic Island. The add QR in its camera is the real one: flat, 128 px, black on white. The
+   hardware is black titanium in either theme; the screen's own chrome follows the page's. One run,
+   2.8 s; reduced motion shows the last frame. Transform and opacity only. */
+.wl-ph {
+  --ph-ti: linear-gradient(150deg, #a3a9b2, #4a4e56 20%, #24272c 48%, #60656d 78%, #2c2f35);
+  --ph-ink: #050608;
+  --ph-key: #34373d;
+  --ph-lock: #ffd60a;
+  --ph-sheet: #1c1c1e;
+  --ph-screen: #000;
+  --ph-tint: #0a84ff;
+  --ph-chrome: #fff;
+  --ph-tab-1: #2dd4bf;
+  --ph-tab-2: #9a5cff;
+  --ph-tab-3: #ffc24d;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .wl-ph {
+    --ph-sheet: #f2f2f7;
+    --ph-screen: #f2f2f7;
+    --ph-tint: #007aff;
+    --ph-chrome: #000;
+  }
+}
+[data-theme="light"] .wl-ph {
+  --ph-sheet: #f2f2f7;
+  --ph-screen: #f2f2f7;
+  --ph-tint: #007aff;
+  --ph-chrome: #000;
+}
+.wl-ph {
+  position: relative;
+  width: 12.5rem;
+  height: 25.75rem;
+  border: 3px solid transparent;
+  border-radius: 2.5rem;
+  background:
+    linear-gradient(var(--ph-ink), var(--ph-ink)) padding-box,
+    var(--ph-ti) border-box;
+  box-shadow:
+    0 1.5rem 3rem -1.25rem rgb(0 0 0 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+/* Keys: the action button and the volume pair on the left, the side button on the right. */
+.wl-ph::before,
+.wl-ph::after {
+  content: "";
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--ph-key);
+}
+.wl-ph::before {
+  top: 5.5rem;
+  left: -6px;
+  height: 1.25rem;
+  box-shadow:
+    0 2.25rem 0 var(--ph-key),
+    0 4.5rem 0 var(--ph-key);
+}
+.wl-ph::after {
+  top: 7.5rem;
+  right: -6px;
+  height: 3.75rem;
+}
+.wl-ph-glass {
+  position: absolute;
+  inset: 6px;
+  overflow: hidden;
+  border-radius: 1.9375rem;
+  background: var(--ph-screen);
+}
+/* Light off the glass at the top left, clear of the code. */
+.wl-ph-glass::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  inset: 0 45% 70% 0;
+  background: linear-gradient(130deg, rgb(255 255 255 / 0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.wl-ph-status {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem 0 1.625rem;
+  color: var(--ph-chrome);
+  font:
+    600 0.6875rem / 1 -apple-system,
+    "SF Pro Text",
+    var(--pk-font-sans);
+}
+.wl-ph[data-screen="scan"] .wl-ph-status {
+  color: #fff;
+}
+.wl-ph-island {
+  position: absolute;
+  top: 0.5625rem;
+  left: 50%;
+  width: 3.875rem;
+  height: 1.125rem;
+  margin-left: -1.9375rem;
+  border-radius: 1rem;
+  background: #000;
+}
+.wl-ph-cell {
+  position: relative;
+  width: 1.375rem;
+  height: 0.625rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  opacity: 0.9;
+}
+.wl-ph-cell::before {
+  content: "";
+  position: absolute;
+  inset: 1px 5px 1px 1px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+/* The camera: a dim room around the laptop's lit screen, the code centred in it. */
+.wl-ph-cam {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(9rem 8rem at 50% 34%, #3b414c, transparent 70%),
+    linear-gradient(#15171c, #0b0c0f);
+}
+.wl-ph-target {
+  position: absolute;
+  top: 4rem;
+  left: 50%;
+  width: 8.75rem;
+  height: 8.75rem;
+  margin-left: -4.375rem;
+}
+.wl-ph-qr {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+  padding: 0.375rem;
+}
+.wl-ph-scan {
+  position: absolute;
+  inset: 0.375rem;
+  opacity: 0;
+}
+.wl-ph-scan::before {
+  content: "";
+  position: absolute;
+  inset: 0 -0.25rem auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ph-lock) 20% 80%, transparent);
+  box-shadow: 0 0 10px 1px color-mix(in oklab, var(--ph-lock) 70%, transparent);
+}
+.wl-ph-lock {
+  position: absolute;
+  inset: -0.5rem;
+}
+.wl-ph-lock > i {
+  position: absolute;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 0 solid var(--ph-lock);
+}
+.wl-ph-lock > i:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-width: 2.5px 0 0 2.5px;
+  border-top-left-radius: 0.5rem;
+}
+.wl-ph-lock > i:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-width: 2.5px 2.5px 0 0;
+  border-top-right-radius: 0.5rem;
+}
+.wl-ph-lock > i:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 2.5px 2.5px;
+  border-bottom-left-radius: 0.5rem;
+}
+.wl-ph-lock > i:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-width: 0 2.5px 2.5px 0;
+  border-bottom-right-radius: 0.5rem;
+}
+.wl-ph-chip {
+  position: absolute;
+  top: 13.75rem;
+  left: 50%;
+  display: flex;
+  max-width: 9.5rem;
+  align-items: center;
+  gap: 0.25rem;
+  overflow: hidden;
+  padding: 0.25rem 0.5625rem;
+  border-radius: 1rem;
+  background: var(--ph-lock);
+  color: #1c1c1e;
+  font:
+    600 0.625rem / 1.2 -apple-system,
+    "SF Pro Text",
+    var(--pk-font-sans);
+  white-space: nowrap;
+  translate: -50% 0;
+}
+.wl-ph-chip svg {
+  width: 0.6875rem;
+  height: 0.6875rem;
+  flex: none;
+}
+.wl-ph-shutter {
+  position: absolute;
+  bottom: 1.625rem;
+  left: 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-left: -1.375rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px #111318,
+    0 0 0 5.5px #fff;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-ph {
+    animation: wl-ph-in 520ms var(--wl-ease-out) 120ms backwards;
+  }
+  .wl-ph-scan {
+    animation: wl-ph-sweep 900ms cubic-bezier(0.45, 0, 0.4, 1) 700ms;
+  }
+  .wl-ph-lock > i {
+    animation: wl-ph-lock 340ms var(--wl-ease-spring) 1560ms backwards;
+  }
+  .wl-ph-chip {
+    animation: wl-ph-chip 260ms var(--wl-ease-out) 1820ms backwards;
+  }
+}
+@keyframes wl-ph-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+@keyframes wl-ph-sweep {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(100% - 2px));
+  }
+}
+@keyframes wl-ph-lock {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+@keyframes wl-ph-chip {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem) scale(0.92);
+  }
+}

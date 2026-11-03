@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { cn } from '../lib/cn.ts';
 import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from '../pass-card/barcode-engine.ts';
@@ -14,11 +14,20 @@ export function qrDataUri(toSvg: ToSvg, text: string): string {
 }
 
 /**
- * The add QR in a phone frame, smaller than the pass's own barcode so the two never pass for each
- * other. A scan line sweeps it once as it appears (holder-pass.css); the frame keeps its size
- * while the encoder loads.
+ * The code on a white tile, `className` sizing it. The tile keeps its size while the encoder
+ * loads; `children` (a scan line) draw over the code once it is there.
  */
-export function HolderQr({ value, label }: { value: string; label: string }) {
+export function QrTile({
+  value,
+  label,
+  className,
+  children,
+}: {
+  value: string;
+  label: string;
+  className?: string;
+  children?: ReactNode;
+}) {
   const [engine, setEngine] = useState<ToSvg | undefined>(getBarcodeEngine);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -33,25 +42,38 @@ export function HolderQr({ value, label }: { value: string; label: string }) {
     };
   }, [engine]);
   return (
+    <span
+      className={cn(
+        'wl-qr relative grid place-items-center overflow-hidden',
+        // White behind the code only: the failure line stays on the theme's surface.
+        !failed && 'bg-white',
+        className,
+      )}
+    >
+      {engine ? (
+        <>
+          <img src={qrDataUri(engine, value)} alt={label} className="block size-full" />
+          {children}
+        </>
+      ) : failed ? (
+        <span className="px-1 text-center text-xs text-danger">{HOLDER_COPY.qrFailed}</span>
+      ) : (
+        <span role="img" aria-label={label} aria-busy="true" className="block size-full" />
+      )}
+    </span>
+  );
+}
+
+/**
+ * The add QR in a phone frame, smaller than the pass's own barcode so the two never pass for each
+ * other. A scan line sweeps it once as it appears (holder-pass.css).
+ */
+export function HolderQr({ value, label }: { value: string; label: string }) {
+  return (
     <span className="wl-qr-phone relative block w-fit shrink-0 rounded-[1.25rem] border-2 border-border-strong bg-surface-raised px-2 pt-4.5 pb-3.5">
-      <span
-        className={cn(
-          'wl-qr relative grid size-28 place-items-center overflow-hidden rounded-md p-1',
-          // White behind the code only: the failure line stays on the theme's surface.
-          !failed && 'bg-white',
-        )}
-      >
-        {engine ? (
-          <>
-            <img src={qrDataUri(engine, value)} alt={label} className="block size-full" />
-            <span aria-hidden className="wl-qr-scan" />
-          </>
-        ) : failed ? (
-          <span className="px-1 text-center text-xs text-danger">{HOLDER_COPY.qrFailed}</span>
-        ) : (
-          <span role="img" aria-label={label} aria-busy="true" className="block size-full" />
-        )}
-      </span>
+      <QrTile value={value} label={label} className="size-28 rounded-md p-1">
+        <span aria-hidden className="wl-qr-scan" />
+      </QrTile>
     </span>
   );
 }

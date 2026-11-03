@@ -1,3 +1,4 @@
+import { addDirection } from '../../../shared/add-direction.ts';
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
@@ -7,6 +8,7 @@ import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { rateLimit } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
+import { explores } from '../../ssr/pass-explore.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
@@ -81,6 +83,7 @@ register(
         voided: pass.status === 'voided',
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
+        direction: addDirection(new URL(c.req.url).search, explores(baseUrl(c.env))),
       });
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
