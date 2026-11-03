@@ -91,13 +91,17 @@ describe('route guards in the app', () => {
     expect(art).toHaveAttribute('data-state', 'lost');
   });
 
-  it('renders the admin not found page with a palette search', async () => {
+  it('renders the admin not found page as the holder one, with a palette search', async () => {
     const user = userEvent.setup();
     const { container } = await renderApp('/admin/nope', { session: 'admin' });
     expect(
       await screen.findByRole('heading', { name: 'Page not found', level: 1 }),
     ).toBeInTheDocument();
-    expect(container.querySelector('main [data-buddy] [data-art="torn"]')).not.toBeNull();
+    // A route not found is the lost buddy peeking (an item not found mends the torn pass).
+    const buddy = container.querySelector('main [data-buddy]');
+    expect(buddy).toHaveAttribute('data-scene', 'peek');
+    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-state', 'lost');
+    expect(buddy?.querySelector('[data-art="torn"]')).toBeNull();
     expect(container.querySelector('main [data-part="w"]')).toHaveAttribute('data-mood', 'sad');
     expect(screen.getByRole('link', { name: 'Go to Overview' })).toBeInTheDocument();
     await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Search' }));

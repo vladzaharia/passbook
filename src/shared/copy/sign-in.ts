@@ -1,5 +1,6 @@
 import { EMAIL_INVALID_MESSAGE } from '../email.ts';
 import { HOLDER_COPY } from './holder.ts';
+import { STATE_COPY, waitLine } from './states.ts';
 
 // Sign-in copy, shared by /login (SPA) and the worker's SSR auth pages.
 
@@ -8,6 +9,7 @@ export const SIGN_IN_FOOTER = HOLDER_COPY.signInFooter;
 
 export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;
 export const WRONG_CODE = 'That code is wrong or expired.';
+const LINK_EXPIRED = 'Link expired';
 
 /** One line on /login for `?reason=`. */
 export const LOGIN_REASONS = {
@@ -30,7 +32,10 @@ export type SignInErrorCode =
 
 /** A refused or failed sign-in, by the server's error code: a title and one sentence. */
 export const SIGN_IN_ERROR_COPY: Record<SignInErrorCode, { title: string; message: string }> = {
-  NO_ACCESS: { title: 'No access', message: 'This Polaris ID account cannot use PassBook.' },
+  NO_ACCESS: {
+    title: STATE_COPY.forbidden,
+    message: 'This Polaris ID account cannot use PassBook.',
+  },
   ACCOUNT_DISABLED: {
     title: 'Account disabled',
     message: 'This account is disabled. Ask an admin.',
@@ -52,12 +57,12 @@ export const SIGN_IN_ERROR_COPY: Record<SignInErrorCode, { title: string; messag
     message: 'Sign in to the account that asked for this link, then confirm.',
   },
   LINK_INVALID: {
-    title: 'Link expired',
+    title: LINK_EXPIRED,
     message: 'This link or code is invalid or expired. Request a new one.',
   },
   EMAIL_TAKEN: { title: 'Email in use', message: 'That address belongs to another account.' },
   MAGIC_LINK_DISABLED: { title: 'Email sign-in is off', message: 'Sign in another way.' },
-  RATE_LIMITED: { title: 'Too many requests', message: 'Try again in a minute.' },
+  RATE_LIMITED: { title: STATE_COPY.rateLimited, message: waitLine() },
   VALIDATION: { title: 'Sign-in failed', message: 'The request was incomplete. Start again.' },
 };
 
@@ -72,6 +77,37 @@ export const OIDC_FAILURE_COPY = {
   unavailable: {
     title: 'Sign-in unavailable',
     message: 'The sign-in provider failed. Try again.',
+  },
+} as const;
+export type OidcFailure = keyof typeof OIDC_FAILURE_COPY;
+
+/** The SSR auth pages' labels (worker/modules/auth/pages.ts). */
+export const AUTH_PAGE_COPY = {
+  signIn: 'Sign in',
+  backToSignIn: 'Back to sign in',
+  signInToConfirm: 'Sign in to confirm',
+  confirmEmail: 'Confirm email',
+  confirm: 'Confirm',
+  otherAccount: 'This browser is signed in to another account.',
+  emailInstead: 'Sign in with email instead',
+  otherPolarisId: 'Use another Polaris ID',
+  breakglass: 'Break-glass sign-in',
+  token: 'Token',
+  signingOut: 'Signing out',
+  continue: 'Continue',
+} as const;
+
+/** A dead link, by what it was for: an add-email link is no way to sign in. */
+export const EXPIRED_LINK_COPY = {
+  sign_in: {
+    title: LINK_EXPIRED,
+    message: 'Request a new one to sign in.',
+    action: AUTH_PAGE_COPY.backToSignIn,
+  },
+  verify_email: {
+    title: LINK_EXPIRED,
+    message: 'Add the email again in Account.',
+    action: 'Go to Account',
   },
 } as const;
 

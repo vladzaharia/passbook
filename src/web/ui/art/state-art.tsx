@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
 import type { ArtSize } from './base.tsx';
-import { BuddyArt, type BuddyScene } from './buddy-art.tsx';
+import { BuddyArt } from './buddy-art.tsx';
 import { LockArt } from './lock.tsx';
+import { ACTED_STATES, type ActedState } from './state-acts.ts';
 import { TornArt } from './torn.tsx';
 import { UnpluggedArt } from './unplugged.tsx';
 import { WalletArt, type WalletState } from './wallet.tsx';
@@ -24,13 +24,9 @@ export type StateArtName =
   | 'torn'
   | 'no-access';
 
-/** Refusals and failures: the sad buddy acts it out beside its prop, as the app's state boxes do. */
-const ACTED: Partial<Record<StateArtName, { scene: BuddyScene; prop?: ReactNode; lost?: true }>> = {
-  broken: { scene: 'plug', prop: <UnpluggedArt size="sm" /> },
-  lost: { scene: 'peek', lost: true },
-  torn: { scene: 'mend', prop: <TornArt size="sm" /> },
-  'no-access': { scene: 'tug', prop: <LockArt size="sm" /> },
-};
+/** The acted states' props, drawn statically here (SSR); the app draws them lazily. */
+const PROP = { unplugged: UnpluggedArt, torn: TornArt, lock: LockArt } as const;
+const isActed = (name: StateArtName): name is ActedState => Object.hasOwn(ACTED_STATES, name);
 
 /**
  * The rest stand seated with their state's part; a click waves hello. `failed` (a refused form)
@@ -47,15 +43,16 @@ export function StateArt({
   failed?: boolean;
   playOnLoad?: boolean;
 }) {
-  const acted = ACTED[name];
-  if (acted) {
+  if (isActed(name)) {
+    const act = ACTED_STATES[name];
+    const Prop = act.prop ? PROP[act.prop] : null;
     return (
       <BuddyArt
         mood="sad"
         size={size}
-        scene={acted.scene}
-        state={acted.lost ? 'lost' : 'login'}
-        prop={acted.prop}
+        scene={act.scene}
+        state={act.state ?? 'login'}
+        prop={Prop ? <Prop size="sm" /> : undefined}
         playOnLoad={playOnLoad}
       />
     );

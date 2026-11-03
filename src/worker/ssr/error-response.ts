@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 import type { AppBindings } from '../platform/context.ts';
-import { renderErrorPage } from './error-page.tsx';
+import { backToSignIn, GO_TO_MY_PASSES, renderErrorPage } from './error-page.tsx';
 import { requestTheme } from './head.ts';
 import { renderNotFoundPage } from './pass-page.tsx';
 
@@ -46,7 +46,7 @@ async function detailOf(res: Response): Promise<string | undefined> {
 /**
  * Swaps a problem+json response for the hosted HTML page when a browser asked for the route.
  * Status and Retry-After carry over; a dead pass link gets the "Link expired" card. A refused
- * form post cannot be retried by reloading, so its way back is the sign-in page or home.
+ * form post cannot be retried by reloading, so its way back is the sign-in page or My passes.
  */
 export async function asBrowserPage(c: Context<AppBindings>, res: Response): Promise<Response> {
   if (!wantsHtml(c) || !paged(c, res.status)) return res;
@@ -66,11 +66,7 @@ export async function asBrowserPage(c: Context<AppBindings>, res: Response): Pro
       ...(line ? { line } : {}),
       ...(isNavigation(c)
         ? {}
-        : {
-            action: c.req.path.startsWith('/auth/')
-              ? { label: 'Back to sign in', href: '/login' }
-              : { label: 'Go home', href: '/' },
-          }),
+        : { action: c.req.path.startsWith('/auth/') ? backToSignIn() : GO_TO_MY_PASSES }),
     });
   }
   const headers = new Headers(res.headers);
