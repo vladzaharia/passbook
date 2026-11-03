@@ -63,11 +63,15 @@ describe('nudge, list, stage and miniature scenes', () => {
     expect(at('wl-s-nudge-land', '13.5%')).toMatch(/scale: 1\.14 0\.83/);
     expect(at('wl-s-nudge-shadow', '13.5%')).toMatch(/scale: 1\.14 1/);
     expect(at('wl-s-nudge-blink', '12.5%')).toMatch(/scale: 1 0\.15/);
-    // Then the teal pass lifts out of the pocket and aims up-left at the badge, twice (B3).
+    // Then the teal pass lifts out of the pocket and aims up-left at the badge, twice (B3); a
+    // seat steeper below its badge scales the turn and moves the look (portal.css).
     expect(at('wl-s-nudge-point', '48%, 56%, 62%')).toMatch(
-      /translate: -3px -10px; rotate: -24deg/,
+      /translate: -3px -10px; rotate: calc\(var\(--wl-aim, 1\) \* -24deg\)/,
     );
-    expect(at('wl-s-nudge-point', '52%')).toMatch(/translate: -2px -7px; rotate: -16deg/);
+    expect(at('wl-s-nudge-point', '52%')).toMatch(
+      /translate: -2px -7px; rotate: calc\(var\(--wl-aim, 1\) \* -16deg\)/,
+    );
+    expect(at('wl-s-nudge-look', '40%, 68%')).toMatch(/translate: var\(--wl-look, -2.2px -1.2px\)/);
     // 2.6 s from the landed art (700 ms): still by 3.3 s.
     const runs = [...css('nudge.css').matchAll(/animation: wl-s-nudge-\w+ ([\d.]+)s/g)];
     expect(runs.length).toBe(11);

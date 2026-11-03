@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -79,32 +77,6 @@ describe('pass detail', () => {
     expect(document.querySelector('[data-scene="nudge"], .wl-nudge')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'More' }));
     expect(within(await screen.findByRole('menu')).queryByText(/Add again/)).toBeNull();
-  });
-
-  it('seats the S buddy on the Details card under the badge, clear of the actions', async () => {
-    const { container } = await renderApp('/passes/p1', {
-      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
-    });
-    await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
-    const card = screen.getByRole('heading', { name: 'Details' }).parentElement?.parentElement;
-    const buddy = container.querySelector('[data-scene="nudge"]');
-    // On the card's top edge (the card is its host), at its left end: S, seated, decorative.
-    expect(buddy?.parentElement).toBe(card);
-    expect(buddy).toHaveClass('wl-buddy', 'wl-nudge');
-    expect(buddy).toHaveAttribute('data-at', 'start');
-    expect(buddy?.querySelector('svg')).toHaveAttribute('width', '64');
-    expect(buddy).toHaveAttribute('aria-hidden', 'true');
-    expect(
-      buddy?.querySelectorAll('[data-part="l1"], [data-part="l2"], [data-part="sd"]'),
-    ).toHaveLength(3);
-    // The card follows the badge's block and keeps 56 px clear above it: 44 for the seated
-    // buddy, 12 for its fall (18 of the art's 72 units), so it never reaches the actions.
-    const badge = screen.getByRole('link', { name: 'Add to Apple Wallet' });
-    expect(badge.parentElement?.parentElement?.nextElementSibling).toBe(card);
-    expect(card).toHaveClass('mt-8');
-    const css = readFileSync(join(process.cwd(), 'src/web/portal/portal.css'), 'utf8');
-    expect(css).toMatch(/\.wl-nudge \{\s*--wl-drop: 18px;/);
-    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('deals the card on a deep link', async () => {

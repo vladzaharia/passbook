@@ -528,11 +528,15 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   passes. No `Updated` line. Tile radius 18 px (the pass's ~14).
 - **Portal pass detail** and **`/p`** are one view (`portal/holder-pass-view.tsx`; `/p` renders
   it to static markup with the same CSS, `npm run gen`): the card left; right, the voided or
-  expired notice (voided names the org's support: `Contact <org>`), the QR per the device rule,
-  the badge with the portal's `Refresh` and `More` (Copy link, Open public page in a new tab,
-  Remove) beside it at badge size, the add line, the portal's Details card, then the org's help.
-  The portal's PageHeader carries the org and `Updated Nov 1` as meta. `/p` adds one quiet link,
-  `Open in My passes`, to the holder's portal page (sign-in first). No `.pkpass` download.
+  expired notice (voided names the org's support: `Contact <org>`), the add block, the portal's
+  Details card, then the org's help. Where the QR shows (device rule) it leads, captioned `Scan
+  with your iPhone.`; beside it one column, top-aligned with the phone and as tall: the badge,
+  then the portal's `Refresh` and `More` (Copy link, Open public page in a new tab, Remove), all
+  badge-high and as wide as the badge (a countdown widens them all, never the badge). Without
+  the QR (iPhone) they follow the badge in a row, `More` icon-only under 640. The add line closes
+  the block. The badge has no padding of its own there: the gaps are its clear space. The
+  portal's PageHeader carries the org and `Updated Nov 1` as meta. `/p` puts one quiet link,
+  `Open in My passes`, where the portal has its actions (sign-in first). No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.
 - **Org first**: `/p` and the pass email show the org's logo or name, not the PassBook mark. The

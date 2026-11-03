@@ -146,11 +146,11 @@
   56%,
   62% {
     translate: -3px -10px;
-    rotate: -24deg;
+    rotate: calc(var(--wl-aim, 1) * -24deg);
   }
   52% {
     translate: -2px -7px;
-    rotate: -16deg;
+    rotate: calc(var(--wl-aim, 1) * -16deg);
   }
   70%,
   100% {
@@ -216,7 +216,7 @@
   }
   40%,
   68% {
-    translate: -2.2px -1.2px;
+    translate: var(--wl-look, -2.2px -1.2px);
   }
   76%,
   92% {

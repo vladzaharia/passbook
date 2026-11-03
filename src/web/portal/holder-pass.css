@@ -48,10 +48,9 @@
     animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
   }
   /* The side column rises after the card (240 ms). Apple's badge never animates: only the pieces
-     that do not hold it rise. */
-  .wl-after-card > :not(:has([data-awb])),
-  .wl-after-card > :has([data-awb]) > :not([data-awb], :has([data-awb])),
-  .wl-after-card > :has([data-awb]) > :has([data-awb]) > :not([data-awb]) {
+     that do not hold it rise, at any depth (the badge sits in the row or in the stack). */
+  .wl-after-card > :not([data-awb], :has([data-awb])),
+  .wl-after-card :has([data-awb]) > :not([data-awb], :has([data-awb])) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
   }
 }

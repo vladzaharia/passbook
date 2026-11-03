@@ -2,6 +2,8 @@ import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-que
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
+import { canAddToWallet } from '@/shared/device.ts';
+import { cn } from '../lib/cn.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Buddy,
@@ -17,7 +19,7 @@ import {
 } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { HolderPassView } from './holder-pass-view.tsx';
+import { HolderPassView, showsQr } from './holder-pass-view.tsx';
 import { InWalletPill } from './my-passes-page.tsx';
 import { fieldRows, updatedLine } from './pass-fields.ts';
 import { type MyPass, passName, toView } from './pass-view.ts';
@@ -36,11 +38,24 @@ function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass
 
 const crumbsFor = (name: string) => [{ label: 'My passes', to: '/' }, { label: name }];
 
-/** Status and the pass's fields. Not on a device yet, the buddy falls onto it under the badge. */
-function DetailsCard({ pass, nudge }: { pass: MyPass; nudge: boolean }) {
+/**
+ * Where the nudge sits on the Details card's top edge (portal.css): past the stack beside the QR,
+ * or under the badge's row on the phone.
+ */
+type NudgeSeat = 'beside' | 'under';
+
+/** Status and the pass's fields. Not on a device yet, the buddy falls onto it and points. */
+function DetailsCard({ pass, nudge }: { pass: MyPass; nudge: NudgeSeat | null }) {
   return (
-    <Card className={nudge ? 'mt-8' : undefined}>
-      {nudge ? <Buddy scene="nudge" size="sm" at="start" className="wl-nudge" /> : null}
+    <Card className={nudge === 'under' ? 'mt-8' : nudge === 'beside' ? 'mt-2' : undefined}>
+      {nudge ? (
+        <Buddy
+          scene="nudge"
+          size="sm"
+          at="start"
+          className={cn('wl-nudge', nudge === 'beside' && 'wl-nudge-beside')}
+        />
+      ) : null}
       <CardHeader title="Details" />
       <CardBody>
         <KeyValue
@@ -64,6 +79,15 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const voided = pass.status === 'voided';
   const state = voided ? 'voided' : view.expired ? 'expired' : 'active';
   const publicUrl = publicUrlOf(pass.downloadUrl);
+  const stacked = showsQr(state, device, publicUrl);
+  // In Wallet keeps the badge (a holder who removed the pass adds it back) but not the nudge;
+  // nor does a device whose badge cannot add (its line says where to go instead).
+  const nudge =
+    state === 'active' && !pass.inWallet && canAddToWallet(device.device)
+      ? stacked
+        ? 'beside'
+        : 'under'
+      : null;
   return (
     <HolderPassView
       pass={
@@ -95,6 +119,7 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           {voided ? null : <RefreshButton passId={pass.id} pass={pass} size="badge" />}
           <PassMoreMenu
             page
+            stacked={stacked}
             passId={pass.id}
             passTitle={name}
             publicUrl={voided ? null : publicUrl}
@@ -102,8 +127,7 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           />
         </>
       }
-      // In Wallet keeps the badge (a holder who removed the pass adds it back) but not the nudge.
-      details={<DetailsCard pass={pass} nudge={state === 'active' && !pass.inWallet} />}
+      details={<DetailsCard pass={pass} nudge={nudge} />}
     />
   );
 }

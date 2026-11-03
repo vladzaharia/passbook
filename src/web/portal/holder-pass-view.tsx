@@ -27,11 +27,11 @@ export interface HolderPassViewProps {
   /** The absolute /p URL the add QR encodes; null hides the QR. */
   publicUrl: string | null;
   support?: HolderSupport | null;
-  /** Beside the badge: the portal's Refresh and More. */
+  /** With the badge, at its size: the portal's Refresh and More. */
   actions?: ReactNode;
   /** Under the add block: the portal's Details card, which seats the nudge. */
   details?: ReactNode;
-  /** /p: the quiet way to the holder's page in the portal. */
+  /** /p: the quiet way to the holder's page in the portal, with the badge. */
   portalHref?: string;
   /** As the download starts: the card dips towards the badge. */
   onAdd?: () => void;
@@ -89,21 +89,55 @@ function Help({ support }: { support: HolderSupport }) {
   );
 }
 
+/** The add QR shows: a live pass with a public page, wherever this is not the phone. */
+export function showsQr(
+  state: HolderPassViewProps['state'],
+  device: DeviceInfo,
+  publicUrl: string | null,
+): publicUrl is string {
+  return state === 'active' && publicUrl !== null && showsAddQr(device.device);
+}
+
+/** /p's quiet way to the holder's page: muted until pointed at. Signed out, sign-in comes first. */
+function PortalLink({ href }: { href: string }) {
+  return (
+    <p className="text-sm">
+      <a href={href} className="text-fg-muted underline underline-offset-4 hover:text-fg-strong">
+        {HOLDER_COPY.openInPortal}
+      </a>
+    </p>
+  );
+}
+
 /**
  * The holder's pass page, one composition for the portal (/passes/:id) and the public link (/p,
- * rendered to static markup with the same CSS): the card, then the notice, the add QR where this
- * is not the phone, the Apple badge with the portal's actions beside it, the add line, the
- * portal's details and the org's help. The QR leads where the badge cannot add here.
+ * rendered to static markup with the same CSS): the card, then the notice, the add block, the
+ * portal's details and the org's help. Where the QR shows (not the phone), the badge and the
+ * actions stack beside it, one column the phone's height and the badge's width; on the phone they
+ * follow the badge in a row. The add line closes the block.
  */
 export function HolderPassView(props: HolderPassViewProps) {
   const { state, device, publicUrl, support } = props;
   const active = state === 'active';
+  const qr = showsQr(state, device, publicUrl);
   const line = active ? addLine(device) : null;
-  const qr = active && publicUrl && showsAddQr(device.device);
-  // The line that says how to add sits with the QR when there is one, else under the badge.
-  const qrLine = qr && line === HOLDER_COPY.openOnApple ? line : null;
-  const badgeLine = line === qrLine ? null : line;
   const help = state !== 'voided' && (support?.email || support?.url) ? support : null;
+  // The gaps around the badge are its clear space, so its art lines up with the column's edge.
+  const badge = active ? (
+    <AppleWalletBadge
+      href={props.downloadHref}
+      onClick={props.onAdd}
+      theme={props.theme}
+      className="p-0"
+    />
+  ) : null;
+  const actions =
+    props.actions || props.portalHref ? (
+      <>
+        {props.actions}
+        {props.portalHref ? <PortalLink href={props.portalHref} /> : null}
+      </>
+    ) : null;
   return (
     <div className="wl-holder grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-x-12">
       <div className="flex min-w-0 flex-col items-center gap-3">
@@ -114,52 +148,42 @@ export function HolderPassView(props: HolderPassViewProps) {
         className={cn('wl-pass-side flex min-w-0 flex-col gap-6', props.rise && 'wl-after-card')}
       >
         <Notice state={state} orgName={props.orgName} support={support} />
-        {qr ? (
-          <div className="flex items-center gap-4">
-            <HolderQr value={publicUrl} label={HOLDER_COPY.qrAlt(props.passTitle)} />
-            <div className="flex min-w-0 flex-col gap-1 text-sm">
-              <p className="font-medium text-fg-strong">{HOLDER_COPY.scanQr}</p>
-              {qrLine ? <p className="text-fg-muted">{qrLine}</p> : null}
-              {/* /p cannot tell an iPad from a Mac by its user agent; a touch screen can. */}
-              {device.device === 'mac' ? (
-                <p className="wl-ipad-line text-fg-muted">{HOLDER_COPY.openOnApple}</p>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-        {active || props.actions ? (
-          <div className="flex flex-col gap-3">
-            {/* The actions wrap as a pair under the badge, never one alone. */}
-            <div className="flex flex-wrap items-center gap-2">
-              {active ? (
-                <AppleWalletBadge
-                  href={props.downloadHref}
-                  onClick={props.onAdd}
-                  theme={props.theme}
-                />
-              ) : null}
-              {props.actions ? (
-                <div className="flex items-center gap-2">{props.actions}</div>
-              ) : null}
-            </div>
-            {badgeLine ? <p className="text-sm text-fg-muted">{badgeLine}</p> : null}
+        {badge || actions ? (
+          <div className="flex flex-col gap-2">
+            {qr ? (
+              // The column wraps under the QR only where the two do not fit side by side.
+              <div className="flex flex-wrap items-start gap-3 sm:gap-x-4">
+                <div className="flex flex-col gap-2">
+                  <HolderQr value={publicUrl} label={HOLDER_COPY.qrAlt(props.passTitle)} />
+                  {/* The phone's caption: no wider than the phone, its words run on past it. */}
+                  <p className="w-0 min-w-full text-sm font-medium whitespace-nowrap text-fg-strong">
+                    {HOLDER_COPY.scanQr}
+                  </p>
+                </div>
+                {/* Three badge-high controls (40, 44 on touch) span the phone's 148 px. */}
+                <div className="flex w-fit flex-col gap-3.5 pointer-coarse:gap-2">
+                  {badge}
+                  {actions}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                {badge}
+                {/* The actions wrap as a pair under the badge, never one alone. */}
+                {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+              </div>
+            )}
+            {line ? <p className="text-sm text-fg-muted">{line}</p> : null}
+            {/* /p cannot tell an iPad from a Mac by its user agent; a touch screen can. */}
+            {qr && device.device === 'mac' ? (
+              <p className="wl-ipad-line text-sm text-fg-muted">{HOLDER_COPY.openOnApple}</p>
+            ) : null}
           </div>
         ) : null}
         {props.details}
-        {help || props.portalHref ? (
-          <div className="flex flex-col gap-2 border-t border-border pt-4">
-            {help ? <Help support={help} /> : null}
-            {props.portalHref ? (
-              <p className="text-sm">
-                {/* Quiet: muted until pointed at. Signed out, the portal asks to sign in first. */}
-                <a
-                  href={props.portalHref}
-                  className="text-fg-muted underline underline-offset-4 hover:text-fg-strong"
-                >
-                  {HOLDER_COPY.openInPortal}
-                </a>
-              </p>
-            ) : null}
+        {help ? (
+          <div className="border-t border-border pt-4">
+            <Help support={help} />
           </div>
         ) : null}
       </div>
