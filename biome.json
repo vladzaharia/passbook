@@ -18,6 +18,7 @@
       "!templates",
       "!public/templates",
       "!public/fonts",
+      "!public/pass-tilt.js",
       "!public/apple",
       "!public/*.svg",
       "!package-lock.json",

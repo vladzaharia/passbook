@@ -64,6 +64,8 @@
 
 [data-theme="light"] {
   --wl-hover-mix: black;
+  /* The brand's light value again: the dark muted above also matches :root, and comes later. */
+  --pk-text-muted: #48536b;
   --pk-accent: #0f766e;
   --pk-accent-fg: #0f766e;
   --pk-accent-on: #ffffff;

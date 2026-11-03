@@ -4,6 +4,7 @@ import { PassCard, type PassCardProps } from './PassCard.tsx';
 import './stage.css';
 import './stage-motion.css';
 import './stage-seg.css';
+import { bindTilt, type TiltStage } from './tilt.ts';
 
 /** SSR-safe: no window access outside effects. */
 export interface PassStageProps extends Omit<PassCardProps, 'face'> {
@@ -35,109 +36,17 @@ export interface PassStageProps extends Omit<PassCardProps, 'face'> {
   toggleId?: string;
 }
 
-const FINE = '(hover: hover) and (pointer: fine)';
-const COARSE = '(pointer: coarse)';
-const REDUCED = '(prefers-reduced-motion: reduce)';
-
 // The Worker typecheck has no DOM lib; effects only run in the browser, so type what they use.
-interface Box {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-interface StageEl {
-  getBoundingClientRect(): Box;
+interface StageEl extends TiltStage {
   readonly offsetWidth: number;
-  style: { setProperty(name: string, value: string): void };
-  dataset: Record<string, string | undefined>;
-  addEventListener(type: string, fn: (e: never) => void): void;
-  removeEventListener(type: string, fn: (e: never) => void): void;
 }
-interface PointerLike {
-  clientX: number;
-  clientY: number;
-}
-interface Browser {
-  matchMedia?: (query: string) => { matches: boolean };
-  requestAnimationFrame: (fn: () => void) => number;
-  cancelAnimationFrame: (id: number) => void;
-}
-const browser = globalThis as unknown as Browser;
 const el = (ref: { current: unknown }) => ref.current as StageEl | null;
 
-/**
- * Fine pointers tilt up to 7° with a following highlight. On touch the card tilts up to 5° while
- * pressed and springs back (480 ms); a vertical move over 8 px hands the gesture to scrolling.
- */
+/** The shared pointer tilt (tilt.ts, also public/pass-tilt.js on /p). */
 function useTilt(ref: { current: unknown }, on: boolean) {
   useEffect(() => {
     const stage = el(ref);
-    const mq = browser.matchMedia;
-    if (!on || !stage || typeof mq !== 'function' || mq(REDUCED).matches) return;
-    const fine = mq(FINE).matches;
-    if (!fine && !mq(COARSE).matches) return;
-    let rect: Box | undefined;
-    let frame = 0;
-    let start: PointerLike | undefined;
-    const clamp = (n: number) => Math.max(-0.5, Math.min(0.5, n));
-    const set = (px: number, py: number) => {
-      browser.cancelAnimationFrame(frame);
-      frame = browser.requestAnimationFrame(() => {
-        stage.style.setProperty('--px', px.toFixed(3));
-        stage.style.setProperty('--py', py.toFixed(3));
-      });
-    };
-    const track = (e: PointerLike) => {
-      rect ??= stage.getBoundingClientRect();
-      set(
-        clamp((e.clientX - rect.left) / rect.width - 0.5),
-        clamp((e.clientY - rect.top) / rect.height - 0.5),
-      );
-    };
-    const enter = () => {
-      rect = stage.getBoundingClientRect();
-      stage.dataset.tracking = '';
-    };
-    const leave = () => {
-      browser.cancelAnimationFrame(frame);
-      rect = undefined;
-      start = undefined;
-      delete stage.dataset.tracking;
-      delete stage.dataset.press;
-      stage.style.setProperty('--px', '0');
-      stage.style.setProperty('--py', '0');
-    };
-    const down = (e: PointerLike & { pointerType: string }) => {
-      if (e.pointerType !== 'touch') return;
-      start = e;
-      rect = stage.getBoundingClientRect();
-      stage.dataset.press = '';
-      track(e);
-    };
-    const touchMove = (e: PointerLike & { pointerType: string }) => {
-      if (!start || e.pointerType !== 'touch') return;
-      if (Math.abs(e.clientY - start.clientY) > 8) return leave();
-      track(e);
-    };
-    const events: [string, (e: never) => void][] = fine
-      ? [
-          ['pointerenter', enter],
-          ['pointermove', track],
-          ['pointerleave', leave],
-        ]
-      : [
-          ['pointerdown', down],
-          ['pointermove', touchMove],
-          ['pointerup', leave],
-          ['pointercancel', leave],
-          ['pointerleave', leave],
-        ];
-    for (const [type, fn] of events) stage.addEventListener(type, fn);
-    return () => {
-      browser.cancelAnimationFrame(frame);
-      for (const [type, fn] of events) stage.removeEventListener(type, fn);
-    };
+    return on && stage ? bindTilt(stage) : undefined;
   }, [ref, on]);
 }
 
