@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../../lib/api.ts';
@@ -8,9 +8,11 @@ import {
   Button,
   Callout,
   CheckboxField,
+  Form,
   SaveBar,
   toast,
   UnsavedChangesDialog,
+  useFormErrors,
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
 import { useConnection } from '../../connections/api.ts';
@@ -68,7 +70,7 @@ export function FieldsTab({
   const [draft, setDraft] = useState<FormValues>(baseline.values);
   const [saving, setSaving] = useState(false);
   const [rejected, setRejected] = useState(false);
-  const [showErrors, setShowErrors] = useState(false);
+  const formId = useId();
   const [serverErrors, setServerErrors] = useState<Record<string, string>>();
 
   // Void state is pass.status; a /voided input would contradict the header.
@@ -91,6 +93,7 @@ export function FieldsTab({
   }, [pass, stale, dirty, saving]);
 
   const errors = useMemo(() => validateValues(schema, draft), [schema, draft]);
+  const check = useFormErrors(errors);
 
   // The preview follows the draft once typing pauses; a clean form shows the saved pass.
   useEffect(() => {
@@ -119,7 +122,6 @@ export function FieldsTab({
   }
 
   async function save() {
-    if (Object.keys(errors).length > 0) return setShowErrors(true);
     setSaving(true);
     setServerErrors(undefined);
     try {
@@ -130,6 +132,7 @@ export function FieldsTab({
       qc.setQueryData(passKeys.detail(pass.id), next);
       take(next, {});
       setNotify(false);
+      check.reset();
       void qc.invalidateQueries({ queryKey: passKeys.all });
       toast.success(notify ? 'Saved; holders notified' : 'Saved');
     } catch (error) {
@@ -173,7 +176,12 @@ export function FieldsTab({
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-16">
+    <Form
+      id={formId}
+      {...check.form}
+      onValid={() => void save()}
+      className="flex flex-col gap-6 pb-16"
+    >
       {voided ? (
         <p className="text-sm text-fg-muted">Unvoid to edit.</p>
       ) : conflict ? (
@@ -204,7 +212,7 @@ export function FieldsTab({
         onChange={setDraft}
         disabled={saving || voided}
         hiddenKeys={hiddenKeys}
-        showAllErrors={showErrors}
+        showAllErrors={Object.keys(check.errors).length > 0}
         serverErrors={serverErrors}
         fieldSources={pass.connectionId ? pass.fieldSources : undefined}
         sourceName={connection.data?.name}
@@ -223,15 +231,15 @@ export function FieldsTab({
             />
           )
         }
-        onSave={() => void save()}
+        formId={formId}
         onDiscard={() => {
           setDraft(baseline.values);
           setRejected(false);
-          setShowErrors(false);
+          check.reset();
           setNotify(false);
         }}
       />
       <UnsavedChangesDialog blocker={guard} />
-    </div>
+    </Form>
   );
 }

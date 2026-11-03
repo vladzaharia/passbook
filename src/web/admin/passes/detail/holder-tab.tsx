@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
 import { errorMessage } from '../../../lib/errors.ts';
@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   EntityAvatar,
+  Form,
   FormField,
   Input,
   KeyValue,
@@ -20,6 +21,7 @@ import {
   ListRows,
   StatusPill,
   toast,
+  useFormErrors,
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
 import { newKey } from '../format.ts';
@@ -35,19 +37,20 @@ function ChangeHolderDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const actions = usePassActions(pass.id);
+  const formId = useId();
   const [email, setEmail] = useState(pass.holderEmail ?? '');
   const [send, setSend] = useState(true);
-  const [error, setError] = useState<string>();
+  const [failed, setFailed] = useState<string>();
   const [busy, setBusy] = useState(false);
   const owned = pass.holderState === 'owned';
   const trimmed = email.trim();
   const valid = strictEmail(trimmed) !== null;
   const same = trimmed.toLowerCase() === (pass.holderEmail ?? '').toLowerCase();
+  const check = useFormErrors({ email: valid ? undefined : EMAIL_INVALID_MESSAGE });
 
   async function save() {
-    if (!valid) return setError(EMAIL_INVALID_MESSAGE);
     setBusy(true);
-    setError(undefined);
+    setFailed(undefined);
     try {
       if (owned) await actions.reassign.mutateAsync(trimmed);
       else await actions.assign.mutateAsync(trimmed);
@@ -56,14 +59,18 @@ function ChangeHolderDialog({
       else toast.success('Holder changed');
       onOpenChange(false);
     } catch (cause) {
-      setError(errorMessage(cause));
+      setFailed(errorMessage(cause));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
+    <Dialog
+      open={open}
+      dirty={trimmed !== (pass.holderEmail ?? '')}
+      onOpenChange={(o) => !busy && onOpenChange(o)}
+    >
       <DialogContent
         title="Change holder"
         description={
@@ -74,20 +81,19 @@ function ChangeHolderDialog({
             <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button loading={busy} disabled={!trimmed || same} onClick={() => void save()}>
+            <Button type="submit" form={formId} loading={busy} disabled={!trimmed || same}>
               {send ? 'Change and send' : 'Change holder'}
             </Button>
           </>
         }
       >
-        <form
+        <Form
+          id={formId}
+          {...check.form}
+          onValid={() => void save()}
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void save();
-          }}
         >
-          <FormField label="Email" error={error}>
+          <FormField label="Email" error={check.errors.email ?? failed}>
             {(c) => (
               <Input
                 {...c}
@@ -97,7 +103,7 @@ function ChangeHolderDialog({
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (strictEmail(e.target.value)) setError(undefined);
+                  setFailed(undefined);
                 }}
               />
             )}
@@ -107,7 +113,7 @@ function ChangeHolderDialog({
             checked={send}
             onCheckedChange={(c) => setSend(c === true)}
           />
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
