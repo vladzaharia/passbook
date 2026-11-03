@@ -8,6 +8,8 @@ export const REFERRER_DEFAULT = 'strict-origin-when-cross-origin';
 export const COOP = 'same-origin';
 export const CORP = 'same-origin';
 export const XFO = 'DENY';
+/** Nothing the Worker answers is for search: pass and sign-in links, the API, Apple and hooks. */
+export const ROBOTS = 'noindex, nofollow';
 
 export function contentSecurityPolicy(nonce?: string): string {
   const n = nonce ? ` 'nonce-${nonce}'` : '';
@@ -51,6 +53,8 @@ export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => 
   set('cross-origin-opener-policy', COOP);
   set('cross-origin-resource-policy', CORP);
   set('x-frame-options', XFO);
+  // Hashed bundles are fetched to render the indexable sign-in page.
+  if (!path.startsWith('/assets/')) set('x-robots-tag', ROBOTS);
   if (NO_STORE_PREFIXES.some((p) => path.startsWith(p)) || path.endsWith('/pass.pkpass')) {
     set('cache-control', 'no-store');
   }
