@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn.ts';
+import { formatWallTime } from '../../../lib/format.ts';
 import { localZone, zoneLabel, zoneOptions } from '../../../lib/timezones.ts';
-import {
-  CheckboxField,
-  CONTROL,
-  CONTROL_HEIGHT,
-  Combobox,
-  formatLocal,
-} from '../../../ui/index.ts';
+import { CheckboxField, CONTROL, CONTROL_HEIGHT, Combobox } from '../../../ui/index.ts';
 import { isoToLocal, localToOffsetIso, writtenOffset, zoneOffset } from './datetime.ts';
 
 interface Props {
@@ -92,7 +87,7 @@ export function DateTimeInput({
           </div>
           {shown ? (
             <p className="text-xs text-fg-muted">
-              {formatLocal(shown)}, {zoneLabel(zone)}
+              {formatWallTime(shown)}, {zoneLabel(zone)}
             </p>
           ) : null}
         </>

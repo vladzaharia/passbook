@@ -7,6 +7,7 @@ import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { api } from '../../../lib/api.ts';
 import { DELIVERY_ICON } from '../../../lib/entities.ts';
 import { errorMessage } from '../../../lib/errors.ts';
+import { formatDateTime } from '../../../lib/format.ts';
 import { deliveryKindLabel } from '../../../lib/status.ts';
 import {
   Button,
@@ -24,7 +25,7 @@ import {
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
-import { formatDate, newKey } from '../format.ts';
+import { newKey } from '../format.ts';
 import { DevicesCard } from './devices-card.tsx';
 
 type Entry = z.infer<typeof DeliveryEntrySchema>;
@@ -146,7 +147,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
       toast.success('Retry queued');
       void delivery.refetch();
     } catch (cause) {
-      toast.error(cause);
+      toast.error(cause, 'Could not retry');
     }
   }
 
@@ -202,7 +203,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
         id: 'created',
         header: 'Created',
         meta: { nowrap: true },
-        cell: ({ row }) => formatDate(row.original.createdAt),
+        cell: ({ row }) => formatDateTime(row.original.createdAt),
       },
       {
         id: 'retry',

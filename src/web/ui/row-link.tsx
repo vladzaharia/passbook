@@ -2,6 +2,7 @@ import { createLink } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import type { AnchorHTMLAttributes, Ref } from 'react';
 import { cn } from '../lib/cn.ts';
+import { formatCount } from '../lib/format.ts';
 import { TOUCH_HIT } from './button.tsx';
 
 type AnchorProps = AnchorHTMLAttributes<HTMLAnchorElement> & { ref?: Ref<HTMLAnchorElement> };
@@ -64,7 +65,7 @@ function CountAnchor({
   return (
     <a ref={ref} className={cn(COUNT_LINK, className)} {...props}>
       {Icon ? <Icon aria-hidden /> : null}
-      {count.toLocaleString('en-US')}
+      {formatCount(count)}
       {noun ? ` ${count === 1 ? noun[0] : noun[1]}` : null}
     </a>
   );

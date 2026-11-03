@@ -1,5 +1,6 @@
 import type { Json } from '@/passkit/types.ts';
 import { formatValue } from '@/shared/pass-view/format.ts';
+import { formatDay, formatShortDate } from '../lib/format.ts';
 
 const ABBREVIATIONS = new Set(['ID', 'VIP', 'URL', 'QR', 'SKU', 'ZIP', 'PIN', 'UPC', 'ETA', 'DOB']);
 const STYLES = ['generic', 'storeCard', 'coupon', 'eventTicket', 'boardingPass', 'posterGeneric'];
@@ -67,11 +68,8 @@ export function fieldRows(
   return rows.map((r) => ((count.get(r.label) ?? 0) > 1 ? { ...r, label: humanizeKey(r.id) } : r));
 }
 
-const SHORT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
-const WITH_YEAR = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
-
 /** "Updated Nov 1"; the year shows once it is not this year. */
 export function updatedLine(ms: number, now = Date.now()): string {
   const sameYear = new Date(ms).getFullYear() === new Date(now).getFullYear();
-  return `Updated ${(sameYear ? SHORT : WITH_YEAR).format(ms)}`;
+  return `Updated ${(sameYear ? formatShortDate : formatDay)(ms)}`;
 }

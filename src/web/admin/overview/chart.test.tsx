@@ -1,9 +1,9 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { daysUntil, formatRelative } from '../../lib/format.ts';
 import { chartGeometry, LineChart, niceMax, ticks } from './chart.tsx';
 import { resetShownCounts, useRememberedCount } from './count.ts';
-import { daysUntil, formatRelative } from './format.ts';
 
 const series = (vals: number[]) =>
   vals.map((v, i) => ({ t: 1_700_000_000_000 + i * 86_400_000, v }));

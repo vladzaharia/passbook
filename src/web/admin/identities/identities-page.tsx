@@ -5,6 +5,7 @@ import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
+import { formatCount } from '@/web/lib/format.ts';
 import {
   Button,
   DataTable,
@@ -80,7 +81,7 @@ export function IdentitiesPage() {
         header: 'Passes',
         id: 'passes',
         meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
-        cell: ({ row }) => row.original.passCount.toLocaleString(),
+        cell: ({ row }) => formatCount(row.original.passCount),
       },
     ];
   }, [orgName]);

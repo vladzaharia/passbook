@@ -10,8 +10,8 @@ import {
   PageHeader,
   SkeletonRows,
 } from '@/web/ui/index.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { useOrgList } from '../orgs/queries.ts';
-import { formatDateTime } from '../overview/format.ts';
 import { AuditFilters } from './audit-filters.tsx';
 import { ActionButton, AuditRows } from './audit-rows.tsx';
 import type { AuditSearch } from './audit-search.ts';

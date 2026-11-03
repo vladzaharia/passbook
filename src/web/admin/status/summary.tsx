@@ -3,7 +3,7 @@ import { cn } from '@/web/lib/cn.ts';
 import { useChangeCount } from '@/web/lib/motion.ts';
 import { statusOf } from '@/web/lib/status.ts';
 import { BuddyFace, Button, StatusPill } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { type Component, countStates, headline, leaves, problems, type State } from './groups.ts';
 import './status.css';
 

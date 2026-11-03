@@ -11,10 +11,10 @@ import {
   SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { componentLink, pillStatus, problems, summaryLine } from '../status/groups.ts';
 import { COMPONENT_ICON } from '../status/icons.ts';
 import { useStatus } from '../status/queries.ts';
-import { formatDateTime } from './format.ts';
 
 /** Failing and degraded leaves, linked to the page that owns them; "All good" otherwise. */
 export function Health() {

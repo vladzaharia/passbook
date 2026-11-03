@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { toast as sonner } from 'sonner';
 import type { z } from 'zod';
 import type { TemplateDetailSchema, TemplateVersionSchema } from '@/shared/contracts/templates.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import {
   Badge,
   Button,
@@ -17,7 +17,6 @@ import {
   StatusPill,
   toast,
 } from '../../ui/index.ts';
-import { formatDate } from '../passes/format.ts';
 import { useTemplateActions } from './api.ts';
 import { ValidationReport } from './validation-report.tsx';
 
@@ -57,7 +56,7 @@ function ActivateDialog({
                   toast.success(rebuild ? 'Activated. Rebuilding passes.' : 'Activated');
                   onClose();
                 } catch (cause) {
-                  toast.error(cause);
+                  toast.error(cause, 'Could not activate');
                 }
               }}
             >
@@ -101,9 +100,9 @@ function UpdatePasses({ template }: { template: Template }) {
         confirmLabel={label}
         onConfirm={async () => {
           await actions.reissue.mutateAsync();
-          sonner.success(`Updating ${n} ${n === 1 ? 'pass' : 'passes'}`, {
-            duration: 6000,
-            action: { label: 'View run', onClick: () => void navigate({ to: '/admin/status' }) },
+          toast.action(`Updating ${n} ${n === 1 ? 'pass' : 'passes'}`, {
+            label: 'View run',
+            onClick: () => void navigate({ to: '/admin/status' }),
           });
         }}
       />
@@ -137,7 +136,9 @@ export function VersionsPanel({ template }: { template: Template }) {
                     <span className="font-mono text-xs text-fg-strong">
                       {v.version.slice(0, 12)}
                     </span>
-                    <span className="ml-3 text-xs text-fg-muted">{formatDate(v.createdAt)}</span>
+                    <span className="ml-3 text-xs text-fg-muted">
+                      {formatDateTime(v.createdAt)}
+                    </span>
                     {v.active ? (
                       <StatusPill status="active" tone="success" className="ml-2" />
                     ) : null}

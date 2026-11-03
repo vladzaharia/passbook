@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react';
 import { cn } from '../lib/cn.ts';
+import { formatWallTime } from '../lib/format.ts';
 import { zoneLabel, zoneOptions } from '../lib/timezones.ts';
 import { CheckboxField } from './checkbox.tsx';
 import { Combobox } from './combobox.tsx';
@@ -25,22 +26,6 @@ export interface DateTimeFieldProps {
   className?: string;
 }
 
-/** "Nov 15, 2026, 4:08 AM" from a datetime-local string (wall time, no zone shift). */
-export function formatLocal(local: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
-  if (!m) return '';
-  const [, y, mo, d, h, mi] = m.map(Number) as number[];
-  const date = new Date(Date.UTC(y ?? 0, (mo ?? 1) - 1, d ?? 1, h ?? 0, mi ?? 0));
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'UTC',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
-}
-
 /**
  * A styled native datetime-local plus a time zone combobox ("Los Angeles (PT)", stores the IANA
  * id), with the value spelled out below. Full width under 768. The clear box hides both.
@@ -57,7 +42,7 @@ export function DateTimeField({
   const auto = useId();
   const inputId = id ?? auto;
   const zones = useMemo(() => zoneOptions(), []);
-  const shown = value?.local ? formatLocal(value.local) : '';
+  const shown = value?.local ? formatWallTime(value.local) : '';
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       {value ? (
