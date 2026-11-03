@@ -2,11 +2,13 @@ import {
   type FormEvent,
   type FormHTMLAttributes,
   type ReactNode,
+  useContext,
   useEffect,
   useRef,
   useState,
 } from 'react';
 import { prefersReducedMotion } from '../lib/motion.ts';
+import { type GroupedForm, SaveBarGroupContext, type SaveHandler } from './save-bar.tsx';
 
 const INVALID = '[aria-invalid="true"]';
 
@@ -85,7 +87,8 @@ export function useFormErrors<E extends Partial<Record<string, string>>>(found: 
 export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'onSubmit'> {
   /** The form has errors: submit shows them, focuses the first and announces the count. */
   invalid: boolean;
-  onValid: () => void;
+  /** May resolve how the save ended: 'refused' (server field errors) focuses them like a block. */
+  onValid: SaveHandler;
   /** Show every field's error (set the caller's showErrors). */
   onInvalid?: () => void;
   children: ReactNode;
@@ -94,19 +97,33 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
 /**
  * A form whose blocked submit focuses the first invalid field and announces one summary. Pair it
  * with useFormErrors. A Save or Next button outside the form submits it with `form={id}`
- * (SaveBar and Wizard take a formId).
+ * (SaveBar and Wizard take a formId). In a SaveBarGroup the page's Save submits it, and Enter
+ * saves the page.
  */
-export function Form({ invalid, onValid, onInvalid, children, ...props }: FormProps) {
+export function Form({ id, invalid, onValid, onInvalid, children, ...props }: FormProps) {
   const blocked = useBlockedSubmit<HTMLFormElement>();
+  const group = useContext(SaveBarGroupContext);
+  const self = useRef<GroupedForm>({ invalid, onValid, onInvalid, block: blocked.block });
+  self.current = { invalid, onValid, onInvalid, block: blocked.block };
+  useEffect(() => {
+    if (!group || !id) return;
+    group.form(id, self);
+    return () => group.form(id, null);
+  }, [group, id]);
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (group && id && group.has(id)) return group.save();
     if (invalid) {
       onInvalid?.();
       blocked.block();
-    } else onValid();
+      return;
+    }
+    const saving = onValid();
+    if (saving instanceof Promise)
+      void saving.then((result) => result === 'refused' && blocked.block());
   };
   return (
-    <form ref={blocked.ref} noValidate onSubmit={submit} {...props}>
+    <form ref={blocked.ref} id={id} noValidate onSubmit={submit} {...props}>
       {children}
       {blocked.live}
     </form>
