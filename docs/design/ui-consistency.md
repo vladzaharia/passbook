@@ -424,8 +424,8 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   QR), Refresh, `More` (Show QR, Copy link, Open public page, Remove). No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.
-- **Org first**: `/p` and the pass email show the org's logo or name. Never the bare "Wallet"
-  brand in a view with the badge.
+- **Org first**: `/p` and the pass email show the org's logo or name, not the PassBook mark. The
+  portal header shows the full PassBook wordmark on every page.
 - Sign-in, magic-link confirm, link expired, no access, break-glass: one "hosted" shell shared by
   `/login` and the worker pages. See below.
 

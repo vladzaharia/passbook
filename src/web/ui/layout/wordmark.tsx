@@ -42,18 +42,15 @@ const SIZES = {
 
 /**
  * The mark says hello once per browser session; never on the sign-in scene (hello={false}).
- * `markOnly` drops the word: views that show the Add to Apple Wallet badge never show a bare
- * "PassBook" brand beside it. `lg` is the hosted sign-in header.
+ * `lg` is the hosted sign-in header.
  */
 export function Wordmark({
   to = '/',
   hello = true,
-  markOnly = false,
   size = 'md',
 }: {
   to?: string;
   hello?: boolean;
-  markOnly?: boolean;
   size?: keyof typeof SIZES;
 }) {
   // Latched per instance, so a re-render mid-hello does not cut it short.
@@ -72,7 +69,7 @@ export function Wordmark({
       )}
     >
       <BrandMark hello={play} className={cn('text-accent-fg', SIZES[size].icon)} />
-      {markOnly ? <span className="sr-only">Home</span> : 'PassBook'}
+      PassBook
     </Link>
   );
 }

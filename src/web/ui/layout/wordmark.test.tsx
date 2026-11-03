@@ -33,18 +33,15 @@ describe('every wordmark wears the face', () => {
     expect(mark).not.toHaveAttribute('data-hello');
   });
 
-  it('in the portal header: the face alone on pass views, named Home', async () => {
-    const { container } = await renderApp('/', { session: 'user' });
-    const home = await screen.findByRole('link', { name: 'Home' });
-    expect(home).toHaveAttribute('href', '/');
-    expectFace(home);
-    expect(home).not.toHaveTextContent('PassBook');
-    expect((await axe(container.querySelector('header') as HTMLElement)).violations).toEqual([]);
-  });
-
-  it('in the portal header beside the word elsewhere', async () => {
-    await renderApp('/account', { session: 'user' });
-    expectFace(await screen.findByRole('link', { name: 'PassBook' }));
+  it('in the portal header with its word on every page, pass views included', async () => {
+    for (const path of ['/', '/account']) {
+      const { container, unmount } = await renderApp(path, { session: 'user' });
+      const mark = await screen.findByRole('link', { name: 'PassBook' });
+      expect(mark).toHaveAttribute('href', '/');
+      expectFace(mark);
+      expect((await axe(container.querySelector('header') as HTMLElement)).violations).toEqual([]);
+      unmount();
+    }
   });
 
   it('on the sign-in band at 24 px', async () => {
