@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import type { MySessionListSchema } from '@/shared/contracts/me.ts';
 import { prefersReducedMotion, removeWithTransition } from '../lib/motion.ts';
+import { endSession, leaveSignedOut, useSession } from '../lib/session.ts';
 import {
   Button,
   Card,
@@ -15,13 +16,14 @@ import {
   SkeletonRows,
   toast,
 } from '../ui/index.ts';
-import { mySessionsKey, mySessionsQuery, revokeAllSessions, revokeSession } from './api.ts';
+import { mySessionsKey, mySessionsQuery, revokeSession } from './api.ts';
 
 type Sessions = z.infer<typeof MySessionListSchema>;
 
 /** Signed-in devices (kit SessionList). Revoked rows leave through a view transition. */
-export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhere: () => void }) {
+export function SessionsSection() {
   const client = useQueryClient();
+  const { authed } = useSession();
   const query = useQuery(mySessionsQuery);
   const [confirmAll, setConfirmAll] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -39,11 +41,11 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
   });
 
   // The other rows leave 30 ms apart, then the browser signs out (at most 320 ms of motion).
-  function signOutEverywhere() {
+  function signOutEverywhere(target: string) {
     const others = query.data?.items.filter((s) => !s.current).length ?? 0;
     setLeaving(true);
     const wait = prefersReducedMotion() ? 0 : Math.min(160 + Math.min(others, 6) * 30, 320);
-    setTimeout(onSignedOutEverywhere, wait);
+    setTimeout(() => leaveSignedOut(target), wait);
   }
 
   return (
@@ -84,8 +86,8 @@ export function SessionsSection({ onSignedOutEverywhere }: { onSignedOutEverywhe
         confirmLabel="Sign out"
         destructive
         onConfirm={async () => {
-          await revokeAllSessions();
-          signOutEverywhere();
+          // One call ends every session and leaves through Pocket ID like a single sign-out.
+          signOutEverywhere(await endSession(authed?.csrfToken, { everywhere: true }));
         }}
       />
     </Card>

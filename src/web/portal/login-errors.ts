@@ -1,14 +1,13 @@
-const MESSAGES: Record<string, string> = {
-  not_in_group: 'Your Polaris ID is not allowed to use PassBook.',
-  expired_link: 'That link expired. Request a new one.',
-  invalid_link: 'That link is invalid or already used. Request a new one.',
-  used_link: 'That link was already used. Request a new one.',
-  access_denied: 'Sign-in was cancelled.',
-  rate_limited: 'Too many attempts. Try again later.',
-};
+import { isSignInErrorCode, SIGN_IN_ERROR_COPY } from '@/shared/copy/sign-in.ts';
+import { errorMessage, isApiError } from '../lib/errors.ts';
 
-/** One line for an `?error=` code from the auth redirects; unknown codes get a generic line. */
-export function loginErrorMessage(code: string | undefined): string | null {
-  if (!code) return null;
-  return MESSAGES[code] ?? 'Sign-in failed. Try again.';
+export interface SignInError {
+  title?: string;
+  message: string;
+}
+
+/** A failed sign-in request, worded as the SSR pages word it (title and sentence) when known. */
+export function signInError(error: unknown): SignInError {
+  if (isApiError(error) && isSignInErrorCode(error.code)) return SIGN_IN_ERROR_COPY[error.code];
+  return { message: errorMessage(error) };
 }

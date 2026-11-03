@@ -32,7 +32,7 @@ async function requestLink(user: ReturnType<typeof userEvent.setup>, email = 'sa
   await waitFor(() => expect(callbacks.callback).toBeDefined());
   token('tok-1');
   await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
-  return screen.findByRole('heading', { name: 'Enter the code from your email' });
+  return screen.findByRole('heading', { name: 'Enter the code' });
 }
 
 describe('magic link', () => {
@@ -49,7 +49,8 @@ describe('magic link', () => {
         },
         '/auth/magic/consume': async (_u, init) => {
           consumed.push(JSON.parse(String(init?.body)));
-          return json({});
+          // The server applies the landing rule; the face follows its answer.
+          return json({ ok: true, next: '/passes/p1#from-server' });
         },
       },
     });
@@ -57,7 +58,10 @@ describe('magic link', () => {
     expect(requests).toEqual([
       { email: 'sam@example.com', turnstileToken: 'tok-1', next: '/passes/p1' },
     ]);
-    expect(screen.getByText('sam@example.com')).toBeInTheDocument();
+    // Neutral: unknown or throttled addresses get no mail, so the face never says "sent".
+    expect(screen.getByText('sam@example.com').parentElement).toHaveTextContent(
+      'Check sam@example.com for a code.',
+    );
     expect(container.querySelector('[data-side="email"]')).toHaveAttribute('inert');
     expect(screen.queryByRole('link', { name: 'Sign in with Polaris ID' })).toBeNull();
     const code = screen.getByLabelText('Code');
@@ -70,7 +74,7 @@ describe('magic link', () => {
     expect(code).toHaveValue('123456');
     expect(container.querySelector('.wl-code')).toHaveAttribute('data-complete');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    await waitFor(() => expect(goTo).toHaveBeenCalledWith('/passes/p1'));
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith('/passes/p1#from-server'));
     expect(consumed).toEqual([{ email: 'sam@example.com', code: '123456' }]);
     expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'success');
     // The wallet fills: the eyes smile.
@@ -148,16 +152,14 @@ describe('magic link', () => {
     ).fetchMock;
     await user.type(await screen.findByLabelText('Email'), 'nope');
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
-    expect(await screen.findByText('Enter a valid email.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
     await user.clear(screen.getByLabelText('Email'));
     await user.type(screen.getByLabelText('Email'), 'sam@example.com');
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
     expect(await screen.findByRole('button', { name: 'Checking…' })).toBeDisabled();
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/auth/magic'))).toBe(false);
     token('tok-late');
-    expect(
-      await screen.findByRole('heading', { name: 'Enter the code from your email' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Enter the code' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -173,7 +175,10 @@ describe('magic link', () => {
     await waitFor(() => expect(callbacks.callback).toBeDefined());
     token('tok-1');
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many requests. Try later.');
+    // Worded as the hosted pages word it: a title and one sentence.
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /Too many requests\s*Try again in a minute\./,
+    );
     expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
     expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
     // Sad drops the lifted card back into the fan.

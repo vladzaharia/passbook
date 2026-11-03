@@ -55,7 +55,7 @@ export function AccountPage({ focusAdd = false }: { focusAdd?: boolean }) {
           </Card>
         ) : null}
         <EmailsSection focusAdd={focusAdd} />
-        <SessionsSection onSignedOutEverywhere={doSignOut} />
+        <SessionsSection />
       </div>
     </div>
   );

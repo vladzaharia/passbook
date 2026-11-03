@@ -55,7 +55,7 @@ describe('oidc sign-in', () => {
     expect(start.status).toBe(302);
     expect(start.headers.get('location')).toContain('code_challenge_method=S256');
     expect(res.status).toBe(302);
-    expect(res.headers.get('location')).toBe('/');
+    expect(res.headers.get('location')).toBe('/admin');
     const body = (await session(jar)) as {
       authenticated: boolean;
       roles: string[];

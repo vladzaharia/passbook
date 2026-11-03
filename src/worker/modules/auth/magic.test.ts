@@ -550,7 +550,7 @@ describe('verify email', () => {
     expect(await ownerOf(pass.id)).toBeFalsy();
     const res = await consumeForm(tokenOf(h.mail[0]), jar);
     expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe('/account');
+    expect(res.headers.get('location')).toBe(`/account?verified=${encodeURIComponent(email)}`);
     const row = await first<{ user_id: string; verified_via: string }>(
       h.env.DB,
       'SELECT user_id, verified_via FROM user_emails WHERE email = ?',

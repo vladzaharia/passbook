@@ -21,7 +21,9 @@ export async function requireSession(
 ): Promise<AuthedSession> {
   const session = await queryClient.ensureQueryData(sessionQuery);
   if (!session.authenticated) {
-    throw redirect({ to: '/login', search: { next: safeNext(next) } });
+    // Home is no destination: signing in picks it (the console for admins, My passes otherwise).
+    const target = safeNext(next);
+    throw redirect({ to: '/login', search: target === '/' ? {} : { next: target } });
   }
   return session;
 }

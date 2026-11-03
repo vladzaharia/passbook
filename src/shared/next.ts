@@ -21,3 +21,8 @@ export function safeNextPath(raw: string | null | undefined): string | null {
   if (url.origin !== BASE) return null;
   return `${url.pathname}${url.search}${url.hash}`;
 }
+
+/** Where a signed-in person lands: a safe `next`, else the console for admins, My passes for holders. */
+export function homeFor(roles: readonly string[], next?: string | null): string {
+  return safeNextPath(next) ?? (roles.includes('admin') ? '/admin' : '/');
+}

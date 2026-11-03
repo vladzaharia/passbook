@@ -40,13 +40,25 @@ export interface TurnstileProps {
   onError: () => void;
   /** Change to force a fresh challenge (tokens are single use). */
   resetKey?: number;
+  /** True while the widget asks the visitor to interact; the host shows its slot only then. */
+  onInteractive?: (shown: boolean) => void;
 }
 
-export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: TurnstileProps) {
+/**
+ * Cloudflare Turnstile. The production widget is invisible and `interaction-only` keeps a
+ * managed fallback hidden, so the widget draws nothing unless it needs the visitor.
+ */
+export function Turnstile({
+  siteKey,
+  onToken,
+  onError,
+  resetKey = 0,
+  onInteractive,
+}: TurnstileProps) {
   const host = useRef<HTMLDivElement>(null);
   const { resolved } = useTheme();
-  const callbacks = useRef({ onToken, onError });
-  callbacks.current = { onToken, onError };
+  const callbacks = useRef({ onToken, onError, onInteractive });
+  callbacks.current = { onToken, onError, onInteractive };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey remounts the widget on purpose; a theme change re-renders it.
   useEffect(() => {
@@ -61,8 +73,9 @@ export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: Turnstile
         widgetId = t.render(host.current, {
           sitekey: siteKey,
           theme: resolved,
-          // The production widget is invisible; this keeps a managed fallback hidden unless needed.
           appearance: 'interaction-only',
+          'before-interactive-callback': () => callbacks.current.onInteractive?.(true),
+          'after-interactive-callback': () => callbacks.current.onInteractive?.(false),
           callback: (token: string) => callbacks.current.onToken(token),
           'expired-callback': () => callbacks.current.onToken(null),
           'error-callback': () => {
@@ -74,6 +87,7 @@ export function Turnstile({ siteKey, onToken, onError, resetKey = 0 }: Turnstile
       .catch(() => live && callbacks.current.onError());
     return () => {
       live = false;
+      callbacks.current.onInteractive?.(false);
       if (api && widgetId) api.remove(widgetId);
     };
   }, [siteKey, resetKey, resolved]);

@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import { MagicLinkConsumeSchema, MagicLinkRequestSchema } from '../../../shared/contracts/index.ts';
+import { isSignInErrorCode, type SignInErrorCode } from '../../../shared/copy/sign-in.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -12,7 +13,6 @@ import {
 import { sha256Hex } from '../../platform/ids.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { getPlatformSettings } from '../settings/service.ts';
 import {
   clearCookie,
   ipPrefix,
@@ -24,13 +24,15 @@ import {
 import {
   consumeMagicCode,
   consumeMagicToken,
+  isEmailSignInEnabled,
   MAGIC_TTL_MS,
   type MagicOutcome,
+  magicLinkNext,
   peekMagicLink,
   processSignInRequest,
 } from './magic-service.ts';
-import { nextOrHome, safeNext } from './next.ts';
-import { confirmPage, expiredPage, messagePage, SIGN_IN_ERRORS } from './pages.ts';
+import { homeFor, loginPath, safeNext } from './next.ts';
+import { confirmPage, confirmPath, expiredPage, signInErrorPage, verifyPage } from './pages.ts';
 import { resolveSession } from './sessions.ts';
 import { verifyTurnstile } from './turnstile.ts';
 
@@ -39,7 +41,7 @@ export async function requestMagic(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
   const ip = clientIp(c);
   await enforceRateLimit(c.env, 'RL_MAGIC_LINK', `ip:${ip}`);
-  if (!(await getPlatformSettings(ctx))['auth.magicLinkEnabled']) {
+  if (!(await isEmailSignInEnabled(ctx))) {
     throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
   }
   const input = MagicLinkRequestSchema.parse(await c.req.json());
@@ -66,15 +68,30 @@ export async function requestMagic(c: Context<AppBindings>) {
   return c.json({ ok: true as const }, 202);
 }
 
+/** The session this browser presents, if any. */
+async function currentSession(c: Context<AppBindings>) {
+  const cookie = readCookie(c, SESSION_COOKIE);
+  const session = cookie ? await resolveSession(c.env, serviceContext(c).clock, cookie) : null;
+  return { cookie, session };
+}
+
 /** GET /auth/magic?t=. Reads only; scanners cannot burn the token. */
 export async function confirmMagic(c: Context<AppBindings>) {
+  const ctx = serviceContext(c);
+  const nonce = c.var.nonce;
   const token = c.req.query('t') ?? '';
-  const link =
-    token.length >= 16 && token.length <= 256
-      ? await peekMagicLink(serviceContext(c), token)
-      : null;
-  if (!link) return c.html(expiredPage(c.var.nonce), 400);
-  return c.html(confirmPage(c.var.nonce, { token, ...link }));
+  const link = token.length >= 16 && token.length <= 256 ? await peekMagicLink(ctx, token) : null;
+  if (!link) return c.html(expiredPage(nonce, await magicLinkNext(ctx, token)), 400);
+  if (link.purpose === 'sign_in') {
+    if (link.needsEmailSignIn && !(await isEmailSignInEnabled(ctx))) {
+      const page = signInErrorPage(nonce, 'MAGIC_LINK_DISABLED', { next: link.next });
+      return c.html(page.html, page.status);
+    }
+    return c.html(confirmPage(nonce, { token, email: link.email }));
+  }
+  const { session } = await currentSession(c);
+  const viewer = !session ? 'signed-out' : session.userId === link.userId ? 'requester' : 'other';
+  return c.html(verifyPage(nonce, { token, email: link.email, requester: link.requester, viewer }));
 }
 
 async function readConsumeBody(c: Context<AppBindings>, isForm: boolean): Promise<unknown> {
@@ -91,8 +108,7 @@ async function runConsume(c: Context<AppBindings>, body: unknown): Promise<Magic
   if (!parsed.success) throw new ValidationError('Invalid request.');
   await enforceRateLimit(c.env, 'RL_LOGIN', `magic:${clientIp(c)}`);
   const ctx = serviceContext(c);
-  const previousCookie = readCookie(c, SESSION_COOKIE);
-  const session = previousCookie ? await resolveSession(c.env, ctx.clock, previousCookie) : null;
+  const { cookie: previousCookie, session } = await currentSession(c);
   const sign = {
     ipPrefix: ipPrefix(clientIp(c)),
     userAgent: c.req.header('user-agent') ?? null,
@@ -109,35 +125,52 @@ async function runConsume(c: Context<AppBindings>, body: unknown): Promise<Magic
       );
 }
 
+/** A refused confirm click: a page that keeps the link's next, never problem+json. */
+async function consumeErrorPage(
+  c: Context<AppBindings>,
+  code: SignInErrorCode,
+  error: AppError,
+  body: unknown,
+) {
+  const nonce = c.var.nonce;
+  const field = (body as Record<string, unknown> | null)?.token;
+  const token = typeof field === 'string' ? field : '';
+  const next = await magicLinkNext(serviceContext(c), token);
+  if (code === 'LINK_INVALID') return c.html(expiredPage(nonce, next), 400);
+  for (const [name, value] of Object.entries(error.headers ?? {})) c.header(name, value);
+  const page =
+    code === 'SESSION_REQUIRED' && token
+      ? signInErrorPage(nonce, 'SESSION_REQUIRED', {
+          href: loginPath(confirmPath(token)),
+          action: 'Sign in to confirm',
+        })
+      : signInErrorPage(nonce, code, { next });
+  return c.html(page.html, page.status);
+}
+
 /** POST /auth/magic/consume. Forms get a redirect or an error page; JSON gets JSON. */
 export async function consumeMagic(c: Context<AppBindings>) {
   const type = c.req.header('content-type') ?? '';
   const isForm =
     type.includes('application/x-www-form-urlencoded') || type.includes('multipart/form-data');
+  let body: unknown = null;
   let outcome: MagicOutcome;
   try {
-    outcome = await runConsume(c, await readConsumeBody(c, isForm));
+    body = await readConsumeBody(c, isForm);
+    outcome = await runConsume(c, body);
   } catch (error) {
-    const known = error instanceof AppError ? SIGN_IN_ERRORS[error.code] : undefined;
-    if (!isForm || !known) throw error;
-    return c.html(
-      known === SIGN_IN_ERRORS.LINK_INVALID
-        ? expiredPage(c.var.nonce)
-        : messagePage(c.var.nonce, {
-            title: known.title,
-            message: known.message,
-            href: '/login',
-            action: 'Back to sign in',
-            ...(known.art ? { art: known.art } : {}),
-          }),
-      known.status,
-    );
+    const code = error instanceof AppError ? error.code : '';
+    if (!isForm || !isSignInErrorCode(code)) throw error;
+    return consumeErrorPage(c, code, error as AppError, body);
   }
   if (outcome.kind === 'signed_in') {
     setSessionCookie(c, outcome.result.session.cookieValue, outcome.result.session.maxAgeSeconds);
     clearCookie(c, MAGIC_COOKIE);
   }
+  // ?verified= tells /account which address was just added (the portal confirms it).
   const target =
-    outcome.kind === 'verified' ? (safeNext(outcome.next) ?? '/account') : nextOrHome(outcome.next);
+    outcome.kind === 'verified'
+      ? `/account?verified=${encodeURIComponent(outcome.email)}`
+      : homeFor(outcome.result.roles, outcome.next);
   return isForm ? c.redirect(target, 303) : c.json({ ok: true as const, next: target });
 }

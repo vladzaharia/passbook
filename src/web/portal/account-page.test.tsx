@@ -7,13 +7,16 @@ import { deviceLabel } from '../lib/device.ts';
 import { json, problem, renderApp, sessionFixture } from '../lib/test-utils.tsx';
 
 const signOut = vi.hoisted(() => vi.fn(async () => {}));
+const leaveSignedOut = vi.hoisted(() => vi.fn());
 vi.mock('../lib/session.ts', async (orig) => ({
   ...(await orig<typeof import('../lib/session.ts')>()),
   signOut,
+  leaveSignedOut,
 }));
 
 beforeEach(() => {
   signOut.mockClear();
+  leaveSignedOut.mockClear();
   sessionStorage.clear();
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -289,16 +292,19 @@ describe('account page', () => {
     expect(revoked).toBe(true);
   });
 
-  it('signs out everywhere with one revoke-all call, then signs out', async () => {
+  it('signs out everywhere with one logout call that keeps the provider sign-out', async () => {
     const user = userEvent.setup();
-    const revoked: string[] = [];
+    const calls: { url: string; csrf: string | null }[] = [];
     await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
         '/api/v1/me/sessions': () => json(sessions()),
-        '/api/v1/me/sessions/revoke-all': () => {
-          revoked.push('all');
-          return json({ ok: true });
+        '/auth/logout': (url, init) => {
+          calls.push({
+            url: `${url.pathname}${url.search}`,
+            csrf: new Headers(init?.headers).get('x-csrf-token'),
+          });
+          return json({ ok: true, redirect: 'https://id.test/end-session' });
         },
       },
     });
@@ -306,24 +312,25 @@ describe('account page', () => {
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Sign out' }),
     );
-    await waitFor(() => expect(signOut).toHaveBeenCalledWith('csrf-test'));
-    expect(revoked).toEqual(['all']);
+    await waitFor(() => expect(leaveSignedOut).toHaveBeenCalledWith('https://id.test/end-session'));
+    expect(calls).toEqual([{ url: '/auth/logout?all=1', csrf: 'csrf-test' }]);
+    expect(signOut).not.toHaveBeenCalled();
   });
 
-  it('does not sign out when a revoke fails', async () => {
+  it('does not leave when signing out everywhere fails', async () => {
     const user = userEvent.setup();
     await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
         '/api/v1/me/sessions': () => json(sessions()),
-        '/api/v1/me/sessions/revoke-all': () => problem(500, 'server_error', 'x'),
+        '/auth/logout': () => problem(500, 'server_error', 'x'),
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Sign out everywhere' }));
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(await within(dialog).findByText('Server error. Try again.')).toBeInTheDocument();
-    expect(signOut).not.toHaveBeenCalled();
+    expect(leaveSignedOut).not.toHaveBeenCalled();
   });
 
   it('signs out this session', async () => {

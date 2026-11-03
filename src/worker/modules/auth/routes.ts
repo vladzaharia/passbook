@@ -1,4 +1,5 @@
 import {
+  LogoutQuerySchema,
   MagicLinkRequestSchema,
   OidcStartQuerySchema,
   OkSchema,
@@ -83,7 +84,7 @@ register(
 register(
   authRoutes,
   'auth',
-  { method: 'post', path: '/logout', summary: 'Sign out', status: 302 },
+  { method: 'post', path: '/logout', summary: 'Sign out', query: LogoutQuerySchema, status: 302 },
   logout,
 );
 
