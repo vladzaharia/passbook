@@ -6,7 +6,7 @@ import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 
 import { ActiveIndicator } from './active-indicator.tsx';
 import { Cameo } from './art/cameo.tsx';
 import { WalletArt } from './art/wallet.tsx';
-import { DialogOverlay } from './dialog.tsx';
+import { DialogOverlay } from './overlay.tsx';
 
 export interface CommandItem {
   id: string;

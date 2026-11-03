@@ -1,8 +1,7 @@
-import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useMediaQuery } from '../lib/media.ts';
 import { prefersReducedMotion, useChangeCount } from '../lib/motion.ts';
-import { ConfirmDialog } from './alert-dialog.tsx';
 import { Button } from './button.tsx';
 import { Tick } from './checkbox.tsx';
 import { useBlockedSubmit } from './form.tsx';
@@ -23,8 +22,10 @@ export interface WizardProps {
   aside?: ReactNode;
   /** The stage's visible label and landmark name. */
   asideLabel?: string;
-  /** Unsaved input: Cancel asks first. */
-  dirty?: boolean;
+  /**
+   * Cancel only navigates away: the page's useUnsavedChangesGuard asks once when there is unsaved
+   * input, like any other way out.
+   */
   onCancel: () => void;
   onBack?: () => void;
   /**
@@ -126,7 +127,6 @@ export function Stepper({
  * Next or Create right.
  */
 export function WizardBar({
-  dirty,
   onCancel,
   onBack,
   onNext,
@@ -136,9 +136,8 @@ export function WizardBar({
   busy,
 }: Pick<
   WizardProps,
-  'dirty' | 'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'nextDisabled' | 'busy'
+  'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'nextDisabled' | 'busy'
 >) {
-  const [asking, setAsking] = useState(false);
   return (
     <section
       aria-label="Wizard actions"
@@ -147,11 +146,7 @@ export function WizardBar({
       className="wl-bar fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-[env(safe-area-inset-bottom)] shadow-elevation-3 lg:left-60"
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-safe py-3 sm:[--wl-gutter:1.5rem]">
-        <Button
-          variant="ghost"
-          disabled={busy}
-          onClick={() => (dirty ? setAsking(true) : onCancel())}
-        >
+        <Button variant="ghost" disabled={busy} onClick={onCancel}>
           Cancel
         </Button>
         <div className="flex gap-2">
@@ -171,15 +166,6 @@ export function WizardBar({
           </Button>
         </div>
       </div>
-      <ConfirmDialog
-        open={asking}
-        onOpenChange={setAsking}
-        title="Discard unsaved changes?"
-        confirmLabel="Discard"
-        cancelLabel="Keep editing"
-        destructive
-        onConfirm={onCancel}
-      />
     </section>
   );
 }

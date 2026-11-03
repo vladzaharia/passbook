@@ -83,20 +83,27 @@
 }
 
 /* Phones: menus open as a bottom action sheet. Radix positions the wrapper inline, so the sheet
-   overrides it. The ::before is the backdrop. */
+   overrides it. The wrapper's ::before is the scrim, the dialogs' colour. It hangs off the wrapper,
+   not the sliding menu, and the wrapper drops floating-ui's will-change (set on high-density
+   screens), so nothing becomes the scrim's containing block and it covers the whole screen. */
 @media (max-width: 639.98px) {
   [data-radix-popper-content-wrapper]:has(> .wl-action-sheet) {
     position: fixed !important;
     inset: auto 0 0 !important;
     min-width: 0 !important;
     transform: none !important;
+    will-change: auto !important;
   }
-  .wl-action-sheet::before {
+  [data-radix-popper-content-wrapper]:has(> .wl-action-sheet)::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
     background: rgb(0 0 0 / 0.6);
+    animation: wl-fade-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  }
+  [data-radix-popper-content-wrapper]:has(> .wl-action-sheet[data-state="closed"])::before {
+    animation: wl-fade-out var(--wl-dur-exit) var(--wl-ease-in) forwards;
   }
 }
 

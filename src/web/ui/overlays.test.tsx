@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -7,7 +8,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -24,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './dropdown-menu.tsx';
+import { OVERLAY_TITLE } from './overlay.tsx';
 import { SaveBar, UnsavedChangesDialog, useUnsavedChangesGuard } from './save-bar.tsx';
 import { Sheet, SheetContent, SheetTrigger } from './sheet.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs.tsx';
@@ -49,6 +51,83 @@ describe('Dialog', () => {
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(trigger).toHaveFocus();
+  });
+});
+
+describe('Dialog dirty', () => {
+  function Harness({ dirty }: { dirty: boolean }) {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <Button onClick={() => setOpen(true)}>New organization</Button>
+        <Dialog open={open} dirty={dirty} onOpenChange={setOpen}>
+          <DialogContent
+            title="New organization"
+            footer={
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+            }
+          >
+            <input aria-label="Name" data-autofocus />
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+  const open = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole('button', { name: 'New organization' }));
+    return screen.findByRole('dialog', { name: 'New organization' });
+  };
+
+  it('asks before Esc, an outside click or X close it, and stays on Keep editing', async () => {
+    const user = userEvent.setup();
+    render(<Harness dirty />);
+    await open(user);
+    const ask = async (close: () => Promise<void>) => {
+      await close();
+      const confirm = await screen.findByRole('alertdialog', { name: 'Discard unsaved changes?' });
+      await user.click(within(confirm).getByRole('button', { name: 'Keep editing' }));
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+      // Back in the form, where the user was.
+      const dialog = screen.getByRole('dialog', { name: 'New organization' });
+      await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    };
+    await ask(() => user.keyboard('{Escape}'));
+    await ask(() => user.click(screen.getByRole('button', { name: 'Close' })));
+    await ask(async () => {
+      const overlay = document.querySelector('.wl-overlay');
+      if (overlay) await user.pointer({ target: overlay, keys: '[MouseLeft]' });
+    });
+  });
+
+  it('closes on Discard and returns focus to the opener; Cancel closes without asking', async () => {
+    const user = userEvent.setup();
+    render(<Harness dirty />);
+    await open(user);
+    await user.keyboard('{Escape}');
+    const confirm = await screen.findByRole('alertdialog', { name: 'Discard unsaved changes?' });
+    // Above the dialog it confirms for, so its scrim dims that dialog too.
+    expect(confirm.className).toContain('z-[70]');
+    await user.click(within(confirm).getByRole('button', { name: 'Discard' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'New organization' })).toHaveFocus(),
+    );
+    await open(user);
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('closes at once when clean', async () => {
+    const user = userEvent.setup();
+    render(<Harness dirty={false} />);
+    await open(user);
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });
 
@@ -149,6 +228,8 @@ describe('Sheet', () => {
     await user.click(screen.getByRole('button', { name: 'Menu' }));
     const sheet = await screen.findByRole('dialog', { name: 'Navigation' });
     expect((await axe(sheet)).violations).toEqual([]);
+    // One overlay title size: sheets read like dialogs (16 px, semibold).
+    expect(screen.getByRole('heading', { name: 'Navigation' }).className).toContain(OVERLAY_TITLE);
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
@@ -347,5 +428,20 @@ describe('useUnsavedChangesGuard', () => {
     await user.click(await screen.findByRole('link', { name: 'Leave' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/other'));
     expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+});
+
+const cssBlock = (css: string, selector: string) =>
+  css.match(new RegExp(`${selector.replace(/[[\]"().>]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+
+describe('bottom sheets', () => {
+  it('dims the screen behind a menu that opens as an action sheet', () => {
+    const css = readFileSync('src/web/styles/kit-motion.css', 'utf8');
+    const wrapper = '[data-radix-popper-content-wrapper]:has(> .wl-action-sheet)';
+    expect(cssBlock(css, wrapper)).toMatch(/will-change:\s*auto !important/);
+    const scrim = cssBlock(css, `${wrapper}::before`);
+    expect(scrim).toMatch(/position:\s*fixed/);
+    expect(scrim).toMatch(/inset:\s*0/);
+    expect(scrim).toMatch(/background:\s*rgb\(0 0 0 \/ 0\.6\)/);
   });
 });

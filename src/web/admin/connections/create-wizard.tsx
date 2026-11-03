@@ -202,7 +202,6 @@ export function CreateConnectionWizard() {
         onStep={setStep}
         aside={<WizardAside connector={info} sample={sample} />}
         asideLabel="Connector"
-        dirty={dirty}
         onCancel={() => void navigate({ to: '/admin/connections' })}
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={next}

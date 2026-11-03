@@ -3,6 +3,8 @@ import { type KeyboardEvent, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useChangeCount } from '../lib/motion.ts';
 import { ActiveIndicator } from './active-indicator.tsx';
+// Geometry shared with the SSR side toggle (.pc-seg), so both are one size.
+import '../pass-card/stage-seg.css';
 
 export interface SegmentOption<V extends string = string> {
   value: V;
@@ -17,7 +19,6 @@ export interface SegmentedControlProps<V extends string = string> {
   options: readonly SegmentOption<V>[];
   value: V;
   onValueChange: (value: V) => void;
-  size?: 'sm' | 'md';
   /** Stretch segments to fill the row. */
   block?: boolean;
   className?: string;
@@ -25,15 +26,15 @@ export interface SegmentedControlProps<V extends string = string> {
 
 /**
  * A radiogroup on a sunken track; the raised thumb (ActiveIndicator, 280 ms spring) slides to the
- * selection. Arrow keys move and select, Home/End jump. The SSR fallback (a radio pair) is styled
- * by .pc-seg in pass-card/stage.css.
+ * selection. Arrow keys move and select, Home/End jump. One size: 36 tall with 14 px text, 44 on
+ * touch. The geometry lives in pass-card/stage-seg.css (.wl-seg), shared with the SSR fallback (a
+ * radio pair, .pc-seg).
  */
 export function SegmentedControl<V extends string>({
   label,
   options,
   value,
   onValueChange,
-  size = 'md',
   block,
   className,
 }: SegmentedControlProps<V>) {
@@ -68,7 +69,7 @@ export function SegmentedControl<V extends string>({
       aria-label={label}
       onKeyDown={move}
       className={cn(
-        'relative inline-flex rounded-md border border-border bg-surface-sunken p-0.5',
+        'wl-seg relative inline-flex border-border bg-surface-sunken',
         block && 'flex w-full',
         className,
       )}
@@ -88,11 +89,9 @@ export function SegmentedControl<V extends string>({
             disabled={o.disabled}
             onClick={() => onValueChange(o.value)}
             className={cn(
-              'relative inline-flex items-center justify-center gap-1.5 rounded-[5px] px-3 font-medium wl-colors',
+              'relative inline-flex items-center justify-center gap-1.5 wl-colors',
               'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
               'disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4',
-              size === 'sm' ? 'min-h-7 text-xs' : 'min-h-8 text-sm',
-              'pointer-coarse:min-h-11',
               block && 'flex-1',
               checked ? 'text-fg-strong' : 'text-fg-muted hover:not-disabled:text-fg-strong',
             )}

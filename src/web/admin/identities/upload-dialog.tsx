@@ -15,6 +15,7 @@ import { CertificateFields } from './certificate-fields.tsx';
 import { useUploadIdentity } from './queries.ts';
 import {
   buildUploadBody,
+  draftDirty,
   EMPTY_DRAFT as EMPTY,
   type UploadDraft,
   validateUpload,
@@ -68,7 +69,11 @@ export function UploadIdentityDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
+    <Dialog
+      open={open}
+      dirty={draftDirty(draft) || org !== PLATFORM || nfc}
+      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+    >
       <DialogContent
         title="Upload Apple identity"
         size="lg"

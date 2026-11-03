@@ -175,6 +175,44 @@ describe('LoadMore', () => {
     render(<LoadMore hasMore loading onLoadMore={() => {}} />);
     expect(screen.getByRole('button', { name: 'Load more' })).toBeDisabled();
   });
+
+  it('pages a cursor query, announces the new count and keeps focus at the list end', async () => {
+    const user = userEvent.setup();
+    const fetchNextPage = vi.fn(() => Promise.resolve());
+    const page = (o: { more: boolean; busy?: boolean; failed?: boolean }) => ({
+      hasNextPage: o.more,
+      isFetchingNextPage: o.busy ?? false,
+      isFetchNextPageError: o.failed ?? false,
+      fetchNextPage,
+    });
+    const noun = ['pass', 'passes'] as const;
+    const { rerender } = render(<LoadMore query={page({ more: true })} shown={20} noun={noun} />);
+    const status = screen.getByRole('status');
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(fetchNextPage).toHaveBeenCalledOnce();
+    // Loading disables the button, which drops focus; the next page brings it back.
+    rerender(<LoadMore query={page({ more: true, busy: true })} shown={20} noun={noun} />);
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(status).toHaveTextContent('');
+    rerender(<LoadMore query={page({ more: true })} shown={40} noun={noun} />);
+    expect(status).toHaveTextContent('40 passes');
+    expect(screen.getByRole('button', { name: 'Load more' })).toHaveFocus();
+    // A failed page says so and the button retries.
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    rerender(<LoadMore query={page({ more: true, busy: true })} shown={40} noun={noun} />);
+    rerender(<LoadMore query={page({ more: true, failed: true })} shown={40} noun={noun} />);
+    expect(status).toHaveTextContent('Could not load more.');
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(fetchNextPage).toHaveBeenCalledTimes(3);
+    // The last page: the button goes and focus lands on the count, not the top of the page.
+    rerender(<LoadMore query={page({ more: true, busy: true })} shown={40} noun={noun} />);
+    (document.activeElement as HTMLElement | null)?.blur();
+    rerender(<LoadMore query={page({ more: false })} shown={45} noun={noun} />);
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(status).toHaveTextContent('45 passes');
+    expect(document.activeElement).toHaveTextContent('45 passes');
+    expect(document.activeElement).not.toBe(status);
+  });
 });
 
 describe('states', () => {

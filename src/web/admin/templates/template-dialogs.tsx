@@ -42,7 +42,11 @@ export function DuplicateDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      dirty={name !== `${template.name} copy` || orgId !== (template.orgId ?? undefined)}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent
         title="Duplicate template"
         footer={
@@ -105,7 +109,7 @@ export function OrgDialog({
     }
   }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} dirty={value !== (template.orgId ?? ALL)} onOpenChange={onOpenChange}>
       <DialogContent
         title="Change organization"
         footer={

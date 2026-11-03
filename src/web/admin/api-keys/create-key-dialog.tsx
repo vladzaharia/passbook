@@ -153,7 +153,11 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
+    <Dialog
+      open={open}
+      dirty={name.trim() !== '' || scopes.length > 0}
+      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+    >
       <DialogContent
         size="md"
         title="New API key"

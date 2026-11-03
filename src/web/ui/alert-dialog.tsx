@@ -8,9 +8,10 @@ import {
   DIALOG_PANEL,
   DialogOverlay,
   focusInitial,
+  OVERLAY_TITLE,
   restoreOpener,
   useOpener,
-} from './dialog.tsx';
+} from './overlay.tsx';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -56,7 +57,8 @@ export function ConfirmDialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogPrimitive.Portal>
-        <DialogOverlay />
+        {/* Above any dialog or sheet it confirms for: its scrim dims that overlay too. */}
+        <DialogOverlay className="z-[60]" />
         <DialogPrimitive.Content
           role="alertdialog"
           // The dialog itself takes focus (never Cancel), so a pointer user sees no ring.
@@ -65,12 +67,10 @@ export function ConfirmDialog({
           onInteractOutside={(e) => e.preventDefault()}
           className={cn(
             DIALOG_PANEL,
-            'p-5 outline-none sm:max-w-sm max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+            'z-[70] p-5 outline-none sm:max-w-sm max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))]',
           )}
         >
-          <DialogPrimitive.Title className="text-base font-semibold text-fg-strong">
-            {title}
-          </DialogPrimitive.Title>
+          <DialogPrimitive.Title className={OVERLAY_TITLE}>{title}</DialogPrimitive.Title>
           {description ? (
             <DialogPrimitive.Description className="mt-2 text-sm text-fg-muted">
               {description}
@@ -92,5 +92,31 @@ export function ConfirmDialog({
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  );
+}
+
+/**
+ * The one unsaved-changes confirm: a dirty dialog closing (ui/dialog.tsx `dirty`) and a blocked
+ * route change (save-bar.tsx UnsavedChangesDialog) both ask with it.
+ */
+export function DiscardDialog({
+  open,
+  onOpenChange,
+  onDiscard,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Discard unsaved changes?"
+      confirmLabel="Discard"
+      cancelLabel="Keep editing"
+      destructive
+      onConfirm={onDiscard}
+    />
   );
 }

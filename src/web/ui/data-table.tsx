@@ -4,6 +4,7 @@ import { type CSSProperties, Fragment, type ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { BELOW_MD, useMediaQuery } from '../lib/media.ts';
 import { useArrivalMode, useInsertHighlight } from '../lib/motion.ts';
+import { CARD_SURFACE } from './card.tsx';
 import { HIDE_BELOW } from './data-table-meta.ts';
 import { EdgeFade, useEdgeFade } from './edge-fade.tsx';
 import { LoadingRail, useDelayed } from './loading-rail.tsx';
@@ -119,7 +120,8 @@ export function DataTable<T>({
     (c.columnDef.meta ?? {}) as NonNullable<ColumnDef<T>['meta']>;
   const stackCols = table.getVisibleLeafColumns().filter((c) => !metaOf(c).stackHidden);
   const [titleCol, ...restCols] = stackCols;
-  const frame = bare ? '' : 'rounded-lg border border-border';
+  // On its own the table is a card (same surface and shadow); inside one it uses the card's.
+  const frame = bare ? '' : CARD_SURFACE;
   const stagger = entering ? 'wl-stagger [--wl-rise:4px]' : undefined;
   const rowState = (id: string, index: number) => ({
     'data-row-id': id,
@@ -194,8 +196,8 @@ export function DataTable<T>({
                 <caption className="sr-only">{caption}</caption>
                 <thead
                   className={cn(
-                    'bg-surface-raised',
-                    virtualHeight && 'sticky top-0 z-10 shadow-[0_1px_0_var(--pk-border-subtle)]',
+                    virtualHeight &&
+                      'sticky top-0 z-10 bg-surface-raised shadow-[0_1px_0_var(--pk-border-subtle)]',
                   )}
                 >
                   {table.getHeaderGroups().map((group) => (

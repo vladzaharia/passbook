@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -59,7 +59,6 @@ describe('Wizard and OptionTile', () => {
         ]}
         current={step}
         onStep={setStep}
-        dirty
         onCancel={onCancel}
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={() => setStep(step + 1)}
@@ -86,7 +85,7 @@ describe('Wizard and OptionTile', () => {
     );
   }
 
-  it('moves forward and back, keeps values, focuses the step heading and guards Cancel', async () => {
+  it('moves forward and back, keeps values, focuses the step heading; Cancel only navigates', async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();
     render(<Harness onCancel={onCancel} />);
@@ -99,11 +98,10 @@ describe('Wizard and OptionTile', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Template' })).toHaveFocus());
     await user.click(screen.getByRole('button', { name: /Organization/ }));
     expect(screen.getByLabelText('Org b')).toBeChecked();
+    // The page's route guard owns the unsaved-changes confirm; the wizard never asks a second time.
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    const dialog = await screen.findByRole('alertdialog', { name: 'Discard unsaved changes?' });
-    expect(onCancel).not.toHaveBeenCalled();
-    await user.click(within(dialog).getByRole('button', { name: 'Discard' }));
-    expect(onCancel).toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it('commits a tile on Enter', async () => {

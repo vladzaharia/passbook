@@ -20,9 +20,11 @@
   --pk-info-on: #060912;
   --pk-info-subtle: #0f1a2e;
   --pk-info-border: #3b82f6;
-  /* Editable fields: sunken in dark, raised in light. Disabled ones lift to the surface. */
+  /* Editable fields: sunken in dark, raised in light. Disabled and read-only ones lift to the
+     surface in dark and sink in light: never the editable fill. */
   --wl-field: var(--pk-surface-sunken);
   --wl-field-disabled: transparent;
+  --wl-field-readonly: transparent;
   /* Placeholders hint a format at about 3.8:1, well under the value's contrast. */
   --wl-placeholder: #646b7d;
   /* Org monogram when the org has no accent. */
@@ -54,6 +56,7 @@
     --pk-success-subtle: #dcf2e2;
     --wl-field: var(--pk-surface-raised);
     --wl-field-disabled: var(--pk-surface-sunken);
+    --wl-field-readonly: var(--pk-surface-sunken);
     --wl-placeholder: #858b9a;
     --wl-hover-mix: black;
   }
@@ -82,6 +85,7 @@
   --pk-success-subtle: #dcf2e2;
   --wl-field: var(--pk-surface-raised);
   --wl-field-disabled: var(--pk-surface-sunken);
+  --wl-field-readonly: var(--pk-surface-sunken);
   --wl-placeholder: #858b9a;
 }
 

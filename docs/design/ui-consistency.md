@@ -12,7 +12,7 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | --- | --- | --- |
 | Page | `surface-page` | App background, SSR pages, public page |
 | Raised | `surface-raised` | Cards, sidebar, portal header, table header; editable fields in light |
-| Sunken | `surface-sunken` | Read-only values, code, disabled fields, art slots. Never an editable field in light |
+| Sunken | `surface-sunken` | Code, art slots, read-only and disabled fields in light. Never an editable field in light |
 | Overlay | `surface-overlay` | Dialogs, menus, sheets, save and wizard bars |
 | Lines | `border` (dividers), `border-strong` (controls, art strokes) | Never raw greys |
 | Text | `fg-strong` titles, `fg` body and values, `fg-muted` labels and meta, `fg-subtle` placeholders | Dark `fg-muted` ≈ #8f98ad: 4.5–7:1 on raised, so labels separate from values |
@@ -35,7 +35,7 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Control to help or error | 1 (4px) |
 | Controls in a row, pills, button groups | 2 (8px) |
 | Fields in a form | 4 (16px) |
-| Card padding | header `px-4 py-3`, body `p-4` |
+| Card padding | header 48 px (`min-h-12 px-4`), body `p-4` |
 | List rows | `py-3`, first `pt-0`, last `pb-0`, dividers between |
 | Group heading in a form | 6 (24px) above, hairline |
 | Between cards / sections | 6 (24px) |
@@ -48,10 +48,15 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 
 | Size | Fine pointer | Coarse pointer (touch) | Use |
 | --- | --- | --- | --- |
-| `sm` | 32 (`h-8`) | 32 visual, 44 × 44 hit area | Card-header actions, row actions, inline secondary actions |
+| `sm` | 32 (`h-8`) | 44 (`h-11`) | Card-header actions, row actions, list footers: fits the 48 px card header and table row |
 | `md` | 36 (`h-9`) | 44 (`h-11`) | Default: inputs, selects, combobox, search, page actions, toolbars, dialogs |
-| `lg` | 44 (`h-11`) | 44 | Actions beside the Add to Apple Wallet badge, to match its height |
+| `badge` | 40 (`h-10`) | 44 (`h-11`) | Buttons and icon buttons beside the Add to Apple Wallet badge, the art's height |
+| `lg` | 44 (`h-11`) | 44 | Not beside the badge (use `badge`) |
 
+- Text is 14 px at every size. Icon buttons follow the same table (`sm` 32, `md` 36, `badge` 40,
+  44 on touch).
+- One segmented control size: 36 (44 on touch), 14 px text. The SSR side toggle (`.pc-seg`) and
+  the kit `SegmentedControl` (`.wl-seg`) share `pass-card/stage-seg.css`.
 - Everything in one row shares one height. Fields are always `md`.
 - Under `pointer: coarse`: tabs, menu items, nav links and icon buttons are at least 44 px; inline
   text links get padding to a 44 px hit height.
@@ -110,7 +115,8 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 
 ## Sections and cards
 
-- Card: `rounded-lg border bg-surface-raised shadow-elevation-1`; title `text-sm font-semibold`.
+- Card: `rounded-lg border bg-surface-raised shadow-elevation-1` (`CARD_SURFACE`; a table on its
+  own uses it too); title `text-sm font-semibold`. The header is 48 px with or without actions.
   Card-header actions are ghost `sm` buttons with a trailing `ChevronRight` (internal) or
   `ArrowUpRight` (external); no underlined links.
 - Pick one per page: all sections are cards, or all are `h2` (`text-base font-semibold`) with setting
@@ -148,12 +154,17 @@ health items):
 - Header `h-10`, rows `py-2` (≥44px), `text-sm`, one line per cell; second line `text-xs fg-muted`.
   Row heights within a table vary by at most 4px.
 - Text left; numbers right with `tabular-nums`; pills left; row actions right (ghost `size-8`).
+- Row title: `RowLink`, strong text that turns teal and underlines on hover (voided rows muted and
+  struck through). The row is the target and teal stays for actions, so titles are not teal at
+  rest. A count that opens a filtered list: `CountLink` (teal; zero is muted text). A link in a
+  meta row (`Audit log`): `MetaLink` (muted, icon first).
 - First column grows; meta columns (template, org, dates) `whitespace-nowrap`, truncate with a
   `title`.
 - A state that every row would repeat (holder state) is an icon with a tooltip, not a pill.
 - Dates: one formatter, `Oct 31, 2026, 6:17 PM`. No seconds, no numeric `10/31/2026`.
 - Footer: `<n> <noun>` left, plus the scope (`19 passes in Northwind`); `Load more` (`sm` outline)
-  right. Same component on every list.
+  right. Same component on every list: `LoadMore query={infiniteQuery}` pages by cursor, announces
+  the new count, keeps focus at the list end and offers `Try again` when a page fails.
 - No sort controls; lists use the server order.
 - Below 768: stacked rows (title link, secondary line, pills, one key meta value). Wide record
   tables (runs, delivery) scroll inside their container with a 32px edge fade.
@@ -172,10 +183,18 @@ health items):
 ## Forms
 
 - Label above the control (`text-sm font-medium fg`), required `*` right after the label text in
-  `danger`, help `text-xs fg-muted` below, error `text-xs danger` replaces help and sets the danger
-  border. Errors use `aria-describedby`, not `role=alert`.
+  `danger` (hidden when the control is read-only or disabled), help `text-xs fg-muted` below, error
+  `text-xs danger` replaces help and sets the danger border. Errors use `aria-describedby`, not
+  `role=alert`.
+- Read-only and disabled text fields never look editable: no fill in dark, sunken in light
+  (`--wl-field-readonly`), `border` instead of `border-strong`, muted text.
+- Errors appear on submit, not while typing into a fresh form; after that they follow the value,
+  so a fix clears its message on the same keystroke.
 - Blocked submit: focus and scroll to the first invalid field and announce one polite summary
   (`2 fields need attention`).
+- Every form gets this from the kit: `useFormErrors(found)` spread on `Form` (`{...check.form}
+  onValid`), fields read `check.errors`. A Save or Next outside the form submits it by id
+  (`SaveBar formId`, `Wizard formId`). `InlineAddField validate` does the same for one field.
 - Fields sit in a `FormGrid`. Fixed widths only for number + unit (`w-28`, unit inside the field,
   no spin buttons) and colour (swatch + `w-40` hex).
 - Group headings (`FieldGroup`): `text-sm font-semibold fg-strong`, 24px above, hairline. Hidden
@@ -192,8 +211,8 @@ health items):
 
 - Kit `Wizard`: `Stepper` on top (numbered circles joined by a hairline; done steps show a check
   and are clickable, state kept). Below 640: `Step 2 of 5 · Template` and a 2px progress bar.
-- `WizardBar` sticky at the bottom: `Cancel` (ghost, left; unsaved guard when dirty), `Back`
-  (outline) and `Next` / `Create` (primary) right.
+- `WizardBar` sticky at the bottom: `Cancel` (ghost, left), `Back` (outline) and `Next` /
+  `Create` (primary) right. Cancel only navigates; the page's `useUnsavedChangesGuard` asks once.
 - A step change scrolls to the top and focuses the step heading.
 - The scope prefills the org; a step with one choice is skipped.
 - Choices are `OptionTile`s (icon, name, one-line description). Enter or double-click advances.
@@ -301,6 +320,10 @@ Action icons (`src/web/lib/action-icons.ts`):
 - Header title (+ optional one-line description); X close except on alert dialogs and destructive
   confirms. Footer right: Cancel outline, then the action (primary, or danger with the verb:
   `Void`, `Delete`).
+- One title size on every overlay: dialogs, confirms, sheets and drawers are `text-base
+  font-semibold` (`OVERLAY_TITLE`).
+- A form dialog with input passes `dirty`: Esc, an outside click and X ask `Discard unsaved
+  changes?` (the same confirm as a blocked route change); Cancel discards without asking.
 - Confirms name the consequence and, for many records, the count (`Void 12 passes?`).
 - Typed confirms (`TypedConfirmDialog`): the title (≤24 characters), the slug, else `delete`;
   case-insensitive; a check appears when it matches.
@@ -309,7 +332,8 @@ Action icons (`src/web/lib/action-icons.ts`):
 - Focus: a field marked `data-autofocus`, else the dialog itself, never Cancel. Opened by pointer,
   nothing shows a ring. Focus returns to the opener (or the menu trigger) on close.
 - Below 640: dialogs and confirms are bottom sheets (full width, actions stacked with the primary
-  on top, 44px, safe-area padding); `MoreMenu` and row menus open as an action sheet.
+  on top, 44px, safe-area padding); `MoreMenu` and row menus open as an action sheet. Every bottom
+  sheet dims the screen behind it with the dialog scrim.
 - Sheets: left for navigation (drag to close on touch), right for record detail (`w-96` at ≥640,
   full width minus 16px below).
 
@@ -319,7 +343,8 @@ Action icons (`src/web/lib/action-icons.ts`):
 | --- | --- |
 | Page title | `text-2xl font-semibold tracking-[-0.015em]` |
 | Section heading (no card) | `text-base font-semibold` |
-| Card / dialog title | `text-sm font-semibold` (dialog `text-base`) |
+| Card title | `text-sm font-semibold` |
+| Overlay title (dialog, confirm, sheet, drawer) | `text-base font-semibold` |
 | Form group heading | `text-sm font-semibold fg-strong` |
 | Field label | `text-sm font-medium fg` |
 | Body, table cells, values | `text-sm` |
@@ -371,19 +396,19 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Status | `StatusPill status icon?`; `StatusIcon` for a state every row repeats (tooltip carries the hint) |
 | Empty | `EmptyState art title action? description? variant? inline? heading?`; `FilteredEmpty entity onClear` |
 | Error | `ErrorState error? title? onRetry? retryLabel?` (Retry spins `RefreshCw`; a failed retry shakes) |
-| Lists | `DataTable … loading fetching filtered empty emptyFiltered toolbar footer` (rows carry `data-row-id`, new rows `data-new`); `FilterBar search filters onClear` (`DATE_RANGES`, `rangeStart`); `LoadMore … noun={['pass','passes']} scoped`; queries use `listQuery({...})` |
+| Lists | `DataTable … loading fetching filtered empty emptyFiltered toolbar footer` (rows carry `data-row-id`, new rows `data-new`); `FilterBar search filters onClear` (`DATE_RANGES`, `rangeStart`); `LoadMore query={infiniteQuery} shown noun={['pass','passes']} scoped`; queries use `listQuery({...})`; `RowLink to params inactive?`, `CountLink count noun? icon? to search`, `MetaLink to icon?` |
 | Rows | `ListRows` + `ListRow leading title pills meta trailing rowId isNew` (the trailing control drops under the body below a 16rem list); `RowActions label actions` |
 | Account rows | `EmailList`, `SessionList`, `InlineAddField` (presentational; the page owns mutations) |
 | Layout | `TwoPane aside asideFrom='xl'\|'lg' stickyAside`; `FormGrid` + `FormSpan full`; `FieldGroup title onlyFieldLabel` |
-| Forms | `Form form onSubmit` (blocked submit: focus, scroll, one polite summary); `RhfField`; `NumberField unit`; `DateTimeField clearLabel defaultZone` |
+| Forms | `useFormErrors(found)` + `Form id {...check.form} onValid` (errors on submit, then live; blocked submit: focus, scroll, one polite summary); `FormField label required error help`; `NumberField unit`; `DateTimeField clearLabel defaultZone` |
 | Choices | `SegmentedControl label options value onValueChange`; `OptionTile` (Enter or double-click commits); `EntityPicker kind` |
-| Wizards | `Wizard steps current onStep aside dirty onCancel onBack onNext formId nextLabel busy` |
-| Confirms | `ConfirmDialog`; `TypedConfirmDialog word={confirmWord({ title, slug })}`; `SecretReveal fields onDone` |
+| Wizards | `Wizard steps current onStep aside onCancel onBack onNext formId nextLabel busy`; the page owns `useUnsavedChangesGuard` |
+| Confirms | `ConfirmDialog`; `DiscardDialog` (unsaved changes); `Dialog dirty`; `TypedConfirmDialog word={confirmWord({ title, slug })}`; `SecretReveal fields onDone` |
 | Notes | `Callout tone title items actions` |
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
 | Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
-| Buttons | `Button busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused`; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
+| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
 | Badge | `AppleWalletBadge href label?`; `appleWalletBadgeHtml({ href, email? })` for SSR and email |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |

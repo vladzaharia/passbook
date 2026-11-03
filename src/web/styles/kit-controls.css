@@ -247,6 +247,18 @@
   }
 }
 
+/* Forms (ui/field.tsx): a field that cannot be filled in (read-only or disabled text, a disabled
+   select) shows no required mark. Checkboxes and radios match :read-only always, so they are out. */
+[data-field]:has(
+  :is(
+      input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="file"]),
+      textarea
+    ):read-only,
+  button[role="combobox"]:disabled
+) [data-required-mark] {
+  display: none;
+}
+
 /* A button whose variant just swapped (Button useInstantVariant): no colour transition. */
 [data-instant] {
   transition: none !important;

@@ -1,5 +1,6 @@
 import { Mail, RotateCw, Star, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import { strictEmail } from '../../shared/email.ts';
 import { ACTION_ICON } from '../lib/action-icons.ts';
 import { useInsertHighlight } from '../lib/motion.ts';
 import { InlineAddField } from './inline-add-field.tsx';
@@ -28,6 +29,10 @@ export interface EmailListProps {
   addError?: string;
   className?: string;
 }
+
+/** The add row checks the address the way the server does (shared/email.ts) before onAdd. */
+const checkEmail = (v: string) =>
+  !v ? 'Enter an email.' : strictEmail(v) ? undefined : 'Enter a valid email.';
 
 /**
  * Account emails (portal and admin): address with Primary and Unverified pills, actions trailing,
@@ -140,6 +145,7 @@ export function EmailList({
           autoComplete="email"
           placeholder="name@example.com"
           value={draft}
+          validate={checkEmail}
           onChange={(v) => {
             setDraft(v);
             setEdited(true);

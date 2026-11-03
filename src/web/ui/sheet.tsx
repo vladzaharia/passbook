@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { cn } from '../lib/cn.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
-import { DialogOverlay, restoreOpener, useOpener } from './dialog.tsx';
+import { DialogOverlay, OVERLAY_TITLE, restoreOpener, useOpener } from './overlay.tsx';
 
 const SheetOpener = createContext<{ current: HTMLElement | null } | null>(null);
 const SheetClose = createContext<(() => void) | null>(null);
@@ -135,12 +135,7 @@ export function SheetContent({
       >
         <div className="flex min-h-14 items-center justify-between gap-2 border-b border-border px-4 py-2">
           {header}
-          <DialogPrimitive.Title
-            className={cn(
-              'text-sm font-semibold text-fg-strong',
-              (hideTitle || header) && 'sr-only',
-            )}
-          >
+          <DialogPrimitive.Title className={cn(OVERLAY_TITLE, (hideTitle || header) && 'sr-only')}>
             {title}
           </DialogPrimitive.Title>
           <DialogPrimitive.Close
