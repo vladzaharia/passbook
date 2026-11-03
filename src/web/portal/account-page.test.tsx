@@ -192,7 +192,7 @@ describe('account page', () => {
     const input = await screen.findByLabelText('Add email');
     await user.type(input, 'bad');
     await user.click(screen.getByRole('button', { name: 'Add' }));
-    expect(await screen.findByText('Enter a valid email.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
     // A refused address stays in the field to be fixed.
     expect(screen.getByLabelText('Add email')).toHaveValue('bad');
     await user.clear(screen.getByLabelText('Add email'));
@@ -329,7 +329,7 @@ describe('account page', () => {
     await user.click(await screen.findByRole('button', { name: 'Sign out everywhere' }));
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Sign out' }));
-    expect(await within(dialog).findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await within(dialog).findByText('Something went wrong. Try again.')).toBeInTheDocument();
     expect(leaveSignedOut).not.toHaveBeenCalled();
   });
 

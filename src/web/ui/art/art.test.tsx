@@ -289,8 +289,9 @@ describe('entity art', () => {
   // click-to-replay (replay.ts) and the scenes' rest sheet (scenes/rest.css). The lazy scenes rose
   // by 1 kB for the search walk's planted steps (scenes/search-steps.css). Then by 1 kB for the
   // canonical buddy: the fall onto the edge, the size tiers' lines and placement, the face's happy
-  // eyes and the SSR-safe markup (buddy-art.tsx); Cameo went.
-  it('fits the 14.5 kB gzip budget; the lazy scenes fit 8 kB; the state parts 2.5 kB', () => {
+  // eyes and the SSR-safe markup (buddy-art.tsx); Cameo went. Then by 0.25 kB for presence.ts:
+  // one buddy per view, so toasts know when a page buddy is mounted.
+  it('fits the 14.75 kB gzip budget; the lazy scenes fit 8 kB; the state parts 2.5 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
     // with the sign-in page and on SSR pages only.
     const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
@@ -302,7 +303,7 @@ describe('entity art', () => {
     const kit = [...files, join(DIR, 'scenes/rest.css')];
     const gz = (paths: string[]) =>
       gzipSync(paths.map((f) => readFileSync(f, 'utf8')).join('\n'), { level: 9 }).length;
-    expect(gz(kit)).toBeLessThanOrEqual(14.5 * 1024);
+    expect(gz(kit)).toBeLessThanOrEqual(14.75 * 1024);
     expect(gz(states.map((f) => join(DIR, f)))).toBeLessThanOrEqual(2.5 * 1024);
     // Nothing in the kit's entry pulls them in.
     for (const f of ['index.ts', 'buddy.tsx', 'buddy-art.tsx', 'wallet.tsx'])

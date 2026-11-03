@@ -2,7 +2,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { Copy, FileSignature } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
+import { copyText } from '@/web/lib/clipboard.ts';
 import { isApiError } from '@/web/lib/errors.ts';
+import { formatCount } from '@/web/lib/format.ts';
 import {
   ConfirmDialog,
   DropdownMenuItem,
@@ -19,7 +21,7 @@ import { CertificateCard, OverviewCard, PushSetupCard, SettingsCard } from './id
 import { useDeleteIdentity, useIdentity, useResignIdentityPasses } from './queries.ts';
 import { RotateIdentityDialog } from './rotate-dialog.tsx';
 
-const passes = (n: number) => `${n.toLocaleString()} ${n === 1 ? 'pass' : 'passes'}`;
+const passes = (n: number) => `${formatCount(n)} ${n === 1 ? 'pass' : 'passes'}`;
 
 export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const query = useIdentity(identityId);
@@ -73,11 +75,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         actions={
           <MoreMenu>
             <DropdownMenuItem
-              onSelect={() =>
-                void navigator.clipboard
-                  .writeText(identity.passTypeIdentifier)
-                  .then(() => toast.success('Pass type ID copied'), toast.error)
-              }
+              onSelect={() => void copyText(identity.passTypeIdentifier, 'pass type ID')}
             >
               <Copy aria-hidden />
               Copy pass type ID

@@ -176,7 +176,7 @@ describe('audit page', () => {
       session: 'admin',
       handlers: { '/api/v1/audit': () => problem(500, 'x', 'x') },
     });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
   });
 
   it('stacks rows below 768 with action, actor and target', async () => {

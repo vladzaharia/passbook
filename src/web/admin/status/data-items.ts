@@ -1,5 +1,5 @@
 import { humanizeStatus, statusOf } from '@/web/lib/status.ts';
-import { formatDateTime } from '../overview/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 
 const LABELS: Record<string, string> = {
   backlog: 'Backlog',

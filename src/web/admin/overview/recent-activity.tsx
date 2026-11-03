@@ -12,10 +12,10 @@ import {
   ListRows,
   SkeletonRows,
 } from '@/web/ui/index.ts';
+import { formatDateTime, formatRelative } from '../../lib/format.ts';
 import { TONE_TEXT } from '../audit/audit-rows.tsx';
 import { targetRef } from '../audit/labels.ts';
 import { useAuditLog } from '../audit/queries.ts';
-import { formatDateTime, formatRelative } from './format.ts';
 
 /** Six one-line rows without sign-ins; each opens its target, or the entry when it has none. */
 export function RecentActivity({ orgId }: { orgId: string | undefined }) {

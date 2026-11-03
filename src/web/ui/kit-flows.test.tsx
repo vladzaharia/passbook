@@ -87,15 +87,17 @@ describe('InlineAddField', () => {
           value={v}
           onChange={setV}
           onSubmit={onSubmit}
-          error="Enter a valid email."
+          error="Enter a valid email address."
         />
       );
     }
     const { container } = render(<Harness />);
     const grid = container.querySelector('.grid');
     expect(grid?.className).toContain('grid-cols-[minmax(0,1fr)_auto]');
-    expect(screen.getByText('Enter a valid email.').className).toContain('col-start-1');
-    expect(screen.getByLabelText('Add email')).toHaveAccessibleDescription('Enter a valid email.');
+    expect(screen.getByText('Enter a valid email address.').className).toContain('col-start-1');
+    expect(screen.getByLabelText('Add email')).toHaveAccessibleDescription(
+      'Enter a valid email address.',
+    );
     await user.type(screen.getByLabelText('Add email'), 'a@b.co{Enter}');
     expect(onSubmit).toHaveBeenCalledWith('a@b.co');
   });
@@ -124,6 +126,34 @@ describe('EmailList', () => {
     expect(within(items[0] as HTMLElement).getByText('Primary')).toBeInTheDocument();
     expect(within(items[1] as HTMLElement).getByText('Check your inbox')).toBeInTheDocument();
     expect(within(items[2] as HTMLElement).getByLabelText('Add email')).toBeInTheDocument();
+  });
+
+  it('says "Not verified" for every unproven address and resends with the mail icon', async () => {
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <EmailList
+          items={[
+            { email: 'ada@example.com', primary: true, verified: false, pending: false },
+            { email: 'old@example.com', primary: false, verified: false, pending: false },
+          ]}
+          onAdd={noop}
+          onRemove={noop}
+          onMakePrimary={noop}
+          onResend={noop}
+          onCancelPending={noop}
+        />
+      </TooltipProvider>,
+    );
+    const [primary, other] = screen.getAllByRole('listitem') as HTMLElement[];
+    for (const row of [primary, other] as HTMLElement[]) {
+      const pill = within(row).getByText('Not verified');
+      expect(pill.closest('span')?.className).toContain('text-fg-muted');
+    }
+    expect(screen.queryByText('Unverified')).toBeNull();
+    await user.click(within(other as HTMLElement).getByRole('button', { name: /Actions for/ }));
+    const resend = await screen.findByRole('menuitem', { name: 'Resend' });
+    expect(resend.querySelector('svg')?.getAttribute('class')).toContain('lucide-mail');
   });
 
   it('shows one muted line when empty, then the add row', () => {

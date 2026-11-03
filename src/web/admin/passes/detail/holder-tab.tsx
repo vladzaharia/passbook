@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
+import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import {
   Button,
@@ -23,8 +24,6 @@ import {
 import { usePassActions } from '../api.ts';
 import { newKey } from '../format.ts';
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 /** Change the holder: assign or reassign, and email the pass to the new address (on by default). */
 function ChangeHolderDialog({
   pass,
@@ -42,11 +41,11 @@ function ChangeHolderDialog({
   const [busy, setBusy] = useState(false);
   const owned = pass.holderState === 'owned';
   const trimmed = email.trim();
-  const valid = EMAIL.test(trimmed);
+  const valid = strictEmail(trimmed) !== null;
   const same = trimmed.toLowerCase() === (pass.holderEmail ?? '').toLowerCase();
 
   async function save() {
-    if (!valid) return setError('Enter a valid email.');
+    if (!valid) return setError(EMAIL_INVALID_MESSAGE);
     setBusy(true);
     setError(undefined);
     try {
@@ -98,7 +97,7 @@ function ChangeHolderDialog({
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (EMAIL.test(e.target.value.trim())) setError(undefined);
+                  if (strictEmail(e.target.value)) setError(undefined);
                 }}
               />
             )}
@@ -190,7 +189,7 @@ export function HolderTab({ pass }: { pass: PassDetailDto }) {
                       onClick={() =>
                         actions.clearBlock.mutate(u.id, {
                           onSuccess: () => toast.success('They can add it again'),
-                          onError: (cause) => toast.error(cause),
+                          onError: (cause) => toast.error(cause, 'Could not allow again'),
                         })
                       }
                     >

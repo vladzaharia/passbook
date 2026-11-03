@@ -119,7 +119,7 @@ describe('EmailList add row', () => {
     const field = screen.getByLabelText('Add email');
     await user.type(field, 'nope{Enter}');
     expect(onAdd).not.toHaveBeenCalled();
-    expect(field).toHaveAccessibleDescription('Enter a valid email.');
+    expect(field).toHaveAccessibleDescription('Enter a valid email address.');
     await waitFor(() => expect(field).toHaveFocus());
     await user.type(field, '@example.com{Enter}');
     expect(onAdd).toHaveBeenCalledWith('nope@example.com');

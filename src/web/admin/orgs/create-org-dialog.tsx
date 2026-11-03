@@ -1,8 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { Button, Dialog, DialogContent, Form, FormField, Input } from '@/web/ui/index.ts';
+import { Button, Dialog, DialogContent, Form, FormField, Input, toast } from '@/web/ui/index.ts';
 import { useCreateOrg } from './queries.ts';
 
 export function slugify(name: string): string {

@@ -1,6 +1,6 @@
 import { type CSSProperties, useEffect, useId, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
-import { formatCount } from './format.ts';
+import { formatCount, formatShortDate, formatShortDateHour, formatTime } from '@/web/lib/format.ts';
 import type { Range } from './range.ts';
 
 import './overview.css';
@@ -47,16 +47,13 @@ export function chartGeometry(points: readonly Point[]): Geometry {
 }
 
 export function axisLabel(t: number, range: Range): string {
-  const d = new Date(t);
-  return range === '24h'
-    ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return range === '24h' ? formatTime(t) : formatShortDate(t);
 }
 
 /** One bucket, precise enough to tell 6-hour buckets apart: "Nov 1, 6 AM" on 7 days. */
 export function pointLabel(t: number, range: Range): string {
   if (range !== '7d') return axisLabel(t, range);
-  return new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric' });
+  return formatShortDateHour(t);
 }
 
 /** Whole-number ticks only: top, middle (when whole) and zero. */

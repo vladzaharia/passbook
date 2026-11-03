@@ -115,7 +115,7 @@ export function SessionsCard({ user, now }: { user: UserDetail; now: number }) {
       removeWithTransition(() => setGone((g) => new Set(g).add(id)));
       toast.success('Session revoked');
     } catch (cause) {
-      toast.error(cause);
+      toast.error(cause, 'Could not revoke');
     }
   }
 

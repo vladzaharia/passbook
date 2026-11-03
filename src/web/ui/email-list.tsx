@@ -1,6 +1,6 @@
-import { Mail, RotateCw, Star, Trash2, X } from 'lucide-react';
+import { Mail, Star, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { strictEmail } from '../../shared/email.ts';
+import { EMAIL_INVALID_MESSAGE, strictEmail } from '../../shared/email.ts';
 import { ACTION_ICON } from '../lib/action-icons.ts';
 import { useInsertHighlight } from '../lib/motion.ts';
 import { InlineAddField } from './inline-add-field.tsx';
@@ -32,10 +32,10 @@ export interface EmailListProps {
 
 /** The add row checks the address the way the server does (shared/email.ts) before onAdd. */
 const checkEmail = (v: string) =>
-  !v ? 'Enter an email.' : strictEmail(v) ? undefined : 'Enter a valid email.';
+  !v ? 'Enter an email.' : strictEmail(v) ? undefined : EMAIL_INVALID_MESSAGE;
 
 /**
- * Account emails (portal and admin): address with Primary and Unverified pills, actions trailing,
+ * Account emails (portal and admin): address with Primary and Not verified pills, actions trailing,
  * and the add field as the last row with the same rhythm and divider. Presentational.
  */
 export function EmailList({
@@ -67,7 +67,7 @@ export function EmailList({
       return [
         {
           label: item.pending ? 'Resend' : 'Verify',
-          icon: item.pending ? RotateCw : ACTION_ICON.sendEmail,
+          icon: ACTION_ICON.sendEmail,
           onSelect: () => onResend(item.email),
           disabled: busy,
         },
@@ -98,7 +98,12 @@ export function EmailList({
             onSelect: () => onMakePrimary(item.email),
             disabled: busy,
           }
-        : { label: 'Resend', icon: RotateCw, onSelect: () => onResend(item.email), disabled: busy },
+        : {
+            label: 'Resend',
+            icon: ACTION_ICON.sendEmail,
+            onSelect: () => onResend(item.email),
+            disabled: busy,
+          },
       {
         label: 'Remove',
         icon: Trash2,
@@ -124,13 +129,7 @@ export function EmailList({
               <>
                 {item.primary ? <StatusPill status="primary" /> : null}
                 {item.verified ? null : (
-                  <StatusPill status="waiting">
-                    {item.pending
-                      ? 'Check your inbox'
-                      : item.primary
-                        ? 'Not verified'
-                        : 'Unverified'}
-                  </StatusPill>
+                  <StatusPill status={item.pending ? 'check_inbox' : 'unverified'} />
                 )}
               </>
             }

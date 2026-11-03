@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { actionOf } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
 import type { Tone } from '@/web/lib/status.ts';
-import { formatDateTime } from '../overview/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import type { AuditEntry } from './entry-drawer.tsx';
 import { actorRef, targetRef } from './labels.ts';
 import { RefChip } from './ref-chip.tsx';

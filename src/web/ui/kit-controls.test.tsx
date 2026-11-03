@@ -4,9 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { formatWallTime } from '../lib/format.ts';
 import { json, stubFetch } from '../lib/test-utils.tsx';
 import { Callout } from './callout.tsx';
-import { DateTimeField, formatLocal } from './date-time-field.tsx';
+import { DateTimeField } from './date-time-field.tsx';
 import { EntityAvatar, EntityChip, EntityIcon, initialsOf, onColor } from './entity.tsx';
 import { EntityPicker } from './entity-picker.tsx';
 import { FieldGroup, FormGrid, FormSpan } from './form-grid.tsx';
@@ -74,7 +75,7 @@ describe('DateTimeField', () => {
         defaultZone="UTC"
       />,
     );
-    expect(formatLocal('2026-11-15T04:08')).toBe('Nov 15, 2026, 4:08 AM');
+    expect(formatWallTime('2026-11-15T04:08')).toBe('Nov 15, 2026, 4:08 AM');
     expect(screen.getByText(/Nov 15, 2026, 4:08 AM, Los Angeles/)).toBeInTheDocument();
     expect(container.textContent).not.toContain('America/');
     expect(container.textContent).not.toContain('_');

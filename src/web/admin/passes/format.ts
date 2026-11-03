@@ -1,5 +1,3 @@
-export { formatDateTime as formatDate } from '../../lib/format.ts';
-
 export function newKey(): string {
   return crypto.randomUUID();
 }

@@ -151,7 +151,7 @@ export async function listMyEmails(ctx: ServiceContext, userId: string) {
  */
 export async function addMyEmail(ctx: ServiceContext, userId: string, rawEmail: string) {
   const email = strictEmail(rawEmail);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'INVALID_EMAIL');
+  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   if (!(await checkRateLimit(ctx.env, 'RL_MAGIC_LINK', `verify:${userId}`))) {
     throw new RateLimitedError();
   }
@@ -162,7 +162,7 @@ export async function addMyEmail(ctx: ServiceContext, userId: string, rawEmail: 
 
 export async function removeMyEmail(ctx: ServiceContext, userId: string, rawEmail: string) {
   const email = strictEmail(rawEmail);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'INVALID_EMAIL');
+  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   const user = await repo.getUser(ctx.env.DB, userId);
   if (user?.primary_email === email) {
     throw new ConflictError('The primary email cannot be removed.', 'PRIMARY_EMAIL');
@@ -183,7 +183,7 @@ export async function removeMyEmail(ctx: ServiceContext, userId: string, rawEmai
 /** Sign-in emails go to another of my verified addresses. */
 export async function makeMyEmailPrimary(ctx: ServiceContext, userId: string, rawEmail: string) {
   const email = strictEmail(rawEmail);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'INVALID_EMAIL');
+  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   if (!(await repo.setPrimaryEmail(ctx.env.DB, userId, email))) {
     throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
   }

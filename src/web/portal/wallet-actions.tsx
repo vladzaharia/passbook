@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, ExternalLink, MoreHorizontal, QrCode as QrIcon, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { HOLDER_COPY } from '@/shared/copy/holder.ts';
+import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
 import {
   AppleWalletBadge,
@@ -44,10 +46,10 @@ export function AddToWalletButton({
  */
 export function AddLine({ className }: { className?: string }) {
   const line = inAppBrowser()
-    ? 'Open in Safari to add to Apple Wallet.'
+    ? HOLDER_COPY.openInSafari
     : canAddToWallet()
       ? null
-      : 'Open on iPhone or Mac to add to Apple Wallet.';
+      : HOLDER_COPY.openOnApple;
   return line ? <p className={cn('text-sm text-fg-muted', className)}>{line}</p> : null;
 }
 
@@ -96,16 +98,6 @@ function useRemovePass(passId: string, onRemoved?: () => void) {
       onRemoved?.();
     },
   });
-}
-
-async function copyLink(url: string) {
-  try {
-    await navigator.clipboard.writeText(url);
-    toast.success('Link copied');
-  } catch (error) {
-    // Clipboard needs a secure context and permission: say so instead of failing silently.
-    toast.error(error, 'Could not copy the link');
-  }
 }
 
 export interface PassMenuProps {
@@ -159,7 +151,7 @@ export function PassMoreMenu({
           ) : null}
           {page && publicUrl ? (
             <>
-              <DropdownMenuItem onSelect={() => void copyLink(publicUrl)}>
+              <DropdownMenuItem onSelect={() => void copyText(publicUrl, 'link')}>
                 <Copy aria-hidden /> Copy link
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

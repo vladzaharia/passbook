@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
-import { formatDay } from '@/web/lib/format.ts';
+import { formatCount, formatDay } from '@/web/lib/format.ts';
 import {
   Button,
   DataTable,
@@ -27,9 +27,7 @@ type Org = z.infer<typeof OrgSummarySchema>;
 
 export function OrgStatus({ status }: { status: 'active' | 'suspended' | 'deleted' }) {
   return status === 'suspended' ? (
-    <StatusPill status="suspended" tone="warning">
-      Suspended
-    </StatusPill>
+    <StatusPill status="suspended" />
   ) : (
     <StatusPill status={status === 'active' ? 'active' : 'disabled'} />
   );
@@ -71,19 +69,19 @@ const COLUMNS: ColumnDef<Org, never>[] = [
     header: 'Passes',
     id: 'passes',
     meta: { numeric: true },
-    cell: ({ row }) => row.original.counts.passes.toLocaleString(),
+    cell: ({ row }) => formatCount(row.original.counts.passes),
   },
   {
     header: 'Templates',
     id: 'templates',
     meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
-    cell: ({ row }) => row.original.counts.templates.toLocaleString(),
+    cell: ({ row }) => formatCount(row.original.counts.templates),
   },
   {
     header: 'Connections',
     id: 'connections',
     meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
-    cell: ({ row }) => row.original.counts.connections.toLocaleString(),
+    cell: ({ row }) => formatCount(row.original.counts.connections),
   },
   {
     header: 'Created',

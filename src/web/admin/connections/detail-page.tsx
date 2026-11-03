@@ -3,7 +3,7 @@ import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
-import { formatDateTime } from '../../lib/format.ts';
+import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Button,
@@ -97,7 +97,7 @@ export function ConnectionDetailPage({
     actions.sync
       .mutateAsync()
       .then(() => toast.success('Sync started'))
-      .catch((error: unknown) => toast.error(error));
+      .catch((error: unknown) => toast.error(error, 'Could not start the sync'));
   const sample = test?.kind === 'result' ? test.result.sample : undefined;
 
   return (
@@ -146,7 +146,9 @@ export function ConnectionDetailPage({
                     .then(() =>
                       toast.success(c.enabled ? 'Connection disabled' : 'Connection enabled'),
                     )
-                    .catch((error: unknown) => toast.error(error))
+                    .catch((error: unknown) =>
+                      toast.error(error, c.enabled ? 'Could not disable' : 'Could not enable'),
+                    )
                 }
               >
                 {c.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}
@@ -179,7 +181,7 @@ export function ConnectionDetailPage({
                           className="inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums hover:underline"
                         >
                           <ENTITY.pass.icon aria-hidden className="size-4" />
-                          {c.metrics.passCount.toLocaleString()}{' '}
+                          {formatCount(c.metrics.passCount)}{' '}
                           {c.metrics.passCount === 1 ? 'pass' : 'passes'}
                         </Link>
                       ),

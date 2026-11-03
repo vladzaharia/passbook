@@ -2,8 +2,8 @@ import { type ReactElement, useState } from 'react';
 import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { formatDateTime } from '@/web/lib/format.ts';
+import { isApiError } from '@/web/lib/errors.ts';
+import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import {
   Card,
   CardBody,
@@ -113,7 +113,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
       toast.success('Identity saved');
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setErrors(cause.fields);
-      else toast.error(errorMessage(cause));
+      else toast.error(cause, 'Could not save');
     }
   }
 
@@ -207,7 +207,7 @@ export function OverviewCard({
               value: (
                 <span className="inline-flex items-center gap-1.5 tabular-nums">
                   <ENTITY.pass.icon aria-hidden className="size-4 text-fg-muted" />
-                  {identity.passCount.toLocaleString()}
+                  {formatCount(identity.passCount)}
                 </span>
               ),
             },

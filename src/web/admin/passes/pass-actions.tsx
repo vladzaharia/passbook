@@ -1,10 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import { Copy, UserMinus } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
-import { toast as sonner } from 'sonner';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { copyText } from '../../lib/clipboard.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
 import { usePassActions } from './api.ts';
 import { absoluteUrl } from './format.ts';
@@ -133,39 +133,25 @@ export function usePassActionRunner(
             : 'Update queued',
       );
     } catch (error) {
-      toast.error(error);
+      toast.error(error, id === 'pull' ? 'Could not pull' : 'Could not update');
     }
   }
 
+  // Undo re-voids, so it asks the same "Void pass?" as Void does: the confirm guards what holders
+  // see, whatever the entry point. The offer goes with this page, which owns that confirm.
+  const undoToast = useRef<string | number | undefined>(undefined);
+  useEffect(() => () => toast.dismiss(undoToast.current), []);
   async function unvoid() {
     try {
       await actions.setVoided.mutateAsync(false);
-      sonner.success('Pass unvoided', {
-        duration: 6000,
-        action: {
-          label: 'Undo',
-          onClick: () =>
-            void actions.setVoided
-              .mutateAsync(true)
-              .then(() => toast.success('Pass voided'))
-              .catch((error: unknown) => toast.error(error)),
-        },
-      });
+      undoToast.current = toast.undo('Pass unvoided', () => setAsk('void'));
     } catch (error) {
-      toast.error(error);
+      toast.error(error, 'Could not unvoid');
     }
   }
 
   async function copy() {
-    if (!links) return;
-    try {
-      await navigator.clipboard.writeText(absoluteUrl(links.publicUrl));
-      bump('copy');
-      toast.success('Link copied');
-    } catch {
-      // Clipboard access can be denied (permissions, insecure context): say how to get the link.
-      toast.error(new Error('Could not copy. Open the public page and copy its address.'));
-    }
+    if (links && (await copyText(absoluteUrl(links.publicUrl), 'link'))) bump('copy');
   }
 
   function run(id: PassActionId) {

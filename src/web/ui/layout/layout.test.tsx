@@ -108,7 +108,7 @@ describe('route guards in the app', () => {
     const { findByRole } = await renderApp('/', {
       handlers: { '/api/v1/session': () => new Response('boom', { status: 500 }) },
     });
-    expect(await findByRole('alert')).toHaveTextContent('Server error. Try again.');
+    expect(await findByRole('alert')).toHaveTextContent('Something went wrong. Try again.');
   });
 });
 

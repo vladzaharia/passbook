@@ -526,6 +526,30 @@ describe('pass detail: header actions', () => {
     );
   });
 
+  it('undoes an unvoid through the same Void pass? confirm, never around it', async () => {
+    const user = userEvent.setup();
+    const server = newServer({ status: 'voided' });
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      handlers: handlers(server, {
+        '/api/v1/passes/p1/unvoid': () => {
+          server.pass = { ...server.pass, status: 'active' };
+          return json(passSummary({ status: 'active' }));
+        },
+        '/api/v1/passes/p1/void': () => json(passSummary({ status: 'voided' })),
+      }),
+    });
+    await user.click(await screen.findByRole('button', { name: 'Unvoid' }));
+    const toast = (await screen.findByText('Pass unvoided')).closest('[data-sonner-toast]');
+    await user.click(within(toast as HTMLElement).getByRole('button', { name: 'Undo' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Void pass?' });
+    expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/void')).toBe(false);
+    await user.click(within(ask).getByRole('button', { name: 'Void' }));
+    await waitFor(() =>
+      expect(server.calls.some((c) => c.path === '/api/v1/passes/p1/void')).toBe(true),
+    );
+  });
+
   it('opens the public page in a new tab without a referrer', async () => {
     await renderApp('/admin/passes/p1', { session: 'admin', handlers: handlers(newServer()) });
     await screen.findByRole('button', { name: 'More' });
@@ -558,7 +582,7 @@ describe('pass detail: header actions', () => {
         '/api/v1/passes/p1': () => problem(500, 'internal', 'Boom.'),
       },
     });
-    expect(await screen.findByRole('alert')).toHaveTextContent('Server error');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 

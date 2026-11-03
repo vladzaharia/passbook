@@ -4,6 +4,7 @@ import { viewTransitionOption } from './lib/motion.ts';
 import { guardOfflineChunks } from './lib/offline-routes.ts';
 import { routeTree } from './routeTree.gen.ts';
 import { NotFoundPage, RouteError } from './ui/layout/error-pages.tsx';
+import { SessionEnded } from './ui/session-ended.tsx';
 
 export function createAppRouter(options: { queryClient: QueryClient; history?: RouterHistory }) {
   const router = createRouter({
@@ -15,6 +16,13 @@ export function createAppRouter(options: { queryClient: QueryClient; history?: R
     defaultNotFoundComponent: NotFoundPage,
     scrollRestoration: true,
     defaultViewTransition: viewTransitionOption(),
+    // Inside the router, so its Sign in can pass the unsaved-changes blocker.
+    InnerWrap: ({ children }) => (
+      <>
+        {children}
+        <SessionEnded />
+      </>
+    ),
   });
   guardOfflineChunks(Object.values(router.routesById));
   return router;

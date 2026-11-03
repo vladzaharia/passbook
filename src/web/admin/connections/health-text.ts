@@ -1,15 +1,13 @@
 import type { z } from 'zod';
 import type { ConnectionSchema } from '@/shared/contracts/connections.ts';
-import { formatDateTime } from '../../lib/format.ts';
+import { formatDateTime, formatTime } from '../../lib/format.ts';
 
 type Connection = z.infer<typeof ConnectionSchema>;
-
-const TIME = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' });
 
 /** 4:03 AM today, else the full date-time. */
 export function clock(ms: number, now: number): string {
   const sameDay = new Date(ms).toDateString() === new Date(now).toDateString();
-  return sameDay ? TIME.format(ms) : formatDateTime(ms);
+  return sameDay ? formatTime(ms) : formatDateTime(ms);
 }
 
 const failures = (n: number) => `${n} ${n === 1 ? 'failure' : 'failures'}`;

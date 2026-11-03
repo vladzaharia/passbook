@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionSummarySchema } from '@/shared/contracts/connections.ts';
 import { connectorIcon } from '../../lib/entities.ts';
-import { formatDateTime } from '../../lib/format.ts';
+import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
@@ -128,7 +128,7 @@ export function ConnectionsListPage({
               aria-label={`${row.original.passCount} passes from ${row.original.name}`}
               className="rounded-sm text-accent-fg tabular-nums hover:underline"
             >
-              {row.original.passCount.toLocaleString()}
+              {formatCount(row.original.passCount)}
             </Link>
           ) : (
             <span className="text-fg-muted tabular-nums">0</span>

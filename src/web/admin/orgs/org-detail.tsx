@@ -3,15 +3,14 @@ import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
-import { isApiError } from '@/web/lib/errors.ts';
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
   ConfirmDialog,
+  detailError,
   EntityAvatar,
-  ErrorState,
   PageHeader,
   SkeletonDetail,
   TwoPane,
@@ -48,18 +47,11 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
     );
   }
   if (query.isError) {
-    return (
-      <>
-        <PageHeader title="Organization" breadcrumbs={crumbs} />
-        <ErrorState
-          error={query.error}
-          title={
-            isApiError(query.error) && query.error.isNotFound ? 'Organization not found' : undefined
-          }
-          onRetry={() => query.refetch()}
-        />
-      </>
-    );
+    return detailError(query, {
+      entity: 'org',
+      to: '/admin/orgs',
+      header: <PageHeader title="Organization" breadcrumbs={crumbs} />,
+    });
   }
   const org = query.data;
   const suspended = org.status === 'suspended';

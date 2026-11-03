@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
   Button,
@@ -9,6 +8,7 @@ import {
   FormField,
   Input,
   Select,
+  toast,
 } from '@/web/ui/index.ts';
 import { useOrgList } from '../orgs/queries.ts';
 import { CertificateFields } from './certificate-fields.tsx';

@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { Ban, Clock } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
+import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { isApiError } from '../lib/errors.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
@@ -98,7 +99,7 @@ function Detail({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
             <QrCode value={publicUrl} label={`QR code for ${name}`} />
             <div className="flex flex-col gap-1 text-center sm:text-left">
               <p className="text-sm font-medium text-fg-strong">Scan with your iPhone.</p>
-              <p className="text-sm text-fg-muted">Open on iPhone or Mac to add to Apple Wallet.</p>
+              <p className="text-sm text-fg-muted">{HOLDER_COPY.openOnApple}</p>
             </div>
           </Card>
         ) : null}

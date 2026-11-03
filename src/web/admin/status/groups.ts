@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { ComponentStatusSchema } from '@/shared/contracts/status.ts';
-import { formatDateTime } from '../overview/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 
 export type Component = z.infer<typeof ComponentStatusSchema>;
 export type State = Component['state'];

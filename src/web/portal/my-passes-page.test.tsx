@@ -83,7 +83,7 @@ describe('my passes', () => {
           ++calls === 1 ? problem(500, 'server_error', 'x') : list(passFixture()),
       },
     });
-    expect(await screen.findByText('Server error. Try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('heading', { name: 'Gym membership' })).toBeInTheDocument();
   });

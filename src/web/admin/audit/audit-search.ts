@@ -1,3 +1,5 @@
+import { formatShortDate } from '../../lib/format.ts';
+
 export interface AuditSearch {
   /** Deep links from an org page; the top-bar scope applies otherwise. */
   orgId?: string | undefined;
@@ -75,8 +77,7 @@ export function msToDay(ms: number | undefined): string {
 
 /** "Date: any", "Oct 1 – Oct 31", "From Oct 1", "To Oct 31". */
 export function rangeLabel(from: number | undefined, to: number | undefined): string {
-  const day = (ms: number) =>
-    new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const day = formatShortDate;
   if (from !== undefined && to !== undefined) return `${day(from)} – ${day(to)}`;
   if (from !== undefined) return `From ${day(from)}`;
   if (to !== undefined) return `To ${day(to)}`;

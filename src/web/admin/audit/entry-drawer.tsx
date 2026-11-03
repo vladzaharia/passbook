@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
 import { actionLabel } from '@/web/lib/actions.ts';
 import { DiffViewer, JsonViewer, KeyValue, Sheet, SheetContent } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { actorRef, targetRef } from './labels.ts';
 import { describeDetail } from './redact.ts';
 import { RefChip } from './ref-chip.tsx';

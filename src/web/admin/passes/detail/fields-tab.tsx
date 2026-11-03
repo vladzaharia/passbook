@@ -143,9 +143,9 @@ export function FieldsTab({
             Object.entries(error.fields).map(([k, v]) => [k.replace(/^input\./, ''), v]),
           ),
         );
-        toast.error(error);
+        toast.error(error, 'Could not save');
       } else {
-        toast.error(error);
+        toast.error(error, 'Could not save');
       }
     } finally {
       setSaving(false);
@@ -166,7 +166,7 @@ export function FieldsTab({
       if (isApiError(error) && error.status === 412) {
         setRejected(true);
         void qc.invalidateQueries({ queryKey: passKeys.detail(pass.id) });
-      } else toast.error(error);
+      } else toast.error(error, 'Could not reset');
     } finally {
       setSaving(false);
     }

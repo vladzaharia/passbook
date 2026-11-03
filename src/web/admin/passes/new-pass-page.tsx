@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
+import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
 import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { markMinted } from '../../lib/motion.ts';
@@ -33,7 +34,6 @@ import {
 } from './schema-form/index.ts';
 import { displayName } from './template-groups.ts';
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type StepId = 'org' | 'template' | 'details' | 'holder' | 'review';
 const TITLES: Record<StepId, string> = {
   org: 'Organization',
@@ -98,7 +98,7 @@ export function NewPassPage({
   }, [templateId, schema]);
 
   // The box checks itself the first time the address becomes valid; unchecking sticks.
-  const validEmail = EMAIL.test(email.trim());
+  const validEmail = strictEmail(email) !== null;
   const autoChecked = useRef(false);
   useEffect(() => {
     if (validEmail && !autoChecked.current) {
@@ -156,8 +156,7 @@ export function NewPassPage({
     return out;
   }, [create.error]);
   const inputErrors = schema ? validateValues(schema, input) : {};
-  const emailError =
-    email.trim() && !validEmail ? 'Enter a valid email.' : fieldErrors?.holderEmail;
+  const emailError = email.trim() && !validEmail ? EMAIL_INVALID_MESSAGE : fieldErrors?.holderEmail;
   const hiddenKeys = useMemo(
     () => keysBoundTo(template.data?.manifest, '/voided'),
     [template.data],

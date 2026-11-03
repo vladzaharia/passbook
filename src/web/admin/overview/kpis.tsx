@@ -6,9 +6,9 @@ import { cn } from '@/web/lib/cn.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { PASS_STATUS } from '@/web/lib/status.ts';
 import { EntityIcon } from '@/web/ui/index.ts';
+import { formatCount } from '../../lib/format.ts';
 import { chartGeometry, type Point } from './chart.tsx';
 import { useRememberedCount } from './count.ts';
-import { formatCount } from './format.ts';
 import type { Range } from './range.ts';
 
 export const RANGE_LABEL: Record<Range, string> = {

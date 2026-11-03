@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
-import { formatDateTime } from '@/web/lib/format.ts';
+import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import {
   Button,
   Card,
@@ -64,7 +64,7 @@ export function CountsCard({ org }: { org: Org }) {
                     />
                   </span>
                   <span className="text-2xl font-semibold text-fg-strong tabular-nums">
-                    {animate ? <CountUp value={n} /> : n.toLocaleString()}
+                    {animate ? <CountUp value={n} /> : formatCount(n)}
                     {org.countsCapped && n >= 100_000 ? '+' : ''}
                   </span>
                   <span className="text-xs text-fg-muted first-letter:uppercase">{text}</span>

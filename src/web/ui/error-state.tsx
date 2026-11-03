@@ -6,6 +6,7 @@ import { useChangeCount } from '../lib/motion.ts';
 import { Buddy } from './art/buddy.tsx';
 import { UnpluggedArt } from './art/unplugged.tsx';
 import { Button } from './button.tsx';
+import { useInCard } from './in-card.ts';
 
 export interface ErrorStateProps {
   error?: unknown;
@@ -15,7 +16,10 @@ export interface ErrorStateProps {
   onRetry?: () => unknown;
   retryLabel?: string;
   action?: ReactNode;
-  /** A section of a page (a tab, a card): the small art, no buddy, so a view has one at most. */
+  /**
+   * A section of a page (a tab, a card): the small art, no buddy, so a view has one at most.
+   * Defaults to true inside a Card (InCardContext), false elsewhere; pass it to override.
+   */
   inline?: boolean;
   className?: string;
 }
@@ -39,9 +43,11 @@ export function ErrorState({
   onRetry,
   retryLabel = 'Retry',
   action,
-  inline = false,
+  inline: inlineProp,
   className,
 }: ErrorStateProps) {
+  const inCard = useInCard();
+  const inline = inlineProp ?? inCard;
   const requestId = isApiError(error) ? error.requestId : undefined;
   const [retrying, setRetrying] = useState(false);
   // Each Retry sends the buddy back to the plug.

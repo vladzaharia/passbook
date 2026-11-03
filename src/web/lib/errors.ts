@@ -1,4 +1,5 @@
 import { ProblemSchema } from '@/shared/contracts/common.ts';
+import { FORBIDDEN_MESSAGE, STATE_COPY } from '@/shared/copy/states.ts';
 
 export interface ApiErrorInit {
   status: number;
@@ -69,19 +70,23 @@ export function problemToError(status: number, body: unknown): ApiError {
   return new ApiError({
     status,
     code: status >= 500 ? 'server_error' : 'request_failed',
-    detail: status >= 500 ? 'Server error. Try again.' : 'Request failed.',
+    detail: status >= 500 ? STATE_COPY.error : 'Request failed.',
   });
 }
 
-/** One sentence for the UI. Never exposes raw server text for 5xx. */
+/**
+ * One sentence for the UI. Never exposes raw server text for 5xx. A string is taken as a message
+ * already written for people, so passing one through again never wraps it twice.
+ */
 export function errorMessage(error: unknown): string {
+  if (typeof error === 'string' && error) return error;
   if (isApiError(error)) {
     // The body did not match its schema (lib/api.ts parse): a reload fetches the current app.
-    if (error.code === 'invalid_response') return 'Could not read the response. Reload.';
-    if (error.status === 0) return 'Network error. Check your connection.';
-    if (error.status === 403) return 'You do not have access.';
-    if (error.status >= 500) return 'Server error. Try again.';
+    if (error.code === 'invalid_response') return STATE_COPY.badResponse;
+    if (error.status === 0) return STATE_COPY.network;
+    if (error.status === 403) return FORBIDDEN_MESSAGE;
+    if (error.status >= 500) return STATE_COPY.error;
     return error.message;
   }
-  return 'Something went wrong. Try again.';
+  return STATE_COPY.error;
 }

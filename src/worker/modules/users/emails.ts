@@ -9,7 +9,7 @@ import { getUserDetail, requireUser, type UserDetailDto } from './service.ts';
 
 function parseEmail(raw: string): string {
   const email = strictEmail(raw);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'INVALID_EMAIL');
+  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   return email;
 }
 

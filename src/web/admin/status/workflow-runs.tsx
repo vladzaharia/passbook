@@ -11,7 +11,7 @@ import {
   SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { formatDateTime } from '../overview/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { workflowErrorMessage, workflowKindLabel } from './labels.ts';
 import { useWorkflowRuns } from './queries.ts';
 

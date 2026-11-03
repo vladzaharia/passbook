@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
 import { StatusPill } from '@/web/ui/index.ts';
-import { daysUntil, formatDay } from '../overview/format.ts';
+import { daysUntil, formatDay } from '../../lib/format.ts';
 
 type Identity = z.infer<typeof IdentitySchema>;
 

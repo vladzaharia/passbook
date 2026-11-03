@@ -1,7 +1,9 @@
 import { keepPreviousData } from '@tanstack/react-query';
+import { useSyncExternalStore } from 'react';
 import type { z } from 'zod';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import { ApiError, problemToError } from './errors.ts';
-import { loginHref } from './redirect.ts';
+import { safeNext } from './redirect.ts';
 
 export type QueryValue = string | number | boolean | null | undefined;
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -80,7 +82,7 @@ export function createApiClient(deps: ApiClientDeps) {
       throw new ApiError({
         status: 0,
         code: 'network',
-        detail: 'Network error. Check your connection.',
+        detail: STATE_COPY.network,
       });
     }
     const data = await readBody(res);
@@ -159,16 +161,52 @@ export function setCsrfProvider(fn: () => Promise<string | undefined>): void {
   csrfProvider = fn;
 }
 
-export function redirectToLogin(_error?: ApiError): void {
-  if (typeof window === 'undefined') return;
-  const { pathname, search } = window.location;
-  if (pathname === '/login') return;
-  window.location.assign(loginHref(`${pathname}${search}`));
+// A 401 means the session ended mid-use. However many requests come back 401, one dialog says so
+// (ui/session-ended-dialog.tsx); its button signs in again and returns here.
+let sessionEnded = false;
+const sessionListeners = new Set<() => void>();
+
+export function endSession(): void {
+  if (typeof window === 'undefined' || window.location.pathname === '/login') return;
+  if (sessionEnded) return;
+  sessionEnded = true;
+  for (const listener of sessionListeners) listener();
+}
+
+/** Test seam: back to a live session. */
+export function resetSessionEnded(): void {
+  sessionEnded = false;
+  for (const listener of sessionListeners) listener();
+}
+
+function subscribeSession(listener: () => void): () => void {
+  sessionListeners.add(listener);
+  return () => sessionListeners.delete(listener);
+}
+
+/** True once a request came back 401. */
+export function useSessionEnded(): boolean {
+  return useSyncExternalStore(
+    subscribeSession,
+    () => sessionEnded,
+    () => false,
+  );
+}
+
+/**
+ * Sign-in that returns to `next` and says why the session went. Home is no destination, as in the
+ * session guard: signing in picks it.
+ */
+export function sessionEndedHref(next: string): string {
+  const target = safeNext(next);
+  return target === '/'
+    ? '/login?reason=expired'
+    : `/login?next=${encodeURIComponent(target)}&reason=expired`;
 }
 
 export const api = createApiClient({
   getCsrfToken: () => csrfProvider(),
-  onUnauthorized: redirectToLogin,
+  onUnauthorized: endSession,
 });
 
 /**
