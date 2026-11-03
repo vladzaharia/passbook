@@ -44,17 +44,17 @@ export function RevealButton({
 }
 
 /**
- * In Apple Wallet already: a calm line, no badge pushed. `children` is the reveal button, and
- * `aside` art beside the words (c's buddy sits on the box instead).
+ * In Apple Wallet already: a calm line, no badge pushed. `children` is the reveal button. The
+ * check leads it, unless the buddy stands over the words (c).
  */
-export function AddedLine({ children, aside }: { children?: ReactNode; aside?: ReactNode }) {
+export function AddedLine({ children, mark = true }: { children?: ReactNode; mark?: boolean }) {
   return (
-    <div className="wl-added flex flex-wrap items-center gap-x-3 gap-y-3">
-      {aside ?? (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
+      {mark ? (
         <span aria-hidden className="wl-added-mark">
           <Check />
         </span>
-      )}
+      ) : null}
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-fg-strong">{ADD_COPY.added}</p>
         <p className="text-sm text-fg-muted">{ADD_COPY.addedLine}</p>

@@ -74,8 +74,18 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  width: fit-content;
+  min-width: 15rem;
+  max-width: 100%;
+  align-self: center;
   margin-top: 2.75rem;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 2rem;
+}
+@media (min-width: 640px) {
+  /* Beside the pass: at the column's start, the buddy near the badge it points at. */
+  .wl-c-here {
+    align-self: flex-start;
+  }
 }
 .wl-c-added {
   position: relative;

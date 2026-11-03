@@ -56,10 +56,10 @@ export function BuddyAdd(p: AddAreaProps & { buddy: RenderBuddy }) {
           size: 'sm',
           mood: 'happy',
           scene: 'count',
-          at: 'end',
+          at: 'start',
           className: 'wl-c-buddy-sm',
         })}
-        <AddedLine>
+        <AddedLine mark={false}>
           <RevealButton
             open={open}
             onToggle={() => setOpen((o) => !o)}
