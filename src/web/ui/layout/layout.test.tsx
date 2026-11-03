@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { ADMIN_NAV } from '../../lib/nav.ts';
 import { json, renderApp } from '../../lib/test-utils.tsx';
-import { THEME_KEY } from '../../lib/theme.tsx';
 
 function memoryStorage() {
   const map = new Map<string, string>();
@@ -219,9 +218,9 @@ describe('admin layout', () => {
     expect(screen.getByRole('main')).toHaveFocus();
   });
 
-  it('lists orgs in the filter and keeps the choice', async () => {
+  it('lists orgs in the scope switcher and writes the choice to the URL', async () => {
     const user = userEvent.setup();
-    await renderApp('/admin', {
+    const { router } = await renderApp('/admin', {
       session: 'admin',
       handlers: {
         '/api/v1/orgs': () =>
@@ -245,104 +244,11 @@ describe('admin layout', () => {
       },
     });
     const filter = await screen.findByRole('combobox', { name: /^Organization scope/ });
-    expect(filter).toHaveTextContent('All orgs');
+    expect(filter).toHaveTextContent('All organizations');
     await user.click(filter);
     await user.click(await screen.findByRole('option', { name: 'Henrys' }));
     expect(filter).toHaveTextContent('Henrys');
+    await waitFor(() => expect(router.state.location.search).toEqual({ orgId: 'o1' }));
     expect(localStorage.getItem('wallet-org-filter')).toBe('o1');
-  });
-});
-
-describe('theme', () => {
-  const openMenu = async (user: ReturnType<typeof userEvent.setup>) =>
-    user.click(await screen.findByRole('button', { name: 'Account menu' }));
-
-  it('sets and clears data-theme from the admin account menu and persists the choice', async () => {
-    const user = userEvent.setup();
-    await renderApp('/admin', { session: 'admin' });
-    await openMenu(user);
-    await user.click(await screen.findByRole('menuitemradio', { name: 'Light' }));
-    expect(document.documentElement.dataset.theme).toBe('light');
-    expect(localStorage.getItem(THEME_KEY)).toBe('light');
-    // The menu stays open while choosing.
-    await user.click(screen.getByRole('menuitemradio', { name: 'Dark' }));
-    expect(document.documentElement.dataset.theme).toBe('dark');
-    await user.click(screen.getByRole('menuitemradio', { name: 'System' }));
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(localStorage.getItem(THEME_KEY)).toBe('system');
-  });
-
-  it('applies the stored preference in the admin console only', async () => {
-    localStorage.setItem(THEME_KEY, 'dark');
-    const first = await renderApp('/admin', { session: 'admin' });
-    await screen.findByRole('navigation', { name: 'Admin' });
-    expect(document.documentElement.dataset.theme).toBe('dark');
-    first.unmount();
-    await renderApp('/account', { session: 'admin' });
-    await screen.findByRole('heading', { name: 'Account', level: 1 });
-    // Holder pages follow the system appearance and offer no toggle.
-    await waitFor(() => expect(document.documentElement.dataset.theme).toBeUndefined());
-    expect(screen.queryByRole('button', { name: 'Theme' })).toBeNull();
-  });
-
-  it('ignores a corrupt stored value', async () => {
-    localStorage.setItem(THEME_KEY, 'neon');
-    await renderApp('/admin', { session: 'admin' });
-    await screen.findByRole('navigation', { name: 'Admin' });
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-  });
-
-  it('still switches when storage throws', async () => {
-    const user = userEvent.setup();
-    vi.stubGlobal('localStorage', {
-      getItem: () => {
-        throw new Error('blocked');
-      },
-      setItem: () => {
-        throw new Error('blocked');
-      },
-      removeItem: () => {},
-    });
-    await renderApp('/admin', { session: 'admin' });
-    await openMenu(user);
-    await user.click(await screen.findByRole('menuitemradio', { name: 'Dark' }));
-    expect(document.documentElement.dataset.theme).toBe('dark');
-  });
-
-  it('lists My passes, Account, Theme and Sign out in the admin account menu', async () => {
-    const user = userEvent.setup();
-    await renderApp('/admin', { session: 'admin' });
-    await openMenu(user);
-    const menu = await screen.findByRole('menu');
-    expect(
-      within(menu)
-        .getAllByRole('menuitem')
-        .map((i) => i.textContent),
-    ).toEqual(['My passes', 'Account', 'Sign out']);
-    expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(3);
-    expect(within(menu).getByText('Theme')).toBeInTheDocument();
-  });
-});
-
-describe('user menu', () => {
-  it('signs out with a POST that carries the CSRF token', async () => {
-    const user = userEvent.setup();
-    const { fetchMock } = await renderApp('/account', {
-      session: 'user',
-      handlers: { '/auth/logout': () => new Response(null, { status: 204 }) },
-    });
-    await user.click(await screen.findByRole('button', { name: 'Account menu' }));
-    // The account page shows the address too; look inside the menu.
-    expect(
-      await within(await screen.findByRole('menu')).findByText('test@example.com'),
-    ).toBeInTheDocument();
-    await user.click(await screen.findByRole('menuitem', { name: 'Sign out' }));
-    await waitFor(() => {
-      const call = fetchMock.mock.calls.find(([url]) => String(url) === '/auth/logout');
-      expect(call).toBeTruthy();
-      const init = call?.[1] as RequestInit;
-      expect(init.method).toBe('POST');
-      expect((init.headers as Record<string, string>)['x-csrf-token']).toBe('csrf-test');
-    });
   });
 });

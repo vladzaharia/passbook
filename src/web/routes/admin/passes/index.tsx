@@ -5,7 +5,8 @@ import { passListSearchSchema } from '../../../admin/passes/search.ts';
 import { compactSearch } from '../../../lib/url-state.ts';
 
 function PassesRoute() {
-  const search = Route.useSearch();
+  // The scope is not a filter: the page reads it through useOrgScope.
+  const { orgId: _scope, ...search } = Route.useSearch();
   const navigate = Route.useNavigate();
   const onSearch = useCallback(
     (patch: Partial<typeof search>) =>

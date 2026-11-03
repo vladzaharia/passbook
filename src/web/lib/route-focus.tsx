@@ -1,16 +1,45 @@
-import { useRouterState } from '@tanstack/react-router';
+import { useRouter, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 
 export const MAIN_ID = 'main';
 
-/** Moves focus to the page h1 (or main) after navigation and announces the page. */
+/** The tab title for a page: "<page> · PassBook". The announcer reads it when a page has no h1. */
+export function useDocumentTitle(title: string): void {
+  useEffect(() => {
+    const previous = document.title;
+    const mine = `${title} · PassBook`;
+    document.title = mine;
+    return () => {
+      // A page that mounted after this one keeps its own title.
+      if (document.title === mine) document.title = previous;
+    };
+  }, [title]);
+}
+
+/** History moves that restore a page (Back, Forward, Go) rather than open a new one. */
+const RESTORES = new Set(['BACK', 'FORWARD', 'GO']);
+
+/**
+ * Announces the page after navigation and moves focus to its h1 (or main) without scrolling.
+ * Back and Forward leave focus alone, so the router's scroll restoration holds.
+ */
 export function RouteAnnouncer() {
+  const router = useRouter();
   // The resolved location only changes once the new route's chunk and loaders are done.
   const pathname = useRouterState({
     select: (s) => (s.status === 'idle' ? s.resolvedLocation?.pathname : undefined),
   });
   const last = useRef<string | undefined>(undefined);
+  const restoring = useRef(false);
   const [message, setMessage] = useState('');
+
+  useEffect(
+    () =>
+      router.history.subscribe(({ action }) => {
+        restoring.current = RESTORES.has(action.type);
+      }),
+    [router],
+  );
 
   useEffect(() => {
     if (pathname === undefined) return;
@@ -19,12 +48,12 @@ export function RouteAnnouncer() {
     const previous = last.current;
     last.current = pathname;
     if (previous === undefined || previous === pathname) return;
+    const restore = restoring.current;
     // Wait a frame so the new route has rendered its heading.
     const frame = requestAnimationFrame(() => {
       const main = document.getElementById(MAIN_ID);
       const heading = main?.querySelector<HTMLElement>('h1');
-      const target = heading ?? main;
-      target?.focus({ preventScroll: false });
+      if (!restore) (heading ?? main)?.focus({ preventScroll: true });
       setMessage(heading?.textContent?.trim() || document.title);
     });
     return () => cancelAnimationFrame(frame);

@@ -253,7 +253,9 @@ describe('template detail', () => {
         '/api/v1/templates/b1/preview': preview,
       },
     });
-    expect(await screen.findByText('All organizations')).toBeInTheDocument();
+    expect(
+      await within(await screen.findByRole('main')).findByText('All organizations'),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Change organization' }));
     const dialog = await screen.findByRole('dialog', { name: 'Change organization' });
     const select = within(dialog).getByRole('combobox', { name: 'Organization' });

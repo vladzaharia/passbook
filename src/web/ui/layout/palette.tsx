@@ -16,7 +16,7 @@ import {
   useUserSearch,
 } from '../../lib/search.ts';
 import { type Swatch, useSwatches } from '../../lib/swatches.ts';
-import { type ThemePref, useTheme } from '../../lib/theme.tsx';
+import { THEME_OPTIONS, useTheme } from '../../lib/theme.tsx';
 import {
   type CommandGroup,
   type CommandItem,
@@ -33,12 +33,6 @@ export const PALETTE_GROUPS = {
   users: { heading: 'Users', icon: ENTITY.user.icon },
   orgs: { heading: 'Organizations', icon: ENTITY.org.icon },
 } as const;
-
-const THEMES: { value: ThemePref; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-];
 
 /**
  * Opens with Cmd/Ctrl+K. Pages and actions are local; passes and users search the server
@@ -105,7 +99,7 @@ export function AdminPalette({
   const orgGroup: CommandItem[] = [
     {
       id: 'org:all',
-      label: 'All orgs',
+      label: 'All organizations',
       icon: ENTITY.org.icon,
       onSelect: () => setOrgId(undefined),
     },
@@ -120,7 +114,7 @@ export function AdminPalette({
 
   const groups: CommandGroup[] =
     mode === 'orgs'
-      ? [{ heading: 'Switch org', icon: ENTITY.org.icon, items: local(orgGroup) }]
+      ? [{ heading: 'Switch organization', icon: ENTITY.org.icon, items: local(orgGroup) }]
       : [
           {
             heading: 'Pages',
@@ -225,7 +219,7 @@ export function AdminPalette({
                 },
                 {
                   id: 'switch-org',
-                  label: 'Switch org…',
+                  label: 'Switch organization…',
                   icon: ArrowLeftRight,
                   onSelect: () => {
                     setQuery('');
@@ -233,7 +227,7 @@ export function AdminPalette({
                     onOpenChange(true);
                   },
                 },
-                ...THEMES.map((t) => ({
+                ...THEME_OPTIONS.map((t) => ({
                   id: `theme:${t.value}`,
                   label: `Theme: ${t.label}`,
                   icon: THEME_ICON[t.value],

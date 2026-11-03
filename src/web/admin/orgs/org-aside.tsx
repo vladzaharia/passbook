@@ -5,7 +5,6 @@ import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
-import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Button,
   Card,
@@ -36,9 +35,8 @@ const TILES: { kind: EntityKind; key: keyof Org['counts']; to: string }[] = [
   { kind: 'apiKey', key: 'apiKeys', to: '/admin/api-keys' },
 ];
 
-/** Count tiles that open each list scoped to the org (the top-bar scope). */
+/** Count tiles that open each list scoped to the org (the top-bar scope, `?orgId=`). */
 export function CountsCard({ org }: { org: Org }) {
-  const { setOrgId } = useOrgScope();
   const animate = useFirstArrival(org.id);
   return (
     <Card>
@@ -54,7 +52,7 @@ export function CountsCard({ org }: { org: Org }) {
               <li key={key}>
                 <Link
                   to={to}
-                  onClick={() => setOrgId(org.id)}
+                  search={{ orgId: org.id }}
                   aria-label={`${n} ${text} in ${org.name}`}
                   className="group flex min-h-20 flex-col gap-1 rounded-md border border-border p-3 wl-colors hover:border-border-strong hover:bg-state-hover-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
@@ -100,10 +98,9 @@ export function OverviewCard({ org }: { org: Org }) {
 
 /** Next steps for an org without passes; each step checks itself from the counts. */
 export function OrgChecklist({ org }: { org: Org }) {
-  const { setOrgId } = useOrgScope();
   const go = (to: string, label: string, scoped = true) => (
     <Button asChild variant="ghost" size="sm" iconEnd={<ChevronRight aria-hidden />}>
-      <Link to={to} onClick={scoped ? () => setOrgId(org.id) : undefined}>
+      <Link to={to} search={scoped ? { orgId: org.id } : {}}>
         {label}
       </Link>
     </Button>

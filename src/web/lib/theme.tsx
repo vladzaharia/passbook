@@ -11,26 +11,73 @@ import { flushSync } from 'react-dom';
 import { prefersReducedMotion } from './motion.ts';
 
 export type ThemePref = 'system' | 'light' | 'dark';
+/** Cookie name (the worker's SSR pages read it) and the storage key it replaced. */
 export const THEME_KEY = 'wallet-theme';
+const ONE_YEAR_S = 31_536_000;
+
+/** The browser chrome per theme: the page surface. index.html carries the same pair by media. */
+export const THEME_COLOR = { light: '#f6f8ff', dark: '#060912' } as const;
+
+/** The account menu and the palette offer these, in this order; icons are THEME_ICON. */
+export const THEME_OPTIONS = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+] as const satisfies readonly { value: ThemePref; label: string }[];
 
 function isPref(value: unknown): value is ThemePref {
   return value === 'system' || value === 'light' || value === 'dark';
 }
 
-export function readPref(): ThemePref {
+function cookiePref(): ThemePref | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const value = new RegExp(`(?:^|;\\s*)${THEME_KEY}=([^;]*)`).exec(document.cookie)?.[1];
+  return isPref(value) ? value : undefined;
+}
+
+function storedPref(): ThemePref | undefined {
   try {
-    const stored = localStorage.getItem(THEME_KEY);
-    return isPref(stored) ? stored : 'system';
+    const value = localStorage.getItem(THEME_KEY);
+    return isPref(value) ? value : undefined;
   } catch {
-    // Storage can be blocked (private mode); the theme then follows the system.
-    return 'system';
+    // Storage can be blocked (private mode); the cookie or the system decides.
+    return undefined;
   }
 }
 
+/** The saved choice: the cookie, else storage from before the cookie, else the system. */
+export function readPref(): ThemePref {
+  return cookiePref() ?? storedPref() ?? 'system';
+}
+
+/** Saves the choice where the SSR pages (cookie) and older tabs (storage) look for it. */
+export function writePref(pref: ThemePref): void {
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  // biome-ignore lint/suspicious/noDocumentCookie: a plain first-party cookie, read by theme-init.js and the worker
+  document.cookie = `${THEME_KEY}=${pref}; Path=/; SameSite=Lax; Max-Age=${ONE_YEAR_S}${secure}`;
+  try {
+    localStorage.setItem(THEME_KEY, pref);
+  } catch {
+    // Storage blocked: the cookie still carries the choice.
+  }
+}
+
+/** The same steps as public/theme-init.js, which runs before the first paint. */
 export function applyPref(pref: ThemePref, root: HTMLElement = document.documentElement): void {
   if (pref === 'system') delete root.dataset.theme;
   else root.dataset.theme = pref;
   root.dataset.themePref = pref;
+}
+
+/** One theme-color meta for the theme on screen, replacing index.html's pair by media. */
+export function applyThemeColor(theme: 'light' | 'dark', head: HTMLElement = document.head): void {
+  const [meta = head.appendChild(document.createElement('meta')), ...rest] = head.querySelectorAll(
+    'meta[name="theme-color"]',
+  );
+  for (const extra of rest) extra.remove();
+  meta.setAttribute('name', 'theme-color');
+  meta.removeAttribute('media');
+  meta.setAttribute('content', THEME_COLOR[theme]);
 }
 
 const systemTheme = (): 'light' | 'dark' =>
@@ -41,18 +88,16 @@ const systemTheme = (): 'light' | 'dark' =>
     : 'dark';
 
 interface ThemeContextValue {
-  /** The stored admin preference. */
+  /** The saved choice. */
   pref: ThemePref;
-  /** The theme on screen: the preference inside the admin shell, the system elsewhere. */
+  /** The theme on screen. */
   resolved: 'light' | 'dark';
   setPref: (pref: ThemePref) => void;
-  /** Called by the admin shell while mounted (useThemeScope). */
-  setScoped: (scoped: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-/** A same-document View Transition with types, or undefined where unsupported. */
+/** A same-document View Transition with types, or false where unsupported. */
 function typedTransition(update: () => void, types: string[]): boolean {
   const doc = document as Document & {
     startViewTransition?: (o: { update: () => void; types: string[] }) => unknown;
@@ -66,22 +111,25 @@ function typedTransition(update: () => void, types: string[]): boolean {
   return true;
 }
 
-/**
- * The admin theme. The preference applies only inside the admin shell; holder surfaces (portal,
- * login) follow the system appearance and have no toggle.
- */
+/** One theme for every page: the account menu and the palette set it. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [pref, setPrefState] = useState<ThemePref>(readPref);
-  // theme-init.js applied the preference before paint on /admin; start from the same state.
-  const [scoped, setScoped] = useState(
-    () => typeof location !== 'undefined' && /^\/admin(\/|$)/.test(location.pathname),
-  );
   const [system, setSystem] = useState(systemTheme);
-  const active = scoped ? pref : 'system';
+  const resolved = pref === 'system' ? system : pref;
 
   useEffect(() => {
-    applyPref(active);
-  }, [active]);
+    applyPref(pref);
+  }, [pref]);
+
+  useEffect(() => {
+    applyThemeColor(resolved);
+  }, [resolved]);
+
+  // A choice saved before the cookie existed lives in storage only; give it to the SSR pages too.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, with the first preference
+  useEffect(() => {
+    if (cookiePref() === undefined && pref !== 'system') writePref(pref);
+  }, []);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
@@ -91,25 +139,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const setPref = useCallback(
-    (next: ThemePref) => {
-      try {
-        localStorage.setItem(THEME_KEY, next);
-      } catch {
-        // Not persisted when storage is blocked; the choice still applies for this page.
-      }
-      const swap = () => {
-        flushSync(() => setPrefState(next));
-        if (scoped) applyPref(next);
-      };
-      // Admin theme change crossfades the page (200 ms); instant under reduced motion.
-      if (!scoped || !typedTransition(swap, ['theme'])) setPrefState(next);
-    },
-    [scoped],
-  );
+  const setPref = useCallback((next: ThemePref) => {
+    writePref(next);
+    const swap = () => {
+      flushSync(() => setPrefState(next));
+      applyPref(next);
+    };
+    // The page crossfades (200 ms); instant under reduced motion.
+    if (!typedTransition(swap, ['theme'])) setPrefState(next);
+  }, []);
 
-  const resolved = active === 'system' ? system : active;
-  const value = useMemo(() => ({ pref, resolved, setPref, setScoped }), [pref, resolved, setPref]);
+  const value = useMemo(() => ({ pref, resolved, setPref }), [pref, resolved, setPref]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
@@ -117,13 +157,4 @@ export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme needs ThemeProvider');
   return ctx;
-}
-
-/** The admin shell calls this: its theme preference applies while it is mounted. */
-export function useThemeScope(): void {
-  const { setScoped } = useTheme();
-  useEffect(() => {
-    setScoped(true);
-    return () => setScoped(false);
-  }, [setScoped]);
 }
