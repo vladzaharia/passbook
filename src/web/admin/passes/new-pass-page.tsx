@@ -225,7 +225,6 @@ export function NewPassPage({
         current={step}
         onStep={go}
         aside={aside}
-        dirty={dirty}
         onCancel={() => void navigate({ to: '/admin/passes' })}
         {...(step > 0 ? { onBack: () => go(step - 1) } : {})}
         onNext={next}

@@ -1,68 +1,49 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import {
-  type ComponentProps,
-  createContext,
-  type ReactNode,
-  useContext,
-  useLayoutEffect,
-  useRef,
-} from 'react';
+import { type ComponentProps, createContext, type ReactNode, useContext, useState } from 'react';
 import { cn } from '../lib/cn.ts';
-import { installInputModality } from '../lib/input-modality.ts';
+import { DiscardDialog } from './alert-dialog.tsx';
+import {
+  DIALOG_ACTIONS,
+  DIALOG_PANEL,
+  DialogOverlay,
+  focusInitial,
+  OVERLAY_TITLE,
+  restoreOpener,
+  useOpener,
+} from './overlay.tsx';
 
 const OpenerContext = createContext<{ current: HTMLElement | null } | null>(null);
 
-/** The element to refocus: a dropdown item resolves to its menu trigger, which outlives the item. */
-function openerOf(active: HTMLElement): HTMLElement {
-  const labelledBy = active.closest('[role="menu"]')?.getAttribute('aria-labelledby');
-  const trigger = labelledBy ? document.getElementById(labelledBy) : null;
-  return trigger ?? active;
-}
-
-/** Remembers the element focused when a state-controlled overlay opens. */
-export function useOpener(open: boolean | undefined) {
-  const opener = useRef<HTMLElement | null>(null);
-  useLayoutEffect(() => {
-    installInputModality();
-    if (open && document.activeElement instanceof HTMLElement) {
-      opener.current = openerOf(document.activeElement);
-    }
-  }, [open]);
-  return opener;
-}
-
-/** Onclose auto-focus handler: returns focus to the opener when Radix has no trigger to use. */
-export function restoreOpener(opener: { current: HTMLElement | null } | null) {
-  return (e: Event) => {
-    const el = opener?.current;
-    if (el?.isConnected) {
-      e.preventDefault();
-      el.focus();
-    }
-  };
+export interface DialogProps extends ComponentProps<typeof DialogPrimitive.Root> {
+  /**
+   * The form holds unsaved input: Esc, an outside click and the X ask "Discard unsaved changes?"
+   * before closing. Cancel in the footer closes at once (it is the discard).
+   */
+  dirty?: boolean;
 }
 
 /** Dialog root. Focus returns to the opener on close, with or without a DialogTrigger. */
-export function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
+export function Dialog({ dirty, onOpenChange, ...props }: DialogProps) {
   const opener = useOpener(props.open);
+  const [asking, setAsking] = useState(false);
+  const change = (open: boolean) => {
+    if (!open && dirty) setAsking(true);
+    else onOpenChange?.(open);
+  };
   return (
     <OpenerContext.Provider value={opener}>
-      <DialogPrimitive.Root {...props} />
+      <DialogPrimitive.Root onOpenChange={change} {...props} />
+      <DiscardDialog
+        open={asking && props.open !== false}
+        onOpenChange={setAsking}
+        onDiscard={() => onOpenChange?.(false)}
+      />
     </OpenerContext.Provider>
   );
 }
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
-
-export const OVERLAY = 'wl-overlay fixed inset-0 z-40 bg-black/60';
-
-export function DialogOverlay({
-  className,
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Overlay>) {
-  return <DialogPrimitive.Overlay className={cn(OVERLAY, className)} {...props} />;
-}
 
 export interface DialogContentProps
   extends Omit<ComponentProps<typeof DialogPrimitive.Content>, 'title'> {
@@ -78,28 +59,6 @@ export interface DialogContentProps
 }
 
 const SIZES = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-3xl' } as const;
-
-/**
- * Shared panel classes: centred at 640 and up; below it a bottom sheet (full width, rounded top,
- * safe-area padding) that slides up (kit-motion.css).
- */
-export const DIALOG_PANEL = cn(
-  'fixed z-50 flex flex-col border border-border bg-surface-overlay shadow-[var(--wl-edge),var(--pk-elevation-3)] wl-dialog',
-  'sm:top-1/2 sm:left-1/2 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg',
-  'max-sm:inset-x-0 max-sm:bottom-0 max-sm:max-h-[calc(100dvh-env(safe-area-inset-top)-1rem)] max-sm:rounded-t-xl max-sm:border-b-0 max-sm:pb-[env(safe-area-inset-bottom)]',
-);
-
-/** Footer actions: right-aligned row; stacked full width on phones with the primary on top. */
-export const DIALOG_ACTIONS =
-  'flex flex-wrap justify-end gap-2 max-sm:flex-col-reverse max-sm:[&>*]:min-h-11 max-sm:[&>*]:w-full';
-
-/** Focus a [data-autofocus] field, else the dialog itself: never Cancel. */
-export function focusInitial(e: Event) {
-  const content = e.currentTarget as HTMLElement | null;
-  e.preventDefault();
-  const target = content?.querySelector<HTMLElement>('[data-autofocus]') ?? content;
-  target?.focus({ preventScroll: true });
-}
 
 export function DialogContent({
   title,
@@ -133,9 +92,7 @@ export function DialogContent({
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="min-w-0">
-            <DialogPrimitive.Title
-              className={cn('text-base font-semibold text-fg-strong', hideTitle && 'sr-only')}
-            >
+            <DialogPrimitive.Title className={cn(OVERLAY_TITLE, hideTitle && 'sr-only')}>
               {title}
             </DialogPrimitive.Title>
             {description ? (

@@ -21,6 +21,10 @@ export const EMPTY_DRAFT: UploadDraft = {
   p12Password: '',
 };
 
+/** Something typed or chosen: closing the dialog asks first. The PEM / .p12 switch alone is not. */
+export const draftDirty = (d: UploadDraft) =>
+  Boolean(d.label.trim() || d.certificatePem || d.privateKeyPem || d.p12 || d.p12Password);
+
 export function validateUpload(d: UploadDraft, needLabel = true): Record<string, string> {
   const errors: Record<string, string> = {};
   if (needLabel && !d.label.trim()) errors.label = 'Required.';

@@ -69,7 +69,11 @@ export function CreateOrgDialog({
   const clearServer = (key: string) => setServerErrors(({ [key]: _gone, ...rest }) => rest);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
+    <Dialog
+      open={open}
+      dirty={name.trim() !== '' || slug !== ''}
+      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+    >
       <DialogContent
         size="md"
         title="New organization"

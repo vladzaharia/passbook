@@ -4,7 +4,13 @@ import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { Button, Dialog, DialogContent } from '@/web/ui/index.ts';
 import { CertificateFields } from './certificate-fields.tsx';
 import { useRotateIdentity } from './queries.ts';
-import { buildRotateBody, EMPTY_DRAFT, type UploadDraft, validateUpload } from './upload-input.ts';
+import {
+  buildRotateBody,
+  draftDirty,
+  EMPTY_DRAFT,
+  type UploadDraft,
+  validateUpload,
+} from './upload-input.ts';
 
 export function RotateIdentityDialog({
   identityId,
@@ -44,7 +50,11 @@ export function RotateIdentityDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
+    <Dialog
+      open={open}
+      dirty={draftDirty(draft)}
+      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+    >
       <DialogContent
         title="Rotate certificate"
         description="Same pass type ID. Existing passes keep working."
