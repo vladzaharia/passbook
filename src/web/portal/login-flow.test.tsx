@@ -153,6 +153,8 @@ describe('magic link', () => {
     await user.type(await screen.findByLabelText('Email'), 'nope');
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
+    // A slip, not a failure: flat, never sad (B4b).
+    expect(document.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'flat');
     await user.clear(screen.getByLabelText('Email'));
     await user.type(screen.getByLabelText('Email'), 'sam@example.com');
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
@@ -163,7 +165,7 @@ describe('magic link', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('shows a rate limit in a callout, shakes the wallet sad and gets a fresh challenge', async () => {
+  it('shows a rate limit in a callout, stands the hourglass by the sad wallet, gets a fresh challenge', async () => {
     const user = userEvent.setup();
     const { container } = await renderApp('/login', {
       session: 'anon',
@@ -179,7 +181,9 @@ describe('magic link', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /Too many requests\s*Try again in a minute\./,
     );
-    expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
+    // The hourglass means a wait, here and on the SSR 429 page (art/wallet-states.tsx).
+    expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-sad', 'wait');
+    expect(container.querySelector('[data-part="hg"]')).not.toBeNull();
     expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
     // Sad drops the lifted card back into the fan.
     expect(container.querySelector('[data-lift]')).toBeNull();
@@ -199,7 +203,7 @@ describe('magic link', () => {
     await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     const scene = container.querySelector('.wl-login-scene');
-    expect(scene).toHaveAttribute('data-sad', 'fail');
+    expect(scene).toHaveAttribute('data-sad', 'error');
     expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
     expect(container.querySelector('.wl-login-pocket[data-shake]')).toBeNull();
     await user.type(screen.getByLabelText('Email'), 'm');
@@ -223,18 +227,19 @@ describe('magic link', () => {
     const error = await screen.findByText('That code is wrong or expired.');
     expect(error.textContent).not.toMatch(/link/i);
     expect(screen.getByLabelText('Code')).toHaveAttribute('aria-invalid', 'true');
-    // The shake settles into sad: brows up, a frown, the fan droops.
+    // A slip: one shake and a flat face, not sad (B4b); no hourglass, no drooping pass.
     expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
-    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
-    expect(container.querySelector('[data-look] [data-part="br"]')).not.toBeNull();
-    expect(container.querySelector('.wl-login-hourglass')).not.toHaveAttribute('data-on');
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'flat');
+    expect(container.querySelector('[data-look] [data-part="br"]')).toBeNull();
+    expect(container.querySelector('[data-part="hg"]')).toBeNull();
+    expect(container.querySelector('[data-art="wallet"]')).toHaveAttribute('data-state', 'login');
     expect(goTo).not.toHaveBeenCalled();
     // Another try cheers it up.
     await user.type(screen.getByLabelText('Code'), '{Backspace}');
     expect(container.querySelector('[data-part="w"]')).not.toHaveAttribute('data-mood');
   });
 
-  it('flips the hourglass when the code has run out', async () => {
+  it('greys and droops the gold pass when the code has run out', async () => {
     const user = userEvent.setup();
     const now = Date.now();
     const { container } = await renderApp('/login', {
@@ -250,7 +255,11 @@ describe('magic link', () => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 16 * 60_000);
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     await screen.findByText('That code is wrong or expired.');
-    expect(container.querySelector('.wl-login-hourglass')).toHaveAttribute('data-on');
+    // Expired, as on the SSR "Link expired" page: sad, the gold pass greyed and drooping.
+    expect(container.querySelector('[data-art="wallet"]')).toHaveAttribute('data-state', 'expired');
+    expect(container.querySelector('[data-part="c3"].dim')).not.toBeNull();
+    expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'sad');
+    expect(container.querySelector('[data-part="hg"]')).toBeNull();
     expect(clock).toHaveBeenCalled();
   });
 

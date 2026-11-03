@@ -10,7 +10,7 @@ import { Button, Callout, Label } from '../ui/index.ts';
 import { CODE_LENGTH, CodeField } from './code-field.tsx';
 import { goTo } from './goto.ts';
 import { type SignInError, signInError } from './login-errors.ts';
-import type { SceneActions } from './login-scene.tsx';
+import { failure, type SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
 /** Matches the server's magic-link lifetime (auth MAGIC_TTL_MS, "Expires in 15 minutes"). */
@@ -64,11 +64,11 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
     onError: (e) => {
       if (isApiError(e) && e.status === 400) {
         setFieldError(WRONG_CODE);
-        scene.fail({ expired: Date.now() - sentAt > CODE_TTL_MS });
+        scene.fail(Date.now() - sentAt > CODE_TTL_MS ? 'expired' : 'slip');
         return;
       }
       setError(signInError(e));
-      scene.fail({ shake: isApiError(e) && e.status === 429 });
+      scene.fail(failure(e));
     },
   });
 
@@ -91,11 +91,11 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
       return;
     }
     if ('challenge' in result) {
-      scene.fail({ shake: false });
+      scene.fail('error');
       return setError({ message: CHALLENGE_FAILED });
     }
     setError(signInError(result.error));
-    scene.fail({ shake: isApiError(result.error) && result.error.status === 429 });
+    scene.fail(failure(result.error));
   }
 
   const noteId = `${id}-note`;
