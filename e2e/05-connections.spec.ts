@@ -51,13 +51,15 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
   const connectionId = page.url().split('/').pop() as string;
 
-  await page.getByRole('button', { name: 'Test', exact: true }).click();
+  // The Created callout repeats Test and Sync now beside the page's own; both run the same action.
+  await expect(page.getByText('Connection created', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Test', exact: true }).first().click();
   await expect(page.getByRole('status').filter({ hasText: 'Test passed' })).toContainText(
     '3 demo records',
   );
 
   const firstBucket = Math.floor(Date.now() / SYNC_BUCKET_MS);
-  await page.getByRole('button', { name: 'Sync now' }).click();
+  await page.getByRole('button', { name: 'Sync now' }).first().click();
   const api = await apiAs('admin');
   await expect
     .poll(async () => (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items.length, {
@@ -88,7 +90,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   });
   // Admin syncs in the same bucket share one workflow instance (by design): wait for the next one.
   await expect.poll(() => Math.floor(Date.now() / SYNC_BUCKET_MS) > firstBucket).toBe(true);
-  await page.getByRole('button', { name: 'Sync now' }).click();
+  await page.getByRole('button', { name: 'Sync now' }).first().click();
   await expect
     .poll(
       async () => {
