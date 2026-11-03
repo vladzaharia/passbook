@@ -1,15 +1,17 @@
 /** Script-free SSR pages for the auth flows, on the hosted shell shared with /login. */
+
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { ArrowRight } from 'lucide-react';
 import { SIGN_IN_ERROR_COPY, type SignInErrorCode } from '../../../shared/copy/sign-in.ts';
 import type { PageTheme } from '../../ssr/head.ts';
 import { type HostedArt, hostedPage } from '../../ssr/hosted.ts';
+import { iconHtml } from '../../ssr/icon.ts';
 import { escapeHtml } from '../../ssr/theme.ts';
 import { loginPath, safeNext } from './next.ts';
 
 export { escapeHtml };
 
-const ARROW =
-  '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+const ARROW = iconHtml(ArrowRight);
 
 const link = (href: string, label: string, outline = false) =>
   `<a class="btn${outline ? ' outline' : ''}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
