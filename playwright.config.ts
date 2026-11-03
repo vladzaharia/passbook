@@ -8,6 +8,9 @@ export default defineConfig({
   workers: 1,
   // No retries anywhere: a flake is a bug to fix, not to mask.
   retries: 0,
+  // A sign-in may wait out RL_LOGIN's 60 s window (helpers/auth.ts polls up to 70 s), so the test
+  // must outlive that wait; the 30 s default failed whenever a run's sign-ins bunched up.
+  timeout: 90_000,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   // Reduced motion: no view transitions or entrance animations, so clicks never land mid-transition.
   use: {
