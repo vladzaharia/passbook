@@ -304,16 +304,17 @@ describe('scene stylesheets', () => {
             fn: at(decl, 'animation-timing-function') ?? 'linear',
           };
         });
-        frames.slice(1).forEach((b, i) => {
-          const a = frames[i];
-          if (!a || a.y !== '0' || b.y !== '0' || a.r === b.r) return;
+        for (let i = 1; i < frames.length; i++) {
+          const [a, b] = [frames[i - 1], frames[i]];
+          // On the ground at both ends and moving against the body: a stance.
+          if (a?.y !== '0' || b?.y !== '0' || a.r === b.r) continue;
           const g = go.findIndex((k) => Math.abs(k.ms - a.ms) < 0.1);
           const h = go[g + 1];
           expect(h && Math.abs(h.ms - b.ms) < 0.1, `${leg} at ${a.ms} ms`).toBe(true);
           expect(b.r - a.r).toBeCloseTo(-((h?.r ?? 0) - (go[g]?.r ?? 0)), 6);
           expect([b.px, a.fn]).toEqual([a.px, go[g]?.fn]);
           stances++;
-        });
+        }
       }
     }
     expect(stances).toBe(11);
