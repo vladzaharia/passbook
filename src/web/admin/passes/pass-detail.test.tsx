@@ -487,9 +487,10 @@ describe('pass detail: header actions', () => {
       }),
     });
     await user.click(await screen.findByRole('button', { name: 'More' }));
+    const entries = router.history.length;
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
-    const dialog = await screen.findByRole('dialog');
-    const confirm = within(dialog).getByRole('button', { name: 'Delete pass' });
+    const dialog = await screen.findByRole('dialog', { name: 'Delete Sam Jones?' });
+    const confirm = within(dialog).getByRole('button', { name: 'Delete' });
     expect(confirm).toBeDisabled();
     // The word is the pass title (human, at most 24 characters), matched case-insensitively.
     await user.type(within(dialog).getByLabelText('Type Sam Jones to confirm'), ' sam jones ');
@@ -497,6 +498,8 @@ describe('pass detail: header actions', () => {
     await user.click(confirm);
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
     expect(server.calls.some((c) => c.method === 'DELETE')).toBe(true);
+    // The deleted page leaves history: Back does not land on its not found.
+    expect(router.history.length).toBe(entries);
   });
 
   it('voids and rotates the link after confirmation', async () => {
@@ -567,6 +570,8 @@ describe('pass detail: header actions', () => {
       },
     });
     expect(await screen.findByText('Pass not found')).toBeInTheDocument();
+    // The page keeps its header: title and the way up.
+    expect(screen.getByRole('heading', { level: 1, name: 'Pass' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to passes' })).toHaveAttribute(
       'href',
       '/admin/passes',

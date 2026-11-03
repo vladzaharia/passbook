@@ -114,6 +114,7 @@ export function PassPreviewPanel({
   waiting,
   swapKey,
   beside,
+  seat = false,
   className,
   ...preview
 }: Omit<PassPreviewProps, 'face' | 'target' | 'flippable'> & {
@@ -126,6 +127,11 @@ export function PassPreviewPanel({
   swapKey?: string | number;
   /** Seated on the Front / Details row's top edge, which leaves room for it (the stage buddy). */
   beside?: ReactNode;
+  /**
+   * Keep that room from the first frame when a buddy can arrive later (a void), so the row and
+   * everything under it never shift.
+   */
+  seat?: boolean;
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const [target, setTarget] = useState<PassTarget>('27');
@@ -151,7 +157,7 @@ export function PassPreviewPanel({
       <div
         className={cn(
           'relative flex flex-wrap items-center justify-center gap-2',
-          Boolean(beside) && 'mt-8',
+          (seat || Boolean(beside)) && 'mt-8',
         )}
       >
         <PassSideToggle value={face} onChange={setFace} />

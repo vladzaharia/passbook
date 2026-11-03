@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { voidConfirm } from '../../lib/confirms.ts';
 import { Button, ConfirmDialog, IconButton, toast } from '../../ui/index.ts';
 import { useBulkPassAction } from './api.ts';
 
@@ -72,9 +73,7 @@ export function SelectionBar({
       <ConfirmDialog
         open={ask === 'void'}
         onOpenChange={(o) => !o && setAsk(null)}
-        title={`Void ${plural(n, 'pass', 'passes')}?`}
-        description="Wallet shows them as void on every holder's device."
-        confirmLabel="Void"
+        {...voidConfirm(n)}
         destructive
         onConfirm={() => run('void')}
       />

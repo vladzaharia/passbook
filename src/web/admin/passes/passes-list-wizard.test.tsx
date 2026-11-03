@@ -286,6 +286,7 @@ describe('new pass wizard', () => {
       session: 'admin',
       handlers: wizardHandlers(() => json(passDetail({ id: 'p9' }), 201), posts),
     });
+    const entries = router.history.length;
     // Without a template, Next stays on the Template step, says why and focuses the first tile.
     // Wait for the tiles: before they load there is nothing to focus.
     await screen.findByRole('radio', { name: /Copper card/ });
@@ -315,6 +316,14 @@ describe('new pass wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
+    // The pass's page replaces the wizard and says what happened, with what to do next.
+    expect(router.history.length).toBe(entries);
+    expect(await screen.findByText(/^Pass created and sent to /)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Create another' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/admin/passes/new?'),
+    );
+    expect(screen.queryByRole('button', { name: 'Send to holder' })).toBeNull();
     // Just created: the happy buddy stands beside the pass, decorative.
     const buddy = await waitFor(() => {
       const el = document.querySelector('.wl-pass-buddy');
@@ -406,9 +415,18 @@ describe('new pass wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.type(screen.getByLabelText('Holder email'), 'nope');
     expect(screen.getByRole('checkbox', { name: 'Email the pass' })).toBeDisabled();
+    // Nothing while typing: the error waits for Next.
+    expect(screen.queryByText('Enter a valid email address.')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Holder' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText('Holder email')).toHaveFocus());
+    // Fixed, it clears at once and Next goes on to Review.
+    await user.clear(screen.getByLabelText('Holder email'));
+    await user.type(screen.getByLabelText('Holder email'), 'sam@example.com');
+    expect(screen.queryByText('Enter a valid email address.')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
   });
 
   it('opens a deep link with an org and template on Details', async () => {

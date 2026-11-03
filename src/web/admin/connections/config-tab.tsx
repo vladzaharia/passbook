@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
 import { isApiError } from '../../lib/errors.ts';
@@ -7,11 +7,13 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Form,
   FormField,
   Input,
   SaveBar,
   toast,
   UnsavedChangesDialog,
+  useFormErrors,
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
 import {
@@ -68,7 +70,7 @@ export function ConfigTab({ c }: { c: Detail }) {
   const [secrets, setSecrets] = useState<FormValues>({});
   const [rpm, setRpm] = useState<string | undefined>();
   const [conc, setConc] = useState<string | undefined>();
-  const [showErrors, setShowErrors] = useState(false);
+  const formId = useId();
 
   const cfg = config ?? initialConfig;
   const rpmValue = rpm ?? num(c.requestsPerMinute);
@@ -77,6 +79,13 @@ export function ConfigTab({ c }: { c: Detail }) {
   const secErrors = replacing && secSchema ? validateValues(secSchema, secrets) : {};
   const rpmError = limitError(rpmValue, 1, 6000);
   const concError = limitError(concValue, 1, 20);
+  const check = useFormErrors({
+    ...Object.fromEntries(Object.entries(cfgErrors).map(([k, v]) => [`config.${k}`, v])),
+    ...Object.fromEntries(Object.entries(secErrors).map(([k, v]) => [`secrets.${k}`, v])),
+    rpm: rpmError,
+    conc: concError,
+  });
+  const showErrors = Object.values(check.errors).some(Boolean);
   const dirty =
     !sameValues(cfg, initialConfig) ||
     replacing ||
@@ -91,17 +100,11 @@ export function ConfigTab({ c }: { c: Detail }) {
     setSecrets({});
     setRpm(undefined);
     setConc(undefined);
-    setShowErrors(false);
+    check.reset();
     actions.update.reset();
   }
 
   async function save() {
-    const invalid =
-      Object.keys(cfgErrors).length > 0 ||
-      Object.keys(secErrors).length > 0 ||
-      rpmError ||
-      concError;
-    if (invalid) return setShowErrors(true);
     const patch: ConnectionPatch = {};
     if (!sameValues(cfg, initialConfig))
       patch.config = nestValues(cleanValues(cfg)) as ConnectionPatch['config'];
@@ -127,7 +130,12 @@ export function ConfigTab({ c }: { c: Detail }) {
 
   const defaults = connector.data?.defaults;
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <Form
+      id={formId}
+      {...check.form}
+      onValid={() => void save()}
+      className="flex min-w-0 flex-col gap-6"
+    >
       {cfgSchema ? (
         <Card>
           <CardHeader title="Connector" />
@@ -191,7 +199,7 @@ export function ConfigTab({ c }: { c: Detail }) {
         <CardBody className="grid gap-4 sm:grid-cols-2">
           <FormField
             label="Requests per minute"
-            error={showErrors ? rpmError : undefined}
+            error={check.errors.rpm}
             help={defaults ? `Default ${defaults.requestsPerMinute}.` : undefined}
           >
             {(f) => (
@@ -207,7 +215,7 @@ export function ConfigTab({ c }: { c: Detail }) {
           </FormField>
           <FormField
             label="Max concurrency"
-            error={showErrors ? concError : undefined}
+            error={check.errors.conc}
             help={defaults ? `Default ${defaults.maxConcurrency}.` : undefined}
           >
             {(f) => (
@@ -223,13 +231,8 @@ export function ConfigTab({ c }: { c: Detail }) {
           </FormField>
         </CardBody>
       </Card>
-      <SaveBar
-        dirty={dirty}
-        saving={actions.update.isPending}
-        onSave={() => void save()}
-        onDiscard={reset}
-      />
+      <SaveBar dirty={dirty} saving={actions.update.isPending} formId={formId} onDiscard={reset} />
       <UnsavedChangesDialog blocker={guard} />
-    </div>
+    </Form>
   );
 }

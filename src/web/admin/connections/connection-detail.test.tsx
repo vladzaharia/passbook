@@ -228,8 +228,11 @@ describe('connection detail', () => {
       }),
     });
     await user.click(await screen.findByRole('button', { name: 'More' }));
+    const entries = router.history.length;
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', { name: 'Delete MemberSpot sync?' });
+    expect(dialog).toHaveTextContent('Bound passes keep their data and stop syncing.');
+    expect(dialog).toHaveTextContent('This cannot be undone.');
     const confirm = within(dialog).getByRole('button', { name: 'Delete' });
     expect(confirm).toBeDisabled();
     await user.type(
@@ -239,9 +242,11 @@ describe('connection detail', () => {
     await user.click(confirm);
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/connections'));
     expect(calls).toEqual(['DELETE']);
+    // Back does not land on the deleted connection.
+    expect(router.history.length).toBe(entries);
   });
 
-  it('shows an error state when the connection is missing', async () => {
+  it('shows not found with the header and a way back, and no retry', async () => {
     await renderApp('/admin/connections/c1', {
       session: 'admin',
       handlers: {
@@ -249,6 +254,12 @@ describe('connection detail', () => {
         '/api/v1/connections/c1': () => problem(404, 'not_found', 'Connection not found.'),
       },
     });
-    expect(await screen.findByText(/Connection not found|not found/i)).toBeInTheDocument();
+    expect(await screen.findByText('Connection not found')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Connection' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to connections' })).toHaveAttribute(
+      'href',
+      '/admin/connections',
+    );
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 });

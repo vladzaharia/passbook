@@ -1,11 +1,12 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatDateTime } from '../../../lib/format.ts';
-import { Button, Callout, IconButton } from '../../../ui/index.ts';
+import { Button, Callout } from '../../../ui/index.ts';
+import { CreatedCallout } from '../created.tsx';
 import type { PassActionRunner } from '../pass-actions.tsx';
 
 /** Voided: when and by whom; Unvoid sits in the header. The Ban stamps when it just happened. */
@@ -64,57 +65,59 @@ export function PassWarnings({ pass }: { pass: PassDetailDto }) {
   );
 }
 
-/** After a create without sending: the next steps, until dismissed. */
-export function CreatedCallout({
+/** After the wizard: what happened and the next steps (send, copy the link, another like it). */
+export function PassCreatedCallout({
   pass,
+  sent,
   runner,
   onSend,
   onDismiss,
 }: {
   pass: PassDetailDto;
+  /** The wizard emailed it. */
+  sent: boolean;
   runner: PassActionRunner;
   onSend: () => void;
   onDismiss: () => void;
 }) {
   return (
-    <div className="relative">
-      <Callout
-        tone="success"
-        title="Pass created"
-        actions={
-          <>
-            {pass.holderEmail ? (
-              <Button size="sm" iconStart={<ACTION_ICON.sendEmail aria-hidden />} onClick={onSend}>
-                Send to holder
-              </Button>
-            ) : null}
-            <Button
-              size="sm"
-              variant="outline"
-              iconStart={<ACTION_ICON.duplicate aria-hidden />}
-              done={runner.done.copy}
-              onClick={() => runner.run('copy')}
-            >
-              Copy link
+    <CreatedCallout
+      title={
+        sent && pass.holderEmail ? `Pass created and sent to ${pass.holderEmail}` : 'Pass created'
+      }
+      onDismiss={onDismiss}
+      actions={
+        <>
+          {sent ? null : pass.holderEmail ? (
+            <Button size="sm" iconStart={<ACTION_ICON.sendEmail aria-hidden />} onClick={onSend}>
+              Send to holder
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              iconStart={<ACTION_ICON.create aria-hidden />}
-              asChild
-            >
-              <Link to="/admin/passes/new">Create another</Link>
+          ) : (
+            <Button size="sm" iconStart={<UserPlus aria-hidden />} asChild>
+              <Link to="." search={{ tab: 'holder' }}>
+                Add holder
+              </Link>
             </Button>
-          </>
-        }
-      />
-      <IconButton
-        label="Dismiss"
-        size="sm"
-        icon={<X aria-hidden />}
-        onClick={onDismiss}
-        className="absolute top-2 right-2"
-      />
-    </div>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            iconStart={<ACTION_ICON.duplicate aria-hidden />}
+            done={runner.done.copy}
+            onClick={() => runner.run('copy')}
+          >
+            Copy link
+          </Button>
+          <Button size="sm" variant="ghost" iconStart={<ACTION_ICON.create aria-hidden />} asChild>
+            <Link
+              to="/admin/passes/new"
+              search={{ orgId: pass.orgId, templateId: pass.templateId }}
+            >
+              Create another
+            </Link>
+          </Button>
+        </>
+      }
+    />
   );
 }

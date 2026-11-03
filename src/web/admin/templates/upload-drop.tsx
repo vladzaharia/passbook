@@ -144,7 +144,7 @@ export function UploadDrop({
         }}
         className={cn(
           'wl-drop relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 text-center wl-colors',
-          compact ? 'min-h-40 py-6' : 'min-h-60 py-8',
+          compact ? 'min-h-40 py-6' : 'min-h-44 py-8',
           drag ? 'border-accent bg-accent-subtle' : 'border-border-strong bg-surface-raised',
           disabled && 'opacity-80',
         )}

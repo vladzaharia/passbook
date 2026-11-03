@@ -1,4 +1,10 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { z } from 'zod';
 import {
@@ -26,6 +32,7 @@ export const connectionKeys = {
   connectors: ['admin', 'connectors'] as const,
 };
 
+/** Pickers and name lookups: the first 200 in one request. The list page pages instead. */
 export function useConnections(filters: ConnectionFilters, enabled = true) {
   return useQuery(
     listQuery({
@@ -36,6 +43,22 @@ export function useConnections(filters: ConnectionFilters, enabled = true) {
           signal,
         }),
       enabled,
+    }),
+  );
+}
+
+/** The Connections list: 50 at a time; Load more fetches the next page. */
+export function useConnectionPages(filters: ConnectionFilters) {
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: [...connectionKeys.all, 'pages', filters] as const,
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get('/api/v1/connections', ConnectionListSchema, {
+          query: { ...filters, cursor: pageParam, limit: 50 },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
     }),
   );
 }

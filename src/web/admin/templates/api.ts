@@ -1,6 +1,7 @@
 import {
   keepPreviousData,
   queryOptions,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -31,6 +32,7 @@ export const templateKeys = {
   import: (id: string) => ['admin', 'templates', 'import', id] as const,
 };
 
+/** Pickers and name lookups: the first 200 in one request. The list page pages instead. */
 export function useTemplates(filters: TemplateFilters, enabled = true) {
   return useQuery(
     listQuery({
@@ -46,6 +48,28 @@ export function useTemplates(filters: TemplateFilters, enabled = true) {
           signal,
         }),
       enabled,
+    }),
+  );
+}
+
+/** The Templates list: 50 at a time, newest first; Load more fetches the next page. */
+export function useTemplatePages(filters: TemplateFilters) {
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: [...templateKeys.all, 'pages', filters] as const,
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get('/api/v1/templates', TemplateListSchema, {
+          query: {
+            ...filters,
+            includeArchived: filters.includeArchived || undefined,
+            q: filters.q || undefined,
+            cursor: pageParam,
+            limit: 50,
+          },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
     }),
   );
 }
