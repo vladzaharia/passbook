@@ -192,6 +192,7 @@ describe('create connection wizard', () => {
       session: 'admin',
       handlers: wizard(posts),
     });
+    const entries = router.history.length;
     await toConfig(user, /Webhook push/);
     await user.type(await screen.findByLabelText(/^Name/), 'Hooked');
     for (let i = 0; i < 4; i++) await next(user);
@@ -207,6 +208,11 @@ describe('create connection wizard', () => {
     await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
     await user.click(done);
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/connections/c9'));
+    // The connection's page replaces the wizard and leads with its next steps.
+    expect(router.history.length).toBe(entries);
+    expect(await screen.findByText('Connection created')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText('Connection created')).toBeNull();
   });
 
   it('maps server field errors back to the configuration form', async () => {

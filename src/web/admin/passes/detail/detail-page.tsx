@@ -1,15 +1,12 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
-import { isApiError } from '../../../lib/errors.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Buddy,
-  Button,
   Celebrate,
-  EmptyState,
-  ErrorState,
+  detailError,
   KeyValue,
   PageHeader,
   SkeletonDetail,
@@ -21,15 +18,16 @@ import {
 } from '../../../ui/index.ts';
 import { useDraftPreview, useTemplate } from '../../templates/api.ts';
 import { usePass, usePassActions, usePassVersion } from '../api.ts';
+import { useCreated } from '../created.tsx';
 import { newKey } from '../format.ts';
 import { usePassActionRunner } from '../pass-actions.tsx';
 import { PassPreview, PassPreviewPanel } from '../pass-preview.tsx';
 import { PreviewLayout } from '../preview-layout.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
-import { CreatedCallout, PassWarnings, VoidedCallout } from './callouts.tsx';
+import { PassCreatedCallout, PassWarnings, VoidedCallout } from './callouts.tsx';
 import { HeaderActionsView } from './header-actions.tsx';
 import { PassTabs } from './pass-tabs.tsx';
-import { useCreated, useStageMotion } from './stage-state.ts';
+import { useStageMotion } from './stage-state.ts';
 import '../passes.css';
 
 type Search = z.infer<typeof passDetailSearchSchema>;
@@ -46,27 +44,11 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
     { label: pass.data ? (pass.data.title ?? pass.data.serial) : 'Pass' },
   ];
   if (pass.isError) {
-    const missing = isApiError(pass.error) && pass.error.isNotFound;
-    if (missing)
-      return (
-        <EmptyState
-          heading
-          art="torn"
-          title="Pass not found"
-          action={
-            <Button asChild variant="outline">
-              <Link to="/admin/passes">Back to passes</Link>
-            </Button>
-          }
-          className="mt-6"
-        />
-      );
-    return (
-      <>
-        <PageHeader title="Pass" breadcrumbs={crumbs} />
-        <ErrorState error={pass.error} onRetry={() => void pass.refetch()} />
-      </>
-    );
+    return detailError(pass, {
+      entity: 'pass',
+      to: '/admin/passes',
+      header: <PageHeader title="Pass" breadcrumbs={crumbs} />,
+    });
   }
   if (!pass.data) {
     return (
@@ -113,7 +95,7 @@ function Loaded({
     const t = setTimeout(() => setDeal(false), 900);
     return () => clearTimeout(t);
   }, []);
-  const created = useCreated(p.id);
+  const created = useCreated<{ sent: boolean; first: boolean }>(`pass:${p.id}`);
   const runner = usePassActionRunner(p, p);
   const actions = usePassActions(p.id);
   const template = useTemplate(p.templateId);
@@ -139,7 +121,7 @@ function Loaded({
 
   const stage = (size: 'column' | 'card' | 'sheet') => (
     <div className="relative">
-      {size === 'sheet' ? null : <Celebrate when={created.first} />}
+      {size === 'sheet' ? null : <Celebrate when={created.mark?.first === true} />}
       <PassPreviewPanel
         passJson={source.passJson}
         assetBaseUrl={source.assetBaseUrl}
@@ -155,6 +137,8 @@ function Loaded({
         swapKey={picked === undefined ? 'current' : showing}
         label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
         className={size === 'card' ? 'gap-2' : undefined}
+        // Any pass can be voided while open: the buddy's seat is kept from the first frame.
+        seat
         // Just created, the buddy falls onto the Front / Details control and waves at the pass;
         // just voided, it sheds a tear. It stays there, in every layout.
         beside={
@@ -199,9 +183,10 @@ function Loaded({
       />
       <div className="mb-6 flex flex-col gap-3 empty:hidden">
         {voided ? <VoidedCallout pass={p} stamp={motion.stamp} /> : null}
-        {created.unsent && !voided ? (
-          <CreatedCallout
+        {created.shown && !voided ? (
+          <PassCreatedCallout
             pass={p}
+            sent={created.mark?.sent === true}
             runner={runner}
             onDismiss={created.dismiss}
             onSend={() =>

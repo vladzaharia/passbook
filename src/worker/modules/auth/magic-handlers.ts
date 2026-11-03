@@ -28,12 +28,12 @@ import {
   isEmailSignInEnabled,
   MAGIC_TTL_MS,
   type MagicOutcome,
-  magicLinkNext,
+  magicLinkTrace,
   peekMagicLink,
   processSignInRequest,
 } from './magic-service.ts';
-import { homeFor, loginPath, safeNext } from './next.ts';
-import { confirmPage, confirmPath, expiredPage, signInErrorPage, verifyPage } from './pages.ts';
+import { homeFor, safeNext } from './next.ts';
+import { confirmPage, expiredPage, signInErrorPage, signInToConfirm, verifyPage } from './pages.ts';
 import { resolveSession } from './sessions.ts';
 import { verifyTurnstile } from './turnstile.ts';
 
@@ -83,7 +83,7 @@ export async function confirmMagic(c: Context<AppBindings>) {
   const theme = requestTheme(c);
   const token = c.req.query('t') ?? '';
   const link = token.length >= 16 && token.length <= 256 ? await peekMagicLink(ctx, token) : null;
-  if (!link) return c.html(expiredPage(nonce, await magicLinkNext(ctx, token), theme), 400);
+  if (!link) return c.html(expiredPage(nonce, await magicLinkTrace(ctx, token), theme), 400);
   if (link.purpose === 'sign_in') {
     if (link.needsEmailSignIn && !(await isEmailSignInEnabled(ctx))) {
       const page = signInErrorPage(nonce, 'MAGIC_LINK_DISABLED', { next: link.next }, theme);
@@ -140,18 +140,14 @@ async function consumeErrorPage(
   const theme = requestTheme(c);
   const field = (body as Record<string, unknown> | null)?.token;
   const token = typeof field === 'string' ? field : '';
-  const next = await magicLinkNext(serviceContext(c), token);
-  if (code === 'LINK_INVALID') return c.html(expiredPage(nonce, next, theme), 400);
+  const trace = await magicLinkTrace(serviceContext(c), token);
+  if (code === 'LINK_INVALID') return c.html(expiredPage(nonce, trace, theme), 400);
   for (const [name, value] of Object.entries(error.headers ?? {})) c.header(name, value);
-  const page =
+  const opts =
     code === 'SESSION_REQUIRED' && token
-      ? signInErrorPage(
-          nonce,
-          'SESSION_REQUIRED',
-          { href: loginPath(confirmPath(token)), action: 'Sign in to confirm' },
-          theme,
-        )
-      : signInErrorPage(nonce, code, { next }, theme);
+      ? { action: signInToConfirm(token) }
+      : { next: trace?.next ?? null };
+  const page = signInErrorPage(nonce, code, opts, theme);
   return c.html(page.html, page.status);
 }
 

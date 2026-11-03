@@ -5,13 +5,16 @@ import type { AppBindings } from '../../platform/context.ts';
 import { csrfGuard } from '../../platform/csrf.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { wantsHtml } from '../../ssr/error-response.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { clearSessionCookie, ipPrefix, readCookie } from './cookies.ts';
-import { loginPath } from './next.ts';
+import { clearSessionCookie, ipPrefix, readCookie, setNextCookie } from './cookies.ts';
+import { loginPath, safeNext } from './next.ts';
 import { postLogoutRedirectUri } from './oidc-cimd.ts';
 import { discover } from './oidc-client.ts';
 import { oidcConfig } from './oidc-handlers.ts';
+import { leavingPage } from './pages.ts';
 import { findUser } from './service.ts';
 import { revokeAllForUser, revokeOne } from './sessions.ts';
 
@@ -61,7 +64,8 @@ async function endSessionUrl(c: Context<AppBindings>): Promise<string | null> {
 /**
  * POST /auth/logout[?all=1][&next=]. Revokes this session, or with all=1 every session of the
  * account (CSRF token required, as for any account change), then leaves via Pocket ID when it
- * supports it. Without Pocket ID the sign-in page keeps a safe next.
+ * supports it, a safe next kept in a short-lived cookie (its end-session drops query strings).
+ * Without Pocket ID the sign-in URL carries next.
  */
 export async function logout(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
@@ -83,11 +87,18 @@ export async function logout(c: Context<AppBindings>) {
       ipPrefix: ipPrefix(clientIp(c)),
       ...(everywhere ? { detail: { count } } : {}),
     });
-    if (auth.amr === 'oidc') target = (await endSessionUrl(c)) ?? target;
+    const end = auth.amr === 'oidc' ? await endSessionUrl(c) : null;
+    if (end) target = end;
+    // Only the Pocket ID round trip needs the cookie; any other sign-out drops an older one.
+    setNextCookie(c, end ? safeNext(c.req.query('next')) : null);
   }
   clearSessionCookie(c);
   if (c.req.header('accept')?.includes('application/json')) {
     return c.json({ ok: true as const, redirect: target });
+  }
+  // A form post may not redirect off-site (CSP form-action 'self'): Pocket ID gets a page.
+  if (wantsHtml(c) && !target.startsWith('/')) {
+    return c.html(leavingPage(c.var.nonce, target, requestTheme(c)));
   }
   return c.redirect(target, 303);
 }

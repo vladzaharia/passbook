@@ -84,14 +84,13 @@ export const peekLink = (db: Db, tokenHash: string, now: number) =>
   );
 
 /** The stored next of any link, live, used or expired. */
-export const linkRedirectPath = async (db: Db, tokenHash: string): Promise<string | null> =>
-  (
-    await first<{ redirect_path: string | null }>(
-      db,
-      'SELECT redirect_path FROM magic_links WHERE token_hash = ?',
-      [tokenHash],
-    )
-  )?.redirect_path ?? null;
+/** A link's purpose and next, live or not. */
+export const linkTrace = (db: Db, tokenHash: string) =>
+  first<{ redirect_path: string | null; purpose: MagicPurpose }>(
+    db,
+    'SELECT redirect_path, purpose FROM magic_links WHERE token_hash = ?',
+    [tokenHash],
+  );
 
 export const consumeLink = (db: Db, tokenHash: string, now: number) =>
   first<MagicLinkRow>(

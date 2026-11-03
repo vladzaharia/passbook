@@ -1,17 +1,19 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { deleteConfirm } from '../../lib/confirms.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
-import { formatCount, formatDateTime } from '../../lib/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
+  CountLink,
   DropdownMenuItem,
-  ErrorState,
+  detailError,
   KeyValue,
   MoreMenu,
   PageHeader,
@@ -25,6 +27,7 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { confirmWord } from '../../ui/typed-confirm-dialog.tsx';
+import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { useConnection, useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
 import { MappingTab, SettingsTab } from './detail-tabs.tsx';
@@ -48,6 +51,7 @@ export function ConnectionDetailPage({
   const orgs = useOrgOptions();
   const [del, setDel] = useState(false);
   const [test, setTest] = useState<TestOutcome>();
+  const created = useCreated(`connection:${connectionId}`);
   const connector = useConnector(connection.data?.connectorType);
   const connectorName = useConnectorNames();
   const crumbs = [
@@ -56,12 +60,11 @@ export function ConnectionDetailPage({
   ];
 
   if (connection.isError) {
-    return (
-      <>
-        <PageHeader title="Connection" breadcrumbs={crumbs} />
-        <ErrorState error={connection.error} onRetry={() => void connection.refetch()} />
-      </>
-    );
+    return detailError(connection, {
+      entity: 'connection',
+      to: '/admin/connections',
+      header: <PageHeader title="Connection" breadcrumbs={crumbs} />,
+    });
   }
   if (!connection.data) {
     return (
@@ -97,7 +100,7 @@ export function ConnectionDetailPage({
     actions.sync
       .mutateAsync()
       .then(() => toast.success('Sync started'))
-      .catch((error: unknown) => toast.error(error, 'Could not start the sync'));
+      .catch((error: unknown) => toast.error(error, 'Could not sync'));
   const sample = test?.kind === 'result' ? test.result.sample : undefined;
 
   return (
@@ -162,6 +165,44 @@ export function ConnectionDetailPage({
           </>
         }
       />
+      {created.shown ? (
+        <div className="mb-6">
+          <CreatedCallout
+            title="Connection created"
+            onDismiss={created.dismiss}
+            actions={
+              <>
+                <Button
+                  size="sm"
+                  busy="pulse"
+                  loading={actions.test.isPending}
+                  iconStart={<ACTION_ICON.test aria-hidden />}
+                  onClick={() => void runTest()}
+                >
+                  Test
+                </Button>
+                {canSync && c.enabled ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    busy="spin"
+                    loading={actions.sync.isPending}
+                    iconStart={<ACTION_ICON.refresh aria-hidden />}
+                    onClick={() => void sync()}
+                  >
+                    Sync now
+                  </Button>
+                ) : null}
+                {showWebhook ? (
+                  <Button size="sm" variant="ghost" onClick={() => setTab('webhook')}>
+                    Webhook
+                  </Button>
+                ) : null}
+              </>
+            }
+          />
+        </div>
+      ) : null}
       <TwoPane
         aside={
           <Card>
@@ -171,20 +212,15 @@ export function ConnectionDetailPage({
                 items={[
                   {
                     label: 'Passes',
-                    value:
-                      c.metrics.passCount === 0 ? (
-                        'None'
-                      ) : (
-                        <Link
-                          to="/admin/passes"
-                          search={{ connectionId: c.id }}
-                          className="inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums hover:underline"
-                        >
-                          <ENTITY.pass.icon aria-hidden className="size-4" />
-                          {formatCount(c.metrics.passCount)}{' '}
-                          {c.metrics.passCount === 1 ? 'pass' : 'passes'}
-                        </Link>
-                      ),
+                    value: (
+                      <CountLink
+                        count={c.metrics.passCount}
+                        noun={['pass', 'passes']}
+                        icon={ENTITY.pass.icon}
+                        to="/admin/passes"
+                        search={{ connectionId: c.id }}
+                      />
+                    ),
                   },
                   { label: 'Organization', value: orgName },
                   { label: 'Creates passes', value: c.autoCreate ? 'On' : 'Off' },
@@ -242,14 +278,12 @@ export function ConnectionDetailPage({
       <TypedConfirmDialog
         open={del}
         onOpenChange={setDel}
-        title={`Delete ${c.name}?`}
-        description="Bound passes keep their data and stop syncing."
+        {...deleteConfirm('connection', c.name)}
         word={confirmWord({ title: c.name })}
-        confirmLabel="Delete"
         onConfirm={async () => {
           await actions.remove.mutateAsync();
           toast.success('Connection deleted');
-          void navigate({ to: '/admin/connections' });
+          void navigate({ to: '/admin/connections', replace: true });
         }}
       />
     </>

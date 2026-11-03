@@ -1,6 +1,7 @@
 import { type ErrorComponentProps, Link, useRouter, useRouterState } from '@tanstack/react-router';
-import { LogIn, Search, WalletCards } from 'lucide-react';
+import { LayoutDashboard, LogIn, Search, WalletCards } from 'lucide-react';
 import { useEffect } from 'react';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { isAdminPath } from '../../lib/guards.ts';
 import { usePalette } from '../../lib/palette.ts';
@@ -11,7 +12,18 @@ import { ErrorState, isChunkLoadError } from '../error-state.tsx';
 import { AppShell } from './app-shell.tsx';
 import { PortalBar } from './portal-layout.tsx';
 
+// Words, art and action weights match the SSR pages (worker/ssr/error-page.tsx): outline ways back.
+
 const useInAdmin = () => useRouterState({ select: (s) => isAdminPath(s.location.pathname) });
+
+const ToMyPasses = () => (
+  <Button variant="outline" asChild>
+    <Link to="/">
+      <WalletCards aria-hidden />
+      {STATE_COPY.goToMyPasses}
+    </Link>
+  </Button>
+);
 
 export function ForbiddenPage() {
   const { authed } = useSession();
@@ -23,23 +35,16 @@ export function ForbiddenPage() {
     <EmptyState
       heading
       art="lock"
-      title="You do not have access"
+      title={STATE_COPY.forbidden}
       action={
         <div className="flex flex-wrap items-center justify-center gap-2">
-          {holder ? (
-            <Button variant="outline" asChild>
-              <Link to="/">
-                <WalletCards aria-hidden />
-                Go to My passes
-              </Link>
-            </Button>
-          ) : null}
+          {holder ? <ToMyPasses /> : null}
           <Button
             variant={holder ? 'ghost' : 'outline'}
             iconStart={<LogIn aria-hidden />}
             onClick={() => void signOut(authed?.csrfToken, { next: here })}
           >
-            Sign in as someone else
+            {STATE_COPY.switchAccount}
           </Button>
         </div>
       }
@@ -47,40 +52,34 @@ export function ForbiddenPage() {
   );
 }
 
+/** A route that is not there: the lost buddy peeks, as on the SSR 404. */
 export function NotFoundPage() {
   const inAdmin = useInAdmin();
   const palette = usePalette();
-  if (!inAdmin) {
-    return (
-      <EmptyState
-        heading
-        art="wallet"
-        artState="lost"
-        title="Page not found"
-        action={
-          <Button asChild variant="outline">
-            <Link to="/">Go to My passes</Link>
-          </Button>
-        }
-      />
-    );
-  }
   return (
     <EmptyState
       heading
-      art="torn"
-      title="Page not found"
+      art="wallet"
+      artState="lost"
+      title={STATE_COPY.pageNotFound}
       action={
-        <div className="flex flex-wrap justify-center gap-2">
-          {palette ? (
-            <Button variant="outline" iconStart={<Search aria-hidden />} onClick={palette.open}>
-              Search
+        inAdmin ? (
+          <div className="flex flex-wrap justify-center gap-2">
+            {palette ? (
+              <Button variant="outline" iconStart={<Search aria-hidden />} onClick={palette.open}>
+                {STATE_COPY.search}
+              </Button>
+            ) : null}
+            <Button asChild variant="outline">
+              <Link to="/admin">
+                <LayoutDashboard aria-hidden />
+                {STATE_COPY.goToOverview}
+              </Link>
             </Button>
-          ) : null}
-          <Button asChild variant="outline">
-            <Link to="/admin">Go to Overview</Link>
-          </Button>
-        </div>
+          </div>
+        ) : (
+          <ToMyPasses />
+        )
       }
     />
   );
@@ -112,9 +111,9 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
   if (chunk) {
     return (
       <ErrorState
-        title="Could not load this page. Check your connection."
+        title={STATE_COPY.pageLoadFailed}
         onRetry={() => window.location.reload()}
-        retryLabel="Reload"
+        retryLabel={STATE_COPY.reload}
       />
     );
   }

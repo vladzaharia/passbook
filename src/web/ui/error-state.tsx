@@ -1,9 +1,11 @@
 import { ChevronRight, RefreshCw, TriangleAlert } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import { cn } from '../lib/cn.ts';
 import { errorMessage, isApiError } from '../lib/errors.ts';
 import { useChangeCount } from '../lib/motion.ts';
 import { Buddy } from './art/buddy.tsx';
+import { ACTED_STATES } from './art/state-acts.ts';
 import { UnpluggedArt } from './art/unplugged.tsx';
 import { Button } from './button.tsx';
 import { useInCard } from './in-card.ts';
@@ -34,14 +36,14 @@ export function isChunkLoadError(error: unknown): boolean {
 
 /**
  * Neutral card, one sentence, Retry; the request id hides under Details. The sad buddy sits on its
- * top edge beside the pulled plug; inline, a danger tile on the unplugged art. A failure after
- * Retry shakes the art once; the first render never shakes.
+ * top edge beside the pulled plug (art/state-art.tsx, as on the SSR 500); inline, a danger tile on
+ * the unplugged art. A failure after Retry shakes the art once; the first render never shakes.
  */
 export function ErrorState({
   error,
   title,
   onRetry,
-  retryLabel = 'Retry',
+  retryLabel = STATE_COPY.retry,
   action,
   inline: inlineProp,
   className,
@@ -92,7 +94,12 @@ export function ErrorState({
             </span>
           </>
         ) : (
-          <Buddy mood="sad" scene="plug" replay={tries} prop={<UnpluggedArt size="sm" />} />
+          <Buddy
+            mood="sad"
+            scene={ACTED_STATES.broken.scene}
+            replay={tries}
+            prop={<UnpluggedArt size="sm" />}
+          />
         )}
       </div>
       <div

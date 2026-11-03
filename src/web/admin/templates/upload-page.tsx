@@ -1,9 +1,10 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { importErrorMessage } from '@/shared/contracts/templates.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { errorMessage } from '../../lib/errors.ts';
+import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
@@ -21,6 +22,7 @@ import {
   Select,
   Skeleton,
 } from '../../ui/index.ts';
+import { markCreated } from '../passes/created.tsx';
 import { useImportStatus, useTemplate, useUploadTemplate } from './api.ts';
 import { TemplateStill } from './gallery.tsx';
 import { type PackageInfo, readPackage, UploadDrop } from './upload-drop.tsx';
@@ -57,6 +59,7 @@ export function TemplateUploadPage({
   templateId?: string | undefined;
   upload?: string | undefined;
 }) {
+  const navigate = useNavigate();
   const scope = useOrgScope().orgId;
   const orgs = useOrgOptions();
   const base = useTemplate(templateId);
@@ -66,6 +69,8 @@ export function TemplateUploadPage({
   const [file, setFile] = useState<File>();
   const [info, setInfo] = useState<PackageInfo>();
   const [uploadId, setUploadId] = useState(initialUpload);
+  // Started here, not reopened from Recent uploads: success opens the template.
+  const [sent, setSent] = useState(false);
   const status = useImportStatus(uploadId);
   const s = status.data;
   const finished = s?.status === 'complete';
@@ -94,111 +99,129 @@ export function TemplateUploadPage({
     const res = await upload
       .mutateAsync({ file: f, orgId, name: name.trim() || undefined })
       .catch(() => undefined);
-    if (res) setUploadId(res.uploadId);
-    else setRejected((n) => n + 1);
+    if (res) {
+      setUploadId(res.uploadId);
+      setSent(true);
+    } else setRejected((n) => n + 1);
   }
+
+  // The template page replaces this one in history and leads with "Template imported". A report
+  // reopened from Recent uploads stays here.
+  const landedId = sent && finished ? s?.templateId : undefined;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: navigate once per finished upload
+  useEffect(() => {
+    if (!landedId) return;
+    markMinted(`template:${landedId}`);
+    markCreated(`template:${landedId}`, version ? 'version' : 'imported');
+    void navigate({
+      to: '/admin/templates/$templateId',
+      params: { templateId: landedId },
+      replace: true,
+    });
+  }, [landedId]);
 
   const working = Boolean(uploadId) && !finished && !failed && !status.isError;
   const landed = uploadId ? (finished ? 4 : (STEPS[s?.step ?? 'queued'] ?? 0)) : undefined;
   const title = version ? `New version of ${version.name}` : 'Upload template';
 
-  const left = finished ? (
-    <Card className="mt-18">
-      <Buddy mood="happy" scene="cheer" />
-      <CardHeader
-        title={
-          result.data && result.data.versions.length > 1
-            ? `Version ${result.data.versions.length} of ${result.data.name}`
-            : 'New template'
-        }
-      />
-      <CardBody className="flex flex-col gap-4">
-        <UploadDrop label="Done" file={file} onFile={() => {}} disabled landed={4} done compact />
-        <div className="flex flex-wrap gap-2">
-          {s?.templateId ? (
-            <Button asChild>
-              <Link to="/admin/templates/$templateId" params={{ templateId: s.templateId }}>
-                Open template
-              </Link>
+  const left =
+    finished && !sent ? (
+      <Card className="mt-18">
+        <Buddy mood="happy" scene="cheer" />
+        <CardHeader
+          title={
+            result.data && result.data.versions.length > 1
+              ? `Version ${result.data.versions.length} of ${result.data.name}`
+              : 'New template'
+          }
+        />
+        <CardBody className="flex flex-col gap-4">
+          <UploadDrop label="Done" file={file} onFile={() => {}} disabled landed={4} done compact />
+          <div className="flex flex-wrap gap-2">
+            {s?.templateId ? (
+              <Button asChild>
+                <Link to="/admin/templates/$templateId" params={{ templateId: s.templateId }}>
+                  Open template
+                </Link>
+              </Button>
+            ) : null}
+            {result.data && result.data.passesOnOlderVersions > 0 ? (
+              <Button asChild variant="outline" iconStart={<ACTION_ICON.refresh aria-hidden />}>
+                <Link
+                  to="/admin/templates/$templateId"
+                  params={{ templateId: s?.templateId ?? '' }}
+                  search={{ tab: 'versions' }}
+                >
+                  Update passes
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+        </CardBody>
+      </Card>
+    ) : (
+      <div className="flex flex-col gap-6">
+        <UploadDrop
+          label={failed ? 'Choose fixed file' : 'Drop a template package'}
+          file={file}
+          disabled={working || upload.isPending}
+          landed={landed}
+          failed={failed ? failedPiece(s?.error ?? null) : undefined}
+          rejected={rejected}
+          onFile={(f) => {
+            void choose(f);
+            // After a failure the fix goes straight up, with the same org and name.
+            if (failed) void send(f);
+          }}
+        />
+        <p aria-live="polite" className="sr-only">
+          {working ? (STEP_TEXT[s?.step ?? 'queued'] ?? 'Processing') : ''}
+        </p>
+        {version ? null : (
+          <div className="grid gap-4 @container sm:grid-cols-2">
+            <FormField label="Name">
+              {(c) => (
+                <Input
+                  {...c}
+                  maxLength={120}
+                  value={name}
+                  disabled={working}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              )}
+            </FormField>
+            <FormField label="Organization">
+              {(c) => (
+                <Select
+                  {...c}
+                  disabled={working}
+                  value={orgId ?? ALL}
+                  onValueChange={(v) => setOrgId(v === ALL ? undefined : v)}
+                  options={[
+                    { value: ALL, label: 'All organizations' },
+                    ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
+                  ]}
+                />
+              )}
+            </FormField>
+          </div>
+        )}
+        {upload.isError ? <Callout tone="danger">{errorMessage(upload.error)}</Callout> : null}
+        {failed || working ? null : (
+          <div>
+            <Button
+              iconStart={<ACTION_ICON.upload aria-hidden />}
+              busy="bob"
+              loading={upload.isPending}
+              disabled={!file}
+              onClick={() => void send()}
+            >
+              {version ? 'Upload version' : 'Upload'}
             </Button>
-          ) : null}
-          {result.data && result.data.passesOnOlderVersions > 0 ? (
-            <Button asChild variant="outline" iconStart={<ACTION_ICON.refresh aria-hidden />}>
-              <Link
-                to="/admin/templates/$templateId"
-                params={{ templateId: s?.templateId ?? '' }}
-                search={{ tab: 'versions' }}
-              >
-                Update passes
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </CardBody>
-    </Card>
-  ) : (
-    <div className="flex flex-col gap-6">
-      <UploadDrop
-        label={failed ? 'Choose fixed file' : 'Drop a template package'}
-        file={file}
-        disabled={working || upload.isPending}
-        landed={landed}
-        failed={failed ? failedPiece(s?.error ?? null) : undefined}
-        rejected={rejected}
-        onFile={(f) => {
-          void choose(f);
-          // After a failure the fix goes straight up, with the same org and name.
-          if (failed) void send(f);
-        }}
-      />
-      <p aria-live="polite" className="sr-only">
-        {working ? (STEP_TEXT[s?.step ?? 'queued'] ?? 'Processing') : ''}
-      </p>
-      {version ? null : (
-        <div className="grid gap-4 @container sm:grid-cols-2">
-          <FormField label="Name">
-            {(c) => (
-              <Input
-                {...c}
-                maxLength={120}
-                value={name}
-                disabled={working}
-                onChange={(e) => setName(e.target.value)}
-              />
-            )}
-          </FormField>
-          <FormField label="Organization">
-            {(c) => (
-              <Select
-                {...c}
-                disabled={working}
-                value={orgId ?? ALL}
-                onValueChange={(v) => setOrgId(v === ALL ? undefined : v)}
-                options={[
-                  { value: ALL, label: 'All organizations' },
-                  ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
-                ]}
-              />
-            )}
-          </FormField>
-        </div>
-      )}
-      {upload.isError ? <Callout tone="danger">{errorMessage(upload.error)}</Callout> : null}
-      {failed || working ? null : (
-        <div>
-          <Button
-            iconStart={<ACTION_ICON.upload aria-hidden />}
-            busy="bob"
-            loading={upload.isPending}
-            disabled={!file}
-            onClick={() => void send()}
-          >
-            {version ? 'Upload version' : 'Upload'}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
+          </div>
+        )}
+      </div>
+    );
 
   const sentence = (error: string | null) =>
     error && !/^[A-Z][A-Z0-9_]+$/.test(error) ? error : importErrorMessage(error);

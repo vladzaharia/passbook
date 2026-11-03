@@ -17,11 +17,7 @@ const content = (html: string, key: string) =>
   new RegExp(`<meta (?:name|property)="${key}" content="([^"]*)"`).exec(html)?.[1];
 
 describe('auth and error page heads', () => {
-  const confirm = confirmPage('n', {
-    token: 't'.repeat(20),
-    email: 'ada@example.com',
-    purpose: 'sign_in',
-  });
+  const confirm = confirmPage('n', { token: 't'.repeat(20), email: 'ada@example.com' });
 
   it.each([
     ['confirm', confirm, 'Sign in'],

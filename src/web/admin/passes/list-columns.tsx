@@ -1,10 +1,9 @@
-import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { type CSSProperties, createContext, useContext } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
 import type { Swatch } from '../../lib/swatches.ts';
-import { Checkbox, StatusIcon } from '../../ui/index.ts';
+import { Checkbox, RowLink, StatusIcon } from '../../ui/index.ts';
 import { PassRowMenu } from './row-menu.tsx';
 
 export type { Swatch };
@@ -79,17 +78,13 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
   return (
     <span className="flex min-w-0 max-w-72 items-center gap-3 contain-inline-size">
       <PassChip swatch={o.swatches.get(p.templateId)} voided={p.status === 'voided'} />
-      <Link
+      <RowLink
         to="/admin/passes/$passId"
         params={{ passId: p.id }}
-        className={
-          p.status === 'voided'
-            ? 'truncate font-medium text-fg-muted line-through decoration-fg-subtle hover:text-fg-strong'
-            : 'truncate font-medium text-fg-strong hover:text-accent-fg hover:underline'
-        }
+        inactive={p.status === 'voided'}
       >
         {nameOf(p)}
-      </Link>
+      </RowLink>
       {o.showSubtitles && p.subtitle ? (
         <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
       ) : null}

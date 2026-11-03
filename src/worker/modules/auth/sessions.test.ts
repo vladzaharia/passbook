@@ -232,4 +232,56 @@ describe('http', () => {
     });
     expect(await res.json()).toEqual({ ok: true, redirect: '/login' });
   });
+
+  // Pocket ID's end-session returns to a bare /login; the sign-in page reads next from here.
+  const nextCookie = (res: Response) =>
+    res.headers.getSetCookie().find((line) => line.startsWith('wallet-next='));
+  const logout = (jar: Jar, next: string) =>
+    h.call(`/auth/logout?next=${encodeURIComponent(next)}`, { method: 'POST', cookies: jar });
+
+  it('keeps a safe next through Pocket ID in a short-lived cookie only /login sees', async () => {
+    const { jar } = await signIn(['user']);
+    const res = await logout(jar, '/auth/magic?t=abc');
+    expect(res.headers.get('location')).toContain('/api/oidc/end-session');
+    const cookie = nextCookie(res) ?? '';
+    expect(cookie).toContain(`wallet-next=${encodeURIComponent('/auth/magic?t=abc')};`);
+    expect(cookie).toMatch(/Max-Age=300/);
+    expect(cookie).toMatch(/Path=\/login/);
+    expect(cookie).toMatch(/Secure/);
+    expect(cookie).toMatch(/SameSite=Lax/);
+    expect(cookie).not.toMatch(/HttpOnly/);
+  });
+
+  it('leaves a form post for Pocket ID by a page (form-action self blocks the redirect)', async () => {
+    const { jar } = await signIn(['user']);
+    const res = await h.call('/auth/logout?next=%2Faccount', {
+      method: 'POST',
+      cookies: jar,
+      headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'text/html' },
+    });
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toMatch(/<meta http-equiv="refresh" content="0;url=https:\/\/id\.test\/[^"]*">/);
+    expect(html).toMatch(
+      /<a class="btn" href="https:\/\/id\.test\/[^"]*end-session[^"]*">Continue/,
+    );
+    expect(nextCookie(res)).toContain('wallet-next=%2Faccount;');
+  });
+
+  it('drops an unsafe next, and needs no cookie when the URL keeps next', async () => {
+    const unsafe = await logout((await signIn(['user'])).jar, '//evil.example/x');
+    expect(nextCookie(unsafe)).toMatch(/^wallet-next=;.*Max-Age=0/);
+    const { user } = await open(['user']);
+    const ctx = createServiceContext(h.env, { clock });
+    const magic = await createSession(ctx, {
+      userId: user.id,
+      roles: ['user'],
+      amr: 'magic_link',
+      ipPrefix: null,
+      userAgent: null,
+    });
+    const res = await logout(new Map([['__Host-wallet_sid', magic.cookieValue]]), '/account');
+    expect(res.headers.get('location')).toBe('/login?next=%2Faccount');
+    expect(nextCookie(res)).toMatch(/Max-Age=0/);
+  });
 });

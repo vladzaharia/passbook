@@ -1,26 +1,22 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
-import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
-import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Callout,
   ErrorState,
+  Form,
   PageHeader,
   SkeletonKeyValue,
   UnsavedChangesDialog,
+  useFormErrors,
   useUnsavedChangesGuard,
   Wizard,
 } from '../../ui/index.ts';
 import { useTemplate, useTemplates } from '../templates/api.ts';
-import { passKeys } from './api.ts';
-import { markCreated } from './detail/stage-state.ts';
-import { fingerprint, newKey } from './format.ts';
+import { useCreatePass } from './new-pass-create.ts';
 import { ShowPassRow, StagePreview, useLivePreview } from './new-pass-preview.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
 import { HolderStep, OrgStep, TemplateStep } from './new-pass-steps.tsx';
@@ -35,6 +31,7 @@ import {
 import { displayName } from './template-groups.ts';
 
 type StepId = 'org' | 'template' | 'details' | 'holder' | 'review';
+const FORM_ID = 'new-pass-step';
 const TITLES: Record<StepId, string> = {
   org: 'Organization',
   template: 'Template',
@@ -51,7 +48,6 @@ export function NewPassPage({
   templateId?: string | undefined;
 }) {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const scope = useOrgScope().orgId;
   const orgs = useOrgOptions();
   const active = useMemo(
@@ -86,7 +82,6 @@ export function NewPassPage({
   const [input, setInput] = useState<FormValues>({});
   const [email, setEmail] = useState('');
   const [send, setSend] = useState(false);
-  const [showErrors, setShowErrors] = useState(false);
   const [createdId, setCreatedId] = useState<string>();
 
   // Seed schema defaults once per template so the form shows what the server applies.
@@ -121,31 +116,15 @@ export function NewPassPage({
     }),
     [orgId, templateId, input, email, send, validEmail],
   );
-  // The same payload on retry reuses the key, so a double submit cannot create two passes.
-  const keyRef = useRef<{ fp: string; key: string }>({ fp: '', key: '' });
-  const create = useMutation({
-    mutationFn: () => {
-      const fp = fingerprint(payload);
-      if (keyRef.current.fp !== fp) keyRef.current = { fp, key: newKey() };
-      return api.post('/api/v1/passes', PassDetailSchema, payload, {
-        headers: { 'idempotency-key': keyRef.current.key },
-      });
-    },
-    onSuccess: async (pass) => {
-      await qc.invalidateQueries({ queryKey: passKeys.all });
-      // The detail page renders its card on the first frame, so the preview morphs into it.
-      qc.setQueryData(passKeys.detail(pass.id), pass);
-      markMinted(pass.id);
-      markCreated(
-        pass.id,
-        payload.sendEmail,
-        (org && 'counts' in org ? org.counts.passes : 1) === 0,
-      );
-      setCreatedId(pass.id);
-    },
-  });
+  const create = useCreatePass(
+    payload,
+    (org && 'counts' in org ? org.counts.passes : 1) === 0,
+    setCreatedId,
+  );
+  // The pass's page replaces the wizard in history; it leads with "Pass created".
   useEffect(() => {
-    if (createdId) void navigate({ to: '/admin/passes/$passId', params: { passId: createdId } });
+    if (createdId)
+      void navigate({ to: '/admin/passes/$passId', params: { passId: createdId }, replace: true });
   }, [createdId, navigate]);
 
   const fieldErrors = useMemo(() => {
@@ -156,32 +135,35 @@ export function NewPassPage({
     return out;
   }, [create.error]);
   const inputErrors = schema ? validateValues(schema, input) : {};
-  const emailError = email.trim() && !validEmail ? EMAIL_INVALID_MESSAGE : fieldErrors?.holderEmail;
+  // Each step's errors show once Next is refused, then clear as they are fixed.
+  const check = useFormErrors<Partial<Record<string, string>>>(
+    at === 'org'
+      ? { org: orgId ? undefined : 'Choose an organization.' }
+      : at === 'template'
+        ? { template: templateId ? undefined : 'Choose a template.' }
+        : at === 'details'
+          ? inputErrors
+          : at === 'holder'
+            ? { holderEmail: email.trim() && !validEmail ? EMAIL_INVALID_MESSAGE : undefined }
+            : {},
+  );
+  const emailError = check.errors.holderEmail ?? fieldErrors?.holderEmail;
   const hiddenKeys = useMemo(
     () => keysBoundTo(template.data?.manifest, '/voided'),
     [template.data],
   );
 
-  const go = (to: number) => setStep(Math.max(0, Math.min(ids.length - 1, to)));
+  const go = (to: number) => {
+    check.reset();
+    setStep(Math.max(0, Math.min(ids.length - 1, to)));
+  };
   const index = (id: StepId) => ids.indexOf(id);
-  /** False keeps the step: the Wizard focuses the first error and announces the count. */
-  function next(): boolean {
-    if ((at === 'org' && !orgId) || (at === 'template' && !templateId)) {
-      setShowErrors(true);
-      return false;
-    }
-    if (at === 'details' && Object.keys(inputErrors).length > 0) {
-      setShowErrors(true);
-      return false;
-    }
-    if (at === 'holder' && emailError) return false;
-    setShowErrors(false);
+  /** Next with the step complete; a refused Next stays and Form focuses the first error. */
+  function advance() {
     if (at === 'review') create.mutate();
     else go(step + 1);
-    return true;
   }
   const chooseOrg = (id: string) => {
-    setShowErrors(false);
     if (id !== orgId) {
       setTemplateId(undefined);
       seeded.current = undefined;
@@ -190,7 +172,6 @@ export function NewPassPage({
     setOrgId(id);
   };
   const chooseTemplate = (id: string) => {
-    setShowErrors(false);
     if (id !== templateId) {
       seeded.current = undefined;
       setInput({});
@@ -226,98 +207,105 @@ export function NewPassPage({
         aside={aside}
         onCancel={() => void navigate({ to: '/admin/passes' })}
         {...(step > 0 ? { onBack: () => go(step - 1) } : {})}
-        onNext={next}
+        formId={FORM_ID}
         nextLabel={
           at === 'review' ? (payload.sendEmail ? 'Create and send' : 'Create pass') : 'Next'
         }
         busy={create.isPending}
       >
-        {at === 'org' ? (
-          <OrgStep
-            orgs={active}
-            loading={orgs.isPending}
-            error={orgs.error}
-            orgId={orgId}
-            choiceError={showErrors && !orgId ? 'Choose an organization.' : undefined}
-            onSelect={chooseOrg}
-            onCommit={(id) => {
-              chooseOrg(id);
-              go(step + 1);
-            }}
-          />
-        ) : null}
-        {at === 'template' ? (
-          <TemplateStep
-            templates={usable}
-            orgName={org?.name}
-            loading={templates.isPending}
-            error={templates.error}
-            templateId={templateId}
-            choiceError={showErrors && !templateId ? 'Choose a template.' : undefined}
-            onSelect={chooseTemplate}
-            onCommit={(id) => {
-              chooseTemplate(id);
-              go(step + 1);
-            }}
-          />
-        ) : null}
-        {at === 'details' ? (
-          template.isError ? (
-            <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />
-          ) : !template.data ? (
-            <SkeletonKeyValue label="Loading fields" />
-          ) : (
-            <>
-              {showPass}
-              <SchemaForm
-                schema={template.data.inputSchema}
-                value={input}
-                onChange={setInput}
-                hiddenKeys={hiddenKeys}
-                showAllErrors={showErrors}
-                serverErrors={fieldErrors}
-              />
-            </>
-          )
-        ) : null}
-        {at === 'holder' ? (
-          <HolderStep
-            email={email}
-            onEmail={setEmail}
-            error={emailError}
-            valid={validEmail}
-            send={send}
-            onSend={setSend}
-          />
-        ) : null}
-        {at === 'review' ? showPass : null}
-        {at === 'review' ? (
-          <ReviewStep
-            org={org?.name}
-            template={name}
-            schema={schema}
-            input={input}
-            email={email}
-            send={payload.sendEmail}
-            steps={{
-              ...(skipOrg ? {} : { org: index('org') }),
-              template: index('template'),
-              details: index('details'),
-              holder: index('holder'),
-            }}
-            onEdit={go}
-            warnings={live.preview?.warnings ?? []}
-            error={
-              create.isError ? (
-                <Callout tone="danger">
-                  {Object.keys(fieldErrors ?? {}).length > 0
-                    ? 'Fix the highlighted fields on Details or Holder.'
-                    : create.error.message}
-                </Callout>
-              ) : null
-            }
-          />
-        ) : null}
+        <Form
+          id={FORM_ID}
+          {...check.form}
+          onValid={advance}
+          className="flex min-w-0 flex-col gap-6"
+        >
+          {at === 'org' ? (
+            <OrgStep
+              orgs={active}
+              loading={orgs.isPending}
+              error={orgs.error}
+              orgId={orgId}
+              choiceError={check.errors.org}
+              onSelect={chooseOrg}
+              onCommit={(id) => {
+                chooseOrg(id);
+                go(step + 1);
+              }}
+            />
+          ) : null}
+          {at === 'template' ? (
+            <TemplateStep
+              templates={usable}
+              orgName={org?.name}
+              loading={templates.isPending}
+              error={templates.error}
+              templateId={templateId}
+              choiceError={check.errors.template}
+              onSelect={chooseTemplate}
+              onCommit={(id) => {
+                chooseTemplate(id);
+                go(step + 1);
+              }}
+            />
+          ) : null}
+          {at === 'details' ? (
+            template.isError ? (
+              <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />
+            ) : !template.data ? (
+              <SkeletonKeyValue label="Loading fields" />
+            ) : (
+              <>
+                {showPass}
+                <SchemaForm
+                  schema={template.data.inputSchema}
+                  value={input}
+                  onChange={setInput}
+                  hiddenKeys={hiddenKeys}
+                  showAllErrors={Object.values(check.errors).some(Boolean)}
+                  serverErrors={fieldErrors}
+                />
+              </>
+            )
+          ) : null}
+          {at === 'holder' ? (
+            <HolderStep
+              email={email}
+              onEmail={setEmail}
+              error={emailError}
+              valid={validEmail}
+              send={send}
+              onSend={setSend}
+            />
+          ) : null}
+          {at === 'review' ? showPass : null}
+          {at === 'review' ? (
+            <ReviewStep
+              org={org?.name}
+              template={name}
+              schema={schema}
+              input={input}
+              email={email}
+              send={payload.sendEmail}
+              steps={{
+                ...(skipOrg ? {} : { org: index('org') }),
+                template: index('template'),
+                details: index('details'),
+                holder: index('holder'),
+              }}
+              onEdit={go}
+              warnings={live.preview?.warnings ?? []}
+              error={
+                create.isError ? (
+                  <Callout tone="danger">
+                    {Object.keys(fieldErrors ?? {}).length > 0
+                      ? 'Fix the highlighted fields on Details or Holder.'
+                      : create.error.message}
+                  </Callout>
+                ) : null
+              }
+            />
+          ) : null}
+        </Form>
       </Wizard>
       <UnsavedChangesDialog blocker={guard} />
     </>

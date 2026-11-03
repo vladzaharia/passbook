@@ -13,6 +13,7 @@ import {
   type WalletMood,
   type WalletState,
 } from './art/index.ts';
+import { ACTED_STATES, type ActedState } from './art/state-acts.ts';
 import { Button } from './button.tsx';
 
 export interface EmptyStateProps {
@@ -20,7 +21,7 @@ export interface EmptyStateProps {
   art: ArtName;
   /** The mascot's pose when art is "wallet". */
   artState?: WalletState;
-  /** The buddy's mood (not inline): sad on a heading (not found, forbidden), else curious. */
+  /** The buddy's mood (not inline): sad on a heading, else curious. Not found and forbidden are sad. */
   mood?: WalletMood;
   title: string;
   /** One action: outline for navigation, primary only for create. */
@@ -38,12 +39,18 @@ export interface EmptyStateProps {
   className?: string;
 }
 
+/** Not found and forbidden: the SSR pages' compositions (art/state-acts.ts), always sad. */
+function stateOf(art: ArtName, artState: WalletState | undefined): ActedState | undefined {
+  if (art === 'torn') return 'torn';
+  if (art === 'lock') return 'no-access';
+  if (art === 'wallet' && artState === 'lost') return 'lost';
+  return undefined;
+}
+
 /** What the buddy acts out over each kind of empty box (art/buddy.tsx). */
-function sceneFor(art: ArtName, artState: WalletState | undefined, filtered: boolean): BuddyScene {
-  if (art === 'wallet') return artState === 'lost' ? 'peek' : 'search';
+function sceneFor(art: ArtName, filtered: boolean): BuddyScene {
+  if (art === 'wallet') return 'search';
   if (filtered) return 'sweep';
-  if (art === 'torn') return 'mend';
-  if (art === 'lock') return 'tug';
   if (art === 'log') return 'flip';
   return 'inspect';
 }
@@ -67,7 +74,8 @@ export function EmptyState({
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
   const Title = heading ? 'h1' : 'p';
-  const scene = sceneFor(art, artState, filtered);
+  const state = filtered ? undefined : stateOf(art, artState);
+  const scene = state ? ACTED_STATES[state].scene : sceneFor(art, filtered);
   // Filtered: the art dims under a lens. Not inline, the buddy holds it.
   const picture = (
     <>
@@ -104,7 +112,7 @@ export function EmptyState({
         <div className="relative mb-1">{picture}</div>
       ) : (
         <Buddy
-          mood={mood ?? (heading ? 'sad' : 'curious')}
+          mood={state ? 'sad' : (mood ?? (heading ? 'sad' : 'curious'))}
           still={still}
           scene={scene}
           {...(art === 'wallet'
