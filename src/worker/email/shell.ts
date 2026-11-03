@@ -17,7 +17,7 @@ const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light da
 .e-text{color:${D.text}!important}
 .e-strong{color:${D.strong}!important}
 .e-muted,.e-muted a{color:${D.muted}!important}
-.e-btn{background:${D.accent}!important;color:${D.accentOn}!important}
+.e-btn{background:${D.accent}!important;border-color:${D.accent}!important;color:${D.accentOn}!important}
 .e-block{border-color:${D.lineStrong}!important;color:${D.text}!important}
 .e-chip{background:${D.sunken}!important;color:${D.strong}!important}
 }`;
