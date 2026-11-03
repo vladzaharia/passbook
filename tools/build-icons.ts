@@ -81,9 +81,15 @@ async function ogImage(browser: Browser) {
   const markCss = readFileSync(resolve(root, 'src/web/ui/layout/brand-mark.css'), 'utf8');
   const font = readFileSync(resolve(root, 'public/fonts/rubik-var-latin.woff2')).toString('base64');
   const html = ogHtml({
-    // The resting frame: no entrance, beat or idle motion.
+    // The resting frame (L, the band's tier and line): no entrance, beat or idle motion.
     art: renderToStaticMarkup(
-      createElement(WalletArt as never, { state: 'login', seat: true, beat: false, still: true }),
+      createElement(WalletArt as never, {
+        state: 'login',
+        size: 'xl',
+        seat: true,
+        beat: false,
+        still: true,
+      }),
     ),
     mark: renderToStaticMarkup(createElement(BrandMark as never)),
     css: `${ART_CSS}\n${markCss}`,
