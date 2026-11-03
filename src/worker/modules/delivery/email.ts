@@ -1,3 +1,4 @@
+import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { passSummary } from '../../email/pass-summary.ts';
 import { writeEvent } from '../../platform/analytics.ts';
@@ -53,7 +54,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     supportUrl: orgSettings['support.url'] ?? branding.supportUrl,
     downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
     manageUrl: `${base}/p/${pass.downloadToken}`,
-    badgeUrl: `${base}/apple/badge/en/black@2x.png`,
+    badgeUrl: emailAssetUrl(base, '/apple/badge/en/black@2x.png'),
     attached: attach,
     passTitle:
       pass.displayTitle ?? (typeof passJson.description === 'string' ? passJson.description : null),

@@ -20,10 +20,14 @@ export const EMAIL_BUDDY = {
 export const buddyPath = (mood: EmailMood, density: 2 | 3) =>
   `/email/buddy-${mood}@${density}x.png`;
 
+/** Static assets answer a literal `@` with a 307 to `%40`; mail clients get the final URL. */
+export const emailAssetUrl = (base: string, path: string) =>
+  `${base}${path.replaceAll('@', '%40')}`;
+
 /** Decorative: empty alt, presentation role, fixed box so blocked images keep the layout. */
 export function buddyImg(base: string, mood: EmailMood): string {
   const { width, height } = EMAIL_BUDDY;
-  const src = escapeHtml(`${base}${buddyPath(mood, 2)}`);
-  const hi = escapeHtml(`${base}${buddyPath(mood, 3)}`);
+  const src = escapeHtml(emailAssetUrl(base, buddyPath(mood, 2)));
+  const hi = escapeHtml(emailAssetUrl(base, buddyPath(mood, 3)));
   return `<img src="${src}" srcset="${src} 2x, ${hi} 3x" alt="" role="presentation" width="${width}" height="${height}" border="0" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none">`;
 }

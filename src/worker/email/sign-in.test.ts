@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import headersFile from '../../../public/_headers?raw';
-import { EMAIL_BUDDY } from './buddy.ts';
+import { EMAIL_BUDDY, emailAssetUrl } from './buddy.ts';
 import { renderSignInEmail, SIGN_IN_MOOD, type SignInEmailInput } from './sign-in.ts';
 
 const BASE = 'https://wallet.test';
@@ -69,8 +69,8 @@ describe('renderSignInEmail', () => {
 describe('header buddy', () => {
   it('is happy when a sign-in link is sent and curious when an address is confirmed', () => {
     expect(SIGN_IN_MOOD).toEqual({ sign_in: 'happy', verify_email: 'curious' });
-    expect(buddyTag(signIn().html)).toContain(`src="${BASE}/email/buddy-happy@2x.png"`);
-    expect(buddyTag(verify().html)).toContain(`src="${BASE}/email/buddy-curious@2x.png"`);
+    expect(buddyTag(signIn().html)).toContain(`src="${BASE}/email/buddy-happy%402x.png"`);
+    expect(buddyTag(verify().html)).toContain(`src="${BASE}/email/buddy-curious%402x.png"`);
     expect(signIn().html).not.toContain('buddy-curious');
     expect(verify().html).not.toContain('buddy-happy');
   });
@@ -85,7 +85,7 @@ describe('header buddy', () => {
       `style="display:block;width:${EMAIL_BUDDY.width}px;height:${EMAIL_BUDDY.height}px;`,
     );
     expect(tag).toContain(
-      `srcset="${BASE}/email/buddy-happy@2x.png 2x, ${BASE}/email/buddy-happy@3x.png 3x"`,
+      `srcset="${BASE}/email/buddy-happy%402x.png 2x, ${BASE}/email/buddy-happy%403x.png 3x"`,
     );
     expect(tag).not.toMatch(/transform|position:/);
   });
@@ -117,5 +117,16 @@ describe('header buddy', () => {
     expect(rule).toContain('Cache-Control: public, max-age=86400');
     expect(rule).toContain('! Cross-Origin-Resource-Policy');
     expect(rule).toContain('Cross-Origin-Resource-Policy: cross-origin');
+  });
+});
+
+describe('emailAssetUrl', () => {
+  it('writes @ as %40, the URL static assets serve without a 307', () => {
+    expect(emailAssetUrl('https://w.test', '/apple/badge/en/black@2x.png')).toBe(
+      'https://w.test/apple/badge/en/black%402x.png',
+    );
+    expect(emailAssetUrl('https://w.test', '/email/buddy-happy@3x.png')).toBe(
+      'https://w.test/email/buddy-happy%403x.png',
+    );
   });
 });
