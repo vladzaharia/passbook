@@ -34,8 +34,9 @@ export function InWalletPill() {
 }
 
 /**
- * A flex column: the card takes the free height, so the title, org and actions sit at the bottom
- * on one line across a row of tiles. The actions beside the badge are badge-sized outline buttons.
+ * Three rows of the list's grid (subgrid): the card, then title and org, then the actions, so a
+ * row of tiles lines them up however their actions wrap. The actions beside the badge are
+ * badge-sized outline buttons.
  */
 function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const name = passName(pass);
@@ -47,9 +48,9 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
   const link = { to: '/passes/$passId', params: { passId: pass.id } } as const;
   return (
     // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
-    <Card className="flex h-full w-full flex-col gap-4 rounded-xl p-4">
+    <Card className="row-span-3 grid grid-rows-subgrid gap-y-3 rounded-xl p-4">
       {/* The card is a second way into the pass; the title link is the one in the tab order. */}
-      <Link {...link} tabIndex={-1} aria-hidden className="flex flex-1 items-center">
+      <Link {...link} tabIndex={-1} aria-hidden className="mb-1 flex items-center">
         <PassCardStage
           view={toView(pass)}
           mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
@@ -61,7 +62,7 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           transitionName={`pass-${pass.id}`}
         />
       </Link>
-      <div className={cn('mt-auto flex flex-col gap-3', dealt && 'wl-tile-chrome')}>
+      <div className={cn('contents', dealt && 'wl-tile-chrome')}>
         <div className="min-w-0">
           <div className="flex min-h-6 items-center justify-between gap-2">
             <h2 className="min-w-0 text-sm font-semibold text-fg-strong">
@@ -77,7 +78,8 @@ function PassTile({ pass, dealt }: { pass: MyPass; dealt: boolean }) {
           </div>
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         </div>
-        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 pointer-coarse:min-h-11">
+        {/* As tall as the badge with its clear space (52, 56 on touch), badge or not. */}
+        <div className="flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
           <div className="flex flex-wrap items-center gap-2">
             {voided || pass.inWallet || !qr || !publicUrl ? null : (
               <ShowQrButton passTitle={name} url={publicUrl} />
@@ -166,7 +168,11 @@ export function MyPassesPage() {
         <div>
           <ul className={GRID}>
             {passes.map((pass, i) => (
-              <li key={pass.id} className="flex min-w-0" style={{ '--i': i } as CSSProperties}>
+              <li
+                key={pass.id}
+                className="row-span-3 grid min-w-0 grid-rows-subgrid"
+                style={{ '--i': i } as CSSProperties}
+              >
                 <PassTile pass={pass} dealt={dealt} />
               </li>
             ))}
