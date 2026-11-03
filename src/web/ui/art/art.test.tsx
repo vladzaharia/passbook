@@ -153,7 +153,7 @@ describe('entity art', () => {
     const mouth = (mood?: WalletMood) =>
       new DOMParser()
         .parseFromString(renderToStaticMarkup(<WalletArt mood={mood} />), 'image/svg+xml')
-        .querySelector('[data-body] > path.m')
+        .querySelector('[data-trunk] > path.m')
         ?.getAttribute('d');
     expect(new Set([undefined, ...MOODS].map(mouth)).size).toBe(4);
     expect(mouth('happy')).toBe(mouth());
