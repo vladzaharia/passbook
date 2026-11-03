@@ -4,30 +4,44 @@ import { escapeHtml } from '../../shared/html.ts';
 export const EMAIL_MOODS = ['happy', 'curious'] as const;
 export type EmailMood = (typeof EMAIL_MOODS)[number];
 
-/**
- * The mascot for the email header, from tools/build-email-art.ts: the wallet art (96×72 view box)
- * in its dark palette at 1.25×. The crop (whole CSS pixels) runs from above the fan into the
- * pocket's bottom stroke, so it stands on the header's bottom edge, and ends 4 px right of it.
- * Transparent: the filled pocket carries its own contrast on light, grey and black.
- */
-export const EMAIL_BUDDY = {
-  scale: 1.25,
-  crop: { x: 7.2, y: 5.6, width: 76.8, height: 60.8 },
-  width: 96,
-  height: 76,
-} as const;
+/** One palette per scheme; dark clients that honour <picture> media swap to the dark art. */
+export const EMAIL_SCHEMES = ['light', 'dark'] as const;
+export type EmailScheme = (typeof EMAIL_SCHEMES)[number];
 
-export const buddyPath = (mood: EmailMood, density: 2 | 3) =>
-  `/email/buddy-${mood}@${density}x.png`;
+export const BUDDY_SLICES = ['top', 'legs'] as const;
+export type BuddySlice = (typeof BUDDY_SLICES)[number];
+
+/**
+ * The seated mascot over the email card, from tools/build-email-art.ts: the wallet art at the
+ * canonical L size (128×96) in each scheme's tokens, cut at the seam (its base, y 66 of 72). Mail
+ * clients cannot overlap two table cells, so the art is two images: the top stands in the band
+ * above the card, the legs and contact shadow sit in the card's first row, over the foil. The feet
+ * reach past the art's box (it draws with overflow visible), so the legs slice runs 12 px down.
+ */
+export const EMAIL_BUDDY = { width: 128, height: 96, seam: 88, legs: 12 } as const;
+
+export const sliceHeight = (slice: BuddySlice) =>
+  slice === 'top' ? EMAIL_BUDDY.seam : EMAIL_BUDDY.legs;
+
+export const buddyPath = (
+  mood: EmailMood,
+  scheme: EmailScheme,
+  slice: BuddySlice,
+  density: 2 | 3,
+) => `/email/buddy-${mood}-${scheme}-${slice}-${density}x.png`;
 
 /** Static assets answer a literal `@` with a 307 to `%40`; mail clients get the final URL. */
 export const emailAssetUrl = (base: string, path: string) =>
   `${base}${path.replaceAll('@', '%40')}`;
 
-/** Decorative: empty alt, presentation role, fixed box so blocked images keep the layout. */
-export function buddyImg(base: string, mood: EmailMood): string {
-  const { width, height } = EMAIL_BUDDY;
-  const src = escapeHtml(emailAssetUrl(base, buddyPath(mood, 2)));
-  const hi = escapeHtml(emailAssetUrl(base, buddyPath(mood, 3)));
-  return `<img src="${src}" srcset="${src} 2x, ${hi} 3x" alt="" role="presentation" width="${width}" height="${height}" border="0" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none">`;
+/** One slice. Decorative: empty alt, presentation role, fixed box so blocked images keep the layout. */
+export function buddySliceHtml(base: string, mood: EmailMood, slice: BuddySlice): string {
+  const width = EMAIL_BUDDY.width;
+  const height = sliceHeight(slice);
+  const set = (scheme: EmailScheme) =>
+    escapeHtml(
+      `${base}${buddyPath(mood, scheme, slice, 2)} 2x, ${base}${buddyPath(mood, scheme, slice, 3)} 3x`,
+    );
+  const src = escapeHtml(`${base}${buddyPath(mood, 'light', slice, 2)}`);
+  return `<picture><source srcset="${set('dark')}" media="(prefers-color-scheme: dark)"><img src="${src}" srcset="${set('light')}" alt="" role="presentation" width="${width}" height="${height}" border="0" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none"></picture>`;
 }
