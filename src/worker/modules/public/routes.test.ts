@@ -114,7 +114,7 @@ describe('GET /p/:token', () => {
     if (line === 'ipad') {
       expect(lines).toHaveLength(1);
       expect(lines[0]).toContain('wl-ipad-line');
-    } else expect(lines).toHaveLength(line);
+    } else expect(lines).toHaveLength(Number(line));
     expect(html).toContain('alt="Add to Apple Wallet"');
   });
 
