@@ -7,6 +7,7 @@ import { listOutboxForPass } from '../delivery/repo.ts';
 import { replacedBy } from './assets.ts';
 import { brandingWarnings, readBranding } from './branding.ts';
 import { resolveTemplate } from './builder.ts';
+import { pushBudgetOf } from './change-messages.ts';
 import { depsOf } from './deps.ts';
 import {
   currentPassJson,
@@ -160,6 +161,7 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
   const warnings = await warningsFor(ctx, pass, passJson);
   return {
     ...toSummary(pass),
+    pushBudget: await pushBudgetOf(ctx, pass.id),
     ownerName: owner?.name ?? null,
     ownerEmail: owner?.email ?? null,
     personalization: pass.personalization,

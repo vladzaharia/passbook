@@ -4,6 +4,7 @@ import { handleQueue } from './jobs/queue.ts';
 import type { AppEnv } from './platform/env.ts';
 import { createAuthStores } from './stores.ts';
 
+export { Broadcast } from './workflows/broadcast.ts';
 export { BulkReissue } from './workflows/bulk-reissue.ts';
 export { ConnectionSync } from './workflows/connection-sync.ts';
 export { TemplateImport } from './workflows/template-import.ts';

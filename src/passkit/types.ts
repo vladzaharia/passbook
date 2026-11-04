@@ -139,6 +139,11 @@ export interface TemplateManifest {
   org?: { slug: string; name: string };
   /** Files used for web previews only. They never enter the signed bundle. */
   previewOnlyAssets?: string[];
+  /**
+   * Opts in to broadcast messages: `input` is bound to a back field whose changeMessage is "%@",
+   * so a new value shows on the lock screen.
+   */
+  messaging?: { input: string };
 }
 
 export type Personalization = Record<string, Json>;

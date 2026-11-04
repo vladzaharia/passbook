@@ -54,6 +54,7 @@ export const ApiScopeSchema = z.enum([
   'passes:write',
   'holders:write',
   'templates:read',
+  'messages:write',
 ]);
 export const RoleSchema = z.enum(['admin', 'user']);
 

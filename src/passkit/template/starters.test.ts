@@ -101,14 +101,20 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
 
   it('keeps change messages to time-critical fields and never repeats free text', async () => {
     const { template } = await loadBaked(slug);
-    const text = JSON.stringify(template.passJson);
+    // "%@" shows the whole new value: only the broadcast message field may do that.
+    const text = JSON.stringify(template.passJson).replace(
+      '{"key":"message","label":"Message","value":"","changeMessage":"%@"}',
+      '',
+    );
     expect(text).not.toContain('"changeMessage":"%@"');
     const keys = Object.values((template.passJson[style] as object) ?? {})
       .flat()
       .filter((f): f is PassField => typeof f === 'object' && f !== null && 'changeMessage' in f)
       .map((f) => f.key.replace(/-poster$/, ''));
     for (const key of keys)
-      expect(['gate', 'departs', 'date', 'time', 'status', 'balance', 'tier']).toContain(key);
+      expect(['message', 'gate', 'departs', 'date', 'time', 'status', 'balance', 'tier']).toContain(
+        key,
+      );
   });
 
   it('uses only slots its style draws', async () => {

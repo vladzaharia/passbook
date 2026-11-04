@@ -297,5 +297,8 @@
   "previewOnlyAssets": [
     "background@2x.png",
     "background@3x.png"
-  ]
+  ],
+  "messaging": {
+    "input": "message"
+  }
 }

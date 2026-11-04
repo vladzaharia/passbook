@@ -93,7 +93,18 @@ export const PassVoidedSchema = z.object({
   actorLabel: z.string().nullable(),
 });
 
+/** Notifying updates of a pass in the last 24 hours against the daily limit. */
+export const PushBudgetSchema = z.object({
+  used: z.number().int().nonnegative(),
+  limit: z.number().int().nonnegative(),
+  /** When the oldest counted update leaves the window; null while none counts. */
+  resetsAt: TimestampSchema.nullable(),
+});
+
+export type PushBudgetDto = z.infer<typeof PushBudgetSchema>;
+
 export const PassDetailSchema = PassSummarySchema.extend({
+  pushBudget: PushBudgetSchema,
   /** Owner's display name and email (null when unowned); the summary carries only the id. */
   ownerName: z.string().nullable(),
   ownerEmail: z.string().nullable(),

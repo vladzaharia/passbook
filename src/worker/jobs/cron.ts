@@ -1,6 +1,7 @@
 import { dailyApple } from '../modules/apple/jobs.ts';
 import { dailyAudit } from '../modules/audit/jobs.ts';
 import { dailyAuth } from '../modules/auth/jobs.ts';
+import { startDueBroadcasts } from '../modules/broadcasts/start.ts';
 import { dailyConnections, reconcileConnections } from '../modules/connections/jobs.ts';
 import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyEvents } from '../modules/events/jobs.ts';
@@ -25,6 +26,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
     { name: 'passes.stale_reissue', run: reissueStalePasses },
+    { name: 'broadcasts.start', run: startDueBroadcasts },
   ],
   [DAILY_CRON]: [
     { name: 'passes.retention', run: dailyPasses },

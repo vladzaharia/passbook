@@ -206,6 +206,15 @@
         "x-group": "Links",
         "x-order": 180,
         "x-widget": "url"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 169,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back. A change notifies the holder."
       }
     }
   },
@@ -321,6 +330,16 @@
       },
       "value": "{{seat}}",
       "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}",
+      "remove": {
+        "input": "message",
+        "empty": true
+      }
     },
     {
       "to": {
@@ -584,5 +603,8 @@
         "leadMinutes": 60
       }
     }
-  ]
+  ],
+  "messaging": {
+    "input": "message"
+  }
 }

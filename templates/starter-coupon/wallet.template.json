@@ -87,6 +87,15 @@
         "x-label": "Store longitude",
         "x-group": "Location",
         "x-order": 201
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 39,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back. A change notifies the holder."
       }
     },
     "dependentRequired": {
@@ -123,6 +132,16 @@
         "field": "expires"
       },
       "value": "{{expirationDate}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}",
+      "remove": {
+        "input": "message",
+        "empty": true
+      }
     },
     {
       "to": {
@@ -214,5 +233,8 @@
       "offer",
       "code"
     ]
+  },
+  "messaging": {
+    "input": "message"
   }
 }

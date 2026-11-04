@@ -7,11 +7,15 @@ export interface PassListFilter {
   /** The caller's mode; admin and API lists always set it. */
   mode?: Mode;
   templateId?: string;
+  /** Any of these templates. */
+  templateIds?: string[];
   connectionId?: string;
   status?: PassStatus;
   holderEmail?: string;
   holderState?: 'unassigned' | 'waiting' | 'owned';
   onDevice?: boolean;
+  /** Skips passes removed from Wallet. */
+  excludeRemoved?: boolean;
   q?: string;
   cursor?: string;
   limit: number;
@@ -23,11 +27,11 @@ const HOLDER_STATE_SQL = {
   owned: 'owner_user_id IS NOT NULL',
 } as const;
 
-/** Newest first by id (UUIDv7). Search is prefix-only on display fields, exact on serial. */
-export async function listPasses(
-  db: D1Database,
-  filter: PassListFilter,
-): Promise<{ items: Pass[]; nextCursor: string | null }> {
+/** The WHERE clauses and parameters for a filter, shared by lists and counts. */
+export function passFilterSql(filter: PassListFilter): {
+  where: string[];
+  params: (string | number)[];
+} {
   const where: string[] = ['deleted_at IS NULL'];
   const params: (string | number)[] = [];
   const add = (sql: string, ...values: (string | number)[]) => {
@@ -37,6 +41,8 @@ export async function listPasses(
   if (filter.orgId) add('org_id = ?', filter.orgId);
   if (filter.mode) add('mode = ?', filter.mode);
   if (filter.templateId) add('template_id = ?', filter.templateId);
+  if (filter.templateIds?.length)
+    add(`template_id IN (${filter.templateIds.map(() => '?').join(', ')})`, ...filter.templateIds);
   if (filter.connectionId) add('connection_id = ?', filter.connectionId);
   if (filter.status) add('status = ?', filter.status);
   if (filter.holderEmail) add('holder_email = ?', filter.holderEmail);
@@ -45,6 +51,7 @@ export async function listPasses(
     where.push(
       `${filter.onDevice ? '' : 'NOT '}EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = passes.id)`,
     );
+  if (filter.excludeRemoved) where.push('removed_at IS NULL');
   if (filter.cursor) add('id < ?', filter.cursor);
   const q = filter.q?.trim();
   if (q) {
@@ -66,6 +73,15 @@ export async function listPasses(
       q,
     );
   }
+  return { where, params };
+}
+
+/** Newest first by id (UUIDv7). Search is prefix-only on display fields, exact on serial. */
+export async function listPasses(
+  db: D1Database,
+  filter: PassListFilter,
+): Promise<{ items: Pass[]; nextCursor: string | null }> {
+  const { where, params } = passFilterSql(filter);
   const rows = await all<PassDbRow>(
     db,
     `${PASS_SELECT} WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,

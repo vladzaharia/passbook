@@ -9,7 +9,7 @@ import { isPersonalized } from '../apple/repo-personalize.ts';
 import { dispatchSafely } from '../delivery/service.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { buildArtifact } from './builder.ts';
-import { notifiesHolder } from './change-messages.ts';
+import { notifiesHolder, overBudget, pushBudgetOf } from './change-messages.ts';
 import {
   casMeta,
   casPublish,
@@ -60,6 +60,8 @@ export interface PublishOptions {
 export interface PublishResult {
   pass: Pass;
   changed: boolean;
+  /** The update would have notified, but the pass is at its daily limit: it went out silent. */
+  silenced?: boolean;
 }
 
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -97,7 +99,7 @@ export async function publishPass(
     // Older passes get their scan code on the first publish after it was introduced.
     const scanCode = current.scanCode ?? newScanCode(ctx);
     const removal = current.removedAt !== null ? await getRemoval(db, current.id) : null;
-    const artifact = await buildArtifact(buildCtx, {
+    const buildRequest = {
       orgId: current.orgId,
       orgName: org.name,
       branding: org.branding,
@@ -120,8 +122,10 @@ export async function publishPass(
       templateVersion: next.templateVersion,
       personalization: next.personalization,
       status: next.status,
-    });
-    const passJson = JSON.stringify(artifact.passJson);
+    };
+    let artifact = await buildArtifact(buildCtx, buildRequest);
+    const previousParsed = previousJson ? (JSON.parse(previousJson) as PassJson) : null;
+    let passJson = JSON.stringify(artifact.passJson);
     // A template upgrade that leaves pass.json and every asset unchanged is not a new pass:
     // devices must not be pushed (catalog 22). Legacy rows without a hash compare pass.json.
     const sameContent =
@@ -154,6 +158,17 @@ export async function publishPass(
         continue;
       }
       return { pass: (await getPass(db, current.id)) ?? current, changed: false };
+    }
+
+    // Push budget: a publish that would notify past the daily limit is rebuilt without messages.
+    let silenced = false;
+    if (
+      notifiesHolder(artifact.passJson, previousParsed) &&
+      overBudget(await pushBudgetOf(ctx, current.id))
+    ) {
+      artifact = await buildArtifact(buildCtx, { ...buildRequest, silent: true });
+      passJson = JSON.stringify(artifact.passJson);
+      silenced = true;
     }
 
     const now = ctx.clock.now();
@@ -220,12 +235,8 @@ export async function publishPass(
           cause: options.cause,
           source: options.source ?? null,
           // Only a resign skips the push; a push carries a message when a field with one changed.
-          notified:
-            pushes &&
-            notifiesHolder(
-              artifact.passJson,
-              previousJson ? (JSON.parse(previousJson) as PassJson) : null,
-            ),
+          notified: pushes && notifiesHolder(artifact.passJson, previousParsed),
+          ...(silenced ? { overBudget: true } : {}),
         },
       },
       ...(pushes
@@ -239,7 +250,7 @@ export async function publishPass(
         : []),
     ]);
     if (options.dispatch !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
-    return { pass, changed: true };
+    return { pass, changed: true, ...(silenced ? { silenced } : {}) };
   }
   throw new ConflictError('The pass changed while publishing. Retry.', 'PASS_CONFLICT');
 }

@@ -237,6 +237,8 @@ export function validateManifest(
       );
   }
 
+  if (manifest.messaging !== undefined) checkMessaging(manifest, inputNames, options, error);
+
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)
       if (!options.assetNames.includes(name))
@@ -247,6 +249,47 @@ export function validateManifest(
         );
   }
   return issues;
+}
+
+const MESSAGE_CHANGE = '%@';
+
+/** `messaging.input` must exist and drive a back field that shows its new value as the message. */
+function checkMessaging(
+  manifest: TemplateManifest,
+  inputNames: Set<string>,
+  options: ValidateManifestOptions,
+  error: (code: string, message: string, path?: string) => void,
+): void {
+  const input = (manifest.messaging as { input?: unknown } | null)?.input;
+  if (typeof input !== 'string' || !inputNames.has(input)) {
+    error('MESSAGING_INPUT', `messaging.input "${String(input)}" is not an input.`, 'messaging');
+    return;
+  }
+  if (!options.passJson) return;
+  const messageKeys = new Set<string>();
+  for (const style of BINDING_STYLE_GROUPS.styles) {
+    const dict = options.passJson[style];
+    const back = isRecord(dict) ? (dict as Record<string, unknown>).backFields : undefined;
+    if (Array.isArray(back))
+      for (const f of back as { key?: unknown; changeMessage?: unknown }[])
+        if (f.changeMessage === MESSAGE_CHANGE) messageKeys.add(String(f.key));
+  }
+  const bound = (manifest.bindings ?? []).some((binding) => {
+    const to = targetOf(binding);
+    if (!('field' in to) || 'prop' in to) return false;
+    const keys = Array.isArray(to.field) ? (to.field as string[]) : [String(to.field)];
+    return (
+      keys.some((key) => messageKeys.has(key)) &&
+      binding.value !== undefined &&
+      exprReferences(binding.value).inputs.includes(input)
+    );
+  });
+  if (!bound)
+    error(
+      'MESSAGING_FIELD',
+      `Bind "${input}" to a back field whose changeMessage is "%@".`,
+      'messaging',
+    );
 }
 
 /** cfworker also reports every ancestor of a failing value; keep the innermost errors. */

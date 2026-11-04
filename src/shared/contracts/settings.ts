@@ -20,6 +20,8 @@ export const PlatformSettingsSchema = z.object({
   'retention.auditDays': z.number().int().min(30).max(3650).default(365),
   /** Sync log and device activity (pass_events). */
   'retention.eventsDays': z.number().int().min(7).max(3650).default(90),
+  /** Notifying updates one pass may get per rolling 24 hours; later updates are silent. */
+  'push.budgetPerDay': z.number().int().min(0).max(50).default(3),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z
