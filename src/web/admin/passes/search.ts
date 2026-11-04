@@ -20,7 +20,17 @@ export const newPassSearchSchema = z.object({
 
 export const passDetailSearchSchema = z.object({
   tab: opt(
-    z.enum(['fields', 'holder', 'images', 'delivery', 'versions', 'connection', 'activity']),
+    z.enum([
+      'fields',
+      'holder',
+      'devices',
+      'sync',
+      'images',
+      'delivery',
+      'versions',
+      'connection',
+      'activity',
+    ]),
   ),
   v: opt(z.coerce.number().int()),
 });

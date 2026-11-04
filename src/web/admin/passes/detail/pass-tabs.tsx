@@ -5,10 +5,12 @@ import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts'
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
 import type { Tab } from './detail-page.tsx';
+import { DevicesTab } from './devices-tab.tsx';
 import { FieldsTab } from './fields-tab.tsx';
 import { HolderTab } from './holder-tab.tsx';
 import { ImagesTab } from './images-tab.tsx';
 import { ActivityTab } from './info-tabs.tsx';
+import { SyncTab } from './sync-tab.tsx';
 import { VersionsTab } from './versions-tab.tsx';
 
 type Template = UseQueryResult<import('zod').infer<typeof TemplateDetailSchema>>;
@@ -48,6 +50,12 @@ export function PassTabs({
       </TabsContent>
       <TabsContent value="holder">
         <HolderTab pass={pass} />
+      </TabsContent>
+      <TabsContent value="devices" className="min-w-0">
+        <DevicesTab pass={pass} active={tab === 'devices'} />
+      </TabsContent>
+      <TabsContent value="sync" className="min-w-0">
+        <SyncTab pass={pass} active={tab === 'sync'} />
       </TabsContent>
       <TabsContent value="delivery" className="min-w-0">
         <DeliveryTab pass={pass} />

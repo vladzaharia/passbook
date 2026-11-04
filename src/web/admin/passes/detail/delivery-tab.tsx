@@ -26,7 +26,6 @@ import {
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
 import { newKey } from '../format.ts';
-import { DevicesCard } from './devices-card.tsx';
 
 type Entry = z.infer<typeof DeliveryEntrySchema>;
 const ListSchema = z.object({ items: z.array(DeliveryEntrySchema) });
@@ -257,7 +256,6 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
           />
         )}
       </Card>
-      <DevicesCard pass={pass} />
     </div>
   );
 }

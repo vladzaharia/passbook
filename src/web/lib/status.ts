@@ -7,6 +7,7 @@ import {
   CirclePause,
   Clock,
   Eye,
+  EyeOff,
   Loader2,
   Lock,
   type LucideIcon,
@@ -46,8 +47,38 @@ export const HEALTH_STATUS = {
 export const PASS_STATUS = {
   active: { label: 'Active', tone: 'success', icon: CheckCircle2 },
   voided: { label: 'Voided', tone: 'neutral', icon: Ban },
+  /** Taken off holders' devices: Wallet files it under Expired passes. */
+  removed: { label: 'Removed', tone: 'neutral', icon: EyeOff },
   /** On the holder's own list: the pass is already in a Wallet. */
   in_wallet: { label: 'In Wallet', tone: 'success', icon: WalletCards },
+} as const satisfies Record<string, StatusEntry>;
+
+/** Where a registered device stands against the pass's current version (events ledger). */
+export const DEVICE_SYNC_STATUS = {
+  device_current: { label: 'Up to date', tone: 'success', icon: CheckCircle2 },
+  device_waiting: {
+    label: 'Waiting',
+    tone: 'info',
+    icon: Clock,
+    hint: 'Pushed, and the device has not fetched the new version yet.',
+  },
+  push_failing: {
+    label: 'Push failing',
+    tone: 'danger',
+    icon: XCircle,
+    hint: 'Apple rejected the last push to this device.',
+  },
+  device_removed: {
+    label: 'Removed from device',
+    tone: 'neutral',
+    icon: Ban,
+    hint: 'The device unregistered the pass.',
+  },
+  device_unknown: { label: 'No activity', tone: 'neutral', icon: CircleDashed },
+  /** After a remove: the device fetched the final version, or the holder deleted the pass. */
+  removal_fetched: { label: 'Removed', tone: 'success', icon: CheckCircle2 },
+  removal_deleted: { label: 'Deleted by holder', tone: 'success', icon: CheckCircle2 },
+  removal_pending: { label: 'Waiting', tone: 'info', icon: Clock },
 } as const satisfies Record<string, StatusEntry>;
 
 /** An organization paused by an admin: its passes stop updating until reactivated. */
@@ -135,6 +166,7 @@ export const MARKER_STATUS = {
 export const STATUS_VOCAB = {
   ...HEALTH_STATUS,
   ...PASS_STATUS,
+  ...DEVICE_SYNC_STATUS,
   ...ORG_STATUS,
   ...EMAIL_STATUS,
   ...HOLDER_STATUS,

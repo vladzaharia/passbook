@@ -86,11 +86,24 @@ describe('pass actions', () => {
       'rotate',
       'download',
       'copy',
+      'remove',
       'clear',
       'delete',
     ]);
     const bound = { ...manual, connectionId: 'c1' };
     expect(ids(bound)[0]).toBe('pull');
+  });
+  it('offers only Restore in the bar of a removed pass, with no Void, Update or Pull', () => {
+    const removed = {
+      ...(passSummary() as Parameters<typeof actionsFor>[0]),
+      status: 'voided' as const,
+      removedAt: 5,
+    };
+    const defs = actionsFor(removed);
+    expect(defs.filter((d) => d.bar).map((d) => d.id)).toEqual(['restore']);
+    const all = defs.map((d) => d.id);
+    for (const gone of ['void', 'unvoid', 'update', 'pull', 'remove'])
+      expect(all).not.toContain(gone);
   });
   it('offers only Unvoid in the bar of a voided pass and never Update or Pull', () => {
     const voided = {

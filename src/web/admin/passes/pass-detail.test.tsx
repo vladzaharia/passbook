@@ -429,16 +429,14 @@ describe('pass detail: tabs', () => {
     expect(crumb).not.toHaveTextContent('p1');
   });
 
-  it('lists devices in Delivery and counts them in the header', async () => {
+  it('counts devices in the header; the list lives in the Devices tab', async () => {
     await renderApp('/admin/passes/p1?tab=delivery', {
       session: 'admin',
       handlers: handlers(newServer()),
     });
     expect(await screen.findByText('On 2 devices')).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Devices' })).toBeNull();
-    const devices = screen.getByRole('list', { name: 'Devices' });
-    expect(within(devices).getByText('a1b2c3')).toBeInTheDocument();
-    expect(within(devices).getByText('No push yet')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Devices' })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Devices' })).toBeNull();
   });
 
   it('says why each push went, and that a push with no device reached nothing', async () => {

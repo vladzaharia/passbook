@@ -8,6 +8,8 @@ import { copyText } from '../../lib/clipboard.ts';
 import { clearHolderConfirm, deleteConfirm, voidConfirm } from '../../lib/confirms.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
 import { usePassActions } from './api.ts';
+import { RemoveDialog } from './detail/remove-dialog.tsx';
+import { usePassRemoval } from './detail/sync-api.ts';
 import { absoluteUrl } from './format.ts';
 import { RotatedLinkDialog } from './rotated-link-dialog.tsx';
 
@@ -16,6 +18,8 @@ export type PassActionId =
   | 'pull'
   | 'void'
   | 'unvoid'
+  | 'remove'
+  | 'restore'
   | 'open'
   | 'rotate'
   | 'download'
@@ -33,13 +37,15 @@ type ActionPass = Pick<
   | 'holderState'
   | 'holderEmail'
   | 'deviceCount'
->;
+> & { removedAt?: number | null | undefined };
 
 const LABEL: Record<PassActionId, string> = {
   update: 'Update devices',
   pull: 'Pull from source',
   void: 'Void',
   unvoid: 'Unvoid',
+  remove: 'Remove from Wallet',
+  restore: 'Restore',
   open: 'Open public page',
   rotate: 'Rotate link',
   download: 'Download .pkpass',
@@ -52,6 +58,8 @@ const ICON: Record<PassActionId, LucideIcon> = {
   pull: ACTION_ICON.refresh,
   void: ACTION_ICON.void,
   unvoid: ACTION_ICON.unvoid,
+  remove: ACTION_ICON.removeFromWallet,
+  restore: ACTION_ICON.restoreToWallet,
   open: ACTION_ICON.openPublic,
   rotate: ACTION_ICON.rotate,
   download: ACTION_ICON.download,
@@ -59,7 +67,7 @@ const ICON: Record<PassActionId, LucideIcon> = {
   clear: UserMinus,
   delete: ACTION_ICON.delete,
 };
-const DANGER = new Set<PassActionId>(['clear', 'delete']);
+const DANGER = new Set<PassActionId>(['remove', 'clear', 'delete']);
 
 export interface PassActionDef {
   id: PassActionId;
@@ -72,16 +80,30 @@ export interface PassActionDef {
 
 /**
  * Every action a pass offers, in order. The header and the row menu both read this, so they always
- * offer the same set. A voided pass shows only Unvoid in the bar and never Update or Pull.
+ * offer the same set. A voided pass shows only Unvoid in the bar and never Update or Pull. A
+ * removed pass shows only Restore: it stays removed until restored, so Void and Update would lie.
  */
 export function actionsFor(pass: ActionPass): PassActionDef[] {
+  const removed = pass.removedAt != null;
   const voided = pass.status === 'voided';
-  const ids: PassActionId[] = voided
-    ? ['unvoid', 'open', 'rotate', 'download', 'copy']
-    : [pass.connectionId ? 'pull' : 'update', 'void', 'open', 'rotate', 'download', 'copy'];
+  const ids: PassActionId[] = removed
+    ? ['restore', 'open', 'rotate', 'download', 'copy']
+    : voided
+      ? ['unvoid', 'open', 'rotate', 'download', 'copy', 'remove']
+      : [
+          pass.connectionId ? 'pull' : 'update',
+          'void',
+          'open',
+          'rotate',
+          'download',
+          'copy',
+          'remove',
+        ];
   if (pass.holderState !== 'unassigned') ids.push('clear');
   ids.push('delete');
-  const bar = new Set<PassActionId>(voided ? ['unvoid'] : ['update', 'pull', 'void', 'open']);
+  const bar = new Set<PassActionId>(
+    removed ? ['restore'] : voided ? ['unvoid'] : ['update', 'pull', 'void', 'open'],
+  );
   return ids.map((id) => ({
     id,
     label: LABEL[id],
@@ -114,8 +136,9 @@ export function usePassActionRunner(
   options: { onDeleted?: () => void } = {},
 ): PassActionRunner {
   const actions = usePassActions(pass.id);
+  const removal = usePassRemoval(pass.id);
   const navigate = useNavigate();
-  const [ask, setAsk] = useState<'void' | 'clear' | 'delete' | 'rotate' | null>(null);
+  const [ask, setAsk] = useState<'void' | 'clear' | 'delete' | 'rotate' | 'remove' | null>(null);
   const [rotated, setRotated] = useState<PassLinks | null>(null);
   const [done, setDone] = useState<Partial<Record<PassActionId, number>>>({});
   const bump = (id: PassActionId) => setDone((d) => ({ ...d, [id]: (d[id] ?? 0) + 1 }));
@@ -151,6 +174,16 @@ export function usePassActionRunner(
     }
   }
 
+  async function restore() {
+    try {
+      await removal.restore.mutateAsync();
+      bump('restore');
+      toast.success('Pass restored');
+    } catch (error) {
+      toast.error(error, 'Could not restore');
+    }
+  }
+
   async function copy() {
     if (links && (await copyText(absoluteUrl(links.publicUrl), 'link'))) bump('copy');
   }
@@ -158,10 +191,18 @@ export function usePassActionRunner(
   function run(id: PassActionId) {
     if (id === 'update' || id === 'pull') void refresh(id);
     else if (id === 'unvoid') void unvoid();
+    else if (id === 'restore') void restore();
     else if (id === 'copy') void copy();
     else if (id === 'open' && links) window.open(links.publicUrl, '_blank', 'noopener,noreferrer');
     else if (id === 'download' && links) window.location.assign(links.downloadUrl);
-    else if (id === 'void' || id === 'clear' || id === 'delete' || id === 'rotate') setAsk(id);
+    else if (
+      id === 'void' ||
+      id === 'remove' ||
+      id === 'clear' ||
+      id === 'delete' ||
+      id === 'rotate'
+    )
+      setAsk(id);
   }
 
   const close = (open: boolean) => !open && setAsk(null);
@@ -176,6 +217,15 @@ export function usePassActionRunner(
           await actions.setVoided.mutateAsync(true);
           bump('void');
           toast.success('Pass voided');
+        }}
+      />
+      <RemoveDialog
+        open={ask === 'remove'}
+        onOpenChange={close}
+        onConfirm={async (message) => {
+          await removal.remove.mutateAsync(message);
+          bump('remove');
+          toast.success('Pass removed from Wallet');
         }}
       />
       <ConfirmDialog
@@ -232,6 +282,7 @@ export function usePassActionRunner(
       update: actions.refreshFromSource.isPending,
       pull: actions.refreshFromSource.isPending,
       unvoid: actions.setVoided.isPending,
+      restore: removal.restore.isPending,
     },
     done,
     dialogs,

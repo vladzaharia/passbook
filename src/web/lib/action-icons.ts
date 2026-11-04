@@ -1,8 +1,10 @@
 import {
+  ArchiveRestore,
   Ban,
   Copy,
   Download,
   ExternalLink,
+  EyeOff,
   LogOut,
   type LucideIcon,
   Mail,
@@ -32,6 +34,9 @@ export const ACTION_ICON = {
   rotate: RotateCw,
   void: Ban,
   unvoid: Undo2,
+  /** Remove from Wallet, and its undo. */
+  removeFromWallet: EyeOff,
+  restoreToWallet: ArchiveRestore,
   delete: Trash2,
   /** Revoke a session, sign out. */
   signOut: LogOut,
