@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "0c55b7c234a6d4dad90d40ba3145cf2a0563e4da";
+export const BAKED_BUILD_HASH = "02601fecc1a9ea658ef69911e0635f47b381355d";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "994290705ddb37c7",
+    "version": "209e027febcec51d",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -426,8 +426,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "issuer-poster",
             "label": "Pass service",
-            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
-            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+            "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>"
           }
         ]
       },
@@ -505,8 +505,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "issuer",
             "label": "Pass service",
-            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
-            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+            "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>"
           }
         ]
       }
@@ -523,7 +523,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/artwork@2x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/artwork@2x.png"
         }
       },
       {
@@ -537,7 +537,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/artwork@3x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/artwork@3x.png"
         }
       },
       {
@@ -550,7 +550,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/209e027febcec51d/en.lproj/pass.strings"
         }
       },
       {
@@ -564,7 +564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/icon@2x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/icon@2x.png"
         }
       },
       {
@@ -578,7 +578,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/icon@3x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/icon@3x.png"
         }
       },
       {
@@ -592,7 +592,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/logo@2x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/logo@2x.png"
         }
       },
       {
@@ -606,7 +606,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/logo@3x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/logo@3x.png"
         }
       },
       {
@@ -620,7 +620,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/primaryLogo@2x.png"
         }
       },
       {
@@ -634,7 +634,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/994290705ddb37c7/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/209e027febcec51d/primaryLogo@3x.png"
         }
       }
     ],
@@ -643,13 +643,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 86361,
         "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
-        "path": "/templates/henrys-blue/994290705ddb37c7/background@2x.png"
+        "path": "/templates/henrys-blue/209e027febcec51d/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 156846,
         "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
-        "path": "/templates/henrys-blue/994290705ddb37c7/background@3x.png"
+        "path": "/templates/henrys-blue/209e027febcec51d/background@3x.png"
       }
     ],
     "report": {
@@ -660,7 +660,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "01dcec9fd38add9c",
+    "version": "6cc9eb33aefb625e",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -1078,8 +1078,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "issuer-poster",
             "label": "Pass service",
-            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
-            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+            "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>"
           }
         ]
       },
@@ -1157,8 +1157,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "issuer",
             "label": "Pass service",
-            "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
-            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+            "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/",
+            "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>"
           }
         ]
       }
@@ -1175,7 +1175,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/artwork@2x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/artwork@2x.png"
         }
       },
       {
@@ -1189,7 +1189,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/artwork@3x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/artwork@3x.png"
         }
       },
       {
@@ -1202,7 +1202,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/en.lproj/pass.strings"
         }
       },
       {
@@ -1216,7 +1216,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/icon@2x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/icon@2x.png"
         }
       },
       {
@@ -1230,7 +1230,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/icon@3x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/icon@3x.png"
         }
       },
       {
@@ -1244,7 +1244,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/logo@2x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/logo@2x.png"
         }
       },
       {
@@ -1258,7 +1258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/logo@3x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/logo@3x.png"
         }
       },
       {
@@ -1272,7 +1272,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/primaryLogo@2x.png"
         }
       },
       {
@@ -1286,7 +1286,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/01dcec9fd38add9c/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/6cc9eb33aefb625e/primaryLogo@3x.png"
         }
       }
     ],
@@ -1295,13 +1295,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "background@2x.png",
         "size": 89428,
         "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
-        "path": "/templates/henrys-copper/01dcec9fd38add9c/background@2x.png"
+        "path": "/templates/henrys-copper/6cc9eb33aefb625e/background@2x.png"
       },
       {
         "name": "background@3x.png",
         "size": 161342,
         "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
-        "path": "/templates/henrys-copper/01dcec9fd38add9c/background@3x.png"
+        "path": "/templates/henrys-copper/6cc9eb33aefb625e/background@3x.png"
       }
     ],
     "report": {

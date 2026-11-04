@@ -104,8 +104,8 @@
       {
         "key": "issuer-poster",
         "label": "Pass service",
-        "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
-        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+        "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/",
+        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>"
       }
     ]
   },
@@ -183,8 +183,8 @@
       {
         "key": "issuer",
         "label": "Pass service",
-        "value": "Operated by Vlad Zaharia. Support: https://wallet.plrs.im/",
-        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://wallet.plrs.im/\">wallet.plrs.im</a>"
+        "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/",
+        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>"
       }
     ]
   }
