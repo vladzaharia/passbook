@@ -52,6 +52,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     templateName: row.template_name,
     orgName: row.org_name,
     status: row.status,
+    mode: row.mode,
     modifiedAt: row.modified_at,
     lastRefreshedAt: row.last_refreshed_at,
     refreshRequestedAt: row.refresh_requested_at,

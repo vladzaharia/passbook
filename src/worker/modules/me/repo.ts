@@ -13,6 +13,7 @@ export interface MyPassRow {
   display_title: string | null;
   display_subtitle: string | null;
   status: 'active' | 'voided';
+  mode: 'live' | 'test';
   modified_at: number;
   last_refreshed_at: number | null;
   refresh_requested_at: number | null;
@@ -26,7 +27,7 @@ export interface MyPassRow {
 
 // pass_versions keeps the built pass.json for recent versions; it is what the card renders.
 const SELECT = `
-  SELECT p.id, p.org_id, p.template_id, p.template_version, p.display_title, p.display_subtitle, p.status, p.modified_at, p.last_refreshed_at,
+  SELECT p.id, p.org_id, p.template_id, p.template_version, p.display_title, p.display_subtitle, p.status, p.mode, p.modified_at, p.last_refreshed_at,
          p.refresh_requested_at, p.download_token, t.name AS template_name, o.name AS org_name,
          COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json,
          EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered

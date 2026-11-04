@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const MyPassSchema = z.object({
   id: IdSchema,
@@ -8,6 +8,8 @@ export const MyPassSchema = z.object({
   templateName: z.string(),
   orgName: z.string(),
   status: z.enum(['active', 'voided']),
+  /** Holders see test passes too; the card carries a Test badge. */
+  mode: ModeSchema.default('live'),
   modifiedAt: TimestampSchema,
   lastRefreshedAt: TimestampSchema.nullable(),
   refreshRequestedAt: TimestampSchema.nullable(),
