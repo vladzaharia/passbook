@@ -79,6 +79,16 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | h | admin core pages | `src/web/routes/admin/{index,status,settings,audit,users,orgs,identities,api-keys}**`, `src/web/admin/{overview,status,settings,audit,users,orgs,identities,api-keys}/**` |
 | i | admin passes, templates, connections pages | `src/web/routes/admin/{passes,templates,connections}**`, `src/web/admin/{passes,templates,connections}/**` |
 | j | portal, login | `src/web/routes/{index,login,account,passes}**`, `src/web/portal/**` |
+| n1 | sync log, device details, remote remove | `modules/events/**`, `modules/apple/**`, event hooks in `modules/delivery/{push,email,jobs}.ts`, `modules/passes/remove*.ts`, `src/web/admin/passes/detail/**` |
+| n2 | own Apple identity, push key | `modules/identities/**`, `modules/delivery/apns*.ts`, `src/web/admin/identities/**`, `migrations/0012_identities.sql` |
+| n3 | multi-event, beacons | `src/passkit/behaviors/{upcoming-events,beacons}/**`, `templates/starter-*`, `src/shared/pass-view/**`, `src/web/pass-card/**`, `src/web/admin/passes/schema-form/**` |
+| n4 | pass bundles | `modules/bundles/**`, `src/worker/ssr/bundle*`, `src/worker/email/bundle*`, `src/shared/contracts/bundles.ts`, `src/web/admin/passes/bundle*`, `migrations/0011_bundles.sql` |
+| n5 | template designer | `src/web/admin/templates/designer/**`, `src/web/routes/admin/templates/` designer route, new files in `modules/templates/` for saving a version from JSON, `migrations/0017_designer.sql` if needed |
+| n6 | sandbox mode | `src/web/ui/layout/mode*`, `modules/sandbox/**`, test-inbox pages, `migrations/0015_sandbox.sql` |
+| n7 | broadcasts, schedules | `modules/broadcasts/**`, `src/worker/workflows/broadcast.ts`, `src/web/admin/messages/**`, `src/web/routes/admin/messages/`, `modules/passes/change-messages.ts`, `migrations/0013_broadcasts.sql` |
+| n8 | scanner | `modules/scan/**`, `src/web/scan/**`, `src/web/routes/scan*`, `src/web/admin/scanners/**`, `src/web/routes/admin/scanners/`, `migrations/0014_scan.sql` |
 | integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
+
+`modules/events` was built by the foundation (`migrations/0010_events.sql`, `recordPassEvent`, mode plumbing, scan codes) and passes to n1 after it. The streams' specs are in `docs/design/next-wave.md`.
 
 Foundation owns `src/worker/platform/**`, `src/shared/contracts/common.ts`, tooling configs and `AGENTS.md`; change them only for a bug and tell the integration agent.
