@@ -4,7 +4,12 @@ import { bindPass } from './bindings.ts';
 import { InMemoryTemplateRegistry } from './in-memory-registry.ts';
 import { isAllowedPointer } from './pointer.ts';
 
-function bind(bindings: unknown[], input: Record<string, unknown>, extra = {}) {
+function bind(
+  bindings: unknown[],
+  input: Record<string, unknown>,
+  extra = {},
+  server: { scanCode?: string } = {},
+) {
   const passJson = {
     formatVersion: 1,
     serialNumber: 'keep',
@@ -32,8 +37,37 @@ function bind(bindings: unknown[], input: Record<string, unknown>, extra = {}) {
     display: { title: 'x' },
   };
   const template = new InMemoryTemplateRegistry().add({ id: 't', manifest, passJson });
-  return bindPass(template, input as never);
+  return bindPass(template, input as never, server);
 }
+
+describe('pass.scanCode', () => {
+  const to = { barcode: 0, prop: 'message' };
+  it('binds the server scan code into a barcode', () => {
+    const { pass } = bind([{ to, value: '{{pass.scanCode}}' }], {}, {}, { scanCode: 'ABCD234' });
+    expect(pass.barcodes?.[0]?.message).toBe('ABCD234');
+  });
+  it('joins it with text and is empty without one', () => {
+    const joined = bind(
+      [{ to, value: 'https://x.test/{{pass.scanCode}}' }],
+      {},
+      {},
+      { scanCode: 'Q' },
+    );
+    expect(joined.pass.barcodes?.[0]?.message).toBe('https://x.test/Q');
+    expect(bind([{ to, value: '{{pass.scanCode}}' }], {}).pass.barcodes?.[0]?.message).toBe('');
+  });
+  it('is not an input and cannot be shadowed by one', () => {
+    const { pass } = bind(
+      [{ to, value: '{{pass.scanCode}}' }],
+      { pass: { scanCode: 'evil' } },
+      {},
+      {
+        scanCode: 'REAL',
+      },
+    );
+    expect(pass.barcodes?.[0]?.message).toBe('REAL');
+  });
+});
 
 describe('bindings', () => {
   it('sets field props and reaches footer fields', () => {

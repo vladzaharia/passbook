@@ -100,3 +100,11 @@ describe('expression errors and limits', () => {
     expect(() => testCondition(c, scope)).toThrow(/nested too deeply/);
   });
 });
+
+describe('pass scope', () => {
+  it('reads server values and does not count pass as an input', () => {
+    const scope = { input: {}, lookups: {}, pass: { scanCode: 'ABC' } };
+    expect(evaluate('{{pass.scanCode}}', scope)).toBe('ABC');
+    expect(exprReferences('{{pass.scanCode}} {{name}}').inputs).toEqual(['name']);
+  });
+});

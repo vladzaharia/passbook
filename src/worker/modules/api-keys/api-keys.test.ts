@@ -30,6 +30,7 @@ interface Created {
   secret: string;
   prefix: string;
   scopes: string[];
+  mode?: string;
   orgId: string | null;
   createdBy: string;
 }
@@ -220,6 +221,25 @@ describe('use', () => {
     expect(await store.resolve(key.secret)).toMatchObject({ orgId: org.id });
     await run(h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
     expect(await store.resolve(key.secret)).toBeNull();
+  });
+
+  it('creates keys in live mode by default, or test mode on request', async () => {
+    const store = createApiKeyStore(h.env, h.clock);
+    const live = await create({ name: 'live', scopes: ['passes:read'] });
+    const test = await create({ name: 'sandbox', scopes: ['passes:read'], mode: 'test' });
+    expect(live.key).toMatchObject({ mode: 'live' });
+    expect(test.key).toMatchObject({ mode: 'test' });
+    expect(await store.resolve(live.key.secret)).toMatchObject({ mode: 'live' });
+    expect(await store.resolve(test.key.secret)).toMatchObject({ mode: 'test' });
+    const list = (await (await h.call('/api/v1/api-keys', { headers: test.headers })).json()) as {
+      items: { id: string; mode: string }[];
+    };
+    expect(list.items.find((k) => k.id === test.key.id)?.mode).toBe('test');
+  });
+
+  it('rejects an unknown mode', async () => {
+    const { res } = await create({ name: 'x', scopes: ['passes:read'], mode: 'staging' });
+    expect(res.status).toBe(422);
   });
 
   it('works with keys inserted by the shared test factory', async () => {

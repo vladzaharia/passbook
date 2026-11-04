@@ -1,7 +1,7 @@
 import type { Json, Mode } from '../../../shared/contracts/common.ts';
 import { type EventKind, EventKindSchema } from '../../../shared/contracts/events.ts';
 import { batch, chunk } from '../../platform/db.ts';
-import { sha256Hex } from '../../platform/ids.ts';
+import { randomBytes, sha256Hex, uuidv7 } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type EventRow, insertEventStmt } from './repo.ts';
 
@@ -54,9 +54,24 @@ export function sanitizeEventData(data: Record<string, Json> | undefined): Recor
   return JSON.stringify(clean).length > DATA_MAX_BYTES ? { truncated: true } : clean;
 }
 
+let sequence = 0;
+
+/**
+ * UUIDv7 whose 12-bit rand_a is a counter, so events recorded in the same millisecond sort in the
+ * order they were recorded (a plain UUIDv7 would order them randomly).
+ */
+function eventId(at: number): string {
+  sequence = (sequence + 1) & 0x0fff;
+  const random = randomBytes(10);
+  random[0] = sequence >> 8;
+  random[1] = sequence & 0xff;
+  return uuidv7(at, random);
+}
+
 async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventRow> {
+  const at = input.at ?? ctx.clock.now();
   return {
-    id: ctx.ids.id(),
+    id: eventId(at),
     org_id: input.orgId,
     pass_id: input.passId,
     mode: input.mode,
@@ -65,7 +80,7 @@ async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventR
     actor_type: input.actor?.type ?? null,
     actor_id: input.actor?.id ?? null,
     data: JSON.stringify(sanitizeEventData(input.data)),
-    at: input.at ?? ctx.clock.now(),
+    at,
   };
 }
 
