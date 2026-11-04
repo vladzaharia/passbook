@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { keyState } from './api-keys-page.tsx';
 
@@ -130,6 +131,7 @@ describe('api keys page', () => {
     await waitFor(() => expect(body.name).toBe('CI key'));
     expect(body.scopes).toEqual(['passes:read']);
     expect(body.orgId).toBeNull();
+    expect(body.mode).toBe('live');
     expect(typeof body.expiresAt).toBe('number');
     const reveal = await screen.findByRole('dialog', { name: /Copy your key/ });
     expect(reveal.querySelector('.wl-turn')).not.toBeNull();
@@ -141,6 +143,53 @@ describe('api keys page', () => {
     await user.click(screen.getByRole('checkbox', { name: 'I saved the key' }));
     await user.click(done);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('marks Test keys with the pill and the wlt_test_ prefix', async () => {
+    await renderApp('/admin/api-keys', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/api-keys': () => page([key({ id: 'k9', name: 'Sandbox key', mode: 'test' })]),
+      },
+    });
+    expect(await screen.findByText('Sandbox key')).toBeInTheDocument();
+    expect(screen.getByText('Test')).toBeInTheDocument();
+    expect(screen.getByText('wlt_test_abc123')).toBeInTheDocument();
+  });
+
+  it('creates a Test key when Test mode is on', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (k === 'passbook-mode' ? 'test' : null),
+      setItem: () => {},
+      removeItem: () => {},
+    });
+    setMode('test');
+    try {
+      let body: Record<string, unknown> = {};
+      await renderApp('/admin/api-keys', {
+        session: 'admin',
+        handlers: {
+          '/api/v1/api-keys': (_u, init) => {
+            if (init?.method === 'POST') {
+              body = JSON.parse(String(init.body));
+              return json({ ...key({ mode: 'test' }), secret: 'wlt_abc123_S' }, 201);
+            }
+            return page([]);
+          },
+        },
+      });
+      const user = userEvent.setup();
+      await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByText('Test')).toBeInTheDocument();
+      await user.type(within(dialog).getByLabelText(/Name/), 'T');
+      await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
+      await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+      await waitFor(() => expect(body.mode).toBe('test'));
+    } finally {
+      resetModeForTests();
+      vi.unstubAllGlobals();
+    }
   });
 
   it('shows a server error in the create dialog', async () => {

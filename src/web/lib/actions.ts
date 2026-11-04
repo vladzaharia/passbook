@@ -81,6 +81,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.unvoid': a('Pass restored', I.unvoid, 'success'),
   'pass.update': a('Pass updated', I.edit, 'info'),
   'pass.void': a('Pass voided', I.void, 'warning'),
+  'sandbox.send_to_me': a('Test email sent to admin', I.sendEmail, 'info'),
   'session.revoke': a('Session revoked', I.signOut, 'warning'),
   'settings.update': a('Settings updated', Settings, 'info'),
   'template.activate': a('Template activated', CircleCheck, 'success'),
