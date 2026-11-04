@@ -217,6 +217,9 @@ export function ListInput({
                     />
                   </div>
                 </div>
+                {serverErrors?.[`${field.key}.${i}`] ? (
+                  <p className="mb-3 text-xs text-danger">{serverErrors[`${field.key}.${i}`]}</p>
+                ) : null}
                 <FormGrid>
                   {def.fields.map((sub) => {
                     const key = rowErrorKey(field.key, i, sub.key);

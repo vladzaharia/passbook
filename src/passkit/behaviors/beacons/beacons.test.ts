@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { validatePass } from '../../validate.ts';
 import type { BehaviorContext, Json, PassJson } from '../../types.ts';
+import { validatePass } from '../../validate.ts';
 import { type BeaconsConfig, beacons } from './index.ts';
 
 const ctx: BehaviorContext = {

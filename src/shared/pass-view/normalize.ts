@@ -4,8 +4,8 @@ import { safeLocale } from './format.ts';
 import { resolveImages } from './images.ts';
 import { buildLayout, chooseStyle } from './layout.ts';
 import { localize } from './strings.ts';
-import { upcomingEvents } from './upcoming.ts';
 import type { LayoutView, PassTarget, PassView } from './types.ts';
+import { upcomingEvents } from './upcoming.ts';
 
 export interface NormalizeOptions {
   /** Asset file name (e.g. `logo@2x.png`, `en.lproj/strip.png`) → URL the browser can load. */
