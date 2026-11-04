@@ -28,7 +28,7 @@ type Outcome = 'ok' | 'refuse' | 'fail';
 type Server = (value: string) => Promise<Outcome>;
 
 /** One field, required; the server answers ok, refuses the value or fails. */
-function TestForm({ name, server }: { name: string; server: Server }) {
+function TestForm({ name, server, note }: { name: string; server: Server; note?: string }) {
   const [base, setBase] = useState(`${name} 0`);
   const [value, setValue] = useState(base);
   const [saving, setSaving] = useState(false);
@@ -45,7 +45,7 @@ function TestForm({ name, server }: { name: string; server: Server }) {
     if (outcome === 'ok') {
       setBase(value);
       check.reset();
-      saved(`${name} saved`);
+      saved(`${name} saved`, note);
       return 'saved';
     }
     if (outcome === 'refuse') {
@@ -141,6 +141,21 @@ describe('SaveBarGroup', () => {
     await user.type(screen.getByLabelText('Beta'), 'y');
     expect(bars()).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: 'Save' })).toHaveLength(1);
+  });
+
+  it('carries a form note in the one Saved toast', async () => {
+    const user = userEvent.setup();
+    const success = vi.spyOn(toast, 'success');
+    setup(
+      <SaveBarGroup>
+        <TestForm name="Alpha" server={ok} note="3 passes will update." />
+        <TestForm name="Beta" server={ok} />
+      </SaveBarGroup>,
+    );
+    await editBoth(user);
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(success).toHaveBeenCalledOnce());
+    expect(success).toHaveBeenCalledWith('Saved. 3 passes will update.');
   });
 
   it('saves both top to bottom with one Saved toast', async () => {

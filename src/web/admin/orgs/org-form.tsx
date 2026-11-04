@@ -23,7 +23,7 @@ import { useIdentityOptions } from '../identities/queries.ts';
 import { HEX } from './branding.ts';
 import { ColorField } from './color-field.tsx';
 import { PassBrandingCard, type PassColorsDraft } from './pass-branding.tsx';
-import { passUpdateNote, useUpdateOrg } from './queries.ts';
+import { passUpdateText, useUpdateOrg } from './queries.ts';
 
 type Org = z.infer<typeof OrgSummarySchema>;
 
@@ -101,8 +101,7 @@ export function OrgForm({ org }: { org: Org }) {
   async function save(): Promise<SaveResult> {
     try {
       const result = await update.mutateAsync(orgPatch(draft, org));
-      if (result.passesToUpdate) toast.success(`Saved.${passUpdateNote(result.passesToUpdate)}`);
-      else saved('Organization saved');
+      saved('Organization saved', passUpdateText(result.passesToUpdate));
       return 'saved';
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) {

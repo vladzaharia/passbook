@@ -61,6 +61,7 @@ export function SaveBarGroup({ children }: { children: ReactNode }) {
   live.current = members;
   const forms = useRef(new Map<string, { readonly current: GroupedForm }>());
   const running = useRef(false);
+  const notes = useRef<string[]>([]);
 
   const api = useMemo<SaveBarGroupApi>(() => {
     async function submit(member: SaveBarMember): Promise<SaveResult> {
@@ -87,10 +88,11 @@ export function SaveBarGroup({ children }: { children: ReactNode }) {
       for (const m of dirty)
         results.push({ formId: m.props.current.formId, result: await submit(m) });
       running.current = false;
+      const note = notes.current.splice(0).join(' ');
       const refused = results.find((r) => r.result === 'refused');
       if (refused?.formId) forms.current.get(refused.formId)?.current.block();
       else if (results.length > 0 && results.every((r) => r.result === 'saved'))
-        toast.success('Saved');
+        toast.success(note ? `Saved. ${note}` : 'Saved');
     }
     return {
       member: entry(setMembers),
@@ -100,6 +102,7 @@ export function SaveBarGroup({ children }: { children: ReactNode }) {
         else forms.current.delete(id);
       },
       has: (formId) => live.current.has(formId),
+      note: (text) => void notes.current.push(text),
       save: () => void save(),
     };
   }, []);
@@ -129,10 +132,14 @@ export function SaveBarGroup({ children }: { children: ReactNode }) {
   );
 }
 
-/** A form's own confirmation. Inside a SaveBarGroup the group says "Saved" once instead. */
-export function useSavedToast(): (message: string) => void {
-  const grouped = useContext(SaveBarGroupContext) !== null;
-  return (message) => {
-    if (!grouped) toast.success(message);
+/**
+ * A form's own confirmation. Inside a SaveBarGroup the group says "Saved" once instead, followed
+ * by each form's `note`.
+ */
+export function useSavedToast(): (message: string, note?: string) => void {
+  const group = useContext(SaveBarGroupContext);
+  return (message, note) => {
+    if (!group) toast.success(note ? `${message}. ${note}` : message);
+    else if (note) group.note(note);
   };
 }
