@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, run, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -9,6 +10,7 @@ export interface ApiKeyRow {
   prefix: string;
   key_hash: string;
   scopes: string;
+  mode: Mode;
   created_by: string | null;
   created_at: number;
   last_used_at: number | null;
@@ -19,8 +21,8 @@ export interface ApiKeyRow {
 export function insertKeyStmt(db: Db, key: ApiKeyRow): D1PreparedStatement {
   return stmt(
     db,
-    `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, created_by, created_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       key.id,
       key.org_id,
@@ -28,6 +30,7 @@ export function insertKeyStmt(db: Db, key: ApiKeyRow): D1PreparedStatement {
       key.prefix,
       key.key_hash,
       key.scopes,
+      key.mode,
       key.created_by,
       key.created_at,
       key.expires_at,

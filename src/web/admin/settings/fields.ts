@@ -70,6 +70,15 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     help: '30 to 3650.',
     schema: P['retention.auditDays'],
   },
+  {
+    key: 'retention.eventsDays',
+    group: 'Passes and retention',
+    label: 'Activity retention',
+    kind: 'int',
+    suffix: 'days',
+    help: '7 to 3650.',
+    schema: P['retention.eventsDays'],
+  },
 ];
 
 export const ORG_FIELDS: readonly SettingField[] = [

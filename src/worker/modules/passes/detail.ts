@@ -39,6 +39,7 @@ export function toSummary(pass: Pass) {
     subtitle: pass.displaySubtitle,
     externalId: pass.externalId,
     status: pass.status,
+    mode: pass.mode,
     version: pass.version,
     connectionId: pass.connectionId,
     externalRef: pass.externalRef,

@@ -1,4 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 export type PassStatus = 'active' | 'voided';
 export type FieldSources = Record<string, 'manual' | 'connection'>;
 export type PassCause =
@@ -28,6 +29,8 @@ export interface Pass {
   holderEmail: string | null;
   ownerUserId: string | null;
   status: PassStatus;
+  /** Set from the creator's mode and never changed. */
+  mode: Mode;
   version: number;
   revision: number;
   objectKey: string;
@@ -42,6 +45,12 @@ export interface Pass {
   lastRefreshedAt: number | null;
   contentHash: string | null;
   deletedAt: number | null;
+  /** Unguessable scan identifier; null until the first publish after it was introduced. */
+  scanCode: string | null;
+  /** SHA-256 hex of the primary barcode message at the last publish. */
+  barcodeHash: string | null;
+  /** Set when the pass was removed from Wallet; cleared on restore. */
+  removedAt: number | null;
   createdAt: number;
   /** Registered devices; 0 when the query did not count them. */
   deviceCount: number;
@@ -67,6 +76,7 @@ export interface PassDbRow {
   holder_email: string | null;
   owner_user_id: string | null;
   status: PassStatus;
+  mode: Mode;
   version: number;
   revision: number;
   object_key: string;
@@ -81,6 +91,9 @@ export interface PassDbRow {
   last_refreshed_at: number | null;
   content_hash: string | null;
   deleted_at: number | null;
+  scan_code: string | null;
+  barcode_hash: string | null;
+  removed_at: number | null;
   created_at: number;
   device_count?: number;
   org_slug?: string | null;
@@ -110,6 +123,7 @@ export function mapPass(row: PassDbRow): Pass {
     holderEmail: row.holder_email,
     ownerUserId: row.owner_user_id,
     status: row.status,
+    mode: row.mode,
     version: row.version,
     revision: row.revision,
     objectKey: row.object_key,
@@ -124,6 +138,9 @@ export function mapPass(row: PassDbRow): Pass {
     lastRefreshedAt: row.last_refreshed_at,
     contentHash: row.content_hash,
     deletedAt: row.deleted_at,
+    scanCode: row.scan_code,
+    barcodeHash: row.barcode_hash,
+    removedAt: row.removed_at,
     createdAt: row.created_at,
     deviceCount: row.device_count ?? 0,
     orgSlug: row.org_slug ?? null,

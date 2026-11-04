@@ -21,6 +21,8 @@ export interface AnalyticsEvent {
   templateId?: string | null;
   identityId?: string | null;
   outcome?: string;
+  /** The pass's mode; metrics split on it. Default live. */
+  mode?: 'live' | 'test';
   /** Numeric payload, e.g. duration in ms or a count. */
   value?: number;
 }
@@ -43,6 +45,7 @@ export function writeEvent(
         event.templateId ?? '',
         event.identityId ?? '',
         event.outcome ?? 'ok',
+        event.mode ?? 'live',
       ],
       doubles: [event.value ?? 1],
     });

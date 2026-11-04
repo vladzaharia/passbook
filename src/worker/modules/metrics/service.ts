@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import type {
   MetricsOverview,
   MetricsQuery,
@@ -159,9 +160,10 @@ async function load(ctx: ServiceContext, w: repo.Window, scope: repo.Scope, now:
 export async function getOverview(
   ctx: ServiceContext,
   query: MetricsQuery,
+  mode: Mode = 'live',
 ): Promise<MetricsOverview> {
   const now = ctx.clock.now();
-  const key = JSON.stringify([query.orgId, query.templateId, query.range]);
+  const key = JSON.stringify([query.orgId, query.templateId, query.range, mode]);
   const byKey = cache.get(ctx.env.DB) ?? new Map();
   cache.set(ctx.env.DB, byKey);
   const hit = byKey.get(key);
@@ -169,7 +171,7 @@ export async function getOverview(
   const settled = hit && hit.value.setup.passEmailsSent > 0;
   if (hit && settled && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.value;
 
-  const scope: repo.Scope = { orgId: query.orgId, templateId: query.templateId };
+  const scope: repo.Scope = { orgId: query.orgId, templateId: query.templateId, mode };
   const range = RANGES[query.range];
   const start = Math.floor((now - range.ms) / range.bucketMs) * range.bucketMs;
   const end = Math.floor(now / range.bucketMs) * range.bucketMs;

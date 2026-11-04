@@ -1,11 +1,14 @@
 import type { PassJson, Personalization } from '../../../passkit/types.ts';
+import type { PassSource } from '../../../shared/contracts/passes.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError, NotFoundError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withoutPersonalizationFiles } from '../apple/personalize-files.ts';
 import { isPersonalized } from '../apple/repo-personalize.ts';
 import { dispatchSafely } from '../delivery/service.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { buildArtifact } from './builder.ts';
+import { notifiesHolder } from './change-messages.ts';
 import {
   casMeta,
   casPublish,
@@ -17,6 +20,7 @@ import {
   type PassCause,
   type PassStatus,
 } from './repo.ts';
+import { newScanCode } from './scan-code.ts';
 import type { Actor } from './service.ts';
 
 export const MAX_CAS_ATTEMPTS = 3;
@@ -33,6 +37,8 @@ export interface PublishOptions {
   passId: string;
   orgScope?: string | null;
   cause: PassCause;
+  /** Why beside the cause: scan, broadcast, schedule, remove, restore or designer. */
+  source?: PassSource;
   actor: Actor;
   /** If-Match: a stale version fails with 412 instead of re-reading. */
   expectedVersion?: number;
@@ -84,7 +90,10 @@ export async function publishPass(
     const buildCtx = (await isPersonalized(db, current.id))
       ? withoutPersonalizationFiles(ctx)
       : ctx;
-    const previous = options.notify === undefined ? null : await currentPassJson(db, current.id);
+    const previousJson = await currentPassJson(db, current.id);
+    const previous = options.notify === undefined ? null : previousJson;
+    // Older passes get their scan code on the first publish after it was introduced.
+    const scanCode = current.scanCode ?? newScanCode(ctx);
     const artifact = await buildArtifact(buildCtx, {
       orgId: current.orgId,
       orgName: org.name,
@@ -98,6 +107,7 @@ export async function publishPass(
             },
           }),
       passId: current.id,
+      scanCode,
       serial: current.serial,
       authToken: current.authToken,
       webServiceUrl: current.webServiceUrl,
@@ -113,8 +123,7 @@ export async function publishPass(
     const sameContent =
       current.contentHash !== null
         ? current.contentHash === artifact.contentHash
-        : next.templateVersion === current.templateVersion &&
-          (await currentPassJson(db, current.id)) === passJson;
+        : next.templateVersion === current.templateVersion && previousJson === passJson;
     const identical =
       !options.force &&
       next.status === current.status &&
@@ -125,13 +134,16 @@ export async function publishPass(
         !sameJson(next.fieldSources, current.fieldSources) ||
         next.externalId !== current.externalId ||
         next.templateVersion !== current.templateVersion ||
-        current.contentHash === null;
+        current.contentHash === null ||
+        current.scanCode === null;
       if (!metaChanged) return { pass: current, changed: false };
       const written = await casMeta(db, current.id, current.version, {
         fieldSources: next.fieldSources,
         externalId: next.externalId,
         templateVersion: next.templateVersion,
         contentHash: artifact.contentHash,
+        barcodeHash: artifact.barcodeHash,
+        scanCode,
       });
       if (written === null) {
         if (options.expectedVersion !== undefined) throw new PreconditionFailedError();
@@ -164,9 +176,12 @@ export async function publishPass(
         objectSize: artifact.bytes.length,
         contentHash: artifact.contentHash,
         cause: options.cause,
+        source: options.source ?? null,
         actorType: options.actor.type,
         actorId: options.actor.id,
         passJson,
+        barcodeHash: artifact.barcodeHash,
+        scanCode,
       });
     } catch (error) {
       // Ambiguous D1 failure: the commit may have succeeded, so the object stays.
@@ -187,6 +202,27 @@ export async function publishPass(
       templateId: pass.templateId,
       identityId: pass.identityId,
       outcome: options.cause,
+      mode: pass.mode,
+    });
+    // Seam: later streams add their own events (push, device, scan) at their own call sites.
+    await recordPassEvent(ctx, {
+      orgId: pass.orgId,
+      passId: pass.id,
+      mode: pass.mode,
+      kind: 'pass.updated',
+      actor: options.actor,
+      data: {
+        version: pass.version,
+        cause: options.cause,
+        source: options.source ?? null,
+        // Only a resign skips the push; a push carries a message when a field with one changed.
+        notified:
+          options.cause !== 'resign' &&
+          notifiesHolder(
+            artifact.passJson,
+            previousJson ? (JSON.parse(previousJson) as PassJson) : null,
+          ),
+      },
     });
     if (options.dispatch !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
     return { pass, changed: true };

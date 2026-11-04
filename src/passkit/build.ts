@@ -25,6 +25,8 @@ export interface ServerFields {
   webServiceURL: string;
   organizationName: string;
   identity: PassIdentity;
+  /** Bound as `{{pass.scanCode}}`. A template that reads it without one gets an empty string. */
+  scanCode?: string;
 }
 
 /** A per-pass image. Replaces the template file of the same name. */
@@ -220,7 +222,9 @@ export function planPass(args: BuildPassInput): PlannedPass {
   let pass: PassJson;
   let dropped: string[];
   try {
-    ({ pass, droppedImages: dropped } = bindPass(template, input));
+    ({ pass, droppedImages: dropped } = bindPass(template, input, {
+      ...(server.scanCode ? { scanCode: server.scanCode } : {}),
+    }));
   } catch (error) {
     if (error instanceof Error) fail('TEMPLATE', `Binding failed: ${error.message}`);
     throw error;

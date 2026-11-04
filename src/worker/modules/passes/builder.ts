@@ -19,6 +19,7 @@ import { applyChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
+import { barcodeHashOf } from './scan-code.ts';
 
 export interface BuildRequest {
   orgId: string;
@@ -33,6 +34,8 @@ export interface BuildRequest {
   templateVersion?: string;
   personalization: Personalization;
   status: PassStatus;
+  /** Bound as `{{pass.scanCode}}`. */
+  scanCode?: string;
   /** Raw `orgs.branding`; colours, logo and icon replace the template's (readBranding). */
   branding?: unknown;
   /**
@@ -51,6 +54,8 @@ export interface Artifact {
   subtitle: string | null;
   /** Pass.json plus asset digests; equal hashes mean identical content. */
   contentHash: string;
+  /** SHA-256 hex of the primary barcode message; null without a barcode. */
+  barcodeHash: string | null;
   warnings: ValidationIssue[];
 }
 
@@ -217,6 +222,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
         webServiceURL: req.webServiceUrl,
         organizationName: req.orgName,
         identity,
+        ...(req.scanCode ? { scanCode: req.scanCode } : {}),
       },
       signing: identity.material,
       behaviors: deps.behaviors,
@@ -251,6 +257,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       title: display.title,
       subtitle: display.subtitle,
       contentHash: built.contentHash,
+      barcodeHash: await barcodeHashOf(built.passJson),
       warnings: [
         ...built.report.issues.filter((i) => i.severity !== 'error'),
         ...brandingWarnings(

@@ -37,6 +37,8 @@ export function eventsQuery(w: Window, scope: Scope, now: number): AnalyticsSQLQ
     filters.push('blob3 = $templateId');
     params.templateId = scope.templateId;
   }
+  // blob6 is the pass mode. Rows written before it existed are live.
+  filters.push(scope.mode === 'test' ? "blob6 = 'test'" : "blob6 != 'test'");
   return {
     query: `SELECT blob1 AS event, blob5 AS outcome,
       toUnixTimestamp(toStartOfInterval(timestamp, INTERVAL '${bucketSeconds}' SECOND)) AS t,

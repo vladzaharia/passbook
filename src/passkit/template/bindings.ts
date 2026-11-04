@@ -1,5 +1,5 @@
 import type { Binding, Json, PassField, PassJson, Personalization } from '../types.ts';
-import { type ExprScope, evaluate, isEmpty, testCondition } from './expr.ts';
+import { type ExprScope, evaluate, isEmpty, type PassScope, testCondition } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import { BINDING_STYLE_GROUPS, deletePointer, isAllowedPointer, setPointer } from './pointer.ts';
 import type { ResolvedTemplate } from './registry.ts';
@@ -158,11 +158,16 @@ function applyBinding(ctx: Context, binding: Binding): void {
 }
 
 /** Applies manifest bindings to a copy of the template's pass.json. */
-export function bindPass(template: ResolvedTemplate, input: Personalization): BoundPass {
+export function bindPass(
+  template: ResolvedTemplate,
+  input: Personalization,
+  server: PassScope = {},
+): BoundPass {
   const pass = structuredClone(template.passJson);
   const scope: ExprScope = {
     input: applyDefaults(template.manifest, input),
     lookups: template.manifest.lookups ?? {},
+    pass: server,
   };
   const ctx: Context = { pass, scope, dropped: new Set() };
   for (const binding of template.manifest.bindings) applyBinding(ctx, binding);

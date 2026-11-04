@@ -56,3 +56,9 @@ export const ApiScopeSchema = z.enum([
   'templates:read',
 ]);
 export const RoleSchema = z.enum(['admin', 'user']);
+
+/** Sandbox: test passes, keys and events never mix with live ones in lists or metrics. */
+export const ModeSchema = z.enum(['live', 'test']);
+export type Mode = z.infer<typeof ModeSchema>;
+/** Admin sessions pick a mode with this header; anything but `test` means live. */
+export const MODE_HEADER = 'x-passbook-mode';

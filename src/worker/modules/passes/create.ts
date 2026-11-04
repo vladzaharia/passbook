@@ -1,4 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -8,6 +9,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { enqueuePassEmail } from '../delivery/service.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { runAttachHookA } from '../holders/service.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
@@ -24,6 +26,7 @@ import {
   insertPass,
   type Pass,
 } from './repo.ts';
+import { newScanCode } from './scan-code.ts';
 import type { Actor } from './service.ts';
 
 export interface CreateParams {
@@ -39,6 +42,8 @@ export interface CreateParams {
   externalRef?: string | null;
   sendEmail?: boolean;
   source: 'manual' | 'connection';
+  /** The creator's mode (modeOf(auth)). Connection syncs always create live passes. */
+  mode?: Mode;
   actor: Actor;
   /** Preassigned pass id; idempotent creates reserve it with the key. */
   passId?: string;
@@ -75,6 +80,8 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 
   const id = p.passId ?? ctx.ids.id();
+  const mode: Mode = p.source === 'connection' ? 'live' : (p.mode ?? 'live');
+  const scanCode = newScanCode(ctx);
   const serial = p.serial ?? ctx.ids.id();
   const authToken = ctx.ids.token();
   const webServiceUrl = `${baseUrl(ctx.env)}/wallet`;
@@ -83,6 +90,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     orgName: org.name,
     branding: org.branding,
     passId: id,
+    scanCode,
     serial,
     authToken,
     webServiceUrl,
@@ -127,6 +135,9 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       passJson: JSON.stringify(artifact.passJson),
       actorType: p.actor.type,
       actorId: p.actor.id,
+      mode,
+      scanCode,
+      barcodeHash: artifact.barcodeHash,
     });
   } catch (error) {
     await ctx.env.BUCKET.delete(objectKey);
@@ -149,11 +160,20 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     targetId: id,
     detail: { templateId: template.id, connectionId: p.connectionId ?? null },
   });
+  await recordPassEvent(ctx, {
+    orgId: p.orgId,
+    passId: id,
+    mode,
+    kind: 'pass.issued',
+    actor: p.actor,
+    data: { version: 1, cause: 'create', source: null, notified: false },
+  });
   writeEvent(ctx.env, {
     event: 'pass.issued',
     orgId: p.orgId,
     templateId: template.id,
     identityId: identity.id,
+    mode,
   });
   if (p.sendEmail && holderEmail) {
     try {

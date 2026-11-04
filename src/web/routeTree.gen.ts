@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAccountRouteImport } from './routes/admin/account'
 import { Route as PassesPassIdRouteImport } from './routes/passes/$passId'
@@ -23,11 +24,13 @@ import { Route as AdminConnectionsConnectionIdRouteImport } from './routes/admin
 import { Route as AdminConnectionsNewRouteImport } from './routes/admin/connections/new'
 import { Route as AdminIdentitiesIndexRouteImport } from './routes/admin/identities/index'
 import { Route as AdminIdentitiesIdentityIdRouteImport } from './routes/admin/identities/$identityId'
+import { Route as AdminMessagesIndexRouteImport } from './routes/admin/messages/index'
 import { Route as AdminOrgsIndexRouteImport } from './routes/admin/orgs/index'
 import { Route as AdminOrgsOrgIdRouteImport } from './routes/admin/orgs/$orgId'
 import { Route as AdminPassesIndexRouteImport } from './routes/admin/passes/index'
 import { Route as AdminPassesPassIdRouteImport } from './routes/admin/passes/$passId'
 import { Route as AdminPassesNewRouteImport } from './routes/admin/passes/new'
+import { Route as AdminScannersIndexRouteImport } from './routes/admin/scanners/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as AdminStatusIndexRouteImport } from './routes/admin/status/index'
 import { Route as AdminTemplatesIndexRouteImport } from './routes/admin/templates/index'
@@ -54,6 +57,11 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -108,6 +116,11 @@ const AdminIdentitiesIdentityIdRoute =
     path: '/identities/$identityId',
     getParentRoute: () => AdminRouteRoute,
   } as any)
+const AdminMessagesIndexRoute = AdminMessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminOrgsIndexRoute = AdminOrgsIndexRouteImport.update({
   id: '/orgs/',
   path: '/orgs/',
@@ -131,6 +144,11 @@ const AdminPassesPassIdRoute = AdminPassesPassIdRouteImport.update({
 const AdminPassesNewRoute = AdminPassesNewRouteImport.update({
   id: '/passes/new',
   path: '/passes/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminScannersIndexRoute = AdminScannersIndexRouteImport.update({
+  id: '/scanners/',
+  path: '/scanners/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
@@ -175,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
+  '/scan': typeof ScanRoute
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -191,8 +210,10 @@ export interface FileRoutesByFullPath {
   '/admin/audit/': typeof AdminAuditIndexRoute
   '/admin/connections/': typeof AdminConnectionsIndexRoute
   '/admin/identities/': typeof AdminIdentitiesIndexRoute
+  '/admin/messages/': typeof AdminMessagesIndexRoute
   '/admin/orgs/': typeof AdminOrgsIndexRoute
   '/admin/passes/': typeof AdminPassesIndexRoute
+  '/admin/scanners/': typeof AdminScannersIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
@@ -202,6 +223,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
+  '/scan': typeof ScanRoute
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/admin': typeof AdminIndexRoute
@@ -218,8 +240,10 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditIndexRoute
   '/admin/connections': typeof AdminConnectionsIndexRoute
   '/admin/identities': typeof AdminIdentitiesIndexRoute
+  '/admin/messages': typeof AdminMessagesIndexRoute
   '/admin/orgs': typeof AdminOrgsIndexRoute
   '/admin/passes': typeof AdminPassesIndexRoute
+  '/admin/scanners': typeof AdminScannersIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/admin/status': typeof AdminStatusIndexRoute
   '/admin/templates': typeof AdminTemplatesIndexRoute
@@ -231,6 +255,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
+  '/scan': typeof ScanRoute
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -247,8 +272,10 @@ export interface FileRoutesById {
   '/admin/audit/': typeof AdminAuditIndexRoute
   '/admin/connections/': typeof AdminConnectionsIndexRoute
   '/admin/identities/': typeof AdminIdentitiesIndexRoute
+  '/admin/messages/': typeof AdminMessagesIndexRoute
   '/admin/orgs/': typeof AdminOrgsIndexRoute
   '/admin/passes/': typeof AdminPassesIndexRoute
+  '/admin/scanners/': typeof AdminScannersIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
@@ -261,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/account'
     | '/login'
+    | '/scan'
     | '/admin/account'
     | '/passes/$passId'
     | '/admin/'
@@ -277,8 +305,10 @@ export interface FileRouteTypes {
     | '/admin/audit/'
     | '/admin/connections/'
     | '/admin/identities/'
+    | '/admin/messages/'
     | '/admin/orgs/'
     | '/admin/passes/'
+    | '/admin/scanners/'
     | '/admin/settings/'
     | '/admin/status/'
     | '/admin/templates/'
@@ -288,6 +318,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/login'
+    | '/scan'
     | '/admin/account'
     | '/passes/$passId'
     | '/admin'
@@ -304,8 +335,10 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/connections'
     | '/admin/identities'
+    | '/admin/messages'
     | '/admin/orgs'
     | '/admin/passes'
+    | '/admin/scanners'
     | '/admin/settings'
     | '/admin/status'
     | '/admin/templates'
@@ -316,6 +349,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/account'
     | '/login'
+    | '/scan'
     | '/admin/account'
     | '/passes/$passId'
     | '/admin/'
@@ -332,8 +366,10 @@ export interface FileRouteTypes {
     | '/admin/audit/'
     | '/admin/connections/'
     | '/admin/identities/'
+    | '/admin/messages/'
     | '/admin/orgs/'
     | '/admin/passes/'
+    | '/admin/scanners/'
     | '/admin/settings/'
     | '/admin/status/'
     | '/admin/templates/'
@@ -345,6 +381,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AccountRoute: typeof AccountRoute
   LoginRoute: typeof LoginRoute
+  ScanRoute: typeof ScanRoute
   PassesPassIdRoute: typeof PassesPassIdRoute
 }
 
@@ -376,6 +413,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -448,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIdentitiesIdentityIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/messages/': {
+      id: '/admin/messages/'
+      path: '/messages'
+      fullPath: '/admin/messages/'
+      preLoaderRoute: typeof AdminMessagesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/orgs/': {
       id: '/admin/orgs/'
       path: '/orgs'
@@ -481,6 +532,13 @@ declare module '@tanstack/react-router' {
       path: '/passes/new'
       fullPath: '/admin/passes/new'
       preLoaderRoute: typeof AdminPassesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/scanners/': {
+      id: '/admin/scanners/'
+      path: '/scanners'
+      fullPath: '/admin/scanners/'
+      preLoaderRoute: typeof AdminScannersIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/settings/': {
@@ -551,8 +609,10 @@ interface AdminRouteRouteChildren {
   AdminAuditIndexRoute: typeof AdminAuditIndexRoute
   AdminConnectionsIndexRoute: typeof AdminConnectionsIndexRoute
   AdminIdentitiesIndexRoute: typeof AdminIdentitiesIndexRoute
+  AdminMessagesIndexRoute: typeof AdminMessagesIndexRoute
   AdminOrgsIndexRoute: typeof AdminOrgsIndexRoute
   AdminPassesIndexRoute: typeof AdminPassesIndexRoute
+  AdminScannersIndexRoute: typeof AdminScannersIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
   AdminStatusIndexRoute: typeof AdminStatusIndexRoute
   AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
@@ -575,8 +635,10 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAuditIndexRoute: AdminAuditIndexRoute,
   AdminConnectionsIndexRoute: AdminConnectionsIndexRoute,
   AdminIdentitiesIndexRoute: AdminIdentitiesIndexRoute,
+  AdminMessagesIndexRoute: AdminMessagesIndexRoute,
   AdminOrgsIndexRoute: AdminOrgsIndexRoute,
   AdminPassesIndexRoute: AdminPassesIndexRoute,
+  AdminScannersIndexRoute: AdminScannersIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
   AdminStatusIndexRoute: AdminStatusIndexRoute,
   AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
@@ -592,6 +654,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AccountRoute: AccountRoute,
   LoginRoute: LoginRoute,
+  ScanRoute: ScanRoute,
   PassesPassIdRoute: PassesPassIdRoute,
 }
 export const routeTree = rootRouteImport

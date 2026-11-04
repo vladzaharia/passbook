@@ -44,3 +44,19 @@ export function applyChangeMessages(
   }
   return changed;
 }
+
+/**
+ * True when publishing `pass` over `previous` can show a lock-screen message: a field with a
+ * changeMessage whose value changed. A first version never notifies.
+ */
+export function notifiesHolder(pass: PassJson, previous: PassJson | null): boolean {
+  if (!previous) return false;
+  const before = fieldsOf(previous);
+  for (const [key, field] of fieldsOf(pass))
+    if (
+      typeof field.changeMessage === 'string' &&
+      JSON.stringify(before.get(key)?.value) !== JSON.stringify(field.value)
+    )
+      return true;
+  return false;
+}

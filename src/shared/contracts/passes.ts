@@ -1,9 +1,19 @@
 import { z } from 'zod';
-import { IdSchema, JsonSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { ValidationIssueSchema } from './templates.ts';
 
 export const PassStatusSchema = z.enum(['active', 'voided']);
 export const FieldSourceSchema = z.enum(['manual', 'connection']);
+/** Why a version was published, beside its cause. Free text in the database, closed here. */
+export const PassSourceSchema = z.enum([
+  'scan',
+  'broadcast',
+  'schedule',
+  'remove',
+  'restore',
+  'designer',
+]);
+export type PassSource = z.infer<typeof PassSourceSchema>;
 export const PassCauseSchema = z.enum([
   'create',
   'admin',
@@ -25,6 +35,7 @@ export const PassSummarySchema = z.object({
   subtitle: z.string().nullable(),
   externalId: z.string().nullable(),
   status: PassStatusSchema,
+  mode: ModeSchema.default('live'),
   version: z.number().int(),
   connectionId: IdSchema.nullable(),
   externalRef: z.string().nullable().optional(),

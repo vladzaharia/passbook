@@ -1,3 +1,4 @@
+import type { Mode } from '../../src/shared/contracts/common.ts';
 import type {
   ApiKeyAuth,
   ApiScope,
@@ -13,11 +14,21 @@ export interface FakeAuth {
   /** Events passed to onDenied, in order. */
   denied: DeniedEvent[];
   /** Headers for a cookie session. Includes the CSRF token and same-origin hints for unsafe methods. */
-  session(options?: { userId?: string; roles?: Role[]; origin?: string }): Record<string, string>;
-  admin(): Record<string, string>;
+  session(options?: {
+    userId?: string;
+    roles?: Role[];
+    origin?: string;
+    mode?: Mode;
+  }): Record<string, string>;
+  /** `mode: 'test'` sends x-passbook-mode: test, as the admin UI does. */
+  admin(options?: { mode?: Mode }): Record<string, string>;
   user(userId?: string): Record<string, string>;
   /** Headers for a bearer API key. */
-  apiKey(options?: { orgId?: string | null; scopes?: ApiScope[] }): Record<string, string>;
+  apiKey(options?: {
+    orgId?: string | null;
+    scopes?: ApiScope[];
+    mode?: Mode;
+  }): Record<string, string>;
 }
 
 /**
@@ -38,19 +49,32 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
         denied.push(event);
       },
     },
-    session({ userId = 'user-1', roles = ['user'] as Role[], origin: o = origin } = {}) {
+    session({ userId = 'user-1', roles = ['user'] as Role[], origin: o = origin, mode } = {}) {
       const id = `fake-session-${++n}`;
       const csrfSecret = `fake-csrf-${n}`;
-      sessions.set(id, { kind: 'session', userId, sessionId: id, roles, csrfSecret, amr: 'oidc' });
+      sessions.set(id, {
+        kind: 'session',
+        userId,
+        sessionId: id,
+        roles,
+        csrfSecret,
+        amr: 'oidc',
+        mode: 'live',
+      });
       return {
         cookie: `${SESSION_COOKIE}=${id}`,
         'x-csrf-token': csrfSecret,
         origin: o,
         'sec-fetch-site': 'same-origin',
+        ...(mode ? { 'x-passbook-mode': mode } : {}),
       };
     },
-    admin() {
-      return this.session({ userId: 'admin-1', roles: ['admin', 'user'] });
+    admin({ mode }: { mode?: Mode } = {}) {
+      return this.session({
+        userId: 'admin-1',
+        roles: ['admin', 'user'],
+        ...(mode ? { mode } : {}),
+      });
     },
     user(userId = 'user-1') {
       return this.session({ userId, roles: ['user'] });
@@ -58,9 +82,10 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
     apiKey({
       orgId = null,
       scopes = ['passes:read', 'passes:write', 'holders:write', 'templates:read'] as ApiScope[],
+      mode = 'live' as Mode,
     } = {}) {
       const raw = `wlt_fake${++n}_secret`;
-      keys.set(raw, { kind: 'api_key', keyId: `key-${n}`, orgId, scopes });
+      keys.set(raw, { kind: 'api_key', keyId: `key-${n}`, orgId, scopes, mode });
       return { authorization: `Bearer ${raw}` };
     },
   };

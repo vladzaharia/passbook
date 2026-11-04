@@ -2,6 +2,7 @@ export * from './api-keys.ts';
 export * from './audit.ts';
 export * from './common.ts';
 export * from './connections.ts';
+export * from './events.ts';
 export * from './holders.ts';
 export * from './identities.ts';
 export * from './me.ts';

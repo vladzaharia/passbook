@@ -1,8 +1,11 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
 
 export interface Scope {
   orgId?: string;
   templateId?: string;
+  /** Test passes never count in live figures, and the reverse. */
+  mode: Mode;
 }
 
 export interface SeriesRow {
@@ -24,8 +27,8 @@ export interface PassTotals {
 }
 
 function passWhere(scope: Scope, alias = 'p'): { sql: string; params: SqlValue[] } {
-  const parts: string[] = [];
-  const params: SqlValue[] = [];
+  const parts: string[] = [`${alias}.mode = ?`];
+  const params: SqlValue[] = [scope.mode];
   if (scope.orgId) {
     parts.push(`${alias}.org_id = ?`);
     params.push(scope.orgId);
@@ -49,10 +52,8 @@ export async function passTotals(db: D1Database, scope: Scope): Promise<PassTota
   );
   const devices = await first<{ n: number }>(
     db,
-    scope.orgId || scope.templateId
-      ? `SELECT count(DISTINCT r.device_id) AS n FROM registrations r JOIN passes p ON p.id = r.pass_id WHERE p.deleted_at IS NULL${w.sql}`
-      : 'SELECT count(*) AS n FROM devices',
-    scope.orgId || scope.templateId ? w.params : [],
+    `SELECT count(DISTINCT r.device_id) AS n FROM registrations r JOIN passes p ON p.id = r.pass_id WHERE p.deleted_at IS NULL${w.sql}`,
+    w.params,
   );
   return {
     passes: row?.passes ?? 0,
@@ -73,7 +74,7 @@ function ordered(w: Window, extra: SqlValue[], since = true): SqlValue[] {
 
 export function issuedRows(db: D1Database, w: Window, scope: Scope) {
   const pw = passWhere(scope);
-  const join = scope.orgId || scope.templateId ? 'JOIN passes p ON p.id = pv.pass_id' : '';
+  const join = 'JOIN passes p ON p.id = pv.pass_id';
   return all<SeriesRow>(
     db,
     `SELECT ${bucket('pv.created_at')} AS t, count(*) AS n FROM pass_versions pv ${join}
@@ -84,7 +85,7 @@ export function issuedRows(db: D1Database, w: Window, scope: Scope) {
 
 export function updatedRows(db: D1Database, w: Window, scope: Scope, causes: string[]) {
   const pw = passWhere(scope);
-  const join = scope.orgId || scope.templateId ? 'JOIN passes p ON p.id = pv.pass_id' : '';
+  const join = 'JOIN passes p ON p.id = pv.pass_id';
   return all<SeriesRow>(
     db,
     `SELECT ${bucket('pv.created_at')} AS t, count(*) AS n FROM pass_versions pv ${join}
@@ -95,7 +96,7 @@ export function updatedRows(db: D1Database, w: Window, scope: Scope, causes: str
 
 export function registrationRows(db: D1Database, w: Window, scope: Scope) {
   const pw = passWhere(scope);
-  const join = scope.orgId || scope.templateId ? 'JOIN passes p ON p.id = r.pass_id' : '';
+  const join = 'JOIN passes p ON p.id = r.pass_id';
   return all<SeriesRow>(
     db,
     `SELECT ${bucket('r.created_at')} AS t, count(*) AS n FROM registrations r ${join}
@@ -112,17 +113,21 @@ export function outboxRows(
   kind: 'push' | 'email',
   failedOnly: boolean,
 ) {
-  const orgClause = scope.orgId ? ' AND org_id = ?' : '';
-  const failed = failedOnly ? " AND state IN ('failed', 'partial')" : '';
+  const orgClause = scope.orgId ? ' AND o.org_id = ?' : '';
+  const failed = failedOnly ? " AND o.state IN ('failed', 'partial')" : '';
+  // Rows without a pass (sign-in mail) belong to live.
   return all<SeriesRow>(
     db,
-    `SELECT ${bucket('created_at')} AS t, count(*) AS n FROM outbox
-     WHERE kind = ? AND created_at >= ?${orgClause}${failed} GROUP BY t`,
-    [w.bucketMs, w.bucketMs, kind, w.since, ...(scope.orgId ? [scope.orgId] : [])],
+    `SELECT ${bucket('o.created_at')} AS t, count(*) AS n FROM outbox o
+     LEFT JOIN passes p ON p.id = o.pass_id
+     WHERE o.kind = ? AND o.created_at >= ? AND coalesce(p.mode, 'live') = ?${orgClause}${failed} GROUP BY t`,
+    [w.bucketMs, w.bucketMs, kind, w.since, scope.mode, ...(scope.orgId ? [scope.orgId] : [])],
   );
 }
 
-export function syncRunRows(db: D1Database, w: Window, scope: Scope) {
+export async function syncRunRows(db: D1Database, w: Window, scope: Scope): Promise<SeriesRow[]> {
+  // Connection syncs only ever create live passes.
+  if (scope.mode === 'test') return [];
   const join = scope.orgId ? 'JOIN connections c ON c.id = cr.connection_id' : '';
   return all<SeriesRow>(
     db,
@@ -132,7 +137,8 @@ export function syncRunRows(db: D1Database, w: Window, scope: Scope) {
   );
 }
 
-export function signInRows(db: D1Database, w: Window, scope: Scope) {
+export async function signInRows(db: D1Database, w: Window, scope: Scope): Promise<SeriesRow[]> {
+  if (scope.mode === 'test') return [];
   return all<SeriesRow>(
     db,
     `SELECT ${bucket('at')} AS t, count(*) AS n FROM audit_log

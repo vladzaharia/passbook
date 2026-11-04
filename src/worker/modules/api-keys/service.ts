@@ -32,6 +32,7 @@ function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKe
     name: row.name,
     prefix: row.prefix,
     scopes: parseScopes(row.scopes),
+    mode: row.mode,
     createdBy: row.created_by,
     createdByName: row.created_by_name ?? null,
     createdAt: row.created_at,
@@ -80,6 +81,7 @@ export async function createApiKey(
     prefix,
     key_hash: await sha256Hex(secret),
     scopes: JSON.stringify([...new Set(input.scopes)]),
+    mode: input.mode,
     created_by: actorUserId,
     created_at: now,
     last_used_at: null,
@@ -95,7 +97,12 @@ export async function createApiKey(
       action: 'api_key.create',
       targetType: 'api_key',
       targetId: row.id,
-      detail: { name: row.name, scopes: parseScopes(row.scopes), expiresAt: row.expires_at },
+      detail: {
+        name: row.name,
+        scopes: parseScopes(row.scopes),
+        mode: row.mode,
+        expiresAt: row.expires_at,
+      },
     }),
   ]);
   return { ...toDto(row), secret };
@@ -135,7 +142,13 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
       if (row.org_id !== null && row.org_status !== 'active') return null;
       await enforceRateLimit(env, 'RL_API_KEY', `key:${row.id}`);
       await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS);
-      return { kind: 'api_key', keyId: row.id, orgId: row.org_id, scopes: parseScopes(row.scopes) };
+      return {
+        kind: 'api_key',
+        keyId: row.id,
+        orgId: row.org_id,
+        scopes: parseScopes(row.scopes),
+        mode: row.mode,
+      };
     },
   };
 }

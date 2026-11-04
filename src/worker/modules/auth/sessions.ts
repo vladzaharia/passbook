@@ -93,6 +93,7 @@ export async function resolveSession(
     roles,
     csrfSecret: row.csrf_secret,
     amr: row.amr,
+    mode: 'live',
     expiresAt: Math.min(row.expires_at, row.idle_expires_at),
   };
 }

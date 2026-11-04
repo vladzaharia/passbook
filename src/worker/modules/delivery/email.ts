@@ -7,6 +7,7 @@ import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -33,6 +34,18 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   }
   if (!(await isOrgActive(ctx, pass.orgId))) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'ORG_INACTIVE');
+    return;
+  }
+  if (pass.mode === 'test') {
+    // Test passes never send mail. The test inbox (sandbox) will keep the rendered message.
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'TEST_MODE');
+    await recordPassEvent(ctx, {
+      orgId: pass.orgId,
+      passId: pass.id,
+      mode: 'test',
+      kind: 'email.captured',
+      data: { outboxId: row.id, attached: row.payload.attach === true },
+    });
     return;
   }
   if (row.providerId) {

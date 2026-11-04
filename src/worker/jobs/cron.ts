@@ -3,6 +3,7 @@ import { dailyAudit } from '../modules/audit/jobs.ts';
 import { dailyAuth } from '../modules/auth/jobs.ts';
 import { dailyConnections, reconcileConnections } from '../modules/connections/jobs.ts';
 import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
+import { dailyEvents } from '../modules/events/jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
@@ -31,6 +32,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },
     { name: 'audit.retention', run: dailyAudit },
+    { name: 'events.retention', run: dailyEvents },
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },

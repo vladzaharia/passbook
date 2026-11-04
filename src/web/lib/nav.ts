@@ -1,4 +1,4 @@
-import { LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
+import { LayoutDashboard, type LucideIcon, Megaphone, ScanLine, Settings } from 'lucide-react';
 import { ENTITY, type EntityKind } from './entities.ts';
 import { isAdminPath } from './guards.ts';
 
@@ -29,6 +29,11 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
     page('Passes', '/admin/passes', 'pass', true),
     page('Templates', '/admin/templates', 'template', true),
     page('Connections', '/admin/connections', 'connection', true),
+  ],
+  [
+    // No entity yet: the art and glyph arrive with the streams that build these pages.
+    { label: 'Messages', to: '/admin/messages', icon: Megaphone, orgScoped: true },
+    { label: 'Scanners', to: '/admin/scanners', icon: ScanLine, orgScoped: true },
   ],
   [
     page('Users', '/admin/users', 'user', false),

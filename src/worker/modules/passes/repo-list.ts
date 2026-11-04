@@ -1,8 +1,11 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, likeEscape } from '../../platform/db.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from './repo-map.ts';
 
 export interface PassListFilter {
   orgId?: string | null;
+  /** The caller's mode; admin and API lists always set it. */
+  mode?: Mode;
   templateId?: string;
   connectionId?: string;
   status?: PassStatus;
@@ -32,6 +35,7 @@ export async function listPasses(
     params.push(...values);
   };
   if (filter.orgId) add('org_id = ?', filter.orgId);
+  if (filter.mode) add('mode = ?', filter.mode);
   if (filter.templateId) add('template_id = ?', filter.templateId);
   if (filter.connectionId) add('connection_id = ?', filter.connectionId);
   if (filter.status) add('status = ?', filter.status);

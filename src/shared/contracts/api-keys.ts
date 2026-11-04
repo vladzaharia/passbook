@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { ApiScopeSchema, IdSchema, PageQuerySchema, pageOf, TimestampSchema } from './common.ts';
+import {
+  ApiScopeSchema,
+  IdSchema,
+  ModeSchema,
+  PageQuerySchema,
+  pageOf,
+  TimestampSchema,
+} from './common.ts';
 
 export const ApiKeySchema = z.object({
   id: IdSchema,
@@ -7,6 +14,7 @@ export const ApiKeySchema = z.object({
   name: z.string(),
   prefix: z.string(),
   scopes: z.array(ApiScopeSchema),
+  mode: ModeSchema.default('live'),
   createdBy: IdSchema.nullable(),
   /** The creator's name or email, for the actor chip. */
   createdByName: z.string().nullable().default(null),
@@ -30,6 +38,7 @@ export const CreateApiKeySchema = z.object({
   orgId: IdSchema.nullable().optional(),
   name: z.string().min(1).max(120),
   scopes: z.array(ApiScopeSchema).min(1),
+  mode: ModeSchema.default('live'),
   expiresAt: TimestampSchema.nullable().optional(),
 });
 /** `secret` (wlt_<prefix>_<secret>) is returned once. */

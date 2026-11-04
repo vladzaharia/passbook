@@ -2,7 +2,12 @@ import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import type { z } from 'zod';
-import { ApiScopeSchema, type RoleSchema } from '../../shared/contracts/common.ts';
+import {
+  ApiScopeSchema,
+  MODE_HEADER,
+  type Mode,
+  type RoleSchema,
+} from '../../shared/contracts/common.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
@@ -22,6 +27,11 @@ export interface SessionAuth {
   roles: Role[];
   csrfSecret: string;
   amr: Amr;
+  /**
+   * Stores resolve 'live'. Admin guards replace it from the x-passbook-mode header; holder routes
+   * never read it (holders see all their passes).
+   */
+  mode: Mode;
 }
 
 export interface ApiKeyAuth {
@@ -30,6 +40,8 @@ export interface ApiKeyAuth {
   /** null = platform-wide key. */
   orgId: string | null;
   scopes: ApiScope[];
+  /** From api_keys.mode. */
+  mode: Mode;
 }
 
 export type AuthContext = SessionAuth | ApiKeyAuth;
@@ -85,9 +97,20 @@ export const requireSession: MiddlewareHandler<AppBindings> = createMiddleware(a
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
   const session = await sessionOrThrow(c);
   requireAdminRole(c, session);
+  c.set('auth', { ...session, mode: modeFromRequest(c) });
   await csrfGuard(c, session);
   await next();
 });
+
+/** The mode an admin session works in. Only the exact value `test` selects test mode. */
+export function modeFromRequest(c: Context): Mode {
+  return c.req.header(MODE_HEADER)?.trim().toLowerCase() === 'test' ? 'test' : 'live';
+}
+
+/** The mode every admin or API list, aggregate and create must apply. */
+export function modeOf(auth: AuthContext | undefined): Mode {
+  return auth?.mode ?? 'live';
+}
 
 function requireAdminRole(c: Context<AppBindings>, session: SessionAuth): void {
   if (session.roles.includes('admin')) return;
@@ -123,6 +146,7 @@ export function requireApiKeyOrAdmin(scope: ScopeSelector): MiddlewareHandler<Ap
     }
     const session = await sessionOrThrow(c);
     requireAdminRole(c, session);
+    c.set('auth', { ...session, mode: modeFromRequest(c) });
     await csrfGuard(c, session);
     return next();
   });

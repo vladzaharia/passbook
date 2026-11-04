@@ -230,7 +230,7 @@ describe('metrics from Analytics Engine', () => {
 
   it('binds ids as params, never into the SQL text', () => {
     const w = { since: 0, bucketMs: 3_600_000 };
-    const q = eventsQuery(w, { orgId: "x' OR 1=1 --", templateId: 'tpl_1' }, 10_000);
+    const q = eventsQuery(w, { orgId: "x' OR 1=1 --", templateId: 'tpl_1', mode: 'live' }, 10_000);
     expect(q.query).not.toContain('OR 1=1');
     expect(q.params).toMatchObject({ orgId: "x' OR 1=1 --", templateId: 'tpl_1' });
     expect(q.query).toContain("INTERVAL '3600' SECOND");

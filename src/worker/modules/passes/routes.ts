@@ -15,10 +15,11 @@ import {
   UpdatePassSchema,
 } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
-import { methodScope, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import { BadRequestError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { registerEventRoutes } from '../events/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
@@ -72,6 +73,7 @@ register(
     return c.json(
       await listPassSummaries(svc(c), {
         orgId: orgScopeOf(c) ?? q.orgId,
+        mode: modeOf(c.var.auth),
         ...(q.templateId ? { templateId: q.templateId } : {}),
         ...(q.connectionId ? { connectionId: q.connectionId } : {}),
         ...(q.status ? { status: q.status } : {}),
@@ -121,6 +123,7 @@ register(
         externalRef: body.externalRef ?? null,
         sendEmail: body.sendEmail ?? false,
         source: 'manual',
+        mode: modeOf(c.var.auth),
         actor: actorFor(c),
       },
       key,
@@ -312,3 +315,4 @@ register(
 
 registerAssetRoutes(passesRoutes);
 registerBulkRoutes(passesRoutes);
+registerEventRoutes(passesRoutes);

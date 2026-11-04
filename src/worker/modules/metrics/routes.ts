@@ -1,5 +1,5 @@
 import { MetricsOverviewSchema, MetricsQuerySchema } from '../../../shared/contracts/index.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { modeOf, requireAdmin } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOverview } from './service.ts';
@@ -17,5 +17,6 @@ register(
     query: MetricsQuerySchema,
     response: MetricsOverviewSchema,
   },
-  async (c) => c.json(await getOverview(serviceContext(c), c.req.valid('query'))),
+  async (c) =>
+    c.json(await getOverview(serviceContext(c), c.req.valid('query'), modeOf(c.var.auth))),
 );

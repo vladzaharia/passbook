@@ -4,6 +4,12 @@ import type { Condition, Expr, Json, Personalization, TemplateManifest } from '.
 export interface ExprScope {
   input: Personalization;
   lookups: NonNullable<TemplateManifest['lookups']>;
+  /** Server-owned values, read as `{{pass.scanCode}}`. `pass` is reserved: it is never an input. */
+  pass?: PassScope;
+}
+
+export interface PassScope {
+  scanCode?: string;
 }
 
 export const EXPR_LIMITS = {
@@ -122,6 +128,9 @@ export function exprReferences(expr: Expr): { inputs: string[]; lookups: string[
       if (table && !table.startsWith('[')) lookups.add(table);
       for (const token of tokens.slice(2))
         if (token.startsWith('[')) inputs.add(token.slice(1, -1).trim());
+    } else if (first === 'pass') {
+      for (const token of tokens.slice(1))
+        if (token.startsWith('[')) inputs.add(token.slice(1, -1).trim());
     } else if (first) {
       inputs.add(first);
       for (const token of tokens.slice(1))
@@ -154,6 +163,7 @@ export function lookupPath(path: string, scope: ExprScope): Json | undefined {
   const tokens = tokenize(path.trim(), path);
   if (tokens[0] === 'lookups')
     return walk(scope.lookups as unknown as Json, tokens.slice(1), scope);
+  if (tokens[0] === 'pass') return walk((scope.pass ?? {}) as Json, tokens.slice(1), scope);
   return walk(scope.input, tokens, scope);
 }
 

@@ -18,6 +18,8 @@ export const PlatformSettingsSchema = z.object({
   'refresh.userCooldownSeconds': z.number().int().min(5).max(3600).default(30),
   'retention.passVersionsKeep': z.number().int().min(1).max(50).default(3),
   'retention.auditDays': z.number().int().min(30).max(3650).default(365),
+  /** Sync log and device activity (pass_events). */
+  'retention.eventsDays': z.number().int().min(7).max(3650).default(90),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z

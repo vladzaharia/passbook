@@ -1,4 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import type { PassSource } from '../../../shared/contracts/passes.ts';
 import { first, run } from '../../platform/db.ts';
 import type { FieldSources, PassCause, PassStatus } from './repo-map.ts';
 
@@ -29,6 +31,9 @@ export interface NewPassRow {
   passJson: string;
   actorType: string | null;
   actorId: string | null;
+  mode: Mode;
+  scanCode: string;
+  barcodeHash: string | null;
 }
 
 /** The `pass_created` trigger records version 1 from the pending_* columns. */
@@ -38,8 +43,8 @@ export async function insertPass(db: D1Database, row: NewPassRow): Promise<void>
     `INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
        web_service_url, personalization, field_sources, display_title, display_subtitle, external_id, holder_email,
        connection_id, external_ref, object_key, object_sha256, object_size, content_hash, modified_at, created_by, created_at,
-       pending_cause, pending_actor_type, pending_actor_id, pending_pass_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'create', ?, ?, ?)`,
+       pending_cause, pending_actor_type, pending_actor_id, pending_pass_json, mode, scan_code, barcode_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'create', ?, ?, ?, ?, ?, ?)`,
     [
       row.id,
       row.orgId,
@@ -68,6 +73,9 @@ export async function insertPass(db: D1Database, row: NewPassRow): Promise<void>
       row.actorType,
       row.actorId,
       row.passJson,
+      row.mode,
+      row.scanCode,
+      row.barcodeHash,
     ],
   );
 }
@@ -89,9 +97,14 @@ export interface PublishWrite {
   objectSize: number;
   contentHash: string;
   cause: PassCause;
+  /** Why beside the cause (scan, broadcast, ...); copied to pass_versions.source by the trigger. */
+  source: PassSource | null;
   actorType: string | null;
   actorId: string | null;
   passJson: string;
+  barcodeHash: string | null;
+  /** Written only while the pass has none (lazy backfill). */
+  scanCode: string;
 }
 
 /**
@@ -105,7 +118,8 @@ export async function casPublish(db: D1Database, w: PublishWrite): Promise<numbe
     `UPDATE passes SET template_version = ?, personalization = ?, field_sources = ?, display_title = ?,
        display_subtitle = ?, external_id = ?, status = ?, object_key = ?, object_sha256 = ?, object_size = ?,
        content_hash = ?, modified_at = ?, modified_collision = ?, version = version + 1, sync_error_code = NULL,
-       pending_cause = ?, pending_actor_type = ?, pending_actor_id = ?, pending_pass_json = ?
+       pending_cause = ?, pending_actor_type = ?, pending_actor_id = ?, pending_pass_json = ?,
+       pending_source = ?, barcode_hash = ?, scan_code = COALESCE(scan_code, ?)
      WHERE id = ? AND version = ? RETURNING version`,
     [
       w.templateVersion,
@@ -125,6 +139,9 @@ export async function casPublish(db: D1Database, w: PublishWrite): Promise<numbe
       w.actorType,
       w.actorId,
       w.passJson,
+      w.source,
+      w.barcodeHash,
+      w.scanCode,
       w.id,
       w.expectedVersion,
     ],
@@ -142,18 +159,22 @@ export async function casMeta(
     externalId: string | null;
     templateVersion: string;
     contentHash: string;
+    barcodeHash: string | null;
+    scanCode: string;
   },
 ): Promise<number | null> {
   const row = await first<{ version: number }>(
     db,
     `UPDATE passes SET field_sources = ?, external_id = ?, template_version = ?, content_hash = ?,
-       version = version + 1
+       barcode_hash = ?, scan_code = COALESCE(scan_code, ?), version = version + 1
      WHERE id = ? AND version = ? RETURNING version`,
     [
       JSON.stringify(set.fieldSources),
       set.externalId,
       set.templateVersion,
       set.contentHash,
+      set.barcodeHash,
+      set.scanCode,
       id,
       expectedVersion,
     ],
