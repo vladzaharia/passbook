@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
 import { ADD_LINE, renderPassEmail } from './pass.ts';
 import { passSummary } from './pass-summary.ts';
-import { EMAIL_LIGHT } from './shell.ts';
+import { EMAIL_LIGHT, RADIUS } from './shell.ts';
 import { renderSignInEmail } from './sign-in.ts';
+
+const ICON = 'https://w.test/p/t/assets/icon@3x.png?v=1';
 
 const PASS_JSON = {
   description: 'Harbor Lights Festival event ticket',
@@ -100,8 +102,36 @@ describe('pass email', () => {
     expect(text).toContain(ADD_LINE);
     expect(text).toContain('Venue: Pier 62');
     expect(html.match(/class="e-btn"/g) ?? []).toHaveLength(0);
-    // The kit Button at 44 px: 11 + 20 + 11 and the 1 px border.
-    expect(html).toMatch(/class="e-block"[^>]*line-height:20px;font-weight:500;padding:11px 24px;/);
+    expect(html.indexOf('Open your pass')).toBeGreaterThan(badge);
+  });
+
+  it('pairs the unmodified badge with a button of its box and corner', () => {
+    const { html } = render();
+    const { width, height } = EMAIL_BADGE;
+    // The art alone: no white cell or padding around it.
+    expect(html).toContain(
+      `margin:0 12px 12px 0"><a href="https://w.test/p/t/pass.pkpass" style="display:block;text-decoration:none"><img src="https://w.test/apple/badge/en/black@2x.png" alt="Add to Apple Wallet" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`,
+    );
+    // 42 px inside a 1 px outline: the badge's 44, at lg, the radius nearest its corner.
+    expect(html).toContain(
+      `<table role="presentation" width="${width}" cellspacing="0" cellpadding="0" style="width:${width}px;border-collapse:separate"><tr><td class="e-block" align="center" height="${height - 2}" style="height:${height - 2}px;padding:0;border:1px solid ${EMAIL_LIGHT.lineStrong};border-radius:${RADIUS.lg}px">`,
+    );
+    expect(html).toMatch(
+      new RegExp(
+        `<a class="e-block" href="https://w.test/p/t" style="display:block;color:${EMAIL_LIGHT.text};[^"]*font-size:14px;line-height:${height - 2}px;font-weight:500;[^"]*">Open your pass</a>`,
+      ),
+    );
+  });
+
+  it('wraps the pair without media queries, side by side or stacked, and in a row in Outlook', () => {
+    const { html } = render();
+    const items = html.match(/<div style="display:inline-block;vertical-align:top;[^"]*">/g) ?? [];
+    expect(items).toEqual([
+      `<div style="display:inline-block;vertical-align:top;width:${EMAIL_BADGE.width}px;margin:0 12px 12px 0">`,
+      `<div style="display:inline-block;vertical-align:top;width:${EMAIL_BADGE.width}px;margin:0 0 12px 0">`,
+    ]);
+    expect(html).toContain('<!--[if mso]></td><td valign="top"><![endif]-->');
+    expect(html).not.toMatch(/@media[^{]*(max|min)-width/);
   });
 
   it('is static and keeps the card radius on every corner', () => {
@@ -109,15 +139,6 @@ describe('pass email', () => {
     expect(html).not.toMatch(/@keyframes|\.gif/i);
     expect(html).toContain('border-radius:18px 18px 0 0');
     expect(html).toContain('border-radius:0 0 18px 18px');
-  });
-
-  it('keeps the outline action in neutral text, like the hosted card', () => {
-    const { html } = render();
-    expect(html).toMatch(
-      new RegExp(
-        `class="e-block"[^>]*color:${EMAIL_LIGHT.text};border:1px solid ${EMAIL_LIGHT.lineStrong}`,
-      ),
-    );
   });
 
   it('sends from "<Org> via <sender>"', () => {
@@ -158,8 +179,7 @@ describe('pass email', () => {
     });
 
     it('is the sign-in email band, from the same shell', () => {
-      const band = (html: string) =>
-        /<tr><td><table role="presentation"[\s\S]*?<\/table><\/td><\/tr>/.exec(html)?.[0] ?? '';
+      const band = (html: string) => /<tr><td><table[\s\S]*?class="e-card"/.exec(html)?.[0] ?? '';
       const signIn = renderSignInEmail({
         purpose: 'sign_in',
         link: `${BASE}/auth/magic?t=abc`,
@@ -169,9 +189,11 @@ describe('pass email', () => {
       });
       const strip = (html: string) =>
         band(html)
-          .replace(/<img src="[^"]*apple-touch-icon[^>]*>/, '')
+          .replace(/<img src="[^"]*" alt="" width="24"/, '<img src="" alt="" width="24"')
           .replace(/>(PassBook|Harbor Lights Festival)</, '><');
-      expect(strip(withBuddy().html)).toBe(strip(signIn.html));
+      const pass = render({ buddyBase: BASE, iconUrl: ICON }).html;
+      expect(band(pass)).toContain(`<img src="${ICON}" alt="" width="24"`);
+      expect(strip(pass)).toBe(strip(signIn.html));
     });
 
     it('keeps the plain-text part, subject and sender unchanged', () => {
@@ -197,6 +219,69 @@ describe('pass email', () => {
   it('still renders without a pass summary', () => {
     const { html } = render({ summary: null, passTitle: null });
     expect(html).toContain('alt="Add to Apple Wallet"');
+  });
+
+  it('frames the pass in its own colour, or in the card hairline where it would melt in', () => {
+    expect(render().html).toContain(
+      'class="e-line" style="background:rgb(40, 30, 120);border:1px solid rgb(40, 30, 120);',
+    );
+    const white = passSummary(
+      { ...PASS_JSON, backgroundColor: 'rgb(255, 255, 255)' },
+      { now: new Date() },
+    );
+    expect(render({ summary: white }).html).toContain(
+      `class="e-line" style="background:rgb(255, 255, 255);border:1px solid ${EMAIL_LIGHT.line};`,
+    );
+  });
+});
+
+describe("the org's mark and the pass logo", () => {
+  const LOGO = 'https://w.test/p/t/assets/logo@3x.png?v=1';
+  const logoTag = (html: string) => /<img src="[^"]*logo@3x[^>]*>/.exec(html)?.[0];
+
+  it('puts the pass icon before the org name in the band, decorative and fixed', () => {
+    const { html } = render({ iconUrl: ICON });
+    const mark = html.indexOf(
+      `<img src="${ICON}" alt="" width="24" height="24" style="display:block;width:24px;height:24px;`,
+    );
+    expect(mark).toBeGreaterThan(-1);
+    expect(mark).toBeLessThan(html.indexOf('>Harbor Lights Festival</td>'));
+    expect(html.indexOf('>Harbor Lights Festival</td>')).toBeLessThan(
+      html.indexOf('class="e-card"'),
+    );
+    for (const iconUrl of ['/p/t/assets/icon.png', 'javascript:alert(1)', null])
+      expect(render({ iconUrl }).html).toBe(render().html);
+  });
+
+  it('draws the logo on the pass block at its aspect, at most 36 tall, named by alt', () => {
+    const { html } = render({ logo: { url: LOGO, width: 108, height: 50 } });
+    expect(logoTag(html)).toBe(
+      `<img src="${LOGO}" alt="Harbor Lights Festival" width="78" height="36" style="display:block;width:78px;height:36px;border:0">`,
+    );
+    expect(html.indexOf('class="e-line"')).toBeLessThan(html.indexOf(LOGO));
+    expect(html.indexOf(LOGO)).toBeLessThan(html.indexOf('>Harbor Lights 2026</p>'));
+    const wide = render({ logo: { url: LOGO, width: 300, height: 50 } }).html;
+    expect(logoTag(wide)).toContain('width="160" height="27"');
+    const small = render({ logo: { url: LOGO, width: 40, height: 20 } }).html;
+    expect(logoTag(small)).toContain('width="40" height="20"');
+  });
+
+  it("sets the pass's logoText beside the logo, so the image's alt is empty", () => {
+    const { html } = render({
+      logo: { url: LOGO, width: 50, height: 50 },
+      logoText: 'Harbor Lights',
+    });
+    expect(logoTag(html)).toContain('alt="" width="36" height="36"');
+    expect(html).toMatch(/font-weight:600;color:rgb\(255, 255, 255\)">Harbor Lights<\/td>/);
+  });
+
+  it('leaves the logo out without a size or an absolute URL', () => {
+    for (const logo of [
+      { url: LOGO, width: 0, height: 50 },
+      { url: '/p/t/assets/logo.png', width: 100, height: 50 },
+      null,
+    ])
+      expect(render({ logo, logoText: 'Harbor Lights' }).html).toBe(render().html);
   });
 });
 

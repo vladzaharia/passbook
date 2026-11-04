@@ -1,5 +1,5 @@
 import { EMAIL_TOKENS as T } from '../../generated/resolved-tokens.ts';
-import { EMAIL_BUDDY, type EmailMood } from '../../shared/email-art.ts';
+import { EMAIL_BADGE, EMAIL_BUDDY, type EmailMood } from '../../shared/email-art.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { buddySliceHtml } from './buddy.ts';
 
@@ -21,6 +21,7 @@ const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light da
 .e-btn{background:${D.accent}!important;border-color:${D.accent}!important;color:${D.accentOn}!important}
 .e-block{border-color:${D.lineStrong}!important;color:${D.text}!important}
 .e-chip{background:${D.sunken}!important;color:${D.strong}!important}
+.e-line{border-color:${D.line}!important}
 }`;
 
 /** The SPA's sans stack (Rubik first, then its metric fallback and the system faces). */
@@ -47,6 +48,19 @@ export function buttonHtml(href: string, label: string, primary: boolean) {
     ? `background:${c.accent};color:${c.accentOn};border:1px solid ${c.accent}`
     : `background:transparent;color:${c.text};border:1px solid ${c.lineStrong}`;
   return `<a class="${primary ? 'e-btn' : 'e-block'}" href="${escapeHtml(href)}" style="display:block;${look};text-align:center;text-decoration:none;${type('sm')};font-weight:${T.weight.medium};padding:11px 24px;border-radius:${T.radius.md}px">${escapeHtml(label)}</a>`;
+}
+
+/**
+ * The outline button beside the Apple badge (the kit's `badge` size): the badge's box, and lg, the
+ * radius step nearest its corner, so the two read as a pair. The cell draws the outline, so
+ * Outlook keeps the box.
+ */
+export function badgeButtonHtml(href: string, label: string) {
+  const c = EMAIL_LIGHT;
+  const { width, height } = EMAIL_BADGE;
+  const inner = height - 2;
+  const r = T.radius.lg;
+  return `<table role="presentation" width="${width}" cellspacing="0" cellpadding="0" style="width:${width}px;border-collapse:separate"><tr><td class="e-block" align="center" height="${inner}" style="height:${inner}px;padding:0;border:1px solid ${c.lineStrong};border-radius:${r}px"><a class="e-block" href="${escapeHtml(href)}" style="display:block;color:${c.text};font-family:${FONT};font-size:${T.text.sm.size}px;line-height:${inner}px;font-weight:${T.weight.medium};text-align:center;text-decoration:none;border-radius:${r}px">${escapeHtml(label)}</a></td></tr></table>`;
 }
 
 export interface ShellInput {
@@ -76,17 +90,18 @@ const ART_RIGHT_SPACE = 20;
 export function emailShell(input: ShellInput): string {
   const c = EMAIL_LIGHT;
   const r = T.radius.xl;
-  const mark = input.headerMark
-    ? `<img src="${escapeHtml(input.headerMark)}" alt="" width="24" height="24" style="display:inline-block;width:24px;height:24px;border:0;border-radius:${T.radius.md}px;vertical-align:-5px;margin-right:10px">`
-    : '';
   const buddy = input.buddy;
   const name = `${type('xl')};font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${c.strong}`;
+  // A long name beside the buddy wraps beside the mark, centred on its first line, not under it.
+  const wordmark = input.headerMark
+    ? `<table role="presentation" cellspacing="0" cellpadding="0"><tr><td valign="top" style="padding:2px 10px 0 0;vertical-align:top;font-size:0;line-height:0"><img src="${escapeHtml(input.headerMark)}" alt="" width="24" height="24" style="display:block;width:24px;height:24px;border:0;border-radius:${T.radius.md}px"></td><td class="e-strong" style="${name}">${escapeHtml(input.header)}</td></tr></table>`
+    : escapeHtml(input.header);
   // The wordmark's centre lines up with the buddy's face, 28 px above the card; alone, the band is
   // the hosted 56 px.
   const inset = PAD - ART_RIGHT_SPACE;
   const band = buddy
-    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" valign="bottom" style="padding:0 0 14px ${PAD + 1}px;${name};vertical-align:bottom">${mark}${escapeHtml(input.header)}</td><td valign="bottom" align="right" width="${EMAIL_BUDDY.width}" style="width:${EMAIL_BUDDY.width}px;padding:0 ${inset}px 0 0;vertical-align:bottom;font-size:0;line-height:0">${buddySliceHtml(buddy.base, buddy.mood, 'top')}</td></tr></table>`
-    : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" style="padding:14px 0 14px ${PAD + 1}px;${name}">${mark}${escapeHtml(input.header)}</td></tr></table>`;
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" valign="bottom" style="padding:0 0 14px ${PAD + 1}px;${name};vertical-align:bottom">${wordmark}</td><td valign="bottom" align="right" width="${EMAIL_BUDDY.width}" style="width:${EMAIL_BUDDY.width}px;padding:0 ${inset}px 0 0;vertical-align:bottom;font-size:0;line-height:0">${buddySliceHtml(buddy.base, buddy.mood, 'top')}</td></tr></table>`
+    : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" style="padding:14px 0 14px ${PAD + 1}px;${name}">${wordmark}</td></tr></table>`;
   const foil = `background-color:${c.card};background-image:linear-gradient(115deg,${c.foil1},${c.foil2} 55%,${c.foil3});background-size:100% ${FOIL}px;background-repeat:no-repeat;border-radius:${r}px ${r}px 0 0`;
   // The seam row: the foil along its top, the buddy's legs and shadow over it, flush with the band.
   const seam = buddy
