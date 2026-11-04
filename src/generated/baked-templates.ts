@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "224746d12da19e2c2d1079b9951ad80b6113a119";
+export const BAKED_BUILD_HASH = "c9532455d34e6a24bfeb2d6ec2bd1d7e4640804c";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -2590,9 +2590,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "6ccb10e5c69bc065",
+    "version": "6d3e1e551a02afd8",
     "name": "PassBook · Event ticket",
-    "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
+    "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
     "org": null,
     "styles": [
       "eventTicket"
@@ -2600,7 +2600,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     "manifest": {
       "schema": 1,
       "name": "PassBook · Event ticket",
-      "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
+      "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
       "inputs": {
         "type": "object",
         "required": [
@@ -2766,6 +2766,83 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 51,
             "format": "date-time",
             "x-widget": "datetime"
+          },
+          "upcomingEvents": {
+            "type": "array",
+            "maxItems": 10,
+            "x-label": "Upcoming events",
+            "x-group": "Upcoming events",
+            "x-order": 170,
+            "x-widget": "list",
+            "x-itemLabel": "Event",
+            "x-addLabel": "Add event",
+            "x-help": "Season or series ticket. Wallet lists these on the pass. Past events drop off on their own.",
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "x-label": "Name",
+                  "x-order": 10,
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "startsAt": {
+                  "type": "string",
+                  "x-label": "Starts",
+                  "x-order": 20,
+                  "format": "date-time",
+                  "x-widget": "datetime"
+                },
+                "endsAt": {
+                  "type": "string",
+                  "x-label": "Ends",
+                  "x-order": 30,
+                  "format": "date-time",
+                  "x-widget": "datetime"
+                },
+                "venueName": {
+                  "type": "string",
+                  "x-label": "Venue",
+                  "x-order": 40,
+                  "maxLength": 80
+                },
+                "venueRegion": {
+                  "type": "string",
+                  "x-label": "City",
+                  "x-order": 50,
+                  "maxLength": 80
+                },
+                "note": {
+                  "type": "string",
+                  "x-label": "Note",
+                  "x-order": 60,
+                  "maxLength": 200
+                },
+                "website": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://",
+                  "maxLength": 300,
+                  "x-label": "Event page",
+                  "x-order": 70,
+                  "x-widget": "url"
+                },
+                "directionsURL": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://",
+                  "maxLength": 300,
+                  "x-label": "Directions link",
+                  "x-order": 80,
+                  "x-widget": "url"
+                }
+              }
+            }
           }
         },
         "dependentRequired": {
@@ -2789,7 +2866,30 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "attendee": "Alex Morgan",
         "ticketId": "TICKET-0001",
         "doorsAt": "2030-06-01T18:00:00-07:00",
-        "venueRoom": "Main hall"
+        "venueRoom": "Main hall",
+        "upcomingEvents": [
+          {
+            "name": "Sample Event",
+            "startsAt": "2030-06-01T19:00:00-07:00",
+            "endsAt": "2030-06-01T22:00:00-07:00",
+            "venueName": "Sample Hall",
+            "venueRegion": "Cupertino, CA"
+          },
+          {
+            "name": "Sample Event: Encore",
+            "startsAt": "2030-06-08T19:00:00-07:00",
+            "endsAt": "2030-06-08T22:00:00-07:00",
+            "venueName": "Sample Hall",
+            "venueRegion": "Cupertino, CA",
+            "note": "Doors at 6 PM."
+          },
+          {
+            "name": "Sample Event: Finale",
+            "startsAt": "2030-06-15T19:00:00-07:00",
+            "venueName": "Harbor Arena",
+            "venueRegion": "San Jose, CA"
+          }
+        ]
       },
       "bindings": [
         {
@@ -3047,6 +3147,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "end": "endsAt",
             "leadMinutes": 120
           }
+        },
+        {
+          "use": "upcoming-events",
+          "version": 1,
+          "config": {
+            "input": "upcomingEvents"
+          }
         }
       ]
     },
@@ -3212,7 +3319,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/artwork@2x.png"
         }
       },
       {
@@ -3226,7 +3333,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/artwork@3x.png"
         }
       },
       {
@@ -3240,7 +3347,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/background@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/background@2x.png"
         }
       },
       {
@@ -3254,7 +3361,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/background@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/background@3x.png"
         }
       },
       {
@@ -3267,7 +3374,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4061939731,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/en.lproj/pass.strings"
         }
       },
       {
@@ -3281,7 +3388,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/icon@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/icon@2x.png"
         }
       },
       {
@@ -3295,7 +3402,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/icon@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/icon@3x.png"
         }
       },
       {
@@ -3309,7 +3416,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/logo@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/logo@2x.png"
         }
       },
       {
@@ -3323,7 +3430,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/logo@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/logo@3x.png"
         }
       },
       {
@@ -3337,7 +3444,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/primaryLogo@2x.png"
         }
       },
       {
@@ -3351,7 +3458,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/primaryLogo@3x.png"
         }
       },
       {
@@ -3365,7 +3472,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/secondaryLogo@2x.png"
         }
       },
       {
@@ -3379,7 +3486,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/secondaryLogo@3x.png"
         }
       },
       {
@@ -3393,7 +3500,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/thumbnail@2x.png"
         }
       },
       {
@@ -3407,7 +3514,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6ccb10e5c69bc065/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/thumbnail@3x.png"
         }
       }
     ],
@@ -4525,9 +4632,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-store-card",
     "slug": "starter-store-card",
-    "version": "095b170aecb4e658",
+    "version": "82ad1b0cbfc220e2",
     "name": "PassBook · Store card",
-    "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
+    "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
     "org": null,
     "styles": [
       "storeCard"
@@ -4535,7 +4642,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     "manifest": {
       "schema": 1,
       "name": "PassBook · Store card",
-      "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
+      "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
       "inputs": {
         "type": "object",
         "required": [
@@ -4640,6 +4747,53 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Links",
             "x-order": 75,
             "x-widget": "url"
+          },
+          "beacons": {
+            "type": "array",
+            "maxItems": 10,
+            "x-label": "Beacons",
+            "x-group": "Location",
+            "x-order": 210,
+            "x-widget": "list",
+            "x-itemLabel": "Beacon",
+            "x-addLabel": "Add beacon",
+            "x-help": "Shows the card on the lock screen near a Bluetooth beacon. Up to 10.",
+            "items": {
+              "type": "object",
+              "required": [
+                "proximityUUID"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "proximityUUID": {
+                  "type": "string",
+                  "x-label": "UUID",
+                  "x-order": 10,
+                  "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+                  "x-placeholder": "8DEEFBB9-F738-4297-8040-96668BB44281"
+                },
+                "major": {
+                  "type": "integer",
+                  "x-label": "Major",
+                  "x-order": 20,
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "minor": {
+                  "type": "integer",
+                  "x-label": "Minor",
+                  "x-order": 30,
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "relevantText": {
+                  "type": "string",
+                  "x-label": "Lock screen text",
+                  "x-order": 40,
+                  "maxLength": 120
+                }
+              }
+            }
           }
         },
         "dependentRequired": {
@@ -4656,7 +4810,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "cardNumber": "CARD-0001",
         "tier": "Gold",
         "balance": 25,
-        "currency": "USD"
+        "currency": "USD",
+        "beacons": [
+          {
+            "proximityUUID": "8DEEFBB9-F738-4297-8040-96668BB44281",
+            "major": 1,
+            "relevantText": "Welcome back."
+          }
+        ]
       },
       "bindings": [
         {
@@ -4789,7 +4950,16 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "holder",
           "cardNumber"
         ]
-      }
+      },
+      "behaviors": [
+        {
+          "use": "beacons",
+          "version": 1,
+          "config": {
+            "input": "beacons"
+          }
+        }
+      ]
     },
     "passJson": {
       "formatVersion": 1,
@@ -4898,7 +5068,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 878280692,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/en.lproj/pass.strings"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/en.lproj/pass.strings"
         }
       },
       {
@@ -4912,7 +5082,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/icon@2x.png"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/icon@2x.png"
         }
       },
       {
@@ -4926,7 +5096,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/icon@3x.png"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/icon@3x.png"
         }
       },
       {
@@ -4940,7 +5110,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/logo@2x.png"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/logo@2x.png"
         }
       },
       {
@@ -4954,7 +5124,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/logo@3x.png"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/logo@3x.png"
         }
       },
       {
@@ -4968,7 +5138,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/strip@2x.png"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/strip@2x.png"
         }
       },
       {
@@ -4982,7 +5152,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/095b170aecb4e658/strip@3x.png"
+          "path": "/templates/starter-store-card/82ad1b0cbfc220e2/strip@3x.png"
         }
       }
     ],

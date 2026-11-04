@@ -135,5 +135,80 @@
   "serialNumber": "SNAPSHOT-SERIAL",
   "sharingProhibited": true,
   "teamIdentifier": "48H7CLBV8Y",
+  "upcomingPassInformation": [
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Sample Hall, Cupertino, CA"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-01T19:00:00-07:00"
+      },
+      "identifier": "sample-event-203006011900",
+      "isActive": false,
+      "name": "Sample Event",
+      "semantics": {
+        "eventEndDate": "2030-06-01T22:00:00-07:00",
+        "eventName": "Sample Event",
+        "eventStartDate": "2030-06-01T19:00:00-07:00",
+        "venueName": "Sample Hall",
+        "venueRegionName": "Cupertino, CA"
+      },
+      "type": "event"
+    },
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Sample Hall, Cupertino, CA"
+        },
+        {
+          "key": "note",
+          "label": "Note",
+          "value": "Doors at 6 PM."
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-08T19:00:00-07:00"
+      },
+      "identifier": "sample-event-encore-203006081900",
+      "isActive": false,
+      "name": "Sample Event: Encore",
+      "semantics": {
+        "eventEndDate": "2030-06-08T22:00:00-07:00",
+        "eventName": "Sample Event: Encore",
+        "eventStartDate": "2030-06-08T19:00:00-07:00",
+        "venueName": "Sample Hall",
+        "venueRegionName": "Cupertino, CA"
+      },
+      "type": "event"
+    },
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Harbor Arena, San Jose, CA"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-15T19:00:00-07:00"
+      },
+      "identifier": "sample-event-finale-203006151900",
+      "isActive": false,
+      "name": "Sample Event: Finale",
+      "semantics": {
+        "eventName": "Sample Event: Finale",
+        "eventStartDate": "2030-06-15T19:00:00-07:00",
+        "venueName": "Harbor Arena",
+        "venueRegionName": "San Jose, CA"
+      },
+      "type": "event"
+    }
+  ],
   "webServiceURL": "https://wallet.example/wallet"
 }

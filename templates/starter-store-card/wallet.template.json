@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "PassBook · Store card",
-  "description": "Stored-value card with balance, strip image, relevance and two featured actions.",
+  "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
   "inputs": {
     "type": "object",
     "required": [
@@ -106,6 +106,53 @@
         "x-group": "Links",
         "x-order": 75,
         "x-widget": "url"
+      },
+      "beacons": {
+        "type": "array",
+        "maxItems": 10,
+        "x-label": "Beacons",
+        "x-group": "Location",
+        "x-order": 210,
+        "x-widget": "list",
+        "x-itemLabel": "Beacon",
+        "x-addLabel": "Add beacon",
+        "x-help": "Shows the card on the lock screen near a Bluetooth beacon. Up to 10.",
+        "items": {
+          "type": "object",
+          "required": [
+            "proximityUUID"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "proximityUUID": {
+              "type": "string",
+              "x-label": "UUID",
+              "x-order": 10,
+              "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+              "x-placeholder": "8DEEFBB9-F738-4297-8040-96668BB44281"
+            },
+            "major": {
+              "type": "integer",
+              "x-label": "Major",
+              "x-order": 20,
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "minor": {
+              "type": "integer",
+              "x-label": "Minor",
+              "x-order": 30,
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "relevantText": {
+              "type": "string",
+              "x-label": "Lock screen text",
+              "x-order": 40,
+              "maxLength": 120
+            }
+          }
+        }
       }
     },
     "dependentRequired": {
@@ -122,7 +169,14 @@
     "cardNumber": "CARD-0001",
     "tier": "Gold",
     "balance": 25,
-    "currency": "USD"
+    "currency": "USD",
+    "beacons": [
+      {
+        "proximityUUID": "8DEEFBB9-F738-4297-8040-96668BB44281",
+        "major": 1,
+        "relevantText": "Welcome back."
+      }
+    ]
   },
   "bindings": [
     {
@@ -255,5 +309,14 @@
       "holder",
       "cardNumber"
     ]
-  }
+  },
+  "behaviors": [
+    {
+      "use": "beacons",
+      "version": 1,
+      "config": {
+        "input": "beacons"
+      }
+    }
+  ]
 }

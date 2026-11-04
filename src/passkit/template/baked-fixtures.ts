@@ -1,8 +1,10 @@
 // Test helper: loads templates/<slug> as a ResolvedTemplate with a registry that serves its files.
 import { join } from 'node:path';
+import beacons from '../behaviors/beacons/index.ts';
 import expiryFromInput from '../behaviors/expiry-from-input/index.ts';
 import { createBehaviorRegistry } from '../behaviors/registry.ts';
 import relevanceWindow from '../behaviors/relevance-window/index.ts';
+import upcomingEvents from '../behaviors/upcoming-events/index.ts';
 import venueLocations from '../behaviors/venue-locations/index.ts';
 import { buildPass } from '../build.ts';
 import { FIXTURE_IDENTITY } from '../testing/fixture-identity.ts';
@@ -17,6 +19,8 @@ export const bakedBehaviors = createBehaviorRegistry([
   venueLocations as BehaviorPlugin,
   expiryFromInput as BehaviorPlugin,
   relevanceWindow as BehaviorPlugin,
+  upcomingEvents as BehaviorPlugin,
+  beacons as BehaviorPlugin,
 ]);
 
 export function bakedSlugs(): string[] {
