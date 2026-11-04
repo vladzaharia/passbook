@@ -7,6 +7,7 @@ import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
+import { deliverBundleEmail } from '../bundles/deliver.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
@@ -46,6 +47,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       kind: 'email.captured',
       data: { outboxId: row.id, attached: row.payload.attach === true },
     });
+    return;
+  }
+  if (typeof row.payload.bundleId === 'string') {
+    await deliverBundleEmail(ctx, { row, lease, to });
     return;
   }
   if (row.providerId) {
