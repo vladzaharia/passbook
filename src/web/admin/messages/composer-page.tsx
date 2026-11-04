@@ -58,7 +58,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
   const count = useAudienceCount(orgId, targetOf({ ...state, q: settledQ }));
   const actions = useBroadcastActions();
   const [ask, setAsk] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sentId, setSentId] = useState<string>();
 
   const at = atMs(state);
   const text = state.message.trim();
@@ -74,7 +74,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
         : undefined,
   });
   const dirty =
-    !sent && (state.message !== '' || state.templateIds.length > 0 || state.fields.length > 0);
+    !sentId && (state.message !== '' || state.templateIds.length > 0 || state.fields.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
 
   const submit = async (send: 'draft' | 'now' | 'schedule') => {
@@ -82,14 +82,18 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
     const body = bodyOf(orgId, state, send, at);
     if (!body) return;
     const made = await actions.create.mutateAsync(body);
-    setSent(true);
     toast.success(send === 'draft' ? 'Draft saved' : send === 'now' ? 'Sending' : 'Scheduled');
-    void navigate({
-      to: '/admin/messages/$broadcastId',
-      params: { broadcastId: made.id },
-      replace: true,
-    });
+    setSentId(made.id);
   };
+  // Navigates once the guard has re-rendered clean; navigating in submit itself was blocked.
+  useEffect(() => {
+    if (sentId)
+      void navigate({
+        to: '/admin/messages/$broadcastId',
+        params: { broadcastId: sentId },
+        replace: true,
+      });
+  }, [sentId, navigate]);
   const send = state.when === 'later' ? 'schedule' : 'now';
   // A count for an older audience (while the search settles or reloads) is not the count to confirm.
   const counted = count.data !== undefined && !count.isPlaceholderData && settledQ === state.q;
