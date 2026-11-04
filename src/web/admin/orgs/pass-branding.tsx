@@ -23,7 +23,7 @@ import {
 } from '@/web/ui/index.ts';
 import { HEX, ImageInputError, passColorWarnings, prepareImage } from './branding.ts';
 import { ColorField } from './color-field.tsx';
-import { type BrandingSlot, brandingUrl, useBrandingImage } from './queries.ts';
+import { type BrandingSlot, brandingUrl, passUpdateNote, useBrandingImage } from './queries.ts';
 
 type Org = z.infer<typeof OrgSummarySchema>;
 
@@ -103,8 +103,8 @@ function ImageSlot({ org, slot }: { org: Org; slot: BrandingSlot }) {
     setError(undefined);
     try {
       const prepared = await prepareImage(slot, file);
-      await upload.mutateAsync({ slot, ...prepared });
-      toast.success(`${SLOT[slot].label} uploaded`);
+      const saved = await upload.mutateAsync({ slot, ...prepared });
+      toast.success(`${SLOT[slot].label} uploaded.${passUpdateNote(saved.passesToUpdate)}`);
     } catch (cause) {
       setError(cause instanceof ImageInputError ? cause.message : errorMessage(cause));
     }
@@ -153,7 +153,10 @@ function ImageSlot({ org, slot }: { org: Org; slot: BrandingSlot }) {
               icon={<ACTION_ICON.delete aria-hidden />}
               onClick={() =>
                 remove.mutateAsync(slot).then(
-                  () => toast.success(`${SLOT[slot].label} removed`),
+                  (saved) =>
+                    toast.success(
+                      `${SLOT[slot].label} removed.${passUpdateNote(saved.passesToUpdate)}`,
+                    ),
                   (cause) => toast.error(cause, 'Could not remove'),
                 )
               }

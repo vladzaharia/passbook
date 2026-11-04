@@ -138,6 +138,14 @@ export function createApiClient(deps: ApiClientDeps) {
     ): Promise<z.infer<S>> {
       return parse(schema, await send('PATCH', path, body, opts), path);
     },
+    /** DELETE that returns a body. */
+    async deleteJson<S extends z.ZodType>(
+      path: string,
+      schema: S,
+      opts: RequestOptions = {},
+    ): Promise<z.infer<S>> {
+      return parse(schema, await send('DELETE', path, undefined, opts), path);
+    },
     /** For endpoints that return no body. */
     async delete(path: string, opts: RequestOptions = {}): Promise<void> {
       await send('DELETE', path, undefined, opts);

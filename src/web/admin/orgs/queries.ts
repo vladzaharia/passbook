@@ -70,6 +70,10 @@ export function useSetOrgStatus(id: string) {
 
 export type BrandingSlot = 'logo' | 'icon';
 
+/** Tail of a branding toast: " 42 passes will update." when the save restyles live passes. */
+export const passUpdateNote = (count?: number) =>
+  count ? ` ${count} ${count === 1 ? 'pass' : 'passes'} will update.` : '';
+
 export function useBrandingImage(id: string) {
   const client = useQueryClient();
   const done = () => client.invalidateQueries({ queryKey: orgKeys.all });
@@ -81,7 +85,7 @@ export function useBrandingImage(id: string) {
     }),
     remove: useMutation({
       mutationFn: (slot: BrandingSlot) =>
-        api.delete(`${orgPath(id)}/branding/${slot}`).then(() => slot),
+        api.deleteJson(`${orgPath(id)}/branding/${slot}`, OrgSchema),
       onSuccess: done,
     }),
   };
