@@ -1,4 +1,9 @@
-import type { FieldView, LayoutView, PassView } from '../../shared/pass-view/index.ts';
+import type {
+  FieldView,
+  LayoutView,
+  PassView,
+  UpcomingView,
+} from '../../shared/pass-view/index.ts';
 import { Rich } from './parts.tsx';
 
 function Group({ title, fields }: { title?: string; fields: FieldView[] }) {
@@ -16,6 +21,37 @@ function Group({ title, fields }: { title?: string; fields: FieldView[] }) {
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+/** Wallet's event list: a date tile, then the name over the day, time and venue. */
+function Upcoming({ events }: { events: UpcomingView[] }) {
+  if (!events.length) return null;
+  return (
+    <section className="pc-group" aria-label="Upcoming events">
+      <h3 className="pc-group-title">Upcoming</h3>
+      <ol className="pc-list pc-upcoming">
+        {events.map((e) => (
+          <li key={e.id} className="pc-up" data-active={e.active || undefined}>
+            {e.dated ? (
+              <time className="pc-up-date" dateTime={e.dateTime}>
+                <span className="pc-up-month">{e.month}</span>
+                <span className="pc-up-day">{e.day}</span>
+              </time>
+            ) : (
+              <span className="pc-up-date" data-tba="" aria-hidden="true">
+                <span className="pc-up-day">TBA</span>
+              </span>
+            )}
+            <span className="pc-up-text">
+              <span className="pc-up-name">{e.name}</span>
+              <span className="pc-up-meta">{[e.when, e.venue].filter(Boolean).join(' · ')}</span>
+            </span>
+            {e.active ? <span className="pc-up-now">Now</span> : null}
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -53,6 +89,7 @@ export function Back({ view, layout }: { view: PassView; layout: LayoutView }) {
           ))}
         </ul>
       ) : null}
+      <Upcoming events={view.upcoming} />
       <Group title="Additional info" fields={layout.additionalInfo} />
       <Group fields={layout.back} />
       <Group title="More" fields={layout.overflow} />

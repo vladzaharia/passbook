@@ -107,6 +107,68 @@
   border-top: 1px solid rgb(127 127 127 / 0.3);
 }
 
+/* upcoming events: a date tile, then name and meta, as in Wallet's list */
+.pc-up {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 12);
+  padding: calc(var(--u) * 8) calc(var(--u) * 12);
+}
+.pc-up + .pc-up {
+  border-top: 1px solid rgb(127 127 127 / 0.3);
+}
+.pc-up-date {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 44);
+  height: calc(var(--u) * 44);
+  border-radius: calc(var(--u) * 8);
+  background: rgb(127 127 127 / 0.25);
+  line-height: 1.1;
+}
+.pc-up-month {
+  font-size: calc(var(--u) * 10);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pc-label);
+}
+.pc-up-day {
+  font-size: calc(var(--u) * 18);
+  font-weight: 700;
+}
+.pc-up-date[data-tba] .pc-up-day {
+  font-size: calc(var(--u) * 12);
+}
+.pc-up-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 2);
+}
+.pc-up-name {
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.pc-up-meta {
+  font-size: calc(var(--u) * 12);
+  color: var(--pc-label);
+  overflow-wrap: break-word;
+}
+.pc-up-now {
+  flex: none;
+  padding: calc(var(--u) * 2) calc(var(--u) * 8);
+  border-radius: 999px;
+  background: var(--pc-fg);
+  color: var(--pc-bg);
+  font-size: calc(var(--u) * 11);
+  font-weight: 700;
+}
+
 /* voided and expired */
 .pc-void {
   position: absolute;

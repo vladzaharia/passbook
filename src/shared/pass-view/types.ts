@@ -81,6 +81,23 @@ export type SemanticView =
       flight?: string;
     };
 
+/** One row of Wallet's upcoming events list. */
+export interface UpcomingView {
+  id: string;
+  name: string;
+  venue?: string;
+  /** The event is on now. */
+  active: boolean;
+  /** False when the date is not set or not announced. */
+  dated: boolean;
+  /** ISO value for `<time dateTime>`; only when dated. */
+  dateTime?: string;
+  month?: string;
+  day?: string;
+  /** Weekday and time, or "Date to be announced". */
+  when: string;
+}
+
 export interface LayoutView {
   target: PassTarget;
   style: PassStyle;
@@ -120,6 +137,8 @@ export interface PassView {
   eventLogoText?: string;
   colors: ColorsView;
   images: Partial<Record<ImageSlot, ImageView>>;
+  /** Events from `upcomingPassInformation`, in the pass's order. */
+  upcoming: UpcomingView[];
   voided: boolean;
   expired: boolean;
   invalid: 'voided' | 'expired' | null;

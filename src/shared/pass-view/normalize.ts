@@ -4,6 +4,7 @@ import { safeLocale } from './format.ts';
 import { resolveImages } from './images.ts';
 import { buildLayout, chooseStyle } from './layout.ts';
 import { localize } from './strings.ts';
+import { upcomingEvents } from './upcoming.ts';
 import type { LayoutView, PassTarget, PassView } from './types.ts';
 
 export interface NormalizeOptions {
@@ -64,6 +65,7 @@ export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
     ...(eventLogoText ? { eventLogoText } : {}),
     colors: resolveColors(pass),
     images: resolveImages(options.assets, locale),
+    upcoming: upcomingEvents(pass, ctx),
     voided,
     expired,
     invalid: voided ? 'voided' : expired ? 'expired' : null,
