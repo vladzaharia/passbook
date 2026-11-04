@@ -9,6 +9,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
+import { recordPassEvent } from '../events/record.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
 import {
@@ -83,6 +84,15 @@ register(
         now: new Date(svcCtx.clock.now()),
         timeZone: zoneOf(c) ?? 'UTC',
       });
+      svcCtx.waitUntil(
+        recordPassEvent(svcCtx, {
+          orgId: pass.orgId,
+          passId: pass.id,
+          mode: pass.mode,
+          kind: 'page.opened',
+          actor: { type: 'holder', id: null },
+        }),
+      );
       const page = `/p/${pass.downloadToken}`;
       const html = renderPassPage({
         view,
@@ -123,13 +133,22 @@ register(
   async (c) => {
     const pass = await passForToken(svc(c), c.req.valid('param').token);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
-    if (response.status === 200)
+    if (response.status === 200) {
       writeEvent(c.env, {
         event: 'pass.downloaded',
         orgId: pass.orgId,
         templateId: pass.templateId,
         identityId: pass.identityId,
+        mode: pass.mode,
       });
+      await recordPassEvent(svc(c), {
+        orgId: pass.orgId,
+        passId: pass.id,
+        mode: pass.mode,
+        kind: 'pass.downloaded',
+        actor: { type: 'holder', id: null },
+      });
+    }
     return response;
   },
 );

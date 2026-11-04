@@ -86,14 +86,23 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     senderName: platform['email.senderName'],
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
-  const event = (outcome: 'ok' | 'failed') =>
+  const event = async (outcome: 'ok' | 'failed', code?: string) => {
     writeEvent(ctx.env, {
       event: 'email.result',
       orgId: pass.orgId,
       templateId: pass.templateId,
       identityId: pass.identityId,
       outcome,
+      mode: pass.mode,
     });
+    await recordPassEvent(ctx, {
+      orgId: pass.orgId,
+      passId: pass.id,
+      mode: pass.mode,
+      kind: outcome === 'ok' ? 'email.sent' : 'email.failed',
+      data: { outboxId: row.id, attached: attach, ...(code ? { code } : {}) },
+    });
+  };
   let messageId: string;
   try {
     let attachments: { filename: string; type: string; content: Uint8Array }[] | undefined;
@@ -117,7 +126,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       ...(attachments ? { attachments } : {}),
     }));
   } catch (error) {
-    event('failed');
+    await event(
+      'failed',
+      error instanceof PermanentEmailError ? 'EMAIL_PERMANENT' : 'EMAIL_FAILED',
+    );
     if (error instanceof PermanentEmailError) {
       ctx.log.warn('email.send_failed', { outboxId: row.id, code: 'EMAIL_PERMANENT', error });
       await finishOutbox(db, row.id, lease, 'failed', ctx.clock.now(), 'EMAIL_PERMANENT');
@@ -127,7 +139,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     await retryOrGiveUp(ctx, row, lease, 'EMAIL_FAILED', 'failed');
     return;
   }
-  event('ok');
+  await event('ok');
   // The provider has the message. A bookkeeping failure must not cause a second send: the
   // provider id is kept so a lease-expiry re-run only finishes the row.
   try {

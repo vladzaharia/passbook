@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { bump, prune } from '../../platform/counters.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
@@ -101,20 +102,61 @@ export async function removeRegistration(
   return (results[0]?.meta.changes ?? 0) > 0;
 }
 
+export interface UpdatedSerial {
+  serial: string;
+  revision: number;
+  passId: string;
+  orgId: string;
+  mode: Mode;
+  version: number;
+}
+
 export async function serialsSince(
   db: D1Database,
   deviceId: string,
   identityId: string,
   since: number,
   limit: number,
-): Promise<{ serial: string; revision: number }[]> {
-  return all<{ serial: string; revision: number }>(
+): Promise<UpdatedSerial[]> {
+  const rows = await all<{
+    serial: string;
+    revision: number;
+    pass_id: string;
+    org_id: string;
+    mode: Mode;
+    version: number;
+  }>(
     db,
-    `SELECT p.serial, p.revision FROM registrations r JOIN passes p ON p.id = r.pass_id
+    `SELECT p.serial, p.revision, p.id AS pass_id, p.org_id, p.mode, p.version
+     FROM registrations r JOIN passes p ON p.id = r.pass_id
      JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
      WHERE r.device_id = ? AND r.identity_id = ? AND p.revision > ? ORDER BY p.revision LIMIT ?`,
     [deviceId, identityId, since, limit],
   );
+  return rows.map((r) => ({
+    serial: r.serial,
+    revision: r.revision,
+    passId: r.pass_id,
+    orgId: r.org_id,
+    mode: r.mode,
+    version: r.version,
+  }));
+}
+
+/** Passes of one identity with one of these serials, for attaching device log lines. */
+export async function passesBySerials(
+  db: D1Database,
+  identityId: string,
+  serials: string[],
+): Promise<{ id: string; orgId: string; mode: Mode; serial: string }[]> {
+  if (serials.length === 0) return [];
+  const rows = await all<{ id: string; org_id: string; mode: Mode; serial: string }>(
+    db,
+    `SELECT id, org_id, mode, serial FROM passes
+     WHERE identity_id = ? AND serial IN (${serials.map(() => '?').join(', ')}) AND deleted_at IS NULL`,
+    [identityId, ...serials],
+  );
+  return rows.map((r) => ({ id: r.id, orgId: r.org_id, mode: r.mode, serial: r.serial }));
 }
 
 /** Adds `lines` to the hourly window and returns the new total. */

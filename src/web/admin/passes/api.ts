@@ -67,8 +67,12 @@ export function usePassList(filters: PassFilters) {
 export function useBulkPassAction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { action: 'void' | 'send_email'; ids: string[]; orgId?: string }) =>
-      api.post('/api/v1/passes/bulk', BulkPassActionResponseSchema, body),
+    mutationFn: (body: {
+      action: 'void' | 'send_email' | 'remove';
+      ids: string[];
+      message?: string;
+      orgId?: string;
+    }) => api.post('/api/v1/passes/bulk', BulkPassActionResponseSchema, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
   });
 }

@@ -3,6 +3,7 @@ import type { Job } from '../../jobs/types.ts';
 import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { getPass } from '../passes/repo.ts';
 import {
   bumpCounter,
@@ -104,6 +105,13 @@ export async function enqueuePush(
     payload: { reason },
     now: ctx.clock.now(),
   });
+  await recordPassEvent(ctx, {
+    orgId: pass.orgId,
+    passId,
+    mode: pass.mode,
+    kind: 'push.queued',
+    data: { version: pass.version, reason },
+  });
   ctx.waitUntil(dispatchSafely(ctx, { passId }));
 }
 
@@ -136,6 +144,13 @@ export async function enqueuePassEmail(
     coalesceKey: null,
     payload: { to, attach: input.attach },
     now: ctx.clock.now(),
+  });
+  await recordPassEvent(ctx, {
+    orgId: pass.orgId,
+    passId: pass.id,
+    mode: pass.mode,
+    kind: 'email.queued',
+    data: { outboxId, attached: input.attach },
   });
   ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
   return { outboxId };

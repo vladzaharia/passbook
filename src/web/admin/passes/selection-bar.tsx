@@ -4,6 +4,7 @@ import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
 import { Button, ConfirmDialog, IconButton, toast } from '../../ui/index.ts';
 import { useBulkPassAction } from './api.ts';
+import { RemoveDialog } from './detail/remove-dialog.tsx';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -23,17 +24,24 @@ export function SelectionBar({
   onExport: () => void;
 }) {
   const bulk = useBulkPassAction();
-  const [ask, setAsk] = useState<'void' | 'send_email' | null>(null);
+  const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const n = ids.length;
   if (n === 0) return null;
 
-  async function run(action: 'void' | 'send_email') {
-    const result = await bulk.mutateAsync({ action, ids, ...(orgId ? { orgId } : {}) });
+  async function run(action: 'void' | 'send_email' | 'remove', message?: string) {
+    const result = await bulk.mutateAsync({
+      action,
+      ids,
+      ...(message ? { message } : {}),
+      ...(orgId ? { orgId } : {}),
+    });
     const skipped = result.skipped.length;
     toast.success(
       action === 'void'
         ? `${plural(result.done, 'pass', 'passes')} voided`
-        : `${plural(result.done, 'email', 'emails')} queued${skipped ? `, ${skipped} without a holder` : ''}`,
+        : action === 'remove'
+          ? `${plural(result.done, 'pass', 'passes')} removed from Wallet`
+          : `${plural(result.done, 'email', 'emails')} queued${skipped ? `, ${skipped} without a holder` : ''}`,
     );
     onClear();
   }
@@ -64,6 +72,13 @@ export function SelectionBar({
         </Button>
         <Button
           variant="outline"
+          iconStart={<ACTION_ICON.removeFromWallet aria-hidden />}
+          onClick={() => setAsk('remove')}
+        >
+          Remove from Wallet
+        </Button>
+        <Button
+          variant="outline"
           iconStart={<ACTION_ICON.download aria-hidden />}
           onClick={onExport}
         >
@@ -76,6 +91,12 @@ export function SelectionBar({
         {...voidConfirm(n)}
         destructive
         onConfirm={() => run('void')}
+      />
+      <RemoveDialog
+        open={ask === 'remove'}
+        onOpenChange={(o) => !o && setAsk(null)}
+        count={n}
+        onConfirm={(message) => run('remove', message)}
       />
       <ConfirmDialog
         open={ask === 'send_email'}

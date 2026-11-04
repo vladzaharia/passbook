@@ -1,9 +1,11 @@
 import type { z } from 'zod';
 import type { Json } from '../../../shared/contracts/common.ts';
-import type {
-  EventActorType,
-  PassEventListQuerySchema,
-  PassEventListSchema,
+import {
+  EVENT_GROUPS,
+  type EventActorType,
+  type EventKind,
+  type PassEventListQuerySchema,
+  type PassEventListSchema,
 } from '../../../shared/contracts/events.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -48,9 +50,12 @@ export async function listPassEvents(
   if (!(await getPass(ctx.env.DB, passId, orgScope)))
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const after = decodeCursor(query.cursor);
+  const kinds: EventKind[] = [
+    ...new Set([...(query.kind ?? []), ...(query.group ? EVENT_GROUPS[query.group] : [])]),
+  ];
   const rows = await listEvents(ctx.env.DB, {
     passId,
-    ...(query.kind ? { kinds: [query.kind] } : {}),
+    ...(kinds.length ? { kinds } : {}),
     ...(after ? { after } : {}),
     limit: query.limit + 1,
   });

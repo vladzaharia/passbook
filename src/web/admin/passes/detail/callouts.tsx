@@ -121,3 +121,13 @@ export function PassCreatedCallout({
     />
   );
 }
+
+/** Removed from Wallet: when, and the one limit. Restore sits in the header. */
+export function RemovedCallout({ pass }: { pass: PassDetailDto }) {
+  return (
+    <Callout tone="warning" icon={ACTION_ICON.removeFromWallet}>
+      Removed from Wallet on {formatDateTime(pass.removedAt ?? pass.modifiedAt)}. Devices move it to
+      Expired passes, and the holder can delete it there.
+    </Callout>
+  );
+}

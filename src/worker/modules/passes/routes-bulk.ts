@@ -10,7 +10,7 @@ import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction } from './bulk-actions.ts';
 import { actorFor, assertOrg, orgScopeOf, svc } from './http.ts';
 
-/** Many-pass actions: void or email a selection, and template-wide reissues. */
+/** Many-pass actions: void, email or remove a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
   passesRoutes.use('/bulk-reissue', requireAdmin);
 
@@ -20,7 +20,7 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
     {
       method: 'post',
       path: '/bulk',
-      summary: 'Void or email up to 100 passes of one org',
+      summary: 'Void, email or remove up to 100 passes of one org',
       body: BulkPassActionSchema,
       response: BulkPassActionResponseSchema,
     },

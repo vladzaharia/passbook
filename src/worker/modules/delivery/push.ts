@@ -2,6 +2,7 @@ import { retryDelaySeconds } from '../../jobs/retry.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { type PassEventInput, recordPassEvents } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPass } from '../passes/repo.ts';
@@ -20,6 +21,14 @@ import {
   savePushResults,
   setApnsHealth,
 } from './repo.ts';
+
+function pushEvent(
+  pass: { id: string; orgId: string; mode: 'live' | 'test' },
+  kind: 'push.sent' | 'push.failed' | 'device.unregistered',
+  data: Record<string, string | number>,
+): PassEventInput {
+  return { orgId: pass.orgId, passId: pass.id, mode: pass.mode, kind, data };
+}
 
 export const LEASE_MS = 5 * 60_000;
 
@@ -119,6 +128,9 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     teamIdentifier: identity.teamIdentifier,
   };
   if (!(await deps.apns.isAvailable(target))) {
+    await recordPassEvents(ctx, [
+      pushEvent(pass, 'push.failed', { code: 'PUSH_UNAVAILABLE', version: pass.version }),
+    ]);
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'PUSH_UNAVAILABLE');
     return;
   }
@@ -140,6 +152,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
   for (const d of devices) byToken.set(d.pushToken, [...(byToken.get(d.pushToken) ?? []), d]);
   const results = await deps.apns.send(target, [...byToken.keys()], now);
 
+  const events: PassEventInput[] = [];
   const saved: PushResultRow[] = [];
   const gone: { deviceId: string; pushToken: string }[] = [];
   const count: Record<PushOutcome, number> = { ok: 0, gone: 0, transient: 0, cert: 0, rejected: 0 };
@@ -153,7 +166,23 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
         reason: result.reason ?? null,
         apnsId: result.apnsId ?? null,
       });
-      if (outcome === 'gone') gone.push({ deviceId: device.deviceId, pushToken: device.pushToken });
+      const ok = outcome === 'ok';
+      events.push({
+        ...pushEvent(pass, ok ? 'push.sent' : 'push.failed', {
+          version: pass.version,
+          status: result.status,
+          ...(result.reason ? { reason: result.reason } : {}),
+          outcome,
+        }),
+        device: device.deviceId,
+      });
+      if (outcome === 'gone') {
+        events.push({
+          ...pushEvent(pass, 'device.unregistered', { reason: 'push_gone' }),
+          device: device.deviceId,
+        });
+        gone.push({ deviceId: device.deviceId, pushToken: device.pushToken });
+      }
     }
     writeEvent(ctx.env, {
       event: 'push.result',
@@ -161,9 +190,11 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
       templateId: pass.templateId,
       identityId: pass.identityId,
       outcome: outcome === 'ok' ? 'ok' : `${result.status}:${result.reason ?? ''}`,
+      mode: pass.mode,
     });
   }
   await savePushResults(db, row.id, saved, now);
+  await recordPassEvents(ctx, events);
   if (gone.length) await dropRegistrations(db, pass.identityId, gone);
   if (count.cert > 0) await setApnsHealth(db, pass.identityId, 'failing');
   else if (count.ok > 0) await setApnsHealth(db, pass.identityId, 'healthy');

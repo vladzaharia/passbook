@@ -171,7 +171,7 @@ describe('publish records pass.issued and pass.updated', () => {
       mutate: () => ({ personalization: { memberName: 'Changed' } }),
     });
     const list = await rows(pass.id);
-    expect(list.map((r) => r.kind)).toEqual(['pass.issued', 'pass.updated']);
+    expect(list.map((r) => r.kind)).toEqual(['pass.issued', 'pass.updated', 'push.queued']);
     expect(JSON.parse(list[0]?.data ?? '')).toEqual({
       version: 1,
       cause: 'create',

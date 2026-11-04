@@ -75,3 +75,70 @@ export async function deleteEventsBefore(
   );
   return changes;
 }
+
+export interface LatestDeviceEvent {
+  device: string;
+  kind: EventKind;
+  at: number;
+  data: string;
+}
+
+/**
+ * The newest event per (device, kind, step) of a pass, for the kinds that decide a device's state.
+ * `step` separates a device's "asked for updates" check-in from its pass-file fetch.
+ */
+export function latestDeviceEvents(db: D1Database, passId: string): Promise<LatestDeviceEvent[]> {
+  return all<LatestDeviceEvent>(
+    db,
+    `SELECT device, kind, at, data FROM (
+       SELECT device, kind, at, data, ROW_NUMBER() OVER (
+         PARTITION BY device, kind, COALESCE(json_extract(data, '$.step'), '')
+         ORDER BY at DESC, id DESC) AS rn
+       FROM pass_events
+       WHERE pass_id = ? AND device IS NOT NULL
+         AND kind IN ('device.registered', 'device.unregistered', 'device.fetched', 'push.sent', 'push.failed'))
+     WHERE rn = 1`,
+    [passId],
+  );
+}
+
+/** Registrations of a pass: raw device ids, which only this layer may hash. */
+export function registrationsOfPass(
+  db: D1Database,
+  passId: string,
+): Promise<{ device_id: string; created_at: number }[]> {
+  return all(db, 'SELECT device_id, created_at FROM registrations WHERE pass_id = ?', [passId]);
+}
+
+/** The earliest device that checked in since `since` and has not fetched the file after it. */
+export async function pendingFetchDevices(
+  db: D1Database,
+  passId: string,
+  since: number,
+): Promise<string[]> {
+  const rows = await all<{ device: string }>(
+    db,
+    `SELECT l.device FROM pass_events l
+     WHERE l.pass_id = ? AND l.kind = 'device.fetched' AND l.at >= ?
+       AND json_extract(l.data, '$.step') = 'listed' AND l.device IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM pass_events f
+         WHERE f.pass_id = l.pass_id AND f.device = l.device AND f.kind = 'device.fetched'
+           AND json_extract(f.data, '$.step') = 'file' AND f.at >= l.at)
+     ORDER BY l.at, l.id LIMIT 1`,
+    [passId, since],
+  );
+  return rows.map((r) => r.device);
+}
+
+export async function lastEventOfKind(
+  db: D1Database,
+  passId: string,
+  kind: EventKind,
+): Promise<EventRow | null> {
+  const rows = await all<EventRow>(
+    db,
+    'SELECT * FROM pass_events WHERE pass_id = ? AND kind = ? ORDER BY at DESC, id DESC LIMIT 1',
+    [passId, kind],
+  );
+  return rows[0] ?? null;
+}

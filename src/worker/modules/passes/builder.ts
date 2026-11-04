@@ -18,6 +18,7 @@ import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } f
 import { applyChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
+import { applyRemoval, type Removal } from './remove-build.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
 import { barcodeHashOf } from './scan-code.ts';
 
@@ -43,6 +44,8 @@ export interface BuildRequest {
    * value differs from `previous` do. Omitted (syncs, upgrades), the template's messages stay.
    */
   changeMessages?: { previous: PassJson | null; notify: boolean };
+  /** Set while the pass is removed from Wallet: every build stays the stripped, voided version. */
+  removal?: Removal;
 }
 
 export interface Artifact {
@@ -237,6 +240,10 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     if (req.changeMessages) {
       const { previous, notify } = req.changeMessages;
       resign = applyChangeMessages(built.passJson, previous, notify) || resign;
+    }
+    if (req.removal) {
+      applyRemoval(built.passJson, req.removal);
+      resign = true;
     }
     if (resign) {
       const {

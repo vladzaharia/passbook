@@ -16,6 +16,8 @@ export interface PassEventInput {
   kind: EventKind;
   /** The raw Wallet device library identifier. It is hashed here and never stored. */
   device?: string | null;
+  /** An already hashed device (see hashDevice), for events attributed after the fact. */
+  deviceHash?: string | null;
   actor?: { type: EventActorType; id: string | null } | null;
   data?: Record<string, Json>;
   /** Defaults to now. */
@@ -85,7 +87,7 @@ async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventR
     pass_id: input.passId,
     mode: input.mode,
     kind: EventKindSchema.parse(input.kind),
-    device: input.device ? await hashDevice(input.device) : null,
+    device: input.device ? await hashDevice(input.device) : (input.deviceHash ?? null),
     actor_type: input.actor?.type ?? null,
     actor_id: input.actor?.id ?? null,
     data: JSON.stringify(sanitizeEventData(input.data)),

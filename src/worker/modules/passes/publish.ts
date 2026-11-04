@@ -4,9 +4,10 @@ import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError, NotFoundError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withoutPersonalizationFiles } from '../apple/personalize-files.ts';
+import { registrationCount } from '../apple/repo.ts';
 import { isPersonalized } from '../apple/repo-personalize.ts';
 import { dispatchSafely } from '../delivery/service.ts';
-import { recordPassEvent } from '../events/record.ts';
+import { recordPassEvents } from '../events/record.ts';
 import { buildArtifact } from './builder.ts';
 import { notifiesHolder } from './change-messages.ts';
 import {
@@ -20,6 +21,7 @@ import {
   type PassCause,
   type PassStatus,
 } from './repo.ts';
+import { getRemoval } from './repo-remove.ts';
 import { newScanCode } from './scan-code.ts';
 import type { Actor } from './service.ts';
 
@@ -94,6 +96,7 @@ export async function publishPass(
     const previous = options.notify === undefined ? null : previousJson;
     // Older passes get their scan code on the first publish after it was introduced.
     const scanCode = current.scanCode ?? newScanCode(ctx);
+    const removal = current.removedAt !== null ? await getRemoval(db, current.id) : null;
     const artifact = await buildArtifact(buildCtx, {
       orgId: current.orgId,
       orgName: org.name,
@@ -106,6 +109,7 @@ export async function publishPass(
               notify: options.notify,
             },
           }),
+      ...(removal ? { removal: { at: removal.at, message: removal.message } } : {}),
       passId: current.id,
       scanCode,
       serial: current.serial,
@@ -204,26 +208,36 @@ export async function publishPass(
       outcome: options.cause,
       mode: pass.mode,
     });
-    // Seam: later streams add their own events (push, device, scan) at their own call sites.
-    await recordPassEvent(ctx, {
-      orgId: pass.orgId,
-      passId: pass.id,
-      mode: pass.mode,
-      kind: 'pass.updated',
-      actor: options.actor,
-      data: {
-        version: pass.version,
-        cause: options.cause,
-        source: options.source ?? null,
-        // Only a resign skips the push; a push carries a message when a field with one changed.
-        notified:
-          options.cause !== 'resign' &&
-          notifiesHolder(
-            artifact.passJson,
-            previousJson ? (JSON.parse(previousJson) as PassJson) : null,
-          ),
+    const pushes = options.cause !== 'resign';
+    const base = { orgId: pass.orgId, passId: pass.id, mode: pass.mode };
+    await recordPassEvents(ctx, [
+      {
+        ...base,
+        kind: 'pass.updated',
+        actor: options.actor,
+        data: {
+          version: pass.version,
+          cause: options.cause,
+          source: options.source ?? null,
+          // Only a resign skips the push; a push carries a message when a field with one changed.
+          notified:
+            pushes &&
+            notifiesHolder(
+              artifact.passJson,
+              previousJson ? (JSON.parse(previousJson) as PassJson) : null,
+            ),
+        },
       },
-    });
+      ...(pushes
+        ? [
+            {
+              ...base,
+              kind: 'push.queued' as const,
+              data: { version: pass.version, devices: await registrationCount(db, pass.id) },
+            },
+          ]
+        : []),
+    ]);
     if (options.dispatch !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
     return { pass, changed: true };
   }

@@ -1,10 +1,12 @@
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { removePass } from './remove.ts';
 import { getPass } from './repo.ts';
 import { type Actor, resendEmail, voidPass } from './service.ts';
 
 export interface BulkPassAction {
-  action: 'void' | 'send_email';
+  action: 'void' | 'send_email' | 'remove';
+  message?: string | undefined;
   ids: string[];
   orgId?: string;
 }
@@ -29,7 +31,14 @@ export async function bulkPassAction(
   for (const pass of passes) {
     if (!pass) continue;
     if (input.action === 'void') {
+      if (pass.removedAt !== null) {
+        skipped.push({ id: pass.id, code: 'PASS_REMOVED' });
+        continue;
+      }
       if (pass.status === 'active') await voidPass(ctx, actor, pass.id, orgId);
+      done++;
+    } else if (input.action === 'remove') {
+      await removePass(ctx, actor, pass.id, { message: input.message }, orgId);
       done++;
     } else if (!pass.holderEmail) {
       skipped.push({ id: pass.id, code: 'NO_RECIPIENT' });

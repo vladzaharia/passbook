@@ -85,6 +85,9 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
       >
         {nameOf(p)}
       </RowLink>
+      {p.removedAt !== null ? (
+        <span className="shrink-0 text-xs font-medium text-fg-muted">Removed</span>
+      ) : null}
       {o.showSubtitles && p.subtitle ? (
         <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
       ) : null}

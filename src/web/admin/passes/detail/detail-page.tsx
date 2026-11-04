@@ -24,7 +24,7 @@ import { usePassActionRunner } from '../pass-actions.tsx';
 import { PassPreview, PassPreviewPanel } from '../pass-preview.tsx';
 import { PreviewLayout } from '../preview-layout.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
-import { PassCreatedCallout, PassWarnings, VoidedCallout } from './callouts.tsx';
+import { PassCreatedCallout, PassWarnings, RemovedCallout, VoidedCallout } from './callouts.tsx';
 import { HeaderActionsView } from './header-actions.tsx';
 import { PassTabs } from './pass-tabs.tsx';
 import { useStageMotion } from './stage-state.ts';
@@ -109,6 +109,7 @@ function Loaded({
   });
   const tab: Tab = search.tab ?? 'fields';
   const voided = p.status === 'voided';
+  const removed = p.removedAt !== null;
   const loadingVersion = picked !== undefined && !version.data;
   const waiting = useLasting(loadingVersion || (draft !== null && draftPreview.isFetching));
   const source =
@@ -173,7 +174,7 @@ function Loaded({
         breadcrumbs={crumbs}
         meta={
           <>
-            <StatusPill status={p.status} />
+            <StatusPill status={removed ? 'removed' : p.status} />
             <StatusPill status={p.holderState} />
             <span className="tabular-nums">v{p.version}</span>
             <span>{devices(p.deviceCount)}</span>
@@ -182,7 +183,11 @@ function Loaded({
         actions={<HeaderActionsView runner={runner} />}
       />
       <div className="mb-6 flex flex-col gap-3 empty:hidden">
-        {voided ? <VoidedCallout pass={p} stamp={motion.stamp} /> : null}
+        {removed ? (
+          <RemovedCallout pass={p} />
+        ) : voided ? (
+          <VoidedCallout pass={p} stamp={motion.stamp} />
+        ) : null}
         {created.shown && !voided ? (
           <PassCreatedCallout
             pass={p}
@@ -222,6 +227,8 @@ function Loaded({
               [
                 ['fields', 'Fields'],
                 ['holder', 'Holder'],
+                ['devices', 'Devices'],
+                ['sync', 'Sync log'],
                 ['delivery', 'Delivery'],
                 ['images', 'Images'],
                 ['versions', 'Versions'],

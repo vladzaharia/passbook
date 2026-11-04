@@ -1,10 +1,11 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { writeEvent } from '../../platform/analytics.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { enqueuePassEmail } from '../delivery/service.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { createPassRow } from './create.ts';
 import { detailOf, linksOf, toSummary } from './detail.ts';
@@ -108,6 +109,9 @@ async function setStatus(
   status: 'active' | 'voided',
   scope: string | null,
 ) {
+  const current = await getPass(ctx.env.DB, passId, scope);
+  if (current && current.removedAt !== null)
+    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
   const result = await publishPass(ctx, {
     passId,
     orgScope: scope,
@@ -122,6 +126,13 @@ async function setStatus(
     action: status === 'voided' ? 'pass.void' : 'pass.unvoid',
     targetType: 'pass',
     targetId: passId,
+  });
+  await recordPassEvent(ctx, {
+    orgId: result.pass.orgId,
+    passId,
+    mode: result.pass.mode,
+    kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
+    actor,
   });
   return toSummary(result.pass);
 }
@@ -191,6 +202,13 @@ export async function rotateLink(
     targetType: 'pass',
     targetId: passId,
   });
+  await recordPassEvent(ctx, {
+    orgId: pass.orgId,
+    passId,
+    mode: pass.mode,
+    kind: 'pass.link_rotated',
+    actor,
+  });
   const { publicUrl, downloadUrl } = linksOf(ctx, { ...pass, downloadToken: token });
   return { publicUrl, downloadUrl };
 }
@@ -244,6 +262,7 @@ export async function requestRefresh(
     event: 'refresh.requested',
     orgId: pass.orgId,
     templateId: pass.templateId,
+    mode: pass.mode,
   });
   return { requestedAt: now, coalesced: false, cooldownSeconds };
 }
