@@ -20,20 +20,26 @@ import {
   UploadTemplateResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, requireAdmin, requireApiKeyOrAdmin } from '../../platform/auth.ts';
-import { defaultBodyLimit } from '../../platform/body-limit.ts';
+import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
-import { registerLifecycle, registerPreviewBatch, registerUploadList } from './routes-more.ts';
+import {
+  registerLifecycle,
+  registerPreviewBatch,
+  registerUploadList,
+  registerVersions,
+} from './routes-more.ts';
 import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
+import { VERSION_BODY_LIMIT } from './version-files.ts';
 
 export const templatesRoutes = createRouter({ bodyLimit: false });
-/** The archive upload has its own cap below. */
-templatesRoutes.use('*', defaultBodyLimit(/\/uploads$/));
+/** The archive upload and the version save (base64 images) have their own caps below. */
+templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/versions)$/));
 // Reads accept an API key (templates:read); writes are admin only.
 templatesRoutes.use('*', async (c, next) =>
   c.req.method === 'GET'
@@ -52,6 +58,9 @@ templatesRoutes.use(
     },
   }),
 );
+
+/** Up to 15 MB of files as base64, plus the documents. */
+templatesRoutes.use('/:id/versions', limitBody(VERSION_BODY_LIMIT));
 
 type C = Context<AppBindings>;
 
@@ -297,4 +306,5 @@ register(
   },
 );
 
+registerVersions(templatesRoutes);
 registerLifecycle(templatesRoutes);

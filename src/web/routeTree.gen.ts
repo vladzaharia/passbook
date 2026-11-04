@@ -38,6 +38,7 @@ import { Route as AdminTemplatesTemplateIdRouteImport } from './routes/admin/tem
 import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templates/upload'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminTemplatesTemplateIdDesignRouteImport } from './routes/admin/templates/$templateId_.design'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -187,6 +188,12 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminTemplatesTemplateIdDesignRoute =
+  AdminTemplatesTemplateIdDesignRouteImport.update({
+    id: '/templates/$templateId_/design',
+    path: '/templates/$templateId/design',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -248,6 +256,7 @@ export interface FileRoutesByTo {
   '/admin/status': typeof AdminStatusIndexRoute
   '/admin/templates': typeof AdminTemplatesIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
+  '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -280,6 +289,7 @@ export interface FileRoutesById {
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin/status/'
     | '/admin/templates/'
     | '/admin/users/'
+    | '/admin/templates/$templateId/design'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/admin/status'
     | '/admin/templates'
     | '/admin/users'
+    | '/admin/templates/$templateId/design'
   id:
     | '__root__'
     | '/'
@@ -374,6 +386,7 @@ export interface FileRouteTypes {
     | '/admin/status/'
     | '/admin/templates/'
     | '/admin/users/'
+    | '/admin/templates/$templateId_/design'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -590,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/templates/$templateId_/design': {
+      id: '/admin/templates/$templateId_/design'
+      path: '/templates/$templateId/design'
+      fullPath: '/admin/templates/$templateId/design'
+      preLoaderRoute: typeof AdminTemplatesTemplateIdDesignRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
@@ -617,6 +637,7 @@ interface AdminRouteRouteChildren {
   AdminStatusIndexRoute: typeof AdminStatusIndexRoute
   AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+  AdminTemplatesTemplateIdDesignRoute: typeof AdminTemplatesTemplateIdDesignRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -643,6 +664,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminStatusIndexRoute: AdminStatusIndexRoute,
   AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
+  AdminTemplatesTemplateIdDesignRoute: AdminTemplatesTemplateIdDesignRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

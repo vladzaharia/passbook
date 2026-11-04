@@ -1,0 +1,187 @@
+/* Template designer: layout and the assemble motion (transform and opacity only). */
+.dz-layout {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+@media (min-width: 768px) {
+  .dz-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-areas: "structure stage" "structure issues";
+    grid-template-rows: auto 1fr;
+  }
+  .dz-structure {
+    grid-area: structure;
+  }
+  .dz-stage {
+    grid-area: stage;
+    position: sticky;
+    top: calc(5rem + env(safe-area-inset-top));
+  }
+  .dz-issues {
+    grid-area: issues;
+  }
+}
+@media (min-width: 1280px) {
+  .dz-layout {
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr) 16rem;
+    grid-template-areas: "structure stage issues";
+    grid-template-rows: auto;
+  }
+  .dz-issues {
+    position: sticky;
+    top: calc(5rem + env(safe-area-inset-top));
+  }
+}
+
+.dz-section {
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 0.5rem;
+  background: var(--pk-surface-raised);
+}
+.dz-head {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+}
+.dz-head:focus-visible,
+.dz-pick:focus-visible,
+.dz-issue:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.dz-section[data-open] > h2 > .dz-head .dz-chevron {
+  transform: rotate(90deg);
+}
+.dz-panel {
+  padding: 0.25rem 0.75rem 0.875rem;
+}
+
+.dz-row {
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  background: var(--pk-surface-raised);
+}
+.dz-row[data-open] {
+  border-color: var(--pk-accent);
+}
+.dz-row[data-over] {
+  box-shadow: 0 -2px 0 0 var(--pk-accent);
+}
+.dz-grip {
+  cursor: grab;
+}
+.dz-pick {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.25rem;
+  text-align: left;
+  border-radius: 0.25rem;
+}
+.dz-editor {
+  padding: 0.75rem 0.5rem 0.5rem;
+}
+
+.dz-slot {
+  list-style: none;
+}
+.dz-drop {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border: 1px dashed var(--pk-border-strong);
+  border-radius: 0.5rem;
+}
+.dz-drop:focus-within {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.dz-thumb {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: color-mix(in oklab, currentColor 8%, transparent);
+}
+.dz-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.dz-slot[data-over] .dz-thumb {
+  transform: translateY(-4px);
+}
+
+.dz-swatch {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: 0.375rem;
+  background: none;
+  cursor: pointer;
+}
+.dz-issue {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  text-align: left;
+  border-radius: 0.375rem;
+}
+button.dz-issue:hover {
+  background: color-mix(in oklab, currentColor 6%, transparent);
+}
+
+/* Templates assemble: a new part drops in, its siblings stay put. */
+@keyframes dz-assemble {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+}
+@keyframes dz-deal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes dz-count {
+  from {
+    transform: scale(1.35);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dz-chevron {
+    transition: transform var(--wl-dur-enter, 200ms) var(--wl-ease-spring, ease-out);
+  }
+  .dz-thumb {
+    transition: transform 200ms var(--wl-ease-spring, ease-out);
+  }
+  .dz-row[data-new] {
+    animation: dz-assemble 320ms var(--wl-ease-spring, ease-out) both;
+  }
+  .dz-section {
+    animation: dz-deal 200ms var(--wl-ease-out, ease-out) both;
+    animation-delay: calc(min(var(--i, 0), 6) * 30ms);
+  }
+  .dz-count {
+    animation: dz-count 280ms var(--wl-ease-spring, ease-out);
+  }
+}

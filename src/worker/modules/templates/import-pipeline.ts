@@ -1,18 +1,16 @@
 import { behaviorPlugins } from '../../../generated/behaviors.ts';
 import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
-import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { AssetEntry, ValidationIssue, ValidationReport } from '../../../passkit/types.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { dryRun } from './build-check.ts';
+import { dryRunReport } from './dry-run-report.ts';
 import { imagesFromBinding } from './images-binding.ts';
 import { type Analysis, analyzePackage } from './package/analyze.ts';
 import type { ImageTools } from './package/images.ts';
-import { stylesOf } from './package/slots.ts';
 import { extractArchive, ImportError } from './package/unzip.ts';
 import { commitVersion, planTemplate, slugify } from './persist.ts';
 import { r2Key } from './registry.ts';
-import { getImport, getOrgName, setWorkflowRun, updateImport } from './repo.ts';
+import { getImport, setWorkflowRun, updateImport } from './repo.ts';
 
 export interface ImportParams {
   uploadId: string;
@@ -141,36 +139,11 @@ export async function analyzeStage(
 export async function dryRunStage(ctx: ServiceContext, p: ImportParams): Promise<StageResult> {
   const saved = await getJson<Saved>(ctx, `${stage(p)}analysis.json`);
   const a = saved.analysis;
-  const org = p.orgId ? await getOrgName(ctx.env.DB, p.orgId) : null;
-  const template: ResolvedTemplate = {
-    id: 'dry-run',
-    version: a.version,
-    orgId: p.orgId,
-    origin: 'uploaded',
-    manifest: a.manifest,
-    passJson: a.passJson,
-    assets: a.assets.map((x): AssetEntry => ({ ...x, source: { kind: 'inline' } })),
-    styles: stylesOf(a.passJson),
-  };
-  const issues = await dryRun(
-    ctx.env,
-    template,
-    (name) => getBytes(ctx, `${stage(p)}b/${name}`),
-    org?.name ?? 'Organization',
-    new Date(ctx.clock.now()),
-    ctx.log,
+  const report = await dryRunReport(ctx, p.orgId, { ...a, report: a.report }, (name) =>
+    getBytes(ctx, `${stage(p)}b/${name}`),
   );
-  const known = new Set(a.report.issues.map((i) => `${i.code}|${i.path ?? ''}|${i.message}`));
-  const merged = [
-    ...a.report.issues,
-    ...issues.filter((i) => !known.has(`${i.code}|${i.path ?? ''}|${i.message}`)),
-  ];
-  const report: ValidationReport = {
-    ok: !merged.some((i) => i.severity === 'error'),
-    issues: merged,
-  };
   if (!report.ok) {
-    await failImport(ctx, p, merged, 'IMPORT_INVALID');
+    await failImport(ctx, p, report.issues, 'IMPORT_INVALID');
     return { ok: false };
   }
   await putJson(ctx, `${stage(p)}analysis.json`, { ...saved, analysis: { ...a, report } });

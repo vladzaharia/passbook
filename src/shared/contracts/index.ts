@@ -14,5 +14,6 @@ export * from './public.ts';
 export * from './session.ts';
 export * from './settings.ts';
 export * from './status.ts';
+export * from './template-versions.ts';
 export * from './templates.ts';
 export * from './users.ts';

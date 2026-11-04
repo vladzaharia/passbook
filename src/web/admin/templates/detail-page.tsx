@@ -159,6 +159,13 @@ function Loaded({
                 </Link>
               </Button>
             )}
+            {archived ? null : (
+              <Button asChild variant="outline" iconStart={<ACTION_ICON.edit aria-hidden />}>
+                <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
+                  Design
+                </Link>
+              </Button>
+            )}
             <Button
               variant="outline"
               iconStart={<ACTION_ICON.duplicate aria-hidden />}

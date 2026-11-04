@@ -62,6 +62,8 @@ export interface CommitArgs {
   description: string | null;
   createdBy: string | null;
   body: VersionBody;
+  /** Make the version active (the default). A new template always starts active. */
+  activate?: boolean;
 }
 
 /** Writes the version and makes it active, in one batch. Returns whether the version was new. */
@@ -101,7 +103,7 @@ export async function commitVersion(
       createdAt: now,
     }),
   );
-  if (!plan.isNew)
+  if (!plan.isNew && args.activate !== false)
     statements.push(
       activateStmt(db, plan.templateId, body.version, {
         name: args.name,
