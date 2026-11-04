@@ -16,7 +16,7 @@ export interface ReissueParams {
   version: string | null;
   orgId: string | null;
   identityId?: string | null;
-  cause: 'template_upgrade' | 'resign';
+  cause: 'template_upgrade' | 'resign' | 'branding';
 }
 
 export interface ReissuePageResult {
@@ -42,13 +42,15 @@ export async function reissuePage(
     afterId: cursor,
     limit: REISSUE_PAGE,
     skipVersion: params.cause === 'template_upgrade' ? params.version : null,
+    // Branding restyles live passes; a voided pass stays as it is.
+    activeOnly: params.cause === 'branding',
   });
   const result: ReissuePageResult = { nextCursor: null, changed: 0, unchanged: 0, failed: 0 };
   for (const row of rows) {
     try {
       const published = await publishPass(ctx, {
         passId: row.id,
-        cause: params.cause,
+        cause: params.cause === 'branding' ? 'admin' : params.cause,
         actor: { type: 'system', id: null },
         force: params.cause === 'resign',
         dispatch: false,
@@ -99,7 +101,7 @@ export async function startBulkReissue(
       ? await resolveTemplate(ctx, body.orgId, body.templateId, body.version)
       : await resolveUnscoped(ctx, body.templateId, body.version)
     : null;
-  const targetId = template?.id ?? body.identityId ?? '';
+  const targetId = template?.id ?? body.identityId ?? body.orgId ?? '';
   const instanceId = `bulk-${ctx.ids.id()}`;
   await insertWorkflowRun(ctx.env.DB, {
     instanceId,
@@ -133,7 +135,7 @@ export async function startBulkReissue(
     actorType: actor.type,
     actorId: actor.id,
     action: 'pass.bulk_reissue',
-    targetType: template ? 'template' : 'identity',
+    targetType: template ? 'template' : params.cause === 'branding' ? 'org' : 'identity',
     targetId,
     detail: {
       version: template?.version ?? null,

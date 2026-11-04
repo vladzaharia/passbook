@@ -35,6 +35,8 @@ export const OrgSchema = z.object({
   branding: OrgBrandingSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
+  /** Only on a save that restyles live passes: how many will be rebuilt and pushed. */
+  passesToUpdate: z.number().int().optional(),
 });
 export type OrgDto = z.infer<typeof OrgSchema>;
 

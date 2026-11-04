@@ -4,6 +4,7 @@ import { dailyAuth } from '../modules/auth/jobs.ts';
 import { dailyConnections, reconcileConnections } from '../modules/connections/jobs.ts';
 import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
+import { reissueStaleBranding } from '../modules/passes/branding-reissue.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
@@ -22,6 +23,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'delivery.sweep', run: sweepDelivery },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
+    { name: 'orgs.branding_reissue', run: reissueStaleBranding },
   ],
   [DAILY_CRON]: [
     { name: 'passes.retention', run: dailyPasses },

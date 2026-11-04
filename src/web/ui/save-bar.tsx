@@ -62,6 +62,8 @@ export interface SaveBarGroupApi {
   /** A grouped SaveBar submits this form. */
   has: (formId: string) => boolean;
   save: () => void;
+  /** A line the group's "Saved" toast carries after a form's save, e.g. "3 passes will update." */
+  note: (text: string) => void;
 }
 
 /** Provided by SaveBarGroup (save-bar-group.tsx). */

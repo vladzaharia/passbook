@@ -15,8 +15,9 @@ import { imagesFromBinding } from '../templates/images-binding.ts';
 import type { ImageTools } from '../templates/package/images.ts';
 import { isPngInfo, parsePng } from '../templates/package/png.ts';
 import { brandingKey } from './branding-files.ts';
-import { setOrgBranding } from './repo.ts';
-import { requireOrg, toDto } from './service.ts';
+import { markPassesStale } from './branding-stale.ts';
+import { type OrgRow, setOrgBranding } from './repo.ts';
+import { requireOrg, toDto, withUpdates } from './service.ts';
 
 type Slot = z.infer<typeof BrandingSlotSchema>;
 type Branding = z.infer<typeof OrgBrandingSchema>;
@@ -58,12 +59,15 @@ async function derive2x(
 async function saveBranding(
   ctx: ServiceContext,
   actor: Actor,
-  orgId: string,
+  before: OrgRow,
   branding: Branding,
   detail: Record<string, unknown>,
 ): Promise<OrgDto> {
+  const orgId = before.id;
   const now = ctx.clock.now();
-  await setOrgBranding(ctx.env.DB, orgId, JSON.stringify(branding), now);
+  const json = JSON.stringify(branding);
+  await setOrgBranding(ctx.env.DB, orgId, json, now);
+  const passesToUpdate = await markPassesStale(ctx, orgId, before, { ...before, branding: json });
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId,
@@ -72,7 +76,7 @@ async function saveBranding(
     targetId: orgId,
     detail,
   });
-  return toDto({ ...(await requireOrg(ctx, orgId)), updated_at: now });
+  return withUpdates(toDto({ ...(await requireOrg(ctx, orgId)), updated_at: now }), passesToUpdate);
 }
 
 /**
@@ -104,7 +108,7 @@ export async function putBrandingImage(
   }
   const image = { sha: await sha256Hex(x3), ...size };
   const branding = { ...(JSON.parse(row.branding) as Branding), [slot]: image };
-  return saveBranding(ctx, actor, orgId, branding, { changes: { [`branding.${slot}`]: image } });
+  return saveBranding(ctx, actor, row, branding, { changes: { [`branding.${slot}`]: image } });
 }
 
 export async function deleteBrandingImage(
@@ -116,7 +120,7 @@ export async function deleteBrandingImage(
   const row = await requireOrg(ctx, orgId);
   const { [slot]: _gone, ...branding } = JSON.parse(row.branding) as Branding;
   for (const scale of SCALES) await ctx.env.BUCKET.delete(brandingKey(orgId, slot, scale));
-  return saveBranding(ctx, actor, orgId, branding, { changes: { [`branding.${slot}`]: null } });
+  return saveBranding(ctx, actor, row, branding, { changes: { [`branding.${slot}`]: null } });
 }
 
 export async function getBrandingImage(

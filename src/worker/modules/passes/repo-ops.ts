@@ -110,13 +110,15 @@ export async function passesForReissue(
     afterId: string | null;
     limit: number;
     skipVersion: string | null;
+    activeOnly?: boolean;
   },
 ): Promise<{ id: string }[]> {
   return all<{ id: string }>(
     db,
     `SELECT id FROM passes WHERE (? IS NULL OR template_id = ?) AND (? IS NULL OR org_id = ?)
        AND (? IS NULL OR identity_id = ?) AND id > ? AND deleted_at IS NULL
-       AND (? IS NULL OR template_version != ?) ORDER BY id LIMIT ?`,
+       AND (? IS NULL OR template_version != ?)
+       AND (? = 0 OR status = 'active') ORDER BY id LIMIT ?`,
     [
       q.templateId,
       q.templateId,
@@ -127,6 +129,7 @@ export async function passesForReissue(
       q.afterId ?? '',
       q.skipVersion,
       q.skipVersion,
+      q.activeOnly ? 1 : 0,
       q.limit,
     ],
   );
