@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+import { publicBaseUrl, withOrigin } from './tools/lib/site-origin.ts';
 
 /** sonner injects an inline <style> at import time, which the strict CSP blocks. Its CSS ships in app.css. */
 function sonnerNoInlineCss(): Plugin {
@@ -37,6 +38,15 @@ function radixNoInlineStyles(): Plugin {
       }
       return null;
     },
+  };
+}
+
+/** index.html's absolute URLs (og:url, og:image) come from PUBLIC_BASE_URL in wrangler.jsonc. */
+function siteOrigin(): Plugin {
+  const base = publicBaseUrl(fileURLToPath(new URL('./wrangler.jsonc', import.meta.url)));
+  return {
+    name: 'site-origin',
+    transformIndexHtml: { order: 'pre', handler: (html) => withOrigin(html, base) },
   };
 }
 
@@ -118,6 +128,7 @@ export default defineConfig(({ command }) => ({
     }),
     react(),
     tailwindcss(),
+    siteOrigin(),
     // Local dev never opens remote binding sessions (ANALYTICS_SQL is remote-only; charts use D1 locally).
     cloudflare({
       remoteBindings: false,

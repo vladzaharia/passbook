@@ -4,6 +4,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { writeDevVars } from './lib/dev-vars.ts';
+import { publicBaseUrl } from './lib/site-origin.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const secrets = resolve(root, '.secrets');
@@ -26,4 +27,4 @@ writeDevVars(resolve(root, '.dev.vars'), { BREAKGLASS_TOKEN_SHA256: hash }, { re
 console.log(`Token: .secrets/breakglass-token
 Local: .dev.vars BREAKGLASS_TOKEN_SHA256 updated
 Production: echo ${hash} | npx wrangler secret put BREAKGLASS_TOKEN_SHA256
-Sign in: https://wallet.plrs.im/auth/breakglass`);
+Sign in: ${publicBaseUrl(resolve(root, 'wrangler.jsonc'))}/auth/breakglass`);

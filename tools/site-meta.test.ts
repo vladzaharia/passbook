@@ -4,17 +4,16 @@ import { describe, expect, it } from 'vitest';
 import { APP_DESCRIPTION, HEAD_HTML } from '../src/worker/ssr/head.ts';
 import { decodeIco } from './lib/ico.ts';
 import { ICON_COLORS, tabIconSvg } from './lib/icon-art.ts';
-import { parseJsonc } from './lib/jsonc.ts';
 import { OG_ALT, OG_SIZE } from './lib/og-art.ts';
 import { decodePng, type Image } from './lib/png.ts';
+import { ORIGIN_TOKEN, publicBaseUrl, withOrigin } from './lib/site-origin.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (path: string) => readFileSync(resolve(root, path));
 const pub = (url: string) => read(`public${new URL(url, 'https://x').pathname}`);
 const html = read('index.html').toString();
 const manifest = JSON.parse(read('public/manifest.webmanifest').toString());
-const { vars } = parseJsonc(read('wrangler.jsonc').toString()) as { vars: Record<string, string> };
-const BASE = vars.PUBLIC_BASE_URL as string;
+const BASE = publicBaseUrl(resolve(root, 'wrangler.jsonc'));
 
 /** The content of `<meta name|property="key">`; every match when there are several. */
 const meta = (source: string, key: string) =>
@@ -68,6 +67,19 @@ describe('manifest.webmanifest', () => {
       }
     },
   );
+});
+
+describe('client metadata logo', () => {
+  it('is the rounded app icon the manifest installs', () => {
+    // Read from source: the worker module's imports need the Workers types.
+    const CIMD_LOGO_PATH = /export const CIMD_LOGO_PATH = '([^']+)'/.exec(
+      read('src/worker/modules/auth/oidc-cimd.ts').toString(),
+    )?.[1];
+    expect(manifest.icons).toContainEqual(
+      expect.objectContaining({ src: CIMD_LOGO_PATH, purpose: 'any' }),
+    );
+    expect(existsSync(resolve(root, `public${CIMD_LOGO_PATH}`))).toBe(true);
+  });
 });
 
 describe('icons the heads link', () => {
@@ -136,14 +148,18 @@ describe('index.html head', () => {
     expect(meta(html, 'apple-mobile-web-app-status-bar-style')).toEqual(['default']);
   });
 
-  it('previews links with absolute URLs on PUBLIC_BASE_URL', () => {
+  it('previews links with absolute URLs the build takes from PUBLIC_BASE_URL', () => {
     expect(meta(html, 'og:site_name')).toEqual(['PassBook']);
     expect(meta(html, 'og:type')).toEqual(['website']);
     expect(meta(html, 'og:title')).toEqual(['PassBook']);
     expect(meta(html, 'og:description')).toEqual([APP_DESCRIPTION]);
-    expect(meta(html, 'og:url')).toEqual([`${BASE}/`]);
-    expect(meta(html, 'og:image')).toEqual([`${BASE}/og-image.png`]);
-    expect(meta(html, 'twitter:card')).toEqual(['summary_large_image']);
+    expect(meta(html, 'og:url')).toEqual([`${ORIGIN_TOKEN}/`]);
+    expect(html).not.toMatch(/https?:\/\//);
+    const built = withOrigin(html, BASE);
+    expect(BASE).toMatch(/^https:\/\/[a-z0-9.-]+$/);
+    expect(meta(built, 'og:url')).toEqual([`${BASE}/`]);
+    expect(meta(built, 'og:image')).toEqual([`${BASE}/og-image.png`]);
+    expect(meta(built, 'twitter:card')).toEqual(['summary_large_image']);
   });
 });
 
