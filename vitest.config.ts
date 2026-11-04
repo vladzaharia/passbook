@@ -22,6 +22,8 @@ export default defineConfig({
             const migrations = await readD1Migrations('./migrations');
             return {
               wrangler: { configPath: './wrangler.jsonc' },
+              // ANALYTICS_SQL is remote-only; tests must not need Cloudflare sign-in or the network.
+              remoteBindings: false,
               miniflare: {
                 // Tests never read .dev.vars or real secrets: fixtures are generated at setup.
                 bindings: {
