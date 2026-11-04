@@ -16,8 +16,8 @@ curl https://passbook.mobile/api/v1/passes \
 
 | Scope | Allows |
 |---|---|
-| `passes:read` | GET passes, assets, versions, delivery |
-| `passes:write` | create, update, void, refresh, assets, resend email |
+| `passes:read` | GET passes, assets, versions, delivery, events, devices, bundles |
+| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
 
@@ -80,11 +80,18 @@ POST /api/v1/holders/unassign      { "passId": "…" }
 
 - Lists take `limit` (1 to 200) and `cursor`; the response has `nextCursor` (null at the end).
 - `void` and `unvoid` toggle a pass; `rotate-link` invalidates the old download link.
+- `POST /passes/{id}/remove` (`{ message? }`) publishes a last version that is voided and expired, so Wallet
+  moves it to Expired passes; no API deletes a pass from a device. `POST /passes/{id}/restore` undoes it.
+  Bulk: `POST /passes/bulk` with `action: "remove"`.
+- `GET /passes/{id}/events` is the sync log, newest first: `kind` (one or a comma list) or `group`
+  (`delivery`, `devices`, `changes`). `GET /passes/{id}/devices` is per-device sync and push state.
+- `POST /bundles` (`{ orgId, passIds, name, holderEmail?, sendEmail? }`) shares 1 to 10 passes of one org
+  behind one link, `/b/{token}`. Then `send-email`, `rotate-link` and `DELETE` on `/bundles/{id}`.
 - Request and response bodies are JSON except `PUT /passes/{id}/assets/{name}` (PNG body) and
   `POST /templates/uploads` (zip or multipart, up to 15 MB).
 - `POST /templates/{id}/versions` (admin session) saves a version of an uploaded template from JSON, with the
   same checks as an upload. Body: `passJson`, `manifest`, `assets` (`{ name, sha1 }` for a file the template
   already has, `{ name, upload }` for a PNG as base64), `dryRun` (validate and build only; returns the report
   and the built pass) and `activate`. Built-in templates answer 403 `TEMPLATE_BAKED`; duplicate one first.
-- Public pass links (`/p/{token}`), the Apple web service (`/wallet/v1`) and webhooks
+- Public pass and bundle links (`/p/{token}`, `/b/{token}`), the Apple web service (`/wallet/v1`) and webhooks
   (`/hooks/connections/{id}`) have their own auth and are not part of the key API.
