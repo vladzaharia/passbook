@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   BrandingSlotParamSchema,
   CreateOrgSchema,
+  EmailPreviewQuerySchema,
   IdParamSchema,
   IdSchema,
   OkSchema,
@@ -180,15 +181,19 @@ register(
     path: '/{id}/email-preview',
     summary: 'The pass email as holders get it, with sample holder data (HTML)',
     params: IdParamSchema,
-    query: z.object({ buddy: z.enum(['0', '1']).optional() }),
+    query: EmailPreviewQuerySchema,
   },
   async (c) => {
-    const { buddy } = c.req.valid('query');
+    const { buddy, supportEmail, supportUrl } = c.req.valid('query');
     const html = await renderEmailPreview(
       serviceContext(c),
       c.req.valid('param').id,
       new URL(c.req.url).origin,
-      buddy === undefined ? undefined : buddy === '1',
+      {
+        ...(buddy === undefined ? {} : { buddy: buddy === '1' }),
+        ...(supportEmail === undefined ? {} : { supportEmail }),
+        ...(supportUrl === undefined ? {} : { supportUrl }),
+      },
     );
     return c.body(html, 200, {
       'content-type': 'text/html; charset=utf-8',

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, PageQuerySchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
+import { OrgSettingsSchema } from './settings.ts';
 
 const HexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
@@ -75,3 +76,15 @@ export const UploadBrandingImageSchema = z.object({
   x2: z.base64().max(560_000).optional(),
 });
 export const BrandingSlotParamSchema = z.object({ id: IdSchema, slot: BrandingSlotSchema });
+
+/**
+ * The pass email preview with the org page's unsaved values: `buddy`, and the support email and
+ * URL (empty clears one, as Save would). An absent value is the saved one.
+ */
+export const EmailPreviewQuerySchema = z.object({
+  buddy: z.enum(['0', '1']).optional(),
+  supportEmail: z
+    .union([z.literal(''), OrgSettingsSchema.shape['support.email'].unwrap()])
+    .optional(),
+  supportUrl: z.union([z.literal(''), OrgSettingsSchema.shape['support.url'].unwrap()]).optional(),
+});
