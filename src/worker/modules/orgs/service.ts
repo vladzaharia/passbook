@@ -10,6 +10,7 @@ import type { Actor } from '../../platform/context.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
+import { markPassesStale } from './branding-stale.ts';
 import {
   COUNT_CAP,
   countsFor,
@@ -39,6 +40,10 @@ export function toDto(row: OrgRow): OrgDto {
     updatedAt: row.updated_at,
   };
 }
+
+/** Adds the count of live passes a save will rebuild; absent when none. */
+export const withUpdates = (dto: OrgDto, passes: number | undefined): OrgDto =>
+  passes === undefined ? dto : { ...dto, passesToUpdate: passes };
 
 export async function requireOrg(ctx: ServiceContext, id: string): Promise<OrgRow> {
   const row = await getOrgRow(ctx.env.DB, id);
@@ -136,6 +141,7 @@ export async function updateOrg(
     updated_at: ctx.clock.now(),
   };
   await updateOrgRow(ctx.env.DB, next);
+  const passesToUpdate = await markPassesStale(ctx, id, before, next);
   const view = (row: OrgRow) => ({ ...toDto(row) }) as Record<string, unknown>;
   const changes = diffFields(view(before), view(next), [
     'slug',
@@ -154,7 +160,7 @@ export async function updateOrg(
       targetId: id,
       detail: { changes },
     });
-  return toDto(next);
+  return withUpdates(toDto(next), passesToUpdate);
 }
 
 const statusAction = (status: 'active' | 'suspended') =>
