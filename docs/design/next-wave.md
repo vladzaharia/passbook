@@ -385,3 +385,43 @@ Open risks:
   counts link-preview fetches. n3's `isActive` is set at publish, so it flips only when the pass is republished.
 - Gaps 0013 to 0015 are kept for wave 2. Wrangler applies any missing name, so on a database that already has 0016
   they run after it and must not depend on running before it.
+
+## Wave 2 status
+
+Merged into `next/integration` on 2026-11-04, in order: n6, n7. n8 (scanner) was withdrawn from this wave and will
+be designed from scratch; nothing scanner-specific was built, and `0014` stays reserved for it. `npm run check` is
+green and e2e passes, with the new `14-sandbox` and `15-messages`. Migrations 0013 and 0015 apply in order on a fresh
+local D1, and also after 0016 on a database that already has it.
+
+Integration decisions:
+
+- Conflicts: `settings.ts` keeps both `sandbox.purgeDays` and `push.budgetPerDay`; `app.ts` mounts both
+  `/api/v1/test-inbox` and `/api/v1/broadcasts`. Both streams raised the bundle budget, to 230,000 and 230,500 B.
+  It is now 232,500 B; the merged entry measures 229,829 B.
+- Test mode reaches Messages: test messages carry the shared Test pill on rows and detail, and a page test proves
+  the list request sends `x-passbook-mode`. The server already filtered lists and counts by mode.
+- The daily sandbox purge also deletes finished test broadcasts (not scheduled or sending) past `sandbox.purgeDays`,
+  with their per-pass rows. `0013` gains the `broadcasts_test_age` partial index for it.
+- Captured mail: wave 2 adds no email kind. Broadcasts only push, so the pass and bundle capture paths cover every
+  pass email.
+- The designer keeps `manifest.messaging` on save (n7's designer and version tests).
+- Fix: the composer navigated while its unsaved-changes guard was still armed, so the guard cancelled the
+  navigation and Send left the admin on the form. It now navigates after the guard re-renders clean, as the
+  new-pass wizard does. Found by `15-messages`; a page test covers it.
+- Audit labels for `broadcast.create`, `broadcast.send` and `broadcast.cancel`. The composer asks for an
+  organization before it lists templates.
+- Browser check at 1280, 820 and 390 px in light and dark: passes list and detail in Test mode, Test inbox
+  (off, list, preview), Messages list, detail and composer, API keys, and the SSR pass and bundle ribbons.
+
+Open risks:
+
+- The `Broadcast` workflow ran under local Workflows (miniflare) in e2e, not on Cloudflare. Real APNs pushes,
+  the cron start path and `clearAfter` follow-ups are covered by Worker tests only.
+- The sandbox purge's batches are bounded by a query-count test, not by a run against a large dataset.
+- A test-mode outbox row cancelled before n6 has no captured email.
+- The sidebar still has a **Scanners** placeholder (`/admin/scanners`) and `/scan` exists as a placeholder route.
+  Hide them or keep them as the scanner design decides.
+- For the scanner design: `scan.*` event kinds, the `scanner` actor type, the `scan` pass source,
+  `passes.scan_code` and `passes.barcode_hash` already exist. There is no scan scope or scanner credential yet.
+- The broadcast entity reuses the `wallet` art; a dedicated art would fit better.
+- `isActive` on upcoming events still flips only on republish.
