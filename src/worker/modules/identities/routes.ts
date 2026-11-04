@@ -5,6 +5,7 @@ import {
   IdParamSchema,
   OkSchema,
   PageQuerySchema,
+  PushKeyInputSchema,
   RotateIdentitySchema,
   UpdateIdentitySchema,
   UploadIdentitySchema,
@@ -15,6 +16,7 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
 import { probeApns } from './apns-probe.ts';
+import { removePushKey, setPushKey } from './push-key-service.ts';
 import {
   deleteIdentity,
   getIdentity,
@@ -136,4 +138,38 @@ register(
     await enforceRateLimit(c.env, 'RL_REFRESH', `apns-check:${c.req.valid('param').id}`);
     return c.json(await probeApns(serviceContext(c), requestActor(c), c.req.valid('param').id));
   },
+);
+register(
+  identitiesRoutes,
+  'identities',
+  {
+    method: 'put',
+    path: '/{id}/push-key',
+    summary: 'Set or replace the APNs push key (.p8) of the identity team',
+    params: IdParamSchema,
+    body: PushKeyInputSchema,
+    response: IdentitySchema,
+  },
+  async (c) =>
+    c.json(
+      await setPushKey(
+        serviceContext(c),
+        requestActor(c),
+        c.req.valid('param').id,
+        c.req.valid('json'),
+      ),
+    ),
+);
+register(
+  identitiesRoutes,
+  'identities',
+  {
+    method: 'delete',
+    path: '/{id}/push-key',
+    summary: 'Remove the APNs push key of the identity team',
+    params: IdParamSchema,
+    response: IdentitySchema,
+  },
+  async (c) =>
+    c.json(await removePushKey(serviceContext(c), requestActor(c), c.req.valid('param').id)),
 );

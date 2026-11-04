@@ -4,6 +4,7 @@ import { certDetails } from './cert.ts';
 import { apnsBindingPresent } from './db-resolver.ts';
 import { daysRemaining } from './expiry.ts';
 import { type IdentityRow, identityFacts } from './repo.ts';
+import { getPushKeyMeta, teamIdentityCount } from './repo-push-keys.ts';
 
 /** Apple's reason code from a probe's audit detail; null when it passed or none was given. */
 function probeReason(detail: string | null): string | null {
@@ -30,6 +31,14 @@ export async function toDto(ctx: ServiceContext, row: IdentityRow): Promise<Iden
       ctx.log.warn('identity.cert_unreadable', { identityId: row.id, error });
     }
   }
+  const keyMeta = row.team_identifier
+    ? await getPushKeyMeta(ctx.env.DB, row.team_identifier)
+    : null;
+  const pushMethod = apnsBindingPresent(ctx.env, row.apns_binding)
+    ? 'certificate'
+    : keyMeta
+      ? 'key'
+      : 'none';
   return {
     id: row.id,
     orgId: row.org_id,
@@ -44,7 +53,16 @@ export async function toDto(ctx: ServiceContext, row: IdentityRow): Promise<Iden
     notAfter: row.not_after,
     daysRemaining: daysRemaining(row.not_after, ctx.clock.now()),
     apnsBinding: row.apns_binding,
-    apnsAvailable: apnsBindingPresent(ctx.env, row.apns_binding),
+    apnsAvailable: pushMethod !== 'none',
+    pushMethod,
+    pushKey: keyMeta
+      ? {
+          keyId: keyMeta.key_id,
+          createdAt: keyMeta.created_at,
+          rotatedAt: keyMeta.rotated_at,
+          identityCount: await teamIdentityCount(ctx.env.DB, row.team_identifier),
+        }
+      : null,
     apnsHealth: row.apns_health,
     apnsCheckedAt: facts.checked_at,
     apnsReason: probeReason(facts.detail),

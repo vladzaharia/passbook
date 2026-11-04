@@ -115,8 +115,9 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
   const target = {
     passTypeIdentifier: identity.passTypeIdentifier,
     apnsBinding: identity.apnsBinding,
+    teamIdentifier: identity.teamIdentifier,
   };
-  if (!deps.apns.isAvailable(target)) {
+  if (!(await deps.apns.isAvailable(target))) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'PUSH_UNAVAILABLE');
     return;
   }
