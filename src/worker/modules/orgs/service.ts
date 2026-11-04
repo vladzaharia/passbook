@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import type {
   CreateOrgSchema,
   OrgBrandingSchema,
@@ -8,7 +9,6 @@ import type {
 } from '../../../shared/contracts/orgs.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
-import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
 import { markPassesStale } from './branding-stale.ts';

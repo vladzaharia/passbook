@@ -4,6 +4,7 @@ import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
 import type { Swatch } from '../../lib/swatches.ts';
 import { Checkbox, RowLink, StatusIcon } from '../../ui/index.ts';
+import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { PassRowMenu } from './row-menu.tsx';
 
 export type { Swatch };
@@ -85,6 +86,7 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
       >
         {nameOf(p)}
       </RowLink>
+      <ModePill mode={p.mode} compact />
       {p.removedAt !== null ? (
         <span className="shrink-0 text-xs font-medium text-fg-muted">Removed</span>
       ) : null}

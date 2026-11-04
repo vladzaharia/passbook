@@ -4,12 +4,12 @@ import type {
   CapturedEmailDetailSchema,
   CapturedEmailSchema,
 } from '../../../shared/contracts/index.ts';
-import type { Actor } from '../../platform/context.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { depsOf } from '../passes/deps.ts';
+import type { Actor } from '../passes/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { type CapturedRow, getCaptured, listCaptured, verifiedEmailOf } from './repo.ts';
 

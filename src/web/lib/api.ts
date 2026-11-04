@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import type { z } from 'zod';
 import { STATE_COPY } from '@/shared/copy/states.ts';
 import { ApiError, problemToError } from './errors.ts';
+import { modeHeaders } from './mode.ts';
 import { safeNext } from './redirect.ts';
 
 export type QueryValue = string | number | boolean | null | undefined;
@@ -55,7 +56,11 @@ export function createApiClient(deps: ApiClientDeps) {
     opts: RequestOptions,
   ): Promise<unknown> {
     const doFetch = deps.fetch ?? fetch;
-    const headers: Record<string, string> = { accept: 'application/json', ...opts.headers };
+    const headers: Record<string, string> = {
+      accept: 'application/json',
+      ...modeHeaders(),
+      ...opts.headers,
+    };
     if (WRITE.has(method)) {
       const token = await deps.getCsrfToken();
       if (token) headers['x-csrf-token'] = token;

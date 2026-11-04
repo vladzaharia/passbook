@@ -16,6 +16,7 @@ import {
   TabsTrigger,
   toast,
 } from '../../../ui/index.ts';
+import { ModePill } from '../../../ui/layout/mode-pill.tsx';
 import { useDraftPreview, useTemplate } from '../../templates/api.ts';
 import { usePass, usePassActions, usePassVersion } from '../api.ts';
 import { useCreated } from '../created.tsx';
@@ -174,6 +175,7 @@ function Loaded({
         breadcrumbs={crumbs}
         meta={
           <>
+            <ModePill mode={p.mode} />
             <StatusPill status={removed ? 'removed' : p.status} />
             <StatusPill status={p.holderState} />
             <span className="tabular-nums">v{p.version}</span>

@@ -8,6 +8,7 @@ import {
   Clock,
   Eye,
   EyeOff,
+  FlaskConical,
   Loader2,
   Lock,
   type LucideIcon,
@@ -163,6 +164,16 @@ export const MARKER_STATUS = {
   default: { label: 'Default', tone: 'neutral', icon: BadgeCheck },
 } as const satisfies Record<string, StatusEntry>;
 
+/** Sandbox: a pass, bundle or key that belongs to Test mode. One pill everywhere (ModePill). */
+export const MODE_STATUS = {
+  test: {
+    label: 'Test',
+    tone: 'warning',
+    icon: FlaskConical,
+    hint: 'Test mode. Emails stay in the Test inbox and the data is deleted after a while.',
+  },
+} as const satisfies Record<string, StatusEntry>;
+
 export const STATUS_VOCAB = {
   ...HEALTH_STATUS,
   ...PASS_STATUS,
@@ -174,6 +185,7 @@ export const STATUS_VOCAB = {
   ...ROLE_STATUS,
   ...RUN_STATUS,
   ...MARKER_STATUS,
+  ...MODE_STATUS,
 } as const;
 export type StatusKey = keyof typeof STATUS_VOCAB;
 

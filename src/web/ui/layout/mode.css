@@ -1,0 +1,16 @@
+/* The Test mode band hangs from the top bar over the page's first 24 px of padding: it adds no
+   height, so turning Test mode on or off moves nothing. Opacity and transform only. */
+@keyframes wl-mode-in {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+.wl-mode-band {
+  animation: wl-mode-in 200ms var(--wl-ease-out) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-mode-band {
+    animation: wl-fade-in 120ms linear backwards;
+  }
+}

@@ -36,6 +36,7 @@ import { Route as AdminStatusIndexRouteImport } from './routes/admin/status/inde
 import { Route as AdminTemplatesIndexRouteImport } from './routes/admin/templates/index'
 import { Route as AdminTemplatesTemplateIdRouteImport } from './routes/admin/templates/$templateId'
 import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templates/upload'
+import { Route as AdminTestInboxIndexRouteImport } from './routes/admin/test-inbox/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 import { Route as AdminTemplatesTemplateIdDesignRouteImport } from './routes/admin/templates/$templateId_.design'
@@ -178,6 +179,11 @@ const AdminTemplatesUploadRoute = AdminTemplatesUploadRouteImport.update({
   path: '/templates/upload',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminTestInboxIndexRoute = AdminTestInboxIndexRouteImport.update({
+  id: '/test-inbox/',
+  path: '/test-inbox/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
+  '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/admin/status': typeof AdminStatusIndexRoute
   '/admin/templates': typeof AdminTemplatesIndexRoute
+  '/admin/test-inbox': typeof AdminTestInboxIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
+  '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
   '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/admin/status/'
     | '/admin/templates/'
+    | '/admin/test-inbox/'
     | '/admin/users/'
     | '/admin/templates/$templateId/design'
   fileRoutesByTo: FileRoutesByTo
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/status'
     | '/admin/templates'
+    | '/admin/test-inbox'
     | '/admin/users'
     | '/admin/templates/$templateId/design'
   id:
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/admin/status/'
     | '/admin/templates/'
+    | '/admin/test-inbox/'
     | '/admin/users/'
     | '/admin/templates/$templateId_/design'
   fileRoutesById: FileRoutesById
@@ -589,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTemplatesUploadRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/test-inbox/': {
+      id: '/admin/test-inbox/'
+      path: '/test-inbox'
+      fullPath: '/admin/test-inbox/'
+      preLoaderRoute: typeof AdminTestInboxIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/users/': {
       id: '/admin/users/'
       path: '/users'
@@ -636,6 +655,7 @@ interface AdminRouteRouteChildren {
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
   AdminStatusIndexRoute: typeof AdminStatusIndexRoute
   AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
+  AdminTestInboxIndexRoute: typeof AdminTestInboxIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
   AdminTemplatesTemplateIdDesignRoute: typeof AdminTemplatesTemplateIdDesignRoute
 }
@@ -663,6 +683,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
   AdminStatusIndexRoute: AdminStatusIndexRoute,
   AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
+  AdminTestInboxIndexRoute: AdminTestInboxIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
   AdminTemplatesTemplateIdDesignRoute: AdminTemplatesTemplateIdDesignRoute,
 }

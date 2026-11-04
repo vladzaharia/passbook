@@ -183,9 +183,11 @@ describe('test-mode email is never sent', () => {
       await first(kit.env.DB, 'SELECT state, error_code FROM outbox WHERE id = ?', [outboxId]),
     ).toEqual({ state: 'sent', error_code: 'TEST_MODE' });
     expect(
-      await first(kit.env.DB, 'SELECT recipient, pass_id FROM captured_emails WHERE outbox_id = ?', [
-        outboxId,
-      ]),
+      await first(
+        kit.env.DB,
+        'SELECT recipient, pass_id FROM captured_emails WHERE outbox_id = ?',
+        [outboxId],
+      ),
     ).toEqual({ recipient: 'holder-test-mode@example.com', pass_id: pass.id });
     const events = await all<{ kind: string; mode: string; data: string }>(
       kit.env.DB,

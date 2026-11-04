@@ -1,5 +1,5 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ValidationReport } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all } from '../../platform/db.ts';
 
 /** Undeleted passes of one mode per template version. */

@@ -160,6 +160,28 @@ describe('GET /test-inbox', () => {
   });
 });
 
+describe('GET /test-inbox/:id/html', () => {
+  it('serves the message in its own policy, frameable by the admin only', async () => {
+    const { outboxId } = await capture('test', 'frame@example.com');
+    const row = await first<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM captured_emails WHERE outbox_id = ?',
+      [outboxId],
+    );
+    const res = await api(`/test-inbox/${row?.id}/html`, { headers: fake.admin() });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('x-frame-options')).toBe('SAMEORIGIN');
+    const csp = res.headers.get('content-security-policy') ?? '';
+    expect(csp).toContain('sandbox');
+    expect(csp).not.toContain('script-src');
+    expect(csp).toContain("default-src 'none'");
+    expect(await res.text()).toContain('<');
+    expect((await api(`/test-inbox/${row?.id}/html`, { headers: fake.user() })).status).toBe(403);
+    expect((await api('/test-inbox/missing/html', { headers: fake.admin() })).status).toBe(404);
+  });
+});
+
 describe('POST /test-inbox/:id/send-to-me', () => {
   it('sends to the signed-in admin only, audits it and rate limits', async () => {
     const { outboxId } = await capture('test', 'someone-else@example.com');
