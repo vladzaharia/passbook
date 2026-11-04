@@ -6,6 +6,8 @@ import { Callout } from '../ui/callout.tsx';
 export interface HolderSupport {
   email: string | null;
   url: string | null;
+  /** PassBook's own support, because the org has none. */
+  platform?: true | undefined;
 }
 
 const LINK = 'font-medium text-accent-fg underline-offset-4 hover:underline';
@@ -31,7 +33,7 @@ export function Notice({
           <>
             {' '}
             <a href={href} className={LINK}>
-              {HOLDER_COPY.contact(orgName)}
+              {HOLDER_COPY.contact(support?.platform ? 'PassBook' : orgName)}
             </a>
           </>
         ) : null}

@@ -30,7 +30,7 @@ export default defineConfig({
                   TEST_MIGRATIONS: migrations,
                   KEK_V1: 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDc=',
                   // Pinned so a developer's .dev.vars cannot change test outcomes.
-                  PUBLIC_BASE_URL: 'https://wallet.plrs.im',
+                  PUBLIC_BASE_URL: 'https://passbook.mobile',
                   REDIRECT_HOSTS: 'old.wallet.test',
                   OIDC_ISSUER: 'https://id.plrs.im',
                   OIDC_CLIENT_ID: 'wallet-placeholder-client-id',

@@ -95,8 +95,8 @@ describe('passes', () => {
       orgName: 'Acme',
       status: 'active',
       passJson: { description: 'Hello' },
-      downloadUrl: `https://wallet.plrs.im/p/${mine.downloadToken}/pass.pkpass`,
-      assetBaseUrl: `https://wallet.plrs.im/p/${mine.downloadToken}/assets/`,
+      downloadUrl: `https://passbook.mobile/p/${mine.downloadToken}/pass.pkpass`,
+      assetBaseUrl: `https://passbook.mobile/p/${mine.downloadToken}/assets/`,
     });
     expect(user.id).toBeTruthy();
   });

@@ -1,3 +1,5 @@
+import { strictEmail } from '../../src/shared/email.ts';
+
 interface WranglerConfig {
   vars?: Record<string, unknown>;
   routes?: { pattern: string; custom_domain?: boolean }[];
@@ -98,6 +100,8 @@ function domainProblems(config: WranglerConfig): string[] {
       problems.push(
         `routes ${host} is not PUBLIC_BASE_URL or in REDIRECT_HOSTS: it would be refused.`,
       );
+  if (strictEmail(vars.SUPPORT_EMAIL) === null)
+    problems.push('vars.SUPPORT_EMAIL must be a valid email address (PassBook support).');
   const from = vars.EMAIL_FROM;
   const allowed = config.send_email?.find((b) => b.name === 'EMAIL')?.allowed_sender_addresses;
   if (typeof from === 'string' && allowed && !allowed.includes(from))

@@ -19,7 +19,14 @@ export const MyPassSchema = z.object({
   /** A device has registered the pass: it is in someone's Wallet (and leaves Add all). */
   inWallet: z.boolean(),
   /** One pass only: the org's checked support contacts (the voided note names them). */
-  support: z.object({ email: z.string().nullable(), url: z.string().nullable() }).optional(),
+  support: z
+    .object({
+      email: z.string().nullable(),
+      url: z.string().nullable(),
+      /** PassBook's own support, because the org has none. */
+      platform: z.literal(true).optional(),
+    })
+    .optional(),
 });
 export const MyPassListSchema = pageOf(MyPassSchema);
 

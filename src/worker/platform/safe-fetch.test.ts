@@ -18,12 +18,12 @@ describe('assertSafeUrl', () => {
     'https://intranet/x',
     'https://printer.local/x',
     'https://user:pw@example.com/x',
-    'https://wallet.plrs.im/api',
-    'https://sub.wallet.plrs.im/api',
+    'https://passbook.mobile/api',
+    'https://sub.passbook.mobile/api',
     'https://example.com/a/../b',
     'not a url',
   ])('rejects %s', (url) => {
-    expect(() => assertSafeUrl(url, ['wallet.plrs.im'])).toThrow();
+    expect(() => assertSafeUrl(url, ['passbook.mobile'])).toThrow();
   });
 
   it('accepts public https URLs', () => {
@@ -36,13 +36,13 @@ describe('assertSafeUrl', () => {
 
 describe('platformHostsOf', () => {
   const env = {
-    PUBLIC_BASE_URL: 'https://wallet.plrs.im',
+    PUBLIC_BASE_URL: 'https://passbook.mobile',
     OIDC_ISSUER: 'https://id.plrs.im',
     SSRF_DENY_HOSTS: 'plrs.im',
   };
   it('lists the base, issuer, workers.dev and the deny list', () => {
     expect(platformHostsOf(env).sort()).toEqual(
-      ['id.plrs.im', 'plrs.im', 'wallet.plrs.im', 'workers.dev'].sort(),
+      ['id.plrs.im', 'passbook.mobile', 'plrs.im', 'workers.dev'].sort(),
     );
   });
   it('adds the hosts that only redirect to the base', () => {

@@ -1,3 +1,4 @@
+import { platformSupportEmail } from '../../platform/support.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { safeMail, safeUrl } from '../../email/safe.ts';
 import { NotFoundError } from '../../platform/errors.ts';
@@ -38,6 +39,8 @@ export async function passForToken(ctx: ServiceContext, token: string): Promise<
 export interface SupportContacts {
   email: string | null;
   url: string | null;
+  /** PassBook's own support, because the org has none. */
+  platform?: true;
 }
 
 /** Org settings win over the legacy branding fields; unsafe values are dropped. */
@@ -49,10 +52,11 @@ export async function supportContacts(
     getOrgSettings(ctx, orgId),
     orgBranding(ctx.env.DB, orgId),
   ]);
-  return {
-    email: safeMail(settings['support.email'] ?? branding.supportEmail),
-    url: safeUrl(settings['support.url'] ?? branding.supportUrl),
-  };
+  const email = safeMail(settings['support.email'] ?? branding.supportEmail);
+  const url = safeUrl(settings['support.url'] ?? branding.supportUrl);
+  if (email || url) return { email, url };
+  const platform = platformSupportEmail(ctx.env);
+  return platform ? { email: platform, url: null, platform: true } : { email, url };
 }
 
 export interface PublicPageModel {
