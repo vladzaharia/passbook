@@ -107,8 +107,8 @@ stylized face of its own and stays as it is.
 | --- | --- | --- | --- |
 | Face XS | 24 × 20 | 1.25 px | Toasts (`BuddyFace size="sm"`) |
 | Face S | 48 × 44 | 1.5 px | Banners, Status (`BuddyFace size="md"`) |
-| S | 64 × 48 | 1.25 px | Dense chrome: the palette, the pass stage, the nudge (`size="sm"`) |
-| M | 96 × 72 | 1.5 px | State boxes and cards (`size="lg"`) |
+| S | 64 × 48 | 1.25 px | Dense chrome: the palette, the pass stage, the pass page's badge card, line and notice (`size="sm"`) |
+| M | 96 × 72 | 1.5 px | State boxes and cards, the pass page's QR sign (`size="lg"`) |
 | L | 128 × 96, 112 × 84 under 640 | 1.75 px | Hero bands: sign-in, SSR (`size="xl"`; the art steps itself) |
 | Poster | 1.5 × L | 1.75 px | The social image |
 
@@ -154,7 +154,9 @@ a click does nothing. Each scene ends on the rest pose and leaves nothing runnin
 (`translate`, `rotate`, `scale`, `transform`) and opacity only. API: `Buddy mood state prop size at
 scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's composition),
 `BuddyFace scene size mood`, `useScene(auto, again)`. A cameo in dense chrome is a seated
-`Buddy size="sm"` (the nudge: `<Buddy size="sm" scene="nudge" at="start" />` on the Details card).
+`Buddy size="sm"`. On the holder's pass page (`portal/add/add-block.tsx`, `/p` too) the add block
+seats one buddy by state: M on the QR's sign, S on the badge's card, the In Apple Wallet line or the
+voided or expired notice.
 
 | Scene | Where | Beats: anticipation, action, reaction, settle | Time |
 | --- | --- | --- | --- |
@@ -168,10 +170,10 @@ scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's co
 | peek | Lost: page not found; palette, no results | Its see-through lens sweeps left over its head and back, then comes down over its right eye, which looms and blinks behind the glass; lens back, a head tilt | 2.6 s |
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
 | wave | Pass created; S, seated on the Front / Details control's top edge at its right end, in every stage layout (the row leaves room above it) | Has fallen on; hops, looks up at the pass and waves its teal pass twice, then smiles at you | 1.8 s |
-| tear | Pass voided (this visit); seated like wave | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
-| nudge | Portal pass, not on a device yet, where the badge adds (iPhone, Mac); S, seated on the Details card's top edge. Beside the QR: past the action column, the badge up and to its left (the card keeps 32 px over the QR's caption, so even falling it stays below the column). On the phone: at the card's left end under the badge's row (56 px clear above it). Never on the actions. My passes with two or more passes to add, seated on the first tile under the bundle badge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at Add to Apple Wallet, leans in, lifts its teal pass out of the pocket and aims it up-left at the badge twice, then looks back at you and blinks | 2.6 s |
+| tear | Pass voided (this visit); seated like wave. The holder's voided pass page: S at the end of the notice (an expired one sits there sad, its gold pass drooping, no scene) | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
+| nudge | Pass page, not on a device yet: M at the end of the QR's sign, aimed down at the code; on the iPhone S on the badge's card, just past the badge (full width on a phone), aimed down at it (`--wl-aim: 1.6`, eyes lower). My passes with two or more passes to add, seated on the first tile under the bundle badge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at the code or the badge, leans in, lifts its teal pass out of the pocket and aims it at it twice, then looks back at you and blinks | 2.6 s |
 | tuck | My passes with one pass to add (so no bundle badge); S, seated like the list's nudge | Has fallen on. Peeks down over the edge at the passes under it, looks back, lifts its teal pass high out of the pocket and holds it up with a wiggle, eyes on it; drops it back in, faster all the way, a thunk (squash 1.08 × .9, the other passes jolt, a blink); looks at you and blinks | 2.4 s |
-| count | My passes, every live pass in a Wallet (happy); S, seated like the list's nudge | Has fallen on. Counts its passes: teal, violet, gold each pop up 8–9 units as it leans and looks to each; then a crouch, a hop with the outer passes spread ±14° and the violet one raised, the smile widening; lands in a squash | 2.2 s |
+| count | My passes, every live pass in a Wallet (happy); S, seated like the list's nudge. The pass page in Apple Wallet already: S at the start of the In Apple Wallet line | Has fallen on. Counts its passes: teal, violet, gold each pop up 8–9 units as it leans and looks to each; then a crouch, a hop with the outer passes spread ±14° and the violet one raised, the smile widening; lands in a squash | 2.2 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
 | hello | Sign-in wallet at rest; the SSR band's wallet (sign-in, confirm, break-glass, expired, rate limit) | Click only: a squash and stretch, the top pass waves like a hand. SSR: `public/buddy-replay.js` toggles `data-run`; ART_CSS carries `scenes/rest.css` and `scenes/hello.css`. SSR error, not-found and forbidden pages act out plug, peek and tug instead (`STATE_SCENE_CSS`) | 1 s |
 | face: wink | Success toast (the miniature, sm) | Pops with the toast and winks at 380 ms; a click pops and winks again | 580 ms |
@@ -193,19 +195,18 @@ the planted foot moves against the body with the same keyframes and easing, so i
 | 3500–4000 | Hop onto the seat, squash, blink |
 
 Nudge beats (`scenes/nudge.css`, 1% = 26 ms). It starts once the art has landed and is 60% in
-view, and ends by 3.3 s. The buddy is S (64 × 48) at every width. He falls `--wl-drop`: 48 units
-(32 px at S), or 20 units on phones so he never crosses the buttons above.
+view, and ends by 3.3 s. He falls `--wl-drop`: 18 px at S, 28 px at M on the sign.
 
 | ms | Beat |
 | --- | --- |
 | 0–290 | Falls, ease-in, stretched (.93 × 1.08); fades in over the first 80 ms; legs splayed; the shadow grows from .3 to full width under him |
 | 290–550 | Impact: squash 1.14 × .83 at 350 ms, rebound, settle by 810 ms; the shadow spreads to 1.14 and back; the passes dip 3 units and splay ±8°; the legs fling out (30°), swing back under and still by 940 ms; a blink at 325 ms |
-| 880–1250 | Eyes to Add to Apple Wallet (left, up) by 1040; the trunk leans 5° toward it by 1200 |
-| 1250–1610 | The teal pass lifts out of the pocket and aims up-left at it twice (up 10 units and −24° past the fan, back to 7 units and −16°, again, held). Beside the QR the badge is steeper above him: half the turn (`--wl-aim: .5`) and the eyes higher (`--wl-look`) |
+| 880–1250 | Eyes to the target (`--wl-look`: on the list up-left at the bundle badge; on the pass page down-left at the code or the badge) by 1040; the trunk leans 5° toward it by 1200 |
+| 1250–1610 | The teal pass lifts out of the pocket and aims at it twice (up 10 units and −24° × `--wl-aim` past the fan, back to 7 units and −16° × `--wl-aim`, again, held). The pass page aims lower: `--wl-aim: 1.6` |
 | 1610–1980 | Pass down by 1820, upright by 1870, eyes back to you by 1980 |
 | 2180–2600 | A blink; eyes centred; still at 2600 |
 
-Hovering or focusing the badge turns his eyes to it (`portal.css`).
+Hovering or focusing the badge turns his eyes to it (`portal.css`, `portal/add/add.css`).
 
 **My passes with passes** (`portal/my-passes-page.tsx`, `listAct`; `scenes/{tuck,count}.css`).
 One buddy, on the first tile whatever its state, so a change of state never moves it; a new act
@@ -368,8 +369,9 @@ One per screen. The wordmark says hello once per browser session in the SPA and 
    detail page preview, then it mints. The org's first pass also celebrates.
 5. **Portal Add and Refresh.** The badge never moves. Pressing it dips the card 6 px towards it
    (420 ms) as the download starts; nothing claims success. Refresh runs a 2 px foil sync rail
-   under the card while pending, then the card mints and the existing toast shows. The add QR (pass
-   page, /p and the dialog) sweeps a scan line over the code once (900 ms).
+   under the card while pending, then the card mints and the existing toast shows. The QR dialog's
+   code (My passes) sweeps a scan line over it once (900 ms); on the pass page the buddy points
+   at it instead.
 6. **Sliding indicators.** Sidebar, portal nav, tabs and segmented controls share one indicator.
 7. **Entity art.** See above.
 8. **Sign-in: "the wallet fills"** (owner direction 2026-11-01, R5: cute, playful, short).

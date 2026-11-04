@@ -96,9 +96,9 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |
 | Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors; bottom sheets <640 |
-| Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024; account cards cap at 48rem |
+| Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024, the pass sticky at the left; account cards cap at 48rem |
 | Login and SSR auth pages | `max-w-sm` card, centred |
-| Public pass page | `max-w-5xl` like the portal; the portal's pass view (`HolderPassView`): one column, two at ≥1024 (pass left; notice, QR, badge, help right) |
+| Public pass page | `max-w-5xl` like the portal; the portal's header and pass view (`HolderHeading`, `HolderPassView`): one column, two at ≥1024 (pass left; notice, add block, help right) |
 
 - `FormGrid` (container query on its own width): 1 column; 2 at ≥40rem; 3 short fields at
   ≥64rem. Long fields (textarea, URL, JSON, lists) span all columns. With an aside the grid drops
@@ -515,28 +515,38 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 
 - **Badge**: the kit `AppleWalletBadge` everywhere (`/p`, portal tiles and detail, Add all,
   email). Rules in ux-principles.md "Add to Apple Wallet badge".
-- **Device rule** (`src/shared/device.ts`, portal and `/p`): every device gets the badge;
-  iPhone, iPod and Mac can add with it. Wherever this is not the phone (Mac included) the add QR
-  leads, then the badge: the QR encodes the pass's `/p` page, so the iPhone that scans it opens the
-  page in Safari and adds with the badge there (a Mac's own add needs Safari and iCloud's Wallet
-  sync; the scan needs neither). Devices that cannot add (iPad included) add `Open on iPhone or
-  Mac to add to Apple Wallet.`; an in-app web view on one that can, `Open in Safari…`.
+- **Device rule** (`src/shared/device.ts`, portal and `/p`): iPhone, iPod and Mac can add with
+  the badge. Wherever this is not the phone (Mac included) the add QR leads: it encodes the pass's
+  `/p` page, so the iPhone that scans it opens the page in Safari and adds with the badge there (a
+  Mac's own add needs Safari and iCloud's Wallet sync; the scan needs neither). A Mac gets the
+  badge beside the QR; elsewhere (iPad, Android, Windows) the scan is the only way, so the pass
+  page shows no badge and no line. Tiles, Add all and the email keep the badge everywhere, with
+  `Open on iPhone or Mac to add to Apple Wallet.` where it cannot add; an in-app web view on a
+  device that can, `Open in Safari…`.
 - **Portal tiles**: three rows of the list grid (subgrid): the pass (stage), title and org, the
   actions at the bottom, so a row of tiles lines them up however the actions wrap. Actions:
   `Show QR` where the badge cannot add (a Mac finds it in More) and the badge, then `Refresh` and
   `More` (Show QR, Remove) as badge-sized outline icon buttons. `In Wallet` pill for registered
   passes. No `Updated` line. Tile radius 18 px (the pass's ~14).
-- **Portal pass detail** and **`/p`** are one view (`portal/holder-pass-view.tsx`; `/p` renders
-  it to static markup with the same CSS, `npm run gen`): the card left; right, the voided or
-  expired notice (voided names the org's support: `Contact <org>`), the add block, the portal's
-  Details card, then the org's help. Where the QR shows (device rule) it leads, captioned `Scan
-  with your iPhone.`; beside it one column, top-aligned with the phone and as tall: the badge,
-  then the portal's `Refresh` and `More` (Copy link, Open public page in a new tab, Remove), all
-  badge-high and as wide as the badge (a countdown widens them all, never the badge). Without
-  the QR (iPhone) they follow the badge in a row, `More` icon-only under 640. The add line closes
-  the block. The badge has no padding of its own there: the gaps are its clear space. The
-  portal's PageHeader carries the org and `Updated Nov 1` as meta. `/p` puts one quiet link,
-  `Open in My passes`, where the portal has its actions (sign-in first). No `.pkpass` download.
+- **Portal pass detail** and **`/p`** are one header and one view (`portal/holder-heading.tsx`,
+  `portal/holder-pass-view.tsx`; `/p` renders them to static markup with the same CSS, `npm run
+  gen`).
+  - Header: the pass's icon (44 px, app-icon corner), the org's name over what the pass is (the
+    h1: the pass `description` `{Org} {kind}` split at the org, `Membership`; the holder's name
+    stays a field), then `Voided` or `Expired` as a pill and `Updated Nov 1`. The breadcrumb and
+    the tab title are the whole description. Actions at the right: `Refresh` and `More` (Copy
+    link, Open public page in a new tab, Remove); `/p` has one quiet link, `Open in My passes`
+    (sign-in first).
+  - Body: the card left, sticky from 1024; right, the voided or expired notice (voided names the
+    org's support: `Contact <org>`), the add block, the portal's Details card, the org's help.
+  - Add block (`portal/add/`): it only adds, and the buddy holds it. Off the phone the QR sits on
+    a sign drawn like the buddy (its line, fill and stitching), the buddy (M) on its top edge;
+    beside it `On your iPhone` / `Scan with the camera.` and, on a Mac, `On this Mac` with the
+    badge under a hairline. On the iPhone the badge's card (the buddy S on it) comes before the
+    pass, so the badge is on the first screen. In Apple Wallet already: `In Apple Wallet` /
+    `Updates arrive on their own.` under the happy buddy, and `Show QR` (`Add to this iPhone`)
+    opens adding again. Voided or expired: the buddy sits on the notice, sad.
+  - The badge has no padding of its own: the gaps are its clear space. No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.
 - **Org first**: `/p` and the pass email show the org's logo or name, not the PassBook mark. The
@@ -581,8 +591,9 @@ The trust and footer lines are the only explanatory text allowed on these pages:
   only, the account menu owns `Sign out`.
 
 - Public pass page: the app shell's bar (56 px with its border, sticky) with the org's icon and
-  name; a 24 px h1; then the portal's pass view (deals in, flips with a no-script `Details`
-  toggle, tilts on fine pointers through `/pass-tilt.js`, dips in CSS when the badge is pressed).
+  name; the portal's header and pass view (deals in, flips with a no-script `Details` toggle,
+  tilts on fine pointers through `/pass-tilt.js`, dips in CSS when the badge is pressed; the
+  buddy's scene plays once on load and `/buddy-replay.js` replays it on a click).
   A dead link uses the hosted card (`Link expired`, outline `Go to My passes`).
 - Emails match the hosted card: the card's colours, `xl` radius and foil top edge, the kit
   button's type and radius, tokens from `npm run gen`. The sign-in email carries the seated buddy

@@ -63,7 +63,7 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
    - Next and Save stay on screen (sticky bars).
 7. **The holder is a person with an email.**
    - `/login` leads with the email path; Polaris ID is the alternative.
-   - Off iPhone the QR leads ("Scan with your iPhone.").
+   - Off iPhone the QR leads ("On your iPhone: Scan with the camera.").
    - In an installed app the sign-in code leads: an email link would open Safari.
    - Emails show what the pass is before the badge.
    - Account email flows never dead-end: a pending address shows with Resend and Cancel.
@@ -86,11 +86,13 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
 - Height 40–48 px (44 on touch); clear space at least 0.1 × height.
 - Next to the pass, and secondary to the pass and the org's identity.
 - iPhone, iPod and Mac can add. Off the phone (Mac included) the QR of the pass's `/p` page
-  leads: the iPhone that scans it adds with the badge there. Where it cannot add (iPad included)
-  one line: `Open on iPhone or Mac to add to Apple Wallet.` In-app browsers: `Open in Safari to
-  add to Apple Wallet.` These are the only added sentences (`src/shared/device.ts`).
+  leads: the iPhone that scans it adds with the badge there. On the pass page a device that cannot
+  add (iPad included) gets the QR alone, no badge. Elsewhere (tiles, Add all, email) it keeps the
+  badge with one line: `Open on iPhone or Mac to add to Apple Wallet.` In-app browsers: `Open in
+  Safari to add to Apple Wallet.` These are the only added sentences (`src/shared/device.ts`).
 - Never show the bare word "Wallet" as a brand in a view that shows the badge.
-- A pass already registered on a device shows `In Wallet` and leaves the Add all bundle.
+- A pass already registered on a device shows `In Wallet` on its tile and leaves the Add all
+  bundle; its page says `In Apple Wallet` once and keeps adding behind `Show QR`.
 - Licence, source and credit line: `public/apple/README.md`.
 
 ### Pass design
