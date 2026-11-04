@@ -4,8 +4,9 @@ import { renderBundleEmail } from '../../email/bundle.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { finishSent } from '../delivery/email-finish.ts';
 import { retryOrGiveUp } from '../delivery/push.ts';
-import { finishOutbox, type OutboxRow, setProviderId } from '../delivery/repo.ts';
+import { finishOutbox, type OutboxRow } from '../delivery/repo.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getOrg, getPass } from '../passes/repo.ts';
@@ -94,17 +95,5 @@ export async function deliverBundleEmail(
     await retryOrGiveUp(ctx, row, lease, 'EMAIL_FAILED', 'failed');
     return;
   }
-  // The provider has the message: a bookkeeping failure must not cause a second send.
-  try {
-    await finishOutbox(db, row.id, lease, 'sent', ctx.clock.now(), null, messageId);
-  } catch (error) {
-    ctx.log.error('email.finish_failed', { outboxId: row.id, code: 'EMAIL_FINISH', error });
-    await setProviderId(db, row.id, lease, messageId).catch((inner: unknown) =>
-      ctx.log.error('email.finish_failed', {
-        outboxId: row.id,
-        code: 'EMAIL_PROVIDER_ID',
-        error: inner,
-      }),
-    );
-  }
+  await finishSent(ctx, row, lease, messageId);
 }

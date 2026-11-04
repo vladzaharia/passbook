@@ -2,10 +2,10 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
+import { packagePassObjects } from '../passes/package-objects.ts';
 import { getPass, type Pass } from '../passes/repo.ts';
 import { isTokenShape, type PublicPageModel, pageModel } from '../public/service.ts';
 import { bundleAssetPath } from './assets.ts';
-import { packagePassObjects } from './package.ts';
 import { type BundleRow, getBundleByToken, listAddablePasses, membersOf } from './repo.ts';
 
 const notFound = () => new NotFoundError('This link is not valid.', 'LINK_NOT_FOUND');

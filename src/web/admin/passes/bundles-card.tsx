@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
-import { ACTION_ICON } from '../../../lib/action-icons.ts';
+import { ACTION_ICON } from '../../lib/action-icons.ts';
 import {
-  Button,
   Card,
   CardBody,
   CardHeader,
@@ -12,11 +11,12 @@ import {
   ErrorState,
   ListRow,
   ListRows,
+  RowActions,
   Skeleton,
   toast,
-} from '../../../ui/index.ts';
-import { useBundleActions, useBundlesOfPass } from '../bundle-api.ts';
-import { absoluteUrl } from '../format.ts';
+} from '../../ui/index.ts';
+import { useBundleActions, useBundlesOfPass } from './bundle-api.ts';
+import { absoluteUrl } from './format.ts';
 
 function BundleRow({ bundle }: { bundle: BundleDto }) {
   const actions = useBundleActions(bundle.id);
@@ -31,22 +31,36 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
         trailing={
           <span className="flex items-center gap-1">
             <CopyButton value={absoluteUrl(bundle.url)} label="Copy link" />
-            <Button
-              size="sm"
-              variant="ghost"
-              iconStart={<ACTION_ICON.rotate aria-hidden />}
-              onClick={() => setAsk('rotate')}
-            >
-              Rotate
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              iconStart={<ACTION_ICON.delete aria-hidden />}
-              onClick={() => setAsk('delete')}
-            >
-              Delete
-            </Button>
+            <RowActions
+              label={`Actions for ${bundle.name}`}
+              actions={[
+                {
+                  label: 'Rotate link',
+                  icon: ACTION_ICON.rotate,
+                  onSelect: () => setAsk('rotate'),
+                },
+                ...(bundle.holderEmail
+                  ? [
+                      {
+                        label: 'Send email',
+                        icon: ACTION_ICON.sendEmail,
+                        loading: actions.sendEmail.isPending,
+                        onSelect: () =>
+                          actions.sendEmail.mutate(undefined, {
+                            onSuccess: () => toast.success('Email queued'),
+                            onError: (error) => toast.error(error, 'Could not send'),
+                          }),
+                      },
+                    ]
+                  : []),
+                {
+                  label: 'Delete',
+                  icon: ACTION_ICON.delete,
+                  destructive: true,
+                  onSelect: () => setAsk('delete'),
+                },
+              ]}
+            />
           </span>
         }
       />

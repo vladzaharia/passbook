@@ -14,6 +14,7 @@ CREATE TABLE bundles (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX bundles_org ON bundles (org_id, mode, id DESC);
+CREATE INDEX bundles_mode ON bundles (mode, id DESC);
 
 CREATE TABLE bundle_passes (
   bundle_id TEXT NOT NULL REFERENCES bundles (id) ON DELETE CASCADE,

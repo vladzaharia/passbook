@@ -8,7 +8,7 @@ import {
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPass } from '../passes/repo.ts';
@@ -113,7 +113,19 @@ export async function createBundle(
     targetId: row.id,
     detail: { passes: input.passIds.length, mode },
   });
-  if (input.sendEmail && holderEmail) await enqueueBundleEmail(ctx, row.id, holderEmail);
+  if (input.sendEmail && holderEmail) {
+    try {
+      await enqueueBundleEmail(ctx, row.id, holderEmail);
+    } catch (error) {
+      // The bundle exists; a capped email is resent on request, not a failed create.
+      if (!(error instanceof AppError) || error.code !== 'EMAIL_RATE_LIMITED') throw error;
+      ctx.log.warn('bundles.email_rate_limited', {
+        code: 'EMAIL_RATE_LIMITED',
+        orgId: input.orgId,
+        bundleId: row.id,
+      });
+    }
+  }
   return getBundleDto(ctx, row.id, input.orgId);
 }
 

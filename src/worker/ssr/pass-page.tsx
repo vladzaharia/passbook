@@ -28,6 +28,7 @@ import walletStates from '../../web/ui/art/wallet-states.css?raw';
 import { GO_TO_MY_PASSES } from './error-page.tsx';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage, REPLAY_SCRIPT } from './hosted.ts';
+import { OrgBar } from './org-bar.tsx';
 import { THEME_CSS } from './theme.ts';
 
 /**
@@ -84,21 +85,7 @@ function PassBody(props: PassPageProps) {
   const icon = view.images.icon;
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
-      <header className="sticky top-0 z-20 border-b border-border bg-surface-page pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-[calc(3.5rem-1px)] w-full max-w-5xl items-center gap-2.5 px-safe">
-          {icon ? (
-            <img
-              src={icon.src}
-              srcSet={icon.srcset}
-              alt=""
-              className="size-7 shrink-0 rounded-md object-contain"
-            />
-          ) : null}
-          <span className="min-w-0 truncate text-base font-semibold text-fg-strong">
-            {props.orgName}
-          </span>
-        </div>
-      </header>
+      <OrgBar orgName={props.orgName} icon={icon} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
           heading={headingOf(props)}

@@ -4,6 +4,7 @@ import { BundleListSchema, BundleSchema } from '../../../shared/contracts/index.
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
+import { EMAIL_RECIPIENT_HOURLY_CAP } from '../delivery/service.ts';
 import { createPassRow } from '../passes/create.ts';
 import { voidPass } from '../passes/service.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
@@ -249,6 +250,59 @@ describe('send-email', () => {
     expect(await code(await create(fake.admin(), { passIds: [a.id], sendEmail: true }))).toBe(
       'NO_RECIPIENT',
     );
+  });
+
+  it('a capped recipient still gets the bundle: 201, one bundle, no new email row', async () => {
+    const a = await makePass();
+    const body = { passIds: [a.id], name: 'Capped', holderEmail: 'capped@example.com' };
+    for (let i = 0; i < EMAIL_RECIPIENT_HOURLY_CAP; i++)
+      expect((await create(fake.admin(), { ...body, sendEmail: true })).status).toBe(201);
+    const before = await all(
+      kit.env.DB,
+      "SELECT id FROM outbox WHERE kind = 'email' AND pass_id = ?",
+      [a.id],
+    );
+    const res = await create(fake.admin(), { ...body, name: 'Over cap', sendEmail: true });
+    expect(res.status).toBe(201);
+    const rows = await all(kit.env.DB, "SELECT id FROM bundles WHERE name = 'Over cap'");
+    expect(rows).toHaveLength(1);
+    expect(
+      await all(kit.env.DB, "SELECT id FROM outbox WHERE kind = 'email' AND pass_id = ?", [a.id]),
+    ).toHaveLength(before.length);
+  });
+
+  it("another org's key cannot send the bundle email", async () => {
+    const a = await makePass();
+    const bundle = await bundleOf(
+      await create(fake.admin(), { passIds: [a.id], holderEmail: 'own@example.com' }),
+    );
+    const res = await post(`/bundles/${bundle.id}/send-email`, fake.apiKey({ orgId: other.id }));
+    expect(res.status).toBe(404);
+  });
+
+  it('the email still sends when the first pass was deleted; a removed pass reads voided', async () => {
+    const a = await makePass();
+    const b = await makePass();
+    const bundle = await bundleOf(
+      await create(fake.admin(), {
+        passIds: [a.id, b.id],
+        holderEmail: 'first-gone@example.com',
+        sendEmail: true,
+      }),
+    );
+    const row = await first<{ id: string }>(
+      kit.env.DB,
+      "SELECT id FROM outbox WHERE kind = 'email' AND pass_id = ?",
+      [a.id],
+    );
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [Date.now(), a.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [Date.now(), b.id]);
+    const got = await bundleOf(await api(`/bundles/${bundle.id}`, { headers: fake.admin() }));
+    expect(got.passes).toEqual([expect.objectContaining({ id: b.id, status: 'voided' })]);
+    const before = kit.mailer.sent.length;
+    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, kit.ctx);
+    expect(kit.mailer.sent).toHaveLength(before + 1);
+    expect(kit.mailer.sent.at(-1)?.to).toBe('first-gone@example.com');
   });
 
   it('a test-mode bundle never sends: cancelled TEST_MODE, email.captured', async () => {

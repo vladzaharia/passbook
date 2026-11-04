@@ -25,8 +25,8 @@ import {
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
+import { BundlesCard } from '../bundles-card.tsx';
 import { newKey } from '../format.ts';
-import { BundlesCard } from './bundles-card.tsx';
 import { DevicesCard } from './devices-card.tsx';
 
 type Entry = z.infer<typeof DeliveryEntrySchema>;
