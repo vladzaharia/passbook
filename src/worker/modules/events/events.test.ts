@@ -75,7 +75,7 @@ describe('recordPassEvent', () => {
   });
 
   it('never throws: a failed write is logged with a stable code', async () => {
-    const warn = vi.spyOn(kit.ctx.log, 'warn');
+    const warn = vi.spyOn(kit.ctx.log, 'error');
     await expect(
       recordPassEvent(kit.ctx, { ...base('no-such-pass'), kind: 'page.opened' }),
     ).resolves.toBeUndefined();
@@ -128,6 +128,9 @@ describe('GET /passes/{id}/events', () => {
     );
     expect(only.items.map((e) => e.kind)).toEqual(['pass.issued']);
     expect((await events(pass.id, fake.admin(), '?kind=bogus')).status).toBe(422);
+    const bad = await events(pass.id, fake.admin(), '?cursor=garbage');
+    expect(bad.status).toBe(422);
+    expect(await bad.json()).toMatchObject({ code: 'INVALID_CURSOR' });
   });
 
   it('needs passes:read and stays inside the key org', async () => {

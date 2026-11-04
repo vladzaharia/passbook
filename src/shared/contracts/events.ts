@@ -46,10 +46,12 @@ export const EventActorTypeSchema = z.enum([
   'user',
   'api_key',
   'system',
+  'connection',
   'device',
   'holder',
   'scanner',
 ]);
+export type EventActorType = z.infer<typeof EventActorTypeSchema>;
 
 export const PassEventSchema = z.object({
   id: IdSchema,
@@ -58,7 +60,7 @@ export const PassEventSchema = z.object({
   kind: EventKindSchema,
   /** First 12 hex characters of SHA-256(device id). */
   device: z.string().nullable(),
-  actorType: z.string().nullable(),
+  actorType: EventActorTypeSchema.nullable(),
   actorId: z.string().nullable(),
   /** Never holds emails, tokens, push tokens or personalization values. */
   data: z.record(z.string(), JsonSchema),

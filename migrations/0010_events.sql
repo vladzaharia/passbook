@@ -14,7 +14,7 @@ CREATE TABLE pass_events (
   data TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(data)),
   at INTEGER NOT NULL
 );
-CREATE INDEX pass_events_pass ON pass_events (pass_id, at DESC);
+CREATE INDEX pass_events_pass ON pass_events (pass_id, at DESC, id DESC);
 CREATE INDEX pass_events_org_kind ON pass_events (org_id, kind, at DESC);
 CREATE INDEX pass_events_at ON pass_events (at);
 

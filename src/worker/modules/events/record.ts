@@ -1,5 +1,9 @@
 import type { Json, Mode } from '../../../shared/contracts/common.ts';
-import { type EventKind, EventKindSchema } from '../../../shared/contracts/events.ts';
+import {
+  type EventActorType,
+  type EventKind,
+  EventKindSchema,
+} from '../../../shared/contracts/events.ts';
 import { batch, chunk } from '../../platform/db.ts';
 import { randomBytes, sha256Hex, uuidv7 } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -12,7 +16,7 @@ export interface PassEventInput {
   kind: EventKind;
   /** The raw Wallet device library identifier. It is hashed here and never stored. */
   device?: string | null;
-  actor?: { type: string; id: string | null } | null;
+  actor?: { type: EventActorType; id: string | null } | null;
   data?: Record<string, Json>;
   /** Defaults to now. */
   at?: number;
@@ -55,12 +59,17 @@ export function sanitizeEventData(data: Record<string, Json> | undefined): Recor
 }
 
 let sequence = 0;
+let sequenceAt = -1;
 
 /**
  * UUIDv7 whose 12-bit rand_a is a counter, so events recorded in the same millisecond sort in the
  * order they were recorded (a plain UUIDv7 would order them randomly).
  */
 function eventId(at: number): string {
+  if (at !== sequenceAt) {
+    sequenceAt = at;
+    sequence = 0;
+  }
   sequence = (sequence + 1) & 0x0fff;
   const random = randomBytes(10);
   random[0] = sequence >> 8;
@@ -102,7 +111,7 @@ export async function recordPassEvents(
         part.map((row) => insertEventStmt(ctx.env.DB, row)),
       );
   } catch (error) {
-    ctx.log.warn('events.record_failed', {
+    ctx.log.error('events.record_failed', {
       code: 'EVENT_RECORD_FAILED',
       count: inputs.length,
       kind: inputs[0]?.kind,
