@@ -92,6 +92,22 @@ export async function deleteCapturedBefore(
   return changes;
 }
 
+/** Test broadcasts past the cutoff that will not run again; scheduled and sending ones stay. */
+export async function deleteTestBroadcastsBefore(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<number> {
+  const { changes } = await run(
+    db,
+    `DELETE FROM broadcasts WHERE id IN (
+       SELECT id FROM broadcasts WHERE mode = 'test' AND created_at < ?
+         AND state NOT IN ('scheduled', 'sending') ORDER BY created_at LIMIT ?)`,
+    [before, limit],
+  );
+  return changes;
+}
+
 /** The oldest test bundles past the cutoff. */
 export function expiredTestBundles(
   db: D1Database,

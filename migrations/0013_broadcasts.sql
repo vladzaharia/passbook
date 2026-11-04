@@ -28,6 +28,8 @@ CREATE TABLE broadcasts (
 CREATE INDEX broadcasts_org ON broadcasts (org_id, mode, id DESC);
 CREATE INDEX broadcasts_due ON broadcasts (at) WHERE state = 'scheduled';
 CREATE UNIQUE INDEX broadcasts_parent ON broadcasts (parent_id) WHERE parent_id IS NOT NULL;
+-- The sandbox purge walks test broadcasts by age.
+CREATE INDEX broadcasts_test_age ON broadcasts (created_at) WHERE mode = 'test';
 
 -- One row per pass a run handled: a retried chunk skips them, and the counts come from here.
 CREATE TABLE broadcast_items (

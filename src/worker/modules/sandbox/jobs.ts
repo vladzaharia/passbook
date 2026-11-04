@@ -4,6 +4,7 @@ import { getPlatformSettings } from '../settings/service.ts';
 import {
   deleteBundlesByIds,
   deleteCapturedBefore,
+  deleteTestBroadcastsBefore,
   expiredTestBundles,
   expiredTestPasses,
 } from './repo.ts';
@@ -17,6 +18,9 @@ const PASS_BATCH = 25;
 const MAX_PASS_ROUNDS = 3;
 const ROW_BATCH = 500;
 const MAX_ROW_ROUNDS = 10;
+/** A broadcast takes its per-pass rows with it, so fewer per round. */
+const BROADCAST_BATCH = 100;
+const MAX_BROADCAST_ROUNDS = 5;
 
 /**
  * Hard-deletes expired test passes through the same row and object removal as pass retention.
@@ -60,15 +64,26 @@ async function purgeCaptured(ctx: ServiceContext, before: number): Promise<numbe
   return total;
 }
 
+async function purgeTestBroadcasts(ctx: ServiceContext, before: number): Promise<number> {
+  let total = 0;
+  for (let round = 0; round < MAX_BROADCAST_ROUNDS; round++) {
+    const n = await deleteTestBroadcastsBefore(ctx.env.DB, before, BROADCAST_BATCH);
+    total += n;
+    if (n < BROADCAST_BATCH) break;
+  }
+  return total;
+}
+
 /**
- * Deletes test passes, test bundles and captured emails older than `sandbox.purgeDays`. Bounded:
- * what a run leaves over is taken the next day.
+ * Deletes test passes, test bundles, finished test broadcasts and captured emails older than
+ * `sandbox.purgeDays`. Bounded: what a run leaves over is taken the next day.
  */
 export async function dailySandbox(ctx: ServiceContext): Promise<void> {
   const { 'sandbox.purgeDays': days } = await getPlatformSettings(ctx);
   const before = ctx.clock.now() - days * DAY_MS;
   const passes = await purgeTestPasses(ctx, before);
   const bundles = await purgeTestBundles(ctx, before);
+  const broadcasts = await purgeTestBroadcasts(ctx, before);
   const emails = await purgeCaptured(ctx, before);
-  ctx.log.info('sandbox.purge', { passes, bundles, emails, days });
+  ctx.log.info('sandbox.purge', { passes, bundles, broadcasts, emails, days });
 }
