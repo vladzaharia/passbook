@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
@@ -36,6 +38,32 @@ function radixNoInlineStyles(): Plugin {
         return code.replace(/__html: `\[data-radix-select-viewport\][^`]*`/, '__html: ""');
       }
       return null;
+    },
+  };
+}
+
+/**
+ * Dev only. Email asset URLs write `@` as `%40` (src/worker/email/buddy.ts: Cloudflare's static
+ * assets serve that form), but vite dev serves the SPA for it. Decode it for files in public/.
+ */
+function devPublicAtSign(): Plugin {
+  return {
+    name: 'dev-public-at-sign',
+    apply: 'serve',
+    configureServer(server) {
+      const publicDir = server.config.publicDir;
+      server.middlewares.use((req, _res, next) => {
+        const url = req.url ?? '';
+        const query = url.indexOf('?');
+        const path = query === -1 ? url : url.slice(0, query);
+        if (path.includes('%40')) {
+          const decoded = path.replaceAll('%40', '@');
+          const file = join(publicDir, decoded);
+          if (publicDir && file.startsWith(`${publicDir}/`) && existsSync(file))
+            req.url = decoded + (query === -1 ? '' : url.slice(query));
+        }
+        next();
+      });
     },
   };
 }
@@ -106,6 +134,7 @@ export default defineConfig({
   },
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   plugins: [
+    devPublicAtSign(),
     sonnerNoInlineCss(),
     radixNoInlineStyles(),
     // File-based routes under src/web/routes; generates src/web/routeTree.gen.ts.
