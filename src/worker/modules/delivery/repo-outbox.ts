@@ -295,6 +295,8 @@ export interface OrgBranding {
   accent?: string;
   supportEmail?: string;
   supportUrl?: string;
+  /** The pass logo shows the org's name. */
+  logoHasName?: boolean;
 }
 
 /** orgs.branding as written by the org form. Invalid JSON reads as empty. */
