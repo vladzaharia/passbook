@@ -11,7 +11,6 @@ import {
   PreviewResponseSchema,
   TemplateDetailSchema,
   TemplateListSchema,
-  TemplateReissueResponseSchema,
   UploadListSchema,
   UploadTemplateResponseSchema,
 } from '@/shared/contracts/templates.ts';
@@ -125,7 +124,7 @@ export function useTemplateActions(id: string) {
     ]);
   return {
     activate: useMutation({
-      mutationFn: (input: { version: string; rebuildPasses: boolean }) =>
+      mutationFn: (input: { version: string }) =>
         api.post(`/api/v1/templates/${id}/activate`, TemplateDetailSchema, input),
       onSuccess: done,
     }),
@@ -155,13 +154,6 @@ export function useTemplateActions(id: string) {
           TemplateDetailSchema,
         ),
       onSuccess: done,
-    }),
-    reissue: useMutation({
-      mutationFn: () => api.post(`/api/v1/templates/${id}/reissue`, TemplateReissueResponseSchema),
-      onSuccess: async () => {
-        await done();
-        await qc.invalidateQueries({ queryKey: ['admin', 'passes'] });
-      },
     }),
   };
 }

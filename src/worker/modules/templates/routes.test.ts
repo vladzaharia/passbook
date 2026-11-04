@@ -22,7 +22,7 @@ const auth = fakeAuth(ORIGIN);
 const workflows: { id: string; params: unknown }[] = [];
 const imports: { id: string; params: unknown }[] = [];
 let failImportStart = false;
-let failBulkStart = false;
+const failBulkStart = false;
 
 let env: AppEnv;
 let clock: ManualClock;
@@ -591,41 +591,6 @@ describe('activate', () => {
       [t.id],
     );
     expect(JSON.parse(audit?.detail ?? '{}')).toMatchObject({ version: v2, previous: t.version });
-  });
-
-  it('starts a BULK_REISSUE run when asked to rebuild', async () => {
-    const res = await post(`/${t.id}/activate`, { version: t.version, rebuildPasses: true });
-    expect(res.status).toBe(200);
-    const call1 = workflows.find((w) => (w.params as { templateId: string }).templateId === t.id);
-    expect(call1?.params).toEqual({
-      templateId: t.id,
-      version: t.version,
-      orgId: org.id,
-      cause: 'template_upgrade',
-    });
-    const run = await first<{ kind: string; target_id: string; status: string }>(
-      env.DB,
-      'SELECT kind, target_id, status FROM workflow_runs WHERE instance_id = ?',
-      [call1?.id ?? ''],
-    );
-    expect(run).toEqual({ kind: 'bulk_reissue', target_id: t.id, status: 'queued' });
-  });
-
-  it('marks the run errored and answers 503 when the rebuild cannot start', async () => {
-    failBulkStart = true;
-    try {
-      const res = await post(`/${t.id}/activate`, { version: t.version, rebuildPasses: true });
-      expect(res.status).toBe(503);
-      expect(await res.json()).toMatchObject({ code: 'WORKFLOW_START' });
-    } finally {
-      failBulkStart = false;
-    }
-    const run = await first<{ status: string; error_code: string }>(
-      env.DB,
-      "SELECT status, error_code FROM workflow_runs WHERE kind = 'bulk_reissue' AND target_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1",
-      [t.id],
-    );
-    expect(run).toEqual({ status: 'errored', error_code: 'WORKFLOW_START' });
   });
 
   it('rejects unknown versions, baked templates and archived templates', async () => {

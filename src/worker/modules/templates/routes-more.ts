@@ -3,13 +3,12 @@ import {
   PreviewBatchQuerySchema,
   PreviewBatchSchema,
   TemplateDetailSchema,
-  TemplateReissueResponseSchema,
   UploadListQuerySchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { reissueTemplate, setArchived, templatePackage } from './lifecycle.ts';
+import { setArchived, templatePackage } from './lifecycle.ts';
 import { previewMany, recentUploads } from './service.ts';
 
 type Router = ReturnType<typeof createRouter>;
@@ -46,7 +45,7 @@ export function registerPreviewBatch(router: Router): void {
   );
 }
 
-/** Archive, restore, reissue and the package download. */
+/** Archive, restore and the package download. */
 export function registerLifecycle(router: Router): void {
   for (const [path, summary, archived] of [
     ['/{id}/archive', 'Archive an uploaded template', true],
@@ -60,21 +59,6 @@ export function registerLifecycle(router: Router): void {
         c.json(await setArchived(serviceContext(c), c.var.auth, c.req.valid('param').id, archived)),
     );
   }
-
-  register(
-    router,
-    'templates',
-    {
-      method: 'post',
-      path: '/{id}/reissue',
-      summary: 'Move passes on older versions to the active version',
-      params: IdParamSchema,
-      status: 202,
-      response: TemplateReissueResponseSchema,
-    },
-    async (c) =>
-      c.json(await reissueTemplate(serviceContext(c), c.var.auth, c.req.valid('param').id), 202),
-  );
 
   register(
     router,

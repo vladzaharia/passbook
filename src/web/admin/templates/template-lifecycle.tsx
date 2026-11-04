@@ -119,47 +119,37 @@ export function TemplateCreatedCallout({
   onDismiss: () => void;
 }) {
   const older = t.passesOnOlderVersions;
-  const title =
+  const what =
     how === 'duplicated'
       ? 'Template duplicated'
       : how === 'version'
         ? `${versionLabel ?? 'Version'} imported`
         : 'Template imported';
+  const title =
+    how === 'version' && older > 0
+      ? `${what}. ${older} ${older === 1 ? 'pass updates' : 'passes update'} shortly.`
+      : what;
   return (
     <CreatedCallout
       title={title}
       onDismiss={onDismiss}
       actions={
-        <>
-          {older > 0 ? (
-            <Button size="sm" asChild iconStart={<ACTION_ICON.refresh aria-hidden />}>
-              <Link to="." search={{ tab: 'versions' }}>
-                Update {older} {older === 1 ? 'pass' : 'passes'}
-              </Link>
-            </Button>
-          ) : null}
-          {how === 'duplicated' ? (
-            <Button
-              size="sm"
-              variant="outline"
-              asChild
-              iconStart={<ACTION_ICON.upload aria-hidden />}
-            >
-              <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
-                Upload version
-              </Link>
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="ghost"
-              asChild
-              iconStart={<ACTION_ICON.upload aria-hidden />}
-            >
-              <Link to="/admin/templates/upload">Upload another</Link>
-            </Button>
-          )}
-        </>
+        how === 'duplicated' ? (
+          <Button
+            size="sm"
+            variant="outline"
+            asChild
+            iconStart={<ACTION_ICON.upload aria-hidden />}
+          >
+            <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
+              Upload version
+            </Link>
+          </Button>
+        ) : (
+          <Button size="sm" variant="ghost" asChild iconStart={<ACTION_ICON.upload aria-hidden />}>
+            <Link to="/admin/templates/upload">Upload another</Link>
+          </Button>
+        )
       }
     />
   );

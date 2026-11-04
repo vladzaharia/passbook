@@ -79,7 +79,12 @@ export function TemplateOverview({ template: t }: { template: Template }) {
                 ),
               },
               ...(t.passesOnOlderVersions > 0
-                ? [{ label: 'Older versions', value: passes(t.passesOnOlderVersions) }]
+                ? [
+                    {
+                      label: t.passesBlocked > 0 ? 'Not updated' : 'Updating',
+                      value: passes(t.passesOnOlderVersions),
+                    },
+                  ]
                 : []),
               { label: 'Styles', value: styleList(t.styles) },
               { label: 'Slug', value: t.slug, mono: true },
@@ -92,6 +97,13 @@ export function TemplateOverview({ template: t }: { template: Template }) {
           tone="warning"
           title={`${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'} · affects ${passes(t.passCount)}`}
           items={warnings.map((w) => w.message)}
+        />
+      ) : null}
+      {t.passesBlocked > 0 ? (
+        <Callout
+          tone="warning"
+          title={`${passes(t.passesBlocked)} could not update`}
+          items={['Their fields no longer fit the active version. Fix the template or the passes.']}
         />
       ) : null}
       <OrgDialog key={String(changing)} template={t} open={changing} onOpenChange={setChanging} />

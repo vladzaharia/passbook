@@ -1,8 +1,8 @@
 import { FIELD_GROUPS } from '../../../passkit/schema/constants.ts';
 import { PASS_STYLES, type PassJson } from '../../../passkit/types.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { platformSupportEmail } from '../../platform/support.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { platformSupportEmail } from '../../platform/support.ts';
 import { getOrgSettings } from '../settings/service.ts';
 
 export interface BackContacts {

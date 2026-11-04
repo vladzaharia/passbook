@@ -1,12 +1,10 @@
 import { zipSync } from 'fflate';
 import type { AuthContext } from '../../platform/auth.ts';
-import { actorOf } from '../../platform/context.ts';
-import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { startBulkReissue } from '../passes/bulk.ts';
 import { audit } from './mutations.ts';
 import { clearTemplateCache, createTemplateRegistry } from './registry.ts';
-import { countPassesByVersion, setStatus } from './repo.ts';
+import { setStatus } from './repo.ts';
 import { detail, loadTemplate } from './service.ts';
 
 /** Archived templates keep serving their passes; new passes cannot use them. */
@@ -26,35 +24,6 @@ export async function setArchived(
     await audit(ctx, auth, row, archived ? 'template.archive' : 'template.restore');
   }
   return detail(ctx, auth, id);
-}
-
-/** Moves every pass on an older version to the active one (bulk_reissue workflow). */
-export async function reissueTemplate(
-  ctx: ServiceContext,
-  auth: AuthContext | undefined,
-  id: string,
-): Promise<{ workflowInstanceId: string; passes: number }> {
-  const row = await loadTemplate(ctx, auth, id);
-  if (row.status !== 'active' || !row.activeVersion)
-    throw new ConflictError('Restore the template first.', 'TEMPLATE_ARCHIVED');
-  let passes = 0;
-  for (const [version, n] of await countPassesByVersion(ctx.env.DB, id))
-    if (version !== row.activeVersion) passes += n;
-  if (passes === 0)
-    throw new ConflictError('Every pass is on the active version.', 'NOTHING_TO_REISSUE');
-  const actor = actorOf(auth);
-  const workflowInstanceId = await startBulkReissue(
-    ctx,
-    { type: actor.type === 'device' ? 'system' : actor.type, id: actor.id },
-    {
-      templateId: id,
-      version: row.activeVersion,
-      ...(row.orgId ? { orgId: row.orgId } : {}),
-      cause: 'template_upgrade',
-    },
-  );
-  await audit(ctx, auth, row, 'template.reissue', { version: row.activeVersion, passes });
-  return { workflowInstanceId, passes };
 }
 
 /** The active version as an uploadable package: pass.json, wallet.template.json and the images. */

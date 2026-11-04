@@ -182,7 +182,7 @@ describe('template detail', () => {
     expect(screen.getByRole('button', { name: 'Activate ffeeddccbbaa' })).toBeDisabled();
   });
 
-  it('activates a version with the rebuild option', async () => {
+  it('activates a version; its passes update on their own', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];
     const detail = templateDetail();
@@ -206,11 +206,8 @@ describe('template detail', () => {
     await user.click(await screen.findByRole('tab', { name: 'Versions' }));
     await user.click(await screen.findByRole('button', { name: 'Activate ffeeddccbbaa' }));
     const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('checkbox', { name: /Rebuild all passes/ }));
     await user.click(within(dialog).getByRole('button', { name: 'Activate' }));
-    await waitFor(() =>
-      expect(bodies).toEqual([{ version: 'ffeeddccbbaa9988', rebuildPasses: true }]),
-    );
+    await waitFor(() => expect(bodies).toEqual([{ version: 'ffeeddccbbaa9988' }]));
   });
 
   it('offers New pass and Duplicate on built-in templates, and no delete', async () => {

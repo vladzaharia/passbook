@@ -1,4 +1,3 @@
-import { platformSupportEmail } from '../../platform/support.ts';
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
@@ -7,6 +6,7 @@ import { passSummary } from '../../email/pass-summary.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { platformSupportEmail } from '../../platform/support.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';

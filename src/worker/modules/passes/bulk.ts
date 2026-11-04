@@ -43,7 +43,7 @@ export async function reissuePage(
     limit: REISSUE_PAGE,
     skipVersion: params.cause === 'template_upgrade' ? params.version : null,
     // Branding restyles live passes; a voided pass stays as it is.
-    activeOnly: params.cause === 'branding',
+    activeOnly: params.cause !== 'resign',
   });
   const result: ReissuePageResult = { nextCursor: null, changed: 0, unchanged: 0, failed: 0 };
   for (const row of rows) {

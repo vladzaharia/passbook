@@ -5,9 +5,9 @@ import { runBulkReissue } from '../../workflows/bulk-reissue.ts';
 import { deleteBrandingImage, putBrandingImage } from '../orgs/branding.ts';
 import { updateOrg } from '../orgs/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { BRANDING_QUIET_MS, reissueStaleBranding } from './branding-reissue.ts';
 import { publishPass } from './publish.ts';
 import { getPass } from './repo.ts';
+import { BRANDING_QUIET_MS, reissueStaleBranding } from './stale-reissue.ts';
 import { type Kit, setupKit } from './test-kit.ts';
 
 let kit: Kit;
