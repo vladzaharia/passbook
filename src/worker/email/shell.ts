@@ -52,13 +52,23 @@ export const titleHtml = (text: string, margin: string) =>
 /**
  * A full-width 44 px link block (12 px padding, 20 px line): the kit Button's 14/500 type and
  * radius. `primary` fills it with the accent; else it is the outline variant, in neutral text.
+ * Includes the 24 px below it: a table cannot sit in a <p>, so Word gets a spacer row instead.
  */
 export function buttonHtml(href: string, label: string, primary: boolean) {
   const c = EMAIL_LIGHT;
-  const look = primary
-    ? `background:${c.accent};color:${c.accentOn};border:1px solid ${c.accent}`
-    : `background:transparent;color:${c.text};border:1px solid ${c.lineStrong}`;
-  return `<a class="${primary ? 'e-btn' : 'e-block'}" href="${escapeHtml(href)}" style="display:block;${look};text-align:center;text-decoration:none;${type('sm')};font-weight:${T.weight.medium};padding:11px 24px;border-radius:${T.radius.md}px">${escapeHtml(label)}</a>`;
+  const fill = primary ? c.accent : null;
+  const ink = primary ? c.accentOn : c.text;
+  const edge = primary ? c.accent : c.lineStrong;
+  const cls = primary ? 'e-btn' : 'e-block';
+  const link = escapeHtml(href);
+  const text = escapeHtml(label);
+  const look = `${fill ? `background:${fill}` : 'background:transparent'};color:${ink};border:1px solid ${edge}`;
+  const anchor = `<a class="${cls}" href="${link}" style="display:block;${look};text-align:center;text-decoration:none;${type('sm')};font-weight:${T.weight.medium};padding:11px 24px;border-radius:${T.radius.md}px">${text}</a>`;
+  // Word drops padding on an <a>: there the cell draws the fill, border and 44 px height, and the
+  // link fills the cell (line-height = inner height).
+  const inner = 42;
+  const cell = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:separate"><tr><td class="${cls}" align="center" height="${inner}"${fill ? ` bgcolor="${fill}"` : ''} style="height:${inner}px;padding:0;${look}"><a class="${cls}" href="${link}" style="display:block;color:${ink};font-family:${FONT};font-size:${T.text.sm.size}px;line-height:${inner}px;mso-line-height-rule:exactly;font-weight:${T.weight.medium};text-align:center;text-decoration:none">${text}</a></td></tr><tr><td height="24" style="height:24px;font-size:0;line-height:0">&nbsp;</td></tr></table>`;
+  return `<!--[if !mso]><!--><p style="margin:0 0 24px">${anchor}</p><!--<![endif]--><!--[if mso]>${cell}<![endif]-->`;
 }
 
 /**

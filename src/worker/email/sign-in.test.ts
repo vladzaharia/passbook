@@ -226,4 +226,31 @@ describe('emailAssetUrl', () => {
       'https://w.test/apple/badge/en/black%402x.png',
     );
   });
+
+  it('keeps the button in Word-rendered Outlook, which drops padding on a link', () => {
+    for (const mail of [signIn(), signIn({ prefer: 'code' }), verify()]) {
+      const { html } = mail;
+      const opened = html.match(/<!--\[if (!?)mso\]>/g) ?? [];
+      expect(html.match(/<!\[endif\]-->/g)).toHaveLength(opened.length);
+      // What Word sees: mso blocks shown, !mso blocks hidden.
+      const word = html
+        .replace(/<!--\[if !mso\]><!-->[\s\S]*?<!--<!\[endif\]-->/g, '')
+        .replace(/<!--\[if mso\]>([\s\S]*?)<!\[endif\]-->/g, '$1');
+      const href = 'href="https://wallet.test/auth/magic?t=abc"';
+      expect(word).toMatch(
+        /<td class="e-(btn|block)" align="center" height="42"[^>]*><a [^>]*href=/,
+      );
+      expect(word).not.toMatch(/<a [^>]*padding:/);
+      expect(word).toContain(href);
+      // Others keep the padded link, once.
+      expect(
+        html.match(
+          /<!--\[if !mso\]><!--><p style="margin:0 0 24px"><a class="e-(btn|block)"[^>]*padding:11px 24px/g,
+        ),
+      ).toHaveLength(1);
+    }
+    const { html } = signIn();
+    const word = html.replace(/<!--\[if mso\]>([\s\S]*?)<!\[endif\]-->/g, '$1');
+    expect(word).toContain(`bgcolor="${EMAIL_LIGHT.accent}"`);
+  });
 });
