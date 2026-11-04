@@ -34,7 +34,7 @@ export async function removePass(
   const message = input.message?.trim().slice(0, MESSAGE_MAX) || null;
   const db = ctx.env.DB;
   await setRemoval(db, pass.id, { at: ctx.clock.now(), message, priorStatus: pass.status });
-  let published;
+  let published: Awaited<ReturnType<typeof publishPass>>;
   try {
     published = await publishPass(ctx, {
       passId,
@@ -80,7 +80,7 @@ export async function restorePass(
   const removal = await getRemoval(db, pass.id);
   if (!removal) return toSummary(pass);
   await setRemoval(db, pass.id, null);
-  let published;
+  let published: Awaited<ReturnType<typeof publishPass>>;
   try {
     published = await publishPass(ctx, {
       passId,
