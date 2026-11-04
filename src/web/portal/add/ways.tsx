@@ -1,5 +1,5 @@
 import { Laptop, Smartphone } from 'lucide-react';
-import { ADD_COPY } from '../../../shared/copy/add.ts';
+import { HOLDER_COPY } from '../../../shared/copy/holder.ts';
 import { type AddAreaProps, macBeside } from './area.ts';
 
 /**
@@ -12,15 +12,15 @@ export function AddWays(p: AddAreaProps) {
       <div className="wl-way">
         <p className="wl-way-label">
           <Smartphone aria-hidden />
-          {ADD_COPY.iphone}
+          {HOLDER_COPY.iphone}
         </p>
-        <p className="text-sm text-fg-muted">{ADD_COPY.scanLine}</p>
+        <p className="text-sm text-fg-muted">{HOLDER_COPY.scanLine}</p>
       </div>
       {macBeside(p) ? (
         <div className="wl-way wl-mac-only">
           <p className="wl-way-label">
             <Laptop aria-hidden />
-            {ADD_COPY.mac}
+            {HOLDER_COPY.mac}
           </p>
           {p.badge}
         </div>

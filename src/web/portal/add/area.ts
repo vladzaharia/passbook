@@ -1,20 +1,35 @@
 import type { ReactNode } from 'react';
-import type { AddMode } from '../../../shared/add-direction.ts';
-import type { DeviceInfo } from '../../../shared/device.ts';
-import type { PassView } from '../../../shared/pass-view/index.ts';
+import { type DeviceInfo, showsAddQr } from '../../../shared/device.ts';
 
-/** What each exploration's add block gets from the view (direction-view.tsx). */
+/**
+ * What the add block does. scan: the QR leads (not the phone). phone: the badge leads (the
+ * iPhone; a page with no public URL). added: on a device already, so a quiet line, adding again on
+ * request. off: voided or expired, nothing to add.
+ */
+export type AddMode = 'scan' | 'phone' | 'added' | 'off';
+
+export function addMode(
+  state: 'active' | 'voided' | 'expired',
+  device: DeviceInfo,
+  inWallet: boolean,
+  publicUrl: string | null,
+): AddMode {
+  if (state !== 'active') return 'off';
+  if (inWallet) return 'added';
+  return publicUrl !== null && showsAddQr(device.device) ? 'scan' : 'phone';
+}
+
+/** What the add block gets from the view (holder-pass-view.tsx). */
 export interface AddAreaProps {
   mode: Exclude<AddMode, 'off'>;
   device: DeviceInfo;
-  /** The /p URL the QR encodes; set wherever the mode can show the QR. */
+  /** The /p URL the QR encodes; null where there is none. */
   publicUrl: string | null;
   qrLabel: string;
   /** Apple's badge, built once with the page's theme and the card's dip. */
   badge: ReactNode;
   /** Apple's line where this browser cannot add (shared/device.ts addLine). */
   line: string | null;
-  view: PassView;
 }
 
 /**

@@ -6,7 +6,15 @@ import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import { passFixture } from './fixtures.ts';
 import { publicUrlOf } from './wallet-actions.tsx';
 
-afterEach(() => vi.unstubAllGlobals());
+const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/18.0 Safari/605.1.15';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+/** A Mac: the badge sits beside the QR (elsewhere off Apple's devices the scan is the way). */
+const onMac = () => vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(MAC);
 
 describe('publicUrlOf', () => {
   it('strips the pkpass suffix', () => {
@@ -21,13 +29,16 @@ describe('publicUrlOf', () => {
 
 describe('pass detail', () => {
   it('shows the card, the badge, a details card without buttons, and flips', async () => {
+    onMac();
     const user = userEvent.setup();
     const { container } = await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
     });
+    // What the pass is, under its org; the holder's name stays a field.
     expect(
-      await screen.findByRole('heading', { name: 'Gym membership', level: 1 }),
+      await screen.findByRole('heading', { name: 'Membership', level: 1 }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Henrys', { selector: 'header p' })).toBeInTheDocument();
     expect(screen.getByText(/^Updated /)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
     expect(screen.queryByText(/\.pkpass/)).toBeNull();
@@ -66,15 +77,19 @@ describe('pass detail', () => {
     expect(open).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('keeps the badge on a pass already in Wallet, with no custom add item', async () => {
+  it('says In Apple Wallet once on a device, the badge behind Show QR', async () => {
+    onMac();
     const user = userEvent.setup();
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ inWallet: true })) },
     });
-    expect(await screen.findByText('In Wallet')).toBeInTheDocument();
+    const add = await screen.findByRole('region', { name: 'In Apple Wallet' });
+    expect(screen.getAllByText('In Apple Wallet')).toHaveLength(1);
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    // Happy, not nudging.
+    expect(add.querySelector('[data-buddy]')?.getAttribute('data-scene')).toBe('count');
+    await user.click(within(add).getByRole('button', { name: 'Show QR' }));
     expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
-    // On a device already: no buddy nudging, no slot kept for it.
-    expect(document.querySelector('[data-scene="nudge"], .wl-nudge')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'More' }));
     expect(within(await screen.findByRole('menu')).queryByText(/Add again/)).toBeNull();
   });
@@ -83,7 +98,7 @@ describe('pass detail', () => {
     const { container } = await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
     });
-    await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
     expect(container.querySelector('.pc-stage[data-enter]')).not.toBeNull();
   });
 
@@ -93,7 +108,7 @@ describe('pass detail', () => {
         '/api/v1/me/passes/p1': () => json(passFixture({ refreshRequestedAt: Date.now() - 1000 })),
       },
     });
-    await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
     expect(container.querySelector('.pc-sync-rail')).not.toBeNull();
   });
 
@@ -114,7 +129,9 @@ describe('pass detail', () => {
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Refresh/ })).toBeNull();
     expect(screen.getAllByText('Voided').length).toBeGreaterThan(0);
+    // The buddy sits on the note, sad.
     expect(document.querySelector('[data-scene="nudge"]')).toBeNull();
+    expect(document.querySelector('[data-buddy]')?.getAttribute('data-scene')).toBe('tear');
   });
 
   it('shows not found under the page header, the buddy mending the torn pass', async () => {
@@ -135,12 +152,14 @@ describe('pass detail', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Pass' })).toBeInTheDocument();
   });
 
-  it('names the tab after the pass', async () => {
+  it('names the tab and the breadcrumb after what the pass is', async () => {
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
     });
-    await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
-    await waitFor(() => expect(document.title).toBe('Gym membership · PassBook'));
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    await waitFor(() => expect(document.title).toBe('Henrys membership · PassBook'));
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(crumbs).getByText('Henrys membership')).toHaveAttribute('aria-current', 'page');
   });
 
   it('removes from More and returns to the list', async () => {

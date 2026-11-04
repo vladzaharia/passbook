@@ -1,137 +1,58 @@
-/* The pass page's explorations (direction.ts): one grid for the header, the pass, the add block,
-   the details and the help. Phone: one column in that order. From 1024 the pass holds the left
-   column (sticky under the bar) and the rest stacks at its right, top edges level; a and c keep
-   the header across both columns, b seats it beside the pass. Transform and opacity only. */
-.wl-dir {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "head" "pass" "add" "details" "help";
-  row-gap: 1.5rem;
-}
-.wl-dir-head {
-  grid-area: head;
-  min-width: 0;
-}
-/* b: the breadcrumbs over both columns, 12 px above the header as in every page header. */
-.wl-dir[data-dir="b"] {
-  grid-template-areas: "crumbs" "head" "pass" "add" "details" "help";
-}
-.wl-dir-crumbs {
-  grid-area: crumbs;
-  min-width: 0;
-  margin-bottom: -0.75rem;
-}
-.wl-dir-pass {
-  grid-area: pass;
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-.wl-dir-add {
-  grid-area: add;
+/* The add block (add-block.tsx): the buddy holds the job. Every box it sits on keeps 11/12 of its
+   art's height clear above it (M 66 px, S 44 px). On the sign it leans over the code and points
+   its teal pass down at it; on the badge's card, down at the badge (the nudge, aimed lower). Transform and opacity only. */
+.wl-add {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 1rem;
 }
-.wl-dir-details {
-  grid-area: details;
-  min-width: 0;
-}
-.wl-dir-help {
-  grid-area: help;
-  min-width: 0;
-}
-@media (min-width: 1024px) {
-  .wl-dir {
-    grid-template-columns: 22rem minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto 1fr;
-    grid-template-areas:
-      "head head"
-      "pass add"
-      "pass details"
-      "pass help"
-      "pass .";
-    column-gap: 3rem;
-  }
-  .wl-dir[data-dir="b"] {
-    grid-template-rows: auto auto auto auto auto 1fr;
-    grid-template-areas:
-      "crumbs crumbs"
-      "pass head"
-      "pass add"
-      "pass details"
-      "pass help"
-      "pass .";
-  }
-  .wl-dir-crumbs {
-    margin-bottom: 0;
-  }
-  .wl-dir-pass {
-    position: sticky;
-    top: 5rem;
-    align-self: start;
-  }
-  /* The header ends a row above the pass: the gap under it is the page header's (24 px). */
-  .wl-dir[data-dir="b"] .wl-dir-head {
-    padding-bottom: 0.5rem;
-  }
-}
-
-/* Header (holder-heading.tsx). The pass's icon is a 29 pt square drawn for notifications: an app
-   icon's corner and a hairline keep a light icon off a light page. */
-.wl-hh-icon,
-.wl-hh-icon-sm {
-  flex: none;
-  object-fit: contain;
-  box-shadow: 0 0 0 1px var(--pk-border-subtle);
-}
-.wl-hh-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.625rem;
-}
-.wl-hh-icon-sm {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 0.3125rem;
-}
-.wl-hh-org {
-  margin-bottom: 0.125rem;
-}
-
-/* In Apple Wallet: the success check, as the status pill draws it, larger. */
-.wl-added-mark {
+.wl-add-scan {
   display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex: none;
-  place-items: center;
-  border: 1px solid var(--pk-success-border);
-  border-radius: 999px;
-  background: var(--pk-success-subtle);
-  color: var(--pk-success);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 1.5rem;
 }
-.wl-added-mark svg {
-  width: 1.125rem;
-  height: 1.125rem;
+/* The sign is drawn like the buddy: its line and fill, its stitching, a pocket for the code. */
+.wl-sign {
+  --wl-seat-border: 1.5px;
+  position: relative;
+  width: fit-content;
+  margin-top: 4.125rem;
+  padding: 1.125rem;
+  border: 1.5px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-xl);
+  background: var(--pk-surface-raised);
+  box-shadow: var(--wl-edge), var(--pk-elevation-1);
 }
-
-/* /p says mac for an iPad too: on a touch screen the badge beside the QR goes. */
-@media (pointer: coarse) {
-  .wl-dir .wl-mac-only {
-    display: none;
+.wl-sign::before {
+  content: "";
+  position: absolute;
+  inset: 0.375rem;
+  border: 1.5px dashed var(--pk-border-strong);
+  border-radius: 0.75rem;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.wl-sign-qr {
+  width: 10.5rem;
+  height: 10.5rem;
+  border-radius: 0.625rem;
+  padding: 0.5rem;
+}
+.wl-add-scan > .wl-ways {
+  width: 100%;
+}
+@media (min-width: 640px) {
+  .wl-add-scan {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    justify-items: stretch;
+    column-gap: 2rem;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  /* The column rises after the card (240 ms); Apple's badge never animates, so what holds it
-     rises as a whole only where it is not in it. */
-  .wl-dir[data-rise] :is(.wl-dir-head, .wl-dir-details, .wl-dir-help),
-  .wl-dir[data-rise] .wl-dir-add > :not(:has([data-awb])) {
-    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
+  /* As tall as the sign, so the ways centre on it, not on the buddy above it. */
+  .wl-add-scan > .wl-ways {
+    min-height: 12.9375rem;
   }
 }
 
@@ -163,4 +84,84 @@
   width: 1rem;
   height: 1rem;
   color: var(--pk-text-muted);
+}
+/* /p says mac for an iPad too: on a touch screen the badge beside the QR goes. */
+@media (pointer: coarse) {
+  .wl-add .wl-mac-only {
+    display: none;
+  }
+}
+
+/* The code is down and to its left: the pass turns half as far again, the eyes drop. */
+.wl-add-buddy {
+  --wl-buddy-inset: 0.5rem;
+  --wl-drop: 28px;
+  --wl-aim: 1.6;
+  --wl-look: -2.4px 1.6px;
+}
+.wl-add-buddy-sm {
+  --wl-buddy-inset: 1rem;
+  --wl-drop: 18px;
+  --wl-aim: 1.6;
+  --wl-look: -2.2px 1.4px;
+}
+
+/* No QR (the iPhone; a Mac without the public page): the badge on a card that fits it, at the
+   column's start beside the pass, centred on a phone. */
+.wl-add-here {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2.75rem;
+  padding: 1.5rem 1rem;
+}
+/* Full width on a phone, the buddy just past the badge's end (Apple's 110 × 34 art at 44 px is
+   143 px wide): 50% less half the badge, the buddy and 6 px. */
+.wl-add-here > .wl-add-buddy-sm {
+  --wl-buddy-inset: calc(50% - 71.5px - 64px - 6px);
+}
+@media (min-width: 640px) {
+  .wl-add-here {
+    width: fit-content;
+    min-width: 15rem;
+    max-width: 100%;
+    align-self: flex-start;
+    padding-inline: 2rem;
+  }
+  .wl-add-here > .wl-add-buddy-sm {
+    --wl-buddy-inset: 1rem;
+  }
+}
+
+/* In Apple Wallet: the happy buddy stands over the line. */
+.wl-added {
+  position: relative;
+  margin-top: 2.75rem;
+  padding: 1rem;
+}
+.wl-add-again[hidden] {
+  display: none;
+}
+/* Voided or expired: it sits on the notice, sad. */
+.wl-add-seat {
+  position: relative;
+  margin-top: 2.75rem;
+}
+
+/* It watches the badge while it is pointed at or focused: down and left on the badge's card, down
+   and right from the sign. Split selectors: WebKit does not restyle the :is() form inside :has(). */
+.wl-add:has([data-awb]:hover) .wl-add-buddy [data-look],
+.wl-add:has([data-awb]:focus-visible) .wl-add-buddy [data-look] {
+  transform: translate(1.6px, 1.6px);
+}
+.wl-add-here:has([data-awb]:hover) [data-look],
+.wl-add-here:has([data-awb]:focus-visible) [data-look] {
+  transform: translate(-2.2px, 1.4px);
+}
+/* Opened again from In Apple Wallet the buddy stays on the line: no room kept above. */
+.wl-sign:not(:has(> [data-buddy])),
+.wl-add-here:not(:has(> [data-buddy])) {
+  margin-top: 0;
 }

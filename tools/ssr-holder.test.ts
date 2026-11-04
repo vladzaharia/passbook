@@ -24,20 +24,11 @@ const SHEETS = [
   'src/web/pass-card/stage.css',
   'src/web/pass-card/stage-motion.css',
   'src/web/pass-card/stage-seg.css',
-  'src/web/portal/holder-pass.css',
-]
-  .map(read)
-  .join('\n');
-/** An exploration's sheets (pass-explore.ts EXPLORE_CSS): the add block's, then c's buddy art. */
-const EXPLORE_SHEETS = [
-  'src/web/portal/add/add.css',
-  'src/web/portal/add/add-a.css',
-  'src/web/portal/add/add-b.css',
-  'src/web/portal/add/add-c.css',
-  'src/web/portal/add/phone.css',
-  'src/web/portal/add/phone-screens.css',
   'src/web/ui/art/art.css',
   'src/web/ui/art/art-wallet.css',
+  'src/web/ui/art/wallet-states.css',
+  'src/web/portal/holder-pass.css',
+  'src/web/portal/add/add.css',
 ]
   .map(read)
   .join('\n');
@@ -73,16 +64,10 @@ const PAGES = [
   page({ voided: true }),
   page({ view: view({ expirationDate: '2020-01-01T00:00:00Z' }) }),
 ];
-/** `?add=a|b|c` on localhost: the same view with an exploration's header and add block. */
-const EXPLORED = ['a', 'b', 'c'].flatMap((direction) => [
-  ...DEVICES.map((device) => page({ device, direction })),
-  page({ voided: true, direction }),
-]);
-
 /** Tailwind's selector for a class name: every character outside [\w-] escaped. */
 const selector = (cls: string) => `.${cls.replace(/[^\w-]/g, (c) => `\\${c}`)}`;
-/** Hooks: portal.css's nudge look, pass-page.tsx's own dip rule; markers no sheet styles. */
-const HOOKS = new Set(['wl-pass-side', 'wl-holder']);
+/** Hooks no sheet styles: the buddy's host markers. */
+const HOOKS = new Set<string>();
 
 describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
   it('is current: `npm run gen` writes exactly the committed file', async () => {
@@ -92,10 +77,9 @@ describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
   it('reads the class names of the shared view and the kit pieces in it', () => {
     const words = candidatesOf(root);
     for (const cls of [
-      'lg:grid-cols-[22rem_minmax(0,1fr)]',
       'pointer-fine:h-10',
       'bg-warning-subtle',
-      // An exploration's header and add block.
+      // The header and the add block.
       'tracking-[-0.015em]',
       'pointer-coarse:min-h-11',
     ])
@@ -108,15 +92,14 @@ describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
   });
 
   it('has a rule for every class /p names, on every device and state', () => {
-    for (const html of [...PAGES, ...EXPLORED]) {
+    for (const html of PAGES) {
       const body = html.slice(html.indexOf('<body>'));
       const classes = new Set(
         [...body.matchAll(/class="([^"]*)"/g)].flatMap((m) => (m[1] ?? '').split(' ')),
       );
       for (const cls of classes) {
         if (!cls || cls.startsWith('lucide') || HOOKS.has(cls)) continue;
-        const sheets = PAGES.includes(html) ? SHEETS : `${SHEETS}${EXPLORE_SHEETS}`;
-        expect([cls, sheets.includes(selector(cls))]).toEqual([cls, true]);
+        expect([cls, SHEETS.includes(selector(cls))]).toEqual([cls, true]);
       }
     }
   });

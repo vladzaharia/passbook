@@ -93,24 +93,18 @@ export interface PassMenuProps {
   publicUrl: string | null;
   /** Detail page: a labelled "More" with the link items (its QR is on the page). Tiles: an icon. */
   page?: boolean;
-  /** Detail page, in the column beside the QR: the label stays on phones too (a row drops it). */
-  stacked?: boolean;
-  /** badge beside the badge; md in a page header. */
-  size?: 'badge' | 'md';
-  /** The detail page's items behind an icon trigger (an exploration's header). */
-  icon?: boolean;
   onRemoved?: () => void;
 }
 
-/** More beside the badge: Show QR (tiles), Copy link and Open public page (detail), then Remove. */
+/**
+ * More: on a tile an icon beside the badge (Show QR, Remove); in the pass page's header the kit's
+ * More (Copy link, Open public page, Remove), its word gone on phones.
+ */
 export function PassMoreMenu({
   passId,
   passTitle,
   publicUrl,
   page = false,
-  stacked = false,
-  size = 'badge',
-  icon = false,
   onRemoved,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
@@ -121,20 +115,15 @@ export function PassMoreMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {page && !icon ? (
-            <Button
-              variant="outline"
-              size={size}
-              className={stacked ? undefined : 'max-sm:px-3'}
-              iconStart={<MoreHorizontal aria-hidden />}
-            >
-              <span className={stacked ? undefined : 'max-sm:sr-only'}>More</span>
+          {page ? (
+            <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
+              <span className="max-sm:sr-only">More</span>
             </Button>
           ) : (
             <IconButton
               label="More actions"
               variant="outline"
-              size={size}
+              size="badge"
               icon={<MoreHorizontal aria-hidden />}
             />
           )}

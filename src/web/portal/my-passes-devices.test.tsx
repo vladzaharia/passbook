@@ -57,15 +57,18 @@ describe('device rule (shared/device.ts)', () => {
     expect(screen.queryByText(HOLDER_COPY.scanQr)).not.toBeInTheDocument();
   });
 
-  it('leads with the QR off the phone: the scan opens the public page, then the badge', async () => {
+  it('leads with the QR off Apple’s devices: the scan opens the public page, no badge', async () => {
     as(WINDOWS);
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ id: 'p1' })) },
     });
-    const qr = await screen.findByRole('img', { name: HOLDER_COPY.qrAlt('Gym membership') });
-    const badge = screen.getByRole('link', { name: 'Add to Apple Wallet' });
-    expect(qr.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText(HOLDER_COPY.openOnApple)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('img', { name: HOLDER_COPY.qrAlt('Gym membership') }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
+    // The badge cannot add here, so neither it nor its line shows.
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.queryByText(HOLDER_COPY.openOnApple)).toBeNull();
   });
 });
 

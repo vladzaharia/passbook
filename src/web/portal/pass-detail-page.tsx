@@ -1,11 +1,7 @@
 import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
-import { canAddToWallet } from '@/shared/device.ts';
-import type { AddDirection } from '../../shared/add-direction.ts';
-import { cn } from '../lib/cn.ts';
-import { useDocumentTitle } from '../lib/route-focus.tsx';
+import type { PassView } from '@/shared/pass-view/index.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Buddy,
@@ -14,21 +10,18 @@ import {
   CardHeader,
   detailError,
   KeyValue,
-  PageHeader,
   PassSideToggle,
   Skeleton,
   StatusPill,
 } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { HolderPassView, showsQr } from './holder-pass-view.tsx';
-import { InWalletPill } from './my-passes-page.tsx';
-import { exploreOf, portalDirection } from './pass-explore.tsx';
-import { fieldRows, updatedLine } from './pass-fields.ts';
-import { type MyPass, passName, toView } from './pass-view.ts';
+import { HolderPassView } from './holder-pass-view.tsx';
+import { fieldRows } from './pass-fields.ts';
+import { PassHeader } from './pass-header.tsx';
+import { type HolderState, holderState, type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
-import { RefreshButton } from './refresh-button.tsx';
-import { PassMoreMenu, publicUrlOf } from './wallet-actions.tsx';
+import { publicUrlOf } from './wallet-actions.tsx';
 import './portal.css';
 
 type Page = typeof MyPassListSchema._output;
@@ -39,26 +32,10 @@ function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass
   return list?.pages.flatMap((p) => p.items).find((p) => p.id === id);
 }
 
-const crumbsFor = (name: string) => [{ label: 'My passes', to: '/' }, { label: name }];
-
-/**
- * Where the nudge sits on the Details card's top edge (portal.css): past the stack beside the QR,
- * or under the badge's row on the phone.
- */
-type NudgeSeat = 'beside' | 'under';
-
-/** Status and the pass's fields. Not on a device yet, the buddy falls onto it and points. */
-function DetailsCard({ pass, nudge }: { pass: MyPass; nudge: NudgeSeat | null }) {
+/** Status and the pass's fields. */
+function DetailsCard({ pass }: { pass: MyPass }) {
   return (
-    <Card className={nudge === 'under' ? 'mt-8' : nudge === 'beside' ? 'mt-2' : undefined}>
-      {nudge ? (
-        <Buddy
-          scene="nudge"
-          size="sm"
-          at="start"
-          className={cn('wl-nudge', nudge === 'beside' && 'wl-nudge-beside')}
-        />
-      ) : null}
+    <Card>
       <CardHeader title="Details" />
       <CardBody>
         <KeyValue
@@ -74,35 +51,19 @@ function DetailsCard({ pass, nudge }: { pass: MyPass; nudge: NudgeSeat | null })
 
 function Detail({
   pass,
+  view,
+  state,
   dealt,
-  direction,
 }: {
   pass: MyPass;
+  view: PassView;
+  state: HolderState;
   dealt: boolean;
-  direction: AddDirection | null;
 }) {
-  const navigate = useNavigate();
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [dip, setDip] = useState(0);
   const [device] = useState(browserDevice);
-  const name = passName(pass);
-  const view = toView(pass);
-  const voided = pass.status === 'voided';
-  const state = voided ? 'voided' : view.expired ? 'expired' : 'active';
-  const publicUrl = publicUrlOf(pass.downloadUrl);
-  const stacked = showsQr(state, device, publicUrl);
-  const explore = direction ? exploreOf(direction, pass, view, state, name) : null;
-  // In Wallet keeps the badge (a holder who removed the pass adds it back) but not the nudge;
-  // nor does a device whose badge cannot add (its line says where to go instead). An
-  // exploration seats its own art.
-  const nudge =
-    !explore && state === 'active' && !pass.inWallet && canAddToWallet(device.device)
-      ? stacked
-        ? 'beside'
-        : 'under'
-      : null;
-  // Explorations put Refresh and More in the header: page-sized, More as an icon in b.
-  const header = explore !== null;
+  const voided = state === 'voided';
   return (
     <HolderPassView
       pass={
@@ -120,65 +81,25 @@ function Detail({
         />
       }
       toggle={<PassSideToggle value={face} onChange={setFace} />}
-      passTitle={name}
+      passTitle={passName(pass)}
       orgName={pass.orgName}
       state={state}
       device={device}
       downloadHref={pass.downloadUrl}
-      publicUrl={publicUrl}
+      publicUrl={publicUrlOf(pass.downloadUrl)}
       support={pass.support}
+      inWallet={pass.inWallet}
       onAdd={() => setDip((n) => n + 1)}
       rise={dealt}
-      actions={
-        <>
-          {explore ? <DocumentTitle title={explore.heading.title} /> : null}
-          {voided ? null : (
-            <RefreshButton
-              passId={pass.id}
-              pass={pass}
-              size={header ? 'md' : 'badge'}
-              compact={explore?.direction === 'b'}
-            />
-          )}
-          <PassMoreMenu
-            page
-            stacked={stacked && !header}
-            size={header ? 'md' : 'badge'}
-            icon={explore?.direction === 'b'}
-            passId={pass.id}
-            passTitle={name}
-            publicUrl={voided ? null : publicUrl}
-            onRemoved={() => void navigate({ to: '/', replace: true })}
-          />
-        </>
-      }
-      details={<DetailsCard pass={pass} nudge={nudge} />}
-      explore={explore}
+      details={<DetailsCard pass={pass} />}
+      buddy={(props) => <Buddy {...props} />}
     />
-  );
-}
-
-/** An exploration has no PageHeader: its header names the tab. */
-function DocumentTitle({ title }: { title: string }) {
-  useDocumentTitle(title);
-  return null;
-}
-
-/** Org, last update and In Wallet under the h1. */
-function Meta({ pass }: { pass: MyPass }) {
-  return (
-    <>
-      <span>{pass.orgName}</span>
-      <span>{updatedLine(pass.modifiedAt)}</span>
-      {pass.inWallet && pass.status !== 'voided' ? <InWalletPill /> : null}
-    </>
   );
 }
 
 export function PassDetailPage({ passId }: { passId: string }) {
   const client = useQueryClient();
   const [seed] = useState(() => fromList(client, passId));
-  const [direction] = useState(portalDirection);
   const query = useQuery({
     ...myPassQuery(passId),
     ...(seed
@@ -191,21 +112,15 @@ export function PassDetailPage({ passId }: { passId: string }) {
 
   // One header in every state, so the h1 keeps its node (and focus) as the pass arrives.
   const pass = query.data;
-  const name = pass ? passName(pass) : 'Pass';
-  const header = (
-    <PageHeader
-      title={name}
-      breadcrumbs={crumbsFor(name)}
-      meta={pass ? <Meta pass={pass} /> : undefined}
-    />
-  );
-  if (pass) {
-    // Arriving from the grid, the card morphs in; a deep link deals it instead. An exploration
-    // draws its own header.
+  const view = useMemo(() => (pass ? toView(pass) : null), [pass]);
+  const state = pass && view ? holderState(pass, view) : 'active';
+  const header = <PassHeader pass={pass} view={view} state={state} />;
+  if (pass && view) {
+    // Arriving from the grid, the card morphs in; a deep link deals it instead.
     return (
       <>
-        {direction ? null : header}
-        <Detail pass={pass} dealt={!seed} direction={direction} />
+        {header}
+        <Detail pass={pass} view={view} state={state} dealt={!seed} />
       </>
     );
   }

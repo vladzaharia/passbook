@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { assets, fixtures } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
-import { explores } from './pass-explore.ts';
+import { REPLAY_SCRIPT } from './hosted.ts';
 import { type PassPageProps, renderPassPage } from './pass-page.tsx';
 
 const view = (over: Record<string, unknown> = {}) =>
@@ -45,52 +45,51 @@ describe('/p renders the portal HolderPassView', () => {
   const PORTAL_LINK =
     /<p class="text-sm"><a href="\/passes\/p1" class="[^"]*">Open in My passes<\/a><\/p>/;
 
-  it('stacks the badge and the portal link beside the QR off the phone', () => {
-    const html = body(page());
-    // The phone with its caption, then one column: the badge, then the quiet link.
-    const add = new RegExp(
-      `class="wl-qr-phone [\\s\\S]*?<p class="[^"]*">${HOLDER_COPY.scanQr}</p></div><div class="flex w-fit flex-col gap-3\\.5 pointer-coarse:gap-2"><a [^>]*data-awb=""[^>]*class="[^"]*p-0[^"]*">[\\s\\S]*?</a>${PORTAL_LINK.source}</div>`,
-    );
-    expect(html).toMatch(add);
-    expect(html.match(/Open in My passes/g)).toHaveLength(1);
-    // The add line closes the block; the footer keeps only the org's help.
-    expect(html).toContain(`<p class="text-sm text-fg-muted">${HOLDER_COPY.openOnApple}</p>`);
-    expect(html).toMatch(/<div class="border-t border-border pt-4"><p class="[^"]*">Help:/);
+  it('heads the page with what the pass is: the org over the kind, the portal link beside', () => {
+    const html = page();
+    expect(html).toContain('<title>Example Org example pass</title>');
+    const b = body(html);
+    expect(b.match(/<h1/g)).toHaveLength(1);
+    expect(b).toMatch(/<p class="[^"]*">Example Org<\/p><h1[^>]*>Example pass<\/h1>/);
+    expect(b.match(/Open in My passes/g)).toHaveLength(1);
+    expect(b).toMatch(PORTAL_LINK);
   });
 
-  it('puts the portal link after the badge in a row on the phone', () => {
-    const html = body(page({ device: { device: 'iphone', inApp: false } }));
-    expect(html).not.toContain('wl-qr-phone');
-    expect(html).toMatch(
+  it('leads with the QR on the buddy’s sign off Apple’s devices, without the badge', () => {
+    const b = body(page());
+    expect(b).toMatch(
+      /<div class="wl-sign"><span [^>]*data-scene="nudge"[^>]*data-run="load"[\s\S]*?<img src="data:image\/svg\+xml/,
+    );
+    expect(b).toContain(HOLDER_COPY.scanLine);
+    expect(b).not.toContain('data-awb');
+    expect(b).not.toContain(HOLDER_COPY.openOnApple);
+    expect(b).toMatch(/class="wl-holder-help [^"]*"><p class="[^"]*">Help:/);
+    // A click replays the scene, as on the hosted pages.
+    expect(page()).toContain(REPLAY_SCRIPT);
+  });
+
+  it('puts the badge beside the QR on a Mac, which a touch screen (an iPad) hides', () => {
+    const b = body(page({ device: { device: 'mac', inApp: false } }));
+    expect(b).toMatch(
       new RegExp(
-        `<div class="flex flex-wrap items-center gap-2"><a [^>]*data-awb=""[\\s\\S]*?</a><div class="flex items-center gap-2">${PORTAL_LINK.source}</div></div>`,
+        `<div class="wl-way wl-mac-only">[\\s\\S]*?${HOLDER_COPY.mac}[\\s\\S]*?data-awb=""`,
       ),
     );
   });
 
-  it('draws an exploration from the same view: its header holds the h1 and the portal link', () => {
-    const html = page({ direction: 'a', device: { device: 'mac', inApp: false } });
-    expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toMatch(/<h1[^>]*>Example Org example pass<\/h1>/);
-    expect(html).toContain('class="wl-dir wl-holder"');
-    expect(html).toContain('class="wl-vf"');
-    expect(html).toContain(HOLDER_COPY.openInPortal);
-    // c's buddy plays once on load, without script.
-    expect(page({ direction: 'c', device: { device: 'mac', inApp: false } })).toContain(
-      'data-run="load"',
+  it('leads with the badge’s card on the iPhone, the buddy on it pointing at the badge', () => {
+    const b = body(page({ device: { device: 'iphone', inApp: false } }));
+    expect(b).toContain('<div class="wl-holder" data-lead="add"');
+    expect(b).toMatch(
+      /<div class="wl-add-here [^"]*"><span [^>]*data-scene="nudge"[\s\S]*?data-awb=""/,
     );
-    expect(page({ direction: 'b' })).toMatch(/<h1[^>]*>Example pass<\/h1>/);
+    expect(b).not.toContain('wl-sign');
   });
 
-  it('reads ?add= only where the Worker serves localhost', () => {
-    expect(explores('http://localhost:5173')).toBe(true);
-    expect(explores('https://wallet.plrs.im')).toBe(false);
-    expect(explores('http://localhost.evil.test')).toBe(false);
-  });
-
-  it('keeps the portal link on a voided pass, without the badge', () => {
-    const html = body(page({ voided: true }));
-    expect(html).not.toContain('data-awb');
-    expect(html).toMatch(PORTAL_LINK);
+  it('seats the buddy on a voided notice, sad; no badge, the portal link stays', () => {
+    const b = body(page({ voided: true }));
+    expect(b).toMatch(/<div class="wl-add-seat"><span [^>]*data-scene="tear"/);
+    expect(b).not.toContain('data-awb');
+    expect(b).toMatch(PORTAL_LINK);
   });
 });

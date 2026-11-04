@@ -1,6 +1,73 @@
-/* The holder pass page (holder-pass-view.tsx): the portal imports it, /p inlines it. The add QR's
-   phone and its scan line, the iPad line, and the side column rising after the card. Transform and
-   opacity only; reduced motion keeps nothing moving. */
+/* The holder pass page (holder-pass-view.tsx, holder-heading.tsx): the portal imports it, /p
+   inlines it. One grid: phone, one column (the pass, the add block, the details, the help); from
+   1024 the pass holds the left column, sticky under the bar, and the rest stacks at its right,
+   top edges level. Transform and opacity only; reduced motion keeps nothing moving. */
+.wl-holder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "pass" "add" "details" "help";
+  row-gap: 1.5rem;
+}
+.wl-holder-pass {
+  grid-area: pass;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.wl-holder-add {
+  grid-area: add;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+}
+.wl-holder-details {
+  grid-area: details;
+  min-width: 0;
+}
+.wl-holder-help {
+  grid-area: help;
+  min-width: 0;
+}
+/* The iPhone adding: the badge's card first, the pass under it. */
+@media (max-width: 1023.98px) {
+  .wl-holder[data-lead="add"] {
+    grid-template-areas: "add" "pass" "details" "help";
+  }
+}
+@media (min-width: 1024px) {
+  .wl-holder {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "pass add"
+      "pass details"
+      "pass help"
+      "pass .";
+    column-gap: 3rem;
+  }
+  /* 56 px bar, 24 px gap. */
+  .wl-holder-pass {
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
+}
+
+/* The header's mark: the pass's icon, a 29 pt square drawn for notifications. An app icon's
+   corner and a hairline keep a light icon off a light page. */
+.wl-hh-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border-radius: 0.6875rem;
+  object-fit: contain;
+  box-shadow: 0 0 0 1px var(--pk-border-subtle);
+}
+
+/* The QR dialog's phone (holder-qr.tsx HolderQr, My passes): its speaker and its scan line. */
 .wl-qr-phone::before {
   content: "";
   position: absolute;
@@ -28,16 +95,10 @@
   background: var(--wl-foil);
   box-shadow: 0 0 12px color-mix(in oklab, var(--wl-foil-1) 60%, transparent);
 }
-/* /p says `mac` for an iPad too (its user agent); a touch screen shows the iPad its line. */
-.wl-ipad-line {
-  display: none;
-}
+/* base.css gives the app's text links a 44 px touch height; /p has no base.css. */
 @media (pointer: coarse) {
-  .wl-ipad-line {
-    display: block;
-  }
-  /* base.css gives the app's text links a 44 px touch height; /p has no base.css. */
-  .wl-holder p > a {
+  .wl-holder p > a,
+  .wl-hh p > a {
     padding-block: calc((2.75rem - 1.2em) / 2);
     margin-block: calc((1.2em - 2.75rem) / 2);
   }
@@ -47,10 +108,10 @@
   .wl-qr-scan {
     animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
   }
-  /* The side column rises after the card (240 ms). Apple's badge never animates: only the pieces
-     that do not hold it rise, at any depth (the badge sits in the row or in the stack). */
-  .wl-after-card > :not([data-awb], :has([data-awb])),
-  .wl-after-card :has([data-awb]) > :not([data-awb], :has([data-awb])) {
+  /* The column rises after the card (240 ms). Apple's badge never animates: what holds it does
+     not rise. */
+  .wl-holder[data-rise] :is(.wl-holder-details, .wl-holder-help),
+  .wl-holder[data-rise] .wl-holder-add > :not(:has([data-awb])) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
   }
 }

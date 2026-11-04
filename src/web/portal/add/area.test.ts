@@ -1,24 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { addDirection, addMode } from './add-direction.ts';
-import type { DeviceInfo } from './device.ts';
+import type { DeviceInfo } from '../../../shared/device.ts';
+import { addMode } from './area.ts';
 
 const IPHONE: DeviceInfo = { device: 'iphone', inApp: false };
 const MAC: DeviceInfo = { device: 'mac', inApp: false };
 const OTHER: DeviceInfo = { device: 'other', inApp: false };
 const URL = 'https://wallet.test/p/t';
-
-describe('addDirection', () => {
-  it('reads a, b or c from ?add= where allowed', () => {
-    expect(addDirection('?add=a', true)).toBe('a');
-    expect(addDirection('?x=1&add=c', true)).toBe('c');
-    expect(addDirection('?add=d', true)).toBeNull();
-    expect(addDirection('', true)).toBeNull();
-  });
-
-  it('ignores it elsewhere (production)', () => {
-    expect(addDirection('?add=b', false)).toBeNull();
-  });
-});
 
 describe('addMode', () => {
   it('leads with the QR off the phone and the badge on it', () => {
