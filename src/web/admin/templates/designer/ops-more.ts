@@ -6,7 +6,7 @@ import {
   renameInputRefs,
   type Source,
 } from './bindings.ts';
-import { type InputSpec, nameProblem, readInputs, writeInputs } from './inputs.ts';
+import { type InputSpec, nameProblem, readInputs, scalarInputs, writeInputs } from './inputs.ts';
 import { type DesignDoc, type Dict, isRecord } from './model.ts';
 import { copy } from './ops-pass.ts';
 
@@ -146,7 +146,10 @@ export function moveInput(doc: DesignDoc, name: string, to: number): DesignDoc {
   return setInputs(doc, specs);
 }
 
-const firstTitle = (specs: InputSpec[]): string => (specs[0] ? `{{${specs[0].name}}}` : 'Pass');
+const firstTitle = (specs: InputSpec[]): string => {
+  const first = scalarInputs(specs)[0];
+  return first ? `{{${first.name}}}` : 'Pass';
+};
 
 /** The list row of a pass: title and subtitle read from inputs. */
 export function setDisplay(doc: DesignDoc, part: 'title' | 'subtitle', expr: string): DesignDoc {

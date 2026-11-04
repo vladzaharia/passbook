@@ -5,11 +5,13 @@ import { NameEdit, PickEdit, TextEdit } from './controls.tsx';
 import {
   INPUT_TYPES,
   type InputSpec,
-  type InputType,
   nameProblem,
   newInput,
+  type PickType,
   readInputs,
   sampleFor,
+  scalarInputs,
+  typeLabel,
 } from './inputs.ts';
 import { isRecord } from './model.ts';
 
@@ -26,37 +28,43 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
         help="Shown on the form when creating a pass."
         op={(v) => ({ op: 'input-set', name: spec.name, patch: { label: v } })}
       />
-      <PickEdit
-        label="Type"
-        value={spec.type}
-        options={INPUT_TYPES}
-        onPick={(v) =>
-          set({ type: v as InputType, sample: sampleFor(v as InputType), default: '' })
-        }
-      />
+      {spec.type === 'list' ? (
+        <p className="text-sm text-fg-muted">A list. Its rows and sample stay as they are.</p>
+      ) : (
+        <PickEdit
+          label="Type"
+          value={spec.type}
+          options={INPUT_TYPES}
+          onPick={(v) =>
+            set({ type: v as PickType, sample: sampleFor(v as PickType), default: '' })
+          }
+        />
+      )}
       <SwitchRow
         label="Required"
         checked={spec.required}
         onCheckedChange={(required) => set({ required })}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextEdit
-          label="Default"
-          value={spec.default}
-          merge={`in-default:${spec.name}`}
-          op={(v) => ({ op: 'input-set', name: spec.name, patch: { default: v } })}
-        />
-        <TextEdit
-          label="Sample"
-          value={spec.sample}
-          merge={`in-sample:${spec.name}`}
-          help="Shown in the preview."
-          error={
-            spec.required && spec.sample === '' ? 'A required input needs a sample.' : undefined
-          }
-          op={(v) => ({ op: 'input-set', name: spec.name, patch: { sample: v } })}
-        />
-      </div>
+      {spec.type === 'list' ? null : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextEdit
+            label="Default"
+            value={spec.default}
+            merge={`in-default:${spec.name}`}
+            op={(v) => ({ op: 'input-set', name: spec.name, patch: { default: v } })}
+          />
+          <TextEdit
+            label="Sample"
+            value={spec.sample}
+            merge={`in-sample:${spec.name}`}
+            help="Shown in the preview."
+            error={
+              spec.required && spec.sample === '' ? 'A required input needs a sample.' : undefined
+            }
+            op={(v) => ({ op: 'input-set', name: spec.name, patch: { sample: v } })}
+          />
+        </div>
+      )}
       <NameEdit
         label="Name"
         value={spec.name}
@@ -75,7 +83,7 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
 
 const exprOptions = (specs: InputSpec[]) => [
   { value: 'none', label: 'None' },
-  ...specs.map((s) => ({ value: `{{${s.name}}}`, label: s.label })),
+  ...scalarInputs(specs).map((s) => ({ value: `{{${s.name}}}`, label: s.label })),
 ];
 
 export function InputsSection() {
@@ -115,7 +123,7 @@ export function InputsSection() {
               >
                 <span className="truncate font-medium text-fg-strong">{spec.label}</span>
                 <span className="truncate text-xs text-fg-muted">
-                  {INPUT_TYPES.find((t) => t.value === spec.type)?.label}
+                  {typeLabel(spec.type)}
                   {spec.required ? ', required' : ''}
                 </span>
               </button>

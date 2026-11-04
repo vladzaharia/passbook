@@ -9,7 +9,16 @@ export const INPUT_TYPES = [
   { value: 'email', label: 'Email' },
   { value: 'url', label: 'Link' },
 ] as const;
-export type InputType = (typeof INPUT_TYPES)[number]['value'];
+export type PickType = (typeof INPUT_TYPES)[number]['value'];
+/** `list`: an array or object input (upcoming events, beacons). Its schema and sample are kept as is. */
+export type InputType = PickType | 'list';
+
+export const typeLabel = (type: InputType): string =>
+  type === 'list' ? 'List' : (INPUT_TYPES.find((t) => t.value === type)?.label ?? type);
+
+/** Inputs a scalar value (field, barcode, list title) can read. */
+export const scalarInputs = (specs: readonly InputSpec[]): InputSpec[] =>
+  specs.filter((s) => s.type !== 'list');
 
 export interface InputSpec {
   name: string;
@@ -32,6 +41,7 @@ export function nameProblem(name: string, others: readonly string[]): string | n
 }
 
 function typeOf(schema: Dict): InputType {
+  if (schema.type === 'array' || schema.type === 'object') return 'list';
   if (schema.type === 'number' || schema.type === 'integer') return 'number';
   if (schema.type === 'boolean') return 'boolean';
   if (schema.format === 'date-time') return 'datetime';
@@ -58,14 +68,15 @@ export function readInputs(manifest: Dict): InputSpec[] {
     .map(([name, schema], i) => {
       const s = isRecord(schema) ? schema : {};
       const order = typeof s['x-order'] === 'number' ? s['x-order'] : i * 10;
+      const type = typeOf(s);
       return {
         spec: {
           name,
           label: show(s['x-label']) || name,
-          type: typeOf(s),
+          type,
           required: required.includes(name),
-          default: show(s.default),
-          sample: show(sample[name]),
+          default: type === 'list' ? '' : show(s.default),
+          sample: type === 'list' ? '' : show(sample[name]),
         },
         order,
       };
@@ -173,6 +184,7 @@ export function writeInputs(
     return isRecord(node) ? node : null;
   });
   const order = orders(existing);
+  const oldSample = isRecord(manifest.sample) ? manifest.sample : {};
   const properties: Dict = {};
   const sample: Dict = {};
   specs.forEach((spec, i) => {
@@ -182,7 +194,12 @@ export function writeInputs(
       : schemaOf(spec, {}, order[i]);
     node['x-order'] = order[i];
     properties[spec.name] = node;
-    const value = spec.sample === '' ? undefined : parse(spec.type, spec.sample);
+    const value =
+      spec.type === 'list'
+        ? oldSample[was(spec.name)]
+        : spec.sample === ''
+          ? undefined
+          : parse(spec.type, spec.sample);
     if (value !== undefined) sample[spec.name] = value;
   });
   const prev = isRecord(manifest.inputs) ? manifest.inputs : {};
@@ -201,7 +218,7 @@ export function writeInputs(
   };
 }
 
-const SAMPLES: Record<InputType, string> = {
+const SAMPLES: Record<PickType, string> = {
   text: 'Sample',
   textarea: 'Sample text',
   number: '1',
@@ -211,7 +228,7 @@ const SAMPLES: Record<InputType, string> = {
   url: 'https://example.com',
 };
 
-export function newInput(existing: readonly InputSpec[], type: InputType = 'text'): InputSpec {
+export function newInput(existing: readonly InputSpec[], type: PickType = 'text'): InputSpec {
   const names = existing.map((s) => s.name);
   let n = existing.length + 1;
   while (names.includes(`input${n}`)) n++;
@@ -225,4 +242,4 @@ export function newInput(existing: readonly InputSpec[], type: InputType = 'text
   };
 }
 
-export const sampleFor = (type: InputType): string => SAMPLES[type];
+export const sampleFor = (type: PickType): string => SAMPLES[type];

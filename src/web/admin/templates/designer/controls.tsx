@@ -3,7 +3,7 @@ import { FormField, Input, Select, type SelectOption } from '../../../ui/index.t
 import type { Op } from './apply.ts';
 import type { Source } from './bindings.ts';
 import { useDesigner } from './context.tsx';
-import { readInputs } from './inputs.ts';
+import { readInputs, scalarInputs } from './inputs.ts';
 
 /** A text control that edits through the history; quick keystrokes become one undo step. */
 export function TextEdit({
@@ -148,7 +148,7 @@ export function SourcePicker({
   className?: string;
 }) {
   const { doc } = useDesigner();
-  const inputs = readInputs(doc.manifest);
+  const inputs = scalarInputs(readInputs(doc.manifest));
   const options: SelectOption[] = [
     { value: STATIC, label: staticLabel },
     ...inputs.map((i) => ({ value: `in:${i.name}`, label: `Input: ${i.label}` })),

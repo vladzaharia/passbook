@@ -7,7 +7,7 @@ import { applyOp, type Op } from './apply.ts';
 import { fieldSource } from './bindings.ts';
 import { sampleDoc } from './fixtures.ts';
 import { setSlotImage } from './images.ts';
-import { newInput, readInputs } from './inputs.ts';
+import { newInput, readInputs, scalarInputs, writeInputs } from './inputs.ts';
 import { type DesignDoc, fieldsOf, keyOf, styleOf } from './model.ts';
 import { readBarcode } from './ops-more.ts';
 import {
@@ -244,6 +244,27 @@ describe('assets', () => {
     const doc = run(sampleDoc(), { op: 'image', slot: 'logo', asset });
     expect(doc.assets.map((a) => a.name)).toEqual(['icon@3x.png', 'logo@3x.png']);
     expect(run(doc, { op: 'image', slot: 'logo', asset: null }).assets).toHaveLength(1);
+  });
+});
+
+describe('list inputs', () => {
+  it('keeps an array input and its sample untouched when other inputs change', () => {
+    const events = { type: 'array', items: { type: 'object' }, 'x-label': 'Events', 'x-order': 10 };
+    const manifest = {
+      inputs: {
+        type: 'object',
+        properties: { events, name: { type: 'string', 'x-order': 20 } },
+      },
+      sample: { events: [{ name: 'Opening night' }], name: 'Mia' },
+    };
+    const specs = readInputs(manifest);
+    expect(specs.map((s) => s.type)).toEqual(['list', 'text']);
+    expect(scalarInputs(specs).map((s) => s.name)).toEqual(['name']);
+    const next = writeInputs(manifest, [...specs, newInput(specs)]);
+    expect(next.sample).toEqual({ ...manifest.sample, input3: 'Sample' });
+    expect((next.inputs as { properties: Record<string, unknown> }).properties.events).toEqual(
+      events,
+    );
   });
 });
 
