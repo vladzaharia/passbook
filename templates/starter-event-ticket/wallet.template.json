@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "PassBook · Event ticket",
-  "description": "Event ticket with the poster layout and a classic fallback, relevant dates and venue semantics.",
+  "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
   "inputs": {
     "type": "object",
     "required": [
@@ -167,6 +167,83 @@
         "x-order": 51,
         "format": "date-time",
         "x-widget": "datetime"
+      },
+      "upcomingEvents": {
+        "type": "array",
+        "maxItems": 10,
+        "x-label": "Upcoming events",
+        "x-group": "Upcoming events",
+        "x-order": 170,
+        "x-widget": "list",
+        "x-itemLabel": "Event",
+        "x-addLabel": "Add event",
+        "x-help": "Season or series ticket. Wallet lists these on the pass. Past events drop off when the pass is next updated.",
+        "items": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "x-label": "Name",
+              "x-order": 10,
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "startsAt": {
+              "type": "string",
+              "x-label": "Starts",
+              "x-order": 20,
+              "format": "date-time",
+              "x-widget": "datetime"
+            },
+            "endsAt": {
+              "type": "string",
+              "x-label": "Ends",
+              "x-order": 30,
+              "format": "date-time",
+              "x-widget": "datetime"
+            },
+            "venueName": {
+              "type": "string",
+              "x-label": "Venue",
+              "x-order": 40,
+              "maxLength": 80
+            },
+            "venueRegion": {
+              "type": "string",
+              "x-label": "City",
+              "x-order": 50,
+              "maxLength": 80
+            },
+            "note": {
+              "type": "string",
+              "x-label": "Note",
+              "x-order": 60,
+              "maxLength": 200
+            },
+            "website": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "maxLength": 300,
+              "x-label": "Event page",
+              "x-order": 70,
+              "x-widget": "url"
+            },
+            "directionsURL": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "maxLength": 300,
+              "x-label": "Directions link",
+              "x-order": 80,
+              "x-widget": "url"
+            }
+          }
+        }
       }
     },
     "dependentRequired": {
@@ -190,7 +267,30 @@
     "attendee": "Alex Morgan",
     "ticketId": "TICKET-0001",
     "doorsAt": "2030-06-01T18:00:00-07:00",
-    "venueRoom": "Main hall"
+    "venueRoom": "Main hall",
+    "upcomingEvents": [
+      {
+        "name": "Sample Event",
+        "startsAt": "2030-06-01T19:00:00-07:00",
+        "endsAt": "2030-06-01T22:00:00-07:00",
+        "venueName": "Sample Hall",
+        "venueRegion": "Cupertino, CA"
+      },
+      {
+        "name": "Sample Event: Encore",
+        "startsAt": "2030-06-08T19:00:00-07:00",
+        "endsAt": "2030-06-08T22:00:00-07:00",
+        "venueName": "Sample Hall",
+        "venueRegion": "Cupertino, CA",
+        "note": "Doors at 6 PM."
+      },
+      {
+        "name": "Sample Event: Finale",
+        "startsAt": "2030-06-15T19:00:00-07:00",
+        "venueName": "Harbor Arena",
+        "venueRegion": "San Jose, CA"
+      }
+    ]
   },
   "bindings": [
     {
@@ -447,6 +547,14 @@
         "start": "startsAt",
         "end": "endsAt",
         "leadMinutes": 120
+      }
+    },
+    {
+      "use": "upcoming-events",
+      "version": 1,
+      "config": {
+        "input": "upcomingEvents",
+        "timeZoneInput": "venueTimeZone"
       }
     }
   ]

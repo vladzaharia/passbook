@@ -9,6 +9,13 @@
       "messageEncoding": "iso-8859-1"
     }
   ],
+  "beacons": [
+    {
+      "major": 1,
+      "proximityUUID": "8DEEFBB9-F738-4297-8040-96668BB44281",
+      "relevantText": "Welcome back."
+    }
+  ],
   "description": "Store card",
   "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",

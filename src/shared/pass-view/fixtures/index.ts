@@ -121,6 +121,34 @@ export const posterEventTicket: PassJson = {
   ],
 };
 
+/** A series ticket: the poster event ticket plus three upcoming events. Not in `fixtures`. */
+export const seasonTicket: PassJson = {
+  ...posterEventTicket,
+  upcomingPassInformation: [
+    {
+      identifier: 'g1',
+      name: 'Opening night',
+      type: 'event',
+      isActive: true,
+      dateInformation: { date: '2026-10-31T11:00:00-07:00', timeZone: 'America/Los_Angeles' },
+      semantics: { venueName: 'Main Park', venueRegionName: 'Cupertino, CA' },
+    },
+    {
+      identifier: 'g2',
+      name: 'Encore',
+      type: 'event',
+      dateInformation: { date: '2026-11-07T19:30:00-08:00', timeZone: 'America/Los_Angeles' },
+      semantics: { venueName: 'Harbor Arena' },
+    },
+    {
+      identifier: 'g3',
+      name: 'Finale',
+      type: 'event',
+      dateInformation: { isUndetermined: true },
+    },
+  ],
+};
+
 export const boardingPass: PassJson = {
   ...base,
   logoText: 'Air Example',

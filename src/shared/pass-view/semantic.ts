@@ -18,19 +18,19 @@ function validZone(zone: string | undefined): string | undefined {
 }
 
 /**
- * Wallet shows airport times where the airport is, so flights pass the airport's zone; without
- * one the offset written in the value is used. Other dates use the viewer's zone.
+ * The instant and zone a value is shown in. Wallet shows airport and venue times where the place
+ * is, so callers pass its zone; without one the offset written in the value is used. Other dates
+ * use the viewer's zone.
  */
-function when(
+export function placeDate(
   value: unknown,
   ctx: FormatContext,
-  time: boolean,
   place?: { zone?: unknown; local?: boolean },
-): string | undefined {
+): { date: Date; timeZone: string | undefined } | undefined {
   const s = str(value);
   if (!s) return undefined;
-  let d = new Date(s);
-  if (Number.isNaN(d.getTime())) return undefined;
+  let date = new Date(s);
+  if (Number.isNaN(date.getTime())) return undefined;
   let timeZone = ctx.timeZone;
   if (place?.local) {
     const zone = validZone(str(place.zone));
@@ -38,16 +38,27 @@ function when(
     if (zone) timeZone = zone;
     else if (m) {
       const minutes = (Number(m[2]) * 60 + Number(m[3])) * (m[1] === '-' ? -1 : 1);
-      d = new Date(d.getTime() + minutes * 60_000);
+      date = new Date(date.getTime() + minutes * 60_000);
       timeZone = 'UTC';
     }
   }
+  return { date, timeZone };
+}
+
+function when(
+  value: unknown,
+  ctx: FormatContext,
+  time: boolean,
+  place?: { zone?: unknown; local?: boolean },
+): string | undefined {
+  const at = placeDate(value, ctx, place);
+  if (!at) return undefined;
   return new Intl.DateTimeFormat(ctx.locale, {
     month: 'short',
     day: 'numeric',
     ...(time ? { hour: 'numeric', minute: '2-digit' } : { year: 'numeric' }),
-    ...(timeZone ? { timeZone } : {}),
-  }).format(d);
+    ...(at.timeZone ? { timeZone: at.timeZone } : {}),
+  }).format(at.date);
 }
 
 /** The card labels this value "Seat", so a bare seat number carries no prefix of its own. */

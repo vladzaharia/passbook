@@ -5,6 +5,7 @@ import { resolveImages } from './images.ts';
 import { buildLayout, chooseStyle } from './layout.ts';
 import { localize } from './strings.ts';
 import type { LayoutView, PassTarget, PassView } from './types.ts';
+import { upcomingEvents } from './upcoming.ts';
 
 export interface NormalizeOptions {
   /** Asset file name (e.g. `logo@2x.png`, `en.lproj/strip.png`) → URL the browser can load. */
@@ -64,6 +65,7 @@ export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
     ...(eventLogoText ? { eventLogoText } : {}),
     colors: resolveColors(pass),
     images: resolveImages(options.assets, locale),
+    upcoming: upcomingEvents(pass, ctx),
     voided,
     expired,
     invalid: voided ? 'voided' : expired ? 'expired' : null,
