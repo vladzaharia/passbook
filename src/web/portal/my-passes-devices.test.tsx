@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { json, renderApp } from '../lib/test-utils.tsx';
+import { loadBarcodeEngine } from '../pass-card/barcode-engine.ts';
 import { passFixture } from './fixtures.ts';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Version/18.0 Safari/604.1';
@@ -17,6 +18,12 @@ function as(userAgent: string, maxTouchPoints = 0) {
   // jsdom has no maxTouchPoints.
   Object.defineProperty(navigator, 'maxTouchPoints', { value: maxTouchPoints, configurable: true });
 }
+
+// The QR encoder is a lazy chunk. Load it once up front so a QR renders on mount, not after a
+// chunk fetch that races findBy's default wait under load.
+beforeAll(async () => {
+  await loadBarcodeEngine();
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
