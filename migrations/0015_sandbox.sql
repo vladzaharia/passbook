@@ -16,7 +16,7 @@ CREATE TABLE captured_emails (
   attached INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX captured_emails_org ON captured_emails (org_id, created_at DESC, id DESC);
+CREATE INDEX captured_emails_org ON captured_emails (org_id, id DESC);
 CREATE INDEX captured_emails_pass ON captured_emails (pass_id) WHERE pass_id IS NOT NULL;
 CREATE INDEX captured_emails_bundle ON captured_emails (bundle_id) WHERE bundle_id IS NOT NULL;
 CREATE INDEX captured_emails_age ON captured_emails (created_at);

@@ -13,7 +13,7 @@ import {
   Skeleton,
   toast,
 } from '../../ui/index.ts';
-import { previewSrc, useCapturedEmail, useSendToMe } from './queries.ts';
+import { useCapturedEmail, useSendToMe } from './queries.ts';
 
 type Email = z.infer<typeof CapturedEmailDetailSchema>;
 type View = 'html' | 'text';
@@ -59,12 +59,12 @@ function Body({ email, orgName }: { email: Email; orgName: string | undefined })
         </Button>
       </div>
       {view === 'html' ? (
-        // No allow-* tokens: no script, no forms, no popups, no storage. The server's policy adds
-        // the rest. The page behind it is white because email is designed for a light canvas.
+        // No allow-* tokens: no script, no forms, no popups, no storage. The page behind it is
+        // white because email is designed for a light canvas.
         <iframe
           title="Email preview"
           sandbox=""
-          src={previewSrc(email.id)}
+          srcDoc={email.html}
           className="h-[32rem] w-full min-w-0 rounded-md border border-border bg-white"
         />
       ) : (

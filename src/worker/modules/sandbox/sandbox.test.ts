@@ -5,6 +5,7 @@ import {
   CapturedEmailListSchema,
 } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
+import { countQueries } from '../../jobs/query-counter.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
 import { enqueuePassEmail } from '../delivery/service.ts';
@@ -160,28 +161,6 @@ describe('GET /test-inbox', () => {
   });
 });
 
-describe('GET /test-inbox/:id/html', () => {
-  it('serves the message in its own policy, frameable by the admin only', async () => {
-    const { outboxId } = await capture('test', 'frame@example.com');
-    const row = await first<{ id: string }>(
-      kit.env.DB,
-      'SELECT id FROM captured_emails WHERE outbox_id = ?',
-      [outboxId],
-    );
-    const res = await api(`/test-inbox/${row?.id}/html`, { headers: fake.admin() });
-    expect(res.status).toBe(200);
-    expect(res.headers.get('content-type')).toContain('text/html');
-    expect(res.headers.get('x-frame-options')).toBe('SAMEORIGIN');
-    const csp = res.headers.get('content-security-policy') ?? '';
-    expect(csp).toContain('sandbox');
-    expect(csp).not.toContain('script-src');
-    expect(csp).toContain("default-src 'none'");
-    expect(await res.text()).toContain('<');
-    expect((await api(`/test-inbox/${row?.id}/html`, { headers: fake.user() })).status).toBe(403);
-    expect((await api('/test-inbox/missing/html', { headers: fake.admin() })).status).toBe(404);
-  });
-});
-
 describe('POST /test-inbox/:id/send-to-me', () => {
   it('sends to the signed-in admin only, audits it and rate limits', async () => {
     const { outboxId } = await capture('test', 'someone-else@example.com');
@@ -302,5 +281,22 @@ describe('daily purge', () => {
     ).toBeNull();
     await run(kit.env.DB, 'DELETE FROM settings WHERE key = ?', ['sandbox.purgeDays']);
     clearSettingsCache(kit.env.DB);
+  });
+
+  it('stays inside a fixed query count with a backlog', async () => {
+    const old = kit.clock.now() - 40 * DAY;
+    for (let i = 0; i < 90; i++) {
+      const pass = await makePass('test');
+      await run(kit.env.DB, 'UPDATE passes SET created_at = ? WHERE id = ?', [old, pass.id]);
+    }
+    const counter = countQueries(kit.env);
+    await dailySandbox({ ...kit.ctx, env: counter.env });
+    expect(counter.count()).toBeLessThan(400);
+    const left = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) AS n FROM passes WHERE mode = 'test' AND created_at = ?",
+      [old],
+    );
+    expect(left?.n).toBeGreaterThan(0);
   });
 });

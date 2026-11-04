@@ -65,8 +65,8 @@ describe('Test inbox', () => {
     await userEvent.setup().click(screen.getByRole('link', { name: 'Open Your Gym pass' }));
     const frame = await screen.findByTitle('Email preview');
     expect(frame).toHaveAttribute('sandbox', '');
-    expect(frame).toHaveAttribute('src', '/api/v1/test-inbox/e1/html');
-    expect(frame).not.toHaveAttribute('srcdoc');
+    expect(frame).toHaveAttribute('srcdoc');
+    expect(frame).not.toHaveAttribute('src');
     await userEvent.setup().click(screen.getByRole('radio', { name: 'Text' }));
     expect(screen.getByText('Hi there from the pass email.')).toBeInTheDocument();
   });

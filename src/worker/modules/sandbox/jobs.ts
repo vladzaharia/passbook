@@ -9,13 +9,20 @@ import {
 } from './repo.ts';
 
 const DAY_MS = 86_400_000;
-/** Each pass costs about four D1 queries plus one R2 call; a run stays well inside 1,000. */
+/**
+ * Each pass costs about four D1 queries plus one R2 call: at most ~300 for passes, leaving room in
+ * the daily hooks' shared budget. A backlog drains over several days.
+ */
 const PASS_BATCH = 25;
-const MAX_PASS_ROUNDS = 8;
+const MAX_PASS_ROUNDS = 3;
 const ROW_BATCH = 500;
 const MAX_ROW_ROUNDS = 10;
 
-/** Hard-deletes expired test passes through the same row and object removal as pass retention. */
+/**
+ * Hard-deletes expired test passes through the same row and object removal as pass retention.
+ * A test pass already in someone's Wallet is not voided first: voiding costs a publish and a push
+ * per pass, which the daily query budget cannot carry. It stays as it was, without updates.
+ */
 export async function purgeTestPasses(ctx: ServiceContext, before: number): Promise<number> {
   let total = 0;
   for (let round = 0; round < MAX_PASS_ROUNDS; round++) {

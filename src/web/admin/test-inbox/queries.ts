@@ -11,9 +11,6 @@ export const inboxKeys = { all: ['test-inbox'] as const };
 
 const path = (id: string) => `/api/v1/test-inbox/${encodeURIComponent(id)}`;
 
-/** The frame's address: the server answers it with its own policy (no script, inline styles). */
-export const previewSrc = (id: string) => `${path(id)}/html`;
-
 export function useCapturedEmails(orgId: string | undefined) {
   const mode = useMode();
   return useInfiniteQuery({

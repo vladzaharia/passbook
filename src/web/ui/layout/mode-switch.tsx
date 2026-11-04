@@ -1,43 +1,35 @@
-import * as SwitchPrimitive from '@radix-ui/react-switch';
 import { FlaskConical } from 'lucide-react';
 import { cn } from '../../lib/cn.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
-import { TOUCH_HIT } from '../button.tsx';
+import { Switch } from '../switch.tsx';
 import { Tooltip } from '../tooltip.tsx';
 
 /**
- * The Test mode switch in the top bar. A switch, not a button: it holds a state. The label shows
- * from sm; on a phone the flask stands for it.
+ * The Test mode switch in the top bar: the shared Switch, amber while on. The word shows from sm;
+ * on a phone the flask stands for it.
  */
 export function ModeSwitch() {
   const mode = useMode();
   const on = mode === 'test';
   return (
-    <Tooltip content={on ? 'Leave Test mode' : 'Try things without sending anything'}>
-      <SwitchPrimitive.Root
-        checked={on}
-        onCheckedChange={(next) => setMode(next ? 'test' : 'live')}
-        aria-label="Test mode"
+    <Tooltip content={on ? 'Leave Test mode' : 'Try things without sending email'}>
+      <div
         className={cn(
-          'group relative inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium wl-colors',
-          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-          'pointer-coarse:min-h-11',
-          on
-            ? 'border-warning-border bg-warning-subtle text-warning'
-            : 'border-border-strong bg-transparent text-fg-muted hover:bg-state-hover-tint hover:text-fg-strong',
-          TOUCH_HIT,
+          'flex shrink-0 items-center gap-2 rounded-md text-sm font-medium wl-colors',
+          on ? 'text-warning' : 'text-fg-muted',
         )}
       >
         <FlaskConical aria-hidden className="size-4 shrink-0" />
-        <span className="hidden sm:inline">Test mode</span>
-        <span
-          aria-hidden
-          className={cn(
-            'hidden size-2 rounded-full sm:block',
-            on ? 'bg-warning' : 'bg-border-strong',
-          )}
+        <span aria-hidden className="hidden sm:inline">
+          Test mode
+        </span>
+        <Switch
+          checked={on}
+          onCheckedChange={(next) => setMode(next ? 'test' : 'live')}
+          aria-label="Test mode"
+          className="data-[state=checked]:border-warning-border data-[state=checked]:bg-warning"
         />
-      </SwitchPrimitive.Root>
+      </div>
     </Tooltip>
   );
 }

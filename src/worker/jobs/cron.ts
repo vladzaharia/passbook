@@ -34,10 +34,11 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'auth.retention', run: dailyAuth },
     { name: 'audit.retention', run: dailyAudit },
     { name: 'events.retention', run: dailyEvents },
-    { name: 'sandbox.purge', run: dailySandbox },
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
+    // Last: a backlog of test data must never starve the checks above.
+    { name: 'sandbox.purge', run: dailySandbox },
   ],
 };
 

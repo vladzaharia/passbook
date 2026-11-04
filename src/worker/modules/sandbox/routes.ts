@@ -55,20 +55,3 @@ register(
   },
   async (c) => c.json(await sendCapturedToMe(svc(c), actorFor(c), c.req.valid('param').id)),
 );
-
-/**
- * The message as HTML for the admin's preview frame. The frame is sandboxed and this response
- * carries its own policy: inline styles (email is styled inline) and same-origin or data images,
- * no script, no fetch, no framing from anywhere but the admin itself.
- */
-const PREVIEW_CSP =
-  "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; sandbox; frame-ancestors 'self'";
-
-sandboxRoutes.get('/:id/html', async (c) => {
-  const email = await getCapturedEmail(svc(c), c.req.param('id'));
-  return c.html(email.html, 200, {
-    'content-security-policy': PREVIEW_CSP,
-    'x-frame-options': 'SAMEORIGIN',
-    'cache-control': 'no-store',
-  });
-});

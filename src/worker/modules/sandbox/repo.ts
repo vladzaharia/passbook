@@ -46,7 +46,7 @@ export async function insertCaptured(db: D1Database, row: NewCaptured): Promise<
 
 export interface CapturedFilter {
   orgId?: string | undefined;
-  /** Exclusive: the last id of the previous page. */
+  /** Exclusive: the last id of the previous page. Ids are UUIDv7, so id order is time order. */
   cursor?: string | undefined;
   limit: number;
 }
@@ -66,6 +66,7 @@ export function listCaptured(db: D1Database, f: CapturedFilter): Promise<Capture
     where.push('id < ?');
     params.push(f.cursor);
   }
+  // The org index is (org_id, id DESC), so a filtered page reads in index order.
   return all<CapturedRow>(
     db,
     `SELECT ${SUMMARY} FROM captured_emails ${where.length ? `WHERE ${where.join(' AND ')}` : ''}

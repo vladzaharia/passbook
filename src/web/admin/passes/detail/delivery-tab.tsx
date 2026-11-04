@@ -44,6 +44,9 @@ export function deliveryReason(entry: Pick<Entry, 'id' | 'kind'>): string | null
   return null;
 }
 
+/** Mail held in the Test inbox was never sent: neutral, never "Sent". */
+const captured = (e: Entry) => e.state === 'sent' && e.errorCode === 'TEST_MODE';
+
 /** A push with no registered device reached nothing: neutral, never "Sent". */
 const noDevices = (e: Entry) => e.state === 'cancelled' && e.errorCode === 'NO_DEVICES';
 
@@ -180,7 +183,15 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
         id: 'state',
         header: 'State',
         cell: ({ row }) => (
-          <StatusPill status={noDevices(row.original) ? 'no_devices' : row.original.state} />
+          <StatusPill
+            status={
+              noDevices(row.original)
+                ? 'no_devices'
+                : captured(row.original)
+                  ? 'captured'
+                  : row.original.state
+            }
+          />
         ),
       },
       {
@@ -193,7 +204,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
         id: 'error',
         header: 'Error',
         cell: ({ row }) =>
-          row.original.errorCode && !noDevices(row.original) ? (
+          row.original.errorCode && !noDevices(row.original) && !captured(row.original) ? (
             <span className="font-mono text-xs text-fg-muted">{row.original.errorCode}</span>
           ) : (
             <span className="text-fg-subtle">—</span>

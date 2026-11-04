@@ -13,7 +13,7 @@ export function ModeBand() {
     >
       <FlaskConical aria-hidden className="size-3" />
       Test mode
-      <span className="hidden font-normal sm:inline">· Nothing here reaches holders.</span>
+      <span className="hidden font-normal sm:inline">· Emails go to the Test inbox.</span>
     </div>
   );
 }
