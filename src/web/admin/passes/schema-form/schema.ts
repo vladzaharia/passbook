@@ -12,7 +12,8 @@ export type Widget =
   | 'email'
   | 'image'
   | 'password'
-  | 'timezone';
+  | 'timezone'
+  | 'list';
 
 export type FormValues = Record<string, unknown>;
 
@@ -24,7 +25,7 @@ export interface FieldDef {
   group: string;
   order: number;
   widget: Widget;
-  type: 'string' | 'number' | 'integer' | 'boolean';
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'array';
   required: boolean;
   /** Server-applied default, if the schema declares one. */
   hasDefault: boolean;
@@ -32,6 +33,17 @@ export interface FieldDef {
   noneLabel: string;
   options?: { value: string; label: string }[] | undefined;
   schema: Record<string, unknown>;
+  /** `list` widget: the fields of each row, from the schema's `items`. */
+  rows?: ListDef | undefined;
+}
+
+export interface ListDef {
+  fields: FieldDef[];
+  /** Names a row: "Event 2". */
+  itemLabel: string;
+  addLabel: string;
+  min: number;
+  max: number;
 }
 
 export interface FieldGroup {
@@ -52,6 +64,7 @@ const WIDGETS = new Set<string>([
   'image',
   'password',
   'timezone',
+  'list',
 ]);
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -67,12 +80,19 @@ function humanize(key: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+function itemsOf(def: Record<string, unknown>): Record<string, unknown> | undefined {
+  const items = def.items;
+  return isObject(items) && isObject(items.properties) ? items : undefined;
+}
+
 function typeOf(def: Record<string, unknown>): FieldDef['type'] {
+  if (def.type === 'array' && itemsOf(def)) return 'array';
   const t = Array.isArray(def.type) ? def.type.find((x) => x !== 'null') : def.type;
   return t === 'number' || t === 'integer' || t === 'boolean' ? t : 'string';
 }
 
 function widgetOf(def: Record<string, unknown>, type: FieldDef['type']): Widget {
+  if (type === 'array') return 'list';
   if (def['x-timeZone'] === true) return 'timezone';
   const hint = str(def['x-widget']);
   if (hint && WIDGETS.has(hint)) return hint as Widget;
@@ -98,6 +118,19 @@ function optionsOf(def: Record<string, unknown>): FieldDef['options'] {
   });
 }
 
+function listOf(def: Record<string, unknown>, type: FieldDef['type']): ListDef | undefined {
+  const items = itemsOf(def);
+  if (type !== 'array' || !items) return undefined;
+  const itemLabel = str(def['x-itemLabel']) ?? 'Item';
+  return {
+    fields: flatFields(describeSchema(items)),
+    itemLabel,
+    addLabel: str(def['x-addLabel']) ?? `Add ${itemLabel.toLowerCase()}`,
+    min: typeof def.minItems === 'number' ? def.minItems : 0,
+    max: typeof def.maxItems === 'number' ? def.maxItems : 50,
+  };
+}
+
 /** Turns a template input schema into ordered, grouped field definitions. */
 export function describeSchema(schema: unknown): FieldGroup[] {
   if (!isObject(schema) || !isObject(schema.properties)) return [];
@@ -120,6 +153,7 @@ export function describeSchema(schema: unknown): FieldGroup[] {
       hasDefault: 'default' in def && def.default !== undefined,
       options: optionsOf(def),
       schema: def,
+      rows: listOf(def, type),
     });
   }
   const position = new Map(fields.map((f, i) => [f.key, i]));
@@ -143,9 +177,14 @@ export function flatFields(groups: FieldGroup[]): FieldDef[] {
 }
 
 function validateField(field: FieldDef, value: unknown): string | undefined {
-  const empty = value === undefined || value === null || value === '';
+  const empty =
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (field.type === 'array' && Array.isArray(value) && value.length === 0);
   if (empty) return field.required ? 'Required.' : undefined;
   const s = field.schema;
+  if (field.type === 'array') return Array.isArray(value) ? undefined : 'Must be a list.';
   if (field.type === 'boolean') {
     return typeof value === 'boolean' ? undefined : 'Must be true or false.';
   }
@@ -189,15 +228,38 @@ function validateField(field: FieldDef, value: unknown): string | undefined {
   return undefined;
 }
 
-/** Field key to message. Empty when valid. */
+function validateList(field: FieldDef, value: unknown, errors: Record<string, string>): void {
+  const rows = field.rows;
+  if (!rows || !Array.isArray(value)) return;
+  if (value.length < rows.min && value.length > 0) errors[field.key] = `Add at least ${rows.min}.`;
+  if (value.length > rows.max) errors[field.key] = `At most ${rows.max}.`;
+  value.forEach((row, i) => {
+    const record = isObject(row) ? row : {};
+    for (const sub of rows.fields) {
+      const message = validateField(sub, record[sub.key]);
+      if (message) errors[rowErrorKey(field.key, i, sub.key)] = message;
+    }
+  });
+}
+
+/** Where a list row's error lives: `events.2.name`. */
+export function rowErrorKey(list: string, index: number, field: string): string {
+  return `${list}.${index}.${field}`;
+}
+
+/** Field key to message; list rows use `list.index.field`. Empty when valid. */
 export function validateValues(schema: unknown, values: FormValues): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const field of flatFields(describeSchema(schema))) {
     const message = validateField(field, values[field.key]);
     if (message) errors[field.key] = message;
+    else if (field.type === 'array') validateList(field, values[field.key], errors);
   }
   return errors;
 }
+
+const sortKeys = (v: FormValues): FormValues =>
+  Object.fromEntries(Object.entries(v).sort(([x], [y]) => (x < y ? -1 : 1)));
 
 /** Drops empty values so optional fields are omitted from the request. */
 export function cleanValues(values: FormValues): FormValues {
@@ -205,6 +267,13 @@ export function cleanValues(values: FormValues): FormValues {
   for (const [key, value] of Object.entries(values)) {
     if (value === undefined || value === null || value === '') continue;
     if (typeof value === 'number' && Number.isNaN(value)) continue;
+    if (Array.isArray(value)) {
+      const rows = value
+        .map((row) => (isObject(row) ? sortKeys(cleanValues(row)) : row))
+        .filter((row) => !isObject(row) || Object.keys(row).length > 0);
+      if (rows.length > 0) out[key] = rows;
+      continue;
+    }
     out[key] = value;
   }
   return out;

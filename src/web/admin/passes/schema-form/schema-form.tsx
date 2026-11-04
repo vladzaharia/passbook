@@ -13,7 +13,8 @@ import {
   FormSpan,
   Tooltip,
 } from '../../../ui/index.ts';
-import { Control } from './controls.tsx';
+import { Control, WIDE_WIDGETS } from './controls.tsx';
+import { ListInput } from './list-input.tsx';
 import { locationPairs } from './location.ts';
 import { LocationInput } from './location-input.tsx';
 import { describeSchema, type FormValues, validateValues } from './schema.ts';
@@ -73,6 +74,16 @@ export function SchemaForm({
   const zoneValue = zoneKey ? value[zoneKey] : undefined;
   const formZone = typeof zoneValue === 'string' && zoneValue ? zoneValue : undefined;
   const errors = useMemo(() => validateValues(schema, value), [schema, value]);
+  // The server names a list row's field `events/0/name`; rows here use dots.
+  const server = useMemo(
+    () =>
+      serverErrors
+        ? Object.fromEntries(
+            Object.entries(serverErrors).map(([k, v]) => [k.replace(/\//g, '.'), v]),
+          )
+        : undefined,
+    [serverErrors],
+  );
 
   if (groups.length === 0)
     return <p className="text-sm text-fg-muted">This template has no inputs.</p>;
@@ -101,10 +112,26 @@ export function SchemaForm({
           <FormGrid>
             {visible.map((field) => {
               const error =
-                serverErrors?.[field.key] ??
+                server?.[field.key] ??
                 (showAllErrors || touched.has(field.key) ? errors[field.key] : undefined);
               const owned = fieldSources?.[field.key] === 'connection';
-              const wide = WIDE.has(field.widget);
+              const wide = WIDE_WIDGETS.has(field.widget);
+              if (field.widget === 'list')
+                return (
+                  <FormSpan key={field.key} full>
+                    <ListInput
+                      field={field}
+                      value={value[field.key]}
+                      onValue={(rows) => patch({ [field.key]: rows })}
+                      errors={errors}
+                      serverErrors={server}
+                      showAllErrors={showAllErrors || touched.has(field.key)}
+                      disabled={disabled || owned}
+                      maxImageBytes={maxImageBytes}
+                      zone={formZone}
+                    />
+                  </FormSpan>
+                );
               return (
                 <FormSpan key={field.key} full={wide}>
                   <FormField
@@ -155,7 +182,7 @@ export function SchemaForm({
                 value={value}
                 onChange={patch}
                 disabled={disabled || fieldSources?.[pair.lat.key] === 'connection'}
-                serverError={serverErrors?.[pair.lat.key] ?? serverErrors?.[pair.lng.key]}
+                serverError={server?.[pair.lat.key] ?? server?.[pair.lng.key]}
               />
             ))}
           </FormGrid>
@@ -186,8 +213,6 @@ export function SchemaForm({
     </div>
   );
 }
-
-const WIDE = new Set(['textarea', 'image', 'datetime', 'url']);
 
 /** "From MemberSpot sync": the connection owns this field; edit it in the source. */
 function SourceChip({ name }: { name?: string | undefined }) {

@@ -6,6 +6,15 @@ import type { FieldDef } from './schema.ts';
 
 const NONE = '__none__';
 
+/** Widgets that take the full width of their grid. */
+export const WIDE_WIDGETS: ReadonlySet<string> = new Set([
+  'textarea',
+  'image',
+  'datetime',
+  'url',
+  'list',
+]);
+
 function readDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
