@@ -73,7 +73,9 @@ describe('GET /p/:token', () => {
     expect(unsafe).not.toContain('javascript:');
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
     clearSettingsCache(kit.env.DB);
-    expect(await (await get(`/p/${pass.downloadToken}`)).text()).not.toContain('Help: ');
+    const fallback = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(fallback).toContain('href="mailto:support@passbook.mobile"');
+    expect(fallback).not.toContain('gym.test');
   });
 
   it('sets the privacy headers and a nonce that matches the inline style', async () => {

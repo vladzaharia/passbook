@@ -174,6 +174,20 @@ Admin sign-in for when Pocket ID is down.
   break-glass. `--allow-no-oidc` only matters for a placeholder `OIDC_CLIENT_ID`.
 - Keep the token offline (password manager). Rotate it after any use you did not expect.
 
+## PassBook support
+
+`vars.SUPPORT_EMAIL` in `wrangler.jsonc` (`support@passbook.mobile`) is the one address for PassBook's
+own support. `npm run predeploy` refuses an empty or invalid value. It appears as:
+
+- the "Pass service" back field on every pass ("PassBook · support@passbook.mobile" and the site);
+- the support line on the holder pass page, the pass email's "Questions:" line and the voided
+  note, for an org that has no support email or URL of its own (org settings win).
+
+The Worker does not receive mail. In Cloudflare, Email Routing on `passbook.mobile` needs
+`support@passbook.mobile` as a custom address that forwards to the owner's inbox, with the
+destination verified. Changing the address is an edit to `SUPPORT_EMAIL` and a deploy. Issued
+passes keep the old one until a template change or Identities, Re-sign all rebuilds them.
+
 ## Day two
 
 - **Migrations**: `npm run deploy` handles them. Manual: `npx wrangler d1 time-travel info wallet-platform`,
@@ -197,3 +211,11 @@ Admin sign-in for when Pocket ID is down.
 - **Placement**: default. `placement: smart` needs a latency comparison against D1 from production Observability data; none exists before launch. Revisit after a week of traffic.
 - **Worker-first paths** (`assets.run_worker_first`): every path runs the Worker first, so the host policy sees every page visit, except the files `public/` ships (negated entries). The Worker serves the SPA's pages from `ASSETS` unchanged (`public/_headers` applies), keeps `/api`, `/auth`, `/wallet`, `/p`, `/hooks`, `/health` and `/assets` to itself, and answers an unknown file-like path (`/foo.js`, or a missing hashed chunk that would otherwise be cached immutable as the SPA page) with a 404. Add a file to `public/` and its negated entry in `wrangler.jsonc` together; `tools/wrangler-config.test.ts` fails when they differ. Vite's dev paths (`/src/*`, `/@vite/*`, …) are added only in dev, by `vite.config.ts`. The cost is one invocation per page view.
 - **Baked template sync**: runs from the minute cron after a version change; the first template request still checks lazily as a fallback.
+- **Passes follow their template**: when a template's active version changes (deploy of a baked
+  template, import, activation, rollback), the minute cron (`passes.stale_reissue`, next to the
+  branding reissue) waits for it to be quiet for a minute, then starts one `BulkReissue` for the
+  template's live passes. Voided passes stay. Each active version is queued once
+  (`templates.reissued_version`). A pass whose fields no longer fit the new version stays on its
+  version, is logged (`bulk_reissue.pass_failed`, with the error code), counts in the run's
+  `PARTIAL_FAILURE` on Status, and shows as "could not update" on the template page. Upload a fixed
+  version to move it on.

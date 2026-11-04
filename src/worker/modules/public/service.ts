@@ -1,8 +1,8 @@
-import { platformSupportEmail } from '../../platform/support.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { safeMail, safeUrl } from '../../email/safe.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { platformSupportEmail } from '../../platform/support.ts';
 import { orgBranding } from '../delivery/repo.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
