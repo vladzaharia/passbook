@@ -29,6 +29,8 @@ const manifest = (messaging: boolean): TemplateManifest => ({
       memberName: { type: 'string', minLength: 1 },
       gate: { type: 'string', maxLength: 20 },
       message: { type: 'string', maxLength: 256 },
+      // Bound to nothing: changing it never changes the rendered pass.
+      note: { type: 'string', maxLength: 40 },
     },
   },
   sample: { memberName: 'Alex Morgan' },

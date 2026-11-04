@@ -165,6 +165,14 @@ export const dueBroadcasts = (db: D1Database, now: number, limit: number) =>
     [now, limit],
   );
 
+/** Broadcasts that have been sending since before `before`: a workflow may have died under them. */
+export const sendingSince = (db: D1Database, before: number, limit: number) =>
+  all<BroadcastRow>(
+    db,
+    `SELECT * FROM broadcasts WHERE state = 'sending' AND started_at < ? ORDER BY started_at LIMIT ?`,
+    [before, limit],
+  );
+
 export const setTargeted = (db: D1Database, id: string, targeted: number) =>
   run(db, 'UPDATE broadcasts SET targeted = ? WHERE id = ?', [targeted, id]);
 
@@ -225,12 +233,21 @@ export const countItems = (db: D1Database, broadcastIds: readonly string[]) =>
         [...broadcastIds],
       );
 
+/** Active, unremoved passes whose current version has not expired. SQLite reads ISO offsets. */
+function targetWhere(filter: PassListFilter, now: number) {
+  const { where, params } = passFilterSql({ ...filter, excludeRemoved: true, status: 'active' });
+  where.push(`NOT COALESCE((SELECT unixepoch(json_extract(v.pass_json, '$.expirationDate')) * 1000 <= ?
+      FROM pass_versions v WHERE v.pass_id = passes.id ORDER BY v.version DESC LIMIT 1), 0)`);
+  return { where, params: [...params, now] };
+}
+
 /** One page of target pass ids, newest first, after `cursor`. */
 export async function targetPage(
   db: D1Database,
   filter: PassListFilter,
+  now: number,
 ): Promise<{ ids: string[]; nextCursor: string | null }> {
-  const { where, params } = passFilterSql({ ...filter, excludeRemoved: true, status: 'active' });
+  const { where, params } = targetWhere(filter, now);
   const rows = await all<{ id: string }>(
     db,
     `SELECT id FROM passes WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
@@ -246,14 +263,15 @@ export interface TargetCounts {
   overBudget: number;
 }
 
-/** How many active passes a target matches, how many sit on a device, how many are at the limit. */
+/** How many live, unexpired passes a target matches, how many sit on a device, how many are at the limit. */
 export async function countTarget(
   db: D1Database,
   filter: PassListFilter,
+  now: number,
   since: number,
   limit: number,
 ): Promise<TargetCounts> {
-  const { where, params } = passFilterSql({ ...filter, excludeRemoved: true, status: 'active' });
+  const { where, params } = targetWhere(filter, now);
   const row = await first<TargetCounts>(
     db,
     `SELECT COUNT(*) AS targeted,
@@ -266,8 +284,12 @@ export async function countTarget(
   return row ?? { targeted: 0, onDevice: 0, overBudget: 0 };
 }
 
-export async function countTargeted(db: D1Database, filter: PassListFilter): Promise<number> {
-  const { where, params } = passFilterSql({ ...filter, excludeRemoved: true, status: 'active' });
+export async function countTargeted(
+  db: D1Database,
+  filter: PassListFilter,
+  now: number,
+): Promise<number> {
+  const { where, params } = targetWhere(filter, now);
   const row = await first<{ n: number }>(
     db,
     `SELECT COUNT(*) AS n FROM passes WHERE ${where.join(' AND ')}`,
@@ -275,3 +297,13 @@ export async function countTargeted(db: D1Database, filter: PassListFilter): Pro
   );
   return row?.n ?? 0;
 }
+
+/** The clearing follow-up of each broadcast that has one. */
+export const followUpsOf = (db: D1Database, parentIds: readonly string[]) =>
+  parentIds.length === 0
+    ? Promise.resolve([] as { id: string; parent_id: string; at: number | null }[])
+    : all<{ id: string; parent_id: string; at: number | null }>(
+        db,
+        `SELECT id, parent_id, at FROM broadcasts WHERE parent_id IN (${placeholders(parentIds.length)})`,
+        [...parentIds],
+      );

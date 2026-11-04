@@ -77,6 +77,15 @@ export function useBroadcastActions() {
         await done();
       },
     }),
+    /** Sends a draft now (no `at`) or at a time. */
+    send: useMutation({
+      mutationFn: ({ id, at }: { id: string; at?: number | undefined }) =>
+        api.post(`/api/v1/broadcasts/${id}/send`, BroadcastSchema, at === undefined ? {} : { at }),
+      onSuccess: async (made) => {
+        qc.setQueryData(broadcastKeys.detail(made.id), made);
+        await done();
+      },
+    }),
     cancel: useMutation({
       mutationFn: (id: string) => api.post(`/api/v1/broadcasts/${id}/cancel`, BroadcastSchema),
       onSuccess: done,

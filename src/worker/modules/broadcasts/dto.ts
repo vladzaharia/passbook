@@ -21,7 +21,12 @@ export function countsOf(row: BroadcastRow, items: readonly CountRow[]): Broadca
   return counts;
 }
 
-export function toDto(row: BroadcastRow, items: readonly CountRow[]): BroadcastDto {
+export function toDto(
+  row: BroadcastRow,
+  items: readonly CountRow[],
+  followUps: readonly { id: string; parent_id: string; at: number | null }[] = [],
+): BroadcastDto {
+  const followUp = followUps.find((f) => f.parent_id === row.id);
   return {
     id: row.id,
     orgId: row.org_id,
@@ -35,6 +40,7 @@ export function toDto(row: BroadcastRow, items: readonly CountRow[]): BroadcastD
     at: row.at,
     clearAfter: row.clear_after,
     parentId: row.parent_id,
+    followUp: followUp ? { id: followUp.id, at: followUp.at } : null,
     counts: countsOf(row, items),
     errorCode: row.error_code,
     createdAt: row.created_at,

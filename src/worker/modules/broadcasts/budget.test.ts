@@ -3,7 +3,7 @@ import { all } from '../../platform/db.ts';
 import { pushBudgetOf } from '../passes/change-messages.ts';
 import { getPassDetail } from '../passes/detail.ts';
 import { publishPass } from '../passes/publish.ts';
-import { currentPassJson } from '../passes/repo.ts';
+import { currentPassJson, getPass } from '../passes/repo.ts';
 import { type BroadcastKit, broadcastKit } from './test-kit.ts';
 
 let kit: BroadcastKit;
@@ -79,5 +79,44 @@ describe('push budget', () => {
     expect(again.changed).toBe(false);
     expect(await updates(pass.id)).toHaveLength(before.length);
     expect(await queued()).toHaveLength(pushes);
+  });
+
+  it('stores an input change that renders the same pass without a version or a push', async () => {
+    const pass = await kit.makePass({ gate: 'D1' });
+    const pushes = () =>
+      all<{ id: string }>(
+        kit.env.DB,
+        `SELECT id FROM pass_events WHERE pass_id = ? AND kind IN ('push.queued', 'pass.updated')`,
+        [pass.id],
+      );
+    const before = await pushes();
+    const versions = (await getPass(kit.env.DB, pass.id, null))?.version;
+    // {} -> {message: ''} renders as before: the field is removed when empty.
+    const cleared = await publishPass(kit.ctx, {
+      passId: pass.id,
+      cause: 'admin',
+      actor,
+      notify: false,
+      mutate: (p) => ({ personalization: { ...p.personalization, message: '' } }),
+    });
+    // An input the template never renders.
+    const note = await publishPass(kit.ctx, {
+      passId: pass.id,
+      cause: 'admin',
+      actor,
+      notify: true,
+      mutate: (p) => ({ personalization: { ...p.personalization, note: 'hello' } }),
+    });
+    expect([cleared.changed, note.changed]).toEqual([false, false]);
+    expect(await pushes()).toHaveLength(before.length);
+    const row = await getPass(kit.env.DB, pass.id, null);
+    expect(row?.personalization).toMatchObject({ message: '', note: 'hello' });
+    const versionRows = await all<{ version: number }>(
+      kit.env.DB,
+      'SELECT version FROM pass_versions WHERE pass_id = ?',
+      [pass.id],
+    );
+    expect(versionRows).toHaveLength(1);
+    expect(row?.version).toBeGreaterThanOrEqual(versions ?? 0);
   });
 });

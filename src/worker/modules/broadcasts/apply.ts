@@ -134,10 +134,11 @@ export async function applyChunk(
   ctx: ServiceContext,
   broadcastId: string,
   cursor: string | null,
+  chunk = CHUNK,
 ): Promise<{ nextCursor: string | null }> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (row?.state !== 'sending') return { nextCursor: null };
-  const page = await targetPage(ctx.env.DB, targetFilter(row, cursor, CHUNK));
+  const page = await targetPage(ctx.env.DB, targetFilter(row, cursor, chunk), ctx.clock.now());
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();
   let updated = 0;

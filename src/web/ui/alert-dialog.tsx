@@ -21,6 +21,10 @@ export interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  /** Greys out the confirm button, for a dialog still waiting on what it confirms. */
+  confirmDisabled?: boolean;
+  /** Shows only the cancel button, for a dialog with nothing to confirm. */
+  hideConfirm?: boolean;
   /** May be async; the dialog stays open and shows loading until it settles. */
   onConfirm: () => void | Promise<void>;
 }
@@ -34,6 +38,8 @@ export function ConfirmDialog({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   destructive,
+  confirmDisabled,
+  hideConfirm,
   onConfirm,
 }: ConfirmDialogProps) {
   const [busy, setBusy] = useState(false);
@@ -85,9 +91,16 @@ export function ConfirmDialog({
             <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
               {cancelLabel}
             </Button>
-            <Button variant={destructive ? 'danger' : 'primary'} loading={busy} onClick={confirm}>
-              {confirmLabel}
-            </Button>
+            {hideConfirm ? null : (
+              <Button
+                variant={destructive ? 'danger' : 'primary'}
+                loading={busy}
+                disabled={confirmDisabled}
+                onClick={confirm}
+              >
+                {confirmLabel}
+              </Button>
+            )}
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

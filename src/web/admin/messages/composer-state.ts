@@ -70,7 +70,9 @@ export function bodyOf(
   const patch =
     s.kind === 'message'
       ? { message: s.clearing ? '' : s.message.trim() }
-      : Object.fromEntries(s.fields.map((key) => [key, s.values[key] ?? '']));
+      : Object.fromEntries(
+          s.fields.flatMap((key) => (s.values[key] === undefined ? [] : [[key, s.values[key]]])),
+        );
   return {
     orgId,
     kind: s.kind,

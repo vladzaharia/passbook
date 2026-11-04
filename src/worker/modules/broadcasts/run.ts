@@ -24,7 +24,7 @@ export async function startedBroadcast(
   await setTargeted(
     ctx.env.DB,
     broadcastId,
-    await countTargeted(ctx.env.DB, targetFilter(row, null, 1)),
+    await countTargeted(ctx.env.DB, targetFilter(row, null, 1), ctx.clock.now()),
   );
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());
   return true;

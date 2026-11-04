@@ -1,3 +1,4 @@
+import { checkInput } from '../../../passkit/template/manifest.ts';
 import type {
   BroadcastDto,
   BroadcastPreviewDto,
@@ -46,6 +47,16 @@ async function checkTemplates(ctx: ServiceContext, body: CreateBroadcastBody): P
         `${manifest.name} has no input "${unknown}".`,
         [{ path: `patch.${unknown}`, message: 'Unknown input.' }],
         'BROADCAST_UNKNOWN_INPUT',
+      );
+    // Only the keys the change sets are checked; the rest of the input is each pass's own.
+    const bad = checkInput(manifest, body.patch).find((issue) =>
+      Object.hasOwn(body.patch, issue.path?.split('/')[0] ?? ''),
+    );
+    if (bad)
+      throw new ValidationError(
+        `${manifest.name}: ${bad.path} ${bad.message}`,
+        [{ path: `patch.${bad.path}`, message: bad.message }],
+        'BROADCAST_INVALID_INPUT',
       );
   }
 }
@@ -165,7 +176,11 @@ export async function getBroadcastDto(
   orgScope: string | null,
 ): Promise<BroadcastDto> {
   const row = await requireBroadcast(ctx, id, orgScope);
-  return toDto(row, await repo.countItems(ctx.env.DB, [id]));
+  return toDto(
+    row,
+    await repo.countItems(ctx.env.DB, [id]),
+    await repo.followUpsOf(ctx.env.DB, [id]),
+  );
 }
 
 export async function listBroadcastDtos(
@@ -177,7 +192,11 @@ export async function listBroadcastDtos(
     ctx.env.DB,
     rows.map((r) => r.id),
   );
-  return { items: rows.map((r) => toDto(r, counts)), nextCursor };
+  const followUps = await repo.followUpsOf(
+    ctx.env.DB,
+    rows.map((r) => r.id),
+  );
+  return { items: rows.map((r) => toDto(r, counts, followUps)), nextCursor };
 }
 
 /** The live count behind the composer: matches, on-device and already at the daily limit. */
@@ -192,6 +211,7 @@ export async function previewTarget(
   const counts = await repo.countTarget(
     ctx.env.DB,
     filter,
+    ctx.clock.now(),
     ctx.clock.now() - BUDGET_WINDOW_MS,
     limit,
   );

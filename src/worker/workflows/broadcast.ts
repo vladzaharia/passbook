@@ -22,11 +22,11 @@ export async function runBroadcast(
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'broadcast', instanceId, broadcastId: params.broadcastId },
   });
-  const started = await step.do('start', () =>
-    startedBroadcast(ctx, instanceId, params.broadcastId),
-  );
-  if (!started) return { state: 'skipped' };
   try {
+    const started = await step.do('start', () =>
+      startedBroadcast(ctx, instanceId, params.broadcastId),
+    );
+    if (!started) return { state: 'skipped' };
     let cursor: string | null = null;
     for (let n = 0; n < MAX_CHUNKS; n++) {
       const from: string | null = cursor;

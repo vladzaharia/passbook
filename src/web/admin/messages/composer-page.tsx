@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useDebounced } from '../../lib/debounce.ts';
 import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
@@ -53,7 +54,8 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
   );
   const details = useTemplateDetails(usable);
   const chosen = state.templateIds.flatMap((id) => details.get(id) ?? []);
-  const count = useAudienceCount(orgId, targetOf(state));
+  const settledQ = useDebounced(state.q);
+  const count = useAudienceCount(orgId, targetOf({ ...state, q: settledQ }));
   const actions = useBroadcastActions();
   const [ask, setAsk] = useState(false);
   const [sent, setSent] = useState(false);
@@ -89,7 +91,15 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
     });
   };
   const send = state.when === 'later' ? 'schedule' : 'now';
+  // A count for an older audience (while the search settles or reloads) is not the count to confirm.
+  const counted = count.data !== undefined && !count.isPlaceholderData && settledQ === state.q;
   const targeted = count.data?.targeted ?? 0;
+  const noCount = count.isError && count.data === undefined;
+  const nothing = counted || noCount;
+  const canDraft =
+    Boolean(orgId) &&
+    state.templateIds.length > 0 &&
+    (state.kind === 'message' ? state.clearing || Boolean(text) : state.fields.length > 0);
   const quiet = !state.notify || state.clearing || (state.kind === 'message' && !text);
   const title = state.kind === 'message' ? 'New message' : 'New scheduled change';
 
@@ -193,7 +203,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
             <Button
               type="button"
               variant="outline"
-              disabled={!orgId || state.templateIds.length === 0}
+              disabled={!canDraft}
               onClick={() =>
                 void submit('draft').catch((e: unknown) => toast.error(e, 'Could not save'))
               }
@@ -214,22 +224,33 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
         open={ask}
         onOpenChange={setAsk}
         title={
-          targeted === 0
-            ? 'No passes match'
-            : state.when === 'later'
-              ? `Schedule for ${formatCount(targeted)} ${targeted === 1 ? 'pass' : 'passes'}?`
-              : `Send to ${formatCount(targeted)} ${targeted === 1 ? 'pass' : 'passes'}?`
+          noCount
+            ? 'Could not count the passes'
+            : !counted
+              ? 'Counting passes'
+              : targeted === 0
+                ? 'No passes match'
+                : state.when === 'later'
+                  ? `Schedule for ${formatCount(targeted)} ${targeted === 1 ? 'pass' : 'passes'}?`
+                  : `Send to ${formatCount(targeted)} ${targeted === 1 ? 'pass' : 'passes'}?`
         }
         description={
-          targeted === 0
-            ? 'Change the audience first.'
-            : state.when === 'later' && at !== undefined
-              ? `Goes out ${formatDateTime(at)}. You can cancel until then.`
-              : quiet
-                ? 'The passes update without a notification.'
-                : 'Holders are notified at once.'
+          noCount
+            ? 'Close this and try again.'
+            : !counted
+              ? 'One moment.'
+              : targeted === 0
+                ? 'Change the audience first.'
+                : state.when === 'later' && at !== undefined
+                  ? `Goes out ${formatDateTime(at)}. You can cancel until then.`
+                  : quiet
+                    ? 'The passes update without a notification.'
+                    : 'Holders are notified at once.'
         }
         confirmLabel={state.when === 'later' ? 'Schedule' : 'Send'}
+        confirmDisabled={!counted}
+        hideConfirm={nothing && targeted === 0}
+        cancelLabel={nothing && targeted === 0 ? 'Close' : 'Cancel'}
         onConfirm={async () => {
           if (targeted === 0) return;
           await submit(send);

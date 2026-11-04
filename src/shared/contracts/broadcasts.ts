@@ -70,6 +70,8 @@ export const BroadcastSchema = z.object({
   clearAfter: z.number().int().positive().nullable(),
   /** Set on the follow-up that clears another broadcast's message. */
   parentId: IdSchema.nullable(),
+  /** The follow-up that clears this message, once the send has finished. */
+  followUp: z.object({ id: IdSchema, at: TimestampSchema.nullable() }).nullable(),
   counts: BroadcastCountsSchema,
   errorCode: z.string().nullable(),
   createdAt: TimestampSchema,

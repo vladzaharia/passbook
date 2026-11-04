@@ -40,15 +40,10 @@ const dto = async (res: Response) => BroadcastSchema.parse(await res.json());
 const code = async (res: Response) => ((await res.json()) as { code: string }).code;
 
 type Step = Parameters<typeof runBroadcast>[3];
-const step = {
-  do: async (_n: string, a: unknown, b?: unknown) =>
-    (typeof a === 'function' ? a : b) as () => Promise<unknown>,
-} as unknown as Step;
 const stepRun: Step = {
   do: async (_n: string, a: unknown, b?: unknown) =>
     await ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
 } as unknown as Step;
-void step;
 
 /** Creates a broadcast and runs its Workflow instance inline. */
 async function sendNow(body: Record<string, unknown>, headers: Headers = fake.admin()) {
@@ -289,6 +284,17 @@ describe('validation', () => {
     expect(event).not.toBeNull();
   });
 
+  it('rejects a change value the input schema refuses', async () => {
+    const res = await post('/broadcasts', fake.admin(), {
+      orgId: kit.org.id,
+      kind: 'change',
+      target: { templateIds: [kit.messaging.id] },
+      patch: { gate: 'x'.repeat(30) },
+    });
+    expect(res.status).toBe(422);
+    expect(await code(res)).toBe('BROADCAST_INVALID_INPUT');
+  });
+
   it('keeps a message under 256 characters', async () => {
     expect((await post('/broadcasts', fake.admin(), message('x'.repeat(257)))).status).toBe(422);
   });
@@ -347,6 +353,25 @@ describe('tenant, mode and scope isolation', () => {
       ).json()) as { targeted: number };
     expect((await count(testAdmin)).targeted).toBe(1);
     expect(testPass.mode).toBe('test');
+  });
+
+  it('a change also needs passes:write', async () => {
+    const change = {
+      orgId: kit.org.id,
+      kind: 'change',
+      target: { templateIds: [kit.messaging.id] },
+      patch: { gate: 'Z1' },
+    };
+    const only = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    const denied = await post('/broadcasts', only, change);
+    expect(denied.status).toBe(403);
+    expect(await code(denied)).toBe('MISSING_SCOPE');
+    const both = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write', 'passes:write'] });
+    const draft = await dto(await post('/broadcasts', both, { ...change, send: 'draft' }));
+    expect(
+      (await post(`/broadcasts/${draft.id}/send`, only, { at: kit.clock.now() + 60_000 })).status,
+    ).toBe(403);
+    expect((await post(`/broadcasts/${draft.id}/cancel`, only)).status).toBe(200);
   });
 
   it('needs the messages:write scope', async () => {

@@ -132,13 +132,11 @@ export async function publishPass(
       current.contentHash !== null
         ? current.contentHash === artifact.contentHash
         : next.templateVersion === current.templateVersion && previousJson === passJson;
-    const identical =
-      !options.force &&
-      next.status === current.status &&
-      sameJson(next.personalization, current.personalization) &&
-      sameContent;
+    const identical = !options.force && next.status === current.status && sameContent;
     if (identical) {
+      // Input changes that render the same pass are stored without a version or a push.
       const metaChanged =
+        !sameJson(next.personalization, current.personalization) ||
         !sameJson(next.fieldSources, current.fieldSources) ||
         next.externalId !== current.externalId ||
         next.templateVersion !== current.templateVersion ||
@@ -146,6 +144,7 @@ export async function publishPass(
         current.scanCode === null;
       if (!metaChanged) return { pass: current, changed: false };
       const written = await casMeta(db, current.id, current.version, {
+        personalization: next.personalization,
         fieldSources: next.fieldSources,
         externalId: next.externalId,
         templateVersion: next.templateVersion,

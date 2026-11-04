@@ -1,6 +1,7 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { startRun } from '../../platform/workflow-runs.ts';
-import { type BroadcastRow, casState, dueBroadcasts } from './repo.ts';
+import { type BroadcastRow, casState, dueBroadcasts, sendingSince } from './repo.ts';
+import { finishBroadcast } from './run.ts';
 
 export interface BroadcastParams {
   broadcastId: string;
@@ -43,12 +44,45 @@ export async function launchBroadcast(
       await ctx.env.BROADCAST.create({ id: instanceId, params: { broadcastId: row.id } });
     } catch (error) {
       if (!alreadyExists(error)) throw error;
+      // An earlier attempt created it. If that run already ended, nothing will finish this one.
+      if (await instanceEnded(ctx, instanceId)) {
+        await finishBroadcast(ctx, instanceId, row.id, 'BROADCAST_FAILED');
+        return false;
+      }
     }
     return true;
   } catch (error) {
     ctx.log.error('broadcast.start_failed', { broadcastId: row.id, code: 'WORKFLOW_START', error });
     await casState(db, row.id, ['sending'], 'scheduled');
     return false;
+  }
+}
+
+const ENDED = ['complete', 'errored', 'terminated'];
+
+/** True when the Workflow instance is gone or has ended. A lookup that fails counts as running. */
+async function instanceEnded(ctx: ServiceContext, instanceId: string): Promise<boolean> {
+  try {
+    const status = await (await ctx.env.BROADCAST.get(instanceId)).status();
+    return ENDED.includes(status.status);
+  } catch (error) {
+    if (error instanceof Error && /not.?found/i.test(error.message)) return true;
+    ctx.log.warn('broadcast.status_unknown', { instanceId, code: 'WORKFLOW_STATUS', error });
+    return false;
+  }
+}
+
+/** Sending for this long without an end: the instance is checked, and a dead one fails the send. */
+const STUCK_AFTER_MS = 5 * 60_000;
+
+/** Minute cron: fails broadcasts whose Workflow ended without settling them. */
+export async function failStuckBroadcasts(ctx: ServiceContext): Promise<void> {
+  const stuck = await sendingSince(ctx.env.DB, ctx.clock.now() - STUCK_AFTER_MS, DUE_BATCH);
+  for (const row of stuck) {
+    const instanceId = instanceIdOf(row.id);
+    if (!(await instanceEnded(ctx, instanceId))) continue;
+    ctx.log.error('broadcast.stuck', { broadcastId: row.id, code: 'BROADCAST_STUCK' });
+    await finishBroadcast(ctx, instanceId, row.id, 'BROADCAST_FAILED');
   }
 }
 

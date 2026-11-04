@@ -157,7 +157,7 @@ export function ChangeSection({
       ) : null}
       <SwitchRow
         label="Notify holders"
-        help="A changed field with a message in the template shows it. A pass allowed no more notifications today updates quietly."
+        help="Holders get a notification for each field that changes. A pass allowed no more notifications today updates quietly."
         checked={state.notify}
         onCheckedChange={(notify) => onChange({ notify })}
       />

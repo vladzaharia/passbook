@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Ban } from 'lucide-react';
+import { Ban, RotateCcw, Send } from 'lucide-react';
 import { useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
 import { cancelBroadcastConfirm } from '../../lib/confirms.ts';
@@ -22,10 +22,11 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
-import { useBroadcast, useBroadcastActions } from './api.ts';
+import { type NewBroadcast, useBroadcast, useBroadcastActions } from './api.ts';
 import { clearLabel, KIND_LABEL, messageText, whenLine } from './labels.ts';
 import { LockScreenNotice } from './lock-screen.tsx';
 import { BroadcastProgress } from './progress.tsx';
+import { SendDialog } from './send-dialog.tsx';
 
 const CRUMBS = [{ label: 'Messages', to: '/admin/messages' }];
 
@@ -73,10 +74,11 @@ function Counts({ b }: { b: BroadcastDto }) {
 export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
   const navigate = useNavigate();
   const query = useBroadcast(broadcastId);
-  const { cancel } = useBroadcastActions();
+  const { cancel, send, create } = useBroadcastActions();
   const orgs = useOrgOptions();
   const templates = useTemplates({ orgId: query.data?.orgId }, Boolean(query.data));
   const [asking, setAsking] = useState(false);
+  const [sending, setSending] = useState(false);
 
   if (query.isError)
     return detailError(query, {
@@ -96,6 +98,25 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
   const names = new Map((templates.data?.items ?? []).map((t) => [t.id, t.name]));
   const cancellable = b.state === 'draft' || b.state === 'scheduled';
   const text = messageText(b);
+  // Passes the failed run already changed come back as unchanged, so this only finishes the rest.
+  const sendAgain = async () => {
+    try {
+      const made = await create.mutateAsync({
+        orgId: b.orgId,
+        kind: b.kind,
+        name: b.name,
+        target: b.target,
+        patch: b.patch as NewBroadcast['patch'],
+        notify: b.notify,
+        send: 'now',
+        ...(b.clearAfter ? { clearAfter: b.clearAfter } : {}),
+      });
+      toast.success('Sending');
+      void navigate({ to: '/admin/messages/$broadcastId', params: { broadcastId: made.id } });
+    } catch (cause) {
+      toast.error(cause, 'Could not send');
+    }
+  };
 
   return (
     <>
@@ -109,27 +130,48 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
             <span>{whenLine(b)}</span>
             {b.parentId ? (
               <MetaLink to="/admin/messages/$broadcastId" params={{ broadcastId: b.parentId }}>
-                Follow-up
+                Original message
+              </MetaLink>
+            ) : null}
+            {b.followUp ? (
+              <MetaLink to="/admin/messages/$broadcastId" params={{ broadcastId: b.followUp.id }}>
+                {b.followUp.at ? `Clears ${formatDateTime(b.followUp.at)}` : 'Clears later'}
               </MetaLink>
             ) : null}
           </>
         }
         actions={
-          cancellable ? (
-            <Button
-              variant="outline"
-              iconStart={<Ban aria-hidden />}
-              onClick={() => setAsking(true)}
-            >
-              Cancel
-            </Button>
-          ) : undefined
+          <>
+            {b.state === 'draft' ? (
+              <Button iconStart={<Send aria-hidden />} onClick={() => setSending(true)}>
+                Send
+              </Button>
+            ) : null}
+            {b.state === 'failed' ? (
+              <Button
+                iconStart={<RotateCcw aria-hidden />}
+                loading={create.isPending}
+                onClick={() => void sendAgain()}
+              >
+                Send again
+              </Button>
+            ) : null}
+            {cancellable ? (
+              <Button
+                variant="outline"
+                iconStart={<Ban aria-hidden />}
+                onClick={() => setAsking(true)}
+              >
+                Cancel
+              </Button>
+            ) : null}
+          </>
         }
       />
       {b.errorCode ? (
         <Callout tone="danger" className="mb-6">
           {b.state === 'failed'
-            ? 'It stopped before every pass was handled. Send it again to finish.'
+            ? 'It stopped before every pass was handled. Use Send again to finish.'
             : 'Some passes could not be updated. Check the failed count.'}
         </Callout>
       ) : null}
@@ -215,6 +257,14 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
           </Card>
         )}
       </TwoPane>
+      <SendDialog
+        open={sending}
+        onOpenChange={setSending}
+        onSend={async (at) => {
+          await send.mutateAsync({ id: b.id, at });
+          toast.success(at === undefined ? 'Sending' : 'Scheduled');
+        }}
+      />
       <ConfirmDialog
         open={asking}
         onOpenChange={setAsking}

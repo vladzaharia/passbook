@@ -9,6 +9,7 @@ import {
   SendBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { actorFor, assertOrg, authOf, orgScopeOf, svc } from '../passes/http.ts';
 import {
@@ -19,6 +20,13 @@ import {
   previewTarget,
   sendBroadcast,
 } from './service.ts';
+
+/** A change edits pass inputs, so an API key needs passes:write beside messages:write. */
+function assertCanChange(c: Parameters<typeof authOf>[0]): void {
+  const auth = authOf(c);
+  if (auth.kind === 'api_key' && !auth.scopes.includes('passes:write'))
+    throw new ForbiddenError('Changing passes needs the passes:write scope.', 'MISSING_SCOPE');
+}
 
 /** /api/v1/broadcasts: messages and scheduled changes for the passes a target matches. */
 export const broadcastsRoutes = createRouter();
@@ -64,6 +72,7 @@ register(
   async (c) => {
     const body = c.req.valid('json');
     assertOrg(c, body.orgId);
+    if (body.kind === 'change') assertCanChange(c);
     return c.json(await createBroadcast(svc(c), actorFor(c), modeOf(authOf(c)), body), 201);
   },
 );
@@ -109,16 +118,13 @@ register(
     body: SendBroadcastSchema,
     response: BroadcastSchema,
   },
-  async (c) =>
-    c.json(
-      await sendBroadcast(
-        svc(c),
-        actorFor(c),
-        c.req.valid('param').id,
-        c.req.valid('json').at,
-        orgScopeOf(c),
-      ),
-    ),
+  async (c) => {
+    const { id } = c.req.valid('param');
+    if ((await getBroadcastDto(svc(c), id, orgScopeOf(c))).kind === 'change') assertCanChange(c);
+    return c.json(
+      await sendBroadcast(svc(c), actorFor(c), id, c.req.valid('json').at, orgScopeOf(c)),
+    );
+  },
 );
 
 register(
