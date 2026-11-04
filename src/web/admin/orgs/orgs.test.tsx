@@ -315,7 +315,7 @@ describe('org detail', () => {
         },
       ],
     });
-    const { container } = await renderApp('/admin/orgs/o1', {
+    await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: {
         ...handlers(),
@@ -335,18 +335,14 @@ describe('org detail', () => {
     expect(
       screen.getByText("The PassBook buddy sits beside the organization's name."),
     ).toBeInTheDocument();
-    // The sample email follows the switch before Save, with the email's own art.
-    const art = () =>
-      [...container.querySelectorAll('img')]
-        .map((img) => img.getAttribute('src') ?? '')
-        .filter((src) => src.startsWith('/email/'));
+    // The real email, rendered by the Worker, follows the switch before Save.
+    const frame = () => screen.getByTitle('Sample pass email') as HTMLIFrameElement;
     expect(screen.getByText('Sample email')).toBeInTheDocument();
-    expect(art()).toEqual([]);
+    expect(frame().getAttribute('src')).toMatch(/^\/api\/v1\/orgs\/o1\/email-preview\?buddy=0&v=/);
     await ui.click(toggle);
-    expect(art()).toEqual([
-      expect.stringMatching(/^\/email\/buddy-happy-(light|dark)-top-2x\.png$/),
-      expect.stringMatching(/^\/email\/buddy-happy-(light|dark)-legs-2x\.png$/),
-    ]);
+    expect(frame().getAttribute('src')).toMatch(/email-preview\?buddy=1&v=/);
+    // Scripts never run in it.
+    expect(frame().getAttribute('sandbox')).toBe('allow-same-origin');
     const bar = await screen.findByRole('region', { name: 'Unsaved changes' });
     await ui.click(within(bar).getByRole('button', { name: 'Save' }));
     await waitFor(() =>

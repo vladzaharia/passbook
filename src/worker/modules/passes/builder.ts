@@ -1,5 +1,6 @@
 import { PassBuildError } from '../../../passkit/build.ts';
 import { buildPass, crc32, packagePassBytes, signPass } from '../../../passkit/index.ts';
+import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { evaluate } from '../../../passkit/template/expr.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
 import type {
@@ -11,8 +12,9 @@ import type {
 import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import { brandingWarnings, readBranding, tenantPassJson } from './branding.ts';
+import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
 import { applyChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
@@ -144,11 +146,43 @@ export function displayOf(
   };
 }
 
+/** The org's uploaded logo and icon as asset rows (digests read from the stored PNGs). */
+async function brandingRows(
+  bucket: R2Bucket,
+  orgId: string,
+  branding: TenantBranding,
+): Promise<AssetRow[]> {
+  const files = await brandingFiles(bucket, orgId, branding.images);
+  return Promise.all(
+    files.map(async (f) => {
+      const object = await bucket.get(f.r2Key);
+      if (!object) throw new NotFoundError(`Image ${f.name} is missing.`, 'ASSET_NOT_FOUND');
+      const bytes = new Uint8Array(await object.arrayBuffer());
+      return {
+        name: f.name,
+        r2Key: f.r2Key,
+        sha1: await sha1Hex(bytes),
+        size: bytes.length,
+        width: f.width,
+        height: f.height,
+        crc32: crc32(bytes),
+        createdAt: 0,
+      };
+    }),
+  );
+}
+
 /** Org branding fills the slots a per-pass override leaves; overrides win. */
-function brandedOverrides(overrides: AssetRow[], branding: AssetRow[]): AssetRow[] {
-  if (branding.length === 0) return overrides;
+async function brandedOverrides(
+  bucket: R2Bucket,
+  orgId: string,
+  overrides: AssetRow[],
+  branding: TenantBranding,
+): Promise<AssetRow[]> {
+  if (branding.images.length === 0) return overrides;
   const taken = replacedBy(overrides.map((a) => a.name));
-  return [...overrides, ...branding.filter((b) => !taken(b.name))];
+  const rows = await brandingRows(bucket, orgId, branding);
+  return [...overrides, ...rows.filter((b) => !taken(b.name))];
 }
 
 /** Resolves, builds, signs and packages one pass. Does not touch R2 or D1 state. */
@@ -169,7 +203,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     { ...resolved, passJson: tenant },
     deps.registry,
     ctx.env.BUCKET,
-    brandedOverrides(passOverrides, branding.images),
+    await brandedOverrides(ctx.env.BUCKET, req.orgId, passOverrides, branding),
   );
   const now = new Date(ctx.clock.now());
   try {

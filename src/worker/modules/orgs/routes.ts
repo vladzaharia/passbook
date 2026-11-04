@@ -19,6 +19,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
 import { deleteBrandingImage, getBrandingImage, putBrandingImage } from './branding.ts';
+import { renderEmailPreview } from './email-preview.ts';
 import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus, updateOrg } from './service.ts';
 
 export const orgsRoutes = createRouter();
@@ -168,6 +169,33 @@ register(
       'content-type': 'image/png',
       'cache-control': 'private, max-age=60',
       'x-content-type-options': 'nosniff',
+    });
+  },
+);
+register(
+  orgsRoutes,
+  'orgs',
+  {
+    method: 'get',
+    path: '/{id}/email-preview',
+    summary: 'The pass email as holders get it, with sample holder data (HTML)',
+    params: IdParamSchema,
+    query: z.object({ buddy: z.enum(['0', '1']).optional() }),
+  },
+  async (c) => {
+    const { buddy } = c.req.valid('query');
+    const html = await renderEmailPreview(
+      serviceContext(c),
+      c.req.valid('param').id,
+      new URL(c.req.url).origin,
+      buddy === undefined ? undefined : buddy === '1',
+    );
+    return c.body(html, 200, {
+      'content-type': 'text/html; charset=utf-8',
+      // Inline styles, as in a mail client; no script. Only the console may frame it.
+      'content-security-policy':
+        "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+      'x-frame-options': 'SAMEORIGIN',
     });
   },
 );

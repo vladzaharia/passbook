@@ -173,7 +173,11 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
               scope={`org:${org.id}`}
               fields={EMAIL_FIELDS}
               aside={(draft) => (
-                <PassEmailPreview orgName={org.name} buddy={draft['email.buddy'] === true} />
+                <PassEmailPreview
+                  orgId={org.id}
+                  buddy={draft['email.buddy'] === true}
+                  version={org.updatedAt}
+                />
               )}
             />
           </CardBody>

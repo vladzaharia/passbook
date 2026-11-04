@@ -137,7 +137,7 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   return (
     <Form
       id={formId}
-      className={aside ? 'grid gap-6 @[36rem]:grid-cols-[minmax(0,1fr)_16rem]' : undefined}
+      className={aside ? 'grid gap-6 @[36rem]:grid-cols-[minmax(0,1fr)_22rem]' : undefined}
       {...check.form}
       onValid={onValid}
     >

@@ -128,7 +128,7 @@
     {
       "name": "RL_PUBLIC_ASSET",
       "namespace_id": "1009",
-      "simple": { "limit": 1200, "period": 60 }
+      "simple": { "limit": 240, "period": 60 }
     },
     { "name": "RL_APPLE", "namespace_id": "1004", "simple": { "limit": 120, "period": 60 } },
     { "name": "RL_API_KEY", "namespace_id": "1005", "simple": { "limit": 600, "period": 60 } },

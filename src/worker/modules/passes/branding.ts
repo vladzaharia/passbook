@@ -1,22 +1,20 @@
 import { z } from 'zod';
 import type { PassJson } from '../../../passkit/types.ts';
-import type { AssetRow } from './repo.ts';
+import type { BrandingImageRef } from '../orgs/branding-files.ts';
 
 /**
  * The org's pass branding, read leniently from `orgs.branding` (shape owned by the orgs module):
- * `passColors` override the template colours, `logoHasName` drops logoText, and `images` maps
- * `logo@2x.png`-style names to stored PNGs that replace the template's logo and icon.
+ * `passColors` override the template colours, `logoHasName` drops logoText, and the uploaded
+ * `logo` and `icon` (files in R2, see `brandingFiles`) replace the template's.
  */
+const SLOTS = ['logo', 'icon'] as const;
 const Color = z
   .string()
   .regex(/^(#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i);
 const Image = z.object({
-  key: z.string().min(1),
-  sha1: z.string().regex(/^[0-9a-f]{40}$/),
-  size: z.number().int().positive(),
-  crc32: z.number().int().optional(),
-  width: z.number().int().optional(),
-  height: z.number().int().optional(),
+  sha: z.string().min(1),
+  w: z.number().int().positive(),
+  h: z.number().int().positive(),
 });
 const BrandingSchema = z.object({
   logoHasName: z.boolean().optional().catch(undefined),
@@ -28,17 +26,15 @@ const BrandingSchema = z.object({
     })
     .optional()
     .catch(undefined),
-  images: z
-    .record(z.string().regex(/^(logo|icon)(@[23]x)?\.png$/), Image)
-    .optional()
-    .catch(undefined),
+  logo: Image.optional().catch(undefined),
+  icon: Image.optional().catch(undefined),
 });
 
 export interface TenantBranding {
   logoHasName: boolean;
   colors: { background?: string; foreground?: string; label?: string } | null;
-  /** Branding images as asset rows, in the same shape as per-pass overrides. */
-  images: AssetRow[];
+  /** The uploaded logo and icon; their files come from `brandingFiles`. */
+  images: BrandingImageRef[];
 }
 
 export function readBranding(raw: unknown): TenantBranding {
@@ -48,16 +44,10 @@ export function readBranding(raw: unknown): TenantBranding {
   return {
     logoHasName: b.logoHasName === true,
     colors,
-    images: Object.entries(b.images ?? {}).map(([name, img]) => ({
-      name,
-      r2Key: img.key,
-      sha1: img.sha1,
-      size: img.size,
-      width: img.width ?? null,
-      height: img.height ?? null,
-      crc32: img.crc32 ?? null,
-      createdAt: 0,
-    })),
+    images: SLOTS.flatMap((slot) => {
+      const image = b[slot];
+      return image ? [{ slot, ...image }] : [];
+    }),
   };
 }
 
@@ -94,7 +84,6 @@ export function tenantPassJson(
 /** Starter templates ship placeholder logo and icon art that tenants must replace. */
 export const isStarterTemplate = (templateId: string) => templateId.startsWith('baked:starter-');
 
-const SLOTS = ['logo', 'icon'] as const;
 const slotOfName = (name: string) => name.replace(/(@[23]x)?\.png$/, '');
 
 /**
@@ -107,9 +96,10 @@ export function brandingWarnings(
   overrideNames: readonly string[],
 ): { severity: 'warning'; code: string; message: string; path?: string }[] {
   if (!isStarterTemplate(templateId)) return [];
-  const replaced = new Set(
-    [...branding.images.map((i) => i.name), ...overrideNames].map(slotOfName),
-  );
+  const replaced = new Set([
+    ...branding.images.map((i) => i.slot),
+    ...overrideNames.map(slotOfName),
+  ]);
   const missing = SLOTS.filter((slot) => !replaced.has(slot));
   if (missing.length === 0) return [];
   return [

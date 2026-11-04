@@ -54,7 +54,7 @@ describe('public/_headers', () => {
     expect(directive(csp, 'script-src')).toBe(
       "script-src 'self' https://challenges.cloudflare.com",
     );
-    expect(directive(csp, 'frame-src')).toBe('frame-src https://challenges.cloudflare.com');
+    expect(directive(csp, 'frame-src')).toBe("frame-src 'self' https://challenges.cloudflare.com");
     expect(directive(csp, 'connect-src')).toBe(
       "connect-src 'self' https://challenges.cloudflare.com",
     );

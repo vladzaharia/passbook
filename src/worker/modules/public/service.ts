@@ -4,7 +4,9 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgBranding } from '../delivery/repo.ts';
 import { isOrgActive } from '../orgs/active.ts';
+import { brandingFiles } from '../orgs/branding-files.ts';
 import { replacedBy } from '../passes/assets.ts';
+import { readBranding } from '../passes/branding.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -21,11 +23,13 @@ import { getPassAsset } from './repo.ts';
 const TOKEN = /^[A-Za-z0-9_-]{16,128}$/;
 const ASSET_NAME = /^[A-Za-z0-9_@.-]{1,100}\.png$/;
 
+export const isTokenShape = (token: string) => TOKEN.test(token);
+
 const notFound = () => new NotFoundError('This link is not valid.', 'LINK_NOT_FOUND');
 
 /** Bearer-link lookup. A rotated token no longer resolves. */
 export async function passForToken(ctx: ServiceContext, token: string): Promise<Pass> {
-  if (!TOKEN.test(token)) throw notFound();
+  if (!isTokenShape(token)) throw notFound();
   const pass = await getPassByDownloadToken(ctx.env.DB, token);
   if (!pass || !(await isOrgActive(ctx, pass.orgId))) throw notFound();
   return pass;
@@ -73,11 +77,19 @@ export interface PassImage {
  * the slots they leave (an override replaces every scale of its slot, as in the signed pass).
  */
 export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassImage[]> {
-  const [template, overrides] = await Promise.all([
+  const [template, passOverrides, org] = await Promise.all([
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
     listAssets(ctx.env.DB, pass.id),
+    getOrg(ctx.env.DB, pass.orgId),
   ]);
-  const taken = replacedBy(overrides.map((a) => a.name));
+  const branded = await brandingFiles(
+    ctx.env.BUCKET,
+    pass.orgId,
+    readBranding(org?.branding).images,
+  );
+  const own = replacedBy(passOverrides.map((a) => a.name));
+  const orgFiles = branded.filter((f) => !own(f.name));
+  const taken = replacedBy([...passOverrides, ...orgFiles].map((a) => a.name));
   const image = (
     a: { name: string; width?: number | null; height?: number | null },
     version: string,
@@ -91,7 +103,8 @@ export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassI
     ...template.assets
       .filter((a) => a.name.endsWith('.png') && !taken(a.name))
       .map((a) => image(a, a.sha1 || template.version)),
-    ...overrides.map((a) => image(a, a.sha1)),
+    ...orgFiles.map((f) => image(f, f.version)),
+    ...passOverrides.map((a) => image(a, a.sha1)),
   ];
 }
 
@@ -108,7 +121,7 @@ export interface PublicAsset {
   etag: string;
 }
 
-/** Per-pass override first, then the template's image of the same name. */
+/** Per-pass override, then the org's uploaded logo or icon, then the template's image of the same name. */
 export async function openPublicAsset(
   ctx: ServiceContext,
   pass: Pass,
@@ -120,6 +133,15 @@ export async function openPublicAsset(
     const object = await ctx.env.BUCKET.get(override.r2Key);
     if (!object) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
     return { body: object.body, etag: `"${override.sha1}"` };
+  }
+  const org = await getOrg(ctx.env.DB, pass.orgId);
+  const file = (
+    await brandingFiles(ctx.env.BUCKET, pass.orgId, readBranding(org?.branding).images)
+  ).find((f) => f.name === name);
+  if (file) {
+    const object = await ctx.env.BUCKET.get(file.r2Key);
+    if (!object) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
+    return { body: object.body, etag: `"${file.version}-${name}"` };
   }
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const entry = template.assets.find((a) => a.name === name);

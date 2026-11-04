@@ -4,18 +4,33 @@ import { normalize } from '../../../shared/pass-view/index.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
+import { ipPrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { rateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
-import { openPublicAsset, pageModel, passForToken, supportContacts } from './service.ts';
+import {
+  isTokenShape,
+  openPublicAsset,
+  pageModel,
+  passForToken,
+  supportContacts,
+} from './service.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
-// A page load fetches its card images through the same IP, so assets get their own, wider bucket.
-publicRoutes.use('/:token/assets/*', rateLimit('RL_PUBLIC_ASSET'));
+// Mail proxies fetch every emailed pass's images from a few IPs, so assets are limited per
+// token and IP prefix; a malformed token (no pass behind it) falls back to the IP alone.
+publicRoutes.use(
+  '/:token/assets/*',
+  rateLimit('RL_PUBLIC_ASSET', (c) => {
+    const ip = clientIp(c);
+    const token = c.req.param('token') ?? '';
+    return isTokenShape(token) ? `${token}:${ipPrefix(ip) ?? ip}` : `ip:${ip}`;
+  }),
+);
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 
