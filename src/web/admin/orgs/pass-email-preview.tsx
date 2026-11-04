@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useUnsaved } from '../settings/drafts.ts';
 import { type Draft, ORG_FIELDS, parseField } from '../settings/fields.ts';
 
@@ -43,7 +43,8 @@ function useSettled(query: string | null, ms: number): string {
 function useAvailableWidth() {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
-  useEffect(() => {
+  // Before paint, so the frame never shows at the wrong width.
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     setWidth(el.clientWidth);
