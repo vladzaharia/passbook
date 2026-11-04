@@ -108,7 +108,7 @@ stylized face of its own and stays as it is.
 | Face XS | 24 × 20 | 1.25 px | Toasts (`BuddyFace size="sm"`) |
 | Face S | 48 × 44 | 1.5 px | Banners, Status (`BuddyFace size="md"`) |
 | S | 64 × 48 | 1.25 px | Dense chrome: the palette, the pass stage, the pass page's badge card, line and notice (`size="sm"`) |
-| M | 96 × 72 | 1.5 px | State boxes and cards, the pass page's QR sign (`size="lg"`) |
+| M | 96 × 72 | 1.5 px | State boxes and cards, the QR's sign on the pass page and in My passes' QR dialog (`size="lg"`) |
 | L | 128 × 96, 112 × 84 under 640 | 1.75 px | Hero bands: sign-in, SSR (`size="xl"`; the art steps itself) |
 | Poster | 1.5 × L | 1.75 px | The social image |
 
@@ -139,7 +139,7 @@ lines (`.f`, `.h`, the check) scale with it. A prop is 2/3 of its buddy.
   the torn pass, mend; forbidden is the lock, tug; expired is the gold pass greying and drooping
   18° past the fan; a rate limit is the hourglass, which flips in on the surface at the wallet's
   left. Confirm puts a check on the top card; break-glass turns a key in the clasp.
-- **Scenes.** At most one buddy in view, toast faces included (a page `Buddy` registers in `ui/art/presence.ts`; while one is mounted a success toast shows a check). A scene plays once, 700 ms after the
+- **Scenes.** At most one buddy in view, toast faces included (a page `Buddy` registers in `ui/art/presence.ts`; while one is mounted a success toast shows a check). An open dialog's buddy hides the page's under the scrim, which comes back as the dialog closes (`art-wallet.css`). A scene plays once, 700 ms after the
   landing and when 60% in view; 1.8–3.2 s (search 4 s); done within 5 s; it ends on the rest pose.
   Painted parts take the click that replays it. Reduced motion: the final pose. SSR pages render
   the same React to static markup and mark the buddy `data-run="load"`, so the scene plays once,
@@ -156,7 +156,8 @@ scene replay` (`BuddyArt` is its SSR-safe markup), `StateArt name` (a state's co
 `BuddyFace scene size mood`, `useScene(auto, again)`. A cameo in dense chrome is a seated
 `Buddy size="sm"`. On the holder's pass page (`portal/add/add-block.tsx`, `/p` too) the add block
 seats one buddy by state: M on the QR's sign, S on the badge's card, the In Apple Wallet line or the
-voided or expired notice.
+voided or expired notice. The QR's sign is one component (`portal/add/scan.tsx`): My passes' QR
+dialog shows it as the pass page does, the buddy on it.
 
 | Scene | Where | Beats: anticipation, action, reaction, settle | Time |
 | --- | --- | --- | --- |
@@ -171,7 +172,7 @@ voided or expired notice.
 | cheer | Template imported (result card) | Crouches, hops and throws its violet pass high, the outer two out like arms; lands, wiggles it, lowers it | 1.8 s |
 | wave | Pass created; S, seated on the Front / Details control's top edge at its right end, in every stage layout (the row leaves room above it) | Has fallen on; hops, looks up at the pass and waves its teal pass twice, then smiles at you | 1.8 s |
 | tear | Pass voided (this visit); seated like wave. The holder's voided pass page: S at the end of the notice (an expired one sits there sad, its gold pass drooping, no scene) | Has fallen on; looks up at the dimmed pass, a teal tear rolls down its face, a sob and a sigh | 2 s |
-| nudge | Pass page, not on a device yet: M at the end of the QR's sign, aimed down at the code; on the iPhone S on the badge's card, just past the badge (full width on a phone), aimed down at it (`--wl-aim: 1.6`, eyes lower). My passes with two or more passes to add, seated on the first tile under the bundle badge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at the code or the badge, leans in, lifts its teal pass out of the pocket and aims it at it twice, then looks back at you and blinks | 2.6 s |
+| nudge | Pass page, not on a device yet, and My passes' QR dialog: M at the end of the QR's sign, aimed down at the code; on the iPhone S on the badge's card, just past the badge (full width on a phone), aimed down at it (`--wl-aim: 1.6`, eyes lower). My passes with two or more passes to add, seated on the first tile under the bundle badge | Unseen until it runs. Falls onto the card, stretched, the shadow spreading under it; lands in a squash, the passes jolt and splay, the legs swing once, a blink. Looks at the code or the badge, leans in, lifts its teal pass out of the pocket and aims it at it twice, then looks back at you and blinks | 2.6 s |
 | tuck | My passes with one pass to add (so no bundle badge); S, seated like the list's nudge | Has fallen on. Peeks down over the edge at the passes under it, looks back, lifts its teal pass high out of the pocket and holds it up with a wiggle, eyes on it; drops it back in, faster all the way, a thunk (squash 1.08 × .9, the other passes jolt, a blink); looks at you and blinks | 2.4 s |
 | count | My passes, every live pass in a Wallet (happy); S, seated like the list's nudge. The pass page in Apple Wallet already: S at the start of the In Apple Wallet line | Has fallen on. Counts its passes: teal, violet, gold each pop up 8–9 units as it leans and looks to each; then a crouch, a hop with the outer passes spread ±14° and the violet one raised, the smile widening; lands in a squash | 2.2 s |
 | beat | Upload drop zone (its host drives the mood) | Click only: the mood's beat again (hop, sigh, lean) or a squash and stretch | 640 ms |
@@ -369,9 +370,8 @@ One per screen. The wordmark says hello once per browser session in the SPA and 
    detail page preview, then it mints. The org's first pass also celebrates.
 5. **Portal Add and Refresh.** The badge never moves. Pressing it dips the card 6 px towards it
    (420 ms) as the download starts; nothing claims success. Refresh runs a 2 px foil sync rail
-   under the card while pending, then the card mints and the existing toast shows. The QR dialog's
-   code (My passes) sweeps a scan line over it once (900 ms); on the pass page the buddy points
-   at it instead.
+   under the card while pending, then the card mints and the existing toast shows. On the pass
+   page and in My passes' QR dialog the buddy points at the QR on its sign (the nudge).
 6. **Sliding indicators.** Sidebar, portal nav, tabs and segmented controls share one indicator.
 7. **Entity art.** See above.
 8. **Sign-in: "the wallet fills"** (owner direction 2026-11-01, R5: cute, playful, short).

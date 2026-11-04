@@ -528,7 +528,9 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   actions at the bottom, so a row of tiles lines them up however the actions wrap. Actions:
   `Show QR` where the badge cannot add (a Mac finds it in More) and the badge, then `Refresh` and
   `More` (Show QR, Remove) as badge-sized outline icon buttons. `In Wallet` pill for registered
-  passes. No `Updated` line. Tile radius 18 px (the pass's ~14).
+  passes. No `Updated` line. Tile radius 18 px (the pass's ~14). Show QR opens `Add to Apple
+  Wallet` over the pass's name with the pass page's scan (`portal/add/scan.tsx`): the buddy on the
+  QR's sign, `On your iPhone` / `Scan with the camera.` beside it, under it in the bottom sheet.
 - **Portal pass detail** and **`/p`** are one header and one view (`portal/holder-heading.tsx`,
   `portal/holder-pass-view.tsx`; `/p` renders them to static markup with the same CSS, `npm run
   gen`).
