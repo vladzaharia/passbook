@@ -111,6 +111,12 @@ export function validateManifest(
   scanSchema(manifest.inputs, 'inputs', options, { nodes: 0 }, error);
   const properties = isRecord(manifest.inputs.properties) ? manifest.inputs.properties : {};
   const inputNames = new Set(Object.keys(properties));
+  if (inputNames.has('pass'))
+    error(
+      'INPUT_RESERVED',
+      '"pass" is reserved for server values; rename the input.',
+      'inputs.properties.pass',
+    );
 
   const sample = manifest.sample ?? {};
   try {
@@ -131,6 +137,8 @@ export function validateManifest(
       error('EXPR', problem, path);
       return;
     }
+    for (const m of (typeof expr === 'string' ? expr : '').matchAll(/\bpass\.(\w+)/g))
+      if (m[1] !== 'scanCode') warn('EXPR_PASS', `Unknown pass value "${m[1]}".`, path);
     const refs = exprReferences(expr);
     for (const name of refs.inputs)
       if (!inputNames.has(name)) warn('EXPR_INPUT', `Unknown input "${name}".`, path);
