@@ -2,6 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import { passFixture } from './fixtures.ts';
 
@@ -132,20 +133,27 @@ describe('my passes', () => {
     expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
   });
 
-  it('offers a QR for the public link on desktop', async () => {
+  it('offers the pass page’s scan in a dialog on desktop: the buddy on the QR’s sign', async () => {
     const user = userEvent.setup();
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(passFixture()) } });
     await user.click(await screen.findByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Show QR' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', { name: HOLDER_COPY.addTitle });
+    expect(dialog).toHaveAccessibleDescription('Gym membership');
     // The QR renderer is a lazy chunk; under a loaded full run it can take over a second.
-    expect(
-      await within(dialog).findByRole(
-        'img',
-        { name: 'QR code for Gym membership' },
-        { timeout: 5000 },
-      ),
-    ).toBeInTheDocument();
+    const qr = await within(dialog).findByAltText(
+      HOLDER_COPY.qrAlt('Gym membership'),
+      {},
+      { timeout: 5000 },
+    );
+    // The QR encodes the pass's /p page, whose badge adds on the iPhone that scans it.
+    expect(qr.getAttribute('src')).toMatch(/^data:image\/svg\+xml;base64,/);
+    const buddy = qr.closest('.wl-sign')?.querySelector(':scope > [data-buddy]');
+    expect(buddy).toHaveAttribute('data-scene', 'nudge');
+    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-size', 'lg');
+    expect(within(dialog).getByText(HOLDER_COPY.iphone)).toBeInTheDocument();
+    expect(within(dialog).getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
+    expect((await axe(dialog)).violations).toEqual([]);
   });
 });
 

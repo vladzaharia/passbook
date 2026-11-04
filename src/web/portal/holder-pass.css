@@ -67,34 +67,6 @@
   box-shadow: 0 0 0 1px var(--pk-border-subtle);
 }
 
-/* The QR dialog's phone (holder-qr.tsx HolderQr, My passes): its speaker and its scan line. */
-.wl-qr-phone::before {
-  content: "";
-  position: absolute;
-  top: 0.4375rem;
-  left: 50%;
-  width: 1.5rem;
-  height: 0.25rem;
-  margin-left: -0.75rem;
-  border-radius: 1rem;
-  background: var(--pk-border-strong);
-}
-/* A box the code's height; its top edge is the line, so the sweep is a translate of 100%. */
-.wl-qr-scan {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-.wl-qr-scan::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--wl-foil);
-  box-shadow: 0 0 12px color-mix(in oklab, var(--wl-foil-1) 60%, transparent);
-}
 /* base.css gives the app's text links a 44 px touch height; /p has no base.css. */
 @media (pointer: coarse) {
   .wl-holder p > a,
@@ -105,27 +77,10 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .wl-qr-scan {
-    animation: wl-qr-scan 900ms var(--wl-ease-move) 120ms;
-  }
   /* The column rises after the card (240 ms). Apple's badge never animates: what holds it does
      not rise. */
   .wl-holder[data-rise] :is(.wl-holder-details, .wl-holder-help),
   .wl-holder[data-rise] .wl-holder-add > :not(:has([data-awb])) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
-  }
-}
-
-@keyframes wl-qr-scan {
-  0% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(calc(100% - 3px));
   }
 }

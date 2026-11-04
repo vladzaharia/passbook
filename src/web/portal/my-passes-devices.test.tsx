@@ -54,7 +54,7 @@ describe('device rule (shared/device.ts)', () => {
     expect(await screen.findByText(HOLDER_COPY.openInSafari)).toBeInTheDocument();
     expect(screen.queryByText(HOLDER_COPY.openOnApple)).not.toBeInTheDocument();
     // The phone itself gets no QR to scan.
-    expect(screen.queryByText(HOLDER_COPY.scanQr)).not.toBeInTheDocument();
+    expect(screen.queryByText(HOLDER_COPY.scanLine)).not.toBeInTheDocument();
   });
 
   it('leads with the QR off Apple’s devices: the scan opens the public page, no badge', async () => {
@@ -62,9 +62,8 @@ describe('device rule (shared/device.ts)', () => {
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ id: 'p1' })) },
     });
-    expect(
-      await screen.findByRole('img', { name: HOLDER_COPY.qrAlt('Gym membership') }),
-    ).toBeInTheDocument();
+    // The image, not the encoder's placeholder it replaces.
+    expect(await screen.findByAltText(HOLDER_COPY.qrAlt('Gym membership'))).toBeVisible();
     expect(screen.getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
     // The badge cannot add here, so neither it nor its line shows.
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
