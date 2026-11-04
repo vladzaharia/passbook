@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { FormField, Input, Select, type SelectOption } from '../../../ui/index.ts';
 import type { Op } from './apply.ts';
 import type { Source } from './bindings.ts';
@@ -41,6 +41,55 @@ export function TextEdit({
           value={value}
           placeholder={placeholder}
           onChange={(e) => edit(op(e.target.value), merge)}
+        />
+      )}
+    </FormField>
+  );
+}
+
+/**
+ * A text control for an identifier. Typing stays local; the name is applied on blur or Enter,
+ * and only when `problem` finds nothing wrong, so a row never changes identity mid-keystroke.
+ */
+export function NameEdit({
+  label,
+  value,
+  help,
+  problem,
+  onCommit,
+}: {
+  label: string;
+  value: string;
+  help?: string;
+  problem: (text: string) => string | null;
+  onCommit: (text: string) => void;
+}) {
+  const [text, setText] = useState(value);
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    setText(value);
+  }
+  const error = text === value ? null : problem(text);
+  const commit = () => {
+    if (text === value) return;
+    if (problem(text)) setText(value);
+    else onCommit(text);
+  };
+  return (
+    <FormField label={label} help={help} error={error ?? undefined}>
+      {(control) => (
+        <Input
+          {...control}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            }
+          }}
         />
       )}
     </FormField>

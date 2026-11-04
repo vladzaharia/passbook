@@ -6,6 +6,7 @@ import { validateManifest } from '../../../../passkit/template/manifest.ts';
 import { applyOp, type Op } from './apply.ts';
 import { fieldSource } from './bindings.ts';
 import { sampleDoc } from './fixtures.ts';
+import { setSlotImage } from './images.ts';
 import { newInput, readInputs } from './inputs.ts';
 import { type DesignDoc, fieldsOf, keyOf, styleOf } from './model.ts';
 import { readBarcode } from './ops-more.ts';
@@ -276,8 +277,70 @@ describe('starters stay valid after edits', () => {
         { op: 'pass-prop', key: 'logoText', value: 'Hello' },
       );
       expect(errors(edited)).toEqual([]);
+      // Adding an input leaves every other input's schema exactly as it was.
+      const props = (d: DesignDoc) =>
+        (d.manifest.inputs as { properties: Record<string, unknown> }).properties;
+      const before = props(doc);
+      const after = props(run(doc, { op: 'input-add', spec: newInput(readInputs(doc.manifest)) }));
+      for (const [name, node] of Object.entries(before)) expect(after[name], name).toEqual(node);
+      // So does editing one input's label, and a rename keeps the node's constraints.
+      const first = readInputs(doc.manifest)[0];
+      if (!first) return;
+      const labeled = props(
+        run(doc, { op: 'input-set', name: first.name, patch: { label: 'Changed' } }),
+      );
+      for (const [name, node] of Object.entries(before))
+        expect(labeled[name], name).toEqual(
+          name === first.name ? { ...(node as object), 'x-label': 'Changed' } : node,
+        );
+      const renamed = props(
+        run(doc, { op: 'input-set', name: first.name, patch: { name: 'renamedIn' } }),
+      );
+      expect(renamed.renamedIn).toEqual({
+        ...(before[first.name] as object),
+        'x-label': (before[first.name] as { 'x-label'?: string })['x-label'],
+      });
     });
   }
+});
+
+describe('input names and images and barcodes', () => {
+  it('ignores an invalid input name and survives regex characters', () => {
+    const doc = sampleDoc();
+    expect(run(doc, { op: 'input-set', name: 'name', patch: { name: 'a(' } })).toBe(doc);
+    expect(run(doc, { op: 'input-set', name: 'name', patch: { name: '' } })).toBe(doc);
+    const legacy = run(doc, {
+      op: 'input-add',
+      spec: { ...newInput(readInputs(doc.manifest)), name: 'ok' },
+    });
+    expect(() => run(legacy, { op: 'input-remove', name: 'ok' })).not.toThrow();
+  });
+
+  it('keeps localized images when a slot image is replaced', () => {
+    const doc: DesignDoc = {
+      ...sampleDoc(),
+      assets: [
+        { name: 'logo.png', slot: 'logo', scale: 1, size: 1, sha1: 'a'.repeat(40) },
+        { name: 'fr.lproj/logo.png', slot: 'logo', scale: 1, size: 1, sha1: 'b'.repeat(40) },
+      ],
+    };
+    expect(setSlotImage(doc, 'logo', null).assets.map((a) => a.name)).toEqual([
+      'fr.lproj/logo.png',
+    ]);
+  });
+
+  it('edits the first barcode in place', () => {
+    const doc = sampleDoc();
+    doc.passJson.barcodes = [
+      { format: 'PKBarcodeFormatQR', message: 'A', messageEncoding: 'utf-8' },
+      { format: 'PKBarcodeFormatPDF417', message: 'B', messageEncoding: 'iso-8859-1' },
+    ];
+    const next = run(doc, { op: 'barcode', settings: { ...readBarcode(doc), staticMessage: 'C' } });
+    expect(next.passJson.barcodes).toEqual([
+      { format: 'PKBarcodeFormatQR', message: 'C', messageEncoding: 'utf-8' },
+      { format: 'PKBarcodeFormatPDF417', message: 'B', messageEncoding: 'iso-8859-1' },
+    ]);
+  });
 });
 
 describe('history', () => {

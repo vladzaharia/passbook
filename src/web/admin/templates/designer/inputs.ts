@@ -80,7 +80,10 @@ const parse = (type: InputType, text: string): unknown => {
   return text;
 };
 
-/** The JSON Schema node of one input. `existing` keeps keywords the designer does not edit. */
+const orderOf = (node: Dict): number | undefined =>
+  typeof node['x-order'] === 'number' ? node['x-order'] : undefined;
+
+/** A fresh JSON Schema node for an input whose type is new or changed. */
 export function schemaOf(spec: InputSpec, existing: Dict = {}, order = 10): Dict {
   const {
     format: _f,
@@ -111,14 +114,74 @@ export function schemaOf(spec: InputSpec, existing: Dict = {}, order = 10): Dict
   return node;
 }
 
+/**
+ * The node after an edit. A node whose type did not change keeps every keyword it has
+ * (integer, date formats, widgets, limits); only the properties the user edited are touched.
+ */
+function nodeFor(spec: InputSpec, existing: Dict, wasRequired: boolean): Dict {
+  const before = readInputs({ inputs: { properties: { [spec.name]: existing } } })[0];
+  if (!before || before.type !== spec.type) return schemaOf(spec, existing, orderOf(existing));
+  const node: Dict = { ...existing };
+  if (before.label !== spec.label) node['x-label'] = spec.label;
+  if (before.default !== spec.default) {
+    const dflt = spec.default === '' ? undefined : parse(spec.type, spec.default);
+    if (dflt === undefined) delete node.default;
+    else node.default = dflt;
+  }
+  if (wasRequired !== spec.required && node.type === 'string') {
+    if (spec.required) node.minLength = Math.max(1, Number(node.minLength) || 0);
+    else if (node.minLength === 1) delete node.minLength;
+  }
+  return node;
+}
+
+/** x-order values that keep the existing ones when their sequence still holds. */
+function orders(nodes: readonly (Dict | null)[]): number[] {
+  const own = nodes.map((n) => (n ? orderOf(n) : undefined));
+  const ok = nodes.every((n, i) => n === null || own[i] !== undefined);
+  const out: number[] = [];
+  if (ok) {
+    let last = 0;
+    for (let i = 0; i < nodes.length; i++) {
+      let o = own[i];
+      if (o === undefined) {
+        const next = own.slice(i + 1).find((x) => x !== undefined);
+        o = next === undefined || next - last > 10 ? last + 10 : (last + next) / 2;
+      }
+      out.push(o);
+      last = o;
+    }
+    if (out.every((o, i) => i === 0 || o >= (out[i - 1] ?? 0))) return out;
+  }
+  return nodes.map((_n, i) => (i + 1) * 10);
+}
+
 /** Writes the specs back as `inputs` and `sample`, keeping everything else in the manifest. */
-export function writeInputs(manifest: Dict, specs: readonly InputSpec[]): Dict {
+export function writeInputs(
+  manifest: Dict,
+  specs: readonly InputSpec[],
+  renamed?: { from: string; to: string },
+): Dict {
   const old = propsOf(manifest);
+  const wasRequired =
+    isRecord(manifest.inputs) && Array.isArray(manifest.inputs.required)
+      ? (manifest.inputs.required as string[])
+      : [];
+  const was = (name: string) => (renamed && name === renamed.to ? renamed.from : name);
+  const existing = specs.map((s) => {
+    const node = old[was(s.name)];
+    return isRecord(node) ? node : null;
+  });
+  const order = orders(existing);
   const properties: Dict = {};
   const sample: Dict = {};
   specs.forEach((spec, i) => {
-    const existing = isRecord(old[spec.name]) ? (old[spec.name] as Dict) : {};
-    properties[spec.name] = schemaOf(spec, existing, (i + 1) * 10);
+    const prior = existing[i];
+    const node = prior
+      ? nodeFor(spec, prior, wasRequired.includes(was(spec.name)))
+      : schemaOf(spec, {}, order[i]);
+    node['x-order'] = order[i];
+    properties[spec.name] = node;
     const value = spec.sample === '' ? undefined : parse(spec.type, spec.sample);
     if (value !== undefined) sample[spec.name] = value;
   });

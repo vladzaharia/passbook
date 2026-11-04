@@ -46,12 +46,13 @@ export async function saveVersion(
   const row = await loadTemplate(ctx, auth, id);
   if (row.origin === 'baked')
     throw new ForbiddenError(
-      'Baked templates cannot be changed. Duplicate it first.',
+      'Built-in templates cannot be changed. Duplicate it first.',
       'TEMPLATE_BAKED',
     );
   if (row.status !== 'active')
     throw new ConflictError('Archived templates cannot be changed.', 'TEMPLATE_ARCHIVED');
 
+  // tooling.json of an uploaded version is not carried into designer versions; it only serves the import pipeline.
   const { files, carried } = await resolveVersionFiles(ctx, id, body.assets);
   const manifest = body.manifest as unknown as TemplateManifest;
   const input = new Map(files);
@@ -128,6 +129,11 @@ export async function saveVersion(
     version: analysis.version,
     activated: body.activate,
   });
+  if (body.activate)
+    await audit(ctx, auth, row, 'template.activate', {
+      version: analysis.version,
+      previous: row.activeVersion,
+    });
   return {
     ...base,
     saved: true,

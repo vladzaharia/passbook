@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 import { errorMessage } from '../../../lib/errors.ts';
+import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { useChangeCount } from '../../../lib/motion.ts';
 import {
   Button,
@@ -56,6 +57,7 @@ const _isEditable = (el: EventTarget | null) =>
   (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
 export function Designer({ templateId, name, base, draft, assetBase }: DesignerProps) {
+  const phone = useMediaQuery(PHONE);
   const [version, setVersion] = useState(base.version);
   const [state, dispatch] = useReducer(designerReducer, undefined, () =>
     initialState(draft ?? base.doc, base.doc),
@@ -100,16 +102,24 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
   }, [added, state.doc.passJson, focusTarget]);
 
   // The draft survives a reload; saving or discarding clears it.
+  // A draft from an older version is offered by the page; it is only cleared once edits were made here.
+  const wasDirty = useRef(false);
   useEffect(() => {
-    if (!dirty) return clearDraft(templateId);
+    if (!dirty) {
+      if (wasDirty.current) clearDraft(templateId);
+      wasDirty.current = false;
+      return;
+    }
+    wasDirty.current = true;
     const t = setTimeout(
-      () => saveDraft(templateId, { base: base.version, doc: state.doc, at: Date.now() }),
+      () => saveDraft(templateId, { base: version, doc: state.doc, at: Date.now() }),
       800,
     );
     return () => clearTimeout(t);
-  }, [dirty, state.doc, templateId, base.version]);
+  }, [dirty, state.doc, templateId, version]);
 
   function onKeyDown(e: KeyboardEvent) {
+    if (phone) return;
     if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
     const k = e.key.toLowerCase();
     if (k !== 'z' && k !== 'y') return;
@@ -181,25 +191,27 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
             { label: 'Design' },
           ]}
           actions={
-            <>
-              <IconButton
-                label="Undo"
-                icon={<Undo2 aria-hidden />}
-                variant="outline"
-                disabled={!canUndo(state)}
-                onClick={() => dispatch({ type: 'undo' })}
-              />
-              <IconButton
-                label="Redo"
-                icon={<Redo2 aria-hidden />}
-                variant="outline"
-                disabled={!canRedo(state)}
-                onClick={() => dispatch({ type: 'redo' })}
-              />
-            </>
+            phone ? undefined : (
+              <>
+                <IconButton
+                  label="Undo"
+                  icon={<Undo2 aria-hidden />}
+                  variant="outline"
+                  disabled={!canUndo(state)}
+                  onClick={() => dispatch({ type: 'undo' })}
+                />
+                <IconButton
+                  label="Redo"
+                  icon={<Redo2 aria-hidden />}
+                  variant="outline"
+                  disabled={!canRedo(state)}
+                  onClick={() => dispatch({ type: 'redo' })}
+                />
+              </>
+            )
           }
         />
-        {restored ? (
+        {restored && !phone ? (
           <Callout
             className="mb-4"
             tone="info"
@@ -267,13 +279,15 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
             />
           }
         />
-        <SaveBar
-          dirty={dirty}
-          saving={save.isPending}
-          saveLabel="Save version"
-          onSave={saveVersion}
-          onDiscard={() => dispatch({ type: 'reset', doc: state.saved })}
-        />
+        {phone ? null : (
+          <SaveBar
+            dirty={dirty}
+            saving={save.isPending}
+            saveLabel="Save version"
+            onSave={saveVersion}
+            onDiscard={() => dispatch({ type: 'reset', doc: state.saved })}
+          />
+        )}
         <UnsavedChangesDialog blocker={guard} />
       </div>
     </DesignerProvider>

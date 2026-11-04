@@ -11,7 +11,7 @@ import { useTemplate } from '../api.ts';
 import { DuplicateDialog } from '../template-dialogs.tsx';
 import { useBaseVersion } from './api.ts';
 import { Designer } from './designer.tsx';
-import { loadDraft } from './drafts.ts';
+import { clearDraft, loadDraft } from './drafts.ts';
 import type { DesignDoc } from './model.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -105,7 +105,7 @@ function Gate({
       </>
     );
   }
-  return <Loaded template={t} crumbs={crumbs} />;
+  return <Loaded key={t.id} template={t} crumbs={crumbs} />;
 }
 
 function Loaded({
@@ -115,7 +115,11 @@ function Loaded({
   template: Template;
   crumbs: { label: string; to?: string }[];
 }) {
-  const version = useBaseVersion(t.id, t.activeVersion);
+  // The version the designer opened with. Activating or another admin's upload moves
+  // `activeVersion`, but must not remount the designer or drop its edits.
+  const [opened] = useState(t.activeVersion);
+  const [stale, setStale] = useState<'ask' | 'restore' | 'discard'>('ask');
+  const version = useBaseVersion(t.id, opened);
   const base = useMemo(() => (version.data ? docOf(version.data) : null), [version.data]);
   if (version.isError) {
     return detailError(version, {
@@ -133,14 +137,44 @@ function Loaded({
     );
   }
   const draft = loadDraft(t.id);
+  const older = draft && draft.base !== version.data.version ? draft : null;
+  const asking = older && stale === 'ask';
+  const fresh = draft && draft.base === version.data.version ? draft.doc : null;
   return (
-    <Designer
-      key={t.id}
-      templateId={t.id}
-      name={t.name}
-      base={{ version: version.data.version, doc: base }}
-      draft={draft && draft.base === version.data.version ? draft.doc : null}
-      assetBase={assetBaseOf(t.id)}
-    />
+    <>
+      {asking ? (
+        <Callout
+          className="mb-4"
+          tone="info"
+          actions={
+            <>
+              <Button size="sm" onClick={() => setStale('restore')}>
+                Restore
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  clearDraft(t.id);
+                  setStale('discard');
+                }}
+              >
+                Discard
+              </Button>
+            </>
+          }
+        >
+          You have an unsaved draft from an older version of this template.
+        </Callout>
+      ) : null}
+      <Designer
+        key={`${t.id}:${asking ? 'ask' : stale}`}
+        templateId={t.id}
+        name={t.name}
+        base={{ version: version.data.version, doc: base }}
+        draft={fresh ?? (older && stale === 'restore' ? older.doc : null)}
+        assetBase={assetBaseOf(t.id)}
+      />
+    </>
   );
 }

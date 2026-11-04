@@ -2,9 +2,9 @@ import { DATE_STYLES, NUMBER_STYLES, TEXT_ALIGNMENTS } from '@/passkit/schema/co
 import { SwitchRow } from '../../../ui/index.ts';
 import { fieldSource } from './bindings.ts';
 import { useDesigner } from './context.tsx';
-import { PickEdit, SourcePicker, TextEdit } from './controls.tsx';
+import { NameEdit, PickEdit, SourcePicker, TextEdit } from './controls.tsx';
 import { readInputs } from './inputs.ts';
-import type { Dict, GroupId } from './model.ts';
+import { allKeys, type Dict, type GroupId } from './model.ts';
 
 const NONE = 'none';
 const words = (s: string) =>
@@ -111,12 +111,18 @@ export function FieldEditor({ field, group }: { field: Dict; group: GroupId }) {
           onCheckedChange={(on) => edit({ op: 'field-link', key, on, optional })}
         />
       ) : null}
-      <TextEdit
+      <NameEdit
         label="Key"
         value={key}
-        merge="field-key"
-        help="Identifies the field in the pass. Unique; a taken key is ignored."
-        op={(to) => ({ op: 'field-key', key, to })}
+        help="Identifies the field in the pass. Unique."
+        problem={(text) =>
+          text === ''
+            ? 'A key is required.'
+            : allKeys(doc.passJson).includes(text)
+              ? 'Another field has this key.'
+              : null
+        }
+        onCommit={(to) => edit({ op: 'field-key', key, to })}
       />
     </div>
   );

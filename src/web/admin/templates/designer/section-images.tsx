@@ -3,7 +3,7 @@ import { type DragEvent, useId, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn.ts';
 import { Callout, IconButton } from '../../../ui/index.ts';
 import { useDesigner } from './context.tsx';
-import { placeImage, previewAssetMap, slotHint } from './images.ts';
+import { isSlotImage, placeImage, previewAssetMap, slotHint } from './images.ts';
 import { SLOT_LABEL, slotsOf } from './model.ts';
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -15,7 +15,7 @@ function SlotDrop({ slot }: { slot: string }) {
   const [over, setOver] = useState(false);
   const [problem, setProblem] = useState<string>();
   const [soft, setSoft] = useState<string>();
-  const current = doc.assets.find((a) => a.slot === slot);
+  const current = doc.assets.find((a) => isSlotImage(a, slot));
   const url = current ? previewAssetMap([current], assetBase)[current.name] : undefined;
   const label = SLOT_LABEL[slot] ?? slot;
 

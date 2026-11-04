@@ -15,6 +15,8 @@ export function FieldsSection({ group }: { group: GroupId }) {
   const fields = fieldsOf(doc.passJson, group);
   const [note, setNote] = useState('');
   const [over, setOver] = useState<number | null>(null);
+  // Only the grip starts a drag, so text inside an open editor stays selectable.
+  const [armed, setArmed] = useState<string | null>(null);
   const open = state.select.section === group ? state.select.key : undefined;
   const added = state.added?.kind === 'field' ? state.added : null;
 
@@ -33,6 +35,7 @@ export function FieldsSection({ group }: { group: GroupId }) {
   function drop(e: DragEvent, index: number) {
     e.preventDefault();
     setOver(null);
+    setArmed(null);
     const key = e.dataTransfer.getData(DRAG_TYPE);
     if (key) edit({ op: 'field-move', key, group, index });
   }
@@ -55,8 +58,9 @@ export function FieldsSection({ group }: { group: GroupId }) {
               data-new={added?.key === key ? added.n : undefined}
               data-open={open === key || undefined}
               data-over={over === i || undefined}
-              draggable
+              draggable={armed === key}
               onDragStart={(e) => e.dataTransfer.setData(DRAG_TYPE, key)}
+              onDragEnd={() => setArmed(null)}
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -69,7 +73,13 @@ export function FieldsSection({ group }: { group: GroupId }) {
               }}
             >
               <div className="flex items-center gap-1">
-                <GripVertical aria-hidden className="dz-grip size-4 shrink-0 text-fg-muted" />
+                <span
+                  className="dz-grip grid shrink-0 cursor-grab place-items-center"
+                  onPointerDown={() => setArmed(key)}
+                  onPointerUp={() => setArmed(null)}
+                >
+                  <GripVertical aria-hidden className="size-4 text-fg-muted" />
+                </span>
                 <button
                   type="button"
                   className="dz-pick"

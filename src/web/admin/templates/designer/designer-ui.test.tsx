@@ -237,7 +237,7 @@ describe('designer', () => {
     const fg = await screen.findByLabelText('Text');
     await user.clear(fg);
     await user.type(fg, 'rgb(20,30,60)');
-    expect((await screen.findAllByText(/hard to read on this background/)).length).toBeGreaterThan(
+    expect((await screen.findAllByText(/hard to read on the background/)).length).toBeGreaterThan(
       0,
     );
   });
@@ -274,6 +274,46 @@ describe('designer', () => {
     await user.click(screen.getByRole('button', { name: 'Activate' }));
     await waitFor(() => expect(s.activations).toEqual([{ version: 'feedfacefeedface' }]));
     expect(await screen.findByText('Version saved and active.')).toBeInTheDocument();
+  });
+
+  it('keeps focus while typing a multi-character input name and field key', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Inputs/ }));
+    await user.click(await screen.findByRole('button', { name: /^Name/ }));
+    const name = await screen.findByLabelText('Name', { selector: 'input' });
+    await user.clear(name);
+    await user.type(name, 'member');
+    expect(name).toHaveFocus();
+    expect(name).toHaveValue('member');
+    await user.tab();
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Name/ })).toBeInTheDocument());
+    await user.click(await screen.findByRole('button', { name: /^Primary/ }));
+    await user.click(await screen.findByRole('button', { name: /^Member/ }));
+    const key = await screen.findByLabelText('Key');
+    await user.clear(key);
+    await user.type(key, 'who');
+    expect(key).toHaveFocus();
+    expect(key).toHaveValue('who');
+  });
+
+  it('keeps the designer and its edits when activation moves the active version', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    let active = VERSION;
+    s.handlers['/api/v1/templates/tpl1'] = () => json(templateDetail({ activeVersion: active }));
+    s.handlers['/api/v1/templates/tpl1/activate'] = () => {
+      active = 'feedfacefeedface';
+      return json(templateDetail({ activeVersion: active }));
+    };
+    await open(s);
+    await user.type(await screen.findByLabelText('Logo text'), '!');
+    await screen.findByText('Ready to save.');
+    await user.click(await screen.findByRole('button', { name: 'Save version' }));
+    await user.click(await screen.findByRole('button', { name: 'Activate' }));
+    expect(await screen.findByText('Version saved and active.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Logo text')).toHaveValue('Org!');
   });
 
   it('will not save while the check has errors', async () => {

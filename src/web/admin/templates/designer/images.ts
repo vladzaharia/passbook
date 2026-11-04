@@ -72,9 +72,13 @@ export function placeImage(slot: string, bytes: Uint8Array): Placed {
   };
 }
 
-/** Replaces every file of a slot with `asset` (null removes the slot). */
+/** Localized files (`fr.lproj/logo.png`) belong to a slot but are not the slot's own image. */
+export const isSlotImage = (a: DraftAsset, slot: string): boolean =>
+  a.slot === slot && !a.name.includes('/');
+
+/** Replaces the slot's own files with `asset` (null removes them); localized files stay. */
 export function setSlotImage(doc: DesignDoc, slot: string, asset: DraftAsset | null): DesignDoc {
-  const rest = doc.assets.filter((a) => a.slot !== slot);
+  const rest = doc.assets.filter((a) => !isSlotImage(a, slot));
   return { ...doc, assets: asset ? [...rest, asset] : rest };
 }
 

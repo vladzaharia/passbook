@@ -2,10 +2,11 @@ import {
   barcodeSource,
   bindBarcode,
   dropInputRefs,
+  escapeRe,
   renameInputRefs,
   type Source,
 } from './bindings.ts';
-import { type InputSpec, readInputs, writeInputs } from './inputs.ts';
+import { type InputSpec, nameProblem, readInputs, writeInputs } from './inputs.ts';
 import { type DesignDoc, type Dict, isRecord } from './model.ts';
 import { copy } from './ops-pass.ts';
 
@@ -45,13 +46,17 @@ export function setBarcode(doc: DesignDoc, s: BarcodeSettings): DesignDoc {
     );
     return next;
   }
+  const rest = Array.isArray(next.passJson.barcodes) ? next.passJson.barcodes : [];
+  const first: Dict = isRecord(rest[0]) ? rest[0] : {};
   const code: Dict = {
+    ...first,
     format: s.format,
     message: s.staticMessage || 'SAMPLE',
-    messageEncoding: 'iso-8859-1',
+    messageEncoding: first.messageEncoding ?? 'iso-8859-1',
   };
   if (s.staticAlt) code.altText = s.staticAlt;
-  next.passJson.barcodes = [code];
+  else delete code.altText;
+  next.passJson.barcodes = [code, ...rest.slice(1)];
   const withMessage = bindBarcode(next.manifest, 'message', s.message);
   next.manifest.bindings = bindBarcode(
     { ...next.manifest, bindings: withMessage },
@@ -73,9 +78,13 @@ export function setList(doc: DesignDoc, key: ListKey, items: Dict[]): DesignDoc 
 export const listOf = (doc: DesignDoc, key: ListKey): Dict[] =>
   Array.isArray(doc.passJson[key]) ? (doc.passJson[key] as unknown[]).filter(isRecord) : [];
 
-export function setInputs(doc: DesignDoc, specs: InputSpec[]): DesignDoc {
+export function setInputs(
+  doc: DesignDoc,
+  specs: InputSpec[],
+  renamed?: { from: string; to: string },
+): DesignDoc {
   const next = copy(doc);
-  next.manifest = writeInputs(next.manifest, specs);
+  next.manifest = writeInputs(next.manifest, specs, renamed);
   return next;
 }
 
@@ -89,9 +98,21 @@ export function updateInput(doc: DesignDoc, name: string, patch: Partial<InputSp
   const old = specs[at];
   if (!old) return doc;
   const merged = { ...old, ...patch };
-  if (patch.name && patch.name !== name && specs.some((s) => s.name === patch.name)) return doc;
+  if (
+    patch.name !== undefined &&
+    patch.name !== name &&
+    nameProblem(
+      patch.name,
+      specs.map((s) => s.name).filter((n) => n !== name),
+    )
+  )
+    return doc;
   specs[at] = merged;
-  let next = setInputs(doc, specs);
+  let next = setInputs(
+    doc,
+    specs,
+    merged.name !== name ? { from: name, to: merged.name } : undefined,
+  );
   if (merged.name !== name)
     next = { ...next, manifest: renameInputRefs(next.manifest, name, merged.name) };
   return next;
@@ -106,7 +127,7 @@ export function removeInput(doc: DesignDoc, name: string): DesignDoc {
   const display = isRecord(next.manifest.display) ? next.manifest.display : {};
   const search = Array.isArray(display.search) ? display.search.filter((s) => s !== name) : [];
   const keep = (v: unknown) =>
-    typeof v === 'string' && new RegExp(`\\{\\{\\s*${name}\\b`).test(v) ? undefined : v;
+    typeof v === 'string' && new RegExp(`\\{\\{\\s*${escapeRe(name)}\\b`).test(v) ? undefined : v;
   next.manifest.display = {
     ...display,
     title: keep(display.title) ?? firstTitle(readInputs(next.manifest)),

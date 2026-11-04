@@ -35,7 +35,7 @@ describe('colors', () => {
       labelColor: 'rgb(255,255,255)',
     });
     expect(warned.map((w) => w.key)).toEqual(['foregroundColor']);
-    expect(warned[0]?.message).toMatch(/^Text are hard to read/);
+    expect(warned[0]?.message).toMatch(/^Text is hard to read/);
     expect(contrastWarnings({ foregroundColor: '#fff' })).toEqual([]);
   });
 });

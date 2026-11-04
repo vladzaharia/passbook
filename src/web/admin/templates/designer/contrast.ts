@@ -64,7 +64,7 @@ export function contrastWarnings(pass: Dict): ContrastWarning[] {
       out.push({
         key,
         ratio,
-        message: `${name} are hard to read on this background (${ratio.toFixed(1)}:1; use ${NEED}:1 or more).`,
+        message: `${name} ${/s$/.test(name) ? 'are' : 'is'} hard to read on the background (${ratio.toFixed(1)}:1; needs ${NEED}:1).`,
       });
   }
   return out;

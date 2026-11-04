@@ -72,9 +72,12 @@ export function renameFieldBindings(manifest: Dict, from: string, to: string): D
   );
 }
 
+export const escapeRe = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const rewrite = (text: string, from: string, to: string | null): string =>
-  text.replace(new RegExp(`\\{\\{\\s*${from}(\\s*\\|[^}]*)?\\}\\}`, 'g'), (_m, pipe: string) =>
-    to === null ? '' : `{{${to}${pipe ?? ''}}}`,
+  text.replace(
+    new RegExp(`\\{\\{\\s*${escapeRe(from)}(\\s*\\|[^}]*)?\\}\\}`, 'g'),
+    (_m, pipe: string) => (to === null ? '' : `{{${to}${pipe ?? ''}}}`),
   );
 
 /** Input renamed: every expression that reads it follows. */
@@ -107,7 +110,7 @@ export function renameInputRefs(manifest: Dict, from: string, to: string): Dict 
 /** Input removed: bindings that read it go, so their targets keep the static text. */
 export function dropInputRefs(manifest: Dict, name: string): Dict[] {
   const reads = (v: unknown): boolean => {
-    if (typeof v === 'string') return new RegExp(`\\{\\{\\s*${name}\\b`).test(v);
+    if (typeof v === 'string') return new RegExp(`\\{\\{\\s*${escapeRe(name)}\\b`).test(v);
     if (Array.isArray(v)) return v.some(reads);
     if (isRecord(v))
       return Object.entries(v).some(([k, x]) => (k === 'input' ? x === name : reads(x)));

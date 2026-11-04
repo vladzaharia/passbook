@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Button, IconButton, SwitchRow } from '../../../ui/index.ts';
 import { useDesigner } from './context.tsx';
-import { PickEdit, TextEdit } from './controls.tsx';
+import { NameEdit, PickEdit, TextEdit } from './controls.tsx';
 import {
   INPUT_TYPES,
   type InputSpec,
@@ -17,10 +17,6 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
   const { edit } = useDesigner();
   const set = (patch: Partial<InputSpec>, merge?: string) =>
     edit({ op: 'input-set', name: spec.name, patch }, merge);
-  const problem = nameProblem(
-    spec.name,
-    names.filter((n) => n !== spec.name),
-  );
   return (
     <div className="dz-editor grid gap-4">
       <TextEdit
@@ -61,13 +57,17 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
           op={(v) => ({ op: 'input-set', name: spec.name, patch: { sample: v } })}
         />
       </div>
-      <TextEdit
+      <NameEdit
         label="Name"
         value={spec.name}
-        merge="in-name"
         help="Used in expressions as {{name}}."
-        error={problem ?? undefined}
-        op={(v) => ({ op: 'input-set', name: spec.name, patch: { name: v } })}
+        problem={(text) =>
+          nameProblem(
+            text,
+            names.filter((n) => n !== spec.name),
+          )
+        }
+        onCommit={(name) => edit({ op: 'input-set', name: spec.name, patch: { name } })}
       />
     </div>
   );

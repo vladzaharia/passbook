@@ -17,7 +17,7 @@ import { createIdentityResolver } from '../identities/resolver.ts';
 export const behaviors = createBehaviorRegistry([...behaviorPlugins]);
 
 /** What `{{pass.scanCode}}` reads in previews and dry runs: shaped like a real code (26 base32). */
-export const PREVIEW_SCAN_CODE = 'PREVIEW2PASS3SCAN4CODE5XY';
+export const PREVIEW_SCAN_CODE = 'PREVIEW2PASS3SCAN4CODE5XYZ';
 
 function platformIdentity(env: AppEnv): PassIdentity {
   return { passTypeIdentifier: env.PLATFORM_PASS_TYPE_ID, teamIdentifier: env.PLATFORM_TEAM_ID };
