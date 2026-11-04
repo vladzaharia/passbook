@@ -1,8 +1,11 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import { all } from '../../platform/db.ts';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { all, run } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
+import { putPassAsset } from '../passes/asset-service.ts';
+import type { Pass } from '../passes/repo.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { updateSettings } from '../settings/service.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import { handleEmailSend } from './jobs.ts';
 import { enqueuePassEmail } from './service.ts';
 
@@ -13,11 +16,14 @@ beforeAll(async () => {
 
 const actor = { type: 'user' as const, id: 'admin-1' };
 
-async function sendOne() {
-  const pass = await kit.pass();
+let sends = 0;
+
+/** Each send to a new address, under the per-recipient hourly cap. */
+async function sendOne(given?: Pass) {
+  const pass = given ?? (await kit.pass());
   const { outboxId } = await enqueuePassEmail(kit.ctx, {
     passId: pass.id,
-    to: 'holder@example.com',
+    to: `holder-${++sends}@example.com`,
     attach: false,
   });
   await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
@@ -57,5 +63,69 @@ describe('pass email buddy (email.buddy)', () => {
       values: { 'email.buddy': null },
     });
     expect((await sendOne()).html).not.toContain('/email/buddy-');
+  });
+});
+
+describe("the pass's icon and logo", () => {
+  const assets = (pass: Pass) => `${baseUrl(kit.env)}/p/${pass.downloadToken}/assets`;
+
+  it('come from the public assets route with the pass token, fixed in size', async () => {
+    const pass = await kit.pass();
+    const plain = await sendOne(pass);
+    // The kit template ships an icon and no logo.
+    expect(plain.html).toContain(
+      `<img src="${assets(pass)}/icon.png?v=${kit.template.version}" alt="" width="24" height="24"`,
+    );
+    expect(plain.html).not.toContain('/assets/logo');
+
+    // An override at @2x: 200×60 px is 100×30 pt, under the email's 36.
+    await putPassAsset(kit.ctx, actor, pass.id, 'logo@2x.png', makePng(200, 60), null);
+    const { html } = await sendOne(pass);
+    expect(html).toMatch(
+      new RegExp(
+        `<img src="${assets(pass)}/logo@2x\\.png\\?v=[0-9a-f]{40}" alt="${kit.org.name}" width="100" height="30"`,
+      ),
+    );
+  });
+
+  it("set the pass's logoText beside the logo unless the org's logo has the name", async () => {
+    const pass = await kit.pass();
+    await putPassAsset(kit.ctx, actor, pass.id, 'logo@2x.png', makePng(100, 100), null);
+    await run(
+      kit.env.DB,
+      "UPDATE pass_versions SET pass_json = json_set(pass_json, '$.logoText', ?) WHERE pass_id = ?",
+      [kit.org.name, pass.id],
+    );
+    const named = new RegExp(`font-weight:600;color:[^"]*">${kit.org.name}</td>`);
+    expect((await sendOne(pass)).html).toMatch(named);
+    await run(kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [
+      JSON.stringify({ logoHasName: true }),
+      kit.org.id,
+    ]);
+    try {
+      const { html } = await sendOne(pass);
+      expect(html).not.toMatch(named);
+      expect(html).toContain(`alt="${kit.org.name}" width="36" height="36"`);
+    } finally {
+      await run(kit.env.DB, "UPDATE orgs SET branding = '{}' WHERE id = ?", [kit.org.id]);
+    }
+  });
+
+  it('leave the email to go without them when the template cannot be read', async () => {
+    const pass = await kit.pass();
+    const warn = vi.spyOn(kit.ctx.log, 'warn');
+    const resolve = vi.spyOn(kit.registry, 'resolve').mockRejectedValue(new Error('D1 down'));
+    try {
+      const { html } = await sendOne(pass);
+      expect(html).not.toContain('/assets/');
+      expect(html).toContain('alt="Add to Apple Wallet"');
+      expect(warn).toHaveBeenCalledWith(
+        'email.images_failed',
+        expect.objectContaining({ code: 'EMAIL_IMAGES' }),
+      );
+    } finally {
+      resolve.mockRestore();
+      warn.mockRestore();
+    }
   });
 });

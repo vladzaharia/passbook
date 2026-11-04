@@ -1,5 +1,7 @@
+import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
+import { passEmailImages } from '../../email/pass-images.ts';
 import { passSummary } from '../../email/pass-summary.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -8,6 +10,7 @@ import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import { currentPassJson, getOrg, getPass } from '../passes/repo.ts';
+import { passImages } from '../public/service.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { claimOrSettle, retryOrGiveUp } from './push.ts';
 import { finishOutbox, orgBranding, setProviderId } from './repo.ts';
@@ -39,24 +42,34 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   const attach = row.payload.attach === true;
   const org = await getOrg(db, pass.orgId);
   const base = baseUrl(ctx.env);
-  const [platform, orgSettings, branding, rawPassJson] = await Promise.all([
+  const [platform, orgSettings, branding, rawPassJson, images] = await Promise.all([
     getPlatformSettings(ctx),
     getOrgSettings(ctx, pass.orgId),
     orgBranding(db, pass.orgId),
     currentPassJson(db, pass.id),
+    // Without them the email still goes, with the org's name and no pass art.
+    passImages(ctx, pass).catch((error: unknown) => {
+      ctx.log.warn('email.images_failed', { outboxId: row.id, code: 'EMAIL_IMAGES', error });
+      return [];
+    }),
   ]);
   const passJson = parseStoredPassJson(rawPassJson);
+  const { iconUrl, logo } = passEmailImages(images, base);
   const email = renderPassEmail({
     orgName: org?.name ?? 'PassBook',
     supportEmail: orgSettings['support.email'] ?? branding.supportEmail,
     supportUrl: orgSettings['support.url'] ?? branding.supportUrl,
     downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
     manageUrl: `${base}/p/${pass.downloadToken}`,
-    badgeUrl: emailAssetUrl(base, '/apple/badge/en/black@2x.png'),
+    badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     attached: attach,
     passTitle:
       pass.displayTitle ?? (typeof passJson.description === 'string' ? passJson.description : null),
     summary: passSummary(passJson, { now: new Date(now) }),
+    iconUrl,
+    logo,
+    logoText:
+      branding.logoHasName || typeof passJson.logoText !== 'string' ? null : passJson.logoText,
     senderName: platform['email.senderName'],
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });

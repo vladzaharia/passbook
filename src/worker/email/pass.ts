@@ -1,9 +1,11 @@
+import { APPLE_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { contrast, parseColor } from '../../shared/pass-view/color.ts';
 import type { PassSummary } from './pass-summary.ts';
 import { safeMail, safeUrl } from './safe.ts';
 import {
-  buttonHtml,
+  badgeButtonHtml,
   EMAIL_LIGHT as c,
   emailShell,
   escapeHtml,
@@ -20,23 +22,24 @@ export interface PassEmailInput {
   downloadUrl: string;
   /** The public pass page. */
   manageUrl: string;
-  /**
-   * Apple's black badge PNG at @2x (absolute URL). It sits on a white cell that dark mail clients
-   * keep, so it never lands on a dark card until the outline artwork ships.
-   */
+  /** Apple's black badge PNG (absolute URL), drawn in the EMAIL_BADGE box. */
   badgeUrl: string;
   attached: boolean;
   /** The pass's title (display title, else its description). */
   passTitle?: string | null;
   /** Key fields and colours from the built pass; shown before the badge. */
   summary?: PassSummary | null;
-  /** The org's logo (absolute URL) when it is branded. */
-  logoUrl?: string | null;
+  /** The pass's icon (absolute URL): the org's mark before its name in the band, as on `/p`. */
+  iconUrl?: string | null;
+  /** The pass's logo (absolute URL) and its size in points, drawn on the pass block. */
+  logo?: { url: string; width: number; height: number } | null;
+  /** The pass's logoText, beside the logo as in Wallet. Absent when the logo shows the name. */
+  logoText?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
   /**
    * PUBLIC_BASE_URL when the org opted in (`email.buddy`): the buddy sits at the band's right end,
-   * as in the sign-in email. Absent, the band is the org's name alone.
+   * as in the sign-in email. Absent, the band is the org's mark and name alone.
    */
   buddyBase?: string | null;
 }
@@ -51,6 +54,30 @@ export interface RenderedEmail {
 
 export const ADD_LINE = HOLDER_COPY.openOnApple;
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
+const OPEN_LABEL = 'Open your pass';
+
+/** Wallet's logo box is 160×50 pt; the email draws the logo at most this tall. */
+const LOGO = { width: 160, height: 36 };
+/** Between the badge and its button, side by side or stacked: more than its 0.1 × height. */
+const GAP = 12;
+const CARD = parseColor(c.card) ?? { r: 255, g: 255, b: 255 };
+
+/** The logo row, as the pass's header: the logo, then logoText unless the logo has the name. */
+function logoHtml(input: PassEmailInput, fg: string): string {
+  const url = safeUrl(input.logo?.url);
+  const { width = 0, height = 0 } = input.logo ?? {};
+  if (!url || !(width > 0 && height > 0)) return '';
+  const scale = Math.min(1, LOGO.width / width, LOGO.height / height);
+  const w = Math.max(1, Math.round(width * scale));
+  const h = Math.max(1, Math.round(height * scale));
+  const text = input.logoText?.trim();
+  // Named beside it, the image adds nothing to read; alone, it is the org's name.
+  const img = `<img src="${escapeHtml(url)}" alt="${text ? '' : escapeHtml(input.orgName)}" width="${w}" height="${h}" style="display:block;width:${w}px;height:${h}px;border:0">`;
+  const name = text
+    ? `<td style="padding:0 0 0 10px;vertical-align:middle;font-size:16px;line-height:20px;font-weight:600;color:${fg}">${escapeHtml(text)}</td>`
+    : '';
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 14px;border-collapse:collapse"><tr><td style="vertical-align:middle">${img}</td>${name}</tr></table>`;
+}
 
 /** The pass, drawn small in its own colours: logo, title and two or three fields. */
 function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string {
@@ -59,9 +86,6 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
   const bg = s?.colors.background ?? c.sunken;
   const fg = s?.colors.foreground ?? c.strong;
   const label = s?.colors.label ?? c.muted;
-  const logo = input.logoUrl
-    ? `<img src="${escapeHtml(input.logoUrl)}" alt="${escapeHtml(input.orgName)}" height="24" style="display:block;height:24px;width:auto;border:0;margin:0 0 12px">`
-    : '';
   const title = input.passTitle
     ? `<p style="margin:0 0 ${fields.length ? 12 : 0}px;font-size:17px;line-height:22px;font-weight:600;color:${fg}">${escapeHtml(input.passTitle)}</p>`
     : '';
@@ -74,7 +98,23 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
   const table = rows
     ? `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse">${rows}</table>`
     : '';
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:separate"><tr><td style="background:${bg};border-radius:${RADIUS.lg}px;padding:16px 18px">${logo}${title}${table}</td></tr></table>`;
+  // The card's hairline where the pass's colour would melt into the card: a light pass here, any
+  // pass in dark clients (e-line). Elsewhere the edge is the pass's own colour.
+  const bgRgb = parseColor(bg);
+  const edge = !bgRgb || contrast(bgRgb, CARD) < 1.5 ? c.line : bg;
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:separate"><tr><td class="e-line" style="background:${bg};border:1px solid ${edge};border-radius:${RADIUS.lg}px;padding:15px 17px">${logoHtml(input, fg)}${title}${table}</td></tr></table>`;
+}
+
+/**
+ * The badge and its button: one box, side by side where the column fits both, else stacked, left
+ * on the card's text edge. Inline blocks wrap without media queries (Gmail); Outlook gets a row.
+ */
+function actionsHtml(input: PassEmailInput): string {
+  const { width, height } = EMAIL_BADGE;
+  const item = (inner: string, right: string) =>
+    `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 ${right} ${GAP}px 0">${inner}</div>`;
+  const badge = `<a href="${escapeHtml(input.downloadUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`;
+  return `<div style="margin:0 0 4px;font-size:0;line-height:0"><!--[if mso]><table role="presentation" cellspacing="0" cellpadding="0"><tr><td valign="top"><![endif]-->${item(badge, `${GAP}px`)}<!--[if mso]></td><td valign="top"><![endif]-->${item(badgeButtonHtml(input.manageUrl, OPEN_LABEL), '0')}<!--[if mso]></td></tr></table><![endif]--></div>`;
 }
 
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
@@ -100,8 +140,8 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     ...(input.passTitle ? ['', input.passTitle] : []),
     ...fields.map((f) => `${f.label ? `${f.label}: ` : ''}${f.value}`),
     '',
-    `Add to Apple Wallet: ${input.downloadUrl}`,
-    `Open your pass: ${input.manageUrl}`,
+    `${APPLE_BADGE_ALT}: ${input.downloadUrl}`,
+    `${OPEN_LABEL}: ${input.manageUrl}`,
     ADD_LINE,
     ...(input.attached ? ['', 'The pass is also attached.'] : []),
     '',
@@ -112,18 +152,19 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
   const body = `${titleHtml(HOLDER_COPY.passReady, '0 0 16px')}
 ${passBlock(input, fields)}
-<p style="margin:0 0 16px"><a href="${escapeHtml(input.downloadUrl)}" style="display:inline-block;padding:4px;border-radius:${RADIUS.lg}px;background:#ffffff;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="Add to Apple Wallet" width="150" style="display:block;width:150px;height:auto;border:0"></a></p>
-<p style="margin:0 0 16px">${buttonHtml(input.manageUrl, 'Open your pass', false)}</p>
+${actionsHtml(input)}
 ${muted('0 0 24px', ADD_LINE)}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${supportHtml ? `<p class="e-muted" style="margin:12px 0 0;${type('xs')};color:${c.muted}">Questions: ${supportHtml}</p>` : ''}`;
   // Images need an absolute URL, as in the sign-in email.
   const buddyBase = safeUrl(input.buddyBase);
+  const mark = safeUrl(input.iconUrl);
   const html = emailShell({
     lang: input.lang ?? 'en',
     title: subject,
     header: input.orgName,
+    ...(mark ? { headerMark: mark } : {}),
     ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD } } : {}),
     body,
   });

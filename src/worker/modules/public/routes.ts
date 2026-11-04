@@ -19,6 +19,8 @@ publicRoutes.use('/:token/assets/*', rateLimit('RL_PUBLIC_ASSET'));
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 
+const EMAILED = /^(icon|logo)(@[23]x)?\.png$/;
+
 const PAGE_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
   'cache-control': 'private, no-store',
@@ -136,6 +138,8 @@ register(
       etag: asset.etag,
       'cache-control': 'private, max-age=31536000, immutable',
       'x-content-type-options': 'nosniff',
+      // The pass email shows the icon and logo, and webmail loads them from its own origin.
+      ...(EMAILED.test(p.name) ? { 'cross-origin-resource-policy': 'cross-origin' } : {}),
     };
     if (c.req.header('if-none-match') === asset.etag) {
       await asset.body.cancel();

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BUDDY_SLICES,
   buddyPath,
+  EMAIL_BADGE,
   EMAIL_BUDDY,
   EMAIL_MOODS,
   EMAIL_SCHEMES,
@@ -44,5 +45,16 @@ describe('public/email buddy PNGs', () => {
 
   it('ships exactly these files, none named with @', () => {
     expect(new Set(readdirSync(resolve(root, 'public/email')))).toEqual(expected);
+  });
+});
+
+// Apple's kit, when it lands, may change the art's aspect: the email's fixed box must follow.
+describe('the email badge box', () => {
+  it("keeps the PNG's aspect at its 44 px height", () => {
+    const img = decodePng(readFileSync(resolve(root, `public${EMAIL_BADGE.path}`)));
+    expect(EMAIL_BADGE.height).toBe(44);
+    expect(
+      Math.abs((EMAIL_BADGE.height * img.width) / img.height - EMAIL_BADGE.width),
+    ).toBeLessThan(0.5);
   });
 });

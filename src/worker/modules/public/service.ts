@@ -4,6 +4,7 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgBranding } from '../delivery/repo.ts';
 import { isOrgActive } from '../orgs/active.ts';
+import { replacedBy } from '../passes/assets.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -58,19 +59,47 @@ export interface PublicPageModel {
   assets: Record<string, string>;
 }
 
+export interface PassImage {
+  name: string;
+  /** Under `/p/:token/assets/`, cache-busted by content hash. */
+  path: string;
+  /** Pixels, when recorded. */
+  width: number | null;
+  height: number | null;
+}
+
+/**
+ * The pass's images for the pass page and the pass email: its overrides, then the template's for
+ * the slots they leave (an override replaces every scale of its slot, as in the signed pass).
+ */
+export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassImage[]> {
+  const [template, overrides] = await Promise.all([
+    resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
+    listAssets(ctx.env.DB, pass.id),
+  ]);
+  const taken = replacedBy(overrides.map((a) => a.name));
+  const image = (
+    a: { name: string; width?: number | null; height?: number | null },
+    version: string,
+  ): PassImage => ({
+    name: a.name,
+    path: `/p/${pass.downloadToken}/assets/${a.name}?v=${version}`,
+    width: a.width ?? null,
+    height: a.height ?? null,
+  });
+  return [
+    ...template.assets
+      .filter((a) => a.name.endsWith('.png') && !taken(a.name))
+      .map((a) => image(a, a.sha1 || template.version)),
+    ...overrides.map((a) => image(a, a.sha1)),
+  ];
+}
+
 export async function pageModel(ctx: ServiceContext, pass: Pass): Promise<PublicPageModel> {
   const raw = await currentPassJson(ctx.env.DB, pass.id);
   if (!raw) throw new NotFoundError('The pass has no stored version.', 'PASS_VERSION_MISSING');
-  const base = `/p/${pass.downloadToken}/assets/`;
-  const assets: Record<string, string> = {};
-  const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-  for (const a of template.assets) {
-    if (a.name.endsWith('.png'))
-      assets[a.name] = `${base}${a.name}?v=${a.sha1 || template.version}`;
-  }
-  for (const a of await listAssets(ctx.env.DB, pass.id))
-    assets[a.name] = `${base}${a.name}?v=${a.sha1}`;
-  const org = await getOrg(ctx.env.DB, pass.orgId);
+  const [images, org] = await Promise.all([passImages(ctx, pass), getOrg(ctx.env.DB, pass.orgId)]);
+  const assets = Object.fromEntries(images.map((i) => [i.name, i.path]));
   return { passJson: parseStoredPassJson(raw), assets, orgName: org?.name ?? '' };
 }
 
