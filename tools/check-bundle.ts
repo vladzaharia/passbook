@@ -7,8 +7,8 @@ import { gzipSync } from 'node:zlib';
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
 
-/** Initial gzip bytes measured after the admin-only libraries left the entry (217,649), plus 5%. */
-export const BUDGET_BYTES = 230_000;
+/** Initial gzip bytes measured after the admin-only libraries left the entry (217,649), plus 5%, plus wave 2 (Test mode, Messages). */
+export const BUDGET_BYTES = 232_500;
 export const FORBIDDEN = ['cmdk-', 'getRowModel', 'measureElement'] as const;
 
 export function initialAssets(html: string): string[] {

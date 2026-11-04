@@ -99,6 +99,15 @@
         "x-group": "Links",
         "x-order": 75,
         "maxLength": 16
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 59,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back. A change notifies the holder."
       }
     },
     "dependentRequired": {
@@ -118,6 +127,16 @@
     "since": "2026-01-01T00:00:00Z"
   },
   "bindings": [
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}",
+      "remove": {
+        "input": "message",
+        "empty": true
+      }
+    },
     {
       "to": {
         "field": [
@@ -268,5 +287,8 @@
       "holder",
       "memberId"
     ]
+  },
+  "messaging": {
+    "input": "message"
   }
 }

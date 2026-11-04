@@ -15,7 +15,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
 import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
-import { applyChangeMessages } from './change-messages.ts';
+import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { applyRemoval, type Removal } from './remove-build.ts';
@@ -44,6 +44,8 @@ export interface BuildRequest {
    * value differs from `previous` do. Omitted (syncs, upgrades), the template's messages stay.
    */
   changeMessages?: { previous: PassJson | null; notify: boolean };
+  /** Strips every changeMessage: the update reaches devices without a notification. */
+  silent?: boolean;
   /** Set while the pass is removed from Wallet: every build stays the stripped, voided version. */
   removal?: Removal;
 }
@@ -241,6 +243,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       const { previous, notify } = req.changeMessages;
       resign = applyChangeMessages(built.passJson, previous, notify) || resign;
     }
+    if (req.silent) resign = stripChangeMessages(built.passJson) || resign;
     if (req.removal) {
       applyRemoval(built.passJson, req.removal);
       resign = true;

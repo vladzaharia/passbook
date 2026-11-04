@@ -4,6 +4,7 @@ import { apiKeysRoutes } from './modules/api-keys/routes.ts';
 import { appleRoutes } from './modules/apple/routes.ts';
 import { auditRoutes } from './modules/audit/routes.ts';
 import { authRoutes, sessionRoutes } from './modules/auth/routes.ts';
+import { broadcastsRoutes } from './modules/broadcasts/routes.ts';
 import { bundlePublicRoutes } from './modules/bundles/public-routes.ts';
 import { bundlesRoutes } from './modules/bundles/routes.ts';
 import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/connections/routes.ts';
@@ -80,6 +81,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/bundles', bundlesRoutes);
   app.route('/api/v1/test-inbox', sandboxRoutes);
+  app.route('/api/v1/broadcasts', broadcastsRoutes);
   app.route('/api/v1/holders', holdersRoutes);
   app.route('/api/v1/delivery', deliveryRoutes);
   app.route('/api/v1/connections', connectionsRoutes);

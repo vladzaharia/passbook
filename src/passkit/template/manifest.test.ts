@@ -123,6 +123,39 @@ describe('validateManifest', () => {
   });
 });
 
+describe('messaging', () => {
+  const passJson = (changeMessage?: string): PassJson =>
+    ({
+      generic: {
+        backFields: [
+          { key: 'name', label: 'Name', value: 'x', ...(changeMessage ? { changeMessage } : {}) },
+        ],
+      },
+    }) as unknown as PassJson;
+  const opts = { allowPattern: true };
+
+  it('accepts an input bound to a "%@" back field', () => {
+    const m = { ...base, messaging: { input: 'name' } };
+    expect(codes(m, { ...opts, passJson: passJson('%@') })).toEqual([]);
+  });
+
+  it('rejects an unknown input', () => {
+    const m = { ...base, messaging: { input: 'nope' } };
+    expect(codes(m, opts)).toEqual(['MESSAGING_INPUT']);
+  });
+
+  it('rejects an input whose field has no "%@" message', () => {
+    const m = { ...base, messaging: { input: 'name' } };
+    expect(codes(m, { ...opts, passJson: passJson() })).toEqual(['MESSAGING_FIELD']);
+    expect(codes(m, { ...opts, passJson: passJson('Now %@') })).toEqual(['MESSAGING_FIELD']);
+  });
+
+  it('rejects an input no binding reaches the field with', () => {
+    const m = { ...base, messaging: { input: 'tier' } };
+    expect(codes(m, { ...opts, passJson: passJson('%@') })).toEqual(['MESSAGING_FIELD']);
+  });
+});
+
 describe('inputs and display', () => {
   it('applies defaults without mutating the input', () => {
     const input = { name: 'A' };

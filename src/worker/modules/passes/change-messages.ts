@@ -1,5 +1,9 @@
 import { FIELD_GROUPS } from '../../../passkit/schema/constants.ts';
 import { PASS_STYLES, type PassJson } from '../../../passkit/types.ts';
+import type { PushBudgetDto } from '../../../shared/contracts/passes.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { getPlatformSettings } from '../settings/service.ts';
+import { notifiedSince } from './repo-budget.ts';
 
 type Field = { key?: unknown; value?: unknown; changeMessage?: unknown };
 
@@ -60,3 +64,34 @@ export function notifiesHolder(pass: PassJson, previous: PassJson | null): boole
       return true;
   return false;
 }
+
+/** Removes every changeMessage so the update reaches the device without a notification. */
+export function stripChangeMessages(pass: PassJson): boolean {
+  let changed = false;
+  for (const field of fieldsOf(pass).values())
+    if (field.changeMessage !== undefined) {
+      delete field.changeMessage;
+      changed = true;
+    }
+  return changed;
+}
+
+export const BUDGET_WINDOW_MS = 24 * 3_600_000;
+
+/**
+ * Notifying updates this pass got in the last 24 hours against `push.budgetPerDay`. Every
+ * publish source counts the same: edits, syncs, upgrades, scans, broadcasts and schedules.
+ */
+export async function pushBudgetOf(ctx: ServiceContext, passId: string): Promise<PushBudgetDto> {
+  const [{ used, oldest }, settings] = await Promise.all([
+    notifiedSince(ctx.env.DB, passId, ctx.clock.now() - BUDGET_WINDOW_MS),
+    getPlatformSettings(ctx),
+  ]);
+  return {
+    used,
+    limit: settings['push.budgetPerDay'],
+    resetsAt: oldest === null ? null : oldest + BUDGET_WINDOW_MS,
+  };
+}
+
+export const overBudget = (budget: PushBudgetDto): boolean => budget.used >= budget.limit;

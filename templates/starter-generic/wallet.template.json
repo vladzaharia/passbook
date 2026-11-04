@@ -122,6 +122,15 @@
         "x-group": "Links",
         "x-order": 75,
         "maxLength": 16
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 59,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back. A change notifies the holder."
       }
     },
     "dependentRequired": {
@@ -173,6 +182,16 @@
       },
       "value": "{{since}}",
       "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}",
+      "remove": {
+        "input": "message",
+        "empty": true
+      }
     },
     {
       "to": {
@@ -305,5 +324,8 @@
       "holder",
       "memberId"
     ]
+  },
+  "messaging": {
+    "input": "message"
   }
 }

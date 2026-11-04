@@ -153,6 +153,15 @@
             }
           }
         }
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 59,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back. A change notifies the holder."
       }
     },
     "dependentRequired": {
@@ -203,6 +212,16 @@
         "prop": "currencyCode"
       },
       "value": "{{currency}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}",
+      "remove": {
+        "input": "message",
+        "empty": true
+      }
     },
     {
       "to": {
@@ -318,5 +337,8 @@
         "input": "beacons"
       }
     }
-  ]
+  ],
+  "messaging": {
+    "input": "message"
+  }
 }

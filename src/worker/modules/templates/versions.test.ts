@@ -152,6 +152,38 @@ describe('POST /templates/{id}/versions', () => {
     expect(next.template.activeVersion).toBe(body.version);
   });
 
+  it('keeps manifest.messaging on save and refuses one that no back field backs', async () => {
+    const withMessage = (changeMessage?: string) =>
+      draft({
+        manifest: { ...manifest('Messaging Card'), messaging: { input: 'name' } },
+        passJson: pass({
+          generic: {
+            primaryFields: [{ key: 'other', label: 'Other', value: 'x' }],
+            backFields: [
+              {
+                key: 'name',
+                label: 'Message',
+                value: '',
+                ...(changeMessage ? { changeMessage } : {}),
+              },
+            ],
+          },
+        }),
+      });
+    const bad = await save(mine.id, withMessage());
+    expect(bad.status).toBe(422);
+    expect(JSON.stringify(await bad.json())).toContain('MESSAGING_FIELD');
+    const ok = await save(mine.id, withMessage('%@'));
+    expect(ok.status).toBe(200);
+    const { version } = (await ok.json()) as { version: string };
+    const row = await first<{ manifest: string }>(
+      env.DB,
+      'SELECT manifest FROM template_versions WHERE template_id = ? AND version = ?',
+      [mine.id, version],
+    );
+    expect(JSON.parse(row?.manifest ?? '{}').messaging).toEqual({ input: 'name' });
+  });
+
   it('keeps carried files and stores uploaded images', async () => {
     const icon3 = b64(makePng(114, 114));
     const res = await save(mine.id, {

@@ -22,6 +22,8 @@ export const PlatformSettingsSchema = z.object({
   'retention.eventsDays': z.number().int().min(7).max(3650).default(90),
   /** Test-mode passes, bundles and captured emails older than this are deleted daily. */
   'sandbox.purgeDays': z.number().int().min(1).max(365).default(30),
+  /** Notifying updates one pass may get per rolling 24 hours; later updates are silent. */
+  'push.budgetPerDay': z.number().int().min(0).max(50).default(3),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z

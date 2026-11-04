@@ -85,4 +85,5 @@ export const SCOPE_LABEL: Record<string, string> = {
   'passes:write': 'Create and update passes',
   'holders:write': 'Assign holders',
   'templates:read': 'Read templates',
+  'messages:write': 'Send messages and scheduled changes',
 };

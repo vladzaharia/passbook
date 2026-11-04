@@ -148,7 +148,8 @@
       {
         "key": "message",
         "label": "From Henry’s",
-        "value": "Welcome to Henry’s."
+        "value": "Welcome to Henry’s.",
+        "changeMessage": "%@"
       },
       {
         "key": "portal",

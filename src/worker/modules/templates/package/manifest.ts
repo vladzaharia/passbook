@@ -1,5 +1,6 @@
 import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
+import { messagingIssues } from '../../../../passkit/template/messaging.ts';
 import type {
   Json,
   PassField,
@@ -249,6 +250,8 @@ export function validateManifest(
         error('BINDING_POINTER', `Pointer ${String(to.pointer)} is not allowed.`, `${path}.to`);
     } else error('BINDING_SHAPE', 'Unknown binding target.', `${path}.to`);
   }
+
+  issues.push(...messagingIssues(manifest, pass));
 
   for (const [i, use] of (manifest.behaviors ?? []).entries()) {
     const path = `behaviors.${i}`;

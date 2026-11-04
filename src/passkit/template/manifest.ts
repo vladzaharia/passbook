@@ -11,6 +11,7 @@ import type {
   ValidationIssue,
 } from '../types.ts';
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
+import { messagingIssues } from './messaging.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 import { validateRequires } from './requires.ts';
 
@@ -236,6 +237,8 @@ export function validateManifest(
         `${path}/config${e.instanceLocation.slice(1)}`,
       );
   }
+
+  issues.push(...messagingIssues(manifest, options.passJson));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)

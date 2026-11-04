@@ -122,6 +122,12 @@
     ],
     "backFields": [
       {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
         "key": "note",
         "label": "Note",
         "value": ""

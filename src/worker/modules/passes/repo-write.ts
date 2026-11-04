@@ -155,6 +155,7 @@ export async function casMeta(
   id: string,
   expectedVersion: number,
   set: {
+    personalization: Personalization;
     fieldSources: FieldSources;
     externalId: string | null;
     templateVersion: string;
@@ -165,10 +166,11 @@ export async function casMeta(
 ): Promise<number | null> {
   const row = await first<{ version: number }>(
     db,
-    `UPDATE passes SET field_sources = ?, external_id = ?, template_version = ?, content_hash = ?,
+    `UPDATE passes SET personalization = ?, field_sources = ?, external_id = ?, template_version = ?, content_hash = ?,
        barcode_hash = ?, scan_code = COALESCE(scan_code, ?), version = version + 1
      WHERE id = ? AND version = ? RETURNING version`,
     [
+      JSON.stringify(set.personalization),
       JSON.stringify(set.fieldSources),
       set.externalId,
       set.templateVersion,
