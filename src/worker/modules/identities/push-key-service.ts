@@ -4,8 +4,9 @@ import { encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
-import { clearApnsTokens } from '../delivery/apns-jwt.ts';
+import { dropTeamApnsTokens } from '../delivery/apns-jwt.ts';
 import { invalid } from './cert.ts';
+import { apnsBindingPresent } from './db-resolver.ts';
 import { checkKeyId, readP8 } from './push-key.ts';
 import { clearPushKeyCache, pushKeyAad } from './push-key-store.ts';
 import { getIdentityRow, type IdentityRow } from './repo.ts';
@@ -13,9 +14,19 @@ import {
   deletePushKey,
   getPushKeyMeta,
   replacePushKey,
-  resetTeamApnsHealth,
+  resetApnsHealth,
+  teamIdentityBindings,
 } from './repo-push-keys.ts';
 import { getIdentity } from './service.ts';
+
+/** Only identities that push with the key lose their health; certificate-bound ones keep theirs. */
+async function resetKeyUsers(ctx: ServiceContext, team: string): Promise<void> {
+  const rows = await teamIdentityBindings(ctx.env.DB, team);
+  await resetApnsHealth(
+    ctx.env.DB,
+    rows.filter((r) => !apnsBindingPresent(ctx.env, r.apns_binding)).map((r) => r.id),
+  );
+}
 
 async function teamRow(ctx: ServiceContext, identityId: string): Promise<IdentityRow> {
   const row = await getIdentityRow(ctx.env.DB, identityId);
@@ -52,9 +63,9 @@ export async function setPushKey(
     createdBy: actor.type === 'user' ? actor.id : null,
     now: ctx.clock.now(),
   });
-  await resetTeamApnsHealth(ctx.env.DB, team);
+  await resetKeyUsers(ctx, team);
   clearPushKeyCache();
-  clearApnsTokens();
+  dropTeamApnsTokens(team);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.org_id,
@@ -76,9 +87,9 @@ export async function removePushKey(
   const meta = await getPushKeyMeta(ctx.env.DB, team);
   if (!meta || !(await deletePushKey(ctx.env.DB, team)))
     throw new ConflictError('This team has no push key.', 'PUSH_KEY_NONE');
-  await resetTeamApnsHealth(ctx.env.DB, team);
+  await resetKeyUsers(ctx, team);
   clearPushKeyCache();
-  clearApnsTokens();
+  dropTeamApnsTokens(team);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.org_id,

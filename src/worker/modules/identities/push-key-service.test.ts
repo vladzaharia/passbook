@@ -124,6 +124,12 @@ describe('push key routes', () => {
     const body = { keyId: KEY_ID, p8: (await makeP8()).pem };
     expect((await putKey(a, body, fake.user())).status).toBe(403);
     expect((await putKey(a, body, { cookie: fake.admin().cookie ?? '' })).status).toBe(403);
+    for (const as of [fake.apiKey(), fake.apiKey({ mode: 'test' })]) {
+      expect([401, 403]).toContain((await putKey(a, body, as)).status);
+      const del = await request(`/api/v1/identities/${a}/push-key`, { method: 'DELETE', as });
+      expect([401, 403]).toContain(del.status);
+    }
+    expect((await putKey(a, body, fake.admin({ mode: 'test' }))).status).toBe(200);
     expect((await putKey('nope', body)).status).toBe(404);
     expect((await request('/api/v1/identities/nope/push-key', { method: 'DELETE' })).status).toBe(
       404,

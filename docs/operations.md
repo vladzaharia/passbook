@@ -49,6 +49,10 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
      `.secrets/platform-*.pem` with `wrangler mtls-certificate upload` and adds
      `mtls_certificates: APNS` to `wrangler.jsonc`. Then `npm run gen`.
    - Without the binding the platform signs passes but cannot push updates.
+   - Or add a team push key (.p8) on the identity's Push card. After deploy, press Check there:
+     failures with `APNS_TOKEN_TRANSPORT_FAILED` in the logs mean the runtime cannot reach APNs over
+     HTTP/2. Apple answers 429 `TooManyProviderTokenUpdates` if tokens are re-signed too often
+     (after setting a key, or on many isolates at once); the push job retries it.
 4. **Turnstile**: a widget whose hostnames include `PUBLIC_BASE_URL`'s host. Site key in
    `vars.TURNSTILE_SITE_KEY`, secret in step 5. The always-pass test key is refused by `predeploy`.
 5. **Secrets** (`wrangler secret put <NAME>`, value on stdin)

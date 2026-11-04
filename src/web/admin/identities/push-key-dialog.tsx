@@ -96,7 +96,7 @@ export function PushKeyDialog({
         >
           <div>
             <FileDrop
-              art="certificate"
+              art="key"
               accept=".p8"
               maxBytes={MAX_P8_BYTES}
               label={draft.file ? draft.file.name : 'Choose the AuthKey .p8 file'}

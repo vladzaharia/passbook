@@ -20,18 +20,17 @@ import {
   useFormErrors,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
-import { ApnsRow } from './apns-check.tsx';
 import { ExpiryPill } from './expiry.tsx';
 import { useUpdateIdentity } from './queries.ts';
 
 type Identity = z.infer<typeof IdentitySchema>;
 
-/** Every read-only fact about the certificate, with the APNs row last. */
+/** Every read-only fact about the certificate. */
 export function CertificateCard({ identity, now }: { identity: Identity; now: number }) {
   return (
     <Card>
       <CardHeader title="Certificate" />
-      <CardBody className="flex flex-col gap-4">
+      <CardBody>
         <KeyValue
           items={[
             { label: 'Pass type ID', value: identity.passTypeIdentifier, mono: true },
@@ -46,9 +45,6 @@ export function CertificateCard({ identity, now }: { identity: Identity; now: nu
             },
           ]}
         />
-        <div className="border-t border-border pt-4">
-          <ApnsRow identity={identity} />
-        </div>
       </CardBody>
     </Card>
   );

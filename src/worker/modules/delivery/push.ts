@@ -36,6 +36,7 @@ const CERT_REASONS = new Set([
   'BadCertificateEnvironment',
   'ExpiredProviderToken',
   'InvalidProviderToken',
+  'PushKeyUnreadable',
   'MissingTopic',
   'TopicDisallowed',
   'Forbidden',

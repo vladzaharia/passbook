@@ -13,6 +13,10 @@ export function clearApnsTokens(): void {
   cache.clear();
 }
 
+export function dropTeamApnsTokens(team: string): void {
+  for (const k of cache.keys()) if (k.startsWith(`${team}:`)) cache.delete(k);
+}
+
 export function dropApnsToken(team: string, keyId: string): void {
   cache.delete(`${team}:${keyId}`);
 }

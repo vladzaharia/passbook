@@ -15,7 +15,7 @@ type Identity = z.infer<typeof IdentitySchema>;
 const METHOD_LABEL = {
   certificate: 'Certificate binding',
   key: 'Push key',
-  none: 'Not set up',
+  none: '',
 } as const;
 
 type Health = Result['health'] | Identity['apnsHealth'];
@@ -44,6 +44,7 @@ export function failureSentence(
     return method === 'key'
       ? 'Apple rejected the push key. Check the key ID and team, or upload a new key.'
       : 'Apple rejected the push certificate. Upload a new one.';
+  if (reason === 'PushKeyUnreadable') return 'The stored push key cannot be read. Rotate the key.';
   if (status === 0 || (reason && UNREACHABLE.has(reason)))
     return method === 'key'
       ? 'Could not reach Apple with the push key. Check the Worker logs for APNS_TOKEN_TRANSPORT_FAILED.'
@@ -61,7 +62,7 @@ function HealthPill({ health, available }: { health: Health; available: boolean 
 }
 
 /**
- * The APNs row of the Certificate card: seal, status pill, last check and an inline Check. Rings
+ * The APNs row of the Push card: seal, status pill, last check and an inline Check. Rings
  * leave the seal while the check runs; the answer pops (healthy) or shakes (failing) it once.
  */
 export function ApnsRow({ identity }: { identity: Identity }) {
@@ -121,9 +122,11 @@ export function ApnsRow({ identity }: { identity: Identity }) {
         </span>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm text-fg-strong">APNs</span>
-          <span className="text-xs text-fg-muted">
-            {METHOD_LABEL[result?.method ?? identity.pushMethod]}
-          </span>
+          {(result?.method ?? identity.pushMethod) === 'none' ? null : (
+            <span className="text-xs text-fg-muted">
+              {METHOD_LABEL[result?.method ?? identity.pushMethod]}
+            </span>
+          )}
           <HealthPill health={health} available={identity.apnsAvailable} />
           {checkedAt ? (
             <span className="text-xs text-fg-muted">Checked {formatDateTime(checkedAt)}</span>

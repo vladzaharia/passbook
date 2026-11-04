@@ -50,30 +50,19 @@ export interface PushKeyWrite {
   now: number;
 }
 
-/** `created_by` is stored only when the user exists (API keys and tests have none). */
-/** Inserts the team's key, or replaces it in place (new id, so the AAD changes with it). */
+/** Inserts the team's key, or replaces it in place (new id, so the AAD changes with it). True when it replaced one. */
 export async function replacePushKey(db: D1Database, w: PushKeyWrite): Promise<boolean> {
-  const existing = await first<{ id: string }>(
-    db,
-    'SELECT id FROM apns_keys WHERE team_identifier = ?',
-    [w.team],
-  );
-  if (existing) {
-    await run(
-      db,
-      `UPDATE apns_keys SET id = ?, key_id = ?, kek_version = ?, iv = ?, wrapped_dek = ?, ciphertext = ?,
-         created_by = (SELECT id FROM users WHERE id = ?), rotated_at = ? WHERE team_identifier = ?`,
-      [w.id, w.keyId, w.kekVersion, w.iv, w.wrappedDek, w.ciphertext, w.createdBy, w.now, w.team],
-    );
-    return true;
-  }
-  await run(
+  const row = await first<{ rotated_at: number | null }>(
     db,
     `INSERT INTO apns_keys (id, team_identifier, key_id, kek_version, iv, wrapped_dek, ciphertext, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT id FROM users WHERE id = ?), ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT id FROM users WHERE id = ?), ?)
+     ON CONFLICT(team_identifier) DO UPDATE SET id = excluded.id, key_id = excluded.key_id,
+       kek_version = excluded.kek_version, iv = excluded.iv, wrapped_dek = excluded.wrapped_dek,
+       ciphertext = excluded.ciphertext, created_by = excluded.created_by, rotated_at = excluded.created_at
+     RETURNING rotated_at`,
     [w.id, w.team, w.keyId, w.kekVersion, w.iv, w.wrappedDek, w.ciphertext, w.createdBy, w.now],
   );
-  return false;
+  return row?.rotated_at != null;
 }
 
 export async function deletePushKey(db: D1Database, team: string): Promise<boolean> {
@@ -81,19 +70,20 @@ export async function deletePushKey(db: D1Database, team: string): Promise<boole
   return result.changes > 0;
 }
 
-/** Identities of the team: the ones its push key serves. */
-export async function teamIdentityCount(db: D1Database, team: string): Promise<number> {
-  const row = await first<{ n: number }>(
+/** Identities of the team with the binding each names; the key serves those without a present one. */
+export const teamIdentityBindings = (db: D1Database, team: string) =>
+  all<{ id: string; apns_binding: string | null }>(
     db,
-    'SELECT count(*) AS n FROM signing_identities WHERE team_identifier = ?',
+    'SELECT id, apns_binding FROM signing_identities WHERE team_identifier = ?',
     [team],
   );
-  return row?.n ?? 0;
-}
 
-/** A new or removed key makes earlier push results meaningless for the team's identities. */
-export async function resetTeamApnsHealth(db: D1Database, team: string): Promise<void> {
-  await run(db, "UPDATE signing_identities SET apns_health = 'unknown' WHERE team_identifier = ?", [
-    team,
-  ]);
+/** A new or removed key makes earlier push results meaningless for the identities that use it. */
+export async function resetApnsHealth(db: D1Database, ids: readonly string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await run(
+    db,
+    `UPDATE signing_identities SET apns_health = 'unknown' WHERE id IN (${ids.map(() => '?').join(',')})`,
+    ids,
+  );
 }

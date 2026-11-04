@@ -1,4 +1,3 @@
-import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
@@ -12,9 +11,9 @@ import {
   CodeBlock,
   ConfirmDialog,
   KeyValue,
-  StatusPill,
   toast,
 } from '@/web/ui/index.ts';
+import { ApnsRow } from './apns-check.tsx';
 import { PushKeyDialog } from './push-key-dialog.tsx';
 import { useRemovePushKey } from './queries.ts';
 
@@ -24,12 +23,11 @@ const MTLS_STEPS = `npx wrangler mtls-certificate upload --cert cert.pem --key k
 # wrangler.jsonc
 "mtls_certificates": [{ "binding": "APNS_<IDENTITY>", "certificate_id": "<id from upload>" }]`;
 
-function MethodPill({ method }: { method: Identity['pushMethod'] }) {
-  if (method === 'certificate')
-    return <StatusPill status="verified">Certificate binding</StatusPill>;
-  if (method === 'key') return <StatusPill status="verified">Push key</StatusPill>;
-  return <StatusPill status="not_configured">Not set up</StatusPill>;
-}
+const METHOD_TEXT = {
+  certificate: 'Certificate binding',
+  key: 'Push key',
+  none: 'Not set up',
+} as const;
 
 /** How pushes reach Apple for this identity: its mTLS binding, else the team's .p8 key. */
 export function PushCard({
@@ -45,6 +43,7 @@ export function PushCard({
   const [removing, setRemoving] = useState(false);
   const key = identity.pushKey;
   const shared = (key?.identityCount ?? 0) > 1;
+  const dependents = key?.dependentCount ?? 0;
   const none = identity.pushMethod === 'none';
 
   return (
@@ -53,7 +52,7 @@ export function PushCard({
       <CardBody className="flex flex-col gap-4">
         <KeyValue
           items={[
-            { label: 'Method', value: <MethodPill method={identity.pushMethod} /> },
+            { label: 'Method', value: METHOD_TEXT[identity.pushMethod] },
             ...(key
               ? [
                   { label: 'Push key ID', value: key.keyId, mono: true },
@@ -72,6 +71,9 @@ export function PushCard({
               : []),
           ]}
         />
+        <div className="border-t border-border pt-4">
+          <ApnsRow identity={identity} />
+        </div>
         {none ? (
           <p className="max-w-[65ch] text-sm text-fg-muted">
             Passes update when holders refresh in Wallet. Add a push key to update them right away.
@@ -85,7 +87,9 @@ export function PushCard({
           <Button
             size="sm"
             variant={none ? 'primary' : 'outline'}
-            iconStart={key ? <ACTION_ICON.rotate aria-hidden /> : <KeyRound aria-hidden />}
+            iconStart={
+              key ? <ACTION_ICON.rotate aria-hidden /> : <ACTION_ICON.pushKey aria-hidden />
+            }
             onClick={() => onDialogOpenChange(true)}
           >
             {key ? 'Rotate key' : 'Add push key'}
@@ -122,8 +126,8 @@ export function PushCard({
         onOpenChange={setRemoving}
         title="Remove push key?"
         description={
-          shared
-            ? `${key?.identityCount} identities of team ${identity.teamIdentifier} lose push until a key or binding is set.`
+          dependents > 1
+            ? `${dependents} identities of team ${identity.teamIdentifier} lose push until a key or binding is set.`
             : 'Passes update only when holders refresh in Wallet until a new key or binding is set.'
         }
         confirmLabel="Remove"

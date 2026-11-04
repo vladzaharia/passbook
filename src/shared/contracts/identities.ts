@@ -12,6 +12,8 @@ export const PushKeyInfoSchema = z.object({
   rotatedAt: TimestampSchema.nullable(),
   /** Identities of the team the key serves. */
   identityCount: z.number().int().nonnegative(),
+  /** Identities of the team with no present binding, which push only with the key. */
+  dependentCount: z.number().int().nonnegative(),
 });
 
 export const IdentitySchema = z.object({

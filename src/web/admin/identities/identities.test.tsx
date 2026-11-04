@@ -251,6 +251,7 @@ describe('identity detail', () => {
         createdAt: 1_600_000_000_000,
         rotatedAt: null,
         identityCount: 2,
+        dependentCount: 2,
       },
     });
     const { container } = await renderApp('/admin/identities/i1', {
