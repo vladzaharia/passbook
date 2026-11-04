@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth, makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
-import { sha1Hex } from '../../../passkit/sign/index.ts';
 import {
   BulkPassActionResponseSchema,
   PassDetailSchema,
@@ -9,6 +8,8 @@ import {
 import { createApp } from '../../app.ts';
 import { all, run } from '../../platform/db.ts';
 import { enqueuePush } from '../delivery/service.ts';
+import { putBrandingImage } from '../orgs/branding.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import { getPass } from './repo.ts';
 import { ICON_PNG, type Kit, setupKit } from './test-kit.ts';
 
@@ -219,21 +220,17 @@ describe('tenant identity', () => {
       "Uses the starter logo and icon. Add the organization's logo and icon in Pass branding.",
     );
 
-    const sha1 = await sha1Hex(ICON_PNG);
-    const image = (key: string) => ({ key, sha1, size: ICON_PNG.length, width: 38, height: 38 });
     await run(kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [
       JSON.stringify({
         logoHasName: true,
         passColors: { background: 'rgb(10, 20, 30)', foreground: 'rgb(250, 250, 250)' },
-        images: {
-          'icon.png': image('org-assets/icon.png'),
-          'logo.png': image('org-assets/logo.png'),
-        },
       }),
       kit.org.id,
     ]);
-    await kit.env.BUCKET.put('org-assets/icon.png', ICON_PNG);
-    await kit.env.BUCKET.put('org-assets/logo.png', ICON_PNG);
+    const admin = { type: 'user', id: 'admin' } as const;
+    const b64 = (png: Uint8Array) => btoa(String.fromCharCode(...png));
+    await putBrandingImage(kit.ctx, admin, kit.org.id, 'icon', { x3: b64(makePng(114, 114)) });
+    await putBrandingImage(kit.ctx, admin, kit.org.id, 'logo', { x3: b64(makePng(480, 150)) });
     const branded = await create();
     expect(branded.passJson.logoText).toBeUndefined();
     expect(branded.passJson.backgroundColor).toBe('rgb(10, 20, 30)');

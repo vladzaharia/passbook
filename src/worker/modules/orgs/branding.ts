@@ -14,6 +14,7 @@ import { auditActor, recordAudit } from '../audit/service.ts';
 import { imagesFromBinding } from '../templates/images-binding.ts';
 import type { ImageTools } from '../templates/package/images.ts';
 import { isPngInfo, parsePng } from '../templates/package/png.ts';
+import { brandingKey } from './branding-files.ts';
 import { setOrgBranding } from './repo.ts';
 import { requireOrg, toDto } from './service.ts';
 
@@ -24,9 +25,6 @@ type Upload = z.infer<typeof UploadBrandingImageSchema>;
 /** Apple's guidance: any pass image at most about 200 KB. */
 export const MAX_BRANDING_BYTES = 200 * 1024;
 const SCALES = [3, 2] as const;
-
-export const brandingKey = (orgId: string, slot: Slot, scale: 2 | 3) =>
-  `orgs/${orgId}/branding/${slot}@${scale}x.png`;
 
 const decode = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
@@ -131,21 +129,4 @@ export async function getBrandingImage(
   const object = await ctx.env.BUCKET.get(brandingKey(orgId, slot, scale));
   if (!object) throw new NotFoundError('Image not found.', 'IMAGE_NOT_FOUND');
   return object.arrayBuffer();
-}
-
-/**
- * The org's pass images as pass package files (`logo@3x.png`, `icon@2x.png`…), for the pass
- * builder to use in place of the template's. Empty when none are uploaded.
- */
-export async function orgBrandingAssets(
-  env: Pick<Env, 'BUCKET'>,
-  orgId: string,
-): Promise<Map<string, Uint8Array>> {
-  const out = new Map<string, Uint8Array>();
-  for (const slot of ['logo', 'icon'] as const)
-    for (const scale of SCALES) {
-      const object = await env.BUCKET.get(brandingKey(orgId, slot, scale));
-      if (object) out.set(`${slot}@${scale}x.png`, new Uint8Array(await object.arrayBuffer()));
-    }
-  return out;
 }

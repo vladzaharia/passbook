@@ -6,7 +6,8 @@ import { all } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { orgBrandingAssets, putBrandingImage } from './branding.ts';
+import { putBrandingImage } from './branding.ts';
+import { brandingKey } from './branding-files.ts';
 
 const fake = fakeAuth();
 let appEnv: AppEnv;
@@ -81,12 +82,9 @@ describe('pass branding images', () => {
       x2: b64(makePng(320, 100)),
     });
     expect(logo.status).toBe(200);
-    expect([...(await orgBrandingAssets(appEnv, org.id)).keys()].sort()).toEqual([
-      'icon@2x.png',
-      'icon@3x.png',
-      'logo@2x.png',
-      'logo@3x.png',
-    ]);
+    for (const slot of ['icon', 'logo'] as const)
+      for (const scale of [2, 3] as const)
+        expect(await appEnv.BUCKET.head(brandingKey(org.id, slot, scale))).not.toBeNull();
     const patched = await call('PATCH', `/${org.id}`, {
       branding: {
         accent: '#0f766e',
@@ -114,6 +112,26 @@ describe('pass branding images', () => {
       { x3: b64(makePng(300, 90)) },
       { resize: async () => null },
     );
-    expect([...(await orgBrandingAssets(appEnv, org.id)).keys()]).toEqual(['logo@3x.png']);
+    expect(await appEnv.BUCKET.head(brandingKey(org.id, 'logo', 3))).not.toBeNull();
+    expect(await appEnv.BUCKET.head(brandingKey(org.id, 'logo', 2))).toBeNull();
+  });
+});
+
+describe('email preview', () => {
+  it('renders the real pass email with the org name, uploaded images and the buddy choice', async () => {
+    const org = await makeOrg(fixtures(appEnv), { name: 'Zed Climbing' });
+    await call('PUT', `/${org.id}/branding/icon`, { x3: b64(makePng(114, 114)) });
+    const res = await call('GET', `/${org.id}/email-preview?buddy=1`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('content-security-policy')).not.toContain('script-src');
+    const html = await res.text();
+    expect(html).toContain('Zed Climbing');
+    expect(html).toContain(`/api/v1/orgs/${org.id}/branding/icon/3x`);
+    expect(html).not.toContain('/branding/logo/3x');
+    expect(html).toContain('/email/buddy-');
+    const plain = await (await call('GET', `/${org.id}/email-preview?buddy=0`)).text();
+    expect(plain).not.toContain('/email/buddy-');
+    expect((await call('GET', '/missing/email-preview')).status).toBe(404);
   });
 });
