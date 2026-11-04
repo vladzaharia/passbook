@@ -58,7 +58,8 @@ describe('Test inbox', () => {
     });
     expect(await screen.findByText('Your Gym pass')).toBeInTheDocument();
     const listCall = fetchMock.mock.calls.find(([u]) => String(u).startsWith('/api/v1/test-inbox'));
-    expect((listCall?.[1]?.headers as Record<string, string>)['x-passbook-mode']).toBe('test');
+    const headers = (listCall?.[1]?.headers ?? {}) as Record<string, string>;
+    expect(headers['x-passbook-mode']).toBe('test');
     expect(screen.getByText(/To holder@example.com/)).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
     await userEvent.setup().click(screen.getByRole('link', { name: 'Open Your Gym pass' }));

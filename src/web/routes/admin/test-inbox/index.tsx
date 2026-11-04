@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { InboxPage, parseInboxSearch } from '../../../admin/test-inbox/inbox-page.tsx';
+import { InboxPage } from '../../../admin/test-inbox/inbox-page.tsx';
+import { parseInboxSearch } from '../../../admin/test-inbox/search.ts';
 
 export const Route = createFileRoute('/admin/test-inbox/')({
   validateSearch: parseInboxSearch,

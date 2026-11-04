@@ -69,9 +69,8 @@ describe('aggregates split by mode', () => {
       const one = await get(`/orgs/${org.id}`, mode);
       expect((one.counts as { passes: number }).passes).toBe(n);
       const list = await get('/orgs?limit=200', mode);
-      expect((list.items.find((o) => o.id === org.id)?.counts as { passes: number }).passes).toBe(
-        n,
-      );
+      const row = list.items.find((o) => o.id === org.id);
+      expect((row?.counts as { passes: number } | undefined)?.passes).toBe(n);
     }
   });
 

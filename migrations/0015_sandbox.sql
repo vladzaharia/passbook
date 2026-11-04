@@ -17,6 +17,8 @@ CREATE TABLE captured_emails (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX captured_emails_org ON captured_emails (org_id, created_at DESC, id DESC);
+CREATE INDEX captured_emails_pass ON captured_emails (pass_id) WHERE pass_id IS NOT NULL;
+CREATE INDEX captured_emails_bundle ON captured_emails (bundle_id) WHERE bundle_id IS NOT NULL;
 CREATE INDEX captured_emails_age ON captured_emails (created_at);
 -- A re-run of the same outbox row captures once.
 CREATE UNIQUE INDEX captured_emails_outbox ON captured_emails (outbox_id) WHERE outbox_id IS NOT NULL;

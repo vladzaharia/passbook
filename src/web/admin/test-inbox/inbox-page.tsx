@@ -18,14 +18,7 @@ import {
 import { useOrgNames } from '../orgs/queries.ts';
 import { EmailPreview } from './preview.tsx';
 import { useCapturedEmails } from './queries.ts';
-
-export interface InboxSearch {
-  email?: string | undefined;
-}
-
-export const parseInboxSearch = (raw: Record<string, unknown>): InboxSearch => ({
-  email: typeof raw.email === 'string' && raw.email.trim() ? raw.email.trim() : undefined,
-});
+import type { InboxSearch } from './search.ts';
 
 /** Mail that Test mode held back, newest first. Nothing in it was sent. */
 export function InboxPage({
