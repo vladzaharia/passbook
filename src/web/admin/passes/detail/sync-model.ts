@@ -65,7 +65,7 @@ const SINGLE_TITLE: Record<string, string> = {
   'email.queued': 'Email queued',
   'email.sent': 'Email sent',
   'email.failed': 'Email failed',
-  'email.captured': 'Email held back in test mode',
+  'email.captured': 'Email captured in the Test inbox',
   'page.opened': 'Pass page opened',
   'pass.downloaded': '.pkpass downloaded',
   'bundle.opened': 'Bundle page opened',

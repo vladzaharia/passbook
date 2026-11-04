@@ -180,7 +180,9 @@ export async function setupCounts(db: D1Database): Promise<SetupCounts> {
        (SELECT count(*) FROM templates WHERE org_id IS NOT NULL AND status != 'deleted')
          AS assignedTemplates,
        (SELECT count(*) FROM passes WHERE deleted_at IS NULL AND mode = 'live') AS passes,
-       (SELECT count(*) FROM outbox WHERE kind = 'email' AND state = 'sent') AS passEmailsSent`,
+       (SELECT count(*) FROM outbox o LEFT JOIN passes p ON p.id = o.pass_id
+         WHERE o.kind = 'email' AND o.state = 'sent' AND coalesce(p.mode, 'live') = 'live')
+         AS passEmailsSent`,
   );
   const latest = await first<{ id: string }>(
     db,

@@ -7,17 +7,17 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
 import { retryOrGiveUp } from '../delivery/push.ts';
 import { finishOutbox, type OutboxRow } from '../delivery/repo.ts';
-import { recordPassEvent } from '../events/record.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getOrg, getPass } from '../passes/repo.ts';
 import { passImages, supportContacts } from '../public/service.ts';
+import { captureEmail } from '../sandbox/capture.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { bundleImages } from './assets.ts';
 import { getBundle, membersOf } from './repo.ts';
 
 /**
  * Sends a claimed outbox row whose payload names a bundle (`deliverEmail` hands it over once the
- * org and the recipient are checked). A test bundle never sends: the row ends `cancelled`.
+ * org and the recipient are checked). A test bundle never sends: its message is captured (modules/sandbox).
  */
 export async function deliverBundleEmail(
   ctx: ServiceContext,
@@ -32,17 +32,6 @@ export async function deliverBundleEmail(
   const first = members[0] ? await getPass(db, members[0].pass_id) : null;
   if (!bundle || !first) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'BUNDLE_GONE');
-    return;
-  }
-  if (bundle.mode === 'test') {
-    await finishOutbox(db, row.id, lease, 'cancelled', now, 'TEST_MODE');
-    await recordPassEvent(ctx, {
-      orgId: bundle.org_id,
-      passId: first.id,
-      mode: 'test',
-      kind: 'email.captured',
-      data: { outboxId: row.id, bundleId },
-    });
     return;
   }
   if (row.providerId) {
@@ -81,6 +70,18 @@ export async function deliverBundleEmail(
     senderName: platform['email.senderName'],
     buddyBase: settings['email.buddy'] ? base : null,
   });
+  if (bundle.mode === 'test') {
+    await captureEmail(ctx, {
+      row,
+      lease,
+      orgId: bundle.org_id,
+      eventPassId: first.id,
+      bundleId,
+      to,
+      email,
+    });
+    return;
+  }
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({

@@ -15,6 +15,7 @@ import {
   Skeleton,
   toast,
 } from '../../ui/index.ts';
+import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBundleActions, useBundlesOfPass } from './bundle-api.ts';
 import { absoluteUrl } from './format.ts';
 
@@ -27,6 +28,7 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
       <ListRow
         leading={<ACTION_ICON.bundle aria-hidden />}
         title={bundle.name}
+        pills={<ModePill mode={bundle.mode} />}
         meta={`${n} ${n === 1 ? 'pass' : 'passes'}${bundle.holderEmail ? ` · ${bundle.holderEmail}` : ''}`}
         trailing={
           <span className="flex items-center gap-1">

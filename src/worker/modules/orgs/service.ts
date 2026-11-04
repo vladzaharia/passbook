@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import type {
   CreateOrgSchema,
   OrgBrandingSchema,
@@ -68,12 +69,14 @@ async function checkSlug(ctx: ServiceContext, slug: string, exceptId?: string) {
 export async function listOrgs(
   ctx: ServiceContext,
   query: { cursor?: string; limit: number; q?: string },
+  mode: Mode = 'live',
 ): Promise<{ items: Summary[]; nextCursor: string | null }> {
   const rows = await listOrgRows(ctx.env.DB, query.cursor, query.limit + 1, query.q);
   const page = rows.slice(0, query.limit);
   const counts = await countsFor(
     ctx.env.DB,
     page.map((r) => r.id),
+    mode,
   );
   return {
     items: page.map((row) => summarize(row, counts.get(row.id))),
@@ -86,9 +89,13 @@ function summarize(row: OrgRow, counts?: Summary['counts']): Summary {
   return { ...toDto(row), counts: c, countsCapped: Object.values(c).some((n) => n >= COUNT_CAP) };
 }
 
-export async function getOrg(ctx: ServiceContext, id: string): Promise<Summary> {
+export async function getOrg(
+  ctx: ServiceContext,
+  id: string,
+  mode: Mode = 'live',
+): Promise<Summary> {
   const row = await requireOrg(ctx, id);
-  return summarize(row, (await countsFor(ctx.env.DB, [id])).get(id));
+  return summarize(row, (await countsFor(ctx.env.DB, [id], mode)).get(id));
 }
 
 export async function createOrg(

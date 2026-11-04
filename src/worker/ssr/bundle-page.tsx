@@ -1,6 +1,7 @@
 import { Ban } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
+import type { Mode } from '../../shared/contracts/common.ts';
 import { addLine, type DeviceInfo } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
@@ -15,6 +16,7 @@ import { documentStart, type PageTheme } from './head.ts';
 import { REPLAY_SCRIPT } from './hosted.ts';
 import { OrgBar } from './org-bar.tsx';
 import { PAGE_CSS } from './pass-page.tsx';
+import { TestRibbon } from './test-ribbon.tsx';
 
 export const BUNDLE_COPY = {
   addAll: 'Add all to Apple Wallet',
@@ -43,6 +45,8 @@ export interface BundlePageProps {
   orgLabel: string;
   name: string;
   items: BundlePageItem[];
+  /** A test bundle carries a ribbon. */
+  mode?: Mode;
   addAllHref: string;
   /** The absolute URL of this page: the add QR encodes it. */
   publicUrl: string;
@@ -75,6 +79,7 @@ function BundleBody(props: BundlePageProps) {
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
       <OrgBar orgName={props.orgName} icon={icon} />
+      <TestRibbon mode={props.mode} what="bundle" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <header className="mb-6 min-w-0">
           <h1 className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong [overflow-wrap:anywhere]">

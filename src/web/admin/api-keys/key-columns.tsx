@@ -5,6 +5,7 @@ import { copyText } from '@/web/lib/clipboard.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
+import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
 
 const STATE_TONE = { active: 'success', expired: 'warning', revoked: 'neutral' } as const;
@@ -20,6 +21,10 @@ export interface KeyColumnsOptions {
 }
 
 /** Name (no detail page: plain strong text), org, scopes, created by, last used, status, actions. */
+/** What the list shows of a key: `wlt_` and the prefix, with `test_` between for a Test key. The key itself is unchanged. */
+export const keyPrefix = (k: Pick<ApiKey, 'prefix' | 'mode'>) =>
+  `wlt_${k.mode === 'test' ? 'test_' : ''}${k.prefix}`;
+
 export function keyColumns({
   orgName,
   justRevoked,
@@ -44,8 +49,11 @@ export function keyColumns({
               <KeyRound />
             </span>
             <div className="min-w-0">
-              <span className="block truncate font-medium text-fg-strong">{k.name}</span>
-              <code className="block truncate font-mono text-xs text-fg-muted">wlt_{k.prefix}</code>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate font-medium text-fg-strong">{k.name}</span>
+                <ModePill mode={k.mode} />
+              </span>
+              <code className="block truncate font-mono text-xs text-fg-muted">{keyPrefix(k)}</code>
             </div>
           </div>
         );
@@ -125,7 +133,7 @@ export function keyColumns({
               {
                 label: 'Copy prefix',
                 icon: Copy,
-                onSelect: () => void copyText(`wlt_${row.original.prefix}`, 'prefix'),
+                onSelect: () => void copyText(keyPrefix(row.original), 'prefix'),
               },
               ...(row.original.revokedAt === null
                 ? [

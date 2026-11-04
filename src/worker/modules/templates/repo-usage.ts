@@ -1,16 +1,18 @@
 import type { ValidationReport } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all } from '../../platform/db.ts';
 
-/** Live passes per template version. */
+/** Undeleted passes of one mode per template version. */
 export async function countPassesByVersion(
   db: D1Database,
   templateId: string,
+  mode: Mode = 'live',
 ): Promise<Map<string, number>> {
   const rows = await all<{ template_version: string; n: number }>(
     db,
     `SELECT template_version, COUNT(*) AS n FROM passes
-     WHERE template_id = ? AND deleted_at IS NULL GROUP BY template_version`,
-    [templateId],
+     WHERE template_id = ? AND deleted_at IS NULL AND mode = ? GROUP BY template_version`,
+    [templateId, mode],
   );
   return new Map(rows.map((r) => [r.template_version, r.n]));
 }

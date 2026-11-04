@@ -7,6 +7,7 @@ import { dailyEvents } from '../modules/events/jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
+import { dailySandbox } from '../modules/sandbox/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import type { AppEnv } from '../platform/env.ts';
@@ -36,6 +37,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
+    // Last: a backlog of test data must never starve the checks above.
+    { name: 'sandbox.purge', run: dailySandbox },
   ],
 };
 

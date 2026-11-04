@@ -8,6 +8,8 @@ import { Button } from '../button.tsx';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
 import { AppShell } from './app-shell.tsx';
+import { ModeBand } from './mode-band.tsx';
+import { ModeSwitch } from './mode-switch.tsx';
 import { AdminPalette } from './palette.tsx';
 import { ScopeSwitcher } from './scope-switcher.tsx';
 import { SidebarNav } from './sidebar.tsx';
@@ -61,13 +63,14 @@ export function AdminLayout() {
         )}
       </Button>
       <span className="mr-auto sm:hidden" />
+      <ModeSwitch />
       <ScopeSwitcher />
       <UserMenu />
     </>
   );
   return (
     <PaletteContext.Provider value={palette}>
-      <AppShell bar={bar} sidebar={sidebar} width="console" holder={false}>
+      <AppShell bar={bar} sidebar={sidebar} band={<ModeBand />} width="console" holder={false}>
         <Outlet />
       </AppShell>
       <Sheet open={navOpen} onOpenChange={setNavOpen}>

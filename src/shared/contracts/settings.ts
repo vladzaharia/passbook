@@ -20,6 +20,8 @@ export const PlatformSettingsSchema = z.object({
   'retention.auditDays': z.number().int().min(30).max(3650).default(365),
   /** Sync log and device activity (pass_events). */
   'retention.eventsDays': z.number().int().min(7).max(3650).default(90),
+  /** Test-mode passes, bundles and captured emails older than this are deleted daily. */
+  'sandbox.purgeDays': z.number().int().min(1).max(365).default(30),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z

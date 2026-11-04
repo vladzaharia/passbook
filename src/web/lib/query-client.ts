@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { setCsrfProvider } from './api.ts';
 import { isApiError } from './errors.ts';
+import { onModeChange } from './mode.ts';
 import { sessionQuery } from './session.ts';
 
 export function shouldRetry(failureCount: number, error: unknown): boolean {
@@ -20,6 +21,11 @@ export function createQueryClient(): QueryClient {
       },
       mutations: { retry: false },
     },
+  });
+  // Never show the other mode's data: a switch empties every cached answer (the session is the
+  // same in both modes) and the pages on screen load again.
+  onModeChange(() => {
+    void client.resetQueries({ predicate: (query) => query.queryKey[0] !== 'session' });
   });
   setCsrfProvider(async () => {
     const session = await client.ensureQueryData(sessionQuery);

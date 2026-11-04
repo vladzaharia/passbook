@@ -7,7 +7,7 @@ import { getBundle, membersOf } from './repo.ts';
 /**
  * Queues the bundle email through the outbox. The row hangs on the bundle's first pass (the outbox
  * is keyed by pass); `payload.bundleId` routes it to the bundle template. Shares the pass email's
- * recipient and org caps. Test-mode bundles queue like any other and end `cancelled/TEST_MODE`.
+ * recipient and org caps. Test-mode bundles queue like any other and are captured, not sent (sandbox/capture.ts).
  */
 export async function enqueueBundleEmail(
   ctx: ServiceContext,

@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -223,6 +224,7 @@ export async function listHolders(
     email?: string;
     state?: HolderState;
     orgId?: string | null;
+    mode?: Mode;
     cursor?: string;
     limit: number;
   },

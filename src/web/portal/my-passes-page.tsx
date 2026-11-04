@@ -21,6 +21,7 @@ import {
   StatusPill,
   type WalletMood,
 } from '../ui/index.ts';
+import { ModePill } from '../ui/layout/mode-pill.tsx';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
 import { type MyPass, passName, toView } from './pass-view.ts';
@@ -100,7 +101,10 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
                 {name}
               </Link>
             </h2>
-            {voided ? <StatusPill status="voided" /> : pass.inWallet ? <InWalletPill /> : null}
+            <span className="flex shrink-0 items-center gap-1.5">
+              <ModePill mode={pass.mode} />
+              {voided ? <StatusPill status="voided" /> : pass.inWallet ? <InWalletPill /> : null}
+            </span>
           </div>
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         </div>

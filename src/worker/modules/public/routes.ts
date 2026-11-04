@@ -106,6 +106,7 @@ register(
         publicUrl: `${baseUrl(c.env)}${page}`,
         portalHref: `/passes/${pass.id}`,
         voided: pass.status === 'voided',
+        mode: pass.mode,
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
       });

@@ -1,4 +1,11 @@
-import { LayoutDashboard, type LucideIcon, Megaphone, ScanLine, Settings } from 'lucide-react';
+import {
+  Inbox,
+  LayoutDashboard,
+  type LucideIcon,
+  Megaphone,
+  ScanLine,
+  Settings,
+} from 'lucide-react';
 import { ENTITY, type EntityKind } from './entities.ts';
 import { isAdminPath } from './guards.ts';
 
@@ -34,6 +41,13 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
     // No entity yet: the art and glyph arrive with the streams that build these pages.
     { label: 'Messages', to: '/admin/messages', icon: Megaphone, orgScoped: true },
     { label: 'Scanners', to: '/admin/scanners', icon: ScanLine, orgScoped: true },
+    {
+      label: 'Test inbox',
+      to: '/admin/test-inbox',
+      icon: Inbox,
+      orgScoped: true,
+      keywords: ['sandbox', 'emails'],
+    },
   ],
   [
     page('Users', '/admin/users', 'user', false),

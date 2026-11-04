@@ -88,6 +88,7 @@ register(
         orgName: items[0]?.view.organizationName || org,
         orgLabel: org,
         name: bundle.name,
+        mode: bundle.mode,
         items,
         addAllHref: `/b/${bundle.token}/passes.pkpasses`,
         publicUrl: `${baseUrl(c.env)}/b/${bundle.token}`,

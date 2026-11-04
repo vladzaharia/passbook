@@ -1,7 +1,8 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
-import { ApiScopeSchema } from '@/shared/contracts/common.ts';
+import { ApiScopeSchema, type Mode } from '@/shared/contracts/common.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
+import { getMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Button,
@@ -28,6 +29,10 @@ const EXPIRY = [
   { value: 'never', label: 'Never' },
 ];
 const PLATFORM = 'platform';
+const MODES = [
+  { value: 'live', label: 'Live' },
+  { value: 'test', label: 'Test' },
+];
 
 export interface CreateKeyDialogProps {
   open: boolean;
@@ -95,6 +100,8 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
   const [org, setOrg] = useState(scoped ?? PLATFORM);
   const [scopes, setScopes] = useState<string[]>([]);
   const [expiry, setExpiry] = useState('90');
+  // A key made in Test mode is a Test key unless the admin picks Live.
+  const [keyMode, setKeyMode] = useState<Mode>(getMode);
   const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [secret, setSecret] = useState<string>();
@@ -110,6 +117,7 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
     setOrg(scoped ?? PLATFORM);
     setScopes([]);
     setExpiry('90');
+    setKeyMode(getMode());
     setServer({});
     check.reset();
     setFormError(undefined);
@@ -123,6 +131,7 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
         name: name.trim(),
         orgId: org === PLATFORM ? null : org,
         scopes: scopes as (typeof SCOPES)[number][],
+        mode: keyMode,
         expiresAt: expiry === 'never' ? null : Date.now() + Number(expiry) * DAY,
       });
       setSecret(created.secret);
@@ -218,6 +227,23 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
               {(p) => <Select {...p} value={expiry} onValueChange={setExpiry} options={EXPIRY} />}
             </FormField>
           </div>
+          <FormField
+            label="Mode"
+            help={
+              keyMode === 'test'
+                ? 'Passes made with a Test key are test passes. Their emails stay in the Test inbox.'
+                : undefined
+            }
+          >
+            {(p) => (
+              <Select
+                {...p}
+                value={keyMode}
+                onValueChange={(v) => setKeyMode(v as Mode)}
+                options={MODES}
+              />
+            )}
+          </FormField>
           <ScopeRows value={scopes} onChange={setScopes} error={errors.scopes} />
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </Form>

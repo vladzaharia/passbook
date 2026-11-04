@@ -14,7 +14,7 @@ import {
   UpdateOrgSchema,
   UploadBrandingImageSchema,
 } from '../../../shared/contracts/index.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { modeOf, requireAdmin } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -38,7 +38,7 @@ register(
     query: OrgListQuerySchema,
     response: OrgListSchema,
   },
-  async (c) => c.json(await listOrgs(serviceContext(c), c.req.valid('query'))),
+  async (c) => c.json(await listOrgs(serviceContext(c), c.req.valid('query'), modeOf(c.var.auth))),
 );
 register(
   orgsRoutes,
@@ -64,7 +64,7 @@ register(
     params: IdParamSchema,
     response: OrgSummarySchema,
   },
-  async (c) => c.json(await getOrg(serviceContext(c), c.req.valid('param').id)),
+  async (c) => c.json(await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth))),
 );
 register(
   orgsRoutes,
