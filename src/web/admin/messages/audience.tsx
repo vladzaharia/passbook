@@ -63,7 +63,9 @@ export function AudienceSection({
         aria-describedby={error ? 'tpl-error' : undefined}
       >
         <legend className="mb-2 text-sm font-medium text-fg-strong">Templates</legend>
-        {loading ? (
+        {!orgId ? (
+          <p className="text-sm text-fg-muted">Choose an organization first.</p>
+        ) : loading ? (
           <Skeleton className="h-10 w-full" />
         ) : templates.length === 0 ? (
           <p className="text-sm text-fg-muted">No templates yet.</p>
