@@ -37,7 +37,7 @@
 
 .dz-section {
   border: 1px solid var(--pk-border-subtle);
-    border-radius: 0.5rem;
+  border-radius: 0.5rem;
   background: var(--pk-surface-raised);
 }
 .dz-head {
