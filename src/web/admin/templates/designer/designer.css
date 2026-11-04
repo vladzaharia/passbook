@@ -36,10 +36,9 @@
 }
 
 .dz-section {
-  border: 1px solid var(--pk-border, currentColor);
-  border-color: var(--color-border, color-mix(in oklab, currentColor 15%, transparent));
-  border-radius: 0.5rem;
-  background: var(--color-surface-raised, transparent);
+  border: 1px solid var(--pk-border-subtle);
+    border-radius: 0.5rem;
+  background: var(--pk-surface-raised);
 }
 .dz-head {
   display: flex;
@@ -55,7 +54,7 @@
 .dz-head:focus-visible,
 .dz-pick:focus-visible,
 .dz-issue:focus-visible {
-  outline: 2px solid var(--color-focus, currentColor);
+  outline: 2px solid var(--pk-focus);
   outline-offset: 2px;
 }
 .dz-chevron {
@@ -69,16 +68,16 @@
 }
 
 .dz-row {
-  border: 1px solid var(--color-border, color-mix(in oklab, currentColor 15%, transparent));
+  border: 1px solid var(--pk-border-subtle);
   border-radius: 0.375rem;
   padding: 0.25rem 0.25rem 0.25rem 0.5rem;
-  background: var(--color-surface, transparent);
+  background: var(--pk-surface-raised);
 }
 .dz-row[data-open] {
-  border-color: var(--color-accent, currentColor);
+  border-color: var(--pk-accent);
 }
 .dz-row[data-over] {
-  box-shadow: 0 -2px 0 0 var(--color-accent, currentColor);
+  box-shadow: 0 -2px 0 0 var(--pk-accent);
 }
 .dz-grip {
   cursor: grab;
@@ -104,11 +103,11 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem;
-  border: 1px dashed var(--color-border-strong, currentColor);
+  border: 1px dashed var(--pk-border-strong);
   border-radius: 0.5rem;
 }
 .dz-drop:focus-within {
-  outline: 2px solid var(--color-focus, currentColor);
+  outline: 2px solid var(--pk-focus);
   outline-offset: 2px;
 }
 .dz-thumb {
@@ -138,7 +137,7 @@
   height: 2.25rem;
   flex: none;
   padding: 0;
-  border: 1px solid var(--color-border-strong, currentColor);
+  border: 1px solid var(--pk-border-strong);
   border-radius: 0.375rem;
   background: none;
   cursor: pointer;
