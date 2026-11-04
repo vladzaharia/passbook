@@ -12,8 +12,10 @@ describe('failureSentence', () => {
     expect(failureSentence('TopicDisallowed', 400)).toMatch(/pass type/);
     expect(failureSentence('NetworkError')).toBe('Could not reach Apple. Try again.');
     expect(failureSentence('PushUnavailable', 0)).toBe(
-      'No push binding is set for this certificate.',
+      'Push is not set up. Add a push key or a certificate binding.',
     );
+    expect(failureSentence('InvalidProviderToken', 403, 'key')).toMatch(/push key/);
+    expect(failureSentence('NetworkError', 0, 'key')).toMatch(/APNS_TOKEN_TRANSPORT_FAILED/);
     expect(failureSentence('TooManyRequests', 429)).toBe(
       'Apple gave no clear answer. Try again later.',
     );

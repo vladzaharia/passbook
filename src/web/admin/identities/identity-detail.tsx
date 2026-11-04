@@ -19,7 +19,8 @@ import {
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
-import { CertificateCard, OverviewCard, PushSetupCard, SettingsCard } from './identity-cards.tsx';
+import { CertificateCard, OverviewCard, SettingsCard } from './identity-cards.tsx';
+import { PushCard } from './push-card.tsx';
 import { useDeleteIdentity, useIdentity, useResignIdentityPasses } from './queries.ts';
 import { RotateIdentityDialog } from './rotate-dialog.tsx';
 
@@ -34,6 +35,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const created = useCreated(`identity:${identityId}`);
   const [confirm, setConfirm] = useState<'delete' | 'resign'>();
   const [rotating, setRotating] = useState(false);
+  const [pushKeyOpen, setPushKeyOpen] = useState(false);
   const crumbs = [
     { label: 'Apple identities', to: '/admin/identities' },
     { label: query.data?.label ?? 'Identity' },
@@ -105,20 +107,31 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
             title="Identity uploaded"
             onDismiss={created.dismiss}
             actions={
-              <Button asChild size="sm" iconEnd={<ChevronRight aria-hidden />}>
-                {identity.orgId ? (
-                  <Link to="/admin/orgs/$orgId" params={{ orgId: identity.orgId }}>
-                    Use in {orgName(identity.orgId)}
-                  </Link>
-                ) : (
-                  <Link to="/admin/orgs">Use in an organization</Link>
-                )}
-              </Button>
+              <>
+                {identity.pushMethod === 'none' ? (
+                  <Button size="sm" variant="outline" onClick={() => setPushKeyOpen(true)}>
+                    Add push key
+                  </Button>
+                ) : null}
+                <Button asChild size="sm" iconEnd={<ChevronRight aria-hidden />}>
+                  {identity.orgId ? (
+                    <Link to="/admin/orgs/$orgId" params={{ orgId: identity.orgId }}>
+                      Use in {orgName(identity.orgId)}
+                    </Link>
+                  ) : (
+                    <Link to="/admin/orgs">Use in an organization</Link>
+                  )}
+                </Button>
+              </>
             }
           />
         ) : null}
         <CertificateCard identity={identity} now={Date.now()} />
-        <PushSetupCard identity={identity} />
+        <PushCard
+          identity={identity}
+          dialogOpen={pushKeyOpen}
+          onDialogOpenChange={setPushKeyOpen}
+        />
         <SettingsCard
           key={`${identity.label}|${identity.apnsBinding}|${identity.nfcEnabled}|${identity.isDefault}`}
           identity={identity}

@@ -8,7 +8,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CodeBlock,
   Form,
   FormField,
   Input,
@@ -26,10 +25,6 @@ import { ExpiryPill } from './expiry.tsx';
 import { useUpdateIdentity } from './queries.ts';
 
 type Identity = z.infer<typeof IdentitySchema>;
-
-const MTLS_STEPS = `npx wrangler mtls-certificate upload --cert cert.pem --key key.pem --name <identity>
-# wrangler.jsonc
-"mtls_certificates": [{ "binding": "APNS_<IDENTITY>", "certificate_id": "<id from upload>" }]`;
 
 /** Every read-only fact about the certificate, with the APNs row last. */
 export function CertificateCard({ identity, now }: { identity: Identity; now: number }) {
@@ -54,22 +49,6 @@ export function CertificateCard({ identity, now }: { identity: Identity; now: nu
         <div className="border-t border-border pt-4">
           <ApnsRow identity={identity} />
         </div>
-      </CardBody>
-    </Card>
-  );
-}
-
-/** Shown while the deployment has no mTLS binding for this certificate. */
-export function PushSetupCard({ identity }: { identity: Identity }) {
-  if (identity.apnsAvailable) return null;
-  return (
-    <Card>
-      <CardHeader title="Push setup" />
-      <CardBody className="flex flex-col gap-3">
-        <p className="max-w-[65ch] text-sm text-fg-muted">
-          Passes update when holders refresh in Wallet. Pushes need an mTLS binding.
-        </p>
-        <CodeBlock code={MTLS_STEPS} label="APNs binding steps" maxHeight="max-h-40" />
       </CardBody>
     </Card>
   );

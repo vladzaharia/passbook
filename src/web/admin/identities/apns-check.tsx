@@ -12,6 +12,12 @@ import './apns-check.css';
 
 type Result = z.infer<typeof ApnsProbeResultSchema>;
 type Identity = z.infer<typeof IdentitySchema>;
+const METHOD_LABEL = {
+  certificate: 'Certificate binding',
+  key: 'Push key',
+  none: 'Not set up',
+} as const;
+
 type Health = Result['health'] | Identity['apnsHealth'];
 
 const REJECTED = new Set([
@@ -19,25 +25,35 @@ const REJECTED = new Set([
   'BadCertificateEnvironment',
   'Forbidden',
   'ExpiredProviderToken',
+  'InvalidProviderToken',
 ]);
 const TOPIC = new Set(['TopicDisallowed', 'MissingTopic']);
 const UNREACHABLE = new Set(['NetworkError', 'Timeout', 'ServiceUnavailable']);
 
 /** One sentence for a failed or unclear check; the code stays beside it in mono. */
-export function failureSentence(reason: string | null, status?: number): string {
-  if (reason === 'PushUnavailable') return 'No push binding is set for this certificate.';
+export function failureSentence(
+  reason: string | null,
+  status?: number,
+  method?: Identity['pushMethod'],
+): string {
+  if (reason === 'PushUnavailable')
+    return 'Push is not set up. Add a push key or a certificate binding.';
   if (reason && TOPIC.has(reason))
     return 'Apple refused this pass type for the certificate. Check the pass type ID.';
   if ((reason && REJECTED.has(reason)) || status === 403)
-    return 'Apple rejected the push certificate. Upload a new one.';
+    return method === 'key'
+      ? 'Apple rejected the push key. Check the key ID and team, or upload a new key.'
+      : 'Apple rejected the push certificate. Upload a new one.';
   if (status === 0 || (reason && UNREACHABLE.has(reason)))
-    return 'Could not reach Apple. Try again.';
+    return method === 'key'
+      ? 'Could not reach Apple with the push key. Check the Worker logs for APNS_TOKEN_TRANSPORT_FAILED.'
+      : 'Could not reach Apple. Try again.';
   return 'Apple gave no clear answer. Try again later.';
 }
 
 function HealthPill({ health, available }: { health: Health; available: boolean }) {
   if (!available || health === 'unavailable')
-    return <StatusPill status="not_configured">Push unavailable</StatusPill>;
+    return <StatusPill status="not_configured">Not set up</StatusPill>;
   if (health === 'healthy') return <StatusPill status="verified">Healthy</StatusPill>;
   if (health === 'failing') return <StatusPill status="failing">Failing</StatusPill>;
   if (health === 'inconclusive') return <StatusPill status="degraded">Unclear</StatusPill>;
@@ -105,6 +121,9 @@ export function ApnsRow({ identity }: { identity: Identity }) {
         </span>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm text-fg-strong">APNs</span>
+          <span className="text-xs text-fg-muted">
+            {METHOD_LABEL[result?.method ?? identity.pushMethod]}
+          </span>
           <HealthPill health={health} available={identity.apnsAvailable} />
           {checkedAt ? (
             <span className="text-xs text-fg-muted">Checked {formatDateTime(checkedAt)}</span>
@@ -129,7 +148,7 @@ export function ApnsRow({ identity }: { identity: Identity }) {
           <p className="text-fg">{errorMessage(check.error)}</p>
         ) : bad ? (
           <p className="text-fg">
-            {failureSentence(reason, result?.status)}
+            {failureSentence(reason, result?.status, result?.method ?? identity.pushMethod)}
             {reason ? <span className="ml-2 font-mono text-xs text-fg-muted">{reason}</span> : null}
           </p>
         ) : null}
