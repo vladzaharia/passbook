@@ -12,7 +12,6 @@ import {
 import {
   TemplateDetailSchema,
   TemplateListSchema,
-  TemplateReissueResponseSchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -80,8 +79,8 @@ beforeAll(async () => {
   admin = auth.session({ userId: (await makeUser(f)).id, roles: ['admin', 'user'] });
 });
 
-describe('versions and reissue', () => {
-  it('counts passes per version and moves the older ones to the active version', async () => {
+describe('versions', () => {
+  it('counts passes per version and the ones waiting for the automatic update', async () => {
     const v1 = await importVersion('Counted Card');
     const id = v1.result?.templateId ?? '';
     const t1 = await createTemplateRegistry(env).resolve(id);
@@ -94,27 +93,6 @@ describe('versions and reissue', () => {
     expect(active?.passCount).toBe(0);
     expect(d.passesOnOlderVersions).toBe(3);
     expect(d.passCount).toBe(3);
-
-    const res = await post(`/${id}/reissue`);
-    expect(res.status).toBe(202);
-    expect(TemplateReissueResponseSchema.parse(await res.json())).toMatchObject({ passes: 3 });
-    expect(workflows.at(-1)?.params).toMatchObject({
-      templateId: id,
-      version: d.activeVersion,
-      cause: 'template_upgrade',
-    });
-    expect(
-      await first(
-        env.DB,
-        "SELECT 1 FROM audit_log WHERE action = 'template.reissue' AND target_id = ?",
-        [id],
-      ),
-    ).not.toBeNull();
-  });
-
-  it('refuses a reissue when every pass is current', async () => {
-    const t = await importVersion('Fresh Card');
-    expect((await post(`/${t.result?.templateId}/reissue`)).status).toBe(409);
   });
 });
 

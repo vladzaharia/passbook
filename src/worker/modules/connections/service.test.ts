@@ -214,7 +214,7 @@ describe('SSRF at save', () => {
     'https://intranet/v1',
     'https://api.example.com:8443/v1',
     'https://user:pw@api.example.com/v1',
-    'https://wallet.plrs.im/v1',
+    'https://passbook.mobile/v1',
     'https://thing.workers.dev/v1',
   ])('rejects %s', async (baseUrl) => {
     await expect(

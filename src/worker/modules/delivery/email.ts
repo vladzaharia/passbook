@@ -6,6 +6,7 @@ import { passSummary } from '../../email/pass-summary.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { platformSupportEmail } from '../../platform/support.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -57,8 +58,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   const { iconUrl, logo } = passEmailImages(images, base);
   const email = renderPassEmail({
     orgName: org?.name ?? 'PassBook',
-    supportEmail: orgSettings['support.email'] ?? branding.supportEmail,
-    supportUrl: orgSettings['support.url'] ?? branding.supportUrl,
+    ...emailSupport(ctx.env, orgSettings, branding),
     downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
     manageUrl: `${base}/p/${pass.downloadToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
@@ -129,4 +129,17 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       }),
     );
   }
+}
+
+/** The org's support; PassBook's own when the org has none. */
+function emailSupport(
+  env: object,
+  settings: { 'support.email'?: string | undefined; 'support.url'?: string | undefined },
+  branding: { supportEmail?: string | null; supportUrl?: string | null },
+) {
+  const supportEmail = settings['support.email'] ?? branding.supportEmail;
+  const supportUrl = settings['support.url'] ?? branding.supportUrl;
+  return supportEmail || supportUrl
+    ? { supportEmail, supportUrl }
+    : { supportEmail: platformSupportEmail(env), supportUrl: null };
 }

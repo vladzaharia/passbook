@@ -45,6 +45,7 @@
     "PUBLIC_BASE_URL": "https://passbook.mobile",
     "REDIRECT_HOSTS": "wallet.plrs.im",
     "EMAIL_FROM": "delivery@passbook.mobile",
+    "SUPPORT_EMAIL": "support@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
     "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     "OIDC_ADMIN_GROUP": "wallet-admins",

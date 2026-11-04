@@ -145,17 +145,6 @@ export function TemplateUploadPage({
                 </Link>
               </Button>
             ) : null}
-            {result.data && result.data.passesOnOlderVersions > 0 ? (
-              <Button asChild variant="outline" iconStart={<ACTION_ICON.refresh aria-hidden />}>
-                <Link
-                  to="/admin/templates/$templateId"
-                  params={{ templateId: s?.templateId ?? '' }}
-                  search={{ tab: 'versions' }}
-                >
-                  Update passes
-                </Link>
-              </Button>
-            ) : null}
           </div>
         </CardBody>
       </Card>

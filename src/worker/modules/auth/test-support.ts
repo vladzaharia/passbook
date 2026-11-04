@@ -7,7 +7,7 @@ import { createApiKeyStore } from '../api-keys/service.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { createSessionStore } from './sessions.ts';
 
-export const ORIGIN = 'https://wallet.plrs.im';
+export const ORIGIN = 'https://passbook.mobile';
 export const ISSUER = 'https://id.test';
 export const CLIENT_ID = 'wallet-test';
 

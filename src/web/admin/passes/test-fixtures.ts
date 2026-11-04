@@ -92,6 +92,7 @@ export function templateDetail(over: Record<string, unknown> = {}) {
       },
     ],
     passesOnOlderVersions: 0,
+    passesBlocked: 0,
     ...over,
   };
 }

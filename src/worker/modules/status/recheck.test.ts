@@ -80,7 +80,7 @@ describe('status recheck and crons', () => {
   });
 
   it('treats only https, non-loopback base URLs as deployed', () => {
-    expect(isDeployed({ PUBLIC_BASE_URL: 'https://wallet.plrs.im' })).toBe(true);
+    expect(isDeployed({ PUBLIC_BASE_URL: 'https://passbook.mobile' })).toBe(true);
     expect(isDeployed({ PUBLIC_BASE_URL: 'https://localhost:8787' })).toBe(false);
     expect(isDeployed({ PUBLIC_BASE_URL: 'http://wallet.test' })).toBe(false);
     expect(isDeployed({ PUBLIC_BASE_URL: 'not a url' })).toBe(false);

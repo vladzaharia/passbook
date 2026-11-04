@@ -80,10 +80,9 @@
         "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
-        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>",
-        "key": "issuer",
+        "key": "pass-service",
         "label": "Pass service",
-        "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/"
+        "value": ""
       }
     ],
     "headerFields": [
@@ -174,10 +173,9 @@
         "value": "Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership."
       },
       {
-        "attributedValue": "Operated by Vlad Zaharia. Support: <a href=\"https://passbook.mobile/\">passbook.mobile</a>",
-        "key": "issuer-poster",
+        "key": "pass-service-poster",
         "label": "Pass service",
-        "value": "Operated by Vlad Zaharia. Support: https://passbook.mobile/"
+        "value": ""
       }
     ],
     "footerFields": [

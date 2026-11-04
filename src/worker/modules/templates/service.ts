@@ -33,6 +33,7 @@ import {
   listRecentImports,
   listTemplates,
   listVersions,
+  olderLivePasses,
   type TemplateRow,
   type VersionRow,
 } from './repo.ts';
@@ -135,11 +136,8 @@ export async function detail(
   const active = versions.find((v) => v.version === row.activeVersion);
   if (!active) throw new NotFoundError('Template has no active version.', 'TEMPLATE_NOT_FOUND');
   let total = 0;
-  let older = 0;
-  for (const [version, n] of counts) {
-    total += n;
-    if (version !== row.activeVersion) older += n;
-  }
+  for (const n of counts.values()) total += n;
+  const { older, settled } = await olderLivePasses(ctx.env.DB, id);
   return {
     ...summaryOf(
       row,
@@ -151,6 +149,7 @@ export async function detail(
     manifest: active.manifest as unknown as Json,
     versions: versions.map((v) => versionDto(v, row.activeVersion, counts.get(v.version) ?? 0)),
     passesOnOlderVersions: older,
+    passesBlocked: settled ? older : 0,
   };
 }
 

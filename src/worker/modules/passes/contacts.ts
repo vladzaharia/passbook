@@ -2,18 +2,25 @@ import { FIELD_GROUPS } from '../../../passkit/schema/constants.ts';
 import { PASS_STYLES, type PassJson } from '../../../passkit/types.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { platformSupportEmail } from '../../platform/support.ts';
 import { getOrgSettings } from '../settings/service.ts';
 
 export interface BackContacts {
   /** The org's support email and URL, one per line; null when it has none. */
   contact: string | null;
-  /** Who runs the pass (the platform), so holders can reach the signer. */
+  /** Platform support, so holders can reach the signer. */
   passService: string | null;
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const safeUrl = (v: unknown) => (typeof v === 'string' && /^https:\/\/\S+$/.test(v) ? v : null);
 const safeMail = (v: unknown) => (typeof v === 'string' && EMAIL.test(v) ? v : null);
+
+/** "PassBook · support@passbook.mobile" and the site; just the site when no address is set. */
+export function passServiceText(env: Parameters<typeof baseUrl>[0]): string {
+  const email = platformSupportEmail(env);
+  return [email ? `PassBook · ${email}` : null, baseUrl(env)].filter(Boolean).join('\n');
+}
 
 /** Org settings win over the legacy branding fields. */
 export async function backContactsFor(
@@ -27,7 +34,7 @@ export async function backContactsFor(
     safeMail(settings['support.email'] ?? legacy.supportEmail),
     safeUrl(settings['support.url'] ?? legacy.supportUrl),
   ].filter((v): v is string => Boolean(v));
-  return { contact: lines.length ? lines.join('\n') : null, passService: baseUrl(ctx.env) };
+  return { contact: lines.length ? lines.join('\n') : null, passService: passServiceText(ctx.env) };
 }
 
 const SLOT = /^(contact|pass-service)(-poster)?$/;

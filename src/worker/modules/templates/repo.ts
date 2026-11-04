@@ -321,4 +321,5 @@ export { orgIdentity as getOrgName } from '../orgs/repo.ts';
 // Import progress
 
 export * from './repo-imports.ts';
+export * from './repo-stale.ts';
 export * from './repo-usage.ts';

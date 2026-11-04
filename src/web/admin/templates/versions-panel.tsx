@@ -1,8 +1,6 @@
-import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema, TemplateVersionSchema } from '@/shared/contracts/templates.ts';
-import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import {
   Badge,
@@ -10,8 +8,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CheckboxField,
-  ConfirmDialog,
   Dialog,
   DialogContent,
   StatusPill,
@@ -33,7 +29,6 @@ function ActivateDialog({
   onClose: () => void;
 }) {
   const actions = useTemplateActions(template.id);
-  const [rebuild, setRebuild] = useState(false);
   return (
     <Dialog open={version !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
@@ -49,11 +44,8 @@ function ActivateDialog({
               onClick={async () => {
                 if (!version) return;
                 try {
-                  await actions.activate.mutateAsync({
-                    version: version.version,
-                    rebuildPasses: rebuild,
-                  });
-                  toast.success(rebuild ? 'Activated. Rebuilding passes.' : 'Activated');
+                  await actions.activate.mutateAsync({ version: version.version });
+                  toast.success('Activated. Passes update shortly.');
                   onClose();
                 } catch (cause) {
                   toast.error(cause, 'Could not activate');
@@ -65,48 +57,9 @@ function ActivateDialog({
           </>
         }
       >
-        <CheckboxField
-          label="Rebuild all passes on this template"
-          checked={rebuild}
-          onCheckedChange={(c) => setRebuild(c === true)}
-        />
+        <p className="text-sm text-fg-muted">Its live passes update to it shortly.</p>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/** Moves every pass on an older version to the active one, after a confirm with the count. */
-function UpdatePasses({ template }: { template: Template }) {
-  const actions = useTemplateActions(template.id);
-  const navigate = useNavigate();
-  const [ask, setAsk] = useState(false);
-  const n = template.passesOnOlderVersions;
-  if (n === 0 || template.status !== 'active') return null;
-  const label = `Update ${n} ${n === 1 ? 'pass' : 'passes'}`;
-  return (
-    <>
-      <Button
-        size="sm"
-        iconStart={<ACTION_ICON.refresh aria-hidden />}
-        onClick={() => setAsk(true)}
-      >
-        {label}
-      </Button>
-      <ConfirmDialog
-        open={ask}
-        onOpenChange={setAsk}
-        title={`${label}?`}
-        description="Each moves to the active version and devices get the update."
-        confirmLabel={label}
-        onConfirm={async () => {
-          await actions.reissue.mutateAsync();
-          toast.action(`Updating ${n} ${n === 1 ? 'pass' : 'passes'}`, {
-            label: 'View run',
-            onClick: () => void navigate({ to: '/admin/status' }),
-          });
-        }}
-      />
-    </>
   );
 }
 
@@ -157,7 +110,6 @@ export function VersionsPanel({ template }: { template: Template }) {
                     ) : null}
                   </div>
                   <div className="flex gap-2">
-                    {v.active ? <UpdatePasses template={template} /> : null}
                     <Button
                       size="sm"
                       variant="outline"

@@ -1,6 +1,6 @@
 import type { ValidationReport } from '../../../passkit/types.ts';
 import { first, run, stmt } from '../../platform/db.ts';
-import { finishRun, type NewRun, startRun, startRunStmt } from '../../platform/workflow-runs.ts';
+import { finishRun, startRunStmt } from '../../platform/workflow-runs.ts';
 
 export interface ImportRow {
   uploadId: string;
@@ -118,8 +118,4 @@ export async function setWorkflowRun(
   extra: { errorCode?: string | null; targetId?: string | null } = {},
 ): Promise<void> {
   await finishRun(db, instanceId, status, now, extra);
-}
-
-export async function insertWorkflowRun(db: D1Database, row: NewRun): Promise<void> {
-  await startRun(db, row);
 }

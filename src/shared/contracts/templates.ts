@@ -72,8 +72,10 @@ export const TemplateDetailSchema = TemplateSummarySchema.extend({
   sample: z.record(z.string(), JsonSchema),
   manifest: JsonSchema,
   versions: z.array(TemplateVersionSchema),
-  /** Live passes on a version other than the active one: what "Update N passes" moves. */
+  /** Live passes on a version other than the active one: waiting for the automatic update. */
   passesOnOlderVersions: z.number().int().default(0),
+  /** Of those, the passes the update could not move: their fields no longer fit the active version. */
+  passesBlocked: z.number().int().default(0),
 });
 
 const BoolQuery = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');
@@ -125,12 +127,6 @@ export const UploadSummarySchema = z.object({
 });
 export const UploadListSchema = z.object({ items: z.array(UploadSummarySchema) });
 
-export const TemplateReissueResponseSchema = z.object({
-  workflowInstanceId: z.string(),
-  /** Passes on older versions when the run started. */
-  passes: z.number().int(),
-});
-
 export const TemplateVersionParamSchema = z.object({
   id: IdSchema,
   version: z.string().min(1).max(64),
@@ -150,7 +146,6 @@ export function bakedTemplateId(slug: string): string {
 
 export const ActivateVersionSchema = z.object({
   version: z.string(),
-  rebuildPasses: z.boolean().default(false),
 });
 export const CloneTemplateSchema = z.object({
   orgId: IdSchema,
