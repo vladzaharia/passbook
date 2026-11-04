@@ -124,6 +124,9 @@ export function removeInput(doc: DesignDoc, name: string): DesignDoc {
     readInputs(doc.manifest).filter((s) => s.name !== name),
   );
   next.manifest.bindings = dropInputRefs(next.manifest, name);
+  // A template without its message input can no longer take broadcast messages.
+  if (isRecord(next.manifest.messaging) && next.manifest.messaging.input === name)
+    delete next.manifest.messaging;
   const display = isRecord(next.manifest.display) ? next.manifest.display : {};
   const search = Array.isArray(display.search) ? display.search.filter((s) => s !== name) : [];
   const keep = (v: unknown) =>

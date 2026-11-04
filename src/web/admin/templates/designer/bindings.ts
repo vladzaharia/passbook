@@ -97,8 +97,10 @@ export function renameInputRefs(manifest: Dict, from: string, to: string): Dict 
   const next = walk({ bindings: manifest.bindings, display: manifest.display }) as Dict;
   const display = isRecord(next.display) ? next.display : {};
   const search = isRecord(manifest.display) ? manifest.display.search : undefined;
+  const messaging = isRecord(manifest.messaging) ? manifest.messaging : undefined;
   return {
     ...manifest,
+    ...(messaging?.input === from ? { messaging: { ...messaging, input: to } } : {}),
     bindings: next.bindings,
     display: {
       ...display,

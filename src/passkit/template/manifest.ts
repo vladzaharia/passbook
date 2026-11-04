@@ -237,7 +237,7 @@ export function validateManifest(
       );
   }
 
-  if (manifest.messaging !== undefined) checkMessaging(manifest, inputNames, options, error);
+  issues.push(...messagingIssues(manifest, options.passJson));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)
@@ -254,21 +254,24 @@ export function validateManifest(
 const MESSAGE_CHANGE = '%@';
 
 /** `messaging.input` must exist and drive a back field that shows its new value as the message. */
-function checkMessaging(
+export function messagingIssues(
   manifest: TemplateManifest,
-  inputNames: Set<string>,
-  options: ValidateManifestOptions,
-  error: (code: string, message: string, path?: string) => void,
-): void {
+  passJson?: PassJson,
+): ValidationIssue[] {
+  if (manifest.messaging === undefined) return [];
+  const issues: ValidationIssue[] = [];
+  const error = (code: string, message: string) =>
+    issues.push({ severity: 'error', code, message, path: 'messaging' });
   const input = (manifest.messaging as { input?: unknown } | null)?.input;
-  if (typeof input !== 'string' || !inputNames.has(input)) {
-    error('MESSAGING_INPUT', `messaging.input "${String(input)}" is not an input.`, 'messaging');
-    return;
+  const properties = isRecord(manifest.inputs?.properties) ? manifest.inputs.properties : {};
+  if (typeof input !== 'string' || !Object.hasOwn(properties, input)) {
+    error('MESSAGING_INPUT', `messaging.input "${String(input)}" is not an input.`);
+    return issues;
   }
-  if (!options.passJson) return;
+  if (!passJson) return issues;
   const messageKeys = new Set<string>();
   for (const style of BINDING_STYLE_GROUPS.styles) {
-    const dict = options.passJson[style];
+    const dict = passJson[style];
     const back = isRecord(dict) ? (dict as Record<string, unknown>).backFields : undefined;
     if (Array.isArray(back))
       for (const f of back as { key?: unknown; changeMessage?: unknown }[])
@@ -285,11 +288,8 @@ function checkMessaging(
     );
   });
   if (!bound)
-    error(
-      'MESSAGING_FIELD',
-      `Bind "${input}" to a back field whose changeMessage is "%@".`,
-      'messaging',
-    );
+    error('MESSAGING_FIELD', `Bind "${input}" to a back field whose changeMessage is "%@".`);
+  return issues;
 }
 
 /** cfworker also reports every ancestor of a failing value; keep the innermost errors. */

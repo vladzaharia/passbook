@@ -206,6 +206,24 @@ describe('inputs editor', () => {
     expect(errors(doc)).toEqual([]);
   });
 
+  it('keeps messaging through edits and follows an input rename', () => {
+    const base = sampleDoc();
+    const messaging = {
+      ...base,
+      manifest: { ...base.manifest, messaging: { input: 'name' } },
+    } as DesignDoc;
+    const edited = run(messaging, { op: 'input-set', name: 'name', patch: { label: 'Who' } });
+    expect(edited.manifest.messaging).toEqual({ input: 'name' });
+    const renamed = run(messaging, { op: 'input-set', name: 'name', patch: { name: 'member' } });
+    expect(renamed.manifest.messaging).toEqual({ input: 'member' });
+    const removed = run(
+      renamed,
+      { op: 'input-add', spec: newInput(readInputs(renamed.manifest)) },
+      { op: 'input-remove', name: 'member' },
+    );
+    expect(removed.manifest.messaging).toBeUndefined();
+  });
+
   it('reorders inputs', () => {
     const doc = run(
       sampleDoc(),

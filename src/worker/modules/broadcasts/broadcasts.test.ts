@@ -5,8 +5,8 @@ import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
 import { getPass } from '../passes/repo.ts';
-import { type BroadcastKit, broadcastKit } from './test-kit.ts';
 import { startDueBroadcasts } from './start.ts';
+import { type BroadcastKit, broadcastKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);
@@ -241,7 +241,7 @@ describe('schedule', () => {
     const res = await post(
       '/broadcasts',
       fake.admin(),
-      message('Old', { send: 'schedule', at: kit.clock.now() - 1000 }),
+      message('Old', { send: 'schedule', at: 1000 }),
     );
     expect(res.status).toBe(422);
     expect(await code(res)).toBe('BROADCAST_PAST');

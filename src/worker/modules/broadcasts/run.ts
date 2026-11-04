@@ -1,7 +1,8 @@
 import type { BroadcastState } from '../../../shared/contracts/broadcasts.ts';
-import { finishRun } from '../../platform/workflow-runs.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { finishRun } from '../../platform/workflow-runs.ts';
 import { actorOf, targetFilter } from './apply.ts';
+import { countsOf } from './dto.ts';
 import {
   type BroadcastRow,
   casState,
@@ -11,7 +12,6 @@ import {
   insertBroadcastStmt,
   setTargeted,
 } from './repo.ts';
-import { countsOf } from './dto.ts';
 
 /** First workflow step: counts the target. False when the broadcast is not in `sending`. */
 export async function startedBroadcast(
