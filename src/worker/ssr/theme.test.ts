@@ -62,12 +62,18 @@ describe('theme cookie on Worker pages', () => {
     kit = await setupKit();
     app = createApp({ stores: fakeAuth(ORIGIN).stores });
   });
+  // A Mac: the pass page shows the badge beside its QR (off Apple's devices, the QR alone).
+  const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15';
   const get = async (path: string, theme?: string) =>
     (
       await app.request(
         `${ORIGIN}${path}`,
         {
-          headers: { accept: 'text/html', ...(theme ? { cookie: `wallet-theme=${theme}` } : {}) },
+          headers: {
+            accept: 'text/html',
+            'user-agent': MAC,
+            ...(theme ? { cookie: `wallet-theme=${theme}` } : {}),
+          },
         },
         kit.env,
       )
