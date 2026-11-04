@@ -128,6 +128,7 @@ export type Section =
   | 'inputs'
   | 'barcode'
   | 'relevance'
+  | 'none'
   | GroupId;
 
 export interface Selection {
@@ -137,6 +138,7 @@ export interface Selection {
 }
 
 export const SECTION_LABEL: Record<Exclude<Section, GroupId>, string> = {
+  none: '',
   template: 'Template',
   style: 'Style',
   colors: 'Colors',
@@ -150,3 +152,11 @@ export const sectionLabel = (s: Section): string =>
   s in GROUP_LABEL
     ? `${GROUP_LABEL[s as GroupId]} fields`
     : SECTION_LABEL[s as keyof typeof SECTION_LABEL];
+
+/** Locations, beacons and relevant dates the pass carries. */
+export function listCount(doc: DesignDoc): number {
+  return (['locations', 'beacons', 'relevantDates'] as const).reduce((n, k) => {
+    const list = doc.passJson[k];
+    return n + (Array.isArray(list) ? list.length : 0);
+  }, 0);
+}

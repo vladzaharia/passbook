@@ -59,11 +59,19 @@ export function designerReducer(state: DesignerState, action: Action): DesignerS
           : op.op === 'input-add'
             ? { kind: 'input' as const, key: op.spec.name, n: (state.added?.n ?? 0) + 1 }
             : state.added;
+      // A renamed field or input keeps the selection.
+      const renamed =
+        op.op === 'field-key' && state.select.key === op.key
+          ? op.to
+          : op.op === 'input-set' && op.patch.name && state.select.key === op.name
+            ? op.patch.name
+            : undefined;
       return {
         ...state,
         doc,
         past,
         future: [],
+        select: renamed ? { ...state.select, key: renamed } : state.select,
         added,
         merge: action.merge !== undefined ? { key: action.merge, at } : null,
       };
