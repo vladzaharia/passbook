@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-// Page buddies (Buddy, Cameo) mounted now. One buddy per view: the toaster shows a check while > 0.
+// Buddies mounted now. One buddy per view: the toaster shows a check while > 0; an open dialog's
+// buddy hides the page's (art-wallet.css).
 let count = 0;
 const subs = new Set<() => void>();
 const emit = () => {
