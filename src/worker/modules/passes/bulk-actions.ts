@@ -31,6 +31,10 @@ export async function bulkPassAction(
   for (const pass of passes) {
     if (!pass) continue;
     if (input.action === 'void') {
+      if (pass.removedAt !== null) {
+        skipped.push({ id: pass.id, code: 'PASS_REMOVED' });
+        continue;
+      }
       if (pass.status === 'active') await voidPass(ctx, actor, pass.id, orgId);
       done++;
     } else if (input.action === 'remove') {

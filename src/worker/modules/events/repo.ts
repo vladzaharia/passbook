@@ -110,7 +110,7 @@ export function registrationsOfPass(
   return all(db, 'SELECT device_id, created_at FROM registrations WHERE pass_id = ?', [passId]);
 }
 
-/** Devices that checked in for a pass since `since` and have not fetched the file after it. */
+/** The earliest device that checked in since `since` and has not fetched the file after it. */
 export async function pendingFetchDevices(
   db: D1Database,
   passId: string,
@@ -118,12 +118,13 @@ export async function pendingFetchDevices(
 ): Promise<string[]> {
   const rows = await all<{ device: string }>(
     db,
-    `SELECT DISTINCT l.device FROM pass_events l
+    `SELECT l.device FROM pass_events l
      WHERE l.pass_id = ? AND l.kind = 'device.fetched' AND l.at >= ?
        AND json_extract(l.data, '$.step') = 'listed' AND l.device IS NOT NULL
        AND NOT EXISTS (SELECT 1 FROM pass_events f
          WHERE f.pass_id = l.pass_id AND f.device = l.device AND f.kind = 'device.fetched'
-           AND json_extract(f.data, '$.step') = 'file' AND f.at >= l.at)`,
+           AND json_extract(f.data, '$.step') = 'file' AND f.at >= l.at)
+     ORDER BY l.at, l.id LIMIT 1`,
     [passId, since],
   );
   return rows.map((r) => r.device);

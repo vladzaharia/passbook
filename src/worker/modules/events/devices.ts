@@ -45,11 +45,14 @@ export function statusOf(input: {
   version: number;
   fetch: { at: number; version: number } | null;
   push: { at: number; ok: boolean } | null;
+  /** Registered after the current version was published, so it came with that version. */
+  registeredCurrent?: boolean;
 }): DeviceStatus {
   const { fetch, push } = input;
   if (!input.registered) return 'removed';
   if (push && !push.ok && (!fetch || push.at >= fetch.at)) return 'push_failing';
   if (fetch && fetch.version >= input.version) return 'current';
+  if (input.registeredCurrent) return 'current';
   if (fetch || push) return 'waiting';
   return 'unknown';
 }
@@ -85,13 +88,20 @@ function describe(
   let removalState: PassSyncDeviceDto['removal'] = null;
   if (removal) {
     if (!registered) removalState = 'deleted';
+    else if (registeredAt >= removal.at) removalState = 'fetched';
     else if (fetch && fetch.at >= removal.at && fetch.version >= (removal.version ?? 0))
       removalState = 'fetched';
     else removalState = 'pending';
   }
   return {
     device: hash,
-    status: statusOf({ registered, version: pass.version, fetch, push }),
+    status: statusOf({
+      registered,
+      version: pass.version,
+      fetch,
+      push,
+      registeredCurrent: registeredAt !== null && registeredAt >= pass.modifiedAt,
+    }),
     registeredAt,
     unregisteredAt,
     lastFetch: fetch,

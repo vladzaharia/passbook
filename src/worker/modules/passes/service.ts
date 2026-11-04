@@ -1,6 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { writeEvent } from '../../platform/analytics.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
@@ -109,6 +109,9 @@ async function setStatus(
   status: 'active' | 'voided',
   scope: string | null,
 ) {
+  const current = await getPass(ctx.env.DB, passId, scope);
+  if (current && current.removedAt !== null)
+    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
   const result = await publishPass(ctx, {
     passId,
     orgScope: scope,

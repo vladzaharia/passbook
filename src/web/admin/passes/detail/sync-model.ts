@@ -98,7 +98,13 @@ function singleTitle(e: PassEventDto): string {
   return SINGLE_TITLE[e.kind] ?? e.kind;
 }
 
-/** Why a single event looks the way it does, as one short line. */
+/** Raw codes for the Details disclosure; never part of the inline line. */
+export function eventCodes(e: PassEventDto): string | null {
+  const code = str(e.data.code);
+  return code ? code : null;
+}
+
+/** Why a single event looks the way it does, as one short line. Codes are left to eventCodes. */
 export function eventDetail(e: PassEventDto): string | null {
   const parts: string[] = [];
   const v = versionOf(e);
@@ -107,8 +113,6 @@ export function eventDetail(e: PassEventDto): string | null {
   if (status !== null) parts.push(`HTTP ${status}`);
   const reason = str(e.data.reason);
   if (reason && e.kind !== 'device.unregistered') parts.push(reason);
-  const code = str(e.data.code);
-  if (code) parts.push(code);
   const line = str(e.data.line);
   if (line) parts.push(line);
   return parts.length ? parts.join(' · ') : null;
@@ -135,6 +139,7 @@ function cycle(version: number, events: PassEventDto[]): SyncRow {
   const sent = newestFirst.filter((e) => e.kind === 'push.sent');
   const failed = newestFirst.filter((e) => e.kind === 'push.failed');
   const fetched = newestFirst.filter(isFile);
+  const unregistered = newestFirst.filter((e) => e.kind === 'device.unregistered');
   const facts: SyncFact[] = [];
 
   const registered = num(queued?.data.devices);
@@ -157,11 +162,17 @@ function cycle(version: number, events: PassEventDto[]): SyncRow {
   if (fetched.length > 0) {
     const first = fetched.at(-1) as PassEventDto;
     const start = (queued ?? sent.at(-1) ?? oldest).at;
+    const devices = new Set(fetched.flatMap((e) => (e.device ? [e.device] : []))).size;
+    const count = devices > 0 ? devices : fetched.length;
     facts.push({
-      text: `${fetched.length} fetched${first.at >= start ? ` in ${duration(first.at - start)}` : ''}`,
+      text: `${count} fetched${first.at >= start ? ` in ${duration(first.at - start)}` : ''}`,
       tone: 'success',
     });
   } else if (sent.length > 0) facts.push({ text: 'Not fetched yet', tone: 'warning' });
+  if (unregistered.length > 0) {
+    const n = new Set(unregistered.map((e) => e.device)).size;
+    facts.push({ text: `${n} unregistered`, tone: 'neutral' });
+  }
 
   const title = head ? singleTitle(head) : `Version ${version}`;
   const tone: SyncRow['tone'] = facts.some((f) => f.tone === 'danger')
@@ -172,7 +183,7 @@ function cycle(version: number, events: PassEventDto[]): SyncRow {
         ? 'warning'
         : 'info';
   return {
-    id: `v${version}-${oldest.id}`,
+    id: `v${version}`,
     at: (newestFirst[0] as PassEventDto).at,
     title,
     group: newestFirst.length > 1,
@@ -190,11 +201,21 @@ function cycle(version: number, events: PassEventDto[]): SyncRow {
 export function groupEvents(events: readonly PassEventDto[]): SyncRow[] {
   const byVersion = new Map<number, PassEventDto[]>();
   const rows: { at: number; id: string; build: () => SyncRow }[] = [];
+  const loose: PassEventDto[] = [];
   for (const e of events) {
     const v = versionOf(e);
-    const inCycle = v !== null && CYCLE.has(e.kind);
-    if (!inCycle) rows.push({ at: e.at, id: e.id, build: () => single(e) });
-    else byVersion.set(v, [...(byVersion.get(v) ?? []), e]);
+    if (v !== null && CYCLE.has(e.kind)) byVersion.set(v, [...(byVersion.get(v) ?? []), e]);
+    else if (e.kind === 'device.unregistered') loose.push(e);
+    else rows.push({ at: e.at, id: e.id, build: () => single(e) });
+  }
+  // A device that unregisters after a version was published belongs to that version's row.
+  const starts = [...byVersion].map(
+    ([v, list]) => [v, Math.min(...list.map((e) => e.at))] as const,
+  );
+  for (const e of loose) {
+    const owner = starts.filter(([, start]) => start <= e.at).sort((a, b) => b[1] - a[1])[0];
+    if (owner) byVersion.set(owner[0], [...(byVersion.get(owner[0]) ?? []), e]);
+    else rows.push({ at: e.at, id: e.id, build: () => single(e) });
   }
   for (const [version, list] of byVersion) {
     const newest = list.reduce((a, b) => (b.at > a.at ? b : a));

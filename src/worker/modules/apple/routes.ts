@@ -123,7 +123,8 @@ register(
       c.req.header('authorization'),
     );
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
-    await recordPassFetch(svc(c), pass, response.status);
+    const ctx = svc(c);
+    ctx.waitUntil(recordPassFetch(ctx, pass, response.status));
     return response;
   },
 );

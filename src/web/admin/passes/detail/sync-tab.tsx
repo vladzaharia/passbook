@@ -29,7 +29,7 @@ import {
 } from '../../../ui/index.ts';
 import { RelTime, useNow } from './rel-time.tsx';
 import { usePassEvents } from './sync-api.ts';
-import { eventDetail, groupEvents, type SyncRow, shortDevice } from './sync-model.ts';
+import { eventCodes, eventDetail, groupEvents, type SyncRow, shortDevice } from './sync-model.ts';
 
 type Filter = EventGroup | 'all';
 const FILTERS = [
@@ -87,6 +87,7 @@ function Child({ e, now }: { e: PassEventDto; now: number }) {
       <span className="text-fg">{label}</span>
       {e.device ? <span className="font-mono">{shortDevice(e.device)}</span> : null}
       {detail ? <span>{detail}</span> : null}
+      {eventCodes(e) ? <span className="font-mono">{eventCodes(e)}</span> : null}
       <span className="ml-auto">
         <RelTime at={e.at} now={now} />
       </span>
@@ -129,6 +130,12 @@ function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean })
           </span>
         </div>
         {detail ? <p className="line-clamp-2 text-xs break-words text-fg-muted">{detail}</p> : null}
+        {single && eventCodes(single) ? (
+          <details className="text-xs text-fg-muted">
+            <summary className="cursor-pointer pointer-coarse:min-h-11">Details</summary>
+            <span className="font-mono">{eventCodes(single)}</span>
+          </details>
+        ) : null}
         {row.facts.length > 0 ? (
           <ul className="mt-1 flex flex-wrap gap-1.5" aria-label="Result">
             {row.facts.map((f) => (

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
+import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { ValidationIssueSchema } from './templates.ts';
 
 export const PassStatusSchema = z.enum(['active', 'voided']);
@@ -212,7 +213,7 @@ export const BULK_PASS_LIMIT = 100;
 export const BulkPassActionSchema = z.object({
   action: z.enum(['void', 'send_email', 'remove']),
   /** For `remove`: shown to holders on the lock screen. */
-  message: z.string().max(200).optional(),
+  message: z.string().trim().max(REMOVE_MESSAGE_MAX).optional(),
   ids: z.array(IdSchema).min(1).max(BULK_PASS_LIMIT),
   /** The caller's view: every id must belong to this org. */
   orgId: IdSchema.optional(),

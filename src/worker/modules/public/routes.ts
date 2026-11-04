@@ -84,13 +84,15 @@ register(
         now: new Date(svcCtx.clock.now()),
         timeZone: zoneOf(c) ?? 'UTC',
       });
-      await recordPassEvent(svcCtx, {
-        orgId: pass.orgId,
-        passId: pass.id,
-        mode: pass.mode,
-        kind: 'page.opened',
-        actor: { type: 'holder', id: null },
-      });
+      svcCtx.waitUntil(
+        recordPassEvent(svcCtx, {
+          orgId: pass.orgId,
+          passId: pass.id,
+          mode: pass.mode,
+          kind: 'page.opened',
+          actor: { type: 'holder', id: null },
+        }),
+      );
       const page = `/p/${pass.downloadToken}`;
       const html = renderPassPage({
         view,

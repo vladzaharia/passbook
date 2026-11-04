@@ -143,17 +143,18 @@ export async function serialsSince(
   }));
 }
 
-/** Passes with one of these serials, for attaching device log lines. */
+/** Passes of one identity with one of these serials, for attaching device log lines. */
 export async function passesBySerials(
   db: D1Database,
+  identityId: string,
   serials: string[],
 ): Promise<{ id: string; orgId: string; mode: Mode; serial: string }[]> {
   if (serials.length === 0) return [];
   const rows = await all<{ id: string; org_id: string; mode: Mode; serial: string }>(
     db,
     `SELECT id, org_id, mode, serial FROM passes
-     WHERE serial IN (${serials.map(() => '?').join(', ')}) AND deleted_at IS NULL`,
-    serials,
+     WHERE identity_id = ? AND serial IN (${serials.map(() => '?').join(', ')}) AND deleted_at IS NULL`,
+    [identityId, ...serials],
   );
   return rows.map((r) => ({ id: r.id, orgId: r.org_id, mode: r.mode, serial: r.serial }));
 }

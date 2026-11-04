@@ -36,7 +36,9 @@ export function usePassEvents(id: string, group: EventGroup | 'all', active: boo
         signal,
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    refetchInterval: active ? POLL_MS : false,
+    // Refetching reloads every loaded page, so polling stops once older pages are open.
+    refetchInterval: (query) =>
+      active && (query.state.data?.pages.length ?? 1) <= 1 ? POLL_MS : false,
   });
 }
 

@@ -183,6 +183,30 @@ describe('POST /passes/{id}/remove and /restore', () => {
     );
   });
 
+  it('refuses void and unvoid on a removed pass, and skips it in a bulk void', async () => {
+    const pass = await kit.pass();
+    await post(`/${pass.id}/remove`);
+    for (const action of ['void', 'unvoid']) {
+      const res = await post(`/${pass.id}/${action}`);
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ code: 'PASS_REMOVED' });
+    }
+    const bulk = await (await post('/bulk', { action: 'void', ids: [pass.id] })).json();
+    expect(bulk).toMatchObject({ done: 0, skipped: [{ id: pass.id, code: 'PASS_REMOVED' }] });
+  });
+
+  it('removes once when two removes race', async () => {
+    const pass = await kit.pass();
+    const [a, b] = await Promise.all([post(`/${pass.id}/remove`), post(`/${pass.id}/remove`)]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+    const row = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT count(*) AS n FROM pass_events WHERE pass_id = ? AND kind = 'pass.removed'",
+      [pass.id],
+    );
+    expect(row?.n).toBe(1);
+  });
+
   it('needs passes:write, stays inside the key org and works in either mode', async () => {
     const pass = await kit.pass();
     const other = await makeOrg(kit.fx, { name: 'Elsewhere' });

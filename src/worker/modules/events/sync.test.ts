@@ -70,7 +70,7 @@ describe('a device from register to up to date', () => {
     expect((await register(pass, 'dev-walk')).status).toBe(201);
     const hash = await hashDevice('dev-walk');
     expect(only((await devices(pass)).devices, hash)).toMatchObject({
-      status: 'unknown',
+      status: 'current',
       lastFetch: null,
       lastPush: null,
     });
@@ -157,6 +157,42 @@ describe('a device from register to up to date', () => {
   });
 });
 
+describe('fetch attribution', () => {
+  it('credits a fetch to one device and leaves the other waiting', async () => {
+    const pass = await kit.pass();
+    await register(pass, 'dev-a');
+    await register(pass, 'dev-b');
+    kit.clock.advance(2000);
+    await updatePass(
+      kit.ctx,
+      { type: 'system', id: null },
+      pass.id,
+      { input: { memberName: 'Two Devices' } },
+      { scope: null },
+    );
+    await push(pass);
+    kit.clock.advance(1000);
+    await check('dev-a');
+    kit.clock.advance(10);
+    await check('dev-b');
+    expect((await fetchPass(pass)).status).toBe(200);
+    await kit.settle();
+    const list = (await devices(pass)).devices;
+    expect(only(list, await hashDevice('dev-a'))?.status).toBe('current');
+    expect(only(list, await hashDevice('dev-b'))?.status).toBe('waiting');
+  });
+
+  it('counts a device registered after the latest version as up to date', async () => {
+    const pass = await kit.pass();
+    // Registrations are stamped by the app's own clock, not the kit's.
+    await kit.env.DB.prepare('UPDATE passes SET modified_at = 1 WHERE id = ?').bind(pass.id).run();
+    await register(pass, 'dev-late');
+    expect(only((await devices(pass)).devices, await hashDevice('dev-late'))?.status).toBe(
+      'current',
+    );
+  });
+});
+
 describe('device log lines', () => {
   it('attach to the pass that owns the serial they name', async () => {
     const pass = await kit.pass();
@@ -166,9 +202,10 @@ describe('device log lines', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         logs: [
-          `Pass ${pass.serial} failed to update`,
+          `Register task (for device dev-secret-1, pass type ${TYPE}, serial number ${pass.serial}) failed to update`,
           'nothing about a pass',
-          `${other.serial} ok`,
+          `pass type ${TYPE} serial number ${other.serial} ok`,
+          `pass type pass.unknown.type serial number ${pass.serial} stray`,
         ],
       }),
     });
@@ -178,6 +215,8 @@ describe('device log lines', () => {
     );
     expect(log.items).toHaveLength(1);
     expect(log.items[0]?.data.line).toContain('failed to update');
+    expect(log.items[0]?.data.line).not.toContain('dev-secret-1');
+    expect(log.items[0]?.data.line).toContain(await hashDevice('dev-secret-1'));
     expect(await kinds(other, '?kind=device.log')).toEqual(['device.log']);
   });
 });

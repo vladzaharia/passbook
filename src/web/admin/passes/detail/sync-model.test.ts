@@ -42,14 +42,30 @@ describe('groupEvents', () => {
         ev('device.unregistered', 20_000, { reason: 'device' }, 'bbbbbbbbbbbb'),
       ]),
     );
-    expect(rows.map((r) => r.title)).toEqual(['Device removed the pass', 'Updated to v7']);
-    const group = rows[1];
+    expect(rows.map((r) => r.title)).toEqual(['Updated to v7']);
+    const group = rows[0];
+    expect(group?.id).toBe('v7');
     expect(group?.group).toBe(true);
-    expect(group?.facts.map((f) => f.text)).toEqual(['Pushed to 2 devices', '1 fetched in 13 s']);
+    expect(group?.facts.map((f) => f.text)).toEqual([
+      'Pushed to 2 devices',
+      '1 fetched in 13 s',
+      '1 unregistered',
+    ]);
     expect(group?.tone).toBe('success');
-    // The check-in belongs to the version; a device leaving does not.
     expect(group?.events.map((e) => e.kind)).toContain('device.fetched');
-    expect(group?.events.map((e) => e.kind)).not.toContain('device.unregistered');
+  });
+
+  it('counts devices that fetched, not fetch requests', () => {
+    const rows = groupEvents(
+      newestFirst([
+        ev('pass.updated', 1000, { version: 3 }),
+        ev('push.sent', 1500, { version: 3 }, 'aaaaaaaaaaaa'),
+        ev('device.fetched', 2000, { step: 'file', version: 3, status: 200 }, 'aaaaaaaaaaaa'),
+        ev('device.fetched', 2500, { step: 'file', version: 3, status: 304 }, 'aaaaaaaaaaaa'),
+        ev('device.fetched', 2600, { step: 'file', version: 3, status: 200 }),
+      ]),
+    );
+    expect(rows[0]?.facts.map((f) => f.text)).toContain('1 fetched in 1 s');
   });
 
   it('says so when nothing was registered, or the push is not set up', () => {

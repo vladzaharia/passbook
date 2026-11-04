@@ -1,3 +1,4 @@
+import { REMOVE_MESSAGE_MAX } from '../../../shared/contracts/events.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -5,10 +6,9 @@ import { recordPassEvent } from '../events/record.ts';
 import { toSummary } from './detail.ts';
 import { publishPass } from './publish.ts';
 import { getPass } from './repo.ts';
-import { getRemoval, setRemoval } from './repo-remove.ts';
+import { claimRemoval, getRemoval, releaseRemoval, setRemoval } from './repo-remove.ts';
 import type { Actor } from './service.ts';
 
-const MESSAGE_MAX = 200;
 const causeOf = (actor: Actor) => (actor.type === 'api_key' ? 'api' : 'admin');
 
 async function required(ctx: ServiceContext, passId: string, scope: string | null) {
@@ -31,9 +31,11 @@ export async function removePass(
 ) {
   const pass = await required(ctx, passId, scope);
   if (pass.removedAt !== null) return toSummary(pass);
-  const message = input.message?.trim().slice(0, MESSAGE_MAX) || null;
+  const message = input.message?.trim().slice(0, REMOVE_MESSAGE_MAX) || null;
   const db = ctx.env.DB;
-  await setRemoval(db, pass.id, { at: ctx.clock.now(), message, priorStatus: pass.status });
+  const at = ctx.clock.now();
+  if (!(await claimRemoval(db, pass.id, { at, message, priorStatus: pass.status })))
+    return toSummary((await getPass(db, passId)) ?? pass);
   let published: Awaited<ReturnType<typeof publishPass>>;
   try {
     published = await publishPass(ctx, {
@@ -46,7 +48,7 @@ export async function removePass(
       mutate: () => ({ status: 'voided' }),
     });
   } catch (error) {
-    await setRemoval(db, pass.id, null);
+    await releaseRemoval(db, pass.id, at);
     throw error;
   }
   await recordPassEvent(ctx, {
