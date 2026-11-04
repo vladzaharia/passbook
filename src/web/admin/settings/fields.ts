@@ -79,6 +79,15 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     help: '7 to 3650.',
     schema: P['retention.eventsDays'],
   },
+  {
+    key: 'sandbox.purgeDays',
+    group: 'Passes and retention',
+    label: 'Test data retention',
+    kind: 'int',
+    suffix: 'days',
+    help: 'Test passes, bundles and emails are deleted after this. 1 to 365.',
+    schema: P['sandbox.purgeDays'],
+  },
 ];
 
 export const ORG_FIELDS: readonly SettingField[] = [

@@ -162,7 +162,7 @@ describe('holders and metrics', () => {
 });
 
 describe('test-mode email is never sent', () => {
-  it('cancels the outbox row with TEST_MODE and records email.captured', async () => {
+  it('captures the message, ends the outbox row sent/TEST_MODE and records email.captured', async () => {
     const pass = await createPassRow(kit.ctx, {
       orgId: kit.org.id,
       templateId: kit.template.id,
@@ -181,7 +181,12 @@ describe('test-mode email is never sent', () => {
     expect(kit.mailer.sent).toHaveLength(before);
     expect(
       await first(kit.env.DB, 'SELECT state, error_code FROM outbox WHERE id = ?', [outboxId]),
-    ).toEqual({ state: 'cancelled', error_code: 'TEST_MODE' });
+    ).toEqual({ state: 'sent', error_code: 'TEST_MODE' });
+    expect(
+      await first(kit.env.DB, 'SELECT recipient, pass_id FROM captured_emails WHERE outbox_id = ?', [
+        outboxId,
+      ]),
+    ).toEqual({ recipient: 'holder-test-mode@example.com', pass_id: pass.id });
     const events = await all<{ kind: string; mode: string; data: string }>(
       kit.env.DB,
       "SELECT kind, mode, data FROM pass_events WHERE pass_id = ? AND kind = 'email.captured'",

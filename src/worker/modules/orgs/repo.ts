@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, chunk, first, likeEscape, placeholders, run, stmt } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
@@ -128,14 +129,18 @@ export async function identityUsableBy(
 const capped = (table: string, where: string) =>
   `(SELECT count(*) FROM (SELECT 1 FROM ${table} WHERE org_id = o.id${where} LIMIT ${COUNT_CAP}))`;
 
-/** Per-org counts, each bounded by COUNT_CAP index rows. */
-export async function countsFor(db: D1Database, orgIds: string[]): Promise<Map<string, OrgCounts>> {
+/** Per-org counts, each bounded by COUNT_CAP index rows. Passes are those of `mode`. */
+export async function countsFor(
+  db: D1Database,
+  orgIds: string[],
+  mode: Mode = 'live',
+): Promise<Map<string, OrgCounts>> {
   const out = new Map<string, OrgCounts>();
   for (const ids of chunk(orgIds)) {
     const rows = await all<{ id: string } & OrgCounts>(
       db,
       `SELECT o.id AS id,
-         ${capped('passes', '')} AS passes,
+         ${capped('passes', ` AND mode = '${mode}'`)} AS passes,
          ${capped('templates', " AND status != 'deleted'")} AS templates,
          ${capped('connections', '')} AS connections,
          ${capped('api_keys', ' AND revoked_at IS NULL')} AS apiKeys

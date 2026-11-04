@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
 
 export interface HolderPass {
@@ -66,6 +67,8 @@ export interface HolderFilter {
   orgId?: string | null;
   email?: string;
   state?: 'unassigned' | 'waiting' | 'owned';
+  /** Only passes of this mode. Absent: every mode. */
+  mode?: Mode;
   cursor?: string;
   limit: number;
 }
@@ -79,6 +82,10 @@ export async function listHolderPasses(
   if (filter.orgId) {
     where.push('p.org_id = ?');
     params.push(filter.orgId);
+  }
+  if (filter.mode) {
+    where.push('p.mode = ?');
+    params.push(filter.mode);
   }
   if (filter.email) {
     where.push('p.holder_email = ?');

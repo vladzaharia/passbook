@@ -14,6 +14,7 @@ import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import { currentPassJson, getOrg, getPass } from '../passes/repo.ts';
 import { passImages } from '../public/service.ts';
+import { captureEmail } from '../sandbox/capture.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { finishSent } from './email-finish.ts';
 import { claimOrSettle, retryOrGiveUp } from './push.ts';
@@ -46,18 +47,6 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   }
   if (!(await isOrgActive(ctx, pass.orgId))) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'ORG_INACTIVE');
-    return;
-  }
-  if (pass.mode === 'test') {
-    // Test passes never send mail. The test inbox (sandbox) will keep the rendered message.
-    await finishOutbox(db, row.id, lease, 'cancelled', now, 'TEST_MODE');
-    await recordPassEvent(ctx, {
-      orgId: pass.orgId,
-      passId: pass.id,
-      mode: 'test',
-      kind: 'email.captured',
-      data: { outboxId: row.id, attached: row.payload.attach === true },
-    });
     return;
   }
   if (row.providerId) {
@@ -98,6 +87,19 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     senderName: platform['email.senderName'],
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
+  if (pass.mode === 'test') {
+    await captureEmail(ctx, {
+      row,
+      lease,
+      orgId: pass.orgId,
+      eventPassId: pass.id,
+      passId: pass.id,
+      to,
+      email,
+      attached: attach,
+    });
+    return;
+  }
   const event = async (outcome: 'ok' | 'failed', code?: string) => {
     writeEvent(ctx.env, {
       event: 'email.result',

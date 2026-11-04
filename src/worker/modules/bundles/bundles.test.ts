@@ -305,7 +305,7 @@ describe('send-email', () => {
     expect(kit.mailer.sent.at(-1)?.to).toBe('first-gone@example.com');
   });
 
-  it('a test-mode bundle never sends: cancelled TEST_MODE, email.captured', async () => {
+  it('a test-mode bundle never sends: captured, sent/TEST_MODE, email.captured', async () => {
     const t = await makePass(kit.org.id, 'test');
     const bundle = await bundleOf(
       await create(fake.admin({ mode: 'test' }), {
@@ -325,9 +325,16 @@ describe('send-email', () => {
     expect(
       await first(kit.env.DB, 'SELECT state, error_code FROM outbox WHERE id = ?', [row?.id]),
     ).toEqual({
-      state: 'cancelled',
+      state: 'sent',
       error_code: 'TEST_MODE',
     });
+    expect(
+      await first(
+        kit.env.DB,
+        'SELECT recipient, bundle_id, pass_id FROM captured_emails WHERE outbox_id = ?',
+        [row?.id],
+      ),
+    ).toEqual({ recipient: 'test-bundle@example.com', bundle_id: bundle.id, pass_id: null });
     const events = await all<{ data: string }>(
       kit.env.DB,
       "SELECT data FROM pass_events WHERE pass_id = ? AND kind = 'email.captured'",

@@ -14,7 +14,7 @@ import type {
   TemplateVersionDetailSchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
-import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
+import { type AuthContext, assertOrgAccess, modeOf } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -114,6 +114,7 @@ export async function list(
     ...(query.q ? { q: query.q } : {}),
     limit: query.limit + 1,
     cursor,
+    mode: modeOf(auth),
   });
   const page = rows.slice(0, query.limit);
   const last = page.at(-1);
@@ -131,7 +132,7 @@ export async function detail(
   const row = await loadTemplate(ctx, auth, id);
   const [versions, counts] = await Promise.all([
     listVersions(ctx.env.DB, id),
-    countPassesByVersion(ctx.env.DB, id),
+    countPassesByVersion(ctx.env.DB, id, modeOf(auth)),
   ]);
   const active = versions.find((v) => v.version === row.activeVersion);
   if (!active) throw new NotFoundError('Template has no active version.', 'TEMPLATE_NOT_FOUND');
@@ -162,7 +163,7 @@ export async function versionDetail(
   const row = await loadTemplate(ctx, auth, id);
   const v = await getVersion(ctx.env.DB, id, version);
   if (!v) throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');
-  const counts = await countPassesByVersion(ctx.env.DB, id);
+  const counts = await countPassesByVersion(ctx.env.DB, id, modeOf(auth));
   return {
     ...versionDto(v, row.activeVersion, counts.get(v.version) ?? 0),
     manifest: v.manifest as unknown as Json,

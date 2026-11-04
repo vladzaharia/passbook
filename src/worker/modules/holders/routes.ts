@@ -9,7 +9,7 @@ import {
   ReassignHolderSchema,
   UnassignHolderSchema,
 } from '../../../shared/contracts/index.ts';
-import { methodScope, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { actorFor, assertOrg, orgScopeOf, svc } from '../passes/http.ts';
 import {
@@ -41,7 +41,7 @@ register(
     const q = c.req.valid('query');
     if (q.orgId) assertOrg(c, q.orgId);
     const orgId = orgScopeOf(c) ?? q.orgId;
-    return c.json(await listHolders(svc(c), { ...q, orgId }));
+    return c.json(await listHolders(svc(c), { ...q, orgId, mode: modeOf(c.var.auth) }));
   },
 );
 

@@ -5,6 +5,7 @@ import type {
   TemplateManifest,
   ValidationReport,
 } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, likeEscape, run, stmt } from '../../platform/db.ts';
 
 export interface TemplateRow {
@@ -125,6 +126,8 @@ export interface ListFilter {
   q?: string;
   limit: number;
   cursor?: { createdAt: number; id: string } | null;
+  /** Which mode's passes the pass counts cover. Default live. */
+  mode?: Mode;
 }
 
 export interface ListedTemplate extends TemplateRow {
@@ -162,11 +165,11 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     `SELECT ${TEMPLATE_COLUMNS.split(', ')
       .map((c) => `t.${c}`)
       .join(', ')},
-       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL) AS pass_count,
+       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL AND p.mode = ?) AS pass_count,
        (SELECT o.name FROM orgs o WHERE o.id = t.org_id) AS org_name
      FROM templates t WHERE ${where.join(' AND ')}
      ORDER BY t.created_at DESC, t.id DESC LIMIT ?`,
-    [...params, f.limit],
+    [f.mode ?? 'live', ...params, f.limit],
   );
   return rows.map((r) => ({ ...templateRow(r), passCount: r.pass_count, orgName: r.org_name }));
 }
