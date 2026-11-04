@@ -165,3 +165,13 @@
 .wl-add-here:not(:has(> [data-buddy])) {
   margin-top: 0;
 }
+/* Stacked under the sign on a phone, the ways centre with it. */
+@media (max-width: 639.98px) {
+  .wl-add-scan > .wl-ways {
+    align-items: center;
+    text-align: center;
+  }
+  .wl-add-scan .wl-way-label {
+    justify-content: center;
+  }
+}
