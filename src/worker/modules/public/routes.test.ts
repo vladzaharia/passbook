@@ -139,7 +139,9 @@ describe('GET /p/:token', () => {
     expect(svg).toContain('<svg');
     expect(html).toContain('Scan with the camera.');
     // The scan opens this page on the iPhone, whose badge adds.
-    expect(html).toMatch(/<div class="wl-sign">[\s\S]*?<span class="wl-qr [^"]*"><img src="data:/);
+    expect(html).toMatch(
+      /<div class="wl-sign">[\s\S]*?<span class="wl-sign-qr [^"]*"><img src="data:/,
+    );
   });
 
   it('links the holder to the pass in the portal, quietly, once', async () => {

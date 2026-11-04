@@ -248,6 +248,10 @@
   left: auto;
   right: var(--wl-buddy-inset, 12px);
 }
+/* One in view: an open dialog's buddy takes over from the page's under the scrim. */
+body:has([role="dialog"][data-state="open"] .wl-buddy) .wl-buddy:not([role="dialog"] *) {
+  visibility: hidden;
+}
 .wl-buddy-prop {
   position: absolute;
   bottom: var(--wl-prop-y, 1px);

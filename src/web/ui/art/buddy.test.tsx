@@ -78,6 +78,40 @@ describe('buddy seat', () => {
       '.wl-buddy[data-at="end"] { left: auto; right: var(--wl-buddy-inset, 12px); }',
     );
   });
+
+  it('is the one in view: an open dialog’s buddy hides the page’s under the scrim', () => {
+    const rule = /([^{}]+) \{ visibility: hidden; \}/.exec(wallet)?.[1]?.trim() ?? '';
+    expect(rule).toContain('body:has(');
+    const dialog = (state: string, buddy = true) => (
+      <div role="dialog" data-state={state}>
+        {buddy ? <Buddy at="end" /> : null}
+      </div>
+    );
+    const shown = () => [...document.querySelectorAll('[data-buddy]')].map((b) => !b.matches(rule));
+    // A dialog with no buddy hides nothing.
+    const { rerender } = render(
+      <>
+        <Buddy />
+        {dialog('open', false)}
+      </>,
+    );
+    expect(shown()).toEqual([true]);
+    rerender(
+      <>
+        <Buddy />
+        {dialog('open')}
+      </>,
+    );
+    expect(shown()).toEqual([false, true]);
+    // Closing, it fades out as the page's comes back.
+    rerender(
+      <>
+        <Buddy />
+        {dialog('closed')}
+      </>,
+    );
+    expect(shown()).toEqual([true, true]);
+  });
 });
 
 describe('buddy markup', () => {

@@ -3,8 +3,9 @@ import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, type DeviceInfo } from '../../shared/device.ts';
 import { AppleWalletBadge } from '../ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../ui/art/buddy-art.tsx';
-import { AddBlock, type RenderBuddy } from './add/add-block.tsx';
+import { AddBlock } from './add/add-block.tsx';
 import { type AddAreaProps, addMode } from './add/area.ts';
+import type { RenderBuddy } from './add/scan.tsx';
 import { Help, type HolderSupport, Notice } from './holder-parts.tsx';
 import './holder-pass.css';
 

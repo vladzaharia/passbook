@@ -8,10 +8,8 @@ export const HOLDER_COPY = {
   openOnApple: 'Open on iPhone or Mac to add to Apple Wallet.',
   /** In an in-app web view, which cannot add to Wallet. */
   openInSafari: 'Open in Safari to add to Apple Wallet.',
-  /** The QR dialog's title (My passes). */
-  scanQr: 'Scan with your iPhone.',
   qrAlt: (pass: string) => `QR code for ${pass}`,
-  /** The pass page's add block: its name, then the ways to add beside the QR. */
+  /** The pass page's add block and My passes' QR dialog: the name, then the ways beside the QR. */
   addTitle: 'Add to Apple Wallet',
   iphone: 'On your iPhone',
   scanLine: 'Scan with the camera.',

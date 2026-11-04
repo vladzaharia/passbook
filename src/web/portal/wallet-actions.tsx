@@ -6,6 +6,7 @@ import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
 import {
+  Buddy,
   Button,
   ConfirmDialog,
   Dialog,
@@ -17,9 +18,9 @@ import {
   IconButton,
   toast,
 } from '../ui/index.ts';
+import { Scan } from './add/scan.tsx';
 import { myPassesKey, removePass } from './api.ts';
 import { browserDevice } from './device.ts';
-import { HolderQr } from './holder-qr.tsx';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
 export function publicUrlOf(downloadUrl: string, origin = window.location.origin): string | null {
@@ -34,6 +35,10 @@ export function AddLine({ className }: { className?: string }) {
   return line ? <p className={cn('text-sm text-fg-muted', className)}>{line}</p> : null;
 }
 
+/**
+ * The pass page's scan in a dialog: the buddy on the QR's sign, On your iPhone beside it, stacked
+ * in the bottom sheet. The page's buddy steps aside while it is open (art-wallet.css).
+ */
 export function QrDialog({
   passTitle,
   url,
@@ -47,10 +52,8 @@ export function QrDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent title={HOLDER_COPY.scanQr} description={passTitle} size="sm">
-        <div className="flex justify-center">
-          {open ? <HolderQr value={url} label={HOLDER_COPY.qrAlt(passTitle)} /> : null}
-        </div>
+      <DialogContent title={HOLDER_COPY.addTitle} description={passTitle}>
+        <Scan url={url} label={HOLDER_COPY.qrAlt(passTitle)} buddy={(p) => <Buddy {...p} />} />
       </DialogContent>
     </Dialog>
   );
