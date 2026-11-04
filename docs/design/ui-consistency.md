@@ -72,7 +72,8 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 - Top bar: ghost icon buttons; search is a field at ≥640 and an icon button below. The shortcut
   hint reads `⌘K` on Apple platforms, `Ctrl K` elsewhere, and hides when the only pointer is coarse.
 - SSR pages use the kit's classes, so they match the app: same heights (36, 44 on touch), 14 px
-  text, `md` radius. Emails: a 44 px link block, the Button's 14/500 type and `md` radius.
+  text, `md` radius. Emails: a 44 px link block, the Button's 14/500 type and `md` radius; beside
+  the badge, the badge's 143 × 44 box at `lg`.
 - Every screen, customer pages included, uses this scale. The one larger thing is the sign-in
   wordmark (`Wordmark size="lg"`, 20 px).
 
@@ -539,8 +540,19 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   `Open in My passes`, where the portal has its actions (sign-in first). No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.
-- **Org first**: `/p` and the pass email show the org's logo or name, not the PassBook mark. The
-  portal header shows the full PassBook wordmark on every page.
+- **Org first**: `/p` and the pass email lead with the pass's icon and the org's name, and show
+  the pass's logo on the pass, never the PassBook mark. The portal header shows the full PassBook
+  wordmark on every page.
+- **Pass email** (`email/pass.ts` in the shared shell): the band is `/p`'s bar, the pass's icon
+  (24 px, `md`) and the org's name, which wraps beside the icon; the buddy only when the org opts
+  in. The card: the title, the pass drawn small in its colours (its logo at most 36 px tall, then
+  its logoText unless the org's logo has the name; a `line` edge where its colour would melt into
+  the card, and in dark clients), then the badge and `Open your pass` as one pair: the badge's
+  143 × 44 box, `lg` corners (the step nearest the art's), 12 px apart, left on the text edge.
+  Side by side where the column fits both (390 up), stacked below. Inline blocks wrap without
+  media queries (Gmail); a ghost table keeps the row in Outlook. Images come from
+  `/p/:token/assets` with fixed boxes; the icon and logo answer `Cross-Origin-Resource-Policy:
+  cross-origin` so webmail can show them.
 - Sign-in, magic-link confirm, link expired, no access, break-glass: one "hosted" shell shared by
   `/login` and the worker pages. See below.
 

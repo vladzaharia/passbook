@@ -80,7 +80,8 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
 ### Add to Apple Wallet badge
 
 - Apple's badge artwork only: SVG from Apple's kit, unmodified, locale matching the page language,
-  black on light grounds, outline on dark. Email uses a PNG export of Apple's artwork.
+  black on light grounds, outline on dark. Email uses a PNG export of the black art on every
+  ground, with no cell of its own: its grey edge carries it on dark cards.
 - Never recreate, restyle, dim, animate, glow or press-scale it. No custom "Add to Apple Wallet"
   buttons anywhere, bundles included (badge plus a plain label beside it: `All passes (3)`).
 - Height 40–48 px (44 on touch); clear space at least 0.1 × height.

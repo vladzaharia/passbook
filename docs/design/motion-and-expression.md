@@ -256,8 +256,8 @@ clients cannot overlap cells, so it is cut at its seam: the top stands in the ba
 beside the wordmark; the legs and contact shadow sit in the card's first row, over the foil. Dark
 clients that honour `<picture>` media get the dark art. Happy in the sign-in link, curious in
 Confirm your email. Decorative (`alt=""`); blocked, the band keeps its height. The pass email is
-the org's (its name and pass), so no buddy there unless the org opts in (`email.buddy`): then the
-same composition, happy, at the right end of the org's band.
+the org's (the pass's icon, the org's name and the pass), so no buddy there unless the org opts in
+(`email.buddy`): then the same composition, happy, at the right end of the org's band.
 
 ## Action verbs
 
