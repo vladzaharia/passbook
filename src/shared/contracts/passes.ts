@@ -45,6 +45,8 @@ export const PassSummarySchema = z.object({
   ownerUserId: IdSchema.nullable(),
   /** Devices that have the pass in Wallet. */
   deviceCount: z.number().int().default(0),
+  /** When the pass was removed from Wallet; null while it is not. */
+  removedAt: TimestampSchema.nullable().default(null),
   modifiedAt: TimestampSchema,
   createdAt: TimestampSchema,
 });
@@ -208,7 +210,9 @@ export const DiffQuerySchema = z.object({
 });
 export const BULK_PASS_LIMIT = 100;
 export const BulkPassActionSchema = z.object({
-  action: z.enum(['void', 'send_email']),
+  action: z.enum(['void', 'send_email', 'remove']),
+  /** For `remove`: shown to holders on the lock screen. */
+  message: z.string().max(200).optional(),
   ids: z.array(IdSchema).min(1).max(BULK_PASS_LIMIT),
   /** The caller's view: every id must belong to this org. */
   orgId: IdSchema.optional(),

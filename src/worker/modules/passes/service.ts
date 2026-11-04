@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { enqueuePassEmail } from '../delivery/service.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { createPassRow } from './create.ts';
 import { detailOf, linksOf, toSummary } from './detail.ts';
@@ -123,6 +124,13 @@ async function setStatus(
     targetType: 'pass',
     targetId: passId,
   });
+  await recordPassEvent(ctx, {
+    orgId: result.pass.orgId,
+    passId,
+    mode: result.pass.mode,
+    kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
+    actor,
+  });
   return toSummary(result.pass);
 }
 
@@ -191,6 +199,13 @@ export async function rotateLink(
     targetType: 'pass',
     targetId: passId,
   });
+  await recordPassEvent(ctx, {
+    orgId: pass.orgId,
+    passId,
+    mode: pass.mode,
+    kind: 'pass.link_rotated',
+    actor,
+  });
   const { publicUrl, downloadUrl } = linksOf(ctx, { ...pass, downloadToken: token });
   return { publicUrl, downloadUrl };
 }
@@ -244,6 +259,7 @@ export async function requestRefresh(
     event: 'refresh.requested',
     orgId: pass.orgId,
     templateId: pass.templateId,
+    mode: pass.mode,
   });
   return { requestedAt: now, coalesced: false, cooldownSeconds };
 }

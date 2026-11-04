@@ -48,6 +48,7 @@ export function toSummary(pass: Pass) {
     holderState: holderStateOf(pass),
     ownerUserId: pass.ownerUserId,
     deviceCount: pass.deviceCount,
+    removedAt: pass.removedAt,
     modifiedAt: pass.modifiedAt,
     createdAt: pass.createdAt,
   };

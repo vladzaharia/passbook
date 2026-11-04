@@ -4,8 +4,10 @@ import { AppError, BadRequestError, UnauthenticatedError } from '../../platform/
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordPassEvent, recordPassEvents } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { getPassBySerial, type Pass } from '../passes/repo.ts';
+import { attachLogLines } from './log-events.ts';
 import {
   addRegistration,
   bumpLogCounter,
@@ -115,6 +117,14 @@ export async function registerDevice(
     orgId: pass.orgId,
     templateId: pass.templateId,
     identityId: identity.id,
+    mode: pass.mode,
+  });
+  await recordPassEvent(ctx, {
+    orgId: pass.orgId,
+    passId: pass.id,
+    mode: pass.mode,
+    kind: 'device.registered',
+    device: input.deviceId,
   });
   return 'created';
 }
@@ -136,13 +146,23 @@ export async function unregisterDevice(
   );
   checkDevice(input.deviceId);
   const removed = await removeRegistration(ctx.env.DB, input.deviceId, identity.id, pass.id);
-  if (removed)
+  if (removed) {
     writeEvent(ctx.env, {
       event: 'pass.unregistered',
       orgId: pass.orgId,
       templateId: pass.templateId,
       identityId: identity.id,
+      mode: pass.mode,
     });
+    await recordPassEvent(ctx, {
+      orgId: pass.orgId,
+      passId: pass.id,
+      mode: pass.mode,
+      kind: 'device.unregistered',
+      device: input.deviceId,
+      data: { reason: 'device' },
+    });
+  }
 }
 
 /** Unauthenticated by protocol: keyed by the opaque device id. Unknown pass types read as empty. */
@@ -164,6 +184,17 @@ export async function updatedSerials(
   );
   const last = rows.at(-1);
   if (!last) return null;
+  await recordPassEvents(
+    ctx,
+    rows.map((r) => ({
+      orgId: r.orgId,
+      passId: r.passId,
+      mode: r.mode,
+      kind: 'device.fetched' as const,
+      device: input.deviceId,
+      data: { step: 'listed', version: r.version },
+    })),
+  );
   return { serialNumbers: rows.map((r) => r.serial), lastUpdated: String(last.revision) };
 }
 
@@ -192,5 +223,6 @@ export async function recordDeviceLogs(
   if (total > LOG_LINES_PER_HOUR)
     throw new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
   await insertLogs(ctx.env.DB, kept, null, now);
+  await attachLogLines(ctx, kept);
   return kept.length;
 }

@@ -7,6 +7,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
+import { recordPassFetch } from './log-events.ts';
 import { personalize } from './personalize.ts';
 import {
   authorizePass,
@@ -121,7 +122,9 @@ register(
       p.serial,
       c.req.header('authorization'),
     );
-    return servePassFile(c.env.BUCKET, pass, c.req.raw);
+    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    await recordPassFetch(svc(c), pass, response.status);
+    return response;
   },
 );
 
