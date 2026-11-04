@@ -1,12 +1,24 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import { z } from 'zod';
-import { BroadcastStateSchema } from '@/shared/contracts/broadcasts.ts';
+import type { BroadcastState } from '@/shared/contracts/broadcasts.ts';
 import { MessagesPage } from '../../../admin/messages/messages-page.tsx';
 import { compactSearch } from '../../../lib/url-state.ts';
 
 const searchSchema = z.object({
-  state: BroadcastStateSchema.optional().catch(undefined),
+  // Narrowed here by name only: the full contract stays out of the entry chunk.
+  state: z
+    .enum([
+      'draft',
+      'scheduled',
+      'sending',
+      'sent',
+      'partial',
+      'failed',
+      'cancelled',
+    ] as const satisfies readonly BroadcastState[])
+    .optional()
+    .catch(undefined),
 });
 
 function MessagesRoute() {
