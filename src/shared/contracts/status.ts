@@ -45,7 +45,7 @@ export const HealthResponseSchema = z.object({ ok: z.literal(true) });
 
 export const WorkflowRunSchema = z.object({
   instanceId: z.string(),
-  kind: z.enum(['template_import', 'bulk_reissue', 'connection_sync']),
+  kind: z.enum(['template_import', 'bulk_reissue', 'connection_sync', 'broadcast']),
   orgId: z.string().nullable(),
   targetId: z.string().nullable(),
   status: z.enum(['queued', 'running', 'complete', 'errored', 'terminated']),

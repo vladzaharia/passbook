@@ -1,7 +1,7 @@
 import { first, run, stmt } from './db.ts';
 
 /** The `workflow_runs` table: every module that starts a workflow records it here. */
-export type WorkflowKind = 'template_import' | 'bulk_reissue' | 'connection_sync';
+export type WorkflowKind = 'template_import' | 'bulk_reissue' | 'connection_sync' | 'broadcast';
 export type WorkflowStatus = 'queued' | 'running' | 'complete' | 'errored' | 'terminated';
 
 export interface NewRun {

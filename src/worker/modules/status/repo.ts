@@ -1,6 +1,6 @@
 import { all, first } from '../../platform/db.ts';
 
-const KINDS = ['template_import', 'bulk_reissue', 'connection_sync'] as const;
+const KINDS = ['template_import', 'bulk_reissue', 'connection_sync', 'broadcast'] as const;
 
 export interface WorkflowCount {
   kind: string;
@@ -26,7 +26,7 @@ export function workflowCounts(db: D1Database, since: number): Promise<WorkflowC
 
 export interface WorkflowRunRow {
   instance_id: string;
-  kind: 'template_import' | 'bulk_reissue' | 'connection_sync';
+  kind: (typeof KINDS)[number];
   org_id: string | null;
   target_id: string | null;
   status: 'queued' | 'running' | 'complete' | 'errored' | 'terminated';

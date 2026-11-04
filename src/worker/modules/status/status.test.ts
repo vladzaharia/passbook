@@ -104,6 +104,18 @@ describe('status components', () => {
     expect(find(s, 'queue')).toMatchObject({ state: 'degraded', data: { backlog: 2000, dlq: 3 } });
   });
 
+  it('counts broadcast runs', async () => {
+    const now = Date.now();
+    for (const id of ['b1', 'b2'])
+      await run(
+        env.DB,
+        "INSERT INTO workflow_runs (instance_id, kind, status, started_at) VALUES (?, 'broadcast', 'errored', ?)",
+        [id, now],
+      );
+    const s = await status({}, okFetch, new ManualClock(now));
+    expect(find(s, 'workflows')).toMatchObject({ data: { errored: 2, total: 2 } });
+  });
+
   it('does not count rejected template uploads as workflow failures', async () => {
     const now = Date.now();
     await run(
