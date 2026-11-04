@@ -17,6 +17,7 @@ import {
   RowLink,
   StatusPill,
 } from '../../ui/index.ts';
+import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBroadcastPages } from './api.ts';
 import { countsLine, KIND_LABEL, STATE_FILTERS, whenLine } from './labels.ts';
 import { BroadcastProgress } from './progress.tsx';
@@ -49,9 +50,12 @@ export function MessagesPage({
         header: 'Message',
         cell: ({ row }) => (
           <div className="min-w-0 max-w-80">
-            <RowLink to="/admin/messages/$broadcastId" params={{ broadcastId: row.original.id }}>
-              {row.original.name}
-            </RowLink>
+            <span className="flex min-w-0 items-center gap-2">
+              <RowLink to="/admin/messages/$broadcastId" params={{ broadcastId: row.original.id }}>
+                {row.original.name}
+              </RowLink>
+              <ModePill mode={row.original.mode} compact />
+            </span>
             <span className="block truncate text-xs text-fg-muted">
               {KIND_LABEL[row.original.kind]}
               {orgId ? '' : ` · ${orgNames.get(row.original.orgId) ?? '—'}`}

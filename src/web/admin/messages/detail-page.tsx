@@ -21,6 +21,7 @@ import {
   TwoPane,
   toast,
 } from '../../ui/index.ts';
+import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useTemplates } from '../templates/api.ts';
 import { type NewBroadcast, useBroadcast, useBroadcastActions } from './api.ts';
 import { clearLabel, KIND_LABEL, messageText, whenLine } from './labels.ts';
@@ -125,6 +126,7 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
         breadcrumbs={[...CRUMBS, { label: b.name }]}
         meta={
           <>
+            <ModePill mode={b.mode} />
             <StatusPill status={b.state} />
             <span>{KIND_LABEL[b.kind]}</span>
             <span>{whenLine(b)}</span>
