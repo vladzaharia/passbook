@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import type { Op } from './apply.ts';
-import type { DesignDoc, Section, Selection } from './model.ts';
+import type { DesignDoc, Selection } from './model.ts';
 import type { Action, DesignerState } from './reducer.ts';
 
 export interface DesignerApi {
@@ -28,6 +28,3 @@ export function useDesigner(): DesignerApi {
   if (!api) throw new Error('useDesigner needs a DesignerProvider.');
   return api;
 }
-
-export const targetId = (section: Section, key?: string): string =>
-  key ? `${section}:${key}` : section;

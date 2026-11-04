@@ -97,7 +97,7 @@ export function designerReducer(state: DesignerState, action: Action): DesignerS
     case 'saved':
       return { ...state, saved: action.doc, merge: null };
     case 'reset':
-      return initialState(action.doc);
+      return { ...initialState(action.doc), select: state.select };
   }
 }
 

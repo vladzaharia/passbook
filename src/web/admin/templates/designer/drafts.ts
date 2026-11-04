@@ -35,9 +35,10 @@ export function loadDraft(templateId: string): Draft | null {
 /** Returns false when the draft does not fit or the browser refuses it. */
 export function saveDraft(templateId: string, draft: Draft): boolean {
   try {
+    const store = storage();
     const text = JSON.stringify(draft);
-    if (text.length > MAX_CHARS) return false;
-    storage()?.setItem(PREFIX + templateId, text);
+    if (!store || text.length > MAX_CHARS) return false;
+    store.setItem(PREFIX + templateId, text);
     return true;
   } catch {
     return false;

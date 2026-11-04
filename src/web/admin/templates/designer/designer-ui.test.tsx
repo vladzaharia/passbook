@@ -116,6 +116,57 @@ describe('designer', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('has no axe violations in any inspector', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    const { container } = await open(s);
+    await screen.findByRole('navigation', { name: 'Structure' });
+    for (const name of [
+      /^Images/,
+      /^Primary/,
+      /^Back/,
+      /^Inputs/,
+      /^Barcode/,
+      /^Relevance/,
+      /^Template/,
+    ]) {
+      await user.click(await screen.findByRole('button', { name }));
+      if (String(name).includes('Primary')) {
+        await user.click(await screen.findByRole('button', { name: /^Member/ }));
+        await screen.findByLabelText('Change message');
+      }
+      if (String(name).includes('Inputs')) {
+        await user.click(await screen.findByRole('button', { name: /^Name/ }));
+        await screen.findByLabelText('Sample');
+      }
+      expect((await axe(container)).violations, String(name)).toEqual([]);
+    }
+  });
+
+  it('drags a field to another position', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Secondary/ }));
+    const list = await screen.findByRole('list', { name: 'Secondary fields' });
+    const rows = within(list).getAllByRole('listitem');
+    const data = new Map<string, string>();
+    const dataTransfer = {
+      setData: (k: string, v: string) => data.set(k, v),
+      getData: (k: string) => data.get(k) ?? '',
+    };
+    fireEvent.dragStart(rows[0] as HTMLElement, { dataTransfer });
+    fireEvent.dragOver(rows[1] as HTMLElement, { dataTransfer });
+    fireEvent.drop(rows[1] as HTMLElement, { dataTransfer });
+    await waitFor(() => {
+      const names = within(screen.getByRole('list', { name: 'Secondary fields' })).getAllByRole(
+        'button',
+        { name: /^Move .* up$/ },
+      );
+      expect(names[0]).toHaveAttribute('aria-label', 'Move since up');
+    });
+  });
+
   it('undoes and redoes from the buttons and the keyboard, and guards unsaved edits', async () => {
     const user = userEvent.setup();
     const s = setup();

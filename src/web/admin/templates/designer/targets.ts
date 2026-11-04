@@ -50,6 +50,3 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
   if (path === 'name' || path === 'description') return { section: 'template' };
   return null;
 }
-
-export const sameTarget = (a: Selection, b: Selection): boolean =>
-  a.section === b.section && a.key === b.key;

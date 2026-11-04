@@ -82,5 +82,9 @@ POST /api/v1/holders/unassign      { "passId": "…" }
 - `void` and `unvoid` toggle a pass; `rotate-link` invalidates the old download link.
 - Request and response bodies are JSON except `PUT /passes/{id}/assets/{name}` (PNG body) and
   `POST /templates/uploads` (zip or multipart, up to 15 MB).
+- `POST /templates/{id}/versions` (admin session) saves a version of an uploaded template from JSON, with the
+  same checks as an upload. Body: `passJson`, `manifest`, `assets` (`{ name, sha1 }` for a file the template
+  already has, `{ name, upload }` for a PNG as base64), `dryRun` (validate and build only; returns the report
+  and the built pass) and `activate`. Built-in templates answer 403 `TEMPLATE_BAKED`; duplicate one first.
 - Public pass links (`/p/{token}`), the Apple web service (`/wallet/v1`) and webhooks
   (`/hooks/connections/{id}`) have their own auth and are not part of the key API.
