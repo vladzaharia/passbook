@@ -168,7 +168,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
         <OrgForm key={`${org.updatedAt}`} org={org} />
         <Card>
           <CardHeader title="Pass email" />
-          <CardBody className="@container">
+          <CardBody>
             <SettingsForm
               scope={`org:${org.id}`}
               fields={EMAIL_FIELDS}

@@ -56,7 +56,7 @@ export interface SettingsFormProps {
   fields: readonly SettingField[];
   /** Asked with the changed values before saving. */
   guard?: (values: Record<string, unknown>) => SaveGuard | null;
-  /** Beside the fields in a wide container (`@container` on the caller), under them when narrow. */
+  /** Under the fields: a preview wants the card's width, and one toggle beside it would float. */
   aside?: (draft: Draft) => ReactNode;
 }
 
@@ -150,7 +150,7 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   return (
     <Form
       id={formId}
-      className={aside ? 'grid gap-6 @[36rem]:grid-cols-[minmax(0,1fr)_22rem]' : undefined}
+      className={aside ? 'flex flex-col gap-6' : undefined}
       {...check.form}
       onValid={onValid}
     >
