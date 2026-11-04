@@ -570,6 +570,13 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   two 143 px cells with a 12 px one between (the inline blocks are hidden from it), and the foil as
   a solid 2 px row of its first colour; corners are square. `pass.test.ts` resolves the comments
   as Word does and checks what is left.
+- **Pass email preview** (org page `Pass email` card): the Worker renders the real email
+  (`GET /api/v1/orgs/:id/email-preview`) into a frame that runs no script. It follows the page's
+  unsaved buddy at once and the support email and URL once typing settles (400 ms; a value Save
+  would refuse keeps the last email). The art is what the org's next pass carries: its uploads,
+  else the icon and logo of the template its passes use most (else its first, else the generic
+  starter), through admin routes, never a holder's link. Laid out at 390 px (up to 512 where the
+  column allows) and scaled to fit, so the 22rem aside never squeezes it.
 - Sign-in, magic-link confirm, link expired, no access, break-glass: one "hosted" shell shared by
   `/login` and the worker pages. See below.
 
@@ -619,7 +626,7 @@ The trust and footer lines are the only explanatory text allowed on these pages:
   cut in two slices at the card seam (top in the header band, legs over the foil; static PNGs,
   `public/email/`); the pass email is the org's, with no buddy unless the org opts in
   (`email.buddy`, org page `Pass email` card with a sample). Fluid container `width:100%;
-  max-width:480px`; 3px foil line (teal fallback) over the header bar. One title line. The pass
+  max-width:480px`; 2 px foil line (its first colour where gradients do not draw) over the header bar. One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
   pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
   not a field; asked from the installed app (`prefer: 'code'`) the email is `Your sign-in code`:

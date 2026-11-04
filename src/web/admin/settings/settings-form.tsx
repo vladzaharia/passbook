@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { isApiError } from '@/web/lib/errors.ts';
@@ -17,6 +17,7 @@ import {
   useSavedToast,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
+import { publishUnsaved } from './drafts.ts';
 import { changedValues, type Draft, type SettingField, toDraft } from './fields.ts';
 import { useSaveSettings, useSettings } from './queries.ts';
 import { SettingRow } from './setting-row.tsx';
@@ -85,6 +86,18 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   const blocker = useUnsavedChangesGuard(dirty);
   // Org detail has two forms on one scope (support contacts, pass email): ids must differ.
   const formId = `settings-${useId()}`;
+  // Views outside the form (org detail's email preview) follow its unsaved values.
+  const unsaved = JSON.stringify(
+    Object.fromEntries(
+      initial
+        ? fields.filter((f) => draft[f.key] !== initial[f.key]).map((f) => [f.key, draft[f.key]])
+        : [],
+    ),
+  );
+  useEffect(() => {
+    publishUnsaved(scope, formId, JSON.parse(unsaved) as Draft);
+  }, [scope, formId, unsaved]);
+  useEffect(() => () => publishUnsaved(scope, formId, null), [scope, formId]);
 
   if (query.isPending)
     return <SkeletonRows rows={Math.min(4, fields.length)} label="Loading settings" />;
