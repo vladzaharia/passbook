@@ -76,8 +76,7 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
     : [title, askedBy, `${action}: ${input.link}`, input.code ? `Code: ${input.code}` : '', expiry];
   const text = lines.filter(Boolean).join('\n\n');
 
-  const button = (primary: boolean) =>
-    `<p style="margin:0 0 24px">${buttonHtml(input.link, action, primary)}</p>`;
+  const button = (primary: boolean) => buttonHtml(input.link, action, primary);
   const actions = codeFirst
     ? `${chipHtml(input.code ?? '', true)}\n${orLine('Or open this link')}\n${button(false)}`
     : `${button(true)}\n${input.code ? `${orLine('Or enter this code')}\n${chipHtml(input.code, false)}` : ''}`;
