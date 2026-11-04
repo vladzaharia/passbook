@@ -7,6 +7,7 @@ import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
+import { deliverBundleEmail } from '../bundles/deliver.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
@@ -14,8 +15,9 @@ import { parseStoredPassJson } from '../passes/detail.ts';
 import { currentPassJson, getOrg, getPass } from '../passes/repo.ts';
 import { passImages } from '../public/service.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
+import { finishSent } from './email-finish.ts';
 import { claimOrSettle, retryOrGiveUp } from './push.ts';
-import { finishOutbox, orgBranding, setProviderId } from './repo.ts';
+import { finishOutbox, orgBranding } from './repo.ts';
 
 /** A failure that retrying cannot fix. */
 class PermanentEmailError extends Error {}
@@ -26,6 +28,16 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   if (!claimed) return;
   const { row, lease } = claimed;
   const now = ctx.clock.now();
+  if (typeof row.payload.bundleId === 'string') {
+    // The row hangs on the bundle's first pass, but a deleted pass must not cancel the bundle:
+    // deliverBundleEmail picks the first live member.
+    const bundleTo = typeof row.payload.to === 'string' ? row.payload.to : null;
+    if (!bundleTo) await finishOutbox(db, row.id, lease, 'cancelled', now, 'NO_RECIPIENT');
+    else if (!(await isOrgActive(ctx, row.orgId)))
+      await finishOutbox(db, row.id, lease, 'cancelled', now, 'ORG_INACTIVE');
+    else await deliverBundleEmail(ctx, { row, lease, to: bundleTo });
+    return;
+  }
   const pass = row.passId ? await getPass(db, row.passId) : null;
   const to = typeof row.payload.to === 'string' ? row.payload.to : null;
   if (!pass || !to) {
@@ -140,20 +152,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     return;
   }
   await event('ok');
-  // The provider has the message. A bookkeeping failure must not cause a second send: the
-  // provider id is kept so a lease-expiry re-run only finishes the row.
-  try {
-    await finishOutbox(db, row.id, lease, 'sent', ctx.clock.now(), null, messageId);
-  } catch (error) {
-    ctx.log.error('email.finish_failed', { outboxId: row.id, code: 'EMAIL_FINISH', error });
-    await setProviderId(db, row.id, lease, messageId).catch((inner: unknown) =>
-      ctx.log.error('email.finish_failed', {
-        outboxId: row.id,
-        code: 'EMAIL_PROVIDER_ID',
-        error: inner,
-      }),
-    );
-  }
+  await finishSent(ctx, row, lease, messageId);
 }
 
 /** The org's support; PassBook's own when the org has none. */

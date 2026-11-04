@@ -30,7 +30,7 @@ export function contentSecurityPolicy(nonce?: string): string {
   ].join('; ');
 }
 
-const NO_REFERRER_PREFIXES = ['/p/', '/auth/'];
+const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/'];
 const NO_STORE_PREFIXES = ['/api/', '/auth/'];
 
 const passedThrough = new WeakSet<Response>();

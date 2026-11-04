@@ -1,5 +1,6 @@
 export * from './api-keys.ts';
 export * from './audit.ts';
+export * from './bundles.ts';
 export * from './common.ts';
 export * from './connections.ts';
 export * from './events.ts';

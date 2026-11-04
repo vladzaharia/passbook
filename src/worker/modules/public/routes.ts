@@ -35,22 +35,22 @@ publicRoutes.use(
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 
-const EMAILED = /^(icon|logo)(@[23]x)?\.png$/;
+export const EMAILED = /^(icon|logo)(@[23]x)?\.png$/;
 
-const PAGE_HEADERS = {
+export const PAGE_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
   'cache-control': 'private, no-store',
   'x-robots-tag': 'noindex, nofollow',
 };
 
 /** Formatting locale for dates and numbers on the card; the page copy stays English. */
-const langOf = (header: string | undefined): string => {
+export const langOf = (header: string | undefined): string => {
   const tag = header?.split(',')[0]?.split(';')[0]?.trim();
   return tag && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(tag) ? tag : 'en';
 };
 
 /** Visitor zone from Cloudflare, if it is a zone Intl knows. */
-function zoneOf(c: C): string | undefined {
+export function zoneOf(c: C): string | undefined {
   const tz = c.req.raw.cf?.timezone;
   if (typeof tz !== 'string' || !tz) return undefined;
   try {

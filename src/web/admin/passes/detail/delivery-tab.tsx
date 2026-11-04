@@ -25,6 +25,7 @@ import {
   toast,
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
+import { BundlesCard } from '../bundles-card.tsx';
 import { newKey } from '../format.ts';
 
 type Entry = z.infer<typeof DeliveryEntrySchema>;
@@ -256,6 +257,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
           />
         )}
       </Card>
+      <BundlesCard passId={pass.id} />
     </div>
   );
 }

@@ -6,6 +6,8 @@ export interface AppleWalletBadgeProps {
   href: string;
   /** A plain label beside the badge for bundles: "All passes (3)". Never badge-like. */
   label?: string;
+  /** The id of the element that names what the badge adds (several badges on one page). */
+  describedBy?: string;
   /** The page language; Apple's artwork per locale. */
   locale?: string;
   /** Runs as the download starts (the pass card dips towards the badge; the badge never moves). */
@@ -22,6 +24,7 @@ export function AppleWalletBadge({
   href,
   label,
   locale = 'en',
+  describedBy,
   onClick,
   className,
 }: AppleWalletBadgeProps) {
@@ -29,6 +32,7 @@ export function AppleWalletBadge({
     <a
       href={href}
       onClick={onClick}
+      aria-describedby={describedBy}
       data-awb=""
       className={cn(
         'inline-flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg p-1.5 text-sm font-medium text-fg-strong',

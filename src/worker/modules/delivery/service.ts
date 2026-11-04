@@ -1,3 +1,4 @@
+import type { Json, Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import type { Job } from '../../jobs/types.ts';
 import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
@@ -123,14 +124,40 @@ export async function enqueuePassEmail(
   if (!to) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   const pass = await getPass(ctx.env.DB, input.passId);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  return queueEmail(ctx, {
+    orgId: pass.orgId,
+    passId: pass.id,
+    mode: pass.mode,
+    to,
+    payload: { to, attach: input.attach },
+    event: { attached: input.attach },
+  });
+}
+
+/**
+ * Applies the recipient and org caps, then queues one email row, records `email.queued` on the
+ * row's pass and dispatches it. Pass and bundle emails share it (`to` is already normalized by
+ * `strictEmail`).
+ */
+export async function queueEmail(
+  ctx: ServiceContext,
+  input: {
+    orgId: string;
+    passId: string;
+    mode: Mode;
+    to: string;
+    payload: Record<string, unknown>;
+    event: Record<string, Json>;
+  },
+): Promise<{ outboxId: string }> {
   const now = ctx.clock.now();
-  const recipient = (await sha256Hex(`pass-email:${to.toLowerCase()}`)).slice(0, 32);
+  const recipient = (await sha256Hex(`pass-email:${input.to.toLowerCase()}`)).slice(0, 32);
   const perRecipient = await bumpCounter(
     ctx.env.DB,
     `pass-email:to:${recipient}`,
     now - (now % HOUR),
   );
-  const perOrg = await bumpCounter(ctx.env.DB, `pass-email:org:${pass.orgId}`, now - (now % DAY));
+  const perOrg = await bumpCounter(ctx.env.DB, `pass-email:org:${input.orgId}`, now - (now % DAY));
   if (perRecipient > EMAIL_RECIPIENT_HOURLY_CAP || perOrg > EMAIL_ORG_DAILY_CAP)
     throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
       headers: { 'retry-after': '3600' },
@@ -138,21 +165,21 @@ export async function enqueuePassEmail(
   const outboxId = ctx.ids.id();
   await insertOutbox(ctx.env.DB, {
     id: outboxId,
-    orgId: pass.orgId,
+    orgId: input.orgId,
     kind: 'email',
-    passId: pass.id,
+    passId: input.passId,
     coalesceKey: null,
-    payload: { to, attach: input.attach },
+    payload: input.payload,
     now: ctx.clock.now(),
   });
   await recordPassEvent(ctx, {
-    orgId: pass.orgId,
-    passId: pass.id,
-    mode: pass.mode,
+    orgId: input.orgId,
+    passId: input.passId,
+    mode: input.mode,
     kind: 'email.queued',
-    data: { outboxId, attached: input.attach },
+    data: { outboxId, ...input.event },
   });
-  ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
+  ctx.waitUntil(dispatchSafely(ctx, { passId: input.passId }));
   return { outboxId };
 }
 

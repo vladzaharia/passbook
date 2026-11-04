@@ -1,5 +1,4 @@
 import type { z } from 'zod';
-import { PackageLimitError, packagePasses } from '../../../passkit/index.ts';
 import { MY_PASSES_BUNDLE_SIZE, type MyPassSchema } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -17,6 +16,7 @@ import { processVerifyRequest } from '../auth/magic-service.ts';
 import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
 import { removePassFromUser } from '../holders/service.ts';
 import { assetNamesOf } from '../passes/detail.ts';
+import { packagePassObjects } from '../passes/package-objects.ts';
 import { requestRefresh } from '../passes/service.ts';
 import { supportContacts } from '../public/service.ts';
 import * as repo from './repo.ts';
@@ -256,26 +256,9 @@ export async function myPassesBundle(ctx: ServiceContext, userId: string, part: 
     (part - 1) * MY_PASSES_BUNDLE_SIZE,
   );
   if (rows.length === 0) throw BUNDLE_NOT_FOUND();
-  try {
-    const body = packagePasses(
-      rows.map((row) => ({
-        name: row.id,
-        ...(row.object_size ? { size: row.object_size } : {}),
-        bytes: async () => {
-          const object = await ctx.env.BUCKET.get(row.object_key);
-          if (!object) throw new NotFoundError('A pass file is missing.', 'PASS_FILE_MISSING');
-          return new Uint8Array(await object.arrayBuffer());
-        },
-      })),
-    );
-    return { body, parts };
-  } catch (error) {
-    if (error instanceof PackageLimitError) {
-      throw new ConflictError(
-        'The bundle is too large. Add passes one by one.',
-        'BUNDLE_TOO_LARGE',
-      );
-    }
-    throw error;
-  }
+  const body = packagePassObjects(
+    ctx.env.BUCKET,
+    rows.map((row) => ({ id: row.id, objectKey: row.object_key, objectSize: row.object_size })),
+  );
+  return { body, parts };
 }

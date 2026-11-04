@@ -82,6 +82,10 @@ export function PassesListPage({
     [allSelected, rows],
   );
 
+  const bundleOrgId = useMemo(() => {
+    const orgs = new Set(rows.filter((r) => selected.has(r.id)).map((r) => r.orgId));
+    return orgs.size === 1 ? ([...orgs][0] ?? null) : null;
+  }, [rows, selected]);
   const columns = useMemo(() => passColumns(!orgId), [orgId]);
   const context = useMemo(
     () => ({
@@ -166,6 +170,7 @@ export function PassesListPage({
       <SelectionBar
         ids={[...selected]}
         orgId={orgId}
+        bundleOrgId={bundleOrgId}
         onClear={() => setSelected(new Set())}
         onExport={exportCsv}
       />
