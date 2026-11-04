@@ -115,6 +115,7 @@ export function platformHostsOf(env: {
   PUBLIC_BASE_URL: string;
   OIDC_ISSUER?: string;
   SSRF_DENY_HOSTS?: string;
+  REDIRECT_HOSTS?: string;
 }): string[] {
   const hostOf = (raw: string | undefined) => {
     try {
@@ -123,7 +124,7 @@ export function platformHostsOf(env: {
       return null;
     }
   };
-  const listed = (env.SSRF_DENY_HOSTS ?? '')
+  const listed = `${env.SSRF_DENY_HOSTS ?? ''},${env.REDIRECT_HOSTS ?? ''}`
     .split(',')
     .map((h) => h.trim().toLowerCase())
     .filter(Boolean);

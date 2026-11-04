@@ -29,15 +29,14 @@ describe('wrangler.jsonc', () => {
     });
   });
 
-  it('answers unknown file-like paths in the Worker, except every file public/ ships', () => {
+  it('runs the Worker first for everything except the files public/ ships', () => {
     const patterns = wrangler.assets?.run_worker_first ?? [];
-    expect(patterns).toContain('/*.*');
-    // The SPA's own entry stays a static asset (it redirects to /).
-    expect(patterns).toContain('!/index.html');
     const shipped = readdirSync(new URL('../public', import.meta.url), { withFileTypes: true })
       .filter((entry) => !/^[._]/.test(entry.name))
       .map((entry) => (entry.isDirectory() ? `!/${entry.name}/*` : `!/${entry.name}`));
     expect(shipped.length).toBeGreaterThan(5);
-    for (const pattern of shipped) expect(patterns).toContain(pattern);
+    // index.html stays a static asset (it redirects to /). public/templates comes from
+    // npm run gen, so a fresh checkout may not have it yet.
+    expect(new Set(patterns)).toEqual(new Set(['/*', '!/index.html', '!/templates/*', ...shipped]));
   });
 });

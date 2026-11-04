@@ -31,6 +31,7 @@ export default defineConfig({
                   KEK_V1: 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDc=',
                   // Pinned so a developer's .dev.vars cannot change test outcomes.
                   PUBLIC_BASE_URL: 'https://wallet.plrs.im',
+                  REDIRECT_HOSTS: 'old.wallet.test',
                   OIDC_ISSUER: 'https://id.plrs.im',
                   OIDC_CLIENT_ID: 'wallet-placeholder-client-id',
                   OIDC_CLIENT_SECRET: 'test-oidc-secret',

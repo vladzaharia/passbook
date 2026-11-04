@@ -45,6 +45,17 @@ describe('platformHostsOf', () => {
       ['id.plrs.im', 'plrs.im', 'wallet.plrs.im', 'workers.dev'].sort(),
     );
   });
+  it('adds the hosts that only redirect to the base', () => {
+    const moved = {
+      ...env,
+      PUBLIC_BASE_URL: 'https://passbook.mobile',
+      REDIRECT_HOSTS: 'old.example',
+    };
+    expect(platformHostsOf(moved)).toEqual(
+      expect.arrayContaining(['passbook.mobile', 'old.example']),
+    );
+    expect(() => assertSafeUrl('https://old.example/x', platformHostsOf(moved))).toThrow();
+  });
   it.each(['https://id.plrs.im/api', 'https://other.plrs.im/x', 'https://plrs.im/'])(
     'refuses %s',
     (url) => {

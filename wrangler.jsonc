@@ -13,18 +13,12 @@
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
+    // Every request runs the Worker first (host policy, routes, the SPA's pages from ASSETS)
+    // except the files public/ ships, which the asset layer serves on every host.
+    // tools/wrangler-config.test.ts keeps the exceptions in step with public/; vite.config.ts adds
+    // Vite's own dev paths.
     "run_worker_first": [
-      "/assets/*",
-      "/api/*",
-      "/auth/*",
-      "/wallet/*",
-      "/p/*",
-      "/hooks/*",
-      "/health",
-      // A file-like path is never an app route: unless public/ ships it, the Worker answers 404
-      // instead of the SPA (which would show Sign in). tools/wrangler-config.test.ts keeps the
-      // exceptions in step with public/.
-      "/*.*",
+      "/*",
       "!/index.html",
       "!/apple/*",
       "!/apple-touch-icon.png",
@@ -39,17 +33,13 @@
       "!/pass-tilt.js",
       "!/robots.txt",
       "!/templates/*",
-      "!/theme-init.js",
-      // Vite dev serves its modules here (the plugin applies these rules before Vite does).
-      "!/src/*",
-      "!/node_modules/*",
-      "!/@fs/*",
-      "!/@id/*"
+      "!/theme-init.js"
     ]
   },
 
   "vars": {
     "PUBLIC_BASE_URL": "https://wallet.plrs.im",
+    "REDIRECT_HOSTS": "",
     "EMAIL_FROM": "passes@plrs.im",
     "OIDC_ISSUER": "https://id.plrs.im",
     "OIDC_CLIENT_ID": "https://wallet.plrs.im/auth/oidc/client-metadata.json",

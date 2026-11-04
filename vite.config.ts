@@ -40,26 +40,26 @@ function radixNoInlineStyles(): Plugin {
   };
 }
 
+/** Vite serves its modules here in dev; the plugin applies run_worker_first before Vite does. */
+const VITE_DEV_PATHS = [
+  '!/src/*',
+  '!/node_modules/*',
+  '!/@fs/*',
+  '!/@id/*',
+  '!/@vite/*',
+  '!/@react-refresh',
+];
+
 /**
  * e2e only (tools/e2e-server.ts sets WALLET_E2E). wrangler exposes just the declared secrets from a
  * vars file, so the throwaway-CA intermediate must be a declared (empty) var to be overridable.
  * Production config never sees this: wrangler.jsonc is unchanged and deploys do not read this file.
  */
-const e2eConfig =
-  process.env.WALLET_E2E === '1'
-    ? {
-        // tools/e2e-server.ts migrates a fresh database here on every start.
-        persistState: { path: '.wrangler/e2e-state' },
-        config: (c: { vars?: Record<string, unknown> }) => ({
-          vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
-          env: { e2e: {} },
-        }),
-      }
-    : {};
+const e2e = process.env.WALLET_E2E === '1';
 
 const root = fileURLToPath(new URL('.', import.meta.url)).replace(/\/$/, '');
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   publicDir: 'public',
   environments: { wallet: { build: { minify: true } } },
   server: {
@@ -119,6 +119,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
     // Local dev never opens remote binding sessions (ANALYTICS_SQL is remote-only; charts use D1 locally).
-    cloudflare({ ...e2eConfig, remoteBindings: false }),
+    cloudflare({
+      remoteBindings: false,
+      // tools/e2e-server.ts migrates a fresh database here on every start.
+      ...(e2e ? { persistState: { path: '.wrangler/e2e-state' } } : {}),
+      // Merged into wrangler.jsonc (arrays append). The build keeps the file's config as is.
+      config: (c: { vars?: Record<string, unknown> }) => ({
+        ...(command === 'serve' ? { assets: { run_worker_first: VITE_DEV_PATHS } } : {}),
+        ...(e2e
+          ? {
+              vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
+              env: { e2e: {} },
+            }
+          : {}),
+      }),
+    }),
   ],
-});
+}));

@@ -56,8 +56,9 @@ describe('app shell', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
-  it('returns problem+json for unknown routes', async () => {
-    const res = await call('/nope');
+  // Other unknown paths are the SPA's pages (host-policy.test.ts).
+  it('returns problem+json for unknown Worker routes', async () => {
+    const res = await call('/api/v1/nope');
     expect(res.status).toBe(404);
     expect(res.headers.get('content-type')).toBe('application/problem+json');
     expect(await res.json()).toMatchObject({ code: 'NOT_FOUND' });

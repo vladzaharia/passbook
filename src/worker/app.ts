@@ -1,4 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import type { Context } from 'hono';
 import { apiKeysRoutes } from './modules/api-keys/routes.ts';
 import { appleRoutes } from './modules/apple/routes.ts';
 import { auditRoutes } from './modules/audit/routes.ts';
@@ -21,13 +22,30 @@ import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
 import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
-import { securityHeaders } from './platform/security-headers.ts';
+import { hostPolicy } from './platform/host-policy.ts';
+import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
 
 export interface AppOptions {
   /** Session and API-key stores. Production wiring lives in stores.ts; tests pass fakes. */
   stores?: AuthStores | ((env: AppEnv) => AuthStores);
   clock?: Clock;
+  /** Serve only PUBLIC_BASE_URL's origin, redirect REDIRECT_HOSTS, refuse the rest (index.ts). */
+  hostPolicy?: boolean;
+}
+
+/** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|hooks|assets|health)(?:\/|$)/;
+
+/**
+ * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
+ * (wrangler.jsonc runs the Worker first so the host policy sees page visits). A file-like path
+ * that public/ does not ship stays a 404 instead of the SPA's sign-in page.
+ */
+async function spaPage(c: Context<AppBindings>): Promise<Response | null> {
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD') return null;
+  if (WORKER_ONLY.test(c.req.path) || c.req.path.includes('.')) return null;
+  return staticAsset(await c.env.ASSETS.fetch(c.req.raw));
 }
 
 /** One line per module. Adding a module means adding a line here and nothing else shared. */
@@ -35,8 +53,9 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   const app = new OpenAPIHono<AppBindings>();
   app.use('*', requestContext({ stores: options.stores ?? denyAllStores, clock: options.clock }));
   app.use('*', securityHeaders);
+  if (options.hostPolicy) app.use('*', hostPolicy);
   app.onError((error, c) => asBrowserPage(c, handleError(error, c) as Response));
-  app.notFound((c) => asBrowserPage(c, notFoundHandler(c)));
+  app.notFound(async (c) => (await spaPage(c)) ?? asBrowserPage(c, notFoundHandler(c)));
 
   // A missing chunk must not come back as the SPA fallback page (cached immutable under that URL).
   app.get('/assets/*', async (c) => {

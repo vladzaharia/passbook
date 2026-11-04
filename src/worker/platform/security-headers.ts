@@ -33,9 +33,21 @@ export function contentSecurityPolicy(nonce?: string): string {
 const NO_REFERRER_PREFIXES = ['/p/', '/auth/'];
 const NO_STORE_PREFIXES = ['/api/', '/auth/'];
 
+const passedThrough = new WeakSet<Response>();
+
+/**
+ * A static-asset response the Worker returns unchanged (the SPA's pages): public/_headers already
+ * set its headers, and the sign-in page must stay indexable.
+ */
+export function staticAsset(res: Response): Response {
+  passedThrough.add(res);
+  return res;
+}
+
 /** Applies the headers from the spec to every Worker response. Static assets use public/_headers. */
 export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => {
   await next();
+  if (passedThrough.has(c.res)) return;
   c.res = new Response(c.res.body, c.res);
   const path = new URL(c.req.url).pathname;
   const headers = c.res.headers;
