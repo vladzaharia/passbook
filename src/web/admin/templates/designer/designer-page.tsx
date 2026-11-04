@@ -118,7 +118,6 @@ function Loaded({
   // The version the designer opened with. Activating or another admin's upload moves
   // `activeVersion`, but must not remount the designer or drop its edits.
   const [opened] = useState(t.activeVersion);
-  const [stale, setStale] = useState<'ask' | 'restore' | 'discard'>('ask');
   const version = useBaseVersion(t.id, opened);
   const base = useMemo(() => (version.data ? docOf(version.data) : null), [version.data]);
   if (version.isError) {
@@ -136,10 +135,25 @@ function Loaded({
       </>
     );
   }
-  const draft = loadDraft(t.id);
-  const older = draft && draft.base !== version.data.version ? draft : null;
-  const asking = older && stale === 'ask';
-  const fresh = draft && draft.base === version.data.version ? draft.doc : null;
+  return <Ready template={t} version={version.data} base={base} />;
+}
+
+function Ready({
+  template: t,
+  version,
+  base,
+}: {
+  template: Template;
+  version: Version;
+  base: DesignDoc;
+}) {
+  // Read once on open. Saving and activating refetch the template and rewrite the draft
+  // under a newer base; re-reading storage then would raise a false stale-draft prompt.
+  const [initial] = useState(() => loadDraft(t.id));
+  const [answer, setAnswer] = useState<'ask' | 'restore' | 'done'>('ask');
+  const older = initial && initial.base !== version.version ? initial : null;
+  const fresh = initial && initial.base === version.version ? initial.doc : null;
+  const asking = older !== null && answer === 'ask';
   return (
     <>
       {asking ? (
@@ -148,7 +162,7 @@ function Loaded({
           tone="info"
           actions={
             <>
-              <Button size="sm" onClick={() => setStale('restore')}>
+              <Button size="sm" onClick={() => setAnswer(loadDraft(t.id) ? 'restore' : 'done')}>
                 Restore
               </Button>
               <Button
@@ -156,7 +170,7 @@ function Loaded({
                 variant="outline"
                 onClick={() => {
                   clearDraft(t.id);
-                  setStale('discard');
+                  setAnswer('done');
                 }}
               >
                 Discard
@@ -168,11 +182,11 @@ function Loaded({
         </Callout>
       ) : null}
       <Designer
-        key={`${t.id}:${asking ? 'ask' : stale}`}
+        key={`${t.id}:${answer === 'restore' ? 'restore' : 'open'}`}
         templateId={t.id}
         name={t.name}
-        base={{ version: version.data.version, doc: base }}
-        draft={fresh ?? (older && stale === 'restore' ? older.doc : null)}
+        base={{ version: version.version, doc: base }}
+        draft={fresh ?? (older && answer === 'restore' ? older.doc : null)}
         assetBase={assetBaseOf(t.id)}
       />
     </>

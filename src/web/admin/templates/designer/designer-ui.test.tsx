@@ -316,6 +316,36 @@ describe('designer', () => {
     expect(screen.getByLabelText('Logo text')).toHaveValue('Org!');
   });
 
+  it('never raises a stale-draft prompt after Save, a further edit and Activate', async () => {
+    const user = userEvent.setup();
+    const mem = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => mem.get(k) ?? null,
+      setItem: (k: string, v: string) => void mem.set(k, v),
+      removeItem: (k: string) => void mem.delete(k),
+    });
+    const s = setup();
+    let active = VERSION;
+    s.handlers['/api/v1/templates/tpl1'] = () => json(templateDetail({ activeVersion: active }));
+    s.handlers['/api/v1/templates/tpl1/activate'] = () => {
+      active = 'feedfacefeedface';
+      return json(templateDetail({ activeVersion: active }));
+    };
+    await open(s);
+    const logo = await screen.findByLabelText('Logo text');
+    await user.type(logo, '!');
+    await screen.findByText('Ready to save.');
+    await user.click(await screen.findByRole('button', { name: 'Save version' }));
+    await user.type(await screen.findByLabelText('Logo text'), '?');
+    await waitFor(() => expect(mem.get('passbook:designer:tpl1')).toBeDefined(), {
+      timeout: 3000,
+    });
+    await user.click(await screen.findByRole('button', { name: 'Activate' }));
+    await screen.findByText('Version saved and active.');
+    expect(screen.queryByText(/unsaved draft from an older version/)).toBeNull();
+    expect(screen.getByLabelText('Logo text')).toHaveValue('Org!?');
+  });
+
   it('will not save while the check has errors', async () => {
     const user = userEvent.setup();
     const s = setup({ issues: [ISSUE] });
