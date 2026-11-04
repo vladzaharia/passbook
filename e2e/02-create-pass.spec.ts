@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { uid } from './helpers/api.ts';
+import { MAC_SAFARI } from './helpers/devices.ts';
 import { readPkpass } from './helpers/pkpass.ts';
 
-test.use({ storageState: 'e2e/.auth/admin.json' });
+// A Mac, so the public page offers the badge (the download) beside its QR.
+test.use({ storageState: 'e2e/.auth/admin.json', userAgent: MAC_SAFARI });
 
 test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass", async ({
   page,
