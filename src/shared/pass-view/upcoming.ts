@@ -11,7 +11,7 @@ const isDict = (v: unknown): v is Dict => typeof v === 'object' && v !== null &&
 export function upcomingEvents(pass: PassJson, ctx: FormatContext): UpcomingView[] {
   const entries: unknown = pass.upcomingPassInformation;
   if (!Array.isArray(entries)) return [];
-  return entries.flatMap((raw, i) => {
+  return entries.flatMap<UpcomingView>((raw, i) => {
     if (!isDict(raw)) return [];
     const name = str(raw.name);
     if (!name) return [];

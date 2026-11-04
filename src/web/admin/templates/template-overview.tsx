@@ -124,6 +124,7 @@ const TYPE_ICON = {
   image: Image,
   password: Type,
   timezone: Globe,
+  list: List,
 } as const;
 const TYPE_LABEL: Record<string, string> = {
   text: 'Text',
@@ -138,6 +139,7 @@ const TYPE_LABEL: Record<string, string> = {
   image: 'Image',
   password: 'Secret',
   timezone: 'Time zone',
+  list: 'List',
 };
 
 /** Inputs as rows with a type glyph; the raw schema sits behind a disclosure. */
