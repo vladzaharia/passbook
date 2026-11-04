@@ -3,7 +3,7 @@ import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn.ts';
 import { Button, FormField, FormGrid, FormSpan, IconButton } from '../../../ui/index.ts';
 import { Control, WIDE_WIDGETS } from './controls.tsx';
-import { type FieldDef, type FormValues, rowErrorKey } from './schema.ts';
+import { type FieldDef, rowErrorKey } from './schema.ts';
 
 type Row = Record<string, unknown>;
 
@@ -272,5 +272,3 @@ export function ListInput({
     </fieldset>
   );
 }
-
-export type { FormValues };
