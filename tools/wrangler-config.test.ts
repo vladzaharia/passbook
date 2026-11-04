@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { readJsonc } from './lib/jsonc.ts';
 
 interface Wrangler {
+  vars?: Record<string, string>;
+  routes?: { pattern: string; custom_domain?: boolean }[];
+  send_email?: { name: string; allowed_sender_addresses?: string[] }[];
   triggers?: { crons?: string[] };
   analytics?: { binding: string };
   analytics_engine_datasets?: { binding: string; dataset: string }[];
@@ -38,5 +41,21 @@ describe('wrangler.jsonc', () => {
     // index.html stays a static asset (it redirects to /). public/templates comes from
     // npm run gen, so a fresh checkout may not have it yet.
     expect(new Set(patterns)).toEqual(new Set(['/*', '!/index.html', '!/templates/*', ...shipped]));
+  });
+
+  it('attaches the canonical host and each redirect host as custom domains', () => {
+    const vars = wrangler.vars ?? {};
+    const canonical = new URL(vars.PUBLIC_BASE_URL ?? '').host;
+    const redirects = (vars.REDIRECT_HOSTS ?? '').split(',').filter(Boolean);
+    expect(redirects.length).toBeGreaterThan(0);
+    expect(wrangler.routes).toEqual(
+      [canonical, ...redirects].map((pattern) => ({ pattern, custom_domain: true })),
+    );
+    expect(vars.OIDC_CLIENT_ID).toBe(`${vars.PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`);
+  });
+
+  it('sends from an address the email binding allows', () => {
+    const binding = wrangler.send_email?.find((b) => b.name === 'EMAIL');
+    expect(binding?.allowed_sender_addresses).toEqual([wrangler.vars?.EMAIL_FROM]);
   });
 });
