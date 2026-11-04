@@ -8,6 +8,7 @@ import { createPassRow } from '../passes/create.ts';
 import { rotateLink, voidPass } from '../passes/service.ts';
 import { ICON_PNG, type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
 import { clearSettingsCache } from '../settings/service.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 let kit: Kit;
@@ -347,6 +348,26 @@ describe('GET /p/:token/assets/:name', () => {
     expect(new Uint8Array(await override.arrayBuffer())).toEqual(png);
     const untouched = await get(`/p/${other.downloadToken}/assets/icon.png`);
     expect(new Uint8Array(await untouched.arrayBuffer())).toEqual(TINY_PNG);
+  });
+
+  it('lets other origins embed the icon and logo, the pass email images, and nothing else', async () => {
+    const pass = await kit.pass();
+    await putPassAsset(kit.ctx, actor, pass.id, 'thumbnail@2x.png', makePng(100, 100), null);
+    const icon = await get(`/p/${pass.downloadToken}/assets/icon.png`);
+    expect(icon.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
+    await icon.arrayBuffer();
+    const thumb = await get(`/p/${pass.downloadToken}/assets/thumbnail@2x.png`);
+    expect(thumb.status).toBe(200);
+    expect(thumb.headers.get('cross-origin-resource-policy')).toBe('same-origin');
+    await thumb.arrayBuffer();
+  });
+
+  it("lists an overridden slot's files only, as the signed pass has them", async () => {
+    const pass = await kit.pass();
+    await putPassAsset(kit.ctx, actor, pass.id, 'icon@2x.png', makePng(58, 58), null);
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(html).toContain(`/p/${pass.downloadToken}/assets/icon@2x.png?v=`);
+    expect(html).not.toContain(`/p/${pass.downloadToken}/assets/icon.png?v=`);
   });
 
   it('rejects names outside the pass image set', async () => {
