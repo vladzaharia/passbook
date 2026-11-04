@@ -1,9 +1,11 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
 import { Button, ConfirmDialog, IconButton, toast } from '../../ui/index.ts';
 import { useBulkPassAction } from './api.ts';
+import { BundleDialog } from './bundle-dialog.tsx';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -14,16 +16,20 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function SelectionBar({
   ids,
   orgId,
+  bundleOrgId,
   onClear,
   onExport,
 }: {
   ids: string[];
   orgId: string | undefined;
+  /** The one org of the selected passes; null when they span several. */
+  bundleOrgId: string | null;
   onClear: () => void;
   onExport: () => void;
 }) {
   const bulk = useBulkPassAction();
   const [ask, setAsk] = useState<'void' | 'send_email' | null>(null);
+  const [sharing, setSharing] = useState(false);
   const n = ids.length;
   if (n === 0) return null;
 
@@ -36,6 +42,12 @@ export function SelectionBar({
         : `${plural(result.done, 'email', 'emails')} queued${skipped ? `, ${skipped} without a holder` : ''}`,
     );
     onClear();
+  }
+
+  function share() {
+    if (n > BUNDLE_MAX_PASSES || !bundleOrgId)
+      toast.error('Select up to 10 passes of one organization.', 'Could not share');
+    else setSharing(true);
   }
 
   return (
@@ -55,6 +67,9 @@ export function SelectionBar({
         >
           Send email
         </Button>
+        <Button variant="outline" iconStart={<ACTION_ICON.bundle aria-hidden />} onClick={share}>
+          Share as bundle
+        </Button>
         <Button
           variant="outline"
           iconStart={<ACTION_ICON.void aria-hidden />}
@@ -70,6 +85,15 @@ export function SelectionBar({
           Export CSV
         </Button>
       </div>
+      {bundleOrgId ? (
+        <BundleDialog
+          open={sharing}
+          onOpenChange={setSharing}
+          orgId={bundleOrgId}
+          passIds={ids}
+          onDone={onClear}
+        />
+      ) : null}
       <ConfirmDialog
         open={ask === 'void'}
         onOpenChange={(o) => !o && setAsk(null)}

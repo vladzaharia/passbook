@@ -8,6 +8,7 @@ import {
   Mail,
   Monitor,
   Moon,
+  Package,
   Pencil,
   Plus,
   RefreshCw,
@@ -39,6 +40,8 @@ export const ACTION_ICON = {
   upload: Upload,
   openPublic: ExternalLink,
   create: Plus,
+  /** Share passes as a bundle behind one link. */
+  bundle: Package,
   duplicate: Copy,
   edit: Pencil,
 } as const satisfies Record<string, LucideIcon>;
