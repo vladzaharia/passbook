@@ -350,3 +350,38 @@ Touches: `src/passkit/template/manifest.ts` (the `scan` block) and pass detail (
   `docs/design/motion-and-expression.md`. A buddy cameo is fine at real moments.
 - Tests sit beside the code. Every new route gets tenant-isolation and mode tests.
 - Report: what was built, files touched outside ownership, migrations, open risks and anything unverified.
+
+## Wave 1 status
+
+Merged into `next/integration` on 2026-11-04, in order: n3, n2, n1, n4, n5. None skipped. `npm run check` is green
+(299 test files, 3417 tests) and e2e passes (51 tests, setup included). Migrations 0011, 0012 and 0016 apply in
+order on a fresh local D1.
+
+Integration decisions:
+
+- `delivery/push.ts`: n2's awaited `isAvailable` keeps n1's `push.failed` event with code `PUSH_UNAVAILABLE`.
+- `delivery/service.ts`: n4's shared `queueEmail` takes `mode` and event data, and records `email.queued` before
+  dispatch. Pass emails log `{outboxId, attached}`. Bundle emails log `{outboxId, bundleId}` on the bundle's first
+  pass, the same pass that gets `email.captured`.
+- Pass detail: devices sit in n1's Devices tab. The Delivery tab keeps n4's In bundles card.
+- Selection bar: Send email, Share as bundle, Void, Remove from Wallet, Export CSV.
+- Designer: array and object inputs (n3's `upcomingEvents` and `beacons`) read as List inputs. Their schema and
+  sample are kept as they are, and the field, barcode and list title pickers offer only scalar inputs. Before this
+  change, any input edit turned the array sample into a string, which broke the event ticket and store card starters.
+- e2e: `07-public-link` matches the More menu exactly, because the pass tabs now overflow into "More tabs" at 1280 px.
+  New: `12-bundles` (anonymous bundle page, archive, one pass, rotate) and `13-remove` (remove, sync log, restore).
+- `docs/api.md` covers remove, restore, the sync log, devices and bundles.
+
+Open risks:
+
+- Not verified on a device: whether Wallet moves a removed pass to Expired, whether it shows the removal message,
+  and how it renders `upcomingPassInformation`.
+- The push key path (ES256 JWT over `fetch`, which needs HTTP/2 to APNs) is untested against Apple. After deploy,
+  run Check on an identity that has a push key. KEK rotation does not cover `apns_keys`.
+- Until n6 sends `x-passbook-mode`, the admin UI is live-only, including bundles.
+- No browser check at tablet and phone widths, or in both themes, for the n1, n2, n3 and n4 UI. n5 was checked.
+  At 1280 px the pass detail tabs already overflow.
+- n1 credits a pass-file fetch to the devices that checked in during the last 2 minutes. `bundle.opened` also
+  counts link-preview fetches. n3's `isActive` is set at publish, so it flips only when the pass is republished.
+- Gaps 0013 to 0015 are kept for wave 2. Wrangler applies any missing name, so on a database that already has 0016
+  they run after it and must not depend on running before it.
