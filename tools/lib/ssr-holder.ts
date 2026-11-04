@@ -10,8 +10,13 @@ import { sourceHash } from './ssr-kit.ts';
  */
 export const HOLDER_SOURCES = [
   'src/worker/ssr/pass-page.tsx',
+  'src/web/portal/holder-heading.tsx',
   'src/web/portal/holder-pass-view.tsx',
+  'src/web/portal/holder-parts.tsx',
   'src/web/portal/holder-qr.tsx',
+  'src/web/portal/add/add-block.tsx',
+  'src/web/portal/add/added.tsx',
+  'src/web/portal/add/ways.tsx',
   'src/web/ui/apple-wallet-badge.tsx',
   'src/web/ui/callout.tsx',
   'src/web/styles/utilities.css',

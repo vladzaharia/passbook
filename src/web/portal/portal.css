@@ -1,32 +1,6 @@
-/* Portal motion (motion-and-expression.md): tile chrome after the deal, the nudge, the sessions
-   leaving. The holder pass page's own sheet is holder-pass.css. Transform and opacity only;
+/* Portal motion (motion-and-expression.md): tile chrome after the deal, the list's buddy, the
+   sessions leaving. The holder pass page's own sheet is holder-pass.css. Transform and opacity only;
    reduced motion keeps nothing moving. */
-/* Not on a device yet: the buddy (S, at="start") sits on the Details card's top edge. On the phone
-   it is at the card's left end, under Add to Apple Wallet's row; the card keeps 56 px clear above
-   it (44 for the buddy, 12 for its fall), so it never reaches the actions. Beside the QR it sits
-   past the stack, the badge up and to its left: the phone (8.25rem), the gap (1rem) and the
-   badge-wide stack (Apple's 110.095 × 34.016 art at 40 px), then 1rem; a narrow card keeps it
-   inside its end. There the card keeps 32 px more than the add block's caption, so even falling it
-   stays below the stack, however wide a countdown makes it. It looks up at the badge while that
-   is pointed at or focused. Two selectors each, not :is(:hover, :focus-visible): WebKit does not
-   restyle on the :is() form inside :has(). */
-.wl-nudge {
-  --wl-drop: 18px;
-}
-.wl-nudge-beside {
-  --wl-buddy-inset: min(8.25rem + 1rem + 2.5rem * 110.095 / 34.016 + 1rem, 100% - 4.75rem);
-  /* The badge is about 33° off vertical from here: the teal pass turns half as far, eyes higher. */
-  --wl-aim: 0.5;
-  --wl-look: -1.6px -1.8px;
-}
-.wl-pass-side:has([data-awb]:hover) .wl-nudge [data-look],
-.wl-pass-side:has([data-awb]:focus-visible) .wl-nudge [data-look] {
-  transform: translate(-2.2px, -1.2px);
-}
-.wl-pass-side:has([data-awb]:hover) .wl-nudge-beside [data-look],
-.wl-pass-side:has([data-awb]:focus-visible) .wl-nudge-beside [data-look] {
-  transform: translate(-1.6px, -1.8px);
-}
 /* My passes: the buddy (S, at="start") sits on the first tile's top edge, under the bundle badge;
    the grid keeps 56 px clear above the tiles. It looks up at the bundle badge and down at a tile's
    badge while one is pointed at or focused. */

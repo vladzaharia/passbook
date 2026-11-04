@@ -25,7 +25,11 @@ const actor = { type: 'user', id: 'admin-1' } as const;
 describe('GET /p/:token', () => {
   it('renders the pass without script, with a no-JS back toggle and a download link', async () => {
     const pass = await kit.pass();
-    const res = await get(`/p/${pass.downloadToken}`, { 'accept-language': 'de-DE,de;q=0.9' });
+    // A Mac: the badge sits beside the QR (elsewhere off Apple's devices the scan is the way).
+    const res = await get(`/p/${pass.downloadToken}`, {
+      'accept-language': 'de-DE,de;q=0.9',
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
+    });
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('<!doctype html>');
@@ -99,23 +103,20 @@ describe('GET /p/:token', () => {
   });
 
   it.each([
-    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, 0],
-    // A Mac adds too, but the scan reaches the phone without iCloud; an iPad (Mac agent) gets its
-    // line from a coarse pointer.
-    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, 'ipad'],
-    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, 1],
-    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, 1],
-  ])('follows the shared device rule on %s', async (_name, ua, qr, line) => {
+    // The iPhone adds right here: the badge, docked.
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, true],
+    // A Mac adds too, but the scan reaches the phone without iCloud: the QR, the badge beside it
+    // (a coarse pointer, an iPad with a Mac agent, hides it in CSS).
+    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, true],
+    // Elsewhere the scan is the only way: no badge, so no line about it either.
+    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, false],
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, false],
+  ])('follows the shared device rule on %s', async (_name, ua, qr, badge) => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
-    expect(html.includes('Scan with your iPhone.')).toBe(qr);
-    const lines =
-      html.match(/<p class="[^"]*">Open on iPhone or Mac to add to Apple Wallet\.<\/p>/g) ?? [];
-    if (line === 'ipad') {
-      expect(lines).toHaveLength(1);
-      expect(lines[0]).toContain('wl-ipad-line');
-    } else expect(lines).toHaveLength(Number(line));
-    expect(html).toContain('alt="Add to Apple Wallet"');
+    expect(html.includes('Scan with the camera.')).toBe(qr);
+    expect(html.includes('alt="Add to Apple Wallet"')).toBe(badge);
+    expect(html).not.toContain('Open on iPhone or Mac to add to Apple Wallet.');
   });
 
   it('asks in-app browsers to open Safari', async () => {
@@ -125,7 +126,7 @@ describe('GET /p/:token', () => {
     expect(html).toContain('Open in Safari to add to Apple Wallet.');
   });
 
-  it('leads with a QR of this page for desktop visitors, then the badge', async () => {
+  it('leads with a QR of this page for desktop visitors, on the buddy’s sign', async () => {
     const pass = await kit.pass();
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36';
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
@@ -135,10 +136,9 @@ describe('GET /p/:token', () => {
     expect(qr?.[2]).toBeTruthy();
     const svg = atob((qr?.[1] ?? '').split(',')[1] ?? '');
     expect(svg).toContain('<svg');
-    expect(html).toContain('Scan with your iPhone.');
-    // In a phone frame, before the badge: the scan opens this page on the iPhone, whose badge adds.
-    expect(html).toMatch(/class="wl-qr-phone [^"]*"><span class="wl-qr [^"]*"><img src="data:/);
-    expect(html.indexOf('wl-qr-phone')).toBeLessThan(html.indexOf('alt="Add to Apple Wallet"'));
+    expect(html).toContain('Scan with the camera.');
+    // The scan opens this page on the iPhone, whose badge adds.
+    expect(html).toMatch(/<div class="wl-sign">[\s\S]*?<span class="wl-qr [^"]*"><img src="data:/);
   });
 
   it('links the holder to the pass in the portal, quietly, once', async () => {
@@ -245,7 +245,7 @@ describe('GET /p/:token', () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     // The app's 24 px page title.
-    expect(html).toMatch(/<h1 class="[^"]*text-2xl font-semibold[^"]*">[^<]+<\/h1>/);
+    expect(html).toMatch(/<h1 [^>]*class="[^"]*text-2xl font-semibold[^"]*">[^<]+<\/h1>/);
     const styles = [...html.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1] ?? '');
     expect(styles.length).toBeGreaterThan(0);
     for (const v of styles)

@@ -20,3 +20,10 @@ export function toView(pass: MyPass): PassView {
 export function passName(pass: MyPass): string {
   return pass.title ?? pass.templateName;
 }
+
+/** What the holder's page can do with the pass: add it, or say why not. */
+export type HolderState = 'active' | 'voided' | 'expired';
+
+export function holderState(pass: MyPass, view: PassView): HolderState {
+  return pass.status === 'voided' ? 'voided' : view.expired ? 'expired' : 'active';
+}

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button, type ButtonProps, IconButton, toast } from '../ui/index.ts';
+import { Button, IconButton, toast } from '../ui/index.ts';
 import { myPassesKey, requestRefresh } from './api.ts';
 import { type RefreshFields, refreshPhase } from './refresh.ts';
 
@@ -17,19 +17,18 @@ function useNow(active: boolean): number {
 }
 
 /**
- * Refresh beside the badge, badge-sized. While pending the foil rail runs under the card; when the
- * pass lands the card mints, "Pass updated" toasts and the button's `done` changes.
+ * Refresh in the pass page's header, or beside a tile's badge (compact). While pending the foil
+ * rail runs under the card; when the pass lands the card mints, "Pass updated" toasts and the
+ * button's `done` changes.
  */
 export function RefreshButton({
   passId,
   pass,
-  size = 'badge',
   compact = false,
 }: {
   passId: string;
   pass: RefreshFields;
-  size?: ButtonProps['size'];
-  /** Tiles: an outline icon button; the label (and countdown) is its name and tooltip. */
+  /** Tiles: a badge-sized outline icon button; the label (and countdown) is its name and tooltip. */
   compact?: boolean;
 }) {
   const client = useQueryClient();
@@ -90,7 +89,6 @@ export function RefreshButton({
   return (
     <Button
       variant="outline"
-      size={size}
       iconStart={<RefreshCw aria-hidden />}
       loading={pending}
       busy="spin"

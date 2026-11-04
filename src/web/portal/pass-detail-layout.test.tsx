@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { screen } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
@@ -8,105 +7,109 @@ import { json, renderApp } from '../lib/test-utils.tsx';
 import { passFixture } from './fixtures.ts';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Version/18.0 Safari/604.1';
+const IN_APP = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148';
 const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/18.0 Safari/605.1.15';
-const WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0 Safari/537.36';
-
-function as(userAgent: string) {
-  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
-}
+const QR = HOLDER_COPY.qrAlt('Gym membership');
 
 afterEach(() => vi.restoreAllMocks());
 
+/** The encoder's image (it replaces a placeholder with the same name once loaded). */
+const qrImage = () =>
+  waitFor(() => {
+    const img = document.querySelector<HTMLImageElement>(`img[alt="${QR}"]`);
+    expect(img).not.toBeNull();
+    return img as HTMLImageElement;
+  });
+
 async function open(ua: string, over: Parameters<typeof passFixture>[0] = {}) {
-  as(ua);
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(ua);
   const view = await renderApp('/passes/p1', {
     handlers: { '/api/v1/me/passes/p1': () => json(passFixture(over)) },
   });
-  await screen.findByRole('heading', { name: 'Gym membership', level: 1 });
-  const badge = screen.getByRole('link', { name: 'Add to Apple Wallet' });
-  const card = screen.getByRole('heading', { name: 'Details' }).parentElement?.parentElement;
-  const buddy = view.container.querySelector('[data-scene="nudge"]');
-  return { ...view, badge, card, buddy };
+  const h1 = await screen.findByRole('heading', { level: 1, name: 'Membership' });
+  return { ...view, header: h1.closest('header') as HTMLElement };
 }
 
-const portalCss = () => readFileSync(join(process.cwd(), 'src/web/portal/portal.css'), 'utf8');
+const buddies = () => [...document.querySelectorAll<HTMLElement>('[data-buddy]')];
 
-describe('pass page add block', () => {
-  it('stacks the badge, Refresh and More beside the QR, the phone captioned under it', async () => {
-    const { badge, container } = await open(MAC);
-    const stack = badge.parentElement as HTMLElement;
-    // One column, in this order, each as wide as the column (the badge's width) and badge-high.
-    expect([...stack.children]).toEqual([
-      badge,
-      screen.getByRole('button', { name: 'Refresh' }),
-      screen.getByRole('button', { name: 'More' }),
-    ]);
-    expect(stack).toHaveClass('flex', 'w-fit', 'flex-col', 'gap-3.5', 'pointer-coarse:gap-2');
-    // The gaps around the badge are its clear space; its art lines up with the buttons.
-    expect(badge).toHaveClass('p-0');
-    // More keeps its word in the column, phones included.
-    expect(screen.getByText('More')).not.toHaveClass('max-sm:sr-only');
-    const phone = stack.previousElementSibling as HTMLElement;
-    const qr = await screen.findByRole('img', { name: HOLDER_COPY.qrAlt('Gym membership') });
-    expect(phone.contains(qr)).toBe(true);
-    expect(phone.lastElementChild).toHaveTextContent(HOLDER_COPY.scanQr);
+describe('pass page header', () => {
+  it('carries Refresh and More, so the add block only adds', async () => {
+    const { header, container } = await open(MAC);
+    expect(within(header).getByRole('button', { name: 'Refresh' })).toBeVisible();
+    expect(within(header).getByRole('button', { name: 'More' })).toBeVisible();
+    const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });
+    expect(within(add).queryByRole('button')).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
-  });
-
-  it('keeps the row on the phone: the badge leads, Refresh and More follow as a pair', async () => {
-    const { badge } = await open(IPHONE);
-    expect(screen.queryByText(HOLDER_COPY.scanQr)).toBeNull();
-    const row = badge.parentElement as HTMLElement;
-    expect(row).toHaveClass('flex-wrap', 'items-center');
-    const pair = row.lastElementChild as HTMLElement;
-    expect([...pair.children]).toEqual([
-      screen.getByRole('button', { name: 'Refresh' }),
-      screen.getByRole('button', { name: 'More' }),
-    ]);
-    // In a row More gives up its word on phones.
-    expect(screen.getByText('More')).toHaveClass('max-sm:sr-only');
   });
 });
 
-describe('the nudge (not on a device yet)', () => {
-  it('sits past the stack on the Details card, below it, aiming up-left at the badge', async () => {
-    const { buddy, card, container } = await open(MAC);
-    // On the card's top edge (the card is its host): S, seated, decorative.
-    expect(buddy?.parentElement).toBe(card);
-    expect(buddy).toHaveClass('wl-buddy', 'wl-nudge', 'wl-nudge-beside');
-    expect(buddy).toHaveAttribute('data-at', 'start');
-    expect(buddy).toHaveAttribute('aria-hidden', 'true');
-    expect(buddy?.querySelector('svg')).toHaveAttribute('width', '64');
-    expect(
-      buddy?.querySelectorAll('[data-part="l1"], [data-part="l2"], [data-part="sd"]'),
-    ).toHaveLength(3);
-    // 32 px over the caption: falling (44 + 12) it stays below the 148 px stack.
-    expect(card).toHaveClass('mt-2');
-    const css = portalCss();
-    expect(css).toMatch(
-      /\.wl-nudge-beside \{\s*--wl-buddy-inset: min\(8\.25rem \+ 1rem \+ 2\.5rem \* 110\.095 \/ 34\.016 \+ 1rem, 100% - 4\.75rem\);/,
+describe('pass page add block', () => {
+  it('Mac: the buddy on the QR’s sign points at it; the badge adds beside it', async () => {
+    await open(MAC);
+    const sign = (await qrImage()).closest('.wl-sign') as HTMLElement;
+    const buddy = sign.querySelector('[data-buddy]');
+    // M on the sign, at its end, pointing at the code.
+    expect(buddy).toHaveAttribute('data-scene', 'nudge');
+    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-size', 'lg');
+    const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });
+    expect(within(add).getByText(HOLDER_COPY.scanLine)).toBeVisible();
+    const badge = within(add).getByRole('link', { name: 'Add to Apple Wallet' });
+    expect(badge.closest('.wl-way')).toHaveTextContent(HOLDER_COPY.mac);
+    expect(buddies()).toHaveLength(1);
+  });
+
+  it('iPhone: the badge’s card leads the page, the buddy on it pointing at the badge', async () => {
+    const { container } = await open(IPHONE);
+    const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });
+    const card = within(add).getByRole('link', { name: 'Add to Apple Wallet' }).parentElement;
+    expect(card?.querySelector(':scope > [data-buddy]')).toHaveAttribute('data-scene', 'nudge');
+    // The card comes before the pass on a phone (holder-pass.css), so the badge is on screen.
+    expect(container.querySelector('.wl-holder')).toHaveAttribute('data-lead', 'add');
+    expect(document.querySelector(`img[alt="${QR}"]`)).toBeNull();
+    expect(buddies()).toHaveLength(1);
+  });
+
+  it('iPhone in an app’s web view: the card says to open Safari', async () => {
+    await open(IN_APP);
+    const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });
+    expect(add).toHaveTextContent(HOLDER_COPY.openInSafari);
+  });
+
+  it('in Apple Wallet: a quiet line under the happy buddy; Show QR opens adding again', async () => {
+    const user = userEvent.setup();
+    await open(MAC, { inWallet: true });
+    const add = screen.getByRole('region', { name: HOLDER_COPY.added });
+    expect(within(add).getByText(HOLDER_COPY.addedLine)).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    const show = within(add).getByRole('button', { name: HOLDER_COPY.showQr });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    await user.click(show);
+    expect(add.contains(await qrImage())).toBe(true);
+    expect(within(add).getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
+    expect(within(add).getByRole('button', { name: HOLDER_COPY.hideQr })).toHaveAttribute(
+      'aria-expanded',
+      'true',
     );
-    expect(css).toMatch(/--wl-aim: 0\.5;\s*--wl-look: -1\.6px -1\.8px;/);
-    expect(container.querySelector('.wl-nudge-beside')).toBe(buddy);
+    // The happy buddy stays on the line; the sign comes back without one.
+    expect(buddies().map((b) => b.dataset.scene)).toEqual(['count']);
   });
 
-  it('sits under the badge on the phone, the card 56 px clear of the row', async () => {
-    const { buddy, card, badge } = await open(IPHONE);
-    expect(buddy?.parentElement).toBe(card);
-    expect(buddy).toHaveClass('wl-nudge');
-    expect(buddy).not.toHaveClass('wl-nudge-beside');
-    // 44 for the seated buddy, 12 for its fall (18 of the art's 72 units).
-    expect(card).toHaveClass('mt-8');
-    expect(badge.parentElement?.parentElement?.nextElementSibling).toBe(card);
-    expect(portalCss()).toMatch(/\.wl-nudge \{\s*--wl-drop: 18px;/);
+  it('in Apple Wallet on the iPhone: the pass leads; Add to this iPhone brings the badge back', async () => {
+    const user = userEvent.setup();
+    const { container } = await open(IPHONE, { inWallet: true });
+    expect(container.querySelector('.wl-holder')).not.toHaveAttribute('data-lead');
+    const add = screen.getByRole('region', { name: HOLDER_COPY.added });
+    await user.click(within(add).getByRole('button', { name: HOLDER_COPY.addHere }));
+    expect(within(add).getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
   });
 
-  it('stays away where the badge cannot add: the line says where to go', async () => {
-    const { buddy, card } = await open(WINDOWS);
-    expect(screen.getByText(HOLDER_COPY.scanQr)).toBeInTheDocument();
-    expect(screen.getByText(HOLDER_COPY.openOnApple)).toBeInTheDocument();
-    expect(buddy).toBeNull();
-    expect(card).not.toHaveClass('mt-2');
-    expect(card).not.toHaveClass('mt-8');
+  it('expired: the note, the buddy sad on it, nothing to add', async () => {
+    await open(MAC, { passJson: { ...passFixture().passJson, expirationDate: '2020-01-01' } });
+    expect(screen.getByText(HOLDER_COPY.expired)).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    const [buddy] = buddies();
+    expect(buddy?.closest('.wl-add-seat')).not.toBeNull();
+    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-state', 'expired');
+    expect(screen.getAllByText('Expired').length).toBeGreaterThan(0);
   });
 });

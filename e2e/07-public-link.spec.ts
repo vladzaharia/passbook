@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, uid } from './helpers/api.ts';
+import { MAC_SAFARI } from './helpers/devices.ts';
 import { readPkpass } from './helpers/pkpass.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -10,8 +11,8 @@ test('public link works without sign-in and dies when rotated', async ({ browser
   const detail = await admin.get(`/api/v1/passes/${pass.id}`);
   const publicPath = new URL(detail.publicUrl, 'http://localhost:5173').pathname;
 
-  // Anonymous visitor: no cookies at all.
-  const anon = await browser.newContext();
+  // Anonymous visitor on a Mac (the badge shows beside the QR): no cookies at all.
+  const anon = await browser.newContext({ userAgent: MAC_SAFARI });
   const page = await anon.newPage();
   const response = await page.goto(publicPath);
   expect(response?.status()).toBe(200);

@@ -24,7 +24,11 @@ const SHEETS = [
   'src/web/pass-card/stage.css',
   'src/web/pass-card/stage-motion.css',
   'src/web/pass-card/stage-seg.css',
+  'src/web/ui/art/art.css',
+  'src/web/ui/art/art-wallet.css',
+  'src/web/ui/art/wallet-states.css',
   'src/web/portal/holder-pass.css',
+  'src/web/portal/add/add.css',
 ]
   .map(read)
   .join('\n');
@@ -60,11 +64,10 @@ const PAGES = [
   page({ voided: true }),
   page({ view: view({ expirationDate: '2020-01-01T00:00:00Z' }) }),
 ];
-
 /** Tailwind's selector for a class name: every character outside [\w-] escaped. */
 const selector = (cls: string) => `.${cls.replace(/[^\w-]/g, (c) => `\\${c}`)}`;
-/** Hooks: portal.css's nudge look, pass-page.tsx's own dip rule; markers no sheet styles. */
-const HOOKS = new Set(['wl-pass-side', 'wl-holder']);
+/** Hooks no sheet styles: the buddy's host markers. */
+const HOOKS = new Set<string>();
 
 describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
   it('is current: `npm run gen` writes exactly the committed file', async () => {
@@ -74,9 +77,11 @@ describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
   it('reads the class names of the shared view and the kit pieces in it', () => {
     const words = candidatesOf(root);
     for (const cls of [
-      'lg:grid-cols-[22rem_minmax(0,1fr)]',
       'pointer-fine:h-10',
       'bg-warning-subtle',
+      // The header and the add block.
+      'tracking-[-0.015em]',
+      'pointer-coarse:min-h-11',
     ])
       expect(words).toContain(cls);
   });
