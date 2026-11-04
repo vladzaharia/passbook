@@ -10,6 +10,8 @@
 
 - `dev:vars` never overwrites. An old `PUBLIC_BASE_URL` on another port must be edited by hand.
 - Local dev has no APNs binding and no Analytics SQL binding: push is "unavailable", charts read D1.
+- Email asset URLs write `@` as `%40`; dev decodes it for files in `public/` (`vite.config.ts`),
+  as production's static assets do.
 - Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
   `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
 - Demo data: with `npm run dev` running, `node tools/seed-demo.ts` (token from `npm run breakglass`;

@@ -107,14 +107,19 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
 
 /**
  * The badge and its button: one box, side by side where the column fits both, else stacked, left
- * on the card's text edge. Inline blocks wrap without media queries (Gmail); Outlook gets a row.
+ * on the card's text edge. Inline blocks wrap without media queries (Gmail). Word-rendered Outlook
+ * has no inline blocks and drops div margins, so it gets a fixed row instead: two 143 px cells and
+ * a 12 px one between them.
  */
 function actionsHtml(input: PassEmailInput): string {
   const { width, height } = EMAIL_BADGE;
+  const notMso = (html: string) => `<!--[if !mso]><!-->${html}<!--<![endif]-->`;
+  const mso = (html: string) => `<!--[if mso]>${html}<![endif]-->`;
+  const cell = `<td width="${width}" valign="top" style="width:${width}px;padding:0 0 ${GAP}px">`;
   const item = (inner: string, right: string) =>
-    `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 ${right} ${GAP}px 0">${inner}</div>`;
+    `${notMso(`<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 ${right} ${GAP}px 0">`)}${inner}${notMso('</div>')}`;
   const badge = `<a href="${escapeHtml(input.downloadUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`;
-  return `<div style="margin:0 0 4px;font-size:0;line-height:0"><!--[if mso]><table role="presentation" cellspacing="0" cellpadding="0"><tr><td valign="top"><![endif]-->${item(badge, `${GAP}px`)}<!--[if mso]></td><td valign="top"><![endif]-->${item(badgeButtonHtml(input.manageUrl, OPEN_LABEL), '0')}<!--[if mso]></td></tr></table><![endif]--></div>`;
+  return `<div style="margin:0 0 4px;font-size:0;line-height:0">${mso(`<table role="presentation" cellspacing="0" cellpadding="0"><tr>${cell}`)}${item(badge, `${GAP}px`)}${mso(`</td><td width="${GAP}" style="width:${GAP}px;font-size:0;line-height:0">&nbsp;</td>${cell}`)}${item(badgeButtonHtml(input.manageUrl, OPEN_LABEL), '0')}${mso('</td></tr></table>')}</div>`;
 }
 
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
@@ -165,7 +170,7 @@ ${supportHtml ? `<p class="e-muted" style="margin:12px 0 0;${type('xs')};color:$
     title: subject,
     header: input.orgName,
     ...(mark ? { headerMark: mark } : {}),
-    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD } } : {}),
+    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD, tier: 'm' } } : {}),
     body,
   });
   const sender = input.senderName?.trim();

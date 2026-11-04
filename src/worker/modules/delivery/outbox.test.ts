@@ -33,7 +33,7 @@ describe('pass email', () => {
       attached: true,
     });
     expect(email.subject).toBe('Your A&B <Gym> pass');
-    expect(email.html).toContain('<html lang="en">');
+    expect(email.html).toContain('<html lang="en" ');
     expect(email.html).toContain('charset="utf-8"');
     expect(email.html).toContain('A&amp;B &lt;Gym&gt;');
     expect(email.html).toContain('href="https://w.test/p/t/pass.pkpass"');

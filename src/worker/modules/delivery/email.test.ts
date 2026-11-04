@@ -34,7 +34,7 @@ async function sendOne(given?: Pass) {
 
 describe('pass email buddy (email.buddy)', () => {
   it('is off by default, then follows the org setting, audited', async () => {
-    const top = `${baseUrl(kit.env)}/email/buddy-happy-light-top-2x.png`;
+    const top = `${baseUrl(kit.env)}/email/buddy-m-happy-light-top-2x.png`;
     const off = await sendOne();
     expect(off.html).not.toContain('/email/buddy-');
 

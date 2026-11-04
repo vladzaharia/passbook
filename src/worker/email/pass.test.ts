@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { EMAIL_BADGE, EMAIL_BUDDY, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
 import { ADD_LINE, renderPassEmail } from './pass.ts';
 import { passSummary } from './pass-summary.ts';
 import { EMAIL_LIGHT, RADIUS } from './shell.ts';
@@ -110,7 +110,7 @@ describe('pass email', () => {
     const { width, height } = EMAIL_BADGE;
     // The art alone: no white cell or padding around it.
     expect(html).toContain(
-      `margin:0 12px 12px 0"><a href="https://w.test/p/t/pass.pkpass" style="display:block;text-decoration:none"><img src="https://w.test/apple/badge/en/black@2x.png" alt="Add to Apple Wallet" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`,
+      `margin:0 12px 12px 0"><!--<![endif]--><a href="https://w.test/p/t/pass.pkpass" style="display:block;text-decoration:none"><img src="https://w.test/apple/badge/en/black@2x.png" alt="Add to Apple Wallet" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`,
     );
     // 42 px inside a 1 px outline: the badge's 44, at lg, the radius nearest its corner.
     expect(html).toContain(
@@ -118,20 +118,50 @@ describe('pass email', () => {
     );
     expect(html).toMatch(
       new RegExp(
-        `<a class="e-block" href="https://w.test/p/t" style="display:block;color:${EMAIL_LIGHT.text};[^"]*font-size:14px;line-height:${height - 2}px;font-weight:500;[^"]*">Open your pass</a>`,
+        `<a class="e-block" href="https://w.test/p/t" style="display:block;color:${EMAIL_LIGHT.text};[^"]*font-size:14px;line-height:${height - 2}px;mso-line-height-rule:exactly;font-weight:500;[^"]*">Open your pass</a>`,
       ),
     );
   });
 
   it('wraps the pair without media queries, side by side or stacked, and in a row in Outlook', () => {
     const { html } = render();
+    const { width } = EMAIL_BADGE;
     const items = html.match(/<div style="display:inline-block;vertical-align:top;[^"]*">/g) ?? [];
     expect(items).toEqual([
-      `<div style="display:inline-block;vertical-align:top;width:${EMAIL_BADGE.width}px;margin:0 12px 12px 0">`,
-      `<div style="display:inline-block;vertical-align:top;width:${EMAIL_BADGE.width}px;margin:0 0 12px 0">`,
+      `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 12px 12px 0">`,
+      `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 0 12px 0">`,
     ]);
-    expect(html).toContain('<!--[if mso]></td><td valign="top"><![endif]-->');
+    // Word has no inline blocks and drops div margins: the blocks are hidden from it, and it gets
+    // two badge-wide cells with a 12 px one between.
+    expect(html.match(/<!--\[if !mso\]><!--><div style="display:inline-block/g)).toHaveLength(2);
+    expect(html).toContain(
+      `<!--[if mso]></td><td width="12" style="width:12px;font-size:0;line-height:0">&nbsp;</td><td width="${width}" valign="top" style="width:${width}px;padding:0 0 12px"><![endif]-->`,
+    );
     expect(html).not.toMatch(/@media[^{]*(max|min)-width/);
+  });
+
+  it('degrades to fixed tables in Word-rendered Outlook', () => {
+    const { html } = render({ buddyBase: 'https://w.test', iconUrl: ICON });
+    const opened = html.match(/<!--\[if (!?)mso\]>/g) ?? [];
+    expect(opened.length).toBeGreaterThan(0);
+    expect(html.match(/<!\[endif\]-->/g)).toHaveLength(opened.length);
+    // What Word sees: mso blocks shown, !mso blocks hidden.
+    const word = html
+      .replace(/<!--\[if !mso\]><!-->[\s\S]*?<!--<!\[endif\]-->/g, '')
+      .replace(/<!--\[if mso\]>([\s\S]*?)<!\[endif\]-->/g, '$1');
+    expect(word).not.toMatch(/inline-block|display:\s*(flex|grid)/);
+    // max-width alone would let the column fill the window: a 480 px table holds it.
+    expect(word).toMatch(
+      /<table role="presentation" width="480" align="center"[^>]*><tr><td>\s*<table[^>]*max-width:480px/,
+    );
+    // The foil is a gradient Word cannot draw: a solid 2 px row of its first colour instead.
+    expect(word).toContain(
+      `<tr><td height="2" bgcolor="${EMAIL_LIGHT.foil1}" style="height:2px;background:${EMAIL_LIGHT.foil1};`,
+    );
+    // Every image keeps its box when blocked or scaled.
+    for (const img of word.match(/<img [^>]*>/g) ?? [])
+      expect(img).toMatch(/ width="\d+" height="\d+"/);
+    expect(html).toContain('<o:PixelsPerInch>96</o:PixelsPerInch>');
   });
 
   it('is static and keeps the card radius on every corner', () => {
@@ -151,7 +181,7 @@ describe('pass email', () => {
     expect(html).not.toContain('/email/buddy-');
     expect(html).not.toContain('apple-touch-icon');
     expect(html).toMatch(
-      /padding:14px 0 14px 25px;font-size:20px;line-height:28px;font-weight:600;[^"]*">Harbor Lights/,
+      /padding:14px 0 14px 25px;font-size:20px;line-height:28px;mso-line-height-rule:exactly;font-weight:600;[^"]*">Harbor Lights/,
     );
     expect(render({ buddyBase: null })).toEqual(render());
   });
@@ -160,25 +190,27 @@ describe('pass email', () => {
     const BASE = 'https://w.test';
     const withBuddy = () => render({ buddyBase: BASE });
 
-    it('seats the happy buddy as in the sign-in email: top in the band, legs over the foil', () => {
+    it('seats the happy buddy at M: top in the band, legs over the foil', () => {
       expect(PASS_EMAIL_MOOD).toBe('happy');
       const { html } = withBuddy();
-      const top = html.indexOf(`src="${BASE}/email/buddy-happy-light-top-2x.png"`);
-      const legs = html.indexOf(`src="${BASE}/email/buddy-happy-light-legs-2x.png"`);
+      const top = html.indexOf(`src="${BASE}/email/buddy-m-happy-light-top-2x.png"`);
+      const legs = html.indexOf(`src="${BASE}/email/buddy-m-happy-light-legs-2x.png"`);
+      const { width, seam } = EMAIL_BUDDY.m;
+      expect(html).toContain(`width="${width}" height="${seam}"`);
       // The org's name leads the band; the buddy sits at its right end.
       expect(html.indexOf('Harbor Lights Festival</td>')).toBeLessThan(top);
       expect(top).toBeLessThan(html.indexOf('class="e-card"'));
       expect(html.indexOf('class="e-seam"')).toBeLessThan(legs);
       expect(legs).toBeLessThan(html.indexOf('Your pass is ready</p>'));
       expect(html).toContain(
-        `<source srcset="${BASE}/email/buddy-happy-dark-top-2x.png 2x, ${BASE}/email/buddy-happy-dark-top-3x.png 3x" media="(prefers-color-scheme: dark)">`,
+        `<source srcset="${BASE}/email/buddy-m-happy-dark-top-2x.png 2x, ${BASE}/email/buddy-m-happy-dark-top-3x.png 3x" media="(prefers-color-scheme: dark)">`,
       );
       expect(html).not.toContain('buddy-curious');
       // Org-first: no PassBook mark beside the org's name.
       expect(html).not.toContain('apple-touch-icon');
     });
 
-    it('is the sign-in email band, from the same shell', () => {
+    it("is the sign-in email's band at M, from the same shell", () => {
       const band = (html: string) => /<tr><td><table[\s\S]*?class="e-card"/.exec(html)?.[0] ?? '';
       const signIn = renderSignInEmail({
         purpose: 'sign_in',
@@ -190,7 +222,10 @@ describe('pass email', () => {
       const strip = (html: string) =>
         band(html)
           .replace(/<img src="[^"]*" alt="" width="24"/, '<img src="" alt="" width="24"')
-          .replace(/>(PassBook|Harbor Lights Festival)</, '><');
+          .replace(/>(PassBook|Harbor Lights Festival)</, '><')
+          // The tier sets the sizes; the composition is the same.
+          .replace(/buddy-m-/g, 'buddy-')
+          .replace(/\d+/g, '#');
       const pass = render({ buddyBase: BASE, iconUrl: ICON }).html;
       expect(band(pass)).toContain(`<img src="${ICON}" alt="" width="24"`);
       expect(strip(pass)).toBe(strip(signIn.html));

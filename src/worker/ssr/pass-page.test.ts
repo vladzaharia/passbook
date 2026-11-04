@@ -29,12 +29,15 @@ const page = (over: Partial<PassPageProps> = {}) =>
 
 // The CSS each class needs is checked in tools/ssr-holder.test.ts (Node reads the sheets).
 describe('/p renders the portal HolderPassView', () => {
-  it('stamps the chosen theme on the badge art, else lets the OS pick', () => {
-    const dark = page({ theme: 'dark', device: { device: 'iphone', inApp: false } });
-    expect(dark).toContain('src="/apple/badge/en/outline.svg"');
-    expect(dark).not.toContain('<source');
-    const system = page({ device: { device: 'iphone', inApp: false } });
-    expect(system).toContain('<source srcSet="/apple/badge/en/outline.svg"');
+  it("shows Apple's black badge art whatever the theme", () => {
+    for (const theme of ['dark', 'light', undefined] as const) {
+      const html = page({
+        ...(theme ? { theme } : {}),
+        device: { device: 'iphone', inApp: false },
+      });
+      expect(html).toContain('src="/apple/badge/en/black.svg"');
+      expect(html).not.toContain('<source');
+    }
   });
 
   it('dips the card in CSS when the badge is pressed (no script)', () => {

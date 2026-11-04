@@ -483,7 +483,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
 | Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
-| Badge | `AppleWalletBadge href label? theme?` (`theme`: the stamped page theme when server-rendered on `/p`) |
+| Badge | `AppleWalletBadge href label? locale? onClick?` (the black art on every ground) |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
@@ -557,14 +557,26 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   wordmark on every page.
 - **Pass email** (`email/pass.ts` in the shared shell): the band is `/p`'s bar, the pass's icon
   (24 px, `md`) and the org's name, which wraps beside the icon; the buddy only when the org opts
-  in. The card: the title, the pass drawn small in its colours (its logo at most 36 px tall, then
-  its logoText unless the org's logo has the name; a `line` edge where its colour would melt into
-  the card, and in dark clients), then the badge and `Open your pass` as one pair: the badge's
-  143 × 44 box, `lg` corners (the step nearest the art's), 12 px apart, left on the text edge.
-  Side by side where the column fits both (390 up), stacked below. Inline blocks wrap without
-  media queries (Gmail); a ghost table keeps the row in Outlook. Images come from
-  `/p/:token/assets` with fixed boxes; the icon and logo answer `Cross-Origin-Resource-Policy:
-  cross-origin` so webmail can show them.
+  in, at M, so names up to about 20 characters stay on one line at 390 px. The card: the title, the
+  pass drawn small in its colours (its logo at most 36 px tall, then its logoText unless the org's
+  logo has the name; a `line` edge where its colour would melt into the card, and in dark
+  clients), then the badge and `Open your pass` as one pair: the badge's 143 × 44 box, `lg`
+  corners (the step nearest the art's), 12 px apart, left on the text edge. Side by side where the
+  column fits both (390 up), stacked below. Inline blocks wrap without media queries (Gmail).
+  Images come from `/p/:token/assets` with fixed boxes; the icon and logo answer
+  `Cross-Origin-Resource-Policy: cross-origin` so webmail can show them.
+- **Outlook** (Word-rendered): nothing depends on flex, `max-width`, `border-radius`, gradients or
+  inline blocks. Conditional comments give it a 480 px ghost table around the column, the pair as
+  two 143 px cells with a 12 px one between (the inline blocks are hidden from it), and the foil as
+  a solid 2 px row of its first colour; corners are square. `pass.test.ts` resolves the comments
+  as Word does and checks what is left.
+- **Pass email preview** (org page `Pass email` card): the Worker renders the real email
+  (`GET /api/v1/orgs/:id/email-preview`) into a frame that runs no script. It follows the page's
+  unsaved buddy at once and the support email and URL once typing settles (400 ms; a value Save
+  would refuse keeps the last email). The art is what the org's next pass carries: its uploads,
+  else the icon and logo of the template its passes use most (else its first, else the generic
+  starter), through admin routes, never a holder's link. Laid out at 390 px (up to 512 where the
+  column allows) and scaled to fit, so the 22rem aside never squeezes it.
 - Sign-in, magic-link confirm, link expired, no access, break-glass: one "hosted" shell shared by
   `/login` and the worker pages. See below.
 
@@ -614,7 +626,7 @@ The trust and footer lines are the only explanatory text allowed on these pages:
   cut in two slices at the card seam (top in the header band, legs over the foil; static PNGs,
   `public/email/`); the pass email is the org's, with no buddy unless the org opts in
   (`email.buddy`, org page `Pass email` card with a sample). Fluid container `width:100%;
-  max-width:480px`; 3px foil line (teal fallback) over the header bar. One title line. The pass
+  max-width:480px`; 2 px foil line (its first colour where gradients do not draw) over the header bar. One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
   pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
   not a field; asked from the installed app (`prefer: 'code'`) the email is `Your sign-in code`:
