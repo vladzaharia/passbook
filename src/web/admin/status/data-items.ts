@@ -13,6 +13,7 @@ const LABELS: Record<string, string> = {
   daysRemaining: 'Days remaining',
   apnsBinding: 'APNs binding',
   bindingPresent: 'Binding present',
+  pushMethod: 'Push method',
   apnsHealth: 'APNs health',
   sender: 'Sender',
   healthy: 'Healthy',

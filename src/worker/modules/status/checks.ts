@@ -131,6 +131,8 @@ export function identityComponent(
   ctx: ServiceContext,
   row: IdentityRow,
   check: Awaited<ReturnType<typeof lastIdentityCheck>>,
+  /** Teams that have an APNs push key. */
+  keyTeams: ReadonlySet<string> = new Set(),
 ): Draft {
   const now = ctx.clock.now();
   const days = row.not_after === null ? null : Math.floor((row.not_after - now) / DAY);
@@ -148,9 +150,15 @@ export function identityComponent(
   else if (days !== null && days <= 30) lower('degraded', `Expires in ${days} d.`);
   if (check && !check.ok) lower('failing', `Key check failed: ${check.code ?? 'unknown'}.`);
   if (row.source === 'db' && !check) lower('configured', 'Not checked yet.');
-  if (!bindingNamed) lower('configured', 'Push unavailable: no APNs binding.');
-  else if (!bindingPresent) lower('degraded', `APNs binding ${row.apns_binding} is missing.`);
-  else if (row.apns_health === 'failing') lower('degraded', 'APNs is failing.');
+  const pushMethod = bindingPresent
+    ? 'certificate'
+    : keyTeams.has(row.team_identifier)
+      ? 'key'
+      : 'none';
+  if (pushMethod === 'none') {
+    if (bindingNamed) lower('degraded', `APNs binding ${row.apns_binding} is missing.`);
+    else lower('configured', 'Push unavailable: no APNs binding or push key.');
+  } else if (row.apns_health === 'failing') lower('degraded', 'APNs is failing.');
   else if (row.apns_health === 'unknown') lower('configured', 'APNs not verified.');
   return {
     id: `identity:${row.id}`,
@@ -163,6 +171,7 @@ export function identityComponent(
       daysRemaining: days,
       apnsBinding: row.apns_binding,
       bindingPresent,
+      pushMethod,
       apnsHealth: row.apns_health,
       orgId: row.org_id,
     },

@@ -33,8 +33,7 @@ export function ExpiryPill({ identity, now }: { identity: Identity; now: number 
 }
 
 export function ApnsPill({ identity }: { identity: Identity }) {
-  if (!identity.apnsAvailable)
-    return <StatusPill status="not_configured">Push unavailable</StatusPill>;
+  if (!identity.apnsAvailable) return <StatusPill status="not_configured">Not set up</StatusPill>;
   if (identity.apnsHealth === 'healthy') return <StatusPill status="verified">Healthy</StatusPill>;
   if (identity.apnsHealth === 'failing') return <StatusPill status="failing">Failing</StatusPill>;
   return <StatusPill status="not_checked" />;

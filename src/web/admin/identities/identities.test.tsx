@@ -22,6 +22,8 @@ const identity = (over: Record<string, unknown> = {}) => ({
   daysRemaining: 100,
   apnsBinding: 'APNS',
   apnsAvailable: true,
+  pushMethod: 'certificate',
+  pushKey: null,
   apnsHealth: 'healthy',
   nfcEnabled: false,
   isDefault: true,
@@ -93,6 +95,7 @@ describe('identities list', () => {
                 isDefault: false,
                 notAfter: Date.now() + 4.5 * DAY,
                 apnsAvailable: false,
+                pushMethod: 'none',
                 apnsBinding: null,
                 apnsHealth: 'unknown',
               }),
@@ -111,7 +114,7 @@ describe('identities list', () => {
     expect(await screen.findByText('100 days left')).toBeInTheDocument();
     expect(screen.getByText('4 days left')).toBeInTheDocument();
     expect(screen.getByText('Expired 3 days ago')).toBeInTheDocument();
-    expect(screen.getByText('Push unavailable')).toBeInTheDocument();
+    expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
     expect(screen.getByText('Healthy')).toBeInTheDocument();
     expect(screen.getByText('Failing')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
@@ -190,6 +193,7 @@ describe('identity detail', () => {
           json(
             identity({
               apnsAvailable: false,
+              pushMethod: 'none',
               apnsBinding: null,
               apnsHealth: 'unknown',
               source: 'env',
@@ -197,14 +201,79 @@ describe('identity detail', () => {
           ),
       },
     });
-    expect(await screen.findByText('Push setup')).toBeInTheDocument();
+    expect(await screen.findByText('Push')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add push key' })).toBeInTheDocument();
     expect(screen.getByText(/mtls-certificate upload/)).toBeInTheDocument();
-    expect(screen.getByText('Push unavailable')).toBeInTheDocument();
+    expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: 'More' }));
     expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     await userEvent.setup().keyboard('{Escape}');
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('adds a push key from a .p8 file and fills the key ID from its name', async () => {
+    let body: Record<string, unknown> | undefined;
+    const none = identity({ apnsAvailable: false, apnsBinding: null, pushMethod: 'none' });
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1/push-key': (_u, init) => {
+          body = JSON.parse(String(init?.body));
+          return json(none);
+        },
+        '/api/v1/identities/i1': () => json(none),
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Add push key' }));
+    const dialog = await screen.findByRole('dialog');
+    await ui.click(within(dialog).getByRole('button', { name: 'Add key' }));
+    expect(await within(dialog).findByText('Choose a .p8 file.')).toBeInTheDocument();
+    const file = new File(
+      ['-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----'],
+      'AuthKey_AB12CD34EF.p8',
+    );
+    await ui.upload(dialog.querySelector('input[type=file]') as HTMLInputElement, file);
+    expect(within(dialog).getByLabelText(/Key ID/)).toHaveValue('AB12CD34EF');
+    await ui.click(within(dialog).getByRole('button', { name: 'Add key' }));
+    await waitFor(() => expect(body).toMatchObject({ keyId: 'AB12CD34EF' }));
+    expect(String(body?.p8)).toContain('BEGIN PRIVATE KEY');
+  });
+
+  it('shows the push key and removes it after confirming', async () => {
+    let removed = 0;
+    const keyed = identity({
+      apnsBinding: null,
+      pushMethod: 'key',
+      pushKey: {
+        keyId: 'AB12CD34EF',
+        createdAt: 1_600_000_000_000,
+        rotatedAt: null,
+        identityCount: 2,
+        dependentCount: 2,
+      },
+    });
+    const { container } = await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1/push-key': (_u, init) => {
+          if (init?.method === 'DELETE') removed++;
+          return json(identity({ apnsAvailable: false, apnsBinding: null, pushMethod: 'none' }));
+        },
+        '/api/v1/identities/i1': () => json(keyed),
+      },
+    });
+    const ui = userEvent.setup();
+    expect(await screen.findByText('AB12CD34EF')).toBeInTheDocument();
+    expect(screen.getAllByText('Push key').length).toBeGreaterThan(0);
+    expect(screen.getByText('TEAM123, 2 identities')).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
+    await ui.click(screen.getByRole('button', { name: 'Remove key' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText(/2 identities of team TEAM123 lose push/)).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(removed).toBe(1));
   });
 
   it('saves edits with a null binding when cleared', async () => {

@@ -4,6 +4,7 @@ import {
   ApnsProbeResultSchema,
   IdentityListSchema,
   IdentitySchema,
+  type PushKeyInputSchema,
   type RotateIdentitySchema,
   type UpdateIdentitySchema,
   type UploadIdentitySchema,
@@ -77,6 +78,23 @@ export function useRotateIdentity(id: string) {
   return useMutation({
     mutationFn: (body: z.input<typeof RotateIdentitySchema>) =>
       api.post(`${path(id)}/rotate`, IdentitySchema, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
+export function useSetPushKey(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: z.input<typeof PushKeyInputSchema>) =>
+      api.put(`${path(id)}/push-key`, IdentitySchema, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
+export function useRemovePushKey(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deleteJson(`${path(id)}/push-key`, IdentitySchema),
     onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
   });
 }

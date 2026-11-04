@@ -7,6 +7,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { lastIdentityCheck } from '../identities/check.ts';
 import { ensurePlatformIdentity, listIdentityRows } from '../identities/repo.ts';
+import { listPushKeyMeta } from '../identities/repo-push-keys.ts';
 import {
   type Component,
   checkBuild,
@@ -52,7 +53,12 @@ async function identityComponents(ctx: ServiceContext) {
   }
   const rows = await listIdentityRows(ctx.env.DB);
   const checks = await Promise.all(rows.map((row) => lastIdentityCheck(ctx.env.DB, row.id)));
-  const items = rows.map((row, i) => identityComponent(ctx, row, checks[i] ?? null));
+  const keyTeams = new Set(
+    (await listPushKeyMeta(ctx.env.DB, [...new Set(rows.map((r) => r.team_identifier))])).map(
+      (k) => k.team_identifier,
+    ),
+  );
+  const items = rows.map((row, i) => identityComponent(ctx, row, checks[i] ?? null, keyTeams));
   if (!rows.some((r) => r.id === 'platform'))
     items.push({
       id: 'identity:platform',
