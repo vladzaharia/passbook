@@ -109,22 +109,21 @@ describe('JsonViewer', () => {
 });
 
 describe('AppleWalletBadge', () => {
-  it("uses Apple's artwork, switches to outline in dark and never animates", () => {
+  it("uses Apple's black artwork on every ground and never animates", () => {
     const { container, rerender } = render(<AppleWalletBadge href="/p/x/pass.pkpass" />);
     const img = screen.getByRole('img', { name: 'Add to Apple Wallet' });
-    expect(img.getAttribute('src')).toMatch(/^\/apple\/badge\/en\/black\.svg$/);
-    expect(container.querySelector('source')?.getAttribute('media')).toBe(
-      '(prefers-color-scheme: dark)',
-    );
+    expect(img.getAttribute('src')).toBe('/apple/badge/en/black.svg');
     const link = container.querySelector('a');
     expect(link?.className).not.toMatch(/transition|animate|scale|shadow|opacity/);
     expect(getComputedStyle(link as Element).transition || 'none').toMatch(/^(none|all 0s.*|)$/);
     document.documentElement.dataset.theme = 'dark';
     rerender(<AppleWalletBadge href="/p/x/pass.pkpass" label="All passes (3)" />);
     expect(screen.getByRole('img', { name: 'Add to Apple Wallet' }).getAttribute('src')).toBe(
-      '/apple/badge/en/outline.svg',
+      '/apple/badge/en/black.svg',
     );
+    expect(container.querySelector('source')).toBeNull();
     expect(screen.getByText('All passes (3)')).toBeInTheDocument();
+    delete document.documentElement.dataset.theme;
   });
 });
 

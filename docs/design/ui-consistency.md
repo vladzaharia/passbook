@@ -483,7 +483,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
 | Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
-| Badge | `AppleWalletBadge href label? theme?` (`theme`: the stamped page theme when server-rendered on `/p`) |
+| Badge | `AppleWalletBadge href label? locale? onClick?` (the black art on every ground) |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |

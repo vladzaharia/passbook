@@ -30,8 +30,6 @@ export interface HolderPassViewProps {
   details?: ReactNode;
   /** As the download starts: the card dips towards the badge. */
   onAdd?: () => void;
-  /** /p: the stamped page theme picks the badge art. */
-  theme?: 'light' | 'dark';
   /** Deal the side column in after the card (a deep link). */
   rise?: boolean;
   /** The app's Buddy (its scene in view, click replay); /p's plays once on load. */
@@ -60,12 +58,7 @@ export function HolderPassView(props: HolderPassViewProps) {
           qrLabel: HOLDER_COPY.qrAlt(props.passTitle),
           // The gaps around the badge are its clear space.
           badge: (
-            <AppleWalletBadge
-              href={props.downloadHref}
-              onClick={props.onAdd}
-              theme={props.theme}
-              className="p-0"
-            />
+            <AppleWalletBadge href={props.downloadHref} onClick={props.onAdd} className="p-0" />
           ),
           // Off Apple's devices the QR is the way and the badge stays away, so its line does too.
           line: publicUrl !== null && device.device === 'other' ? null : addLine(device),

@@ -123,7 +123,6 @@ function PassBody(props: PassPageProps) {
           downloadHref={props.downloadHref}
           publicUrl={props.publicUrl}
           support={props.support}
-          theme={props.theme}
           rise
         />
       </main>

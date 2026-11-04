@@ -79,18 +79,18 @@ describe('theme cookie on Worker pages', () => {
       )
     ).text();
 
-  it('stamps the pass page and forces the matching Apple badge', async () => {
+  it('stamps the pass page; the Apple badge art is the same in each theme', async () => {
     const pass = await kit.pass();
     const dark = await get(`/p/${pass.downloadToken}`, 'dark');
     expect(dark).toContain('<html lang="en" data-theme="dark">');
-    expect(dark).toContain('/apple/badge/en/outline.svg');
-    expect(dark).not.toContain('<source');
     const light = await get(`/p/${pass.downloadToken}`, 'light');
     expect(light).toContain('<html lang="en" data-theme="light">');
-    expect(light).toContain('/apple/badge/en/black.svg');
     const system = await get(`/p/${pass.downloadToken}`, 'system');
     expect(system).toContain('<html lang="en"><head>');
-    expect(system).toContain('media="(prefers-color-scheme: dark)"');
+    for (const html of [dark, light, system]) {
+      expect(html).toContain('/apple/badge/en/black.svg');
+      expect(html).not.toContain('outline.svg');
+    }
   });
 
   it.each([
