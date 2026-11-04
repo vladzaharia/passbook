@@ -20,10 +20,19 @@ curl https://passbook.mobile/api/v1/passes \
 | `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
+| `messages:write` | broadcasts: list, read, create, preview, send, cancel. A `change` also needs `passes:write` |
 
 An org-bound key only sees its own org. Admin-only routes (orgs, users, identities, settings,
-audit, connections, api-keys) need an admin session; keys get 401 or 403.
+audit, connections, api-keys, test-inbox) need an admin session; keys get 401 or 403.
 Limit: 600 requests per minute per key, then 429.
+
+### Test mode
+
+A key is live or test (`mode` when it is created; shown with a Test badge and `wlt_test_` in the console,
+the secret format is the same). An admin session is test when it sends `x-passbook-mode: test`. Lists and
+counts show only the caller's mode; a get by id works in either and returns `mode`. A pass or bundle takes the
+creator's mode. Email for a test pass or bundle is never sent: it lands in the Test inbox. Test data older
+than `sandbox.purgeDays` (default 30) is deleted daily.
 
 ## Errors
 
@@ -87,6 +96,17 @@ POST /api/v1/holders/unassign      { "passId": "…" }
   (`delivery`, `devices`, `changes`). `GET /passes/{id}/devices` is per-device sync and push state.
 - `POST /bundles` (`{ orgId, passIds, name, holderEmail?, sendEmail? }`) shares 1 to 10 passes of one org
   behind one link, `/b/{token}`. Then `send-email`, `rotate-link` and `DELETE` on `/bundles/{id}`.
+- `POST /broadcasts` sends a message, or a scheduled change of any inputs, to the active passes a `target`
+  matches (`templateIds`, optional `onDevice`, `holderState`, `q`). A `message` sets `patch: { message: text }`
+  on templates with `manifest.messaging`; an empty text clears it. `send` is `draft`, `now` or `schedule` (with
+  `at`); `clearAfter` (ms) clears a message later. `POST /broadcasts/preview` counts a target first.
+  `POST /broadcasts/{id}/send` sends a draft, `POST /broadcasts/{id}/cancel` stops a draft or schedule.
+  Progress is in `GET /broadcasts/{id}` (`state`, `counts`).
+- A pass notifies its holder at most `push.budgetPerDay` times (default 3) in 24 h; later changes publish
+  silently. `GET /passes/{id}` has `pushBudget` (`used`, `limit`, `resetsAt`). An update that leaves the pass
+  unchanged is never pushed.
+- `GET /test-inbox` and `GET /test-inbox/{id}` (admin session in Test mode) list and show captured email.
+  `POST /test-inbox/{id}/send-to-me` sends one to the signed-in admin's verified address.
 - Request and response bodies are JSON except `PUT /passes/{id}/assets/{name}` (PNG body) and
   `POST /templates/uploads` (zip or multipart, up to 15 MB).
 - `POST /templates/{id}/versions` (admin session) saves a version of an uploaded template from JSON, with the
