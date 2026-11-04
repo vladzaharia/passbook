@@ -8,7 +8,7 @@ Decisions marked **(call)** were made by the architect without owner input; ever
 
 ## 1. Intent
 
-A modular, multi-tenant Apple Wallet pass platform on Cloudflare at `https://wallet.plrs.im`. It issues and remotely updates passes for many organizations (companies, gyms, venues, people), each with their own templates and data connections. Henry's Gymnasium (Seattle, two clubs) is the first tenant and the showcase for the feature set.
+A modular, multi-tenant Apple Wallet pass platform on Cloudflare at `https://passbook.mobile` (`PUBLIC_BASE_URL`; `wallet.plrs.im` only redirects there, see `docs/operations.md#domains`). It issues and remotely updates passes for many organizations (companies, gyms, venues, people), each with their own templates and data connections. Henry's Gymnasium (Seattle, two clubs) is the first tenant and the showcase for the feature set.
 
 ### Goals
 1. **Any number of passes, templates and organizations.** Adding a template or a connection type is quick and plugin-style.
@@ -226,9 +226,9 @@ Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 obj
 
 **APNs transport:** `ApnsTransport` interface; v1 implementation uses the identity's mTLS binding (`env[identity.apns_binding]`, platform = `APNS`). Missing binding → identity status "push unavailable", passes still update on pull-to-refresh.
 
-**Email:** Cloudflare Email Sending, sender `Wallet <passes@plrs.im>` for pass delivery and sign-in links **(call — one onboarded sender)**. Pass email: HTML (table layout, `lang`, charset) + text, the pass's icon and the org's name in the band, the pass in its colours with its logo, Add to Apple Wallet badge → direct `.pkpass` paired with Open your pass → `/p/:token` (images from `/p/:token/assets`), optional attachment. Sign-in email: link + 6-digit code, laid out as the hosted sign-in card with the seated buddy; the pass email shows the org's header, with the same buddy when the org opts in (`email.buddy`). Both take colours from the generated tokens.
+**Email:** Cloudflare Email Sending, sender `PassBook <delivery@passbook.mobile>` (`EMAIL_FROM`) for pass delivery and sign-in links **(call — one onboarded sender)**. Pass email: HTML (table layout, `lang`, charset) + text, the pass's icon and the org's name in the band, the pass in its colours with its logo, Add to Apple Wallet badge → direct `.pkpass` paired with Open your pass → `/p/:token` (images from `/p/:token/assets`), optional attachment. Sign-in email: link + 6-digit code, laid out as the hosted sign-in card with the seated buddy; the pass email shows the org's header, with the same buddy when the org opts in (`email.buddy`). Both take colours from the generated tokens.
 
-**Apple web service** (`modules/apple`, under `webServiceURL = https://wallet.plrs.im/wallet`): register (201/200, cap per pass), unregister, serials with `passesUpdatedSince`, latest pass with `If-Modified-Since`/`Last-Modified` and 304, log (redacted, capped, rate-limited), personalize endpoint when the template uses personalization (requires an NFC-entitled identity; the platform identity has none, so personalization and NFC are schema/validator/endpoint support without device tests). `Authorization: ApplePass <token>` compared in constant time. Reads use the D1 primary (no replica lag).
+**Apple web service** (`modules/apple`, under `webServiceURL = ${PUBLIC_BASE_URL}/wallet`): register (201/200, cap per pass), unregister, serials with `passesUpdatedSince`, latest pass with `If-Modified-Since`/`Last-Modified` and 304, log (redacted, capped, rate-limited), personalize endpoint when the template uses personalization (requires an NFC-entitled identity; the platform identity has none, so personalization and NFC are schema/validator/endpoint support without device tests). `Authorization: ApplePass <token>` compared in constant time. Reads use the D1 primary (no replica lag).
 
 **SSR shares the SPA's source:** `npm run gen` compiles the SPA's tokens, kit controls, fonts and holder CSS for SSR pages and emails (`src/generated/ssr-*.css`, `resolved-tokens.ts`; `tools/ssr-parity.test.ts` fails on drift), icons come from `ssr/icon.ts` `iconHtml`, and words from `src/shared/copy/*`. Theme: `requestTheme(c)` reads `wallet-theme`.
 
@@ -372,9 +372,9 @@ Constant-time token comparison; all tokens ≥ 256-bit from `crypto.getRandomVal
 
 ## 18. Go-live steps that need the owner
 
-1. Pocket ID (`id.plrs.im`): create groups `wallet-admins` and `wallet-users`; create an OIDC client "Wallet" with callback `https://wallet.plrs.im/auth/oidc/callback` (and `http://localhost:5173/auth/oidc/callback` for dev), PKCE enabled, groups claim included; provide client id/secret.
+1. Pocket ID (`id.plrs.im`): create groups `wallet-admins` and `wallet-users`; create an OIDC client "Wallet" with callback `https://passbook.mobile/auth/oidc/callback` (and `http://localhost:5173/auth/oidc/callback` for dev), PKCE enabled, groups claim included; provide client id/secret.
 2. Upload the new platform certificate as a Cloudflare mTLS certificate for APNs (`tools/identity-add.ts` does it with wrangler) and set `SIGNER_PLATFORM_*` secrets.
-3. Turnstile widget for `wallet.plrs.im`; set `TURNSTILE_SECRET`/site key.
+3. Turnstile widget for `passbook.mobile`; set `TURNSTILE_SECRET`/site key.
 4. Generate `KEK_V1`.
 5. Create the new queues/workflows/rate-limit namespaces/AE dataset (wrangler deploy auto-provisions most), apply `0001` to a **fresh** D1 (owner approved wiping), deploy.
 6. Device acceptance test: add a Henry's pass on an iPhone, verify lock-screen relevance near a club, update push, and barcode scan.
