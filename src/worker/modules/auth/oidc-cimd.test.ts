@@ -21,8 +21,12 @@ describe('client ID metadata document', () => {
     expect(res.headers.get('cache-control')).toBe('public, max-age=3600');
     const text = await res.text();
     expect(text.length).toBeLessThan(5 * 1024);
-    expect(JSON.parse(text)).toMatchObject({
+    const doc = JSON.parse(text);
+    expect(doc).toMatchObject({
       client_id: METADATA_URL,
+      client_name: 'PassBook',
+      client_uri: ORIGIN,
+      logo_uri: `${ORIGIN}/icons/icon-512.png`,
       redirect_uris: [`${ORIGIN}/auth/oidc/callback`],
       post_logout_redirect_uris: [`${ORIGIN}/login`],
       token_endpoint_auth_method: 'none',
@@ -30,6 +34,16 @@ describe('client ID metadata document', () => {
       response_types: ['code'],
       scope: 'openid email profile groups',
     });
+    expect(doc).not.toHaveProperty('client_secret');
+  });
+
+  it('puts every URL it names on the canonical origin', async () => {
+    const doc = await (await h.call('/auth/oidc/client-metadata.json')).json();
+    const urls = Object.values(doc as Record<string, unknown>)
+      .flat()
+      .filter((v): v is string => typeof v === 'string' && v.startsWith('http'));
+    expect(urls.length).toBeGreaterThanOrEqual(5);
+    for (const url of urls) expect(new URL(url).origin).toBe(ORIGIN);
   });
 
   it('signs in with the metadata URL as client id and never sends a secret', async () => {

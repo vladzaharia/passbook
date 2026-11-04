@@ -13,7 +13,7 @@ let app: ReturnType<typeof createApp> | undefined;
 
 export default {
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
-    app ??= createApp({ stores: createAuthStores });
+    app ??= createApp({ stores: createAuthStores, hostPolicy: true });
     return app.fetch(request, env, ctx);
   },
   queue: (batch: MessageBatch<unknown>, env: AppEnv, ctx: ExecutionContext) =>

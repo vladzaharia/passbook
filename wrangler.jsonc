@@ -8,23 +8,21 @@
   "workers_dev": false,
   "preview_urls": false,
   "upload_source_maps": true,
-  "routes": [{ "pattern": "wallet.plrs.im", "custom_domain": true }],
+  // passbook.mobile is PUBLIC_BASE_URL; wallet.plrs.im only redirects there (REDIRECT_HOSTS).
+  "routes": [
+    { "pattern": "passbook.mobile", "custom_domain": true },
+    { "pattern": "wallet.plrs.im", "custom_domain": true }
+  ],
 
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
+    // Every request runs the Worker first (host policy, routes, the SPA's pages from ASSETS)
+    // except the files public/ ships, which the asset layer serves on every host.
+    // tools/wrangler-config.test.ts keeps the exceptions in step with public/; vite.config.ts adds
+    // Vite's own dev paths.
     "run_worker_first": [
-      "/assets/*",
-      "/api/*",
-      "/auth/*",
-      "/wallet/*",
-      "/p/*",
-      "/hooks/*",
-      "/health",
-      // A file-like path is never an app route: unless public/ ships it, the Worker answers 404
-      // instead of the SPA (which would show Sign in). tools/wrangler-config.test.ts keeps the
-      // exceptions in step with public/.
-      "/*.*",
+      "/*",
       "!/index.html",
       "!/apple/*",
       "!/apple-touch-icon.png",
@@ -39,20 +37,16 @@
       "!/pass-tilt.js",
       "!/robots.txt",
       "!/templates/*",
-      "!/theme-init.js",
-      // Vite dev serves its modules here (the plugin applies these rules before Vite does).
-      "!/src/*",
-      "!/node_modules/*",
-      "!/@fs/*",
-      "!/@id/*"
+      "!/theme-init.js"
     ]
   },
 
   "vars": {
-    "PUBLIC_BASE_URL": "https://wallet.plrs.im",
-    "EMAIL_FROM": "passes@plrs.im",
+    "PUBLIC_BASE_URL": "https://passbook.mobile",
+    "REDIRECT_HOSTS": "wallet.plrs.im",
+    "EMAIL_FROM": "delivery@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
-    "OIDC_CLIENT_ID": "https://wallet.plrs.im/auth/oidc/client-metadata.json",
+    "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     "OIDC_ADMIN_GROUP": "wallet-admins",
     "OIDC_USER_GROUP": "wallet-users",
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
@@ -114,7 +108,7 @@
     }
   ],
 
-  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["passes@plrs.im"] }],
+  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@passbook.mobile"] }],
 
   // Enable at go-live after uploading the platform certificate. A missing binding means "push unavailable".
   // Retired Henry's id, do not reuse: 9d7b9372-b262-42c3-82db-e90c4c588e90

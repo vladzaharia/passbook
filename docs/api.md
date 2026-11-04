@@ -10,7 +10,7 @@ Machine API under `/api/v1`. The reference is generated from the code at `GET /a
 3. Send it as a bearer token. No cookie, no CSRF header.
 
 ```
-curl https://wallet.plrs.im/api/v1/passes \
+curl https://passbook.mobile/api/v1/passes \
   -H "Authorization: Bearer $WALLET_API_KEY"
 ```
 
@@ -39,7 +39,7 @@ Branch on `code`, not `detail`. Quote `requestId` when asking for help.
 ## Create a pass
 
 ```
-curl -X POST https://wallet.plrs.im/api/v1/passes \
+curl -X POST https://passbook.mobile/api/v1/passes \
   -H "Authorization: Bearer $WALLET_API_KEY" \
   -H "Idempotency-Key: member-000123-v1" \
   -H "Content-Type: application/json" \
@@ -60,7 +60,7 @@ curl -X POST https://wallet.plrs.im/api/v1/passes \
 `VERSION_CONFLICT`: re-read and retry. A changed pass is rebuilt and pushed to its devices.
 
 ```
-curl -X PATCH https://wallet.plrs.im/api/v1/passes/$ID \
+curl -X PATCH https://passbook.mobile/api/v1/passes/$ID \
   -H "Authorization: Bearer $WALLET_API_KEY" -H "If-Match: 3" \
   -H "Content-Type: application/json" \
   -d '{ "input": { "points": 1300 } }'

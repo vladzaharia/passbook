@@ -1,5 +1,7 @@
 interface WranglerConfig {
   vars?: Record<string, unknown>;
+  routes?: { pattern: string; custom_domain?: boolean }[];
+  send_email?: { name: string; allowed_sender_addresses?: string[] }[];
   d1_databases?: { binding: string; database_id?: string }[];
   mtls_certificates?: { binding: string; certificate_id?: string }[];
 }
@@ -38,7 +40,7 @@ export function predeployProblems(
     if (key === 'TURNSTILE_SITE_KEY' && TURNSTILE_TEST_KEY.test(value))
       problems.push('vars.TURNSTILE_SITE_KEY is a Cloudflare test key.');
   }
-  problems.push(...cimdProblems(config.vars ?? {}));
+  problems.push(...cimdProblems(config.vars ?? {}), ...domainProblems(config));
   const apns = (config.mtls_certificates ?? []).find((m) => m.binding === 'APNS');
   if (!apns) {
     if (!options.allowNoPush)
@@ -62,6 +64,45 @@ function cimdProblems(vars: Record<string, unknown>): string[] {
   return id === `${base}${CIMD_PATH}`
     ? []
     : [`vars.OIDC_CLIENT_ID must be ${base}${CIMD_PATH} to use a client metadata document.`];
+}
+
+/**
+ * Every custom domain is either PUBLIC_BASE_URL's host or a REDIRECT_HOSTS host; the Worker refuses
+ * any other (src/worker/platform/host-policy.ts). The sender must be one the binding allows.
+ */
+function domainProblems(config: WranglerConfig): string[] {
+  const vars = config.vars ?? {};
+  const problems: string[] = [];
+  let canonical: string | null = null;
+  try {
+    const url = new URL(String(vars.PUBLIC_BASE_URL));
+    if (url.protocol !== 'https:') problems.push('vars.PUBLIC_BASE_URL must be https.');
+    canonical = url.host;
+  } catch {
+    problems.push('vars.PUBLIC_BASE_URL is not a URL.');
+  }
+  const redirects = String(vars.REDIRECT_HOSTS ?? '')
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean);
+  const routes = config.routes ?? [];
+  const hosts = routes.map((r) => r.pattern.toLowerCase());
+  for (const r of routes)
+    if (!r.custom_domain) problems.push(`routes ${r.pattern}: only custom domains are supported.`);
+  if (canonical && !hosts.includes(canonical))
+    problems.push(`routes has no custom domain for ${canonical} (vars.PUBLIC_BASE_URL).`);
+  for (const host of redirects)
+    if (!hosts.includes(host)) problems.push(`vars.REDIRECT_HOSTS: ${host} has no route.`);
+  for (const host of hosts)
+    if (host !== canonical && !redirects.includes(host))
+      problems.push(
+        `routes ${host} is not PUBLIC_BASE_URL or in REDIRECT_HOSTS: it would be refused.`,
+      );
+  const from = vars.EMAIL_FROM;
+  const allowed = config.send_email?.find((b) => b.name === 'EMAIL')?.allowed_sender_addresses;
+  if (typeof from === 'string' && allowed && !allowed.includes(from))
+    problems.push(`vars.EMAIL_FROM ${from} is not in send_email allowed_sender_addresses.`);
+  return problems;
 }
 
 /** D1 bookmarks look like 00000085-0000024c-00004c6d-8e61117bf38d7adb71b934ebbf891683. */

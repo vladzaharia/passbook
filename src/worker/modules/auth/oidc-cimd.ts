@@ -10,6 +10,11 @@ import { NotFoundError } from '../../platform/errors.ts';
 
 export const CIMD_PATH = '/auth/oidc/client-metadata.json';
 export const OIDC_SCOPE = 'openid email profile groups';
+/**
+ * The rounded app icon (tools/build-icons.ts), legible on light and dark. Pocket ID 2.19 ignores a
+ * document's logo_uri; its admin sets the client logo from this URL (docs/operations.md).
+ */
+export const CIMD_LOGO_PATH = '/icons/icon-512.png';
 
 type UrlEnv = Pick<AppEnv, 'PUBLIC_BASE_URL'>;
 
@@ -29,7 +34,7 @@ export function clientMetadata(env: UrlEnv) {
     client_id: cimdClientId(env),
     client_name: 'PassBook',
     client_uri: base,
-    logo_uri: `${base}/apple-touch-icon.png`,
+    logo_uri: `${base}${CIMD_LOGO_PATH}`,
     redirect_uris: [oidcRedirectUri(env)],
     post_logout_redirect_uris: [postLogoutRedirectUri(env)],
     grant_types: ['authorization_code'],
@@ -39,7 +44,10 @@ export function clientMetadata(env: UrlEnv) {
   };
 }
 
-/** GET /auth/oidc/client-metadata.json. Cacheable: Polaris ID stores the client it resolves. */
+/**
+ * GET /auth/oidc/client-metadata.json. Polaris ID stores the client for max-age (it refuses
+ * no-store and never follows a redirect to fetch this).
+ */
 export function clientMetadataDocument(c: Context<AppBindings>) {
   if (!usesCimd(c.env)) throw new NotFoundError();
   return c.json(clientMetadata(c.env), 200, { 'cache-control': 'public, max-age=3600' });

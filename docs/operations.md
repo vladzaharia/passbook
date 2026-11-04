@@ -22,7 +22,7 @@
 Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.jsonc`.
 
 1. **Pocket ID** (`id.plrs.im`). PassBook registers itself with a Client ID Metadata Document:
-   `vars.OIDC_CLIENT_ID` is `https://wallet.plrs.im/auth/oidc/client-metadata.json`, which the
+   `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
    - Groups: `wallet-admins`, `wallet-users`. Pocket ID's generated names (`wallet_admins`) match
@@ -31,6 +31,8 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.
    - Metadata changes reach Pocket ID within an hour, or at once with Refresh in its client list.
+   - Logo: Pocket ID ignores the document's `logo_uri`. On the client, set Logo URL (and Dark logo
+     URL) to `${PUBLIC_BASE_URL}/icons/icon-512.png`; Pocket ID downloads and keeps it.
    - Emails: Settings → "Trust Polaris ID emails" links and verifies an address only when Pocket ID
      sends `email_verified: true` (the user verified it in Pocket ID, or an admin ticked "Email
      verified"). Never set Pocket ID's `EMAILS_VERIFIED=true`: a user could then claim any address.
@@ -45,8 +47,8 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
      `.secrets/platform-*.pem` with `wrangler mtls-certificate upload` and adds
      `mtls_certificates: APNS` to `wrangler.jsonc`. Then `npm run gen`.
    - Without the binding the platform signs passes but cannot push updates.
-4. **Turnstile**: widget for `wallet.plrs.im`. Site key in `vars.TURNSTILE_SITE_KEY`, secret in step 5.
-   The always-pass test key is refused by `predeploy`.
+4. **Turnstile**: a widget whose hostnames include `PUBLIC_BASE_URL`'s host. Site key in
+   `vars.TURNSTILE_SITE_KEY`, secret in step 5. The always-pass test key is refused by `predeploy`.
 5. **Secrets** (`wrangler secret put <NAME>`, value on stdin)
    - `KEK_V1`: `openssl rand -base64 32`. Back it up outside Cloudflare. Losing it loses every
      stored credential.
@@ -81,6 +83,79 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
     - Update a field. The pass updates on the phone within a minute (push).
     - Near a venue the pass appears on the lock screen. The barcode scans.
     - Void the pass; the phone shows it as voided.
+
+## Domains
+
+`vars.PUBLIC_BASE_URL` (`https://passbook.mobile`) is the only origin the app serves; pass
+`webServiceURL`s, emails, the OIDC metadata, `index.html`'s preview tags and the break-glass
+URL all derive from it. `src/worker/platform/host-policy.ts`:
+
+- `PUBLIC_BASE_URL`'s host serves everything; plain http on it gets a 308 to https.
+- A `vars.REDIRECT_HOSTS` host (`wallet.plrs.im`) answers every request, any path or method, with
+  an uncached 308 to the same path and query on `PUBLIC_BASE_URL`.
+- Any other host gets 421.
+- The files `public/` ships (icons, email images, fonts, `robots.txt`) come from the asset layer
+  before the Worker runs, so they load as they are on every attached host.
+
+`npm run predeploy` checks that every custom domain in `routes` is the canonical host or a
+redirect host, and that `EMAIL_FROM` is an allowed sender.
+
+A pass keeps the `webServiceURL` it was issued with (`passes.web_service_url`). Apple documents
+neither what Wallet does when an update carries a different one nor whether its web service
+calls follow redirects, so once a pass is on a device its host must keep serving `/wallet/*`
+itself. Moving again after that means serving the Apple web service on both hosts, not
+redirecting.
+
+### Move to passbook.mobile
+
+Done (2026-11-03, through the Cloudflare API):
+
+- `passbook.mobile` is an active zone in the deploying account (`account_id`), next to `plrs.im`.
+- The Turnstile widget (`vars.TURNSTILE_SITE_KEY`) allows `passbook.mobile`. Without it the email
+  sign-in form cannot pass the challenge.
+- Email Sending is onboarded for `passbook.mobile` with its `cf-bounce` MX, SPF, DKIM and DMARC
+  records. Without it every send from `delivery@passbook.mobile` fails
+  (`E_SENDER_DOMAIN_NOT_AVAILABLE`): no sign-in links or codes, no pass emails.
+
+Owner steps:
+
+1. **Pocket ID**, before the deploy. OIDC settings → Client ID Metadata Documents → Allowed
+   metadata document URLs: add `https://passbook.mobile/auth/oidc/client-metadata.json` (or
+   `CIMD_URL_ALLOWLIST` when the UI config is disabled). The `wallet.plrs.im` entry does not match
+   it. Until then Pocket ID sign-in fails; break-glass still works.
+2. **Deploy**: `npm run deploy -- --apply`. The token needs Workers Routes Write on
+   `passbook.mobile` and `plrs.im`. If `passbook.mobile` already has an apex record, delete it
+   first; the custom domain creates its own. The deploy applies `migrations/0008_passes.sql`,
+   which moves stored web service URLs off wallet.plrs.im (no pass was on a device).
+3. **First sign-in** through Pocket ID creates a new client: set its allowed groups
+   (`wallet-admins`, `wallet-users`) and its logo as in [Go-live](#go-live-checklist) step 1. User
+   ids (`sub`) do not change, so linked accounts carry over; everyone consents once.
+4. If passes existed, rebuild their files: Identities → the platform identity → Re-sign.
+
+Sessions are host-only cookies, so everyone signs in again on passbook.mobile. Sign-in links in
+recent emails still work through the redirect; a sign-in code requested on wallet.plrs.im does
+not (it is bound to that host's cookie), so request a new one.
+
+Verify:
+
+    curl -sI https://passbook.mobile/health                          # 200
+    curl -sI 'https://wallet.plrs.im/p/x?y=1'                        # 308 to https://passbook.mobile/p/x?y=1
+    curl -s https://passbook.mobile/auth/oidc/client-metadata.json   # every URL on passbook.mobile
+
+- Sign in with Pocket ID and with an email link on passbook.mobile. Status shows Email Sending
+  and Turnstile configured.
+- Issue a pass and add it to Wallet: its back shows the passbook.mobile support link, and an
+  update reaches the phone.
+- Once a rollback is off the table, remove the old Pocket ID client, its allowlist entry and
+  `wallet.plrs.im` in the Turnstile widget.
+
+Rollback: revert the change (`routes`, `PUBLIC_BASE_URL`, `REDIRECT_HOSTS`, `OIDC_CLIENT_ID`,
+`EMAIL_FROM` and `send_email` move together) and deploy. The old Pocket ID client and allowlist
+entry must still exist. Stored web service URLs stay on passbook.mobile: restore the D1 bookmark
+the deploy logged (this drops later writes), or set them back with the reverse `UPDATE`.
+Redirects are uncached, so no browser loops. Everyone signs in again. A pass added to Wallet in
+between keeps calling passbook.mobile's web service, and Wallet does not follow redirects: its
+holder re-adds it from a new link.
 
 ## Break-glass admin
 
@@ -118,5 +193,5 @@ Admin sign-in for when Pocket ID is down.
 
 - **workerd versions**: `npm run test:worker` runs on the pool's miniflare (workerd 1.20260815), dev and prod on the root wrangler (1.20261012). The pool pins its own copy until a release catches up. The Dependabot `cloudflare` group tracks it; when one ships, align versions and drop the `overrides` entries in `package.json`. Stay on vitest 4 until the pool supports 5.
 - **Placement**: default. `placement: smart` needs a latency comparison against D1 from production Observability data; none exists before launch. Revisit after a week of traffic.
-- **Worker-first paths** (`assets.run_worker_first`): `/assets/*` is kept: a missing hashed chunk would otherwise get the SPA fallback page cached immutable under the chunk URL; the guard turns it into a 404. File-like paths (`/*.*`) also run the Worker, except the files `public/` ships (negated entries): an unknown `/foo.js` is a 404, not the SPA's sign-in page. Add a file to `public/` and its negated entry in `wrangler.jsonc` together; `tools/wrangler-config.test.ts` fails when they differ. The cost is one invocation per such request.
+- **Worker-first paths** (`assets.run_worker_first`): every path runs the Worker first, so the host policy sees every page visit, except the files `public/` ships (negated entries). The Worker serves the SPA's pages from `ASSETS` unchanged (`public/_headers` applies), keeps `/api`, `/auth`, `/wallet`, `/p`, `/hooks`, `/health` and `/assets` to itself, and answers an unknown file-like path (`/foo.js`, or a missing hashed chunk that would otherwise be cached immutable as the SPA page) with a 404. Add a file to `public/` and its negated entry in `wrangler.jsonc` together; `tools/wrangler-config.test.ts` fails when they differ. Vite's dev paths (`/src/*`, `/@vite/*`, …) are added only in dev, by `vite.config.ts`. The cost is one invocation per page view.
 - **Baked template sync**: runs from the minute cron after a version change; the first template request still checks lazily as a fallback.

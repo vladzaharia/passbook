@@ -29,6 +29,13 @@ Each shows on the admin status page.
 
 Magic-link sends are also capped per address (5/h), per network (30/day) and, for verification mail, per signed-in user (10/day).
 
+## Hosts
+
+- Only `PUBLIC_BASE_URL`'s origin (`passbook.mobile`) serves the app and sets cookies. Sessions and sign-in bindings are host-only `__Host-` cookies there.
+- A `REDIRECT_HOSTS` host (`wallet.plrs.im`) only answers 308 to the same path and query on the canonical origin, uncached. It runs no route, so it sets no cookie and serves no API.
+- Any other host gets 421 and logs `host.refused`, so a stray route or a `workers.dev` URL cannot serve the app under another origin. Plain http on the canonical host gets a 308 to https.
+- Files `public/` ships are served by the asset layer on every attached host. They are public by design.
+
 ## Personalization
 
 `/wallet/v1/passes/.../personalize` signs a token Wallet chooses. Tokens with `{ } [ ] "`, backslash, whitespace or control characters are refused, so no JSON container (a forged `manifest.json`) can be signed. Deleted and voided passes answer 404. First token wins.
@@ -36,7 +43,7 @@ Magic-link sends are also capped per address (5/h), per network (30/day) and, fo
 ## Outbound fetches (SSRF)
 
 - https and 443 only, no credentials, no IP literals, no redirects, size and time caps.
-- Denied hosts: `PUBLIC_BASE_URL`, `OIDC_ISSUER`, `workers.dev`, and `SSRF_DENY_HOSTS` (comma list, `plrs.im`).
+- Denied hosts: `PUBLIC_BASE_URL`, `REDIRECT_HOSTS`, `OIDC_ISSUER`, `workers.dev`, and `SSRF_DENY_HOSTS` (comma list, `plrs.im`).
 - Private, link-local, CGNAT, multicast, NAT64, 6to4, Teredo and discard IPv6 ranges are refused after DNS.
 - Residual: DNS TOCTOU. The DoH check and the fetch resolve separately, and Workers cannot pin an IP. Cloudflare itself refuses private ranges.
 - Not done: per-connection host allowlists.
