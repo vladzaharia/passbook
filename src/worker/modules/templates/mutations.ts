@@ -231,7 +231,7 @@ async function deletePrefix(ctx: ServiceContext, prefix: string): Promise<void> 
 }
 
 /** Assets stay under the org they were uploaded for, so reassigning must not change where to delete. */
-async function storageOrg(ctx: ServiceContext, row: TemplateRow): Promise<string | null> {
+export async function storageOrg(ctx: ServiceContext, row: TemplateRow): Promise<string | null> {
   for (const v of await listVersions(ctx.env.DB, row.id))
     for (const a of v.assets) {
       const m = a.source.kind === 'r2' ? a.source.key.match(/^templates\/([^/]+)\//) : null;

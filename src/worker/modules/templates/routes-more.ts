@@ -2,6 +2,8 @@ import {
   IdParamSchema,
   PreviewBatchQuerySchema,
   PreviewBatchSchema,
+  SaveVersionResponseSchema,
+  SaveVersionSchema,
   TemplateDetailSchema,
   UploadListQuerySchema,
   UploadListSchema,
@@ -10,6 +12,7 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { setArchived, templatePackage } from './lifecycle.ts';
 import { previewMany, recentUploads } from './service.ts';
+import { saveVersion } from './versions.ts';
 
 type Router = ReturnType<typeof createRouter>;
 
@@ -80,5 +83,31 @@ export function registerLifecycle(router: Router): void {
         },
       });
     },
+  );
+}
+
+/** POST /{id}/versions: the designer's save and its dry run. */
+export function registerVersions(router: Router): void {
+  register(
+    router,
+    'templates',
+    {
+      method: 'post',
+      path: '/{id}/versions',
+      summary:
+        'Save a version from JSON (same checks as an upload); dryRun only validates and builds',
+      params: IdParamSchema,
+      body: SaveVersionSchema,
+      response: SaveVersionResponseSchema,
+    },
+    async (c) =>
+      c.json(
+        await saveVersion(
+          serviceContext(c),
+          c.var.auth,
+          c.req.valid('param').id,
+          c.req.valid('json'),
+        ),
+      ),
   );
 }
