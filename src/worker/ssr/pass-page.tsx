@@ -38,7 +38,7 @@ import { THEME_CSS } from './theme.ts';
  * script, pressing the badge dips the card in CSS (the portal sets `dip`).
  */
 const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear].join('\n');
-const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${addCss}
+export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${addCss}
 body{padding:0}
 @media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;
 

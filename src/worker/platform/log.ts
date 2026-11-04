@@ -12,9 +12,9 @@ export interface Logger {
 const SENSITIVE_KEY =
   /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download)/i;
 
-/** Capability URLs: /p/<token>, ?t=<token>, ApplePass/Bearer headers, wlt_ keys, PEM blocks. */
+/** Capability URLs: /p/<token>, /b/<token>, ?t=<token>, ApplePass/Bearer headers, wlt_ keys, PEM blocks. */
 const VALUE_PATTERNS: [RegExp, string][] = [
-  [/(\/p\/)[A-Za-z0-9_-]{16,}/g, '$1[redacted]'],
+  [/(\/[pb]\/)[A-Za-z0-9_-]{16,}/g, '$1[redacted]'],
   [/([?&](?:t|token|code|key|state)=)[^&\s]+/gi, '$1[redacted]'],
   [/(ApplePass|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, '$1 [redacted]'],
   [/wlt_[A-Za-z0-9_-]+/g, 'wlt_[redacted]'],
