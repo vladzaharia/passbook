@@ -26,6 +26,7 @@ import {
   sameValues,
   validateValues,
 } from '../schema-form/index.ts';
+import { BudgetNote } from './budget-note.tsx';
 
 type Pass = z.infer<typeof PassDetailSchema>;
 
@@ -206,6 +207,7 @@ export function FieldsTab({
           Your edits are kept.
         </Callout>
       ) : null}
+      <BudgetNote budget={pass.pushBudget} show={notify && dirty && !voided} />
       <SchemaForm
         schema={schema}
         value={draft}

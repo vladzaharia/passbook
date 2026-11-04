@@ -20,7 +20,7 @@ export async function startedBroadcast(
   broadcastId: string,
 ): Promise<boolean> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
-  if (!row || row.state !== 'sending') return false;
+  if (row?.state !== 'sending') return false;
   await setTargeted(
     ctx.env.DB,
     broadcastId,

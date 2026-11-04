@@ -1,6 +1,6 @@
 import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
-import { messagingIssues } from '../../../../passkit/template/manifest.ts';
+import { messagingIssues } from '../../../../passkit/template/messaging.ts';
 import type {
   Json,
   PassField,

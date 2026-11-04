@@ -57,7 +57,7 @@ async function applyOne(
 ): Promise<ItemRow> {
   const base = { passId, silent: false };
   const pass = await getPass(ctx.env.DB, passId, row.org_id);
-  if (!pass || pass.status !== 'active' || pass.removedAt !== null || pass.mode !== row.mode)
+  if (pass?.status !== 'active' || pass.removedAt !== null || pass.mode !== row.mode)
     return { ...base, outcome: 'unchanged' };
   try {
     if (await expired(ctx, pass)) return { ...base, outcome: 'unchanged' };
@@ -136,7 +136,7 @@ export async function applyChunk(
   cursor: string | null,
 ): Promise<{ nextCursor: string | null }> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
-  if (!row || row.state !== 'sending') return { nextCursor: null };
+  if (row?.state !== 'sending') return { nextCursor: null };
   const page = await targetPage(ctx.env.DB, targetFilter(row, cursor, CHUNK));
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();

@@ -104,7 +104,7 @@ export const PushBudgetSchema = z.object({
 export type PushBudgetDto = z.infer<typeof PushBudgetSchema>;
 
 export const PassDetailSchema = PassSummarySchema.extend({
-  pushBudget: PushBudgetSchema,
+  pushBudget: PushBudgetSchema.default({ used: 0, limit: 3, resetsAt: null }),
   /** Owner's display name and email (null when unowned); the summary carries only the id. */
   ownerName: z.string().nullable(),
   ownerEmail: z.string().nullable(),

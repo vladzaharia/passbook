@@ -25,6 +25,8 @@ import { Route as AdminConnectionsNewRouteImport } from './routes/admin/connecti
 import { Route as AdminIdentitiesIndexRouteImport } from './routes/admin/identities/index'
 import { Route as AdminIdentitiesIdentityIdRouteImport } from './routes/admin/identities/$identityId'
 import { Route as AdminMessagesIndexRouteImport } from './routes/admin/messages/index'
+import { Route as AdminMessagesBroadcastIdRouteImport } from './routes/admin/messages/$broadcastId'
+import { Route as AdminMessagesNewRouteImport } from './routes/admin/messages/new'
 import { Route as AdminOrgsIndexRouteImport } from './routes/admin/orgs/index'
 import { Route as AdminOrgsOrgIdRouteImport } from './routes/admin/orgs/$orgId'
 import { Route as AdminPassesIndexRouteImport } from './routes/admin/passes/index'
@@ -122,6 +124,17 @@ const AdminMessagesIndexRoute = AdminMessagesIndexRouteImport.update({
   path: '/messages/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminMessagesBroadcastIdRoute =
+  AdminMessagesBroadcastIdRouteImport.update({
+    id: '/messages/$broadcastId',
+    path: '/messages/$broadcastId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminMessagesNewRoute = AdminMessagesNewRouteImport.update({
+  id: '/messages/new',
+  path: '/messages/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminOrgsIndexRoute = AdminOrgsIndexRouteImport.update({
   id: '/orgs/',
   path: '/orgs/',
@@ -207,6 +220,8 @@ export interface FileRoutesByFullPath {
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
   '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
+  '/admin/messages/$broadcastId': typeof AdminMessagesBroadcastIdRoute
+  '/admin/messages/new': typeof AdminMessagesNewRoute
   '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
@@ -238,6 +253,8 @@ export interface FileRoutesByTo {
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
   '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
+  '/admin/messages/$broadcastId': typeof AdminMessagesBroadcastIdRoute
+  '/admin/messages/new': typeof AdminMessagesNewRoute
   '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
@@ -271,6 +288,8 @@ export interface FileRoutesById {
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
   '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
+  '/admin/messages/$broadcastId': typeof AdminMessagesBroadcastIdRoute
+  '/admin/messages/new': typeof AdminMessagesNewRoute
   '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
@@ -305,6 +324,8 @@ export interface FileRouteTypes {
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
     | '/admin/identities/$identityId'
+    | '/admin/messages/$broadcastId'
+    | '/admin/messages/new'
     | '/admin/orgs/$orgId'
     | '/admin/passes/$passId'
     | '/admin/passes/new'
@@ -336,6 +357,8 @@ export interface FileRouteTypes {
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
     | '/admin/identities/$identityId'
+    | '/admin/messages/$broadcastId'
+    | '/admin/messages/new'
     | '/admin/orgs/$orgId'
     | '/admin/passes/$passId'
     | '/admin/passes/new'
@@ -368,6 +391,8 @@ export interface FileRouteTypes {
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
     | '/admin/identities/$identityId'
+    | '/admin/messages/$broadcastId'
+    | '/admin/messages/new'
     | '/admin/orgs/$orgId'
     | '/admin/passes/$passId'
     | '/admin/passes/new'
@@ -512,6 +537,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMessagesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/messages/$broadcastId': {
+      id: '/admin/messages/$broadcastId'
+      path: '/messages/$broadcastId'
+      fullPath: '/admin/messages/$broadcastId'
+      preLoaderRoute: typeof AdminMessagesBroadcastIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/messages/new': {
+      id: '/admin/messages/new'
+      path: '/messages/new'
+      fullPath: '/admin/messages/new'
+      preLoaderRoute: typeof AdminMessagesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/orgs/': {
       id: '/admin/orgs/'
       path: '/orgs'
@@ -619,6 +658,8 @@ interface AdminRouteRouteChildren {
   AdminConnectionsConnectionIdRoute: typeof AdminConnectionsConnectionIdRoute
   AdminConnectionsNewRoute: typeof AdminConnectionsNewRoute
   AdminIdentitiesIdentityIdRoute: typeof AdminIdentitiesIdentityIdRoute
+  AdminMessagesBroadcastIdRoute: typeof AdminMessagesBroadcastIdRoute
+  AdminMessagesNewRoute: typeof AdminMessagesNewRoute
   AdminOrgsOrgIdRoute: typeof AdminOrgsOrgIdRoute
   AdminPassesPassIdRoute: typeof AdminPassesPassIdRoute
   AdminPassesNewRoute: typeof AdminPassesNewRoute
@@ -646,6 +687,8 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminConnectionsConnectionIdRoute: AdminConnectionsConnectionIdRoute,
   AdminConnectionsNewRoute: AdminConnectionsNewRoute,
   AdminIdentitiesIdentityIdRoute: AdminIdentitiesIdentityIdRoute,
+  AdminMessagesBroadcastIdRoute: AdminMessagesBroadcastIdRoute,
+  AdminMessagesNewRoute: AdminMessagesNewRoute,
   AdminOrgsOrgIdRoute: AdminOrgsOrgIdRoute,
   AdminPassesPassIdRoute: AdminPassesPassIdRoute,
   AdminPassesNewRoute: AdminPassesNewRoute,

@@ -115,3 +115,13 @@ export function revokeKeyConfirm(name: string): ConfirmCopy {
     typed: false,
   };
 }
+
+/** Cancelling a message or change that has not started. */
+export function cancelBroadcastConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Cancel ${name}?`,
+    confirmLabel: 'Cancel message',
+    description: 'No pass changes. You can send a new one later.',
+    typed: false,
+  };
+}

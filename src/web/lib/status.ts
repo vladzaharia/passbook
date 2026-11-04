@@ -152,6 +152,13 @@ export const RUN_STATUS = {
   not_checked: { label: 'Not checked', tone: 'neutral', icon: CircleDashed },
 } as const satisfies Record<string, StatusEntry>;
 
+/** Messages and scheduled changes; sent, partial, failed and cancelled come from RUN_STATUS. */
+export const BROADCAST_STATUS = {
+  draft: { label: 'Draft', tone: 'neutral', icon: CircleDashed },
+  scheduled: { label: 'Scheduled', tone: 'info', icon: Clock },
+  sending: { label: 'Sending', tone: 'info', icon: Loader2, spin: true },
+} as const satisfies Record<string, StatusEntry>;
+
 /**
  * Selection or primary markers: attributes, not health, so neutral (teal is for actions and
  * links); the icon tells them apart. this_device takes the device's icon (StatusPill icon prop).
@@ -173,6 +180,7 @@ export const STATUS_VOCAB = {
   ...ORIGIN_STATUS,
   ...ROLE_STATUS,
   ...RUN_STATUS,
+  ...BROADCAST_STATUS,
   ...MARKER_STATUS,
 } as const;
 export type StatusKey = keyof typeof STATUS_VOCAB;
