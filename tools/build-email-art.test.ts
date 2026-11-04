@@ -3,10 +3,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   BUDDY_SLICES,
+  BUDDY_TIERS,
   buddyPath,
   EMAIL_BADGE,
   EMAIL_BUDDY,
-  EMAIL_MOODS,
   EMAIL_SCHEMES,
   sliceHeight,
 } from '../src/shared/email-art.ts';
@@ -17,31 +17,40 @@ const root = resolve(import.meta.dirname, '..');
 // Regenerate with `node tools/build-email-art.ts` when these fail after an art or size change.
 describe('public/email buddy PNGs', () => {
   const expected = new Set<string>();
-  for (const mood of EMAIL_MOODS)
-    for (const scheme of EMAIL_SCHEMES)
-      for (const slice of BUDDY_SLICES)
-        for (const density of [2, 3] as const) {
-          const path = buddyPath(mood, scheme, slice, density);
-          expected.add(path.slice('/email/'.length));
-          it(`${path} is the ${slice} slice at ${density}x, small and transparent`, () => {
-            const file = readFileSync(resolve(root, `public${path}`));
-            expect(file.length).toBeLessThan(10_000);
-            const img = decodePng(file);
-            const alpha = (x: number, y: number) => img.data[(y * img.width + x) * 4 + 3] ?? 0;
-            expect([img.width, img.height]).toEqual([
-              EMAIL_BUDDY.width * density,
-              sliceHeight(slice) * density,
-            ]);
-            // Clear corners; ink on the seam row (the pocket's base, then the legs below it).
-            expect(alpha(0, 0)).toBe(0);
-            expect(alpha(img.width - 1, img.height - 1)).toBe(0);
-            const row = slice === 'top' ? img.height - 2 * density : density;
-            const ink = Array.from({ length: img.width }, (_, x) => alpha(x, row)).filter(
-              (a) => a > 200,
-            );
-            expect(ink.length).toBeGreaterThan(0);
-          });
-        }
+  for (const tier of BUDDY_TIERS)
+    for (const mood of EMAIL_BUDDY[tier].moods)
+      for (const scheme of EMAIL_SCHEMES)
+        for (const slice of BUDDY_SLICES)
+          for (const density of [2, 3] as const) {
+            const path = buddyPath(tier, mood, scheme, slice, density);
+            expected.add(path.slice('/email/'.length));
+            it(`${path} is the ${slice} slice at ${density}x, small and transparent`, () => {
+              const file = readFileSync(resolve(root, `public${path}`));
+              expect(file.length).toBeLessThan(10_000);
+              const img = decodePng(file);
+              const alpha = (x: number, y: number) => img.data[(y * img.width + x) * 4 + 3] ?? 0;
+              expect([img.width, img.height]).toEqual([
+                EMAIL_BUDDY[tier].width * density,
+                sliceHeight(tier, slice) * density,
+              ]);
+              // The pocket's ink ends `clear` short of the right edge (the band lines it up with the body).
+              const clear = EMAIL_BUDDY[tier].clear * density;
+              const column = (x: number) =>
+                Array.from({ length: img.height }, (_, y) => alpha(x, y)).some((a) => a > 8);
+              if (slice === 'top') {
+                expect(column(img.width - clear)).toBe(false);
+                expect(column(img.width - clear - density)).toBe(true);
+              }
+              // Clear corners; ink on the seam row (the pocket's base, then the legs below it).
+              expect(alpha(0, 0)).toBe(0);
+              expect(alpha(img.width - 1, img.height - 1)).toBe(0);
+              const row = slice === 'top' ? img.height - 2 * density : density;
+              const ink = Array.from({ length: img.width }, (_, x) => alpha(x, row)).filter(
+                (a) => a > 200,
+              );
+              expect(ink.length).toBeGreaterThan(0);
+            });
+          }
 
   it('ships exactly these files, none named with @', () => {
     expect(new Set(readdirSync(resolve(root, 'public/email')))).toEqual(expected);

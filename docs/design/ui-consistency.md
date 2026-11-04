@@ -557,14 +557,19 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   wordmark on every page.
 - **Pass email** (`email/pass.ts` in the shared shell): the band is `/p`'s bar, the pass's icon
   (24 px, `md`) and the org's name, which wraps beside the icon; the buddy only when the org opts
-  in. The card: the title, the pass drawn small in its colours (its logo at most 36 px tall, then
-  its logoText unless the org's logo has the name; a `line` edge where its colour would melt into
-  the card, and in dark clients), then the badge and `Open your pass` as one pair: the badge's
-  143 × 44 box, `lg` corners (the step nearest the art's), 12 px apart, left on the text edge.
-  Side by side where the column fits both (390 up), stacked below. Inline blocks wrap without
-  media queries (Gmail); a ghost table keeps the row in Outlook. Images come from
-  `/p/:token/assets` with fixed boxes; the icon and logo answer `Cross-Origin-Resource-Policy:
-  cross-origin` so webmail can show them.
+  in, at M, so names up to about 20 characters stay on one line at 390 px. The card: the title, the
+  pass drawn small in its colours (its logo at most 36 px tall, then its logoText unless the org's
+  logo has the name; a `line` edge where its colour would melt into the card, and in dark
+  clients), then the badge and `Open your pass` as one pair: the badge's 143 × 44 box, `lg`
+  corners (the step nearest the art's), 12 px apart, left on the text edge. Side by side where the
+  column fits both (390 up), stacked below. Inline blocks wrap without media queries (Gmail).
+  Images come from `/p/:token/assets` with fixed boxes; the icon and logo answer
+  `Cross-Origin-Resource-Policy: cross-origin` so webmail can show them.
+- **Outlook** (Word-rendered): nothing depends on flex, `max-width`, `border-radius`, gradients or
+  inline blocks. Conditional comments give it a 480 px ghost table around the column, the pair as
+  two 143 px cells with a 12 px one between (the inline blocks are hidden from it), and the foil as
+  a solid 2 px row of its first colour; corners are square. `pass.test.ts` resolves the comments
+  as Word does and checks what is left.
 - Sign-in, magic-link confirm, link expired, no access, break-glass: one "hosted" shell shared by
   `/login` and the worker pages. See below.
 

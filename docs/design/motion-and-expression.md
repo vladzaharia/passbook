@@ -108,8 +108,8 @@ stylized face of its own and stays as it is.
 | Face XS | 24 × 20 | 1.25 px | Toasts (`BuddyFace size="sm"`) |
 | Face S | 48 × 44 | 1.5 px | Banners, Status (`BuddyFace size="md"`) |
 | S | 64 × 48 | 1.25 px | Dense chrome: the palette, the pass stage, the pass page's badge card, line and notice (`size="sm"`) |
-| M | 96 × 72 | 1.5 px | State boxes and cards, the QR's sign on the pass page and in My passes' QR dialog (`size="lg"`) |
-| L | 128 × 96, 112 × 84 under 640 | 1.75 px | Hero bands: sign-in, SSR (`size="xl"`; the art steps itself) |
+| M | 96 × 72 | 1.5 px | State boxes and cards, the QR's sign on the pass page and in My passes' QR dialog (`size="lg"`), the pass email's band |
+| L | 128 × 96, 112 × 84 under 640 | 1.75 px | Hero bands: sign-in, SSR (`size="xl"`; the art steps itself), the sign-in email |
 | Poster | 1.5 × L | 1.75 px | The social image |
 
 Nothing else. Lines are non-scaling, so each tier sets its own (`--art-w`, `art.css`); the heavier
@@ -252,14 +252,17 @@ previews). In the app and on SSR pages the same face is the PassBook mark (`Bran
 20-unit grid with 2-unit lines so the pocket's edges land on whole pixels at 20 px. The pocket is
 open; the passes are cut at its top line.
 
-**Email buddy.** Static PNGs of the seated `wallet` art at L (128×96) in each scheme's tokens
-(`public/email/`, 2× and 3×; `node tools/build-email-art.ts` after an art or token change). Mail
+**Email buddy.** Static PNGs of the seated `wallet` art in each scheme's tokens (`public/email/`,
+2× and 3×; `node tools/build-email-art.ts` after an art or token change): L (128×96) in the sign-in
+email, M (96×72) in the pass email. Mail
 clients cannot overlap cells, so it is cut at its seam: the top stands in the band at the right,
 beside the wordmark; the legs and contact shadow sit in the card's first row, over the foil. Dark
 clients that honour `<picture>` media get the dark art. Happy in the sign-in link, curious in
 Confirm your email. Decorative (`alt=""`); blocked, the band keeps its height. The pass email is
 the org's (the pass's icon, the org's name and the pass), so no buddy there unless the org opts in
-(`email.buddy`): then the same composition, happy, at the right end of the org's band.
+(`email.buddy`): then the same composition at M, happy, at the right end of the org's band. M
+leaves the org's name the room for about 20 characters on one line at 390 px; longer names wrap
+beside the icon. Word-rendered Outlook shows the light art only, its legs under a solid foil row.
 
 ## Action verbs
 

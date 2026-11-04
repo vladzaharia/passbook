@@ -18,13 +18,23 @@ export type BuddySlice = (typeof BUDDY_SLICES)[number];
 export const PASS_EMAIL_MOOD: EmailMood = 'happy';
 
 /**
- * The seated mascot over the email card, from tools/build-email-art.ts: the wallet art at the
- * canonical L size (128×96) in each scheme's tokens, cut at the seam (its base, y 66 of 72). Mail
- * clients cannot overlap two table cells, so the art is two images: the top stands in the band
- * above the card, the legs and contact shadow sit in the card's first row, over the foil. The feet
- * reach past the art's box (it draws with overflow visible), so the legs slice runs 12 px down.
+ * The seated mascot over the email card, from tools/build-email-art.ts: the wallet art in each
+ * scheme's tokens, cut at the seam (its base, y 66 of 72). Mail clients cannot overlap two table
+ * cells, so the art is two images: the top stands in the band above the card, the legs and contact
+ * shadow sit in the card's first row, over the foil. The feet reach past the art's box (it draws
+ * with overflow visible), so the legs slice runs below it.
+ *
+ * Two tiers (motion-and-expression.md, The buddy): L in the sign-in email, PassBook's own band; M
+ * in the pass email, where the org's mark and name lead and need the room at 390 px. `face`: the
+ * face's centre above the card, where the band's name lines up. `clear`: the transparent columns
+ * right of the pocket's ink. `moods`: the ones its email uses.
  */
-export const EMAIL_BUDDY = { width: 128, height: 96, seam: 88, legs: 12 } as const;
+export const EMAIL_BUDDY = {
+  l: { width: 128, height: 96, seam: 88, legs: 12, face: 28, clear: 20, moods: EMAIL_MOODS },
+  m: { width: 96, height: 72, seam: 66, legs: 9, face: 21, clear: 15, moods: [PASS_EMAIL_MOOD] },
+} as const;
+export type BuddyTier = keyof typeof EMAIL_BUDDY;
+export const BUDDY_TIERS = Object.keys(EMAIL_BUDDY) as BuddyTier[];
 
 /**
  * Apple's black badge for email (480×148 px) at 44 px tall, the touch height. Unmodified art: its
@@ -36,12 +46,14 @@ export const EMAIL_BADGE = {
   height: 44,
 } as const;
 
-export const sliceHeight = (slice: BuddySlice) =>
-  slice === 'top' ? EMAIL_BUDDY.seam : EMAIL_BUDDY.legs;
+export const sliceHeight = (tier: BuddyTier, slice: BuddySlice) =>
+  slice === 'top' ? EMAIL_BUDDY[tier].seam : EMAIL_BUDDY[tier].legs;
 
+/** L keeps its first file names: pass emails already sent link them. */
 export const buddyPath = (
+  tier: BuddyTier,
   mood: EmailMood,
   scheme: EmailScheme,
   slice: BuddySlice,
   density: 2 | 3,
-) => `/email/buddy-${mood}-${scheme}-${slice}-${density}x.png`;
+) => `/email/buddy-${tier === 'l' ? '' : `${tier}-`}${mood}-${scheme}-${slice}-${density}x.png`;

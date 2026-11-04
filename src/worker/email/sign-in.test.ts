@@ -140,7 +140,8 @@ describe('seated buddy', () => {
     const tag = buddyTag(signIn().html) ?? '';
     expect(tag).toContain('alt=""');
     expect(tag).toContain('role="presentation"');
-    expect(tag).toContain(`width="${EMAIL_BUDDY.width}" height="${EMAIL_BUDDY.seam}"`);
+    // L: the sign-in email is PassBook's own band.
+    expect(tag).toContain(`width="${EMAIL_BUDDY.l.width}" height="${EMAIL_BUDDY.l.seam}"`);
     expect(tag).toContain('border="0"');
     expect(tag).toContain(
       `srcset="${top('happy', 'light', 2)} 2x, ${top('happy', 'light', 3)} 3x"`,
@@ -163,12 +164,12 @@ describe('seated buddy', () => {
     // Table cells only: the top on the band's bottom edge, the legs from the seam row's top.
     expect(html).toMatch(
       new RegExp(
-        `<td valign="bottom" align="right" width="${EMAIL_BUDDY.width}" style="[^"]*vertical-align:bottom;font-size:0;line-height:0"><picture>`,
+        `<td valign="bottom" align="right" width="${EMAIL_BUDDY.l.width}" style="[^"]*vertical-align:bottom;font-size:0;line-height:0"><picture>`,
       ),
     );
     expect(html).toMatch(
       new RegExp(
-        `<td class="e-seam" align="right" valign="top" style="height:${EMAIL_BUDDY.legs}px;[^"]*background-size:100% 2px;`,
+        `<td class="e-seam" align="right" valign="top" style="height:${EMAIL_BUDDY.l.legs}px;[^"]*background-size:100% 2px;`,
       ),
     );
   });
@@ -197,7 +198,9 @@ describe('hosted card metrics', () => {
     expect(html).toMatch(
       /font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0\.015em;[^"]*">Sign in to PassBook/,
     );
-    expect(html).toMatch(/font-size:20px;line-height:28px;font-weight:600;[^"]*">.*PassBook<\/td>/);
+    expect(html).toMatch(
+      /font-size:20px;line-height:28px;mso-line-height-rule:exactly;font-weight:600;[^"]*">.*PassBook<\/td>/,
+    );
     expect(html).toMatch(
       /class="e-btn"[^>]*font-size:14px;line-height:20px;font-weight:500;padding:11px 24px;border-radius:6px/,
     );
