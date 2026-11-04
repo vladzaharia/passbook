@@ -177,7 +177,7 @@
         "x-widget": "list",
         "x-itemLabel": "Event",
         "x-addLabel": "Add event",
-        "x-help": "Season or series ticket. Wallet lists these on the pass. Past events drop off on their own.",
+        "x-help": "Season or series ticket. Wallet lists these on the pass. Past events drop off when the pass is next updated.",
         "items": {
           "type": "object",
           "required": [
@@ -553,7 +553,8 @@
       "use": "upcoming-events",
       "version": 1,
       "config": {
-        "input": "upcomingEvents"
+        "input": "upcomingEvents",
+        "timeZoneInput": "venueTimeZone"
       }
     }
   ]

@@ -145,7 +145,8 @@
         }
       ],
       "dateInformation": {
-        "date": "2030-06-01T19:00:00-07:00"
+        "date": "2030-06-01T19:00:00-07:00",
+        "timeZone": "America/Los_Angeles"
       },
       "identifier": "sample-event-203006011900",
       "isActive": false,
@@ -173,7 +174,8 @@
         }
       ],
       "dateInformation": {
-        "date": "2030-06-08T19:00:00-07:00"
+        "date": "2030-06-08T19:00:00-07:00",
+        "timeZone": "America/Los_Angeles"
       },
       "identifier": "sample-event-encore-203006081900",
       "isActive": false,
@@ -196,7 +198,8 @@
         }
       ],
       "dateInformation": {
-        "date": "2030-06-15T19:00:00-07:00"
+        "date": "2030-06-15T19:00:00-07:00",
+        "timeZone": "America/Los_Angeles"
       },
       "identifier": "sample-event-finale-203006151900",
       "isActive": false,

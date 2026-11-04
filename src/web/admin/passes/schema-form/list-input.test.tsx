@@ -76,11 +76,11 @@ describe('list schema', () => {
     expect(validateValues(schema, {})).toEqual({});
   });
 
-  it('cleans empty fields and rows, and ignores key order when comparing', () => {
+  it('cleans empty fields, keeps row places, and ignores key order when comparing', () => {
     expect(
       cleanValues({ events: [{ name: 'A', seats: undefined }, {}, { seats: 4, name: 'B' }] }),
     ).toEqual({
-      events: [{ name: 'A' }, { name: 'B', seats: 4 }],
+      events: [{ name: 'A' }, {}, { name: 'B', seats: 4 }],
     });
     expect(cleanValues({ events: [{}] })).toEqual({});
     expect(

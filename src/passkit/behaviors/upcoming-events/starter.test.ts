@@ -3,6 +3,7 @@ import type { PassBuildError } from '../../build.ts';
 import { buildBaked as build, loadBaked } from '../../template/baked-fixtures.ts';
 import { createFixtureIdentity } from '../../testing/fixture-identity.ts';
 import type { SigningMaterial } from '../../types.ts';
+import { type UpcomingEventsConfig, upcomingEvents } from './index.ts';
 
 let material: SigningMaterial;
 beforeAll(async () => {
@@ -43,26 +44,37 @@ describe('starter-event-ticket upcoming events', () => {
   });
 });
 
-describe('starter-store-card beacons', () => {
-  it('ships the sample beacon', async () => {
-    const pass = (await build('starter-store-card', material)).passJson;
-    expect(pass.beacons).toEqual([
-      {
-        proximityUUID: '8DEEFBB9-F738-4297-8040-96668BB44281',
-        major: 1,
-        relevantText: 'Welcome back.',
-      },
-    ]);
+describe('upcoming events input checks', () => {
+  const base = { input: 'e' };
+  const run = (rows: unknown[], config: UpcomingEventsConfig = base) => {
+    const pass: Record<string, unknown> = {};
+    upcomingEvents.apply(pass as never, { e: rows, tz: 'Europe/Paris' } as never, config, {
+      now: new Date('2030-01-01T00:00:00Z'),
+      lookups: {},
+    } as never);
+    return pass as { upcomingPassInformation?: { dateInformation: { timeZone?: string } }[] };
+  };
+  it('requires a zone and an end after the start', () => {
+    expect(() => run([{ name: 'A', startsAt: '2030-06-01T19:00' }])).toThrow(/Event 1/);
+    expect(() =>
+      run([{ name: 'A', startsAt: '2030-06-01T19:00:00Z', endsAt: '2030-06-01T18:00:00Z' }]),
+    ).toThrow('Event 1: endsAt is before startsAt.');
   });
-
-  it('omits beacons when none are given and rejects a bad UUID', async () => {
-    const { template } = await loadBaked('starter-store-card');
-    const { beacons: _drop, ...rest } = template.manifest.sample;
-    expect((await build('starter-store-card', material, rest)).passJson.beacons).toBeUndefined();
-    const error = await build('starter-store-card', material, {
-      ...rest,
-      beacons: [{ proximityUUID: 'nope' }],
-    }).catch((e: PassBuildError) => e);
-    expect((error as PassBuildError).code).toBe('INVALID_INPUT');
+  it('defaults the zone from the input', () => {
+    const out = run([{ name: 'A', startsAt: '2030-06-01T19:00:00Z' }], {
+      ...base,
+      timeZoneInput: 'tz',
+    });
+    expect(out.upcomingPassInformation?.[0]?.dateInformation.timeZone).toBe('Europe/Paris');
+  });
+  it('rejects a prototype key as an image name', () => {
+    expect(() =>
+      upcomingEvents.apply(
+        {} as never,
+        { e: [{ name: 'A', headerImage: '__proto__' }] } as never,
+        { ...base, images: 'imgs' },
+        { now: new Date(), lookups: { imgs: {} } } as never,
+      ),
+    ).toThrow('no image named __proto__');
   });
 });

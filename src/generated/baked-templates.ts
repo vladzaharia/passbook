@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "c9532455d34e6a24bfeb2d6ec2bd1d7e4640804c";
+export const BAKED_BUILD_HASH = "18567d9b0ce578179fb2ebb2d90a0e3887e0fa44";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -2590,7 +2590,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "6d3e1e551a02afd8",
+    "version": "5a1bd222523d923e",
     "name": "PassBook · Event ticket",
     "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
     "org": null,
@@ -2776,7 +2776,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-widget": "list",
             "x-itemLabel": "Event",
             "x-addLabel": "Add event",
-            "x-help": "Season or series ticket. Wallet lists these on the pass. Past events drop off on their own.",
+            "x-help": "Season or series ticket. Wallet lists these on the pass. Past events drop off when the pass is next updated.",
             "items": {
               "type": "object",
               "required": [
@@ -3152,7 +3152,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "use": "upcoming-events",
           "version": 1,
           "config": {
-            "input": "upcomingEvents"
+            "input": "upcomingEvents",
+            "timeZoneInput": "venueTimeZone"
           }
         }
       ]
@@ -3319,7 +3320,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/artwork@2x.png"
         }
       },
       {
@@ -3333,7 +3334,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/artwork@3x.png"
         }
       },
       {
@@ -3347,7 +3348,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/background@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/background@2x.png"
         }
       },
       {
@@ -3361,7 +3362,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/background@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/background@3x.png"
         }
       },
       {
@@ -3374,7 +3375,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4061939731,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/en.lproj/pass.strings"
         }
       },
       {
@@ -3388,7 +3389,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/icon@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/icon@2x.png"
         }
       },
       {
@@ -3402,7 +3403,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/icon@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/icon@3x.png"
         }
       },
       {
@@ -3416,7 +3417,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/logo@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/logo@2x.png"
         }
       },
       {
@@ -3430,7 +3431,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/logo@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/logo@3x.png"
         }
       },
       {
@@ -3444,7 +3445,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/primaryLogo@2x.png"
         }
       },
       {
@@ -3458,7 +3459,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/primaryLogo@3x.png"
         }
       },
       {
@@ -3472,7 +3473,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/secondaryLogo@2x.png"
         }
       },
       {
@@ -3486,7 +3487,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/secondaryLogo@3x.png"
         }
       },
       {
@@ -3500,7 +3501,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/thumbnail@2x.png"
         }
       },
       {
@@ -3514,7 +3515,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/6d3e1e551a02afd8/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/5a1bd222523d923e/thumbnail@3x.png"
         }
       }
     ],

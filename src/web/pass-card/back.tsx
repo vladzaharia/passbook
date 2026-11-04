@@ -29,8 +29,10 @@ function Group({ title, fields }: { title?: string; fields: FieldView[] }) {
 function Upcoming({ events }: { events: UpcomingView[] }) {
   if (!events.length) return null;
   return (
-    <section className="pc-group" aria-label="Upcoming events">
-      <h3 className="pc-group-title">Upcoming</h3>
+    <section className="pc-group" aria-labelledby="pc-upcoming-title">
+      <h3 id="pc-upcoming-title" className="pc-group-title">
+        Upcoming events
+      </h3>
       <ol className="pc-list pc-upcoming">
         {events.map((e) => (
           <li key={e.id} className="pc-up" data-active={e.active || undefined}>

@@ -125,6 +125,8 @@ export function ListInput({
   };
   const onKeyDown = (e: KeyboardEvent, i: number) => {
     if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || disabled) return;
+    const t = e.target as HTMLElement;
+    if (t.closest('select, [role="combobox"], [aria-expanded="true"]')) return;
     e.preventDefault();
     move(i, e.key === 'ArrowUp' ? -1 : 1);
   };
@@ -157,19 +159,23 @@ export function ListInput({
           </span>
         ) : null}
       </legend>
-      <p
-        id={helpId}
-        className={cn('mb-3 max-w-[65ch] text-xs', listError ? 'text-danger' : 'text-fg-muted')}
-      >
-        {listError ??
-          field.help ??
-          `${rows.length} of ${def.max}. Alt with the arrow keys moves a row.`}
+      {(listError ?? field.help) ? (
+        <p
+          id={helpId}
+          className={cn('mb-3 max-w-[65ch] text-xs', listError ? 'text-danger' : 'text-fg-muted')}
+        >
+          {listError ?? field.help}
+        </p>
+      ) : null}
+      <p className="mb-3 max-w-[65ch] text-xs text-fg-muted">
+        {`${rows.length} of ${def.max}. Alt with the arrow keys moves a row.`}
       </p>
       {rows.length > 0 ? (
         <ol className="mb-3 flex flex-col gap-3">
           {rows.map((row, i) => {
             const id = rowIds[i] as string;
             const name = summary(def.fields, row);
+            const rowError = serverErrors?.[`${field.key}.${i}`];
             return (
               <li
                 key={id}
@@ -179,6 +185,8 @@ export function ListInput({
                 }}
                 tabIndex={-1}
                 aria-labelledby={`${titleId}-${id}`}
+                aria-describedby={rowError ? `${titleId}-${id}-err` : undefined}
+                aria-invalid={rowError ? true : undefined}
                 onKeyDown={(e) => onKeyDown(e, i)}
                 data-fresh={fresh === id || undefined}
                 className="min-w-0 rounded-md border border-border bg-surface-sunken p-3 outline-none focus-visible:outline-2 focus-visible:outline-focus motion-safe:data-fresh:animate-[wl-fade-in_var(--wl-dur-enter)_var(--wl-ease-out)_backwards] md:p-4"
@@ -217,8 +225,10 @@ export function ListInput({
                     />
                   </div>
                 </div>
-                {serverErrors?.[`${field.key}.${i}`] ? (
-                  <p className="mb-3 text-xs text-danger">{serverErrors[`${field.key}.${i}`]}</p>
+                {rowError ? (
+                  <p id={`${titleId}-${id}-err`} className="mb-3 text-xs text-danger">
+                    {rowError}
+                  </p>
                 ) : null}
                 <FormGrid>
                   {def.fields.map((sub) => {

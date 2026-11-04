@@ -4,7 +4,13 @@ import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
 import { describeSchema, type FormValues } from './schema-form/index.ts';
 
 const shown = (v: unknown) =>
-  v === undefined || v === '' ? null : typeof v === 'string' ? v : JSON.stringify(v);
+  v === undefined || v === ''
+    ? null
+    : typeof v === 'string'
+      ? v
+      : Array.isArray(v)
+        ? `${v.length} ${v.length === 1 ? 'item' : 'items'}`
+        : JSON.stringify(v);
 
 interface Row {
   label: string;

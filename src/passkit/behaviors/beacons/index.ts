@@ -8,7 +8,7 @@ export interface BeaconConfig {
 }
 
 export interface BeaconsConfig {
-  /** Beacons every pass carries. They come first and are never cut. */
+  /** Beacons every pass carries. They come first and are cut only if `max` is below their count. */
   beacons?: BeaconConfig[];
   /** Input holding an array of beacons for this pass. */
   input?: string;

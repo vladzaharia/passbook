@@ -268,10 +268,9 @@ export function cleanValues(values: FormValues): FormValues {
     if (value === undefined || value === null || value === '') continue;
     if (typeof value === 'number' && Number.isNaN(value)) continue;
     if (Array.isArray(value)) {
-      const rows = value
-        .map((row) => (isObject(row) ? sortKeys(cleanValues(row)) : row))
-        .filter((row) => !isObject(row) || Object.keys(row).length > 0);
-      if (rows.length > 0) out[key] = rows;
+      const rows = value.map((row) => (isObject(row) ? sortKeys(cleanValues(row)) : row));
+      // Empty rows keep their place so a server error at `list/1/x` maps to form row 1.
+      if (rows.some((row) => !isObject(row) || Object.keys(row).length > 0)) out[key] = rows;
       continue;
     }
     out[key] = value;

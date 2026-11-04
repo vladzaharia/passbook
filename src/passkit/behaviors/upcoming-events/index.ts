@@ -5,6 +5,8 @@ export interface UpcomingEventsConfig {
   input: string;
   /** Lookup table of remote images by key: `{ URL, SHA256, size, scale? }`. */
   images?: string;
+  /** Input holding the default IANA time zone; a row's own `timeZone` wins. */
+  timeZoneInput?: string;
   /** Lowers the cap of 10. */
   max?: number;
   /** How long an event without an end counts as running. */
@@ -27,10 +29,13 @@ const configSchema: JsonSchemaObject = {
   properties: {
     input: { type: 'string', minLength: 1 },
     images: { type: 'string', minLength: 1 },
+    timeZoneInput: { type: 'string', minLength: 1 },
     max: { type: 'integer', minimum: 1, maximum: MAX_EVENTS },
     fallbackMinutes: { type: 'integer', minimum: 1, maximum: 10080 },
   },
 };
+
+const ZONED = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/i;
 
 type Row = Record<string, Json>;
 
@@ -43,8 +48,10 @@ function date(row: Row, key: string, label: string): { iso: string; ms: number }
   const iso = text(row, key);
   if (!iso) return undefined;
   const ms = Date.parse(iso);
-  if (Number.isNaN(ms) || !/T\d{2}:\d{2}/.test(iso))
-    throw new Error(`${label}: ${key} needs a date and time.`);
+  if (Number.isNaN(ms) || !ZONED.test(iso))
+    throw new Error(
+      `${label}: ${key} needs a date and time with a zone, like 2030-06-01T19:00:00-07:00.`,
+    );
   return { iso, ms };
 }
 
@@ -63,8 +70,9 @@ function remoteImage(
   key: string,
   label: string,
 ): Json {
-  const record = table?.[key];
-  if (!record) throw new Error(`${label}: no image named ${key}.`);
+  const record = table && Object.hasOwn(table, key) ? table[key] : undefined;
+  if (typeof record !== 'object' || record === null)
+    throw new Error(`${label}: no image named ${key}.`);
   const { URL, SHA256, size, scale } = record;
   return {
     URLs: [{ URL, SHA256, size, ...(scale !== undefined ? { scale } : {}) }],
@@ -74,6 +82,8 @@ function remoteImage(
 /**
  * Maps an array input of events to `upcomingPassInformation`: sorted by start, past events
  * dropped, the running one marked active. An event with no start shows as to be determined.
+ * The list is a snapshot of build time: past events and the active mark only update when the
+ * pass is next published.
  */
 export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
   id: 'upcoming-events',
@@ -100,6 +110,8 @@ export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
       if (!name) throw new Error(`${label} needs a name.`);
       const start = date(row, 'startsAt', label);
       const end = date(row, 'endsAt', label);
+      if (start && end && end.ms < start.ms)
+        throw new Error(`${label}: endsAt is before startsAt.`);
       const until = end?.ms ?? (start ? start.ms + fallback : undefined);
       if (until !== undefined && until < now) return [];
 
@@ -143,7 +155,11 @@ export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
         if (ref) pictures[key] = remoteImage(images, ref, label);
       }
 
-      const zone = text(row, 'timeZone');
+      const zone =
+        text(row, 'timeZone') ??
+        (config.timeZoneInput && typeof input[config.timeZoneInput] === 'string'
+          ? (input[config.timeZoneInput] as string)
+          : undefined);
       const entry: Row = {
         identifier,
         name,
