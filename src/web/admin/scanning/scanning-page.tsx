@@ -1,10 +1,12 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
 import { EventsTab, ScansTab, StaffTab } from './placeholder-tabs.tsx';
 import { useScannerPages } from './queries.ts';
+import { NewScannerDialog } from './scanners/new-scanner-dialog.tsx';
+import type { ScannerDraft } from './scanners/scanner-draft.ts';
 import { ScannersTab } from './scanners/scanners-tab.tsx';
 import {
   DEFAULT_TAB,
@@ -30,11 +32,18 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
   const { orgId } = useOrgScope();
   const tab = search.tab ?? DEFAULT_TAB;
   const live = useScannerPages(orgId, false);
+  // New scanner, or Duplicate with the other scanner's settings.
+  const [creating, setCreating] = useState<{ initial?: ScannerDraft } | undefined>();
+  useEffect(() => {
+    if (search.new !== '1') return;
+    setCreating({});
+    void navigate({ to: '.', search: (prev) => ({ ...prev, new: undefined }), replace: true });
+  }, [search.new, navigate]);
   const noScanners =
     !live.isPending && !live.isError && !live.data?.pages.some((p) => p.items.length);
 
   const newScanner = (variant: 'primary' | 'outline'): ReactNode => (
-    <Button variant={variant} iconStart={<Plus aria-hidden />}>
+    <Button variant={variant} iconStart={<Plus aria-hidden />} onClick={() => setCreating({})}>
       New scanner
     </Button>
   );
@@ -60,7 +69,11 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           ))}
         </TabsList>
         <TabsContent value="scanners">
-          <ScannersTab live={live} newButton={newScanner('primary')} />
+          <ScannersTab
+            live={live}
+            newButton={newScanner('primary')}
+            onDuplicate={(initial) => setCreating({ initial })}
+          />
         </TabsContent>
         <TabsContent value="events">
           <EventsTab />
@@ -72,6 +85,13 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           <ScansTab />
         </TabsContent>
       </Tabs>
+      {creating ? (
+        <NewScannerDialog
+          open
+          initial={creating.initial}
+          onOpenChange={(o) => !o && setCreating(undefined)}
+        />
+      ) : null}
     </>
   );
 }

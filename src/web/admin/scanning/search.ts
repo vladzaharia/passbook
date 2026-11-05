@@ -13,7 +13,10 @@ const id = z.string().min(1).max(64).optional().catch(undefined);
  */
 export const scanningSearchSchema = z.object({
   tab: z.enum(SCANNING_TABS).optional().catch(undefined),
-  new: z.literal('1').optional().catch(undefined),
+  // A hand-typed ?new=1 parses as the number 1; the palette sends the string.
+  new: z
+    .preprocess((v) => (v === 1 || v === '1' ? '1' : undefined), z.literal('1').optional())
+    .catch(undefined),
   scannerId: id,
   staffId: id,
   eventId: id,
