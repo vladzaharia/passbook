@@ -1065,7 +1065,7 @@ photo in the identity row, the system holder line with the meta line under it, t
 (header cost included), and a display-only save that is live at once (**Version 5 is live on scanners. Passes are
 unchanged.**, no Activate).
 
-**`mockups` (not shipped) (v1), superseded where B applies.** The `scan-*` result tiles are **superseded** and must
+**`mockups/` (v1, not shipped), superseded where B applies.** The `scan-*` result tiles are **superseded** and must
 not be matched: 04 Checked in, 05 Already checked in, 06 Refused, 07 Offline saved, 10 Desk add stamps, 11 Stamps
 added, 12 Redeem confirm, 13 Needs a Manager, 15 Milestone, 16 iPad door, 18 Test scanner live pass. The others keep
 their content and copy but take the B shell (capsule, live camera, dock, buddy on the dock) before they are matched:

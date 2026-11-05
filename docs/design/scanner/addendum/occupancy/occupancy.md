@@ -46,8 +46,6 @@ Files here (`addendum/occupancy/`):
 
 Only this file ships. Every row above is **not shipped**: the reference code, its tests, the generators, the sheets and the shots stay in the design folder. The sections that cite them carry the rules in prose and SQL.
 
-Only this file ships. Every row above is **not shipped**: the reference code, its tests, the generators, the sheets and the shots stay in the design folder. The sections that cite them carry the rules in prose and SQL.
-
 ---
 
 ## 0. Decisions
