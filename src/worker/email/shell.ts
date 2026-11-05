@@ -14,10 +14,10 @@ export { escapeHtml };
 export const EMAIL_LIGHT = T.light;
 
 const D = T.dark;
-/** The amber of a test pass's strip (the page's warning tones): the foil's amber as the edge. */
+/** A test pass's strip: the foil's amber edge on a sunken block, from the tokens alone. */
 const TEST = {
-  light: { bg: '#fff4de', ink: '#7a4300', edge: T.light.foil3 },
-  dark: { bg: '#2a1d05', ink: D.foil3, edge: D.foil3 },
+  light: { bg: T.light.sunken, ink: T.light.strong, edge: T.light.foil3 },
+  dark: { bg: D.sunken, ink: D.foil3, edge: D.foil3 },
 };
 /** Static only: no @keyframes, no GIFs (motion-and-expression.md, Email). */
 const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light dark}
