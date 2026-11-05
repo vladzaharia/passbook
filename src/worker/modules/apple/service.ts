@@ -223,6 +223,9 @@ export async function recordDeviceLogs(
   if (total > LOG_LINES_PER_HOUR)
     throw new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
   await insertLogs(ctx.env.DB, kept, null, now);
-  await attachLogLines(ctx, kept);
+  // Attaching is best effort: a failure must not turn Wallet's log post into a 500.
+  await attachLogLines(ctx, kept).catch((error: unknown) =>
+    ctx.log.warn('events.log_attach_failed', { code: 'EVENT_LOG_ATTACH', error }),
+  );
   return kept.length;
 }
