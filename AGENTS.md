@@ -90,7 +90,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | n8-sv | scanner: server, device API | `modules/scan/{routes,guard,rules,auth-store,staff-pin,staff-session,resolve,act,effects,undo,group,lookup,outcome,counts,assets,roster,batch,jobs,dto,repo-device,repo-scans,repo-gates,repo-lookup,repo-counts}.ts` |
 | n8-sc | scanner: server, console | `modules/scan/{routes-pair,routes-scanners,routes-events,routes-staff,routes-scans,pairing,scanners,events,staff-admin,feed,live,dto-console,repo-scanners,repo-staff,repo-events,repo-target}.ts` |
 | n8-ds | scanner: display | `src/passkit/template/scan-display/**` except `schema.ts` and `icons.ts`, `modules/scan/{display,repo-history,routes-display}.ts` |
-| n8-pt | scanner: passes, templates, NFC server | `modules/nfc/**`, `src/passkit/template/scan.ts`, `src/shared/pass-view/validity.ts`, `migrations/0018_templates_build_key.sql` |
+| n8-pt | scanner: passes, templates, NFC server | `modules/nfc/**`, `src/passkit/template/scan.ts`, `src/shared/pass-view/validity.ts`, `migrations/00NN_templates_build_key.sql` (next free number; `0018` is taken) |
 | n8-cc | scanner: client core | `src/web/scan/{main.tsx,machine,input,camera,platform,api,offline,dev}/**` (not the n8-p0 files), `src/web/scan/boot/{use-scan-session,pair-link}.ts` |
 | n8-ui | scanner: screens | `src/web/scan/{app.tsx,ui,result,display,lookup,desk}/**`, `src/web/scan/boot/*.tsx` |
 | n8-bu | scanner: buddy, sound | `src/web/scan/{buddy,sound}/**`, the scanner's `ui/art` additions |

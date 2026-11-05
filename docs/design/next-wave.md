@@ -538,3 +538,62 @@ Open risks:
   actions under the More menu below 1024 px were not opened. Those were reviewed in code.
 - The earlier risks stand: Wallet's handling of removed passes and `upcomingPassInformation` is unverified on a
   device, push keys are untested against Apple, and the Broadcast workflow ran only under local Workflows.
+
+## Scanner Phase 0 merged
+
+Merged `next/n8-p0` (at `9de04a7`) into `next/integration` on 2026-11-05. Spec: `docs/design/scanner/scanner-plan.md`
+§2 and `docs/design/scanner/addendum/p0-amendments.md`. `npm run check` is green (341 test files, 3891 tests, build,
+bundle budgets and dry run; initial load 229,219 B, `/scan` initial load 112,409 B), and e2e passes (53 tests, setup
+included).
+
+What is in it:
+
+- Access model: `0014_scan.sql` (scan events and their templates, staff, scanners with device kind and role, scanner
+  templates, scans, gates, VAS keys, `passes.lookup_hash`, and the `scanner` audit actor). The scanner principal,
+  CSRF, `RL_SCAN_*` rate limits and the derived HMAC key. The scan guard, rules, staff PINs and scanner store.
+- Frozen contracts: `contracts/{scan,scan-session,scanners,nfc,scan-display}.ts`, `copy/scan.ts`,
+  `scan-lookup.ts`, `scan-defaults.ts`, the display schema and icons, and the client's machine, timing and input
+  types. Metrics carry scan counts that stay zero until the module reports.
+- `/scan` as its own document: `scan.html` and `scan.webmanifest`, a CSP with wasm and `worker-src`, camera and
+  wake-lock permissions, `no-referrer`, the decoder worker's own CSP, and its own bundle budget.
+- Empty routers at `/api/v1/scan`, `/scanners`, `/scan-events`, `/scan-staff`, `/scans`, `/scan-display` and
+  `/api/v1/nfc`. Scan cron hooks that run no queries yet. A display stub.
+- The design docs in `docs/design/scanner/`, and ownership per scanner stream (n8-p0 to n8-td) in `AGENTS.md`.
+
+Integration decisions:
+
+- The review's removals stand. There is no Scanning nav item and no `/admin/scanning` page until M1. Phase 0 had
+  renamed Scanners to Scanning; both are dropped. `isPublicPath` stays `/login` only.
+- Conflicts: `settings.ts` keeps `PUSH_BUDGET_DEFAULT` and adds the scan settings, `passes.ts` imports both, and
+  `AGENTS.md` takes the per-stream scanner rows.
+- Merge fixes: audit labels for `scan_staff.pin_locked` and `scanner.pin_flood`, which the review's vocabulary test
+  requires. The `/scan` CSP parity test now compares `frame-src`, which the review added to the Worker CSP.
+- **The `/scan` gate.** `vars.SCAN_ENABLED` is `"0"` in `wrangler.jsonc`. While it is off, the Worker answers
+  `/scan`, `/scan/*`, `/scan.html`, `/scan.webmanifest` and `/assets/decode-worker-*` with the not-found page,
+  `no-store`. `scan.webmanifest` left the `run_worker_first` exceptions so the Worker sees it. The scan API routers
+  stay mounted and refuse as before. Tests (`vitest.config.ts`), e2e (`.dev.vars.e2e`) and dev (`npm run dev:vars`)
+  turn it on. `src/worker/scan-gate.test.ts` covers both states, and a `wrangler dev` run of the built Worker with
+  its real assets showed the same: off, those paths are 404 while `/login` and the scan API answer as before; on,
+  `/scan` serves `scan.html` and the manifest keeps its `_headers`. The scan entry chunk still ships under its hashed
+  name. Nothing links to it while the gate is off, and an SPA chunk shares the `scan-` prefix, so it is not gated by
+  name. Turn it on at M1 (`docs/operations.md`, Scanner gate).
+
+Migration order:
+
+- After this release, production has 0001 to 0013, 0015, 0016 and 0018. The next deploy applies `0014_scan.sql`
+  after them, because wrangler applies every file that `d1_migrations` does not list.
+- Proven locally with `--local --persist-to` on scratch directories, never `--remote`:
+  - on a fresh D1, all 17 files apply in order;
+  - on a D1 with production's 16 files and audit rows of every actor type, only 0014 applies. A rerun applies
+    nothing, the audit rows survive the `audit_log` rebuild, and `scanner` becomes a valid actor;
+  - both schemas match except the position of `passes.lookup_hash`, which `ADD COLUMN` appends. No code reads
+    `passes` by column position.
+- `0018` is taken by `0018_broadcasts_mode.sql`. The scanner plan's later files (`0018_templates_build_key` for PT.7,
+  then ST's and AX's) take the next free numbers when they land. `0017` stays reserved for n5.
+
+Open risks:
+
+- `0014` rebuilds `audit_log` on production data. Note the time-travel bookmark before the deploy that applies it
+  (`docs/operations.md`, Day two).
+- The audit page shows a `scanner` actor as "Scanner" and a short id, with the generic glyph, until the admin stream
+  names it.
