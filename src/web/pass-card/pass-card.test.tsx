@@ -242,3 +242,32 @@ describe('truthful front', () => {
     }
   });
 });
+
+describe('voided and removed', () => {
+  it('stamps a voided pass and greys the card itself', () => {
+    const { container } = render(<PassCard view={view({ ...generic, voided: true })} />);
+    expect(screen.getByText('Voided')).toBeInTheDocument();
+    expect(container.querySelector('.pc-card')).toHaveAttribute('data-voided');
+  });
+
+  it('dims a removed pass with no stamp', () => {
+    const { container } = render(<PassCard view={view({ ...generic, voided: true })} removed />);
+    expect(screen.queryByText('Voided')).toBeNull();
+    expect(container.querySelector('.pc-root')).toHaveAttribute('data-removed');
+    expect(container.querySelector('.pc-card')).not.toHaveAttribute('data-voided');
+  });
+});
+
+describe('long primary values', () => {
+  it('step down from 8 characters beside a thumbnail, and again past 12', () => {
+    const named = (value: string) =>
+      view({
+        ...generic,
+        generic: { primaryFields: [{ key: 'name', label: 'Member', value }] },
+      });
+    const { container } = render(<PassCard view={named('Member M-006')} />);
+    const field = container.querySelector('.pc-primary .pc-field');
+    expect(field).toHaveAttribute('data-mid');
+    expect(field).not.toHaveAttribute('data-long');
+  });
+});

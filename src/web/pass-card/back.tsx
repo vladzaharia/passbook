@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type {
   FieldView,
   LayoutView,
@@ -26,11 +27,12 @@ function Group({ title, fields }: { title?: string; fields: FieldView[] }) {
 }
 
 /** Wallet's event list: a date tile, then the name over the day, time and venue. */
-function Upcoming({ events }: { events: UpcomingView[] }) {
+export function Upcoming({ events }: { events: UpcomingView[] }) {
+  const titleId = useId();
   if (!events.length) return null;
   return (
-    <section className="pc-group" aria-labelledby="pc-upcoming-title">
-      <h3 id="pc-upcoming-title" className="pc-group-title">
+    <section className="pc-group" aria-labelledby={titleId}>
+      <h3 id={titleId} className="pc-group-title">
         Upcoming events
       </h3>
       <ol className="pc-list pc-upcoming">

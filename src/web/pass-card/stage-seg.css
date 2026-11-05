@@ -20,7 +20,7 @@
 @media (pointer: coarse) {
   .wl-seg > [role="radio"],
   .pc-seg label {
-    min-height: 2.375rem;
+    min-height: 2.75rem;
   }
 }
 

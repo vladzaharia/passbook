@@ -59,6 +59,7 @@ export function Field({ field, big }: { field: FieldView; big?: boolean }) {
       data-align={field.align}
       data-big={big || undefined}
       data-long={field.text.length > 12 || undefined}
+      data-mid={field.text.length > 8 || undefined}
     >
       {field.label ? <span className="pc-label">{field.label}</span> : null}
       <span className="pc-value">

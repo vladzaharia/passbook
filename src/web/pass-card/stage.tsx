@@ -91,6 +91,7 @@ export function PassCardStage({
   toggleId,
   className,
   target,
+  removed,
 }: PassStageProps) {
   const stage = useRef<HTMLDivElement>(null);
   const lift = useRef<HTMLDivElement>(null);
@@ -113,7 +114,7 @@ export function PassCardStage({
     const hidden = !toggleId && s !== face;
     return (
       <div className="pc-face" data-side={s} inert={hidden}>
-        <PassCard view={view} face={s} {...(target ? { target } : {})} />
+        <PassCard view={view} face={s} {...(target ? { target } : {})} removed={removed} />
         <span className="pc-shine" aria-hidden />
         <span className="pc-sheen" aria-hidden />
       </div>
