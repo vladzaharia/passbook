@@ -28,6 +28,8 @@ writeDevVars(varsFile, {
   ADMIN_SYNC_BUCKET_MS: '2000',
   // Token used by e2e/11-breakglass.spec.ts.
   BREAKGLASS_TOKEN_SHA256: createHash('sha256').update('wbg_e2e-breakglass-token').digest('hex'),
+  // The scanner document, off in production until M1.
+  SCAN_ENABLED: '1',
 });
 
 const env = {

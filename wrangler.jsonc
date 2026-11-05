@@ -18,7 +18,8 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     // Every request runs the Worker first (host policy, routes, the SPA's pages from ASSETS)
-    // except the files public/ ships, which the asset layer serves on every host.
+    // except the files public/ ships, which the asset layer serves on every host. scan.webmanifest
+    // runs the Worker too: SCAN_ENABLED gates it with /scan.
     // tools/wrangler-config.test.ts keeps the exceptions in step with public/; vite.config.ts adds
     // Vite's own dev paths.
     "run_worker_first": [
@@ -36,7 +37,6 @@
       "!/og-image.png",
       "!/pass-tilt.js",
       "!/robots.txt",
-      "!/scan.webmanifest",
       "!/templates/*",
       "!/theme-init.js"
     ]
@@ -54,7 +54,9 @@
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
     "PLATFORM_TEAM_ID": "48H7CLBV8Y",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFujM8ev6K0ns9wy",
-    "SSRF_DENY_HOSTS": "plrs.im"
+    "SSRF_DENY_HOSTS": "plrs.im",
+    // "1" serves /scan, scan.webmanifest and the decoder worker. Off in production until M1.
+    "SCAN_ENABLED": "0"
   },
 
   "secrets": {

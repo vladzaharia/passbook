@@ -39,8 +39,15 @@ describe('wrangler.jsonc', () => {
       .map((entry) => (entry.isDirectory() ? `!/${entry.name}/*` : `!/${entry.name}`));
     expect(shipped.length).toBeGreaterThan(5);
     // index.html stays a static asset (it redirects to /). public/templates comes from
-    // npm run gen, so a fresh checkout may not have it yet.
-    expect(new Set(patterns)).toEqual(new Set(['/*', '!/index.html', '!/templates/*', ...shipped]));
+    // npm run gen, so a fresh checkout may not have it yet. scan.webmanifest goes through the
+    // Worker's scan gate.
+    expect(shipped).toContain('!/scan.webmanifest');
+    const served = shipped.filter((p) => p !== '!/scan.webmanifest');
+    expect(new Set(patterns)).toEqual(new Set(['/*', '!/index.html', '!/templates/*', ...served]));
+  });
+
+  it('keeps the scanner off in production until M1', () => {
+    expect(wrangler.vars?.SCAN_ENABLED).toBe('0');
   });
 
   it('attaches the canonical host and each redirect host as custom domains', () => {

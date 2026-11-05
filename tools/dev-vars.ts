@@ -16,6 +16,8 @@ const entries: Record<string, string> = {
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-dev',
   PUBLIC_BASE_URL: 'http://localhost:5173',
+  // The scanner document, off in production until M1.
+  SCAN_ENABLED: '1',
 };
 
 if (!have.has('SIGNER_PLATFORM_CERTIFICATE') || !have.has('SIGNER_PLATFORM_PRIVATE_KEY')) {

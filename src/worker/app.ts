@@ -1,5 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Context } from 'hono';
+import { createMiddleware } from 'hono/factory';
 import { apiKeysRoutes } from './modules/api-keys/routes.ts';
 import { appleRoutes } from './modules/apple/routes.ts';
 import { auditRoutes } from './modules/audit/routes.ts';
@@ -60,12 +61,33 @@ async function spaPage(c: Context<AppBindings>): Promise<Response | null> {
   return staticAsset(await c.env.ASSETS.fetch(c.req.raw));
 }
 
+/** The scanner's document and the files only it loads. */
+const SCAN_ONLY = /^\/(?:scan(?:\/.*|\.html|\.webmanifest)?|assets\/decode-worker-[^/]*)$/;
+
+/**
+ * Off unless SCAN_ENABLED is "1" (production turns it on at M1): every scanner path is the
+ * not-found page, uncached so turning it on takes effect at once. The scan API stays mounted.
+ */
+const scanGate = createMiddleware<AppBindings>(async (c, next) => {
+  if (!SCAN_ONLY.test(c.req.path)) return next();
+  if (c.env.SCAN_ENABLED !== '1') {
+    const res = await asBrowserPage(c, notFoundHandler(c));
+    const out = new Response(res.body, res);
+    out.headers.set('cache-control', 'no-store');
+    return out;
+  }
+  // A file-like path the SPA fallback would refuse; run_worker_first sends it here for the gate.
+  if (c.req.path === '/scan.webmanifest') return staticAsset(await c.env.ASSETS.fetch(c.req.raw));
+  return next();
+});
+
 /** One line per module. Adding a module means adding a line here and nothing else shared. */
 export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   const app = new OpenAPIHono<AppBindings>();
   app.use('*', requestContext({ stores: options.stores ?? denyAllStores, clock: options.clock }));
   app.use('*', securityHeaders);
   if (options.hostPolicy) app.use('*', hostPolicy);
+  app.use('*', scanGate);
   app.onError((error, c) => asBrowserPage(c, handleError(error, c) as Response));
   app.notFound(async (c) => (await spaPage(c)) ?? asBrowserPage(c, notFoundHandler(c)));
 

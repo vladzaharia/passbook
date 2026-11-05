@@ -39,6 +39,8 @@ export default defineConfig({
                   SIGNER_PLATFORM_CERTIFICATE: 'replaced-in-tests',
                   SIGNER_PLATFORM_PRIVATE_KEY: 'replaced-in-tests',
                   BREAKGLASS_TOKEN_SHA256: '',
+                  // Production keeps the scanner off until M1; tests cover it on (and off, by override).
+                  SCAN_ENABLED: '1',
                 },
               },
             };
