@@ -1,0 +1,646 @@
+/* The /scan shell (BF "Phone geometry", "z-order", "Colour tokens"). Verdict hues are the same in
+   both themes; the full-screen layers are deeper in dark, for a dark venue. Text, inset and chip
+   tokens are the display painter's --sd-* (display.css). */
+:root {
+  --scan-ok: #22c55e;
+  --scan-ok-on: #04170b;
+  --scan-heads: #f59e0b;
+  --scan-heads-on: #1f1600;
+  --scan-refused: #b91c1c;
+  --scan-refused-on: #ffffff;
+  --scan-system: #334155;
+  --scan-system-on: #ffffff;
+
+  --scan-scrim: rgb(0 0 0 / 0.38);
+  --scan-wash-ok: rgb(21 128 61 / 0.62);
+  --scan-wash-heads: rgb(180 83 9 / 0.62);
+  --scan-wash-refused: rgb(185 28 28 / 0.66);
+  --scan-wash-system: rgb(51 65 85 / 0.66);
+  --scan-ring-glow: 70%;
+
+  --scan-card: #0d111b;
+  --scan-glass: rgb(13 17 27 / 0.74);
+  --scan-glass-solid: rgb(13 17 27 / 0.92);
+  --scan-accent-on: #04201c;
+  --scan-camera: #05070c;
+
+  --scan-z-cam: 0;
+  --scan-z-tuck: 9;
+  --scan-z-dock: 10;
+  --scan-z-card: 11;
+  --scan-z-buddy: 12;
+  --scan-z-capsule: 20;
+  --scan-z-ring: 40;
+
+  --scan-dock-h: 166px;
+  --scan-card-top: 117px;
+  --scan-card-bottom: 284px;
+  --scan-card-w: 342px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --scan-scrim: rgb(4 6 12 / 0.3);
+    --scan-wash-ok: rgb(34 197 94 / 0.5);
+    --scan-wash-heads: rgb(245 158 11 / 0.56);
+    --scan-wash-refused: rgb(220 38 38 / 0.6);
+    --scan-wash-system: rgb(51 65 85 / 0.56);
+    --scan-ring-glow: 55%;
+    --scan-card: #ffffff;
+    --scan-glass: rgb(255 255 255 / 0.84);
+    --scan-glass-solid: rgb(255 255 255 / 0.92);
+    --scan-accent-on: #ffffff;
+  }
+}
+[data-theme="light"] {
+  --scan-scrim: rgb(4 6 12 / 0.3);
+  --scan-wash-ok: rgb(34 197 94 / 0.5);
+  --scan-wash-heads: rgb(245 158 11 / 0.56);
+  --scan-wash-refused: rgb(220 38 38 / 0.6);
+  --scan-wash-system: rgb(51 65 85 / 0.56);
+  --scan-ring-glow: 55%;
+  --scan-card: #ffffff;
+  --scan-glass-solid: rgb(255 255 255 / 0.92);
+  --scan-glass: rgb(255 255 255 / 0.84);
+  --scan-accent-on: #ffffff;
+}
+@media (min-width: 640px) {
+  :root {
+    --scan-card-w: 560px;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --scan-dock-h: 128px;
+    --scan-card-top: 108px;
+    --scan-card-bottom: 290px;
+    --scan-card-w: 980px;
+  }
+}
+
+/* The shell: layers in BF z-order. */
+.scan-shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--scan-camera);
+  color: var(--sd-strong);
+  font-family: var(--pk-font-sans);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.scan-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scan-cam {
+  z-index: var(--scan-z-cam);
+}
+.scan-tint {
+  z-index: var(--scan-z-cam);
+}
+.scan-scrim,
+.scan-wash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.scan-scrim {
+  background: var(--scan-scrim);
+}
+.scan-wash[data-kind="green"] {
+  background: var(--scan-wash-ok);
+}
+.scan-wash[data-kind="amber"] {
+  background: var(--scan-wash-heads);
+}
+.scan-wash[data-kind="red"] {
+  background: var(--scan-wash-refused);
+}
+.scan-wash[data-kind="slate"] {
+  background: var(--scan-wash-system);
+}
+.scan-tint[data-tint]:not([data-tint="none"]) .scan-scrim,
+.scan-tint[data-tint="green"] .scan-wash[data-kind="green"],
+.scan-tint[data-tint="amber"] .scan-wash[data-kind="amber"],
+.scan-tint[data-tint="red"] .scan-wash[data-kind="red"],
+.scan-tint[data-tint="slate"] .scan-wash[data-kind="slate"] {
+  opacity: 1;
+}
+.scan-ring {
+  z-index: var(--scan-z-ring);
+  opacity: 0;
+  --v: transparent;
+  box-shadow:
+    inset 0 0 0 10px var(--v),
+    inset 0 0 36px 12px color-mix(in oklab, var(--v) var(--scan-ring-glow), transparent);
+}
+.scan-ring[data-tint="green"] {
+  --v: var(--scan-ok);
+}
+.scan-ring[data-tint="amber"] {
+  --v: var(--scan-heads);
+}
+.scan-ring[data-tint="red"] {
+  --v: var(--scan-refused);
+}
+.scan-ring[data-tint="slate"] {
+  --v: var(--scan-system);
+}
+.scan-ring[data-tint]:not([data-tint="none"]) {
+  opacity: 1;
+}
+@media (min-width: 1024px) {
+  .scan-ring {
+    box-shadow:
+      inset 0 0 0 12px var(--v),
+      inset 0 0 56px 12px color-mix(in oklab, var(--v) var(--scan-ring-glow), transparent);
+  }
+}
+/* One tint transition per verdict: opacity only, 80 ms. Reduced motion: it switches at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .scan-scrim,
+  .scan-wash,
+  .scan-ring {
+    transition: opacity 80ms linear;
+  }
+}
+
+/* Card layer: boot cards and (UI.3) the result card sit in this box. */
+.scan-card-layer {
+  z-index: var(--scan-z-card);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-inline: 24px;
+  padding-block: var(--scan-card-top) var(--scan-card-bottom);
+}
+.scan-card-layer[data-mode="boot"] {
+  align-items: center;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 72px) 24px;
+}
+.scan-card {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, var(--scan-card-w));
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+  border-radius: 28px;
+  background: var(--scan-card);
+  color: var(--sd-body);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
+}
+.scan-card[data-tone="slate"] {
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.scan-card-title {
+  margin: 0;
+  color: var(--sd-strong);
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.scan-card[data-tone="slate"] .scan-card-title {
+  color: inherit;
+}
+.scan-card-line {
+  margin: 0;
+  color: var(--sd-muted);
+  font-size: 17px;
+  line-height: 22px;
+}
+.scan-card[data-tone="slate"] .scan-card-line {
+  color: inherit;
+  opacity: 0.92;
+}
+.scan-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scan-card-actions > * {
+  flex: 1 1 auto;
+}
+
+/* Capsule: glass, 366 x 52 (iPad 60), above the tint and ring. */
+.scan-capsule {
+  position: absolute;
+  z-index: var(--scan-z-capsule);
+  inset-block-start: calc(env(safe-area-inset-top, 0px) + 6px);
+  inset-inline: 0;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: min(366px, calc(100% - 24px));
+  height: 52px;
+  padding-inline: 16px 6px;
+  border-radius: 26px;
+  background: var(--scan-glass);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  color: var(--sd-strong);
+  box-shadow: inset 0 0 0 0.5px var(--sd-line);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .scan-capsule,
+  .scan-dock {
+    background: var(--scan-glass-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (min-width: 1024px) {
+  .scan-capsule {
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 8px);
+    width: min(720px, calc(100% - 48px));
+    height: 60px;
+    border-radius: 30px;
+    padding-inline: 24px 8px;
+  }
+}
+.scan-capsule-title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.scan-capsule-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-capsule-name > span {
+  color: var(--sd-muted);
+  font-weight: 500;
+}
+.scan-capsule-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sd-muted);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.scan-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--scan-ok);
+}
+.scan-capsule-state[data-state="paused"] .scan-dot,
+.scan-capsule-state[data-state="offline"] .scan-dot {
+  background: var(--scan-heads);
+}
+.scan-capsule-state[data-state="checking"] .scan-dot {
+  background: var(--sd-accent);
+}
+.scan-chips {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Chips: 28 tall; the touch hit area is 44. Widths are reserved so a change never moves the title. */
+.scan-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 13px / 16px var(--pk-font-sans);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+button.scan-chip {
+  cursor: pointer;
+}
+button.scan-chip::before {
+  content: "";
+  position: absolute;
+  inset-block: -8px;
+  inset-inline: -4px;
+}
+.scan-chip[data-tone="accent"] {
+  background: var(--sd-accent);
+  color: var(--scan-accent-on);
+}
+.scan-chip[data-tone="amber"] {
+  background: var(--sd-chip-gold-bg);
+  color: var(--sd-chip-gold-fg);
+}
+.scan-chip[data-tone="slate"] {
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.scan-chip[data-slot="count"] {
+  min-width: 7ch;
+}
+.scan-chip > svg {
+  flex: none;
+}
+
+.scan-chip-x {
+  position: relative;
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.scan-chip-x::before {
+  content: "";
+  position: absolute;
+  inset: -12px -8px;
+}
+
+/* Icon button in the capsule: 44. */
+.scan-icon-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--sd-strong);
+  cursor: pointer;
+}
+
+/* Dock: z 10, r 28 top. Strip 40, thumb row 50. Its height is reserved from the first frame. */
+.scan-dock {
+  position: absolute;
+  z-index: var(--scan-z-dock);
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  height: calc(var(--scan-dock-h) - 42px + max(42px, env(safe-area-inset-bottom, 0px) + 8px));
+  padding: 24px 16px max(42px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  border-radius: 28px 28px 0 0;
+  background: var(--scan-glass);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow: inset 0 0.5px 0 var(--sd-line);
+}
+@media (min-width: 1024px) {
+  .scan-dock {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: calc(var(--scan-dock-h) + env(safe-area-inset-bottom, 0px));
+    padding: 0 24px env(safe-area-inset-bottom, 0px);
+    border-radius: 32px 32px 0 0;
+  }
+}
+.scan-dock-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  height: 40px;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .scan-dock-strip {
+    flex: 0 1 460px;
+    height: 56px;
+    padding-inline: 16px 4px;
+    border-radius: 18px;
+    background: var(--sd-fill-gray);
+  }
+}
+.scan-strip-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.scan-strip-disc {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sd-fill-gray);
+  color: var(--sd-muted);
+}
+.scan-strip-disc[data-kind="ok"] {
+  background: var(--scan-ok);
+  color: var(--scan-ok-on);
+}
+.scan-strip-disc[data-kind="heads_up"] {
+  background: var(--scan-heads);
+  color: var(--scan-heads-on);
+}
+.scan-strip-disc[data-kind="refused"] {
+  background: var(--scan-refused);
+  color: var(--scan-refused-on);
+}
+.scan-strip-disc[data-kind="system"] {
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.scan-strip-text {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.scan-strip-title {
+  overflow: hidden;
+  color: var(--sd-strong);
+  font: 600 15px / 20px var(--pk-font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-strip-meta {
+  flex: none;
+  color: var(--sd-muted);
+  font: 500 13px / 16px var(--pk-font-sans);
+  white-space: nowrap;
+}
+.scan-strip-undo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sd-accent);
+  font: 600 15px / 20px var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-dock-row {
+  display: flex;
+  gap: 8px;
+  height: 50px;
+}
+.scan-dock-btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 50px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-dock-btn[data-variant="filled"] {
+  background: var(--sd-accent);
+  color: var(--scan-accent-on);
+}
+.scan-dock-btn[data-shape="square"] {
+  flex: none;
+  width: 50px;
+  padding: 0;
+}
+.scan-dock-btn[data-size="fixed"] {
+  flex: none;
+  width: 116px;
+}
+.scan-dock-btn[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--sd-accent);
+}
+.scan-dock-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (min-width: 1024px) {
+  .scan-dock-row {
+    flex: none;
+    height: 56px;
+  }
+  .scan-dock-btn {
+    flex: none;
+    height: 56px;
+    min-width: 140px;
+    border-radius: 18px;
+  }
+  .scan-dock-btn[data-shape="square"] {
+    width: 56px;
+    min-width: 0;
+  }
+}
+
+/* Buddy seat: XL 192 x 144 on the dock's top edge, z 12. The buddy stream draws into it. */
+.scan-buddy-seat {
+  position: absolute;
+  z-index: var(--scan-z-buddy);
+  inset-inline: 0;
+  inset-block-end: calc(var(--scan-dock-h) - 12px + env(safe-area-inset-bottom, 0px));
+  margin-inline: auto;
+  width: 192px;
+  height: 144px;
+  pointer-events: none;
+}
+@media (min-width: 1024px) {
+  .scan-buddy-seat {
+    width: 256px;
+    height: 192px;
+  }
+}
+
+/* Focus ring on the dark surfaces. */
+.scan-shell :focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+.scan-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Boot cards */
+.scan-start-event {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.scan-start-event-name {
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+}
+.scan-start-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sd-note-info-bg);
+  color: var(--sd-note-info-fg);
+  font: 400 15px / 20px var(--pk-font-sans);
+}
+.scan-start-note > svg {
+  flex: none;
+  margin-block-start: 1px;
+}
+.scan-pair-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 20px;
+}
