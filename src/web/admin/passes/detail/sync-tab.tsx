@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import {
   AlertCircle,
   ChevronDown,
@@ -9,7 +10,7 @@ import {
   Send,
   Smartphone,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { EventGroup, PassEventDto } from '@/shared/contracts/events.ts';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { cn } from '../../../lib/cn.ts';
@@ -24,12 +25,20 @@ import {
   ErrorState,
   Handoff,
   IconButton,
+  LoadingRail,
   SegmentedControl,
   SkeletonTimeline,
 } from '../../../ui/index.ts';
 import { RelTime, useNow } from './rel-time.tsx';
 import { usePassEvents } from './sync-api.ts';
-import { eventCodes, eventDetail, groupEvents, type SyncRow, shortDevice } from './sync-model.ts';
+import {
+  eventCodes,
+  eventDetail,
+  eventLabel,
+  groupEvents,
+  type SyncRow,
+  shortDevice,
+} from './sync-model.ts';
 
 type Filter = EventGroup | 'all';
 const FILTERS = [
@@ -68,23 +77,9 @@ const DOT = {
 
 function Child({ e, now }: { e: PassEventDto; now: number }) {
   const detail = eventDetail(e);
-  const label =
-    e.kind === 'push.sent'
-      ? 'Push sent'
-      : e.kind === 'push.failed'
-        ? 'Push failed'
-        : e.kind === 'push.queued'
-          ? 'Push queued'
-          : e.kind === 'device.fetched'
-            ? e.data.step === 'listed'
-              ? 'Checked for updates'
-              : 'Fetched the pass'
-            : e.kind === 'device.unregistered'
-              ? 'Unregistered'
-              : e.kind.replace('.', ' ');
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 text-xs text-fg-muted">
-      <span className="text-fg">{label}</span>
+      <span className="text-fg">{eventLabel(e)}</span>
       {e.device ? <span className="font-mono">{shortDevice(e.device)}</span> : null}
       {detail ? <span>{detail}</span> : null}
       {eventCodes(e) ? <span className="font-mono">{eventCodes(e)}</span> : null}
@@ -126,10 +121,20 @@ function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean })
             <span className="font-mono text-xs text-fg-muted">{shortDevice(single.device)}</span>
           ) : null}
           <span className="ml-auto text-xs text-fg-muted">
+            {row.folded ? 'Last ' : null}
             <RelTime at={row.at} now={now} />
           </span>
         </div>
         {detail ? <p className="line-clamp-2 text-xs break-words text-fg-muted">{detail}</p> : null}
+        {row.broadcastId ? (
+          <Link
+            to="/admin/messages/$broadcastId"
+            params={{ broadcastId: row.broadcastId }}
+            className="text-xs text-accent-fg underline-offset-2 hover:underline"
+          >
+            Open message
+          </Link>
+        ) : null}
         {single && eventCodes(single) ? (
           <details className="text-xs text-fg-muted">
             <summary className="cursor-pointer pointer-coarse:min-h-11">Details</summary>
@@ -173,6 +178,18 @@ function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean })
   );
 }
 
+/** The rows own their highlight, so a filter change starts from a clean baseline. */
+function Log({ rows, now }: { rows: SyncRow[]; now: number }) {
+  const fresh = useInsertHighlight(rows.map((r) => r.id));
+  return (
+    <ol aria-label="Sync log" className="flex flex-col">
+      {rows.map((row) => (
+        <Row key={row.id} row={row} now={now} isNew={fresh.has(row.id)} />
+      ))}
+    </ol>
+  );
+}
+
 /** Why didn't my pass update? The ledger grouped by version, newest first. */
 export function SyncTab({ pass, active }: { pass: PassDetailDto; active: boolean }) {
   const [filter, setFilter] = useState<Filter>('all');
@@ -180,9 +197,13 @@ export function SyncTab({ pass, active }: { pass: PassDetailDto; active: boolean
   const now = useNow();
   const events = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
   const rows = useMemo(() => groupEvents(events), [events]);
-  const fresh = useInsertHighlight(rows.map((r) => r.id));
+  // The filter the rows on screen belong to: old rows stay (dimmed) until the new ones land.
+  const shown = useRef(filter);
+  if (!query.isPlaceholderData) shown.current = filter;
+  const busy = query.isPlaceholderData;
   return (
-    <Card className="min-w-0">
+    <Card className="relative min-w-0">
+      <LoadingRail show={busy} />
       <CardHeader
         title="Sync log"
         actions={
@@ -197,22 +218,23 @@ export function SyncTab({ pass, active }: { pass: PassDetailDto; active: boolean
       />
       <CardBody className="grid gap-4">
         <SegmentedControl label="Show" options={FILTERS} value={filter} onValueChange={setFilter} />
-        {query.isError ? (
+        {query.isError && !query.data ? (
           <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
         ) : (
           <Handoff
             loading={query.isPending}
             skeleton={<SkeletonTimeline label="Loading sync log" />}
           >
-            {rows.length === 0 ? (
-              <EmptyState inline art="activity" title={EMPTY[filter]} />
-            ) : (
-              <ol aria-label="Sync log" className="flex flex-col">
-                {rows.map((row) => (
-                  <Row key={row.id} row={row} now={now} isNew={fresh.has(row.id)} />
-                ))}
-              </ol>
-            )}
+            <div
+              aria-busy={busy || undefined}
+              className={cn(busy && 'opacity-60 transition-opacity')}
+            >
+              {rows.length === 0 ? (
+                <EmptyState inline art="activity" title={EMPTY[busy ? shown.current : filter]} />
+              ) : (
+                <Log key={shown.current} rows={rows} now={now} />
+              )}
+            </div>
             {query.hasNextPage ? (
               <div>
                 <Button

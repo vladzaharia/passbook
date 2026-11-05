@@ -16,9 +16,8 @@ import {
   StatusPill,
 } from '../../../ui/index.ts';
 import { RelTime, useNow } from './rel-time.tsx';
-import { RemovalProgress } from './removal-progress.tsx';
 import { usePassDevices } from './sync-api.ts';
-import { shortDevice } from './sync-model.ts';
+import { pushReason, shortDevice } from './sync-model.ts';
 
 const SYNC_PILL = {
   current: 'device_current',
@@ -28,18 +27,20 @@ const SYNC_PILL = {
   unknown: 'device_unknown',
 } as const;
 
+/** During a removal the removal state shows, unless the device cannot be reached at all. */
 function pillOf(d: PassSyncDeviceDto, removing: boolean): string {
-  return removing && d.removal ? `removal_${d.removal}` : SYNC_PILL[d.status];
+  if (removing && d.removal && d.status !== 'push_failing') return `removal_${d.removal}`;
+  return SYNC_PILL[d.status];
 }
 
-function Meta({ d, now }: { d: PassSyncDeviceDto; now: number }) {
+function Meta({ d, now, version }: { d: PassSyncDeviceDto; now: number; version: number }) {
   const gone = d.registeredAt === null;
   return (
     <>
       <span className="block">
         {gone && d.unregisteredAt !== null ? (
           <>
-            Left <RelTime at={d.unregisteredAt} now={now} />
+            Stopped updates <RelTime at={d.unregisteredAt} now={now} />
           </>
         ) : d.registeredAt !== null ? (
           <>
@@ -53,6 +54,8 @@ function Meta({ d, now }: { d: PassSyncDeviceDto; now: number }) {
             Fetched v{d.lastFetch.version} ({d.lastFetch.httpStatus}){' '}
             <RelTime at={d.lastFetch.at} now={now} />
           </>
+        ) : d.status === 'current' && d.registeredAt !== null ? (
+          `Added with v${version}`
         ) : (
           'Never fetched'
         )}
@@ -62,7 +65,7 @@ function Meta({ d, now }: { d: PassSyncDeviceDto; now: number }) {
           <>
             {d.lastPush.ok ? 'Pushed' : 'Push failed'}
             {d.lastPush.version !== null ? ` v${d.lastPush.version}` : ''}
-            {!d.lastPush.ok && d.lastPush.reason ? `: ${d.lastPush.reason}` : ''}{' '}
+            {!d.lastPush.ok && d.lastPush.reason ? `: ${pushReason(d.lastPush.reason)}` : ''}{' '}
             <RelTime at={d.lastPush.at} now={now} />
           </>
         ) : (
@@ -73,7 +76,9 @@ function Meta({ d, now }: { d: PassSyncDeviceDto; now: number }) {
   );
 }
 
-function summary(data: PassDevicesDto): string {
+function summary(data: PassDevicesDto): string | null {
+  // During a removal the page's callout carries the one count.
+  if (data.removal) return null;
   const live = data.devices.filter((d) => d.registeredAt !== null);
   if (live.length === 0) return 'No device has the pass';
   const current = live.filter((d) => d.status === 'current').length;
@@ -86,18 +91,17 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
   const now = useNow();
   const data = query.data;
   const fresh = useInsertHighlight(data?.devices.map((d) => d.device) ?? []);
-  if (query.isError)
+  if (query.isError && !data)
     return <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />;
   const removing = data?.removal != null;
   return (
     <div className="grid min-w-0 gap-6">
-      {data?.removal ? <RemovalProgress removal={data.removal} /> : null}
       <Card className="min-w-0">
         <CardHeader
           title="Devices"
           actions={
             <>
-              {data ? (
+              {data && summary(data) ? (
                 <span role="status" className="text-xs text-fg-muted tabular-nums">
                   {summary(data)}
                 </span>
@@ -129,7 +133,7 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
                         {shortDevice(d.device)}
                       </span>
                     }
-                    meta={<Meta d={d} now={now} />}
+                    meta={<Meta d={d} now={now} version={data?.version ?? pass.version} />}
                     trailing={<StatusPill status={pillOf(d, removing)} />}
                   />
                 ))}

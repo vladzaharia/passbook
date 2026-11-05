@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PassEventDto } from '@/shared/contracts/events.ts';
-import { duration, groupEvents } from './sync-model.ts';
+import { duration, eventLabel, groupEvents, pushReason } from './sync-model.ts';
 
 let n = 0;
 const ev = (
@@ -49,7 +49,7 @@ describe('groupEvents', () => {
     expect(group?.facts.map((f) => f.text)).toEqual([
       'Pushed to 2 devices',
       '1 fetched in 13 s',
-      '1 unregistered',
+      '1 device stopped updates',
     ]);
     expect(group?.tone).toBe('success');
     expect(group?.events.map((e) => e.kind)).toContain('device.fetched');
@@ -94,7 +94,7 @@ describe('groupEvents', () => {
       ev('push.failed', 3, { version: 4, status: 400, reason: 'PayloadEmpty' }, 'aaaaaaaaaaaa'),
       ev('pass.updated', 1, { version: 4 }),
     ]);
-    expect(failed[0]?.facts.map((f) => f.text)).toContain('1 push failed: PayloadEmpty');
+    expect(failed[0]?.facts.map((f) => f.text)).toContain('1 push failed: Apple rejected the push');
   });
 
   it('keeps other events as rows of their own, newest first', () => {
@@ -110,5 +110,79 @@ describe('groupEvents', () => {
     ]);
     expect(rows[0]?.tone).toBe('danger');
     expect(rows.every((r) => !r.group)).toBe(true);
+  });
+});
+
+describe('plain reasons', () => {
+  it('maps transport strings to sentences and pluralizes pushes', () => {
+    expect(pushReason('NetworkError:Error')).toBe('Could not reach Apple');
+    expect(pushReason('BadDeviceToken')).toBe('Device token no longer valid');
+    const rows = groupEvents([
+      ev('push.failed', 4, { version: 3, reason: 'NetworkError:Error' }, 'aaaaaaaaaaaa'),
+      ev('push.failed', 3, { version: 3, reason: 'NetworkError:Error' }, 'bbbbbbbbbbbb'),
+      ev('pass.updated', 1, { version: 3 }),
+    ]);
+    expect(rows[0]?.facts.map((f) => f.text)).toContain('2 pushes failed: Could not reach Apple');
+  });
+
+  it('titles an unregistered device Stopped updates and falls back to a humanized kind', () => {
+    expect(groupEvents([ev('device.unregistered', 1, {}, 'aaaaaaaaaaaa')])[0]?.title).toBe(
+      'Stopped updates',
+    );
+    expect(eventLabel(ev('device.log', 1))).toBe('Wallet log line');
+  });
+});
+
+describe('notified and silenced', () => {
+  it('flags a version that notified or went silent over budget', () => {
+    const told = groupEvents([ev('pass.updated', 1, { version: 2, notified: true })]);
+    expect(told[0]?.facts).toContainEqual({ text: 'Notified', tone: 'info' });
+    const silent = groupEvents([
+      ev('pass.updated', 1, { version: 2, notified: false, overBudget: true }),
+    ]);
+    expect(silent[0]?.facts).toContainEqual({
+      text: 'Silent: daily limit reached',
+      tone: 'warning',
+    });
+  });
+
+  it('links a message row to its broadcast', () => {
+    const rows = groupEvents([
+      ev('message.applied', 1, { broadcastId: 'b1', notified: true, overBudget: false }),
+    ]);
+    expect(rows[0]?.broadcastId).toBe('b1');
+    expect(rows[0]?.facts.map((f) => f.text)).toEqual(['Notified']);
+  });
+});
+
+describe('push counts', () => {
+  it('does not say no devices when a device fetched anyway', () => {
+    const rows = groupEvents([
+      ev('device.fetched', 5000, { step: 'file', version: 2, status: 200 }, 'aaaaaaaaaaaa'),
+      ev('push.queued', 1000, { version: 2, devices: 0 }),
+      ev('pass.updated', 900, { version: 2 }),
+    ]);
+    const facts = rows[0]?.facts.map((f) => f.text) ?? [];
+    expect(facts).not.toContain('No devices registered');
+    expect(facts).not.toContain('Push queued');
+  });
+});
+
+describe('repeats', () => {
+  it('folds consecutive opens into one row and keeps other kinds apart', () => {
+    const rows = groupEvents([
+      ev('page.opened', 50),
+      ev('page.opened', 40),
+      ev('page.opened', 30),
+      ev('pass.downloaded', 20),
+      ev('page.opened', 10),
+    ]);
+    expect(rows.map((r) => r.title)).toEqual([
+      'Pass page opened 3 times',
+      '.pkpass downloaded',
+      'Pass page opened',
+    ]);
+    expect(rows[0]?.folded).toBe(true);
+    expect(rows[0]?.at).toBe(50);
   });
 });
