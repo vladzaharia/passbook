@@ -12,10 +12,10 @@ import './apns-check.css';
 
 type Result = z.infer<typeof ApnsProbeResultSchema>;
 type Identity = z.infer<typeof IdentitySchema>;
-const METHOD_LABEL = {
+export const PUSH_METHOD_LABEL = {
   certificate: 'Certificate binding',
   key: 'Push key',
-  none: '',
+  none: 'Not set up',
 } as const;
 
 type Health = Result['health'] | Identity['apnsHealth'];
@@ -36,6 +36,8 @@ export function failureSentence(
   status?: number,
   method?: Identity['pushMethod'],
 ): string {
+  // Probe reasons can carry a detail after the code ("NetworkError:Error").
+  reason = reason?.split(':')[0] ?? null;
   if (reason === 'PushUnavailable')
     return 'Push is not set up. Add a push key or a certificate binding.';
   if (reason && TOPIC.has(reason))
@@ -44,10 +46,10 @@ export function failureSentence(
     return method === 'key'
       ? 'Apple rejected the push key. Check the key ID and team, or upload a new key.'
       : 'Apple rejected the push certificate. Upload a new one.';
-  if (reason === 'PushKeyUnreadable') return 'The stored push key cannot be read. Rotate the key.';
+  if (reason === 'PushKeyUnreadable') return 'The stored push key cannot be read. Replace the key.';
   if (status === 0 || (reason && UNREACHABLE.has(reason)))
     return method === 'key'
-      ? 'Could not reach Apple with the push key. Check the Worker logs for APNS_TOKEN_TRANSPORT_FAILED.'
+      ? 'Could not reach Apple with the push key. Try again or use a certificate binding.'
       : 'Could not reach Apple. Try again.';
   return 'Apple gave no clear answer. Try again later.';
 }
@@ -122,11 +124,6 @@ export function ApnsRow({ identity }: { identity: Identity }) {
         </span>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm text-fg-strong">APNs</span>
-          {(result?.method ?? identity.pushMethod) === 'none' ? null : (
-            <span className="text-xs text-fg-muted">
-              {METHOD_LABEL[result?.method ?? identity.pushMethod]}
-            </span>
-          )}
           <HealthPill health={health} available={identity.apnsAvailable} />
           {checkedAt ? (
             <span className="text-xs text-fg-muted">Checked {formatDateTime(checkedAt)}</span>

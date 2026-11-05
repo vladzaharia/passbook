@@ -15,7 +15,8 @@ describe('failureSentence', () => {
       'Push is not set up. Add a push key or a certificate binding.',
     );
     expect(failureSentence('InvalidProviderToken', 403, 'key')).toMatch(/push key/);
-    expect(failureSentence('NetworkError', 0, 'key')).toMatch(/APNS_TOKEN_TRANSPORT_FAILED/);
+    expect(failureSentence('NetworkError', 0, 'key')).toMatch(/certificate binding/);
+    expect(failureSentence('NetworkError:Error')).toBe('Could not reach Apple. Try again.');
     expect(failureSentence('TooManyRequests', 429)).toBe(
       'Apple gave no clear answer. Try again later.',
     );

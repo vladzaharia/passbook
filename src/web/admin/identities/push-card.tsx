@@ -13,7 +13,7 @@ import {
   KeyValue,
   toast,
 } from '@/web/ui/index.ts';
-import { ApnsRow } from './apns-check.tsx';
+import { ApnsRow, PUSH_METHOD_LABEL } from './apns-check.tsx';
 import { PushKeyDialog } from './push-key-dialog.tsx';
 import { useRemovePushKey } from './queries.ts';
 
@@ -22,12 +22,6 @@ type Identity = z.infer<typeof IdentitySchema>;
 const MTLS_STEPS = `npx wrangler mtls-certificate upload --cert cert.pem --key key.pem --name <identity>
 # wrangler.jsonc
 "mtls_certificates": [{ "binding": "APNS_<IDENTITY>", "certificate_id": "<id from upload>" }]`;
-
-const METHOD_TEXT = {
-  certificate: 'Certificate binding',
-  key: 'Push key',
-  none: 'Not set up',
-} as const;
 
 /** How pushes reach Apple for this identity: its mTLS binding, else the team's .p8 key. */
 export function PushCard({
@@ -45,6 +39,8 @@ export function PushCard({
   const shared = (key?.identityCount ?? 0) > 1;
   const dependents = key?.dependentCount ?? 0;
   const none = identity.pushMethod === 'none';
+  const bound = identity.pushMethod === 'certificate';
+  const bindingFailing = bound && identity.apnsHealth === 'failing';
 
   return (
     <Card>
@@ -52,7 +48,7 @@ export function PushCard({
       <CardBody className="flex flex-col gap-4">
         <KeyValue
           items={[
-            { label: 'Method', value: METHOD_TEXT[identity.pushMethod] },
+            { label: 'Method', value: PUSH_METHOD_LABEL[identity.pushMethod] },
             ...(key
               ? [
                   { label: 'Push key ID', value: key.keyId, mono: true },
@@ -78,21 +74,27 @@ export function PushCard({
           <p className="max-w-[65ch] text-sm text-fg-muted">
             Passes update when holders refresh in Wallet. Add a push key to update them right away.
           </p>
-        ) : identity.pushMethod === 'certificate' && key ? (
+        ) : bound && key ? (
           <p className="max-w-[65ch] text-sm text-fg-muted">
-            The certificate binding is used. The push key stays unused until it is removed.
+            {bindingFailing
+              ? 'The binding is failing. Remove the APNS binding to push with this key.'
+              : 'Pushes use the certificate binding. This key takes over when the binding is removed.'}
+          </p>
+        ) : bindingFailing ? (
+          <p className="max-w-[65ch] text-sm text-fg-muted">
+            The binding is failing. Add a push key to push without it.
           </p>
         ) : null}
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
-            variant={none ? 'primary' : 'outline'}
+            variant={none || (bindingFailing && !key) ? 'primary' : 'outline'}
             iconStart={
               key ? <ACTION_ICON.rotate aria-hidden /> : <ACTION_ICON.pushKey aria-hidden />
             }
             onClick={() => onDialogOpenChange(true)}
           >
-            {key ? 'Rotate key' : 'Add push key'}
+            {key ? 'Replace key' : 'Add push key'}
           </Button>
           {key ? (
             <Button
@@ -126,11 +128,13 @@ export function PushCard({
         onOpenChange={setRemoving}
         title="Remove push key?"
         description={
-          dependents > 1
-            ? `${dependents} identities of team ${identity.teamIdentifier} lose push until a key or binding is set.`
-            : 'Passes update only when holders refresh in Wallet until a new key or binding is set.'
+          bound
+            ? 'Pushes keep using the certificate binding.'
+            : dependents > 1
+              ? `${dependents} identities of team ${identity.teamIdentifier} lose push until a key or binding is set.`
+              : 'Passes update only when holders refresh in Wallet until a new key or binding is set.'
         }
-        confirmLabel="Remove"
+        confirmLabel="Remove key"
         destructive
         onConfirm={async () => {
           await remove.mutateAsync();

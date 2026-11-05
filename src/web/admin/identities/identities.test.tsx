@@ -272,7 +272,7 @@ describe('identity detail', () => {
     await ui.click(screen.getByRole('button', { name: 'Remove key' }));
     const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText(/2 identities of team TEAM123 lose push/)).toBeInTheDocument();
-    await ui.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Remove key' }));
     await waitFor(() => expect(removed).toBe(1));
   });
 
@@ -465,7 +465,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'More' }));
-    await ui.click(await screen.findByRole('menuitem', { name: 'Rotate certificate' }));
+    await ui.click(await screen.findByRole('menuitem', { name: 'Replace certificate' }));
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByRole('button', { name: 'Replace certificate' }));
     expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();
