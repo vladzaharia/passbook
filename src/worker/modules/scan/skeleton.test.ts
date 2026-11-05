@@ -12,15 +12,8 @@ const app = createApp({ stores: fake.stores });
 const call = (path: string, headers: Record<string, string> = {}) =>
   app.request(`${ORIGIN}${path}`, { headers }, env as AppEnv);
 
-const MOUNTS = [
-  '/api/v1/scan',
-  '/api/v1/scanners',
-  '/api/v1/scan-events',
-  '/api/v1/scan-staff',
-  '/api/v1/scans',
-  '/api/v1/scan-display',
-  '/api/v1/nfc',
-];
+/** The console routers (scanners, scan-events, scans) have their own tests; these are still empty. */
+const MOUNTS = ['/api/v1/scan', '/api/v1/scan-staff', '/api/v1/scan-display', '/api/v1/nfc'];
 
 describe('scanner routers', () => {
   it.each(MOUNTS)('%s is mounted and empty: unknown paths are a 404 problem', async (mount) => {
@@ -31,12 +24,15 @@ describe('scanner routers', () => {
     }
   });
 
-  it('the OpenAPI document still builds, with no scan paths yet', async () => {
+  it('the OpenAPI document builds with the console scan paths', async () => {
     const res = await call('/api/v1/openapi.json');
     expect(res.status).toBe(200);
     const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> };
     expect(doc.openapi).toBe('3.1.0');
-    expect(Object.keys(doc.paths).filter((p) => /scan|nfc/.test(p))).toEqual([]);
+    expect(Object.keys(doc.paths)).toEqual(
+      expect.arrayContaining(['/api/v1/scanners', '/api/v1/scan-events', '/api/v1/scans']),
+    );
+    expect(Object.keys(doc.paths).filter((p) => /scan-staff|scan-display|nfc/.test(p))).toEqual([]);
   });
 });
 

@@ -64,7 +64,16 @@ export const UpdateScannerSchema = z.object({
   accepts: ScannerAcceptsSchema.optional(),
   settings: ScannerSettingsSchema.partial().optional(),
 });
-export const ScannerModeSchema = z.object({ mode: ModeSchema });
+/** `detachEvent` lets the change go through while the scanner sits on an event of the old mode. */
+export const ScannerModeSchema = z.object({
+  mode: ModeSchema,
+  detachEvent: z.boolean().optional(),
+});
+/** A new scanner, plus its first pairing code when it is a browser device. */
+export const CreatedScannerSchema = ScannerSchema.extend({
+  pairing: z.object({ code: z.string(), url: z.string(), expiresAt: TimestampSchema }).nullable(),
+});
+export const ScannerSamplePassSchema = z.object({ passId: IdSchema, templateId: IdSchema });
 export const ScannerListQuerySchema = PageQuerySchema.extend({
   orgId: IdSchema.optional(),
   status: z.enum(['not_paired', 'paired', 'revoked']).optional(),
