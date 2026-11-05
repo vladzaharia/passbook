@@ -10,11 +10,12 @@ export function bundleAssetPath(
   passToken: string,
   bundleToken: string,
   passId: string,
-): string {
+): string | null {
   const from = `/p/${passToken}/assets/`;
+  // Fail closed: a path outside the pass prefix would carry the pass token into the bundle.
   return path.startsWith(from)
     ? `/b/${bundleToken}/${passId}/assets/${path.slice(from.length)}`
-    : path;
+    : null;
 }
 
 export const bundleImages = (
@@ -23,4 +24,7 @@ export const bundleImages = (
   bundleToken: string,
   passId: string,
 ): PassImage[] =>
-  images.map((i) => ({ ...i, path: bundleAssetPath(i.path, passToken, bundleToken, passId) }));
+  images.flatMap((i) => {
+    const path = bundleAssetPath(i.path, passToken, bundleToken, passId);
+    return path === null ? [] : [{ ...i, path }];
+  });

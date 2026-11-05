@@ -3,12 +3,10 @@ import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
 import { passSummary } from '../../email/pass-summary.ts';
-import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
-import { recordPassEvent } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -17,11 +15,9 @@ import { passImages } from '../public/service.ts';
 import { captureEmail } from '../sandbox/capture.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { finishSent } from './email-finish.ts';
-import { claimOrSettle, retryOrGiveUp } from './push.ts';
+import { failEmail, PermanentEmailError, recordEmailOutcome } from './email-outcome.ts';
+import { claimOrSettle } from './push.ts';
 import { finishOutbox, orgBranding } from './repo.ts';
-
-/** A failure that retrying cannot fix. */
-class PermanentEmailError extends Error {}
 
 export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promise<void> {
   const db = ctx.env.DB;
@@ -100,22 +96,13 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     });
     return;
   }
-  const event = async (outcome: 'ok' | 'failed', code?: string) => {
-    writeEvent(ctx.env, {
-      event: 'email.result',
-      orgId: pass.orgId,
-      templateId: pass.templateId,
-      identityId: pass.identityId,
-      outcome,
-      mode: pass.mode,
-    });
-    await recordPassEvent(ctx, {
-      orgId: pass.orgId,
-      passId: pass.id,
-      mode: pass.mode,
-      kind: outcome === 'ok' ? 'email.sent' : 'email.failed',
-      data: { outboxId: row.id, attached: attach, ...(code ? { code } : {}) },
-    });
+  const target = {
+    orgId: pass.orgId,
+    passId: pass.id,
+    mode: pass.mode,
+    templateId: pass.templateId,
+    identityId: pass.identityId,
+    attached: attach,
   };
   let messageId: string;
   try {
@@ -140,20 +127,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       ...(attachments ? { attachments } : {}),
     }));
   } catch (error) {
-    await event(
-      'failed',
-      error instanceof PermanentEmailError ? 'EMAIL_PERMANENT' : 'EMAIL_FAILED',
-    );
-    if (error instanceof PermanentEmailError) {
-      ctx.log.warn('email.send_failed', { outboxId: row.id, code: 'EMAIL_PERMANENT', error });
-      await finishOutbox(db, row.id, lease, 'failed', ctx.clock.now(), 'EMAIL_PERMANENT');
-      return;
-    }
-    ctx.log.warn('email.send_failed', { outboxId: row.id, attempts: row.attempts, error });
-    await retryOrGiveUp(ctx, row, lease, 'EMAIL_FAILED', 'failed');
+    await failEmail(ctx, claimed, target, error);
     return;
   }
-  await event('ok');
+  await recordEmailOutcome(ctx, row, target, 'ok');
   await finishSent(ctx, row, lease, messageId);
 }
 

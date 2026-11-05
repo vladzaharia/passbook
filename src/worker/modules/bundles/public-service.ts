@@ -36,10 +36,10 @@ export async function bundleMembers(
       .map(async (pass) => {
         const model = await pageModel(ctx, pass);
         const assets = Object.fromEntries(
-          Object.entries(model.assets).map(([name, path]) => [
-            name,
-            bundleAssetPath(path, pass.downloadToken, bundle.token, pass.id),
-          ]),
+          Object.entries(model.assets).flatMap(([name, path]) => {
+            const own = bundleAssetPath(path, pass.downloadToken, bundle.token, pass.id);
+            return own === null ? [] : [[name, own]];
+          }),
         );
         return { pass, model: { ...model, assets } };
       }),
