@@ -172,6 +172,12 @@ button.dz-issue:hover {
     animation: dz-fade 160ms linear both;
   }
 }
+@keyframes dz-seal {
+  from {
+    opacity: 0;
+    transform: scale(1.06) rotate(-0.6deg);
+  }
+}
 @keyframes dz-fade {
   from {
     opacity: 0;
@@ -190,6 +196,9 @@ button.dz-issue:hover {
   .dz-section {
     animation: dz-deal 200ms var(--wl-ease-out, ease-out) both;
     animation-delay: calc(min(var(--i, 0), 6) * 30ms);
+  }
+  .dz-seal {
+    animation: dz-seal 300ms var(--wl-ease-bounce, ease-out) both;
   }
   .dz-count {
     animation: dz-count 280ms var(--wl-ease-spring, ease-out);

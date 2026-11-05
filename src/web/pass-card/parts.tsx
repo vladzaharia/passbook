@@ -56,6 +56,7 @@ export function Field({ field, big }: { field: FieldView; big?: boolean }) {
   return (
     <div
       className="pc-field"
+      data-fk={field.key}
       data-align={field.align}
       data-big={big || undefined}
       data-long={field.text.length > 12 || undefined}

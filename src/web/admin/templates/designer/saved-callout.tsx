@@ -14,7 +14,7 @@ export function SavedCallout({
 }) {
   return (
     <Callout
-      className="mb-4"
+      className="dz-seal mb-4"
       tone="success"
       actions={
         saved.activated ? (
