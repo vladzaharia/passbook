@@ -87,9 +87,7 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
         {nameOf(p)}
       </RowLink>
       <ModePill mode={p.mode} compact />
-      {p.removedAt !== null ? (
-        <span className="shrink-0 text-xs font-medium text-fg-muted">Removed</span>
-      ) : null}
+      {p.removedAt !== null ? <StatusIcon status="removed" /> : null}
       {o.showSubtitles && p.subtitle ? (
         <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
       ) : null}
@@ -112,7 +110,7 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
   return [
     {
       id: 'select',
-      meta: { stackHidden: true },
+      meta: { stackLead: true },
       header: () => <SelectAll />,
       cell: ({ row }) => <SelectRow pass={row.original} />,
     },

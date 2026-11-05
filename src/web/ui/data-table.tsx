@@ -118,7 +118,10 @@ export function DataTable<T>({
 
   const metaOf = (c: { columnDef: { meta?: unknown } }) =>
     (c.columnDef.meta ?? {}) as NonNullable<ColumnDef<T>['meta']>;
-  const stackCols = table.getVisibleLeafColumns().filter((c) => !metaOf(c).stackHidden);
+  const stackLead = table.getVisibleLeafColumns().find((c) => metaOf(c).stackLead);
+  const stackCols = table
+    .getVisibleLeafColumns()
+    .filter((c) => !metaOf(c).stackHidden && !metaOf(c).stackLead);
   const [titleCol, ...restCols] = stackCols;
   // On its own the table is a card (same surface and shadow); inside one it uses the card's.
   const frame = bare ? '' : CARD_SURFACE;
@@ -159,6 +162,7 @@ export function DataTable<T>({
                   )}
                   onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 >
+                  {stackLead ? <div className="shrink-0">{render(stackLead.id)}</div> : null}
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <div className="min-w-0 truncate text-sm">{render(titleCol.id)}</div>
                     {lines.map((c) => (

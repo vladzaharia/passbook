@@ -17,6 +17,8 @@ declare module '@tanstack/react-table' {
     numeric?: boolean;
     /** Leave the column out of the stacked (below md) layout. */
     stackHidden?: boolean;
+    /** In the stacked layout the column sits left of the row, beside its title (a checkbox). */
+    stackLead?: boolean;
   }
 }
 

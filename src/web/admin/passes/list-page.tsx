@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
+import { useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import { humanizeStatus } from '../../lib/status.ts';
@@ -35,6 +36,7 @@ export function PassesListPage({
   onSearch: (patch: Partial<ListSearch>) => void;
 }) {
   const { orgId } = useOrgScope();
+  const mode = useMode();
   const list = usePassList({ ...search, orgId });
   const templates = useTemplates({ orgId });
   const orgs = useOrgOptions(!orgId);
@@ -43,9 +45,9 @@ export function PassesListPage({
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
   const truth = !list.isPending && !filtered && rows.length === 0;
 
-  // A new filter or scope is a new list: the selection does not carry over.
+  // A new filter, scope or mode is a new list: the selection does not carry over.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on the query key only
-  useEffect(() => setSelected(new Set()), [orgId, JSON.stringify(search)]);
+  useEffect(() => setSelected(new Set()), [orgId, mode, JSON.stringify(search)]);
 
   const templateNames = useMemo(
     () => new Map((templates.data?.items ?? []).map((t) => [t.id, t.name])),
@@ -168,7 +170,7 @@ export function PassesListPage({
         )}
       </PassListContext.Provider>
       <SelectionBar
-        ids={[...selected]}
+        picked={rows.filter((r) => selected.has(r.id))}
         orgId={orgId}
         bundleOrgId={bundleOrgId}
         onClear={() => setSelected(new Set())}
