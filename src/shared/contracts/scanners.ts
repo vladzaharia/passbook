@@ -8,11 +8,11 @@ import {
   TimestampSchema,
 } from './common.ts';
 import {
-  ScanActionKindSchema,
   ScanMethodSchema,
   ScannerSettingsSchema,
-  ScanOutcomeKindSchema,
   ScanReasonSchema,
+  ScanRecordKindSchema,
+  ScanRecordOutcomeSchema,
   ScanRoleSchema,
   TimeZoneSchema,
 } from './scan.ts';
@@ -20,7 +20,9 @@ import {
 const NoteSchema = PlainLineSchema(140);
 const JsonValue = z.any();
 
-export const ScannerKindSchema = z.enum(['device', 'terminal']);
+export const ScannerKindSchema = z.enum(['device', 'terminal', 'display']);
+/** What the device does now: scan, face a customer, or watch scans. A display never scans. */
+export const DeviceRoleSchema = z.enum(['scan', 'customer', 'monitor']);
 export const ScannerAcceptsSchema = z.union([
   z.object({ eventId: IdSchema }),
   z.object({ templateIds: z.array(IdSchema).min(1).max(20) }),
@@ -30,8 +32,10 @@ export const ScannerSchema = z.object({
   orgId: IdSchema,
   mode: ModeSchema,
   kind: ScannerKindSchema,
+  deviceRole: DeviceRoleSchema,
   name: z.string(),
-  accepts: ScannerAcceptsSchema,
+  /** Null only for kind `display`. */
+  accepts: ScannerAcceptsSchema.nullable(),
   settings: ScannerSettingsSchema,
   timeZone: z.string(),
   status: z.enum(['not_paired', 'paired', 'revoked']),
@@ -49,7 +53,8 @@ export type ScannerDto = z.infer<typeof ScannerSchema>;
 export const CreateScannerSchema = z.object({
   orgId: IdSchema,
   name: PlainLineSchema(40),
-  kind: ScannerKindSchema,
+  /** Creating a display is a later stream; widening this enum is additive. */
+  kind: z.enum(['device', 'terminal']),
   accepts: ScannerAcceptsSchema,
   settings: ScannerSettingsSchema.partial().optional(),
   timeZone: TimeZoneSchema,
@@ -145,9 +150,9 @@ export const ScanEventListQuerySchema = PageQuerySchema.extend({
 export const ScanRecordSchema = z.object({
   id: IdSchema,
   at: TimestampSchema,
-  outcome: ScanOutcomeKindSchema,
+  outcome: ScanRecordOutcomeSchema,
   reason: ScanReasonSchema.nullable(),
-  kind: ScanActionKindSchema.nullable(),
+  kind: ScanRecordKindSchema.nullable(),
   actionId: z.string().nullable(),
   actionLabel: z.string().nullable(),
   direction: z.enum(['in', 'out']).nullable(),
@@ -233,7 +238,7 @@ export const ScanListQuerySchema = PageQuerySchema.extend({
   staffId: IdSchema.optional(),
   eventId: IdSchema.optional(),
   passId: IdSchema.optional(),
-  outcome: ScanOutcomeKindSchema.optional(),
+  outcome: ScanRecordOutcomeSchema.optional(),
   reason: ScanReasonSchema.optional(),
   from: z.coerce.number().int().nonnegative().optional(),
   to: z.coerce.number().int().nonnegative().optional(),
@@ -249,8 +254,8 @@ export const ScanFeedRowSchema = z.object({
   templateId: IdSchema.nullable(),
   eventId: IdSchema.nullable(),
   actionId: z.string().nullable(),
-  kind: ScanActionKindSchema.nullable(),
-  outcome: ScanOutcomeKindSchema,
+  kind: ScanRecordKindSchema.nullable(),
+  outcome: ScanRecordOutcomeSchema,
   reason: ScanReasonSchema.nullable(),
   amount: z.number().nullable(),
   before: JsonValue.nullable(),

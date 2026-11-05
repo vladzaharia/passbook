@@ -39,6 +39,10 @@ export const CodeFormatSchema = z.enum([
 ]);
 export const ScanOutcomeKindSchema = z.enum(['ok', 'heads_up', 'refused', 'ready']);
 export type ScanOutcomeKind = z.infer<typeof ScanOutcomeKindSchema>;
+/** What `scans.outcome` can hold: a stored scan is never `ready`. */
+export const ScanRecordOutcomeSchema = z.enum(['ok', 'heads_up', 'refused']);
+/** What `scans.action_kind` can hold: the action kinds, and `undo` for the row an undo writes. */
+export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'undo']);
 
 /** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
 export const SCAN_REFUSED_REASONS = [
@@ -54,6 +58,11 @@ export const SCAN_REFUSED_REASONS = [
   'no_balance',
   'managed_elsewhere',
   'limit_reached',
+  'zone_not_included',
+  'outside_hours',
+  'guest_expired',
+  'guest_visits_used',
+  'suspended',
 ] as const;
 export const SCAN_HEADS_UP_REASONS = [
   'already_done',
@@ -92,13 +101,27 @@ export const ScanInputSchema = z.union([
 ]);
 export type ScanInput = z.infer<typeof ScanInputSchema>;
 
-/** An admin names the org, and optionally the event or templates, per request. */
+/**
+ * An admin names the org, and optionally the event or templates, per request: in the JSON body's
+ * `scope`, or on a GET as `?orgId&eventId&templateIds=a,b&timeZone`. The asset route, which an
+ * `<img>` loads, takes the same query next to `g`. A scanner never sends it.
+ */
 export const ScanAdminScopeSchema = z.object({
   orgId: IdSchema,
   eventId: IdSchema.optional(),
   templateIds: z.array(IdSchema).max(20).optional(),
   timeZone: TimeZoneSchema,
 });
+/** What an Access card's plan says about a verdict. Null on every other template. */
+export const ScanAccessSchema = z.object({
+  plan: z.object({ id: z.string(), label: z.string(), kind: z.enum(['always', 'timed', 'guest']) }),
+  zone: z.object({ id: IdSchema, name: z.string() }).nullable(),
+  closesAt: TimestampSchema.nullable(),
+  nextOpenAt: TimestampSchema.nullable(),
+  visits: z.object({ used: z.number().int(), limit: z.number().int().nullable() }).nullable(),
+  visit: z.boolean(),
+});
+export type ScanAccess = z.infer<typeof ScanAccessSchema>;
 export const ScanApprovalSchema = z.object({ staffId: IdSchema, pin: z.string().regex(/^\d{6}$/) });
 
 const request = {
@@ -124,8 +147,10 @@ export const ScanActRequestSchema = z.strictObject({
   group: z.literal('bundle').optional(),
   approval: ScanApprovalSchema.optional(),
 });
+/** An admin names the org in `scope`, as on any scan call. A scanner never sends it. */
 export const ScanUndoRequestSchema = z.strictObject({
   idempotencyKey: UuidV7Schema,
+  scope: ScanAdminScopeSchema.optional(),
   approval: ScanApprovalSchema.optional(),
 });
 
@@ -210,6 +235,7 @@ export const ScanCardSchema = z.object({
     })
     .nullable(),
   door: z.object({ state: z.enum(['in', 'out']).nullable() }).nullable(),
+  access: ScanAccessSchema.nullable().default(null),
   /** The pass JSON minus barcode, barcodes, nfc, authenticationToken, webServiceURL and serialNumber. */
   passView: z.object({
     passJson: JsonSchema,
@@ -261,6 +287,7 @@ export const ScanOutcomeSchema = z.object({
   counts: ScanCountsSchema,
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),
+  access: ScanAccessSchema.nullable().default(null),
   /** The outcome's screen. Null for system screens and unknown passes, so refusals stay byte-equal across orgs. */
   display: ScanDisplaySchema.nullable(),
 });

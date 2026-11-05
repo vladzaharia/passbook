@@ -4,15 +4,19 @@ import {
   ScanActRequestSchema,
   ScanAdminScopeSchema,
   ScanOutcomeSchema,
+  ScanUndoRequestSchema,
   TimeZoneSchema,
   UuidV7Schema,
 } from './scan.ts';
+import { ScanDisplaySchema } from './scan-display.ts';
 import { ScanSessionSchema } from './scan-session.ts';
 import {
   CreateScanEventSchema,
   CreateScannerSchema,
   ScanEventSchema,
+  ScanFeedRowSchema,
   ScannerSchema,
+  ScanRecordSchema,
 } from './scanners.ts';
 
 const id = '01900000-0000-7000-8000-000000000001';
@@ -49,6 +53,7 @@ const outcome = {
   counts,
   milestone: null,
   undoUntil: null,
+  access: null,
   display: null,
 };
 
@@ -67,6 +72,7 @@ describe('scan contracts', () => {
         id,
         name: 'Front door',
         kind: 'device',
+        deviceRole: 'scan',
         mode: 'live',
         orgId: id,
         orgName: 'Northwind',
@@ -107,6 +113,7 @@ describe('scan contracts', () => {
       orgId: id,
       mode: 'live',
       kind: 'device',
+      deviceRole: 'scan',
       name: 'Door',
       accepts: { eventId: id },
       settings,
@@ -122,6 +129,9 @@ describe('scan contracts', () => {
       createdAt: 1,
     };
     expect(ScannerSchema.parse(scanner)).toEqual(scanner);
+    const display = { ...scanner, kind: 'display', deviceRole: 'customer', accepts: null };
+    expect(ScannerSchema.parse(display)).toEqual(display);
+    expect(ScannerSchema.safeParse({ ...scanner, kind: 'kiosk' }).success).toBe(false);
     const event = {
       id,
       orgId: id,
@@ -192,6 +202,127 @@ describe('scan contracts', () => {
     expect(CreateScannerSchema.safeParse({ ...body, accepts: { templateIds: [] } }).success).toBe(
       false,
     );
+  });
+});
+
+describe('scan records', () => {
+  const record = {
+    id,
+    at: 1,
+    outcome: 'ok',
+    reason: null,
+    kind: 'undo',
+    actionId: null,
+    actionLabel: 'Undo',
+    direction: null,
+    passId: id,
+    passTitle: 'Anna',
+    templateId: id,
+    templateName: 'Ticket',
+    eventId: null,
+    eventName: null,
+    scannerId: id,
+    scannerName: 'Door',
+    staffId: null,
+    staffName: null,
+    approvedBy: null,
+    method: 'manual',
+    amount: null,
+    before: null,
+    after: null,
+    passVersion: 2,
+    override: false,
+    offline: false,
+    actor: { type: 'scanner', id },
+    undoneAt: null,
+    undoneBy: null,
+    undoes: key,
+  };
+
+  it('holds an undo row, and no ready outcome', () => {
+    expect(ScanRecordSchema.parse(record)).toEqual(record);
+    expect(ScanRecordSchema.safeParse({ ...record, outcome: 'ready' }).success).toBe(false);
+    const feed = {
+      id,
+      at: 1,
+      passId: id,
+      externalId: null,
+      templateId: id,
+      eventId: null,
+      actionId: null,
+      kind: 'undo',
+      outcome: 'heads_up',
+      reason: 'already_done',
+      amount: null,
+      before: null,
+      after: null,
+      method: 'camera',
+      scannerId: id,
+      scannerName: 'Door',
+      undoneAt: null,
+    };
+    expect(ScanFeedRowSchema.parse(feed)).toEqual(feed);
+  });
+
+  it('lets an admin put a scope on an undo, and no one add other keys', () => {
+    const undo = { idempotencyKey: key };
+    expect(ScanUndoRequestSchema.safeParse(undo).success).toBe(true);
+    expect(
+      ScanUndoRequestSchema.safeParse({ ...undo, scope: { orgId: id, timeZone: 'UTC' } }).success,
+    ).toBe(true);
+    expect(ScanUndoRequestSchema.safeParse({ ...undo, extra: 1 }).success).toBe(false);
+  });
+
+  it('carries the access block, null by default', () => {
+    const access = {
+      plan: { id: 'gold', label: '24/7 Gold', kind: 'always' },
+      zone: { id, name: 'Pool' },
+      closesAt: null,
+      nextOpenAt: null,
+      visits: { used: 1, limit: null },
+      visit: true,
+    };
+    expect(ScanOutcomeSchema.parse({ ...outcome, access }).access).toEqual(access);
+    const { access: _drop, ...without } = outcome;
+    expect(ScanOutcomeSchema.parse(without).access).toBeNull();
+    expect(ScanOutcomeSchema.safeParse({ ...outcome, reason: 'outside_hours' }).success).toBe(true);
+  });
+
+  it('keeps a big columns row to 8 characters a value', () => {
+    const row = (size: string, value: string) =>
+      ScanDisplaySchema.safeParse({
+        v: 1,
+        screen: 'ok',
+        templateVersion: 'v1',
+        variant: null,
+        identity: { holder: 'A', initials: 'A', photo: null },
+        header: { icon: null, title: null, titleLines: 1, meta: null, chips: [] },
+        panels: [
+          {
+            id: 'p',
+            kind: 'ticket',
+            title: 'T',
+            icon: null,
+            tone: null,
+            rows: [
+              {
+                type: 'columns',
+                id: 'r',
+                size,
+                oneLine: true,
+                items: [
+                  { label: 'Row', value },
+                  { label: 'Seat', value: '12' },
+                ],
+              },
+            ],
+          },
+        ],
+        notes: { staff: null, refused: null },
+      });
+    expect(row('big', '12345678').error?.issues).toBeUndefined();
+    expect(row('big', '123456789').success).toBe(false);
+    expect(row('normal', '1234567890123456').success).toBe(true);
   });
 });
 

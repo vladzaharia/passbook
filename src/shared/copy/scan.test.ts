@@ -20,6 +20,31 @@ describe('SCAN_COPY', () => {
     expect(line.sub.length).toBeGreaterThan(0);
   });
 
+  it('the access reasons name only plan, zone, when, time and limit', () => {
+    const allowed = new Set(['plan', 'zone', 'when', 'time', 'limit']);
+    const lines = [
+      ...(
+        [
+          'zone_not_included',
+          'outside_hours',
+          'guest_expired',
+          'guest_visits_used',
+          'suspended',
+        ] as const
+      ).map((r) => SCAN_REASON_COPY[r].sub),
+      SCAN_COPY.verdict.access.sub,
+      SCAN_COPY.verdict.access.noHours,
+    ];
+    for (const line of lines)
+      for (const [, key] of line.matchAll(/\{(\w+)\}/g)) expect(allowed).toContain(key);
+    expect(SCAN_COPY.verdict.access.headline).toBe('Access granted');
+  });
+
+  it('says what a screen is when it calls a scan route', () => {
+    expect(SCAN_COPY.boot.screenOnlyTitle).toBe('This device is a screen.');
+    expect(SCAN_COPY.boot.screenOnlyLine).toBe('Ask an admin to change it.');
+  });
+
   it('has the display captions of DM 3.5', () => {
     expect(SCAN_COPY.display.moreFor).toBe('{n} more for {reward}');
     expect(SCAN_COPY.display.changedElsewhere).toBe('Changed elsewhere');

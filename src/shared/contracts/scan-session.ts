@@ -8,13 +8,14 @@ import {
   ScanDirectionSchema,
   ScanMethodSchema,
   ScannerSettingsSchema,
-  ScanOutcomeKindSchema,
   ScanOutcomeSchema,
   ScanReasonSchema,
+  ScanRecordOutcomeSchema,
   ScanRoleSchema,
   ScanValueSchema,
   UuidV7Schema,
 } from './scan.ts';
+import { DeviceRoleSchema, ScannerKindSchema } from './scanners.ts';
 
 /** The device API's session, pairing, staff, lookup, recent, summary and offline shapes (SA 4.2). */
 
@@ -33,7 +34,8 @@ export const ScanSessionSchema = z.object({
     .object({
       id: IdSchema,
       name: z.string(),
-      kind: z.enum(['device', 'terminal']),
+      kind: ScannerKindSchema,
+      deviceRole: DeviceRoleSchema,
       mode: ModeSchema,
       orgId: IdSchema,
       orgName: z.string(),
@@ -104,7 +106,7 @@ export const ScanRecentSchema = z.object({
       z.object({
         scanId: IdSchema,
         at: TimestampSchema,
-        outcome: ScanOutcomeKindSchema,
+        outcome: ScanRecordOutcomeSchema,
         reason: ScanReasonSchema.nullable(),
         actionLabel: z.string(),
         title: z.string().nullable(),

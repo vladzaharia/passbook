@@ -62,14 +62,22 @@ export const ScanDisplayRowSchema = z.discriminatedUnion('type', [
     unit: z.string().max(12).nullable(),
     tone: ScanDisplayToneSchema.nullable(),
   }),
-  z.object({
-    type: z.literal('columns'),
-    id: z.string(),
-    size: z.enum(['big', 'normal']),
-    /** The compact-width layout verdict, so the client never measures text. */
-    oneLine: z.boolean(),
-    items: z.array(ColumnItemSchema).min(2).max(4),
-  }),
+  z
+    .object({
+      type: z.literal('columns'),
+      id: z.string(),
+      size: z.enum(['big', 'normal']),
+      /** The compact-width layout verdict, so the client never measures text. */
+      oneLine: z.boolean(),
+      items: z.array(ColumnItemSchema).min(2).max(4),
+    })
+    .refine(
+      (row) => row.size !== 'big' || row.items.every((i) => Array.from(i.value).length <= 8),
+      {
+        path: ['items'],
+        message: 'A big row holds values of 8 characters at most.',
+      },
+    ),
   z.object({
     type: z.literal('progress'),
     id: z.string(),

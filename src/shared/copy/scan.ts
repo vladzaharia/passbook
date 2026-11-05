@@ -37,6 +37,11 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
     headline: 'Daily limit reached',
     sub: "This scanner's limit resets at midnight.",
   },
+  zone_not_included: { headline: 'Not in plan', sub: "{plan} doesn't include {zone}." },
+  outside_hours: { headline: 'Outside hours', sub: '{plan} opens {when}.' },
+  guest_expired: { headline: 'Guest pass ended', sub: 'Ended {time}.' },
+  guest_visits_used: { headline: 'No visits left', sub: 'Used {limit} of {limit}.' },
+  suspended: { headline: 'Suspended', sub: 'Ask them to see the front desk.' },
   already_done: { headline: 'Already checked in', sub: '{ago} · {scanner}' },
   cooldown: { headline: '{verb} {ago}', sub: 'Next {noun} in {wait}.' },
   not_yet_valid: { headline: 'Not open yet', sub: 'Opens {time}.' },
@@ -86,6 +91,12 @@ export const SCAN_COPY = {
     checkedIn: 'Checked in',
     checkedOut: 'Checked out',
     redeemed: 'Redeemed',
+    /** An Access card's check-in. The sub joins the zone and the closing time that exist. */
+    access: {
+      headline: 'Access granted',
+      sub: '{zone} · until {time}',
+      noHours: '{plan} has no hours this week.',
+    },
     letInAgain: 'Let in again.',
     stamps: { one: '+{n} stamp', other: '+{n} stamps' },
     balanceSet: '{input} set',
@@ -134,6 +145,8 @@ export const SCAN_COPY = {
     enterPin: 'Enter your PIN',
     wrongPin: 'Wrong PIN. {n} tries left.',
     pinLocked: 'Too many tries. Try again in 5 min.',
+    screenOnlyTitle: 'This device is a screen.',
+    screenOnlyLine: 'Ask an admin to change it.',
   },
   lookup: {
     placeholder: 'Name, email or code',

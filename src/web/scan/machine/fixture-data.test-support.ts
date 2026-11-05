@@ -105,6 +105,7 @@ export function fixtureCard(over: Partial<Card> = {}): Card {
       },
     ],
     display: fixtureDisplay('ready'),
+    access: null,
     lastScans: [],
     bundle: null,
     door: null,
@@ -144,6 +145,7 @@ export function fixtureOutcome(
     counts: fixtureCounts(),
     milestone: null,
     undoUntil: kind === 'ok' ? FIXTURE_NOW + SCAN_TIMING.UNDO_WINDOW : null,
+    access: null,
     display: server && kind !== 'ready' ? fixtureDisplay(screen) : null,
     ...over,
   };
