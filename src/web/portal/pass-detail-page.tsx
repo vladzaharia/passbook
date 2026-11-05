@@ -2,6 +2,7 @@ import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-que
 import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
+import { Upcoming } from '../pass-card/back.tsx';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   Buddy,
@@ -32,18 +33,25 @@ function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass
   return list?.pages.flatMap((p) => p.items).find((p) => p.id === id);
 }
 
-/** Status and the pass's fields. */
-function DetailsCard({ pass }: { pass: MyPass }) {
+/** The pass's fields, then its upcoming events. The header's pill carries the state. */
+function DetailsCard({ pass, view, state }: { pass: MyPass; view: PassView; state: HolderState }) {
+  const rows = fieldRows(pass.passJson);
   return (
     <Card>
       <CardHeader title="Details" />
-      <CardBody>
+      <CardBody className="flex flex-col gap-4">
         <KeyValue
-          items={[
-            { label: 'Status', value: <StatusPill status={pass.status} /> },
-            ...fieldRows(pass.passJson),
-          ]}
+          items={
+            state === 'active'
+              ? [{ label: 'Status', value: <StatusPill status="active" /> }, ...rows]
+              : rows
+          }
         />
+        {view.upcoming.length ? (
+          <div className="pc-flat">
+            <Upcoming events={view.upcoming} />
+          </div>
+        ) : null}
       </CardBody>
     </Card>
   );
@@ -63,7 +71,7 @@ function Detail({
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [dip, setDip] = useState(0);
   const [device] = useState(browserDevice);
-  const voided = state === 'voided';
+  const stale = state === 'voided' || state === 'removed';
   return (
     <HolderPassView
       pass={
@@ -73,7 +81,8 @@ function Detail({
           flippable
           enter={dealt}
           dim={state !== 'active'}
-          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+          removed={state === 'removed'}
+          mint={stale ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
           settle={pass.status}
           dip={dip}
           syncing={isPendingRefresh(pass, Date.now())}
@@ -84,6 +93,7 @@ function Detail({
       passTitle={passName(pass)}
       orgName={pass.orgName}
       state={state}
+      removalMessage={pass.removalMessage}
       device={device}
       downloadHref={pass.downloadUrl}
       publicUrl={publicUrlOf(pass.downloadUrl)}
@@ -91,7 +101,7 @@ function Detail({
       inWallet={pass.inWallet}
       onAdd={() => setDip((n) => n + 1)}
       rise={dealt}
-      details={<DetailsCard pass={pass} />}
+      details={<DetailsCard pass={pass} view={view} state={state} />}
       buddy={(props) => <Buddy {...props} />}
     />
   );

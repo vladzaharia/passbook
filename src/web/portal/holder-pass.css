@@ -31,9 +31,10 @@
   grid-area: help;
   min-width: 0;
 }
-/* The iPhone adding: the badge's card first, the pass under it. */
+/* The iPhone adding, or a pass that cannot be added: the card of the badge or the notice first,
+   the pass under it. */
 @media (max-width: 1023.98px) {
-  .wl-holder[data-lead="add"] {
+  .wl-holder[data-lead] {
     grid-template-areas: "add" "pass" "details" "help";
   }
 }
@@ -65,6 +66,18 @@
   border-radius: 0.6875rem;
   object-fit: contain;
   box-shadow: 0 0 0 1px var(--pk-border-subtle);
+}
+
+/* The card's upcoming-events rows (back.tsx) on the page: the card's unit is 1 px, its colours the
+   page's. */
+.pc-flat {
+  --u: 0.0625rem;
+  --pc-fg: var(--pk-text-strong);
+  --pc-label: var(--pk-text-muted);
+  --pc-bg: var(--pk-surface-raised);
+}
+.pc-flat .pc-group-title {
+  color: var(--pk-text-muted);
 }
 
 /* base.css gives the app's text links a 44 px touch height; /p has no base.css. */

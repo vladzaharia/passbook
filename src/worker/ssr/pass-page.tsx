@@ -62,6 +62,8 @@ export interface PassPageProps {
   /** The holder's page in the portal (sign-in first when needed). */
   portalHref: string;
   voided: boolean;
+  /** The org removed the pass from Wallet; its note, if it wrote one. */
+  removal?: { message: string | null } | null;
   /** A test pass carries a ribbon. */
   mode?: Mode;
   device: DeviceInfo;
@@ -84,17 +86,16 @@ const headingOf = (props: PassPageProps) =>
 function PassBody(props: PassPageProps) {
   const { view } = props;
   const voided = props.voided || view.voided;
-  const state = voided ? 'voided' : view.expired ? 'expired' : 'active';
+  const state = props.removal ? 'removed' : voided ? 'voided' : view.expired ? 'expired' : 'active';
   const active = state === 'active';
-  const icon = view.images.icon;
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
-      <OrgBar orgName={props.orgName} icon={icon} />
+      <OrgBar orgName={props.orgName} />
       <TestRibbon mode={props.mode} what="pass" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
           heading={headingOf(props)}
-          icon={icon}
+          bare
           actions={<PortalLink href={props.portalHref} />}
         />
         <HolderPassView
@@ -105,12 +106,14 @@ function PassBody(props: PassPageProps) {
               tilt={active}
               glow={active}
               dim={!active}
+              removed={state === 'removed'}
               toggleId="pc-flip"
             />
           }
           passTitle={props.passTitle}
           orgName={props.orgName}
           state={state}
+          removalMessage={props.removal?.message ?? null}
           device={props.device}
           downloadHref={props.downloadHref}
           publicUrl={props.publicUrl}
@@ -135,15 +138,17 @@ function previewHead(org: string, line: string): string {
 
 export function renderPassPage(props: PassPageProps): string {
   const voided = props.voided || props.view.voided;
-  const active = !voided && !props.view.expired;
+  const active = !props.removal && !voided && !props.view.expired;
   // The tab says what the pass is, as the portal's does; never the holder.
   const title = headingOf(props).title;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
-  const line = voided
-    ? HOLDER_COPY.voided
-    : active
-      ? HOLDER_COPY.previewActive
-      : HOLDER_COPY.expired;
+  const line = props.removal
+    ? HOLDER_COPY.previewRemoved
+    : voided
+      ? HOLDER_COPY.voided
+      : active
+        ? HOLDER_COPY.previewActive
+        : HOLDER_COPY.expired;
   return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 

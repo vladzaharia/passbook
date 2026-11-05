@@ -5,6 +5,7 @@ import { run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { createPassRow } from '../passes/create.ts';
+import { removePass } from '../passes/remove.ts';
 import { rotateLink, voidPass } from '../passes/service.ts';
 import { ICON_PNG, type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
 import { clearSettingsCache } from '../settings/service.ts';
@@ -184,6 +185,18 @@ describe('GET /p/:token', () => {
     expect(html).not.toContain('data-tilt');
     expect(html).toContain('data-glow="off"');
     expect(html).not.toContain('pass-tilt.js');
+  });
+
+  it('says a removed pass was removed from Wallet, with the org note, not voided', async () => {
+    const pass = await kit.pass();
+    await removePass(kit.ctx, actor, pass.id, { message: 'Season ended <b>.' }, null);
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(html).toContain('Removed from Wallet. It stays in Expired passes until you delete it.');
+    expect(html).toContain('Season ended &lt;b&gt;.');
+    expect(html).not.toContain('This pass was voided.');
+    expect(html).not.toContain('Add to Apple Wallet');
+    expect(html).toContain('data-removed');
+    expect(html).not.toContain('class="pc-void"');
   });
 
   it('shows an expired banner', async () => {

@@ -71,16 +71,23 @@ register(
           id: pass.id,
           view,
           title: pass.displayTitle ?? view.description ?? model.orgName,
-          voided: pass.status === 'voided' || pass.removedAt !== null || view.voided,
+          state:
+            pass.removedAt !== null
+              ? ('removed' as const)
+              : pass.status === 'voided' || view.voided
+                ? ('voided' as const)
+                : ('active' as const),
           downloadHref: `/b/${bundle.token}/${pass.id}/pass.pkpass`,
         };
       });
       const org = members[0]?.model.orgName ?? '';
-      await recordBundleEvents(
-        ctx,
-        bundle,
-        'bundle.opened',
-        members.map((m) => m.pass.id),
+      ctx.waitUntil(
+        recordBundleEvents(
+          ctx,
+          bundle,
+          'bundle.opened',
+          members.map((m) => m.pass.id),
+        ),
       );
       const html = renderBundlePage({
         nonce,

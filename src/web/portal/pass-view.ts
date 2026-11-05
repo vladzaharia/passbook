@@ -22,8 +22,9 @@ export function passName(pass: MyPass): string {
 }
 
 /** What the holder's page can do with the pass: add it, or say why not. */
-export type HolderState = 'active' | 'voided' | 'expired';
+export type HolderState = 'active' | 'voided' | 'expired' | 'removed';
 
 export function holderState(pass: MyPass, view: PassView): HolderState {
+  if (pass.removedAt !== null) return 'removed';
   return pass.status === 'voided' ? 'voided' : view.expired ? 'expired' : 'active';
 }

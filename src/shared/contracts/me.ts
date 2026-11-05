@@ -11,6 +11,10 @@ export const MyPassSchema = z.object({
   /** Holders see test passes too; the card carries a Test badge. */
   mode: ModeSchema.default('live'),
   modifiedAt: TimestampSchema,
+  /** When the org removed the pass from Wallet; null while it is not. */
+  removedAt: TimestampSchema.nullable().default(null),
+  /** The org's note with the removal, if it wrote one. */
+  removalMessage: z.string().nullable().default(null),
   lastRefreshedAt: TimestampSchema.nullable(),
   refreshRequestedAt: TimestampSchema.nullable(),
   downloadUrl: z.string(),

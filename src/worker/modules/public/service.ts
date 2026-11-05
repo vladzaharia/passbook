@@ -18,6 +18,7 @@ import {
   listAssets,
   type Pass,
 } from '../passes/repo.ts';
+import { getRemoval } from '../passes/repo-remove.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { getPassAsset } from './repo.ts';
 
@@ -65,6 +66,8 @@ export interface PublicPageModel {
   orgName: string;
   /** Asset name -> URL, cache-busted by content hash so the response can be immutable. */
   assets: Record<string, string>;
+  /** Set while the org has the pass removed from Wallet, with its note. */
+  removal: { message: string | null } | null;
 }
 
 export interface PassImage {
@@ -115,9 +118,18 @@ export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassI
 export async function pageModel(ctx: ServiceContext, pass: Pass): Promise<PublicPageModel> {
   const raw = await currentPassJson(ctx.env.DB, pass.id);
   if (!raw) throw new NotFoundError('The pass has no stored version.', 'PASS_VERSION_MISSING');
-  const [images, org] = await Promise.all([passImages(ctx, pass), getOrg(ctx.env.DB, pass.orgId)]);
+  const [images, org, removal] = await Promise.all([
+    passImages(ctx, pass),
+    getOrg(ctx.env.DB, pass.orgId),
+    pass.removedAt !== null ? getRemoval(ctx.env.DB, pass.id) : null,
+  ]);
   const assets = Object.fromEntries(images.map((i) => [i.name, i.path]));
-  return { passJson: parseStoredPassJson(raw), assets, orgName: org?.name ?? '' };
+  return {
+    passJson: parseStoredPassJson(raw),
+    assets,
+    orgName: org?.name ?? '',
+    removal: removal ? { message: removal.message?.trim() || null } : null,
+  };
 }
 
 export interface PublicAsset {

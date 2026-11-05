@@ -18,7 +18,9 @@ export interface HolderPassViewProps {
   toggle?: ReactNode;
   passTitle: string;
   orgName: string;
-  state: 'active' | 'voided' | 'expired';
+  state: 'active' | 'voided' | 'expired' | 'removed';
+  /** The org's note with a removal (state removed). */
+  removalMessage?: string | null;
   device: DeviceInfo;
   downloadHref: string;
   /** The absolute /p URL the add QR encodes; null hides the QR. */
@@ -63,13 +65,14 @@ export function HolderPassView(props: HolderPassViewProps) {
           // Off Apple's devices the QR is the way and the badge stays away, so its line does too.
           line: publicUrl !== null && device.device === 'other' ? null : addLine(device),
         };
-  const help = state !== 'voided' && (support?.email || support?.url) ? support : null;
+  const help =
+    state !== 'voided' && !support?.platform && (support?.email || support?.url) ? support : null;
   // On the iPhone the badge's card leads, so it is on the first screen; the pass follows it.
   const lead = mode === 'phone' && device.device === 'iphone';
   return (
     <div
       className="wl-holder"
-      data-lead={lead ? 'add' : undefined}
+      data-lead={lead ? 'add' : state === 'active' ? undefined : 'notice'}
       data-rise={props.rise || undefined}
     >
       <div className="wl-holder-pass">
@@ -83,7 +86,12 @@ export function HolderPassView(props: HolderPassViewProps) {
             {state === 'voided'
               ? buddy({ size: 'sm', mood: 'sad', scene: 'tear', at: 'end' })
               : buddy({ size: 'sm', mood: 'sad', state: 'expired', at: 'end' })}
-            <Notice state={state} orgName={props.orgName} support={support} />
+            <Notice
+              state={state}
+              orgName={props.orgName}
+              support={support}
+              message={props.removalMessage}
+            />
           </div>
         )}
         {area ? <AddBlock {...area} buddy={buddy} /> : null}

@@ -1,16 +1,19 @@
-import { Ban } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, type DeviceInfo } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
+import { statusOf } from '../../web/lib/status.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import { AddBlock } from '../../web/portal/add/add-block.tsx';
 import { type AddAreaProps, addMode } from '../../web/portal/add/area.ts';
-import { Help, type HolderSupport } from '../../web/portal/holder-parts.tsx';
+import { HolderHeading } from '../../web/portal/holder-heading.tsx';
+import { Help, type HolderSupport, Notice, PortalLink } from '../../web/portal/holder-parts.tsx';
 import { AppleWalletBadge } from '../../web/ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
+import { Badge } from '../../web/ui/badge.tsx';
 import bundleCss from './bundle-page.css?raw';
 import { documentStart, type PageTheme } from './head.ts';
 import { REPLAY_SCRIPT } from './hosted.ts';
@@ -20,9 +23,10 @@ import { TestRibbon } from './test-ribbon.tsx';
 
 export const BUNDLE_COPY = {
   addAll: 'Add all to Apple Wallet',
-  count: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'}`,
-  allVoided: 'None of these passes can be added.',
-  voided: 'Voided',
+  count: HOLDER_COPY.count,
+  /** "3 passes · 1 voided" under the title. */
+  summary: (n: number, off: number) =>
+    `${n} ${n === 1 ? 'pass' : 'passes'}${off ? ` · ${off} voided` : ''}`,
   qrAlt: (name: string) => `QR code for ${name}`,
   preview: 'Add these passes to Apple Wallet.',
 } as const;
@@ -31,7 +35,8 @@ export interface BundlePageItem {
   id: string;
   view: PassView;
   title: string;
-  voided: boolean;
+  /** Voided passes and removed ones cannot be added. */
+  state: 'active' | 'voided' | 'removed';
   /** `/b/:token/:passId/pass.pkpass`. */
   downloadHref: string;
 }
@@ -54,10 +59,22 @@ export interface BundlePageProps {
   support?: HolderSupport;
 }
 
+/** The kit's status words for a pass that cannot be added (the SPA's StatusPill needs the DOM). */
+function OffBadge({ state }: { state: 'voided' | 'removed' }) {
+  const status = statusOf(state);
+  const Icon = status?.icon;
+  return (
+    <Badge tone="warning">
+      {Icon ? <Icon aria-hidden /> : null}
+      {status?.label}
+    </Badge>
+  );
+}
+
 function BundleBody(props: BundlePageProps) {
   const { items, device, support } = props;
-  const addable = items.filter((i) => !i.voided);
-  const icon = items[0]?.view.images.icon;
+  const addable = items.filter((i) => i.state === 'active');
+  const off = items.length - addable.length;
   const mode = addable.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
   const area: AddAreaProps | null =
     mode === 'off'
@@ -78,15 +95,14 @@ function BundleBody(props: BundlePageProps) {
         };
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
-      <OrgBar orgName={props.orgName} icon={icon} />
+      <OrgBar orgName={props.orgName} />
       <TestRibbon mode={props.mode} what="bundle" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <header className="mb-6 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong [overflow-wrap:anywhere]">
-            {props.name}
-          </h1>
-          <p className="mt-1.5 text-sm text-fg-muted">{BUNDLE_COPY.count(items.length)}</p>
-        </header>
+        <HolderHeading
+          heading={{ title: props.name, org: '', kind: null }}
+          meta={<span>{BUNDLE_COPY.summary(items.length, off)}</span>}
+          actions={<PortalLink href="/" />}
+        />
         <div className="bd-top">
           {area ? (
             <section className="bd-add" aria-labelledby="bd-add">
@@ -94,40 +110,39 @@ function BundleBody(props: BundlePageProps) {
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
             </section>
           ) : (
-            <p className="bd-empty" role="status">
-              {BUNDLE_COPY.allVoided}
-            </p>
+            <Notice state="voided" orgName={props.orgName} support={support} many />
           )}
         </div>
         <ul className="bd-list" aria-label={BUNDLE_COPY.count(items.length)}>
           {items.map((item, i) => (
-            <li key={item.id} className="bd-item" style={{ '--bd-i': i } as React.CSSProperties}>
+            <li key={item.id} className="bd-item" style={{ '--i': i } as React.CSSProperties}>
               <PassCardStage
                 view={item.view}
                 tilt={false}
                 glow={false}
-                dim={item.voided}
+                enter
+                dim={item.state !== 'active'}
+                removed={item.state === 'removed'}
                 toggleId={`pc-${item.id}`}
               />
               <p className="bd-name" id={`bd-n-${item.id}`}>
                 {item.title}
               </p>
-              {item.voided ? (
-                <p className="bd-void">
-                  <Ban aria-hidden />
-                  {BUNDLE_COPY.voided}
-                </p>
-              ) : (
-                <AppleWalletBadge
-                  href={item.downloadHref}
-                  describedBy={`bd-n-${item.id}`}
-                  className="p-0"
-                />
-              )}
+              <div className="bd-way">
+                {item.state !== 'active' ? (
+                  <OffBadge state={item.state} />
+                ) : (
+                  <AppleWalletBadge
+                    href={item.downloadHref}
+                    describedBy={`bd-n-${item.id}`}
+                    className="p-0"
+                  />
+                )}
+              </div>
             </li>
           ))}
         </ul>
-        {support?.email || support?.url ? (
+        {support && !support.platform && (support.email || support.url) ? (
           <div className="bd-help border-t border-border pt-4">
             <Help support={support} />
           </div>

@@ -1,5 +1,6 @@
 import { FlaskConical } from 'lucide-react';
 import type { Mode } from '../../shared/contracts/common.ts';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import ribbonCss from './test-ribbon.css?raw';
 
 export const RIBBON_CSS = ribbonCss;
@@ -10,7 +11,7 @@ export function TestRibbon({ mode, what }: { mode: Mode | undefined; what: 'pass
   return (
     <div className="tr" role="note">
       <FlaskConical aria-hidden />
-      Test {what}. It is not real and will be deleted.
+      {HOLDER_COPY.testNote(what)}
     </div>
   );
 }

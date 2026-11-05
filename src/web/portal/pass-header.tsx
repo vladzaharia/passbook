@@ -24,11 +24,11 @@ function Meta({ pass, state }: { pass: MyPass; state: HolderState }) {
   return (
     <>
       {state === 'voided' ? (
-        <StatusPill status="voided" />
+        <StatusPill status="voided" tone="warning" />
+      ) : state === 'removed' ? (
+        <StatusPill status="removed" tone="warning" />
       ) : state === 'expired' ? (
-        <StatusPill status="expired" tone="warning" icon={Clock}>
-          Expired
-        </StatusPill>
+        <StatusPill status="expired" tone="warning" icon={Clock} />
       ) : null}
       <span>{updatedLine(pass.modifiedAt)}</span>
     </>
@@ -46,7 +46,7 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
       ? passHeading(view.description, [view.organizationName, pass.orgName], passName(pass))
       : LOADING;
   useDocumentTitle(heading.title);
-  const voided = state === 'voided';
+  const off = state === 'voided' || state === 'removed';
   return (
     <HolderHeading
       heading={heading}
@@ -56,12 +56,13 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
       actions={
         pass ? (
           <>
-            {voided ? null : <RefreshButton passId={pass.id} pass={pass} />}
+            {off ? null : <RefreshButton passId={pass.id} pass={pass} />}
             <PassMoreMenu
               page
               passId={pass.id}
               passTitle={passName(pass)}
-              publicUrl={voided ? null : publicUrlOf(pass.downloadUrl)}
+              inWallet={pass.inWallet}
+              publicUrl={off ? null : publicUrlOf(pass.downloadUrl)}
               onRemoved={() => void navigate({ to: '/', replace: true })}
             />
           </>

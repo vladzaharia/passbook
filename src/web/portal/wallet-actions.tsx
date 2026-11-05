@@ -96,6 +96,8 @@ export interface PassMenuProps {
   publicUrl: string | null;
   /** Detail page: a labelled "More" with the link items (its QR is on the page). Tiles: an icon. */
   page?: boolean;
+  /** A device has the pass: removing it here leaves it in Wallet. */
+  inWallet?: boolean;
   onRemoved?: () => void;
 }
 
@@ -108,6 +110,7 @@ export function PassMoreMenu({
   passTitle,
   publicUrl,
   page = false,
+  inWallet = false,
   onRemoved,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
@@ -150,7 +153,7 @@ export function PassMoreMenu({
             </>
           ) : null}
           <DropdownMenuItem destructive onSelect={() => setRemoveOpen(true)}>
-            <Trash2 aria-hidden /> Remove
+            <Trash2 aria-hidden /> Remove from My passes
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -161,7 +164,9 @@ export function PassMoreMenu({
         open={removeOpen}
         onOpenChange={setRemoveOpen}
         title="Remove from my passes?"
-        description={`${passTitle} will not come back unless an admin reassigns it.`}
+        description={`${passTitle} will not come back unless an admin reassigns it.${
+          inWallet ? ' It stays in Apple Wallet; delete it there.' : ''
+        }`}
         confirmLabel="Remove"
         destructive
         onConfirm={() => mutation.mutateAsync()}

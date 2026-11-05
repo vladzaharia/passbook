@@ -92,6 +92,6 @@ describe('in Wallet', () => {
     });
     expect(await screen.findByText('In Wallet')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Add to Apple Wallet' })).toHaveLength(2);
-    expect(screen.getByRole('link', { name: /All passes \(2\)/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Add 2 passes/ })).toBeInTheDocument();
   });
 });

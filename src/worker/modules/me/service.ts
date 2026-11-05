@@ -54,6 +54,8 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     status: row.status,
     mode: row.mode,
     modifiedAt: row.modified_at,
+    removedAt: row.removed_at,
+    removalMessage: row.removal_message,
     lastRefreshedAt: row.last_refreshed_at,
     refreshRequestedAt: row.refresh_requested_at,
     downloadUrl: `${base}/pass.pkpass`,

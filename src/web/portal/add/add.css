@@ -48,11 +48,17 @@
     grid-template-columns: auto minmax(0, 1fr);
     align-items: end;
     justify-items: stretch;
+    justify-content: center;
     column-gap: 2rem;
   }
   /* As tall as the sign, so the ways centre on it, not on the buddy above it. */
   .wl-add-scan > .wl-ways {
     min-height: 12.9375rem;
+  }
+}
+@media (min-width: 1024px) {
+  .wl-add-scan {
+    justify-content: start;
   }
 }
 
@@ -127,11 +133,17 @@
     width: fit-content;
     min-width: 15rem;
     max-width: 100%;
-    align-self: flex-start;
+    align-self: center;
     padding-inline: 2rem;
   }
   .wl-add-here > .wl-add-buddy-sm {
     --wl-buddy-inset: 1rem;
+  }
+}
+/* Beside the pass the add block starts at its column; under it, it centres under the card. */
+@media (min-width: 1024px) {
+  .wl-add-here {
+    align-self: flex-start;
   }
 }
 

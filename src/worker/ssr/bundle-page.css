@@ -1,4 +1,5 @@
-/* /b/:token: a bundle's cards under the pass page's shell. Transform and opacity only. */
+/* /b/:token: a bundle's cards under the pass page's shell. Transform and opacity only; the cards
+   deal in with the stage's own entrance (--i on each item). */
 .bd-top {
   display: flex;
   flex-direction: column;
@@ -20,7 +21,8 @@
 }
 .bd-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  grid-template-columns: repeat(auto-fill, 17rem);
+  justify-content: start;
   gap: 2rem 1.5rem;
   margin: 1rem 0 0;
   padding: 0;
@@ -29,7 +31,7 @@
 .bd-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   min-width: 0;
 }
@@ -37,49 +39,55 @@
   width: 100%;
   max-width: 17rem;
 }
+/* The card carries the name from 640; the name is read, not shown. */
 .bd-name {
-  margin: 0;
-  max-width: 17rem;
-  text-align: center;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 500;
-  color: var(--pk-text-strong);
-  overflow-wrap: anywhere;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
-.bd-void {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: var(--pk-text-muted);
-}
-.bd-void svg {
-  width: 1rem;
-  height: 1rem;
-}
-.bd-empty {
-  margin: 0;
-  color: var(--pk-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .bd-item {
-    animation: bd-in 360ms cubic-bezier(0.2, 0, 0, 1) both;
-    animation-delay: calc(var(--bd-i, 0) * 60ms);
+/* On a phone each pass is a row: a small card, then its name and its way to add. */
+@media (max-width: 639.98px) {
+  .bd-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
   }
-  @keyframes bd-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
+  .bd-item {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    grid-template-areas: "card name" "card way";
+    align-content: center;
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.5rem;
+  }
+  .bd-item > .pc-stage {
+    grid-area: card;
+    max-width: none;
+    pointer-events: none;
+  }
+  .bd-item .pc-seg {
+    display: none;
+  }
+  .bd-name {
+    grid-area: name;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    color: var(--pk-text-strong);
+    overflow-wrap: anywhere;
+  }
+  .bd-way {
+    grid-area: way;
   }
 }
 .bd-help {
