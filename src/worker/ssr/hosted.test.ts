@@ -132,6 +132,8 @@ describe('hosted auth pages', () => {
     ['confirm', confirmPage(NONCE, { token: TOKEN, email: 'a@b.co' })],
     ['break-glass', breakglassPage(NONCE, {})],
     ['proof sent', refusal('EMAIL_PROOF_SENT')],
+    // Cancelling is a choice, not a failure: the waiting scene.
+    ['oidc cancelled', oidcFailurePage(NONCE, 'cancelled', null)],
   ])('keeps the wallet content on %s', (_case, html) => {
     expect(mood(html)).toBeUndefined();
     expect(html).not.toContain('data-part="br"');
@@ -145,7 +147,6 @@ describe('hosted auth pages', () => {
     'EMAIL_CONFLICT',
     'SESSION_REQUIRED',
     'EMAIL_TAKEN',
-    'MAGIC_LINK_DISABLED',
   ];
   it.each<[string, string, string, string]>([
     ...forbidden.map((code): [string, string, string, string] => [
@@ -155,7 +156,7 @@ describe('hosted auth pages', () => {
       'lock',
     ]),
     ['VALIDATION', refusal('VALIDATION'), 'plug', 'unplugged'],
-    ['oidc cancelled', oidcFailurePage(NONCE, 'cancelled', null), 'plug', 'unplugged'],
+    ['MAGIC_LINK_DISABLED', refusal('MAGIC_LINK_DISABLED'), 'plug', 'unplugged'],
     ['oidc unverified', oidcFailurePage(NONCE, 'unverified', null), 'plug', 'unplugged'],
     ['oidc unavailable', oidcFailurePage(NONCE, 'unavailable', null), 'plug', 'unplugged'],
   ])('acts out %s by its meaning', (_case, html, scene, prop) => {

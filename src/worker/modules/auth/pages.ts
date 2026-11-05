@@ -143,19 +143,18 @@ function messagePage(
 }
 
 /**
- * Each refusal's status and meaning (the buddy spec): sad, with forbidden's padlock (no access and
- * a disabled account only), an error's plug, expired's drooping pass or a rate limit's hourglass.
+ * Each refusal's status and meaning (the buddy spec): sad, with forbidden's padlock, an error's plug, expired's drooping pass or a rate limit's hourglass.
  * What waits on you (a missing email, a sent proof, signing in first) is the waiting scene.
  */
 const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedArt }> = {
   NO_ACCESS: { status: 403, art: 'no-access' },
   ACCOUNT_DISABLED: { status: 403, art: 'no-access' },
-  NO_EMAIL: { status: 403, art: 'login' },
-  EMAIL_CONFLICT: { status: 403, art: 'login' },
+  NO_EMAIL: { status: 403, art: 'no-access' },
+  EMAIL_CONFLICT: { status: 403, art: 'no-access' },
   EMAIL_PROOF_SENT: { status: 403, art: 'login' },
-  SESSION_REQUIRED: { status: 403, art: 'login' },
+  SESSION_REQUIRED: { status: 403, art: 'no-access' },
   LINK_INVALID: { status: 400, art: 'expired' },
-  EMAIL_TAKEN: { status: 403, art: 'login' },
+  EMAIL_TAKEN: { status: 403, art: 'no-access' },
   MAGIC_LINK_DISABLED: { status: 503, art: 'broken' },
   RATE_LIMITED: { status: 429, art: 'throttled' },
   VALIDATION: { status: 422, art: 'broken' },
