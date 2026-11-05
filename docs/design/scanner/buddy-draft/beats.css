@@ -1,0 +1,789 @@
+/* Scanner beats (src/web/scan/buddy/beats.css), lazy with /scan; spec: scanner-design/buddy-motion.md.
+   A result beat answers one scan: ScanBuddy sets data-beat and restarts data-run (runScene), the beat
+   waits --wl-beat-at (150 ms: colour and sound land first), plays 550 ms and ends at rest, so the
+   buddy is still by 700 ms after the verdict. A new scan restarts or unmounts it: that is the cut.
+   Input beats (catch, glance, wake, rings) start at 0. Reused keyframes, never copied: wl-s-cheer-*
+   (cheer.css), wl-s-sigh (common.css), wl-r-blink (rest.css), wl-w-droop and
+   wl-w-glance (wallet-states.css), wl-shake (motion.css). Units are the art's (viewBox 96 x 72).
+   Every red refusal plays shake (owner, 2026-11-04); slate ends in the sorry pose and never shakes. */
+
+.wl-buddy[data-scene="scan"] {
+  --wl-beat-at: 150ms;
+}
+.wl-buddy[data-scene="scan"] :is([data-trunk], [data-look]) {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+.wl-buddy[data-scene="scan"] [data-k] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Props that only exist mid-beat are invisible at rest and under reduced motion. */
+[data-k="chad"],
+[data-k="sp"],
+[data-k="ring"],
+[data-k="paw"],
+[data-k="zz"] {
+  opacity: 0;
+}
+[data-k="hand"] {
+  transform-origin: 50% 100%;
+}
+[data-k="stamp"],
+[data-k="hole"] {
+  transform-origin: center;
+}
+
+/* Poses: held while the scanner is in a state. Eyes and c2 glide on the engine's 200 ms spring. */
+.wl-buddy[data-pose="aim"] [data-look] {
+  translate: -1.2px 1.4px;
+}
+.wl-buddy[data-pose="aim"] [data-trunk] {
+  rotate: -3deg;
+}
+.wl-buddy[data-pose="lock"] [data-part="eyes"] {
+  --t: translate(var(--lx, 0px), var(--ly, 1px)) scale(1.25);
+}
+.wl-buddy[data-pose="pair"] [data-part="c2"] {
+  --t: translate(-2px, -9px) rotate(-10deg);
+}
+.wl-buddy[data-pose="pair"] [data-look] {
+  translate: -0.6px -1.4px;
+}
+.wl-buddy[data-pose="note"] [data-look] {
+  translate: calc(var(--gx, 0) * 1.5px) 1.4px;
+}
+.wl-buddy[data-pose="reader"] [data-trunk] {
+  rotate: 5deg;
+}
+.wl-buddy[data-pose="reader"] [data-look] {
+  translate: 1.5px 0;
+}
+.wl-buddy[data-pose="rummage"] [data-look] {
+  translate: 0 1.6px;
+}
+.wl-buddy[data-pose="rummage"] [data-part="c2"] {
+  --t: translateY(4px);
+}
+.wl-buddy[data-pose="sleep"] [data-part="eyes"] {
+  opacity: 0;
+}
+.wl-buddy[data-pose="sleep"] [data-k="zz"] {
+  opacity: 1;
+}
+.wl-buddy[data-pose="sleep"] [data-body] {
+  translate: 0 1.5px;
+}
+.wl-buddy[data-pose] :is([data-part="eyes"], [data-k="zz"]) {
+  transition: opacity 120ms linear;
+}
+/* sorry: slate's pose (ScanBuddy sets it with cloud, plug and wait), in every motion setting: eyes up at
+   you and a little wide, brows raised, the outer passes drawn in. */
+.wl-buddy[data-pose="sorry"] [data-look] {
+  translate: 0 -0.8px;
+}
+.wl-buddy[data-pose="sorry"] [data-part="eyes"] {
+  scale: 1.1;
+}
+.wl-buddy[data-pose="sorry"] [data-part="br"] {
+  translate: 0 -0.5px;
+}
+.wl-buddy[data-pose="sorry"] [data-part="c1"] {
+  rotate: 14deg;
+}
+.wl-buddy[data-pose="sorry"] [data-part="c3"] {
+  rotate: -14deg;
+}
+.wl-buddy[data-beat="shake"] [data-fan] {
+  transform-box: view-box;
+  transform-origin: 48px 58px;
+}
+.wl-buddy[data-beat="shake"] [data-part="eyes"] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Reduced motion: red holds a still "no": turned a little, eyes shut, brows pinched, the passes hanging
+   the other way. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="shake"] [data-trunk] {
+    rotate: -4deg;
+  }
+  .wl-buddy[data-beat="shake"] [data-look] {
+    translate: -1.8px 0.3px;
+  }
+  .wl-buddy[data-beat="shake"] [data-part="eyes"] {
+    scale: 1.12 0.28;
+  }
+  .wl-buddy[data-beat="shake"] [data-part="br"] {
+    translate: 0 0.8px;
+  }
+  .wl-buddy[data-beat="shake"] [data-fan] {
+    rotate: 4deg;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose] :is([data-look], [data-trunk]) {
+    transition:
+      translate 200ms var(--art-sp),
+      rotate 200ms var(--art-sp);
+  }
+  /* Pending only: the rummage loops while data-pose="rummage" (a lookup past 300 ms, at most 5 s). */
+  .wl-buddy[data-pose="rummage"] :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+    animation: wl-b-rummage 600ms ease-in-out calc(var(--i, 0) * -200ms) infinite;
+  }
+  .wl-buddy[data-pose="rummage"] [data-body] {
+    animation: wl-b-jig 300ms ease-in-out infinite;
+  }
+
+  /* hop: checked in (happy). Crouch, hop, the gold pass up like a thumb, then tucked away. */
+  .wl-buddy[data-beat="hop"][data-run] [data-body] {
+    animation: wl-b-hop 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="hop"][data-run] [data-part="c3"] {
+    animation: wl-b-thumb 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="hop"], [data-beat="fan"])[data-run] [data-part="joy"] {
+    animation: wl-s-cheer-joy 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="hop"], [data-beat="stash"])[data-run]
+    :is([data-part="c1"], [data-part="c2"]) {
+    animation: wl-b-jolt 550ms ease-out var(--wl-beat-at) backwards;
+  }
+
+  /* fan: a milestone or a reward (happy). The cheer, at beat speed. */
+  .wl-buddy[data-beat="fan"][data-run] [data-body] {
+    animation: wl-s-cheer-body 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="fan"][data-run] [data-part="c2"] {
+    animation: wl-s-cheer-up 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="fan"][data-run] [data-part="c1"] {
+    animation: wl-s-cheer-l 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="fan"][data-run] [data-part="c3"] {
+    animation: wl-s-cheer-r 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+
+  /* punch and stamp: the violet pass is presented, pressed at 200 ms (the impact), the mark pops. */
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"])[data-run] [data-body] {
+    animation: wl-b-press 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="punch"][data-run] [data-part="c2"] {
+    animation: wl-b-present 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="punch"][data-run] [data-k="hole"] {
+    animation: wl-b-pop 220ms var(--art-bo) calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+  .wl-buddy[data-beat="punch"][data-run] [data-k="chad"] {
+    animation: wl-b-chad 260ms ease-in calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+  .wl-buddy[data-beat="stamp"][data-run] [data-part="c3"] {
+    animation: wl-b-stamper 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="stamp"][data-run] [data-part="c2"] {
+    animation: wl-b-dip 550ms ease-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="stamp"][data-run] [data-k="stamp"] {
+    animation: wl-b-stamp 300ms var(--art-bo) calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+  /* Open eyes on the card, the happy arcs at the end; punch winks first. */
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"], [data-beat="sparkle"])[data-run]
+    [data-part="eyes"] {
+    animation: wl-b-eyes 550ms linear var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"], [data-beat="sparkle"])[data-run]
+    [data-part="joy"] {
+    animation: wl-b-joy 550ms linear var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"])[data-run] [data-look] {
+    animation: wl-b-up 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="punch"][data-run] .e:last-child {
+    animation: wl-r-blink 120ms var(--art-mv) calc(var(--wl-beat-at) + 330ms);
+  }
+
+  /* sparkle: points in (happy). Sparks drop into the pocket 60 ms apart; it gulps. dir=out: spend. */
+  .wl-buddy[data-beat="sparkle"][data-run] [data-k="sp"] {
+    animation: wl-b-spark 300ms ease-in calc(var(--wl-beat-at) + var(--i, 0) * 60ms) backwards;
+  }
+  .wl-buddy[data-beat="sparkle"][data-dir="out"][data-run] [data-k="sp"] {
+    animation-direction: reverse;
+    animation-timing-function: ease-out;
+  }
+  .wl-buddy[data-beat="sparkle"][data-run] [data-body] {
+    animation: wl-b-gulp 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="sparkle"][data-run] [data-look] {
+    animation: wl-b-follow 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+
+  /* nod: balance set (neutral); rewind: undone (flat); dip: checked out (neutral). */
+  .wl-buddy[data-beat="nod"][data-run] [data-body] {
+    animation: wl-b-nod 300ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="nod"][data-run] [data-part="eyes"] {
+    animation: wl-r-blink 140ms var(--art-mv) calc(var(--wl-beat-at) + 120ms);
+  }
+  .wl-buddy[data-beat="rewind"][data-run] [data-part="c2"] {
+    animation: wl-b-rewind 400ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="dip"][data-run] [data-part="c3"] {
+    animation: wl-b-dip3 450ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+
+  /* wrist: heads-up (curious). Brow up, the teal pass taps the clock twice; its hand sweeps. */
+  .wl-buddy[data-beat="wrist"][data-run] [data-k="clock"] {
+    animation: wl-b-pop 200ms var(--art-bo) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="wrist"][data-run] [data-part="c1"] {
+    animation: wl-b-tap 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="wrist"][data-run] [data-k="hand"] {
+    animation: wl-b-hand 300ms var(--art-sp) calc(var(--wl-beat-at) + 120ms) backwards;
+  }
+  .wl-buddy[data-beat="wrist"][data-run] [data-trunk] {
+    animation: wl-b-lean 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="wrist"][data-run] [data-part="br"] {
+    animation: wl-b-brow 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  /* tilt: not checked in (curious). */
+  .wl-buddy[data-beat="tilt"][data-run] [data-trunk] {
+    animation: wl-b-tilt 450ms ease-in-out var(--wl-beat-at) backwards;
+  }
+
+  /* droop: expired (sad). The expired state's droop and glance, then a sigh. */
+  .wl-buddy[data-beat="droop"][data-run] [data-part="c3"] {
+    animation: wl-w-droop 300ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="droop"][data-run] [data-look] {
+    animation: wl-w-glance 200ms var(--art-mv) calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+  .wl-buddy[data-beat="droop"][data-run] [data-body] {
+    animation: wl-s-sigh 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+
+  /* shake: every red refusal (sad). A "no": the trunk turns on its feet, the face leads, eyes squeezed and
+     brows pinched; the fan swings 45 ms behind each turn. Within 6 deg and 3 units at every frame (cut-safe). */
+  .wl-buddy[data-beat="shake"][data-run] [data-trunk] {
+    animation: wl-b-shake 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="shake"][data-run] [data-look] {
+    animation: wl-b-shake-look 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="shake"][data-run] [data-part="eyes"] {
+    animation: wl-b-shake-eyes 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="shake"][data-run] [data-part="br"] {
+    animation: wl-b-shake-brow 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="shake"][data-run] [data-body] {
+    animation: wl-b-shake-body 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="shake"][data-run] [data-fan] {
+    animation: wl-b-shake-fan 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+
+  /* sorry: the end of every slate beat. A small bow (cloud, wait; plug keeps its flinch), then it looks up at
+     you with its passes drawn in. Never a shake. */
+  .wl-buddy[data-pose="sorry"]:not([data-beat="plug"])[data-run] [data-body] {
+    animation: wl-b-bow 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-pose="sorry"][data-run] [data-look] {
+    animation: wl-b-sorry-look 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-pose="sorry"][data-run] :is([data-part="c1"], [data-part="c3"]) {
+    animation: wl-b-sorry-pass 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+
+  /* cloud: no connection, no answer, not confirmed (sad). It drifts in over the head and sags. */
+  .wl-buddy[data-beat="cloud"][data-run] [data-k="cloud"] {
+    animation: wl-b-cloud 400ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+
+  /* plug: server error (sad). The prop's own entrance sparks; the buddy flinches, eyes wide (squeezed
+     eyes belong to the red "no"), then sighs. */
+  .wl-buddy[data-beat="plug"][data-run] [data-body] {
+    animation: wl-b-flinch 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="plug"][data-run] [data-part="eyes"] {
+    animation: wl-b-widen 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+
+  /* stash: saved offline (neutral, not confirmed). The gold pass goes in beside the clock. */
+  .wl-buddy[data-beat="stash"][data-run] [data-k="clock"] {
+    animation: wl-b-pop 200ms var(--art-bo) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="stash"][data-run] [data-part="c3"] {
+    animation: wl-b-thumb 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+
+  /* Input beats, at 0: glance (a card opens), catch (a reader read), wake, rings (reader ready). */
+  .wl-buddy[data-beat="glance"][data-run] [data-part="eyes"] {
+    animation: wl-b-widen 300ms var(--art-sp);
+  }
+  .wl-buddy[data-beat="catch"][data-run] [data-part="c2"] {
+    animation: wl-b-catch 260ms ease-in;
+  }
+  .wl-buddy[data-beat="catch"][data-run] [data-body] {
+    animation: wl-b-nod 260ms var(--art-mv) 160ms backwards;
+  }
+  .wl-buddy[data-beat="wake"][data-run] [data-part="eyes"] {
+    animation: wl-b-open 140ms var(--art-out);
+  }
+  .wl-buddy[data-beat="wake"][data-run] [data-body] {
+    animation: wl-b-nod 300ms var(--art-mv);
+  }
+  .wl-buddy[data-beat="rings"][data-run] [data-k="ring"] {
+    animation: wl-b-ring 640ms var(--art-out) calc(var(--i, 0) * 320ms);
+  }
+}
+
+@keyframes wl-b-rummage {
+  50% {
+    translate: 0 6px;
+  }
+}
+@keyframes wl-b-jig {
+  50% {
+    rotate: 1.5deg;
+  }
+}
+@keyframes wl-b-hop {
+  14% {
+    translate: 0 0;
+    scale: 1.06 0.9;
+  }
+  34% {
+    translate: 0 -7px;
+    scale: 0.96 1.06;
+  }
+  52% {
+    translate: 0 0;
+    scale: 1.07 0.9;
+  }
+  64% {
+    scale: 0.98 1.03;
+  }
+  80% {
+    scale: 1.03 0.97;
+  }
+  92% {
+    scale: 1;
+  }
+}
+@keyframes wl-b-thumb {
+  14% {
+    translate: 0 1px;
+    rotate: 0deg;
+  }
+  34%,
+  56% {
+    translate: 0 -10px;
+    rotate: -18deg;
+  }
+  44% {
+    rotate: -24deg;
+  }
+  70% {
+    translate: 0 -4px;
+    rotate: -6deg;
+  }
+  80% {
+    translate: 0 3px;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-jolt {
+  78% {
+    translate: 0 0;
+  }
+  84% {
+    translate: 0 1.5px;
+  }
+}
+@keyframes wl-b-press {
+  30% {
+    scale: 1;
+  }
+  38% {
+    scale: 1.05 0.93;
+  }
+  52% {
+    scale: 1;
+  }
+}
+@keyframes wl-b-present {
+  25% {
+    translate: 0 -6px;
+  }
+  36% {
+    translate: 0 -4px;
+  }
+  46% {
+    translate: 0 -6px;
+  }
+  70% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-pop {
+  from {
+    scale: 0;
+  }
+}
+@keyframes wl-b-chad {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    translate: 1px 10px;
+    rotate: 90deg;
+  }
+}
+@keyframes wl-b-stamper {
+  25% {
+    translate: -8px -6px;
+    rotate: -30deg;
+  }
+  36% {
+    translate: -8px -3px;
+    rotate: -30deg;
+  }
+  46% {
+    translate: -8px -6px;
+    rotate: -30deg;
+  }
+  76% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-dip {
+  34% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 1.5px;
+  }
+  50% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-stamp {
+  from {
+    opacity: 0;
+    scale: 1.3;
+    rotate: -12deg;
+  }
+  1% {
+    opacity: 1;
+  }
+}
+@keyframes wl-b-eyes {
+  0%,
+  86% {
+    opacity: 1;
+  }
+}
+@keyframes wl-b-joy {
+  0%,
+  86% {
+    opacity: 0;
+  }
+}
+@keyframes wl-b-up {
+  12%,
+  56% {
+    translate: 0 -1.2px;
+  }
+  72% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-spark {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+    scale: 0.6;
+  }
+  20% {
+    opacity: 1;
+    scale: 1;
+  }
+  85% {
+    opacity: 1;
+    translate: 0 24px;
+    scale: 0.8;
+  }
+  to {
+    opacity: 0;
+    translate: 0 28px;
+    scale: 0.4;
+  }
+}
+@keyframes wl-b-gulp {
+  62% {
+    scale: 1;
+  }
+  72% {
+    scale: 1.06 0.94;
+  }
+  86% {
+    scale: 0.99 1.02;
+  }
+}
+@keyframes wl-b-follow {
+  10% {
+    translate: 0 -1.4px;
+  }
+  60% {
+    translate: 0 1px;
+  }
+  80% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-nod {
+  40% {
+    scale: 1.04 0.96;
+  }
+}
+@keyframes wl-b-rewind {
+  40% {
+    translate: 0 -6px;
+  }
+  75% {
+    translate: 0 1px;
+  }
+}
+@keyframes wl-b-dip3 {
+  45% {
+    translate: 0 6px;
+  }
+}
+@keyframes wl-b-tap {
+  20%,
+  42%,
+  76% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+  31%,
+  56% {
+    rotate: -30deg;
+    translate: -2px 14px;
+  }
+}
+@keyframes wl-b-hand {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: calc(var(--cw, -1) * 90deg);
+  }
+}
+@keyframes wl-b-lean {
+  18%,
+  70% {
+    rotate: -4deg;
+  }
+}
+@keyframes wl-b-brow {
+  18%,
+  80% {
+    translate: 0 -1.2px;
+  }
+}
+@keyframes wl-b-tilt {
+  30%,
+  70% {
+    rotate: 8deg;
+  }
+}
+@keyframes wl-b-shake {
+  0%,
+  6.4% {
+    rotate: 0deg;
+  }
+  16.4% {
+    rotate: -6deg;
+  }
+  32.7% {
+    rotate: 5.5deg;
+  }
+  49.1% {
+    rotate: -3.5deg;
+  }
+  63.6% {
+    rotate: 1.5deg;
+  }
+  76%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-shake-look {
+  6.4% {
+    translate: 0 0.3px;
+  }
+  14.5% {
+    translate: -2.4px 0.3px;
+  }
+  30.9% {
+    translate: 2.2px 0.3px;
+  }
+  47.3% {
+    translate: -1.4px 0.2px;
+  }
+  61.8% {
+    translate: 0.6px 0.1px;
+  }
+  74.5% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-shake-eyes {
+  5.5%,
+  72.7% {
+    scale: 1.12 0.28;
+  }
+  81.8% {
+    scale: 1 1.12;
+  }
+  90.9% {
+    scale: 1;
+  }
+}
+@keyframes wl-b-shake-brow {
+  5.5%,
+  72.7% {
+    translate: 0 0.8px;
+  }
+  85.5% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-shake-body {
+  6.4% {
+    translate: 0 0.8px;
+    scale: 1.03 0.96;
+  }
+  16.4%,
+  76% {
+    translate: 0 0;
+    scale: 1;
+  }
+  83.6% {
+    translate: 0 -0.8px;
+    scale: 0.99 1.02;
+  }
+}
+@keyframes wl-b-shake-fan {
+  0%,
+  6.4% {
+    rotate: 0deg;
+  }
+  16.4% {
+    rotate: 4.5deg;
+  }
+  24.5% {
+    rotate: -6deg;
+  }
+  40.9% {
+    rotate: 6deg;
+  }
+  57.3% {
+    rotate: -4deg;
+  }
+  71.8% {
+    rotate: 2deg;
+  }
+  83.6% {
+    rotate: -0.8deg;
+  }
+}
+@keyframes wl-b-bow {
+  0%,
+  36.4% {
+    translate: 0 0;
+    scale: 1;
+  }
+  54.5% {
+    translate: 0 1.6px;
+    scale: 1.01 0.97;
+  }
+  74.5% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes wl-b-sorry-look {
+  0%,
+  36.4% {
+    translate: 0 0;
+  }
+  54.5% {
+    translate: 0 0.8px;
+  }
+}
+@keyframes wl-b-sorry-pass {
+  0%,
+  36.4% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-cloud {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+@keyframes wl-b-flinch {
+  22% {
+    translate: 0 0;
+  }
+  32% {
+    translate: 1.5px 1px;
+    scale: 0.97 1.02;
+  }
+  50% {
+    translate: 0 0;
+    scale: 1;
+  }
+  72% {
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+}
+@keyframes wl-b-widen {
+  35% {
+    scale: 1.2;
+  }
+}
+@keyframes wl-b-catch {
+  from {
+    opacity: 0;
+    translate: 0 -14px;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+@keyframes wl-b-open {
+  from {
+    scale: 1 0;
+  }
+}
+@keyframes wl-b-ring {
+  from {
+    opacity: 0.7;
+    scale: 0.6;
+  }
+  to {
+    opacity: 0;
+    scale: 1.5;
+  }
+}
