@@ -549,6 +549,37 @@ describe('0014_scan migration', () => {
     expect(row?.device_role).toBe('scan');
   });
 
+  it('accepts system auto scans and rejects unknown actors and methods', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    let n = 0;
+    const insertScan = (over: Record<string, string | number | null>) => {
+      const row = {
+        id: `scan-${++n}`,
+        org_id: org.id,
+        mode: 'live',
+        actor_type: 'scanner',
+        actor_id: 'a',
+        actor_key: 'k',
+        idempotency_key: `i-${n}`,
+        request_hash: 'h',
+        method: 'camera',
+        at: 1,
+        ...over,
+      };
+      const keys = Object.keys(row);
+      return run(
+        env.DB,
+        `INSERT INTO scans (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+        Object.values(row),
+      );
+    };
+    await insertScan({ actor_type: 'system', actor_key: 'sys:occupancy', method: 'auto' });
+    await insertScan({ actor_type: 'user' });
+    await expect(insertScan({ actor_type: 'robot' })).rejects.toThrow(/CHECK constraint failed/);
+    await expect(insertScan({ method: 'robot' })).rejects.toThrow(/CHECK constraint failed/);
+  });
+
   it('keeps audit rows and the id sequence through the rebuild', async () => {
     const migration = env.TEST_MIGRATIONS.find((m) => m.name.startsWith('0014'));
     const queries = migration?.queries ?? [];
