@@ -102,8 +102,15 @@ describe('pass actions', () => {
     const defs = actionsFor(removed);
     expect(defs.filter((d) => d.bar).map((d) => d.id)).toEqual(['restore']);
     const all = defs.map((d) => d.id);
-    for (const gone of ['void', 'unvoid', 'update', 'pull', 'remove'])
+    for (const gone of ['void', 'unvoid', 'update', 'pull', 'remove', 'rotate', 'download'])
       expect(all).not.toContain(gone);
+  });
+  it('turns off everything but reading for a pass of the other mode', () => {
+    const defs = actionsFor(passSummary() as Parameters<typeof actionsFor>[0], true);
+    expect(defs.filter((d) => !d.disabled).map((d) => d.id)).toEqual(['open', 'download', 'copy']);
+    expect(
+      actionsFor(passSummary() as Parameters<typeof actionsFor>[0]).some((d) => d.disabled),
+    ).toBe(false);
   });
   it('offers only Unvoid in the bar of a voided pass and never Update or Pull', () => {
     const voided = {

@@ -68,7 +68,7 @@ describe('Devices tab', () => {
     expect(rows[0]).toHaveTextContent('Up to date');
     expect(rows[0]).toHaveTextContent('Fetched v3 (200)');
     expect(rows[1]).toHaveTextContent('Push failing');
-    expect(rows[1]).toHaveTextContent('Push failed v3: BadDeviceToken');
+    expect(rows[1]).toHaveTextContent('Push failed v3: Device token no longer valid');
     expect(rows[1]).toHaveTextContent('Never fetched');
     expect(rows[2]).toHaveTextContent('Stopped updates');
     expect(screen.getByText('1 of 2 devices up to date')).toBeInTheDocument();
@@ -194,5 +194,73 @@ describe('Remove from Wallet', () => {
     await user.type(within(dialog).getByLabelText(/Message for holders/), 'Use the new app');
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(bodies).toEqual([{ message: 'Use the new app' }]));
+  });
+});
+
+describe('A removed pass', () => {
+  const removed = () => json(passDetail({ status: 'voided', removedAt: NOW - 5000 }));
+  const devices = () =>
+    json({
+      version: 4,
+      removal: { removedAt: NOW - 5000, version: 4, total: 2, done: 1 },
+      devices: [device({ removal: 'fetched' }), device({ device: 'f6e5d4c3b2a1' })],
+    });
+
+  it('shows the removal and its progress on every tab, with a Devices link', async () => {
+    await renderApp('/admin/passes/p1?tab=holder', {
+      session: 'admin',
+      handlers: handlers({ '/api/v1/passes/p1': removed, '/api/v1/passes/p1/devices': devices }),
+    });
+    expect(await screen.findByText('Removed on 1 of 2 devices')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Devices' })).toBeInTheDocument();
+  });
+
+  it('says Restore, not Unvoid, where the fields would be', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      handlers: handlers({ '/api/v1/passes/p1': removed, '/api/v1/passes/p1/devices': devices }),
+    });
+    expect(await screen.findByText('Removed from Wallet. Restore to edit.')).toBeInTheDocument();
+    expect(screen.queryByText('Unvoid to edit.')).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Restore' }).length).toBeGreaterThan(1);
+    await user.click(screen.getByRole('tab', { name: 'Fields' }));
+  });
+});
+
+describe('Bundles of a pass in the other mode', () => {
+  it('asks in the pass mode and shows its bundles with when they were made', async () => {
+    const seen: string[] = [];
+    await renderApp('/admin/passes/p1?tab=delivery', {
+      session: 'admin',
+      handlers: handlers({
+        '/api/v1/passes/p1': () => json(passDetail({ mode: 'test' })),
+        '/api/v1/delivery': () => json({ items: [] }),
+        '/api/v1/bundles': (_u, init) => {
+          seen.push(
+            String((init?.headers as Record<string, string> | undefined)?.['x-passbook-mode']),
+          );
+          return json({
+            nextCursor: null,
+            items: [
+              {
+                id: 'b1',
+                orgId: 'org1',
+                mode: 'test',
+                name: 'Test pack',
+                url: 'https://wallet.test/b/t',
+                holderEmail: null,
+                passes: [{ id: 'p1', title: 'Pass', status: 'active' }],
+                createdAt: NOW - 3_600_000,
+                linkRotatedAt: null,
+              },
+            ],
+          });
+        },
+      }),
+    });
+    expect(await screen.findByText('Test pack')).toBeInTheDocument();
+    expect(seen).toContain('test');
+    expect(screen.getByText(/Created/)).toBeInTheDocument();
   });
 });

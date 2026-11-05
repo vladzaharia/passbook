@@ -2,16 +2,17 @@ import { useNavigate } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import { Copy, UserMinus } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import type { Mode } from '@/shared/contracts/common.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { copyText } from '../../lib/clipboard.ts';
 import { clearHolderConfirm, deleteConfirm, voidConfirm } from '../../lib/confirms.ts';
+import { useMode } from '../../lib/mode.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
-import { usePassActions } from './api.ts';
+import { usePassActions, usePassRemoval } from './api.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
-import { usePassRemoval } from './detail/sync-api.ts';
 import { absoluteUrl } from './format.ts';
-import { RotatedLinkDialog } from './rotated-link-dialog.tsx';
+import { RotateLink } from './rotated-link-dialog.tsx';
 
 export type PassActionId =
   | 'update'
@@ -37,7 +38,7 @@ type ActionPass = Pick<
   | 'holderState'
   | 'holderEmail'
   | 'deviceCount'
-> & { removedAt?: number | null | undefined };
+> & { removedAt?: number | null | undefined; mode?: Mode | undefined };
 
 const LABEL: Record<PassActionId, string> = {
   update: 'Update devices',
@@ -76,18 +77,24 @@ export interface PassActionDef {
   destructive: boolean;
   /** Shown as a header button; the rest go in More. */
   bar: boolean;
+  /** The pass belongs to the other mode: only reading actions stay on. */
+  disabled: boolean;
 }
+
+const READ_ONLY = new Set<PassActionId>(['open', 'download', 'copy']);
 
 /**
  * Every action a pass offers, in order. The header and the row menu both read this, so they always
  * offer the same set. A voided pass shows only Unvoid in the bar and never Update or Pull. A
- * removed pass shows only Restore: it stays removed until restored, so Void and Update would lie.
+ * removed pass shows only Restore: it stays removed until restored, so Void and Update would lie,
+ * and its link and download are gone with it. `foreign` greys out whatever would change a pass of
+ * the other mode.
  */
-export function actionsFor(pass: ActionPass): PassActionDef[] {
+export function actionsFor(pass: ActionPass, foreign = false): PassActionDef[] {
   const removed = pass.removedAt != null;
   const voided = pass.status === 'voided';
   const ids: PassActionId[] = removed
-    ? ['restore', 'open', 'rotate', 'download', 'copy']
+    ? ['restore', 'open', 'copy']
     : voided
       ? ['unvoid', 'open', 'rotate', 'download', 'copy', 'remove']
       : [
@@ -110,6 +117,7 @@ export function actionsFor(pass: ActionPass): PassActionDef[] {
     icon: ICON[id],
     destructive: DANGER.has(id),
     bar: bar.has(id),
+    disabled: foreign && !READ_ONLY.has(id),
   }));
 }
 
@@ -138,8 +146,9 @@ export function usePassActionRunner(
   const actions = usePassActions(pass.id);
   const removal = usePassRemoval(pass.id);
   const navigate = useNavigate();
+  const mode = useMode();
+  const foreign = pass.mode !== undefined && pass.mode !== mode;
   const [ask, setAsk] = useState<'void' | 'clear' | 'delete' | 'rotate' | 'remove' | null>(null);
-  const [rotated, setRotated] = useState<PassLinks | null>(null);
   const [done, setDone] = useState<Partial<Record<PassActionId, number>>>({});
   const bump = (id: PassActionId) => setDone((d) => ({ ...d, [id]: (d[id] ?? 0) + 1 }));
   const name = pass.title ?? pass.serial;
@@ -178,7 +187,7 @@ export function usePassActionRunner(
     try {
       await removal.restore.mutateAsync();
       bump('restore');
-      toast.success('Pass restored');
+      undoToast.current = toast.undo('Pass restored', () => setAsk('remove'));
     } catch (error) {
       toast.error(error, 'Could not restore');
     }
@@ -189,6 +198,7 @@ export function usePassActionRunner(
   }
 
   function run(id: PassActionId) {
+    if (foreign && !READ_ONLY.has(id)) return;
     if (id === 'update' || id === 'pull') void refresh(id);
     else if (id === 'unvoid') void unvoid();
     else if (id === 'restore') void restore();
@@ -240,18 +250,18 @@ export function usePassActionRunner(
           toast.success('Holder cleared');
         }}
       />
-      <ConfirmDialog
+      <RotateLink
         open={ask === 'rotate'}
         onOpenChange={close}
-        title="Rotate link?"
         description="The current link and download stop working. Devices keep the pass."
-        confirmLabel="Rotate"
-        destructive
-        onConfirm={async () => {
+        rotate={async () => {
           const next = await actions.rotateLink.mutateAsync();
           bump('rotate');
-          setRotated(next);
+          return next.publicUrl;
         }}
+        holderEmail={pass.holderEmail}
+        mode={pass.mode}
+        sendEmail={(key) => actions.resendEmail.mutateAsync({ key })}
       />
       <TypedConfirmDialog
         open={ask === 'delete'}
@@ -265,17 +275,11 @@ export function usePassActionRunner(
           else void navigate({ to: '/admin/passes', replace: true });
         }}
       />
-      <RotatedLinkDialog
-        links={rotated}
-        holderEmail={pass.holderEmail}
-        passId={pass.id}
-        onClose={() => setRotated(null)}
-      />
     </>
   );
 
   return {
-    defs: actionsFor(pass),
+    defs: actionsFor(pass, foreign),
     run,
     links,
     pending: {

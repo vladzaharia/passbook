@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn.ts';
+import { removeWithTransition } from '../../../lib/motion.ts';
 import { Button, FormField, FormGrid, FormSpan, IconButton } from '../../../ui/index.ts';
 import { Control, WIDE_WIDGETS } from './controls.tsx';
 import { type FieldDef, rowErrorKey } from './schema.ts';
@@ -56,6 +57,8 @@ export function ListInput({
   const [ids, setIds] = useState<string[]>(() => rows.map(newId));
   const [fresh, setFresh] = useState<string | null>(null);
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
+  // A row added after a failed submit stays quiet until a field in it is left.
+  const [quiet, setQuiet] = useState<ReadonlySet<string>>(new Set());
   const [said, setSaid] = useState('');
   const refocus = useRef<(() => void) | null>(null);
   const addRef = useRef<HTMLButtonElement>(null);
@@ -82,6 +85,7 @@ export function ListInput({
     if (rows.length >= def.max) return;
     const id = newId();
     setFresh(id);
+    setQuiet((q) => new Set(q).add(id));
     emit([...rows, {}], [...rowIds, id]);
     setSaid(`${def.itemLabel} ${rows.length + 1} added.`);
     refocus.current = () => {
@@ -94,7 +98,7 @@ export function ListInput({
   const remove = (i: number) => {
     const next = rows.filter((_, j) => j !== i);
     const nextIds = rowIds.filter((_, j) => j !== i);
-    emit(next, nextIds);
+    removeWithTransition(() => emit(next, nextIds));
     setSaid(`${label(i)} removed.`);
     // Land on the row that took its place, or the add button when none is left.
     const landing = nextIds[Math.min(i, nextIds.length - 1)];
@@ -140,17 +144,21 @@ export function ListInput({
     });
     emit(next, rowIds);
   };
-  const touch = (id: string, key: string) =>
+  const touch = (id: string, key: string) => {
     setTouched((t) => (t.has(`${id}.${key}`) ? t : new Set(t).add(`${id}.${key}`)));
+    setQuiet((q) => {
+      if (!q.has(id)) return q;
+      const next = new Set(q);
+      next.delete(id);
+      return next;
+    });
+  };
 
   const listError = serverErrors?.[field.key] ?? (showAllErrors ? errors[field.key] : undefined);
   const required = field.required;
+  const note = listError ?? field.help;
   return (
-    <fieldset
-      className="min-w-0 border-0 p-0"
-      aria-describedby={helpId}
-      aria-invalid={listError ? true : undefined}
-    >
+    <fieldset className="min-w-0 border-0 p-0" aria-describedby={note ? helpId : undefined}>
       <legend id={titleId} className="mb-2 text-sm font-medium text-fg-strong">
         {field.label}
         {required ? (
@@ -159,17 +167,19 @@ export function ListInput({
           </span>
         ) : null}
       </legend>
-      {(listError ?? field.help) ? (
+      {note ? (
         <p
           id={helpId}
           className={cn('mb-3 max-w-[65ch] text-xs', listError ? 'text-danger' : 'text-fg-muted')}
         >
-          {listError ?? field.help}
+          {note}
         </p>
       ) : null}
-      <p className="mb-3 max-w-[65ch] text-xs text-fg-muted">
-        {`${rows.length} of ${def.max}. Alt with the arrow keys moves a row.`}
-      </p>
+      {rows.length > 1 ? (
+        <p className="mb-3 max-w-[65ch] text-xs text-fg-muted">
+          {`${rows.length} of ${def.max}. Alt with the arrow keys moves a row.`}
+        </p>
+      ) : null}
       {rows.length > 0 ? (
         <ol className="mb-3 flex flex-col gap-3">
           {rows.map((row, i) => {
@@ -186,7 +196,7 @@ export function ListInput({
                 tabIndex={-1}
                 aria-labelledby={`${titleId}-${id}`}
                 aria-describedby={rowError ? `${titleId}-${id}-err` : undefined}
-                aria-invalid={rowError ? true : undefined}
+                data-row-id={id}
                 onKeyDown={(e) => onKeyDown(e, i)}
                 data-fresh={fresh === id || undefined}
                 className="min-w-0 rounded-md border border-border bg-surface-sunken p-3 outline-none focus-visible:outline-2 focus-visible:outline-focus motion-safe:data-fresh:animate-[wl-fade-in_var(--wl-dur-enter)_var(--wl-ease-out)_backwards] md:p-4"
@@ -235,7 +245,9 @@ export function ListInput({
                     const key = rowErrorKey(field.key, i, sub.key);
                     const error =
                       serverErrors?.[key] ??
-                      (showAllErrors || touched.has(`${id}.${sub.key}`) ? errors[key] : undefined);
+                      ((showAllErrors && !quiet.has(id)) || touched.has(`${id}.${sub.key}`)
+                        ? errors[key]
+                        : undefined);
                     return (
                       <FormSpan key={sub.key} full={WIDE_WIDGETS.has(sub.widget)}>
                         <FormField

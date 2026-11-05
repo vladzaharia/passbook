@@ -1,27 +1,41 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
+import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
-import { Button, ConfirmDialog, IconButton, toast, useBottomBar } from '../../ui/index.ts';
+import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
+import {
+  Button,
+  ConfirmDialog,
+  DropdownMenuItem,
+  IconButton,
+  MoreMenu,
+  toast,
+  useBottomBar,
+} from '../../ui/index.ts';
 import { useBulkPassAction } from './api.ts';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+const SHARE_HINT = `Up to ${BUNDLE_MAX_PASSES} passes of one organization.`;
+
 /**
- * Fixed at the bottom while rows are selected: n selected, then the bulk actions.
- * Email and Void confirm with the count; Void uses the danger button.
+ * Fixed at the bottom while rows are selected: n selected, then the bulk actions. Below lg the
+ * primary two stay on the row and the rest go in More. Email and Void confirm with the count of
+ * passes they will touch; Void uses the danger button.
  */
 export function SelectionBar({
-  ids,
+  picked,
   orgId,
   bundleOrgId,
   onClear,
   onExport,
 }: {
-  ids: string[];
+  /** The selected rows: what each action touches is counted from them. */
+  picked: PassSummaryDto[];
   orgId: string | undefined;
   /** The one org of the selected passes; null when they span several. */
   bundleOrgId: string | null;
@@ -32,7 +46,12 @@ export function SelectionBar({
   const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const [sharing, setSharing] = useState(false);
   const barRef = useBottomBar<HTMLElement>();
+  const compact = useMediaQuery(BELOW_LG);
+  const ids = picked.map((p) => p.id);
   const n = ids.length;
+  const changeable = picked.filter((p) => p.removedAt === null).length;
+  const emailable = picked.filter((p) => p.holderEmail !== null).length;
+  const canShare = n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
   if (n === 0) return null;
 
   async function run(action: 'void' | 'send_email' | 'remove', message?: string) {
@@ -42,21 +61,16 @@ export function SelectionBar({
       ...(message ? { message } : {}),
       ...(orgId ? { orgId } : {}),
     });
-    const skipped = result.skipped.length;
-    toast.success(
+    const skipped = result.skipped.length ? `, ${result.skipped.length} skipped` : '';
+    const text =
       action === 'void'
         ? `${plural(result.done, 'pass', 'passes')} voided`
         : action === 'remove'
           ? `${plural(result.done, 'pass', 'passes')} removed from Wallet`
-          : `${plural(result.done, 'email', 'emails')} queued${skipped ? `, ${skipped} without a holder` : ''}`,
-    );
+          : `${plural(result.done, 'email', 'emails')} queued`;
+    if (action === 'send_email') toast.sent(`${text}${skipped}`);
+    else toast.success(`${text}${skipped}`);
     onClear();
-  }
-
-  function share() {
-    if (n > BUNDLE_MAX_PASSES || !bundleOrgId)
-      toast.error('Select up to 10 passes of one organization.', 'Could not share');
-    else setSharing(true);
   }
 
   return (
@@ -72,35 +86,70 @@ export function SelectionBar({
         </p>
         <Button
           variant="outline"
+          disabled={emailable === 0}
           iconStart={<ACTION_ICON.sendEmail aria-hidden />}
           onClick={() => setAsk('send_email')}
         >
           Send email
         </Button>
-        <Button variant="outline" iconStart={<ACTION_ICON.bundle aria-hidden />} onClick={share}>
-          Share as bundle
-        </Button>
-        <Button
-          variant="outline"
-          iconStart={<ACTION_ICON.void aria-hidden />}
-          onClick={() => setAsk('void')}
-        >
-          Void
-        </Button>
-        <Button
-          variant="outline"
-          iconStart={<ACTION_ICON.removeFromWallet aria-hidden />}
-          onClick={() => setAsk('remove')}
-        >
-          Remove from Wallet
-        </Button>
-        <Button
-          variant="outline"
-          iconStart={<ACTION_ICON.download aria-hidden />}
-          onClick={onExport}
-        >
-          Export CSV
-        </Button>
+        <span title={canShare ? undefined : SHARE_HINT}>
+          <Button
+            variant="outline"
+            disabled={!canShare}
+            aria-describedby={canShare ? undefined : 'share-hint'}
+            iconStart={<ACTION_ICON.bundle aria-hidden />}
+            onClick={() => setSharing(true)}
+          >
+            Share as bundle
+          </Button>
+          {canShare ? null : (
+            <span id="share-hint" className="sr-only">
+              {SHARE_HINT}
+            </span>
+          )}
+        </span>
+        {compact ? (
+          <MoreMenu>
+            <DropdownMenuItem disabled={changeable === 0} onSelect={() => setAsk('void')}>
+              <ACTION_ICON.void aria-hidden />
+              Void
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={changeable === 0} onSelect={() => setAsk('remove')}>
+              <ACTION_ICON.removeFromWallet aria-hidden />
+              Remove from Wallet
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onExport}>
+              <ACTION_ICON.download aria-hidden />
+              Export CSV
+            </DropdownMenuItem>
+          </MoreMenu>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              disabled={changeable === 0}
+              iconStart={<ACTION_ICON.void aria-hidden />}
+              onClick={() => setAsk('void')}
+            >
+              Void
+            </Button>
+            <Button
+              variant="outline"
+              disabled={changeable === 0}
+              iconStart={<ACTION_ICON.removeFromWallet aria-hidden />}
+              onClick={() => setAsk('remove')}
+            >
+              Remove from Wallet
+            </Button>
+            <Button
+              variant="outline"
+              iconStart={<ACTION_ICON.download aria-hidden />}
+              onClick={onExport}
+            >
+              Export CSV
+            </Button>
+          </>
+        )}
       </div>
       {bundleOrgId ? (
         <BundleDialog
@@ -114,21 +163,25 @@ export function SelectionBar({
       <ConfirmDialog
         open={ask === 'void'}
         onOpenChange={(o) => !o && setAsk(null)}
-        {...voidConfirm(n)}
+        {...voidConfirm(changeable)}
         destructive
         onConfirm={() => run('void')}
       />
       <RemoveDialog
         open={ask === 'remove'}
         onOpenChange={(o) => !o && setAsk(null)}
-        count={n}
+        count={changeable}
         onConfirm={(message) => run('remove', message)}
       />
       <ConfirmDialog
         open={ask === 'send_email'}
         onOpenChange={(o) => !o && setAsk(null)}
-        title={`Email ${plural(n, 'holder', 'holders')}?`}
-        description="Each holder gets their pass. Passes without a holder are skipped."
+        title={`Email ${plural(emailable, 'holder', 'holders')}?`}
+        description={
+          emailable < n
+            ? `Each holder gets their pass. ${n - emailable} without a holder will be skipped.`
+            : 'Each holder gets their pass.'
+        }
         confirmLabel="Send email"
         onConfirm={() => run('send_email')}
       />

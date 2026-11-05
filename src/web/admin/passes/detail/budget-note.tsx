@@ -7,9 +7,8 @@ export function BudgetNote({ budget, show }: { budget: PushBudgetDto; show: bool
   if (!show || budget.used < budget.limit) return null;
   return (
     <Callout tone="warning">
-      This pass has had {budget.used} of {budget.limit} notifications today. The save updates it
-      without one
-      {budget.resetsAt ? `. The next opens ${formatDateTime(budget.resetsAt)}.` : '.'}
+      Daily limit reached ({budget.used} of {budget.limit}). This save updates the pass silently
+      {budget.resetsAt ? `; notifications resume ${formatDateTime(budget.resetsAt)}.` : '.'}
     </Callout>
   );
 }

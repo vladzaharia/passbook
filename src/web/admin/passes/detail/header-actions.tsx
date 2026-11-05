@@ -41,7 +41,7 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
             loading={runner.pending[d.id]}
             busy={d.id === 'pull' ? 'spin' : undefined}
             done={runner.done[d.id]}
-            disabled={(d.id === 'open' && !runner.links) || undefined}
+            disabled={d.disabled || (d.id === 'open' && !runner.links) || undefined}
             aria-label={short ? d.label : undefined}
             onClick={() => runner.run(d.id)}
           >
@@ -63,7 +63,11 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
                   </a>
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem destructive={d.destructive} onSelect={() => runner.run(d.id)}>
+                <DropdownMenuItem
+                  destructive={d.destructive}
+                  disabled={d.disabled}
+                  onSelect={() => runner.run(d.id)}
+                >
                   <Icon aria-hidden />
                   {d.label}
                 </DropdownMenuItem>

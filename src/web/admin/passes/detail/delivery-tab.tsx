@@ -53,10 +53,12 @@ const noDevices = (e: Entry) => e.state === 'cancelled' && e.errorCode === 'NO_D
 function SendEmailCard({
   pass,
   sent,
+  foreign,
   onSent,
 }: {
   pass: PassDetailDto;
   sent: boolean;
+  foreign: boolean;
   onSent: () => void;
 }) {
   const actions = usePassActions(pass.id);
@@ -120,7 +122,7 @@ function SendEmailCard({
               iconStart={<ACTION_ICON.sendEmail aria-hidden />}
               loading={actions.resendEmail.isPending}
               done={done}
-              disabled={!to.trim()}
+              disabled={!to.trim() || foreign}
             >
               {sent ? 'Resend email' : 'Send email'}
             </Button>
@@ -131,7 +133,7 @@ function SendEmailCard({
   );
 }
 
-export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
+export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; foreign?: boolean }) {
   const actions = usePassActions(pass.id);
   const delivery = useQuery({
     queryKey: ['admin', 'passes', 'delivery', pass.id],
@@ -155,6 +157,8 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
   }
 
   // Cell renderers are component types to TanStack Table: keep the array stable or rows remount.
+  const foreignRef = useRef(foreign);
+  foreignRef.current = foreign;
   const retryRef = useRef(retry);
   retryRef.current = retry;
   const columns = useMemo<ColumnDef<Entry, never>[]>(
@@ -225,6 +229,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
               size="sm"
               variant="ghost"
               iconStart={<ACTION_ICON.refresh aria-hidden />}
+              disabled={foreignRef.current}
               onClick={() => void retryRef.current(row.original)}
             >
               Retry
@@ -237,7 +242,12 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
 
   return (
     <div className="grid min-w-0 gap-6">
-      <SendEmailCard pass={pass} sent={sent} onSent={() => void delivery.refetch()} />
+      <SendEmailCard
+        pass={pass}
+        sent={sent}
+        foreign={foreign}
+        onSent={() => void delivery.refetch()}
+      />
       <Card className="min-w-0">
         <CardHeader
           title="Outbox"
@@ -259,7 +269,6 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
           <DataTable
             caption="Delivery history"
             bare
-            stack={false}
             columns={columns}
             data={items}
             getRowId={(r) => r.id}
@@ -268,7 +277,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
           />
         )}
       </Card>
-      <BundlesCard passId={pass.id} />
+      <BundlesCard passId={pass.id} mode={pass.mode} foreign={foreign} />
     </div>
   );
 }

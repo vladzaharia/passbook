@@ -207,3 +207,22 @@ export function usePassActions(id: string) {
     }),
   };
 }
+
+/** Remove from Wallet and its undo; both end by refetching the pass, its devices and its log. */
+export function usePassRemoval(id: string) {
+  const qc = useQueryClient();
+  const refresh = async () => {
+    await qc.invalidateQueries({ queryKey: passKeys.all });
+  };
+  return {
+    remove: useMutation({
+      mutationFn: (message: string | undefined) =>
+        api.post(`/api/v1/passes/${id}/remove`, PassActionResponseSchema, { message }),
+      onSuccess: refresh,
+    }),
+    restore: useMutation({
+      mutationFn: () => api.post(`/api/v1/passes/${id}/restore`, PassActionResponseSchema),
+      onSuccess: refresh,
+    }),
+  };
+}

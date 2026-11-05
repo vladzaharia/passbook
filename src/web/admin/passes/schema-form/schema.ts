@@ -220,7 +220,13 @@ function validateField(field: FieldDef, value: unknown): string | undefined {
   }
   if (typeof s.pattern === 'string') {
     try {
-      if (!new RegExp(s.pattern).test(value)) return 'Does not match the expected format.';
+      if (!new RegExp(s.pattern).test(value)) {
+        const said = s['x-pattern-message'];
+        if (typeof said === 'string' && said) return said;
+        return field.placeholder
+          ? `Check the format, like ${field.placeholder}.`
+          : 'Check the format.';
+      }
     } catch {
       // An unusable pattern is the server's to enforce.
     }

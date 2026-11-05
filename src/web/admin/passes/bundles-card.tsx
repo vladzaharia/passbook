@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
+import type { Mode } from '@/shared/contracts/common.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import {
+  Button,
   Card,
   CardBody,
   CardHeader,
@@ -17,10 +19,14 @@ import {
 } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBundleActions, useBundlesOfPass } from './bundle-api.ts';
+import { RelTime, useNow } from './detail/rel-time.tsx';
 import { absoluteUrl } from './format.ts';
+import { RotateLink } from './rotated-link-dialog.tsx';
 
-function BundleRow({ bundle }: { bundle: BundleDto }) {
-  const actions = useBundleActions(bundle.id);
+const SHOWN = 5;
+
+function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; foreign: boolean }) {
+  const actions = useBundleActions(bundle.id, bundle.mode);
   const [ask, setAsk] = useState<'rotate' | 'delete' | null>(null);
   const n = bundle.passes.length;
   return (
@@ -28,8 +34,24 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
       <ListRow
         leading={<ACTION_ICON.bundle aria-hidden />}
         title={bundle.name}
-        pills={<ModePill mode={bundle.mode} />}
-        meta={`${n} ${n === 1 ? 'pass' : 'passes'}${bundle.holderEmail ? ` · ${bundle.holderEmail}` : ''}`}
+        pills={<ModePill mode={bundle.mode} compact />}
+        meta={
+          <>
+            <span className="block">
+              {n} {n === 1 ? 'pass' : 'passes'}
+              {bundle.holderEmail ? ` · ${bundle.holderEmail}` : ''}
+            </span>
+            <span className="block">
+              Created <RelTime at={bundle.createdAt} now={now} />
+              {bundle.linkRotatedAt ? (
+                <>
+                  {' · Link rotated '}
+                  <RelTime at={bundle.linkRotatedAt} now={now} />
+                </>
+              ) : null}
+            </span>
+          </>
+        }
         trailing={
           <span className="flex items-center gap-1">
             <CopyButton value={absoluteUrl(bundle.url)} label="Copy link" />
@@ -39,6 +61,7 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
                 {
                   label: 'Rotate link',
                   icon: ACTION_ICON.rotate,
+                  disabled: foreign,
                   onSelect: () => setAsk('rotate'),
                 },
                 ...(bundle.holderEmail
@@ -47,9 +70,10 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
                         label: 'Send email',
                         icon: ACTION_ICON.sendEmail,
                         loading: actions.sendEmail.isPending,
+                        disabled: foreign,
                         onSelect: () =>
                           actions.sendEmail.mutate(undefined, {
-                            onSuccess: () => toast.success('Email queued'),
+                            onSuccess: () => toast.sent('Email queued'),
                             onError: (error) => toast.error(error, 'Could not send'),
                           }),
                       },
@@ -59,6 +83,7 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
                   label: 'Delete',
                   icon: ACTION_ICON.delete,
                   destructive: true,
+                  disabled: foreign,
                   onSelect: () => setAsk('delete'),
                 },
               ]}
@@ -66,16 +91,14 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
           </span>
         }
       />
-      <ConfirmDialog
+      <RotateLink
         open={ask === 'rotate'}
         onOpenChange={(o) => !o && setAsk(null)}
-        title="Rotate the link?"
-        description="The old link stops working. The new one is not sent."
-        confirmLabel="Rotate"
-        onConfirm={async () => {
-          await actions.rotate.mutateAsync();
-          toast.success('Link rotated');
-        }}
+        description="The current link stops working. The passes stay."
+        rotate={async () => (await actions.rotate.mutateAsync()).url}
+        holderEmail={bundle.holderEmail}
+        mode={bundle.mode}
+        sendEmail={() => actions.sendEmail.mutateAsync()}
       />
       <ConfirmDialog
         open={ask === 'delete'}
@@ -93,10 +116,25 @@ function BundleRow({ bundle }: { bundle: BundleDto }) {
   );
 }
 
-/** The bundles this pass is in (the current mode), with the link's Copy, Rotate and Delete. */
-export function BundlesCard({ passId }: { passId: string }) {
-  const bundles = useBundlesOfPass(passId);
-  const items = bundles.data?.items ?? [];
+/** The bundles this pass is in (in its own mode), with the link's Copy, Rotate and Delete. */
+export function BundlesCard({
+  passId,
+  mode,
+  foreign = false,
+}: {
+  passId: string;
+  mode: Mode;
+  /** The pass is of the other mode: the bundles are shown, not changed. */
+  foreign?: boolean;
+}) {
+  const bundles = useBundlesOfPass(passId, mode);
+  const now = useNow();
+  const [all, setAll] = useState(false);
+  const items = useMemo(
+    () => [...(bundles.data?.items ?? [])].sort((a, b) => b.createdAt - a.createdAt),
+    [bundles.data],
+  );
+  const shown = all ? items : items.slice(0, SHOWN);
   return (
     <Card className="min-w-0">
       <CardHeader title="In bundles" />
@@ -113,10 +151,15 @@ export function BundlesCard({ passId }: { passId: string }) {
       ) : (
         <CardBody>
           <ListRows label="Bundles">
-            {items.map((b) => (
-              <BundleRow key={b.id} bundle={b} />
+            {shown.map((b) => (
+              <BundleRow key={b.id} bundle={b} now={now} foreign={foreign} />
             ))}
           </ListRows>
+          {items.length > SHOWN ? (
+            <Button variant="ghost" className="mt-2" onClick={() => setAll((a) => !a)}>
+              {all ? 'Show fewer' : `Show all (${items.length})`}
+            </Button>
+          ) : null}
         </CardBody>
       )}
     </Card>

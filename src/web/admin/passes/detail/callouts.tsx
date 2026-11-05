@@ -5,9 +5,12 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatDateTime } from '../../../lib/format.ts';
-import { Button, Callout } from '../../../ui/index.ts';
+import { setMode } from '../../../lib/mode.ts';
+import { Button, Callout, ProgressBar } from '../../../ui/index.ts';
 import { CreatedCallout } from '../created.tsx';
 import type { PassActionRunner } from '../pass-actions.tsx';
+import { REMOVAL_LIMIT, removedOnDevices } from './removal-copy.ts';
+import { usePassDevices } from './sync-api.ts';
 
 /** Voided: when and by whom; Unvoid sits in the header. The Ban stamps when it just happened. */
 export function VoidedCallout({ pass, stamp }: { pass: PassDetailDto; stamp: boolean }) {
@@ -122,12 +125,62 @@ export function PassCreatedCallout({
   );
 }
 
-/** Removed from Wallet: when, and the one limit. Restore sits in the header. */
-export function RemovedCallout({ pass }: { pass: PassDetailDto }) {
+/**
+ * Removed from Wallet, on every tab: when, how far the devices are (a device counts once it
+ * fetched the final version or deleted the pass) and the one limit. Restore sits in the header.
+ */
+export function RemovedCallout({ pass, tab }: { pass: PassDetailDto; tab: string }) {
+  const devices = usePassDevices(pass.id, true);
+  const removal = devices.data?.removal;
+  const done = removal?.done ?? 0;
+  const total = removal?.total ?? 0;
   return (
-    <Callout tone="warning" icon={ACTION_ICON.removeFromWallet}>
-      Removed from Wallet on {formatDateTime(pass.removedAt ?? pass.modifiedAt)}. Devices move it to
-      Expired passes, and the holder can delete it there.
+    <Callout
+      tone={total > 0 && done === total ? 'success' : 'warning'}
+      icon={ACTION_ICON.removeFromWallet}
+      title={`Removed from Wallet on ${formatDateTime(pass.removedAt ?? pass.modifiedAt)}`}
+      actions={
+        tab === 'devices' ? null : (
+          <Button size="sm" variant="outline" asChild>
+            <Link to="." search={{ tab: 'devices' }}>
+              Devices
+            </Link>
+          </Button>
+        )
+      }
+    >
+      <div className="grid gap-2">
+        {removal ? (
+          <>
+            <p className="font-medium text-fg-strong tabular-nums">
+              {removedOnDevices(done, total)}
+            </p>
+            {total > 0 ? (
+              <ProgressBar label="Devices updated" value={done} max={total} tone="success" />
+            ) : null}
+          </>
+        ) : null}
+        <p>{REMOVAL_LIMIT}</p>
+      </div>
+    </Callout>
+  );
+}
+
+/** A pass of the other mode: its actions are off until the mode matches. */
+export function ModeMismatchCallout({ pass }: { pass: PassDetailDto }) {
+  const live = pass.mode === 'live';
+  return (
+    <Callout
+      tone="warning"
+      actions={
+        <Button size="sm" variant="outline" onClick={() => setMode(pass.mode)}>
+          Switch to {live ? 'Live' : 'Test'} mode
+        </Button>
+      }
+    >
+      {live
+        ? 'Live pass. Changes reach holders. Switch to Live mode to edit.'
+        : 'Test pass. Switch to Test mode to edit.'}
     </Callout>
   );
 }

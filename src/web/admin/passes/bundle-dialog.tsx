@@ -1,10 +1,12 @@
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { errorMessage, isApiError } from '../../lib/errors.ts';
-import { QrTile } from '../../portal/holder-qr.tsx';
+import { Scan } from '../../portal/add/scan.tsx';
 import {
+  Buddy,
   Button,
   Callout,
   CopyButton,
@@ -13,8 +15,10 @@ import {
   Form,
   FormField,
   Input,
+  toast,
   useFormErrors,
 } from '../../ui/index.ts';
+import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import '../../portal/add/add.css';
 import { useCreateBundle } from './bundle-api.ts';
 import { absoluteUrl } from './format.ts';
@@ -28,19 +32,32 @@ function validate(name: string, email: string): Record<string, string> {
   return found;
 }
 
-/** The link, its QR and Copy: what the bundle is for. */
+/**
+ * The link on the shared QR sign, with Copy. In Test mode nothing was sent: the mail sits in the
+ * Test inbox.
+ */
 function Result({ bundle, emailed }: { bundle: BundleDto; emailed: boolean }) {
   const url = absoluteUrl(bundle.url);
+  const test = bundle.mode === 'test';
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="wl-rise flex min-w-0 flex-col gap-4">
       <Callout tone="success" title="Bundle ready">
-        {emailed
-          ? `Link emailed to ${bundle.holderEmail}.`
-          : `${plural(bundle.passes.length)} in one link.`}
+        <span className="flex flex-wrap items-center gap-x-2">
+          {emailed
+            ? test
+              ? 'Link captured in the Test inbox.'
+              : `Link emailed to ${bundle.holderEmail}.`
+            : `${plural(bundle.passes.length)} in one link.`}
+          {emailed && test ? (
+            <Link to="/admin/test-inbox" className="underline-offset-2 hover:underline">
+              Open Test inbox
+            </Link>
+          ) : null}
+          <ModePill mode={bundle.mode} />
+        </span>
       </Callout>
-      <div className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:items-center">
-        <QrTile value={url} label={`QR code for ${bundle.name}`} />
-        <div className="flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-md border border-border bg-surface-sunken py-1 pr-1 pl-3 sm:self-center">
+      <Scan url={url} label={`QR code for ${bundle.name}`} buddy={(p) => <Buddy {...p} />}>
+        <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-surface-sunken py-1 pr-1 pl-3">
           <span
             data-autofocus
             tabIndex={-1}
@@ -50,7 +67,7 @@ function Result({ bundle, emailed }: { bundle: BundleDto; emailed: boolean }) {
           </span>
           <CopyButton value={url} label="Copy link" />
         </div>
-      </div>
+      </Scan>
     </div>
   );
 }
@@ -104,6 +121,7 @@ export function BundleDialog({
         ...(address ? { holderEmail: address, sendEmail: true } : {}),
       });
       setMade({ bundle, emailed: Boolean(address) });
+      if (address && bundle.mode !== 'test') toast.sent(`Link emailed to ${address}`);
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);
       setFormError(errorMessage(cause));

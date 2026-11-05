@@ -122,14 +122,11 @@ describe('Share as bundle', () => {
     });
     await user.click(await screen.findByRole('checkbox', { name: 'Select Pass 1' }));
     await user.click(screen.getByRole('checkbox', { name: 'Select Pass 2' }));
-    await user.click(
-      within(screen.getByRole('region', { name: 'Selection' })).getByRole('button', {
-        name: 'Share as bundle',
-      }),
-    );
-    expect(
-      await screen.findByText('Select up to 10 passes of one organization.'),
-    ).toBeInTheDocument();
+    const share = within(screen.getByRole('region', { name: 'Selection' })).getByRole('button', {
+      name: 'Share as bundle',
+    });
+    expect(share).toBeDisabled();
+    expect(share).toHaveAccessibleDescription('Up to 10 passes of one organization.');
     expect(screen.queryByRole('dialog', { name: 'Share as bundle' })).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import {
+  Badge,
   Buddy,
   Celebrate,
   detailError,
@@ -22,10 +23,17 @@ import { usePass, usePassActions, usePassVersion } from '../api.ts';
 import { useCreated } from '../created.tsx';
 import { newKey } from '../format.ts';
 import { usePassActionRunner } from '../pass-actions.tsx';
+import { usePassForeign } from '../pass-foreign.ts';
 import { PassPreview, PassPreviewPanel } from '../pass-preview.tsx';
 import { PreviewLayout } from '../preview-layout.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
-import { PassCreatedCallout, PassWarnings, RemovedCallout, VoidedCallout } from './callouts.tsx';
+import {
+  ModeMismatchCallout,
+  PassCreatedCallout,
+  PassWarnings,
+  RemovedCallout,
+  VoidedCallout,
+} from './callouts.tsx';
 import { HeaderActionsView } from './header-actions.tsx';
 import { PassTabs } from './pass-tabs.tsx';
 import { useStageMotion } from './stage-state.ts';
@@ -100,7 +108,6 @@ function Loaded({
   const runner = usePassActionRunner(p, p);
   const actions = usePassActions(p.id);
   const template = useTemplate(p.templateId);
-  const motion = useStageMotion(p.version, p.status, minted);
   const picked = search.v !== undefined && search.v !== p.version ? search.v : undefined;
   const version = usePassVersion(p.id, picked);
   const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
@@ -111,6 +118,8 @@ function Loaded({
   const tab: Tab = search.tab ?? 'fields';
   const voided = p.status === 'voided';
   const removed = p.removedAt !== null;
+  const motion = useStageMotion(p.version, p.status, minted, removed);
+  const foreign = usePassForeign(p);
   const loadingVersion = picked !== undefined && !version.data;
   const waiting = useLasting(loadingVersion || (draft !== null && draftPreview.isFetching));
   const source =
@@ -133,6 +142,7 @@ function Loaded({
         mint={picked === undefined && !draft ? motion.mint : undefined}
         settle={motion.settle}
         dim={voided}
+        removed={removed}
         unsaved={draft !== null}
         waiting={waiting}
         // Browsing versions crossfades in place; a new current version mints the same card.
@@ -176,6 +186,7 @@ function Loaded({
         meta={
           <>
             <ModePill mode={p.mode} />
+            {p.mode === 'live' && foreign ? <Badge tone="warning">Live</Badge> : null}
             <StatusPill status={removed ? 'removed' : p.status} />
             <StatusPill status={p.holderState} />
             <span className="tabular-nums">v{p.version}</span>
@@ -185,8 +196,9 @@ function Loaded({
         actions={<HeaderActionsView runner={runner} />}
       />
       <div className="mb-6 flex flex-col gap-3 empty:hidden">
+        {foreign ? <ModeMismatchCallout pass={p} /> : null}
         {removed ? (
-          <RemovedCallout pass={p} />
+          <RemovedCallout pass={p} tab={tab} />
         ) : voided ? (
           <VoidedCallout pass={p} stamp={motion.stamp} />
         ) : null}
@@ -219,9 +231,19 @@ function Loaded({
             assetNames={p.assetNames}
             still
             dim={voided}
+            removed={removed}
           />
         }
-        summary={<KeyValue items={[{ label: 'Holder', value: p.holderEmail }]} />}
+        summary={
+          <KeyValue
+            items={[
+              { label: 'Holder', value: p.holderEmail },
+              { label: 'Status', value: <StatusPill status={removed ? 'removed' : p.status} /> },
+              { label: 'Devices', value: devices(p.deviceCount) },
+              { label: 'Version', value: `v${p.version}` },
+            ]}
+          />
+        }
       >
         <Tabs value={tab} onValueChange={(t) => setSearch({ tab: t as Tab })} className="min-w-0">
           <TabsList aria-label="Pass sections">
@@ -250,6 +272,7 @@ function Loaded({
             picked={picked}
             onPick={(v) => setSearch({ v })}
             onDraft={setDraft}
+            runner={runner}
           />
         </Tabs>
       </PreviewLayout>

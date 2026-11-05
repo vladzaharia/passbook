@@ -115,7 +115,15 @@ function BindDialog({
   );
 }
 
-function Bound({ pass, onChange }: { pass: PassDetailDto; onChange: () => void }) {
+function Bound({
+  pass,
+  foreign,
+  onChange,
+}: {
+  pass: PassDetailDto;
+  foreign: boolean;
+  onChange: () => void;
+}) {
   const connection = useConnection(pass.connectionId ?? undefined);
   const actions = usePassActions(pass.id);
   const [unbind, setUnbind] = useState(false);
@@ -129,7 +137,13 @@ function Bound({ pass, onChange }: { pass: PassDetailDto; onChange: () => void }
         title="Connection"
         actions={
           <>
-            <Button variant="ghost" size="sm" iconStart={<Pencil aria-hidden />} onClick={onChange}>
+            <Button
+              variant="ghost"
+              size="sm"
+              iconStart={<Pencil aria-hidden />}
+              disabled={foreign}
+              onClick={onChange}
+            >
               Change
             </Button>
             <DropdownMenu>
@@ -141,7 +155,7 @@ function Bound({ pass, onChange }: { pass: PassDetailDto; onChange: () => void }
                 />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem destructive onSelect={() => setUnbind(true)}>
+                <DropdownMenuItem destructive disabled={foreign} onSelect={() => setUnbind(true)}>
                   <Unplug aria-hidden />
                   Unbind
                 </DropdownMenuItem>
@@ -192,7 +206,13 @@ function Bound({ pass, onChange }: { pass: PassDetailDto; onChange: () => void }
   );
 }
 
-export function ConnectionTab({ pass }: { pass: PassDetailDto }) {
+export function ConnectionTab({
+  pass,
+  foreign = false,
+}: {
+  pass: PassDetailDto;
+  foreign?: boolean;
+}) {
   const [binding, setBinding] = useState(false);
   const [opened, setOpened] = useState(0);
   const open = () => {
@@ -202,7 +222,7 @@ export function ConnectionTab({ pass }: { pass: PassDetailDto }) {
   return (
     <>
       {pass.connectionId ? (
-        <Bound pass={pass} onChange={open} />
+        <Bound pass={pass} foreign={foreign} onChange={open} />
       ) : (
         <Card>
           <EmptyState
@@ -210,7 +230,7 @@ export function ConnectionTab({ pass }: { pass: PassDetailDto }) {
             art="plugs"
             title="Not bound to a connection"
             action={
-              pass.status === 'voided' ? undefined : (
+              pass.status === 'voided' || foreign ? undefined : (
                 <Button variant="outline" size="sm" onClick={open}>
                   Bind to a connection
                 </Button>
