@@ -49,6 +49,7 @@ describe('first-run setup counts', () => {
       passes: before.passes + 2,
       passEmailsSent: before.passEmailsSent + 1,
       latestPassId: latest.id,
+      scanners: 0,
     });
 
     // A scope narrows the totals, not the checklist: it is about the platform.
