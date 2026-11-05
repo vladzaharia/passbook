@@ -5,7 +5,7 @@ export const AuditEntrySchema = z.object({
   id: z.number().int(),
   at: TimestampSchema,
   orgId: IdSchema.nullable(),
-  actorType: z.enum(['user', 'api_key', 'system', 'connection', 'device']),
+  actorType: z.enum(['user', 'api_key', 'system', 'connection', 'device', 'scanner']),
   actorId: z.string().nullable(),
   /** Display name for the actor (user name or email, key name); null when unknown or deleted. */
   actorLabel: z.string().nullable().default(null),

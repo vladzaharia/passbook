@@ -46,6 +46,7 @@ export async function toDto(ctx: ServiceContext, row: IdentityRow): Promise<Iden
     label: row.label,
     passTypeIdentifier: row.pass_type_identifier,
     teamIdentifier: row.team_identifier,
+    nfcKeys: [],
     source: row.source,
     certSha256: row.cert_sha256,
     certSubject: subject,

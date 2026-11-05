@@ -24,6 +24,14 @@ export const PlatformSettingsSchema = z.object({
   'sandbox.purgeDays': z.number().int().min(1).max(365).default(30),
   /** Notifying updates one pass may get per rolling 24 hours; later updates are silent. */
   'push.budgetPerDay': z.number().int().min(0).max(50).default(3),
+  /** Scans older than this are deleted daily. */
+  'retention.scansDays': z.number().int().min(30).max(3650).default(396),
+  /** How long a scanner may undo its own scan. */
+  'scan.undoWindowMinutes': z.number().int().min(1).max(60).default(10),
+  /** Name and email lookups one scanner may run per hour. */
+  'scan.lookupsPerHour': z.number().int().min(20).max(2000).default(200),
+  /** Apple NFC (VAS). Off until Apple approves the pass type. */
+  'nfc.enabled': z.boolean().default(false),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z

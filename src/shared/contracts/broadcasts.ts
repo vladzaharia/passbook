@@ -9,6 +9,7 @@ import {
   pageOf,
   TimestampSchema,
 } from './common.ts';
+import { ScanTargetSchema } from './scan.ts';
 
 export const BROADCAST_MAX_TEMPLATES = 20;
 export const BROADCAST_MESSAGE_MAX = 256;
@@ -35,6 +36,7 @@ export const BroadcastTargetSchema = z.object({
   onDevice: z.boolean().optional(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']).optional(),
   q: z.string().trim().max(200).optional(),
+  scan: ScanTargetSchema.optional(),
 });
 export type BroadcastTarget = z.infer<typeof BroadcastTargetSchema>;
 

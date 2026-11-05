@@ -135,6 +135,7 @@ const SERIES_KEYS: SeriesKey[] = [
   'emailFailures',
   'syncRuns',
   'signIns',
+  'scans',
 ];
 
 async function load(ctx: ServiceContext, w: repo.Window, scope: repo.Scope, now: number) {
@@ -217,9 +218,12 @@ export async function getOverview(
       emailFailures: sum('emailFailures'),
       syncRuns: sum('syncRuns'),
       signIns: sum('signIns'),
+      scans: sum('scans'),
+      scanRefused: 0,
     },
     series,
-    setup,
+    setup: { ...setup, scanners: 0 },
+    live: [],
     recent: recent.map((r) => ({
       at: r.at,
       action: r.action,

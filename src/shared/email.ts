@@ -20,3 +20,16 @@ export function strictEmail(raw: unknown): string | null {
   if (at < 1 || at > 64) return null;
   return EMAIL_ADDR_SPEC.test(email) ? email : null;
 }
+
+/** `anna@gmail.com` as `a•••@g•••.com`: enough to tell people apart, not enough to contact them. */
+export function maskEmail(raw: string): string {
+  const email = normalizeEmail(raw);
+  const at = email.lastIndexOf('@');
+  if (at < 1) return '•••';
+  const domain = email.slice(at + 1);
+  const dot = domain.indexOf('.');
+  const host = dot < 0 ? domain : domain.slice(0, dot);
+  const tail = dot < 0 ? '' : domain.slice(dot);
+  const first = (text: string) => Array.from(text)[0] ?? '';
+  return `${first(email.slice(0, at))}•••@${first(host)}•••${tail}`;
+}

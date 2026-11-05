@@ -519,7 +519,7 @@ describe('0014_scan migration', () => {
     await insertScanner(org.id, { token_prefix: 'abcd1234', token_hash: 'h', csrf_secret: 's' });
   });
 
-  it("clears a scanner's event when the event is deleted",  async () => {
+  it("clears a scanner's event when the event is deleted", async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
     await insertEvent(org.id, { id: 'ev-del' });

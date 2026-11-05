@@ -34,6 +34,9 @@ export const MetricsOverviewSchema = z.object({
     emailFailures: z.number().int(),
     syncRuns: z.number().int(),
     signIns: z.number().int(),
+    /** Scans of every outcome, and the refused ones among them. Zero until the scan module reports. */
+    scans: z.number().int(),
+    scanRefused: z.number().int(),
   }),
   series: z.object({
     issued: series,
@@ -47,6 +50,7 @@ export const MetricsOverviewSchema = z.object({
     emailFailures: series,
     syncRuns: series,
     signIns: series,
+    scans: series,
   }),
   /** First-run checklist counts. Platform-wide whatever the scope: the checklist is for a new platform. */
   setup: z.object({
@@ -58,7 +62,21 @@ export const MetricsOverviewSchema = z.object({
     passEmailsSent: z.number().int(),
     /** The newest pass, for "Send it to a holder". */
     latestPassId: IdSchema.nullable(),
+    /** Paired or created scanners, for the checklist. */
+    scanners: z.number().int(),
   }),
+  /** Events that are open now, at most 3. */
+  live: z
+    .array(
+      z.object({
+        eventId: IdSchema,
+        name: z.string(),
+        arrived: z.number().int(),
+        expected: z.number().int(),
+        ratePerMin: z.number(),
+      }),
+    )
+    .max(3),
   recent: z.array(
     z.object({
       at: z.number().int(),

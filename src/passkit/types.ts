@@ -1,6 +1,7 @@
 /** Shared passkit types. No Cloudflare or Hono imports: this module runs in Node and in Workers. */
 
 import type { PassJson } from './schema/pass-types.ts';
+import type { ScanDisplayDoc } from './template/scan-display/schema.ts';
 
 export type * from './schema/pass-types.ts';
 export type * from './schema/semantic-types.ts';
@@ -124,6 +125,63 @@ export type JsonSchemaObject = {
   [key: string]: Json | undefined;
 };
 
+export type {
+  ScanChipDoc,
+  ScanDisplayDoc,
+  ScanPanelDoc,
+  ScanPresetId,
+  ScanRowDoc,
+  ScanText,
+} from './template/scan-display/schema.ts';
+
+export type ScanActionKind = 'check_in' | 'add' | 'take' | 'set' | 'use_up';
+export type ScanRole = 'door' | 'desk' | 'manager';
+export type ScanRepeat = 'once' | 'daily' | 'cooldown' | 'always';
+
+export interface ScanAction {
+  /** `^[a-z][a-z0-9_]{0,31}$`, unique. Scans and gates key on it. */
+  id: string;
+  /** 1-24 characters, unique. */
+  label: string;
+  kind: ScanActionKind;
+  /** add, take: a number input. set: a scalar input. check_in: an optional record input. */
+  input?: string;
+  /** add, take: fixed, or staff enter 1..max. */
+  amount?: number | { max: number; presets?: number[]; default?: number };
+  /** set: a fixed value. Absent: staff pick or type one. */
+  value?: Json;
+  repeat?: ScanRepeat;
+  /** repeat `cooldown`: 1-10080. */
+  cooldownMinutes?: number;
+  minRole?: ScanRole;
+  confirm?: boolean;
+  confirmAbove?: number;
+  /** check_in: Let in again is offered. Default true. */
+  allowAgain?: boolean;
+  /** take: "Free coffee", 1-24. */
+  rewardLabel?: string;
+  /** A lock-screen message; spends the push budget. Default false. */
+  notify?: boolean;
+  /** May change a connection-owned input, which then becomes manual. Default false. */
+  allowOnConnected?: boolean;
+}
+
+export interface ScanManifest {
+  /** 1-6. */
+  actions: ScanAction[];
+  /** A typed member, card or ticket number. */
+  lookup?: { input: string };
+  window?: { from?: string; until?: string; earlyMinutes?: number; lateMinutes?: number };
+  flags?: { input: string; label: string; equals?: string[]; stop?: boolean }[];
+  /** The result screen. No display means `defaultScanDisplay` at read, never persisted. */
+  display?: ScanDisplayDoc;
+}
+
+export interface NfcManifest {
+  enabled: boolean;
+  requiresAuthentication?: boolean;
+}
+
 export interface TemplateManifest {
   schema: 1;
   name: string;
@@ -144,6 +202,10 @@ export interface TemplateManifest {
    * so a new value shows on the lock screen.
    */
   messaging?: { input: string };
+  /** What a scanner may do with this template's passes, and what its result screen says. */
+  scan?: ScanManifest;
+  /** Apple NFC (VAS). Off until the pass type is approved. */
+  nfc?: NfcManifest;
 }
 
 export type Personalization = Record<string, Json>;
