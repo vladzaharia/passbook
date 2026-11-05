@@ -119,11 +119,26 @@ function schedule(pass: PassJson, events: readonly Listed[], leadMinutes: number
     const until = Math.min(Math.max(e.until ?? e.start, e.start), from + DAY);
     return [{ startDate: iso(from), endDate: iso(until) }];
   });
-  if (windows.length > 0) pass.relevantDates = windows;
+  if (windows.length > 0) {
+    // The pass's own window (a ticket's event) stays; listed events fill the rest of the cap.
+    const own = pass.relevantDates ?? [];
+    const seen = new Set(own.map((w) => `${w.startDate}|${w.endDate}`));
+    const extra = windows.filter((w) => !seen.has(`${w.startDate}|${w.endDate}`));
+    pass.relevantDates = [...own, ...extra.slice(0, Math.max(0, MAX_EVENTS - own.length))].sort(
+      (a, b) => Date.parse(a.startDate ?? '') - Date.parse(b.startDate ?? ''),
+    );
+  }
   const first = events.find((e) => e.start !== undefined);
-  if (first?.start !== undefined) pass.relevantDate = iso(first.start);
+  if (first?.start !== undefined) {
+    const own = pass.relevantDate ? Date.parse(pass.relevantDate) : Number.NaN;
+    if (Number.isNaN(own) || first.start < own) pass.relevantDate = iso(first.start);
+  }
   const ends = events.flatMap((e) => (e.until === undefined ? [] : [e.until]));
-  if (ends.length > 0) pass.expirationDate = iso(Math.max(...ends));
+  if (ends.length > 0) {
+    const own = pass.expirationDate ? Date.parse(pass.expirationDate) : Number.NaN;
+    const last = Math.max(...ends);
+    if (Number.isNaN(own) || last > own) pass.expirationDate = iso(last);
+  }
 }
 
 /**

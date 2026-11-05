@@ -31,6 +31,33 @@ describe('season schedule', () => {
     ]);
   });
 
+  it('never expires the pass before its own event, and keeps its own window', () => {
+    const own = { startDate: '2030-09-01T18:00:00Z', endDate: '2030-09-01T23:00:00Z' };
+    const pass = {
+      expirationDate: '2030-09-01T23:00:00Z',
+      relevantDate: '2030-09-01T19:00:00Z',
+      relevantDates: [own],
+    } as PassJson;
+    upcomingEvents.apply(
+      pass,
+      { events },
+      { input: 'events', schedule: { leadMinutes: 60 } },
+      ctx(),
+    );
+    expect(pass.expirationDate).toBe('2030-09-01T23:00:00Z');
+    expect(pass.relevantDates).toHaveLength(4);
+    expect(pass.relevantDates?.at(-1)).toEqual(own);
+    expect(pass.relevantDate).toBe('2030-06-02T19:00:00Z');
+  });
+
+  it('keeps the own window when the ticket event is missing from the list', () => {
+    const own = { startDate: '2030-06-10T18:00:00Z', endDate: '2030-06-10T23:00:00Z' };
+    const pass = { relevantDates: [own] } as PassJson;
+    upcomingEvents.apply(pass, { events }, { input: 'events', schedule: {} }, ctx());
+    expect(pass.relevantDates).toContainEqual(own);
+    expect(pass.relevantDates).toHaveLength(4);
+  });
+
   it('leaves the pass dates alone without a schedule or without events', () => {
     expect(run(events, { input: 'events' }).expirationDate).toBe('2030-06-01T22:00:00-07:00');
     const none = run([], { input: 'events', schedule: {} });
