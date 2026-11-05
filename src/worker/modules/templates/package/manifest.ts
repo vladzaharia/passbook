@@ -2,6 +2,7 @@ import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
 import { messagingIssues } from '../../../../passkit/template/messaging.ts';
 import { reservedInputIssues } from '../../../../passkit/template/reserved.ts';
+import { scanManifestIssues } from '../../../../passkit/template/scan.ts';
 import type {
   Json,
   PassField,
@@ -174,6 +175,8 @@ export interface ManifestOptions {
   /** Uploaded manifests get the restricted schema keywords and the pointer allowlist. */
   uploaded: boolean;
   behaviors?: BehaviorRegistry;
+  /** Package file names, for the scan screen's image checks. */
+  assetNames?: string[];
 }
 
 /** Shape, schema keywords, target resolution, behaviors and sample-vs-schema. */
@@ -252,7 +255,14 @@ export function validateManifest(
     } else error('BINDING_SHAPE', 'Unknown binding target.', `${path}.to`);
   }
 
-  issues.push(...reservedInputIssues(manifest), ...messagingIssues(manifest, pass));
+  issues.push(
+    ...reservedInputIssues(manifest),
+    ...messagingIssues(manifest, pass),
+    ...scanManifestIssues(manifest, {
+      passJson: pass,
+      ...(options.assetNames ? { assetNames: options.assetNames } : {}),
+    }),
+  );
 
   for (const [i, use] of (manifest.behaviors ?? []).entries()) {
     const path = `behaviors.${i}`;

@@ -184,6 +184,35 @@ describe('POST /templates/{id}/versions', () => {
     expect(JSON.parse(row?.manifest ?? '{}').messaging).toEqual({ input: 'name' });
   });
 
+  it('keeps manifest.scan and nfc on save, and an edit to scan is a new version', async () => {
+    const scan = { actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }] };
+    const first1 = await save(
+      mine.id,
+      draft({ manifest: { ...manifest('Scan Card'), scan, nfc: { enabled: false } } }),
+    );
+    expect(first1.status).toBe(200);
+    const { version: v1 } = (await first1.json()) as { version: string };
+    const row = await first<{ manifest: string }>(
+      env.DB,
+      'SELECT manifest FROM template_versions WHERE template_id = ? AND version = ?',
+      [mine.id, v1],
+    );
+    expect(JSON.parse(row?.manifest ?? '{}')).toMatchObject({ scan, nfc: { enabled: false } });
+    const edited = { actions: [{ ...scan.actions[0], label: 'Let in' }] };
+    const second = await save(
+      mine.id,
+      draft({ manifest: { ...manifest('Scan Card'), scan: edited, nfc: { enabled: false } } }),
+    );
+    expect(second.status).toBe(200);
+    expect(((await second.json()) as { version: string }).version).not.toBe(v1);
+    const bad = await save(
+      mine.id,
+      draft({ manifest: { ...manifest('Scan Card'), scan: { ...scan, values: [] } } }),
+    );
+    expect(bad.status).toBe(422);
+    expect(JSON.stringify(await bad.json())).toContain('SCAN_SHAPE');
+  });
+
   it('keeps carried files and stores uploaded images', async () => {
     const icon3 = b64(makePng(114, 114));
     const res = await save(mine.id, {

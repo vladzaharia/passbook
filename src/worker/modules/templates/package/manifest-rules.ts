@@ -43,7 +43,6 @@ export const DATA_ROOTS = new Set([
   'locations',
   'beacons',
   'userInfo',
-  'nfc',
   'upcomingPassInformation',
   'preferredStyleSchemes',
   'maxDistance',

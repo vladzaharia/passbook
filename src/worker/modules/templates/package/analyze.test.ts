@@ -367,3 +367,64 @@ describe('uploaded manifests', () => {
     expect(codes).toContain('error:MANIFEST_INVALID');
   });
 });
+
+describe('scan and nfc in a manifest', () => {
+  const upload = (patch: Record<string, unknown>, pass = passJson()) =>
+    analyze(basicPackage({ 'wallet.template.json': manifest(patch) }, pass));
+
+  it('accepts a template with scan and nfc and keeps both in the manifest', async () => {
+    const scan = { actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }] };
+    const { ok, analysis } = await upload({ scan, nfc: { enabled: true } });
+    expect(ok).toBe(true);
+    expect(analysis.manifest.scan).toEqual(scan);
+    expect(analysis.manifest.nfc).toEqual({ enabled: true });
+  });
+
+  it('refuses scan.values and scan.identity with SCAN_SHAPE', async () => {
+    for (const key of ['values', 'identity']) {
+      const { ok, result } = await upload({
+        scan: { actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }], [key]: [] },
+      });
+      expect(ok).toBe(false);
+      expect(result.report.issues).toContainEqual(
+        expect.objectContaining({ code: 'SCAN_SHAPE', path: `scan.${key}` }),
+      );
+    }
+  });
+
+  it('refuses a template pass.json with nfc', async () => {
+    const { ok, codes } = await upload(
+      {},
+      passJson({ nfc: { message: 'x', encryptionPublicKey: 'k' } }),
+    );
+    expect(ok).toBe(false);
+    expect(codes).toContain('error:NFC_IN_PASS_JSON');
+  });
+
+  it('no longer lets a binding write nfc into pass.json', async () => {
+    const { ok, codes } = await upload({
+      bindings: [{ to: { pointer: '/nfc/message' }, value: '{{name}}' }],
+    });
+    expect(ok).toBe(false);
+    expect(codes).toContain('error:BINDING_POINTER');
+  });
+
+  it('refuses a scan screen over 16 KB with its path, and passes warnings through', async () => {
+    const big = await upload({
+      scan: {
+        actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+        display: { v: 1, header: { title: 'x'.repeat(17 * 1024) } },
+      },
+    });
+    expect(big.ok).toBe(false);
+    expect(big.result.report.issues).toContainEqual(
+      expect.objectContaining({ code: 'SCAN_DISPLAY_TOO_BIG', path: 'scan.display' }),
+    );
+    const warned = await upload({
+      inputs: { type: 'object', properties: { name: { type: 'string' }, n: { type: 'integer' } } },
+      scan: { actions: [{ id: 'a', label: 'Add', kind: 'add', input: 'n', notify: true }] },
+    });
+    expect(warned.ok).toBe(true);
+    expect(warned.codes).toContain('warning:SCAN_NOTIFY_BUDGET');
+  });
+});

@@ -171,6 +171,7 @@ export async function analyzePackage(
     for (const i of validateManifest(manifest, passJson, {
       uploaded: options.uploaded,
       behaviors: options.behaviors,
+      assetNames: images.map((image) => image.path),
     }))
       push(i);
 

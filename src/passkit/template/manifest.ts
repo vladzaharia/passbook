@@ -15,6 +15,7 @@ import { messagingIssues } from './messaging.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 import { validateRequires } from './requires.ts';
 import { reservedInputIssues, unknownPassValues } from './reserved.ts';
+import { scanManifestIssues } from './scan.ts';
 
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
 export interface ImageTarget {
@@ -235,6 +236,7 @@ export function validateManifest(
   }
 
   issues.push(...messagingIssues(manifest, options.passJson));
+  issues.push(...scanManifestIssues(manifest, options));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)
