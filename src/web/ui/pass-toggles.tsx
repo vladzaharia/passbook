@@ -12,7 +12,7 @@ const SIDES = [
 ] as const;
 const TARGETS = [
   { value: '27', label: 'iOS 27' },
-  { value: 'legacy', label: 'iOS 26 and earlier' },
+  { value: 'legacy', label: 'iOS 26-', title: 'iOS 26 and earlier' },
 ] as const;
 
 /** Front / Details: the face a PassCardStage shows. */

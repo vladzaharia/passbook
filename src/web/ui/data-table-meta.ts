@@ -17,6 +17,11 @@ declare module '@tanstack/react-table' {
     numeric?: boolean;
     /** Leave the column out of the stacked (below md) layout. */
     stackHidden?: boolean;
+    /**
+     * In the stacked layout this column leads the row (a selection checkbox) in a 44 px hit area,
+     * instead of dropping out.
+     */
+    stackLead?: boolean;
   }
 }
 

@@ -122,8 +122,19 @@ export function SkeletonTileGrid({
   );
 }
 
-/** A detail page with a pass preview: title, pills, the 3:4 pass in a 20rem column, tabs, fields. */
-export function SkeletonDetail({ label = 'Loading' }: { label?: string }) {
+/**
+ * A detail page: title, pills, tabs and fields, with a 20rem column that mirrors TwoPane (the
+ * aside at the end) so the layout does not flip on load. `media="start"` puts it first, for the
+ * pass detail page whose preview sits left.
+ */
+export function SkeletonDetail({
+  label = 'Loading',
+  media = 'end',
+}: {
+  label?: string;
+  media?: 'start' | 'end';
+}) {
+  const aside = <Skeleton className="aspect-[3/4] w-full max-w-80 max-xl:hidden" />;
   return (
     <Loading label={label} className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
@@ -133,8 +144,15 @@ export function SkeletonDetail({ label = 'Loading' }: { label?: string }) {
           <Skeleton className="h-6 w-24 rounded-full" />
         </div>
       </div>
-      <div className="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
-        <Skeleton className="aspect-[3/4] w-full max-w-80 max-xl:hidden" />
+      <div
+        className={cn(
+          'grid gap-6',
+          media === 'start'
+            ? 'xl:grid-cols-[20rem_minmax(0,1fr)]'
+            : 'xl:grid-cols-[minmax(0,1fr)_20rem]',
+        )}
+      >
+        {media === 'start' ? aside : null}
         <div className="flex min-w-0 flex-col gap-4">
           <Skeleton className="h-9 w-full" />
           {range(3).map((i) => (
@@ -144,6 +162,7 @@ export function SkeletonDetail({ label = 'Loading' }: { label?: string }) {
             </div>
           ))}
         </div>
+        {media === 'end' ? aside : null}
       </div>
     </Loading>
   );

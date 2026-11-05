@@ -55,7 +55,7 @@ export function PassDetailPage({ passId, search }: { passId: string; search: Sea
     return (
       <>
         <PageHeader title="Pass" breadcrumbs={crumbs} />
-        <SkeletonDetail label="Loading pass" />
+        <SkeletonDetail label="Loading pass" media="start" />
       </>
     );
   }

@@ -25,6 +25,8 @@ export interface ComboboxProps {
   onSearch?: (query: string) => void;
   /** Shown under the list while a server search runs. */
   loading?: boolean;
+  /** Below sm only the icon and chevron show; the name stays in the accessible name. */
+  compact?: boolean;
   'aria-label'?: string;
   'aria-describedby'?: string;
   'aria-invalid'?: boolean;
@@ -42,6 +44,7 @@ export function Combobox({
   className,
   onSearch,
   loading,
+  compact,
   'aria-label': label,
   ...aria
 }: ComboboxProps) {
@@ -62,13 +65,18 @@ export function Combobox({
           CONTROL,
           CONTROL_HEIGHT,
           'flex items-center justify-between gap-2 text-left',
+          compact && 'max-sm:gap-1 max-sm:px-2',
           className,
         )}
         {...aria}
       >
         <span className="flex min-w-0 items-center gap-2">
           {selected?.icon}
-          <span className={cn('truncate', !selected && 'text-fg-subtle')}>{shown}</span>
+          <span
+            className={cn('truncate', !selected && 'text-fg-subtle', compact && 'max-sm:sr-only')}
+          >
+            {shown}
+          </span>
         </span>
         <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
       </PopoverPrimitive.Trigger>
