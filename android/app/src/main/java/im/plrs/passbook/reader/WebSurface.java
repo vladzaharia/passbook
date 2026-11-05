@@ -14,6 +14,7 @@ import androidx.webkit.JavaScriptReplyProxy;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
+import androidx.webkit.WebMessageCompat;
 import java.util.Set;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -93,6 +94,7 @@ public final class WebSurface {
         WebViewCompat.addWebMessageListener(view, "PassBookNative", Set.of(next.origin()),
             (web, message, origin, mainFrame, proxy) -> {
                 if (!mainFrame || !trusted(origin.toString()) || !trusted(view.getUrl())) return;
+                if (message.getType() != WebMessageCompat.TYPE_STRING) return;
                 String data = message.getData();
                 if (data == null || data.length() > 8192) return;
                 try {

@@ -94,6 +94,33 @@ public class ReaderInstrumentedTest {
         }
     }
 
+    @Test public void trustedVerifierCanAcceptOnlyTheCurrentScan() throws Exception {
+        new ReaderConfig("https://verifier.example/reader", List.of("pass.example.member"), "", "")
+            .save(InstrumentationRegistry.getInstrumentation().getTargetContext());
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                WebView view = findWeb(activity.getWindow().getDecorView());
+                view.setWebViewClient(new WebViewClient() {
+                    @Override public WebResourceResponse shouldInterceptRequest(WebView web, WebResourceRequest request) {
+                        String html = "<div id='connection'>starting</div><div id='read'></div><script>"
+                            + "const b=PassBookNative;b.onmessage=e=>{const m=JSON.parse(e.data);"
+                            + "if(m.event==='ready')document.querySelector('#connection').textContent='reader connected';"
+                            + "if(m.event==='scan'){document.querySelector('#read').textContent=m.value;"
+                            + "b.postMessage(JSON.stringify({version:1,op:'result',id:m.id,outcome:'accepted'}));}};"
+                            + "b.postMessage(JSON.stringify({version:1,op:'hello'}));</script>";
+                        return new WebResourceResponse("text/html", "UTF-8", new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)));
+                    }
+                });
+                view.loadUrl("https://verifier.example/reader");
+            });
+            awaitPage(scenario);
+            scenario.onActivity(activity -> activity.barcode("000123"));
+            awaitJavascript(scenario, "document.querySelector('#read').textContent", "000123");
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity -> assertTrue(findText(activity.getWindow().getDecorView(), "Accepted")));
+        }
+    }
+
     private static android.widget.EditText findInput(android.view.View view) {
         if (view instanceof android.widget.EditText input) return input;
         if (view instanceof android.view.ViewGroup group) {

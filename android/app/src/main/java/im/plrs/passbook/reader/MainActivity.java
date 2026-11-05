@@ -155,7 +155,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         else super.onBackPressed();
     }
     @Override public void reset() { gate.reset(); nfc.stop(); }
-    @Override public void notice(String text) { status.setText(text); }
+    @Override public void notice(String text) { status.setTextColor(0xff34415d); status.setText(text); }
 
     private void resumeReader() {
         if (!foreground || !web.isReady() || !armed) nfc.stop();
