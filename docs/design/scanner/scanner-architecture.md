@@ -236,10 +236,16 @@ export interface ScannerAuth {
   mode: Mode;
   transport: 'cookie' | 'bearer';
   csrfSecret: string | null;      // cookie only
+  scannerKind: 'device' | 'terminal' | 'display';
+  deviceRole: 'scan' | 'customer' | 'monitor';   // only 'scan' reaches the scan routes
 }
 export type AuthContext = SessionAuth | ApiKeyAuth | ScannerAuth;
 export interface ScannerStore {
-  /** Null for unknown, revoked or expired tokens; touches last_seen_at at most every 60 s. */
+  /**
+   * Null for an unknown or malformed token. A token that still matches a revoked or expired row
+   * throws 401 SCANNER_REVOKED or SCANNER_EXPIRED, so revoke and expiry keep the token columns
+   * (2.7). Touches last_seen_at at most every 60 s, and only when the row is older than that.
+   */
   resolve(token: string, transport: 'cookie' | 'bearer'): Promise<ScannerAuth | null>;
 }
 // AuthStores gains `scanners: ScannerStore`; denyAllStores resolves null.
@@ -284,7 +290,9 @@ export interface ScanActor {
    else 404 with the body of an unknown id.
 2. `isOrgActive` (`modules/orgs/active.ts`); suspended: 403 `ORG_INACTIVE`.
 3. `RL_SCAN_ORG` (`org:<id>`), then `RL_SCAN` (`actorKey`).
-4. Staff binding: expire it past 15 min idle or 12 h; `staffSignIn` on and none bound: 403 `STAFF_REQUIRED`
+4. Device role: a scanner whose `deviceRole` is not `scan` gets 403 `SCREEN_ONLY`, unless the route opts in with
+   `GuardOptions.screens` (`GET /scan/session`, `POST /scan/unpair`). Admin sessions have no device role.
+5. Staff binding: expire it past 15 min idle or 12 h; `staffSignIn` on and none bound: 403 `STAFF_REQUIRED`
    (except `GET /scan/session`, `POST /scan/staff`, `POST /scan/unpair`).
 
 `scanPolicy(ctx, actor, action, request)` in `modules/scan/rules.ts` is the only place rights are decided (2.4,
@@ -354,7 +362,7 @@ replaces the token. Bearer only, no cookie, no CSRF.
 | Resolve | by prefix, then hash. No isolate cache: revocation bites on the next request |
 | Touch | `last_seen_at`, `last_ip_prefix` at most every 60 s. "Online" in the console = seen within 2 min |
 | Expire | devices: 30 d idle, 180 d absolute. Terminals: `expires_at` set at creation (default 365 d), no idle |
-| Revoke | `POST /api/v1/scanners/{id}/revoke`: clears token columns, sets `revoked_at`, ends any staff binding. Next request: 401 `SCANNER_REVOKED`. **Pair again** reactivates the same scanner with a new token |
+| Revoke | `POST /api/v1/scanners/{id}/revoke`: sets `revoked_at` and ends any staff binding; it **keeps** `token_prefix` and `token_hash`, so the old token still matches and the next request is 401 `SCANNER_REVOKED` (clearing them would answer `SCANNER_UNAUTHENTICATED` and show the pairing card, not the **Scanner removed** panel). **Pair again** reactivates the same scanner with a new token |
 | Rotate | none for devices (HttpOnly, `__Host-`, Strict; a lost rotation response would lock a door out). Terminals: Replace token |
 | Unpair | `POST /api/v1/scan/unpair` always 200, clears the cookie, clears the token if valid (audit `scanner.unpair`) |
 
@@ -381,11 +389,12 @@ replaces the token. Bearer only, no cookie, no CSRF.
 | `SCANNER_REVOKED` | 401 | block panel **Scanner removed** · **Ask an admin for a new code.** |
 | `SCANNER_EXPIRED` | 401 | block panel **Pairing expired** · **Ask an admin for a new code.** |
 | `ORG_INACTIVE` | 403 | block panel **Organization suspended** |
+| `SCREEN_ONLY` | 403 | block panel **This device is a screen.** · **Ask an admin to change it.** |
 | `STAFF_REQUIRED` | 403 | **Who's scanning?** sheet |
 | `FORBIDDEN` | 403 | (a user session) sign-in prompt |
 | `PAIRING_INVALID` | 400 | **Code not valid** · **Ask for a new one.** |
 | `PIN_INVALID` | 400 | **Wrong PIN. {n} tries left.** |
-| `SCAN_ACTION_UNKNOWN`, `SCAN_AMOUNT_INVALID`, `SCAN_VALUE_INVALID`, `SCAN_OVERRIDE_INVALID`, `SCAN_SCOPE_NOT_ALLOWED` | 422 | refused band (client bug or a template change mid-shift) |
+| `SCAN_ACTION_UNKNOWN`, `SCAN_AMOUNT_INVALID`, `SCAN_VALUE_INVALID`, `SCAN_OVERRIDE_INVALID`, `SCAN_SCOPE_NOT_ALLOWED`, `SCAN_SCOPE_REQUIRED`, `SCAN_BODY_INVALID` | 422 | refused band (client bug or a template change mid-shift) |
 | `IDEMPOTENCY_KEY_REUSED` | 422 | system `server` |
 | `SCAN_IN_PROGRESS` | 409 + `Retry-After: 1` | retried by the client with the same key |
 | `RATE_LIMITED`, `SCAN_TOO_MANY_MISSES` | 429 + `Retry-After` | system `rate_limited` |
@@ -1281,7 +1290,7 @@ No backfill: the immutability trigger forbids it, and `NULL` keeps today's "ever
 | --- | --- | --- | --- |
 | `scan.reconcile` | minute | pending scans older than 60 s (section 9.3) | 100 rows |
 | `scan.backfill` | minute | passes with `scan_code IS NULL`, `barcode_hash IS NULL` (not removed), or `lookup_hash IS NULL` on a template with `scan.lookup`: compute and write via `passes/repo-write.ts` `backfillScanKeys`. Stops when a run finds none (system setting `scan.backfillDone`) | 200 passes |
-| `scan.retention` | daily | `scans` older than `retention.scansDays`; test `scans` older than `sandbox.purgeDays`; expired pairing codes nulled; device scanners past `expires_at` or 30 d idle unpaired (token columns cleared, row kept); `vas_keys` retired rows kept | `deleteInBatches`, inside `CRON_QUERY_BUDGET` |
+| `scan.retention` | daily | `scans` older than `retention.scansDays`; test `scans` older than `sandbox.purgeDays`; expired pairing codes nulled; device scanners past `expires_at` or 30 d idle are left as they are (the token still matches, so the device hears `SCANNER_EXPIRED`; the console shows them as needing a new code); `vas_keys` retired rows kept | `deleteInBatches`, inside `CRON_QUERY_BUDGET` |
 
 Test passes purged by n6 cascade their `scan_gates`; their `scans` rows keep `pass_id NULL` until the test purge.
 

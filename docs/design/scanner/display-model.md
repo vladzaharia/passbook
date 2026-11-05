@@ -3,7 +3,7 @@
 What a scanner shows about a pass after a scan, how a template author designs it, and how the server renders it.
 Status: reconciled with the direction review, 2026-11-04. Builds on `scanner-architecture.md` (cited **SA**),
 `ux-door.md` (**UD**), `ux-desk.md` (**UK**), `ux-admin.md` (**UA**), `buddy-motion.md` (**BM**) and the direction
-comparison (the direction comparison (not shipped), cited **CMP**). Where this file and SA differ on the result content, this file
+comparison (not shipped, cited **CMP**). Where this file and SA differ on the result content, this file
 wins; section 7 lists every delta.
 
 > **Revision 2026-11-04, owner answers** (`scratchpad/scanner-owner-answers.md`): the band title may add the holder's
@@ -12,6 +12,17 @@ wins; section 7 lists every delta.
 > (R19, 2.3, 8); ledger rows show the action label only, and the memo idea is dropped (R13, 1.10, 9); starters are
 > now **Blueprints**, platform designs you **Use blueprint** from and never issue, so the scanner only sees real
 > templates (2.3, 9). Existing paths (`templates/starter-*`) keep their names.
+
+> **Revision 2026-11-05** (stations and Access cards; section 11):
+> - **A `customer` audience**: an opt-in `customer` block on the doc (`greet`, ≤ 2 chips per header, ≤ 1 panel), allow-
+>   listed rows over a customer scope with every `x-scan` input removed, rendered by a separate pure
+>   `renderCustomerView` into `ScanCustomerView`. Verdict copy for customers is the system's `CUSTOMER_COPY`; every
+>   refusal reads **Please see the desk**. Desk monitors reuse the Door and Desk filters unchanged (5.2).
+> - **Access bindings**: a new scope root `access` (plan, kind, zone, hours, visits, until), and `history.visits.*` /
+>   `history.lastVisit.*` count visits (`scans.visit = 1`), not grants, on access templates (1.10).
+> - **Icons** 40 → 42: `infinity` and `clock` for plan chips (4.1).
+> - Detail: `addendum/stations.md` §3 (**ST**), `addendum/access.md` §1.4, §4.4 (**AX**). Section 11 wins where they
+>   differ.
 
 The owner's requirements, in one line each:
 - customize the text, the icon, chips and information cards on a result;
@@ -463,6 +474,9 @@ nothing: no new table, and the Sync log stays the place to see who changed it.
 **Cost control.** Section 5.3: history queries run only when the doc references them, and in the same D1 batch as the
 card reads.
 
+**Access templates** (11.5): `history.visits.*` and `history.lastVisit.*` count rows with `visit = 1` (one extra
+predicate, same index), and `history.lastVisit.where` is the zone name when the row has one, else the scanner's name.
+
 ### 1.11 Safety rules (non-negotiable, enforced in code, tested)
 
 1. **Verdict.** The display schema has no field that reaches the tint, the ring, the verdict band (glyph, headline,
@@ -712,8 +726,9 @@ resolves to the root; anything else is an input, so `{{tier}}` keeps working as 
 | `scanner` | `name`, `role` | `ScanActor` | all |
 | `lookups` | the template's static tables | manifest | all |
 | `now` | ms | `ctx.clock.now()` | all |
+| `access` (11.4) | `plan`, `kind`, `zone`, `closesAt`, `nextOpenAt`, `until`, `hours`, `visits.used`, `.limit`, `.left` | `ScanOutcome.access` / `ScanCard.access`, the active version's plans | all; null on non-access templates |
 
-**Reserved names.** An input called `holder`, `inputs`, `fields`, `scan`, `history`, `event`, `scanner` or `now` is
+**Reserved names.** An input called `holder`, `inputs`, `fields`, `scan`, `history`, `event`, `scanner`, `access` or `now` is
 shadowed in display expressions. The validator warns (`SCAN_DISPLAY_SHADOWED`) and suggests `inputs.<name>`.
 `pass` is already reserved (`INPUT_RESERVED`).
 
@@ -807,7 +822,9 @@ Owner's example, "when tier = VIP, use the crown icon, a gold chip VIP and the c
 
 ## 4. Icons and images
 
-### 4.1 The curated set (40)
+### 4.1 The curated set (42)
+
+2026-11-05: `infinity` (Lucide `Infinity`) and `clock` (`Clock3`) join for the Access card's plan chips (P0-7).
 
 Stored as our own kebab-case ids in `SCAN_ICONS` (`src/passkit/template/scan-display/icons.ts`), each mapped to a Lucide 1.58
 component in `src/web/scan/display/icons.ts`. Ids, not Lucide names, so a Lucide rename never breaks a stored
@@ -889,6 +906,9 @@ outcome decided (SA 2.6 / 8.4)
 4. Terminals (`kind: 'terminal'`, SA 2.4 "summary only") get the identity, `header` and notes, no panels.
 5. The same function runs in the editor preview with a sample scope (6.6) and the chosen role, so "Door hides this
    row" in the editor is the server's behaviour, not a simulation.
+6. **Audiences beyond scanners** (2026-11-05): a Desk monitor renders with its audience (`door` or `desk`) through
+   these same steps; a Customer screen uses the separate customer path of section 11, never `renderScanDisplay` with a
+   lower role.
 
 ### 5.3 Static `needs` and cost
 
@@ -1380,8 +1400,8 @@ The holder question is settled: the holder line is system-owned and always shows
 ## 10. Editor
 
 The visual editor for `scan.display`: the **Scan screen** mode of the existing template designer
-(`src/web/admin/templates/designer/**` in the `next` checkout). Mockups: `docs/design/scanner/display/ (editor mockups, not shipped)` (1440 and
-820, light and dark, and the 390 preview-only page). Sheets: `docs/design/scanner/display/`. Status: design,
+(`src/web/admin/templates/designer/**` in the `next` checkout). Mockups: `directions/display/editor/*.html` (1440 and
+820, light and dark, and the 390 preview-only page). Sheets: `directions/display/sheets/`. Status: design,
 2026-11-04, reconciled with R1-R19. Nothing is built. The sheets paint the canvas with the B-final kit, so they
 follow R1-R19: Ticket with 4 columns, the photo as an identity setting, the system holder line with the meta under it,
 the fit meter per screen "of 6" (1.6), and a display-only save that is live at once (E9). The canvas paints whatever
@@ -1606,3 +1626,110 @@ type ScanOp =
 
 1. **Real-pass preview.** Decided in the plan: `GET /api/v1/scan-display/preview?templateId&passId&role` (DS.5, M3), returning the role-filtered scope, never a rendered display.
 2. **Inline editing on the canvas.** Should bound text be editable on the canvas through a token-aware input? The proposal keeps canvas editing to literal text, to avoid a second token editor.
+
+---
+
+## 11. Customer audience and access bindings (2026-11-05)
+
+Stations put a **Customer screen** beside a scanner and **Desk monitors** anywhere (SA §18). Monitors are staff: they
+render exactly as a Door or Desk scanner would (5.2 step 6). Customers are not staff, so they get their own audience,
+opt-in content, a narrower scope and a separate renderer. Access cards (SA §19) add a scope root and change how visits
+count.
+
+### 11.1 The `customer` block
+
+```ts
+// ScanDisplayDoc (6.1) gains, optional:
+customer?: {
+  greet?: boolean;      // default true: "Hi, {holder.firstName}" on ok and ready
+  chips?: string[];     // ids of header chips (base or variant); ≤ 2 from any one header; schema max(18)
+  panel?: string | null; // ≤ 1 panel id
+};
+```
+
+- **Opt-in.** Nothing a template author wrote reaches a Customer screen unless the block names it. A named panel keeps
+  its staff rendering too; the block only points at it.
+- **No block** → `defaultCustomer(doc)`: greet on, no chips, the first panel whose `preset.id` is `loyalty` or
+  `balance` (the Stamp card's stamps, the Balance card's balance), else nothing.
+- **Chips per header.** Ids are unique in the doc (7), so a chip that changes tone per variant has one id per
+  variant. Only one header renders, so ≤ 2 per header keeps the customer at ≤ 2 chips. The Access card names
+  `c_plan`, `c_timed`, `c_guest`.
+- The station can still turn the greeting off (`greet` switch); either off means no name.
+
+### 11.2 Rules (`customerIssues`, in `scanDisplayIssues`)
+
+| Rule | Detail | Code (error) |
+| --- | --- | --- |
+| Allow-listed rows | `heading`, `field`, `big`, `columns`, `progress`, `money`, `chips`, `list`, `divider`; `history` only with `source: 'visits' \| 'value'` and `show ⊆ ['when', 'amount']`. Never `note`, `image`, or a `history` with `where` or `action` | `SCAN_DISPLAY_CUSTOMER_ROW` |
+| No raised elements | the panel, its rows and items, and the named chips have no `minRole` | `SCAN_DISPLAY_CUSTOMER_ROLE` |
+| Customer scope | the Door scope minus every input with any `x-scan` annotation, the fields bound to them, `pass.externalId`, `scanner.*`, `event.arrived`, `event.expected`, `event.capacity`, `history.*.where`; a named element reading a removed path is an error | `SCAN_DISPLAY_CUSTOMER_SCOPE` |
+| Density | 1 panel, ≤ 4 units (1.6 weights) | `SCAN_DISPLAY_CUSTOMER_DENSITY` |
+| Chips | ≤ 2 named chips in any one header | `SCAN_DISPLAY_CUSTOMER_DENSITY` |
+| References | named ids exist | `SCAN_DISPLAY_CUSTOMER_REF` |
+| Screens | `ok` and `ready` only; `heads_up` and `refused` show nothing from the doc | renderer |
+| Safety | 1.11 rules 5, 6, 8, 9, 10 and 11 apply unchanged | — |
+
+### 11.3 Rendering
+
+`renderCustomerView(doc, scope, { screen, outcome, locale, timeZone, now }) → ScanCustomerView` in
+`src/passkit/template/scan-display/customer.ts` (DS; pure, browser and worker). The band and the system lines come
+from `CUSTOMER_COPY` and the outcome; `greet`, `chips` and `panel` from the doc over the customer scope. On any throw:
+the system view (band only) and one `SCAN_DISPLAY_RENDER` log. The contract (SA §18.4) has no pass id, scan id,
+reason or image URL. The Worker calls it from `live/audiences.ts` with data the request already loaded; `needs` is the
+union of the actor's role, the monitor audiences present and the customer block, so history statements still ride in
+the existing batch (5.3).
+
+| Screen | Band | Greet | Chips, panel | Lines |
+| --- | --- | --- | --- | --- |
+| `ok` | `CUSTOMER_COPY` ok headline and sub ("Access granted · Pool", "+2 stamps · 9 of 10", "Paid $12.00") | yes | from the block | access: **Until 9:00 PM today** when `closesAt` is today; **2 of 5 visits left** for limited guests |
+| `ready` | **Hi, Sam** (or **Hello**) · template name | in the headline | from the block | none |
+| `see_desk` | the station's `refusedLine`; sub only for `outside_hours` (**Your plan opens at {time}.**) and `guest_expired`, `guest_visits_used` (**Your guest pass has ended.**) | no | none | none |
+
+### 11.4 The `access` root
+
+Present when the template has `scan.access` (null otherwise, so expressions hide):
+
+| Path | Value |
+| --- | --- |
+| `access.plan`, `access.kind` | the pass's plan label ("Off-peak") and kind (`always`, `timed`, `guest`) |
+| `access.zone` | the deciding zone's name ("Pool"); null on a scanner without zones |
+| `access.closesAt`, `access.nextOpenAt` | instants (format with `time`, `ago`) |
+| `access.until` | the pass's end (input, or the guest's computed end), ms |
+| `access.hours` | the plan's hours text: "Mon–Fri 6 AM–4 PM, 8 PM–11 PM · Sat–Sun 8 AM–8 PM" |
+| `access.visits.used`, `.limit`, `.left` | guests and members; `limit` null when unlimited, so strict interpolation hides "of {limit}" |
+| `access.zones` (build only) | "All zones", or names joined, ≤ 3 then "+2": the pass face's **Zones** field |
+
+The same values reach the pass build through `PassScope.access` (`accessScope()`), so the face and the scanner agree.
+`build_key` includes `scan.access` only when a binding reads `{{access.…}}`.
+
+### 11.5 Visits on access templates
+
+A grant is a visit when it comes more than `visitGapMinutes` (default 120) after the last grant (`scans.visit = 1`).
+`history.visits.*` and `history.lastVisit.*` count visits; `history.scans.*` still counts every grant. "This month 12
+visits" stays true when a member passes the main door and then the pool.
+
+### 11.6 The Access card's display (blueprint)
+
+`addendum/access/pass/starter-access-card/wallet.template.json` (AX §4.4): `holder` `{{memberName}}`; `photo`
+`minRole: door`; base header chip `c_plan` (violet, `infinity`); variants **Timed** (`access.kind = timed`, chip
+`c_timed`, teal, `clock`) and **Guest** (`c_guest`, gold, `ticket`); panel `p_visits` (preset `membership`, icon
+`door-open`, title **Visits**): members a `columns` row (**This month** `{{history.visits.month}}` with zero form
+**First visit**, **Last visit** `{{history.lastVisit.at|ago}}`), guests a `columns` row (**Visits left** `{{access.
+visits.left}} of {{access.visits.limit}}`, **Until** `{{access.until|time}}`), and **Guest of** `{{inputs.sponsor}}`
+for Desk; `notes.refused` **Ask at the front desk.**; `customer { chips: [c_plan, c_timed, c_guest], panel: null }`.
+Density on `ok`: 3-4 of 6 units. It parses with Phase 0's frozen schema once P0-7 lands (checked with
+`addendum/access/gen/check-package.mjs`: parse true, access block ok, ids and customer block ok).
+
+### 11.7 Editor
+
+The Scan screen mode (10) gets a **Customer** tab beside Ready, OK, Heads-up and Refused: a preview at customer scale
+(the customer face's card, SD §16.2) and two pickers, **Chips** (per header, ≤ 2) and **Panel** (one; disallowed panels
+greyed with the reason from 11.2). Ops `customer.set` (one undo step each). Owner: TD, `designer/scan/customer-tab.tsx`.
+
+### 11.8 Tests
+
+DS (`customer.test.ts`): the allow-list, the scope removals (a row bound to an `x-scan: desk` input renders empty),
+the per-header chip cap, density, the default for a doc without the block (the Stamp card's stamps only), `greet:
+false`, the fail-safe; a recursive scan of every outcome fixture's customer view for holder data beyond the first name.
+`access` root: every path for 24/7, Off-peak and a 2-visit guest; null on a ticket; `history.visits.month` counts
+visits at a month edge in the zone's time zone.

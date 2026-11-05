@@ -19,11 +19,15 @@ on build structure, `scanner-architecture.md` on design.
 
 ## Not shipped
 
-- **Images and video.** The rendered sheets (`b-final/`, `display/`, `mockups/`), the strips and the webm videos were
-  lost with the working folder and are not here. Paths to them in the docs name where they belong. The B-final
-  geometry, tokens and motion are written out in `b-final.md` and `buddy-motion.md`.
-- **Superseded drafts.** `arch-access.md`, `arch-server.md`, `map-access.md` and `map-domain.md` are folded into SA and
+- **Images and video.** The sources for these are empty or missing in the working folder, so there is nothing to
+  copy: `directions/b-final/shots` and `directions/b-final/video`, `directions/display/sheets`, `mockups` sheets
+  (only `mockups/gen` and its CSS survive, and are not copied), the strips and the webm videos. Paths to them in the
+  docs name where they belong. The owner or the lead regenerates them; until then B-final geometry, tokens and
+  motion are in b-final.md and buddy-motion.md.
+- **`buddy-draft/sound.ts`.** Missing at the source. buddy-motion.md section 12 specifies the chirps.
+- **Superseded drafts.** arch-access.md, arch-server.md, map-access.md and map-domain.md are folded into SA and
   the plan, and not copied.
-- **Research and briefs.** `research/scanning/report.md` (R), `n8b-buddy.md` and `scanner-owner-answers.md` were the
+- **Research and briefs.** research/scanning/report.md (R), n8b-buddy.md and scanner-owner-answers.md were the
   inputs. Their decisions are in the revision notes at the top of the plan, SA and DM.
-- **`buddy-draft/sound.ts`.** Not kept. `buddy-motion.md` section 12 specifies the chirps.
+
+`addendum/` holds the stations and Access card designs the plan cites (ST, AX) and the Phase 0 amendments.

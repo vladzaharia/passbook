@@ -315,7 +315,10 @@ routers are mounted but empty.
     - `rules.ts`: `effectiveRole`, `ROLE_RANK`, and `scanPolicy` for role, `max`, `letInAgain`, the undo window and
       the action-above-role rows of SA §2.4 Matrix B. Pure; the value-action parts are added by stream SV.
   - `src/worker/stores.ts`: wire `scanners` (owner e).
-  - `test/helpers/fake-auth.ts`: `fake.scanner({ orgId, mode, settings, accepts, staff?, transport })`.
+  - `test/helpers/fake-auth.ts`: `fake.scanner({ scannerId, orgId, mode, transport, kind, deviceRole })` fakes the
+    principal only. `requireScanActor` also reads the `scanners` row, so SV and SC tests seed one with
+    `makeScanner(f, { orgId, settings, templateIds, staffId, ... })` (`test/helpers/factories.ts`), the frozen helper for
+    scan tests, and send its `headers`.
   - `test/helpers/count-d1.ts`: a D1 wrapper that counts round trips, for SA §13.1.
 - **Tests first:**
   - guard order SA §2.5: revoked gives `SCANNER_REVOKED`, expired gives `SCANNER_EXPIRED`, a suspended org gives
@@ -332,7 +335,14 @@ routers are mounted but empty.
   - a scanner request with `scope` gives 422 `SCAN_SCOPE_NOT_ALLOWED`; an admin scope naming another org's event or
     template gives 404 with an unknown id's body;
   - no log line contains a PIN or a token (a log spy).
-- **Done when:** `requireScanActor` on a test router admits `fake.scanner()` and `fake.admin()` with a scope.
+  - an admin has no `scope` on an undo or an asset GET only if the route lets it: `ScanUndoRequestSchema.scope` is
+    optional (admin only), and GETs take `?orgId&eventId&templateIds&timeZone` (the asset `<img>` too); without one
+    the answer is 422 `SCAN_SCOPE_REQUIRED` (SA 2.8);
+  - revoking through SQL (`revoked_at` set, token columns kept) gives `SCANNER_REVOKED`; an `expires_at` in the past
+    gives `SCANNER_EXPIRED`;
+  - a guarded request costs at most 5 D1 round trips after the credential (count-d1).
+- **Done when:** `requireScanActor` on a test router admits a `makeScanner` device with its headers and `fake.admin()`
+  with a scope.
 
 **P0.5 The `/scan` document and headers** (foundation and integration files)
 - **Files:**

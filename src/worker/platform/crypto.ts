@@ -149,7 +149,8 @@ export async function rewrapSecret(
 
 /**
  * An HMAC-SHA256 key derived (HKDF) from the oldest configured KEK and a purpose label. The oldest
- * version keeps stored MACs valid when a newer KEK is added. Never reuse a label across purposes.
+ * version keeps stored MACs valid when a newer KEK is added; removing it breaks every MAC made
+ * with it (staff PINs, asset grants), so docs/operations.md says to keep it. Never reuse a label across purposes.
  */
 export async function derivedHmacKey(env: object, label: string): Promise<CryptoKey> {
   const versions = Object.entries(env as Record<string, unknown>)
