@@ -14,6 +14,8 @@ export interface ConfirmCopy {
   /** What happens, one sentence; "This cannot be undone." follows when it cannot. */
   description: string;
   typed: boolean;
+  /** Replaces the dialog's "Cancel" where that would read as the confirm's own word. */
+  cancelLabel?: string;
 }
 
 const CANNOT_UNDO = 'This cannot be undone.';
@@ -73,13 +75,15 @@ export function clearHolderConfirm(owner: string | null): ConfirmCopy {
 /** Archiving a template: new passes cannot use it; the ones it has keep working. */
 export function archiveConfirm(name: string, passCount: number): ConfirmCopy {
   const kept =
-    passCount === 1
-      ? '1 existing pass keeps working.'
-      : `${passCount} existing passes keep working.`;
+    passCount === 0
+      ? ''
+      : passCount === 1
+        ? ' 1 existing pass keeps working.'
+        : ` ${passCount} existing passes keep working.`;
   return {
     title: `Archive ${name}?`,
     confirmLabel: 'Archive',
-    description: `New passes cannot use it. ${kept}`,
+    description: `New passes cannot use it.${kept}`,
     typed: false,
   };
 }
@@ -116,12 +120,23 @@ export function revokeKeyConfirm(name: string): ConfirmCopy {
   };
 }
 
-/** Cancelling a message or change that has not started. */
-export function cancelBroadcastConfirm(name: string): ConfirmCopy {
+/** Cancelling what has not started. A draft is not deleted: the server moves it to Cancelled, same as a scheduled one. */
+export function cancelBroadcastConfirm(
+  name: string,
+  kind: 'message' | 'change',
+  state: string,
+): ConfirmCopy {
+  const noun = kind === 'change' ? 'change' : 'message';
   return {
     title: `Cancel ${name}?`,
-    confirmLabel: 'Cancel message',
-    description: 'No pass changes. You can send a new one later.',
+    confirmLabel: `Cancel ${noun}`,
+    description:
+      state === 'draft'
+        ? 'It moves to Cancelled. No pass changes.'
+        : kind === 'change'
+          ? 'No pass changes. You can schedule a new change later.'
+          : 'No pass changes. You can send a new one later.',
     typed: false,
+    cancelLabel: 'Keep it',
   };
 }

@@ -270,7 +270,7 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
       <ConfirmDialog
         open={asking}
         onOpenChange={setAsking}
-        {...cancelBroadcastConfirm(b.name)}
+        {...cancelBroadcastConfirm(b.name, b.kind, b.state)}
         destructive
         onConfirm={async () => {
           await cancel.mutateAsync(b.id);

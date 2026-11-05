@@ -131,7 +131,12 @@ export function EmptyState({
         {title}
       </Title>
       {description ? <p className="max-w-[65ch] text-sm text-fg-muted">{description}</p> : null}
-      {action ? <div className={inline ? 'mt-1' : 'mt-2'}>{action}</div> : null}
+      {action ? (
+        // Below sm every action is the row's width, so two empty states line up.
+        <div className={cn(inline ? 'mt-1' : 'mt-2', 'max-sm:w-full max-sm:[&>*]:w-full')}>
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }

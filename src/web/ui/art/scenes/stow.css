@@ -1,0 +1,16 @@
+/* stow (a pass taken out of Wallet): tuck's lift, drop and blink without the peek, 1.8 s, once.
+   It shares tuck's keyframes, so the pose it ends on is tuck's: at rest. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene="stow"][data-run] .wl-art [data-body] {
+    animation: wl-s-tuck-thunk 1.8s ease-out;
+  }
+  [data-scene="stow"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-tuck-blink 1.8s ease-in-out;
+  }
+  [data-scene="stow"][data-run] .wl-art [data-part="c1"] {
+    animation: wl-s-tuck-lift 1.8s ease-in-out;
+  }
+  [data-scene="stow"][data-run] .wl-art :is([data-part="c2"], [data-part="c3"]) {
+    animation: wl-s-tuck-jolt 1.8s ease-out;
+  }
+}

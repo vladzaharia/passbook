@@ -31,6 +31,8 @@ export const ART_NAMES = [
   'lock',
   'unplugged',
   'wallet',
+  'broadcast',
+  'bundle',
 ] as const;
 export type ArtName = (typeof ART_NAMES)[number];
 export type EntityArtProps = ArtProps & { name: ArtName; state?: WalletState };

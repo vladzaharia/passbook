@@ -60,6 +60,44 @@
   --b: translateY(6px);
 }
 
+[data-art="broadcast"] [data-part="b"] {
+  --f: translateY(-8px);
+  --u: 280ms;
+  --e: var(--art-out);
+  --b: translateY(2px);
+}
+[data-art="broadcast"] [data-part="d"] {
+  --f: scale(0);
+  --d: 300ms;
+  --u: 220ms;
+  --e: var(--art-bo);
+}
+
+[data-art="bundle"] [data-part="l"] {
+  --t: rotate(-8deg);
+  --f: translateX(8px) rotate(0deg);
+  --u: 280ms;
+  --e: var(--art-out);
+}
+[data-art="bundle"] [data-part="r"] {
+  --t: rotate(8deg);
+  --f: translateX(-8px) rotate(0deg);
+  --u: 280ms;
+  --e: var(--art-out);
+}
+[data-art="bundle"] [data-part="c"] {
+  --f: translateY(6px);
+  --b: translateY(-2px);
+}
+[data-art="bundle"] [data-part="t"] {
+  --f: scaleX(0);
+  --fo: 1;
+  --o: 0% 50%;
+  --d: 260ms;
+  --u: 240ms;
+  --e: var(--art-out);
+}
+
 [data-art="frames"] [data-part="b"] {
   --t: rotate(-6deg);
   --f: rotate(-6deg) translateY(4px);

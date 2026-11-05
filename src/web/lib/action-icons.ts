@@ -4,6 +4,7 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Eye,
   EyeOff,
   KeyRound,
   LogOut,
@@ -13,6 +14,7 @@ import {
   Moon,
   Package,
   Pencil,
+  PenTool,
   Plus,
   RefreshCw,
   RotateCw,
@@ -39,7 +41,9 @@ export const ACTION_ICON = {
   unvoid: Undo2,
   /** Remove from Wallet, and its undo. */
   removeFromWallet: EyeOff,
-  restoreToWallet: ArchiveRestore,
+  restoreToWallet: Eye,
+  /** Bring back something archived or deleted (a template). */
+  restore: ArchiveRestore,
   delete: Trash2,
   /** Revoke a session, sign out. */
   signOut: LogOut,
@@ -51,6 +55,8 @@ export const ACTION_ICON = {
   bundle: Package,
   duplicate: Copy,
   edit: Pencil,
+  /** Open the visual designer: its own verb, not a field edit. */
+  design: PenTool,
 } as const satisfies Record<string, LucideIcon>;
 
 export const THEME_ICON = { system: Monitor, light: Sun, dark: Moon } as const;

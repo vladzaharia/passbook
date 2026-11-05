@@ -10,7 +10,7 @@ const ALL = 'all';
 
 /**
  * The only org control: a combobox in the top bar, hidden where the scope does not apply. It
- * writes `?orgId=` (useOrgScope). Shows the full name; truncates only when the bar runs out of room.
+ * writes `?orgId=` (useOrgScope). Shows the full name (truncating when the bar runs out of room); below sm, the avatar and chevron.
  */
 export function ScopeSwitcher() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -36,6 +36,7 @@ export function ScopeSwitcher() {
       searchPlaceholder="Find an organization"
       className="w-auto min-w-0 gap-1.5 px-2.5"
       options={options}
+      compact
       value={orgId ?? ALL}
       onValueChange={(v) => setOrgId(v === ALL ? undefined : v)}
     />

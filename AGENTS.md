@@ -86,7 +86,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | n5 | template designer | `src/web/admin/templates/designer/**`, `src/web/routes/admin/templates/` designer route, new files in `modules/templates/` for saving a version from JSON, `migrations/0017_designer.sql` if needed |
 | n6 | sandbox mode | `src/web/ui/layout/mode*`, `modules/sandbox/**`, test-inbox pages, `migrations/0015_sandbox.sql` |
 | n7 | broadcasts, schedules | `modules/broadcasts/**`, `src/worker/workflows/broadcast.ts`, `src/web/admin/messages/**`, `src/web/routes/admin/messages/`, `modules/passes/change-messages.ts`, `migrations/0013_broadcasts.sql` |
-| n8 | scanner | `modules/scan/**`, `src/web/scan/**`, `src/web/routes/scan*`, `src/web/admin/scanners/**`, `src/web/routes/admin/scanners/`, `migrations/0014_scan.sql` |
+| n8 | scanner (UI removed; being redesigned) | `modules/scan/**`, `migrations/0014_scan.sql` |
 | integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
 
 `modules/events` was built by the foundation (`migrations/0010_events.sql`, `recordPassEvent`, mode plumbing, scan codes) and passes to n1 after it. The streams' specs are in `docs/design/next-wave.md`.

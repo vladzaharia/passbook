@@ -11,6 +11,8 @@ export interface SegmentOption<V extends string = string> {
   label: string;
   icon?: LucideIcon;
   disabled?: boolean;
+  /** The full name when the label is short: the tooltip and the accessible name. */
+  title?: string;
 }
 
 export interface SegmentedControlProps<V extends string = string> {
@@ -70,7 +72,7 @@ export function SegmentedControl<V extends string>({
       onKeyDown={move}
       className={cn(
         'wl-seg relative inline-flex border-border bg-surface-sunken',
-        block && 'flex w-full',
+        block ? 'flex w-full' : 'self-start',
         className,
       )}
     >
@@ -85,11 +87,13 @@ export function SegmentedControl<V extends string>({
             role="radio"
             aria-checked={checked}
             data-value={o.value}
+            title={o.title}
+            aria-label={o.title}
             tabIndex={checked ? 0 : -1}
             disabled={o.disabled}
             onClick={() => onValueChange(o.value)}
             className={cn(
-              'relative inline-flex items-center justify-center gap-1.5 wl-colors',
+              'relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap wl-colors',
               'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
               'disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4',
               block && 'flex-1',

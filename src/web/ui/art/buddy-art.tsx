@@ -17,6 +17,7 @@ export type BuddyScene =
   | 'tear'
   | 'nudge'
   | 'tuck'
+  | 'stow'
   | 'count'
   | 'beat';
 

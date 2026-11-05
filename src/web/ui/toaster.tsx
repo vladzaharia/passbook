@@ -1,26 +1,10 @@
-import { CircleCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CircleCheck, XCircle } from 'lucide-react';
 import { Toaster as Sonner, toast as sonner } from 'sonner';
 import { errorMessage } from '../lib/errors.ts';
-import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { useTheme } from '../lib/theme.tsx';
 import { BuddyFace } from './art/face.tsx';
 import { useBuddyOnScreen } from './art/presence.ts';
 import { TOUCH_HIT } from './button.tsx';
-
-/** True while a modal dialog, sheet or menu holds the page (Radix locks body scroll). */
-function useOverlayOpen(): boolean {
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const body = document.body;
-    const read = () => setOpen(body.hasAttribute('data-scroll-locked'));
-    read();
-    const observer = new MutationObserver(read);
-    observer.observe(body, { attributes: true, attributeFilter: ['data-scroll-locked'] });
-    return () => observer.disconnect();
-  }, []);
-  return open;
-}
 
 /**
  * Success wears the buddy in miniature (it pops in and winks once, or posts a letter). A view
@@ -34,29 +18,27 @@ function SuccessMark({ scene }: { scene?: 'post' }) {
   );
 }
 
+const BOTTOM = 'calc(max(var(--wl-bottom-bar, 0px), env(safe-area-inset-bottom)) + 1rem)';
+
 export function Toaster() {
   const { resolved } = useTheme();
-  // Phone sheets rise from the bottom: toasts move to the top so they never cover sheet actions.
-  const phone = useMediaQuery(PHONE);
-  const overlay = useOverlayOpen();
   return (
     <Sonner
       theme={resolved}
-      position={phone && overlay ? 'top-center' : 'bottom-right'}
-      // Keep toasts clear of the fixed SaveBar; an error toast sits there until dismissed and
-      // would otherwise cover Save/Discard.
-      offset={{
-        bottom: 'calc(5rem + env(safe-area-inset-bottom))',
-        right: 'max(1rem, env(safe-area-inset-right))',
-      }}
+      position="bottom-right"
+      // Above the fixed SaveBar or SelectionBar (--wl-bottom-bar, bottom-bar.ts), else the safe
+      // area. Phones keep the bottom with an overlay open: the top would cover a sheet's header.
+      offset={{ bottom: BOTTOM, right: 'max(1rem, env(safe-area-inset-right))' }}
       mobileOffset={{
-        top: 'calc(0.75rem + env(safe-area-inset-top))',
-        bottom: 'calc(5rem + env(safe-area-inset-bottom))',
+        bottom: BOTTOM,
         left: 'max(1rem, env(safe-area-inset-left))',
         right: 'max(1rem, env(safe-area-inset-right))',
       }}
       closeButton
-      icons={{ success: <SuccessMark /> }}
+      icons={{
+        success: <SuccessMark />,
+        error: <XCircle aria-hidden className="size-4 text-danger" />,
+      }}
       toastOptions={{
         // Close sits top right inside the box, like a dialog's; the text keeps clear of it.
         classNames: {

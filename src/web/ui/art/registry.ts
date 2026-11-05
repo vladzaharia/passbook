@@ -1,7 +1,9 @@
 import { createElement, type ReactNode } from 'react';
 import { ActivityArt } from './activity.tsx';
 import type { ArtProps } from './base.tsx';
+import { BroadcastArt } from './broadcast.tsx';
 import { BuildingArt } from './building.tsx';
+import { BundleArt } from './bundle.tsx';
 import { CertificateArt } from './certificate.tsx';
 import { EnvelopeArt } from './envelope.tsx';
 import { FramesArt } from './frames.tsx';
@@ -40,6 +42,7 @@ import './scenes/wave.css';
 import './scenes/tear.css';
 import './scenes/nudge.css';
 import './scenes/tuck.css';
+import './scenes/stow.css';
 import './scenes/count.css';
 import './scenes/face.css';
 
@@ -66,6 +69,8 @@ export const ART = {
   lock: LockArt,
   unplugged: UnpluggedArt,
   wallet: WalletArt,
+  broadcast: BroadcastArt,
+  bundle: BundleArt,
 } as const satisfies Record<ArtName, (props: ArtProps) => unknown>;
 
 export function RegisteredArt({ name, ...props }: EntityArtProps): ReactNode {

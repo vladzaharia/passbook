@@ -1,6 +1,6 @@
 import type { PassDevicesDto } from '@/shared/contracts/events.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
-import { Callout } from '../../../ui/index.ts';
+import { Callout, ProgressBar } from '../../../ui/index.ts';
 
 /** "Removed on 1 of 2 devices": a device counts once it fetched the final version or deleted the pass. */
 export function RemovalProgress({ removal }: { removal: NonNullable<PassDevicesDto['removal']> }) {
@@ -15,19 +15,7 @@ export function RemovalProgress({ removal }: { removal: NonNullable<PassDevicesD
             : `Removed on ${done} of ${total} ${total === 1 ? 'device' : 'devices'}`}
         </p>
         {total > 0 ? (
-          <div
-            role="progressbar"
-            aria-label="Devices updated"
-            aria-valuemin={0}
-            aria-valuemax={total}
-            aria-valuenow={done}
-            className="h-1.5 overflow-hidden rounded-full bg-surface-sunken"
-          >
-            <div
-              className="h-full origin-left rounded-full bg-success transition-transform duration-300 motion-reduce:transition-none"
-              style={{ transform: `scaleX(${done / total})` }}
-            />
-          </div>
+          <ProgressBar label="Devices updated" value={done} max={total} tone="success" />
         ) : null}
         <p>The pass moves to Expired passes in Wallet, and the holder can delete it there.</p>
       </div>

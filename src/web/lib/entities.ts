@@ -5,7 +5,6 @@ import {
   Building2,
   Cable,
   FileBadge,
-  FlaskConical,
   History,
   Image,
   KeyRound,
@@ -14,10 +13,12 @@ import {
   Mail,
   Megaphone,
   Milestone,
+  Package,
   ScrollText,
   SearchX,
   Send,
   Smartphone,
+  Sparkles,
   Ticket,
   User,
   Webhook,
@@ -52,7 +53,8 @@ export const ENTITY = {
   status: { label: 'Component', plural: 'components', icon: Activity, art: 'pulse' },
   workflowRun: { label: 'Workflow run', plural: 'workflow runs', icon: Workflow, art: 'runs' },
   device: { label: 'Device', plural: 'devices', icon: Smartphone, art: 'phone' },
-  broadcast: { label: 'Message', plural: 'messages', icon: Megaphone, art: 'wallet' },
+  broadcast: { label: 'Message', plural: 'messages', icon: Megaphone, art: 'broadcast' },
+  bundle: { label: 'Bundle', plural: 'bundles', icon: Package, art: 'bundle' },
   delivery: { label: 'Delivery', plural: 'deliveries', icon: Send, art: 'envelope' },
   image: { label: 'Image', plural: 'images', icon: Image, art: 'frames' },
   version: { label: 'Version', plural: 'versions', icon: History, art: 'layers' },
@@ -65,7 +67,7 @@ export const ENTITY_KINDS = Object.keys(ENTITY) as EntityKind[];
 
 /** Connector glyphs; unknown connectors use the connection icon. */
 export const CONNECTOR_ICON: Record<string, LucideIcon> = {
-  demo: FlaskConical,
+  demo: Sparkles,
   'http-json': Braces,
   'webhook-push': Webhook,
 };

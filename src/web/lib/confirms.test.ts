@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   archiveConfirm,
+  cancelBroadcastConfirm,
   clearHolderConfirm,
   deleteConfirm,
   removeEmailConfirm,
@@ -46,6 +47,21 @@ describe('confirm copy', () => {
       typed: false,
     });
     expect(archiveConfirm('Member', 4).description).toMatch(/4 existing passes keep working/);
+    expect(archiveConfirm('Member', 0).description).toBe('New passes cannot use it.');
+  });
+
+  it('words cancelling a message, a change and a draft apart, and never dismisses with Cancel', () => {
+    const msg = cancelBroadcastConfirm('Sale', 'message', 'scheduled');
+    expect(msg.confirmLabel).toBe('Cancel message');
+    expect(cancelBroadcastConfirm('Sale', 'change', 'scheduled').confirmLabel).toBe(
+      'Cancel change',
+    );
+    // The service moves a draft to 'cancelled' (it is not deleted), so the copy must not say delete.
+    const draft = cancelBroadcastConfirm('Sale', 'message', 'draft');
+    expect(draft).toMatchObject({ title: 'Cancel Sale?', confirmLabel: 'Cancel message' });
+    expect(draft.description).toBe('It moves to Cancelled. No pass changes.');
+    expect(JSON.stringify(draft)).not.toMatch(/delete|undone/i);
+    expect(msg.cancelLabel).toBe('Keep it');
   });
 
   it('words removing an email for the holder and for an admin', () => {

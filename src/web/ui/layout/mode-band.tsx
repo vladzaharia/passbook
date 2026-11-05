@@ -1,19 +1,15 @@
-import { FlaskConical } from 'lucide-react';
 import { useMode } from '../../lib/mode.ts';
 import './mode.css';
+import './test-strip.css';
+import { TestStrip } from './test-strip.tsx';
 
-/** Amber, persistent, and out of the layout flow (AppShell hangs it under the bar). */
+/** Amber, persistent, in flow under the top bar (AppShell). Mode is read at load: no shift on open. */
 export function ModeBand() {
   const mode = useMode();
   if (mode !== 'test') return null;
   return (
-    <div
-      role="status"
-      className="wl-mode-band flex h-5 items-center justify-center gap-1.5 border-b border-warning-border bg-warning-subtle px-safe text-xs font-medium text-warning"
-    >
-      <FlaskConical aria-hidden className="size-3" />
+    <TestStrip className="wl-mode-band" more="· New emails go to the Test inbox.">
       Test mode
-      <span className="hidden font-normal sm:inline">· Emails go to the Test inbox.</span>
-    </div>
+    </TestStrip>
   );
 }
