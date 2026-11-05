@@ -35,6 +35,7 @@ import {
 import { fromRows, type MappingRow } from './mapping.ts';
 import { MappingEditor, targetsOf } from './mapping-editor.tsx';
 import { TemplateSelect } from './template-select.tsx';
+import { TestModeNote } from './test-mode-note.tsx';
 import type { TestOutcome } from './test-result.tsx';
 import { generateSecret } from './webhook.tsx';
 import { ReviewStep, WizardAside } from './wizard-review.tsx';
@@ -204,6 +205,7 @@ export function CreateConnectionWizard() {
   return (
     <>
       <PageHeader title="New connection" breadcrumbs={crumbs} />
+      <TestModeNote className="mb-4" />
       <Wizard
         steps={STEPS}
         current={step}

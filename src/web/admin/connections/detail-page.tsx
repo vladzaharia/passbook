@@ -35,6 +35,7 @@ import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import { modeLabel } from './labels.ts';
 import type { ConnectionDetailSearch } from './search.ts';
+import { showLive, TestModeNote } from './test-mode-note.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
 import { WebhookPanel } from './webhook.tsx';
 
@@ -203,6 +204,7 @@ export function ConnectionDetailPage({
           />
         </div>
       ) : null}
+      <TestModeNote className="mb-4" />
       <TwoPane
         aside={
           <Card>
@@ -219,6 +221,7 @@ export function ConnectionDetailPage({
                         icon={ENTITY.pass.icon}
                         to="/admin/passes"
                         search={{ connectionId: c.id }}
+                        onClick={showLive}
                       />
                     ),
                   },
@@ -243,6 +246,8 @@ export function ConnectionDetailPage({
             <HealthPanel
               connection={c}
               canSync={canSync && c.enabled}
+              pushOnly={!canSync}
+              onWebhookTab={showWebhook ? () => setTab('webhook') : undefined}
               retrying={actions.sync.isPending}
               onRetry={() => void sync()}
             />

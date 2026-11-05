@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { ComponentStatusSchema } from '@/shared/contracts/status.ts';
 import { formatDateTime } from '../../lib/format.ts';
+import { PUSH_METHOD_LABEL } from '../identities/apns-check.tsx';
 
 export type Component = z.infer<typeof ComponentStatusSchema>;
 export type State = Component['state'];
@@ -105,8 +106,17 @@ const plural = (n: number, one: string) => `${n} ${n === 1 ? one : `${one}s`}`;
 
 /** One line under the label: the server detail, else a summary of the data. */
 export function summaryLine(c: Component): string | null {
-  if (c.detail) return c.detail;
   const d = c.data ?? {};
+  if (c.kind === 'identity') {
+    const method = d.pushMethod;
+    if (d.apnsHealth === 'failing' && (method === 'certificate' || method === 'key')) {
+      const days = num(d.daysRemaining);
+      const expiry =
+        days !== null && days >= 0 && days <= 30 ? ` · expires in ${plural(days, 'day')}` : '';
+      return `${PUSH_METHOD_LABEL[method]} failing${expiry}`;
+    }
+  }
+  if (c.detail) return c.detail;
   switch (c.kind) {
     case 'queue':
       return `${num(d.backlog) ?? 0} queued, ${num(d.dlq) ?? 0} dead-lettered`;

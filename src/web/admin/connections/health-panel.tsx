@@ -159,11 +159,17 @@ export function HealthPanel({
   onRetry,
   retrying,
   canSync,
+  pushOnly,
+  onWebhookTab,
 }: {
   connection: Detail;
   onRetry: () => void;
   retrying: boolean;
   canSync: boolean;
+  /** Nothing to poll: the source pushes webhooks. */
+  pushOnly: boolean;
+  /** Opens the Webhook tab; set when the connection receives pushes. */
+  onWebhookTab?: (() => void) | undefined;
 }) {
   const now = Date.now();
   const failing = c.consecutiveFailures > 0;
@@ -174,6 +180,7 @@ export function HealthPanel({
     (r, i) => r.outcome === 'error' && c.runs[i + 1]?.outcome !== 'error',
   )?.startedAt;
   const late = overdue(c, now);
+  const waiting = pushOnly && !c.lastRunAt && !failing;
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <Card>
@@ -181,7 +188,12 @@ export function HealthPanel({
         <CardBody className="flex flex-col gap-4">
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <p className={cn('text-sm', failing ? 'text-fg-strong' : 'text-fg')}>
-              {healthSentence(c, now, since)}
+              {waiting ? 'Waiting for the first webhook. ' : healthSentence(c, now, since)}
+              {waiting && onWebhookTab ? (
+                <Button variant="link" onClick={onWebhookTab}>
+                  Open Webhook
+                </Button>
+              ) : null}
             </p>
             {failing && canSync ? (
               <Button
@@ -209,17 +221,26 @@ export function HealthPanel({
           {c.runs.length ? <RunStrip runs={c.runs} /> : null}
           <KeyValue
             items={[
-              { label: 'Last run', value: c.lastRunAt ? formatDateTime(c.lastRunAt) : null },
+              {
+                label: pushOnly ? 'Last webhook' : 'Last run',
+                value: c.lastRunAt ? formatDateTime(c.lastRunAt) : null,
+              },
               {
                 label: 'Last success',
                 value: c.lastSuccessAt ? formatDateTime(c.lastSuccessAt) : null,
               },
-              {
-                label: 'Next run',
-                value: c.nextRunAt ? (
-                  <span className={cn(late && 'text-warning')}>{formatDateTime(c.nextRunAt)}</span>
-                ) : null,
-              },
+              ...(pushOnly
+                ? []
+                : [
+                    {
+                      label: 'Next run',
+                      value: c.nextRunAt ? (
+                        <span className={cn(late && 'text-warning')}>
+                          {formatDateTime(c.nextRunAt)}
+                        </span>
+                      ) : null,
+                    },
+                  ]),
               {
                 label: 'Paused after repeated failures',
                 value: breaker ? (
@@ -257,7 +278,6 @@ export function HealthPanel({
         <DataTable
           caption="Connection runs"
           bare
-          stack={false}
           columns={columns}
           data={c.runs.slice(0, 20)}
           getRowId={(r) => r.id}

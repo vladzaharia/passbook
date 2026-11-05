@@ -4,6 +4,7 @@ const KIND_LABELS: Record<string, string> = {
   template_import: 'Template import',
   bulk_reissue: 'Bulk reissue',
   connection_sync: 'Connection sync',
+  broadcast: 'Message',
 };
 
 const RUN_ERRORS: Record<string, string> = {

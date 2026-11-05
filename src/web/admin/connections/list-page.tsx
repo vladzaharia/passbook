@@ -24,6 +24,7 @@ import { useConnectionPages, useConnectorNames } from './api.ts';
 import { HealthPill } from './health.tsx';
 import { healthLine } from './health-text.ts';
 import { HEALTH_FILTERS, modeLabel } from './labels.ts';
+import { showLive, TestModeNote } from './test-mode-note.tsx';
 
 type Connection = z.infer<typeof ConnectionSummarySchema>;
 const ALL = 'all';
@@ -126,6 +127,7 @@ export function ConnectionsListPage({
             count={row.original.passCount}
             to="/admin/passes"
             search={{ connectionId: row.original.id }}
+            onClick={showLive}
             aria-label={`${row.original.passCount} passes from ${row.original.name}`}
           />
         ),
@@ -153,6 +155,7 @@ export function ConnectionsListPage({
   return (
     <>
       <PageHeader title="Connections" actions={create(empty ? 'outline' : 'primary')} />
+      <TestModeNote className="mb-4" />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
       ) : (

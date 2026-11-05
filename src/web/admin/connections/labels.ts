@@ -5,8 +5,9 @@ const ERROR_MESSAGE: Record<string, string> = {
   AUTH: 'The source rejected the credentials. Replace them.',
   FORBIDDEN: 'The credentials lack access to this data.',
   RATE_LIMITED: 'The source is rate limiting requests. Retries are automatic.',
-  UPSTREAM: 'The source returned an error. Retries are automatic.',
-  TIMEOUT: 'The source did not respond in time.',
+  UPSTREAM:
+    'The source returned an error. Retries are automatic. Check the source URL in Configuration.',
+  TIMEOUT: 'The source did not respond in time. Check the source URL in Configuration.',
   INVALID_PAYLOAD: 'The source returned data that does not match the mapping.',
   CONFIG: 'The connection configuration is invalid. Check Configuration.',
 };

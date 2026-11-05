@@ -123,6 +123,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
             </Button>
             <Button
               variant="outline"
+              className="border-danger-border text-danger hover:not-disabled:text-danger"
               iconStart={<ACTION_ICON.delete aria-hidden />}
               onClick={() => setDeleting(true)}
             >

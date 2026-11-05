@@ -145,7 +145,7 @@ describe('api keys page', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it('marks Test keys with the pill and the wlt_test_ prefix', async () => {
+  it('marks Test keys with the pill and shows the real prefix', async () => {
     await renderApp('/admin/api-keys', {
       session: 'admin',
       handlers: {
@@ -154,7 +154,7 @@ describe('api keys page', () => {
     });
     expect(await screen.findByText('Sandbox key')).toBeInTheDocument();
     expect(screen.getByText('Test')).toBeInTheDocument();
-    expect(screen.getByText('wlt_test_abc123')).toBeInTheDocument();
+    expect(screen.getByText('wlt_abc123')).toBeInTheDocument();
   });
 
   it('creates a Test key when Test mode is on', async () => {

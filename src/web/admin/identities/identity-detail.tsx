@@ -81,7 +81,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
             {uploaded ? (
               <DropdownMenuItem onSelect={() => setRotating(true)}>
                 <ACTION_ICON.rotate aria-hidden />
-                Rotate certificate
+                Replace certificate
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuItem

@@ -6,6 +6,7 @@ import { daysUntil, formatDay } from '../../lib/format.ts';
 type Identity = z.infer<typeof IdentitySchema>;
 
 export const WARN_DAYS = 30;
+export const DANGER_DAYS = 7;
 
 /** Days left, computed from notAfter so a stale `daysRemaining` cannot mislead. */
 export function remainingDays(identity: Pick<Identity, 'notAfter' | 'daysRemaining'>, now: number) {
@@ -15,7 +16,14 @@ export function remainingDays(identity: Pick<Identity, 'notAfter' | 'daysRemaini
 export function ExpiryPill({ identity, now }: { identity: Identity; now: number }) {
   const days = remainingDays(identity, now);
   if (days === null) return <span className="text-fg-muted">Unknown</span>;
-  const status = days < 0 ? 'failing' : days <= WARN_DAYS ? 'degraded' : 'verified';
+  const status =
+    days < 0
+      ? 'failing'
+      : days <= DANGER_DAYS
+        ? 'failing'
+        : days <= WARN_DAYS
+          ? 'degraded'
+          : 'verified';
   const label =
     days < 0
       ? `Expired ${-days} ${-days === 1 ? 'day' : 'days'} ago`

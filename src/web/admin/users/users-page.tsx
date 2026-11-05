@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { UserSummarySchema } from '@/shared/contracts/users.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
+import { ENTITY } from '@/web/lib/entities.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import {
   CountLink,
@@ -11,7 +12,6 @@ import {
   EntityAvatar,
   ErrorState,
   FilterBar,
-  FilteredEmpty,
   LoadMore,
   PageHeader,
   RowLink,
@@ -152,14 +152,9 @@ export function UsersPage({
               }}
             />
           }
+          // The filter bar's Clear is on screen: a second one here would repeat it.
           emptyFiltered={
-            <FilteredEmpty
-              entity="user"
-              onClear={() => {
-                setText('');
-                onSearch({});
-              }}
-            />
+            <EmptyState art={ENTITY.user.art} variant="filtered" title="No users match" />
           }
           empty={
             <EmptyState

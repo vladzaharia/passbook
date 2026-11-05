@@ -75,7 +75,7 @@ export function PushKeyDialog({
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent
-        title={replacing ? 'Rotate push key' : 'Add push key'}
+        title={replacing ? 'Replace push key' : 'Add push key'}
         description={`One key serves every identity of team ${team}.`}
         footer={
           <>
@@ -97,6 +97,7 @@ export function PushKeyDialog({
           <div>
             <FileDrop
               art="key"
+              className="[--art-a:var(--pk-info)]"
               accept=".p8"
               maxBytes={MAX_P8_BYTES}
               label={draft.file ? draft.file.name : 'Choose the AuthKey .p8 file'}
@@ -114,7 +115,12 @@ export function PushKeyDialog({
               </p>
             ) : null}
           </div>
-          <FormField label="Key ID" required error={errors.keyId}>
+          <FormField
+            label="Key ID"
+            required
+            error={errors.keyId}
+            help="10 letters and digits, from the .p8 file name"
+          >
             {(p) => (
               <Input
                 {...p}
@@ -125,7 +131,9 @@ export function PushKeyDialog({
                 autoCapitalize="characters"
                 autoComplete="off"
                 value={draft.keyId}
-                onChange={(e) => patch({ keyId: e.target.value.toUpperCase() })}
+                onChange={(e) =>
+                  patch({ keyId: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })
+                }
               />
             )}
           </FormField>

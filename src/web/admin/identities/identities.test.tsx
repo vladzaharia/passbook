@@ -272,8 +272,29 @@ describe('identity detail', () => {
     await ui.click(screen.getByRole('button', { name: 'Remove key' }));
     const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText(/2 identities of team TEAM123 lose push/)).toBeInTheDocument();
-    await ui.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Remove key' }));
     await waitFor(() => expect(removed).toBe(1));
+  });
+
+  it('warns about dependents when removing a key on a bound identity', async () => {
+    const bound = identity({
+      pushKey: {
+        keyId: 'AB12CD34EF',
+        createdAt: 1_600_000_000_000,
+        rotatedAt: null,
+        identityCount: 2,
+        dependentCount: 1,
+      },
+    });
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: { '/api/v1/identities/i1': () => json(bound) },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Remove key' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText(/1 identity of team TEAM123 lose push/)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/keep using the certificate binding/)).toBeNull();
   });
 
   it('saves edits with a null binding when cleared', async () => {
@@ -465,7 +486,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'More' }));
-    await ui.click(await screen.findByRole('menuitem', { name: 'Rotate certificate' }));
+    await ui.click(await screen.findByRole('menuitem', { name: 'Replace certificate' }));
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByRole('button', { name: 'Replace certificate' }));
     expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();

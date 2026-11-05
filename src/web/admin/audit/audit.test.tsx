@@ -90,8 +90,23 @@ describe('labels', () => {
   });
   it('prefers labels, falls back to a short id, and links targets', () => {
     const e = entry(1) as Parameters<typeof actorRef>[0];
-    expect(actorRef(e)).toMatchObject({ kind: 'user', name: 'User u1', to: '/admin/users/u1' });
-    expect(targetRef(e)).toMatchObject({ kind: 'org', name: 'Organization o1' });
+    const id = '0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b';
+    expect(actorRef({ ...e, actorId: id })).toMatchObject({ kind: 'user', name: 'User 3f4a5b' });
+    expect(actorRef(e)).toMatchObject({ kind: 'user', name: 'User', to: '/admin/users/u1' });
+    expect(targetRef({ ...e, targetType: 'settings', targetId: 'platform' })?.name).toBe(
+      'Platform settings',
+    );
+    expect(targetRef({ ...e, targetType: 'settings', targetId: 'org:o1' })?.name).toBe(
+      'Organization settings',
+    );
+    expect(targetRef({ ...e, targetType: 'broadcast', targetId: 'b1' })).toMatchObject({
+      name: 'Message',
+      to: '/admin/messages/b1',
+    });
+    expect(targetRef({ ...e, targetType: 'captured_email', targetId: 'x' })?.to).toBe(
+      '/admin/test-inbox',
+    );
+    expect(targetRef(e)).toMatchObject({ kind: 'org', name: 'Organization' });
     expect(actorRef({ ...e, actorLabel: 'Ada' }).name).toBe('Ada');
     expect(
       targetRef({ ...e, targetType: 'pass', targetId: 'p1', targetLabel: 'Clara' }),
