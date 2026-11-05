@@ -59,15 +59,16 @@ function Stat({
 }
 
 /**
- * Progress and the counts. Each count opens the Passes list below filtered to it. The buddy sits
- * on the card from the start and acts out how the run is going.
+ * Progress and the counts. Each count opens the Passes list below filtered to it. The buddy has its
+ * seat on the card in every state, so a state change never moves the layout; it acts out how the run
+ * is going.
  */
 export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome | undefined }) {
   const c = b.counts;
   const act = b.state in STATE_ACTS ? STATE_ACTS[b.state as keyof typeof STATE_ACTS] : undefined;
   return (
-    <Card className={act ? 'mt-14' : undefined}>
-      {act ? <Buddy key={b.state} size="sm" at="end" mood={act.mood} scene={act.scene} /> : null}
+    <Card className="mt-14">
+      <Buddy key={b.state} size="sm" at="end" mood={act?.mood} scene={act?.scene} />
       <CardHeader title="Progress" />
       <CardBody className="flex flex-col gap-4">
         {act ? (
