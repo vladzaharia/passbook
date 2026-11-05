@@ -514,7 +514,7 @@ describe('0014_scan migration', () => {
     const org = await makeOrg(f);
     await expect(
       insertScanner(org.id, { kind: 'terminal', csrf_secret: 'secret' }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed/);
     await expect(insertScanner(org.id, { token_hash: 'h' })).rejects.toThrow();
     await insertScanner(org.id, { token_prefix: 'abcd1234', token_hash: 'h', csrf_secret: 's' });
   });
@@ -522,10 +522,12 @@ describe('0014_scan migration', () => {
   it('splits devices, terminals and displays by device role', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
-    await expect(insertScanner(org.id, { name: 'N1', kind: 'display' })).rejects.toThrow();
+    await expect(insertScanner(org.id, { name: 'N1', kind: 'display' })).rejects.toThrow(
+      /CHECK constraint failed/,
+    );
     await expect(
       insertScanner(org.id, { name: 'N2', kind: 'display', device_role: 'scan' }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed/);
     await insertScanner(org.id, {
       name: 'N3',
       kind: 'display',
@@ -535,10 +537,10 @@ describe('0014_scan migration', () => {
     await insertScanner(org.id, { name: 'N4', kind: 'display', device_role: 'monitor' });
     await expect(
       insertScanner(org.id, { name: 'N5', kind: 'terminal', device_role: 'customer' }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed/);
     await expect(
       insertScanner(org.id, { name: 'N6', kind: 'terminal', csrf_secret: 's' }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed/);
     await insertScanner(org.id, { name: 'N7', id: 'sc-role', kind: 'device' });
     const row = await first<{ device_role: string }>(
       env.DB,

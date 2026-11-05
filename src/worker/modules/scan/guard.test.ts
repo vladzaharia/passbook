@@ -489,8 +489,42 @@ describe('requireScanActor: screens (SA 2.5 step 4)', () => {
   it('a rate limited screen answers 429 before SCREEN_ONLY', async () => {
     ({ app, env } = await build({ RL_SCAN: fakeRateLimiter({ limit: 1 }) }));
     const s = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'monitor' });
-    expect((await get(app, env, '/scans', s.headers)).status).toBe(403);
+    const first = await get(app, env, '/scans', s.headers);
+    expect(first.status).toBe(403);
+    expect(await code(first)).toBe('SCREEN_ONLY');
     expect((await get(app, env, '/scans', s.headers)).status).toBe(429);
+  });
+
+  it('a screen on a scan route leaves an auth.denied event', async () => {
+    const s = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'monitor' });
+    await get(app, env, '/scans', s.headers);
+    expect(fake.denied).toMatchObject([{ code: 'FORBIDDEN', actorType: 'scanner', actorId: s.id }]);
+  });
+
+  it('resolves a display row with its kind and role, cookie only', async () => {
+    const s = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'monitor' });
+    const store = createScannerStore(env, clock);
+    expect(await store.resolve(s.token, 'cookie')).toMatchObject({
+      scannerKind: 'display',
+      deviceRole: 'monitor',
+    });
+    expect(await store.resolve(s.token, 'bearer')).toBeNull();
+  });
+
+  it('fake.scanner defaults to a device that scans, a terminal over bearer', async () => {
+    const stores = fakeAuth(ORIGIN);
+    const cookieHeaders = stores.scanner();
+    const token = /=([^;]+)/.exec(cookieHeaders.cookie ?? '')?.[1] ?? '';
+    expect(await stores.stores.scanners?.resolve(token, 'cookie')).toMatchObject({
+      scannerKind: 'device',
+      deviceRole: 'scan',
+    });
+    const bearer = stores.scanner({ transport: 'bearer' });
+    const raw = bearer.authorization?.replace('Bearer ', '') ?? '';
+    expect(await stores.stores.scanners?.resolve(raw, 'bearer')).toMatchObject({
+      scannerKind: 'terminal',
+      deviceRole: 'scan',
+    });
   });
 
   it('a device scanner and an admin have no screen role to refuse', async () => {

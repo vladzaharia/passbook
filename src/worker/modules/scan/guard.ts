@@ -104,8 +104,10 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
           'SCAN_SCOPE_NOT_ALLOWED',
         );
       await admit(c, auth.orgId, `s:${auth.scannerId}`);
-      if (auth.deviceRole !== 'scan' && !options.screens)
+      if (auth.deviceRole !== 'scan' && !options.screens) {
+        reportDenied(c, 'FORBIDDEN', auth);
         throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
+      }
       const row = resolvedRowOf(auth) ?? (await getScanner(c.env.DB, auth.scannerId));
       if (!row || row.orgId !== auth.orgId) throw unauthenticated();
       const terminal = auth.transport === 'bearer';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ScanReasonSchema } from '../contracts/scan.ts';
-import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from './scan.ts';
+import { SCAN_COPY, SCAN_REASON_COPY, SCAN_REASON_VARIANTS, scanLine } from './scan.ts';
 
 const CLIENT = [
   'network',
@@ -33,8 +33,8 @@ describe('SCAN_COPY', () => {
         ] as const
       ).map((r) => SCAN_REASON_COPY[r].sub),
       SCAN_COPY.verdict.access.sub,
-      SCAN_COPY.verdict.access.noHours,
-      SCAN_COPY.verdict.access.noZone,
+      SCAN_REASON_VARIANTS.outside_hours.noHours,
+      SCAN_REASON_VARIANTS.zone_not_included.noZone,
     ];
     for (const line of lines)
       for (const [, key] of line.matchAll(/\{(\w+)\}/g)) expect(allowed).toContain(key);

@@ -84,6 +84,12 @@ export const SCAN_DISPLAY_COPY = {
   cutOnThisScreen: 'Cut on this screen',
 } as const;
 
+/** Refusal sub-lines for a reason whose plan has nothing to say. They never ride a grant. */
+export const SCAN_REASON_VARIANTS = {
+  outside_hours: { noHours: '{plan} has no hours this week.' },
+  zone_not_included: { noZone: '{plan} opens no zone here.' },
+} as const;
+
 export const SCAN_COPY = {
   reasons: SCAN_REASON_COPY,
   display: SCAN_DISPLAY_COPY,
@@ -95,8 +101,6 @@ export const SCAN_COPY = {
     access: {
       headline: 'Access granted',
       sub: '{zone} · until {time}',
-      noHours: '{plan} has no hours this week.',
-      noZone: '{plan} opens no zone here.',
     },
     letInAgain: 'Let in again.',
     stamps: { one: '+{n} stamp', other: '+{n} stamps' },

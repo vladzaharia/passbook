@@ -3,6 +3,7 @@ import { NfcStatusSchema, VasKeySchema } from './nfc.ts';
 import {
   ScanActRequestSchema,
   ScanAdminScopeSchema,
+  ScanCardSchema,
   ScanOutcomeSchema,
   ScanUndoRequestSchema,
   TimeZoneSchema,
@@ -286,6 +287,10 @@ describe('scan records', () => {
     expect(ScanOutcomeSchema.parse({ ...outcome, access }).access).toEqual(access);
     const { timeZone: _tz, ...noZone } = access;
     expect(ScanOutcomeSchema.safeParse({ ...outcome, access: noZone }).success).toBe(false);
+    const cardAccess = ScanCardSchema.shape.access;
+    expect(cardAccess.parse(access)).toEqual(access);
+    expect(cardAccess.safeParse(noZone).success).toBe(false);
+    expect(cardAccess.parse(undefined)).toBeNull();
     const { access: _drop, ...without } = outcome;
     expect(ScanOutcomeSchema.parse(without).access).toBeNull();
     expect(ScanOutcomeSchema.safeParse({ ...outcome, reason: 'outside_hours' }).success).toBe(true);
