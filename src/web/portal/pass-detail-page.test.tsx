@@ -147,7 +147,8 @@ describe('pass detail', () => {
       },
     });
     expect(await screen.findByText(/Ask Henrys for a new pass\./)).toBeInTheDocument();
-    expect(screen.queryByText(/PassBook/)).toBeNull();
+    expect(screen.queryByText(/Contact PassBook/)).toBeNull();
+    expect(screen.queryByText(/support@passbook\.test/)).toBeNull();
     expect(document.querySelector('a[href="mailto:support@passbook.test"]')).toBeNull();
   });
 
