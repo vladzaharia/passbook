@@ -112,7 +112,7 @@ describe('designer', () => {
     expect(screen.getByRole('region', { name: 'Issues' })).toBeInTheDocument();
     await screen.findByText('Ready to save.');
     await userEvent.click(screen.getByRole('button', { name: 'Colors' }));
-    expect(await screen.findByLabelText('Background')).toHaveValue('rgb(20,30,60)');
+    expect(await screen.findByLabelText('Background')).toHaveValue('#141e3c');
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -237,9 +237,9 @@ describe('designer', () => {
     const fg = await screen.findByLabelText('Text');
     await user.clear(fg);
     await user.type(fg, 'rgb(20,30,60)');
-    expect((await screen.findAllByText(/hard to read on the background/)).length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      (await screen.findAllByText(/^Text contrast is \d+\.\d:1; use at least 4\.5:1\.$/)).length,
+    ).toBeGreaterThan(0);
   });
 
   it('takes a PNG for a slot and sends it as an upload', async () => {
@@ -253,7 +253,8 @@ describe('designer', () => {
     new DataView(png.buffer).setUint32(20, 114);
     const file = new File([png], 'icon.png', { type: 'image/png' });
     Object.defineProperty(file, 'arrayBuffer', { value: async () => png.buffer });
-    await user.upload(await screen.findByLabelText(/^Icon/), file);
+    const row = (await screen.findByRole('button', { name: 'Replace Icon' })).closest('li');
+    await user.upload(row?.querySelector('input[type=file]') as HTMLInputElement, file);
     await waitFor(() =>
       expect(s.posts.some((p) => p.assets.some((a) => a.name === 'icon@3x.png' && a.upload))).toBe(
         true,
@@ -272,6 +273,9 @@ describe('designer', () => {
     expect(await screen.findByText(/Version saved\./)).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)).toMatchObject([{ activate: false }]);
     await user.click(screen.getByRole('button', { name: 'Activate' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Activate' }),
+    );
     await waitFor(() => expect(s.activations).toEqual([{ version: 'feedfacefeedface' }]));
     expect(await screen.findByText('Version saved and active.')).toBeInTheDocument();
   });
@@ -312,6 +316,9 @@ describe('designer', () => {
     await screen.findByText('Ready to save.');
     await user.click(await screen.findByRole('button', { name: 'Save version' }));
     await user.click(await screen.findByRole('button', { name: 'Activate' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Activate' }),
+    );
     expect(await screen.findByText('Version saved and active.')).toBeInTheDocument();
     expect(screen.getByLabelText('Logo text')).toHaveValue('Org!');
   });
@@ -337,13 +344,63 @@ describe('designer', () => {
     await screen.findByText('Ready to save.');
     await user.click(await screen.findByRole('button', { name: 'Save version' }));
     await user.type(await screen.findByLabelText('Logo text'), '?');
-    await waitFor(() => expect(mem.get('passbook:designer:tpl1')).toBeDefined(), {
-      timeout: 3000,
-    });
+    await waitFor(
+      () =>
+        expect(
+          [...mem.keys()].some((k) => k.startsWith('passbook:designer:') && k.endsWith(':tpl1')),
+        ).toBe(true),
+      {
+        timeout: 3000,
+      },
+    );
     await user.click(await screen.findByRole('button', { name: 'Activate' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Activate' }),
+    );
     await screen.findByText('Version saved and active.');
     expect(screen.queryByText(/unsaved draft from an older version/)).toBeNull();
     expect(screen.getByLabelText('Logo text')).toHaveValue('Org!?');
+  });
+
+  it('flags blank barcode text and blocks saving', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Barcode/ }));
+    await user.click(await screen.findByRole('combobox', { name: 'Message' }));
+    await user.click(await screen.findByRole('option', { name: 'Text in the template' }));
+    const text = await screen.findByLabelText('Message text');
+    await user.clear(text);
+    expect(await screen.findAllByText('Enter the barcode text, or pick an input.')).toHaveLength(2);
+    await user.click(await screen.findByRole('button', { name: 'Save version' }));
+    expect(s.posts.every((p) => p.dryRun)).toBe(true);
+  });
+
+  it('edits beacons as keyed rows: row state stays with its row through a move', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Relevance/ }));
+    const add = await screen.findByRole('button', { name: 'Add beacon' });
+    await user.click(add);
+    await user.click(add);
+    const uuids = await screen.findAllByLabelText(/^UUID/);
+    await user.type(uuids[0] as HTMLElement, 'nope');
+    await user.tab();
+    expect(await screen.findByText('Check the format.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Move Beacon 1 down' }));
+    const moved = await screen.findAllByLabelText(/^UUID/);
+    expect(moved[1]).toHaveValue('nope');
+    expect(moved[0]).toHaveValue('');
+  });
+
+  it('labels an empty image slot Add, with the visible word in its name', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Images/ }));
+    const adds = await screen.findAllByRole('button', { name: /^Add / });
+    for (const add of adds) expect(add).toHaveTextContent(/^Add$/);
   });
 
   it('will not save while the check has errors', async () => {
@@ -356,11 +413,19 @@ describe('designer', () => {
     expect(s.posts.every((p) => p.dryRun)).toBe(true);
   });
 
-  it('offers Duplicate to edit for a built-in template', async () => {
+  it('shows a built-in template read only, with Duplicate', async () => {
     const s = setup({ template: templateSummary({ origin: 'baked', orgId: null }) });
     await open(s);
-    expect(await screen.findByRole('button', { name: 'Duplicate to edit' })).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();
+    expect(
+      await screen.findByText('This template is read only. Duplicate it to design your own.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Issues' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save version' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    // The structure is shown but cannot be used.
+    expect(screen.getByRole('navigation', { name: 'Structure', hidden: true })).toBeInTheDocument();
+    expect(s.posts).toEqual([]);
   });
 
   it('shows only the preview on a phone', async () => {

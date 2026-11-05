@@ -175,11 +175,11 @@ describe('template detail', () => {
     await user.click(await screen.findByRole('tab', { name: 'Versions' }));
     expect(await screen.findByText('Missing @3x icon.')).toBeInTheDocument();
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
-    await user.click(screen.getByRole('button', { name: 'Report for ffeeddccbbaa' }));
+    await user.click(screen.getByRole('button', { name: 'Report for Version 2' }));
     expect(await screen.findByText('Duplicate key.')).toBeInTheDocument();
     expect(screen.getByText('generic.primaryFields')).toBeInTheDocument();
     // A version with errors cannot be activated.
-    expect(screen.getByRole('button', { name: 'Activate ffeeddccbbaa' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Activate Version 2' })).toBeDisabled();
   });
 
   it('activates a version; its passes update on their own', async () => {
@@ -204,7 +204,7 @@ describe('template detail', () => {
       },
     });
     await user.click(await screen.findByRole('tab', { name: 'Versions' }));
-    await user.click(await screen.findByRole('button', { name: 'Activate ffeeddccbbaa' }));
+    await user.click(await screen.findByRole('button', { name: 'Activate Version 2' }));
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Activate' }));
     await waitFor(() => expect(bodies).toEqual([{ version: 'ffeeddccbbaa9988' }]));
@@ -238,7 +238,12 @@ describe('template detail', () => {
       '/admin/passes?templateId=b1',
     );
     expect(screen.queryByText(/Customize|Any org/)).toBeNull();
-    expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
+    // Nothing in More shows from md up on a built-in, so More itself is phone-only.
+    expect(screen.getByRole('button', { name: 'More' }).parentElement).toHaveClass('md:hidden');
+    // More holds only what the bar hides on a phone: no upload, archive or delete.
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.queryByRole('menuitem', { name: /Delete|Archive|Upload version/ })).toBeNull();
+    await user.keyboard('{Escape}');
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Duplicate' }));
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate template' });

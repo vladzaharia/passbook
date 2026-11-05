@@ -1,28 +1,26 @@
-import { ImageUp, Trash2 } from 'lucide-react';
-import { type DragEvent, useId, useRef, useState } from 'react';
-import { cn } from '../../../lib/cn.ts';
-import { Callout, IconButton } from '../../../ui/index.ts';
+import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Badge, Callout, IconButton } from '../../../ui/index.ts';
+import { ImageSlotRow } from '../../passes/detail/image-slot-row.tsx';
+import { slotNeeds } from '../../passes/detail/image-slots.ts';
+import '../../passes/passes.css';
+import { MAX_ASSET_BYTES, TOO_BIG } from '../../passes/png.ts';
 import { useDesigner } from './context.tsx';
-import { isSlotImage, placeImage, previewAssetMap, slotHint } from './images.ts';
+import { isSlotImage, placeImage, previewAssetMap } from './images.ts';
 import { SLOT_LABEL, slotsOf } from './model.ts';
-
-const MAX_BYTES = 5 * 1024 * 1024;
 
 function SlotDrop({ slot }: { slot: string }) {
   const { doc, edit, assetBase } = useDesigner();
-  const id = useId();
-  const input = useRef<HTMLInputElement>(null);
-  const [over, setOver] = useState(false);
   const [problem, setProblem] = useState<string>();
   const [soft, setSoft] = useState<string>();
   const current = doc.assets.find((a) => isSlotImage(a, slot));
   const url = current ? previewAssetMap([current], assetBase)[current.name] : undefined;
   const label = SLOT_LABEL[slot] ?? slot;
+  const ground =
+    typeof doc.passJson.backgroundColor === 'string' ? doc.passJson.backgroundColor : undefined;
 
-  async function take(files: FileList | null) {
-    const file = files?.[0];
-    if (!file) return;
-    if (file.size > MAX_BYTES) return setProblem(`${file.name} is larger than 5 MB.`);
+  async function take(file: File) {
+    if (file.size > MAX_ASSET_BYTES) return setProblem(TOO_BIG);
     const placed = placeImage(slot, new Uint8Array(await file.arrayBuffer()));
     if (!placed.ok) {
       setSoft(undefined);
@@ -32,56 +30,25 @@ function SlotDrop({ slot }: { slot: string }) {
     setSoft(placed.warning);
     edit({ op: 'image', slot, asset: placed.asset });
   }
-  const onDrop = (e: DragEvent) => {
-    e.preventDefault();
-    setOver(false);
-    void take(e.dataTransfer.files);
-  };
   return (
-    <li
-      className="dz-slot"
-      data-over={over || undefined}
-      data-target={`images:${slot}`}
-      tabIndex={-1}
-    >
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: drag target; the labelled file input is the keyboard path */}
-      <div
-        className={cn('dz-drop', over && 'border-accent bg-accent-subtle')}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={onDrop}
-      >
-        <div className="dz-thumb" aria-hidden>
-          {url ? <img src={url} alt="" /> : <ImageUp className="size-5 text-fg-muted" />}
-        </div>
-        <div className="min-w-0 flex-1">
-          <label htmlFor={id} className="block cursor-pointer text-sm font-medium text-fg-strong">
-            {label}
-            <span className="ml-1 font-normal text-fg-muted">
-              {current
-                ? `${current.name}${current.width ? `, ${current.width} × ${current.height} px` : ''}`
-                : slot === 'icon'
-                  ? 'required'
-                  : 'none'}
-            </span>
-          </label>
-          <p className="text-xs text-fg-muted">{slotHint(slot)}</p>
-          <input
-            ref={input}
-            id={id}
-            type="file"
-            accept="image/png,.png"
-            className="sr-only"
-            onChange={(e) => {
-              void take(e.target.files);
-              e.target.value = '';
-            }}
-          />
-        </div>
-        {current && slot !== 'icon' ? (
+    <ImageSlotRow
+      target={`images:${slot}`}
+      label={label}
+      badge={slot === 'icon' ? <Badge>Required</Badge> : null}
+      thumb={{ url: url ?? null }}
+      ground={ground}
+      detail={
+        current
+          ? `@${current.scale}x${current.width ? `: ${current.width} × ${current.height} px` : ''}`
+          : undefined
+      }
+      needs={slotNeeds(slot)}
+      error={problem}
+      warning={soft}
+      onFile={(f) => void take(f)}
+      action={current ? 'Replace' : 'Add'}
+      trailing={
+        current && slot !== 'icon' ? (
           <IconButton
             label={`Remove ${label.toLowerCase()}`}
             icon={<Trash2 aria-hidden />}
@@ -89,16 +56,9 @@ function SlotDrop({ slot }: { slot: string }) {
             size="sm"
             onClick={() => edit({ op: 'image', slot, asset: null })}
           />
-        ) : null}
-      </div>
-      {problem ? (
-        <p role="alert" className="mt-1 text-xs text-danger">
-          {problem}
-        </p>
-      ) : soft ? (
-        <p className="mt-1 text-xs text-warning">{soft}</p>
-      ) : null}
-    </li>
+        ) : null
+      }
+    />
   );
 }
 

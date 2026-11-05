@@ -1,15 +1,7 @@
-import { checkImageSize, IMAGE_RULES } from '@/passkit/schema/image-rules.ts';
+import type { StyleTag } from '@/passkit/schema/constants.ts';
+import { checkImageSize, IMAGE_RULES, slotsForStyles } from '@/passkit/schema/image-rules.ts';
+import { PASS_STYLES } from '@/passkit/types.ts';
 
-const STYLE_SLOTS: Record<string, readonly string[]> = {
-  posterGeneric: ['artwork', 'primaryLogo'],
-  posterEventTicket: ['artwork', 'primaryLogo', 'secondaryLogo'],
-  semanticBoardingPass: ['primaryLogo'],
-  storeCard: ['strip'],
-  coupon: ['strip'],
-  eventTicket: ['strip', 'background', 'thumbnail'],
-  generic: ['thumbnail'],
-  boardingPass: ['footer'],
-};
 const ORDER = [
   'icon',
   'logo',
@@ -22,6 +14,25 @@ const ORDER = [
   'footer',
 ];
 
+/** The style tags a pass document carries: its style key plus the poster and semantic schemes. */
+export function styleTags(passJson: Record<string, unknown>): Set<StyleTag> {
+  const tags = new Set<StyleTag>();
+  const style = PASS_STYLES.find((s) => typeof passJson[s] === 'object' && passJson[s] !== null);
+  tags.add(style ?? 'generic');
+  const schemes = Array.isArray(passJson.preferredStyleSchemes)
+    ? passJson.preferredStyleSchemes
+    : [];
+  if (schemes.includes('posterEventTicket')) tags.add('PET');
+  if (schemes.includes('semanticBoardingPass')) tags.add('SBP');
+  return tags;
+}
+
+/** The slots a pass document draws, in display order (the server's rule: SLOT_STYLES). */
+export function drawnSlots(passJson: Record<string, unknown>, hasArtwork = false): string[] {
+  const used = slotsForStyles(styleTags(passJson), hasArtwork);
+  return ORDER.filter((slot) => used.has(slot));
+}
+
 const slotOf = (name: string) => /^(?:[^/]+\.lproj\/)?([A-Za-z]+)(?:@[23]x)?\.png$/.exec(name)?.[1];
 
 /**
@@ -32,16 +43,9 @@ export function usedSlots(
   passJson: Record<string, unknown>,
   assetNames: readonly string[],
 ): string[] {
-  const schemes = Array.isArray(passJson.preferredStyleSchemes)
-    ? (passJson.preferredStyleSchemes as unknown[]).filter(
-        (s): s is string => typeof s === 'string',
-      )
-    : [];
-  const styles = [...schemes, ...Object.keys(STYLE_SLOTS).filter((k) => k in passJson)];
-  const drawn = new Set(['icon', 'logo', ...styles.flatMap((s) => STYLE_SLOTS[s] ?? [])]);
   const shipped = new Set(assetNames.map(slotOf).filter(Boolean));
-  return ORDER.filter(
-    (slot) => drawn.has(slot) && (shipped.has(slot) || slot === 'icon' || slot === 'logo'),
+  return drawnSlots(passJson, shipped.has('artwork')).filter(
+    (slot) => shipped.has(slot) || slot === 'icon' || slot === 'logo',
   );
 }
 
@@ -55,6 +59,10 @@ export function requiredSize(slot: string, scale: 2 | 3): string {
   const exact = rule.width[0] === rule.width[1] && rule.height[0] === rule.height[1];
   return exact ? px(w, h) : `up to ${px(w, h)}`;
 }
+
+/** What a slot takes, as both image surfaces say it: "needs 76 × 76 px (@2x) or 114 × 114 px (@3x)". */
+export const slotNeeds = (slot: string): string =>
+  `needs ${requiredSize(slot, 2)} (@2x) or ${requiredSize(slot, 3)} (@3x)`;
 
 /**
  * The scale a dropped image fits (@2x before @3x), or the error naming the expected sizes. A

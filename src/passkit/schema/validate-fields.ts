@@ -34,7 +34,8 @@ const FIELD_KEYS = new Set([
 const LINK_PROTOCOLS = new Set(['https:', 'tel:', 'mailto:']);
 
 type Limits = Partial<Record<FieldGroup, number>>;
-const LIMITS: Record<PassStyle, Limits> = {
+/** Fields drawn on the face per group; the designer stops adding at these. */
+export const LIMITS: Record<PassStyle, Limits> = {
   generic: { headerFields: 3, primaryFields: 1, secondaryFields: 4, auxiliaryFields: 4 },
   storeCard: { headerFields: 3, primaryFields: 1 },
   coupon: { headerFields: 3, primaryFields: 1 },

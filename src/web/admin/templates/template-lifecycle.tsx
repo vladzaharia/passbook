@@ -39,7 +39,7 @@ export function useTemplateLifecycle(t: Template) {
     menu: (
       <>
         {archived ? null : (
-          <DropdownMenuItem destructive onSelect={() => setAsk('archive')}>
+          <DropdownMenuItem onSelect={() => setAsk('archive')}>
             <ACTION_ICON.void aria-hidden />
             Archive
           </DropdownMenuItem>
@@ -79,7 +79,6 @@ export function useTemplateLifecycle(t: Template) {
           open={ask === 'archive'}
           onOpenChange={close}
           {...archiveConfirm(t.name, t.passCount)}
-          destructive
           onConfirm={async () => {
             await actions.archive.mutateAsync(true);
             offer.current = toast.undo('Template archived', () =>

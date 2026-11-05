@@ -1,7 +1,7 @@
-import { Link } from '@tanstack/react-router';
 import { Redo2, Undo2 } from 'lucide-react';
 import {
   type KeyboardEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -9,9 +9,9 @@ import {
   useRef,
   useState,
 } from 'react';
+import type { ValidationIssue } from '@/passkit/types.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
-import { useChangeCount } from '../../../lib/motion.ts';
 import {
   Button,
   Callout,
@@ -22,13 +22,15 @@ import {
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
-import { useTemplateActions } from '../api.ts';
-import { mergeAssets, useDesignCheck, useSaveVersion } from './api.ts';
+import { ActivateDialog } from '../activate-dialog.tsx';
+import type { Template } from '../versions.ts';
+import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
 import { DesignerProvider } from './context.tsx';
 import { clearDraft, saveDraft } from './drafts.ts';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
+import { localIssues } from './local-issues.ts';
 import { type DesignDoc, findField, type Selection } from './model.ts';
 import { Outline } from './outline.tsx';
 import { DesignerPreview } from './preview.tsx';
@@ -40,43 +42,65 @@ import {
   isDirty,
   validSelection,
 } from './reducer.ts';
+import { useSaveFlow } from './save-flow.ts';
+import { SavedCallout } from './saved-callout.tsx';
 import './designer.css';
 
+/** A template that cannot be changed: the card and its issues stay, the structure is inert. */
+export interface ReadOnlyDesign {
+  /** Why it is read only, with the way out. */
+  notice: ReactNode;
+  /** The built pass to show; the dry run is not available for it. */
+  passJson: Record<string, unknown> | null;
+  issues: readonly ValidationIssue[];
+}
+
 export interface DesignerProps {
-  templateId: string;
-  name: string;
+  template: Template;
+  /** Where drafts of this template are kept (person, organisation, template). */
+  draftKey: string;
   /** The version the draft starts from. */
   base: { version: string; doc: DesignDoc };
   /** A draft from an earlier visit, shown instead of the base. */
   draft: DesignDoc | null;
   assetBase: (version: string) => string;
+  readOnly?: ReadOnlyDesign;
+  /** Shown under the title, before the designer: the stale-draft question. */
+  prompt?: ReactNode;
 }
 
-const _isEditable = (el: EventTarget | null) =>
-  el instanceof HTMLElement &&
-  (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
-
-export function Designer({ templateId, name, base, draft, assetBase }: DesignerProps) {
+export function Designer({
+  template,
+  draftKey,
+  base,
+  draft,
+  assetBase,
+  readOnly,
+  prompt,
+}: DesignerProps) {
+  const templateId = template.id;
+  const name = template.name;
   const phone = useMediaQuery(PHONE);
   const [version, setVersion] = useState(base.version);
   const [state, dispatch] = useReducer(designerReducer, undefined, () =>
     initialState(draft ?? base.doc, base.doc),
   );
   const [restored, setRestored] = useState(draft !== null);
-  const [saved, setSaved] = useState<{ version: string; activated: boolean } | null>(null);
+  const [activating, setActivating] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const latest = useRef(state.doc);
+  latest.current = state.doc;
   const dirty = isDirty(state);
   const guard = useUnsavedChangesGuard(dirty);
   const select = useMemo(() => validSelection(state), [state]);
-  const check = useDesignCheck(templateId, state.doc);
-  const save = useSaveVersion(templateId);
-  const actions = useTemplateActions(templateId);
+  const check = useDesignCheck(templateId, state.doc, !readOnly);
   const base_ = assetBase(version);
 
   const edit = useCallback(
-    (op: Op, merge?: string) =>
-      dispatch({ type: 'edit', op, at: Date.now(), ...(merge ? { merge } : {}) }),
-    [],
+    (op: Op, merge?: string) => {
+      if (!readOnly) dispatch({ type: 'edit', op, at: Date.now(), ...(merge ? { merge } : {}) });
+    },
+    [readOnly],
   );
   const choose = useCallback((s: Selection) => dispatch({ type: 'select', select: s }), []);
   const focusTarget = useCallback((s: Selection) => {
@@ -104,22 +128,26 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
   // The draft survives a reload; saving or discarding clears it.
   // A draft from an older version is offered by the page; it is only cleared once edits were made here.
   const wasDirty = useRef(false);
+  const warned = useRef(false);
   useEffect(() => {
     if (!dirty) {
-      if (wasDirty.current) clearDraft(templateId);
+      if (wasDirty.current) clearDraft(draftKey);
       wasDirty.current = false;
       return;
     }
     wasDirty.current = true;
-    const t = setTimeout(
-      () => saveDraft(templateId, { base: version, doc: state.doc, at: Date.now() }),
-      800,
-    );
+    const t = setTimeout(() => {
+      const kept = saveDraft(draftKey, { base: version, doc: state.doc, at: Date.now() });
+      if (!kept && !warned.current) {
+        warned.current = true;
+        toast.info('This draft is too big to keep. Save a version to keep your work.');
+      }
+    }, 800);
     return () => clearTimeout(t);
-  }, [dirty, state.doc, templateId, version]);
+  }, [dirty, state.doc, draftKey, version]);
 
   function onKeyDown(e: KeyboardEvent) {
-    if (phone) return;
+    if (phone || readOnly) return;
     if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
     const k = e.key.toLowerCase();
     if (k !== 'z' && k !== 'y') return;
@@ -128,42 +156,25 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
     dispatch({ type: k === 'y' || e.shiftKey ? 'redo' : 'undo' });
   }
 
-  const issues = check.data?.report.issues ?? [];
+  const issues = useMemo(
+    () =>
+      readOnly
+        ? readOnly.issues
+        : [...localIssues(state.doc), ...(check.data?.report.issues ?? [])],
+    [readOnly, state.doc, check.data],
+  );
   const blocking = issues.filter((i) => i.severity === 'error').length;
-
-  async function saveVersion(): Promise<'saved' | 'refused' | 'failed'> {
-    if (blocking > 0 || check.isError) {
-      toast.error(
-        `Fix the ${blocking || 'listed'} issue${blocking === 1 ? '' : 's'} first.`,
-        'Could not save',
-      );
-      return 'refused';
-    }
-    try {
-      const result = await save.mutateAsync({ doc: state.doc, activate: false });
-      const doc: DesignDoc = { ...state.doc, assets: mergeAssets(result.assets, state.doc.assets) };
-      dispatch({ type: 'reset', doc });
-      clearDraft(templateId);
+  const flow = useSaveFlow({
+    templateId,
+    draftKey,
+    latest,
+    blocked: () => (check.isError ? null : blocking),
+    dispatch,
+    onSaved: (v) => {
+      setVersion(v);
       setRestored(false);
-      if (result.version) setVersion(result.version);
-      setSaved({ version: result.version ?? '', activated: result.activated });
-      return 'saved';
-    } catch (error) {
-      toast.error(error, 'Could not save');
-      return 'failed';
-    }
-  }
-
-  async function activate() {
-    if (!saved) return;
-    try {
-      await actions.activate.mutateAsync({ version: saved.version });
-      setSaved({ ...saved, activated: true });
-      toast.success('Version active');
-    } catch (error) {
-      toast.error(error, 'Could not activate');
-    }
-  }
+    },
+  });
 
   const api = useMemo(
     () => ({
@@ -174,24 +185,24 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
       focusTarget,
       dispatch,
       assetBase: base_,
+      readOnly: Boolean(readOnly),
     }),
-    [state, select, edit, choose, focusTarget, base_],
+    [state, select, edit, choose, focusTarget, base_, readOnly],
   );
-  const settle = useChangeCount(state.added?.n);
 
   return (
     <DesignerProvider value={api}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
       <div ref={root} data-designer="" onKeyDown={onKeyDown}>
         <PageHeader
-          title={`Design ${name}`}
+          title={name}
           breadcrumbs={[
             { label: 'Templates', to: '/admin/templates' },
             { label: name, to: `/admin/templates/${templateId}` },
             { label: 'Design' },
           ]}
           actions={
-            phone ? undefined : (
+            phone || readOnly ? undefined : (
               <>
                 <IconButton
                   label="Undo"
@@ -211,7 +222,9 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
             )
           }
         />
-        {restored && !phone ? (
+        {readOnly?.notice}
+        {prompt}
+        {restored && !phone && !readOnly ? (
           <Callout
             className="mb-4"
             tone="info"
@@ -221,7 +234,7 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
                 size="sm"
                 onClick={() => {
                   dispatch({ type: 'reset', doc: state.saved });
-                  clearDraft(templateId);
+                  clearDraft(draftKey);
                   setRestored(false);
                 }}
               >
@@ -232,62 +245,48 @@ export function Designer({ templateId, name, base, draft, assetBase }: DesignerP
             Restored your unsaved draft.
           </Callout>
         ) : null}
-        {saved ? (
-          <Callout
-            className="mb-4"
-            tone="success"
-            actions={
-              saved.activated ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/admin/templates/$templateId" params={{ templateId }}>
-                    Open template
-                  </Link>
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  loading={actions.activate.isPending}
-                  onClick={() => void activate()}
-                >
-                  Activate
-                </Button>
-              )
-            }
-          >
-            {saved.activated
-              ? 'Version saved and active.'
-              : 'Version saved. Passes keep the active version until you activate it.'}
-          </Callout>
+        {flow.saved ? (
+          <SavedCallout
+            templateId={templateId}
+            saved={flow.saved}
+            onActivate={() => setActivating(flow.saved?.version ?? null)}
+          />
         ) : null}
         <DesignerLayout
           templateId={templateId}
+          readOnly={Boolean(readOnly)}
           structure={<Outline />}
           preview={
             <DesignerPreview
-              passJson={check.data?.passJson ?? null}
+              passJson={readOnly ? readOnly.passJson : (check.data?.passJson ?? null)}
               assets={state.doc.assets}
               assetBase={base_}
-              checking={check.checking}
-              settle={settle}
+              checking={readOnly ? false : check.checking}
             />
           }
           issues={
             <Issues
               issues={issues}
-              checking={check.checking}
-              failed={check.isError ? errorMessage(check.error) : undefined}
+              checking={readOnly ? false : check.checking}
+              failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
             />
           }
         />
-        {phone ? null : (
+        {phone || readOnly ? null : (
           <SaveBar
             dirty={dirty}
-            saving={save.isPending}
+            saving={flow.saving}
             saveLabel="Save version"
-            onSave={saveVersion}
+            onSave={() => flow.run(state.doc)}
             onDiscard={() => dispatch({ type: 'reset', doc: state.saved })}
           />
         )}
+        <ActivateDialog
+          template={template}
+          version={activating}
+          onClose={() => setActivating(null)}
+          onActivated={() => flow.setSaved((s) => (s ? { ...s, activated: true } : s))}
+        />
         <UnsavedChangesDialog blocker={guard} />
       </div>
     </DesignerProvider>

@@ -30,12 +30,15 @@ export interface InputSpec {
   sample: string;
 }
 
+/** Names the expression engine refuses to read, plus `pass`, which is the server's scope. */
+const RESERVED = new Set(['pass', '__proto__', 'constructor', 'prototype']);
+
 export const NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_]{0,39}$/;
 
 /** Why a name cannot be used, or null. */
 export function nameProblem(name: string, others: readonly string[]): string | null {
   if (!NAME_PATTERN.test(name)) return 'Start with a letter; use letters, digits and _ only.';
-  if (name === 'pass') return '"pass" is reserved. Pick another name.';
+  if (RESERVED.has(name)) return `"${name}" is reserved. Pick another name.`;
   if (others.includes(name)) return 'Another input has this name.';
   return null;
 }

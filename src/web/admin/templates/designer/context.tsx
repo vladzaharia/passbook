@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useMemo } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import type { Op } from './apply.ts';
 import type { DesignDoc, Selection } from './model.ts';
 import type { Action, DesignerState } from './reducer.ts';
@@ -14,13 +14,14 @@ export interface DesignerApi {
   dispatch: (action: Action) => void;
   /** Mutable assets of the saved version: where to read files that have a hash. */
   assetBase: string;
+  /** A template that cannot be changed: edits are ignored and the structure is inert. */
+  readOnly: boolean;
 }
 
 const Ctx = createContext<DesignerApi | null>(null);
 
 export function DesignerProvider({ value, children }: { value: DesignerApi; children: ReactNode }) {
-  const stable = useMemo(() => value, [value]);
-  return <Ctx.Provider value={stable}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useDesigner(): DesignerApi {

@@ -1,11 +1,14 @@
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { type DragEvent, type KeyboardEvent, useState } from 'react';
+import { LIMITS } from '@/passkit/schema/validate-fields.ts';
 import { cn } from '../../../lib/cn.ts';
+import { removeWithTransition } from '../../../lib/motion.ts';
 import { Button, IconButton } from '../../../ui/index.ts';
 import { fieldSource } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { FieldEditor } from './field-editor.tsx';
-import { fieldsOf, GROUP_LABEL, type GroupId, keyOf } from './model.ts';
+import { fieldsOf, GROUP_LABEL, type GroupId, keyOf, styleOf } from './model.ts';
+import { rowId } from './row-id.ts';
 
 const DRAG_TYPE = 'application/x-designer-field';
 
@@ -13,6 +16,8 @@ const DRAG_TYPE = 'application/x-designer-field';
 export function FieldsSection({ group }: { group: GroupId }) {
   const { doc, edit, state, select } = useDesigner();
   const fields = fieldsOf(doc.passJson, group);
+  const max = (LIMITS[styleOf(doc.passJson)] as Partial<Record<string, number>>)[group];
+  const full = max !== undefined && fields.length >= max;
   const [note, setNote] = useState('');
   const [over, setOver] = useState<number | null>(null);
   // Only the grip starts a drag, so text inside an open editor stays selectable.
@@ -54,6 +59,7 @@ export function FieldsSection({ group }: { group: GroupId }) {
           return (
             <li
               key={key}
+              data-row-id={rowId('field', key)}
               className="dz-row"
               data-new={added?.key === key ? added.n : undefined}
               data-open={open === key || undefined}
@@ -117,7 +123,7 @@ export function FieldsSection({ group }: { group: GroupId }) {
                   icon={<Trash2 aria-hidden />}
                   variant="ghost"
                   size="sm"
-                  onClick={() => edit({ op: 'field-remove', key })}
+                  onClick={() => removeWithTransition(() => edit({ op: 'field-remove', key }))}
                 />
               </div>
               {open === key ? <FieldEditor field={field} group={group} /> : null}
@@ -129,15 +135,22 @@ export function FieldsSection({ group }: { group: GroupId }) {
       <p role="status" aria-live="polite" className="sr-only">
         {note}
       </p>
-      <Button
-        variant="outline"
-        size="sm"
-        className="justify-self-start"
-        iconStart={<Plus aria-hidden />}
-        onClick={() => edit({ op: 'field-add', group })}
-      >
-        Add field
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={full}
+          iconStart={<Plus aria-hidden />}
+          onClick={() => edit({ op: 'field-add', group })}
+        >
+          Add field
+        </Button>
+        {full ? (
+          <span className="text-xs text-fg-muted">
+            {GROUP_LABEL[group]} holds {max} {max === 1 ? 'field' : 'fields'}.
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }

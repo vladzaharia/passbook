@@ -349,7 +349,9 @@ describe('pass detail: tabs', () => {
     };
     // A size that fits no scale is refused here, naming what fits.
     await user.upload(input, png(500, 40));
-    expect(await screen.findByText(/76 × 76 px \(@2x\)/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/does not fit icon\. Use 76 × 76 px \(@2x\)/),
+    ).toBeInTheDocument();
     expect(server.calls.some((c) => c.method === 'PUT')).toBe(false);
     // The scale comes from the size; the server's message shows on the tile.
     await user.upload(input, png(76, 76));

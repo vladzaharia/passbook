@@ -23,7 +23,8 @@ export type Action =
   | { type: 'undo' }
   | { type: 'redo' }
   | { type: 'select'; select: Selection }
-  | { type: 'saved'; doc: DesignDoc }
+  /** A save went through: `doc` (with server hashes) is the new baseline for `snapshot`, the document that was sent. */
+  | { type: 'saved'; doc: DesignDoc; snapshot?: DesignDoc }
   | { type: 'reset'; doc: DesignDoc };
 
 export function initialState(doc: DesignDoc, saved: DesignDoc = doc): DesignerState {
@@ -94,8 +95,22 @@ export function designerReducer(state: DesignerState, action: Action): DesignerS
     }
     case 'select':
       return { ...state, select: action.select };
-    case 'saved':
-      return { ...state, saved: action.doc, merge: null };
+    case 'saved': {
+      if (!action.snapshot) return { ...state, saved: action.doc, merge: null };
+      // Nothing changed while saving: the saved document is the document.
+      if (action.snapshot === state.doc)
+        return { ...initialState(action.doc), select: state.select };
+      // Edits made during the save stay. Files that were sent and not touched since take the
+      // server's hash, so they do not read as unsaved.
+      const sent = action.snapshot.assets;
+      const stored = new Map(action.doc.assets.map((a) => [a.name, a]));
+      const assets = state.doc.assets.map((a) => {
+        const was = sent.find((s) => s.name === a.name);
+        const now = stored.get(a.name);
+        return was && now && was.upload === a.upload && was.sha1 === a.sha1 ? now : a;
+      });
+      return { ...state, saved: action.doc, doc: { ...state.doc, assets }, merge: null };
+    }
     case 'reset':
       return { ...initialState(action.doc), select: state.select };
   }

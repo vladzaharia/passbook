@@ -167,6 +167,22 @@ button.dz-issue:hover {
     transform: scale(1.35);
   }
 }
+@media (prefers-reduced-motion: reduce) {
+  .dz-row[data-new] {
+    animation: dz-fade 160ms linear both;
+  }
+}
+@keyframes dz-seal {
+  from {
+    opacity: 0;
+    transform: scale(1.06) rotate(-0.6deg);
+  }
+}
+@keyframes dz-fade {
+  from {
+    opacity: 0;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   .dz-chevron {
     transition: transform var(--wl-dur-enter, 200ms) var(--wl-ease-spring, ease-out);
@@ -181,7 +197,30 @@ button.dz-issue:hover {
     animation: dz-deal 200ms var(--wl-ease-out, ease-out) both;
     animation-delay: calc(min(var(--i, 0), 6) * 30ms);
   }
+  .dz-seal {
+    animation: dz-seal 300ms var(--wl-ease-bounce, ease-out) both;
+  }
   .dz-count {
     animation: dz-count 280ms var(--wl-ease-spring, ease-out);
   }
+}
+
+/* Touch: 44 px targets; text fields are 16 px so iOS does not zoom. */
+@media (pointer: coarse) {
+  .dz-pick,
+  .dz-issue {
+    min-height: 2.75rem;
+  }
+  .dz-swatch {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .dz-grip {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+[data-readonly] {
+  opacity: 0.6;
 }

@@ -2,7 +2,7 @@ import {
   barcodeSource,
   bindBarcode,
   dropInputRefs,
-  escapeRe,
+  readsInput,
   renameInputRefs,
   type Source,
 } from './bindings.ts';
@@ -51,7 +51,7 @@ export function setBarcode(doc: DesignDoc, s: BarcodeSettings): DesignDoc {
   const code: Dict = {
     ...first,
     format: s.format,
-    message: s.staticMessage || 'SAMPLE',
+    message: s.staticMessage,
     messageEncoding: first.messageEncoding ?? 'iso-8859-1',
   };
   if (s.staticAlt) code.altText = s.staticAlt;
@@ -129,8 +129,7 @@ export function removeInput(doc: DesignDoc, name: string): DesignDoc {
     delete next.manifest.messaging;
   const display = isRecord(next.manifest.display) ? next.manifest.display : {};
   const search = Array.isArray(display.search) ? display.search.filter((s) => s !== name) : [];
-  const keep = (v: unknown) =>
-    typeof v === 'string' && new RegExp(`\\{\\{\\s*${escapeRe(name)}\\b`).test(v) ? undefined : v;
+  const keep = (v: unknown) => (typeof v === 'string' && readsInput(v, name) ? undefined : v);
   next.manifest.display = {
     ...display,
     title: keep(display.title) ?? firstTitle(readInputs(next.manifest)),

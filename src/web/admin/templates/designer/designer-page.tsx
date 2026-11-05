@@ -6,19 +6,23 @@ import type {
   TemplateVersionDetailSchema,
 } from '@/shared/contracts/templates.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
-import { Button, Callout, detailError, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
-import { useTemplate } from '../api.ts';
+import { useSession } from '../../../lib/session.ts';
+import { Button, Callout, detailError, PageHeader } from '../../../ui/index.ts';
+import { useTemplate, useTemplatePreview } from '../api.ts';
 import { DuplicateDialog } from '../template-dialogs.tsx';
 import { useBaseVersion } from './api.ts';
-import { Designer } from './designer.tsx';
-import { clearDraft, loadDraft } from './drafts.ts';
+import { Designer, type ReadOnlyDesign } from './designer.tsx';
+import { DesignerSkeleton } from './designer-skeleton.tsx';
+import { clearDraft, draftKey, loadDraft } from './drafts.ts';
 import type { DesignDoc } from './model.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 type Version = z.infer<typeof TemplateVersionDetailSchema>;
+type Crumbs = { label: string; to?: string }[];
 
+/** Root-relative: an absolute http URL is refused by the card's image check. */
 const assetBaseOf = (id: string) => (version: string) =>
-  `${typeof location === 'undefined' ? '' : location.origin}/api/v1/templates/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}/assets`;
+  `/api/v1/templates/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}/assets`;
 
 export function docOf(v: Version): DesignDoc {
   return {
@@ -43,152 +47,157 @@ export function TemplateDesignerPage({ templateId }: { templateId: string }) {
     { label: template.data?.name ?? 'Template', to: `/admin/templates/${templateId}` },
     { label: 'Design' },
   ];
+  const title = template.data?.name ?? 'Design';
   if (template.isError) {
     return detailError(template, {
       entity: 'template',
       to: '/admin/templates',
-      header: <PageHeader title="Design" breadcrumbs={crumbs} />,
+      header: <PageHeader title={title} breadcrumbs={crumbs} />,
     });
   }
   if (!template.data) {
     return (
       <>
-        <PageHeader title="Design" breadcrumbs={crumbs} />
-        <SkeletonDetail label="Loading template" />
+        <PageHeader title={title} breadcrumbs={crumbs} />
+        <DesignerSkeleton />
       </>
     );
   }
-  return <Gate template={template.data} crumbs={crumbs} />;
+  return <Loaded key={template.data.id} template={template.data} crumbs={crumbs} />;
 }
 
-function Gate({
-  template: t,
-  crumbs,
-}: {
-  template: Template;
-  crumbs: { label: string; to?: string }[];
-}) {
+/** Why a template cannot be designed, and the way out. */
+function ReadOnlyNotice({ template: t }: { template: Template }) {
   const [duplicate, setDuplicate] = useState(false);
-  if (t.origin === 'baked' || t.status !== 'active') {
-    return (
-      <>
-        <PageHeader title={`Design ${t.name}`} breadcrumbs={crumbs} />
-        <Callout
-          tone="info"
-          actions={
-            t.origin === 'baked' ? (
-              <Button
-                iconStart={<ACTION_ICON.duplicate aria-hidden />}
-                onClick={() => setDuplicate(true)}
-              >
-                Duplicate to edit
-              </Button>
-            ) : (
-              <Button asChild variant="outline">
-                <Link to="/admin/templates/$templateId" params={{ templateId: t.id }}>
-                  Open template
-                </Link>
-              </Button>
-            )
-          }
-        >
-          {t.origin === 'baked'
-            ? 'Built-in templates are read only. Duplicate it to design your own.'
-            : 'Restore this template to change it.'}
-        </Callout>
+  const baked = t.origin === 'baked';
+  return (
+    <>
+      <Callout
+        className="mb-4"
+        tone="info"
+        actions={
+          baked ? (
+            <Button
+              size="sm"
+              iconStart={<ACTION_ICON.duplicate aria-hidden />}
+              onClick={() => setDuplicate(true)}
+            >
+              Duplicate
+            </Button>
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link to="/admin/templates/$templateId" params={{ templateId: t.id }}>
+                Open template
+              </Link>
+            </Button>
+          )
+        }
+      >
+        {baked
+          ? 'This template is read only. Duplicate it to design your own.'
+          : 'This template is archived. Restore it to change it.'}
+      </Callout>
+      {baked ? (
         <DuplicateDialog
           key={String(duplicate)}
           template={t}
           open={duplicate}
           onOpenChange={setDuplicate}
+          to="design"
         />
-      </>
-    );
-  }
-  return <Loaded key={t.id} template={t} crumbs={crumbs} />;
+      ) : null}
+    </>
+  );
 }
 
-function Loaded({
-  template: t,
-  crumbs,
-}: {
-  template: Template;
-  crumbs: { label: string; to?: string }[];
-}) {
+function Loaded({ template: t, crumbs }: { template: Template; crumbs: Crumbs }) {
   // The version the designer opened with. Activating or another admin's upload moves
   // `activeVersion`, but must not remount the designer or drop its edits.
   const [opened] = useState(t.activeVersion);
   const version = useBaseVersion(t.id, opened);
+  const locked = t.origin === 'baked' || t.status !== 'active';
+  const preview = useTemplatePreview(locked ? t.id : '');
   const base = useMemo(() => (version.data ? docOf(version.data) : null), [version.data]);
   if (version.isError) {
     return detailError(version, {
       entity: 'template',
       to: `/admin/templates/${t.id}`,
-      header: <PageHeader title={`Design ${t.name}`} breadcrumbs={crumbs} />,
+      header: <PageHeader title={t.name} breadcrumbs={crumbs} />,
     });
   }
   if (!base || !version.data) {
     return (
       <>
-        <PageHeader title={`Design ${t.name}`} breadcrumbs={crumbs} />
-        <SkeletonDetail label="Loading template" />
+        <PageHeader title={t.name} breadcrumbs={crumbs} />
+        <DesignerSkeleton />
       </>
     );
   }
-  return <Ready template={t} version={version.data} base={base} />;
+  const readOnly: ReadOnlyDesign | undefined = locked
+    ? {
+        notice: <ReadOnlyNotice template={t} />,
+        passJson: preview.data?.passJson ?? null,
+        issues: version.data.report.issues,
+      }
+    : undefined;
+  return <Ready template={t} version={version.data} base={base} readOnly={readOnly} />;
 }
 
 function Ready({
   template: t,
   version,
   base,
+  readOnly,
 }: {
   template: Template;
   version: Version;
   base: DesignDoc;
+  readOnly: ReadOnlyDesign | undefined;
 }) {
+  const { authed } = useSession();
+  const key = draftKey(authed?.user.id ?? 'anonymous', t.orgId, t.id);
   // Read once on open. Saving and activating refetch the template and rewrite the draft
   // under a newer base; re-reading storage then would raise a false stale-draft prompt.
-  const [initial] = useState(() => loadDraft(t.id));
+  const [initial] = useState(() => (readOnly ? null : loadDraft(key)));
   const [answer, setAnswer] = useState<'ask' | 'restore' | 'done'>('ask');
   const older = initial && initial.base !== version.version ? initial : null;
   const fresh = initial && initial.base === version.version ? initial.doc : null;
   const asking = older !== null && answer === 'ask';
+  const prompt = asking ? (
+    <Callout
+      className="mb-4"
+      tone="info"
+      actions={
+        <>
+          <Button size="sm" onClick={() => setAnswer(loadDraft(key) ? 'restore' : 'done')}>
+            Restore
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              clearDraft(key);
+              setAnswer('done');
+            }}
+          >
+            Discard
+          </Button>
+        </>
+      }
+    >
+      You have an unsaved draft from an older version of this template.
+    </Callout>
+  ) : null;
   return (
-    <>
-      {asking ? (
-        <Callout
-          className="mb-4"
-          tone="info"
-          actions={
-            <>
-              <Button size="sm" onClick={() => setAnswer(loadDraft(t.id) ? 'restore' : 'done')}>
-                Restore
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  clearDraft(t.id);
-                  setAnswer('done');
-                }}
-              >
-                Discard
-              </Button>
-            </>
-          }
-        >
-          You have an unsaved draft from an older version of this template.
-        </Callout>
-      ) : null}
-      <Designer
-        key={`${t.id}:${answer === 'restore' ? 'restore' : 'open'}`}
-        templateId={t.id}
-        name={t.name}
-        base={{ version: version.version, doc: base }}
-        draft={fresh ?? (older && answer === 'restore' ? older.doc : null)}
-        assetBase={assetBaseOf(t.id)}
-      />
-    </>
+    <Designer
+      key={`${t.id}:${answer === 'restore' ? 'restore' : 'open'}`}
+      template={t}
+      draftKey={key}
+      base={{ version: version.version, doc: base }}
+      draft={fresh ?? (older && answer === 'restore' ? older.doc : null)}
+      assetBase={assetBaseOf(t.id)}
+      prompt={prompt}
+      {...(readOnly ? { readOnly } : {})}
+    />
   );
 }
