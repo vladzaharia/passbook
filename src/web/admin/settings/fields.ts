@@ -12,6 +12,10 @@ export interface SettingField {
   group?: string;
   /** Unit inside a number field ("s", "days"). */
   suffix?: string;
+  /** Inclusive bounds for int fields; the error message names them. */
+  range?: readonly [number, number];
+  /** Spoken unit for the range error ('seconds', 'days'). */
+  unit?: string;
   /** Optional org settings may be cleared; platform settings always hold a value. */
   optional?: boolean;
   schema: ZodType;
@@ -51,6 +55,8 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     kind: 'int',
     suffix: 's',
     help: '5 to 3600 seconds, per user.',
+    range: [5, 3600],
+    unit: 'seconds',
     schema: P['refresh.userCooldownSeconds'],
   },
   {
@@ -59,6 +65,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     label: 'Pass versions kept',
     kind: 'int',
     help: '1 to 50.',
+    range: [1, 50],
     schema: P['retention.passVersionsKeep'],
   },
   {
@@ -68,15 +75,19 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     kind: 'int',
     suffix: 'days',
     help: '30 to 3650.',
+    range: [30, 3650],
+    unit: 'days',
     schema: P['retention.auditDays'],
   },
   {
     key: 'retention.eventsDays',
     group: 'Passes and retention',
-    label: 'Activity retention',
+    label: 'Sync log retention',
     kind: 'int',
     suffix: 'days',
-    help: '7 to 3650.',
+    help: 'Pass events shown in the Sync log. 7 to 3650.',
+    range: [7, 3650],
+    unit: 'days',
     schema: P['retention.eventsDays'],
   },
   {
@@ -85,15 +96,26 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     label: 'Test data retention',
     kind: 'int',
     suffix: 'days',
-    help: 'Test passes, bundles and emails are deleted after this. 1 to 365.',
+    help: 'Test passes, bundles, messages and emails are deleted after this. 1 to 365.',
+    range: [1, 365],
+    unit: 'days',
     schema: P['sandbox.purgeDays'],
+  },
+  {
+    key: 'push.budgetPerDay',
+    group: 'Passes and retention',
+    label: 'Notifications per pass per day',
+    kind: 'int',
+    help: '0 to 50. Updates past this arrive silently.',
+    range: [0, 50],
+    schema: P['push.budgetPerDay'],
   },
 ];
 
 export const ORG_FIELDS: readonly SettingField[] = [
   {
     key: 'branding.accent',
-    label: 'Accent colour',
+    label: 'Accent color',
     kind: 'color',
     optional: true,
     schema: O['branding.accent'],
@@ -147,6 +169,10 @@ export function parseField(
   const res = f.schema.safeParse(candidate);
   if (!res.success) {
     if (f.kind === 'color') return { error: 'Use a 6-digit hex like #0f766e.' };
+    if (f.range) {
+      const [min, max] = f.range;
+      return { error: `Use ${min} to ${max}${f.unit ? ` ${f.unit}` : ''}.` };
+    }
     return { error: res.error.issues[0]?.message ?? 'Invalid value.' };
   }
   return { value: candidate };
