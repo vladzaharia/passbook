@@ -120,7 +120,7 @@ function ChangeHolderDialog({
 }
 
 /** One card: the holder's state and who it is, with Change. Clear lives in the header's More. */
-export function HolderTab({ pass }: { pass: PassDetailDto }) {
+export function HolderTab({ pass, foreign = false }: { pass: PassDetailDto; foreign?: boolean }) {
   const actions = usePassActions(pass.id);
   const [changing, setChanging] = useState(false);
   // A fresh dialog per opening, kept mounted so it can animate out.
@@ -132,7 +132,7 @@ export function HolderTab({ pass }: { pass: PassDetailDto }) {
       <CardHeader
         title="Holder"
         actions={
-          pass.status === 'voided' ? null : (
+          pass.status === 'voided' || foreign ? null : (
             <Button
               variant="ghost"
               size="sm"
@@ -192,6 +192,7 @@ export function HolderTab({ pass }: { pass: PassDetailDto }) {
                       variant="ghost"
                       size="sm"
                       loading={actions.clearBlock.isPending}
+                      disabled={foreign}
                       onClick={() =>
                         actions.clearBlock.mutate(u.id, {
                           onSuccess: () => toast.success('They can add it again'),

@@ -2,7 +2,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
-import { useMode } from '../../../lib/mode.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import {
   Badge,
@@ -24,6 +23,7 @@ import { usePass, usePassActions, usePassVersion } from '../api.ts';
 import { useCreated } from '../created.tsx';
 import { newKey } from '../format.ts';
 import { usePassActionRunner } from '../pass-actions.tsx';
+import { usePassForeign } from '../pass-foreign.ts';
 import { PassPreview, PassPreviewPanel } from '../pass-preview.tsx';
 import { PreviewLayout } from '../preview-layout.tsx';
 import type { passDetailSearchSchema } from '../search.ts';
@@ -119,7 +119,7 @@ function Loaded({
   const voided = p.status === 'voided';
   const removed = p.removedAt !== null;
   const motion = useStageMotion(p.version, p.status, minted, removed);
-  const foreign = p.mode !== useMode();
+  const foreign = usePassForeign(p);
   const loadingVersion = picked !== undefined && !version.data;
   const waiting = useLasting(loadingVersion || (draft !== null && draftPreview.isFetching));
   const source =

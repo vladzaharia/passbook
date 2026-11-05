@@ -4,7 +4,6 @@ import type { z } from 'zod';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../../lib/api.ts';
 import { isApiError } from '../../../lib/errors.ts';
-import { useMode } from '../../../lib/mode.ts';
 import {
   Button,
   Callout,
@@ -19,6 +18,7 @@ import {
 import { useConnection } from '../../connections/api.ts';
 import { passKeys } from '../api.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
+import { usePassForeign } from '../pass-foreign.ts';
 import {
   cleanValues,
   type FormValues,
@@ -70,7 +70,7 @@ export function FieldsTab({
   const removed = pass.removedAt !== null;
   const voided = pass.status === 'voided';
   // The other mode's pass: the server refuses the save, so the form does not offer it.
-  const foreign = pass.mode !== useMode();
+  const foreign = usePassForeign(pass);
   const locked = voided || foreign;
   const snapshot = (p: Pass): Baseline => ({
     version: p.version,
@@ -201,6 +201,7 @@ export function FieldsTab({
                 size="sm"
                 variant="outline"
                 loading={runner.pending.restore}
+                disabled={foreign}
                 onClick={() => runner.run('restore')}
               >
                 Restore

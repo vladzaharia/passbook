@@ -25,7 +25,7 @@ import { RotateLink } from './rotated-link-dialog.tsx';
 
 const SHOWN = 5;
 
-function BundleRow({ bundle, now }: { bundle: BundleDto; now: number }) {
+function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; foreign: boolean }) {
   const actions = useBundleActions(bundle.id, bundle.mode);
   const [ask, setAsk] = useState<'rotate' | 'delete' | null>(null);
   const n = bundle.passes.length;
@@ -61,6 +61,7 @@ function BundleRow({ bundle, now }: { bundle: BundleDto; now: number }) {
                 {
                   label: 'Rotate link',
                   icon: ACTION_ICON.rotate,
+                  disabled: foreign,
                   onSelect: () => setAsk('rotate'),
                 },
                 ...(bundle.holderEmail
@@ -69,6 +70,7 @@ function BundleRow({ bundle, now }: { bundle: BundleDto; now: number }) {
                         label: 'Send email',
                         icon: ACTION_ICON.sendEmail,
                         loading: actions.sendEmail.isPending,
+                        disabled: foreign,
                         onSelect: () =>
                           actions.sendEmail.mutate(undefined, {
                             onSuccess: () => toast.sent('Email queued'),
@@ -81,6 +83,7 @@ function BundleRow({ bundle, now }: { bundle: BundleDto; now: number }) {
                   label: 'Delete',
                   icon: ACTION_ICON.delete,
                   destructive: true,
+                  disabled: foreign,
                   onSelect: () => setAsk('delete'),
                 },
               ]}
@@ -94,6 +97,7 @@ function BundleRow({ bundle, now }: { bundle: BundleDto; now: number }) {
         description="The current link stops working. The passes stay."
         rotate={async () => (await actions.rotate.mutateAsync()).url}
         holderEmail={bundle.holderEmail}
+        mode={bundle.mode}
         sendEmail={() => actions.sendEmail.mutateAsync()}
       />
       <ConfirmDialog
@@ -113,7 +117,16 @@ function BundleRow({ bundle, now }: { bundle: BundleDto; now: number }) {
 }
 
 /** The bundles this pass is in (in its own mode), with the link's Copy, Rotate and Delete. */
-export function BundlesCard({ passId, mode }: { passId: string; mode: Mode }) {
+export function BundlesCard({
+  passId,
+  mode,
+  foreign = false,
+}: {
+  passId: string;
+  mode: Mode;
+  /** The pass is of the other mode: the bundles are shown, not changed. */
+  foreign?: boolean;
+}) {
   const bundles = useBundlesOfPass(passId, mode);
   const now = useNow();
   const [all, setAll] = useState(false);
@@ -139,7 +152,7 @@ export function BundlesCard({ passId, mode }: { passId: string; mode: Mode }) {
         <CardBody>
           <ListRows label="Bundles">
             {shown.map((b) => (
-              <BundleRow key={b.id} bundle={b} now={now} />
+              <BundleRow key={b.id} bundle={b} now={now} foreign={foreign} />
             ))}
           </ListRows>
           {items.length > SHOWN ? (

@@ -36,12 +36,14 @@ function SlotTile({
   pass,
   overrides,
   fresh,
+  foreign,
   onChanged,
 }: {
   slot: string;
   pass: PassDetailDto;
   overrides: Override[];
   fresh: boolean;
+  foreign: boolean;
   onChanged: () => void;
 }) {
   const actions = usePassActions(pass.id);
@@ -83,7 +85,7 @@ function SlotTile({
   const drop = (e: DragEvent) => {
     e.preventDefault();
     setOver(false);
-    if (!busy) void take(e.dataTransfer.files[0]);
+    if (!busy && !foreign) void take(e.dataTransfer.files[0]);
   };
 
   return (
@@ -150,13 +152,13 @@ function SlotTile({
           iconStart={<ACTION_ICON.upload aria-hidden />}
           loading={busy}
           busy="bob"
-          disabled={pass.status === 'voided'}
+          disabled={pass.status === 'voided' || foreign}
           aria-label={`Replace ${SLOT_LABEL[slot] ?? slot}`}
           onClick={() => input.current?.click()}
         >
           <span className="max-sm:sr-only">Replace</span>
         </Button>
-        {shown ? (
+        {shown && !foreign ? (
           <IconButton
             size="sm"
             label={`Reset ${SLOT_LABEL[slot] ?? slot} to template`}
@@ -183,7 +185,7 @@ function SlotTile({
 }
 
 /** One tile per image slot: what the pass shows now, the size it needs, drop to replace. */
-export function ImagesTab({ pass }: { pass: PassDetailDto }) {
+export function ImagesTab({ pass, foreign = false }: { pass: PassDetailDto; foreign?: boolean }) {
   const slots = useMemo(
     () => usedSlots(pass.passJson, pass.assetNames),
     [pass.passJson, pass.assetNames],
@@ -210,6 +212,7 @@ export function ImagesTab({ pass }: { pass: PassDetailDto }) {
                   pass={pass}
                   overrides={assets.data.items.filter((a) => slotOf(a.name)?.[1] === slot)}
                   fresh={changed === slot}
+                  foreign={foreign}
                   onChanged={() => setChanged(slot)}
                 />
               ))}

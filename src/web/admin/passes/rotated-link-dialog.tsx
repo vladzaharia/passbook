@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import type { Mode } from '@/shared/contracts/common.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { Button, ConfirmDialog, CopyButton, Dialog, DialogContent, toast } from '../../ui/index.ts';
 import { absoluteUrl, newKey } from './format.ts';
@@ -8,6 +9,7 @@ export function RotatedLinkDialog({
   url: link,
   holderEmail,
   sendEmail,
+  mode,
   onClose,
 }: {
   /** The new link; null while closed. */
@@ -15,6 +17,8 @@ export function RotatedLinkDialog({
   holderEmail: string | null;
   /** Emails the new link; the key makes a retry idempotent. */
   sendEmail: (key: string) => Promise<unknown>;
+  /** Test mode captures mail instead of sending it. */
+  mode?: Mode;
   onClose: () => void;
 }) {
   const [sending, setSending] = useState(false);
@@ -38,7 +42,11 @@ export function RotatedLinkDialog({
                   sendEmail(key.current)
                     .then(() => {
                       key.current = newKey();
-                      toast.sent(`New link emailed to ${holderEmail}`);
+                      toast.sent(
+                        mode === 'test'
+                          ? 'New link captured in the Test inbox'
+                          : `New link emailed to ${holderEmail}`,
+                      );
                       onClose();
                     })
                     .catch((error: unknown) => toast.error(error, 'Could not send'))
@@ -79,6 +87,7 @@ export function RotateLink({
   rotate,
   holderEmail,
   sendEmail,
+  mode,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -87,6 +96,7 @@ export function RotateLink({
   rotate: () => Promise<string>;
   holderEmail: string | null;
   sendEmail: (key: string) => Promise<unknown>;
+  mode?: Mode;
 }) {
   const [url, setUrl] = useState<string | null>(null);
   return (
@@ -104,6 +114,7 @@ export function RotateLink({
         url={url}
         holderEmail={holderEmail}
         sendEmail={sendEmail}
+        mode={mode}
         onClose={() => setUrl(null)}
       />
     </>

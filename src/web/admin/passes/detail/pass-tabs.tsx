@@ -3,6 +3,7 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
+import { usePassForeign } from '../pass-foreign.ts';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
 import type { Tab } from './detail-page.tsx';
@@ -34,6 +35,7 @@ export function PassTabs({
   onDraft: (draft: Record<string, unknown> | null) => void;
   runner: PassActionRunner;
 }) {
+  const foreign = usePassForeign(pass);
   return (
     <>
       <TabsContent value="fields" forceMount hidden={tab !== 'fields'}>
@@ -53,7 +55,7 @@ export function PassTabs({
         )}
       </TabsContent>
       <TabsContent value="holder">
-        <HolderTab pass={pass} />
+        <HolderTab pass={pass} foreign={foreign} />
       </TabsContent>
       <TabsContent value="devices" className="min-w-0">
         <DevicesTab pass={pass} active={tab === 'devices'} />
@@ -62,16 +64,16 @@ export function PassTabs({
         <SyncTab pass={pass} active={tab === 'sync'} />
       </TabsContent>
       <TabsContent value="delivery" className="min-w-0">
-        <DeliveryTab pass={pass} />
+        <DeliveryTab pass={pass} foreign={foreign} />
       </TabsContent>
       <TabsContent value="images">
-        <ImagesTab pass={pass} />
+        <ImagesTab pass={pass} foreign={foreign} />
       </TabsContent>
       <TabsContent value="versions">
         <VersionsTab pass={pass} selected={picked} onSelect={onPick} />
       </TabsContent>
       <TabsContent value="connection">
-        <ConnectionTab pass={pass} />
+        <ConnectionTab pass={pass} foreign={foreign} />
       </TabsContent>
       <TabsContent value="activity">
         <ActivityTab passId={pass.id} active={tab === 'activity'} />

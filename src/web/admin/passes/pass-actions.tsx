@@ -198,6 +198,7 @@ export function usePassActionRunner(
   }
 
   function run(id: PassActionId) {
+    if (foreign && !READ_ONLY.has(id)) return;
     if (id === 'update' || id === 'pull') void refresh(id);
     else if (id === 'unvoid') void unvoid();
     else if (id === 'restore') void restore();
@@ -259,6 +260,7 @@ export function usePassActionRunner(
           return next.publicUrl;
         }}
         holderEmail={pass.holderEmail}
+        mode={pass.mode}
         sendEmail={(key) => actions.resendEmail.mutateAsync({ key })}
       />
       <TypedConfirmDialog
