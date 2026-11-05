@@ -153,6 +153,20 @@ export function updateField(doc: DesignDoc, key: string, patch: Dict): DesignDoc
   return next;
 }
 
+const escapeHtml = (text: string): string =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+/** The anchor of a static link; only https, tel and mailto targets become one. */
+export function anchorOf(url: string): string {
+  const text = escapeHtml(url);
+  return /^(https:|tel:|mailto:)/i.test(url.trim()) ? `<a href="${text}">${text}</a>` : text;
+}
+
 /** Static text of a field; a link field's anchor follows it. */
 export function setFieldValue(doc: DesignDoc, key: string, value: string): DesignDoc {
   const at = findField(doc.passJson, key);
@@ -160,7 +174,7 @@ export function setFieldValue(doc: DesignDoc, key: string, value: string): Desig
   const link = field?.attributedValue !== undefined;
   return updateField(doc, key, {
     value,
-    ...(link ? { attributedValue: `<a href="${value}">${value}</a>` } : {}),
+    ...(link ? { attributedValue: anchorOf(value) } : {}),
   });
 }
 
@@ -212,7 +226,7 @@ export function setFieldLink(
   const source = fieldSource(next.manifest, key);
   if (on) {
     const url = typeof field.value === 'string' ? field.value : '';
-    field.attributedValue = `<a href="${url}">${url}</a>`;
+    field.attributedValue = anchorOf(url);
     next.manifest.bindings = bindLink(next.manifest, key, source, optional);
   } else {
     delete field.attributedValue;

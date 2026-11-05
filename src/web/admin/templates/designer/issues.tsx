@@ -3,13 +3,14 @@ import type { ValidationIssue } from '@/passkit/types.ts';
 import { useDesigner } from './context.tsx';
 import { contrastWarnings } from './contrast.ts';
 import { type Selection, sectionLabel } from './model.ts';
-import { issueTarget } from './targets.ts';
+import { issueTarget, platformManaged } from './targets.ts';
 
 interface Row {
   id: string;
   severity: 'error' | 'warning';
   message: string;
   target: Selection | null;
+  managed?: boolean;
 }
 
 const ORDER = { error: 0, warning: 1 } as const;
@@ -26,6 +27,10 @@ export function Issues({
   failed?: string | undefined;
 }) {
   const { doc, focusTarget } = useDesigner();
+  // The dry run already says it; the local check only fills in while it has not answered.
+  const server = issues.some(
+    (i) => i.code === 'COLOR_CONTRAST' && /^(foreground|label)Color$/.test(i.path ?? ''),
+  );
   const rows: Row[] = [
     ...issues
       .filter((i) => i.severity !== 'info')
@@ -34,8 +39,9 @@ export function Issues({
         severity: i.severity as 'error' | 'warning',
         message: i.message,
         target: issueTarget(i, doc),
+        managed: platformManaged(i),
       })),
-    ...contrastWarnings(doc.passJson).map((w) => ({
+    ...(server ? [] : contrastWarnings(doc.passJson)).map((w) => ({
       id: `contrast:${w.key}`,
       severity: 'warning' as const,
       message: w.message,
@@ -88,6 +94,8 @@ export function Issues({
                       {sectionLabel(row.target.section)}
                       {row.target.key ? `: ${row.target.key}` : ''}
                     </span>
+                  ) : row.managed ? (
+                    <span className="text-xs text-fg-muted">Set by PassBook</span>
                   ) : null}
                 </span>
               </>

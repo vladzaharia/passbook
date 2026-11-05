@@ -55,35 +55,82 @@ export function bindField(
   const prop = options.prop ?? 'value';
   const rest = withoutBindings(manifest, (b) => targetsField(b, key, prop));
   const expr = exprOf(source);
-  if (!expr) return rest;
+  if (expr === null) return rest;
   const to = prop === 'value' ? { field: key } : { field: key, prop };
   return [...rest, { to, value: expr, ...(options.optional ? { omitIfEmpty: true } : {}) }];
 }
 
-export const dropFieldBindings = (manifest: Dict, key: string): Dict[] =>
-  withoutBindings(manifest, (b) => {
-    const field = toOf(b).field;
-    return field === key || (Array.isArray(field) && field.length === 1 && field[0] === key);
-  });
+const fieldList = (b: Dict): string[] => {
+  const field = toOf(b).field;
+  return (Array.isArray(field) ? field : [field]).filter((f): f is string => typeof f === 'string');
+};
 
-export function renameFieldBindings(manifest: Dict, from: string, to: string): Dict[] {
-  return bindingsOf(manifest).map((b) =>
-    toOf(b).field === from ? { ...b, to: { ...toOf(b), field: to } } : b,
-  );
+/** A binding aimed at several fields loses only the removed one. */
+export function dropFieldBindings(manifest: Dict, key: string): Dict[] {
+  return bindingsOf(manifest).flatMap((b) => {
+    const fields = fieldList(b);
+    if (!fields.includes(key)) return [b];
+    const left = fields.filter((f) => f !== key);
+    if (left.length === 0) return [];
+    return [{ ...b, to: { ...toOf(b), field: left.length === 1 ? left[0] : left } }];
+  });
 }
 
-export const escapeRe = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function renameFieldBindings(manifest: Dict, from: string, to: string): Dict[] {
+  return bindingsOf(manifest).map((b) => {
+    const field = toOf(b).field;
+    if (field === from) return { ...b, to: { ...toOf(b), field: to } };
+    if (Array.isArray(field) && field.includes(from))
+      return { ...b, to: { ...toOf(b), field: field.map((f) => (f === from ? to : f)) } };
+    return b;
+  });
+}
 
-const rewrite = (text: string, from: string, to: string | null): string =>
-  text.replace(
-    new RegExp(`\\{\\{\\s*${escapeRe(from)}(\\s*\\|[^}]*)?\\}\\}`, 'g'),
-    (_m, pipe: string) => (to === null ? '' : `{{${to}${pipe ?? ''}}}`),
-  );
+const INTERPOLATION = /\{\{([^{}]*)\}\}/g;
+
+/**
+ * Walks every `{{path|filter}}` in a string and maps the input names it reads: the first path
+ * segment (`name`, `name.x`) and bracket lookups (`lookups.t[name]`). `null` removes the whole
+ * interpolation. `pass` and `lookups` are not inputs.
+ */
+export function mapInputRefs(text: string, fn: (name: string) => string | null): string {
+  return text.replace(INTERPOLATION, (_whole, body: string) => {
+    const bar = body.indexOf('|');
+    const path = bar < 0 ? body : body.slice(0, bar);
+    const rest = bar < 0 ? '' : body.slice(bar);
+    let removed = false;
+    const map = (name: string) => {
+      const to = fn(name);
+      if (to === null) removed = true;
+      return to ?? name;
+    };
+    const head = /^(\s*)([\w-]+)/.exec(path);
+    let out = path;
+    if (head && head[2] !== 'lookups' && head[2] !== 'pass')
+      out = `${head[1]}${map(head[2] as string)}${path.slice(head[0].length)}`;
+    out = out.replace(
+      /\[(\s*)([\w-]+)(\s*)\]/g,
+      (_m, a: string, n: string, c: string) => `[${a}${map(n)}${c}]`,
+    );
+    return removed ? '' : `{{${out}${rest}}}`;
+  });
+}
+
+/** Whether a string reads the input. */
+export function readsInput(text: string, name: string): boolean {
+  let found = false;
+  mapInputRefs(text, (n) => {
+    if (n === name) found = true;
+    return n;
+  });
+  return found;
+}
 
 /** Input renamed: every expression that reads it follows. */
 export function renameInputRefs(manifest: Dict, from: string, to: string): Dict {
+  const swap = (n: string) => (n === from ? to : n);
   const walk = (v: unknown): unknown => {
-    if (typeof v === 'string') return rewrite(v, from, to);
+    if (typeof v === 'string') return mapInputRefs(v, swap);
     if (Array.isArray(v)) return v.map(walk);
     if (isRecord(v)) {
       const out: Dict = {};
@@ -109,16 +156,25 @@ export function renameInputRefs(manifest: Dict, from: string, to: string): Dict 
   };
 }
 
+/** What removing an input would touch, for the confirm. */
+export function inputUses(manifest: Dict, name: string): { fields: number; messaging: boolean } {
+  const bound = bindingsOf(manifest).filter((b) => readsAny(b, name));
+  const fields = new Set(bound.flatMap(fieldList));
+  const messaging = isRecord(manifest.messaging) && manifest.messaging.input === name;
+  return { fields: fields.size, messaging };
+}
+
+function readsAny(v: unknown, name: string): boolean {
+  if (typeof v === 'string') return readsInput(v, name);
+  if (Array.isArray(v)) return v.some((x) => readsAny(x, name));
+  if (isRecord(v))
+    return Object.entries(v).some(([k, x]) => (k === 'input' ? x === name : readsAny(x, name)));
+  return false;
+}
+
 /** Input removed: bindings that read it go, so their targets keep the static text. */
 export function dropInputRefs(manifest: Dict, name: string): Dict[] {
-  const reads = (v: unknown): boolean => {
-    if (typeof v === 'string') return new RegExp(`\\{\\{\\s*${escapeRe(name)}\\b`).test(v);
-    if (Array.isArray(v)) return v.some(reads);
-    if (isRecord(v))
-      return Object.entries(v).some(([k, x]) => (k === 'input' ? x === name : reads(x)));
-    return false;
-  };
-  return withoutBindings(manifest, (b) => reads(b));
+  return withoutBindings(manifest, (b) => readsAny(b, name));
 }
 
 /** Barcode target helpers: the message and alt text bind to every barcode. */
@@ -130,5 +186,5 @@ export function barcodeSource(manifest: Dict, prop: 'message' | 'altText'): Sour
 export function bindBarcode(manifest: Dict, prop: 'message' | 'altText', source: Source): Dict[] {
   const rest = withoutBindings(manifest, (x) => 'barcode' in toOf(x) && toOf(x).prop === prop);
   const expr = exprOf(source);
-  return expr ? [...rest, { to: { barcode: '*', prop }, value: expr }] : rest;
+  return expr !== null ? [...rest, { to: { barcode: '*', prop }, value: expr }] : rest;
 }

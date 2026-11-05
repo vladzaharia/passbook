@@ -15,6 +15,12 @@ const RELEVANCE = /^(locations|beacons|relevantDates?|expirationDate|maxDistance
 const STYLE =
   /^(logoText|eventLogoText|description|organizationName|preferredStyleSchemes|useAutomaticColors|\w+\.transitType)\b/;
 
+/** Keys PassBook fills in when it issues a pass; an author cannot fix them here. */
+export const platformManaged = (issue: ValidationIssue): boolean =>
+  /^(webServiceURL|authenticationToken|passTypeIdentifier|teamIdentifier|serialNumber)\b/.test(
+    issue.path ?? '',
+  );
+
 /** The part of the designer an issue is about, from its path; null when it has no home. */
 export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection | null {
   const path = issue.path ?? '';
@@ -48,5 +54,6 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
     return group ? { section: group, key } : { section: 'inputs' };
   }
   if (path === 'name' || path === 'description') return { section: 'template' };
+  if (issue.code === 'BACK_CONTACT') return { section: 'backFields' };
   return null;
 }

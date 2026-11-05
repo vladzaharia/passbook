@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { contrast, contrastWarnings, parseColor, toHex, toRgbText } from './contrast.ts';
+import { slotNeeds } from '../../passes/detail/image-slots.ts';
 import { clearDraft, loadDraft, saveDraft } from './drafts.ts';
 import { sampleDoc } from './fixtures.ts';
-import { assetsPayload, placeImage, previewAssetMap, readPng, slotHint } from './images.ts';
+import { assetsPayload, placeImage, previewAssetMap, readPng } from './images.ts';
 import { issueTarget } from './targets.ts';
 
 function png(width: number, height: number): Uint8Array {
@@ -16,16 +17,16 @@ function png(width: number, height: number): Uint8Array {
 
 describe('colors', () => {
   it('reads rgb() and hex, and writes both back', () => {
-    expect(parseColor('rgb(1, 2, 3)')).toEqual([1, 2, 3]);
-    expect(parseColor('#0af')).toEqual([0, 170, 255]);
-    expect(parseColor('rgb(300,0,0)')).toBeNull();
-    expect(parseColor('red')).toBeNull();
-    expect(toHex([1, 2, 3])).toBe('#010203');
-    expect(toRgbText([1, 2, 3])).toBe('rgb(1,2,3)');
+    expect(parseColor('rgb(1, 2, 3)')).toEqual({ r: 1, g: 2, b: 3 });
+    expect(parseColor('#0af')).toEqual({ r: 0, g: 170, b: 255 });
+    expect(parseColor('rgb(300,0,0)')).toBeUndefined();
+    expect(parseColor('red')).toBeUndefined();
+    expect(toHex({ r: 1, g: 2, b: 3 })).toBe('#010203');
+    expect(toRgbText({ r: 1, g: 2, b: 3 })).toBe('rgb(1,2,3)');
   });
 
   it('computes WCAG ratios and warns below 4.5:1', () => {
-    expect(contrast([0, 0, 0], [255, 255, 255])).toBeCloseTo(21, 0);
+    expect(contrast({ r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 })).toBeCloseTo(21, 0);
     expect(contrastWarnings({ backgroundColor: '#000000', foregroundColor: '#ffffff' })).toEqual(
       [],
     );
@@ -35,7 +36,11 @@ describe('colors', () => {
       labelColor: 'rgb(255,255,255)',
     });
     expect(warned.map((w) => w.key)).toEqual(['foregroundColor']);
-    expect(warned[0]?.message).toMatch(/^Text is hard to read/);
+    expect(warned[0]?.message).toMatch(/^Text contrast is 1\.\d:1; use at least 4\.5:1\.$/);
+    // Labels are held to 3:1, as the server does.
+    expect(
+      contrastWarnings({ backgroundColor: '#ffffff', labelColor: '#777777' }).map((w) => w.key),
+    ).toEqual([]);
     expect(contrastWarnings({ foregroundColor: '#fff' })).toEqual([]);
   });
 });
@@ -69,9 +74,9 @@ describe('images', () => {
     expect(soft.ok && soft.warning).toMatch(/smaller/);
   });
 
-  it('hints the size of each slot', () => {
-    expect(slotHint('icon')).toBe('38 × 38 pt: 114 × 114 px (@3x) or 76 × 76 px (@2x)');
-    expect(slotHint('logo')).toMatch(/^Up to 160 × 50 pt/);
+  it('says the size of each slot the same way as the pass Images tab', () => {
+    expect(slotNeeds('icon')).toBe('needs 76 × 76 px (@2x) or 114 × 114 px (@3x)');
+    expect(slotNeeds('logo')).toMatch(/^needs up to 320 × 100 px \(@2x\)/);
   });
 
   it('sends saved files by hash and new ones as uploads', () => {

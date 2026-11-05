@@ -17,7 +17,9 @@ export function BarcodeSection() {
       <SwitchRow
         label="Show a barcode"
         checked={s.enabled}
-        onCheckedChange={(enabled) => set({ enabled })}
+        onCheckedChange={(enabled) =>
+          set({ enabled, ...(enabled && !s.staticMessage ? { staticMessage: 'SAMPLE' } : {}) })
+        }
       />
       {s.enabled ? (
         <>
@@ -43,7 +45,7 @@ export function BarcodeSection() {
             />
           ) : null}
           <SourcePicker
-            label="Alt text"
+            label="Alt text from"
             source={s.altText}
             scanCode
             staticLabel="Text in the template"
