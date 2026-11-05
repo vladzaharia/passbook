@@ -21,6 +21,7 @@ export function contentSecurityPolicy(nonce?: string): string {
     ...(nonce ? ["style-src-attr 'unsafe-inline'"] : []),
     "img-src 'self' data: blob:",
     "font-src 'self'",
+    "frame-src 'self'",
     "connect-src 'self'",
     "manifest-src 'self'",
     "form-action 'self'",

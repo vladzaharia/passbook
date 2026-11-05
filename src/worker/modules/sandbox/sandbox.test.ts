@@ -301,3 +301,48 @@ describe('daily purge', () => {
     // Creating 90 passes is the slow part; under a loaded runner it outlasts the 5 s default.
   }, 60_000);
 });
+
+describe('GET /test-inbox/{id}/html', () => {
+  it('serves the email with its own policy and the app policy untouched', async () => {
+    const { outboxId } = await capture('test', 'frame@example.com');
+    const row = await first<{ id: string; html: string }>(
+      kit.env.DB,
+      'SELECT id, html FROM captured_emails WHERE outbox_id = ?',
+      [outboxId],
+    );
+    const res = await api(`/test-inbox/${row?.id}/html`, { headers: fake.admin({ mode: 'test' }) });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('content-security-policy')).toBe(
+      "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data: https:; frame-ancestors 'self'",
+    );
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('x-frame-options')).toBe('SAMEORIGIN');
+    expect(await res.text()).toBe(row?.html);
+    const json = await api(`/test-inbox/${row?.id}`, { headers: fake.admin({ mode: 'test' }) });
+    expect(json.headers.get('content-security-policy')).toContain("default-src 'none'");
+    expect(json.headers.get('content-security-policy')).not.toContain("style-src 'unsafe-inline'");
+  });
+
+  it('is admin only and 404 for an unknown id', async () => {
+    expect(
+      (await api('/test-inbox/nope/html', { headers: fake.admin({ mode: 'test' }) })).status,
+    ).toBe(404);
+    expect((await api('/test-inbox/nope/html', { headers: fake.user() })).status).toBe(403);
+  });
+});
+
+describe('capture ledger', () => {
+  it('records email.captured once when the row is handled twice', async () => {
+    const { pass, outboxId } = await capture('test', 'ledger@example.com');
+    await run(kit.env.DB, "UPDATE outbox SET state = 'enqueued' WHERE id = ?", [outboxId]);
+    await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+    const events = await all(
+      kit.env.DB,
+      "SELECT 1 FROM pass_events WHERE pass_id = ? AND kind = 'email.captured'",
+      [pass.id],
+    );
+    expect(events).toHaveLength(1);
+  });
+});

@@ -31,7 +31,7 @@ describe('security header parity', () => {
       .split(';')
       .map((d) => d.trim())
       .filter(Boolean)
-      .filter((d) => !d.startsWith('frame-src') && !d.startsWith('object-src'))
+      .filter((d) => !d.startsWith('object-src'))
       .map((d) => d.replace(TURNSTILE, ''));
     const worker = contentSecurityPolicy()
       .split(';')
