@@ -259,7 +259,6 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
           <DataTable
             caption="Delivery history"
             bare
-            stack={false}
             columns={columns}
             data={items}
             getRowId={(r) => r.id}
@@ -268,7 +267,7 @@ export function DeliveryTab({ pass }: { pass: PassDetailDto }) {
           />
         )}
       </Card>
-      <BundlesCard passId={pass.id} />
+      <BundlesCard passId={pass.id} mode={pass.mode} />
     </div>
   );
 }

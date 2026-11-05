@@ -1,19 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BundleListSchema, BundleSchema } from '@/shared/contracts/bundles.ts';
-import { OkSchema } from '@/shared/contracts/common.ts';
+import { MODE_HEADER, type Mode, OkSchema } from '@/shared/contracts/common.ts';
 import { api } from '../../lib/api.ts';
 
 export const bundleKeys = {
   all: ['admin', 'bundles'] as const,
-  ofPass: (passId: string) => ['admin', 'bundles', 'pass', passId] as const,
+  ofPass: (passId: string, mode: Mode) => ['admin', 'bundles', 'pass', passId, mode] as const,
 };
 
-/** The bundles a pass is in (the caller's mode). */
-export function useBundlesOfPass(passId: string) {
+/** The request's mode is the pass's own, not the browser's: a live pass seen in Test mode. */
+const inMode = (mode: Mode) => ({ headers: { [MODE_HEADER]: mode } });
+
+/** The bundles a pass is in, listed in the pass's mode. */
+export function useBundlesOfPass(passId: string, mode: Mode) {
   return useQuery({
-    queryKey: bundleKeys.ofPass(passId),
+    queryKey: bundleKeys.ofPass(passId, mode),
     queryFn: ({ signal }) =>
-      api.get('/api/v1/bundles', BundleListSchema, { query: { passId, limit: 50 }, signal }),
+      api.get('/api/v1/bundles', BundleListSchema, {
+        query: { passId, limit: 50 },
+        signal,
+        ...inMode(mode),
+      }),
   });
 }
 
@@ -33,20 +40,21 @@ export function useCreateBundle() {
   });
 }
 
-export function useBundleActions(id: string) {
+export function useBundleActions(id: string, mode: Mode) {
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: bundleKeys.all });
   return {
     rotate: useMutation({
-      mutationFn: () => api.post(`/api/v1/bundles/${id}/rotate-link`, BundleSchema),
+      mutationFn: () =>
+        api.post(`/api/v1/bundles/${id}/rotate-link`, BundleSchema, undefined, inMode(mode)),
       onSuccess: refresh,
     }),
     sendEmail: useMutation({
-      mutationFn: () => api.post(`/api/v1/bundles/${id}/send-email`, OkSchema, {}),
+      mutationFn: () => api.post(`/api/v1/bundles/${id}/send-email`, OkSchema, {}, inMode(mode)),
       onSuccess: refresh,
     }),
     remove: useMutation({
-      mutationFn: () => api.delete(`/api/v1/bundles/${id}`),
+      mutationFn: () => api.delete(`/api/v1/bundles/${id}`, inMode(mode)),
       onSuccess: refresh,
     }),
   };

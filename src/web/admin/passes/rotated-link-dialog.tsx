@@ -1,27 +1,27 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
-import { Button, CopyButton, Dialog, DialogContent, toast } from '../../ui/index.ts';
-import { usePassActions } from './api.ts';
+import { Button, ConfirmDialog, CopyButton, Dialog, DialogContent, toast } from '../../ui/index.ts';
 import { absoluteUrl, newKey } from './format.ts';
-import type { PassLinks } from './pass-actions.tsx';
 
 /** After a rotate: the new public link, with Copy and an email to the holder. */
 export function RotatedLinkDialog({
-  links,
+  url: link,
   holderEmail,
-  passId,
+  sendEmail,
   onClose,
 }: {
-  links: PassLinks | null;
+  /** The new link; null while closed. */
+  url: string | null;
   holderEmail: string | null;
-  passId: string;
+  /** Emails the new link; the key makes a retry idempotent. */
+  sendEmail: (key: string) => Promise<unknown>;
   onClose: () => void;
 }) {
-  const actions = usePassActions(passId);
+  const [sending, setSending] = useState(false);
   const key = useRef(newKey());
-  const url = links ? absoluteUrl(links.publicUrl) : '';
+  const url = link ? absoluteUrl(link) : '';
   return (
-    <Dialog open={links !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={link !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="md"
         title="Link rotated"
@@ -32,17 +32,18 @@ export function RotatedLinkDialog({
               <Button
                 variant="outline"
                 iconStart={<ACTION_ICON.sendEmail aria-hidden />}
-                loading={actions.resendEmail.isPending}
-                onClick={() =>
-                  actions.resendEmail
-                    .mutateAsync({ key: key.current })
+                loading={sending}
+                onClick={() => {
+                  setSending(true);
+                  sendEmail(key.current)
                     .then(() => {
                       key.current = newKey();
                       toast.sent(`New link emailed to ${holderEmail}`);
                       onClose();
                     })
                     .catch((error: unknown) => toast.error(error, 'Could not send'))
-                }
+                    .finally(() => setSending(false));
+                }}
               >
                 Email new link to holder
               </Button>
@@ -64,5 +65,47 @@ export function RotatedLinkDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Rotate a capability link: the confirm, then the new link. One flow for a pass and a bundle, so
+ * both warn the same way and both end with the link and the holder email.
+ */
+export function RotateLink({
+  open,
+  onOpenChange,
+  description,
+  rotate,
+  holderEmail,
+  sendEmail,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  description: string;
+  /** Rotates and returns the new public link. */
+  rotate: () => Promise<string>;
+  holderEmail: string | null;
+  sendEmail: (key: string) => Promise<unknown>;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+  return (
+    <>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Rotate link?"
+        description={description}
+        confirmLabel="Rotate"
+        destructive
+        onConfirm={async () => setUrl(await rotate())}
+      />
+      <RotatedLinkDialog
+        url={url}
+        holderEmail={holderEmail}
+        sendEmail={sendEmail}
+        onClose={() => setUrl(null)}
+      />
+    </>
   );
 }
