@@ -4,6 +4,7 @@ import { LOGIN_REASONS, type LoginReason } from '@/shared/copy/sign-in.ts';
 import { homeFor, safeNextPath } from '@/shared/next.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { clearSignedOut, signedOutJustNow, signedOutNext, useSession } from '../lib/session.ts';
+import { UnpluggedArt } from '../ui/art/unplugged.tsx';
 import { Button, Callout } from '../ui/index.ts';
 import { Wordmark } from '../ui/layout/wordmark.tsx';
 import { goTo } from './goto.ts';
@@ -49,21 +50,25 @@ export function LoginPage({
     front = undefined;
   } else if (isError || !session) {
     failed = true;
+    // The card keeps the code face's height: the callout sits mid-card with the pulled plug.
     front = (
-      <Callout
-        tone="danger"
-        actions={
-          <Button
-            variant="outline"
-            iconStart={<RefreshCw aria-hidden />}
-            onClick={() => void refetch()}
-          >
-            Retry
-          </Button>
-        }
-      >
-        {errorMessage(loadError)}
-      </Callout>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
+        <UnpluggedArt size="sm" />
+        <Callout
+          tone="danger"
+          actions={
+            <Button
+              variant="outline"
+              iconStart={<RefreshCw aria-hidden />}
+              onClick={() => void refetch()}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {errorMessage(loadError)}
+        </Callout>
+      </div>
     );
   } else if (!session.authenticated) {
     if (!session.oidcEnabled && !session.magicLinkEnabled) {

@@ -13,18 +13,19 @@ import {
 import { STATE_COPY } from '../../../shared/copy/states.ts';
 import { backToSignIn } from '../../ssr/error-page.tsx';
 import type { PageTheme } from '../../ssr/head.ts';
-import { actionHtml, type HostedArt, hostedPage, type PageAction } from '../../ssr/hosted.ts';
+import {
+  actionHtml,
+  type HostedArt,
+  hostedPage,
+  type PageAction,
+  postButton,
+} from '../../ssr/hosted.ts';
 import { iconHtml } from '../../ssr/icon.ts';
 import { escapeHtml } from '../../ssr/theme.ts';
 import type { LinkTrace } from './magic-service.ts';
 import { loginPath, safeNext } from './next.ts';
 
 const ARROW = iconHtml(ArrowRight);
-
-const postButton = (action: string, label: string, fields: Record<string, string> = {}) =>
-  `<form method="post" action="${escapeHtml(action)}">${Object.entries(fields)
-    .map(([k, v]) => `<input type="hidden" name="${k}" value="${escapeHtml(v)}">`)
-    .join('')}<button class="btn" type="submit">${label}</button></form>`;
 
 /** The confirm link itself, as a path sign-in can return to. */
 export const confirmPath = (token: string) => `/auth/magic?t=${encodeURIComponent(token)}`;
@@ -142,8 +143,8 @@ function messagePage(
 }
 
 /**
- * Each refusal's status and meaning (the buddy spec): sad, with forbidden's padlock, an error's
- * plug, expired's drooping pass or a rate limit's hourglass. A sent proof waits for you instead.
+ * Each refusal's status and meaning (the buddy spec): sad, with forbidden's padlock, an error's plug, expired's drooping pass or a rate limit's hourglass.
+ * What waits on you (a missing email, a sent proof, signing in first) is the waiting scene.
  */
 const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedArt }> = {
   NO_ACCESS: { status: 403, art: 'no-access' },
@@ -154,7 +155,7 @@ const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedA
   SESSION_REQUIRED: { status: 403, art: 'no-access' },
   LINK_INVALID: { status: 400, art: 'expired' },
   EMAIL_TAKEN: { status: 403, art: 'no-access' },
-  MAGIC_LINK_DISABLED: { status: 503, art: 'no-access' },
+  MAGIC_LINK_DISABLED: { status: 503, art: 'broken' },
   RATE_LIMITED: { status: 429, art: 'throttled' },
   VALIDATION: { status: 422, art: 'broken' },
 };
@@ -166,13 +167,16 @@ export function signInErrorPage(
   opts: { next?: string | null; action?: PageAction } = {},
   theme?: PageTheme,
 ): { html: string; status: ContentfulStatusCode } {
+  // One page for "no access", whichever route refuses.
+  if (code === 'NO_ACCESS')
+    return { html: noAccessPage(nonce, opts.next ?? null, theme), status: 403 };
   const { status, art } = PAGE[code];
   const action = opts.action ?? backToSignIn(loginPath(opts.next));
   return { html: messagePage(nonce, { ...SIGN_IN_ERROR_COPY[code], action, art }, theme), status };
 }
 
 const OIDC_ART: Record<OidcFailure, HostedArt> = {
-  cancelled: 'broken',
+  cancelled: 'login',
   expired: 'expired',
   unverified: 'broken',
   unavailable: 'broken',

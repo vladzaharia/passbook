@@ -12,6 +12,9 @@ export const STATE_COPY = {
   /** The way out of a forbidden page: sign out, then sign in with another account. */
   switchAccount: 'Sign in as someone else',
   goToMyPasses: 'Go to My passes',
+  /** Under the 404 and 403 titles on the hosted pages. */
+  notFoundLine: 'Check the link, or open My passes.',
+  forbiddenLine: 'Sign in with the account that has access.',
   goToOverview: 'Go to Overview',
   search: 'Search',
   /** The generic failure: a 5xx, or anything without a message of its own. */

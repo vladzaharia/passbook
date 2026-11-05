@@ -10,6 +10,8 @@ import {
   emailShell,
   escapeHtml,
   RADIUS,
+  supportFooter,
+  testNoteHtml,
   titleHtml,
   type,
 } from './shell.ts';
@@ -37,6 +39,8 @@ export interface PassEmailInput {
   logoText?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
+  /** A test pass's email carries the amber strip. */
+  mode?: 'live' | 'test';
   /**
    * PUBLIC_BASE_URL when the org opted in (`email.buddy`): the buddy sits at the band's right end,
    * as in the sign-in email. Absent, the band is the org's mark and name alone.
@@ -123,25 +127,14 @@ function actionsHtml(input: PassEmailInput): string {
 }
 
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
-  const supportEmail = safeMail(input.supportEmail);
-  const supportUrl = safeUrl(input.supportUrl);
-  const supportText = [supportEmail, supportUrl].filter(Boolean).join(' | ');
-  const supportHtml = [
-    supportEmail
-      ? `<a href="mailto:${escapeHtml(supportEmail)}" class="e-muted" style="color:${c.muted}">${escapeHtml(supportEmail)}</a>`
-      : '',
-    supportUrl
-      ? `<a href="${escapeHtml(supportUrl)}" class="e-muted" style="color:${c.muted}">${escapeHtml(supportUrl)}</a>`
-      : '',
-  ]
-    .filter(Boolean)
-    .join(' | ');
+  const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const subject = `Your ${input.orgName} pass`;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
     .slice(0, 3);
   const text = [
     HOLDER_COPY.passReady,
+    ...(input.mode === 'test' ? [HOLDER_COPY.testNote('pass')] : []),
     ...(input.passTitle ? ['', input.passTitle] : []),
     ...fields.map((f) => `${f.label ? `${f.label}: ` : ''}${f.value}`),
     '',
@@ -151,17 +144,18 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     ...(input.attached ? ['', 'The pass is also attached.'] : []),
     '',
     PRIVATE_LINE,
-    ...(supportText ? [`Questions: ${supportText}`] : []),
+    ...footer.text,
   ].join('\n');
   const muted = (margin: string, line: string) =>
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
   const body = `${titleHtml(HOLDER_COPY.passReady, '0 0 16px')}
+${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}
 ${muted('0 0 24px', ADD_LINE)}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
-${supportHtml ? `<p class="e-muted" style="margin:12px 0 0;${type('xs')};color:${c.muted}">Questions: ${supportHtml}</p>` : ''}`;
+${footer.html}`;
   // Images need an absolute URL, as in the sign-in email.
   const buddyBase = safeUrl(input.buddyBase);
   const mark = safeUrl(input.iconUrl);

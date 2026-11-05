@@ -70,7 +70,7 @@ describe('pass detail', () => {
       .getAllByRole('menuitem')
       .map((i) => i.textContent?.trim());
     // The page shows its QR itself; Show QR is the tiles' item.
-    expect(items).toEqual(['Copy link', 'Open public page', 'Remove']);
+    expect(items).toEqual(['Copy link', 'Open public page', 'Remove from My passes']);
     const open = within(menu).getByRole('menuitem', { name: 'Open public page' });
     expect(open).toHaveAttribute('href', expect.stringMatching(/\/p\/abcdefghijklmnopqrst$/));
     expect(open).toHaveAttribute('target', '_blank');
@@ -134,6 +134,85 @@ describe('pass detail', () => {
     expect(document.querySelector('[data-buddy]')?.getAttribute('data-scene')).toBe('tear');
   });
 
+  it('names the org, not the platform, when a voided pass has no contact of its own', async () => {
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(
+            passFixture({
+              status: 'voided',
+              support: { email: 'support@passbook.test', url: null, platform: true },
+            }),
+          ),
+      },
+    });
+    expect(await screen.findByText(/Ask Henrys for a new pass\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Contact PassBook/)).toBeNull();
+    expect(screen.queryByText(/support@passbook\.test/)).toBeNull();
+    expect(document.querySelector('a[href="mailto:support@passbook.test"]')).toBeNull();
+  });
+
+  it('says a removed pass is removed from Wallet, with the org note and a Removed pill', async () => {
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(
+            passFixture({
+              status: 'voided',
+              removedAt: 1_700_000_100_000,
+              removalMessage: 'The season ended.',
+            }),
+          ),
+      },
+    });
+    expect(
+      await screen.findByText(/Removed from Wallet\. It stays in Expired passes/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('The season ended.')).toBeInTheDocument();
+    expect(screen.queryByText('This pass was voided.')).toBeNull();
+    expect(screen.getAllByText('Removed').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(document.querySelector('.pc-root[data-removed]')).not.toBeNull();
+    expect(document.querySelector('.pc-void')).toBeNull();
+  });
+
+  it('lists upcoming events in Details and the Remove dialog says a Wallet pass stays', async () => {
+    const user = userEvent.setup();
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(
+            passFixture({
+              inWallet: true,
+              passJson: {
+                organizationName: 'Henrys',
+                description: 'Season ticket',
+                generic: { primaryFields: [{ key: 'name', label: 'Member', value: 'Sam' }] },
+                upcomingPassInformation: [
+                  {
+                    identifier: 'e1',
+                    name: 'Opening night',
+                    dateInformation: { date: '2030-05-01T19:00:00Z', timeZone: 'UTC' },
+                  },
+                ],
+              },
+            }),
+          ),
+      },
+    });
+    const details = (await screen.findByRole('heading', { name: 'Details' })).parentElement
+      ?.parentElement as HTMLElement;
+    expect(within(details).getByText('Upcoming events')).toBeInTheDocument();
+    expect(within(details).getByText('Opening night')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove from My passes' }));
+    expect(
+      within(await screen.findByRole('alertdialog')).getByText(
+        /It stays in Apple Wallet; delete it there\./,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('shows not found under the page header, the buddy mending the torn pass', async () => {
     const { container } = await renderApp('/passes/nope', {});
     expect(await screen.findByText('Pass not found')).toBeInTheDocument();
@@ -172,7 +251,7 @@ describe('pass detail', () => {
       },
     });
     await user.click(await screen.findByRole('button', { name: 'More' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove from My passes' }));
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remove' }),
     );

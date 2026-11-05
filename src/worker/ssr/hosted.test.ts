@@ -108,10 +108,14 @@ describe('hosted auth pages', () => {
     expect(HOSTED_CSS).toContain('.band .mark>svg{width:1.5rem;height:1.5rem}');
   });
 
+  it('keeps the wallet calm when the holder cancelled sign-in', () => {
+    expect(mood(oidcFailurePage(NONCE, 'cancelled', null))).toBeUndefined();
+  });
+
   it.each([
     ['no access', noAccessPage(NONCE)],
     ['an expired or used link', expiredPage(NONCE)],
-    ['sign-in failed', oidcFailurePage(NONCE, 'cancelled', null)],
+    ['unverified sign-in', oidcFailurePage(NONCE, 'unverified', null)],
     ['provider unavailable', oidcFailurePage(NONCE, 'unavailable', null)],
     ['an email conflict', refusal('EMAIL_CONFLICT')],
     ['an email taken', refusal('EMAIL_TAKEN')],
@@ -132,6 +136,8 @@ describe('hosted auth pages', () => {
     ['confirm', confirmPage(NONCE, { token: TOKEN, email: 'a@b.co' })],
     ['break-glass', breakglassPage(NONCE, {})],
     ['proof sent', refusal('EMAIL_PROOF_SENT')],
+    // Cancelling is a choice, not a failure: the waiting scene.
+    ['oidc cancelled', oidcFailurePage(NONCE, 'cancelled', null)],
   ])('keeps the wallet content on %s', (_case, html) => {
     expect(mood(html)).toBeUndefined();
     expect(html).not.toContain('data-part="br"');
@@ -145,7 +151,6 @@ describe('hosted auth pages', () => {
     'EMAIL_CONFLICT',
     'SESSION_REQUIRED',
     'EMAIL_TAKEN',
-    'MAGIC_LINK_DISABLED',
   ];
   it.each<[string, string, string, string]>([
     ...forbidden.map((code): [string, string, string, string] => [
@@ -155,7 +160,7 @@ describe('hosted auth pages', () => {
       'lock',
     ]),
     ['VALIDATION', refusal('VALIDATION'), 'plug', 'unplugged'],
-    ['oidc cancelled', oidcFailurePage(NONCE, 'cancelled', null), 'plug', 'unplugged'],
+    ['MAGIC_LINK_DISABLED', refusal('MAGIC_LINK_DISABLED'), 'plug', 'unplugged'],
     ['oidc unverified', oidcFailurePage(NONCE, 'unverified', null), 'plug', 'unplugged'],
     ['oidc unavailable', oidcFailurePage(NONCE, 'unavailable', null), 'plug', 'unplugged'],
   ])('acts out %s by its meaning', (_case, html, scene, prop) => {
@@ -191,6 +196,26 @@ describe('hosted auth pages', () => {
     expect(verify).not.toContain('sign in');
     expect(verify).not.toContain(HOLDER_COPY.signInFooter);
     expect(outline(verify)).toEqual([['/account', 'Go to Account']]);
+  });
+
+  it('renders no access once: the refusal route offers the same two ways, keeping next', () => {
+    const { html, status } = signInErrorPage(NONCE, 'NO_ACCESS', { next: '/account' });
+    expect(status).toBe(403);
+    expect(html).toBe(noAccessPage(NONCE, '/account'));
+    expect(html).toContain('Sign in with email instead');
+  });
+
+  it('offers a way out of a forbidden page by signing in as someone else', () => {
+    const html = renderErrorPage({ status: 403, nonce: NONCE });
+    expect(html).toContain('action="/auth/logout?next=%2Flogin"');
+    expect(html).toContain('Sign in as someone else');
+  });
+
+  it('words a disabled account without repeating its title', () => {
+    const html = refusal('ACCOUNT_DISABLED');
+    expect(html).toContain('<h1>Account disabled</h1>');
+    expect(html).toContain('Contact the organization that sent your pass.');
+    expect(html).not.toContain('Ask an admin');
   });
 
   it('offers email and another Polaris ID on no access, worded as the app forbids', () => {
@@ -273,8 +298,15 @@ describe('click to replay the wallet', () => {
 describe('renderErrorPage', () => {
   // The SPA's words and weights: not found leads to My passes, an error retries, all outline.
   it.each([
-    [404, 'Page not found', undefined, '/', 'Go to My passes', 'lost'],
-    [403, 'You do not have access', undefined, '/', 'Go to My passes', 'login'],
+    [404, 'Page not found', 'Check the link, or open My passes.', '/', 'Go to My passes', 'lost'],
+    [
+      403,
+      'You do not have access',
+      'Sign in with the account that has access.',
+      '/',
+      'Go to My passes',
+      'login',
+    ],
     [429, 'Too many requests', 'Try again in a minute.', '', 'Retry', 'login'],
     [500, 'Something went wrong', 'Try again.', '', 'Retry', 'login'],
   ])(

@@ -13,9 +13,11 @@ export interface PassCardProps {
   className?: string;
   /** Draw the layout for this OS generation instead of `view.target`. */
   target?: PassTarget;
+  /** Removed from Wallet by the org: dimmed, with no Voided stamp (the page says why). */
+  removed?: boolean;
 }
 
-export function PassCard({ view, face = 'front', className, target }: PassCardProps) {
+export function PassCard({ view, face = 'front', className, target, removed }: PassCardProps) {
   const layout = view.layouts[target ?? view.target];
   const c = view.colors;
   const vars = {
@@ -35,11 +37,13 @@ export function PassCard({ view, face = 'front', className, target }: PassCardPr
       data-semantic={layout.semantic?.kind}
       data-approximate={layout.approximate || undefined}
       data-dark={c.dark || undefined}
+      data-removed={removed || undefined}
     >
       {/* biome-ignore lint/a11y/useSemanticElements: fieldset adds form semantics; a landmark per card is noise */}
       <div
         className="pc-card"
         style={vars}
+        data-voided={view.invalid && !removed ? '' : undefined}
         role="group"
         aria-label={`${name}, ${face === 'front' ? 'front' : 'back'}`}
       >
@@ -48,7 +52,7 @@ export function PassCard({ view, face = 'front', className, target }: PassCardPr
         ) : (
           <Back view={view} layout={layout} />
         )}
-        {view.invalid ? (
+        {view.invalid && !removed ? (
           <div className="pc-void" role="status">
             <span>{view.invalid === 'voided' ? 'Voided' : 'Expired'}</span>
           </div>

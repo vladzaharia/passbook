@@ -25,6 +25,8 @@ export const BundlePassSchema = z.object({
   id: IdSchema,
   title: z.string(),
   status: z.enum(['active', 'voided']),
+  /** When the org removed the pass from Wallet; its status then reads voided. */
+  removedAt: TimestampSchema.nullable().default(null),
 });
 
 export const BundleSchema = z.object({

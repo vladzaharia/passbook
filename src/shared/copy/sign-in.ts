@@ -38,7 +38,7 @@ export const SIGN_IN_ERROR_COPY: Record<SignInErrorCode, { title: string; messag
   },
   ACCOUNT_DISABLED: {
     title: 'Account disabled',
-    message: 'This account is disabled. Ask an admin.',
+    message: 'Contact the organization that sent your pass.',
   },
   NO_EMAIL: {
     title: 'No email',

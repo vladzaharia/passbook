@@ -9,7 +9,7 @@ import { type DeviceInfo, showsAddQr } from '../../../shared/device.ts';
 export type AddMode = 'scan' | 'phone' | 'added' | 'off';
 
 export function addMode(
-  state: 'active' | 'voided' | 'expired',
+  state: 'active' | 'voided' | 'expired' | 'removed',
   device: DeviceInfo,
   inWallet: boolean,
   publicUrl: string | null,

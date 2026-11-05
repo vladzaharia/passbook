@@ -11,6 +11,8 @@ import { sourceHash } from './ssr-kit.ts';
 export const HOLDER_SOURCES = [
   'src/worker/ssr/pass-page.tsx',
   'src/worker/ssr/org-bar.tsx',
+  'src/worker/ssr/bundle-page.tsx',
+  'src/web/ui/badge.tsx',
   'src/web/portal/holder-heading.tsx',
   'src/web/portal/holder-pass-view.tsx',
   'src/web/portal/holder-parts.tsx',

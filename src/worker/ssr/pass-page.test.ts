@@ -48,12 +48,13 @@ describe('/p renders the portal HolderPassView', () => {
   const PORTAL_LINK =
     /<p class="text-sm"><a href="\/passes\/p1" class="[^"]*">Open in My passes<\/a><\/p>/;
 
-  it('heads the page with what the pass is: the org over the kind, the portal link beside', () => {
+  it('heads the page with what the pass is: the kind alone (the bar names the org), the portal link beside', () => {
     const html = page();
     expect(html).toContain('<title>Example Org example pass</title>');
     const b = body(html);
     expect(b.match(/<h1/g)).toHaveLength(1);
-    expect(b).toMatch(/<p class="[^"]*">Example Org<\/p><h1[^>]*>Example pass<\/h1>/);
+    expect(b).toMatch(/<h1[^>]*>Example pass<\/h1>/);
+    expect(b).not.toMatch(/<p class="[^"]*">Example Org<\/p><h1/);
     expect(b.match(/Open in My passes/g)).toHaveLength(1);
     expect(b).toMatch(PORTAL_LINK);
   });

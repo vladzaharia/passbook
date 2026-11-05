@@ -20,3 +20,7 @@
     height: 56px;
   }
 }
+/* The break-glass key draws with the art's line, not the face's heavier ink. */
+.scene [data-part="key"] .m {
+  stroke: var(--art-l);
+}

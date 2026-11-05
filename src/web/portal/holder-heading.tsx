@@ -12,6 +12,8 @@ export interface HolderHeadingProps {
   meta?: ReactNode;
   /** Refresh and More in the portal; /p's way to My passes. */
   actions?: ReactNode;
+  /** The page's bar already names the org: the h1 is what the pass is, with no eyebrow or mark. */
+  bare?: boolean;
 }
 
 /**
@@ -19,16 +21,18 @@ export interface HolderHeadingProps {
  * the pass is (the h1); the holder's name stays a field. The actions end the row at its right, or
  * wrap under the title on a phone.
  */
-export function HolderHeading({ heading, icon, crumbs, meta, actions }: HolderHeadingProps) {
+export function HolderHeading({ heading, icon, crumbs, meta, actions, bare }: HolderHeadingProps) {
   const split = heading.kind !== null && heading.org !== '';
   return (
     <header className="wl-hh mb-6 flex min-w-0 flex-col gap-3">
       {crumbs}
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="flex min-w-0 items-start gap-3.5">
-          {icon ? <img src={icon.src} srcSet={icon.srcset} alt="" className="wl-hh-icon" /> : null}
+          {icon && !bare ? (
+            <img src={icon.src} srcSet={icon.srcset} alt="" className="wl-hh-icon" />
+          ) : null}
           <div className="min-w-0">
-            {split ? (
+            {split && !bare ? (
               <p className="truncate text-sm font-medium text-fg-muted">{heading.org}</p>
             ) : null}
             <h1

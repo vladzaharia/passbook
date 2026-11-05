@@ -1,4 +1,4 @@
-import { Ban, Clock } from 'lucide-react';
+import { Ban, Clock, EyeOff } from 'lucide-react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { Callout } from '../ui/callout.tsx';
 
@@ -12,30 +12,51 @@ export interface HolderSupport {
 
 const LINK = 'font-medium text-accent-fg underline-offset-4 hover:underline';
 
-/** Voided or expired, one line; a voided pass names the org's support so it is not a dead end. */
+/** Voided, removed or expired, one line; a voided pass names the org so it is not a dead end. */
 export function Notice({
   state,
   orgName,
   support,
+  message,
+  many,
 }: {
-  state: 'active' | 'voided' | 'expired';
+  state: 'active' | 'voided' | 'expired' | 'removed';
   orgName: string;
   support?: HolderSupport | null | undefined;
+  /** The org's note with a removal. */
+  message?: string | null | undefined;
+  /** A bundle: every pass in it. */
+  many?: boolean;
 }) {
   if (state === 'active') return null;
   const voided = state === 'voided';
-  const href = support?.email ? `mailto:${support.email}` : support?.url;
+  // PassBook's own inbox is never offered on an org's page.
+  const own = support && !support.platform ? support : null;
+  const href = own?.email ? `mailto:${own.email}` : own?.url;
   return (
     <div role="status">
-      <Callout tone="warning" icon={voided ? Ban : Clock}>
-        {voided ? HOLDER_COPY.voided : HOLDER_COPY.expired}
-        {voided && href ? (
+      <Callout tone="warning" icon={voided ? Ban : state === 'removed' ? EyeOff : Clock}>
+        {voided
+          ? many
+            ? HOLDER_COPY.voidedMany
+            : HOLDER_COPY.voided
+          : state === 'removed'
+            ? HOLDER_COPY.removed
+            : HOLDER_COPY.expired}
+        {voided ? (
           <>
             {' '}
-            <a href={href} className={LINK}>
-              {HOLDER_COPY.contact(support?.platform ? 'PassBook' : orgName)}
-            </a>
+            {href ? (
+              <a href={href} className={LINK}>
+                {HOLDER_COPY.contact(orgName)}
+              </a>
+            ) : (
+              HOLDER_COPY.askForNew(orgName)
+            )}
           </>
+        ) : null}
+        {state === 'removed' && message ? (
+          <span className="mt-1 block [overflow-wrap:anywhere]">{message}</span>
         ) : null}
       </Callout>
     </div>

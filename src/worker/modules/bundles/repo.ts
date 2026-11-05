@@ -18,6 +18,7 @@ export interface MemberRow {
   pass_id: string;
   title: string;
   status: 'active' | 'voided';
+  removed_at: number | null;
 }
 
 export interface NewBundle {
@@ -104,7 +105,8 @@ export async function membersOf(db: D1Database, bundleIds: string[]): Promise<Me
       ...(await all<MemberRow>(
         db,
         `SELECT bp.bundle_id, bp.pass_id, COALESCE(p.display_title, p.serial) AS title,
-                CASE WHEN p.removed_at IS NOT NULL THEN 'voided' ELSE p.status END AS status
+                CASE WHEN p.removed_at IS NOT NULL THEN 'voided' ELSE p.status END AS status,
+                p.removed_at
          FROM bundle_passes bp JOIN passes p ON p.id = bp.pass_id
          WHERE p.deleted_at IS NULL AND bp.bundle_id IN (${placeholders(part.length)})
          ORDER BY bp.bundle_id, bp.position`,

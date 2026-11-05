@@ -7,7 +7,7 @@ import { ArrowLeft, RefreshCw, WalletCards } from 'lucide-react';
 import { AUTH_PAGE_COPY } from '../../shared/copy/sign-in.ts';
 import { STATE_COPY, waitLine } from '../../shared/copy/states.ts';
 import type { PageTheme } from './head.ts';
-import { actionHtml, type HostedArt, hostedPage, type PageAction } from './hosted.ts';
+import { actionHtml, type HostedArt, hostedPage, type PageAction, postButton } from './hosted.ts';
 import { escapeHtml } from './theme.ts';
 
 export interface ErrorPageInput {
@@ -37,6 +37,12 @@ export const backToSignIn = (href = '/login'): PageAction => ({
   icon: ArrowLeft,
 });
 
+/** Forbidden: another account may have the access (sign out, then sign in). */
+const SWITCH_ACCOUNT = postButton('/auth/logout?next=%2Flogin', STATE_COPY.switchAccount).replace(
+  'class="btn"',
+  'class="btn outline"',
+);
+
 const RETRY: PageAction = { label: STATE_COPY.retry, href: '', icon: RefreshCw };
 
 /** Each status's meaning: its words, its art (a sad buddy with the prop) and its way on. */
@@ -47,10 +53,20 @@ function defaults(input: ErrorPageInput): {
   action: PageAction;
 } {
   if (input.status === 404) {
-    return { title: STATE_COPY.pageNotFound, art: 'lost', action: GO_TO_MY_PASSES };
+    return {
+      title: STATE_COPY.pageNotFound,
+      line: STATE_COPY.notFoundLine,
+      art: 'lost',
+      action: GO_TO_MY_PASSES,
+    };
   }
   if (input.status === 403) {
-    return { title: STATE_COPY.forbidden, art: 'no-access', action: GO_TO_MY_PASSES };
+    return {
+      title: STATE_COPY.forbidden,
+      line: STATE_COPY.forbiddenLine,
+      art: 'no-access',
+      action: GO_TO_MY_PASSES,
+    };
   }
   if (input.status === 429) {
     const line = waitLine(input.retryAfter);
@@ -68,6 +84,9 @@ export function renderErrorPage(input: ErrorPageInput): string {
     title: input.title ?? d.title,
     art: d.art,
     ...(line ? { lede: escapeHtml(line) } : {}),
-    body: actionHtml(input.action ?? d.action),
+    body:
+      input.status === 403 && !input.action
+        ? `<div class="stack">${actionHtml(d.action)}${SWITCH_ACCOUNT}</div>`
+        : actionHtml(input.action ?? d.action),
   });
 }

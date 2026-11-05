@@ -38,8 +38,11 @@ const GRID = 'mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
  * the bundle badge above it (nudge) or, with one and no bundle, lifts a pass and drops it into its
  * pocket (tuck). Every live pass in a Wallet: it counts its own, happy. Only voided: a sigh.
  */
+/** Still the holder's to add: not voided, not removed from Wallet. */
+const isLive = (p: MyPass) => p.status !== 'voided' && p.removedAt === null;
+
 export function listAct(passes: readonly MyPass[]): { mood?: WalletMood; scene: BuddyScene } {
-  const live = passes.filter((p) => p.status !== 'voided');
+  const live = passes.filter(isLive);
   const out = live.filter((p) => !p.inWallet).length;
   if (live.length === 0) return { mood: 'sad', scene: 'beat' };
   if (out === 0) return { mood: 'happy', scene: 'count' };
@@ -67,7 +70,8 @@ export function InWalletPill() {
 function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?: ReactNode }) {
   const name = passName(pass);
   const publicUrl = publicUrlOf(pass.downloadUrl);
-  const voided = pass.status === 'voided';
+  const removed = pass.removedAt !== null;
+  const voided = pass.status === 'voided' || removed;
   // Where the badge cannot add, Show QR leads; elsewhere off the phone it waits in More.
   const [qr] = useState(() => !canAddToWallet(browserDevice().device));
   const [dip, setDip] = useState(0);
@@ -85,6 +89,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
           dip={dip}
           enter={dealt}
           dim={voided}
+          removed={removed}
           syncing={isPendingRefresh(pass, Date.now())}
           transitionName={`pass-${pass.id}`}
         />
@@ -103,7 +108,11 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
             </h2>
             <span className="flex shrink-0 items-center gap-1.5">
               <ModePill mode={pass.mode} />
-              {voided ? <StatusPill status="voided" /> : pass.inWallet ? <InWalletPill /> : null}
+              {voided ? (
+                <StatusPill status={removed ? 'removed' : 'voided'} />
+              ) : pass.inWallet ? (
+                <InWalletPill />
+              ) : null}
             </span>
           </div>
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
@@ -120,7 +129,12 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
           </div>
           <div className="ml-auto flex items-center gap-2">
             {voided ? null : <RefreshButton passId={pass.id} pass={pass} compact />}
-            <PassMoreMenu passId={pass.id} passTitle={name} publicUrl={voided ? null : publicUrl} />
+            <PassMoreMenu
+              passId={pass.id}
+              passTitle={name}
+              publicUrl={voided ? null : publicUrl}
+              inWallet={pass.inWallet}
+            />
           </div>
         </div>
       </div>
@@ -142,9 +156,7 @@ function AddAllLinks({ count }: { count: number }) {
             key={from}
             href={`${MY_PASSES_BUNDLE_PATH}?part=${i + 1}`}
             label={
-              parts === 1
-                ? `All passes (${count})`
-                : `Passes ${from === to ? from : `${from}–${to}`}`
+              parts === 1 ? `Add ${count} passes` : `Passes ${from === to ? from : `${from}–${to}`}`
             }
           />
         );
@@ -157,7 +169,7 @@ export function MyPassesPage() {
   const query = useInfiniteQuery(myPassesQuery);
   const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
   const dealt = useArrival(query.isPending);
-  const addable = passes.filter((p) => p.status !== 'voided' && !p.inWallet).length;
+  const addable = passes.filter((p) => isLive(p) && !p.inWallet).length;
   const [device] = useState(browserDevice);
 
   let body: ReactNode;

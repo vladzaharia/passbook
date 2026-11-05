@@ -10,6 +10,8 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
     status: 'active',
     mode: 'live',
     modifiedAt: 1_700_000_000_000,
+    removedAt: null,
+    removalMessage: null,
     lastRefreshedAt: null,
     refreshRequestedAt: null,
     downloadUrl: '/p/abcdefghijklmnopqrst/pass.pkpass',

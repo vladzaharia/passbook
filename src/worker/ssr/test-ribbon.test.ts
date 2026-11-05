@@ -34,7 +34,7 @@ const bundle = (mode?: 'live' | 'test') =>
     orgName: 'Gym',
     orgLabel: 'Gym',
     name: 'Family',
-    items: [{ id: 'a', view, title: 'A', voided: false, downloadHref: '/b/t/a/pass.pkpass' }],
+    items: [{ id: 'a', view, title: 'A', state: 'active', downloadHref: '/b/t/a/pass.pkpass' }],
     ...(mode ? { mode } : {}),
     addAllHref: '/b/t/passes.pkpasses',
     publicUrl: 'https://wallet.test/b/t',

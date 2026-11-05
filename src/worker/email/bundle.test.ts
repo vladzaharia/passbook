@@ -41,4 +41,30 @@ describe('renderBundleEmail', () => {
     expect(html).toContain('mailto:help@gym.test');
     expect(html).not.toContain('javascript:');
   });
+
+  it('marks every bordered cell for dark clients and gives the links a 44 px row', () => {
+    const { html } = render();
+    const cells = html.match(/<td[^>]*border-top:1px solid[^>]*>/g) ?? [];
+    expect(cells).toHaveLength(4);
+    for (const cell of cells) expect(cell).toContain('e-line');
+    expect(html).toContain('.e-link{color:');
+    expect(html).toMatch(/class="e-link"[^>]*padding:12px 0 12px 12px/);
+  });
+
+  it('counts the passes beside the name and shares the support footer', () => {
+    const { html, text } = render({ supportEmail: 'help@harbor.test' });
+    expect(html).toContain('Family trip · 2 passes');
+    expect(text).toContain('Family trip · 2 passes');
+    expect(html).toContain('Questions: <a href="mailto:help@harbor.test"');
+    expect(text).toContain('Questions: help@harbor.test');
+  });
+
+  it('carries the amber strip in test mode only', () => {
+    const live = render();
+    expect(live.html).not.toContain('e-test"');
+    const test = render({ mode: 'test' });
+    expect(test.html).toContain('class="e-test"');
+    expect(test.html).toContain('Test bundle. It is not real and will be deleted.');
+    expect(test.text).toContain('Test bundle. It is not real and will be deleted.');
+  });
 });

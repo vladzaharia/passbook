@@ -32,7 +32,12 @@ function toDto(ctx: ServiceContext, row: repo.BundleRow, members: repo.MemberRow
     name: row.name,
     url: bundleUrl(ctx, row.token),
     holderEmail: row.holder_email,
-    passes: members.map((m) => ({ id: m.pass_id, title: m.title, status: m.status })),
+    passes: members.map((m) => ({
+      id: m.pass_id,
+      title: m.title,
+      status: m.status,
+      removedAt: m.removed_at,
+    })),
     createdAt: row.created_at,
     linkRotatedAt: row.token_rotated_at,
   };
