@@ -1,28 +1,12 @@
 /** Rows to rendered rows (DM 1.6, 5.1). Pure. Missing values hide the row; caps cut by grapheme. */
 import type { ScanChip, ScanDisplayRow } from '../../../shared/contracts/scan-display.ts';
-import { SCAN_DISPLAY_COPY, scanLine } from '../../../shared/copy/scan.ts';
-import type { Json } from '../../types.ts';
-import { testCond } from './condition.ts';
+import { scanLine } from '../../../shared/copy/scan.ts';
 import { columnsUnits, DENSITY, oneLineCap } from './density.ts';
-import { applyFilter, graphemeLength, moneyText, sanitized, toNumber, truncate } from './format.ts';
-import type { ScanChipDoc, ScanCond, ScanRowDoc, ScanText } from './schema.ts';
-import { type EvalCtx, evalExpr, evalText, parseParts, splitPath } from './text.ts';
-
-export interface RowCtx extends EvalCtx {
-  /** The document's currency, when it names one. */
-  docCurrency: string | null;
-}
-
-const COPY = SCAN_DISPLAY_COPY;
-const DASH = '—';
-const MINUS = '−';
-
-export const shown = (el: { when?: ScanCond | undefined }, rc: EvalCtx): boolean =>
-  !el.when || testCond(el.when, rc);
-
-const text = (value: ScanText | null | undefined, rc: EvalCtx, cap: number, breaks = false) =>
-  sanitized(evalText(value, rc), cap, breaks);
-const orNull = (value: string) => (value === '' ? null : value);
+import { graphemeLength, moneyText, toNumber, truncate } from './format.ts';
+import { history } from './render-history.ts';
+import { COPY, DASH, orNull, type RowCtx, record, shown, text } from './render-kit.ts';
+import type { ScanChipDoc, ScanRowDoc } from './schema.ts';
+import { type EvalCtx, evalExpr, parseParts, splitPath } from './text.ts';
 
 export function renderChips(items: ScanChipDoc[], rc: EvalCtx): ScanChip[] {
   const out: ScanChip[] = [];
@@ -40,11 +24,6 @@ const loneInput = (source: string): string | null => {
   const split = path ? splitPath(path) : null;
   return split?.root === 'inputs' ? (split.rest[0] ?? null) : null;
 };
-
-const record = (value: unknown): Record<string, Json> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, Json>)
-    : null;
 
 /** The scan's before value, when this scan changed the row's input. */
 function scanValue(rc: EvalCtx, input: string | null, key: 'before' | 'after'): number | null {
@@ -113,60 +92,6 @@ function money(row: Extract<ScanRowDoc, { type: 'money' }>, rc: RowCtx): ScanDis
     low: row.lowBelow !== undefined && amount < row.lowBelow,
     pending: (row.pending ?? []).slice(0, 6),
   };
-}
-
-const HISTORY_SHOW = {
-  value: ['amount', 'when'],
-  visits: ['when', 'where'],
-  scans: ['when', 'action'],
-} as const;
-
-function signed(n: number, rc: RowCtx): string {
-  return `${n < 0 ? MINUS : '+'}${moneyText(Math.abs(n), rc.locale, rc.docCurrency)}`;
-}
-
-function history(row: Extract<ScanRowDoc, { type: 'history' }>, rc: RowCtx): ScanDisplayRow | null {
-  const lists = record(record(rc.scope.history)?.list);
-  const found =
-    row.source === 'value' ? record(lists?.value)?.[row.input ?? ''] : lists?.[row.source];
-  const list = (Array.isArray(found) ? found : []).map(record).filter((x) => x !== null);
-  const show = new Set<string>(row.show ?? HISTORY_SHOW[row.source]);
-  const items = list.slice(0, row.limit ?? DENSITY.historyDefaultLimit).map((entry) => {
-    const at = toNumber(entry.at);
-    const amount = toNumber(entry.amount);
-    return {
-      at: at === null ? null : Math.round(at),
-      when: show.has('when') && at !== null ? orNull(applyFilter('ago', at, rc)) : null,
-      amount: show.has('amount') && amount !== null ? signed(amount, rc) : null,
-      delta: amount,
-      where:
-        show.has('where') && typeof entry.where === 'string'
-          ? orNull(sanitized(entry.where, 24))
-          : null,
-      label:
-        show.has('action') && typeof entry.label === 'string'
-          ? orNull(sanitized(entry.label, 24))
-          : null,
-      elsewhere: false,
-    };
-  });
-  const current = toNumber(record(rc.scope.inputs)?.[row.input ?? '']);
-  const newest = toNumber(list[0]?.after);
-  if (row.source === 'value' && current !== null && newest !== null && current !== newest) {
-    const delta = current - newest;
-    items.unshift({
-      at: null,
-      when: null,
-      amount: show.has('amount') ? signed(delta, rc) : null,
-      delta,
-      where: null,
-      label: COPY.changedElsewhere,
-      elsewhere: true,
-    });
-  }
-  const empty = items.length === 0 && row.source === 'visits' ? COPY.noVisits : null;
-  if (items.length === 0 && !empty) return null;
-  return { type: 'history', id: row.id, items: items.slice(0, 6), empty };
 }
 
 function columns(row: Extract<ScanRowDoc, { type: 'columns' }>, rc: RowCtx): ScanDisplayRow | null {
