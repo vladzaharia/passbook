@@ -232,7 +232,7 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
             help={
               keyMode === 'test'
                 ? 'Passes made with a Test key are test passes. Their emails stay in the Test inbox.'
-                : undefined
+                : 'Passes are real and emails are sent.'
             }
           >
             {(p) => (

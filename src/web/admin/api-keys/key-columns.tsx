@@ -20,10 +20,10 @@ export interface KeyColumnsOptions {
   onRevoke: (key: ApiKey) => void;
 }
 
-/** Name (no detail page: plain strong text), org, scopes, created by, last used, status, actions. */
-/** What the list shows of a key: `wlt_` and the prefix, with `test_` between for a Test key. The key itself is unchanged. */
-export const keyPrefix = (k: Pick<ApiKey, 'prefix' | 'mode'>) =>
-  `wlt_${k.mode === 'test' ? 'test_' : ''}${k.prefix}`;
+/** What the list shows of a key: `wlt_` and the prefix, the start of every secret it issues. */
+export const keyPrefix = (k: Pick<ApiKey, 'prefix'>) => `wlt_${k.prefix}`;
+
+/** Name (no detail page: plain strong text), mode, org, scopes, created by, last used, status, actions. */
 
 export function keyColumns({
   orgName,
@@ -49,15 +49,23 @@ export function keyColumns({
               <KeyRound />
             </span>
             <div className="min-w-0">
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate font-medium text-fg-strong">{k.name}</span>
-                <ModePill mode={k.mode} />
-              </span>
+              <span className="block truncate font-medium text-fg-strong">{k.name}</span>
               <code className="block truncate font-mono text-xs text-fg-muted">{keyPrefix(k)}</code>
             </div>
           </div>
         );
       },
+    },
+    {
+      header: 'Mode',
+      id: 'mode',
+      meta: { nowrap: true },
+      cell: ({ row }) =>
+        row.original.mode === 'test' ? (
+          <ModePill mode="test" />
+        ) : (
+          <span className="text-fg-muted">Live</span>
+        ),
     },
     {
       header: 'Organization',
