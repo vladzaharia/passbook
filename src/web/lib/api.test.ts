@@ -142,7 +142,7 @@ describe('api client', () => {
     });
     const error = (await api.get('/x', Item).catch((e: unknown) => e)) as ApiError;
     expect(error).toMatchObject({ status: 0, code: 'network' });
-    expect(errorMessage(error)).toMatch(/network/i);
+    expect(errorMessage(error)).toMatch(/reach PassBook/);
   });
 
   it('rethrows aborts untouched', async () => {

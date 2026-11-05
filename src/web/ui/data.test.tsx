@@ -15,7 +15,7 @@ import { FileDrop } from './file-drop.tsx';
 import { KeyValue } from './key-value.tsx';
 import { PageHeader } from './page-header.tsx';
 import { LoadMore } from './pagination.tsx';
-import { SkeletonRows } from './skeleton.tsx';
+import { SkeletonDetail, SkeletonRows } from './skeleton.tsx';
 import { Timeline } from './timeline.tsx';
 import { TooltipProvider } from './tooltip.tsx';
 
@@ -154,6 +154,54 @@ describe('DataTable', () => {
   });
 });
 
+describe('DataTable stacked rows', () => {
+  it('keeps the stackLead column as a 44 px leading control instead of dropping it', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('max-width: 767.98px'),
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    const onRowClick = vi.fn();
+    const columns: ColumnDef<Row, never>[] = [
+      {
+        id: 'select',
+        header: 'Select',
+        cell: () => <input type="checkbox" aria-label="Select row" />,
+        meta: { stackHidden: true, stackLead: true },
+      },
+      ...COLUMNS,
+    ];
+    render(
+      <DataTable
+        caption="Passes"
+        columns={columns}
+        data={ROWS}
+        getRowId={(r) => r.id}
+        onRowClick={onRowClick}
+      />,
+    );
+    const boxes = screen.getAllByRole('checkbox', { name: 'Select row' });
+    expect(boxes).toHaveLength(3);
+    expect(boxes[0]?.parentElement).toHaveClass('size-11');
+    fireEvent.click(boxes[0] as HTMLElement);
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+});
+
+describe('SkeletonDetail', () => {
+  it('puts the aside where TwoPane does, unless the media leads', () => {
+    const order = (media?: 'start') => {
+      const { container, unmount } = render(<SkeletonDetail {...(media ? { media } : {})} />);
+      const grid = container.querySelector('.grid') as HTMLElement;
+      const first = grid.firstElementChild as HTMLElement;
+      unmount();
+      return first.className.includes('aspect-[3/4]');
+    };
+    expect(order()).toBe(false);
+    expect(order('start')).toBe(true);
+  });
+});
+
 describe('LoadMore', () => {
   it('shows the button only when more is available', async () => {
     const user = userEvent.setup();
@@ -230,6 +278,19 @@ describe('states', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('ErrorState leads with what failed and keeps the code under Details', () => {
+    render(
+      <ErrorState
+        subject="messages"
+        error={new ApiError({ status: 500, code: 'server_error', requestId: 'req-1' })}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Could not load messages.Something went wrong. Try again.',
+    );
+    expect(screen.getByText('Code server_error')).toBeInTheDocument();
   });
 
   it('EmptyState seats a curious buddy with the entity art; inline shows the art alone', () => {

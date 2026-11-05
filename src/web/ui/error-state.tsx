@@ -14,6 +14,8 @@ export interface ErrorStateProps {
   error?: unknown;
   /** One sentence: what happened and what to do. Defaults to the error's message. */
   title?: string;
+  /** What failed to load ("messages"): "Could not load messages." leads, the error's message follows. */
+  subject?: string;
   /** May return a promise (refetch); the button shows the RefreshCw verb meanwhile. */
   onRetry?: () => unknown;
   retryLabel?: string;
@@ -42,6 +44,7 @@ export function isChunkLoadError(error: unknown): boolean {
 export function ErrorState({
   error,
   title,
+  subject,
   onRetry,
   retryLabel = STATE_COPY.retry,
   action,
@@ -51,6 +54,7 @@ export function ErrorState({
   const inCard = useInCard();
   const inline = inlineProp ?? inCard;
   const requestId = isApiError(error) ? error.requestId : undefined;
+  const code = isApiError(error) ? error.code : undefined;
   const [retrying, setRetrying] = useState(false);
   // Each Retry sends the buddy back to the plug.
   const [tries, setTries] = useState(0);
@@ -109,7 +113,14 @@ export function ErrorState({
         )}
       >
         <p role="alert" className="max-w-[65ch] text-sm text-fg-strong">
-          {title ?? errorMessage(error)}
+          {subject ? (
+            <>
+              <span className="block font-medium">Could not load {subject}.</span>
+              {title ?? errorMessage(error)}
+            </>
+          ) : (
+            (title ?? errorMessage(error))
+          )}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {onRetry ? (
@@ -125,7 +136,7 @@ export function ErrorState({
             </Button>
           ) : null}
           {action}
-          {requestId ? (
+          {requestId || code ? (
             <details className="group text-xs text-fg-muted">
               <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-sm px-1 hover:text-fg-strong pointer-coarse:min-h-11 [&::-webkit-details-marker]:hidden">
                 <ChevronRight
@@ -134,7 +145,10 @@ export function ErrorState({
                 />
                 Details
               </summary>
-              <p className="px-1 font-mono text-xs text-fg-muted">Request {requestId}</p>
+              <p className="flex flex-col px-1 font-mono text-xs text-fg-muted">
+                {code ? <span>Code {code}</span> : null}
+                {requestId ? <span>Request {requestId}</span> : null}
+              </p>
             </details>
           ) : null}
         </div>
