@@ -1,0 +1,130 @@
+{
+  "v": 1,
+  "holder": "{{memberName}}",
+  "photo": {
+    "minRole": "door"
+  },
+  "header": {
+    "chips": [
+      {
+        "id": "c_plan",
+        "text": "{{access.plan}}",
+        "tone": "violet",
+        "icon": "infinity"
+      }
+    ]
+  },
+  "variants": [
+    {
+      "id": "timed",
+      "name": "Timed",
+      "when": {
+        "path": "access.kind",
+        "eq": "timed"
+      },
+      "header": {
+        "chips": [
+          {
+            "id": "c_timed",
+            "text": "{{access.plan}}",
+            "tone": "teal",
+            "icon": "clock"
+          }
+        ]
+      }
+    },
+    {
+      "id": "guest",
+      "name": "Guest",
+      "when": {
+        "path": "access.kind",
+        "eq": "guest"
+      },
+      "header": {
+        "chips": [
+          {
+            "id": "c_guest",
+            "text": "{{access.plan}}",
+            "tone": "gold",
+            "icon": "ticket"
+          }
+        ]
+      }
+    }
+  ],
+  "panels": [
+    {
+      "id": "p_visits",
+      "preset": {
+        "id": "membership",
+        "v": 1
+      },
+      "title": "Visits",
+      "icon": "door-open",
+      "rows": [
+        {
+          "id": "r_member",
+          "type": "columns",
+          "when": {
+            "not": {
+              "path": "access.kind",
+              "eq": "guest"
+            }
+          },
+          "items": [
+            {
+              "id": "i_month",
+              "label": "This month",
+              "value": {
+                "count": "{{history.visits.month}}",
+                "one": "# visit",
+                "other": "# visits",
+                "zero": "First visit"
+              }
+            },
+            {
+              "id": "i_last",
+              "label": "Last visit",
+              "value": "{{history.lastVisit.at|ago}}"
+            }
+          ]
+        },
+        {
+          "id": "r_guest",
+          "type": "columns",
+          "when": {
+            "path": "access.kind",
+            "eq": "guest"
+          },
+          "items": [
+            {
+              "id": "i_left",
+              "label": "Visits left",
+              "value": "{{access.visits.left}} of {{access.visits.limit}}"
+            },
+            {
+              "id": "i_until",
+              "label": "Until",
+              "value": "{{access.until|time}}"
+            }
+          ]
+        },
+        {
+          "id": "r_sponsor",
+          "type": "field",
+          "label": "Guest of",
+          "value": "{{inputs.sponsor}}",
+          "whenEmpty": "hide",
+          "minRole": "desk"
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "refused": "Ask at the front desk."
+  },
+  "customer": {
+    "chips": ["c_plan", "c_timed", "c_guest"],
+    "panel": null
+  }
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ScanDisplaySchema } from '../../../shared/contracts/scan-display.ts';
+import accessCard from './access-card.fixture.json' with { type: 'json' };
 import { SCAN_ICONS } from './icons.ts';
 import { ScanDisplayDocSchema } from './schema.ts';
 
@@ -261,8 +262,45 @@ describe('ScanDisplayDocSchema', () => {
     expect(nested.success).toBe(false);
   });
 
+  it('takes a range on daysFromNow, one lower and one upper bound at most (DM 3.2)', () => {
+    const doc = (daysFromNow: unknown) => ({
+      v: 1,
+      header: {},
+      panels: [
+        {
+          id: 'p',
+          preset: { id: 'note', v: 1 },
+          when: { path: 'pass.validUntil', daysFromNow },
+          rows: [{ id: 'r', type: 'note', text: 'Soon.' }],
+        },
+      ],
+    });
+    expect(ScanDisplayDocSchema.safeParse(doc({ gte: 0, lte: 30 })).success).toBe(true);
+    expect(ScanDisplayDocSchema.safeParse(doc({ lte: 14 })).success).toBe(true);
+    expect(ScanDisplayDocSchema.safeParse(doc({})).success).toBe(false);
+    expect(ScanDisplayDocSchema.safeParse(doc({ gt: 0, gte: 1 })).success).toBe(false);
+    expect(ScanDisplayDocSchema.safeParse(doc({ lt: 5, lte: 6 })).success).toBe(false);
+  });
+
+  it('parses the Access card with its customer block', () => {
+    const result = ScanDisplayDocSchema.safeParse(accessCard);
+    expect(result.error?.issues).toBeUndefined();
+    expect(result.data?.customer?.chips).toEqual(['c_plan', 'c_timed', 'c_guest']);
+  });
+
+  it('caps customer chips at 18 and refuses an unknown customer key', () => {
+    const doc = (customer: unknown) =>
+      ScanDisplayDocSchema.safeParse({ v: 1, header: {}, customer });
+    expect(doc({ chips: ids(18, 'c') }).success).toBe(true);
+    expect(doc({ chips: ids(19, 'c') }).success).toBe(false);
+    expect(doc({ greet: false, chips: [], panel: null }).success).toBe(true);
+    expect(doc({ color: 'red' }).success).toBe(false);
+  });
+
   it('refuses a verdict icon outside the curated set', () => {
-    expect(SCAN_ICONS).toHaveLength(40);
+    expect(SCAN_ICONS).toHaveLength(42);
+    expect(SCAN_ICONS).toContain('infinity');
+    expect(SCAN_ICONS).toContain('clock');
     expect(SCAN_ICONS).not.toContain('check');
     const result = ScanDisplayDocSchema.safeParse({ v: 1, header: { icon: 'check' } });
     expect(result.success).toBe(false);

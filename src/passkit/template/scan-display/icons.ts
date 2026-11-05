@@ -40,6 +40,8 @@ export const SCAN_ICONS = [
   'info',
   'hand',
   'calendar',
+  'infinity',
+  'clock',
 ] as const;
 
 export type ScanIconId = (typeof SCAN_ICONS)[number];

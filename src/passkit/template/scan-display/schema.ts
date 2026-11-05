@@ -56,7 +56,12 @@ const DaysOps = z
     lt: NumberOp.optional(),
     lte: NumberOp.optional(),
   })
-  .refine((v) => Object.keys(v).length === 1, 'Use one comparison.');
+  .refine((v) => {
+    const keys = Object.keys(v);
+    const lower = keys.filter((k) => k === 'gt' || k === 'gte').length;
+    const upper = keys.filter((k) => k === 'lt' || k === 'lte').length;
+    return keys.length > 0 && lower <= 1 && upper <= 1;
+  }, 'Use one lower and one upper bound at most.');
 
 export type ScanCond =
   | {
@@ -259,6 +264,18 @@ export const ScanDisplayDocSchema = z.strictObject({
   header: HeaderSchema,
   variants: z.array(ScanVariantSchema).max(8).optional(),
   panels: z.array(ScanPanelDocSchema).max(6).optional(),
+  /**
+   * What a customer-facing screen shows. `chips` and `panel` are ids from this document; the
+   * validator checks they exist, the per-header cap (2) and the allowed rows. 18 is 2 chips for
+   * the base header and each of 8 variants.
+   */
+  customer: z
+    .strictObject({
+      greet: z.boolean().optional(),
+      chips: z.array(IdSchema).max(18).optional(),
+      panel: IdSchema.nullable().optional(),
+    })
+    .optional(),
   notes: z
     .strictObject({
       staff: ScanTextSchema.nullable().optional(),
