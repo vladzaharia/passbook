@@ -1,5 +1,12 @@
 # Stations: scanners, customer screens and desk monitors
 
+> **Superseded in part 2026-11-05, later** (desk overrides, SA §20.9 wins): S8 and the read-only monitor hold only by
+> default. A Desk monitor with **Desk actions** on and a staff member signed in by PIN may override soft refusals and
+> in/out holds of scanners in its watch and mark people out, through three routes (`/scan/overrides`, `/scan/mark-out`,
+> `/scan/staff`); the hub gains `resolved` (to the refusing device) and `ScanCustomerView.replaces`. Customer screens
+> still never act. Monitor rows gain `places` with revisions for an ordered **In now**. The who's-inside list
+> (names, photos) needs Desk actions; a read-only monitor shows counts only (review, SA §20.9).
+
 > **Folded 2026-11-05** into SA §18, DM §11, SD §16, BM §17 and the plan (§5.11, M3A); those win. Changes made in
 > the fold: the column is `device_role` / `deviceRole` (not `role`); the guard refuses screens after the rate limits
 > (SA §2.5 step 4); the hub is declared in wrangler's `exports`, not `migrations`; `customer.chips` is ≤ 2 per header

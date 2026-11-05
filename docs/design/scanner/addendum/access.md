@@ -1,5 +1,11 @@
 # Access card: blueprint, zones and access types
 
+> **Superseded in part 2026-11-05, later** (occupancy, SA §20 wins): X7 and §1.2's "Why not anti-passback" no longer
+> hold. The owner asked for "next entry only allowed after a tap out is recorded", so zones offer **Track who's
+> inside** and **Require tap out**, both off by default (SA D38). X7's reason still stands for a one-phone desk, which
+> a **Both** scanner on Auto answers. The re-entry wait stays. Capacity (`capacity_full`) is now exact and Manager-only;
+> the desk can override the soft refusals from a monitor (SA §20.9).
+
 > **Folded 2026-11-05** into SA §19, DM §11, SD §17, BM §6.1 and the plan (§5.12, §5.15, M2A); those win. The
 > package's chip ids now match §4.4 (`c_plan`, `c_timed`, `c_guest`; `check-package.mjs` passes); e2e is
 > `16-scan-access`; Phase 0 changes: `p0-amendments.md`.

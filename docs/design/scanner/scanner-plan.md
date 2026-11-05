@@ -41,9 +41,22 @@ How to build PassBook's scanner. Written for engineers who have only this file a
 >   (§4.1). New e2e `16-scan-access`, `16-scan-stations` (§9); the definition of done gains stations and access (§10).
 > - Sources: SA §18-19 (with `addendum/{stations,access,cloudflare-realtime}.md` as detail), SD §16-17, DM §11, BM §17.
 
+> **Revision 2026-11-05, later** (the owner's occupancy and desk overrides):
+> - **Phase 0 takes two more items** (**P0.9**, P0A P0-9 and P0-10): `scans.actor_type` `system` and `scans.method`
+>   `auto` in `0014`, and the reasons `still_inside`, `not_inside` with their copy. OC's P0-11 to P0-14 land later,
+>   additively.
+> - **New stream OC** (occupancy core, overrides, auto tap-out, the pass's occupancy card) and owned additions to SV,
+>   AX, ST, SC, DS, UI, CD, MN, BU, AD and IN (§3, §5.17). No file has two owners.
+> - **New milestone M3B Occupancy**, after M2A and M3A, in the release (§1.2). M3's "re-entry and check-out" moves into
+>   OC.1 so events and zones get one implementation; event capacity becomes exact there.
+> - **Migrations:** `0014` amended (P0.9); `0020_scan_access.sql` extended by AX.1 (SA §20.13), no `0021` (§7).
+> - New frozen contracts C26-C28 (§4.1); e2e `16-scan-occupancy` (§9); the definition of done gains M3B (§10); three
+>   owner questions (§11).
+> - Sources: SA §20 (detail `addendum/occupancy/occupancy.md`, **OC**), SD §18, DM §12, BM §6.1, §6.8.
+
 **Base.** Branch `next/integration` (HEAD `237b4ce`, n6 and n7 already merged). Every path is relative to the repo
-root. The design docs live in `docs/design/scanner/` (copied there by task P0.7). Every later reference to a doc in
-this plan means that copy.
+root. The design docs live in `docs/design/scanner/` (the scanner design folder). Copy them into the repo with
+task P0.7, so engineers can read them there.
 
 **Sources, and which one wins.**
 
@@ -60,7 +73,8 @@ this plan means that copy.
 | R | `research/scanning/report.md` | background; its critic block overrides its body |
 | ME, UC, UP | `docs/design/{motion-and-expression,ui-consistency,ux-principles}.md` | platform design rules |
 | ST, AX, RT | `addendum/{stations,access,cloudflare-realtime}.md` | the detail behind SA §18-19 (SA wins where they differ) |
-| P0A | `addendum/p0-amendments.md` | the exact Phase 0 changes for stations and access (P0.8) |
+| P0A | `addendum/p0-amendments.md` | the exact Phase 0 changes for stations and access (P0.8) and occupancy (P0.9) |
+| OC | `addendum/occupancy/occupancy.md`, `addendum/occupancy/gen/occupancy{,.test}.mjs` | the detail and reference code behind SA §20 (SA wins where they differ) |
 
 SA beats SD on data and behaviour. SD beats SA on what people see. DM and BF are detail references under SA and SD:
 DM for result content, BF for result visuals. **This plan beats both on file ownership, order,
@@ -113,21 +127,22 @@ Ship a first-class scanner on one Worker:
   next scan without a reissue.
 - **NFC (Apple VAS)**: built end to end and switched off.
 
-### 1.2 Now: this wave, in five milestones
+### 1.2 Now: this wave, in five milestones plus M2A, M3A and M3B
 
 | Milestone | Scope | Exit (demonstrated by e2e plus a device run) |
 | --- | --- | --- |
 | **M1 Door** | P0; migration `0014`; scanners, pairing, pair here, revoke, mode, sample pass; events (window, match, capacity); resolve; `check_in` with gates and the fast path; lookup by name, email and code; ledger and counts; scanner asset route; **the display**: model, validator, renderer, presets, defaults, role filter, history and the server display on every card and outcome; the `/scan` document: session, pairing, reducer with the card layer, wedge, manual entry, camera and zxing decoder, the B shell (capsule, tint and ring, dock), the result card and display painter, recent scans and undo of check-ins, v1 "Not confirmed" retries, sound, the buddy on the dock with poses and result beats; console tabs Scanners, Events (with the staff note) and Scans; blueprints switched to the scan code and shipped with displays | A phone paired from the console checks in a ticket from a template made with **Use blueprint** and shows its Ticket panel; a template with no display shows its Details default. Two doors can't admit the same ticket twice. A test pass is refused on a live scanner. `16-scan-door`, `16-scan-pair` and the M1 part of `16-scan-display` are green |
 | **M2 Desk** | `add`, `take`, `set`, `use_up` through the `commit` hook; undo for every kind; staff with PINs, sign-in and Manager approval; template `scan` manifest, validator and designer **Scanning** section; desk panel, action area, keypad (dock tray on a phone), review, ready action and the promoted **Redeem reward**; display-only versions (`build_key`); the designer's **Scan screen** mode | A desk adds a stamp, redeems a reward and undoes it. A Manager PIN approves a `set`. An admin builds the VIP display in the designer, saves, and the next scan shows it with no pass version. `16-scan-desk`, `16-scan-designer` and `16-scan-display` are green |
-| **M3 Door depth** | re-entry and check-out, bundle check-in, live event dashboard, summaries, milestones (`count`, `all_in`, `reward`), shift summary with the `count` scene, metrics and overview, `GET /api/v1/scans` feed and CSV, broadcast and pass-list scan targets, Sync log filter, terminals (till tokens), admin buddy moments, the designer's real-pass sample (`/api/v1/scan-display/preview`) | The dashboard updates every 5 s. Overview cards show scans. `16-scan-admin` is green |
+| **M3 Door depth** | bundle check-in (re-entry and check-out moved to M3B), live event dashboard, summaries, milestones (`count`, `all_in`, `reward`), shift summary with the `count` scene, metrics and overview, `GET /api/v1/scans` feed and CSV, broadcast and pass-list scan targets, Sync log filter, terminals (till tokens), admin buddy moments, the designer's real-pass sample (`/api/v1/scan-display/preview`) | The dashboard updates every 5 s. Overview cards show scans. `16-scan-admin` is green |
 | **M4 NFC (off)** | manifest `nfc`, `vas_keys`, five build gates, `nfc` injection, scoped reissue, serial rule, identity NFC card, reader keys made in the browser, Test a reader, designer **NFC** section, Settings switch, NFC runbook | Every gate is tested. The flag is off in every environment. A wedge read typed with `reader: 'nfc'` checks in as `method: 'nfc'` |
 | **M5 Offline** | v2: roster, local decide, IndexedDB queue, batch sync, conflicts. v3: a `/scan` service worker for an offline cold start | An offline event scanner checks in from the roster. Its queue syncs, and conflicts show without interrupting the door |
-
 | **M2A Access** | after M2 (Manager approvals for **Let in anyway**, the designer's Scanning section). `0020`; the pure access rules with the ported 24-case suite and the DST, zone, guest and gate tests; zones service and routes; scanner **Checks**; org time zone; the access steps 10a-10e and the gate in resolve and act; `overrideOf` widening; visits history; the `access` scope root and `PassScope.access`; the Zones tab, the designer's Access section, the pass widgets and the Access card on pass detail; the **Access card** blueprint with art and display; the `gate` beat; access results on the scanner | A gym morning on a test clock: a 24/7 member, an Off-peak member and a 2-visit guest at a Pool door and a Gym door get granted, outside hours, not in plan, visits used and suspended, once each; a Manager PIN lets one in; re-entry inside the gap shows **Access granted** again and counts one visit. `16-scan-access` is green |
 | **M3A Stations** | after M2 (desk `ready` and review feed the customer's **Hi, Sam** and **To pay**). `0019`; device roles and stations in the console (Devices tab, Add device, station settings, pairing a screen); `ScanHub`, the live routes, catch-up and snapshot; publish from resolve, act and undo; the customer renderer; the Customer screen and Desk monitor faces; the device flip and PIN unlock; zone watches once M2A is in | A phone flipped to a Customer screen shows a stamp within 300 ms of the scan locally; a monitor shows three scans in order, then both scans made while its socket was down; revoking a screen shows its block panel within 2 s. `16-scan-stations` is green |
+| **M3B Occupancy** | after M2A (zones, `0020`) and M3A (monitors, the hub). The in/out state on zones and events (event re-entry and check-out, from M3), step 9a and the exit path, exact capacity, nested zones, auto tap-out (`scan.occupancy`), In now with revisions, who's inside, Mark as out; desk overrides with the widened guard, staff sign-in on monitors, `resolved` and `replaces`, Undo and reasons; the direction chip and sheet, the in/out results, `bye` and `relent`; zone Occupancy settings, scanner Direction, monitor Desk actions, the pass's where-now card and trail | A gym evening on a test clock: Gym (Require tap out, 60) and Pool (Track, capacity 2); a Both phone at the desk taps in and out by Auto, a double scan is held; **Already in** at the In door; the monitor lets them in with one tap and the door's card and Customer screen turn green; Pool full and a Manager PIN; Mark as out; max stay taps out after 12 h. `16-scan-occupancy` is green |
 
-**Release** needs M1 to M4, M2A and M3A. M5 follows and doesn't block it. M2A and M3A run in parallel with M3 and M4;
-M3A's zone watch is hidden until M2A merges (`scans.zone_id` exists).
+**Release** needs M1 to M4, M2A, M3A and M3B. M5 follows and doesn't block it. M2A and M3A run in parallel with M3 and M4;
+M3A's zone watch is hidden until M2A merges (`scans.zone_id` exists). M3B starts when both M2A and M3A have merged
+(OC.1's pure rules and repo may start after M2A).
 
 ### 1.3 Later (not this wave)
 
@@ -471,6 +486,20 @@ routers are mounted but empty.
   the customer block in place; `npm run check` is green. If P0.1-P0.4 are already committed, one commit per item on
   `next/n8-p0` before the merge.
 
+**P0.9 Occupancy amendments** (2026-11-05 later; `addendum/p0-amendments.md` P0-9 and P0-10, the source of truth)
+- **Files:** `migrations/0014_scan.sql`, `test/migrations.test.ts`; `src/shared/contracts/scan.ts`,
+  `src/shared/copy/scan.ts` and their tests.
+- **Build:** `scans.actor_type` CHECK + `'system'`; `scans.method` CHECK + `'auto'`; `SCAN_HEADS_UP_REASONS` +
+  `still_inside`, `not_inside` with one default line each (P0A P0-10; the variants, including zones' **{zone} full**,
+  come with OC.1). `capacity_full`'s copy is unchanged.
+- **Tests first:** a `system`/`auto` scans row inserts and `'robot'` fails; the "every reason has a line" test covers the
+  two; their placeholders are only `time` and `scanner`.
+- **Done when:** `npm run check` is green. Two commits on `next/n8-p0` before the merge:
+  `feat(scan): system scans for occupancy in 0014`, `feat(scan): occupancy reasons and copy`.
+- **Not in P0** (additive later, P0A): `ScannerSettings.direction` (OC.1), `ScanOutcome.occupancy` /
+  `ScanCard.occupancy` / `ScanCounts.place` (OC.1), the action copy keys (OC.1), the guard's `screenActions` option
+  (SV.11).
+
 **P0 exit:** `npm run check` is green, `0014` applies, and the contracts, the client types and the routers exist.
 Every stream can start.
 
@@ -478,7 +507,7 @@ Every stream can start.
 
 ## 3. Workstreams and owned paths
 
-Nine streams run in parallel after P0 (fourteen with the 2026-11-05 streams below). No two streams own the same file, and no file is a shared touch of two
+Nine streams run in parallel after P0 (fifteen with the 2026-11-05 streams below, OC included). No two streams own the same file, and no file is a shared touch of two
 streams. Unlisted files belong to their usual `AGENTS.md` owner, and need a request.
 
 | Stream | Owns (after P0) | Shared touches (additive, reported) |
@@ -521,6 +550,33 @@ Changes to existing ownership, so no file has two owners:
   validation in `passes/service.ts`.
 - **BU** owns the `gate` beat and the customer and monitor buddy seats (`src/web/scan/buddy/**`).
 - **IN** owns `e2e/16-scan-{access,stations}.spec.ts`, `e2e/helpers/scan-live.ts` and the binding.
+
+**Added 2026-11-05 later: occupancy and desk overrides.** One more stream. Paths are new.
+
+| Stream | Owns | Shared touches (additive, reported) |
+| --- | --- | --- |
+| **OC** occupancy | `src/worker/modules/scan/occupancy/**` (`rules`, `repo`, `service`, `jobs`, `inside` and tests); `src/worker/modules/scan/{routes-overrides,routes-occupancy}.ts`; `src/shared/contracts/scan-occupancy.ts`; `src/web/admin/passes/detail/occupancy-card.tsx` (i registers it) | `src/worker/jobs/cron.ts` registration of `scan.occupancy` (IN applies); the pass detail page's card slot and `sync-model.ts` trail kinds (i, n1; AD makes the trail rows in AD.11); the org time zone save calling `recomputeDue(orgId)` in `modules/orgs` (g makes it, on request, like the suspend hook) |
+
+Changes to existing ownership for occupancy (each stream builds its part; §5.17):
+- **SV** owns every occupancy call from its files: step 9a and the exit path in `resolve.ts` and `act.ts`, the override
+  widening in `rules.ts`, undo groups in `undo.ts`, the `screenActions` guard option and monitor staff sign-in in
+  `guard.ts`, `staff-session.ts` and `routes.ts`. OC exports functions; SV calls them.
+- **AX** owns `0020` as extended (it writes the whole file), the zone settings in `zones.ts`, `repo-zones.ts`,
+  `contracts/access.ts`, and the zone dialog's **Occupancy** section and Zones columns in `src/web/admin/scanning/zones/**`.
+- **ST** owns `places`, `resolved`, `replaces`, the `dev:` target and snapshot counts in `live/**` and
+  `contracts/scan-live.ts`, and `ScreenSettingsSchema.actions`.
+- **SC** owns `direction` validation, `screen.actions`, and `ScanRecord.outCause`, `.overrideNote`, `.occupancy` and
+  the list filters in its files.
+- **DS** owns the `occupancy` scope root and the `duration` filter (`scope.ts`, `format.ts`).
+- **UI** owns the direction chip, the Direction sheet, the band pill, the in/out results and docks, and the turn in
+  place, in `src/web/scan/{ui,result}/**`.
+- **CD** owns the customer exit, holds and the `replaces` swap in `src/web/scan/customer/**`.
+- **MN** owns **In now**, **Inside**, **Let in**, the Manager PIN card, the staff chip and sign-in, and the toast in
+  `src/web/scan/monitor/**`.
+- **BU** owns `bye`, `relent`, the beat-map rows and the monitor `nod`.
+- **AD** owns scanner **Direction** and monitor **Desk actions** in `devices/**`, the Scans tab filters and the
+  in/out trail rows (`sync-model.ts` shared touch, n1).
+- **IN** owns `e2e/16-scan-occupancy.spec.ts` and the cron registration.
 
 Cross-stream imports for the new streams go one way: `src/passkit/template/access/**` imports nothing from `src/worker`
 or `src/web`; `modules/scan/live/**` imports SV's types, never its services; CD and MN import ST's `src/web/scan/live/**`
@@ -578,6 +634,9 @@ painter, so it follows the direction with no TD change.
 | C23 | Customer render: `renderCustomerView(doc, scope, opts) → ScanCustomerView`, `customerIssues(doc)`, `defaultCustomer(doc)` | `src/passkit/template/scan-display/customer.ts` | DS.6 | ST, TD |
 | C24 | Access rules: `decide(input) → Decision`, `accessScope(manifest, inputs, zones, tz, createdAt)`, `hoursText`, `zonesText`, `accessIssues(manifest, { zones? })`; server `accessCheck(ctx, actor, pass, manifest)`, `accessGateStatement(...)` | `src/passkit/template/access/index.ts`, `modules/scan/access.ts` | AX.1 (pure), AX.2 (server; stubbed in AX.1) | SV, PT, DS, TD |
 | C25 | Access contracts: `ScanZoneSchema` and friends, `ScannerZonesSchema`, `PassAccessSchema`, `WeeklyHoursSchema` | `src/shared/contracts/access.ts` | AX.1 | SC, AD, i, d |
+| C26 | Occupancy wire: `ScanOccupancySchema`, `ScannerSettings.direction`, `ScanOutcome.occupancy`, `ScanCard.occupancy`, `ScanCounts.place` (additive in `scan.ts`); `scan-occupancy.ts` (`ScanInsideRow`, `ScanInsideList`, `ScanOverrideRequest`, `ScanMarkOutRequest`, `OVERRIDE_NOTES`); the live additions (`places`, `resolved`, `replaces`, `screen.actions`) | `src/shared/contracts/{scan,scan-occupancy,scan-live}.ts` | OC.1 (ST's live fields in ST.6) | SV, ST, SC, UI, CD, MN, AD, DS |
+| C27 | Occupancy rules: `placeOf(actor)`, `direction(state, settings, explicit, now)`, `entryPlan(...)`, `entryReason(lossRead)`, `dueAt(zone, since, tz)`; server `occupancyStatements(ctx, actor, pass, plan)`, `exitStatements(...)`, `overrideCheck(ctx, actor, overrideOf)`, `markOut(...)` | `modules/scan/occupancy/{rules,service}.ts` | OC.1 (stubs first) | SV, AX, ST |
+| C28 | Live override hooks: `publishResolved(ctx, original, outcome, by)`, customer body with `replaces`; `places[]` on every monitor row | `modules/scan/live/publish.ts` | ST.6 | SV, OC |
 
 **Changing a frozen contract.**
 1. Open a PR against `next/integration` that changes only the contract file and its tests.
@@ -692,12 +751,12 @@ under 300 lines.
   - the act algorithm of SA §8.4: claim `INSERT … ON CONFLICT DO NOTHING`, the replay rules of SA §7.2, resolve,
     policy, gate, effect and finalize;
   - the gate UPSERT of SA §7.3 for `once`, `daily` and `always`, with scope `event:<id>` or `day:<date>` in the venue
-    time zone, and `in`/`out` for re-entry;
+    time zone (`in`/`out` for re-entry moved to OC.1, 2026-11-05 later);
   - the **check-in fast path**, one batch: gate, then finalize under `WHERE EXISTS`, then a ledger insert under the
     same `EXISTS`;
   - `letInAgain` overrides through `overrideOf`, validated per SA §2.6 (same org, mode, pass, action and
     `actor_key`; a `heads_up` row with an overridable reason; ≤ 10 min; not overridden yet; else 422
-    `SCAN_OVERRIDE_INVALID`); capacity (`capacity_full`, a soft limit);
+    `SCAN_OVERRIDE_INVALID`); capacity (`capacity_full`, a soft limit until OC.1 makes it exact and Manager-only);
   - counts: `today` and event `{ arrived, inside, expected, capacity }`, with `expected` cached in the row for 60 s;
   - server-decided milestones `count` (each multiple of 100 crossed by this increment) and `all_in`;
   - ledger kinds per SA §8.5; `writeEvent('scan.result')`; both never throw;
@@ -786,9 +845,10 @@ under 300 lines.
   - a connection sync after a scan does not undo it.
 - **Done when:** M2 desk flows work through the API.
 
-**SV.6 Undo** (check-in and check-out in M1, needs SV.2; the value kinds in M2, needs SV.5)
+**SV.6 Undo** (check-in in M1, needs SV.2; the value kinds in M2, needs SV.5; check-out moved to OC.1)
 - M1 is required: `16-scan-door`, AD.4 and SC.4's console undo all undo a check-in in M1. Land `undo.ts` with the
-  `check_in`/`check_out` rows first (SV.6a), then add the value rows (SV.6b).
+  `check_in` rows first (SV.6a), then add the value rows (SV.6b). Undo of an exit and of an override group is OC.1's
+  (SV.11 wires it).
 - **Files:** `undo.ts`, `routes.ts` (`POST /scans/{scanId}/undo`).
 - **Build:**
   - SA §7.4's undo table: a new scan row (`action_kind 'undo'`), `scan.undone`, silent;
@@ -800,7 +860,7 @@ under 300 lines.
   - undo of each kind;
   - an undo racing a new scan gives `UNDO_SUPERSEDED`;
   - the window edges;
-  - undo of check-out returns to `in`;
+  - (undo of an exit returns to `in`: OC.1);
   - `use_up` undo unvoids only if not removed.
 - **Done when:** the M2 exit criteria pass through the API.
 
@@ -1939,6 +1999,79 @@ SD §16.3 is the spec; `addendum/ux.md` §3 the sizes; `addendum/sheets/ux-monit
 | **TD.8 Access outline entry** | TD | M2A | AX.4 | registers **Access** after Scanning in `outline.ts` and routes its ops to AX's reducer (under 20 lines) |
 | **IN.6 Binding and specs** | IN | M3A, M2A | ST.1 | `wrangler.jsonc` `SCAN_HUB` binding and `exports` entry, `src/worker/index.ts` export, `npm run gen`, `tools/wrangler-config.test.ts`; `e2e/helpers/scan-live.ts` (two contexts, pair a screen, wait for `data-ref`); specs `16-scan-access` (M2A) and `16-scan-stations` (M3A) |
 
+
+### 5.17 OC: occupancy and desk overrides (M3B)
+
+SA §20 is the spec; OC §1-§6 the detail; `addendum/occupancy/gen/occupancy.mjs` and its 23 tests the reference code
+(every D1 statement and the pure rules). Review 2026-11-05, latest: per-reason waivers, implied capacity, due rows
+read as out, zone changes clear their subtree, all-or-nothing undo (SA top note); the tasks below include them. SD §18, DM §12 and BM §6.1, §6.8 are the faces.
+
+**OC.1 Occupancy core** (M3B; needs AX.1 (0020 as extended), SV.10, P0.9)
+- **Files:** `modules/scan/occupancy/{rules,repo,service}.ts` and tests; `contracts/scan-occupancy.ts`; the additive
+  C26 fields in `contracts/scan.ts` and the action copy keys in `copy/scan.ts` (through the §4.1 contract PR).
+- **Build:** port `gen/occupancy.mjs` 1:1: `placeOf`, `direction` (Auto, the 2-minute hold, pins), `entryPlan`,
+  `entryReason`, `dueAt`; ENTER, ENTER_IMPLIED, EXIT, EXIT_BELOW, VISIT (AX's gate inside ENTER), REV, COUNTS,
+  LOSS_READ; event re-entry and check-out on the same statements (from M3); exact capacity for zones and events,
+  implied ancestors included (`ENTER_WITH(k)`, `fullAt`); waivers per reason (`WAIVE_*`, bound from `scanPolicy`);
+  due rows read as out (`liveIn`); children out on any re-entry over an `in` row; undo of exits and override groups
+  under one all-or-nothing guard (`prev_*`, `due_at` recompute, visit decrement, `REV_UNDO`); ledger `data.*`;
+  `ScanOutcome.occupancy` and `ScanCard.occupancy`; `SCANNER_DIRECTION_NO_PLACE`, `ZONE_CLEAR_NEEDS_TZ` and
+  `ZONE_ENFORCE_NEEDS_END` rules, `clearZone(zoneId)` (subtree `due_at = now`) and `recomputeDue(orgId, rootId?)` as
+  functions SC, AX and g call.
+- **Tests first:** the reference suite ported; SA §20.15's worker list for the order, races, exits, Auto, events,
+  isolation and query plans (`test/query-plans.test.ts`: the inside count index-only).
+- **Done when:** the gym evening's entries, exits and holds pass in a worker test with no UI.
+
+**OC.2 Auto tap-out** (M3B; needs OC.1)
+- **Files:** `occupancy/jobs.ts` and test (it exports the handler; IN.7 alone edits `jobs/cron.ts`).
+- **Build:** `scan.occupancy` (SA §20.7): due rows, 200 per run in batches of 25, CAS, idempotent claims, the zone
+  re-read (`out_cause` `zone` for Track off, archived or moved), publish to orgs with monitors; due recompute on zone
+  saves and time zone changes (called by AX.6 and g), bounded.
+- **Tests first:** due on max stay and on clear; spring gap and autumn repeat; CAS against a tap; a retried run changes
+  nothing; 200-row bound and continuation; `CRON_QUERY_BUDGET`; no publish without monitors.
+
+**OC.3 Overrides and mark-out** (M3B; needs OC.1, SV.11, ST.6)
+- **Files:** `routes-overrides.ts`, `occupancy/service.ts` (`overrideCheck`, `markOut`), tests.
+- **Build:** `POST /scan/overrides`, `/overrides/{scanId}/note`, `POST /scan/mark-out` (SA §20.12) on `screenActions`;
+  the widened validation (own, watch, admin; 15 min; once); rights from the refusing scanner's `letInAgain` and the
+  actor's role, capacity always Manager; attribution (`staff_id`, `approved_by`, the original's zone, station, event);
+  audit `scan.override` (`via`, `of`, `note`), `scan.mark_out`, `scan.overrides_capped`; `scan:ovr` counter; the
+  publish calls (C28).
+- **Tests first:** SA §20.15's override list; `SCAN_OVERRIDE_TAKEN` under a scanner-vs-monitor race; a monitor's
+  mark-out outside its watch is 404-shaped; the note after 2 min is 422; log hygiene.
+
+**OC.4 Who's inside and the pass card** (M3B; needs OC.1)
+- **Files:** `occupancy/inside.ts`, `routes-occupancy.ts` (`GET /scan/live/inside` under ST's `requireLivePrincipal`,
+  read-only import, plus `screen.actions` on: read-only monitors get 403; `GET /scan-zones/{id}/inside`; `POST /passes/{id}/mark-out`), `src/web/admin/passes/detail/
+  occupancy-card.tsx`.
+- **Build:** the watch-scoped inside list (longest first, flags **Long stay** at 75 % of max stay and **Pass ended**,
+  ≤ 100, cursor); the admin list; the where-now card with **Mark as out** (SD §18.6).
+- **Tests first:** watch scoping, a test monitor sees no live rows, flags, cursor; the card's states; axe.
+
+**OC.5 Gym evening** (M3B; with IN)
+- OC writes the scenario (zones, scanners, clock steps, expected verdicts and counts) as a fixture in
+  `occupancy/gym-evening.fixture.ts` and runs the device check "a gym evening" (§8.2); IN.7 alone writes
+  `e2e/16-scan-occupancy.spec.ts` from it (§9).
+- **Done when:** the device check's results are in the M3B report and IN.7's spec is green.
+
+Owned additions (2026-11-05 later):
+
+| Task | Stream | Milestone | Needs | Delivers |
+| --- | --- | --- | --- | --- |
+| **SV.11 Occupancy hooks** | SV | M3B | OC.1 (C27 stubs) | step 9a and the exit path in `resolve.ts` and `act.ts` (exits skip 10-14); step 15's occupancy order through `occupancyStatements`; the override widening in `rules.ts` (supersedes the same-`actor_key`, 10-minute rule; 15 minutes for all; every step
+re-runs at override time; per-reason waivers from the actor's rights; `letInAgain: never` closes every Let in); undo groups in `undo.ts`; `GuardOptions.screenActions` in `guard.ts` (additive; `screens: true` unchanged) on overrides, the note, mark-out,
+`POST /scan/undo` (a monitor's own scans only) and staff, and monitor staff binding in `staff-session.ts` and `POST/DELETE /scan/staff`; `ready` reads 9a-15. Tests: SA §2.6's order with 9a and the exit path; a Customer screen and a monitor with actions off get `SCREEN_ONLY`; a monitor with nobody signed in gets `STAFF_REQUIRED` |
+| **AX.6 Zone occupancy** | AX | M3B (the 0020 columns land in M2A with AX.1) | OC.1 | `scan_zones` occupancy fields in `zones.ts`, `repo-zones.ts`, `contracts/access.ts` (`ZONE_CLEAR_NEEDS_TZ`, `ZONE_ENFORCE_NEEDS_END`; due recompute through OC.2 on settings and root time zone saves; `clearZone` on Track off, archive and parent change); the zone dialog's **Occupancy** section and the Zones tab's **Occupancy** and **In now** columns (SD §18.6); the designer's re-entry wait help line. Tests: settings CHECKs through the API; disabled fields under Track off; axe |
+| **ST.6 Live occupancy** | ST | M3B | ST.3, OC.1 | `places[]` with revs on monitor rows and `counts.places` in the snapshot; `resolved` to `dev:<scanner>`; customer bodies with `replaces`; the override's publish targets (the original's station and watches); `ScreenSettingsSchema.actions`; the client store keeps the highest rev per place. Tests: a misordered publish never lowers a count; `resolved` reaches only the refusing device; the customer `replaces` rule; undo to the same targets |
+| **SC.10 Settings and records** | SC | M3B | OC.1 | `settings.direction` (with `SCANNER_DIRECTION_NO_PLACE`, no Both on terminals), monitors' `screen.actions`; `ScanRecord.outCause`, `.overrideNote`, `.occupancy`; `?outCause=` and `?override=true` on the scans list. Tests: 422s; filters |
+| **DS.8 Occupancy scope** | DS | M3B | OC.1 | the `occupancy` root and `duration` filter (DM §12); removed from the customer scope; exits ignore the custom icon and title. Tests: DM §12.4 |
+| **UI.9 In and out on the scanner** | UI | M3B | OC.1, BU.8 | the direction chip and **Direction** sheet (pin lapse), the band pill, the count chip's **In now / capacity**, SD §18.2's results and docks (**Tap out**, **Tap in**, **Let in anyway**), the turn in place on `resolved` and the strip-only fallback (latest verdict, 60 s); the menu item removed. Tests: snapshots of every SD §18.2 row; the reducer's turn vs strip rule; pin lapse with fake timers; axe |
+| **CD.3 Customer exits and holds** | CD | M3B | ST.6, BU.8 | **Tapped out** · **Bye, Maya** · **Stayed …**; the hold subs; the `replaces` swap only over the matching see-the-desk or idle within 60 s. Tests: never over the next customer; nothing for `not_inside` on an exit; no name announced |
+| **MN.2 Desk actions** | MN | M3B | ST.6, OC.3, OC.4, BU.8 | SD §18.5: the **In now** card with bars, **Feed** · **Inside** tabs (**Inside** only with Desk actions on), actionable alerts and the row action column, **Let in** (15 min), **Mark as out**, the staff chip and **Sign in** (shared keypad), the Manager PIN card, the toast with reasons and Undo, **Resolved by**, **Override undone**, **Sign in to act**, `SCAN_OVERRIDE_TAKEN` copy; phone list. Tests: alert pinning with and without Desk actions, toast timing and Undo focus, PIN lockout copy, rev ordering; axe at 1440, 1180, 390 |
+| **BU.8 Bye and relent** | BU | M3B | BU.6 | `bye` (replaces `dip`), `relent`, the beat-map rows (holds amber, Full `wrist` fwd), the monitor `nod`, the customer paths (BM §6.1, §6.8, §17). Tests: BM §17.3 |
+| **AD.11 Devices and trail** | AD | M3B | SC.10 | scanner **Direction** tiles and status, monitor **Desk actions** switch and callout (`devices/**`); Scans tab filters; the in/out trail rows in the pass Sync log (`sync-model.ts`, n1). AD.10 adds labels for `scan.mark_out` and `scan.overrides_capped`. Tests: web and axe at 1440 and 390 |
+| **IN.7 Cron and spec** | IN | M3B | OC.2 | `scan.occupancy` in `jobs/cron.ts`; `e2e/16-scan-occupancy.spec.ts` (§9); `docs/api.md` **Occupancy** section; `docs/operations.md` (auto tap-out, Mark as out from the console) |
+
 ---
 
 ## 6. Integration order
@@ -1972,6 +2105,26 @@ package work may start after M1 and wait to merge):
                ├─ IN.6(binding) ─ ST.2 ─ ST.4 ─ UI.7 ─ CD.1 ─ CD.2   MN.1   BU.7
                └─ ST.5   IN.6(16-scan-stations)                                     ── M3A gate ──
 ```
+
+Occupancy (2026-11-05 later). P0.9 merges with P0; AX.1 writes `0020` with the occupancy columns in M2A. M3B starts
+after both gates (OC.1 may start after M2A and wait to merge):
+
+```
+ └─ M3B  OC.1 ─┬─ SV.11 ─ OC.3 ─ MN.2        OC.2 ─ IN.7(cron)   SC.10 ─ AD.11   DS.8
+               ├─ ST.6 ─ CD.3                OC.4                AX.6            BU.8 ─ UI.9
+               └─ OC.5   IN.7(16-scan-occupancy)                                    ── M3B gate ──
+```
+
+| Task | Merges after |
+| --- | --- |
+| P0.9 | inside P0, before the P0 merge |
+| OC.1 | M2A gate (AX.1, SV.10) and M3A gate |
+| SV.11, OC.2, OC.4, ST.6, SC.10, DS.8, AX.6 | OC.1 |
+| OC.3 | SV.11, ST.6 |
+| UI.9 | OC.1, BU.8 |
+| CD.3 | ST.6, BU.8 |
+| MN.2 | ST.6, OC.3, OC.4, BU.8 |
+| AD.11 | SC.10 |
 
 | Task | Merges after |
 | --- | --- |
@@ -2046,7 +2199,8 @@ A gate passes when all of these hold:
 | **0018** | `migrations/0018_templates_build_key.sql` | PT.7 (M2) | `template_versions.build_key TEXT` and `template_versions_build (template_id, build_key)`; no backfill (the immutability trigger forbids it; `NULL` keeps today's behaviour). SA §6.1a |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.8 | `scanners.kind` + `display`; `device_role` with its two CHECKs; the terminal-only CSRF CHECK (P0A P0-1). Before the P0 merge |
 | **0019** | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
-| **0020** | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7) |
+| **0020** | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
+| **0014** (amended) | `migrations/0014_scan.sql` | P0.9 | `scans.actor_type` + `system`; `scans.method` + `auto` (P0A P0-9). Before the P0 merge; otherwise auto tap-outs need a `scans` rebuild |
 
 **No ledger or visit table.** The balance ledger, visits and last visit are computed from `scans` (which already holds
 `amount`, `before_value`, `after_value`, `action_kind`, `outcome` and `at`) through `scans_pass_ok` (SA D24). No table
@@ -2059,7 +2213,7 @@ Both were applied on SQLite 3.54 over `next/n8-p0`'s 0001-0016 with the amended 
 assigns the number at merge.
 
 No other migration is planned. If a stream needs a schema change after P0:
-- add the next free number, `migrations/0021_scan_<topic>.sql` or later (`0017` is reserved for n5, `0018` is PT.7's,
+- add the next free number, `migrations/0021_scan_<topic>.sql` or later (occupancy took none: it extends `0020`, unbuilt) (`0017` is reserved for n5, `0018` is PT.7's,
   `0019` ST's, `0020` AX's);
 - never rebuild a referenced table;
 - never depend on another stream's in-flight migration;
@@ -2109,6 +2263,19 @@ Added 2026-11-05:
 | Two scanners race a 1-visit guest | Two entries | The single gate UPSERT; the concurrency worker test | AX |
 | Generic passes not allowed for VAS NFC [U] | No door taps | NFC is off anyway; an **Access card · tap** storeCard variant is a package change | BP, owner |
 
+Added 2026-11-05 later:
+
+| Risk | Effect | Mitigation | Owner |
+| --- | --- | --- | --- |
+| `0020` merges (M2A) before AX.1 picks up SA §20.13 | A `0021` and a second `scans` touch | AX.1 writes SA §19.7 and §20.13 together; the M2A gate checks the occupancy columns exist | AX, IN |
+| P0 merges without P0.9 | Auto tap-outs need a `scans` rebuild | P0.9 is a P0 exit item; the reference test's first case fails without it | P0 lead |
+| Members locked out by forgotten tap-outs | Angry members at the door | Require tap out off by default; Max stay 12 h; Clear at; Mark as out; Let in anyway; amber holds | OC, MN |
+| Auto guessing wrong at a busy desk [U] | Counts drift | The band pill and strip say which way; Undo; the 2-minute hold; pins | UI |
+| D1 contention on the entry batch at a busy door | Slow verdicts | One batch per entry; the count is index-only and read only with capacity or a listening monitor; measured in the gym-evening device run | OC |
+| The inside count at a large event (5,000 in) | Each entry scans 5,000 index entries | `test/query-plans.test.ts` times ENTER on a 10,000-row fixture (budget SA §13.1); if over, a counter column on `scan_place_revs` kept in the same batch, additive | OC |
+| An override waiver too broad | Door staff pass a Manager reason | Waivers per reason from `scanPolicy`, never a blanket; worker tests for each reason behind each hold | OC, SV |
+| A desk override flips the wrong screen | A stranger sees **Access granted** | `resolved` by device and `replaces` by `ref`; never over a newer result (unit tests) | ST, UI, CD |
+
 ### 8.2 Real-device checks (manual; results in each milestone's report)
 
 **iPhone**, Safari and the home-screen app, current iOS, 390 × 844:
@@ -2155,6 +2322,11 @@ Added 2026-11-05:
 - a Desk monitor in desktop Chrome hidden for 10 min, then shown: the feed fills in from the catch-up;
 - airplane mode on the screen for 1 min during scans: **Reconnecting** without layout shift, then the feed catches up.
 
+**Occupancy (M3B):** a gym evening with a test clock: one Both phone at the desk and an In and an Out door; 100 taps in
+and out in 15 minutes with interleaved arrivals and departures (Auto's guesses logged, every wrong one undone);
+double scans at the desk (none flips anyone); **Already in** at the In door answered from the iPad monitor (time from
+tap to the door's green logged); Pool full and a Manager PIN; Mark as out; the In now bars against a hand count.
+
 **Access (M2A):** a gym morning with a test clock: 200 grants across two doors in 20 minutes, a guest with 2 visits,
 an Off-peak member at 3:59 and 4:00 PM, the Pool door's **Not in plan**, a Manager PIN override; the photo read at
 arm's length; DST: set the device and test clock across a spring-forward morning.
@@ -2179,6 +2351,7 @@ All under `e2e/`, using `e2e/helpers/scan.ts`. Reduced motion is the default; on
 | `16-scan-offline.spec.ts` | M5 | Roster loaded; offline check-in gives **Saved offline**; reconnect syncs; a conflicting online scan gives `already_done` after the fact; a v3 cold offline load shows Start |
 | `16-scan-access.spec.ts` | M2A | Create zones (Capitol Hill › Main floor, Pool) and a scanner checking Pool; **Use blueprint** Access card; issue a 24/7 member, an Off-peak member and a 2-visit guest; scan at fixed test-clock times: granted with **Pool** and the `gate` beat's `data-beat`, again inside the gap (one visit), **Outside hours** with **Let in anyway** and a Manager PIN, **Not in plan** on a Studio-only plan, **No visits left** on the third visit, **Suspended** after a status change; an event scanner checks the member in once, then **Already checked in** |
 | `16-scan-stations.spec.ts` | M3A | Console: a station, a scanner and a Customer screen paired in a second context (**Pair here**), a Desk monitor in a third. Scan → the screen shows the card (`data-ref` changes) in < 300 ms locally; a refused pass shows **Please see the desk** with no reason in the DOM; three scans reach the monitor in order; kill the screen's socket, scan twice, reconnect: the monitor shows both, the screen stays idle; flip a phone to a Customer screen and back with a PIN; revoke the screen: its block panel within 2 s; a screen calling `POST /scan/resolve` gets 403 `SCREEN_ONLY` |
+| `16-scan-occupancy.spec.ts` | M3B | Zones Gym (Require tap out, 60) and Pool (Track, capacity 2); a Both phone at the desk, an In door and a monitor with Desk actions; on a test clock: tap in, tap out by Auto (`data-beat="bye"`), a double scan held with **Tap out** focused; **Already in** at the In door; the monitor signs in Ana (Desk) and lets them in with one tap: the door's card turns green in place (`relent`) and the Customer screen shows **Access granted** within 300 ms locally; a second override of the same scan gets **already let them in**; Pool full and a Manager PIN override (26 / 2 shown amber); Mark as out from **Inside**; max stay taps out after the clock moves 12 h (Sync log **Auto tapped out**); Undo of an override restores **Already in**; an exit with a voided pass taps out; a Customer screen calling `/scan/overrides` gets 403 |
 | `16-scan-a11y.spec.ts` | M1-M3 | axe (`wcag2a`/`aa`/`21aa`/`22aa`, serious and critical fail) on pair, Start, aiming, each verdict kind, each owner example display, lookup, desk panel, action area, PIN panel, shift summary, the four admin tabs and the designer's Scan screen mode, at 390 × 844, 820 × 1180, 1180 × 820 and 1440 × 900, light and dark |
 
 ---
@@ -2242,6 +2415,15 @@ All under `e2e/`, using `e2e/helpers/scan.ts`. Reduced motion is the default; on
 - docs: `docs/api.md` gains **Access cards** (manifest `scan.access`, reasons) and **Live screens** (no public API;
   how stations work); `docs/operations.md` the hub runbook; AGENTS.md rows for ST, AX, CD, MN, BP match §3.
 
+**M3B is done** (in the release) when, in addition:
+- `16-scan-occupancy` is green, and `16-scan-a11y` covers the Direction sheet, every SD §18.2 result, the monitor's
+  Inside tab, Manager PIN card and toast, and the console's occupancy settings, at 390, 1180 and 1440, light and dark;
+- the visual check matches `addendum/occupancy/sheets/occ-*` and `addendum/occupancy/shots/*`;
+- the ported reference suite (23) and the race tests pass (two doors, capacity 25 under ten passes, parent exit vs
+  child entry, the cron vs a tap, scanner vs monitor override);
+- privacy: customer views carry no count, inside list or staff name; logs carry ids and codes only;
+- docs: `docs/api.md` **Occupancy**; `docs/operations.md` auto tap-out and Mark as out; AGENTS.md row for OC matches §3.
+
 **M5 is done** when `16-scan-offline` is green and the offline device run (an iPhone in airplane mode, reconnecting)
 is logged.
 
@@ -2265,6 +2447,12 @@ Everything else is decided in the design docs and this plan. These are genuinely
 8. **Access card defaults**: generic style (photo on the card), not-yet-valid red, visits merged within 2 hours,
    text-sponsored guests, no holiday calendar (SA §17 items 8-11).
 9. **The first deploy with `ScanHub`** is a `wrangler deploy` by you (the class is new); agents never deploy.
+10. **Full needs a Manager**, for zones and events (door staff could override **Event full** before). Say if door
+    staff should keep it.
+11. **Already in** can be overridden by anyone at the door by default (the scanner's `letInAgain`). Without staff
+    sign-in on that scanner, the override is signed by the device only. Keep it, or default to Manager?
+12. **Max stay** defaults to 12 h when a zone starts tracking, and Require tap out needs a Max stay or Clear at. Keep
+    both?
 
 Settled by the owner, 2026-11-04: names in the band (the holder's name only, 2 lines for 1 more unit); the Balance
 card and Stamp card blueprints; no item names in the ledger.

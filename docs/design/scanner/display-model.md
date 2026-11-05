@@ -24,6 +24,15 @@ wins; section 7 lists every delta.
 > - Detail: `addendum/stations.md` §3 (**ST**), `addendum/access.md` §1.4, §4.4 (**AX**). Section 11 wins where they
 >   differ.
 
+> **Revision 2026-11-05, later** (occupancy and desk overrides; section 12):
+> - **An `occupancy` root**: the place, in or out, **inside since**, via, stay, **In now** and capacity (SA §20). Customers
+>   get none of it. `history.inside` now reads the place's in/out state.
+> - **Exits and holds:** an exit `ok` ignores the custom icon and title (the band says **Tapped out**); `still_inside`,
+>   `not_inside` and `capacity_full` are `heads_up` screens. No new row type, preset or contract field.
+> - **Override states:** a desk override's outcome renders as an ordinary `ok`, role-filtered for the refusing scanner;
+>   "Let in by" is system copy, never in scope.
+> - Detail: `addendum/occupancy/occupancy.md` (**OC**). Section 12 wins where they differ.
+
 The owner's requirements, in one line each:
 - customize the text, the icon, chips and information cards on a result;
 - data comes from anywhere on the pass;
@@ -95,7 +104,7 @@ A display renders for one of four screens, picked from the outcome:
 | Screen | When | Template content allowed |
 | --- | --- | --- |
 | `ready` | desk card after `resolve` (UK 6.4), before an action | meta line, chips, panels, staff note |
-| `ok` | an applied action (door check-in, stamp, redeem, ...) | icon and title (the verdict word kept), meta line, chips, panels, staff note |
+| `ok` | an applied action (door check-in, stamp, redeem, ...) | icon and title (the verdict word kept), meta line, chips, panels, staff note. On an exit (`scan.direction = 'out'`), **not** the icon or title (12.2) |
 | `heads_up` | a real pass that needs a person (`already_done`, `cooldown`, `check_required`, ...) | meta line, chips, panels, staff note. **Not** the icon or title |
 | `refused` | red outcomes | `notes.refused` only |
 
@@ -428,6 +437,7 @@ zone today; the event or scanner time zone is the right one for staff anyway.
 | `count` | number | 1,240 |
 | `money` | number | $42.50 (the doc's `currency`) |
 | `upper` | string | VIP |
+| `duration` (12.1) | ms | 1 h 32 min, 40 min, 45 s |
 
 Typed rows format themselves (`money`, `progress`, `history`). Filters are for inline text. A path with no filter
 interpolated into text is stringified as today (`String(value)`); a lone path in a typed field keeps its type.
@@ -442,7 +452,7 @@ within `retention.scansDays` (396 days by default) and excludes undone scans and
 | `history.lastVisit.at`, `.where` | the last `ok` check-in before this scan | `scans_pass_ok` (`pass_id, action_kind, at DESC`), `LIMIT 1` |
 | `history.visits.today`, `.week`, `.month`, `.year`, `.total` | `ok` check-ins in that period, in the actor's time zone | same index, range count, capped at 9,999 |
 | `history.checkedInAt` | first `ok` check-in in the current gate scope (this event, or today for `daily`) | `scan_gates.first_at` (already read by the gate) |
-| `history.inside` | `true` / `false` / null under re-entry | `scan_gates.state` |
+| `history.inside` | `true` / `false` / null when the scan has no place (alias of `occupancy.state = 'in'`, 12.1) | `scan_gates.state` of the place's row |
 | `history.scans.today`, `.total` | `ok` scans of any action | `scans_pass_ok` |
 | `history.lastScan.at`, `.where`, `.action` | the last scan of any outcome | `scans_pass`, already read for `lastScans` |
 | `history` row `source: 'value'` (the ledger) | the last N `ok` scans whose action's input is `input`: `at`, `amount` (signed), `after`, `where`, `label` (the action's label: "Charge", "Top up") | `scans_pass_ok`, kinds `add`, `take`, `set`, over the last 50 rows |
@@ -727,8 +737,9 @@ resolves to the root; anything else is an input, so `{{tier}}` keeps working as 
 | `lookups` | the template's static tables | manifest | all |
 | `now` | ms | `ctx.clock.now()` | all |
 | `access` (11.4) | `plan`, `kind`, `zone`, `closesAt`, `nextOpenAt`, `until`, `hours`, `visits.used`, `.limit`, `.left` | `ScanOutcome.access` / `ScanCard.access`, the active version's plans | all; null on non-access templates |
+| `occupancy` (12.1) | `place`, `state`, `since`, `via`, `stay`, `inNow`, `capacity`, `due` | `ScanOutcome.occupancy` / `ScanCard.occupancy` | all staff; null when the scan has no place; never customers |
 
-**Reserved names.** An input called `holder`, `inputs`, `fields`, `scan`, `history`, `event`, `scanner`, `access` or `now` is
+**Reserved names.** An input called `holder`, `inputs`, `fields`, `scan`, `history`, `event`, `scanner`, `access`, `occupancy` or `now` is
 shadowed in display expressions. The validator warns (`SCAN_DISPLAY_SHADOWED`) and suggests `inputs.<name>`.
 `pass` is already reserved (`INPUT_RESERVED`).
 
@@ -1735,3 +1746,69 @@ the per-header chip cap, density, the default for a doc without the block (the S
 false`, the fail-safe; a recursive scan of every outcome fixture's customer view for holder data beyond the first name.
 `access` root: every path for 24/7, Off-peak and a 2-visit guest; null on a ticket; `history.visits.month` counts
 visits at a month edge in the zone's time zone.
+
+---
+
+## 12. Occupancy bindings and override states (2026-11-05, later)
+
+Occupancy gives a pass an in/out state per place (a tracked zone or an event) and lets a Desk monitor override a
+refusal on the fly (SA §20, OC). The display model gains one scope root and two rules; the contract (`ScanDisplay`),
+the row types, the presets and the density budget don't change.
+
+### 12.1 The `occupancy` root
+
+Present when the scan has a place (the scanner's event, or its first tracked zone); null otherwise, so expressions
+hide. Values come from `ScanOutcome.occupancy` or `ScanCard.occupancy`, already loaded by the entry statement or the
+`ready` read: no extra statement.
+
+| Path | Value | Example |
+| --- | --- | --- |
+| `occupancy.place` | the place's name | "Gym" |
+| `occupancy.state` | `in` or `out` after this scan (on `ready`: now; a row past its due time reads `out`, SA §20.7) | `in` |
+| `occupancy.since` | **inside since**: the entry when in, the exit when out (ms; format with `time`, `ago`) | "9:12 AM", "40 s ago" |
+| `occupancy.via` | the scanner of the last transition | "Front desk" |
+| `occupancy.stay` | on an exit: the stay in ms (format `duration`) | "1 h 32 min" |
+| `occupancy.inNow`, `occupancy.capacity` | **In now** at the place and its capacity (null when none) | 42, 60 |
+| `occupancy.due` | when the system taps them out (null when no limit) | "11:00 PM" |
+
+- Roles: every staff role (Door scanners already show the count chip). The **customer** scope removes the whole root
+  (11.2's scope rule gains `occupancy.*`): counts, who's inside and when they came never reach a counter screen.
+- `history.inside` stays as an alias of `occupancy.state = 'in'`, so existing docs keep working; under no place it is
+  null.
+- A typical use: a `field` row **Inside since** `{{occupancy.since|time}}`, shown when `occupancy.state` is `in`; an
+  exit's **Stayed** `{{occupancy.stay|duration}}`. `duration` is a new filter (1.9), DS's only formatting change.
+
+### 12.2 Screens for in, out and holds
+
+| Outcome | Screen | Template content |
+| --- | --- | --- |
+| entry ok (**Access granted** / **Checked in**) | `ok` | as today: icon and title, meta, chips, panels, staff note |
+| exit ok (**Tapped out** / **Checked out**) | `ok` | meta, chips, panels, staff note; **not** the custom icon or title, which would read as a welcome. Variants may test `scan.direction` |
+| `still_inside`, `not_inside`, `capacity_full` | `heads_up` | meta, chips, panels, staff note; never the icon or title (1.1) |
+| a desk override of a refusal or hold | `ok` | as an entry ok (12.3) |
+| `not_inside` on an exit | `heads_up` | as above; never published to a customer |
+
+The verdict sub (pill **In** / **Out**, the zone, **Since 9:12 AM · Front desk**, **25 of 25 in.**) is `SCAN_COPY`, not
+template content. Customer views (11.3) follow `CUSTOMER_COPY`: an exit is `ok` with **Bye, Maya** and **Stayed 1 h 32
+min** as system lines; holds are `see_desk` with the subs in SA §20.10.
+
+### 12.3 Override states
+
+- **Who renders.** The override is a new `scans` row with its own outcome; the server renders its display once per
+  audience as for any `ok`: the actor's role for the monitor that acted, **the refusing scanner's role** for the
+  `resolved` event (SA §20.9), each monitor's audience for its row, and `renderCustomerView` for the station's
+  Customer screen (`replaces` = the refused `ref`). The refused display is never patched in place: the client swaps
+  one rendered display for another.
+- **What it says.** **Let in by {staff}** (scanner sub and strip, monitor row; the device's name when nobody was signed
+  in) is system copy from the outcome, never a binding: staff names stay out of every scope (1.10). The customer view never says who or that it was an override.
+- **Undo** of an override renders nothing new: the scanner's strip row returns to red, the Customer screen goes idle,
+  the monitor re-opens the original's alert.
+- **The monitor's inside list** (SD §18.5) is system columns, not a display: photo per audience grant, name, plan chip
+  (the doc's chip with `minRole` respected), zone, since, via.
+
+### 12.4 Tests
+
+DS (`scope.test.ts`, `render.test.ts`): every `occupancy.*` path on an entry, an exit and a hold; null without a place;
+removed from the customer scope (a customer-named panel row bound to `occupancy.inNow` fails `SCAN_DISPLAY_CUSTOMER_SCOPE`);
+an exit ignores a custom title and icon; `history.inside` equals `occupancy.state = 'in'`; the override outcome
+rendered for a Door scanner omits desk-only rows even when a Desk monitor acted.

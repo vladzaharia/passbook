@@ -3,6 +3,11 @@
 The one UX and UI design for PassBook's scanner: the `/scan` app (door and desk), the admin side and the holder
 touches. 2026-11-04. Status: decided, ready to build with `scanner-architecture.md`.
 
+> **Review 2026-11-05, latest** (SA §20 wins): the monitor's **Inside** tab needs Desk actions (read-only monitors
+> show counts only); a **Let in** that meets a Manager reason behind the hold opens the Manager PIN card; the zone
+> dialog asks in place before Track off, archive or a move taps people out, and Require tap out needs a Max stay or
+> Clear at; the trail gains **Zone settings changed** and names the device when nobody was signed in (18.5, 18.6).
+
 > **Revision 2026-11-04** (the owner's three changes):
 > - **Results are B strengthened.** The old flood-and-card result screens are replaced by the B layout with A's verdict
 >   strength: live dimmed camera, a full-screen tint and 10 px ring, the buddy XL on the dock, its violet pass rising
@@ -42,6 +47,22 @@ touches. 2026-11-04. Status: decided, ready to build with `scanner-architecture.
 >   `addendum/access/sheets/access-{card,gate}-*.png`; screens `addendum/shots/{c,m,r,a,ad}-*.png` (phone 390 × 844,
 >   iPad 1180 × 820, desk 1440 × 900, light and dark), console `addendum/access/admin/shots/`.
 
+> **Revision 2026-11-05, later** (occupancy and desk overrides; section 18, D26-D32):
+> - **Direction on the scanner** (18.1): a capsule chip, fixed **In** / **Out** or **Auto ⌄** on a Both scanner, with
+>   the **Direction** sheet; the band pill **In** / **Out**; the count chip shows **In now / capacity**. The menu's
+>   **Direction: In / Out** item is gone.
+> - **New results** (18.2): **Tapped out**; amber **Already in**, **Not tapped in**, **Already out** and **{Pool} full**
+>   with the clock or the tilt, never the head shake; **Let in anyway**, **Tap out** and **Tap in** in the dock.
+> - **Tap out first, said kindly** (18.3): staff see **Already in**; the customer sees **Please see the desk** · **Your
+>   last exit wasn't recorded.**, never "Tap out at the exit first".
+> - **The desk monitor acts** (18.5): **In now** with capacity bars, an **Inside** tab with **Mark as out**, **Let in** on
+>   alerts and rows, **Manager PIN**, a staff chip with **Sign in**, an Undo toast. Off unless the monitor's **Desk
+>   actions** is on (D21 amended).
+> - **Console** (18.6): zone **Occupancy** settings, the Zones tab's **Occupancy** and **In now** columns, scanner
+>   **Direction**, monitor **Desk actions**, the pass's where-now card and in/out trail.
+> - Sheets: `addendum/occupancy/sheets/occ-{scanner-phone,scanner-ipad,customer,monitor-desk,monitor-ipad,console,flip}-*.png`;
+>   every state in `addendum/occupancy/shots/`. Detail: `addendum/occupancy/occupancy.md` §7 (**OC**); this file wins.
+
 **Precedence.** `scanner-architecture.md` (SA) wins on principals, rights, data, API, reasons and timings. This file
 wins on everything a person sees: layout, copy, components, feedback, the buddy's seats and the admin pages. It
 replaces the overlapping parts of `ux-door.md` (UD), `ux-desk.md` (UK), `ux-admin.md` (UA) and `buddy-motion.md` (BM);
@@ -51,7 +72,7 @@ z-order, type steps, colour tokens and motion timings, and DM wins on what the r
 this file states the decisions and the copy.
 
 Visuals: **`docs/design/scanner/b-final/sheets/` is the source of truth for the `/scan` shell, every result and the desk
-panels**; `docs/design/scanner/display/sheets/` for the Scan screen editor; `mockups (not shipped) ` for the admin pages and
+panels**; `docs/design/scanner/display/sheets/` for the Scan screen editor; `mockups` (not shipped) for the admin pages and
 the boot screens' content (section 14 lists what is superseded).
 
 ---
@@ -80,11 +101,18 @@ the boot screens' content (section 14 lists what is superseded).
 | D18 | **The visual direction is isolated.** Only the screens (`ui`, `result`, `display`, `desk`) and the buddy carry geometry, tokens and motion; the display contract has none. | "A at the door, B at the desk" later would touch only those. |
 | D19 | **A Customer screen is the same `/scan` document with a customer face.** The buddy is the interface (XL, centred low), the card rises from its violet pass as on the scanner, the capsule names the org and station. No controls, no counts, no camera. | One app, one pairing; the buddy greets the customer as it greets staff. |
 | D20 | **Customers never see red or a reason.** Every heads-up and refusal is one slate card, **Please see the desk** (the station's line), the buddy bowing (`sorry`). Three access refusals add a sub the customer can act on. | The verdict is staff's to explain; a customer at a till must not read "Suspended". |
-| D21 | **A Desk monitor is a feed, not a scanner.** Counters, filters, rows newest first, one alert strip for the newest refusal, presence. It never acts; rows open a read-only detail. | The owner's "desk interface shows the scans in realtime". |
+| D21 | **A Desk monitor is a feed, not a scanner.** Counters, filters, rows newest first, one alert strip for the newest refusal, presence. It never scans; rows open a detail. By default it never acts; with **Desk actions** on and staff signed in it lets people in and marks them out (D30, 18.5). | The owner's "desk interface shows the scans in realtime", then "easy overriding … on the fly". |
 | D22 | **Flip on the phone, unlock with a PIN.** A paired phone becomes a Customer screen from its menu; holding the capsule brings back **Back to scanning?** with a staff PIN. | Two handhelds, one facing the customer, with no console trip. |
 | D23 | **Access granted every time.** An access card never shows "already checked in"; a re-entry within the gap reads the same **Access granted**, with the last-scan strip saying **Again · 2 min ago**. | The owner: unlimited access, no "already scanned" screen. |
 | D24 | **The plan chip names the plan, its icon names the kind:** `Infinity` 24/7, `Clock3` Timed, `Ticket` Guest. Tones violet, teal, gold. | Staff read "Off-peak" and see at a glance it has hours. |
 | D25 | **Zones are a tree the admin draws once.** Scanners pick what they **Check**; plans pick what they grant. | A gym sets up its doors once; passes only pick a plan. |
+| D26 | **Direction is a capsule chip, Auto by default on a shared phone.** Fixed **In** / **Out** on doors; **Auto ⌄** on Both, pinnable for 15 min. Every result says which way it went (band pill). | A toggle is forgotten and corrupts counts all evening; Auto can't be forgotten, and the pill shows a wrong guess at once. |
+| D27 | **Holds are amber and kind.** **Already in**, **Not tapped in**, **Already out** and **Full** use the clock (`wrist`) or the tilt, never the head shake; each offers the one fix in the dock. | The pass is fine; staff talk. Red is for "this pass may not". |
+| D28 | **Leaving is never stopped.** **Tapped out** is green for any pass of this org; **Not tapped in** at an exit is a heads-up with only **Done**. | Nobody is held inside by a voided card. |
+| D29 | **Customers are never told to go somewhere they can't.** Holds read **Please see the desk** with a kind sub; exits wave **Bye, Maya**. | The holder at the entrance can't reach the exit reader. |
+| D30 | **The desk acts in one tap, with a person.** **Let in** on alerts and rows (15 min), **Mark as out** on the Inside list; staff signed in by PIN; Full, guest limits and no-access ask for a Manager PIN. | The owner's "easy overriding … on the fly"; every action attributed. |
+| D31 | **An override turns the screens it answers.** The refusing scanner's card turns green in place; its Customer screen's **Please see the desk** becomes **Access granted**. Never over the next person. | "which would change the state and the screen". |
+| D32 | **In now is a bar, not a number alone.** Per tracked zone with its children indented; Full turns the bar amber. | Capacity reads at a glance from across a desk. |
 
 ---
 
@@ -165,7 +193,8 @@ A floating glass capsule (phone 366 × 52, r 26, 12 px inset; iPad 60 tall, r 30
   templates show on the Start card and in **This shift**. Tapping the title opens **This shift**.
 - Chips, in order (28 tall, 44 px hit area on touch): **Test** (`ModePill`, test scanners), **Ready: Add stamp ×**
   (accent), **Reader**, **Sync** / **Offline**, **Count**. Each is in section 5.6. Widths are reserved, so a chip
-  change never moves the title.
+  change never moves the title. 2026-11-05 later: a **direction** chip after the name on a scanner with a place, and
+  **Count** shows **In now / capacity** there (18.1).
 - **⋯** is a 44 px icon button; **Sound** is in the menu.
 - The capsule draws above the tint and ring; glass is opaque 92 % under `prefers-reduced-transparency`.
 
@@ -174,7 +203,7 @@ A floating glass capsule (phone 366 × 52, r 26, 12 px inset; iPad 60 tall, r 30
 One list for the action sheet and the dropdown; every item has an icon.
 
 1. **This shift** (`Activity`)
-2. **Direction: In / Out** (`ArrowLeftRight`; event scanners with re-entry)
+2. Removed 2026-11-05 later: **Direction: In / Out** is now the capsule's direction chip (18.1)
 3. **Sound** (switch)
 4. **Keep results until tapped** (switch; turns off every auto-dismiss and the card idle clear, WCAG 2.2.1)
 5. **Camera** › Back · Back wide · Front (radio; remembered per device)
@@ -366,7 +395,7 @@ template's display)
 | Check-in | **Checked in** | — | the display (blueprint: Ticket panel) | `hop` |
 | Re-entry | **Checked in** | **Back in. Out since {8:12 PM}.** | display | `hop` |
 | After an override | **Checked in** | **Let in again.** | display | `hop` |
-| Check-out | **Checked out** | — | display | `dip` |
+| Check-out | **Checked out** | pill **Out** (18.1) | display | `bye` (was `dip`, 18.2) |
 | Bundle | **Checked in** | **{3} more from {Anna}'s group** | chip **{4} of {4} in group** (system, flag slot) | `hop` |
 | Stamps | **+{2} stamps** (**+1 stamp**) | **{9} of {10} stamps** | the display's `progress` row animates 7 → 9; new stamps land from T0 + 220 | `stamp` (+ `thump`) |
 | Points or balance | **+{120} points** · **+{$5.00}** / **−{$5.00}** | **{1,360} points** · **{$29.50} balance** | `big` or `money` row with this scan's change | points `sparkle`; money `coins` (in on a rise, out on a fall; BM 6.1) |
@@ -389,13 +418,13 @@ title), then the notes slot: `notes.staff`, then the event's staff note. Actions
 | --- | --- | --- | --- | --- |
 | `already_done`, check-in | **Already checked in** | **{12 min ago} · {Side door}** (after 60 min **Today {6:29 PM} · {Side door}**); the last-scan strip reads **First in {6:29 PM} · {Side door} · {Sam K.}** (the meta line under the holder belongs to the template) | **Done**, **Let in again** | `wrist` (back) |
 | `already_done`, daily | **Already checked in today** | **{9:14 AM} · {Desk iPad}** | **Done**, **Let in again** | `wrist` |
-| `already_done`, out | **Already checked out** | **{8:12 PM} · {Side door}** | **Done** | `wrist` |
-| `already_done`, out on a pass never in | **Not checked in** | **Check them in instead?** | **Check in**, **Done** | `tilt` |
+| `already_done`, out (now `not_inside` after an exit, 18.2) | **Already checked out** | **{8:12 PM} · {Side door}** | **Done** | `wrist` |
+| `already_done`, out on a pass never in (now `not_inside`, 18.2) | **Not checked in** | **Check them in instead?** | **Check in**, **Done** | `tilt` |
 | `already_done`, use up | **Already redeemed** | **{Nov 3, 2:10 PM} · {Till 2}** | **Undo that redeem** (own, in window), **Done** | `wrist` |
 | `cooldown` | **{Stamped} {2} min ago** (verb by kind: Checked in, Stamped, Added points) | **Next {stamp} in {3} min** | **Done**, **Add anyway** / **Let in again** | `wrist` (fwd) |
 | `not_yet_valid` | **Not open yet** (pass window: **Not valid yet**) | **Opens {6:00 PM}.** / **Valid from {Nov 10}.** | **Done**, **Let in anyway** | `wrist` (fwd) |
 | `ended` | **Event ended** (pass window: **Ended**) | **Ended {11:00 PM}.** | **Done**, **Let in anyway** | `wrist` (fwd) |
-| `capacity_full` | **Event full** | **{500} of {500} in.** | **Done**, **Let in anyway** | `wrist` |
+| `capacity_full` | **Event full** (zones **{Pool} full**) | **{500} of {500} in.** | **Done**, **Let in anyway** (Manager only, shield; 18.2) | `wrist` (fwd) |
 | `check_required` | **{Check ID}** (the flag's label) | **Then check them in.** | **Check in**, **Done** | `tilt` |
 | `needs_approval` | **Needs a manager** | **{Set balance} is for managers.** | **Manager PIN** (when `approvals`), **Done**; no managers: **Ask an admin to allow it.** | `wrist` |
 | `stale` | **Balance changed** | **Now {1,300}. Check it and set again.** | **Review**, **Done** | `wrist` |
@@ -1036,7 +1065,7 @@ photo in the identity row, the system holder line with the meta line under it, t
 (header cost included), and a display-only save that is live at once (**Version 5 is live on scanners. Passes are
 unchanged.**, no Activate).
 
-**`mockups (not shipped) ` (v1), superseded where B applies.** The `scan-*` result tiles are **superseded** and must
+**`mockups` (not shipped) (v1), superseded where B applies.** The `scan-*` result tiles are **superseded** and must
 not be matched: 04 Checked in, 05 Already checked in, 06 Refused, 07 Offline saved, 10 Desk add stamps, 11 Stamps
 added, 12 Redeem confirm, 13 Needs a Manager, 15 Milestone, 16 iPad door, 18 Test scanner live pass. The others keep
 their content and copy but take the B shell (capsule, live camera, dock, buddy on the dock) before they are matched:
@@ -1090,8 +1119,8 @@ CSS for the builders to read sizes from: `addendum/assets/x-{cust,mon,dev,admin}
 | Verdict | B card, tint, ring, `SCAN_COPY` | the same card at counter scale; ok in its colour; every heads-up and refusal one slate **Please see the desk** card | a feed row with the verdict shape and word |
 | Who | full name, photo per role | **Hi, Maya** (first name, ok and ready, when **Greet by first name** is on) | name, photo per audience |
 | Template content | role-filtered panels | only what `display.customer` names (DM §11) | the row's display on expand, per audience |
-| Controls | dock | none | filters, **Seen**, row detail; never an action |
-| Counts | own today | never | visits today, in now, refused, undone |
+| Controls | dock | none | filters, **Seen**, row detail; with **Desk actions** on: **Let in**, **Mark as out**, **Sign in** (18.5) |
+| Counts | own today; **In now / capacity** with a place | never | visits today, in now per tracked zone, refused, undone, let in |
 
 ### 16.2 Customer screen (`src/web/scan/customer/`)
 
@@ -1132,7 +1161,7 @@ Sauna", **Live** chip, ⋯) over two columns.
   (clock time, "now", "1 min"). Newest on top; a new row lands at the top and its tint fades over 2 s. Undone rows are
   struck. Footer **Last 15 minutes live · older scans in Scans**. The **Staff** column is desk width only (not on iPad). While a
   row is hovered or the list is scrolled, new rows wait behind a **3 new** pill instead of moving the list.
-- **Alerts** (refusals only; heads-up rows never pin): an unseen refusal pins above the feed (red outline, octagon, headline, plan chip, "Maya Okafor · Pool
+- **Alerts** (refusals only; heads-up rows never pin; with **Desk actions** on, actionable heads-ups pin too, 18.5): an unseen refusal pins above the feed (red outline, octagon, headline, plan chip, "Maya Okafor · Pool
   gate · Off-peak doesn't include Pool." (the staff sub, `SCAN_COPY`), photo, **Seen**), at most 3, newest first; announced in a polite live region; an
   optional chirp (`screen.sound`).
 - **Row detail** (tap): a side sheet with the row's display for the monitor's audience; read only.
@@ -1229,8 +1258,8 @@ Scanning › **Devices** (`/admin/scanning?tab=devices`); detail in `addendum/ux
   signed in, tapping opens **Manager PIN** (D9: locked actions stay visible). `a-zone`, `a-guestend`, `a-visits` and
   `a-notyet` were re-rendered with **Let in anyway** · **Done** (2026-11-05).
 - **Announcements:** customer screens never speak the name.
-- **"In now" for access:** zones have no exits, so access watches show **Visits today**; occupancy needs exit scanners
-  (later). Event watches with re-entry keep **In now**.
+- **"In now" for access:** superseded 2026-11-05 later. A watch whose zones track occupancy shows **In now** with
+  capacity bars (18.5); untracked zones still show **Visits today**. Event watches with re-entry keep **In now**.
 
 ---
 
@@ -1310,3 +1339,161 @@ scanner-zones,stills}-*.png`.
   **Member** and **Hours**, QR scan code, the member photo as thumbnail; back: **Message**, **Guest of**, **Hours**,
   **Terms** (**Show this card at the door. It's for you only.**). Stills (with the QR) on
   `addendum/access/sheets/access-card-*.png`.
+
+---
+
+## 18. Occupancy and desk overrides
+
+The owner: "Can we add occupancy support? Next entry only allowed after a tap out is recorded." and "The desk view
+should also allow for easy overriding (ie. if no access, or already in, etc) on the fly, which would change the state
+and the screen." Rules and data: SA §20 (detail `addendum/occupancy/occupancy.md`). Sheets
+`addendum/occupancy/sheets/occ-*-{light,dark}.png`; every state in `addendum/occupancy/shots/`.
+
+### 18.1 Scanner direction
+
+Sheets `occ-scanner-phone` (390), `occ-scanner-ipad` (1180).
+
+- **Direction chip** in the capsule, after the name, on a scanner with a place (a tracked zone or an event): fixed
+  **In** (`LogIn`) or **Out** (`LogOut`), no chevron; on a Both scanner **Auto ⌄** (`ArrowLeftRight`). A pinned **In ⌄**
+  / **Out ⌄** is teal. No chip on a scanner with no place. `aria-label` **Direction: Auto**.
+- **Direction sheet** (tap the Auto chip): title **Direction**, sub **Front desk counts people in Gym.**; three radio
+  rows **Auto** *In if they're out, out if they're in.* · **In** *Every scan taps in.* · **Out** *Every scan taps
+  out.*; the line **In or Out goes back to Auto after 15 min without a scan.**; **Done**.
+- **Count chip** (`Users`) reads **In now / capacity** (**42/60**), or **42** with no capacity; elsewhere today's count
+  as before.
+- **Band pill:** every in/out result leads its sub with a pill **In** / **Out**, before the zone pin (**In · Gym**,
+  **Out · Gym · 1 h 32 min**). The strip reads **In · Gym · 6:41 PM**.
+- iPad: the split card; the pill sits in the verdict column's sub.
+
+### 18.2 Results
+
+| Result | Band | Dock | Buddy |
+| --- | --- | --- | --- |
+| Tap in | green **Access granted** (events **Checked in**) · pill **In** · **Gym** | strip with **Undo** | `gate` (`hop` on events) |
+| Tap out | green **Tapped out** (events **Checked out**) · pill **Out** · **Gym · 1 h 32 min** | strip with **Undo** | `bye` |
+| Already in (Require tap out) | amber **Already in** (events **Already checked in**) · **Since 9:12 AM · Front desk** | **Let in anyway** · **Done** | `wrist` (back) |
+| Already in, Auto turnaround | amber **Already in** · **40 s ago · Front desk** | **Tap out** · **Done** | `wrist` (back) |
+| Already out, Auto turnaround | amber **Already out** · **30 s ago · Front desk** | **Tap in** · **Done** | `wrist` (back) |
+| Not tapped in, at an exit | amber **Not tapped in** · **No entry recorded.** (events **Not checked in** · **Check them in instead?**) | **Done** (events **Check in** · **Done**) | `tilt` |
+| Not tapped in, parent first | amber **Not tapped in** · **Tap in at Gym first.** | **Let in anyway** · **Done** | `tilt` |
+| Full | amber **Pool full** (events **Event full**) · **25 of 25 in.** | **Let in anyway** (shield: Manager) · **Done** | `wrist` (fwd) |
+| Let in by the desk | green **Access granted** · **Pool · Let in by Sam K.** | strip **Let in by Sam K. at Office iPad**, no Undo | `relent` + `gate` |
+
+- Holds are amber: the pass is fine and staff talk. Never the head shake.
+- **Let in anyway** on Already in follows the scanner's `letInAgain` (default anyone); on Full it always needs a
+  Manager: signed in, it acts; otherwise it opens **Manager PIN** (D9). It records a forced exit and the entry.
+- On a turnaround hold the dock's direction button is the focused element.
+- Desk `ready` shows **Inside since 9:12 AM** in the system line and the commit reads **Tap in** or **Tap out**.
+- **When the desk lets them in** (sheet `occ-flip` 01-04): if the refused card is still up, or it is the latest verdict
+  and under 60 s old, the card **turns** in place: tint and ring cross-fade 240 ms, the band wipes green left to right
+  (240 ms) while the octagon turns into the check circle, the headline cross-fades to **Access granted**; hold 1.2 s,
+  then tuck. Otherwise only the strip row turns green with a 2 s highlight. Never over the next person.
+
+### 18.3 Tap out first
+
+**Require tap out** means a second entry waits for a recorded exit. Staff see it as **Already in** with when and where,
+and fix it in one tap (**Let in anyway**, or **Mark as out** from the desk). The holder never reads "Tap out at the exit
+first": they are standing at the entrance and the exit reader is inside. The customer screen says **Please see the
+desk** · **Your last exit wasn't recorded.**: what happened, no blame, and the one person who can fix it.
+
+Zones help (18.6) says **Put an Out or Both scanner at the exit.**, and Max stay ends forgotten tap-outs (default 12 h).
+
+### 18.4 Customer screen
+
+Sheet `occ-customer` (390 and 1180).
+
+| Result | Screen | Buddy |
+| --- | --- | --- |
+| Tap in | as today: **Access granted** · zone · **Hi, Maya** + plan chip | `gate` |
+| Tap out | green **Tapped out** · zone; body **Bye, Maya** · `Clock` **Stayed 1 h 32 min** | `bye` (waves goodbye) |
+| Already in | slate **Please see the desk** · **Your last exit wasn't recorded.** | `sorry` |
+| Full | slate **Please see the desk** · **We're full right now.** | `sorry` |
+| Not tapped in (parent) | slate **Please see the desk** | `sorry` |
+| Not tapped in at an exit | nothing shown: leaving never stops anyone | — |
+| Let in by the desk | the **Please see the desk** card tucks (150 ms) and **Access granted** · **Hi, Maya** rises (`occ-flip` 05-08); never who let them in, never "override". Only over the card it answers, or idle within 60 s of it | `relent` from `sorry`, then `gate` |
+
+Announced once: **Tapped out.** (OC's **Tapped out. Bye, Maya.** would speak the name at a counter; 16.6 holds).
+
+### 18.5 Desk monitor
+
+Sheets `occ-monitor-desk` (1440), `occ-monitor-ipad` (1180). Everything here needs the monitor's **Desk actions** on;
+without it the monitor is as 16.3 plus the **In now** rail (counts only). The **Inside** tab lists names and photos,
+so it needs Desk actions too: a lobby screen never shows who is in the building.
+
+- **Rail:** an **In now** card: the watch's top tracked zone large (**42 / 60**, a bar), tracked children indented
+  below it with their own count and bar (`CornerDownRight` **Pool 25 / 25**); a full zone turns its bar and number
+  amber and says **Full**. Then **Visits** and **Let in** (overrides today). Presence and the buddy as 16.3.
+- **Capsule:** the staff chip **Ana R. · Desk** with a sign-out icon, or **Sign in** when Desk actions are on and
+  nobody is signed in (the shared keypad, D8; 15 min idle, 12 h; **Switch staff** in ⋯).
+- **View tabs:** **Feed** · **Inside 42**.
+- **Alerts:** actionable heads-ups pin too (amber ring), not only refusals: **Pool full** · plan chip · **Maya Okafor ·
+  Pool gate · 25 of 25 in.** · photo · time · **Let in** (`ShieldCheck` when a Manager is needed) · **Seen**. At most 3,
+  newest first. Signed out: the button reads **Sign in to act**.
+- **Feed rows** gain an action column: **Let in** on overridable rows under 15 min old. Results show the direction
+  (**→ Access granted**, **← Tapped out**); system rows (**Auto tapped out · Max stay 12 h**, staff **—**) are dimmed;
+  override rows are green with a shield (**Access granted · Let in by Ana R. · forgot to tap out**); a resolved hold
+  reads **Resolved by Ana R.** and loses its button. Hard refusals keep **Seen** only.
+- **Who's inside** (**Inside** tab): longest first; columns **Who** (photo, name, plan chip) · **Zone** (with its
+  parent, "in Gym") · **In since** (time, stay, flags **Long stay** past 75 % of max stay, **Pass ended**) · **Via**
+  (scanner, staff; hidden on iPad) · **Mark as out**. Summary **42 in Gym · 2 long stays**; filters **All zones**,
+  **Longest first**. Flagged rows are tinted amber and their button is filled. Footer **Everyone inside Gym, Pool and
+  Sauna is tapped out after 12 h.** Marking a row removes it and drops In now; the Sync log says who.
+- **Manager PIN:** a centred card over the dimmed monitor: **Manager PIN** · **Let Maya Okafor into Pool?** · the held
+  answer (**Pool full · 25 of 25 in · Pool gate · now**) · Manager picker chips · six dots · keypad · **Cancel**. The
+  alert's button reads **Letting in…** meanwhile. Wrong PINs say tries left; lockout as staff sign-in. It also opens
+  when a Desk member's **Let in** meets a Manager reason behind the hold (an override waives only what its person
+  may): **Let Leo Park into Gym?** · **No visits left · Used 1 of 1.**
+- **Toast** at the foot of the feed, 8 s: `CircleCheck` **Leo Park let in · Gym** · **Why?** chips **Forgot to tap
+  out** · **Known to staff** · **Paid** · **Other** · **Undo**. Undo stays in the row menu for 10 min. Undone:
+  the original's alert returns as **Override undone**.
+- **Taken:** a second override of the same scan says **Ana R. already let them in.** and the row shows the result.
+- Buddy: a `nod` once when its own staff override (throttled with alerts, 1 per 2 s).
+- **Phone** (390): **Inside** is a list (photo, name, zone, since, **Mark as out**); alerts and rows keep **Let in**.
+
+### 18.6 Console
+
+Sheet `occ-console` (1440).
+
+- **Zone dialog**, section **Occupancy:** **Track who's inside** *Counts people in and out. Monitors show In now.* ·
+  **Require tap out** *A second entry waits for a tap-out. Put an Out or Both scanner at the exit.* · **Capacity**
+  (*people*; help **Full stops new entries. A Manager can let someone in.**) · **Max stay** (help **Anyone still in
+  after this is tapped out.**) · **Clear at** (the zone's clock; help **Everyone still in is tapped out at this time.
+  Empty: never.**; without a time zone: **Set a time zone on Gym or the organization first.**) · status **25 inside
+  now. Counted by Pool gate (Both).** Fields under Track are disabled while it is off. Require tap out with neither
+  Max stay nor Clear at shows under Max stay **Set a Max stay or a Clear at time so a forgotten tap-out ends.** Turning
+  Track off, archiving or moving a zone with people inside asks in place (no dialog): **25 people inside will be tapped
+  out.** · **Turn off** / **Archive** / **Move** · **Cancel**.
+- **Zones tab:** columns **Occupancy** (**Tap out required** / **Counts** / —) and **In now** (**42 / 60**).
+- **Scanner dialog, Direction:** tiles **In** *Every scan taps in.* · **Out** *Every scan taps out.* · **Both** *Auto:
+  in if they're out, out if they're in.*; help **A reader at a door: pick In or Out. One phone at the desk: Both.**;
+  status **Counts people in Gym · 42 inside now.** With no place, the tiles are disabled: **Track who's inside on one
+  of its zones first.**
+- **Desk monitor dialog:** switch **Desk actions** *Staff sign in here to let people in and mark them out. Full and
+  guest limits ask for a Manager.*; callout **Every action is signed by the staff member and shows in the pass's
+  activity.**
+- **Pass › Activity:** a where-now card (**Inside Gym, Pool · Since 5:31 PM · Pool gate · 1 h 12 min**, **Mark as
+  out**, **Tapped out automatically after 12 h or at 11:00 PM.**) over the trail: **Tapped in · Pool**, **Tapped out ·
+  Gym** (stayed), **Auto tapped out · Gym** (Max stay 12 h or Cleared 11:00 PM), **Marked as out · Gym** (Ana R. at
+  Office iPad), **Let in · Gym** (Over Already in · forgot to tap out · Ana R. at Office iPad), **Forced out · Gym**
+  (By the override), **Already in · Gym entry**, **Auto tapped out · Gym** (Zone settings changed). A door override
+  made with nobody signed in names the device: **Let in · Gym** (Over Already in · Front door).
+- **Scans tab:** filters **Overrides** and **Tap-out cause**.
+- **Designer › Access › Rules:** the re-entry wait's help gains **Zones that require tap out usually don't need a
+  wait.**
+
+### 18.7 Accessibility
+
+The verdict is colour + glyph + words; the direction pill and chip carry text. The turnaround hold's dock action takes
+focus. Monitor: **Let in**, **Mark as out** and **Seen** are 44 px buttons; the PIN card traps focus and returns it to
+the alert; the toast is `role="status"` with Undo reachable by keyboard for its 8 s and from the row menu after; the
+inside list is a table with row headers; a new actionable alert is announced once ("Pool full, Pool gate"). Customer
+screens announce **Tapped out.** (never the name, 16.6). Axe at 1440, 1180 and 390, light and dark.
+
+### 18.8 Against the earlier sections and `addendum/ux.md`
+
+- 2.4's **Direction: In / Out** menu item → the capsule chip (18.1).
+- 16.3 and `ux.md` §3.2: the monitor is no longer only read-only; with Desk actions it acts (18.5). Heads-up rows pin
+  when they are actionable.
+- 16.7 and `ux.md` §9 item 1: **In now** exists for tracked zones.
+- 17.1: Full is amber with a Manager-only **Let in anyway**, not red.
+- Sheet captions: `occ-flip` calls the hub message `override`; its name is `resolved` (SA §20.9).

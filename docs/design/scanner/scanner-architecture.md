@@ -2,6 +2,46 @@
 
 The one design for PassBook's scanner: access, server and client. Status: decided, ready to build. 2026-11-04.
 
+> **Review 2026-11-05, latest** (occupancy and desk overrides; section 20 and 2.5-2.6 updated, they win; reference
+> code and its 23 tests updated to match):
+> - **An override waives only what the actor may** (2.6, 20.9): one flag per step-15 reason, from the actor's rights,
+>   and every step re-runs at override time. Before, one `:override` flag waived them all, so door staff overriding
+>   **Already in**, **Not tapped in** or a wait also passed a guest limit or **Full** (Manager reasons).
+> - **Implied ancestors are counted** (20.5): a tracked parent with a capacity is checked when the pass isn't in it
+>   yet, so a child's street door can't overfill it. Each implied row gets its own due time (it had none, so an
+>   override could leave a Gym row that never expired).
+> - **No lock-out between the due time and the cron** (20.7): a row past `due_at` reads as out everywhere (direction,
+>   step 15, the parent check). Re-entering a zone the pass was in leaves its children.
+> - **Zone changes clear their rows** (20.2): Track off, archive or a parent change taps everyone in that subtree out
+>   (`out_cause` `zone`); Require tap out needs Max stay or Clear at; org and root time zone changes recompute due
+>   times.
+> - **Undo is all or nothing and moves counts** (20.9): one guard on every undo statement; a revision per restored
+>   place. A lost override no longer holds `scans_override_once`.
+> - **Guard:** `POST /scan/undo` and the note route admit a monitor with Desk actions (own scans only); the who's-inside
+>   list needs Desk actions (a read-only lobby monitor shows counts, never names).
+
+> **Revision 2026-11-05, later** (the owner: "Can we add occupancy support? Next entry only allowed after a tap out is
+> recorded." and "The desk view should also allow for easy overriding … on the fly, which would change the state and
+> the screen"):
+> - **Occupancy** (new section 20, D37-D43). A pass's in/out state per place (a zone or an event) lives in
+>   `scan_gates`, so zones and event re-entry are one model. Per zone: **Track who's inside**, **Require tap out**,
+>   **Capacity** (exact), **Max stay**, **Clear at**. Scanners are **In**, **Out** or **Both** (Auto). Leaving is never
+>   refused for who you are. Forgotten tap-outs end by the minute cron (`scan.occupancy`). Two new amber reasons,
+>   `still_inside` and `not_inside`. **D35's "no anti-passback" is overturned** (opt-in, off by default).
+> - **Desk overrides** (20.9, D44-D45). A Desk monitor with **Desk actions** on and a staff member signed in by PIN may
+>   **Let in** a soft refusal or an in/out hold of any scanner in its watch, and **Mark as out** anyone inside. The
+>   override guard (2.6) now covers other devices; one live override per scan (`scans_override_once`). The hub flips
+>   the refusing scanner (`resolved`) and its Customer screen (`replaces`). **D29's "Screens never act" is narrowed**:
+>   a monitor acts through three routes only, with a signed-in person.
+> - **Guard order** (2.6): step 9a (direction), an exit path that skips 10-14, and step 15's fixed occupancy order.
+> - **Capacity** becomes Manager-only to override and exact (inside the entry statement) for events too; 7.4's soft
+>   limit is superseded.
+> - **Migrations:** `0014` takes `scans.actor_type` `system` and `scans.method` `auto` now (P0-9); `0020_scan_access.sql`
+>   is extended (not built yet), no `0021`. Phase 0 also takes the two reasons (P0-10). Everything else is additive.
+> - **Detail reference:** `addendum/occupancy/occupancy.md` (**OC**; reference code `addendum/occupancy/gen/
+>   occupancy.mjs`, 23 tests on next/n8-p0's migrations; sheets `addendum/occupancy/sheets/occ-*`). This file wins
+>   where they differ (section 1, rows 11-05 occ).
+
 > **Revision 2026-11-05** (the owner's two new requirements: multi-screen stations and the Access card):
 > - **Stations, screens and realtime** (new section 18, D27-D31). Every paired thing stays a `scanners` row with a
 >   **kind** (`device`, `terminal`, new `display`) and a **device role** (`scan`, `customer`, `monitor`). A station
@@ -99,14 +139,23 @@ verify on a device.
 | 26 | **The result surface is the card (B strengthened, BF).** The camera stays live under a full-screen verdict tint and a 10 px ring; the buddy's violet pass rises into the result card; a different code is accepted from T0 + 350 and interrupts it. Desk `ready` is a panel over the dimmed camera, with the template's panels and a **system action area** (stepper, keypad, review in the card; the commit pair in the dock). The display contract carries no geometry or colour, so the visual direction stays a client choice. |
 | 27 | **Every paired thing is a device row in `scanners`.** `kind` is the ceiling (`device` a paired browser, `terminal` a till, `display` a screen-only browser); `device_role` is what it does now (`scan`, `customer`, `monitor`). One pairing flow, cookie, revocation, audit and console list for all. The console tab **Scanners** becomes **Devices** (18.1). |
 | 28 | **A station is the scanners and Customer screens at one counter or door.** A device is in at most one station, so a customer's name and balance only reach the screen beside them. **Desk monitors watch a scope** (own station, ≤ 8 stations, an event, ≤ 8 zones, or the whole org) with a Door or Desk audience, never Manager (18.2). |
-| 29 | **Screens never act.** A device whose role isn't `scan` gets 403 `SCREEN_ONLY` from the guard (2.5 step 4). Customer screens get only a `ScanCustomerView`: every refusal and heads-up reads **Please see the desk**, a first name at most, no reason, staff, note or photo (18.4). |
+| 29 | **Screens never scan.** A device whose role isn't `scan` gets 403 `SCREEN_ONLY` from the guard (2.5 step 4). Customer screens never act and get only a `ScanCustomerView`: every refusal and heads-up reads **Please see the desk**, a first name at most, no reason, staff, note or photo (18.4). (Narrowed 2026-11-05 later: a Desk monitor with **Desk actions** on and a signed-in staff member may override, mark out and sign in; D44.) |
 | 30 | **Realtime is one `ScanHub` Durable Object per org and mode**, raw WebSocket Hibernation API, no framework. Scans stay HTTP; the Worker publishes after the D1 commit in `waitUntil`; the hub routes pre-rendered bodies by socket tags and keeps a short numbered buffer for replay; HTTP catch-up on the same buffer is the fallback. D1 stays the record. An org with no screens publishes nothing (18.5). |
 | 31 | **A paired phone flips itself** to Customer screen (**Show to customer**) and back with a staff PIN (a 2 s hold when the org has no staff). A `display` changes role only in the console (18.3). |
 | 32 | **Access is a policy on a template, not an action kind.** `scan.access` turns the template's `check_in` into a door grant: repeat `always`, verdict **Access granted**, no `already_done`. `ScanActionKind` stays the five (19.1). |
 | 33 | **Plans on the template, one per pass.** 1-12 plans: **24/7** (`always`), **Timed** (weekly hours), **Guest** (a window, optional visit limit). Per pass: plan, add-on zones, start, end, visit limit, sponsor. Hours are never per pass (19.2). |
 | 34 | **Zones are org data**, nested (a root site plus 3 levels), granted by key; a grant on a parent opens its children. A scanner checks 0-8 zones (OR); none means any zone. Hours are wall clock in the zone's time zone (root, else org, else scanner) (19.3). |
-| 35 | **Visits, not grants, are counted**: a grant more than `visitGapMinutes` (120) after the last starts a visit. One `scan_gates` row per pass (scope `access`) counts visits, enforces the guest limit and the optional re-entry wait. No anti-passback (19.4). |
+| 35 | **Visits, not grants, are counted**: a grant more than `visitGapMinutes` (120) after the last starts a visit. One `scan_gates` row per pass (scope `access`) counts visits, enforces the guest limit and the optional re-entry wait. No anti-passback (19.4); overturned 2026-11-05 later: opt-in per zone (D38). |
 | 36 | **Five red reasons** (`zone_not_included`, `outside_hours`, `guest_expired`, `guest_visits_used`, `suspended`); `not_yet_valid` is red on access templates. A Manager may **Let in anyway** on the four soft ones plus `not_yet_valid` (19.5). |
+| 37 | **A pass has an in/out state per place** (2026-11-05 later): in or out, since when, through which scanner. A place is `zone:<id>` or `event:<id>`; the state is the `scan_gates` row for that scope, so zone occupancy and event re-entry share one set of statements, one undo and one count (20.1). Not "presence": that word stays devices online. |
+| 38 | **Occupancy is per zone, never per plan, and opt-in.** **Track who's inside** counts; **Require tap out** makes a second entry answer amber **Already in** (`still_inside`) until a tap-out is recorded. Both off by default. Overturns D35's "no anti-passback" (20.2). |
+| 39 | **Leaving is never refused for who you are.** An exit skips steps 10-14: a voided, suspended, ended or outside-hours pass still taps out. Exits change no visit (20.4). |
+| 40 | **A scanner is In, Out or Both** (`ScannerSettings.direction`, default `in`). Both runs **Auto** (inside → out, else in) with a 2-minute turnaround hold, so a double scan never flips anyone; staff may pin In or Out for 15 minutes. Readers at a door are fixed In or Out (20.3). |
+| 41 | **Nobody is locked out for good:** auto tap-out at **Max stay** (default 12 h) and an optional daily **Clear at**, by the minute cron; **Mark as out**; **Let in anyway** records a forced exit and the entry (20.7). |
+| 42 | **Capacity is exact and Manager-only to override,** for zones and events: the count condition rides inside the entry statement. `capacity_full` stays amber; `letInAgain` no longer covers it (20.8). |
+| 43 | **In now is exact and ordered:** counted in the committing batch, stamped with a per-place revision (`scan_place_revs`); monitors keep the highest revision. The hub stays a router (20.8). |
+| 44 | **Desk overrides.** A Desk monitor with **Desk actions** on (default off) and a staff member signed in by PIN may **Let in** any soft refusal or in/out hold from a scanner in its watch, one tap, within 15 minutes, and **Mark as out** anyone inside. Full, guest limits and no-access refusals need a Manager. Hard refusals never (20.9). |
+| 45 | **An override changes the state and the screens live:** one batch records the entry (and the forced exit), the in/out rows and the visit; the hub turns the refusing scanner's card green (`resolved`) and replaces its Customer screen's **Please see the desk** (`replaces`). Undo: 8 s toast, 10 minutes from the row (20.9). |
 
 ---
 
@@ -177,6 +226,20 @@ verify on a device.
 | Access undo and gate (review 11-05) | AX: "restore `prev_*`"; gate keyed by the action id; "one ok, one refused" for a 1-visit race | One-step undo while the gate points at the grant; `action_id = 'access'`; a race inside one visit lets both in | The old rules could double-restore, split counts on a rename, and the race claim contradicted the gap rule |
 | Any-zone scanners (review 11-05) | Reference: named the first org zone; an unknown zone id fell to `*` | `zone: null` and no sub; unknown ids grant nothing | The front desk said **Pool**; a stale id opened every door |
 | Customer beat (review 11-05) | BM: beat derived from the band's words | `ScanCustomerView.cue { kind, unit }` | Copy changes must not change motion |
+| Anti-passback (11-05 occ) | AX X7, D35: not offered (one-reader gyms have no exit scans) | Offered per zone, off by default: **Track** and **Require tap out** (D38) | The owner asked for it. AX's reason still holds for one-phone desks, which **Both** on Auto answers (the same scan taps out), and nobody stays locked out (D41) |
+| Desk monitor acts (11-05 occ) | ST S8, D29, 18.4: monitors are read-only | Read-only by default; **Desk actions** on lets a signed-in staff member override and mark out through three routes (D44, 20.9) | The owner asked for overrides from the desk. A lobby wall screen stays read-only; every action has a person |
+| A display binds staff (11-05 occ) | 18.1: a display never binds staff | A monitor with **Desk actions** binds staff (the same PIN binding, 15 min idle, 12 h) | Rights come from the person, never the device (D4) |
+| Override window and source (11-05 occ) | 2.6: same `actor_key`, ≤ 10 min, check-in heads-ups | Same `actor_key`, or a device in the acting monitor's watch, or any device for an admin; ≤ 15 min for all; refused rows included (20.9) | The desk answers another device's refusal; 15 min is the monitor's live window |
+| Capacity (11-05 occ) | 2.2: `letInAgain` covers `capacity_full`; 7.4: a soft limit | Manager only, zones and events; exact (D42) | Capacity is often a safety number (lifeguard ratio, fire code). Owner may relax it (17, item 12) |
+| Event re-entry (11-05 occ) | 7.3: direction `out` rows on the event's scope; M3 builds re-entry | The same occupancy statements with `place = event:<id>` (20.6); OC.1 builds it in M3B | One model and one undo for zones and events |
+| Exit beat (11-05 occ) | BM: `dip` | `bye` (the teal pass waves) | An exit is a goodbye, on the scanner and as **Bye, Maya** on the Customer screen |
+| Customer copy for Already in (11-05 occ) | Draft: **Tap out at the exit first** | **Please see the desk** · **Your last exit wasn't recorded.** | The holder stands outside and can't reach the exit reader; the desk fixes it in one tap |
+| Name (11-05 occ) | Owner: "occupancy"; drafts: "presence" | **Occupancy** / in/out state; `ScanOccupancySchema` | `presence` already means devices online (`LivePresenceSchema`) |
+| Auto tap-out runner (11-05 occ) | `ScanHub` alarm | The minute cron (`scan.occupancy`) | It must work for orgs with no screens; the hub has no D1 access by design |
+| Phase 0 scope (11-05 occ) | OC: P0-9 to P0-14 | P0 takes **P0-9** (two CHECK values on `scans`) and **P0-10** (two reasons and one default line each; `capacity_full`'s copy unchanged). P0-11 to P0-14 land later, additively (P0A) | P0 amendments stay minimal: only what would otherwise need a table rebuild or a reason-list change. A defaulted settings field, a nullable outcome field, new copy keys and a new guard option are additive (plan §4.1) |
+| Override waivers (11-05 review) | OC reference: one `:override` flag waives parent, tap-out, wait, limit and capacity | One flag per reason from the actor's rights; every step re-runs at override time (2.6) | Overriding a door-level hold must not pass a Manager-level reason that happens to come later in step 15 |
+| Implied capacity (11-05 review) | OC 4.4: implied parent entries skip the parent's capacity | Checked unless the pass is already in that parent (20.5) | Only an enforcing parent proves they are inside; a track-only parent can be entered through a child's own door |
+| Monitor undo (11-05 review) | 2.5: monitors only on overrides, mark-out and staff | Also `POST /scan/undo` (own scans) and the note route | The toast's **Undo** and **Why?** would otherwise be 403 |
 
 ---
 
@@ -206,7 +269,8 @@ A scanner never satisfies `requireSession`, `requireAdmin` or `requireApiKeyOrAd
 | `defaultActionId` | action id or null | null = the template's first action | used by `auto` |
 | `roleWithoutSignIn` | `door`, `desk` | `door` | the role when nobody is signed in |
 | `staffSignIn` | bool | false | ask staff to pick their name and enter their PIN |
-| `letInAgain` | `anyone`, `manager`, `never` | `anyone` | who may override `already_done` on check-in, `not_yet_valid`, `ended`, `capacity_full` |
+| `letInAgain` | `anyone`, `manager`, `never` | `anyone` | who may override `already_done` on check-in, `not_yet_valid`, `ended`, and (20) `still_inside`, `not_inside` (parent), `cooldown`, at this scanner or from a desk. `capacity_full` left it 2026-11-05 later: Manager only (D42) |
+| `direction` (20.3) | `in`, `out`, `both` | `in` | which way a scan counts at the scanner's place; `both` runs Auto. Out and Both need a tracked zone or a re-entry event (`SCANNER_DIRECTION_NO_PLACE`); a terminal can't be Both |
 | `reader` | `none`, `barcode`, `nfc` | `none` | client hint: chip, stage, `method: 'nfc'` mapping |
 | `lookup` | bool | true | name or email search (typed codes always work) |
 | `offline` | bool | false | v2; event scanners only |
@@ -255,7 +319,12 @@ holds, and the template defines the action.
 | Action with `minRole` ≤ role | yes | yes | yes | yes | its role |
 | Action above role | needs approval | needs approval | yes | yes | no |
 | Amount above the action's `max` (≤ input schema maximum) | needs approval | needs approval | yes | yes | no |
-| Check out (event re-entry on) | yes | yes | yes | yes | no |
+| Check out (event re-entry on) | yes | yes | yes | yes | no; yes with `direction: out` (20.3) |
+| Tap in / tap out at a place (20.4; exits skip 10-14) | yes | yes | yes | yes | its fixed direction |
+| Let in on Already in, Not tapped in (parent), a re-entry wait (20.9) | per `letInAgain` | per `letInAgain` | yes | yes | no |
+| Let in on Full, guest limits, no-access refusals (19.5, 20.8) | needs approval | needs approval | yes | yes | no |
+| From a Desk monitor with Desk actions (20.9): the rows above, for scans of devices in its watch | as the signed-in person | as the signed-in person | yes | — | — |
+| Mark as out (20.7) | no | yes (monitor with Desk actions) | yes | yes (console) | no |
 | Let in again: `letInAgain = anyone` | yes | yes | yes | yes | no |
 | Let in again: `letInAgain = manager` | needs approval | needs approval | yes | yes | no |
 | Override a cooldown on `add`/`take` | needs approval | needs approval | yes | yes | no |
@@ -340,7 +409,12 @@ export interface ScanActor {
 3. `RL_SCAN_ORG` (`org:<id>`), then `RL_SCAN` (`actorKey`).
 4. **Device role** (2026-11-05): a scanner principal with `deviceRole ≠ 'scan'` (a Customer screen or Desk monitor)
    gets 403 `SCREEN_ONLY`, except on routes declared with `screens: true` (`GET /scan/session`, `POST /scan/unpair`).
-   Admin sessions have no device role. The live routes use their own guard (18.6).
+   Admin sessions have no device role. The live routes use their own guard (18.6). **Desk actions** (2026-11-05
+   later, 20.9): routes declared with the additive option `screenActions: true` (`POST /scan/overrides`, `POST
+   /scan/overrides/{scanId}/note`, `POST /scan/mark-out`, `POST /scan/undo` (a monitor undoes only its own scans),
+   `POST /scan/staff` and `DELETE /scan/staff`) also admit a `monitor` whose `screen.actions` is on;
+   a Customer screen, and a monitor with actions off, still get `SCREEN_ONLY`. `screens: true` keeps its meaning (read
+   only). P0-3's boolean is unchanged; the new option lands with SV.11.
 5. Staff binding: expire it past 15 min idle or 12 h; `staffSignIn` on and none bound: 403 `STAFF_REQUIRED`
    (except `GET /scan/session`, `POST /scan/staff`, `POST /scan/unpair`).
 
@@ -386,6 +460,35 @@ the same `actor_key` in the last 10 minutes and not already overridden; anything
 `zone_not_included`, `outside_hours`, `not_yet_valid`, `guest_expired` or `guest_visits_used`, and the override needs
 a Manager (signed in, or a PIN approval) whatever `letInAgain` says, unless `letInAgain` is `never`. It skips 10b-10e
 and the gate's limit and wait, and still records a visit.
+
+**Occupancy** (2026-11-05 later, section 20) adds to the order when the scan has a place (a tracked zone of the
+scanner, or an event):
+- **9a Direction**: the request's explicit `direction`, else the scanner's (`in`, `out`), else Auto from the pass's
+  in/out state at the place. An Auto flip under 2 minutes after the last transition at that place is held: heads-up
+  `still_inside` or `not_inside` with `occupancy.turnaround` (the dock's one-tap direction).
+- **Exit** (direction `out`): steps 10-14 are skipped; in → out with every tracked zone below it. Not inside: heads-up
+  `not_inside` (nothing changes; they still leave).
+- **Entry**: 10-14 as above, except that capacity leaves step 14. **Step 15** runs in one statement, in this fixed
+  order: `not_inside` (the nearest ancestor that requires tap out) → `still_inside` (this zone requires tap out) →
+  `cooldown` (AX wait) → `guest_visits_used` (AX limit) → `capacity_full`. Who-you-are comes first and the place last,
+  so a guest out of visits is never told to wait for a free place.
+- `ready` runs 9a-15 as reads: the desk card shows **Inside since 9:12 AM** and the dock shows the direction it would
+  take.
+
+**Overrides, widened** (2026-11-05 later, 20.9; supersedes the "same `actor_key` … last 10 minutes" rule above for
+every override): `overrideOf` names a `scans` row of the actor's org and mode, with a pass, outcome `heads_up` or
+`refused`, and a reason the actor may override; written by the same `actor_key`, **or** by a device whose station,
+zone or event the acting monitor watches, **or** by any device of the org for an admin session; at most **15
+minutes** old; not already overridden (`scans_override_once`; a racing second override gets 409
+`SCAN_OVERRIDE_TAKEN`). Anything else: 422 `SCAN_OVERRIDE_INVALID` with the body of an unknown id. The rights check
+uses the **refusing** scanner's `letInAgain` and the actor's role. `capacity_full` always needs a Manager.
+`letInAgain: never` closes every **Let in** at that scanner, from the door or the desk, Full included; **Mark as out**
+still works. **Every step re-runs at override time** (a pass voided or suspended since the refusal is refused as
+usual), and the override waives **only the reasons the actor may override**, one flag each (`waive.parent`, `.inside`,
+`.wait`, `.limit`, `.cap`, plus 10b-10e for a Manager), never a blanket: door staff letting someone in past **Already
+in** still meet a guest limit or **Full** behind it, which then answers as usual (`needs_approval` with the Manager
+PIN when a Manager could pass it). Overridable reasons: `already_done`, `cooldown`, `not_yet_valid`, `ended`, `capacity_full`, `still_inside`, `not_inside` (parent
+only), and the access refusals above.
 
 ### 2.7 Credentials
 
@@ -489,6 +592,7 @@ D1 counters (`platform/counters.ts`):
 | `scan:pinall:<scannerId>` | 1 h | 20 misses, any name | 429 for every PIN on that scanner; audit `scanner.pin_flood` once |
 | `scan:amt:<scannerId>` | scanner-local day | `dailyAmount` | `limit_reached` |
 | `scan:export:<userId>` | 1 h | 10 | 429 |
+| `scan:ovr:<actorKey>` (20.9) | 1 h | 120 overrides and Mark-as-outs | 429 `SCAN_TOO_MANY_OVERRIDES`; audit `scan.overrides_capped` once |
 
 Stations and access add **no binding and no counter** (2026-11-05): the live upgrade and the catch-up poll run under
 `RL_SCAN` (the 2 s poll is 30/min of 240); beats are capped in the hub at 10/s per socket (close 1008); the flip-back
@@ -542,8 +646,12 @@ member's staff row follow their account. Nothing in this design blocks it.
 | `scanner.watch_change` (18) | user | scanner |
 | `scan_zone.create`, `.update`, `.archive`, `.restore` (19) | user | scan_zone |
 | `pass.access_visits_reset` (19) | user | pass |
+| `scan.override` (20.9: `detail` gains `via: 'scanner' \| 'monitor' \| 'console'`, `of`, `note`) | scanner or user | pass |
+| `scan.mark_out` (20.7; `detail`: `place`, `via`) | scanner or user | pass |
+| `scan.overrides_capped` (20.9, once per hour per device) | scanner | scanner |
 
-No new actor type: Customer screens and Desk monitors are `scanners` rows and audit as `scanner`.
+Zone occupancy and scanner direction changes ride `scan_zone.update` and `scanner.update`. Auto tap-outs are scans
+(actor `system`), not audit rows. No new actor type: Customer screens and Desk monitors are `scanners` rows and audit as `scanner`.
 
 ---
 
@@ -748,6 +856,8 @@ ScanReasonSchema       = enum [
   // heads_up (amber)
   'already_done', 'cooldown', 'not_yet_valid', 'ended', 'capacity_full', 'check_required',
   'needs_approval', 'stale', 'in_progress',
+  // heads_up, occupancy (20.10; P0-10)
+  'still_inside', 'not_inside',
   // ready
   'choose',
 ]
@@ -844,6 +954,11 @@ ScanBatchResultSchema   = { items: { idempotencyKey, outcome: ScanOutcomeSchema 
 // Shared with broadcasts and the passes list
 ScanTargetSchema = union [ { eventId: IdSchema, checkedIn: boolean }, { noScanDays: literal 30 | literal 90 } ]
 ```
+
+Occupancy (20.11) adds, additively after P0: `ScannerSettings.direction`, `ScanOutcome.occupancy`,
+`ScanCard.occupancy` (`ScanOccupancySchema`, nullable, default null) and `ScanCounts.place`. `ScanCard.door` and
+`ScanLookupRow.doorState` read the same in/out row. `ScanMethodSchema` stays the four input methods: `auto` is a stored
+method for system scans only (`ScanRecord.method`), never accepted on input.
 
 ### 4.3 Console API (`src/shared/contracts/scanners.ts`)
 
@@ -1043,7 +1158,8 @@ D1 read, useless without that actor's credential. Request logs carry the route p
 | `GET /roster` (v2) | scanner with `offline`, accepts an event | `?cursor` → `ScanRoster` |
 | `POST /batch` (v2) | scanner with `offline` | `ScanBatchRequest` → `ScanBatchResult` |
 
-Stations add `/live`, `/live/events`, `/live/snapshot`, `/role/options` and `/role` (18.6). Every route above
+Stations add `/live`, `/live/events`, `/live/snapshot`, `/role/options` and `/role` (18.6). Occupancy adds
+`/overrides`, `/overrides/{scanId}/note`, `/mark-out` and `/live/inside` (20.12). Every route above
 answers 403 `SCREEN_ONLY` to a Customer screen or Desk monitor, except `/session` and `/unpair`.
 
 ### 5.2 Console and integration
@@ -1364,6 +1480,9 @@ No backfill: the immutability trigger forbids it, and `NULL` keeps today's "ever
 | Broadcast "checked in at event" | `scan_gates` PK prefix (pass_id) |
 | Display history: last visit, visit counts, value ledger, month sums | `scans_pass_ok` |
 | Stale passes (display-only versions) | `template_versions_build` joined to `passes.template_version` |
+| In now per place, capacity in the entry statement, who's inside (20.8) | `scan_gates_count` (index-only, checked by query plan) |
+| Auto tap-out due rows (20.7) | `scan_gates_due` (partial, `due_at IS NOT NULL`) |
+| One live override per scan (20.9) | `scans_override_once` (unique, partial) |
 
 ### 6.3 Retention and cron (`scan/jobs.ts`, registered in `jobs/cron.ts`)
 
@@ -1371,6 +1490,7 @@ No backfill: the immutability trigger forbids it, and `NULL` keeps today's "ever
 | --- | --- | --- | --- |
 | `scan.reconcile` | minute | pending scans older than 60 s (section 9.3) | 100 rows |
 | `scan.backfill` | minute | passes with `scan_code IS NULL`, `barcode_hash IS NULL` (not removed), or `lookup_hash IS NULL` on a template with `scan.lookup`: compute and write via `passes/repo-write.ts` `backfillScanKeys`. Stops when a run finds none (system setting `scan.backfillDone`) | 200 passes |
+| `scan.occupancy` (20.7) | minute | in rows with `due_at <= now`, oldest first: auto tap-out (Max stay, Clear at), CAS on `last_scan_id`, idempotent claims; publish to orgs with monitors | 200 rows, batches of 25, `CRON_QUERY_BUDGET` |
 | `scan.retention` | daily | `scans` older than `retention.scansDays`; test `scans` older than `sandbox.purgeDays`; expired pairing codes nulled; device scanners past `expires_at` or 30 d idle are left as they are (the token still matches, so the device hears `SCANNER_EXPIRED`; the console shows them as needing a new code); `vas_keys` retired rows kept | `deleteInBatches`, inside `CRON_QUERY_BUDGET` |
 
 Test passes purged by n6 cascade their `scan_gates`; their `scans` rows keep `pass_id NULL` until the test purge.
@@ -1440,6 +1560,10 @@ for `previous` (still `pending`: `in_progress`).
 Release after a failed effect: restore `prev_*` when `last_scan_id` is still this scan, or delete the row this scan
 inserted (`prev_state IS NULL`).
 
+**Occupancy** (2026-11-05 later): the `once`-with-re-entry and direction `out` rows above are superseded by section
+20's statements on scope `event:<id>` (re-entry on) or `zone:<id>`: the same table, one row per pass, action and
+place, plus `due_at`. `once` without re-entry is unchanged.
+
 **Check-in fast path.** A check-in that publishes nothing commits in one batch after the claim:
 `[gate UPSERT, finalize scan WHERE EXISTS (gate.last_scan_id = :scanId), ledger INSERT … SELECT … WHERE EXISTS (same)]`.
 A loser's batch changes nothing; one read builds its heads-up.
@@ -1470,8 +1594,8 @@ Two exits the hook never sees (AS §6.2 step 9):
 - **Effect refusal** (`take` short of balance): `effects.ts` throws `ScanEffectStop('no_balance')` from `mutate`;
   `act` releases the gate and finalizes refused `no_balance`. Any other error: release, `failed`, rethrow.
 
-Capacity is a soft limit: doors racing the last places can overshoot by the requests in flight (at most one per
-door). The dashboard shows the true count.
+Capacity was a soft limit here. Superseded 2026-11-05 later (D42, 20.8): the count condition sits inside the entry
+statement, so capacity is exact for events and zones, and its override needs a Manager.
 
 **Undo** (`POST /scan/scans/{id}/undo`, console `POST /scans/{id}/undo`): a new scan row, `scan.undone` in the ledger,
 always silent.
@@ -1783,7 +1907,7 @@ Smart Tap is out of scope; a dual reader keeps that door open.
 
 ## 12. Security and threat model
 
-Stations and screens: 18.9. Access cards and zones: 19.9.
+Stations and screens: 18.9. Access cards and zones: 19.9. Occupancy and desk overrides: 20.14.
 
 ### 12.1 Threats
 
@@ -2042,11 +2166,12 @@ mismatch across two orgs on one pass type ID; the verdict read at arm's length a
 | **0. Foundation PR** (integration) | `ScannerAuth`, store port, CSRF, `Actor`, `reportDenied`; `scans:read`; `RL_SCAN_*` 1010-1013; `derivedHmacKey`; `/scan` headers; vite second input, `'!/scan'` in `VITE_DEV_PATHS`; `check-bundle` second budget; event kinds and group; settings keys; `AuditActorType` | `npm run check` green, behaviour unchanged (`denyAllStores` resolves null) |
 | **1. Door core** | 0014; scanners, pairing, pair here, revoke, mode; events (with the staff note); resolve; `check_in` with gates and the fast path; ledger; counts; asset route; test-mode rules; the display model, validator, renderer, presets, defaults, role filter, history and the server display (every result renders a default or a blueprint's display); `/scan` entry, session, pairing, reducer with the card layer, wedge, manual, camera and decoder, the B shell, result card and display painter, sound, the dock-seated buddy, v1 unsure; console Scanners, Events, Scans tabs; blueprints switched, with displays | a paired phone checks in a ticket and shows its Ticket panel; two doors can't double admit; e2e green |
 | **2. Desk** | `add`, `take`, `set`, `use_up` with the `commit` hook; undo; lookup search; miss caps; manifest, validator, designer **Scanning**; desk panel, action area, keypad, review, ready action, promoted actions; staff, PINs, sign-in, approvals; display-only versions (`build_key`, 0018); the designer's **Scan screen** mode | a desk adds a stamp, redeems a reward, undoes; a Manager PIN approves a `set`; a display edit goes live on the next scan with no reissue |
-| **3. Door depth** | re-entry, capacity, bundle check-in, live dashboard, summaries, milestones, buddy beats and the beat API, metrics and overview, feed and CSV, broadcast and list targets, Sync log, portal `lastScan`, terminals, the designer's real-pass sample (`/api/v1/scan-display/preview`) | dashboard live at 5 s; overview cards |
+| **3. Door depth** | capacity (re-entry moved to 3B), bundle check-in, live dashboard, summaries, milestones, buddy beats and the beat API, metrics and overview, feed and CSV, broadcast and list targets, Sync log, portal `lastScan`, terminals, the designer's real-pass sample (`/api/v1/scan-display/preview`) | dashboard live at 5 s; overview cards |
 | **4. NFC (off)** | manifest `nfc`, `vas_keys`, gates, build injection, scoped reissue, identity NFC card, browser keys, reader test, designer **NFC**, serial rule, docs | all gates tested; flag off in every environment |
 | **5. Offline** | v2 roster, decide, queue, batch; then v3 service worker | conflicts shown without interrupting the door |
 | **2A. Access** (after 2) | `0020`, zones, plans, the access steps and gate, Let in anyway, Zones tab, Access designer section, pass widgets, the Access card blueprint and the `gate` beat (19) | a gym morning: 24/7, Off-peak and a guest at two doors, each refusal once, a Manager lets one in |
 | **3A. Stations** (after 2) | `0019`, device roles in the console, the hub, publish, catch-up, Customer screen and Desk monitor faces, the device flip (18) | a phone flipped to a Customer screen shows a stamp within 300 ms; a monitor shows both after a dropped socket |
+| **3B. Occupancy** (after 2A and 3A) | in/out state on zones and events (event re-entry and check-out move here from phase 3), direction and Auto, exact capacity, auto tap-out, In now with revisions, who's inside, Mark as out, desk overrides with the live flip, the zone and device settings, `bye` and `relent` (20) | a gym evening: one Both phone and two doors; **Already in** at the In door; the monitor lets them in and the door's card turns green; Pool full with a Manager PIN; max stay taps out after 12 h on a test clock |
 | Later | door list (AS §7.3), outbound webhooks (a platform stream), server-side VAS decryption, native `readVAS` shell, org membership (2.10) | — |
 
 ### 16.2 AGENTS.md ownership row (replaces n8's)
@@ -2130,6 +2255,17 @@ Added 2026-11-05 (stations and Access cards; defaults are set, the owner may cha
 11. **Guests are text-sponsored** ("Guest of Maya Okafor") this wave; linking guests to members and a guests-per-member
     cap come later. No holiday calendar this wave.
 
+Added 2026-11-05 later (occupancy and desk overrides; defaults are set, the owner may change them):
+
+12. **Full needs a Manager**, for zones and events. Before this, door staff could override **Event full** under
+    `letInAgain`; capacity is often a safety limit, so it tightens. Say if door staff should keep it.
+13. **Already in** can be overridden by anyone at the door (the door's `letInAgain`, default anyone): it is usually a
+    forgotten tap-out and the photo is on screen. On a scanner without staff sign-in that override is signed by the
+    device only (**Front door**), not a person; desk overrides always have a person. Keep anyone, or default to
+    Manager (or require staff sign-in on scanners at a Require-tap-out zone)?
+14. **Max stay defaults to 12 h** when a zone starts tracking (a 24/7 gym might want 6 h, an office 14 h), and Require
+    tap out now needs a Max stay or a Clear at, so every hold ends by itself. Keep both?
+
 ---
 
 ## 18. Stations, screens and realtime
@@ -2148,8 +2284,8 @@ where they differ (section 1, rows 11-05).
 | `display` | **Customer screen** or **Desk monitor** | `customer`, `monitor` | the console only |
 
 - One table (`scanners`): pairing, the cookie, **Pair again**, expiry, `last_seen_at`, revocation, audit and the
-  console list are the same for screens. A display never accepts templates or an event (`accepts` null) and never
-  binds staff.
+  console list are the same for screens. A display never accepts templates or an event (`accepts` null). It binds
+  staff only as a Desk monitor with **Desk actions** on (20.9; same PIN binding, 15 min idle, 12 h).
 - The kind is what the device may ever do; the role is what it does now. A phone left facing a customer is still a
   scanner underneath, so a PIN brings it back; an iPad paired as a screen can never scan.
 - UI names: the console tab **Devices** (was Scanners; `?tab=scanners` redirects to `?tab=devices`); roles
@@ -2192,6 +2328,8 @@ where they differ (section 1, rows 11-05).
 | | Scanner | Desk monitor | Customer screen |
 | --- | --- | --- | --- |
 | Scan routes (resolve, actions, undo, lookup, recent, stats, summary, roster, batch) | yes | 403 `SCREEN_ONLY` | 403 `SCREEN_ONLY` |
+| Override, mark out, staff sign-in (20.9) | yes | only with **Desk actions** on and staff signed in (sign-in itself needs only the switch) | 403 `SCREEN_ONLY` |
+| `GET /scan/live/inside` (20.12) | no | yes | no |
 | `GET /scan/session` | yes | yes (`screen` block) | yes (`screen` block) |
 | Live socket, catch-up | yes (presence; sends beats) | yes (monitor rows) | yes (customer views) |
 | `GET /scan/live/snapshot` | no | yes | no |
@@ -2229,7 +2367,8 @@ trusted). The zone, the plan's other hours and a suspension never reach a custom
 `kind` (no `ready`), `reason`, `action`, `direction`, `method`, `holder`, `template { name, style }`, `value`
 (filtered), `zone`, `event`, `override`, `undone`, `display` (the outcome's display for the monitor's audience). One
 builder, `toMonitorRow()`, serves the live publish and the snapshot, so the feed reads the same before and after a
-reload.
+reload. Occupancy (20.11) adds `occupancy`, `places[] { place, inNow, capacity, rev }`, `outCause`, `overrideOf`,
+`resolvedBy`; `ScanCustomerView` adds `replaces` (20.9).
 
 Monitor photos use an **audience grant**: `g = HMAC(derivedHmacKey(env, 'scan-asset'), 'aud:' ‖ orgId ‖ ':' ‖ mode ‖
 ':' ‖ audience ‖ passId ‖ exp) ‖ exp`, 1 h, valid for a monitor principal of that org, mode and audience or higher.
@@ -2255,6 +2394,8 @@ Monitor photos use an **audience grant**: `g = HMAC(derivedHmacKey(env, 'scan-as
 - **Who publishes:** `actions` (ok, heads-up, refused; never a replay) → `scan`; `resolve` → `ready` (customer body,
   only with a Customer screen in the station and `showReady`), and heads-up/refused → `scan` with `scanId: null`;
   undo → `undo`; v2 batch → `scan` to monitors only. Admin "Scan as admin" publishes to `w:org` and `w:ev` only.
+  Occupancy (20.8, 20.9): an override publishes to the **original** scan's station and watches, plus `resolved` to
+  `dev:<refusing scanner>`; auto tap-outs publish from the cron to orgs with monitors (monitor rows only).
 - **Rendering:** the Worker renders at most three bodies per scan (`customer`, `door`, `desk`) with the display model
   and the data the request already loaded; the hub never builds content. `actor.live` (two scalar subqueries in the
   guard's scanner read: a Customer screen in the station; the monitor audiences in the org and mode) skips rendering
@@ -2393,7 +2534,7 @@ the class is a `wrangler deploy` by the owner, never `versions upload`.
 | A revoked screen keeps receiving | Kick 4403 awaited with a retry; upgrade and catch-up re-resolve the cookie; the hub drops a socket past its 15-minute attachment expiry before sending |
 | A desk lookup shows someone else on the counter screen | Customer bodies only for a presented code (18.4); a lookup publishes to monitors only; the scanner's `idle` beat clears a `ready` card |
 | A forged attachment | The route builds a new request and sets `x-pb-live` itself; the hub checks the attachment's org and mode against its own name |
-| A stolen monitor | Revoke as any device; monitors never see Manager-only content, never act, and their photo grants are bound to the audience and expire in 1 h |
+| A stolen monitor | Revoke as any device; monitors never see Manager-only content and their photo grants are bound to the audience and expire in 1 h. A monitor acts only with **Desk actions** on and a staff member signed in by PIN (15 min idle); Manager-only overrides need a Manager PIN (20.14) |
 | Socket floods | ≤ 3 sockets per device, `RL_SCAN` on upgrade, 10 beats/s, 512-byte messages, strict client schema |
 | Logs | `scan.live.*` lines carry `orgId` and `code` only; never bodies, names or tickets |
 
@@ -2606,7 +2747,8 @@ CREATE INDEX scans_zone ON scans (zone_id, at DESC) WHERE zone_id IS NOT NULL;
 ```
 
 Depth, cycles and cross-org parents or scanner zones are service rules (`ZONE_DEPTH`, `ZONE_CYCLE`,
-`ZONE_ORG_MISMATCH` as a 404 body). `scan_gates` needs no change. Retention: nothing new.
+`ZONE_ORG_MISMATCH` as a 404 body). Retention: nothing new. **Extended 2026-11-05 later** with the occupancy columns,
+`scan_gates.due_at`, `scan_place_revs` and the override columns and index (20.13); AX.1 writes the whole file.
 
 ### 19.8 Contracts and routes
 
@@ -2631,7 +2773,8 @@ Routes (`modules/scan/routes-zones.ts`, `requireAdmin`, mode-free, CSRF, audited
 - Customer screens get only the band (zone name on a grant), two system lines and the plan chip; a refusal never names
   the zone, the plan's hours beyond the next opening, or a suspension.
 - Logs carry ids only: no zone names, inputs or sponsors.
-- The photo is the anti-sharing control (`sharingProhibited` on the pass, the photo at the door). No anti-passback.
+- The photo is the anti-sharing control (`sharingProhibited` on the pass, the photo at the door). Anti-passback is
+  opt-in per zone since 2026-11-05 later (**Require tap out**, 20.2); the photo stays the main control.
 
 ### 19.10 Files and tests
 
@@ -2645,3 +2788,426 @@ with real D1, multi-zone, the guest limit under concurrency, undo of a visit, is
 no-zone scanner naming no zone, a foreign zone id granting nothing, `guestUntil` with `days: 3` across a DST night
 and written into `until` at issue, `timeZone` on the outcome, log hygiene; web: the week grid, the zone
 tree, the pass widgets, axe at 1440/820/390 in both themes), e2e `16-scan-access`.
+
+---
+
+## 20. Occupancy and desk overrides
+
+Owner: "Can we add occupancy support? Next entry only allowed after a tap out is recorded." and "The desk view should
+also allow for easy overriding (ie. if no access, or already in, etc) on the fly, which would change the state and the
+screen." Detail: **OC** (`addendum/occupancy/occupancy.md`), reference code `addendum/occupancy/gen/occupancy.mjs`
+with 23 passing tests on next/n8-p0's migrations (SQLite 3.54), sheets `addendum/occupancy/sheets/occ-*`. This
+section wins where they differ (section 1, rows 11-05 occ). Words: **occupancy** is who is inside a place; a pass's
+**in/out state** is its row for one place. **Presence** keeps its meaning (devices online).
+
+### 20.1 The in/out state
+
+| Field | Source |
+| --- | --- |
+| place | `scan_gates.scope`: `zone:<id>` or `event:<id>` |
+| state | `scan_gates.state`, `in` or `out` |
+| since | `last_at` (the entry when in, the exit when out) |
+| via | `last_scan_id` → `scans.scanner_id`, `station_id`, `staff_id` |
+| due | `due_at`: when the system taps them out (in rows only) |
+
+One row per pass and place (the gate's key: zones use `action_id = 'access'`, events the template's check-in action).
+No row means out, and so does an `in` row past its `due_at` (20.7). Zones and events share the statements, the undo
+and the count query; a separate table would duplicate all three. Occupancy at a zone covers access templates (zones
+are theirs, 19.3); another template a zone scanner accepts neither counts nor is held.
+
+### 20.2 Zone settings
+
+| Setting | Values | Default | Meaning |
+| --- | --- | --- | --- |
+| **Track who's inside** | on/off | off | count in and out; In now on monitors, the console and the scanner's count chip |
+| **Require tap out** | on/off (needs Track) | off | a second entry while inside answers **Already in** (`still_inside`) |
+| **Capacity** | 1-100,000 or none | none | entries past it answer **{zone} full** (`capacity_full`) |
+| **Max stay** | 15 min-48 h or none | 12 h when Track turns on | anyone inside longer is tapped out |
+| **Clear at** | a local time or none | none | everyone inside is tapped out daily at this time, in the zone's clock |
+
+Stored as `scan_zones.occupancy` (`off` \| `track` \| `enforce`), `capacity`, `max_stay_minutes`, `clear_at`.
+
+- **Per zone, never per plan:** occupancy is a door's rule, and a door serves every plan the same way. A staff
+  exemption is a Manager override, not a setting.
+- **Tracking alone refuses nothing except Full.** A track-only zone answers a second entry with **Access granted**;
+  the row keeps its `since`, and the visit gap decides the count.
+- Service rules: Require tap out, capacity, max stay and clear need Track (a CHECK); Clear at needs a time zone on the
+  root or the org (`ZONE_CLEAR_NEEDS_TZ` 422); **Require tap out needs Max stay or Clear at** (`ZONE_ENFORCE_NEEDS_END`
+  422, **Set a Max stay or a Clear at time so a forgotten tap-out ends.**), so every hold ends by itself.
+- **Changes that break the tree's invariant clear it.** Turning Track off, archiving a zone, or changing its parent
+  taps everyone inside it and below out: the save sets `due_at = now` on those rows (bounded batches) and the cron
+  exits them with `out_cause` `zone` (trail **Auto tapped out · Zone settings changed**). A restored or re-tracked
+  zone starts empty. Track to Require tap out (and back) keeps the rows: they are accurate.
+- **Time zone changes** (the org's, or a root zone's) recompute `due_at` for the affected inside rows, like a settings
+  save: AX calls it for a root, g for the org (on request, as the suspend hook). Until then the job's re-read re-arms
+  any row that would fire early. If no time zone applies any more (the org's cleared), Clear at is skipped (Max stay
+  still runs) and the zone dialog shows **Set a time zone on Gym or the organization first.**; `dueAt` never guesses a
+  clock.
+
+### 20.3 Direction
+
+| `ScannerSettings.direction` | Device | Use |
+| --- | --- | --- |
+| `in` (default) | fixed chip **In** (no chip without a place) | the way in; every scanner that doesn't count |
+| `out` | fixed chip **Out** | an exit reader |
+| `both` | chip **Auto ⌄** (Auto, In, Out) | one phone at a front desk; a gate used both ways |
+
+- **The scanner's place:** its event, else its first zone (in **Checks** order) that tracks. Its other zones stay
+  access-only. A scanner with no place ignores direction; Out and Both are refused at save
+  (`SCANNER_DIRECTION_NO_PLACE` 422). A terminal can't be Both.
+- **Auto** infers per scan: inside → out, otherwise in. The server decides inside the statement; every result says
+  which (band pill **In** / **Out**), and Undo is in the strip.
+- **Pin:** staff may pin In or Out on a Both scanner for a rush; per device, client state, sent as `direction` on each
+  act; it lapses after 15 minutes without a scan.
+- **Turnaround hold:** on Auto, a flip at the same place under **2 minutes** after the last transition is held (amber
+  **Already in · 40 s ago · Front desk** with **Tap out**, or **Already out** with **Tap in**). An explicit direction
+  (a pin or a dock action) skips the hold; Require tap out still applies. Client double-scan windows are unchanged
+  (7.5).
+- **Readers at a door** (wedge, NFC, terminals) have nobody to answer a hold: fixed In or Out, one scanner per door
+  direction.
+
+### 20.4 Entry and exit
+
+| | Entry (`in`) | Exit (`out`) |
+| --- | --- | --- |
+| Checks | 1-9, 10-10e, 13-14, then step 15 | 1-9 only, then the in/out gate |
+| In/out | out → in, and implied entries up the tree (20.5) | in → out, and every tracked zone below |
+| Visit | AX's gate: a new visit past the gap | none |
+| Held | `not_inside` (parent), `still_inside`, `cooldown`, `guest_visits_used`, `capacity_full` | `not_inside` (nothing to close; they still leave) |
+| Verdict | **Access granted** (events **Checked in**) | **Tapped out** (events **Checked out**) |
+
+Leaving is never refused for who you are (D39): a voided, suspended, ended or outside-hours pass taps out `ok`. Only
+"not this org's pass" and a mode mismatch stop it.
+
+**Statements** (one D1 batch per entry, as the check-in fast path; reference `gen/occupancy.mjs`):
+
+```
+1 ENTER          upsert the place's row WHERE enforcing parent in, AX wait and limit, not inside (enforce),
+                 inside(place) < capacity, and each implied ancestor with a capacity has room or holds the pass;
+                 each condition skipped only by its own waiver; one statement: it moves or it doesn't
+2 ENTER_IMPLIED  each tracked ancestor up to the enforcing one: in, with that ancestor's own due time, if 1 won
+3 EXIT_BELOW     children out, if 1 won over a row that was in (forced, past due, or a track-only repeat)
+4 VISIT          AX's gate UPSERT, if 1 won (or no tracked place)
+5 REV            per changed place: rev + 1, if 1 won
+6 finalize scan  WHERE 1 won; ledger INSERT … SELECT WHERE 1 won
+7 COUNTS         In now with revs for the changed places, only when a monitor listens (actor.live)
+```
+
+A loser runs one read (`LOSS_READ`) and `entryReason()` names the reason in step 15's order (`fullAt()` names which
+place is full). **Waivers:** an override binds one flag per reason (`wParent`, `wInside`, `wWait`, `wLimit`, `wCap`)
+from the actor's rights (2.6); `:override` only resets `since` on a forced re-entry. **Due rows:** an `in` row past
+`due_at` reads as out in ENTER, the parent check, `direction()` and `entryReason()`, so nobody waits on the cron.
+**Auto** reads the row before the batch; if another door moved it meanwhile, the statement still decides (a stale
+**out** ends as **Not tapped in**, a stale **in** as **Already in** or a kept `since`), never a double state. An exit is `EXIT` (CAS on
+`last_scan_id`), `EXIT_BELOW`, `REV`, finalize, ledger. Because AX's wait and limit are inside statement 1, a refused
+entry never moves the in/out state and nothing needs compensating. Two doors at once: D1 serializes batches, so the
+second sees the first's row (tested: one entry, one `still_inside`, one visit). Offline replay (v2, event scanners):
+`AND :clientTs >= last_at` on ENTER and EXIT, and no later scan of the pass at that event (any outcome, so an online
+**Not checked in** exit counts); an older item is recorded as a heads-up with no state change (9.2). Batch items carry
+the direction the device decided; the server never re-infers Auto from a stale roster.
+
+### 20.5 Nested zones
+
+- Entering a zone needs the pass inside the nearest ancestor that **requires tap out** (else **Not tapped in · Tap in
+  at Gym first.**, `not_inside`). An override enters that ancestor too.
+- Tracked ancestors in between are entered with it (implied entry), each with its own due time. A count-only parent
+  never refuses for tap-out, but **its capacity holds**: when the pass isn't in it yet (a child with its own street
+  door), ENTER checks its count too and the answer is **{Club} full**. A parent the pass is already in isn't counted
+  again.
+- Re-entering a zone the pass was in (a forced re-entry, a row past due, or a track-only repeat) leaves every zone
+  below it: to scan at its way in, they left them.
+- Leaving a zone leaves every zone below it, in the same batch. So in(child) ⇒ in(every tracked ancestor), and a
+  parent's In now includes its children's. An untracked zone has no count.
+- A parent exit racing a child entry ends consistent in either order (tested): the parent check is inside ENTER.
+
+### 20.6 Events
+
+An event is a place (`event:<id>`); its re-entry is the occupancy path, built once in OC.1:
+
+| Event | In while in | Out while not in | Capacity |
+| --- | --- | --- | --- |
+| re-entry off | `already_done` **Already checked in** (unchanged) | — (no exits) | exact, **Event full** |
+| re-entry on (`enforce`) | `still_inside` **Already checked in** | `not_inside` **Not checked in** · **Check in** | exact |
+
+Event scanners get the same Direction (the old menu item **Direction: In / Out** becomes the capsule chip). Events
+never auto tap out (the event ends) and have no zones (19.3).
+
+### 20.7 Forgotten tap-outs
+
+| Path | Who | Records |
+| --- | --- | --- |
+| **Max stay** | system | exit, `out_cause` `stay`, actor `system`, method `auto` |
+| **Clear at** | system | exit, `out_cause` `clear` |
+| **Mark as out** | Desk and up: a monitor with Desk actions and staff signed in; an admin in the console | exit, `out_cause` `desk`, the person; audit `scan.mark_out` |
+| **Let in anyway** on **Already in** | the door per its `letInAgain`, or the desk | a forced-exit row (`out_cause` `forced`) and the grant (`override_of`), one `group_id` |
+| Turnaround **Tap out** | anyone at a Both scanner | an ordinary exit |
+
+**The cron, not a hub alarm** (6.3 `scan.occupancy`, minute): `due_at <= now` from `scan_gates_due`, oldest first,
+200 rows, batches of 25. Per row: claim a `scans` row (actor `system`, `actor_key 'sys:occupancy'`, key
+`auto:<pass>:<scope>:<last_at>`, method `auto`, direction `out`), `EXIT` with CAS on the `last_scan_id` it read,
+`EXIT_BELOW`, `REV`, finalize or delete the claim, ledger; then publish to orgs with monitors. A tap at the same moment
+wins and the cron changes nothing; a retried run collapses on the key. It must work for orgs with no screens, and the
+hub has no D1 access by design. The job re-reads the zone first: Track off, archived or moved gives `out_cause` `zone`
+(20.2). **Lag is harmless:** a row past `due_at` already reads as out to every scan, so a 23:00 clear of 600 people
+that takes the cron three minutes holds nobody; only In now and the inside list trail it by that long.
+
+**Due time:** the earlier of `since + max stay` and the next Clear at after `since`, wall clock in the zone's time zone
+via AX's `instantOf` (a clear in the spring-forward gap fires when the gap ends; the repeated autumn hour fires at its
+first instance). Set at entry, null on exit. A zone settings change recomputes `due_at` for its inside rows in bounded
+batches; the job re-reads the zone before acting, so a stale due time re-arms instead of tapping out early.
+
+### 20.8 Capacity and In now
+
+- **Exact:** the count condition is inside ENTER, so two doors racing the last place get one entry, for zones and
+  events (7.4's soft limit is gone). `inside(place)` is an index-only `count(*)` on `scan_gates_count`, read only when
+  capacity is set or a monitor listens.
+- **Full** is amber `capacity_full` (**Pool full · 25 of 25 in.**): the pass is fine and staff talk. Override:
+  **Manager only** (signed in or PIN), zones and events; `letInAgain` no longer covers it. An override can pass
+  capacity; the count says so (26 / 25).
+- **Ordered:** `scan_place_revs (org_id, mode, place, rev)` is bumped in the batch that changes the place. Every monitor
+  row carries `places: [{ place, inNow, capacity, rev }]` for the places it changed; the client keeps, per place, the
+  value with the highest `rev`, so publishes arriving out of commit order can't roll a count back.
+  `GET /scan/live/snapshot` returns `counts.places`.
+- The hub stays a router: no D1, no timers. A test-pass purge cascades its gate rows without a rev bump; the next
+  change or snapshot carries the true count. Undo bumps the revision of every place it restores (`REV_UNDO`) and
+  publishes counts, like any change.
+
+### 20.9 Desk overrides
+
+**What the desk can do** (a Desk monitor, one tap from a feed row or a pinned alert, scans ≤ 15 minutes old):
+
+| Answer at the door | Desk action | Needs | Records |
+| --- | --- | --- | --- |
+| `zone_not_included`, `outside_hours`, `not_yet_valid` (access) | **Let in** | Manager | grant (`override_of`), in (+ implied), visit |
+| `guest_expired`, `guest_visits_used` | **Let in** | Manager | the same; the visit may pass the limit |
+| `still_inside` | **Let in** | the refusing scanner's `letInAgain` | forced-exit row + grant; `since` resets; children out |
+| `not_inside` (parent) | **Let in** | `letInAgain` | grant + implied parent entries |
+| `capacity_full` | **Let in** | Manager | grant; the count passes capacity |
+| `cooldown` | **Let in** | `letInAgain` | grant |
+| `already_done`, `not_yet_valid`, `ended` (events) | **Let in again** | `letInAgain` | check-in |
+| anyone inside | **Mark as out** | Desk | exit, `out_cause` `desk` |
+| `not_inside` on an exit | none (they left) | — | — |
+| `voided`, `removed`, `expired` (non-guest), `suspended`, `test_pass`, `live_pass`, `not_found`, `not_accepted`, `wrong_event`, `ambiguous` | **Seen** only | never | — |
+
+`letInAgain` is the **refusing** scanner's: the door's policy follows the scan wherever it is overridden; `never` closes
+it for the desk too. Resolve-only rows (`scanId: null`, 18.5) carry no **Let in**: nothing was recorded to override.
+
+**Who may override.**
+- **Desk actions** (`ScreenSettingsSchema.actions`, default off) is the gate. A lobby wall screen never acts.
+- A staff member must be **signed in on the monitor** with their PIN (the existing binding: 15 min idle, 12 h,
+  **Switch staff**). Without one the buttons read **Sign in to act**. Every action has a person.
+- Rights are the signed-in person's role (Door, Desk, Manager), never the device's, its audience or its paired role
+  (D4). A Door-audience monitor acts if its staff can; audience filters content, not rights.
+- Manager-only overrides take a Manager signed in, or a Manager PIN for that one action (`approval`, 2.7).
+- An admin session may override any device of its org in the console's scope.
+- `letInAgain: never` at the refusing scanner closes **Let in** from the desk too, Full included; **Mark as out**
+  stays.
+- **Who's inside** (names and photos) needs Desk actions: a read-only monitor shows **In now** counts only, so a
+  lobby screen never lists who is in the building.
+
+**The validation** (2.6, widened): `overrideOf` names a row of the actor's org and mode, with a pass, outcome
+`heads_up` or `refused`, an overridable reason (table above); written by the same `actor_key`, or by a device whose
+station, zone or event the monitor watches (`watchCovers(monitor.watch, row)`: `station_id`, `zone_id` and its
+ancestors, `event_id`), or by any device for an admin; ≤ 15 minutes old; not already overridden. Anything else is 422
+`SCAN_OVERRIDE_INVALID` with the body of an unknown id (no probing across watches). The monitor sends only
+`overrideOf` (plus `approval`, `note`): the pass, action, place, event and direction come from the referenced row, so
+the desk can't redirect anything. **Every step re-runs at override time** against the pass as it is now, and only the
+reasons the actor may override are waived (2.6); a remaining Manager reason answers `needs_approval` and the monitor
+opens the Manager PIN card.
+
+**One tap does** (one batch): the grant with the original's `zone_id`, `station_id`, `event_id`; the forced exit when
+the pass was inside; the in/out rows (implied ancestors, children out); AX's visit; `REV`. Then:
+- **Attribution:** the new `scans` row is the monitor's (`scanner_id` = the monitor, `staff_id` = the signed-in staff
+  member, `approved_by` = the Manager PIN if any) with `override_of`; ledger `scan.checked_in` with `data.override`;
+  audit `scan.override` with `via: 'monitor'`, `of`, `note`.
+- **Alert:** the override's monitor row carries `overrideOf`; every monitor marks the original **Resolved by Ana R.**
+  and unpins its alert.
+- **Screens, live:** the hub sends `resolved { of, outcome, by: { staff, device } }` to `dev:<refusing scanner>` (the
+  outcome role-filtered for that scanner's role), and the original station's Customer screen gets the override's
+  customer body with `replaces` = the refused request's `ref`. Scanners already hold a socket whenever the org has
+  screens, and a desk override implies a monitor.
+  - The scanner turns its card green in place if the refused card for `of` is up, or it is the latest verdict and under
+    60 s old; otherwise only its strip row turns green. Never over the next person. No Undo there: the desk owns it.
+  - The Customer screen shows it only over the `see_desk` it replaces, or idle within 60 s of it; never over the next
+    customer. It never says who let them in or that it was an override.
+- **Undo:** an 8 s toast on the monitor (**Leo Park let in · Gym** · **Why?** chips · **Undo**) and **Undo** from the
+  row for 10 minutes (own scan rules, 7.4). Undo restores every row the group changed (`last_scan_id = :undone`; rows
+  it inserted are deleted, others take `prev_*`; `due_at` recomputed; AX's visit decremented), marks the group undone,
+  re-opens the original's alert as **Override undone**, and publishes `undo` to the station and the refusing scanner
+  (its strip row returns to red). A later in/out change of the pass at any place answers `UNDO_SUPERSEDED`: every undo
+  statement carries the same guard, so an undo applies whole or not at all. Undo bumps each restored place's revision.
+- **Reason note:** optional chips **Forgot to tap out** · **Known to staff** · **Paid** · **Other**, posted within 2
+  minutes (`override_note`).
+
+**Abuse guards:** Desk actions off by default; sign-in required; Manager for the risky ones; only scans in the watch,
+≤ 15 minutes old, once each (`scans_override_once` on pending and winning overrides; a racing scanner and monitor
+get one winner and 409 `SCAN_OVERRIDE_TAKEN`, copy **Ana R. already let them in.**; an override that lost frees it); `scan:ovr:<actorKey>` 120 per hour per device (2.9);
+PIN misses reuse `scan:pin:*` and `scan:pinall:*`; `RL_SCAN` on every route; every override attributed, audited, in
+the Sync log, counted on the monitor rail (**Let in 3**) and in the Scans log (`?override=true`).
+
+### 20.10 Reasons and copy
+
+| Reason or verdict | Kind | Headline | Sub | Dock | Beat |
+| --- | --- | --- | --- | --- | --- |
+| entry ok | ok | **Access granted** (events **Checked in**) | pill **In** + zone | Undo in the strip | `gate` / `hop` |
+| exit ok | ok | **Tapped out** (events **Checked out**) | pill **Out** + **{zone} · {1 h 32 min}** | Undo | `bye` |
+| `still_inside` | heads-up | **Already in** (events **Already checked in**) | **Since {9:12 AM} · {Front desk}** (under 60 min: **{40 s ago} · {Front desk}**) | In door: **Let in anyway** · **Done**; Auto: **Tap out** · **Done** | `wrist` (back) |
+| `not_inside`, no entry | heads-up | **Not tapped in** (events **Not checked in**) | **No entry recorded.** (events: **Check them in instead?**) | **Done** (events: **Check in**) | `tilt` |
+| `not_inside`, Auto after an exit | heads-up | **Already out** | **{30 s ago} · {Front desk}** | **Tap in** · **Done** | `wrist` (back) |
+| `not_inside`, parent | heads-up | **Not tapped in** | **Tap in at {Gym} first.** | **Let in anyway** · **Done** | `tilt` |
+| `capacity_full` | heads-up | **{Pool} full** (events **Event full**) | **{25} of {25} in.** | **Let in anyway** (Manager, shield) · **Done** | `wrist` (fwd) |
+| after a desk override | ok | **Access granted** | **{Pool} · Let in by {Sam K.}** | strip **Let in by Sam K. at Office iPad** | `relent` + `gate` |
+
+Customer screens (`CUSTOMER_COPY`): exit **Tapped out** · **Bye, Maya** · **Stayed 1 h 32 min**; `still_inside`
+**Please see the desk** · **Your last exit wasn't recorded.**; `capacity_full` **Please see the desk** · **We're full
+right now.**; `not_inside` (parent) **Please see the desk**; `not_inside` on an exit publishes nothing to the customer
+(leaving never stops anyone); an override of a shown see-the-desk shows the ordinary ok view. Counts, who is inside,
+reasons and staff names never reach a customer.
+
+### 20.11 Contracts
+
+Phase 0 (P0A): **P0-10** adds `still_inside` and `not_inside` to `SCAN_HEADS_UP_REASONS` with one default line each;
+`capacity_full`'s copy is unchanged (zones' **{zone} full** is an OC.1 variant; events keep **Event full**).
+Everything else is additive, in stream OC (plan §5.17):
+
+```ts
+// contracts/scan.ts (additive, OC.1)
+ScannerSettingsSchema.direction = z.enum(['in', 'out', 'both']).default('in');
+ScanOccupancySchema = z.object({
+  place: z.object({ kind: z.enum(['zone', 'event']), id: IdSchema, name: z.string() }),
+  direction: ScanDirectionSchema,               // what this scan did or asked
+  auto: z.boolean(),                            // inferred on a Both scanner
+  state: z.enum(['in', 'out']),                 // after this scan (or now, on a card)
+  since: TimestampSchema.nullable(),
+  via: z.string().nullable(),                   // the scanner of the last transition
+  stayMs: z.number().int().nullable(),          // on an exit
+  inNow: z.number().int().nullable(),           // the place's count, when the actor may see it
+  capacity: z.number().int().nullable(),
+  turnaround: z.enum(['in', 'out']).nullable(), // a held Auto flip: the dock's one-tap direction
+});
+ScanOutcome.occupancy, ScanCard.occupancy: ScanOccupancySchema.nullable().default(null);
+ScanCounts.place: z.object({ name, inNow, capacity }).nullable().default(null);
+```
+
+| File | Names |
+| --- | --- |
+| `contracts/scan-occupancy.ts` (new, OC) | `OccupancySettingsSchema`, `ScanInsideRowSchema` (`{ passId, holder, photoUrl, plan, place, since, via, flags: ('long_stay' \| 'pass_ended')[] }`), `ScanInsideListSchema` (≤ 100, `total`, cursor), `ScanOverrideRequestSchema` (`{ idempotencyKey, overrideOf, approval?, note? }`), `ScanOverrideNoteSchema`, `ScanMarkOutRequestSchema` (`{ idempotencyKey, passId, place, approval? }`), `OVERRIDE_NOTES` |
+| `contracts/access.ts` (AX) | `ScanZoneSchema` + `occupancy`, `capacity`, `maxStayMinutes`, `clearAt`, `inNow`; create and update the same |
+| `contracts/scan-live.ts` (ST) | `ScanMonitorRow` + `occupancy`, `places[]`, `outCause`, `overrideOf`, `resolvedBy`; `ScanCustomerView.replaces: UuidV7 \| null`; `LiveEvent` + `resolved { of, outcome, by }`; `ScreenSettingsSchema.actions` (default false); `ScanLiveSnapshot.counts.places[]` |
+| `contracts/scanners.ts` (SC) | `ScanRecord.outCause`, `.overrideNote`, `.occupancy`; `ScanListQuery.outCause`, `.override` |
+| `copy/scan.ts`, `copy/scan-customer.ts` | verdict `tappedOut`; actions `tapIn`, `tapOut`, `markAsOut`, `letIn`, `signInToAct`; customer lines above |
+| `contracts/events.ts` | none: `scan.checked_in` / `scan.checked_out` with `data.place`, `.zoneId`, `.direction`, `.auto`, `.outCause`, `.override`, `.overrideNote`; auto exits are actor `system` |
+
+### 20.12 Routes
+
+| Method and path | Guard | Body → result |
+| --- | --- | --- |
+| `POST /api/v1/scan/overrides` | scan actor with `screenActions` (scanner, monitor with Desk actions, admin), CSRF, `RL_SCAN`, `scan:ovr` | `ScanOverrideRequest` → `ScanOutcome` |
+| `POST /api/v1/scan/overrides/{scanId}/note` | `screenActions`; the override's device and staff member, ≤ 2 min | `{ note }` → 204 |
+| `POST /api/v1/scan/mark-out` | scan actor with `screenActions`, Desk+, CSRF, `scan:ovr` | `ScanMarkOutRequest` → `ScanOutcome` (exit, `out_cause` `desk`); a monitor only for a pass of its org and mode and a place in its watch, else 404-shaped |
+| `POST /api/v1/scan/staff`, `DELETE` | now also monitors with Desk actions (`screenActions`) | staff sign-in on the monitor |
+| `GET /api/v1/scan/live/inside?place&cursor` | live principal, role `monitor`, `screen.actions` on | → `ScanInsideList` (watch-scoped) |
+| `POST /api/v1/scan/undo` | now also monitors with Desk actions (`screenActions`), own scans only | as 5.1 |
+| `GET /api/v1/scan-zones/{id}/inside` | `requireAdmin` | → `ScanInsideList` |
+| `POST /api/v1/passes/{id}/mark-out` | `requireAdmin`, CSRF, audited | `{ place }` → 204 |
+| `PATCH /api/v1/scan-zones/{id}` (AX) | as 19.8 | + occupancy settings; recomputes due times |
+| `PATCH /api/v1/scanners/{id}` (SC) | as 5.2 | `settings.direction`; monitors `screen.actions` |
+
+`POST /scan/actions` keeps `overrideOf` for a scanner overriding its own answer; `/scan/overrides` is the path for a
+monitor or another device (one service underneath). Errors: `SCAN_OVERRIDE_INVALID` 422, `SCAN_OVERRIDE_TAKEN` 409,
+`SCAN_TOO_MANY_OVERRIDES` 429, `NOT_INSIDE` 409 (Mark as out on someone already out), `SCANNER_DIRECTION_NO_PLACE`
+422, `ZONE_CLEAR_NEEDS_TZ` 422, `ZONE_ENFORCE_NEEDS_END` 422, `STAFF_REQUIRED` 403 (a monitor acting with nobody signed in), `SCREEN_ONLY` 403 (a
+Customer screen, or a monitor with Desk actions off).
+
+### 20.13 Data and migrations
+
+**P0-9, in `0014_scan.sql` before the P0 merge** (P0A): `scans.actor_type` CHECK adds `'system'`; `scans.method` CHECK
+adds `'auto'`. Both CHECKs sit on `CREATE TABLE scans`; after the merge, auto tap-outs would need a rebuild of the
+busiest table. Checked on next/n8-p0 at `18ca03c`: both still lack the values, and the reference's auto tap-out insert
+fails without them.
+
+**`0020_scan_access.sql`, extended** (not built; AX.1 writes 19.7 plus this, verbatim; no `0021`):
+
+```sql
+-- inside CREATE TABLE scan_zones (after sort):
+  -- Occupancy: off; track (count who's inside); enforce (track, and a second entry waits for a tap-out).
+  occupancy TEXT NOT NULL DEFAULT 'off' CHECK (occupancy IN ('off', 'track', 'enforce')),
+  capacity INTEGER CHECK (capacity IS NULL OR capacity BETWEEN 1 AND 100000),
+  max_stay_minutes INTEGER CHECK (max_stay_minutes IS NULL OR max_stay_minutes BETWEEN 15 AND 2880),
+  clear_at TEXT CHECK (clear_at IS NULL OR (clear_at GLOB '[0-2][0-9]:[0-5][0-9]' AND clear_at < '24:00')),
+  ...
+  CHECK (occupancy <> 'off' OR (capacity IS NULL AND max_stay_minutes IS NULL AND clear_at IS NULL))
+
+-- Why a tap-out wasn't the holder's: max stay, the daily clear, Mark as out, a forced re-entry, or a zone change.
+ALTER TABLE scans ADD COLUMN out_cause TEXT CHECK (out_cause IS NULL OR out_cause IN ('stay', 'clear', 'desk', 'forced', 'zone'));
+-- The desk's optional reason for an override.
+ALTER TABLE scans ADD COLUMN override_note TEXT CHECK (override_note IS NULL OR override_note IN ('forgot_out', 'known', 'paid', 'other'));
+-- One live override per scan: a scanner and a monitor letting the same person in race to one winner. A pending
+-- claim holds it; an override that lost (heads-up or refused) or was undone frees it.
+CREATE UNIQUE INDEX scans_override_once ON scans (override_of)
+  WHERE override_of IS NOT NULL AND undone_at IS NULL AND state <> 'failed' AND (outcome IS NULL OR outcome = 'ok');
+
+-- When the system taps a pass out of a zone (max stay or the daily clear). Null when out or no limit.
+ALTER TABLE scan_gates ADD COLUMN due_at INTEGER;
+CREATE INDEX scan_gates_due ON scan_gates (due_at) WHERE due_at IS NOT NULL;
+
+-- Orders the In now counts monitors receive. One row per place ('zone:<id>' or 'event:<id>') and mode.
+CREATE TABLE scan_place_revs (
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
+  place TEXT NOT NULL,
+  rev INTEGER NOT NULL,
+  PRIMARY KEY (org_id, mode, place)
+) WITHOUT ROWID;
+```
+
+- Touches `scans` and `scan_gates` (SV's tables, 0014): additive columns and indexes only, reported to SV and
+  integration. `scans_override_once` also closes the scanner-only "not already overridden" race of 2.6.
+- Tests (`describe('0020_scan_access')`): capacity without track fails; `24:00`, `7:00` and max stay 5 fail;
+  `out_cause` and `override_note` CHECKs; a second live override fails, and an undone or lost one frees the index;
+  `scan_gates_due` is partial. Query plans: the inside count is index-only; due rows; who's inside; revs.
+- Retention: in/out rows live and die with the pass; `scan_place_revs` is one row per place.
+
+### 20.14 Security and privacy
+
+| Threat | Mitigation |
+| --- | --- |
+| A Door device skips holds by quoting another device's scan | `overrideOf` must be its own, in the acting monitor's watch, or an admin's org; ≤ 15 min; once; the refusing door's `letInAgain` and the actor's role decide; else an unknown-id body |
+| An unattended or stolen monitor lets people in | Desk actions off by default; a signed-in person (PIN, 15 min idle) for every action; Manager PIN for capacity, guest limits and no-access; `scan:ovr` cap; revoke as any device |
+| Two people override the same refusal | `scans_override_once`: one winner, 409 for the other |
+| Door staff pass a Manager reason by overriding an earlier hold | one waiver per reason from the actor's rights; every step re-runs at override time; a remaining Manager reason answers `needs_approval` |
+| A child's street door overfills a tracked parent | ENTER checks each implied ancestor's capacity unless the pass is already in it |
+| A partial undo leaves counts wrong | one all-or-nothing guard on every undo statement; `REV_UNDO` per restored place |
+| Who's inside on a lobby screen | the inside list needs Desk actions; read-only monitors show counts only |
+| An override flips the wrong person's screen | `resolved` goes only to `dev:<refusing scanner>`; the customer body replaces only the matching `ref` and never shows over a newer result |
+| Lock-outs (a forgotten tap-out) | Max stay, Clear at, Mark as out, Let in anyway; Require tap out off by default and needs Max stay or Clear at; a row past due reads as out before the cron runs; implied rows carry their own due time; Track off, archive or a parent change clears the subtree |
+| The cron and a tap racing | CAS on `last_scan_id`; idempotent claim keys; the tap wins |
+| Counts out of order on monitors | per-place revisions; highest wins |
+| Occupancy leaking to customers | customer views carry no count, inside list, reason or staff name; `not_inside` on an exit publishes nothing to them |
+| Cross-tenant or cross-mode reads | every statement keyed by `org_id` and `mode`; the inside list is watch-scoped; a test monitor sees no live occupancy |
+| Logs | ids and codes only (`scan.override.ok`, `scan.override.taken`, `scan.occupancy.auto_out`): no names, zone names or notes |
+
+### 20.15 Files and tests
+
+Files (plan §3, §5.17): stream **OC** owns `src/worker/modules/scan/occupancy/{rules,repo,service,jobs,inside}.ts`,
+`modules/scan/{routes-overrides,routes-occupancy}.ts`, `src/shared/contracts/scan-occupancy.ts` and
+`src/web/admin/passes/detail/occupancy-card.tsx`. Owned additions elsewhere: SV (9a, the exit path, the override
+widening, undo groups, the `screenActions` option), AX (0020 as extended, zone settings, the Zones columns), ST
+(`places`, `resolved`, `replaces`, `dev:` target, snapshot counts), SC (direction and Desk actions settings, record
+fields), DS (the `occupancy` scope root), UI, CD, MN, BU, AD (their faces), IN (`jobs/cron.ts` registration, e2e).
+
+Tests: the reference suite (`gen/occupancy.test.mjs`, 23) ported; worker tests per OC §11.2 (the order 9a-16 with each
+reason once; races: two scanners, enter vs exit, ten passes at capacity 25 → exactly 25, parent exit vs child entry,
+the cron vs a tap; exits for voided, suspended, ended and outside-hours passes; Auto, the 2-minute hold, a pin; events
+on the same statements; cron bounds and `CRON_QUERY_BUDGET`; revs never lower a client count; overrides in and outside
+the watch, over 15 min, twice, of a hard refusal; rights per `letInAgain`; capacity always Manager; a Customer screen
+403; Desk actions off 403 `SCREEN_ONLY`; nobody signed in 403 `STAFF_REQUIRED`; the cap 429; `resolved` only to the
+refusing device; isolation; DST; log hygiene). Added by the review: door staff overriding **Already in** for a guest
+out of visits get `needs_approval`, and over **Not tapped in** at a full pool get **Pool full**; a pass voided after
+its refusal can't be let in; a child's street door at a full tracked parent answers **{parent} full**; an override
+into a child gives every implied row its own due time; a row past due is re-entered with no **Already in** and its
+children leave; Track off, archive and a parent change tap the subtree out (`zone`); org and root time zone changes
+re-arm due times; Require tap out with neither Max stay nor Clear at is 422; undo after a later change at another
+place changes nothing (`UNDO_SUPERSEDED`); undo bumps revisions; a lost override frees `scans_override_once`; a
+monitor undoes its own override and gets 404-shaped on anyone else's; `GET /scan/live/inside` without Desk actions
+is 403. Unit and web per OC §11.3; e2e `16-scan-occupancy`.

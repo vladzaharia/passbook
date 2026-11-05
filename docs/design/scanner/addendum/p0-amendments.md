@@ -1,4 +1,16 @@
-# Phase 0 amendments: stations and Access cards
+# Phase 0 amendments: stations, Access cards and occupancy
+
+> **Revision 2026-11-05, later** (occupancy and desk overrides, SA §20, `occupancy/occupancy.md` **OC** §9): two more
+> items, **P0-9** (two CHECK values on `scans` in `0014`) and **P0-10** (two heads-up reasons and their default copy).
+> OC proposed four more (P0-11 to P0-14); they are additive, so they land with stream OC and SV, not in P0 (see "Not in
+> P0"). Checked against `next/n8-p0` at `18ca03c`: `scans.actor_type` is `('scanner', 'user')`, `scans.method` is the
+> four input methods, and the guard's `screens?: boolean` is built.
+>
+> **Review 2026-11-05, latest:** re-checked at `9f1d57f` (read-only): both CHECKs still lack the values, and
+> `capacity_full` reads **Event full** with no placeholder. P0-10 no longer changes `capacity_full`'s copy: that was
+> a string change, not a reason-list change, and a `{place}` marker that a caller forgets shows as **{place} full**
+> (`scanLine` keeps missing markers). Zones get **{zone} full** as an OC.1 variant; events keep **Event full**. P0
+> is now two CHECK values and two reason keys.
 
 The changes Phase 0 takes before it merges, so stations (`stations.md`, **ST**) and Access cards (`access.md`,
 **AX**) land later without a table rebuild or a break in a frozen contract. 2026-11-05. Checked against
@@ -20,10 +32,12 @@ inside P0's owned paths plus the two foundation files P0 already touches.
 | P0-6 | Manifest `access` key and `scanOf` | `src/passkit/types.ts`, `src/shared/scan-defaults.ts` (+ test) | N4 |
 | P0-7 | Display doc: `customer` block, two icons | `src/passkit/template/scan-display/{schema,icons}.ts`, `schema.test.ts` | A7, N6, AX C1 |
 | P0-8 | `/scan` headers | `src/worker/platform/security-headers.ts`, `public/_headers`, `security-headers.test.ts` | ST §8 note |
+| P0-9 | Migration 0014: system scans | `migrations/0014_scan.sql`, `test/migrations.test.ts` | OC P0-9 |
+| P0-10 | Occupancy reasons and copy | `src/shared/contracts/scan.ts`, `src/shared/copy/scan.ts`, `scan.test.ts` (both) | OC P0-10 |
 | — | Audit actors | none | — |
 | — | Rate limits | none | — |
 
-Size: about 120 changed lines plus tests. No new route, table, binding or dependency.
+Size: about 120 changed lines plus tests (P0-9 and P0-10 add about 15). No new route, table, binding or dependency.
 
 ---
 
@@ -229,6 +243,66 @@ device check below stays in P0.5 either way, because its answer decides the CSP 
   Safari and the home-screen app on iOS 17+ (any response counts; the route arrives with ST). If WebKit blocks it, add
   `wss://passbook.mobile wss://wallet.plrs.im` to both policies.
 
+## P0-9. Migration 0014: system scans [OC P0-9]
+
+`scans` in `migrations/0014_scan.sql`:
+
+```sql
+  actor_type TEXT NOT NULL CHECK (actor_type IN ('scanner', 'user', 'system')),
+  ...
+  method TEXT NOT NULL CHECK (method IN ('camera', 'wedge', 'nfc', 'manual', 'auto')),
+```
+
+- Auto tap-outs (Max stay, Clear at; SA §20.7) are scans written by the cron: actor `system`, `actor_key
+  'sys:occupancy'`, method `auto`. Both CHECKs sit on `CREATE TABLE scans`; after the merge, adding the values means
+  rebuilding the busiest table, which `scan_gates` and the ledger point at.
+- **Must land before the merge.** OC's reference test (`occupancy/gen/occupancy.test.mjs`, first case) applies
+  next/n8-p0's real migrations and shows the auto tap-out insert failing without it.
+- Contracts don't change: `ScanMethodSchema` stays the four input methods (`auto` is never accepted on input); the
+  console DTO's method and actor widen with stream OC (SC.10), additively.
+
+Tests, in `describe('0014_scan migration')`: a scans row with `actor_type = 'system'` and `method = 'auto'` inserts;
+`actor_type = 'robot'` and `method = 'robot'` fail.
+
+## P0-10. Occupancy reasons and copy [OC P0-10]
+
+`src/shared/contracts/scan.ts`:
+
+```ts
+export const SCAN_HEADS_UP_REASONS = [
+  ...,                 // today's list
+  'still_inside',      // Already in: a second entry where tap-out is required, or an Auto flip under 2 min
+  'not_inside',        // Not tapped in: an exit with no entry, or a zone whose parent needs a tap-in first
+] as const;
+```
+
+`src/shared/copy/scan.ts` (`SCAN_REASON_COPY`, one default line each):
+
+| Key | Headline | Sub |
+| --- | --- | --- |
+| `still_inside` | **Already in** | **Since {time} · {scanner}** |
+| `not_inside` | **Not tapped in** | **No entry recorded.** |
+
+`capacity_full` is unchanged (**Event full** · **{in} of {capacity} in.**).
+
+- Freezes the reason list once, as P0-5 did: copy maps are `Record<ScanReason, …>`, so a later widening would touch
+  every consumer.
+- The variants (events **Already checked in** / **Not checked in**, Auto **Already out**, the parent's **Tap in at
+  {zone} first.**, **{ago} · {scanner}** under an hour, and zones' **{zone} full**) are an additive map with OC.1
+  (SA §20.10).
+
+Tests: the "every reason has a line" test covers the two; their placeholders are only `time` and `scanner`;
+`capacity_full` still reads **Event full**.
+
+## Not in P0 (OC's P0-11 to P0-14: additive, later)
+
+| OC item | Lands in | Why not now |
+| --- | --- | --- |
+| P0-11 `ScannerSettings.direction` (default `in`) | OC.1 / SC.10 | An optional field with a default, like `customerToggle` (below): existing rows parse unchanged |
+| P0-12 `ScanOccupancySchema`; `ScanOutcome.occupancy`, `ScanCard.occupancy`, `ScanCounts.place` | OC.1 (contract PR) | Nullable with a default: additive under plan §4.1; no screen paints it before M3B |
+| P0-13 copy: `tappedOut`, `tapIn`, `tapOut`, `markAsOut`, `letIn`, `signInToAct` | OC.1 | New keys, not a reason-keyed map |
+| P0-14 `GuardOptions.screens` → `'read' \| 'act'` | SV.11, as a new option `screenActions?: boolean` | Changing a built option's type is not additive; a second option is. `screens: true` keeps its meaning |
+
 ## Not changed, on purpose
 
 - **Audit actors.** Customer screens and desk monitors are rows in `scanners`, so they audit as `scanner` (already in
@@ -240,13 +314,21 @@ device check below stays in P0.5 either way, because its answer decides the CSP 
   `scan:pin:*` and `scan:pinall:*`. Display pairing reuses `RL_SCAN_PAIR`.
 - **Zones, plans, stations, the hub.** All additive later: `0019_scan_stations.sql` (ST), `0020_scan_access.sql`
   (AX), `contracts/{scan-live,access}.ts`, the `SCAN_HUB` binding.
-- **`scan_gates`.** Scope `'access'` is a value; no change.
+- **`scan_gates`.** Scope `'access'` is a value; no change. Occupancy's scopes (`zone:<id>`, `event:<id>`) are values
+  too; `due_at` and its index come with `0020` (SA §20.13), additive.
+- **Occupancy tables and indexes.** `scan_zones` occupancy columns, `scans.out_cause`, `scans.override_note`,
+  `scans_override_once`, `scan_gates.due_at`, `scan_place_revs`: all in `0020_scan_access.sql` as extended (AX.1),
+  additive on SV's tables.
+- **Rate limits for overrides.** `scan:ovr:<actorKey>` is a D1 counter (`platform/counters.ts`), added with OC.3; no
+  binding.
 - **`ScannerSettings`.** `customerToggle` arrives with ST.5 as an optional field with a default.
 
 ## Order inside P0
 
-P0-1 with P0.1 (the migration task), P0-2 and P0-3 with P0.3-P0.4, P0-4 to P0-7 with P0.2 (contracts), P0-8 with P0.5.
+P0-1 with P0.1 (the migration task), P0-2 and P0-3 with P0.3-P0.4, P0-4 to P0-7 with P0.2 (contracts), P0-8 with P0.5,
+P0-9 and P0-10 as plan task P0.9.
 If P0.1-P0.4 are already committed on `next/n8-p0` (they are at `eca97b3`), add one commit per item on the branch
 before the P0 merge: `feat(scan): display devices and device roles in 0014`, `feat(scan): screens refused by the scan
 guard`, `feat(scan): access reasons and outcome field`, `feat(scan): customer block and plan icons`,
-`feat(scan): wake lock on /scan`. `npm run check` after each.
+`feat(scan): wake lock on /scan`, then `feat(scan): system scans for occupancy in 0014` and `feat(scan): occupancy
+reasons and copy`. `npm run check` after each.

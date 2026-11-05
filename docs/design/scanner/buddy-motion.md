@@ -33,6 +33,14 @@ File paths are relative to `scratchpad/next` unless they say otherwise.
 > gains one bounded loop: the customer `rummage`. Reference sheet: `addendum/access/sheets/access-gate-{light,dark}.png`
 > (nine frames, reduced motion, denied, re-entry wait); customer stills `addendum/shots/c-*`.
 
+> **Revision 2026-11-05, later** (occupancy and desk overrides; SA §20, SD §18): two new beats. **`bye`** (§6.1) is
+> every exit (**Tapped out**): the teal pass rises like a hand and waves twice; it replaces `dip`. **`relent`** (§6.8)
+> is a 150 ms prefix ("oh": eyes pop, sad brows lift, mood sad → happy) that turns a shown refusal into the grant's
+> own beat when a desk overrides it on the fly, on the scanner and on its Customer screen. The in/out holds use the
+> clock or the tilt, never the shake; **Full** (`capacity_full`) moves from red `shake` to amber `wrist` (fwd). The
+> monitor's buddy nods once when its own staff override. Reference: `addendum/occupancy/sheets/occ-flip-*.png`
+> (frames of a desk override), `occ-scanner-phone-*.png` (`bye`, holds), `occ-customer-*.png`.
+
 ---
 
 ## 0. Decisions
@@ -51,6 +59,8 @@ File paths are relative to `scratchpad/next` unless they say otherwise.
 | M8 | **No loops except the rummage**, which runs only while a lookup is pending (or, on a Customer screen, while the scanner reads, §17, capped at 3 s) and never past 4.7 s. NFC rings play once per trigger. | ME "No ambient loops"; WCAG 2.2.2; UXK's looping `rings` while armed changes to once. |
 | M9 | **The buddy never takes a tap on `/scan`.** No click replay, no hover blink, `pointer-events: none`. | UXD §6: a gloved "dismiss" tap must never be eaten. |
 | M10 | **Sound: seven chirps and two garnishes, synthesized, on by default.** Rising means yes, falling means no, flat repeats mean "look". | R §5.4, UXD §7.1, UXK §2.7, merged (section 11). |
+| M14 | **An exit waves goodbye** (`bye`), green and happy, on the scanner and the Customer screen. | The owner's tap-out; a goodbye reads at a glance and differs from every entry beat. |
+| M15 | **A refusal can relent.** When the desk overrides a shown refusal, the buddy plays a 150 ms "oh" (`relent`) and then the grant's beat, all still by T0 + 700 from the override's arrival. The prefix moves eyes and brows only, so it is cut-safe. | "which would change the state and the screen": the change must look like a change of mind, not a new scan. |
 | M11 | **Celebrations come from data and never wait.** Device milestones: `fan`, the `reward` chirp and six sparks from the verdict icon. Admin moments reuse `wave`, `cheer`, `count` and the face's `cheer`. | ME Signature 9; BG "no celebratory copy". |
 
 ---
@@ -99,7 +109,7 @@ Cost to the art kit: about 120 to 180 B gzip, against 145 B of headroom (15,215 
 | `beats.css` | Poses and beats (draft: `buddy-draft/beats.css`). Imported by `scan-buddy.tsx`. |
 | `props.tsx` | `SCAN_PARTS` (draft: `buddy-draft/props.tsx`). |
 | `cover.css` | Optional split of the `cover` act if `beats.css` nears 300 lines. |
-| `sound.ts` | Chirps (section 12; the draft file was not kept). |
+| `sound.ts` | Chirps (draft: `buddy-draft/sound.ts`). |
 | `*.test.ts(x)` | Section 14. |
 
 The scan chunk also imports `ui/art/wallet-states.tsx` for `HOURGLASS` and the expired droop (`wallet-states.css`). That is a shared lazy chunk with sign-in, already budgeted at ≤ 2.5 kB (`art.test.tsx`). The registry chunk (with `cheer`, `count`, `hello`, `tug`, `common.css`) starts loading with the app (`ui/art/index.ts`, `void preloadArt()`), so reused keyframes are present before the first scan. If it fails to load, beats that reuse it simply don't move; nothing breaks.
@@ -268,7 +278,18 @@ The number in the card counts up from the old value (600 ms, `useRememberedCount
 
 **`nod`**: points set. Happy. Squash 1.04 × .96 at 270 and a blink 270-410; rest by 450. Chirp `ok`.
 
-**`dip`**: checked out (door, Out direction). Happy. The gold pass sinks 6 into the pocket by 352 and comes back by 600. Chirp `ok`.
+**`bye`** (2026-11-05 later; replaces `dip`): every exit, **Tapped out** and **Checked out**. Happy. No prop (the teal
+pass is the hand). Chirp `ok`.
+
+| T0 + ms | Motion |
+| --- | --- |
+| 150-260 | The teal pass rises to −52° (34° past its rest, inside §7.5's 36°), like a hand; the trunk leans 3° toward the exit; eyes up-right 1.2 |
+| 260-410 | First wave: −52° → −38° → −52°; two motion lines fade in beside it |
+| 410-560 | Second wave |
+| 560-700 | The hand comes down to rest; lines fade; happy arcs |
+
+Snap at cut: ≤ 34° on the teal pass (inside the 36° bound), ≤ 1 unit on the body. Reduced motion: the hand up at −52°
+with the lines, happy. Customer screens play it at XL. `dip` is retired with its keyframes.
 
 **`stash`**: saved offline (door `queued`). **Neutral** (M4). Prop: the clock (`aside`). The clock pops onto the surface at its left (150-350, bounce); the gold pass rises like a thumb and tucks away (the `hop` thumb track, no hop); teal and violet jolt at 612. Chirp `ok` (the scan was taken). End pose: the clock stays.
 
@@ -287,13 +308,13 @@ The number in the card counts up from the old value (600 ms, `useRememberedCount
 
 End pose: curious, the clock beside it. n8b's "taps its wrist": the buddy has no wrists, so it taps its clock with a pass. Snap at cut: none.
 
-**`tilt`**: not checked in (Out direction, never in). Curious. Head tilt: trunk 8° at 285, held to 465, back by 600. Chirp `headsUp`.
+**`tilt`**: not checked in or not tapped in (`not_inside`: an exit with no entry, or a zone whose parent needs a tap-in first). Curious. Head tilt: trunk 8° at 285, held to 465, back by 600. Chirp `headsUp`.
 
 ### 6.3 Red: the head shake
 
 **`shake`**: every red refusal (section 8): voided, removed, not found (and another org's code), ambiguous,
-replaced, wrong event, expired, not valid yet, test/live mismatch, not accepted here, capacity, not enough stamps or
-points, forbidden, organization paused. Sad. Chirp `refused`. No prop, except the two ME states: **expired** sets
+replaced, wrong event, expired, not valid yet, test/live mismatch, not accepted here, not enough stamps or
+points, forbidden, organization paused. (Capacity left this list 2026-11-05 later: **Full** is amber `wrist` fwd.) Sad. Chirp `refused`. No prop, except the two ME states: **expired** sets
 `WalletArt state="expired"` at T0 (the gold pass greys and droops 18° past the fan, one meaning everywhere), and
 **forbidden** and **organization paused** stand the lock beside it (`prop={<LockArt size="sm" />}`, the shackle
 drops, 200 ms bounce). A forbidden answer to a tapped desk action also shakes that button (240 ms, ME Failure).
@@ -417,6 +438,26 @@ Not a scan result, so it is not bound to 700 ms; it is bound to ME's scene rules
 
 n8b's "covers its eyes with its passes": the fan sits behind the pocket, so the passes can't reach the face. Two small passes in `front` read as the same passes moving forward. Other camera panels (UXD §7.4): **Unavailable** is sad with no beat; **No camera** is flat with no beat; **Asking** is the `ask` pose.
 
+### 6.8 Override: `relent` (2026-11-05 later)
+
+A desk override reaches a scanner whose refused or held card is still up (or is its latest verdict, under 60 s old):
+the card turns green in place (SD §18.2) and the buddy changes its mind. `relent` is a prefix in the result beat's own
+150 ms delay; T0 is the override's arrival, not the original scan.
+
+| T0 + ms | Motion |
+| --- | --- |
+| 0-60 | "Oh": eyes pop to 1.06 × 1.22 and up 0.6; sad brows lift 1 unit; body 0.99 × 1.02 |
+| 60-150 | Mood sad → happy (120 ms fade, ME's allowance) |
+| 150-700 | the grant's beat: `gate` (access) or `hop` (event check-in), as §6.1 |
+
+- Cut-safe: before 150 only eyes and brows move; a cut snaps them home in one frame. A shake still running when the
+  override lands is cut first (§7), so the prefix starts from the still "no" at worst.
+- Reduced motion: the destination's end pose at once (gate arm up, happy).
+- Customer screens: from `sorry`, the same prefix, then `gate` at XL, as the slate card tucks and the green one rises.
+- Only on the device the override answers. When the card is gone (the strip row turns green instead), no beat: the
+  buddy never reacts to an old scan over the next person.
+- Chirp: `ok` at 150 on the scanner; none on Customer screens (§17.1).
+
 ---
 
 ## 7. The cut
@@ -459,7 +500,8 @@ One table for door (UXD §5.3) and desk (UXK §6). Every reason gets a colour, a
 | Reason | Colour | Mood | Beat | Props | Chirp |
 | --- | --- | --- | --- | --- | --- |
 | `checked_in` (+ re-entry, + override) | green | happy | `hop` | | `ok` |
-| `checked_out` | green | happy | `dip` | | `ok` |
+| `checked_out`, tapped out (every exit, zones and events) | green | happy | `bye` | | `ok` |
+| let in by the desk (an override reaching the refusing device, §6.8) | green | sad → happy | `relent` + `gate` (`hop` on events) | | `ok` |
 | access granted (`outcome.access` set; + re-entry in the gap, + override) | green | happy | `gate` | | `ok` |
 | `zone_not_included`, `outside_hours`, `guest_visits_used`, `suspended`; `not_yet_valid` on access | red | sad | `shake` | | `refused` |
 | `guest_expired` | red | sad | `shake` | (state `expired`) | `refused` |
@@ -472,9 +514,10 @@ One table for door (UXD §5.3) and desk (UXK §6). Every reason gets a colour, a
 | goal reached, reward ready | green | happy | `fan` + six sparks | | `reward` |
 | milestone (section 9) | green | happy | `fan` + six sparks | | `reward` |
 | undone | neutral | flat | `rewind` | | `undo` |
-| `already_in`, `already_out`, already redeemed, stale | amber | curious | `wrist` (back) | clock | `headsUp` |
+| `already_in`, `already_out`, already redeemed, stale; `still_inside` (Already in, and the Auto turnaround); `not_inside` after an Auto exit (Already out) | amber | curious | `wrist` (back) | clock | `headsUp` |
+| `capacity_full` (**{place} full**; was red) | amber | curious | `wrist dir="fwd"` | clock | `headsUp` |
 | `wrong_day`, `not_open`, `event_ended`, `cooldown` | amber | curious | `wrist dir="fwd"` | clock | `headsUp` |
-| `not_in` | amber | curious | `tilt` | | `headsUp` |
+| `not_in`; `not_inside` (no entry at an exit, or the parent first) | amber | curious | `tilt` | | `headsUp` |
 | can't undo | amber | curious | `wrist` (back) | clock | `headsUp` |
 | `voided`, `removed` | red | sad | `shake` | | `refused` |
 | `not_found` (+ another org's code), `ambiguous`, replaced | red | sad | `shake` | | `refused` |
@@ -482,7 +525,7 @@ One table for door (UXD §5.3) and desk (UXK §6). Every reason gets a colour, a
 | `expired` | red | sad | `shake` | (state `expired`: the gold pass grey and drooped) | `refused` |
 | `not_yet_valid` | red | sad | `shake` | | `refused` |
 | `test_pass`, `live_pass` (test/live mismatch) | red | sad | `shake` | | `refused` |
-| `template_not_allowed` (not accepted here), capacity | red | sad | `shake` | | `refused` |
+| `template_not_allowed` (not accepted here) | red | sad | `shake` | | `refused` |
 | `no_balance` | red | sad | `shake` | | `refused` |
 | `forbidden`, `org_inactive` | red | sad | `shake` | `LockArt` S beside it | `refused` |
 | `network`, `timeout`, `unsure` | slate | sad, pose `sorry` | `cloud` | cloud (aside) | `system` |
@@ -549,7 +592,9 @@ No `data-run` is ever set, so no beat runs. Each state shows its end pose with i
 | State | Still |
 | --- | --- |
 | Aiming, detected, checking, reader | the pose (`aim`, `lock`, `rummage` static, `reader`); no rings |
-| `hop`, `fan`, `nod`, `dip` | happy rest |
+| `hop`, `fan`, `nod` | happy rest |
+| `bye` | happy, the teal pass up at −52° with the two motion lines |
+| `relent` | the destination's end pose (gate arm up, happy) |
 | `punch` | happy, the hole in the violet pass |
 | `stamp` | happy, the stamp mark |
 | `sparkle` | happy (no sparks; the number shows its value at once) |
@@ -851,6 +896,8 @@ words, which are copy.
 | Ready (staff choosing) | same | `glance` up at the card | neutral | none |
 | Review (amount under review) | same | holds; eyes on the amount | neutral | none |
 | OK | same; the violet pass is the card (`card: 'out'`) | the scanner's beat for the result: `gate`, `hop`, `stamp`, `coins`, `punch`, `sparkle`; `fan` + sparks on a reward or milestone | happy | none by default |
+| Tapped out (exit) | same | `bye` at XL, the wave toward the exit | happy | none |
+| Let in by the desk (an override replacing the shown **Please see the desk**) | same | `relent` from `sorry` (§6.8), then `gate` | sad → happy | none |
 | Please see the desk (any heads-up or refusal) | same | the slate bow (§6.4, 350-560) into `sorry`. **Never `shake` and never `wrist`**: a customer is not told "no" by the buddy | sad, `sorry` | none |
 | Undone | same | `rewind`, then idle | flat | none |
 | Reconnecting | same | rest; no beat | curious | none |
@@ -869,6 +916,7 @@ words, which are copy.
 | Rest | the rail's seat (216 desk, 192 iPad) or the phone dock (152) | rest |
 | A new alert (a refusal) | same | one `shake`; at most one per 2 s, the newest wins; nothing during a replay (`hello { replayed }`) |
 | Green and amber rows | same | none (a busy door would make it jitter) |
+| Its own staff override or mark someone out (Desk actions, SD §18.5) | same | `nod` once; throttled with alerts, 1 per 2 s |
 | Empty feed | moves into the empty card (one buddy per view) | `wave` once |
 | Reconnecting | same | rest, curious |
 
@@ -877,5 +925,10 @@ No chirps unless the monitor's `screen.sound` is on, then only `refused` for a n
 ### 17.3 Tests
 
 `gate`: frames at 150, 230, 390, 520, 700 against the table; snap at a 350 cut ≤ 2 units; reduced-motion end pose.
+`bye` (2026-11-05 later): frames at 150, 260, 410, 560, 700; the teal pass never past −52° (34° from rest) at any
+keyframe; reduced-motion pose. `relent`: frames at 0, 60, 150, 390, 700; only eyes and brows move before 150; a cut at
+100 leaves no transform on the trunk or the fan; reduced motion jumps to the grant's end pose. The beat map: every
+exit maps to `bye`, no in/out hold or `capacity_full` maps to `shake`, and the customer map still yields no `shake` or
+`wrist`. Monitor: an own override plays `nod` once; a second within 2 s plays nothing.
 Customer map: every `ScanCustomerView.screen` maps to a beat, and no customer path can produce `shake` or `wrist`
 (a unit test over the map). Monitor: only alerts animate it, the 2 s throttle, no beats during replay.
