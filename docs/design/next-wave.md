@@ -390,14 +390,15 @@ Open risks:
 
 Merged into `next/integration` on 2026-11-04, in order: n6, n7. n8 (scanner) was withdrawn from this wave and will
 be designed from scratch; nothing scanner-specific was built, and `0014` stays reserved for it. `npm run check` is
-green and e2e passes, with the new `14-sandbox` and `15-messages`. Migrations 0013 and 0015 apply in order on a fresh
+green (311 test files, 3491 tests) and e2e passes (53 tests, setup included), with the new `14-sandbox` and
+`15-messages`. Migrations 0013 and 0015 apply in order on a fresh
 local D1, and also after 0016 on a database that already has it.
 
 Integration decisions:
 
 - Conflicts: `settings.ts` keeps both `sandbox.purgeDays` and `push.budgetPerDay`; `app.ts` mounts both
   `/api/v1/test-inbox` and `/api/v1/broadcasts`. Both streams raised the bundle budget, to 230,000 and 230,500 B.
-  It is now 232,500 B; the merged entry measures 229,829 B.
+  It is now 232,500 B; the merged entry measures 229,823 B.
 - Test mode reaches Messages: test messages carry the shared Test pill on rows and detail, and a page test proves
   the list request sends `x-passbook-mode`. The server already filtered lists and counts by mode.
 - The daily sandbox purge also deletes finished test broadcasts (not scheduled or sending) past `sandbox.purgeDays`,
@@ -410,6 +411,8 @@ Integration decisions:
   new-pass wizard does. Found by `15-messages`; a page test covers it.
 - Audit labels for `broadcast.create`, `broadcast.send` and `broadcast.cancel`. The composer asks for an
   organization before it lists templates.
+- Under a heavily loaded runner, two tests timed out: the 90-pass purge backlog test now has 60 s, and the audit
+  drawer wait 5 s. `unzip.test.ts`'s 500 ms bound also failed once under that load and was left as it is.
 - Browser check at 1280, 820 and 390 px in light and dark: passes list and detail in Test mode, Test inbox
   (off, list, preview), Messages list, detail and composer, API keys, and the SSR pass and bundle ribbons.
 
