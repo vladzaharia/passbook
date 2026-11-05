@@ -11,7 +11,7 @@ export interface AppShellProps {
   bar?: ReactNode;
   /** A column left of the page from lg (the admin sidebar). */
   sidebar?: ReactNode;
-  /** Hangs under the bar and the offline bar without taking height (the Test mode band). */
+  /** In flow under the bar and the offline bar, in the same sticky block (the Test mode band). */
   band?: ReactNode;
   width: keyof typeof WIDTH;
   /** Holder pages follow the iOS text size (Dynamic Type, base.css .wl-portal). */
@@ -43,9 +43,7 @@ export function AppShell({ bar, sidebar, band, width, holder, children }: AppShe
         <OfflineBanner
           className={bar ? undefined : 'h-auto min-h-8 pt-[env(safe-area-inset-top)]'}
         />
-        {band ? (
-          <div className="pointer-events-none absolute inset-x-0 top-full">{band}</div>
-        ) : null}
+        {band}
       </div>
       <main
         id={MAIN_ID}

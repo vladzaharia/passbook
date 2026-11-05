@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeftRight, Plus, Upload } from 'lucide-react';
+import { ArrowLeftRight, Plus, Search, Upload } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { THEME_ICON } from '../../lib/action-icons.ts';
@@ -242,7 +242,7 @@ export function AdminPalette({
   const searchPasses: CommandItem = {
     id: 'search-passes',
     label: `Search passes for "${q}"`,
-    icon: ENTITY.search.icon,
+    icon: Search,
     onSelect: go('/admin/passes', { q }),
   };
 

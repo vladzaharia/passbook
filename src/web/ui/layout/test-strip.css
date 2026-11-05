@@ -1,0 +1,31 @@
+/* The Test strip: the one amber band for Test mode, in the console (ModeBand) and on /p and /b
+   (TestRibbon). In flow; its own height, never over the page. Plain CSS so SSR inlines it. */
+.wl-test-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 1.25rem;
+  padding: 0.125rem max(1rem, env(safe-area-inset-right)) 0.125rem
+    max(1rem, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--pk-warning-border);
+  background: var(--pk-warning-subtle);
+  color: var(--pk-warning);
+  font-size: var(--pk-font-size-xs);
+  line-height: var(--pk-line-height-xs);
+  font-weight: var(--pk-font-weight-medium);
+  text-align: center;
+}
+.wl-test-strip svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+.wl-test-strip [data-more] {
+  font-weight: 400;
+}
+@media (max-width: 39.99rem) {
+  .wl-test-strip [data-more="sm"] {
+    display: none;
+  }
+}

@@ -1,5 +1,4 @@
-/* The Test mode band hangs from the top bar over the page's first 24 px of padding: it adds no
-   height, so turning Test mode on or off moves nothing. Opacity and transform only. */
+/* The Test mode band slides in from under the bar. Opacity and transform only. */
 @keyframes wl-mode-in {
   from {
     opacity: 0;

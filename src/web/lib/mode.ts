@@ -48,11 +48,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function useMode(): Mode {
-  return useSyncExternalStore(
-    (notify) => onModeChange(notify),
-    getMode,
-    () => 'live',
-  );
+  return useSyncExternalStore(onModeChange, getMode, () => 'live');
 }
 
 /** The header every admin API request carries while Test mode is on. */

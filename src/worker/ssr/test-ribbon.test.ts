@@ -43,11 +43,11 @@ const bundle = (mode?: 'live' | 'test') =>
 
 describe('test ribbon on /p and /b', () => {
   it('shows on a test pass and a test bundle, never on live ones', () => {
-    expect(pass('test')).toContain('class="tr"');
+    expect(pass('test')).toContain('wl-test-strip');
     expect(pass('test')).toContain('Test pass.');
     expect(bundle('test')).toContain('Test bundle.');
     for (const html of [pass('live'), pass(), bundle('live'), bundle()])
-      expect(html).not.toContain('class="tr"');
+      expect(html).not.toContain('wl-test-strip');
   });
 
   it('renders nothing for live', () => {
