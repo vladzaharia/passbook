@@ -109,6 +109,13 @@ describe('the scanner document and its decoder worker', () => {
     const csp = scan.get('content-security-policy')?.[0] ?? '';
     expect(csp).toContain("'wasm-unsafe-eval'");
     expect(csp).toContain("worker-src 'self'");
+    expect(csp).toContain("connect-src 'self' ");
+  });
+
+  it('/scan keeps customer screens and monitors awake, and the SPA policy is unchanged', () => {
+    expect(SCAN_PERMISSIONS_POLICY).toContain('screen-wake-lock=(self)');
+    expect(scan.get('permissions-policy')?.[0]).toContain('screen-wake-lock=(self)');
+    expect(PERMISSIONS_POLICY).toBe('camera=(), microphone=(), geolocation=(), payment=(), usb=()');
   });
 
   it('/scan CSP equals the Worker scan CSP apart from Turnstile, frame-src and object-src', () => {

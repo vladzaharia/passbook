@@ -13,7 +13,7 @@ export const ROBOTS = 'noindex, nofollow';
 
 /** /scan reads the camera. Everything else keeps camera=(). */
 export const SCAN_PERMISSIONS_POLICY =
-  'camera=(self), microphone=(), geolocation=(), payment=(), usb=()';
+  'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), screen-wake-lock=(self)';
 /** The barcode decoder worker (/assets/decode-worker-*): its script's policy governs the worker. */
 export const DECODE_WORKER_CSP =
   "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'";
