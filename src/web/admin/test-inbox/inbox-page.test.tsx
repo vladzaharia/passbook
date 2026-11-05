@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
-import { json, renderApp } from '@/web/lib/test-utils.tsx';
+import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 
 const email = (over: Record<string, unknown> = {}) => ({
   id: 'e1',
@@ -65,8 +65,14 @@ describe('Test inbox', () => {
     await userEvent.setup().click(screen.getByRole('link', { name: 'Open Your Gym pass' }));
     const frame = await screen.findByTitle('Email preview');
     expect(frame).toHaveAttribute('sandbox', '');
-    expect(frame).toHaveAttribute('srcdoc');
-    expect(frame).not.toHaveAttribute('src');
+    expect(frame).toHaveAttribute('src', '/api/v1/test-inbox/e1/html');
+    expect(frame).toHaveAttribute('referrerpolicy', 'no-referrer');
+    expect(frame).not.toHaveAttribute('srcdoc');
+    expect(frame.style.colorScheme).toBe('light');
+    expect(screen.getByRole('link', { name: 'A pass' })).toHaveAttribute(
+      'href',
+      '/admin/passes/p1',
+    );
     await userEvent.setup().click(screen.getByRole('radio', { name: 'Text' }));
     expect(screen.getByText('Hi there from the pass email.')).toBeInTheDocument();
   });
@@ -89,6 +95,21 @@ describe('Test inbox', () => {
     expect(await screen.findByText('Sent to me@example.com')).toBeInTheDocument();
   });
 
+  it('offers Account when the admin has no verified address', async () => {
+    setMode('test');
+    await renderApp('/admin/test-inbox?email=e1', {
+      session: 'admin',
+      handlers: {
+        ...handlers,
+        '/api/v1/test-inbox/e1/send-to-me': () =>
+          problem(422, 'NO_VERIFIED_EMAIL', 'Verify your email address first.'),
+      },
+    });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Send to me' }));
+    expect(await screen.findByText('Verify your email address first.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Account' })).toHaveAttribute('href', '/account');
+  });
+
   it('says so when nothing was captured', async () => {
     setMode('test');
     await renderApp('/admin/test-inbox', {
@@ -96,5 +117,9 @@ describe('Test inbox', () => {
       handlers: { '/api/v1/test-inbox': () => json({ items: [], nextCursor: null }) },
     });
     expect(await screen.findByText('No test emails yet')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'New pass' })).toHaveAttribute(
+      'href',
+      '/admin/passes/new',
+    );
   });
 });

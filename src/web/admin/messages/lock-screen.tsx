@@ -1,16 +1,19 @@
 import { EntityAvatar } from '../../ui/index.ts';
 
 /**
- * The notification Wallet shows on the lock screen: the org's icon, its name and the message.
+ * The notification Wallet shows on the lock screen: the pass's icon, the organization's name and the message.
  * A drawing of it, not a screenshot: the text is the one the holder gets.
  */
 export function LockScreenNotice({
   org,
   text,
   silent,
+  iconUrl,
 }: {
   org: { id: string; name: string; accent?: string | null };
   text: string;
+  /** The pass's own icon, as Wallet shows it; the organization's avatar until it loads. */
+  iconUrl?: string | undefined;
   /** Nothing appears on the lock screen: the pass updates quietly. */
   silent?: boolean;
 }) {
@@ -24,7 +27,11 @@ export function LockScreenNotice({
         data-silent={silent ? '' : undefined}
         className="wl-stage-swap flex min-h-16 items-start gap-3 rounded-xl border border-border bg-surface-raised p-3 shadow-elevation-1 data-[silent]:opacity-60"
       >
-        <EntityAvatar kind="org" id={org.id} name={org.name} accent={org.accent} size={40} />
+        {iconUrl ? (
+          <img src={iconUrl} alt="" width={40} height={40} className="size-10 rounded-lg" />
+        ) : (
+          <EntityAvatar kind="org" id={org.id} name={org.name} accent={org.accent} size={40} />
+        )}
         <figcaption className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate text-sm font-semibold text-fg-strong">{org.name}</span>

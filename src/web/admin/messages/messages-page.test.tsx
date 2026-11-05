@@ -28,7 +28,7 @@ const modeOf = (calls: unknown[][], path: string) => {
 };
 
 describe('Messages in Test mode', () => {
-  it('lists with the Test header and marks test messages', async () => {
+  it('sends the Test header and leaves the per-row pill off when every message is a test', async () => {
     setMode('test');
     const { container, fetchMock } = await renderApp('/admin/messages', {
       session: 'admin',
@@ -39,8 +39,34 @@ describe('Messages in Test mode', () => {
     });
     expect(await screen.findByText('Doors open late')).toBeInTheDocument();
     expect(modeOf(fetchMock.mock.calls, '/api/v1/broadcasts')).toBe('test');
-    expect(screen.getByRole('button', { name: /^Test\. Test mode/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Test\. Test mode/ })).not.toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('marks a test message among live ones', async () => {
+    await renderApp('/admin/messages', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/broadcasts': () =>
+          json({ items: [broadcast({ mode: 'test' }), broadcast({ id: 'b2' })], nextCursor: null }),
+      },
+    });
+    expect(await screen.findAllByText('Doors open late')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^Test\. Test mode/ })).toHaveLength(1);
+  });
+
+  it('tells a scheduled message when it goes out under its name', async () => {
+    await renderApp('/admin/messages', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/broadcasts': () =>
+          json({
+            items: [broadcast({ state: 'scheduled', at: Date.now() + 3_600_000, startedAt: null })],
+            nextCursor: null,
+          }),
+      },
+    });
+    expect((await screen.findAllByText(/^Goes out /)).length).toBeGreaterThan(0);
   });
 
   it('sends no header live, and a live message has no Test pill', async () => {

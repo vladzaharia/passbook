@@ -43,6 +43,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.cancel': a('Message cancelled', I.void, 'warning'),
   'broadcast.create': a('Message created', ENTITY.broadcast.icon, 'success'),
   'broadcast.send': a('Message sent', I.updateDevices, 'info'),
+  'broadcast.update': a('Message edited', I.edit, 'info'),
+  'broadcast.retry': a('Message sent again', I.updateDevices, 'info'),
   'api_key.create': a('API key created', ENTITY.apiKey.icon, 'success'),
   'api_key.revoke': a('API key revoked', ENTITY.apiKey.icon, 'warning'),
   'auth.sign_in': a('Signed in', LogIn, 'success'),

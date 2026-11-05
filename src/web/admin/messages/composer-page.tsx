@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounced } from '../../lib/debounce.ts';
-import { formatCount, formatDateTime } from '../../lib/format.ts';
+import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
@@ -9,7 +9,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  ConfirmDialog,
   EntityPicker,
   Form,
   FormField,
@@ -22,15 +21,24 @@ import {
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
-import { useAudienceCount, useBroadcastActions } from './api.ts';
+import { useAudienceCount, useBroadcast } from './api.ts';
 import { AudienceSection, useTemplateDetails } from './audience.tsx';
 import { ComposePreview } from './compose-preview.tsx';
 import { ChangeSection, MessageSection, WhenSection } from './compose-sections.tsx';
-import { atMs, bodyOf, type ComposerState, INITIAL, targetOf } from './composer-state.ts';
+import { atMs, type ComposerState, INITIAL, stateOfBroadcast, targetOf } from './composer-state.ts';
+import { useComposerSubmit } from './composer-submit.ts';
+import { SendConfirm } from './send-confirm.tsx';
 
 const FORM_ID = 'compose-message';
 
-export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined }) {
+export function ComposerPage({
+  kind,
+  from,
+}: {
+  kind?: 'message' | 'change' | undefined;
+  /** A saved draft to edit. */
+  from?: string | undefined;
+}) {
   const navigate = useNavigate();
   const scope = useOrgScope().orgId;
   const orgs = useOrgOptions();
@@ -42,11 +50,27 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
   useEffect(() => {
     if (!picked && active.length === 1) setPicked(active[0]?.id);
   }, [picked, active]);
-  const orgId = scope ?? picked;
+  const found = useBroadcast(from);
+  const draft = found.data?.state === 'draft' ? found.data : undefined;
+  const orgId = draft?.orgId ?? scope ?? picked;
   const org = active.find((o) => o.id === orgId);
 
   const [state, setState] = useState<ComposerState>({ ...INITIAL, kind: kind ?? 'message' });
   const change = (patch: Partial<ComposerState>) => setState((s) => ({ ...s, ...patch }));
+  const [loaded, setLoaded] = useState<string>();
+  useEffect(() => {
+    if (draft && loaded !== draft.id) {
+      setLoaded(draft.id);
+      setState(stateOfBroadcast(draft));
+    }
+  }, [draft, loaded]);
+  // Another organization has other templates: nothing chosen for the last one carries over.
+  const lastOrg = useRef(orgId);
+  useEffect(() => {
+    if (lastOrg.current && lastOrg.current !== orgId)
+      setState((s) => ({ ...s, templateIds: [], fields: [], values: {} }));
+    lastOrg.current = orgId;
+  }, [orgId]);
   const templates = useTemplates({ orgId }, Boolean(orgId));
   const usable = useMemo(
     () => (templates.data?.items ?? []).filter((t) => t.status === 'active' && t.activeVersion),
@@ -56,9 +80,8 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
   const chosen = state.templateIds.flatMap((id) => details.get(id) ?? []);
   const settledQ = useDebounced(state.q);
   const count = useAudienceCount(orgId, targetOf({ ...state, q: settledQ }));
-  const actions = useBroadcastActions();
   const [ask, setAsk] = useState(false);
-  const [sentId, setSentId] = useState<string>();
+  const wide = !useMediaQuery(BELOW_LG);
 
   const at = atMs(state);
   const text = state.message.trim();
@@ -73,18 +96,12 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
         ? 'Pick a time in the future.'
         : undefined,
   });
-  const dirty =
-    !sentId && (state.message !== '' || state.templateIds.length > 0 || state.fields.length > 0);
-  const guard = useUnsavedChangesGuard(dirty);
+  const { submit, sentId, pending } = useComposerSubmit(orgId, state, at, draft);
+  const dirty = draft
+    ? JSON.stringify(state) !== JSON.stringify(stateOfBroadcast(draft))
+    : state.message !== '' || state.templateIds.length > 0 || state.fields.length > 0;
+  const guard = useUnsavedChangesGuard(dirty && !sentId);
 
-  const submit = async (send: 'draft' | 'now' | 'schedule') => {
-    if (!orgId) return;
-    const body = bodyOf(orgId, state, send, at);
-    if (!body) return;
-    const made = await actions.create.mutateAsync(body);
-    toast.success(send === 'draft' ? 'Draft saved' : send === 'now' ? 'Sending' : 'Scheduled');
-    setSentId(made.id);
-  };
   // Navigates once the guard has re-rendered clean; navigating in submit itself was blocked.
   useEffect(() => {
     if (sentId)
@@ -95,39 +112,31 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
       });
   }, [sentId, navigate]);
   const send = state.when === 'later' ? 'schedule' : 'now';
-  // A count for an older audience (while the search settles or reloads) is not the count to confirm.
-  const counted = count.data !== undefined && !count.isPlaceholderData && settledQ === state.q;
-  const targeted = count.data?.targeted ?? 0;
-  const noCount = count.isError && count.data === undefined;
-  const nothing = counted || noCount;
   const canDraft =
     Boolean(orgId) &&
     state.templateIds.length > 0 &&
     (state.kind === 'message' ? state.clearing || Boolean(text) : state.fields.length > 0);
-  const quiet = !state.notify || state.clearing || (state.kind === 'message' && !text);
-  const title = state.kind === 'message' ? 'New message' : 'New scheduled change';
+  const quiet = !state.notify || state.clearing;
+  const title = draft ? 'Edit draft' : state.kind === 'message' ? 'New message' : 'New change';
+  const preview = org ? (
+    <ComposePreview
+      org={{ id: org.id, name: org.name, accent: org.branding.accent ?? null }}
+      state={state}
+      detail={chosen[0]}
+      silent={quiet}
+    />
+  ) : null;
 
   return (
     <>
       <PageHeader
         title={title}
-        breadcrumbs={[{ label: 'Messages', to: '/admin/messages' }, { label: 'New' }]}
+        breadcrumbs={[
+          { label: 'Messages', to: '/admin/messages' },
+          { label: draft ? 'Edit' : 'New' },
+        ]}
       />
-      <TwoPane
-        asideFrom="lg"
-        stickyAside
-        asideLabel="Preview"
-        aside={
-          org ? (
-            <ComposePreview
-              org={{ id: org.id, name: org.name, accent: org.branding.accent ?? null }}
-              state={state}
-              detail={chosen[0]}
-              silent={quiet}
-            />
-          ) : null
-        }
-      >
+      <TwoPane asideFrom="lg" stickyAside asideLabel="Preview" aside={wide ? preview : null}>
         <Form
           id={FORM_ID}
           {...checks.form}
@@ -140,7 +149,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
                 label="Type"
                 options={[
                   { value: 'message', label: 'Message' },
-                  { value: 'change', label: 'Scheduled change' },
+                  { value: 'change', label: 'Change' },
                 ]}
                 value={state.kind}
                 onValueChange={(next) =>
@@ -155,10 +164,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
                       kind="org"
                       value={orgId}
                       placeholder="Choose an organization"
-                      onValueChange={(id) => {
-                        setPicked(id);
-                        change({ templateIds: [], fields: [], values: {} });
-                      }}
+                      onValueChange={setPicked}
                     />
                   )}
                 </FormField>
@@ -175,6 +181,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
                 templates={usable}
                 loading={templates.isPending && Boolean(orgId)}
                 details={details}
+                count={count}
                 error={checks.errors.templates}
               />
             </CardBody>
@@ -194,6 +201,7 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
               )}
             </CardBody>
           </Card>
+          {wide ? null : preview}
           <Card>
             <CardHeader title="When" />
             <CardBody>
@@ -201,12 +209,13 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
             </CardBody>
           </Card>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" loading={actions.create.isPending && !ask}>
+            <Button type="submit" loading={pending && !ask}>
               {state.when === 'later' ? 'Schedule' : 'Send now'}
             </Button>
             <Button
               type="button"
               variant="outline"
+              loading={pending && !ask}
               disabled={!canDraft}
               onClick={() =>
                 void submit('draft').catch((e: unknown) => toast.error(e, 'Could not save'))
@@ -224,41 +233,16 @@ export function ComposerPage({ kind }: { kind?: 'message' | 'change' | undefined
           </div>
         </Form>
       </TwoPane>
-      <ConfirmDialog
+      <SendConfirm
         open={ask}
         onOpenChange={setAsk}
-        title={
-          noCount
-            ? 'Could not count the passes'
-            : !counted
-              ? 'Counting passes'
-              : targeted === 0
-                ? 'No passes match'
-                : state.when === 'later'
-                  ? `Schedule for ${formatCount(targeted)} ${targeted === 1 ? 'pass' : 'passes'}?`
-                  : `Send to ${formatCount(targeted)} ${targeted === 1 ? 'pass' : 'passes'}?`
-        }
-        description={
-          noCount
-            ? 'Close this and try again.'
-            : !counted
-              ? 'One moment.'
-              : targeted === 0
-                ? 'Change the audience first.'
-                : state.when === 'later' && at !== undefined
-                  ? `Goes out ${formatDateTime(at)}. You can cancel until then.`
-                  : quiet
-                    ? 'The passes update without a notification.'
-                    : 'Holders are notified at once.'
-        }
-        confirmLabel={state.when === 'later' ? 'Schedule' : 'Send'}
-        confirmDisabled={!counted}
-        hideConfirm={nothing && targeted === 0}
-        cancelLabel={nothing && targeted === 0 ? 'Close' : 'Cancel'}
-        onConfirm={async () => {
-          if (targeted === 0) return;
-          await submit(send);
-        }}
+        kind={state.kind}
+        count={count}
+        settled={settledQ === state.q}
+        quiet={quiet}
+        at={at}
+        later={state.when === 'later'}
+        onConfirm={() => submit(send)}
       />
       <UnsavedChangesDialog blocker={guard} />
     </>

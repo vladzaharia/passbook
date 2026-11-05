@@ -1,5 +1,7 @@
+import type { UseQueryResult } from '@tanstack/react-query';
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type { BroadcastPreviewDto } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { formatCount } from '../../lib/format.ts';
 import {
@@ -12,21 +14,19 @@ import {
   SwitchRow,
 } from '../../ui/index.ts';
 import { templateDetailQuery } from '../templates/api.ts';
-import { useAudienceCount } from './api.ts';
-import { type ComposerState, type HolderChoice, targetOf } from './composer-state.ts';
+import type { ComposerState, HolderChoice } from './composer-state.ts';
+import { HOLDER_LABEL } from './labels.ts';
 
 const HOLDERS: readonly { value: HolderChoice; label: string }[] = [
   { value: 'any', label: 'Any holder' },
-  { value: 'owned', label: 'Claimed' },
-  { value: 'waiting', label: 'Not claimed' },
-  { value: 'unassigned', label: 'No holder' },
+  ...(Object.entries(HOLDER_LABEL) as [Exclude<HolderChoice, 'any'>, string][]).map(
+    ([value, label]) => ({ value, label }),
+  ),
 ];
 
 /** Details of the templates the picker offers; a message needs the manifest's messaging key. */
 export function useTemplateDetails(templates: readonly TemplateSummaryDto[]) {
-  const results = useQueries({
-    queries: templates.slice(0, 30).map((t) => templateDetailQuery(t.id)),
-  });
+  const results = useQueries({ queries: templates.map((t) => templateDetailQuery(t.id)) });
   return useMemo(
     () => new Map(results.flatMap((r) => (r.data ? [[r.data.id, r.data] as const] : []))),
     [results],
@@ -40,6 +40,7 @@ export function AudienceSection({
   templates,
   loading,
   details,
+  count,
   error,
 }: {
   orgId: string | undefined;
@@ -48,9 +49,10 @@ export function AudienceSection({
   templates: readonly TemplateSummaryDto[];
   loading: boolean;
   details: ReturnType<typeof useTemplateDetails>;
+  /** The composer's one (debounced) count, the same the send confirm waits on. */
+  count: Pick<UseQueryResult<BroadcastPreviewDto>, 'data'>;
   error?: string | undefined;
 }) {
-  const count = useAudienceCount(orgId, targetOf(state));
   const toggle = (id: string, on: boolean) =>
     onChange({
       templateIds: on ? [...state.templateIds, id] : state.templateIds.filter((x) => x !== id),
@@ -76,12 +78,14 @@ export function AudienceSection({
               state.kind === 'message' &&
               detail !== undefined &&
               !(detail.manifest as { messaging?: unknown } | null)?.messaging;
+            // A template whose details have not loaded cannot be told apart yet.
+            const unknown = state.kind === 'message' && detail === undefined;
             return (
               <div key={t.id} className="flex flex-wrap items-center gap-x-3">
                 <CheckboxField
                   label={t.name}
                   checked={state.templateIds.includes(t.id)}
-                  disabled={noMessage}
+                  disabled={noMessage || (unknown && !state.templateIds.includes(t.id))}
                   onCheckedChange={(on) => toggle(t.id, on === true)}
                 />
                 {noMessage ? <span className="text-xs text-fg-muted">No message field</span> : null}

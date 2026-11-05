@@ -1,9 +1,11 @@
-import { useNavigate } from '@tanstack/react-router';
-import { Ban, RotateCcw, Send } from 'lucide-react';
+import { useQueries } from '@tanstack/react-query';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Ban, Pencil, RotateCcw, Send } from 'lucide-react';
 import { useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
 import { cancelBroadcastConfirm } from '../../lib/confirms.ts';
-import { formatCount, formatDateTime } from '../../lib/format.ts';
+import { formatDateTime } from '../../lib/format.ts';
+import { useMode } from '../../lib/mode.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   Button,
@@ -22,97 +24,84 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
-import { useTemplates } from '../templates/api.ts';
-import { type NewBroadcast, useBroadcast, useBroadcastActions } from './api.ts';
-import { clearLabel, KIND_LABEL, messageText, whenLine } from './labels.ts';
+import { templateDetailQuery } from '../templates/api.ts';
+import { type ItemOutcome, useAudienceCount, useBroadcast, useBroadcastActions } from './api.ts';
+import { Counts } from './detail-counts.tsx';
+import { PassesCard } from './detail-passes.tsx';
+import {
+  clearLabel,
+  HOLDER_LABEL,
+  isQuiet,
+  KIND_LABEL,
+  messageText,
+  plural,
+  stopLine,
+  whenLine,
+} from './labels.ts';
 import { LockScreenNotice } from './lock-screen.tsx';
-import { BroadcastProgress } from './progress.tsx';
-import { SendDialog } from './send-dialog.tsx';
+import { patchRows } from './patch-view.ts';
+import { SendConfirm } from './send-confirm.tsx';
 
 const CRUMBS = [{ label: 'Messages', to: '/admin/messages' }];
 
-function Stat({ label, value, hint }: { label: string; value: number; hint?: string }) {
+function audienceOf(b: BroadcastDto): string {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <dt className="text-xs text-fg-muted">{label}</dt>
-      <dd className="text-xl font-semibold tabular-nums text-fg-strong">{formatCount(value)}</dd>
-      {hint ? <span className="text-xs text-fg-muted">{hint}</span> : null}
-    </div>
+    [
+      b.target.onDevice ? 'On a device' : null,
+      b.target.holderState ? HOLDER_LABEL[b.target.holderState] : null,
+      b.target.q ? `Matching “${b.target.q}”` : null,
+    ]
+      .filter(Boolean)
+      .join(', ') || 'Every active pass'
   );
 }
 
-function Counts({ b }: { b: BroadcastDto }) {
-  const c = b.counts;
-  const started = b.state !== 'draft' && b.state !== 'scheduled' && b.state !== 'cancelled';
-  return (
-    <Card>
-      <CardHeader title="Progress" />
-      <CardBody className="flex flex-col gap-4">
-        {started ? <BroadcastProgress broadcast={b} /> : null}
-        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <Stat label="Targeted" value={c.targeted} />
-          <Stat label="Updated" value={c.updated} />
-          <Stat label="Unchanged" value={c.unchanged} />
-          <Stat
-            label="Quiet"
-            value={c.overBudget}
-            hint={c.overBudget ? 'At the daily limit' : ''}
-          />
-          <Stat label="Failed" value={c.failed} />
-        </dl>
-        {!started ? (
-          <p className="text-sm text-fg-muted">
-            {b.state === 'cancelled'
-              ? 'Cancelled before it started.'
-              : 'Counts appear once it starts.'}
-          </p>
-        ) : null}
-      </CardBody>
-    </Card>
-  );
-}
-
-export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
+export function MessageDetailPage({
+  broadcastId,
+  outcome,
+  onOutcome,
+}: {
+  broadcastId: string;
+  outcome?: ItemOutcome | undefined;
+  onOutcome?: (next: ItemOutcome | undefined) => void;
+}) {
   const navigate = useNavigate();
+  const mode = useMode();
   const query = useBroadcast(broadcastId);
-  const { cancel, send, create } = useBroadcastActions();
+  const { cancel, send, retry } = useBroadcastActions();
   const orgs = useOrgOptions();
-  const templates = useTemplates({ orgId: query.data?.orgId }, Boolean(query.data));
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
+  const b = query.data;
+  const templates = useQueries({
+    queries: (b?.target.templateIds ?? []).map((id) => templateDetailQuery(id)),
+  });
+  const count = useAudienceCount(b?.orgId, b?.target, sending);
 
-  if (query.isError)
-    return detailError(query, {
-      entity: 'broadcast',
-      to: '/admin/messages',
-      header: <PageHeader title="Message" breadcrumbs={[...CRUMBS, { label: 'Message' }]} />,
-    });
-  if (!query.data)
-    return (
+  if (!b)
+    return query.isError ? (
+      detailError(query, {
+        entity: 'broadcast',
+        to: '/admin/messages',
+        header: <PageHeader title="Message" breadcrumbs={[...CRUMBS, { label: 'Message' }]} />,
+      })
+    ) : (
       <>
         <PageHeader title="Message" breadcrumbs={[...CRUMBS, { label: 'Message' }]} />
         <SkeletonDetail label="Loading message" />
       </>
     );
-  const b = query.data;
   const org = orgs.data?.items.find((o) => o.id === b.orgId);
-  const names = new Map((templates.data?.items ?? []).map((t) => [t.id, t.name]));
-  const cancellable = b.state === 'draft' || b.state === 'scheduled';
+  const names = templates.map((t, i) => t.data?.name ?? b.target.templateIds[i] ?? '');
+  const draft = b.state === 'draft';
+  const noun = b.kind === 'change' ? 'change' : 'message';
   const text = messageText(b);
-  // Passes the failed run already changed come back as unchanged, so this only finishes the rest.
+  const started = b.state !== 'draft' && b.state !== 'scheduled' && b.state !== 'cancelled';
+  const sameMode = b.mode === mode;
   const sendAgain = async () => {
     try {
-      const made = await create.mutateAsync({
-        orgId: b.orgId,
-        kind: b.kind,
-        name: b.name,
-        target: b.target,
-        patch: b.patch as NewBroadcast['patch'],
-        notify: b.notify,
-        send: 'now',
-        ...(b.clearAfter ? { clearAfter: b.clearAfter } : {}),
-      });
-      toast.success('Sending');
+      const made = await retry.mutateAsync(b.id);
+      toast.info('Sending');
       void navigate({ to: '/admin/messages/$broadcastId', params: { broadcastId: made.id } });
     } catch (cause) {
       toast.error(cause, 'Could not send');
@@ -144,37 +133,56 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
         }
         actions={
           <>
-            {b.state === 'draft' ? (
-              <Button iconStart={<Send aria-hidden />} onClick={() => setSending(true)}>
-                Send
-              </Button>
+            {draft ? (
+              <>
+                <Button iconStart={<Send aria-hidden />} onClick={() => setSending(true)}>
+                  Send
+                </Button>
+                <Button asChild variant="outline" iconStart={<Pencil aria-hidden />}>
+                  <Link to="/admin/messages/new" search={{ from: b.id }}>
+                    Edit
+                  </Link>
+                </Button>
+              </>
             ) : null}
-            {b.state === 'failed' ? (
+            {b.state === 'failed' && sameMode ? (
               <Button
                 iconStart={<RotateCcw aria-hidden />}
-                loading={create.isPending}
+                loading={retry.isPending}
                 onClick={() => void sendAgain()}
               >
                 Send again
               </Button>
             ) : null}
-            {cancellable ? (
+            {draft || b.state === 'scheduled' ? (
               <Button
                 variant="outline"
                 iconStart={<Ban aria-hidden />}
                 onClick={() => setAsking(true)}
               >
-                Cancel
+                {`Cancel ${noun}`}
               </Button>
             ) : null}
           </>
         }
       />
-      {b.errorCode ? (
+      {b.state === 'partial' ? (
+        <Callout
+          tone="warning"
+          className="mb-6"
+          actions={
+            <Button size="sm" variant="outline" onClick={() => onOutcome?.('failed')}>
+              Show failed
+            </Button>
+          }
+        >
+          {plural(b.counts.failed, 'pass', 'passes')} could not be updated.
+        </Callout>
+      ) : null}
+      {b.state === 'failed' ? (
         <Callout tone="danger" className="mb-6">
-          {b.state === 'failed'
-            ? 'It stopped before every pass was handled. Use Send again to finish.'
-            : 'Some passes could not be updated. Check the failed count.'}
+          {stopLine(b.errorCode)}
+          {sameMode ? '' : ` Switch to ${b.mode === 'test' ? 'Test' : 'Live'} mode to send again.`}
         </Callout>
       ) : null}
       <TwoPane
@@ -187,25 +195,8 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
               <KeyValue
                 items={[
                   { label: 'Organization', value: org?.name ?? '—' },
-                  {
-                    label: 'Templates',
-                    value: b.target.templateIds.map((id) => names.get(id) ?? id).join(', '),
-                  },
-                  {
-                    label: 'Audience',
-                    value:
-                      [
-                        b.target.onDevice ? 'On a device' : null,
-                        b.target.holderState
-                          ? { owned: 'Claimed', waiting: 'Not claimed', unassigned: 'No holder' }[
-                              b.target.holderState
-                            ]
-                          : null,
-                        b.target.q ? `Matching “${b.target.q}”` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(', ') || 'Every active pass',
-                  },
+                  { label: 'Templates', value: names.join(', ') },
+                  { label: 'Audience', value: audienceOf(b) },
                   {
                     label: 'Notification',
                     value:
@@ -213,7 +204,7 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
                         ? 'None, clears the message'
                         : b.notify
                           ? 'Notify holders'
-                          : 'Quiet',
+                          : 'None',
                   },
                   ...(b.clearAfter ? [{ label: 'Clears', value: clearLabel(b.clearAfter) }] : []),
                   { label: 'Created', value: formatDateTime(b.createdAt) },
@@ -229,7 +220,8 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
           </Card>
         }
       >
-        <Counts b={b} />
+        <Counts b={b} outcome={outcome} />
+        {started ? <PassesCard b={b} outcome={outcome} onOutcome={(o) => onOutcome?.(o)} /> : null}
         {b.kind === 'message' ? (
           <Card>
             <CardHeader title="Message" />
@@ -241,7 +233,7 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
                   accent: org?.branding.accent ?? null,
                 }}
                 text={text}
-                silent={!b.notify || !text.trim()}
+                silent={isQuiet(b)}
               />
             </CardBody>
           </Card>
@@ -250,21 +242,26 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
             <CardHeader title="Changes" />
             <CardBody>
               <KeyValue
-                items={Object.entries(b.patch).map(([key, value]) => ({
-                  label: key,
-                  value: typeof value === 'string' ? value : JSON.stringify(value),
+                items={patchRows(templates[0]?.data?.inputSchema, b.patch).map((r) => ({
+                  label: r.label,
+                  value: r.value,
                 }))}
               />
             </CardBody>
           </Card>
         )}
       </TwoPane>
-      <SendDialog
+      <SendConfirm
         open={sending}
         onOpenChange={setSending}
-        onSend={async (at) => {
-          await send.mutateAsync({ id: b.id, at });
-          toast.success(at === undefined ? 'Sending' : 'Scheduled');
+        kind={b.kind}
+        count={count}
+        quiet={isQuiet(b)}
+        at={undefined}
+        later={false}
+        onConfirm={async () => {
+          await send.mutateAsync({ id: b.id });
+          toast.info('Sending');
         }}
       />
       <ConfirmDialog
@@ -274,7 +271,7 @@ export function MessageDetailPage({ broadcastId }: { broadcastId: string }) {
         destructive
         onConfirm={async () => {
           await cancel.mutateAsync(b.id);
-          toast.success('Message cancelled');
+          toast.success(`${KIND_LABEL[b.kind]} cancelled`);
           void navigate({ to: '/admin/messages' });
         }}
       />
