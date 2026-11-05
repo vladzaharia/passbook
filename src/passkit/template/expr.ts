@@ -6,6 +6,8 @@ export interface ExprScope {
   lookups: NonNullable<TemplateManifest['lookups']>;
   /** Server-owned values, read as `{{pass.scanCode}}`. `pass` is reserved: it is never an input. */
   pass?: PassScope;
+  /** A template saved before `pass` was reserved may have an input named `pass`: it wins. */
+  passIsInput?: boolean;
 }
 
 export interface PassScope {
@@ -163,7 +165,8 @@ export function lookupPath(path: string, scope: ExprScope): Json | undefined {
   const tokens = tokenize(path.trim(), path);
   if (tokens[0] === 'lookups')
     return walk(scope.lookups as unknown as Json, tokens.slice(1), scope);
-  if (tokens[0] === 'pass') return walk((scope.pass ?? {}) as Json, tokens.slice(1), scope);
+  if (tokens[0] === 'pass' && !scope.passIsInput)
+    return walk((scope.pass ?? {}) as Json, tokens.slice(1), scope);
   return walk(scope.input, tokens, scope);
 }
 

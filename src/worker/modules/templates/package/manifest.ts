@@ -1,6 +1,7 @@
 import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
 import { messagingIssues } from '../../../../passkit/template/messaging.ts';
+import { reservedInputIssues } from '../../../../passkit/template/reserved.ts';
 import type {
   Json,
   PassField,
@@ -251,7 +252,7 @@ export function validateManifest(
     } else error('BINDING_SHAPE', 'Unknown binding target.', `${path}.to`);
   }
 
-  issues.push(...messagingIssues(manifest, pass));
+  issues.push(...reservedInputIssues(manifest), ...messagingIssues(manifest, pass));
 
   for (const [i, use] of (manifest.behaviors ?? []).entries()) {
     const path = `behaviors.${i}`;

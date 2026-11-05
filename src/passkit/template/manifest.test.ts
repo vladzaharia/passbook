@@ -178,3 +178,22 @@ describe('inputs and display', () => {
     });
   });
 });
+
+describe('x-pattern-message', () => {
+  const phone = {
+    ...base,
+    inputs: {
+      ...base.inputs,
+      properties: {
+        ...base.inputs.properties,
+        phone: { type: 'string', pattern: '^\\+[0-9]+$', 'x-pattern-message': 'Use +14155550100.' },
+      },
+    },
+  } as TemplateManifest;
+  it('replaces the generic pattern error with the schema words', () => {
+    expect(checkInput(phone, { name: 'A', phone: '555' })).toMatchObject([
+      { path: 'phone', message: 'Use +14155550100.' },
+    ]);
+    expect(checkInput(phone, { name: 'A', phone: '+1555' })).toEqual([]);
+  });
+});

@@ -249,6 +249,16 @@ describe('uploaded manifests', () => {
     expect(codes).not.toContain('warning:MANIFEST_GENERATED');
   });
 
+  it('rejects an input named pass: it is the server scope in expressions', async () => {
+    const { codes } = await run({
+      inputs: {
+        type: 'object',
+        properties: { name: { type: 'string' }, pass: { type: 'string' } },
+      },
+    });
+    expect(codes).toContain('error:INPUT_RESERVED');
+  });
+
   it('rejects unsafe patterns and reference keywords but allows x- annotations', async () => {
     const props = (p: Record<string, unknown>) => ({
       inputs: { type: 'object', properties: { name: { type: 'string', ...p } } },

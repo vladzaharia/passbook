@@ -35,21 +35,34 @@ function luminance(value: unknown): number | undefined {
 }
 const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 
+/** Minimum contrast against the background: text 4.5:1, labels 3:1 (WCAG AA). */
+export const CONTRAST_MIN = { text: 4.5, label: 3 } as const;
+
+/** WCAG contrast of two `rgb(r, g, b)` colors; undefined when either is not one. */
+export function contrastRatio(a: string | undefined, b: string | undefined): number | undefined {
+  const la = luminance(a);
+  const lb = luminance(b);
+  return la === undefined || lb === undefined ? undefined : ratio(la, lb);
+}
+
+/** One decimal, rounded down: a failing 4.46 must not print as 4.5. */
+export const shownRatio = (value: number): string => (Math.floor(value * 10) / 10).toFixed(1);
+
 /** Foreground 4.5:1 and labels 3:1 on the background; image-backed passes get a reminder. */
 function checkContrast(ctx: ValidationContext, assets: ValidatableAsset[]): void {
   const bg = luminance(ctx.pass.backgroundColor);
   const fg = luminance(ctx.pass.foregroundColor);
   const label = luminance(ctx.pass.labelColor);
-  if (bg !== undefined && fg !== undefined && ratio(bg, fg) < 4.5)
+  if (bg !== undefined && fg !== undefined && ratio(bg, fg) < CONTRAST_MIN.text)
     ctx.warn(
       'COLOR_CONTRAST',
-      `Text contrast is ${ratio(bg, fg).toFixed(1)}:1; use at least 4.5:1.`,
+      `Text contrast is ${shownRatio(ratio(bg, fg))}:1; use at least ${CONTRAST_MIN.text}:1.`,
       'foregroundColor',
     );
-  if (bg !== undefined && label !== undefined && ratio(bg, label) < 3)
+  if (bg !== undefined && label !== undefined && ratio(bg, label) < CONTRAST_MIN.label)
     ctx.warn(
       'COLOR_CONTRAST',
-      `Label contrast is ${ratio(bg, label).toFixed(1)}:1; use at least 3:1.`,
+      `Label contrast is ${shownRatio(ratio(bg, label))}:1; use at least ${CONTRAST_MIN.label}:1.`,
       'labelColor',
     );
   if (assets.some((a) => /^(?:[^/]+\.lproj\/)?(background|artwork)(@[23]x)?\.png$/.test(a.name)))
@@ -112,11 +125,14 @@ function checkBackContact(ctx: ValidationContext): void {
     ctx.warn('BACK_CONTACT', 'Add a phone, email or link on the back so holders can get help.');
 }
 
+const MESSAGE_KEY = 'message';
 const FREE_TEXT = /note|message|terms|details|description|about|info/i;
 
 function checkChangeMessages(ctx: ValidationContext): void {
   for (const { field, path } of eachField(ctx)) {
     if (typeof field.changeMessage !== 'string' || !field.changeMessage.includes('%@')) continue;
+    // The messaging field exists to show the whole text.
+    if (field.key === MESSAGE_KEY) continue;
     const name = `${String(field.key ?? '')} ${String(field.label ?? '')}`;
     const long = typeof field.value === 'string' && field.value.length > 40;
     if (FREE_TEXT.test(name) || long)

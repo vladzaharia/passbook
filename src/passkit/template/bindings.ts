@@ -168,6 +168,9 @@ export function bindPass(
     input: applyDefaults(template.manifest, input),
     lookups: template.manifest.lookups ?? {},
     pass: server,
+    ...(Object.hasOwn(template.manifest.inputs.properties ?? {}, 'pass')
+      ? { passIsInput: true }
+      : {}),
   };
   const ctx: Context = { pass, scope, dropped: new Set() };
   for (const binding of template.manifest.bindings) applyBinding(ctx, binding);
