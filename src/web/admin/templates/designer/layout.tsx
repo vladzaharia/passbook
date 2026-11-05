@@ -12,11 +12,13 @@ export function DesignerLayout({
   structure,
   preview,
   issues,
+  readOnly = false,
 }: {
   templateId: string;
   structure: ReactNode;
   preview: ReactNode;
   issues: ReactNode;
+  readOnly?: boolean;
 }) {
   const phone = useMediaQuery(PHONE);
   if (phone) {
@@ -36,7 +38,9 @@ export function DesignerLayout({
   }
   return (
     <div className="dz-layout" data-testid="designer-layout">
-      <div className="dz-structure min-w-0">{structure}</div>
+      <div className="dz-structure min-w-0" inert={readOnly} data-readonly={readOnly || undefined}>
+        {structure}
+      </div>
       <div className="dz-stage min-w-0">{preview}</div>
       <div className="dz-issues min-w-0">{issues}</div>
     </div>

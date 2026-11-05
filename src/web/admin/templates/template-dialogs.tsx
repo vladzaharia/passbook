@@ -17,10 +17,13 @@ export function DuplicateDialog({
   template,
   open,
   onOpenChange,
+  to = 'detail',
 }: {
   template: Template;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  /** Where the copy opens: its page, or straight into its designer. */
+  to?: 'detail' | 'design';
 }) {
   const orgs = useOrgOptions(open);
   const actions = useTemplateActions(template.id);
@@ -36,7 +39,11 @@ export function DuplicateDialog({
       markMinted(`template:${copy.id}`);
       markCreated(`template:${copy.id}`, 'duplicated');
       onOpenChange(false);
-      void navigate({ to: '/admin/templates/$templateId', params: { templateId: copy.id } });
+      void navigate(
+        to === 'design'
+          ? { to: '/admin/templates/$templateId/design', params: { templateId: copy.id } }
+          : { to: '/admin/templates/$templateId', params: { templateId: copy.id } },
+      );
     } catch (cause) {
       setError(errorMessage(cause));
     }

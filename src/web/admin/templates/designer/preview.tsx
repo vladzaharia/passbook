@@ -12,14 +12,11 @@ export function DesignerPreview({
   assets,
   assetBase,
   checking,
-  settle,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
   assetBase: string;
   checking: boolean;
-  /** Changes when a part is added: the card settles once. */
-  settle?: unknown;
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const view = useMemo(() => {
@@ -43,7 +40,6 @@ export function DesignerPreview({
             face={face}
             target="ios27"
             flippable
-            settle={settle}
             tilt
             glow
             className="mx-auto w-full max-w-xs"

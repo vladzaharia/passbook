@@ -2,6 +2,7 @@ import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type SessionResponse, SessionResponseSchema } from '@/shared/contracts/session.ts';
 import { NEXT_COOKIE, NEXT_COOKIE_PATH, safeNextPath } from '@/shared/next.ts';
 import { api } from './api.ts';
+import { clearLocalDrafts } from './local-drafts.ts';
 import { problemToError } from './errors.ts';
 import { loginHref } from './redirect.ts';
 
@@ -129,6 +130,7 @@ export async function endSession(
 
 /** Leaves for `target`, marking the tab so the sign-in page waves and keeps `next`. */
 export function leaveSignedOut(target: string, next?: string): void {
+  clearLocalDrafts();
   try {
     sessionStorage.setItem(BYE, String(Date.now()));
     const safe = safeNextPath(next);

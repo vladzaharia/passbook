@@ -73,20 +73,15 @@ export function useSaveVersion(templateId: string) {
 
 export type { SaveVersionResponse };
 
-/** Server file list (with hashes) back into the designer's assets, keeping uploads that match. */
-export function mergeAssets(
-  server: SaveVersionResponse['assets'],
-  _doc: readonly DraftAsset[],
-): DraftAsset[] {
-  return server.map((a) => {
-    return {
-      name: a.name,
-      slot: a.slot,
-      scale: a.scale,
-      size: a.size,
-      width: a.width,
-      height: a.height,
-      sha1: a.sha1,
-    };
-  });
+/** The server's file list (with hashes) as the designer's assets; none of them carries bytes. */
+export function mergeAssets(server: SaveVersionResponse['assets']): DraftAsset[] {
+  return server.map((a) => ({
+    name: a.name,
+    slot: a.slot,
+    scale: a.scale,
+    size: a.size,
+    width: a.width,
+    height: a.height,
+    sha1: a.sha1,
+  }));
 }
