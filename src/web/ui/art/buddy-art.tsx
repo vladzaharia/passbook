@@ -19,6 +19,7 @@ export type BuddyScene =
   | 'tuck'
   | 'stow'
   | 'count'
+  | 'scan'
   | 'beat';
 
 export interface BuddyProps {
@@ -34,6 +35,16 @@ export interface BuddyProps {
   /** A change replays the scene (Retry). */
   replay?: number;
   className?: string;
+  /** Beat and pose names are the scan chunk's (BM); the kit only renders them. */
+  beat?: string;
+  pose?: string;
+  dir?: 'fwd' | 'out';
+  onCard?: ReactNode;
+  front?: ReactNode;
+  aside?: ReactNode;
+  landed?: boolean;
+  immediate?: boolean;
+  card?: 'in' | 'out';
 }
 
 /** The search scene's "?", hidden at rest. */
@@ -71,6 +82,15 @@ export function BuddyArt({
   scene = 'beat',
   playOnLoad,
   className,
+  beat,
+  pose,
+  dir,
+  onCard,
+  aside,
+  landed,
+  immediate,
+  card,
+  front,
   ref,
 }: Omit<BuddyProps, 'replay'> & { playOnLoad?: boolean; ref?: Ref<HTMLSpanElement> }) {
   return (
@@ -78,7 +98,10 @@ export function BuddyArt({
       ref={ref}
       aria-hidden
       data-buddy=""
-      data-replay=""
+      data-replay={immediate ? undefined : ''}
+      data-beat={beat}
+      data-pose={pose}
+      data-dir={dir}
       data-scene={scene}
       data-prop={prop ? '' : undefined}
       data-at={at}
@@ -90,9 +113,12 @@ export function BuddyArt({
         size={size}
         seat
         beat={false}
-        still={still}
+        still={still || landed}
+        card={card}
+        onCard={onCard}
+        aside={aside}
         mood={mood}
-        front={scene === 'search' ? ASK : scene === 'tear' ? TEAR : undefined}
+        front={front ?? (scene === 'search' ? ASK : scene === 'tear' ? TEAR : undefined)}
       />
       {prop ? <span className="wl-buddy-prop">{prop}</span> : null}
     </span>

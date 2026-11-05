@@ -198,3 +198,30 @@
   --u: 300ms;
   --e: linear;
 }
+
+[data-art="scanner"] [data-part="f"],
+[data-art="stub"] [data-part="t"] {
+  --f: translateY(8px);
+  --u: 240ms;
+  --e: var(--art-out);
+}
+[data-art="scanner"] [data-part="l"] {
+  --f: scaleX(0);
+  --d: 200ms;
+  --u: 200ms;
+  --b: translateY(10px);
+}
+[data-art="stub"] [data-part="h"] {
+  --f: scale(0);
+  --d: 240ms;
+  --u: 200ms;
+  --e: var(--art-bo);
+  --b: scale(1.35);
+}
+[data-art="badge"] [data-part="b"] {
+  --f: rotate(-8deg);
+  --o: 50% 0;
+  --u: 360ms;
+  --e: var(--art-bo);
+  --b: rotate(5deg);
+}

@@ -19,7 +19,7 @@ const wallet = read('art-wallet.css');
 // The canonical buddy (motion-and-expression.md, The buddy).
 describe('buddy scale', () => {
   it('draws S, M and L, L stepping to 112 x 84 under 640, and nothing else', () => {
-    expect(DIM).toEqual({ sm: [64, 48], lg: [96, 72], xl: [128, 96] });
+    expect(DIM).toEqual({ sm: [64, 48], lg: [96, 72], xl: [128, 96], 'xl-scan': [192, 144] });
     for (const size of ['sm', 'lg', 'xl'] as const) {
       const svg = render(<WalletArt size={size} />).container.querySelector('svg');
       expect(svg).toHaveAttribute('data-size', size);

@@ -11,8 +11,9 @@ export type { BuddyProps, BuddyScene } from './buddy-art.tsx';
  */
 export function Buddy({ replay, ...props }: BuddyProps) {
   const { ref } = useScene<HTMLSpanElement>(
-    !props.still && (props.scene ?? 'beat') !== 'beat',
+    !props.still && ((props.scene ?? 'beat') !== 'beat' || (!!props.immediate && !!props.beat)),
     replay,
+    { immediate: props.immediate },
   );
   useRegisterBuddy();
   return <BuddyArt ref={ref} {...props} />;

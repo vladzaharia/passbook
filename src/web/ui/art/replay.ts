@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { prefersReducedMotion } from '../../lib/motion.ts';
 import './scenes/rest.css';
 
@@ -17,19 +17,32 @@ export function runScene(el: Element | null): void {
  * A scene on `ref` (data-replay, data-scene; scenes/*.css). With `auto` it runs once, 60% in view
  * and landed. A click on a painted part replays it and stops there (no parent link or card action
  * sees it); so does a change of `again`. Reduced motion: never runs, a click does nothing.
+ * `immediate`: layout effect, on mount if `auto` and on every `again`; no observer, wait or click.
  */
-export function useScene<T extends Element>(auto: boolean, again?: unknown) {
+export function useScene<T extends Element>(
+  auto: boolean,
+  again?: unknown,
+  { immediate = false }: { immediate?: boolean } = {},
+) {
   const ref = useRef<T>(null);
   const replay = useCallback(() => runScene(ref.current), []);
   const seen = useRef(again);
   useEffect(() => {
-    if (Object.is(seen.current, again)) return;
+    if (immediate || Object.is(seen.current, again)) return;
     seen.current = again;
     replay();
-  }, [again, replay]);
+  }, [again, replay, immediate]);
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    if (!immediate) return;
+    const first = !mounted.current;
+    mounted.current = true;
+    if (first ? auto : !Object.is(seen.current, again)) replay();
+    seen.current = again;
+  }, [immediate, auto, again, replay]);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || immediate) return;
     const click = (e: Event) => {
       e.stopPropagation();
       e.preventDefault();
@@ -56,6 +69,6 @@ export function useScene<T extends Element>(auto: boolean, again?: unknown) {
       io?.disconnect();
       clearTimeout(timer);
     };
-  }, [auto]);
+  }, [auto, immediate]);
   return { ref, replay };
 }

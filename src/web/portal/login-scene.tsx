@@ -1,6 +1,7 @@
 import { Fragment, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { isApiError } from '../lib/errors.ts';
+import { lookAt } from '../lib/gaze.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { HOURGLASS } from '../ui/art/wallet-states.tsx';
 import { useScene, WalletArt } from '../ui/index.ts';
@@ -52,13 +53,8 @@ export function failure(error: unknown): SceneFail {
 }
 
 const GAZE_HOLD_MS = 1500;
-/** The eyes turn fully toward a caret this far to either side of the wallet's centre. */
-const GAZE_REACH = 160;
 
-/** -1…1: how far left or right of the wallet's centre a viewport x is, for the eyes. */
-export function lookAt(x: number, scene: { left: number; width: number }): number {
-  return Math.min(1, Math.max(-1, (x - (scene.left + scene.width / 2)) / GAZE_REACH));
-}
+export { lookAt } from '../lib/gaze.ts';
 
 /** Scene state for the sign-in page; the card drives it through the actions. */
 export function useLoginScene(sadOnLoad = false): [SceneState, SceneActions] {

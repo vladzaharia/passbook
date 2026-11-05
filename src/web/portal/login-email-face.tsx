@@ -3,6 +3,7 @@ import { type FormEvent, type Ref, useEffect, useState } from 'react';
 import { INVALID_EMAIL } from '@/shared/copy/sign-in.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { isApiError } from '../lib/errors.ts';
+import { caretX } from '../lib/gaze.ts';
 import { Button, Callout, FormField, Input } from '../ui/index.ts';
 import { isStandalone } from './device.ts';
 import { type SignInError, signInError } from './login-errors.ts';
@@ -10,16 +11,6 @@ import { failure, type SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 
 const isEmail = (value: string) => strictEmail(value) !== null;
-
-/** An average address character at the field's 16 px, and the field's side padding. */
-const CHAR_PX = 8.3;
-const PAD_PX = 12;
-
-/** About where the caret is after `chars` characters: the eyes follow it. */
-function caretX(field: HTMLInputElement, chars: number): number {
-  const box = field.getBoundingClientRect();
-  return Math.min(box.right - PAD_PX, box.left + PAD_PX + chars * CHAR_PX);
-}
 
 export interface EmailFaceProps {
   oidc: boolean;

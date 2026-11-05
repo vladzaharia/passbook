@@ -1,5 +1,6 @@
 import { createElement, type ReactNode } from 'react';
 import { ActivityArt } from './activity.tsx';
+import { BadgeArt } from './badge.tsx';
 import type { ArtProps } from './base.tsx';
 import { BroadcastArt } from './broadcast.tsx';
 import { BuildingArt } from './building.tsx';
@@ -20,6 +21,8 @@ import { PhoneArt } from './phone.tsx';
 import { PlugsArt } from './plugs.tsx';
 import { PulseArt } from './pulse.tsx';
 import { RunsArt } from './runs.tsx';
+import { ScannerArt } from './scanner.tsx';
+import { StubArt } from './stub.tsx';
 import { TemplateArt } from './template.tsx';
 import { TornArt } from './torn.tsx';
 import { UnpluggedArt } from './unplugged.tsx';
@@ -71,6 +74,9 @@ export const ART = {
   wallet: WalletArt,
   broadcast: BroadcastArt,
   bundle: BundleArt,
+  scanner: ScannerArt,
+  stub: StubArt,
+  badge: BadgeArt,
 } as const satisfies Record<ArtName, (props: ArtProps) => unknown>;
 
 export function RegisteredArt({ name, ...props }: EntityArtProps): ReactNode {
