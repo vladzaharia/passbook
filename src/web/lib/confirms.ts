@@ -120,6 +120,37 @@ export function revokeKeyConfirm(name: string): ConfirmCopy {
   };
 }
 
+/** Revoking a scanner: plain, so a lost phone stays one click away (like an API key). */
+export function revokeScannerConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Revoke ${name}?`,
+    confirmLabel: 'Revoke',
+    description: `The device stops scanning at once. Its scans stay. ${CANNOT_UNDO}`,
+    typed: false,
+  };
+}
+
+/** Pairing a paired scanner again: reversible, so not a danger button. */
+export function pairAgainConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Pair ${name} again?`,
+    confirmLabel: 'Pair again',
+    description: 'The device using it now signs out at its next scan.',
+    typed: false,
+  };
+}
+
+/** A Test scanner turning live; the device keeps its pairing. */
+export function goLiveConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Make ${name} live?`,
+    confirmLabel: 'Go live',
+    description:
+      'It starts accepting live passes and stops accepting test ones. Its test scans stay in Test mode.',
+    typed: false,
+  };
+}
+
 /** Cancelling what has not started. A draft is not deleted: the server moves it to Cancelled, same as a scheduled one. */
 export function cancelBroadcastConfirm(
   name: string,

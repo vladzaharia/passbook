@@ -4,8 +4,11 @@ import {
   cancelBroadcastConfirm,
   clearHolderConfirm,
   deleteConfirm,
+  goLiveConfirm,
+  pairAgainConfirm,
   removeEmailConfirm,
   revokeKeyConfirm,
+  revokeScannerConfirm,
   revokeSessionsConfirm,
   voidConfirm,
 } from './confirms.ts';
@@ -88,6 +91,36 @@ describe('confirm copy', () => {
       title: 'Sign Maya out everywhere?',
       confirmLabel: 'Revoke all',
       description: 'Every session ends. They can sign in again.',
+      typed: false,
+    });
+  });
+});
+
+describe('scanner confirm copy', () => {
+  it('revokes in one click and says the scans stay', () => {
+    expect(revokeScannerConfirm('Front door')).toEqual({
+      title: 'Revoke Front door?',
+      confirmLabel: 'Revoke',
+      description: 'The device stops scanning at once. Its scans stay. This cannot be undone.',
+      typed: false,
+    });
+  });
+
+  it('pairs again without calling it dangerous', () => {
+    expect(pairAgainConfirm('Front door')).toEqual({
+      title: 'Pair Front door again?',
+      confirmLabel: 'Pair again',
+      description: 'The device using it now signs out at its next scan.',
+      typed: false,
+    });
+  });
+
+  it('goes live with what changes for passes', () => {
+    expect(goLiveConfirm('Front door')).toEqual({
+      title: 'Make Front door live?',
+      confirmLabel: 'Go live',
+      description:
+        'It starts accepting live passes and stops accepting test ones. Its test scans stay in Test mode.',
       typed: false,
     });
   });
