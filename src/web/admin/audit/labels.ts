@@ -1,4 +1,4 @@
-import { Bot, Layers, type LucideIcon, Mail, Monitor, Settings } from 'lucide-react';
+import { Bot, type LucideIcon, Mail, Monitor, Settings } from 'lucide-react';
 import { humanize } from '@/web/lib/actions.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
 import type { AuditEntry } from './entry-drawer.tsx';
@@ -30,7 +30,7 @@ const REFS: Record<string, RefDef> = {
   device: { label: 'Device', kind: 'device' },
   session: { label: 'Session', icon: Monitor },
   broadcast: { label: 'Message', kind: 'broadcast', to: (id) => `/admin/messages/${id}` },
-  bundle: { label: 'Bundle', icon: Layers },
+  bundle: { label: 'Bundle', kind: 'bundle' },
   captured_email: { label: 'Test email', icon: Mail, to: () => '/admin/test-inbox' },
   settings: {
     label: 'Settings',
