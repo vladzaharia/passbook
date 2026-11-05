@@ -80,6 +80,23 @@ describe('staff PIN', () => {
     await expect(attempt(b.id, '222222')).resolves.toBeUndefined();
   });
 
+  it('10 concurrent wrong PINs evaluate at most 5', async () => {
+    const a = await makeScanStaff(f, { orgId, pin: '111111' });
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => attempt(a.id, '000000').catch((e: { code: string }) => e)),
+    );
+    const codes = results.map((r) => (r as { code: string }).code);
+    expect(codes.filter((c) => c === 'PIN_INVALID')).toHaveLength(5);
+    expect(codes.filter((c) => c === 'RATE_LIMITED')).toHaveLength(5);
+  });
+
+  it('a right PIN does not use up a try', async () => {
+    const a = await makeScanStaff(f, { orgId, pin: '111111' });
+    for (let i = 0; i < 4; i++) await attempt(a.id, '000000').catch(() => {});
+    await expect(attempt(a.id, '111111')).resolves.toBeUndefined();
+    await expect(attempt(a.id, '000000')).rejects.toMatchObject({ code: 'PIN_INVALID' });
+  });
+
   it('the lock ends with the window', async () => {
     const a = await makeScanStaff(f, { orgId, pin: '111111' });
     for (let i = 0; i < 5; i++) await attempt(a.id, '000000').catch(() => {});

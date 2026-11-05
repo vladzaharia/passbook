@@ -1,4 +1,4 @@
-import { bump, read } from '../../platform/counters.ts';
+import { bump } from '../../platform/counters.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
 import { safeEqual, toHex } from '../../platform/ids.ts';
@@ -35,37 +35,40 @@ export interface PinCheck {
 const personKey = (c: PinCheck) => `scan:pin:${c.scannerId}:${c.staffId}`;
 const allKey = (scannerId: string) => `scan:pinall:${scannerId}`;
 
+const lockedError = (secondsLeft: number) =>
+  new RateLimitedError(Math.ceil(secondsLeft / 1000), 'Too many wrong PINs. Try again later.');
+
 /**
  * Verifies a staff PIN on a scanner. Throws 400 PIN_INVALID (with the tries left) on a miss and
  * 429 once that person is locked on that scanner, or the scanner is locked for every name. A PIN
  * of another org's staff, or a disabled one, is a plain miss. Never logs the PIN.
+ *
+ * The attempt is reserved before the PIN is compared: both counters are bumped first, and only
+ * the callers whose bump landed inside a cap get a guess, so a burst of concurrent requests
+ * cannot test more PINs than the caps allow. A match gives the reservation back.
  */
 export async function checkPin(ctx: ServiceContext, check: PinCheck): Promise<void> {
   const now = ctx.clock.now();
   const personWindow = windowOf(now, PIN_PERSON_WINDOW_MS);
   const allWindow = windowOf(now, PIN_SCANNER_WINDOW_MS);
-  const [personMisses, allMisses] = await Promise.all([
-    read(ctx.env.DB, personKey(check), personWindow),
-    read(ctx.env.DB, allKey(check.scannerId), allWindow),
-  ]);
-  if (personMisses >= PIN_MISSES_PER_PERSON || allMisses >= PIN_MISSES_PER_SCANNER)
-    throw new RateLimitedError(
-      Math.ceil(
-        (personMisses >= PIN_MISSES_PER_PERSON
-          ? personWindow + PIN_PERSON_WINDOW_MS - now
-          : allWindow + PIN_SCANNER_WINDOW_MS - now) / 1000,
-      ),
-      'Too many wrong PINs. Try again later.',
-    );
+  const person = await bump(ctx.env.DB, personKey(check), personWindow);
+  if (person > PIN_MISSES_PER_PERSON) throw lockedError(personWindow + PIN_PERSON_WINDOW_MS - now);
+  const all = await bump(ctx.env.DB, allKey(check.scannerId), allWindow);
+  if (all > PIN_MISSES_PER_SCANNER) {
+    await bump(ctx.env.DB, personKey(check), personWindow, -1);
+    throw lockedError(allWindow + PIN_SCANNER_WINDOW_MS - now);
+  }
 
   const usable = check.staff?.orgId === check.orgId && check.staff.disabledAt === null;
   const expected = await hashPin(ctx.env, check.staffId, check.pin);
-  if (usable && (await safeEqual(expected, check.staff?.pinHash ?? ''))) return;
+  if (usable && (await safeEqual(expected, check.staff?.pinHash ?? ''))) {
+    await Promise.all([
+      bump(ctx.env.DB, personKey(check), personWindow, -1),
+      bump(ctx.env.DB, allKey(check.scannerId), allWindow, -1),
+    ]);
+    return;
+  }
 
-  const [person, all] = await Promise.all([
-    bump(ctx.env.DB, personKey(check), personWindow),
-    bump(ctx.env.DB, allKey(check.scannerId), allWindow),
-  ]);
   const audits: Promise<unknown>[] = [];
   if (person === PIN_MISSES_PER_PERSON)
     audits.push(
