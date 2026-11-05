@@ -70,6 +70,7 @@ async function dtoOf(ctx: ServiceContext, row: IdentityRow, keys: TeamKeys): Pro
     label: row.label,
     passTypeIdentifier: row.pass_type_identifier,
     teamIdentifier: row.team_identifier,
+    nfcKeys: [],
     source: row.source,
     certSha256: row.cert_sha256,
     certSubject: subject,

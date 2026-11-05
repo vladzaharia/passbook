@@ -203,7 +203,7 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
   - other identities: admin console, Identities, Rotate certificate (admin session only; `POST /api/v1/identities/{id}/rotate`). Re-sign all passes is on the same page.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
-- **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data.
+- **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data. Keep the oldest KEK configured for as long as scan PINs and asset grants exist: their HMAC key derives from it, and removing it makes every staff PIN fail.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
 - **Icons and social image**: `node tools/build-icons.ts` after the mark or the wallet art changes,

@@ -4,9 +4,10 @@ import type {
   ApiScope,
   AuthStores,
   Role,
+  ScannerAuth,
   SessionAuth,
 } from '../../src/worker/platform/auth.ts';
-import { SESSION_COOKIE } from '../../src/worker/platform/auth.ts';
+import { SCANNER_COOKIE, SESSION_COOKIE } from '../../src/worker/platform/auth.ts';
 import type { DeniedEvent } from '../../src/worker/platform/denied.ts';
 
 export interface FakeAuth {
@@ -23,6 +24,21 @@ export interface FakeAuth {
   /** `mode: 'test'` sends x-passbook-mode: test, as the admin UI does. */
   admin(options?: { mode?: Mode }): Record<string, string>;
   user(userId?: string): Record<string, string>;
+  /**
+   * Headers for a paired scanner: a cookie device (with CSRF token and same-origin hints) or a
+   * bearer terminal. Only the principal is faked. `requireScanActor` also reads the `scanners` row,
+   * so a test that goes through the guard seeds one with `makeScanner`, which is the frozen helper
+   * for scan tests, and uses its headers.
+   */
+  scanner(options?: {
+    scannerId?: string;
+    orgId?: string;
+    mode?: Mode;
+    transport?: 'cookie' | 'bearer';
+    kind?: ScannerAuth['scannerKind'];
+    deviceRole?: ScannerAuth['deviceRole'];
+    origin?: string;
+  }): Record<string, string>;
   /** Headers for a bearer API key. */
   apiKey(options?: {
     orgId?: string | null;
@@ -38,6 +54,7 @@ export interface FakeAuth {
 export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
   const sessions = new Map<string, SessionAuth>();
   const keys = new Map<string, ApiKeyAuth>();
+  const scanners = new Map<string, ScannerAuth>();
   const denied: DeniedEvent[] = [];
   let n = 0;
   return {
@@ -45,6 +62,12 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
     stores: {
       sessions: { resolve: async (cookie) => sessions.get(cookie) ?? null },
       apiKeys: { resolve: async (raw) => keys.get(raw) ?? null },
+      scanners: {
+        resolve: async (token, transport) => {
+          const found = scanners.get(token);
+          return found?.transport === transport ? found : null;
+        },
+      },
       onDenied: (event) => {
         denied.push(event);
       },
@@ -78,6 +101,46 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
     },
     user(userId = 'user-1') {
       return this.session({ userId, roles: ['user'] });
+    },
+    scanner({
+      scannerId = 'scanner-1',
+      orgId = 'org-1',
+      mode = 'live' as Mode,
+      transport = 'cookie' as 'cookie' | 'bearer',
+      kind = transport === 'bearer' ? 'terminal' : 'device',
+      deviceRole = 'scan',
+      origin: o = origin,
+    }: {
+      scannerId?: string;
+      orgId?: string;
+      mode?: Mode;
+      transport?: 'cookie' | 'bearer';
+      kind?: ScannerAuth['scannerKind'];
+      deviceRole?: ScannerAuth['deviceRole'];
+      origin?: string;
+    } = {}) {
+      const token = `wls_${String(++n).padStart(8, 'f')}_${'A'.repeat(43)}`;
+      const csrfSecret = transport === 'cookie' ? `fake-scan-csrf-${n}` : null;
+      scanners.set(token, {
+        kind: 'scanner',
+        scannerId,
+        orgId,
+        mode,
+        transport,
+        csrfSecret,
+        scannerKind: kind,
+        deviceRole,
+      });
+      const headers: Record<string, string> =
+        transport === 'bearer'
+          ? { authorization: `Bearer ${token}` }
+          : {
+              cookie: `${SCANNER_COOKIE}=${token}`,
+              'x-csrf-token': csrfSecret ?? '',
+              origin: o,
+              'sec-fetch-site': 'same-origin',
+            };
+      return headers;
     },
     apiKey({
       orgId = null,

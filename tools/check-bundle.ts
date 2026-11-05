@@ -9,7 +9,18 @@ const dist = join(root, 'dist/client');
 
 /** Initial gzip bytes measured after the admin-only libraries left the entry (217,649), plus 5%, plus wave 2 (Test mode, Messages). */
 export const BUDGET_BYTES = 232_500;
-export const FORBIDDEN = ['cmdk-', 'getRowModel', 'measureElement'] as const;
+/** The scanner's initial load (scan.html), in gzip bytes. */
+export const SCAN_BUDGET_BYTES = 150_000;
+/** Literal strings: this check matches text, so an identifier would not survive minification. */
+export const FORBIDDEN = [
+  'cmdk-',
+  'getRowModel',
+  'measureElement',
+  'scan-display:render',
+  'SCAN_DISPLAY_DENSITY',
+] as const;
+/** The scan entry also never pulls the SPA router tree or the e2e hook. */
+export const SCAN_FORBIDDEN = [...FORBIDDEN, 'routeTree', '__passbookScan'] as const;
 
 export function initialAssets(html: string): string[] {
   const urls = [
@@ -23,13 +34,14 @@ export function checkBundle(
   read: (url: string) => string,
   html: string,
   budget: number,
+  forbidden: readonly string[] = FORBIDDEN,
 ): { total: number; errors: string[] } {
   const errors: string[] = [];
   let total = 0;
   for (const url of initialAssets(html)) {
     const body = read(url);
     total += gzipSync(body).length;
-    for (const marker of FORBIDDEN) {
+    for (const marker of forbidden) {
       if (body.includes(marker)) errors.push(`${url} contains ${marker}`);
     }
   }
@@ -39,15 +51,29 @@ export function checkBundle(
 }
 
 if (import.meta.main) {
-  const html = readFileSync(join(dist, 'index.html'), 'utf8');
-  const { total, errors } = checkBundle(
-    (url) => readFileSync(join(dist, url.replace(/^\//, '')), 'utf8'),
-    html,
-    BUDGET_BYTES,
-  );
-  process.stdout.write(`initial gzip: ${total} B\n`);
-  if (errors.length > 0) {
-    process.stderr.write(`${errors.join('\n')}\n`);
-    process.exit(1);
+  const runs = [
+    { name: 'initial', page: 'index.html', budget: BUDGET_BYTES, forbidden: FORBIDDEN },
+    {
+      name: 'scan initial',
+      page: 'scan.html',
+      budget: SCAN_BUDGET_BYTES,
+      forbidden: SCAN_FORBIDDEN,
+    },
+  ];
+  let failed = false;
+  for (const run of runs) {
+    const html = readFileSync(join(dist, run.page), 'utf8');
+    const { total, errors } = checkBundle(
+      (url) => readFileSync(join(dist, url.replace(/^\//, '')), 'utf8'),
+      html,
+      run.budget,
+      run.forbidden,
+    );
+    process.stdout.write(`${run.name} gzip: ${total} B\n`);
+    if (errors.length > 0) {
+      process.stderr.write(`${errors.join('\n')}\n`);
+      failed = true;
+    }
   }
+  if (failed) process.exit(1);
 }

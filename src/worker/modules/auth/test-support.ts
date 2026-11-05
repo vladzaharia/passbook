@@ -1,6 +1,7 @@
 import { makeEnv } from '../../../../test/helpers/env.ts';
 import { createMockOidc, type MockOidc } from '../../../../test/mock-oidc/index.ts';
 import { createApp } from '../../app.ts';
+import { denyAllStores } from '../../platform/auth.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
@@ -101,7 +102,11 @@ export async function harness(
     throw new Error(`unexpected fetch ${url}`);
   });
   const app = createApp({
-    stores: { sessions: createSessionStore(env, clock), apiKeys: createApiKeyStore(env, clock) },
+    stores: {
+      sessions: createSessionStore(env, clock),
+      apiKeys: createApiKeyStore(env, clock),
+      scanners: denyAllStores.scanners,
+    },
     clock,
   });
 

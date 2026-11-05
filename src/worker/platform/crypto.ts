@@ -146,3 +146,35 @@ export async function rewrapSecret(
   wrappedDek.set(wrapped, wrapIv.length);
   return { ...envelope, kekVersion: ring.current, wrappedDek };
 }
+
+/**
+ * An HMAC-SHA256 key derived (HKDF) from the oldest configured KEK and a purpose label. The oldest
+ * version keeps stored MACs valid when a newer KEK is added; removing it breaks every MAC made
+ * with it (staff PINs, asset grants), so docs/operations.md says to keep it. Never reuse a label across purposes.
+ */
+export async function derivedHmacKey(env: object, label: string): Promise<CryptoKey> {
+  const versions = Object.entries(env as Record<string, unknown>)
+    .map(([name, value]) => ({ match: /^KEK_V(\d+)$/.exec(name), value }))
+    .filter((e) => e.match && typeof e.value === 'string' && e.value)
+    .map((e) => ({ version: Number(e.match?.[1]), value: e.value as string }))
+    .sort((a, b) => a.version - b.version);
+  const oldest = versions[0];
+  if (!oldest) throw new Error('No KEK configured (KEK_V1)');
+  const raw = fromBase64(oldest.value.trim());
+  if (raw.length !== 32) throw new Error('KEK must be 32 bytes, base64 encoded');
+  const ikm = await crypto.subtle.importKey('raw', raw as BufferSource, 'HKDF', false, [
+    'deriveKey',
+  ]);
+  return crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: encoder.encode('passbook.derived-hmac.v1') as BufferSource,
+      info: encoder.encode(label) as BufferSource,
+    },
+    ikm,
+    { name: 'HMAC', hash: 'SHA-256', length: 256 },
+    false,
+    ['sign', 'verify'],
+  );
+}

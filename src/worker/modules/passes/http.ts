@@ -19,6 +19,7 @@ export function authOf(c: C): AuthContext {
 /** Org scope for queries: org-scoped API keys are pinned to their org, admins see every org. */
 export function orgScopeOf(c: C): string | null {
   const auth = authOf(c);
+  if (auth.kind === 'scanner') return auth.orgId;
   return auth.kind === 'api_key' ? auth.orgId : null;
 }
 

@@ -381,3 +381,238 @@ describe('constraints and cascades', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('0014_scan migration', () => {
+  let seq = 0;
+  const insertEvent = (orgId: string, over: Record<string, string | number | null> = {}) => {
+    const row = {
+      id: `ev-${++seq}`,
+      org_id: orgId,
+      mode: 'live',
+      name: 'Gala',
+      match_input: null,
+      match_values: null,
+      opens_at: 10,
+      closes_at: 20,
+      time_zone: 'UTC',
+      note: null,
+      created_at: 1,
+      updated_at: 1,
+      ...over,
+    };
+    const keys = Object.keys(row);
+    return run(
+      env.DB,
+      `INSERT INTO scan_events (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+      Object.values(row),
+    );
+  };
+
+  const insertScanner = (orgId: string, over: Record<string, string | number | null> = {}) => {
+    const row = {
+      id: `sc-${++seq}`,
+      org_id: orgId,
+      mode: 'live',
+      kind: 'device',
+      name: 'Door',
+      settings: '{}',
+      time_zone: 'UTC',
+      created_at: 1,
+      updated_at: 1,
+      ...over,
+    };
+    const keys = Object.keys(row);
+    return run(
+      env.DB,
+      `INSERT INTO scanners (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+      Object.values(row),
+    );
+  };
+
+  it('creates the scan tables and passes.lookup_hash', async () => {
+    const rows = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM sqlite_master WHERE type = 'table'",
+    );
+    const names = new Set(rows.map((r) => r.name));
+    for (const table of [
+      'scan_events',
+      'scan_event_templates',
+      'scan_staff',
+      'scanners',
+      'scanner_templates',
+      'scans',
+      'scan_gates',
+      'vas_keys',
+    ]) {
+      expect(names, table).toContain(table);
+    }
+    const columns = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM pragma_table_info('passes')",
+    );
+    expect(columns.map((c) => c.name)).toContain('lookup_hash');
+  });
+
+  it('accepts the scanner audit actor and keeps every audit index', async () => {
+    await run(
+      env.DB,
+      "INSERT INTO audit_log (at, actor_type, actor_id, action) VALUES (1, 'scanner', 'sc-1', 'scanner.paired')",
+    );
+    const indexes = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM pragma_index_list('audit_log')",
+    );
+    const names = new Set(indexes.map((i) => i.name));
+    for (const index of ['audit_org', 'audit_target', 'audit_at', 'audit_actor', 'audit_action']) {
+      expect(names, index).toContain(index);
+    }
+    await expect(
+      run(
+        env.DB,
+        "INSERT INTO audit_log (at, actor_type, action) VALUES (1, 'robot', 'scanner.paired')",
+      ),
+    ).rejects.toThrow();
+  });
+
+  it('keeps scan_gates WITHOUT ROWID with the pass, action, scope key', async () => {
+    const sql = await first<{ sql: string }>(
+      env.DB,
+      "SELECT sql FROM sqlite_master WHERE name = 'scan_gates'",
+    );
+    expect(sql?.sql).toMatch(/WITHOUT ROWID/);
+    const pk = await all<{ name: string; pk: number }>(
+      env.DB,
+      "SELECT name, pk FROM pragma_table_info('scan_gates') WHERE pk > 0 ORDER BY pk",
+    );
+    expect(pk.map((c) => c.name)).toEqual(['pass_id', 'action_id', 'scope']);
+  });
+
+  it('indexes scans_pass_ok as a partial index on ok outcomes', async () => {
+    const row = await first<{ sql: string }>(
+      env.DB,
+      "SELECT sql FROM sqlite_master WHERE name = 'scans_pass_ok'",
+    );
+    expect(row?.sql).toMatch(/WHERE outcome = 'ok'/);
+  });
+
+  it('rejects a bad mode, a backwards window, a match half and a long note', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await expect(insertEvent(org.id, { mode: 'staging' })).rejects.toThrow();
+    await expect(insertEvent(org.id, { closes_at: 10 })).rejects.toThrow();
+    await expect(insertEvent(org.id, { closes_at: 5 })).rejects.toThrow();
+    await expect(insertEvent(org.id, { match_input: 'tier' })).rejects.toThrow();
+    await expect(insertEvent(org.id, { match_values: '["gold"]' })).rejects.toThrow();
+    await expect(insertEvent(org.id, { note: 'x'.repeat(141) })).rejects.toThrow();
+    await insertEvent(org.id, { note: 'x'.repeat(140) });
+    await expect(insertScanner(org.id, { mode: 'staging' })).rejects.toThrow();
+  });
+
+  it('keeps a csrf secret to browser devices and the token columns paired', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await expect(
+      insertScanner(org.id, { kind: 'terminal', csrf_secret: 'secret' }),
+    ).rejects.toThrow(/CHECK constraint failed/);
+    await expect(insertScanner(org.id, { token_hash: 'h' })).rejects.toThrow();
+    await insertScanner(org.id, { token_prefix: 'abcd1234', token_hash: 'h', csrf_secret: 's' });
+  });
+
+  it('splits devices, terminals and displays by device role', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await expect(insertScanner(org.id, { name: 'N1', kind: 'display' })).rejects.toThrow(
+      /CHECK constraint failed/,
+    );
+    await expect(
+      insertScanner(org.id, { name: 'N2', kind: 'display', device_role: 'scan' }),
+    ).rejects.toThrow(/CHECK constraint failed/);
+    await insertScanner(org.id, {
+      name: 'N3',
+      kind: 'display',
+      device_role: 'customer',
+      csrf_secret: 's',
+    });
+    await insertScanner(org.id, { name: 'N4', kind: 'display', device_role: 'monitor' });
+    await expect(
+      insertScanner(org.id, { name: 'N5', kind: 'terminal', device_role: 'customer' }),
+    ).rejects.toThrow(/CHECK constraint failed/);
+    await expect(
+      insertScanner(org.id, { name: 'N6', kind: 'terminal', csrf_secret: 's' }),
+    ).rejects.toThrow(/CHECK constraint failed/);
+    await insertScanner(org.id, { name: 'N7', id: 'sc-role', kind: 'device' });
+    const row = await first<{ device_role: string }>(
+      env.DB,
+      "SELECT device_role FROM scanners WHERE id = 'sc-role'",
+    );
+    expect(row?.device_role).toBe('scan');
+  });
+
+  it('accepts system auto scans and rejects unknown actors and methods', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    let n = 0;
+    const insertScan = (over: Record<string, string | number | null>) => {
+      const row = {
+        id: `scan-${++n}`,
+        org_id: org.id,
+        mode: 'live',
+        actor_type: 'scanner',
+        actor_id: 'a',
+        actor_key: 'k',
+        idempotency_key: `i-${n}`,
+        request_hash: 'h',
+        method: 'camera',
+        at: 1,
+        ...over,
+      };
+      const keys = Object.keys(row);
+      return run(
+        env.DB,
+        `INSERT INTO scans (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+        Object.values(row),
+      );
+    };
+    await insertScan({ actor_type: 'system', actor_key: 'sys:occupancy', method: 'auto' });
+    await insertScan({ actor_type: 'user' });
+    await expect(insertScan({ actor_type: 'robot' })).rejects.toThrow(/CHECK constraint failed/);
+    await expect(insertScan({ method: 'robot' })).rejects.toThrow(/CHECK constraint failed/);
+  });
+
+  it('keeps audit rows and the id sequence through the rebuild', async () => {
+    const migration = env.TEST_MIGRATIONS.find((m) => m.name.startsWith('0014'));
+    const queries = migration?.queries ?? [];
+    const from = queries.findIndex((q) => /CREATE TABLE audit_log_next/.test(q));
+    expect(from).toBeGreaterThan(-1);
+    for (const at of [1, 2, 3])
+      await run(
+        env.DB,
+        "INSERT INTO audit_log (at, actor_type, action) VALUES (?, 'system', 'x.test')",
+        [at],
+      );
+    const before = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
+    for (const q of queries.slice(from)) await env.DB.prepare(q).run();
+    const after = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
+    expect(after).toEqual(before);
+    await run(
+      env.DB,
+      "INSERT INTO audit_log (at, actor_type, action) VALUES (4, 'system', 'x.test')",
+    );
+    const last = await first<{ id: number }>(env.DB, 'SELECT MAX(id) AS id FROM audit_log');
+    expect(last?.id).toBe((before.at(-1)?.id ?? 0) + 1);
+  });
+
+  it("clears a scanner's event when the event is deleted", async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await insertEvent(org.id, { id: 'ev-del' });
+    await insertScanner(org.id, { id: 'sc-del', event_id: 'ev-del' });
+    await run(env.DB, "DELETE FROM scan_events WHERE id = 'ev-del'");
+    const scanner = await first<{ event_id: string | null }>(
+      env.DB,
+      "SELECT event_id FROM scanners WHERE id = 'sc-del'",
+    );
+    expect(scanner?.event_id).toBeNull();
+  });
+});

@@ -2,6 +2,7 @@ import { createApiKeyStore } from './modules/api-keys/service.ts';
 import { recordAudit } from './modules/audit/service.ts';
 import { bumpCounter } from './modules/auth/repo-magic.ts';
 import { createSessionStore } from './modules/auth/sessions.ts';
+import { createScannerStore } from './modules/scan/auth-store.ts';
 import type { AuthStores } from './platform/auth.ts';
 import type { AppEnv } from './platform/env.ts';
 import { createServiceContext } from './platform/service-context.ts';
@@ -14,6 +15,7 @@ export function createAuthStores(env: AppEnv): AuthStores {
   return {
     sessions: createSessionStore(env),
     apiKeys: createApiKeyStore(env),
+    scanners: createScannerStore(env),
     async onDenied(event) {
       const ctx = createServiceContext(env);
       const now = ctx.clock.now();

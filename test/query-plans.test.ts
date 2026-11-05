@@ -119,4 +119,15 @@ describe('list and search query plans', () => {
     expect(text).toContain('users_name_nc');
     expect(text).toContain('user_emails_nc');
   });
+
+  it('scans: the ok-only history reads use the partial index', async () => {
+    const rows = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT at FROM scans WHERE pass_id = ? AND action_kind = 'check_in' AND outcome = 'ok' ORDER BY at DESC LIMIT 5",
+    )
+      .bind('p')
+      .all<{ detail: string }>();
+    const lines = rows.results.map((r) => r.detail);
+    expect(fullScans(lines, 'scans')).toEqual([]);
+    expect(lines.join('\n')).toContain('scans_pass_ok');
+  });
 });

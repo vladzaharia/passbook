@@ -3,6 +3,7 @@ import type { ResolvedTemplate } from '../../src/passkit/template/registry.ts';
 import type { PassJson, TemplateManifest } from '../../src/passkit/types.ts';
 import { ensurePlatformIdentity } from '../../src/worker/modules/identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
+import { hashPin } from '../../src/worker/modules/scan/staff-pin.ts';
 import { ManualClock } from '../../src/worker/platform/clock.ts';
 import { run } from '../../src/worker/platform/db.ts';
 import type { AppEnv } from '../../src/worker/platform/env.ts';
@@ -281,4 +282,181 @@ export async function makeApiKey(
     ],
   );
   return { id, secret, headers: { authorization: `Bearer ${secret}` } };
+}
+
+export interface StaffFixture {
+  id: string;
+  name: string;
+  role: 'door' | 'desk' | 'manager';
+  pin: string;
+}
+
+/** A scan_staff row with a real HMAC PIN hash. */
+export async function makeScanStaff(
+  f: Fixtures,
+  options: {
+    orgId: string;
+    name?: string;
+    role?: 'door' | 'desk' | 'manager';
+    pin?: string;
+    disabled?: boolean;
+  },
+): Promise<StaffFixture> {
+  const id = f.ids.id();
+  const pin = options.pin ?? '123456';
+  const now = f.clock.now();
+  const name = options.name ?? `Staff ${id.slice(-6)}`;
+  const role = options.role ?? 'door';
+  await run(
+    f.env.DB,
+    `INSERT INTO scan_staff (id, org_id, name, role, pin_hash, pin_set_at, disabled_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      options.orgId,
+      name,
+      role,
+      await hashPin(f.env, id, pin),
+      now,
+      options.disabled ? now : null,
+      now,
+      now,
+    ],
+  );
+  return { id, name, role, pin };
+}
+
+export interface EventFixture {
+  id: string;
+}
+
+export async function makeScanEvent(
+  f: Fixtures,
+  options: {
+    orgId: string;
+    mode?: 'live' | 'test';
+    templateIds?: string[];
+    opensAt?: number;
+    closesAt?: number;
+  },
+): Promise<EventFixture> {
+  const id = f.ids.id();
+  const now = f.clock.now();
+  await run(
+    f.env.DB,
+    `INSERT INTO scan_events (id, org_id, mode, name, opens_at, closes_at, time_zone, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'UTC', ?, ?)`,
+    [
+      id,
+      options.orgId,
+      options.mode ?? 'live',
+      'Event',
+      options.opensAt ?? now - 3600_000,
+      options.closesAt ?? now + 3600_000,
+      now,
+      now,
+    ],
+  );
+  for (const templateId of options.templateIds ?? [])
+    await run(f.env.DB, 'INSERT INTO scan_event_templates (event_id, template_id) VALUES (?, ?)', [
+      id,
+      templateId,
+    ]);
+  return { id };
+}
+
+export interface ScannerFixture {
+  id: string;
+  token: string;
+  headers: Record<string, string>;
+}
+
+const DEFAULT_SCANNER_SETTINGS = {
+  flow: 'auto',
+  defaultActionId: null,
+  roleWithoutSignIn: 'door',
+  staffSignIn: false,
+  letInAgain: 'anyone',
+  reader: 'none',
+  lookup: true,
+  offline: false,
+  dailyAmount: null,
+};
+
+/**
+ * A paired scanner row with a real token. Device: cookie headers with the CSRF secret.
+ * Terminal: bearer headers. Accepts an event or templates.
+ */
+export async function makeScanner(
+  f: Fixtures,
+  options: {
+    orgId: string;
+    mode?: 'live' | 'test';
+    kind?: 'device' | 'terminal' | 'display';
+    deviceRole?: 'scan' | 'customer' | 'monitor';
+    eventId?: string | null;
+    templateIds?: string[];
+    settings?: Record<string, unknown>;
+    staffId?: string;
+    staffSince?: number;
+    staffSeenAt?: number;
+    revoked?: boolean;
+    expiresAt?: number | null;
+    lastSeenAt?: number | null;
+    origin?: string;
+  },
+): Promise<ScannerFixture> {
+  const id = f.ids.id();
+  const now = f.clock.now();
+  const kind = options.kind ?? 'device';
+  const prefix = f.ids
+    .token(24)
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(0, 8);
+  const token = `wls_${prefix}_${f.ids.token(32)}`;
+  const csrf = kind === 'terminal' ? null : f.ids.token();
+  const deviceRole = options.deviceRole ?? (kind === 'display' ? 'customer' : 'scan');
+  await run(
+    f.env.DB,
+    `INSERT INTO scanners (id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
+       csrf_secret, paired_at, expires_at, last_seen_at, staff_id, staff_since, staff_seen_at, created_at, updated_at, revoked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UTC', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      options.orgId,
+      options.mode ?? 'live',
+      kind,
+      deviceRole,
+      `Scanner ${id.slice(-6)}`,
+      options.eventId ?? null,
+      JSON.stringify({ ...DEFAULT_SCANNER_SETTINGS, ...options.settings }),
+      prefix,
+      await sha256Hex(token),
+      csrf,
+      now,
+      options.expiresAt === undefined ? now + 180 * 86_400_000 : options.expiresAt,
+      options.lastSeenAt === undefined ? now : options.lastSeenAt,
+      options.staffId ?? null,
+      options.staffId ? (options.staffSince ?? now) : null,
+      options.staffId ? (options.staffSeenAt ?? now) : null,
+      now,
+      now,
+      options.revoked ? now : null,
+    ],
+  );
+  for (const templateId of options.templateIds ?? [])
+    await run(f.env.DB, 'INSERT INTO scanner_templates (scanner_id, template_id) VALUES (?, ?)', [
+      id,
+      templateId,
+    ]);
+  const headers: Record<string, string> =
+    kind === 'terminal'
+      ? { authorization: `Bearer ${token}` }
+      : {
+          cookie: `__Host-wallet_scan=${token}`,
+          'x-csrf-token': csrf ?? '',
+          origin: options.origin ?? 'https://wallet.test',
+          'sec-fetch-site': 'same-origin',
+        };
+  return { id, token, headers };
 }

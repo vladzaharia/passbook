@@ -11,11 +11,25 @@ export const XFO = 'DENY';
 /** Nothing the Worker answers is for search: pass and sign-in links, the API, Apple and hooks. */
 export const ROBOTS = 'noindex, nofollow';
 
-export function contentSecurityPolicy(nonce?: string): string {
+/** /scan reads the camera. Everything else keeps camera=(). */
+export const SCAN_PERMISSIONS_POLICY =
+  'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), screen-wake-lock=(self)';
+/** The barcode decoder worker (/assets/decode-worker-*): its script's policy governs the worker. */
+export const DECODE_WORKER_CSP =
+  "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'";
+
+/** /scan: the SPA policy, plus wasm for zxing and a same-origin decoder worker. */
+export function scanContentSecurityPolicy(): string {
+  return contentSecurityPolicy(undefined, { scan: true });
+}
+
+export function contentSecurityPolicy(nonce?: string, options: { scan?: boolean } = {}): string {
   const n = nonce ? ` 'nonce-${nonce}'` : '';
+  const wasm = options.scan ? " 'wasm-unsafe-eval'" : '';
   return [
     "default-src 'none'",
-    `script-src 'self'${n}`,
+    `script-src 'self'${wasm}${n}`,
+    ...(options.scan ? ["worker-src 'self'"] : []),
     `style-src 'self'${n}`,
     // SSR pass cards set arbitrary pass colors through style attributes. Never scripts.
     ...(nonce ? ["style-src-attr 'unsafe-inline'"] : []),
@@ -31,7 +45,7 @@ export function contentSecurityPolicy(nonce?: string): string {
   ].join('; ');
 }
 
-const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/'];
+const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan'];
 const NO_STORE_PREFIXES = ['/api/', '/auth/'];
 
 const passedThrough = new WeakSet<Response>();

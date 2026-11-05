@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { VasKeySchema } from './nfc.ts';
 
 /** How pushes reach Apple: the identity's mTLS certificate binding, the team's .p8 key, or neither. */
 export const PushMethodSchema = z.enum(['certificate', 'key', 'none']);
@@ -40,6 +41,8 @@ export const IdentitySchema = z.object({
   /** Passes signed with this identity (stops counting at 100000). */
   passCount: z.number().int().nonnegative().default(0),
   nfcEnabled: z.boolean(),
+  /** Reader public keys, newest first. */
+  nfcKeys: z.array(VasKeySchema).default([]),
   isDefault: z.boolean(),
   createdAt: TimestampSchema,
 });

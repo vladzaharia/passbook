@@ -1,0 +1,33 @@
+# Scanner design
+
+Start with `scanner-plan.md`: build order, streams, owned paths, frozen contracts. Where docs disagree, the plan wins
+on build structure, `scanner-architecture.md` on design.
+
+| Short | File | Wins on |
+| --- | --- | --- |
+| plan | `scanner-plan.md` | order, ownership, numbering, contracts (section 4) |
+| SA | `scanner-architecture.md` | principals, rights, data, API, reasons, timings, security |
+| SD | `scanner-design.md` | everything a person sees |
+| DM | `display-model.md` | `scan.display`: schema, limits, renderer, presets, editor |
+| BF | `b-final.md` | result screen geometry, tokens and motion |
+| BM | `buddy-motion.md` | buddy beats, poses, props, sound |
+| AC | `arch-client.md` | reducer tables, decoder, wedge, file tree, tests |
+| UD, UK, UA | `ux-door.md`, `ux-desk.md`, `ux-admin.md` | detail SD does not restate |
+| PM | `platform-map.md` | facts about the platform's code when these were written |
+
+`buddy-draft/` holds measured CSS and JSX drafts for the buddy. They are a reference and are not built.
+
+## Not shipped
+
+- **Images and video.** The sources for these are empty or missing in the working folder, so there is nothing to
+  copy: `directions/b-final/shots` and `directions/b-final/video`, `directions/display/sheets`, `mockups` sheets
+  (only `mockups/gen` and its CSS survive, and are not copied), the strips and the webm videos. Paths to them in the
+  docs name where they belong. The owner or the lead regenerates them; until then B-final geometry, tokens and
+  motion are in b-final.md and buddy-motion.md.
+- **`buddy-draft/sound.ts`.** Missing at the source. buddy-motion.md section 12 specifies the chirps.
+- **Superseded drafts.** arch-access.md, arch-server.md, map-access.md and map-domain.md are folded into SA and
+  the plan, and not copied.
+- **Research and briefs.** research/scanning/report.md (R), n8b-buddy.md and scanner-owner-answers.md were the
+  inputs. Their decisions are in the revision notes at the top of the plan, SA and DM.
+
+`addendum/` holds the stations and Access card designs the plan cites (ST, AX), the Phase 0 amendments, the customer and desk UX and, in `addendum/occupancy/occupancy.md` (OC), occupancy and desk overrides. Its sheets, shots, gen scripts and pass fixtures are not shipped; paths to them name where they belong.

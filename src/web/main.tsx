@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
 import './pass-card/barcode-loader.ts';
+import { installChunkReload } from './lib/chunk-reload.ts';
 import { installInputModality } from './lib/input-modality.ts';
 import { AppProviders } from './lib/providers.tsx';
 import { createQueryClient } from './lib/query-client.ts';
@@ -14,27 +15,7 @@ z.config({ jitless: true });
 
 installInputModality();
 
-// A deploy replaces hashed chunks; reload once to pick up the new shell. Offline, a reload would
-// lose the shell: the route shows "Could not load this page" with Reload instead (RouteError).
-window.addEventListener('vite:preloadError', (event) => {
-  if (!navigator.onLine) return;
-  event.preventDefault();
-  try {
-    if (sessionStorage.getItem('chunk-reload')) return;
-    sessionStorage.setItem('chunk-reload', '1');
-  } catch {
-    return;
-  }
-  window.location.reload();
-});
-
-window.setTimeout(() => {
-  try {
-    sessionStorage.removeItem('chunk-reload');
-  } catch {
-    // Storage blocked; nothing to clear.
-  }
-}, 10_000);
+installChunkReload();
 
 const queryClient = createQueryClient();
 const router = createAppRouter({ queryClient });

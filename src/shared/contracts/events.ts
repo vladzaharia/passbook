@@ -36,6 +36,9 @@ export const EVENT_KINDS = [
   'scan.redeemed',
   'scan.adjusted',
   'scan.rejected',
+  'scan.checked_out',
+  'scan.heads_up',
+  'scan.undone',
   'message.applied',
   'schedule.applied',
 ] as const;
@@ -100,8 +103,17 @@ export const EVENT_GROUPS = {
     'message.applied',
     'schedule.applied',
   ],
+  scans: [
+    'scan.checked_in',
+    'scan.checked_out',
+    'scan.redeemed',
+    'scan.adjusted',
+    'scan.rejected',
+    'scan.heads_up',
+    'scan.undone',
+  ],
 } as const satisfies Record<string, readonly EventKind[]>;
-export const EventGroupSchema = z.enum(['delivery', 'devices', 'changes']);
+export const EventGroupSchema = z.enum(['delivery', 'devices', 'changes', 'scans']);
 export type EventGroup = z.infer<typeof EventGroupSchema>;
 
 const KindListSchema = z

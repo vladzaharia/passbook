@@ -86,9 +86,18 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | n5 | template designer | `src/web/admin/templates/designer/**`, `src/web/routes/admin/templates/` designer route, new files in `modules/templates/` for saving a version from JSON, `migrations/0017_designer.sql` if needed |
 | n6 | sandbox mode | `src/web/ui/layout/mode*`, `modules/sandbox/**`, test-inbox pages, `migrations/0015_sandbox.sql` |
 | n7 | broadcasts, schedules | `modules/broadcasts/**`, `src/worker/workflows/broadcast.ts`, `src/web/admin/messages/**`, `src/web/routes/admin/messages/`, `modules/passes/change-messages.ts`, `migrations/0013_broadcasts.sql` |
-| n8 | scanner (UI removed; being redesigned) | `modules/scan/**`, `migrations/0014_scan.sql` |
+| n8-p0 | scanner: contracts, access, entry | `migrations/0014_scan.sql`, `src/shared/contracts/{scan,scanners,nfc,scan-display}.ts`, `src/passkit/template/scan-display/{schema,icons}.ts`, `src/shared/copy/scan.ts`, `src/shared/{scan-lookup,scan-defaults}.ts`, `src/web/scan/{machine/types,timing,input/types}.ts`, `scan.html`, `public/scan.webmanifest` (frozen: change only through the contract PR, `docs/design/scanner/scanner-plan.md` §4.1) |
+| n8-sv | scanner: server, device API | `modules/scan/{routes,guard,rules,auth-store,staff-pin,staff-session,resolve,act,effects,undo,group,lookup,outcome,counts,assets,roster,batch,jobs,dto,repo-device,repo-scans,repo-gates,repo-lookup,repo-counts}.ts` |
+| n8-sc | scanner: server, console | `modules/scan/{routes-pair,routes-scanners,routes-events,routes-staff,routes-scans,pairing,scanners,events,staff-admin,feed,live,dto-console,repo-scanners,repo-staff,repo-events,repo-target}.ts` |
+| n8-ds | scanner: display | `src/passkit/template/scan-display/**` except `schema.ts` and `icons.ts`, `modules/scan/{display,repo-history,routes-display}.ts` |
+| n8-pt | scanner: passes, templates, NFC server | `modules/nfc/**`, `src/passkit/template/scan.ts`, `src/shared/pass-view/validity.ts`, `migrations/0018_templates_build_key.sql` |
+| n8-cc | scanner: client core | `src/web/scan/{main.tsx,machine,input,camera,platform,api,offline,dev}/**` (not the n8-p0 files), `src/web/scan/boot/{use-scan-session,pair-link}.ts` |
+| n8-ui | scanner: screens | `src/web/scan/{app.tsx,ui,result,display,lookup,desk}/**`, `src/web/scan/boot/*.tsx` |
+| n8-bu | scanner: buddy, sound | `src/web/scan/{buddy,sound}/**`, the scanner's `ui/art` additions |
+| n8-ad | scanner: admin | `src/web/admin/scanning/**`, `src/web/routes/admin/scanning/**` |
+| n8-td | scanner: template designer | `src/web/admin/templates/designer/scan/**` |
 | integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
 
-`modules/events` was built by the foundation (`migrations/0010_events.sql`, `recordPassEvent`, mode plumbing, scan codes) and passes to n1 after it. The streams' specs are in `docs/design/next-wave.md`.
+`modules/events` was built by the foundation (`migrations/0010_events.sql`, `recordPassEvent`, mode plumbing, scan codes) and passes to n1 after it. The streams' specs are in `docs/design/next-wave.md`; the scanner's are in `docs/design/scanner/` (start with `scanner-plan.md`).
 
 Foundation owns `src/worker/platform/**`, `src/shared/contracts/common.ts`, tooling configs and `AGENTS.md`; change them only for a bug and tell the integration agent.

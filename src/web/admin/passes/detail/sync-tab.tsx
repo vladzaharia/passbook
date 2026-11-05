@@ -53,6 +53,7 @@ const EMPTY: Record<Filter, string> = {
   delivery: 'No pushes or emails yet',
   devices: 'No device activity yet',
   changes: 'No changes yet',
+  scans: 'No scans yet',
 };
 
 function iconOf(row: SyncRow): LucideIcon {

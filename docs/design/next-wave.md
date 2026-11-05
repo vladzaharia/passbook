@@ -304,7 +304,11 @@ Owns: `modules/broadcasts/**`, `src/worker/workflows/broadcast.ts`, `src/web/adm
 
 ### n8: Scanner (wave 2)
 
-Owns: `modules/scan/**`, `src/web/scan/**`, `src/web/routes/scan*`, `src/web/admin/scanners/**` and `0014_scan.sql`.
+The full spec is in `docs/design/scanner/`: `scanner-plan.md` (build order, streams, contracts),
+`scanner-architecture.md` (access, data, API) and `scanner-design.md` (screens). Where this section differs, those win;
+the paths below are the original ones. Ownership is per stream in `AGENTS.md`.
+
+Owns: `modules/scan/**`, `modules/nfc/**`, `src/web/scan/**`, `src/web/admin/scanning/**` and `0014_scan.sql`.
 Touches: `src/passkit/template/manifest.ts` (the `scan` block) and pass detail (scans in the sync log).
 
 - **Who scans:**

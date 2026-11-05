@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
+import { ScanTargetSchema } from './scan.ts';
 import { PUSH_BUDGET_DEFAULT } from './settings.ts';
 import { ValidationIssueSchema } from './templates.ts';
 
@@ -151,6 +152,20 @@ export const PassListQuerySchema = z.object({
     .transform((v) => v === 'true')
     .optional(),
   q: z.string().max(200).optional(),
+  /** A ScanTarget as a JSON string: checked in at an event, or not scanned for 30 or 90 days. */
+  scan: z
+    .string()
+    .max(200)
+    .transform((raw, ctx) => {
+      try {
+        return JSON.parse(raw) as unknown;
+      } catch {
+        ctx.addIssue({ code: 'custom', message: 'Use a JSON scan target.' });
+        return z.NEVER;
+      }
+    })
+    .pipe(ScanTargetSchema)
+    .optional(),
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });

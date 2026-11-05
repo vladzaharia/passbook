@@ -44,7 +44,25 @@ export interface ApiKeyAuth {
   mode: Mode;
 }
 
-export type AuthContext = SessionAuth | ApiKeyAuth;
+export const SCANNER_COOKIE = '__Host-wallet_scan';
+export const SCANNER_TOKEN = /^wls_[A-Za-z0-9]{8}_[A-Za-z0-9_-]{43}$/;
+
+/** A paired browser device (cookie) or terminal (bearer). Reaches /api/v1/scan/* only. */
+export interface ScannerAuth {
+  kind: 'scanner';
+  scannerId: string;
+  orgId: string;
+  mode: Mode;
+  transport: 'cookie' | 'bearer';
+  /** Cookie transport only. */
+  csrfSecret: string | null;
+  /** `scanners.kind`: a display never scans, a terminal always does. */
+  scannerKind: 'device' | 'terminal' | 'display';
+  /** `scanners.device_role`: what the device does now. Only `scan` reaches the scan routes. */
+  deviceRole: 'scan' | 'customer' | 'monitor';
+}
+
+export type AuthContext = SessionAuth | ApiKeyAuth | ScannerAuth;
 
 /** Implemented by modules/auth. Returns null for unknown, expired, revoked or disabled-user sessions. */
 export interface SessionStore {
@@ -56,9 +74,24 @@ export interface ApiKeyStore {
   resolve(rawKey: string): Promise<ApiKeyAuth | null>;
 }
 
+/**
+ * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner
+ * was revoked or has expired throws a 401 with code SCANNER_REVOKED or SCANNER_EXPIRED, so the
+ * device can say why. Revoking sets `revoked_at` and keeps the token columns, and expiry is
+ * `expires_at` (or idle time), so the token still matches and the reason survives.
+ */
+export interface ScannerStore {
+  resolve(
+    token: string,
+    transport: 'cookie' | 'bearer',
+    meta?: { ipPrefix: string | null },
+  ): Promise<ScannerAuth | null>;
+}
+
 export interface AuthStores {
   sessions: SessionStore;
   apiKeys: ApiKeyStore;
+  scanners: ScannerStore;
   /** Audits a refused principal. Platform never imports a module; stores.ts wires this. */
   onDenied?(event: DeniedEvent): Promise<void> | void;
 }
@@ -66,6 +99,7 @@ export interface AuthStores {
 export const denyAllStores: AuthStores = {
   sessions: { resolve: async () => null },
   apiKeys: { resolve: async () => null },
+  scanners: { resolve: async () => null },
 };
 
 function bearer(c: Context): string | null {
@@ -157,6 +191,9 @@ export function assertOrgAccess(auth: AuthContext | undefined, orgId: string): v
   if (!auth) throw new UnauthenticatedError();
   if (auth.kind === 'api_key' && auth.orgId !== null && auth.orgId !== orgId) {
     throw new ForbiddenError('The API key cannot access this organization.', 'ORG_FORBIDDEN');
+  }
+  if (auth.kind === 'scanner' && auth.orgId !== orgId) {
+    throw new ForbiddenError('The scanner cannot access this organization.', 'ORG_FORBIDDEN');
   }
 }
 

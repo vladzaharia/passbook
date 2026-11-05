@@ -2,6 +2,8 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "src/web/routes/**/*.{ts,tsx}!",
+    "src/web/scan/main.tsx!",
+    "src/web/scan/camera/decode-worker.ts!",
     "tools/*.ts",
     "e2e/**/*.ts",
     "test/**/*.ts",
@@ -9,7 +11,7 @@
   ],
   "project": ["src/**/*.{ts,tsx}!", "tools/**/*.ts", "e2e/**/*.ts", "test/**/*.ts"],
   "ignore": [],
-  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss"],
+  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss", "zxing-wasm"],
   "ignoreBinaries": ["openssl"],
   "rules": {
     "nsExports": "off",
@@ -20,6 +22,8 @@
   "ignoreExportsUsedInFile": true,
   "ignoreIssues": {
     "src/passkit/**": ["exports", "types"],
+    "src/worker/modules/scan/**": ["exports", "types"],
+    "src/web/scan/{machine/types,timing,input/types}.ts": ["exports", "types"],
     "src/shared/**": ["exports", "types"],
     "tools/lib/**": ["exports"],
     "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": ["exports"],

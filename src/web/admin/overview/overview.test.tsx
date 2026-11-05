@@ -14,6 +14,7 @@ const setup = {
   passes: 1200,
   passEmailsSent: 9,
   latestPassId: 'p9',
+  scanners: 0,
 };
 
 const overview = (over: Record<string, unknown> = {}) => ({
@@ -38,6 +39,8 @@ const overview = (over: Record<string, unknown> = {}) => ({
     emailFailures: 0,
     syncRuns: 0,
     signIns: 0,
+    scans: 0,
+    scanRefused: 0,
   },
   series: {
     issued: series([1, 3, 2]),
@@ -51,8 +54,10 @@ const overview = (over: Record<string, unknown> = {}) => ({
     emailFailures: none,
     syncRuns: none,
     signIns: none,
+    scans: none,
   },
   setup,
+  live: [],
   recent: [],
   ...over,
 });
@@ -202,7 +207,14 @@ describe('overview page', () => {
 });
 
 describe('get started', () => {
-  const empty = { orgs: 0, assignedTemplates: 0, passes: 0, passEmailsSent: 0, latestPassId: null };
+  const empty = {
+    orgs: 0,
+    assignedTemplates: 0,
+    passes: 0,
+    passEmailsSent: 0,
+    latestPassId: null,
+    scanners: 0,
+  };
   const zero = (s: Record<string, unknown>) =>
     overview({
       setup: { ...empty, ...s },
