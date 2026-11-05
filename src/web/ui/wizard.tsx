@@ -65,8 +65,16 @@ export function Stepper({
           />
         </div>
       </div>
-      <ol className="relative flex items-start justify-between max-sm:hidden">
-        <span aria-hidden className="absolute top-2.5 right-2.5 left-2.5 h-px bg-border">
+      <ol
+        className="relative grid items-start max-sm:hidden"
+        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+      >
+        {/* Circles sit at equal column centres; the line runs from the first to the last. */}
+        <span
+          aria-hidden
+          className="absolute top-2.5 h-px bg-border"
+          style={{ left: `${50 / steps.length}%`, right: `${50 / steps.length}%` }}
+        >
           <span
             className="wl-fill absolute inset-0 origin-left bg-accent"
             style={{ transform: `scaleX(${progress})` } as CSSProperties}
@@ -88,15 +96,12 @@ export function Stepper({
             </span>
           );
           return (
-            <li
-              key={s.id}
-              className="relative flex min-w-0 flex-1 flex-col items-center gap-1.5 first:items-start last:items-end"
-            >
+            <li key={s.id} className="relative flex min-w-0 flex-col items-center gap-1.5">
               {done ? (
                 <button
                   type="button"
                   onClick={() => onStep(i)}
-                  className="group flex flex-col items-center gap-1.5 rounded-md group-first:items-start"
+                  className="group flex flex-col items-center gap-1.5 rounded-md"
                 >
                   {circle}
                   <span className="text-xs text-fg-muted group-hover:text-fg-strong">

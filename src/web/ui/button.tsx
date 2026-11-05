@@ -22,7 +22,7 @@ export const TOUCH_HIT =
 
 export const buttonVariants = cva(
   [
-    'relative inline-flex select-none items-center justify-center gap-2 rounded-md text-center font-medium',
+    'relative inline-flex select-none items-center justify-center gap-2 rounded-md text-center font-medium whitespace-nowrap',
     'transition-[color,background-color,border-color,box-shadow,scale] duration-(--wl-dur-hover) ease-(--wl-ease-move)',
     'motion-safe:active:not-disabled:not-aria-disabled:scale-(--pk-motion-scale-press)',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',

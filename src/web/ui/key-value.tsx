@@ -22,16 +22,12 @@ export function KeyValue({
 }) {
   return (
     <div className={cn('@container', className)}>
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm @[22rem]:grid-cols-[minmax(7rem,max-content)_minmax(0,1fr)]">
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm @[22rem]:gap-y-2 @[22rem]:grid-cols-[minmax(7rem,max-content)_minmax(0,1fr)]">
         {items.map((item) => (
-          <div key={item.id ?? item.label} className="contents">
+          // Stacked: 2 px within a pair, 12 px between pairs.
+          <div key={item.id ?? item.label} className="flex flex-col gap-0.5 @[22rem]:contents">
             <dt className="font-normal text-fg-muted">{item.label}</dt>
-            <dd
-              className={cn(
-                'min-w-0 break-words text-fg max-@[22rem]:mb-1',
-                item.mono && 'font-mono text-xs',
-              )}
-            >
+            <dd className={cn('min-w-0 break-words text-fg', item.mono && 'font-mono text-xs')}>
               {item.value ?? <span className="text-fg-subtle">—</span>}
             </dd>
           </div>
