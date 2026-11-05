@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import type { BroadcastDto, BroadcastState } from '@/shared/contracts/broadcasts.ts';
+import { ENTITY } from '../../lib/entities.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
@@ -43,6 +44,8 @@ export function MessagesPage({
     () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
     [orgs.data],
   );
+  // Test mode already says so in the header; a pill on every row would repeat it.
+  const mixed = rows.some((r) => r.mode !== 'test');
   const columns = useMemo<ColumnDef<BroadcastDto, never>[]>(
     () => [
       {
@@ -54,11 +57,20 @@ export function MessagesPage({
               <RowLink to="/admin/messages/$broadcastId" params={{ broadcastId: row.original.id }}>
                 {row.original.name}
               </RowLink>
-              <ModePill mode={row.original.mode} compact />
+              {mixed ? <ModePill mode={row.original.mode} compact /> : null}
             </span>
             <span className="block truncate text-xs text-fg-muted">
               {KIND_LABEL[row.original.kind]}
               {orgId ? '' : ` · ${orgNames.get(row.original.orgId) ?? '—'}`}
+            </span>
+            {/* Phones show one row per message: the columns that fit nowhere move under the name. */}
+            <span className="mt-1 flex flex-col gap-1 text-xs text-fg-muted md:hidden">
+              <span>{whenLine(row.original)}</span>
+              {row.original.state === 'sending' ? (
+                <BroadcastProgress broadcast={row.original} className="w-40" />
+              ) : countsLine(row.original) ? (
+                <span>{countsLine(row.original)}</span>
+              ) : null}
             </span>
           </div>
         ),
@@ -85,11 +97,11 @@ export function MessagesPage({
       {
         id: 'when',
         header: 'When',
-        meta: { nowrap: true, hideBelow: 'lg', stackHidden: true },
+        meta: { nowrap: true, hideBelow: 'md', stackHidden: true },
         cell: ({ row }) => whenLine(row.original),
       },
     ],
-    [orgNames, orgId],
+    [orgNames, orgId, mixed],
   );
 
   const filtered = Boolean(search.state);
@@ -135,7 +147,9 @@ export function MessagesPage({
             />
           }
           emptyFiltered={<FilteredEmpty entity="broadcast" onClear={clear} />}
-          empty={<EmptyState art="envelope" title="No messages" action={create('primary')} />}
+          empty={
+            <EmptyState art={ENTITY.broadcast.art} title="No messages" action={create('primary')} />
+          }
           footer={
             <LoadMore
               query={list}

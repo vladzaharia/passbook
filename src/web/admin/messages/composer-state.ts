@@ -1,4 +1,8 @@
-import type { BroadcastKind, BroadcastTarget } from '@/shared/contracts/broadcasts.ts';
+import type {
+  BroadcastDto,
+  BroadcastKind,
+  BroadcastTarget,
+} from '@/shared/contracts/broadcasts.ts';
 import type { DateTimeValue } from '../../ui/index.ts';
 import { localToIso } from '../passes/schema-form/datetime.ts';
 import type { FormValues } from '../passes/schema-form/index.ts';
@@ -83,4 +87,24 @@ export function bodyOf(
     ...(send === 'schedule' && at !== undefined ? { at } : {}),
     ...(s.kind === 'message' && !s.clearing && clearAfter ? { clearAfter } : {}),
   };
+}
+
+/** A saved draft as the composer holds it, to edit and send. */
+export function stateOfBroadcast(b: BroadcastDto): ComposerState {
+  const clear = CLEAR_CHOICES.find((c) => c.ms === b.clearAfter)?.value ?? 'never';
+  const base: ComposerState = {
+    ...INITIAL,
+    kind: b.kind,
+    templateIds: b.target.templateIds,
+    onDevice: b.target.onDevice ?? false,
+    holder: b.target.holderState ?? 'any',
+    q: b.target.q ?? '',
+    notify: b.notify,
+    clear,
+  };
+  if (b.kind === 'message') {
+    const message = String(b.patch.message ?? '');
+    return { ...base, message, clearing: message === '' };
+  }
+  return { ...base, fields: Object.keys(b.patch), values: b.patch as FormValues };
 }

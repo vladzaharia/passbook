@@ -35,7 +35,7 @@ export function progressOf(b: BroadcastDto): { done: number; total: number; rati
   return { done, total: targeted, ratio: targeted === 0 ? 0 : done / targeted };
 }
 
-const plural = (n: number, one: string, many = `${one}s`) =>
+export const plural = (n: number, one: string, many = `${one}s`) =>
   `${formatCount(n)} ${n === 1 ? one : many}`;
 
 /** One line of counts, leaving out zeros: "12 updated, 3 unchanged, 1 failed". */
@@ -61,5 +61,30 @@ export function whenLine(b: BroadcastDto): string {
   return formatDateTime(b.finishedAt ?? b.startedAt);
 }
 
+/** Holders get no lock-screen notice: notifying is off, or the message is empty (it clears). */
+export const isQuiet = (b: BroadcastDto): boolean =>
+  !b.notify || (b.kind === 'message' && !messageText(b).trim());
+
 export const messageText = (b: BroadcastDto): string =>
   b.kind === 'message' ? String(b.patch.message ?? '') : '';
+
+/** Who holds a pass, as the audience filter and the details name it. */
+export const HOLDER_LABEL = {
+  owned: 'Claimed',
+  waiting: 'Not claimed',
+  unassigned: 'No holder',
+} as const;
+
+/** Why a run stopped, from its error code, with what to do about it. */
+export function stopLine(code: string | null): string {
+  switch (code) {
+    case 'ORG_INACTIVE':
+      return 'The organization is not active. Activate it, then send again.';
+    case 'CREATOR_REVOKED':
+      return 'The key or admin that scheduled it was revoked. Create it again.';
+    case 'MESSAGING_UNSUPPORTED':
+      return 'A template has no message field. Pick another and send again.';
+    default:
+      return 'It stopped before every pass was handled. Send again to finish the rest.';
+  }
+}

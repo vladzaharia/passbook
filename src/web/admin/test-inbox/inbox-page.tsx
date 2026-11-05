@@ -1,4 +1,6 @@
-import { FlaskConical, Mail } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { FlaskConical, Package, Plus } from 'lucide-react';
+import { ENTITY } from '../../lib/entities.ts';
 import { formatRelative } from '../../lib/format.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -16,6 +18,7 @@ import {
   SkeletonRows,
 } from '../../ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
+import { useSettings } from '../settings/queries.ts';
 import { EmailPreview } from './preview.tsx';
 import { useCapturedEmails } from './queries.ts';
 import type { InboxSearch } from './search.ts';
@@ -32,6 +35,9 @@ export function InboxPage({
   const { orgId } = useOrgScope();
   const orgName = useOrgNames();
   const list = useCapturedEmails(orgId);
+  const kept = useSettings('platform').data?.items.find(
+    (i) => i.key === 'sandbox.purgeDays',
+  )?.value;
   const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
   const now = Date.now();
 
@@ -39,7 +45,7 @@ export function InboxPage({
     <>
       <PageHeader
         title="Test inbox"
-        description="Emails for test passes and bundles land here. Nothing is sent."
+        description={`Emails for test passes and bundles land here. Nothing is sent.${typeof kept === 'number' ? ` Kept ${kept} days.` : ''}`}
       />
       {mode !== 'test' ? (
         <EmptyState
@@ -61,7 +67,15 @@ export function InboxPage({
       ) : list.isPending ? (
         <SkeletonRows label="Loading test inbox" />
       ) : rows.length === 0 ? (
-        <EmptyState art="envelope" title="No test emails yet" />
+        <EmptyState
+          art="envelope"
+          title="No test emails yet"
+          action={
+            <Button asChild iconStart={<Plus aria-hidden />}>
+              <Link to="/admin/passes/new">New pass</Link>
+            </Button>
+          }
+        />
       ) : (
         <>
           <Card>
@@ -71,7 +85,13 @@ export function InboxPage({
                   <ListRow
                     key={m.id}
                     rowId={m.id}
-                    leading={<Mail aria-hidden />}
+                    leading={
+                      m.kind === 'bundle' ? (
+                        <Package aria-hidden />
+                      ) : (
+                        <ENTITY.pass.icon aria-hidden />
+                      )
+                    }
                     title={
                       <RowLink
                         to="/admin/test-inbox"

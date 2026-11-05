@@ -4,7 +4,6 @@ import { BROADCAST_MESSAGE_MAX } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { localZone, zoneLabel } from '../../lib/timezones.ts';
 import {
-  Button,
   CheckboxField,
   DateTimeField,
   FormField,
@@ -58,19 +57,16 @@ export function MessageSection({
           )}
         </FormField>
       )}
-      <Button
-        type="button"
-        variant="ghost"
-        className="self-start"
-        onClick={() => onChange({ clearing: !state.clearing, clear: 'never' })}
-      >
-        {state.clearing ? 'Write a message instead' : 'Clear the current message instead'}
-      </Button>
+      <CheckboxField
+        label="Clear the current message"
+        checked={state.clearing}
+        onCheckedChange={(on) => onChange({ clearing: on === true, clear: 'never' })}
+      />
       {state.clearing ? null : (
         <>
           <SwitchRow
             label="Notify holders"
-            help="Shows on the lock screen. A pass allowed no more notifications today updates quietly."
+            help="Wallet can show it on the lock screen."
             checked={state.notify}
             onCheckedChange={(notify) => onChange({ notify })}
           />
@@ -157,7 +153,7 @@ export function ChangeSection({
       ) : null}
       <SwitchRow
         label="Notify holders"
-        help="Holders get a notification for each field that changes. A pass allowed no more notifications today updates quietly."
+        help="Wallet can show it on the lock screen."
         checked={state.notify}
         onCheckedChange={(notify) => onChange({ notify })}
       />

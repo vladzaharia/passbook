@@ -4,11 +4,12 @@ import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { Skeleton } from '../../ui/index.ts';
 import { withGhosts } from '../passes/new-pass-preview.tsx';
-import { PassPreview } from '../passes/pass-preview.tsx';
+import { assetMap, PassPreview } from '../passes/pass-preview.tsx';
 import type { FormValues } from '../passes/schema-form/index.ts';
 import { useDraftPreview } from '../templates/api.ts';
 import type { ComposerState } from './composer-state.ts';
 import { LockScreenNotice } from './lock-screen.tsx';
+import { patchRows } from './patch-view.ts';
 
 type Detail = z.infer<typeof TemplateDetailSchema>;
 
@@ -42,11 +43,43 @@ export function ComposePreview({
     250,
   );
   const preview = useDraftPreview(detail?.id, input, { orgId: org.id });
+  // The notice carries the pass's own icon and the name its pass.json gives the organization.
+  const icons = preview.data ? assetMap(preview.data.assetBaseUrl, preview.data.assetNames) : {};
+  const iconUrl = icons['icon@2x.png'] ?? icons['icon.png'];
+  const named = {
+    ...org,
+    name:
+      (preview.data?.passJson as { organizationName?: string } | undefined)?.organizationName ??
+      org.name,
+  };
+  // Wallet shows "<Label> is now <value>" for each changed field.
+  const changes =
+    detail && state.kind === 'change' ? patchRows(detail.inputSchema, state.values) : [];
   return (
     <div className="flex flex-col gap-6">
       {state.kind === 'message' ? (
-        <LockScreenNotice org={org} text={state.message} silent={silent} />
-      ) : null}
+        <LockScreenNotice
+          org={named}
+          text={state.clearing ? '' : state.message}
+          silent={silent}
+          iconUrl={iconUrl}
+        />
+      ) : (
+        state.fields.flatMap((key) => {
+          const row = changes.find((r) => r.key === key);
+          return row
+            ? [
+                <LockScreenNotice
+                  key={key}
+                  org={named}
+                  text={`${row.label} is now ${row.value}`}
+                  silent={silent}
+                  iconUrl={iconUrl}
+                />,
+              ]
+            : [];
+        })
+      )}
       {!detail ? (
         <p className="rounded-xl border border-dashed border-border-strong p-6 text-center text-sm text-fg-muted">
           Choose a template to see the pass.
