@@ -9,7 +9,8 @@ import { NotFoundError } from '../../platform/errors.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import type { BakedTemplate } from './baked-types.ts';
 import { stylesOf } from './package/slots.ts';
-import { getTemplate, getVersion, listTemplates } from './repo.ts';
+import { getTemplate, getVersion } from './repo.ts';
+import { listTemplates } from './repo-list.ts';
 import { generatedSource, type SyncSource, syncBakedTemplates } from './sync.ts';
 
 export const BAKED_PREFIX = 'baked:';
