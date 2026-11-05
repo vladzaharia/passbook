@@ -10,13 +10,15 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
+import { dropTeamApnsTokens } from '../delivery/apns-jwt.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
 import { checkIdentityById } from './check.ts';
 import { clearIdentityKeyCache } from './db-resolver.ts';
-import { toDto } from './dto.ts';
+import { toDto, toDtos } from './dto.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
 import { readPkcs12 } from './pkcs12.ts';
+import { clearPushKeyCache } from './push-key-store.ts';
 import {
   deleteIdentityRows,
   findByPassType,
@@ -28,6 +30,7 @@ import {
   rotateIdentityRows,
   updateIdentityRow,
 } from './repo.ts';
+import { getPushKeyMeta } from './repo-push-keys.ts';
 
 type Upload = z.infer<typeof UploadIdentitySchema>;
 type Patch = z.infer<typeof UpdateIdentitySchema>;
@@ -49,7 +52,7 @@ export async function listIdentities(
   const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1);
   const page = rows.slice(0, query.limit);
   return {
-    items: await Promise.all(page.map((row) => toDto(ctx, row))),
+    items: await toDtos(ctx, page),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -195,7 +198,9 @@ export async function deleteIdentity(ctx: ServiceContext, actor: Actor, id: stri
       'Passes still use this identity. Delete them first, or rotate its certificate to renew it.',
       'IDENTITY_IN_USE',
     );
-  await deleteIdentityRows(ctx.env.DB, id, row.credential_id);
+  const team = row.team_identifier;
+  const keyMeta = team ? await getPushKeyMeta(ctx.env.DB, team) : null;
+  await deleteIdentityRows(ctx.env.DB, id, row.credential_id, team);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.org_id,
@@ -204,6 +209,19 @@ export async function deleteIdentity(ctx: ServiceContext, actor: Actor, id: stri
     targetId: id,
     detail: { label: row.label, passTypeIdentifier: row.pass_type_identifier },
   });
+  // The key goes with the team's last identity: a later identity must not inherit it unseen.
+  if (keyMeta && !(await getPushKeyMeta(ctx.env.DB, team))) {
+    clearPushKeyCache();
+    dropTeamApnsTokens(team);
+    await recordAudit(ctx, {
+      ...auditActor(actor),
+      orgId: row.org_id,
+      action: 'identity.push_key_remove',
+      targetType: 'identity',
+      targetId: id,
+      detail: { teamIdentifier: team, keyId: keyMeta.key_id },
+    });
+  }
 }
 
 /** Yearly renewal: new certificate and key for the same pass type ID; existing passes keep working. */

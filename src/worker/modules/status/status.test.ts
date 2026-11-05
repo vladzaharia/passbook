@@ -223,7 +223,7 @@ describe('status components', () => {
     const s = await status();
     const platform = find(s, 'identity:platform');
     expect(platform?.state).toBe('degraded');
-    expect(platform?.detail).toMatch(/Expires in/);
+    expect(platform?.detail).toMatch(/days? left/);
     expect(platform?.data).toMatchObject({ source: 'env', bindingPresent: false });
 
     await run(
