@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { notifiedSince } from './repo-budget.ts';
 
-type Field = { key?: unknown; value?: unknown; changeMessage?: unknown };
+type Field = { key?: unknown; label?: unknown; value?: unknown; changeMessage?: unknown };
 
 function fieldsOf(pass: PassJson): Map<string, Field> {
   const out = new Map<string, Field>();
@@ -22,9 +22,22 @@ function fieldsOf(pass: PassJson): Map<string, Field> {
   return out;
 }
 
+/** The message a field gets when its template gives none: "Tier is now Gold", never a bare value. */
+function messageFor(field: Field): string {
+  const label = typeof field.label === 'string' ? field.label.trim() : '';
+  return label ? `${label.replace(/%/g, '%%')} is now %@` : 'Updated to %@';
+}
+
+/** A value that differs from the same field in the previous version. A new field is not a change. */
+function moved(before: Map<string, Field>, key: string, field: Field): boolean {
+  const old = before.get(key);
+  return old !== undefined && JSON.stringify(old.value) !== JSON.stringify(field.value);
+}
+
 /**
  * An editor's save. Without `notify` every changeMessage goes; with it, a field keeps (or gets
- * "%@") its message only when its value differs from the previous version. Returns true when the
+ * "<Label> is now %@") its message only when its value differs from the same field in the
+ * previous version; a field the previous version lacked is new, not changed. Returns true when the
  * pass changed. Wallet only shows a message for a changed value, so syncs keep the template's.
  */
 export function applyChangeMessages(
@@ -35,10 +48,9 @@ export function applyChangeMessages(
   const before = previous ? fieldsOf(previous) : new Map<string, Field>();
   let changed = false;
   for (const [key, field] of fieldsOf(pass)) {
-    const moved = notify && JSON.stringify(before.get(key)?.value) !== JSON.stringify(field.value);
-    if (moved) {
+    if (notify && moved(before, key, field)) {
       if (typeof field.changeMessage !== 'string') {
-        field.changeMessage = '%@';
+        field.changeMessage = messageFor(field);
         changed = true;
       }
     } else if (field.changeMessage !== undefined) {
@@ -57,11 +69,7 @@ export function notifiesHolder(pass: PassJson, previous: PassJson | null): boole
   if (!previous) return false;
   const before = fieldsOf(previous);
   for (const [key, field] of fieldsOf(pass))
-    if (
-      typeof field.changeMessage === 'string' &&
-      JSON.stringify(before.get(key)?.value) !== JSON.stringify(field.value)
-    )
-      return true;
+    if (typeof field.changeMessage === 'string' && moved(before, key, field)) return true;
   return false;
 }
 
