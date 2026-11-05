@@ -1,0 +1,11 @@
+.gradle/
+**/build/
+local.properties
+dist/
+*.jks
+*.p12
+signing.properties
+.idea/
+__pycache__/
+*.pyc
+!gradle/wrapper/gradle-wrapper.jar

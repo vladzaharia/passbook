@@ -1,0 +1,12 @@
+PassBook Reader
+
+The Apple VAS command flow is adapted from android-universal-reader by kormax,
+commit 8a4c887d068abe0de9ec81fd35446d01caac275c (Apache License 2.0).
+https://github.com/kormax/android-universal-reader
+
+Modifications: Java implementation, bounded BER-TLV parsing, VAS-only protocol,
+fresh request nonce, encrypted-result bridge, native UI, lifecycle management,
+barcode adapters and tests. This app contains no upstream demo private keys.
+
+The upstream license is reproduced in third-party/kormax-LICENSE.
+Dependencies retain their own licenses in the APK META-INF entries.

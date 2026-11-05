@@ -1,0 +1,47 @@
+:root {
+  color-scheme: light;
+  font:
+    16px / 1.5 system-ui,
+    sans-serif;
+  color: #182136;
+  background: #f5f4ef;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 36rem;
+  margin: auto;
+  padding: 24px 8px 40px;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #2854d7;
+}
+h1 {
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin: 12px 0 20px;
+}
+h2 {
+  font-size: 18px;
+  margin-top: 28px;
+}
+p {
+  margin: 10px 0;
+}
+.card {
+  border: 1px solid #d8dce5;
+  border-radius: 16px;
+  padding: 18px;
+  margin-top: 24px;
+  background: #fff;
+}
+.card p,
+.muted {
+  color: #586078;
+  font-size: 14px;
+}

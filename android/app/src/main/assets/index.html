@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; frame-src 'none'" />
+    <title>Reader diagnostics</title>
+    <link rel="stylesheet" href="reader.css" />
+    <script type="module" src="diagnostics.js"></script>
+  </head>
+  <body>
+    <main>
+      <span class="eyebrow">DEVICE SETUP</span>
+      <h1>Ready for a pass.</h1>
+      <p>Open Wallet, select and authenticate your NFC pass, then hold it against the back of the P400.</p>
+      <div class="card" role="status" aria-live="polite">
+        <strong id="connection">Connecting…</strong>
+        <p id="read">No reads yet.</p>
+      </div>
+      <h2>Connect your verifier</h2>
+      <p>In Settings, enter your verifier URL and Pass Type ID. The verifier needs the PassBook reader bridge.</p>
+      <p class="muted">Diagnostics captures reads. Pass acceptance requires a connected verifier. Automatic Wallet presentation is unavailable on this reader.</p>
+      <p class="muted" id="version"></p>
+    </main>
+  </body>
+</html>
