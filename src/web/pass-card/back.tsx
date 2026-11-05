@@ -44,8 +44,11 @@ export function Upcoming({ events }: { events: UpcomingView[] }) {
                 <span className="pc-up-day">{e.day}</span>
               </time>
             ) : (
-              <span className="pc-up-date" data-tba="" aria-hidden="true">
-                <span className="pc-up-day">TBA</span>
+              <span className="pc-up-date" data-tba="">
+                <span className="pc-up-day" aria-hidden="true">
+                  TBA
+                </span>
+                <span className="pc-sr">Date to be announced</span>
               </span>
             )}
             <span className="pc-up-text">

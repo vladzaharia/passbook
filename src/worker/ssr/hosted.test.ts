@@ -108,10 +108,14 @@ describe('hosted auth pages', () => {
     expect(HOSTED_CSS).toContain('.band .mark>svg{width:1.5rem;height:1.5rem}');
   });
 
+  it('keeps the wallet calm when the holder cancelled sign-in', () => {
+    expect(mood(oidcFailurePage(NONCE, 'cancelled', null))).toBeUndefined();
+  });
+
   it.each([
     ['no access', noAccessPage(NONCE)],
     ['an expired or used link', expiredPage(NONCE)],
-    ['sign-in failed', oidcFailurePage(NONCE, 'cancelled', null)],
+    ['unverified sign-in', oidcFailurePage(NONCE, 'unverified', null)],
     ['provider unavailable', oidcFailurePage(NONCE, 'unavailable', null)],
     ['an email conflict', refusal('EMAIL_CONFLICT')],
     ['an email taken', refusal('EMAIL_TAKEN')],

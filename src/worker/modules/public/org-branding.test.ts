@@ -37,7 +37,7 @@ describe('org branding images on passes', () => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     expect(html).toContain(`/p/${pass.downloadToken}/assets/logo@3x.png?v=`);
-    expect(html).toContain(`/p/${pass.downloadToken}/assets/icon@3x.png?v=`);
+    expect(html).not.toContain('/assets/icon@3x.png');
     const logo = await get(`/p/${pass.downloadToken}/assets/logo@3x.png`);
     expect(await bytesOf(logo)).toEqual(makePng(480, 150));
   });

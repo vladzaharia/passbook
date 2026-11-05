@@ -125,6 +125,7 @@
   border-top: 1px solid rgb(127 127 127 / 0.3);
 }
 .pc-up-date {
+  position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
