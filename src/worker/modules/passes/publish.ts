@@ -60,7 +60,7 @@ export interface PublishOptions {
   notify?: boolean;
   /**
    * Statements that commit in the same batch as the version write (a scan row, a ledger entry).
-   * Each guards itself with `EXISTS (SELECT 1 FROM passes WHERE id = ? AND object_key = ?)`, so a
+   * Each guards itself on the pass still holding the object key this publish wrote, so a
    * lost CAS leaves no write. Runs only when a version is written, never for an unchanged pass.
    */
   commit?: CommitHook;
