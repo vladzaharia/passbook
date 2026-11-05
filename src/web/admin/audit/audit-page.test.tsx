@@ -132,7 +132,8 @@ describe('audit page', () => {
     expect(await screen.findByRole('link', { name: 'Pass 2' })).toBeInTheDocument();
     expect(auditCalls(fetchMock).some((u) => u.includes('cursor=c1'))).toBe(true);
     await user.click(screen.getAllByRole('button', { name: 'Pass voided' })[0] as HTMLElement);
-    const drawer = await screen.findByRole('dialog');
+    // The drawer is a lazy chunk; a loaded runner needs more than findBy's 1 s default.
+    const drawer = await screen.findByRole('dialog', {}, { timeout: 5_000 });
     expect(within(drawer).getByText('pass.void')).toHaveClass('font-mono', 'text-xs');
   });
 
