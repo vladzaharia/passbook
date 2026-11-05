@@ -22,10 +22,10 @@
   font-size: calc(var(--u) * 24);
 }
 /* Beside a thumbnail the primary has less room: step down earlier, and once more when long. */
-.pc-root[data-face="front"] .pc-main .pc-primary .pc-field[data-mid] > .pc-value {
+.pc-root[data-face="front"] .pc-main:has(> .pc-thumb) .pc-primary .pc-field[data-mid] > .pc-value {
   font-size: calc(var(--u) * 24);
 }
-.pc-root[data-face="front"] .pc-main .pc-primary .pc-field[data-long] > .pc-value {
+.pc-root[data-face="front"] .pc-main:has(> .pc-thumb) .pc-primary .pc-field[data-long] > .pc-value {
   font-size: calc(var(--u) * 20);
 }
 .pc-poster-meta {

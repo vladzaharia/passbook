@@ -259,15 +259,24 @@ describe('voided and removed', () => {
 });
 
 describe('long primary values', () => {
-  it('step down from 8 characters beside a thumbnail, and again past 12', () => {
-    const named = (value: string) =>
-      view({
-        ...generic,
-        generic: { primaryFields: [{ key: 'name', label: 'Member', value }] },
-      });
+  const named = (value: string, withAssets = assets) =>
+    normalize(
+      { ...generic, generic: { primaryFields: [{ key: 'name', label: 'Member', value }] } },
+      { assets: withAssets, now, timeZone: 'UTC' },
+    );
+  const thumbs = { ...assets, 'thumbnail@2x.png': '/a/thumbnail@2x.png' };
+
+  it('marks 8-12 characters mid and 13+ long', () => {
     const { container } = render(<PassCard view={named('Member M-006')} />);
     const field = container.querySelector('.pc-primary .pc-field');
     expect(field).toHaveAttribute('data-mid');
     expect(field).not.toHaveAttribute('data-long');
+  });
+
+  it('puts the thumbnail inside .pc-main only when there is one', () => {
+    const plain = render(<PassCard view={named('Member M-006')} />).container;
+    expect(plain.querySelector('.pc-main > .pc-thumb')).toBeNull();
+    const withThumb = render(<PassCard view={named('Member M-006', thumbs)} />).container;
+    expect(withThumb.querySelector('.pc-main > .pc-thumb')).not.toBeNull();
   });
 });

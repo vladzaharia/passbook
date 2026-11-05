@@ -45,7 +45,7 @@
 }
 @media (min-width: 640px) {
   .wl-add-scan {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 20rem);
     align-items: end;
     justify-items: stretch;
     justify-content: center;
@@ -58,6 +58,7 @@
 }
 @media (min-width: 1024px) {
   .wl-add-scan {
+    grid-template-columns: auto minmax(0, 1fr);
     justify-content: start;
   }
 }
