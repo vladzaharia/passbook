@@ -2,6 +2,7 @@ export * from './alert-dialog.tsx';
 export * from './apple-wallet-badge.tsx';
 export * from './art/index.ts';
 export * from './badge.tsx';
+export * from './bottom-bar.ts';
 export * from './button.tsx';
 export * from './callout.tsx';
 export * from './card.tsx';

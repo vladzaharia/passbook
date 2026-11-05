@@ -69,6 +69,31 @@ describe('Toaster', () => {
     expect(await toastOf('C')).toHaveTextContent('Allow clipboard access and try again.');
   });
 
+  it('gives an error a danger icon', async () => {
+    renderToaster();
+    act(() => {
+      toast.error(new Error('x'), 'Could not save');
+    });
+    expect(
+      (await toastOf('Could not save')).querySelector('[data-icon] svg.lucide-circle-x'),
+    ).not.toBeNull();
+  });
+
+  it('sits above the fixed bottom bar and stays at the bottom with an overlay open', async () => {
+    renderToaster();
+    act(() => {
+      toast.success('Saved');
+    });
+    await toastOf('Saved');
+    const region = document.querySelector('[data-sonner-toaster]') as HTMLElement;
+    expect(region.getAttribute('data-y-position')).toBe('bottom');
+    expect(region.style.getPropertyValue('--offset-bottom')).toContain('--wl-bottom-bar');
+    document.body.setAttribute('data-scroll-locked', '1');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(region.getAttribute('data-y-position')).toBe('bottom');
+    document.body.removeAttribute('data-scroll-locked');
+  });
+
   it('puts the close button at the top right, inside the toast', async () => {
     renderToaster();
     act(() => {

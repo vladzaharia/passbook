@@ -9,8 +9,10 @@ import {
   useRef,
   useState,
 } from 'react';
+import { cn } from '../lib/cn.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { DiscardDialog } from './alert-dialog.tsx';
+import { useBottomBar } from './bottom-bar.ts';
 import { Button } from './button.tsx';
 
 export interface SaveBarProps {
@@ -109,6 +111,7 @@ function SaveBarView({
   extra,
 }: SaveBarProps) {
   const [phase, setPhase] = useState<Phase>(dirty ? 'shown' : 'hidden');
+  const barRef = useBottomBar<HTMLElement>();
   const wasSaving = useRef(false);
   useEffect(() => {
     if (saving) wasSaving.current = true;
@@ -136,6 +139,7 @@ function SaveBarView({
   const done = phase === 'saved' || phase === 'closing';
   return (
     <section
+      ref={barRef}
       aria-label="Unsaved changes"
       // The shell pads the end of main while a bar is up (app-shell.tsx), so nothing hides under it.
       data-save-bar=""
@@ -145,13 +149,14 @@ function SaveBarView({
       }}
       className="wl-bar fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-[env(safe-area-inset-bottom)] shadow-elevation-3 lg:left-60"
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-safe py-3 sm:[--wl-gutter:1.5rem]">
-        <p className="text-sm text-fg-strong" role="status">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-safe py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:[--wl-gutter:1.5rem]">
+        {/* Phones: the buttons say it; the label stays for screen readers and for "Saved". */}
+        <p className={cn('text-sm text-fg-strong', !done && 'max-sm:sr-only')} role="status">
           {done ? 'Saved' : 'Unsaved changes'}
         </p>
-        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4">
           {extra}
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-sm:[&>*]:flex-1">
             <Button variant="outline" disabled={saving || paused || done} onClick={onDiscard}>
               Discard
             </Button>

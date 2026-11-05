@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
-import { Button, ConfirmDialog, IconButton, toast } from '../../ui/index.ts';
+import { Button, ConfirmDialog, IconButton, toast, useBottomBar } from '../../ui/index.ts';
 import { useBulkPassAction } from './api.ts';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
@@ -31,6 +31,7 @@ export function SelectionBar({
   const bulk = useBulkPassAction();
   const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const [sharing, setSharing] = useState(false);
+  const barRef = useBottomBar<HTMLElement>();
   const n = ids.length;
   if (n === 0) return null;
 
@@ -60,6 +61,7 @@ export function SelectionBar({
 
   return (
     <section
+      ref={barRef}
       aria-label="Selection"
       className="wl-bar fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-safe shadow-elevation-3 lg:left-60"
     >
