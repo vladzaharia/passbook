@@ -118,12 +118,12 @@ describe('the scanner document and its decoder worker', () => {
     expect(PERMISSIONS_POLICY).toBe('camera=(), microphone=(), geolocation=(), payment=(), usb=()');
   });
 
-  it('/scan CSP equals the Worker scan CSP apart from Turnstile, frame-src and object-src', () => {
+  it('/scan CSP equals the Worker scan CSP apart from Turnstile and object-src', () => {
     const directives = (scan.get('content-security-policy')?.[0] ?? '')
       .split(';')
       .map((d) => d.trim())
       .filter(Boolean)
-      .filter((d) => !d.startsWith('frame-src') && !d.startsWith('object-src'))
+      .filter((d) => !d.startsWith('object-src'))
       .map((d) => d.replace(TURNSTILE, ''));
     const code = scanContentSecurityPolicy()
       .split(';')
