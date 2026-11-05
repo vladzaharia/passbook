@@ -26,17 +26,20 @@ export function usePassView(
   passJson: Record<string, unknown>,
   assetBaseUrl: string,
   assetNames?: readonly string[],
+  removed = false,
 ): PassView | null {
   return useMemo(() => {
     try {
-      return normalize(passJson as unknown as PassJson, {
+      const view = normalize(passJson as unknown as PassJson, {
         assets: assetMap(assetBaseUrl, assetNames),
       });
+      // A removed pass is stored voided, but Wallet files it under Expired passes: the card says so.
+      return removed ? { ...view, invalid: 'expired' } : view;
     } catch {
       // A malformed pass.json must not take the page down; callers show the fallback line.
       return null;
     }
-  }, [passJson, assetBaseUrl, assetNames]);
+  }, [passJson, assetBaseUrl, assetNames, removed]);
 }
 
 export interface PassPreviewProps {
@@ -54,6 +57,8 @@ export interface PassPreviewProps {
   settle?: unknown;
   /** The glow fades (voided). */
   dim?: boolean;
+  /** Removed from Wallet: the card reads Expired, not Voided. */
+  removed?: boolean;
   /** Deal in on mount. */
   enter?: boolean;
   /** Off for thumbnails: no pointer tilt, no glow. */
@@ -73,12 +78,13 @@ export function PassPreview({
   mint,
   settle,
   dim,
+  removed = false,
   enter,
   still = false,
   transitionName,
   className,
 }: PassPreviewProps) {
-  const view = usePassView(passJson, assetBaseUrl, assetNames);
+  const view = usePassView(passJson, assetBaseUrl, assetNames, removed);
   if (!view) {
     return (
       <p role="alert" className="text-sm text-danger">
@@ -135,7 +141,12 @@ export function PassPreviewPanel({
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const [target, setTarget] = useState<PassTarget>('27');
-  const view = usePassView(preview.passJson, preview.assetBaseUrl, preview.assetNames);
+  const view = usePassView(
+    preview.passJson,
+    preview.assetBaseUrl,
+    preview.assetNames,
+    preview.removed,
+  );
   const differ = view?.hasAlternate ?? false;
   const shown = differ ? target : '27';
   const approximate = view?.layouts[viewTarget(shown)].approximate ?? false;

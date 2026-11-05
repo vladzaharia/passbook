@@ -45,7 +45,7 @@ export function PassRowMenu({ pass }: { pass: PassSummaryDto }) {
               {i === firstDanger && i > 0 ? <DropdownMenuSeparator /> : null}
               <DropdownMenuItem
                 destructive={d.destructive}
-                disabled={needsLinks.has(d.id) && !runner.links}
+                disabled={d.disabled || (needsLinks.has(d.id) && !runner.links)}
                 onSelect={() => runner.run(d.id)}
               >
                 <d.icon aria-hidden />

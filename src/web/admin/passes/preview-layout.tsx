@@ -64,7 +64,7 @@ export function PreviewLayout({ stage, still, title, summary, children }: Previe
   }
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <Card className="grid grid-cols-[180px_minmax(0,1fr)] items-center gap-6 p-5">
+      <Card className="grid grid-cols-[180px_minmax(0,1fr)] items-start gap-6 p-5">
         <div className="w-[180px]">{stage('card')}</div>
         <div className="flex min-w-0 flex-col gap-4">{summary}</div>
       </Card>

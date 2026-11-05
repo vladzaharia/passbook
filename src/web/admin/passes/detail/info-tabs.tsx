@@ -2,6 +2,7 @@ import type { EntityChipProps } from '../../../ui/index.ts';
 import {
   Card,
   CardBody,
+  CardHeader,
   EmptyState,
   ErrorState,
   Handoff,
@@ -43,6 +44,7 @@ export function ActivityTab({ passId, active }: { passId: string; active: boolea
   return (
     <Handoff loading={audit.isPending} skeleton={<SkeletonTimeline label="Loading activity" />}>
       <Card>
+        <CardHeader title="Activity" />
         {items.length === 0 ? (
           <EmptyState inline art="activity" title="No activity" />
         ) : (

@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../../lib/api.ts';
 import { isApiError } from '../../../lib/errors.ts';
+import { useMode } from '../../../lib/mode.ts';
 import {
   Button,
   Callout,
@@ -17,6 +18,7 @@ import {
 } from '../../../ui/index.ts';
 import { useConnection } from '../../connections/api.ts';
 import { passKeys } from '../api.ts';
+import type { PassActionRunner } from '../pass-actions.tsx';
 import {
   cleanValues,
   type FormValues,
@@ -52,17 +54,24 @@ export function FieldsTab({
   schema,
   manifest,
   onDraft,
+  runner,
 }: {
   pass: Pass;
   schema: unknown;
   manifest?: unknown;
   /** Unsaved values (debounced 300 ms) for the live preview; null when clean. */
   onDraft?: (draft: FormValues | null) => void;
+  /** Restore for a removed pass; the header's runs the same action. */
+  runner?: PassActionRunner;
 }) {
   const qc = useQueryClient();
   const connection = useConnection(pass.connectionId ?? undefined);
   const [notify, setNotify] = useState(false);
+  const removed = pass.removedAt !== null;
   const voided = pass.status === 'voided';
+  // The other mode's pass: the server refuses the save, so the form does not offer it.
+  const foreign = pass.mode !== useMode();
+  const locked = voided || foreign;
   const snapshot = (p: Pass): Baseline => ({
     version: p.version,
     values: pickDeclared(schema, p.personalization),
@@ -183,8 +192,26 @@ export function FieldsTab({
       onValid={() => void save()}
       className="flex flex-col gap-6 pb-16"
     >
-      {voided ? (
-        <p className="text-sm text-fg-muted">Unvoid to edit.</p>
+      {removed ? (
+        <Callout
+          tone="warning"
+          actions={
+            runner ? (
+              <Button
+                size="sm"
+                variant="outline"
+                loading={runner.pending.restore}
+                onClick={() => runner.run('restore')}
+              >
+                Restore
+              </Button>
+            ) : null
+          }
+        >
+          Removed from Wallet. Restore to edit.
+        </Callout>
+      ) : voided ? (
+        <Callout tone="info">Unvoid to edit.</Callout>
       ) : conflict ? (
         <Callout
           tone="warning"
@@ -207,12 +234,12 @@ export function FieldsTab({
           Your edits are kept.
         </Callout>
       ) : null}
-      <BudgetNote budget={pass.pushBudget} show={notify && dirty && !voided} />
+      <BudgetNote budget={pass.pushBudget} show={notify && dirty && !locked} />
       <SchemaForm
         schema={schema}
         value={draft}
         onChange={setDraft}
-        disabled={saving || voided}
+        disabled={saving || locked}
         hiddenKeys={hiddenKeys}
         showAllErrors={Object.keys(check.errors).length > 0}
         serverErrors={serverErrors}
@@ -224,7 +251,7 @@ export function FieldsTab({
         dirty={dirty}
         saving={saving}
         extra={
-          voided ? null : (
+          locked ? null : (
             <CheckboxField
               label="Notify holders"
               checked={notify}

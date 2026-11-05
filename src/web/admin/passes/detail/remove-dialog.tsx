@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { REMOVE_MESSAGE_MAX } from '@/shared/contracts/events.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { Button, Dialog, DialogContent, FormField, Textarea } from '../../../ui/index.ts';
+import {
+  REMOVAL_LIMIT,
+  REMOVAL_LIMIT_MANY,
+  REMOVAL_UNDO,
+  REMOVAL_UNDO_MANY,
+} from './removal-copy.ts';
 
 /**
  * Remove from Wallet. Apple has no call that deletes a pass from a device, so the copy states what
@@ -44,9 +50,7 @@ export function RemoveDialog({
         closeButton={false}
         title={many ? `Remove ${count} passes from Wallet?` : 'Remove from Wallet?'}
         description={
-          many
-            ? 'Each pass moves to Expired passes in Wallet, and its holder can delete it there.'
-            : 'The pass moves to Expired passes in Wallet, and the holder can delete it there.'
+          many ? `${REMOVAL_LIMIT_MANY} ${REMOVAL_UNDO_MANY}` : `${REMOVAL_LIMIT} ${REMOVAL_UNDO}`
         }
         footer={
           <>

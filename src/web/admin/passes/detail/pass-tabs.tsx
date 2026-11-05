@@ -2,6 +2,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
+import type { PassActionRunner } from '../pass-actions.tsx';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
 import type { Tab } from './detail-page.tsx';
@@ -23,6 +24,7 @@ export function PassTabs({
   picked,
   onPick,
   onDraft,
+  runner,
 }: {
   pass: PassDetailDto;
   tab: Tab;
@@ -30,6 +32,7 @@ export function PassTabs({
   picked: number | undefined;
   onPick: (version: number | undefined) => void;
   onDraft: (draft: Record<string, unknown> | null) => void;
+  runner: PassActionRunner;
 }) {
   return (
     <>
@@ -43,6 +46,7 @@ export function PassTabs({
             schema={template.data.inputSchema}
             manifest={template.data.manifest}
             onDraft={onDraft}
+            runner={runner}
           />
         ) : (
           <SkeletonKeyValue label="Loading fields" />
