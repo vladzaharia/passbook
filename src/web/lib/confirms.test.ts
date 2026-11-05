@@ -53,7 +53,9 @@ describe('confirm copy', () => {
   it('words cancelling a message, a change and a draft apart, and never dismisses with Cancel', () => {
     const msg = cancelBroadcastConfirm('Sale', 'message', 'scheduled');
     expect(msg.confirmLabel).toBe('Cancel message');
-    expect(cancelBroadcastConfirm('Sale', 'change', 'scheduled').confirmLabel).toBe('Cancel change');
+    expect(cancelBroadcastConfirm('Sale', 'change', 'scheduled').confirmLabel).toBe(
+      'Cancel change',
+    );
     expect(cancelBroadcastConfirm('Sale', 'message', 'draft')).toMatchObject({
       title: 'Delete Sale?',
       confirmLabel: 'Delete draft',

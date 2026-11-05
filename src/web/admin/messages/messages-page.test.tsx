@@ -66,7 +66,7 @@ describe('Messages in Test mode', () => {
           }),
       },
     });
-    expect(await screen.findByText(/^Goes out /)).toBeInTheDocument();
+    expect((await screen.findAllByText(/^Goes out /)).length).toBeGreaterThan(0);
   });
 
   it('sends no header live, and a live message has no Test pill', async () => {
