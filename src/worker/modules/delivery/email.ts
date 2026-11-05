@@ -85,6 +85,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     logoText:
       branding.logoHasName || typeof passJson.logoText !== 'string' ? null : passJson.logoText,
     senderName: platform['email.senderName'],
+    mode: pass.mode,
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
   if (pass.mode === 'test') {

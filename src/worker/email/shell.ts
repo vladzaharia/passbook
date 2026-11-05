@@ -14,6 +14,11 @@ export { escapeHtml };
 export const EMAIL_LIGHT = T.light;
 
 const D = T.dark;
+/** The amber of a test pass's strip (the page's warning tones): the foil's amber as the edge. */
+const TEST = {
+  light: { bg: '#fff4de', ink: '#7a4300', edge: T.light.foil3 },
+  dark: { bg: '#2a1d05', ink: D.foil3, edge: D.foil3 },
+};
 /** Static only: no @keyframes, no GIFs (motion-and-expression.md, Email). */
 const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light dark}
 @media (prefers-color-scheme:dark){
@@ -27,6 +32,8 @@ const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light da
 .e-block{border-color:${D.lineStrong}!important;color:${D.text}!important}
 .e-chip{background:${D.sunken}!important;color:${D.strong}!important}
 .e-line{border-color:${D.line}!important}
+.e-link{color:${D.accent}!important}
+.e-test{background:${TEST.dark.bg}!important;border-color:${TEST.dark.edge}!important;color:${TEST.dark.ink}!important}
 }`;
 
 /**
@@ -44,6 +51,29 @@ export const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono
 /** `font-size` and `line-height` of a type step, in px. */
 export const type = (step: keyof typeof T.text) =>
   `font-size:${T.text[step].size}px;line-height:${T.text[step].line}px`;
+
+/** Under the title on a test pass or bundle: the page's strip, as a block in the card. */
+export const testNoteHtml = (text: string) =>
+  `<p class="e-test" style="margin:0 0 16px;padding:6px 12px;background:${TEST.light.bg};border:1px solid ${TEST.light.edge};border-radius:${T.radius.md}px;color:${TEST.light.ink};${type('xs')};font-weight:${T.weight.medium};text-align:center">${escapeHtml(text)}</p>`;
+
+/** The support line under a holder email: its html and its text, both empty without a contact. */
+export function supportFooter(email: string | null, url: string | null) {
+  const links = [
+    email
+      ? `<a href="mailto:${escapeHtml(email)}" class="e-muted" style="color:${EMAIL_LIGHT.muted}">${escapeHtml(email)}</a>`
+      : '',
+    url
+      ? `<a href="${escapeHtml(url)}" class="e-muted" style="color:${EMAIL_LIGHT.muted}">${escapeHtml(url)}</a>`
+      : '',
+  ].filter(Boolean);
+  const text = [email, url].filter(Boolean).join(' | ');
+  return {
+    html: links.length
+      ? `<p class="e-muted" style="margin:12px 0 0;${type('xs')};color:${EMAIL_LIGHT.muted}">Questions: ${links.join(' | ')}</p>`
+      : '',
+    text: text ? [`Questions: ${text}`] : [],
+  };
+}
 
 /** The card's h1: 24/32, semibold, tight, as the hosted card. */
 export const titleHtml = (text: string, margin: string) =>

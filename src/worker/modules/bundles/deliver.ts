@@ -68,6 +68,7 @@ export async function deliverBundleEmail(
     })),
     iconUrl,
     senderName: platform['email.senderName'],
+    mode: bundle.mode,
     buddyBase: settings['email.buddy'] ? base : null,
   });
   if (bundle.mode === 'test') {
