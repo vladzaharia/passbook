@@ -6,6 +6,7 @@ import { buildLayout, chooseStyle } from './layout.ts';
 import { localize } from './strings.ts';
 import type { LayoutView, PassTarget, PassView } from './types.ts';
 import { upcomingEvents } from './upcoming.ts';
+import { validityOf } from './validity.ts';
 
 export interface NormalizeOptions {
   /** Asset file name (e.g. `logo@2x.png`, `en.lproj/strip.png`) → URL the browser can load. */
@@ -45,10 +46,9 @@ export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
   const layouts = { ios27: build('ios27'), legacy: build('legacy') };
   const target = options.target ?? 'ios27';
   const layout = layouts[target];
+  const { status, validUntil } = validityOf(pass, now);
   const voided = pass.voided === true;
-  const expired =
-    typeof pass.expirationDate === 'string' &&
-    new Date(pass.expirationDate).getTime() < now.getTime();
+  const expired = validUntil !== null && validUntil < now.getTime();
   const loc = (k: string) =>
     typeof pass[k] === 'string' ? localize(options.strings, pass[k]) : undefined;
   const logoText = loc('logoText');
@@ -68,7 +68,7 @@ export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
     upcoming: upcomingEvents(pass, ctx),
     voided,
     expired,
-    invalid: voided ? 'voided' : expired ? 'expired' : null,
+    invalid: status === 'active' ? null : status,
     suppressHeaderDarkening: pass.suppressHeaderDarkening === true,
     locations: (Array.isArray(pass.locations) ? pass.locations : []).flatMap((l) =>
       typeof l?.latitude === 'number' && typeof l.longitude === 'number'

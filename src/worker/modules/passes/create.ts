@@ -138,6 +138,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       mode,
       scanCode,
       barcodeHash: artifact.barcodeHash,
+      lookupHash: artifact.lookupHash,
     });
   } catch (error) {
     await ctx.env.BUCKET.delete(objectKey);

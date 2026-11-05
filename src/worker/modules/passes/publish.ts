@@ -23,6 +23,7 @@ import {
   type PassStatus,
 } from './repo.ts';
 import { getRemoval } from './repo-remove.ts';
+import type { CommitHook } from './repo-write.ts';
 import { newScanCode } from './scan-code.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
@@ -57,6 +58,12 @@ export interface PublishOptions {
    * changeMessage. Omit for syncs and upgrades (the template's messages stay).
    */
   notify?: boolean;
+  /**
+   * Statements that commit in the same batch as the version write (a scan row, a ledger entry).
+   * Each guards itself with `EXISTS (SELECT 1 FROM passes WHERE id = ? AND object_key = ?)`, so a
+   * lost CAS leaves no write. Runs only when a version is written, never for an unchanged pass.
+   */
+  commit?: CommitHook;
 }
 
 export interface PublishResult {
@@ -151,7 +158,10 @@ export async function publishPass(
         templateVersion: next.templateVersion,
         contentHash: artifact.contentHash,
         barcodeHash: artifact.barcodeHash,
+        lookupHash: artifact.lookupHash,
         scanCode,
+        objectKey: current.objectKey,
+        commit: options.commit,
       });
       if (written === null) {
         if (options.expectedVersion !== undefined) throw new PreconditionFailedError();
@@ -203,7 +213,9 @@ export async function publishPass(
         actorId: options.actor.id,
         passJson,
         barcodeHash: artifact.barcodeHash,
+        lookupHash: artifact.lookupHash,
         scanCode,
+        commit: options.commit,
       });
     } catch (error) {
       // Ambiguous D1 failure: the commit may have succeeded, so the object stays.

@@ -20,7 +20,7 @@ import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { applyRemoval, type Removal } from './remove-build.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
-import { barcodeHashOf } from './scan-code.ts';
+import { barcodeHashOf, lookupHashOf, lookupValueOf } from './scan-code.ts';
 
 export interface BuildRequest {
   orgId: string;
@@ -61,6 +61,8 @@ export interface Artifact {
   contentHash: string;
   /** SHA-256 hex of the primary barcode message; null without a barcode. */
   barcodeHash: string | null;
+  /** SHA-256 hex of the normalized `scan.lookup` input; null without `scan.lookup` or a value. */
+  lookupHash: string | null;
   warnings: ValidationIssue[];
 }
 
@@ -259,6 +261,8 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     }
     const bytes = packagePassBytes(signed);
     const display = displayOf(template, req.personalization);
+    const lookupInput = resolved.manifest.scan?.lookup?.input;
+    const lookupValue = lookupInput ? lookupValueOf(req.personalization, lookupInput) : null;
     return {
       bytes,
       sha256: await sha256Hex(bytes),
@@ -268,6 +272,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       subtitle: display.subtitle,
       contentHash: built.contentHash,
       barcodeHash: await barcodeHashOf(built.passJson),
+      lookupHash: lookupValue === null ? null : await lookupHashOf(lookupValue),
       warnings: [
         ...built.report.issues.filter((i) => i.severity !== 'error'),
         ...brandingWarnings(
