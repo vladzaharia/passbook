@@ -189,7 +189,9 @@ export type ScanEvent =
   | { type: 'overlay'; open: ScanState['overlay'] }
   | { type: 'resume' }
   | { type: 'prefs'; prefs: Partial<ScanState['prefs']> }
-  | { type: 'counts'; counts: Counts };
+  | { type: 'counts'; counts: Counts }
+  /** The reader setup and its health: the scanner's reader kind, and `badLayout` from the wedge source. */
+  | { type: 'reader'; reader: Partial<ScanState['reader']> };
 
 export type Tone = 'ok' | 'reward' | 'heads_up' | 'refused' | 'system' | 'undo' | 'read';
 
