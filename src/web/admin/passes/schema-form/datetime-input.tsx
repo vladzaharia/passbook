@@ -56,7 +56,8 @@ export function DateTimeInput({
     <div className="flex flex-col gap-2">
       {none ? null : (
         <>
-          <div className="flex flex-col gap-2 md:flex-row">
+          {/* Wraps rather than widening a narrow column (the designer's Relevance pane). */}
+          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap">
             <input
               {...control}
               type="datetime-local"

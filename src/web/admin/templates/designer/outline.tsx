@@ -89,7 +89,7 @@ export function Outline() {
   const next = () => n++;
   return (
     <nav aria-label="Structure">
-      <ul className="grid gap-2">
+      <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
         <Disclosure section="template" index={next()}>
           <TemplateSection />
         </Disclosure>
