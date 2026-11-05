@@ -41,8 +41,8 @@ import {
   isDirty,
   validSelection,
 } from './reducer.ts';
-import { SavedCallout } from './saved-callout.tsx';
 import { useSaveFlow } from './save-flow.ts';
+import { SavedCallout } from './saved-callout.tsx';
 import './designer.css';
 
 /** A template that cannot be changed: the card and its issues stay, the structure is inert. */

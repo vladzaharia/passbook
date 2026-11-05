@@ -2,8 +2,8 @@ import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type SessionResponse, SessionResponseSchema } from '@/shared/contracts/session.ts';
 import { NEXT_COOKIE, NEXT_COOKIE_PATH, safeNextPath } from '@/shared/next.ts';
 import { api } from './api.ts';
-import { clearLocalDrafts } from './local-drafts.ts';
 import { problemToError } from './errors.ts';
+import { clearLocalDrafts } from './local-drafts.ts';
 import { loginHref } from './redirect.ts';
 
 export type AuthedSession = Extract<SessionResponse, { authenticated: true }>;

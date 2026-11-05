@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { contrast, contrastWarnings, parseColor, toHex, toRgbText } from './contrast.ts';
 import { slotNeeds } from '../../passes/detail/image-slots.ts';
+import { contrast, contrastWarnings, parseColor, toHex, toRgbText } from './contrast.ts';
 import { clearDraft, loadDraft, saveDraft } from './drafts.ts';
 import { sampleDoc } from './fixtures.ts';
 import { assetsPayload, placeImage, previewAssetMap, readPng } from './images.ts';

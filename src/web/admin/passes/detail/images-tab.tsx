@@ -16,8 +16,8 @@ import {
 } from '../../../ui/index.ts';
 import { usePassActions, usePassAssets } from '../api.ts';
 import { checkPng, MAX_ASSET_BYTES } from '../png.ts';
-import { fitScale, SLOT_LABEL, slotNeeds, usedSlots } from './image-slots.ts';
 import { ImageSlotRow } from './image-slot-row.tsx';
+import { fitScale, SLOT_LABEL, slotNeeds, usedSlots } from './image-slots.ts';
 
 const KB = 1024;
 const SOFT_LIMIT = 200 * KB;
