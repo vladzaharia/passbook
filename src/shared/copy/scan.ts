@@ -54,6 +54,8 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
     headline: 'Being scanned',
     sub: 'Another scanner has this pass. Scan again in a moment.',
   },
+  still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}' },
+  not_inside: { headline: 'Not tapped in', sub: 'No entry recorded.' },
   choose: { headline: 'Choose an action', sub: 'Pick what to do with this pass.' },
   network: { headline: 'No connection', sub: "Scan again. It won't count twice." },
   timeout: { headline: 'No answer', sub: "Scan again. It won't count twice." },

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { NfcStatusSchema, VasKeySchema } from './nfc.ts';
 import {
+  SCAN_HEADS_UP_REASONS,
   ScanActRequestSchema,
   ScanAdminScopeSchema,
   ScanCardSchema,
   ScanOutcomeSchema,
+  ScanReasonSchema,
   ScanUndoRequestSchema,
   TimeZoneSchema,
   UuidV7Schema,
@@ -358,5 +360,14 @@ describe('requests', () => {
     expect(TimeZoneSchema.safeParse('Europe/Berlin').success).toBe(true);
     expect(TimeZoneSchema.safeParse('Mars/Olympus').success).toBe(false);
     expect(ScanAdminScopeSchema.safeParse({ orgId: id, timeZone: 'nope' }).success).toBe(false);
+  });
+});
+
+describe('occupancy reasons', () => {
+  it('lists still_inside and not_inside as heads-up reasons the schema accepts', () => {
+    for (const r of ['still_inside', 'not_inside'] as const) {
+      expect(SCAN_HEADS_UP_REASONS).toContain(r);
+      expect(ScanReasonSchema.safeParse(r).success).toBe(true);
+    }
   });
 });

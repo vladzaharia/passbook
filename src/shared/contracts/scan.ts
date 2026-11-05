@@ -74,6 +74,8 @@ export const SCAN_HEADS_UP_REASONS = [
   'needs_approval',
   'stale',
   'in_progress',
+  'still_inside',
+  'not_inside',
 ] as const;
 export const ScanReasonSchema = z.enum([
   ...SCAN_REFUSED_REASONS,

@@ -41,6 +41,18 @@ describe('SCAN_COPY', () => {
     expect(SCAN_COPY.verdict.access.headline).toBe('Access granted');
   });
 
+  it('has occupancy reasons with one default line each', () => {
+    expect(SCAN_REASON_COPY.still_inside).toEqual({
+      headline: 'Already in',
+      sub: 'Since {time} · {scanner}',
+    });
+    expect(SCAN_REASON_COPY.not_inside).toEqual({
+      headline: 'Not tapped in',
+      sub: 'No entry recorded.',
+    });
+    expect(SCAN_REASON_COPY.capacity_full.headline).toBe('Event full');
+  });
+
   it('says what a screen is when it calls a scan route', () => {
     expect(SCAN_COPY.boot.screenOnlyTitle).toBe('This device is a screen.');
     expect(SCAN_COPY.boot.screenOnlyLine).toBe('Ask an admin to change it.');
