@@ -1,5 +1,8 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
-import { Button, IconButton, SwitchRow } from '../../../ui/index.ts';
+import { useState } from 'react';
+import { removeWithTransition } from '../../../lib/motion.ts';
+import { Button, IconButton, SwitchRow, toast } from '../../../ui/index.ts';
+import { inputUses } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { NameEdit, PickEdit, TextEdit } from './controls.tsx';
 import {
@@ -86,8 +89,25 @@ const exprOptions = (specs: InputSpec[]) => [
   ...scalarInputs(specs).map((s) => ({ value: `{{${s.name}}}`, label: s.label })),
 ];
 
+/** What removing the input takes with it, in one line. */
+function usedBy(uses: { fields: number; messaging: boolean }): string {
+  const parts = [
+    ...(uses.fields > 0 ? [`${uses.fields} ${uses.fields === 1 ? 'field' : 'fields'}`] : []),
+    ...(uses.messaging ? ['Messages'] : []),
+  ];
+  return `Used by ${parts.join(' and ')}. Remove?`;
+}
+
 export function InputsSection() {
-  const { doc, edit, state, select } = useDesigner();
+  const { doc, edit, state, select, dispatch } = useDesigner();
+  const [confirm, setConfirm] = useState<string | null>(null);
+  function remove(spec: InputSpec) {
+    setConfirm(null);
+    removeWithTransition(() => {
+      edit({ op: 'input-remove', name: spec.name });
+      toast.undo(`${spec.label} removed`, () => dispatch({ type: 'undo' }));
+    });
+  }
   const specs = readInputs(doc.manifest);
   const names = specs.map((s) => s.name);
   const open = state.select.section === 'inputs' ? state.select.key : undefined;
@@ -107,6 +127,7 @@ export function InputsSection() {
         {specs.map((spec, i) => (
           <li
             key={spec.name}
+            data-row-id={`input:${spec.name}`}
             className="dz-row"
             data-new={added?.key === spec.name ? added.n : undefined}
             data-open={open === spec.name || undefined}
@@ -148,9 +169,26 @@ export function InputsSection() {
                 icon={<Trash2 aria-hidden />}
                 variant="ghost"
                 size="sm"
-                onClick={() => edit({ op: 'input-remove', name: spec.name })}
+                onClick={() => {
+                  const uses = inputUses(doc.manifest, spec.name);
+                  if (uses.fields > 0 || uses.messaging) setConfirm(spec.name);
+                  else remove(spec);
+                }}
               />
             </div>
+            {confirm === spec.name ? (
+              <div role="alert" className="flex flex-wrap items-center gap-2 px-1 pt-2 pb-1">
+                <span className="min-w-0 flex-1 text-sm text-fg-strong">
+                  {usedBy(inputUses(doc.manifest, spec.name))}
+                </span>
+                <Button size="sm" variant="outline" onClick={() => setConfirm(null)}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={() => remove(spec)}>
+                  Remove
+                </Button>
+              </div>
+            ) : null}
             {open === spec.name ? <InputEditor spec={spec} names={names} /> : null}
           </li>
         ))}

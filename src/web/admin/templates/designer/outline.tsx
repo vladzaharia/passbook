@@ -1,9 +1,11 @@
 import { ChevronRight } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
+import { useChangeCount } from '../../../lib/motion.ts';
 import { Badge } from '../../../ui/index.ts';
 import { useDesigner } from './context.tsx';
 import { readInputs } from './inputs.ts';
 import {
+  type DraftAsset,
   fieldsOf,
   type GroupId,
   groupsFor,
@@ -20,6 +22,16 @@ import { InputsSection } from './section-inputs.tsx';
 import { RelevanceSection } from './section-relevance.tsx';
 import { StyleSection } from './section-style.tsx';
 import { TemplateSection } from './section-template.tsx';
+
+/** The count pops when it changes, not when the page opens. */
+function Count({ n }: { n: number }) {
+  const changes = useChangeCount(n);
+  return (
+    <Badge key={changes} className={changes > 0 ? 'dz-count' : undefined}>
+      {n}
+    </Badge>
+  );
+}
 
 function Disclosure({
   section,
@@ -52,11 +64,7 @@ function Disclosure({
         >
           <ChevronRight aria-hidden className="dz-chevron size-4 shrink-0" />
           <span className="min-w-0 flex-1 truncate text-left">{sectionLabel(section)}</span>
-          {count !== undefined ? (
-            <Badge key={count} className="dz-count">
-              {count}
-            </Badge>
-          ) : null}
+          {count !== undefined ? <Count n={count} /> : null}
         </button>
       </h2>
       {open ? (
@@ -67,6 +75,10 @@ function Disclosure({
     </li>
   );
 }
+
+/** Image slots with a file of their own, whatever the scales. */
+const filledSlots = (assets: readonly DraftAsset[]): number =>
+  new Set(assets.filter((a) => a.slot && !a.name.includes('/')).map((a) => a.slot)).size;
 
 /** The structure of the template: one section per concern; the open one is its inspector. */
 export function Outline() {
@@ -87,11 +99,7 @@ export function Outline() {
         <Disclosure section="colors" index={next()}>
           <ColorsSection />
         </Disclosure>
-        <Disclosure
-          section="images"
-          index={next()}
-          count={doc.assets.filter((a) => a.name.endsWith('.png')).length}
-        >
+        <Disclosure section="images" index={next()} count={filledSlots(doc.assets)}>
           <ImagesSection />
         </Disclosure>
         {groups.map((g: GroupId) => (
