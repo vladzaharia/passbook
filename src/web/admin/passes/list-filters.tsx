@@ -43,6 +43,7 @@ export function PassListFilters({
         { value: ANY, label: 'All' },
         { value: 'active', label: 'Active' },
         { value: 'voided', label: 'Voided' },
+        { value: 'removed', label: 'Removed' },
       ],
       onChange: (v) => onChange({ status: pick(v) }),
     },

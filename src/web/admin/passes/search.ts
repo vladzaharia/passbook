@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PassListStatusSchema } from '@/shared/contracts/passes.ts';
 
 /** Unknown or malformed values fall away instead of breaking the page. */
 const opt = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined);
@@ -8,7 +9,7 @@ export const passListSearchSchema = z.object({
   orgId: opt(z.string()),
   templateId: opt(z.string()),
   connectionId: opt(z.string()),
-  status: opt(z.enum(['active', 'voided'])),
+  status: opt(PassListStatusSchema),
   holderState: opt(z.enum(['unassigned', 'waiting', 'owned'])),
   onDevice: opt(z.enum(['true', 'false'])),
 });

@@ -238,6 +238,16 @@ const CAUSE_LABEL: Record<string, string> = {
   resign: 'Re-signed',
 };
 
+/** Why a version was published, when it says more than its cause. */
+const SOURCE_LABEL: Record<string, string> = {
+  broadcast: 'Message',
+  schedule: 'Scheduled change',
+  remove: 'Removed from Wallet',
+  restore: 'Restored',
+  scan: 'Scan',
+  designer: 'Designer',
+};
+
 const DELIVERY_KIND_LABEL: Record<string, string> = { push: 'Push', email: 'Email' };
 
 type SignInMethod = z.infer<typeof SignInMethodSchema>;
@@ -255,5 +265,8 @@ export const signInMethodLabel = (key: string): string =>
   SIGN_IN_METHOD[key as SignInMethod] ?? humanizeStatus(key);
 
 export const causeLabel = (key: string): string => CAUSE_LABEL[key] ?? humanizeStatus(key);
+/** A version's label: its source when it has one ("Message"), else its cause ("Admin edit"). */
+export const versionLabel = (v: { cause: string; source?: string | null | undefined }): string =>
+  v.source ? (SOURCE_LABEL[v.source] ?? humanizeStatus(v.source)) : causeLabel(v.cause);
 export const deliveryKindLabel = (key: string): string =>
   DELIVERY_KIND_LABEL[key] ?? humanizeStatus(key);

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { ENTITY } from '../../lib/entities.ts';
 import {
   Button,
   Card,
@@ -147,7 +148,7 @@ export function BundlesCard({
           <Skeleton className="h-10 w-full" />
         </CardBody>
       ) : items.length === 0 ? (
-        <EmptyState inline art="passes" title="Not in a bundle" />
+        <EmptyState inline art={ENTITY.bundle.art} title="Not in a bundle" />
       ) : (
         <CardBody>
           <ListRows label="Bundles">

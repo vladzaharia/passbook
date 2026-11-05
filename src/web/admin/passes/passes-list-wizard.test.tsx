@@ -60,6 +60,21 @@ describe('passes list', () => {
     await waitFor(() => expect(router.state.location.search).toEqual({}));
   });
 
+  it('filters to passes removed from Wallet', async () => {
+    const seen: URL[] = [];
+    await renderApp('/admin/passes?status=removed', {
+      session: 'admin',
+      handlers: baseHandlers({
+        '/api/v1/passes': (url) => {
+          seen.push(url);
+          return json({ items: [passSummary()], nextCursor: null });
+        },
+      }),
+    });
+    await screen.findByRole('link', { name: 'Sam Jones' });
+    expect(seen[0]?.searchParams.get('status')).toBe('removed');
+  });
+
   it('debounces search into the URL and the query', async () => {
     const user = userEvent.setup();
     const seen: URL[] = [];

@@ -2,7 +2,7 @@ import { ArrowRight, Eye } from 'lucide-react';
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { formatDateTime } from '../../../lib/format.ts';
-import { causeLabel } from '../../../lib/status.ts';
+import { versionLabel } from '../../../lib/status.ts';
 import { LayersArt } from '../../../ui/art/layers.tsx';
 import {
   Badge,
@@ -102,7 +102,7 @@ export function VersionsTab({
                     {v.purged ? <Badge>Purged</Badge> : null}
                   </>
                 }
-                meta={`${causeLabel(v.cause)} · ${formatDateTime(v.createdAt)}`}
+                meta={`${versionLabel(v)} · ${formatDateTime(v.createdAt)}`}
                 trailing={
                   v.version === showing ? (
                     <StatusPill status="showing" />
