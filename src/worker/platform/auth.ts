@@ -56,6 +56,10 @@ export interface ScannerAuth {
   transport: 'cookie' | 'bearer';
   /** Cookie transport only. */
   csrfSecret: string | null;
+  /** `scanners.kind`: a display never scans, a terminal always does. */
+  scannerKind: 'device' | 'terminal' | 'display';
+  /** `scanners.device_role`: what the device does now. Only `scan` reaches the scan routes. */
+  deviceRole: 'scan' | 'customer' | 'monitor';
 }
 
 export type AuthContext = SessionAuth | ApiKeyAuth | ScannerAuth;
@@ -73,7 +77,8 @@ export interface ApiKeyStore {
 /**
  * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner
  * was revoked or has expired throws a 401 with code SCANNER_REVOKED or SCANNER_EXPIRED, so the
- * device can say why.
+ * device can say why. Revoking sets `revoked_at` and keeps the token columns, and expiry is
+ * `expires_at` (or idle time), so the token still matches and the reason survives.
  */
 export interface ScannerStore {
   resolve(

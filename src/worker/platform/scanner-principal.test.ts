@@ -25,6 +25,8 @@ const scannerAuth: ScannerAuth = {
   mode: 'live',
   transport: 'cookie',
   csrfSecret: 'secret',
+  scannerKind: 'device',
+  deviceRole: 'scan',
 };
 
 function guarded(fake = fakeAuth(ORIGIN)) {

@@ -519,6 +519,57 @@ describe('0014_scan migration', () => {
     await insertScanner(org.id, { token_prefix: 'abcd1234', token_hash: 'h', csrf_secret: 's' });
   });
 
+  it('splits devices, terminals and displays by device role', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await expect(insertScanner(org.id, { name: 'N1', kind: 'display' })).rejects.toThrow();
+    await expect(
+      insertScanner(org.id, { name: 'N2', kind: 'display', device_role: 'scan' }),
+    ).rejects.toThrow();
+    await insertScanner(org.id, {
+      name: 'N3',
+      kind: 'display',
+      device_role: 'customer',
+      csrf_secret: 's',
+    });
+    await insertScanner(org.id, { name: 'N4', kind: 'display', device_role: 'monitor' });
+    await expect(
+      insertScanner(org.id, { name: 'N5', kind: 'terminal', device_role: 'customer' }),
+    ).rejects.toThrow();
+    await expect(
+      insertScanner(org.id, { name: 'N6', kind: 'terminal', csrf_secret: 's' }),
+    ).rejects.toThrow();
+    await insertScanner(org.id, { name: 'N7', id: 'sc-role', kind: 'device' });
+    const row = await first<{ device_role: string }>(
+      env.DB,
+      "SELECT device_role FROM scanners WHERE id = 'sc-role'",
+    );
+    expect(row?.device_role).toBe('scan');
+  });
+
+  it('keeps audit rows and the id sequence through the rebuild', async () => {
+    const migration = env.TEST_MIGRATIONS.find((m) => m.name.startsWith('0014'));
+    const queries = migration?.queries ?? [];
+    const from = queries.findIndex((q) => /CREATE TABLE audit_log_next/.test(q));
+    expect(from).toBeGreaterThan(-1);
+    for (const at of [1, 2, 3])
+      await run(
+        env.DB,
+        "INSERT INTO audit_log (at, actor_type, action) VALUES (?, 'system', 'x.test')",
+        [at],
+      );
+    const before = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
+    for (const q of queries.slice(from)) await env.DB.prepare(q).run();
+    const after = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
+    expect(after).toEqual(before);
+    await run(
+      env.DB,
+      "INSERT INTO audit_log (at, actor_type, action) VALUES (4, 'system', 'x.test')",
+    );
+    const last = await first<{ id: number }>(env.DB, 'SELECT MAX(id) AS id FROM audit_log');
+    expect(last?.id).toBe((before.at(-1)?.id ?? 0) + 1);
+  });
+
   it("clears a scanner's event when the event is deleted", async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);

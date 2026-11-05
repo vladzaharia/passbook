@@ -26,13 +26,17 @@ export interface FakeAuth {
   user(userId?: string): Record<string, string>;
   /**
    * Headers for a paired scanner: a cookie device (with CSRF token and same-origin hints) or a
-   * bearer terminal.
+   * bearer terminal. Only the principal is faked. `requireScanActor` also reads the `scanners` row,
+   * so a test that goes through the guard seeds one with `makeScanner`, which is the frozen helper
+   * for scan tests, and uses its headers.
    */
   scanner(options?: {
     scannerId?: string;
     orgId?: string;
     mode?: Mode;
     transport?: 'cookie' | 'bearer';
+    kind?: ScannerAuth['scannerKind'];
+    deviceRole?: ScannerAuth['deviceRole'];
     origin?: string;
   }): Record<string, string>;
   /** Headers for a bearer API key. */
@@ -103,11 +107,30 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
       orgId = 'org-1',
       mode = 'live' as Mode,
       transport = 'cookie' as 'cookie' | 'bearer',
+      kind = transport === 'bearer' ? 'terminal' : 'device',
+      deviceRole = 'scan',
       origin: o = origin,
+    }: {
+      scannerId?: string;
+      orgId?: string;
+      mode?: Mode;
+      transport?: 'cookie' | 'bearer';
+      kind?: ScannerAuth['scannerKind'];
+      deviceRole?: ScannerAuth['deviceRole'];
+      origin?: string;
     } = {}) {
       const token = `wls_${String(++n).padStart(8, 'f')}_${'A'.repeat(43)}`;
       const csrfSecret = transport === 'cookie' ? `fake-scan-csrf-${n}` : null;
-      scanners.set(token, { kind: 'scanner', scannerId, orgId, mode, transport, csrfSecret });
+      scanners.set(token, {
+        kind: 'scanner',
+        scannerId,
+        orgId,
+        mode,
+        transport,
+        csrfSecret,
+        scannerKind: kind,
+        deviceRole,
+      });
       const headers: Record<string, string> =
         transport === 'bearer'
           ? { authorization: `Bearer ${token}` }

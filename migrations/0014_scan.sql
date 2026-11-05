@@ -52,7 +52,8 @@ CREATE TABLE scanners (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
   mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
-  kind TEXT NOT NULL CHECK (kind IN ('device', 'terminal')),
+  kind TEXT NOT NULL CHECK (kind IN ('device', 'terminal', 'display')),  -- a display never scans; a terminal always does
+  device_role TEXT NOT NULL DEFAULT 'scan' CHECK (device_role IN ('scan', 'customer', 'monitor')),
   name TEXT NOT NULL,
   event_id TEXT REFERENCES scan_events (id) ON DELETE SET NULL,
   settings TEXT NOT NULL CHECK (json_valid(settings)),
@@ -76,7 +77,9 @@ CREATE TABLE scanners (
   updated_at INTEGER NOT NULL,
   revoked_at INTEGER,
   CHECK ((token_hash IS NULL) = (token_prefix IS NULL)),
-  CHECK (kind = 'device' OR csrf_secret IS NULL)
+  CHECK (kind <> 'terminal' OR csrf_secret IS NULL),
+  CHECK (kind <> 'terminal' OR device_role = 'scan'),
+  CHECK (kind <> 'display' OR device_role <> 'scan')
 );
 CREATE UNIQUE INDEX scanners_org_name ON scanners (org_id, mode, name COLLATE NOCASE) WHERE revoked_at IS NULL;
 CREATE INDEX scanners_org ON scanners (org_id, mode, id DESC);

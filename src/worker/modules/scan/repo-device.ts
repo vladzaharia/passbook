@@ -8,7 +8,8 @@ export interface ScannerRow {
   id: string;
   orgId: string;
   mode: Mode;
-  kind: 'device' | 'terminal';
+  kind: 'device' | 'terminal' | 'display';
+  deviceRole: 'scan' | 'customer' | 'monitor';
   name: string;
   eventId: string | null;
   settings: string;
@@ -30,7 +31,8 @@ interface Raw {
   id: string;
   org_id: string;
   mode: Mode;
-  kind: 'device' | 'terminal';
+  kind: 'device' | 'terminal' | 'display';
+  device_role: 'scan' | 'customer' | 'monitor';
   name: string;
   event_id: string | null;
   settings: string;
@@ -48,7 +50,7 @@ interface Raw {
   updated_at: number;
 }
 
-const COLUMNS = `id, org_id, mode, kind, name, event_id, settings, time_zone, token_prefix, token_hash,
+const COLUMNS = `id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
   csrf_secret, paired_at, expires_at, last_seen_at, revoked_at, staff_id, staff_since, staff_seen_at, updated_at`;
 
 const toRow = (r: Raw): ScannerRow => ({
@@ -56,6 +58,7 @@ const toRow = (r: Raw): ScannerRow => ({
   orgId: r.org_id,
   mode: r.mode,
   kind: r.kind,
+  deviceRole: r.device_role,
   name: r.name,
   eventId: r.event_id,
   settings: r.settings,
@@ -85,7 +88,7 @@ export async function getScanner(db: Db, id: string): Promise<ScannerRow | null>
   return row ? toRow(row) : null;
 }
 
-/** Writes only when the last touch is older than `everyMs`, so a busy door costs one write a minute. */
+/** Callers skip the call inside `everyMs` of the last touch; the WHERE keeps it safe against races. */
 export async function touchScanner(
   db: Db,
   id: string,

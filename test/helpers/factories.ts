@@ -392,7 +392,8 @@ export async function makeScanner(
   options: {
     orgId: string;
     mode?: 'live' | 'test';
-    kind?: 'device' | 'terminal';
+    kind?: 'device' | 'terminal' | 'display';
+    deviceRole?: 'scan' | 'customer' | 'monitor';
     eventId?: string | null;
     templateIds?: string[];
     settings?: Record<string, unknown>;
@@ -413,17 +414,19 @@ export async function makeScanner(
     .replace(/[^A-Za-z0-9]/g, '')
     .slice(0, 8);
   const token = `wls_${prefix}_${f.ids.token(32)}`;
-  const csrf = kind === 'device' ? f.ids.token() : null;
+  const csrf = kind === 'terminal' ? null : f.ids.token();
+  const deviceRole = options.deviceRole ?? (kind === 'display' ? 'customer' : 'scan');
   await run(
     f.env.DB,
-    `INSERT INTO scanners (id, org_id, mode, kind, name, event_id, settings, time_zone, token_prefix, token_hash,
+    `INSERT INTO scanners (id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
        csrf_secret, paired_at, expires_at, last_seen_at, staff_id, staff_since, staff_seen_at, created_at, updated_at, revoked_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'UTC', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UTC', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       options.orgId,
       options.mode ?? 'live',
       kind,
+      deviceRole,
       `Scanner ${id.slice(-6)}`,
       options.eventId ?? null,
       JSON.stringify({ ...DEFAULT_SCANNER_SETTINGS, ...options.settings }),
