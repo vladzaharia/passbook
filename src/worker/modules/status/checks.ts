@@ -158,7 +158,7 @@ export function identityComponent(
   if (pushMethod === 'none') {
     if (bindingNamed) lower('degraded', `APNs binding ${row.apns_binding} is missing.`);
     else lower('configured', 'Push unavailable: no APNs binding or push key.');
-  } else if (row.apns_health === 'failing') lower('degraded', 'APNs is failing.');
+  } else if (row.apns_health === 'failing') lower('failing', 'APNs is failing.');
   else if (row.apns_health === 'unknown') lower('configured', 'APNs not verified.');
   return {
     id: `identity:${row.id}`,

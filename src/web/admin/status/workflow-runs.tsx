@@ -26,7 +26,10 @@ export function runLink(r: Run): { to: string; search?: Record<string, string> }
   if (r.kind === 'connection_sync') return { to: `/admin/connections/${r.targetId}` };
   if (r.kind === 'template_import' && r.targetId === r.instanceId)
     return { to: '/admin/templates/upload', search: { upload: r.instanceId } };
-  return { to: `/admin/templates/${r.targetId}` };
+  if (r.kind === 'broadcast') return { to: `/admin/messages/${r.targetId}` };
+  if (r.kind === 'template_import' || r.kind === 'bulk_reissue')
+    return { to: `/admin/templates/${r.targetId}` };
+  return undefined;
 }
 
 export function WorkflowRuns({ orgName }: { orgName: (id: string | null) => string | undefined }) {
@@ -47,7 +50,6 @@ export function WorkflowRuns({ orgName }: { orgName: (id: string | null) => stri
           caption="Workflow runs"
           bare
           className="[&_td:first-child]:pl-4 [&_td:last-child]:pr-4 [&_th:first-child]:pl-4 [&_th:last-child]:pr-4"
-          stack={false}
           data={runs.data.items}
           getRowId={(r) => r.instanceId}
           empty={<EmptyState inline art="runs" title="No workflow runs" />}
