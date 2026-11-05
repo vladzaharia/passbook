@@ -20,7 +20,7 @@ curl https://passbook.mobile/api/v1/passes \
 | `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
-| `messages:write` | broadcasts: list, read, create, preview, send, cancel. A `change` also needs `passes:write` |
+| `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 
 An org-bound key only sees its own org. Admin-only routes (orgs, users, identities, settings,
 audit, connections, api-keys, test-inbox) need an admin session; keys get 401 or 403.
@@ -101,7 +101,11 @@ POST /api/v1/holders/unassign      { "passId": "…" }
   on templates with `manifest.messaging`; an empty text clears it. `send` is `draft`, `now` or `schedule` (with
   `at`); `clearAfter` (ms) clears a message later. `POST /broadcasts/preview` counts a target first.
   `POST /broadcasts/{id}/send` sends a draft, `POST /broadcasts/{id}/cancel` stops a draft or schedule.
-  Progress is in `GET /broadcasts/{id}` (`state`, `counts`).
+  `PATCH /broadcasts/{id}` edits a draft or a scheduled message that has not started (same body as
+  create). `POST /broadcasts/{id}/retry` sends a failed, partial or cancelled message again as a new
+  one in the same mode. Send, cancel, edit and retry act on the caller's mode only (404 otherwise).
+  Progress is in `GET /broadcasts/{id}` (`state`, `counts`, `errorCode`);
+  `GET /broadcasts/{id}/items?outcome=` lists the passes it reached.
 - A pass notifies its holder at most `push.budgetPerDay` times (default 3) in 24 h; later changes publish
   silently. `GET /passes/{id}` has `pushBudget` (`used`, `limit`, `resetsAt`). An update that leaves the pass
   unchanged is never pushed.

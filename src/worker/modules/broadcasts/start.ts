@@ -1,6 +1,15 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { startRun } from '../../platform/workflow-runs.ts';
-import { type BroadcastRow, casState, dueBroadcasts, sendingSince } from './repo.ts';
+import { orgIsActive } from '../orgs/repo.ts';
+import {
+  type BroadcastRow,
+  casState,
+  dueBroadcasts,
+  getBroadcast,
+  markChecked,
+  sendingSince,
+} from './repo.ts';
+import { creatorIsActive } from './repo-creator.ts';
 import { finishBroadcast } from './run.ts';
 
 export interface BroadcastParams {
@@ -16,6 +25,15 @@ function alreadyExists(error: unknown): boolean {
   return error instanceof Error && /already.?exist|instance.*exists/i.test(error.message);
 }
 
+/** Why a broadcast must not run: its org was suspended or its creating key or admin was revoked. */
+async function launchBlocker(ctx: ServiceContext, id: string): Promise<string | null> {
+  const row = await getBroadcast(ctx.env.DB, id, null);
+  if (!row) return 'BROADCAST_NOT_FOUND';
+  if (!(await orgIsActive(ctx.env.DB, row.org_id))) return 'ORG_INACTIVE';
+  const live = await creatorIsActive(ctx.env.DB, row, ctx.clock.now());
+  return live ? null : 'CREATOR_REVOKED';
+}
+
 /**
  * Moves a scheduled broadcast to sending (compare-and-swap: one caller wins) and starts its
  * Workflow. If the Workflow cannot start, the broadcast goes back to scheduled for the next tick.
@@ -28,6 +46,15 @@ export async function launchBroadcast(
   if (!(await casState(db, row.id, ['scheduled'], 'sending', { startedAt: ctx.clock.now() })))
     return false;
   const instanceId = instanceIdOf(row.id);
+  const blocked = await launchBlocker(ctx, row.id);
+  if (blocked) {
+    ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: blocked });
+    await casState(db, row.id, ['sending'], 'failed', {
+      finishedAt: ctx.clock.now(),
+      errorCode: blocked,
+    });
+    return false;
+  }
   try {
     await startRun(
       db,
@@ -80,7 +107,10 @@ export async function failStuckBroadcasts(ctx: ServiceContext): Promise<void> {
   const stuck = await sendingSince(ctx.env.DB, ctx.clock.now() - STUCK_AFTER_MS, DUE_BATCH);
   for (const row of stuck) {
     const instanceId = instanceIdOf(row.id);
-    if (!(await instanceEnded(ctx, instanceId))) continue;
+    if (!(await instanceEnded(ctx, instanceId))) {
+      await markChecked(ctx.env.DB, row.id, ctx.clock.now());
+      continue;
+    }
     ctx.log.error('broadcast.stuck', { broadcastId: row.id, code: 'BROADCAST_STUCK' });
     await finishBroadcast(ctx, instanceId, row.id, 'BROADCAST_FAILED');
   }

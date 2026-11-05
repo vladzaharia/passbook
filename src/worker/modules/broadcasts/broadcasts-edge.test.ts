@@ -177,6 +177,7 @@ describe('stuck broadcasts', () => {
     expect((await dto(await api(`/broadcasts/${made.id}`, { headers: fake.admin() }))).state).toBe(
       'sending',
     );
+    kit.clock.advance(6 * 60_000);
     instanceStatus('complete');
     await failStuckBroadcasts(kit.ctx);
     const failed = await dto(await api(`/broadcasts/${made.id}`, { headers: fake.admin() }));

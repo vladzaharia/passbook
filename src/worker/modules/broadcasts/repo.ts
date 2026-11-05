@@ -1,17 +1,8 @@
+import type { BroadcastKind, BroadcastState } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, first, placeholders, run, stmt } from '../../platform/db.ts';
-import { notifiedWhere } from '../passes/repo-budget.ts';
-import { type PassListFilter, passFilterSql } from '../passes/repo-list.ts';
 
-export type BroadcastKind = 'message' | 'change';
-export type BroadcastState =
-  | 'draft'
-  | 'scheduled'
-  | 'sending'
-  | 'sent'
-  | 'partial'
-  | 'failed'
-  | 'cancelled';
+export type { BroadcastKind, BroadcastState };
 
 export interface BroadcastRow {
   id: string;
@@ -34,6 +25,7 @@ export interface BroadcastRow {
   created_at: number;
   started_at: number | null;
   finished_at: number | null;
+  checked_at: number | null;
 }
 
 export interface NewBroadcast {
@@ -165,13 +157,56 @@ export const dueBroadcasts = (db: D1Database, now: number, limit: number) =>
     [now, limit],
   );
 
-/** Broadcasts that have been sending since before `before`: a workflow may have died under them. */
+/**
+ * Broadcasts that have been sending since before `before` and not checked since: a workflow may
+ * have died under them. Least recently checked first, so a few long sends never hide a dead one.
+ */
 export const sendingSince = (db: D1Database, before: number, limit: number) =>
   all<BroadcastRow>(
     db,
-    `SELECT * FROM broadcasts WHERE state = 'sending' AND started_at < ? ORDER BY started_at LIMIT ?`,
+    `SELECT * FROM broadcasts WHERE state = 'sending' AND COALESCE(checked_at, started_at) < ?
+     ORDER BY COALESCE(checked_at, started_at) LIMIT ?`,
     [before, limit],
   );
+
+export const markChecked = (db: D1Database, id: string, at: number) =>
+  run(db, `UPDATE broadcasts SET checked_at = ? WHERE id = ? AND state = 'sending'`, [at, id]);
+
+export interface BroadcastEdit {
+  name: string;
+  kind: BroadcastKind;
+  target: unknown;
+  patch: unknown;
+  notify: boolean;
+  state: 'draft' | 'scheduled';
+  at: number | null;
+  clearAfter: number | null;
+}
+
+/** Replaces a draft or a scheduled broadcast that has not started. False when it already moved on. */
+export async function updateBroadcast(
+  db: D1Database,
+  id: string,
+  e: BroadcastEdit,
+): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE broadcasts SET name = ?, kind = ?, target = ?, patch = ?, notify = ?, state = ?, at = ?,
+       clear_after = ? WHERE id = ? AND state IN ('draft', 'scheduled')`,
+    [
+      e.name,
+      e.kind,
+      JSON.stringify(e.target),
+      JSON.stringify(e.patch),
+      e.notify ? 1 : 0,
+      e.state,
+      e.at,
+      e.clearAfter,
+      id,
+    ],
+  );
+  return changes === 1;
+}
 
 export const setTargeted = (db: D1Database, id: string, targeted: number) =>
   run(db, 'UPDATE broadcasts SET targeted = ? WHERE id = ?', [targeted, id]);
@@ -232,71 +267,6 @@ export const countItems = (db: D1Database, broadcastIds: readonly string[]) =>
          WHERE broadcast_id IN (${placeholders(broadcastIds.length)}) GROUP BY broadcast_id, outcome, silent`,
         [...broadcastIds],
       );
-
-/** Active, unremoved passes whose current version has not expired. SQLite reads ISO offsets. */
-function targetWhere(filter: PassListFilter, now: number) {
-  const { where, params } = passFilterSql({ ...filter, excludeRemoved: true, status: 'active' });
-  where.push(`NOT COALESCE((SELECT unixepoch(json_extract(v.pass_json, '$.expirationDate')) * 1000 <= ?
-      FROM pass_versions v WHERE v.pass_id = passes.id ORDER BY v.version DESC LIMIT 1), 0)`);
-  return { where, params: [...params, now] };
-}
-
-/** One page of target pass ids, newest first, after `cursor`. */
-export async function targetPage(
-  db: D1Database,
-  filter: PassListFilter,
-  now: number,
-): Promise<{ ids: string[]; nextCursor: string | null }> {
-  const { where, params } = targetWhere(filter, now);
-  const rows = await all<{ id: string }>(
-    db,
-    `SELECT id FROM passes WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
-    [...params, filter.limit],
-  );
-  const ids = rows.map((r) => r.id);
-  return { ids, nextCursor: ids.length === filter.limit ? (ids.at(-1) ?? null) : null };
-}
-
-export interface TargetCounts {
-  targeted: number;
-  onDevice: number;
-  overBudget: number;
-}
-
-/** How many live, unexpired passes a target matches, how many sit on a device, how many are at the limit. */
-export async function countTarget(
-  db: D1Database,
-  filter: PassListFilter,
-  now: number,
-  since: number,
-  limit: number,
-): Promise<TargetCounts> {
-  const { where, params } = targetWhere(filter, now);
-  const row = await first<TargetCounts>(
-    db,
-    `SELECT COUNT(*) AS targeted,
-       COALESCE(SUM(EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = passes.id)), 0) AS onDevice,
-       COALESCE(SUM(id IN (SELECT pass_id FROM pass_events WHERE org_id = ? AND ${notifiedWhere}
-                           GROUP BY pass_id HAVING COUNT(*) >= ?)), 0) AS overBudget
-     FROM passes WHERE ${where.join(' AND ')}`,
-    [filter.orgId ?? '', since, limit, ...params],
-  );
-  return row ?? { targeted: 0, onDevice: 0, overBudget: 0 };
-}
-
-export async function countTargeted(
-  db: D1Database,
-  filter: PassListFilter,
-  now: number,
-): Promise<number> {
-  const { where, params } = targetWhere(filter, now);
-  const row = await first<{ n: number }>(
-    db,
-    `SELECT COUNT(*) AS n FROM passes WHERE ${where.join(' AND ')}`,
-    params,
-  );
-  return row?.n ?? 0;
-}
 
 /** The clearing follow-up of each broadcast that has one. */
 export const followUpsOf = (db: D1Database, parentIds: readonly string[]) =>

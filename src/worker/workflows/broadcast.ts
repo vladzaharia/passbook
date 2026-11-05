@@ -10,7 +10,7 @@ const CHUNK_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'expone
 
 type StepLike = Pick<WorkflowStep, 'do'>;
 
-/** Applies a broadcast in chunks of 100 passes. Owner: broadcasts module. */
+/** Applies a broadcast in chunks of `CHUNK` passes. Owner: broadcasts module. */
 export async function runBroadcast(
   env: AppEnv,
   instanceId: string,

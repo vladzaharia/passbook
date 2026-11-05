@@ -1,4 +1,6 @@
 import {
+  BroadcastItemListQuerySchema,
+  BroadcastItemListSchema,
   BroadcastListQuerySchema,
   BroadcastListSchema,
   BroadcastPreviewBodySchema,
@@ -7,11 +9,13 @@ import {
   CreateBroadcastSchema,
   IdParamSchema,
   SendBroadcastSchema,
+  UpdateBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { actorFor, assertOrg, authOf, orgScopeOf, svc } from '../passes/http.ts';
+import type { BroadcastScope } from './guards.ts';
 import {
   cancelBroadcast,
   createBroadcast,
@@ -20,13 +24,21 @@ import {
   previewTarget,
   sendBroadcast,
 } from './service.ts';
+import { listBroadcastItems, retryBroadcast, updateBroadcast } from './service-edit.ts';
+
+type Ctx = Parameters<typeof authOf>[0];
 
 /** A change edits pass inputs, so an API key needs passes:write beside messages:write. */
-function assertCanChange(c: Parameters<typeof authOf>[0]): void {
+const canChange = (c: Ctx): boolean => {
   const auth = authOf(c);
-  if (auth.kind === 'api_key' && !auth.scopes.includes('passes:write'))
-    throw new ForbiddenError('Changing passes needs the passes:write scope.', 'MISSING_SCOPE');
-}
+  return auth.kind !== 'api_key' || auth.scopes.includes('passes:write');
+};
+
+const scopeOf = (c: Ctx): BroadcastScope => ({
+  orgScope: orgScopeOf(c),
+  mode: modeOf(authOf(c)),
+  canChange: canChange(c),
+});
 
 /** /api/v1/broadcasts: messages and scheduled changes for the passes a target matches. */
 export const broadcastsRoutes = createRouter();
@@ -72,7 +84,8 @@ register(
   async (c) => {
     const body = c.req.valid('json');
     assertOrg(c, body.orgId);
-    if (body.kind === 'change') assertCanChange(c);
+    if (body.kind === 'change' && !canChange(c))
+      throw new ForbiddenError('Changing passes needs the passes:write scope.', 'MISSING_SCOPE');
     return c.json(await createBroadcast(svc(c), actorFor(c), modeOf(authOf(c)), body), 201);
   },
 );
@@ -120,10 +133,7 @@ register(
   },
   async (c) => {
     const { id } = c.req.valid('param');
-    if ((await getBroadcastDto(svc(c), id, orgScopeOf(c))).kind === 'change') assertCanChange(c);
-    return c.json(
-      await sendBroadcast(svc(c), actorFor(c), id, c.req.valid('json').at, orgScopeOf(c)),
-    );
+    return c.json(await sendBroadcast(svc(c), actorFor(c), id, c.req.valid('json').at, scopeOf(c)));
   },
 );
 
@@ -138,5 +148,62 @@ register(
     response: BroadcastSchema,
   },
   async (c) =>
-    c.json(await cancelBroadcast(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
+    c.json(await cancelBroadcast(svc(c), actorFor(c), c.req.valid('param').id, scopeOf(c))),
+);
+
+register(
+  broadcastsRoutes,
+  'broadcasts',
+  {
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Edit a draft or a scheduled message that has not started',
+    params: IdParamSchema,
+    body: UpdateBroadcastSchema,
+    response: BroadcastSchema,
+  },
+  async (c) => {
+    const body = c.req.valid('json');
+    assertOrg(c, body.orgId);
+    return c.json(
+      await updateBroadcast(svc(c), actorFor(c), c.req.valid('param').id, body, scopeOf(c)),
+    );
+  },
+);
+
+register(
+  broadcastsRoutes,
+  'broadcasts',
+  {
+    method: 'post',
+    path: '/{id}/retry',
+    summary: 'Send a failed or cancelled message again, as a new one in the same mode',
+    params: IdParamSchema,
+    status: 201,
+    response: BroadcastSchema,
+  },
+  async (c) =>
+    c.json(await retryBroadcast(svc(c), actorFor(c), c.req.valid('param').id, scopeOf(c)), 201),
+);
+
+register(
+  broadcastsRoutes,
+  'broadcasts',
+  {
+    method: 'get',
+    path: '/{id}/items',
+    summary: 'The passes a message reached: updated, unchanged or failed',
+    params: IdParamSchema,
+    query: BroadcastItemListQuerySchema,
+    response: BroadcastItemListSchema,
+  },
+  async (c) =>
+    c.json(
+      await listBroadcastItems(
+        svc(c),
+        c.req.valid('param').id,
+        orgScopeOf(c),
+        c.req.valid('query'),
+      ),
+    ),
 );
