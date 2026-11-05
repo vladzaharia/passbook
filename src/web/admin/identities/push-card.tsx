@@ -127,13 +127,7 @@ export function PushCard({
         open={removing}
         onOpenChange={setRemoving}
         title="Remove push key?"
-        description={
-          bound
-            ? 'Pushes keep using the certificate binding.'
-            : dependents > 1
-              ? `${dependents} identities of team ${identity.teamIdentifier} lose push until a key or binding is set.`
-              : 'Passes update only when holders refresh in Wallet until a new key or binding is set.'
-        }
+        description={removeCopy(bound, dependents, identity.teamIdentifier)}
         confirmLabel="Remove key"
         destructive
         onConfirm={async () => {
@@ -143,4 +137,14 @@ export function PushCard({
       />
     </Card>
   );
+}
+
+// Unbound: dependents includes this identity. Bound: it counts only the others.
+function removeCopy(bound: boolean, dependents: number, team: string): string {
+  if (dependents > (bound ? 0 : 1)) {
+    const noun = dependents === 1 ? 'identity' : 'identities';
+    return `${dependents} ${noun} of team ${team} lose push until a key or binding is set.`;
+  }
+  if (bound) return 'Pushes keep using the certificate binding.';
+  return 'Passes update only when holders refresh in Wallet until a new key or binding is set.';
 }
