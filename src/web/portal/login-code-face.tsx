@@ -7,7 +7,7 @@ import { api } from '../lib/api.ts';
 import { isApiError } from '../lib/errors.ts';
 import { safeNext } from '../lib/redirect.ts';
 import { Button, Callout, Label } from '../ui/index.ts';
-import { CODE_LENGTH, CodeField } from './code-field.tsx';
+import { CODE_LENGTH, CodeField } from '../ui/code-field.tsx';
 import { goTo } from './goto.ts';
 import { type SignInError, signInError } from './login-errors.ts';
 import { failure, type SceneActions } from './login-scene.tsx';
