@@ -8,7 +8,7 @@ import { requireAdmin } from '../../platform/auth.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction } from './bulk-actions.ts';
-import { actorFor, assertOrg, orgScopeOf, svc } from './http.ts';
+import { actorFor, assertOrg, passScopeOf, svc } from './http.ts';
 
 /** Many-pass actions: void, email or remove a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
@@ -27,7 +27,7 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
     async (c) => {
       const body = c.req.valid('json');
       if (body.orgId) assertOrg(c, body.orgId);
-      return c.json(await bulkPassAction(svc(c), actorFor(c), body, orgScopeOf(c)));
+      return c.json(await bulkPassAction(svc(c), actorFor(c), body, passScopeOf(c)));
     },
   );
 

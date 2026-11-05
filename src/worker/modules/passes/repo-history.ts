@@ -1,4 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import { type PassSource, PassSourceSchema } from '../../../shared/contracts/passes.ts';
 import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
 import type { PassCause } from './repo-map.ts';
 
@@ -6,6 +7,7 @@ export interface VersionRow {
   version: number;
   templateVersion: string;
   cause: PassCause;
+  source: PassSource | null;
   actorType: string | null;
   actorId: string | null;
   createdAt: number;
@@ -18,6 +20,7 @@ interface VersionDbRow {
   version: number;
   template_version: string;
   cause: PassCause;
+  source: string | null;
   actor_type: string | null;
   actor_id: string | null;
   created_at: number;
@@ -30,6 +33,7 @@ const mapVersion = (r: VersionDbRow): VersionRow => ({
   version: r.version,
   templateVersion: r.template_version,
   cause: r.cause,
+  source: PassSourceSchema.safeParse(r.source).data ?? null,
   actorType: r.actor_type,
   actorId: r.actor_id,
   createdAt: r.created_at,

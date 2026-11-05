@@ -1,6 +1,7 @@
 import type { BroadcastKind, BroadcastState } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 
 export type { BroadcastKind, BroadcastState };
 
@@ -74,13 +75,13 @@ export function insertBroadcastStmt(db: D1Database, b: NewBroadcast): D1Prepared
   );
 }
 
-/** `orgScope` null = platform-wide. A broadcast outside the scope reads as missing. Either mode. */
-export const getBroadcast = (db: D1Database, id: string, orgScope: string | null) =>
-  first<BroadcastRow>(db, 'SELECT * FROM broadcasts WHERE id = ? AND (? IS NULL OR org_id = ?)', [
-    id,
-    orgScope,
-    orgScope,
-  ]);
+/** Outside the org reads as missing. API keys read their own mode, sessions either. */
+export const getBroadcast = (db: D1Database, id: string, scope: ScopeArg) =>
+  first<BroadcastRow>(
+    db,
+    'SELECT * FROM broadcasts WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?)',
+    [id, scopeOrg(scope), scopeOrg(scope), readMode(scope), readMode(scope)],
+  );
 
 export interface BroadcastListFilter {
   orgScope: string | null;

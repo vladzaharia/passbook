@@ -2,6 +2,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createLogger } from '../../platform/log.ts';
 import { loadPushKey, teamHasPushKey } from '../identities/push-key-store.ts';
+import { pushMethodOf } from '../identities/push-method.ts';
 import { apnsToken, dropApnsToken } from './apns-jwt.ts';
 
 export interface ApnsTarget {
@@ -73,16 +74,17 @@ async function pushOne(
   }
 }
 
+const bindingOf = (env: AppEnv, target: ApnsTarget): Fetcher | undefined =>
+  target.apnsBinding
+    ? (env as unknown as Record<string, Fetcher | undefined>)[target.apnsBinding]
+    : undefined;
+
 /** Production APNs over the identity's mTLS binding. A missing binding means push is unavailable. */
 export function createMtlsApnsTransport(env: AppEnv): ApnsTransport {
-  const binding = (target: ApnsTarget): Fetcher | undefined =>
-    target.apnsBinding
-      ? (env as unknown as Record<string, Fetcher | undefined>)[target.apnsBinding]
-      : undefined;
   return {
-    isAvailable: (target) => binding(target) !== undefined,
+    isAvailable: (target) => bindingOf(env, target) !== undefined,
     async send(target, tokens, now) {
-      const fetcher = binding(target);
+      const fetcher = bindingOf(env, target);
       if (!fetcher) return tokens.map((token) => ({ token, status: 0, reason: 'PushUnavailable' }));
       return Promise.all(
         tokens.map((token) => pushOne((u, i) => fetcher.fetch(u, i), target, token, now)),
@@ -91,15 +93,11 @@ export function createMtlsApnsTransport(env: AppEnv): ApnsTransport {
   };
 }
 
-const bindingOf = (env: AppEnv, target: ApnsTarget): Fetcher | undefined =>
-  target.apnsBinding
-    ? (env as unknown as Record<string, Fetcher | undefined>)[target.apnsBinding]
-    : undefined;
-
 /** How this target would be pushed: its mTLS binding, else its team's push key, else not at all. */
 export async function apnsMethod(env: AppEnv, target: ApnsTarget): Promise<ApnsMethod> {
-  if (bindingOf(env, target)) return 'certificate';
-  return (await teamHasPushKey(env, target.teamIdentifier ?? '')) ? 'key' : 'none';
+  const bound = pushMethodOf(env, target.apnsBinding, false);
+  if (bound === 'certificate') return bound;
+  return pushMethodOf(env, null, await teamHasPushKey(env, target.teamIdentifier ?? ''));
 }
 
 /**

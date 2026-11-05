@@ -94,10 +94,31 @@ export function uuidv7(nowMs: number, random: Uint8Array = randomBytes(10)): str
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+let sequence = 0;
+let sequenceAt = -1;
+
+/**
+ * UUIDv7 whose 12-bit rand_a is a counter, so ids made in the same millisecond sort in the order
+ * they were made (a plain UUIDv7 orders them randomly).
+ */
+function orderedUuid(at: number): string {
+  if (at !== sequenceAt) {
+    sequenceAt = at;
+    sequence = 0;
+  }
+  sequence = (sequence + 1) & 0x0fff;
+  const random = randomBytes(10);
+  random[0] = sequence >> 8;
+  random[1] = sequence & 0xff;
+  return uuidv7(at, random);
+}
+
 /** Id and token generation, injected so tests are deterministic. */
 export interface Ids {
   /** Time-ordered primary key (UUIDv7). */
   id(): string;
+  /** Like `id`, but ids from the same millisecond keep their creation order (ledger rows). */
+  ordered(at?: number): string;
   /** URL-safe random token with `bytes` of entropy (default 256 bits). */
   token(bytes?: number): string;
   /** Random decimal code, zero padded. */
@@ -107,6 +128,7 @@ export interface Ids {
 export function createIds(clock: Clock): Ids {
   return {
     id: () => uuidv7(clock.now()),
+    ordered: (at = clock.now()) => orderedUuid(at),
     token: (bytes = 32) => toBase64Url(randomBytes(bytes)),
     code: (digits = 6) => {
       const max = 10 ** digits;

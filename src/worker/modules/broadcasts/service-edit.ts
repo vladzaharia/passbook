@@ -4,10 +4,10 @@ import type {
   BroadcastOutcome,
   CreateBroadcastBody,
 } from '../../../shared/contracts/broadcasts.ts';
-import type { Mode } from '../../../shared/contracts/common.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import {
   assertCanChange,
@@ -17,6 +17,7 @@ import {
   nameOf,
   plainLine,
   requireBroadcast,
+  requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { listItems } from './repo-items.ts';
@@ -31,7 +32,7 @@ export async function updateBroadcast(
   body: CreateBroadcastBody,
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, scope.orgScope, scope.mode);
+  const row = await requireWritableBroadcast(ctx, id, scope);
   assertCanChange(scope, row.kind);
   assertCanChange(scope, body.kind);
   if (body.orgId !== row.org_id)
@@ -73,7 +74,7 @@ export async function updateBroadcast(
     detail: { kind: body.kind, send: body.send },
   });
   if (body.send === 'now') await launchBroadcast(ctx, row);
-  return getBroadcastDto(ctx, id, scope.orgScope);
+  return getBroadcastDto(ctx, id, scope);
 }
 
 /** Copies a failed, partial or cancelled broadcast as a new one and sends it now, in its own mode. */
@@ -83,7 +84,7 @@ export async function retryBroadcast(
   id: string,
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, scope.orgScope, scope.mode);
+  const row = await requireWritableBroadcast(ctx, id, scope);
   assertCanChange(scope, row.kind);
   if (!['failed', 'partial', 'cancelled'].includes(row.state))
     throw new ConflictError(
@@ -113,11 +114,10 @@ export async function retryBroadcast(
 export async function listBroadcastItems(
   ctx: ServiceContext,
   id: string,
-  orgScope: string | null,
-  mode: Mode,
+  scope: ScopeArg,
   query: { outcome?: BroadcastOutcome | undefined; cursor?: string | undefined; limit: number },
 ): Promise<{ items: BroadcastItemDto[]; nextCursor: string | null }> {
-  await requireBroadcast(ctx, id, orgScope, mode);
+  await requireBroadcast(ctx, id, scope);
   const { rows, nextCursor } = await listItems(ctx.env.DB, id, query);
   return {
     items: rows.map((r) => ({

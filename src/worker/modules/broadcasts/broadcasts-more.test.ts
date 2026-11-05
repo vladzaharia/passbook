@@ -129,7 +129,7 @@ describe('chunk budget', () => {
 });
 
 describe('mode', () => {
-  it('send, cancel, edit and send again are scoped to the broadcast mode', async () => {
+  it('send, cancel, edit and send again need the broadcast mode', async () => {
     const draft = await dto(
       await send(
         'POST',
@@ -145,10 +145,11 @@ describe('mode', () => {
       ['POST', `/broadcasts/${draft.id}/cancel`],
       ['POST', `/broadcasts/${draft.id}/retry`],
       ['PATCH', `/broadcasts/${draft.id}`],
-    ] as const)
-      expect((await send(method, path, live, method === 'PATCH' ? body('x') : {})).status).toBe(
-        404,
-      );
+    ] as const) {
+      const res = await send(method, path, live, method === 'PATCH' ? body('x') : {});
+      expect(res.status).toBe(409);
+      expect(((await res.json()) as { code: string }).code).toBe('MODE_MISMATCH');
+    }
     expect(
       (await send('POST', `/broadcasts/${draft.id}/cancel`, fake.admin({ mode: 'test' }))).status,
     ).toBe(200);
@@ -242,7 +243,8 @@ describe('items access', () => {
       mode: 'test',
     });
     expect((await api(url, { headers: testKey })).status).toBe(404);
-    expect((await api(url, { headers: fake.admin({ mode: 'test' }) })).status).toBe(404);
+    // Sessions read either mode by id, as for GET /broadcasts/{id}.
+    expect((await api(url, { headers: fake.admin({ mode: 'test' }) })).status).toBe(200);
   });
 });
 

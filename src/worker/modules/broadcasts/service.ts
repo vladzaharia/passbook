@@ -10,6 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
+import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { targetFilter } from './apply.ts';
@@ -21,6 +22,7 @@ import {
   checkTime,
   nameOf,
   requireBroadcast,
+  requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { countTarget } from './repo-target.ts';
@@ -88,7 +90,7 @@ export async function sendBroadcast(
   at: number | undefined,
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, scope.orgScope, scope.mode);
+  const row = await requireWritableBroadcast(ctx, id, scope);
   assertCanChange(scope, row.kind);
   if (at !== undefined) checkTime(ctx, at);
   if (!(await repo.casSchedule(ctx.env.DB, id, at ?? ctx.clock.now())))
@@ -103,7 +105,7 @@ export async function sendBroadcast(
     detail: { scheduled: at !== undefined },
   });
   if (at === undefined) await launchBroadcast(ctx, row);
-  return getBroadcastDto(ctx, id, scope.orgScope);
+  return getBroadcastDto(ctx, id, scope);
 }
 
 export async function cancelBroadcast(
@@ -112,7 +114,7 @@ export async function cancelBroadcast(
   id: string,
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, scope.orgScope, scope.mode);
+  const row = await requireWritableBroadcast(ctx, id, scope);
   const won = await repo.casState(ctx.env.DB, id, ['draft', 'scheduled'], 'cancelled', {
     finishedAt: ctx.clock.now(),
   });
@@ -129,15 +131,15 @@ export async function cancelBroadcast(
     targetType: 'broadcast',
     targetId: id,
   });
-  return getBroadcastDto(ctx, id, scope.orgScope);
+  return getBroadcastDto(ctx, id, scope);
 }
 
 export async function getBroadcastDto(
   ctx: ServiceContext,
   id: string,
-  orgScope: string | null,
+  scope: ScopeArg,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, orgScope);
+  const row = await requireBroadcast(ctx, id, scope);
   return toDto(
     row,
     await repo.countItems(ctx.env.DB, [id]),

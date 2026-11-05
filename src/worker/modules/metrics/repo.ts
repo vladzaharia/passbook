@@ -154,7 +154,9 @@ export interface RecentRow {
   target_id: string | null;
 }
 
-export function recentAudit(db: D1Database, scope: Scope, limit: number) {
+/** Audit rows carry no mode, so test mode shows none, like the sign-in series. */
+export async function recentAudit(db: D1Database, scope: Scope, limit: number) {
+  if (scope.mode === 'test') return [];
   return all<RecentRow>(
     db,
     `SELECT at, action, org_id, target_id FROM audit_log

@@ -22,8 +22,9 @@ export type NewCaptured = Omit<CapturedRow, 'attached' | 'pass_id' | 'bundle_id'
   attached?: boolean;
 };
 
-export async function insertCaptured(db: D1Database, row: NewCaptured): Promise<void> {
-  await run(
+/** False when the outbox row was already captured (a re-handled job). */
+export async function insertCaptured(db: D1Database, row: NewCaptured): Promise<boolean> {
+  const { changes } = await run(
     db,
     `INSERT OR IGNORE INTO captured_emails
        (id, org_id, pass_id, bundle_id, outbox_id, recipient, subject, html, text, attached, created_at)
@@ -42,6 +43,7 @@ export async function insertCaptured(db: D1Database, row: NewCaptured): Promise<
       row.created_at,
     ],
   );
+  return changes > 0;
 }
 
 export interface CapturedFilter {

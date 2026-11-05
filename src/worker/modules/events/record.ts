@@ -5,7 +5,7 @@ import {
   EventKindSchema,
 } from '../../../shared/contracts/events.ts';
 import { batch, chunk } from '../../platform/db.ts';
-import { randomBytes, sha256Hex, uuidv7 } from '../../platform/ids.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type EventRow, insertEventStmt } from './repo.ts';
 
@@ -60,29 +60,10 @@ export function sanitizeEventData(data: Record<string, Json> | undefined): Recor
   return JSON.stringify(clean).length > DATA_MAX_BYTES ? { truncated: true } : clean;
 }
 
-let sequence = 0;
-let sequenceAt = -1;
-
-/**
- * UUIDv7 whose 12-bit rand_a is a counter, so events recorded in the same millisecond sort in the
- * order they were recorded (a plain UUIDv7 would order them randomly).
- */
-function eventId(at: number): string {
-  if (at !== sequenceAt) {
-    sequenceAt = at;
-    sequence = 0;
-  }
-  sequence = (sequence + 1) & 0x0fff;
-  const random = randomBytes(10);
-  random[0] = sequence >> 8;
-  random[1] = sequence & 0xff;
-  return uuidv7(at, random);
-}
-
 async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventRow> {
   const at = input.at ?? ctx.clock.now();
   return {
-    id: eventId(at),
+    id: ctx.ids.ordered(at),
     org_id: input.orgId,
     pass_id: input.passId,
     mode: input.mode,

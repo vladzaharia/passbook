@@ -11,6 +11,9 @@ function isHttpsUrl(value: string): boolean {
   }
 }
 
+/** Notifying updates one pass may get per rolling 24 hours, until the setting is changed. */
+export const PUSH_BUDGET_DEFAULT = 3;
+
 export const PlatformSettingsSchema = z.object({
   'oidc.trustEmail': z.boolean().default(false),
   'auth.magicLinkEnabled': z.boolean().default(true),
@@ -23,7 +26,7 @@ export const PlatformSettingsSchema = z.object({
   /** Test-mode passes, bundles and captured emails older than this are deleted daily. */
   'sandbox.purgeDays': z.number().int().min(1).max(365).default(30),
   /** Notifying updates one pass may get per rolling 24 hours; later updates are silent. */
-  'push.budgetPerDay': z.number().int().min(0).max(50).default(3),
+  'push.budgetPerDay': z.number().int().min(0).max(50).default(PUSH_BUDGET_DEFAULT),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z

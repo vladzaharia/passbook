@@ -1,6 +1,7 @@
 import { credentialAad, decryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { UnavailableError } from '../../platform/errors.ts';
+import { createLogger } from '../../platform/log.ts';
 import { importSigningKey } from './push-key.ts';
 import { getPushKeyMeta, getPushKeyRow } from './repo-push-keys.ts';
 
@@ -43,7 +44,12 @@ export async function loadPushKey(env: AppEnv, team: string): Promise<PushKey | 
     const loaded = { keyId: row.key_id, key: await importSigningKey(der) };
     keys.set(row.id, loaded);
     return loaded;
-  } catch {
+  } catch (error) {
+    createLogger({ build: env.CF_VERSION?.id }).error('push_key.decrypt_failed', {
+      code: 'PUSH_KEY_UNREADABLE',
+      team,
+      error,
+    });
     throw new UnavailableError('The push key cannot be decrypted.', 'PUSH_KEY_UNREADABLE');
   }
 }

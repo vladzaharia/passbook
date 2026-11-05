@@ -10,7 +10,7 @@ import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { deletePassAsset, listPassAssets, putPassAsset } from './asset-service.ts';
 import { MAX_ASSET_BYTES } from './assets.ts';
-import { actorFor, orgScopeOf, svc } from './http.ts';
+import { actorFor, passScopeOf, svc } from './http.ts';
 
 /** Per-pass image overrides. */
 export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
@@ -34,7 +34,7 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       params: IdParamSchema,
       response: PassAssetListSchema,
     },
-    async (c) => c.json(await listPassAssets(svc(c), c.req.valid('param').id, orgScopeOf(c))),
+    async (c) => c.json(await listPassAssets(svc(c), c.req.valid('param').id, passScopeOf(c))),
   );
 
   register(
@@ -50,7 +50,7 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
     async (c) => {
       const p = c.req.valid('param');
       const bytes = new Uint8Array(await c.req.arrayBuffer());
-      return c.json(await putPassAsset(svc(c), actorFor(c), p.id, p.name, bytes, orgScopeOf(c)));
+      return c.json(await putPassAsset(svc(c), actorFor(c), p.id, p.name, bytes, passScopeOf(c)));
     },
   );
 
@@ -66,7 +66,7 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
     },
     async (c) => {
       const p = c.req.valid('param');
-      await deletePassAsset(svc(c), actorFor(c), p.id, p.name, orgScopeOf(c));
+      await deletePassAsset(svc(c), actorFor(c), p.id, p.name, passScopeOf(c));
       return c.json({ ok: true });
     },
   );

@@ -6,13 +6,10 @@ import type {
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass, type Pass } from '../passes/repo.ts';
+import { removalVersion } from '../passes/repo-remove.ts';
+import type { ScopeArg } from '../passes/scope.ts';
 import { hashDevice } from './record.ts';
-import {
-  type LatestDeviceEvent,
-  lastEventOfKind,
-  latestDeviceEvents,
-  registrationsOfPass,
-} from './repo.ts';
+import { type LatestDeviceEvent, latestDeviceEvents, registrationsOfPass } from './repo.ts';
 
 const num = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 const str = (v: unknown): string | null => (typeof v === 'string' ? v : null);
@@ -117,28 +114,23 @@ function describe(
 export async function listPassDevices(
   ctx: ServiceContext,
   passId: string,
-  orgScope: string | null,
+  orgScope: ScopeArg,
 ): Promise<PassDevicesDto> {
   const db = ctx.env.DB;
   const pass = await getPass(db, passId, orgScope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  const [registrations, latest, removedEvent] = await Promise.all([
+  const [registrations, latest, removedVersion] = await Promise.all([
     registrationsOfPass(db, passId),
     latestDeviceEvents(db, passId),
-    pass.removedAt !== null ? lastEventOfKind(db, passId, 'pass.removed') : null,
+    pass.removedAt !== null ? removalVersion(db, passId) : null,
   ]);
   const seen = fold(latest);
-  const registeredAt = new Map<string, number>();
-  for (const r of registrations) registeredAt.set(await hashDevice(r.device_id), r.created_at);
-  const removal =
-    pass.removedAt !== null
-      ? {
-          at: pass.removedAt,
-          version: removedEvent
-            ? num((JSON.parse(removedEvent.data) as { version?: unknown }).version)
-            : null,
-        }
-      : null;
+  const registeredAt = new Map<string, number>(
+    await Promise.all(
+      registrations.map(async (r) => [await hashDevice(r.device_id), r.created_at] as const),
+    ),
+  );
+  const removal = pass.removedAt !== null ? { at: pass.removedAt, version: removedVersion } : null;
   const hashes = new Set([...registeredAt.keys(), ...seen.keys()]);
   const devices: PassSyncDeviceDto[] = [];
   for (const hash of hashes) {

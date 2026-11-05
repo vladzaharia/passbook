@@ -5,7 +5,7 @@ import {
   PassEventListSchema,
 } from '../../../shared/contracts/index.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
-import { orgScopeOf, svc } from '../passes/http.ts';
+import { passScopeOf, svc } from '../passes/http.ts';
 import { listPassDevices } from './devices.ts';
 import { listPassEvents } from './service.ts';
 
@@ -24,7 +24,7 @@ export function registerEventRoutes(passesRoutes: ReturnType<typeof createRouter
     },
     async (c) =>
       c.json(
-        await listPassEvents(svc(c), c.req.valid('param').id, orgScopeOf(c), c.req.valid('query')),
+        await listPassEvents(svc(c), c.req.valid('param').id, passScopeOf(c), c.req.valid('query')),
       ),
   );
 
@@ -38,6 +38,6 @@ export function registerEventRoutes(passesRoutes: ReturnType<typeof createRouter
       params: IdParamSchema,
       response: PassDevicesSchema,
     },
-    async (c) => c.json(await listPassDevices(svc(c), c.req.valid('param').id, orgScopeOf(c))),
+    async (c) => c.json(await listPassDevices(svc(c), c.req.valid('param').id, passScopeOf(c))),
   );
 }

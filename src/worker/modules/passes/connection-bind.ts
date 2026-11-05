@@ -1,10 +1,11 @@
 import type { z } from 'zod';
 import type { BindPassConnectionSchema } from '../../../shared/contracts/index.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { detailOf } from './detail.ts';
+import { getPassForWrite } from './pass-access.ts';
 import {
   connectionInOrg,
   type FieldSources,
@@ -12,6 +13,7 @@ import {
   getPass,
   setBinding,
 } from './repo.ts';
+import type { ScopeArg } from './scope.ts';
 import { type Actor, requestRefresh } from './service.ts';
 
 const refTaken = () =>
@@ -23,11 +25,10 @@ export async function bindPassConnection(
   actor: Actor,
   passId: string,
   body: z.infer<typeof BindPassConnectionSchema>,
-  scope: string | null,
+  scope: ScopeArg,
 ) {
   const db = ctx.env.DB;
-  const pass = await getPass(db, passId, scope);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const pass = await getPassForWrite(db, passId, scope);
   const { connectionId, externalRef } = body;
   let fieldSources: FieldSources = pass.fieldSources;
   if (connectionId !== null && externalRef !== null) {

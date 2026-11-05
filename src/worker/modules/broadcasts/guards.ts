@@ -3,29 +3,28 @@ import {
   BROADCAST_MAX_LEAD_MS,
   type CreateBroadcastBody,
 } from '../../../shared/contracts/broadcasts.ts';
-import type { Mode } from '../../../shared/contracts/common.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
+import { assertWritableMode, type PassScope, type ScopeArg } from '../passes/scope.ts';
 import * as repo from './repo.ts';
 
-/** Who is asking: the org they are limited to, their mode, and whether they may change passes. */
-export interface BroadcastScope {
-  orgScope: string | null;
-  mode: Mode;
+/** Who is asking (see PassScope), and whether they may change passes. */
+export interface BroadcastScope extends PassScope {
   canChange: boolean;
 }
 
-/** A broadcast of the other mode reads as missing for every write. */
-export async function requireBroadcast(
-  ctx: ServiceContext,
-  id: string,
-  orgScope: string | null,
-  mode?: Mode,
-) {
-  const row = await repo.getBroadcast(ctx.env.DB, id, orgScope);
-  if (!row || (mode !== undefined && row.mode !== mode))
-    throw new NotFoundError('Message not found.', 'BROADCAST_NOT_FOUND');
+/** By-id read: an API key sees only its own mode, a session either. */
+export async function requireBroadcast(ctx: ServiceContext, id: string, scope: ScopeArg) {
+  const row = await repo.getBroadcast(ctx.env.DB, id, scope);
+  if (!row) throw new NotFoundError('Message not found.', 'BROADCAST_NOT_FOUND');
+  return row;
+}
+
+/** By-id write: the other mode is 404 for an API key and 409 MODE_MISMATCH for a session. */
+export async function requireWritableBroadcast(ctx: ServiceContext, id: string, scope: ScopeArg) {
+  const row = await requireBroadcast(ctx, id, scope);
+  assertWritableMode(scope, row.mode, 'broadcast');
   return row;
 }
 

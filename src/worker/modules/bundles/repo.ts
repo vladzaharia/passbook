@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { all, chunk, first, placeholders, stmt } from '../../platform/db.ts';
+import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 
 export interface BundleRow {
   id: string;
@@ -31,9 +32,9 @@ export interface NewBundle {
   now: number;
 }
 
-/** One transaction: the bundle and its passes, in the order given. */
-export async function insertBundle(db: D1Database, b: NewBundle): Promise<void> {
-  await batch(db, [
+/** The bundle and its passes, in the order given; batch them with the audit row. */
+export function insertBundleStmts(db: D1Database, b: NewBundle): D1PreparedStatement[] {
+  return [
     stmt(
       db,
       `INSERT INTO bundles (id, org_id, mode, name, token, holder_email, created_by_type, created_by_id, created_at)
@@ -47,16 +48,19 @@ export async function insertBundle(db: D1Database, b: NewBundle): Promise<void> 
         position,
       ]),
     ),
-  ]);
+  ];
 }
 
-/** `orgScope` null = platform-wide. A bundle outside the scope reads as missing. Either mode. */
-export const getBundle = (db: D1Database, id: string, orgScope: string | null) =>
-  first<BundleRow>(db, 'SELECT * FROM bundles WHERE id = ? AND (? IS NULL OR org_id = ?)', [
-    id,
-    orgScope,
-    orgScope,
-  ]);
+/** Null scope = platform-wide. A bundle outside the scope (org, or an API key's mode) reads as missing. */
+export function getBundle(db: D1Database, id: string, scope: ScopeArg) {
+  const orgScope = scopeOrg(scope);
+  const mode = readMode(scope);
+  return first<BundleRow>(
+    db,
+    'SELECT * FROM bundles WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?)',
+    [id, orgScope, orgScope, mode, mode],
+  );
+}
 
 export const getBundleByToken = (db: D1Database, token: string) =>
   first<BundleRow>(db, 'SELECT * FROM bundles WHERE token = ?', [token]);
@@ -70,20 +74,19 @@ export interface BundleListFilter {
   limit: number;
 }
 
-export const listBundleRows = (db: D1Database, f: BundleListFilter) =>
-  all<BundleRow>(
+/** `org_id = ?` is added only when an org is set, so SQLite can pick bundles_org over bundles_mode. */
+export function listBundleRows(db: D1Database, f: BundleListFilter) {
+  const orgId = f.orgScope ?? f.orgId ?? null;
+  return all<BundleRow>(
     db,
     `SELECT * FROM bundles
-     WHERE mode = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR org_id = ?)
+     WHERE mode = ?${orgId ? ' AND org_id = ?' : ''}
        AND (? IS NULL OR EXISTS (SELECT 1 FROM bundle_passes bp WHERE bp.bundle_id = bundles.id AND bp.pass_id = ?))
        AND (? IS NULL OR id < ?)
      ORDER BY id DESC LIMIT ?`,
     [
       f.mode,
-      f.orgScope,
-      f.orgScope,
-      f.orgId ?? null,
-      f.orgId ?? null,
+      ...(orgId ? [orgId] : []),
       f.passId ?? null,
       f.passId ?? null,
       f.cursor ?? null,
@@ -91,6 +94,7 @@ export const listBundleRows = (db: D1Database, f: BundleListFilter) =>
       f.limit,
     ],
   );
+}
 
 /** The bundles' passes in order, leaving out passes that were deleted. */
 export async function membersOf(db: D1Database, bundleIds: string[]): Promise<MemberRow[]> {
@@ -111,23 +115,11 @@ export async function membersOf(db: D1Database, bundleIds: string[]): Promise<Me
   return rows;
 }
 
-export async function setBundleToken(
-  db: D1Database,
-  id: string,
-  token: string,
-  now: number,
-): Promise<void> {
-  await run(db, 'UPDATE bundles SET token = ?, token_rotated_at = ? WHERE id = ?', [
-    token,
-    now,
-    id,
-  ]);
-}
+export const setBundleTokenStmt = (db: D1Database, id: string, token: string, now: number) =>
+  stmt(db, 'UPDATE bundles SET token = ?, token_rotated_at = ? WHERE id = ?', [token, now, id]);
 
-export async function deleteBundle(db: D1Database, id: string): Promise<boolean> {
-  const { changes } = await run(db, 'DELETE FROM bundles WHERE id = ?', [id]);
-  return changes > 0;
-}
+export const deleteBundleStmt = (db: D1Database, id: string) =>
+  stmt(db, 'DELETE FROM bundles WHERE id = ?', [id]);
 
 export interface PackRow {
   id: string;

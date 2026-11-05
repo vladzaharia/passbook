@@ -1,9 +1,12 @@
 import { z } from 'zod';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
+import { PUSH_BUDGET_DEFAULT } from './settings.ts';
 import { ValidationIssueSchema } from './templates.ts';
 
 export const PassStatusSchema = z.enum(['active', 'voided']);
+/** List filter: the two statuses, plus passes removed from Wallet (which also read as voided). */
+export const PassListStatusSchema = z.enum(['active', 'voided', 'removed']);
 export const FieldSourceSchema = z.enum(['manual', 'connection']);
 /** Why a version was published, beside its cause. Free text in the database, closed here. */
 export const PassSourceSchema = z.enum([
@@ -57,6 +60,8 @@ export const PassVersionSchema = z.object({
   version: z.number().int(),
   templateVersion: z.string(),
   cause: PassCauseSchema,
+  /** Why the version was published beside its cause; null for plain edits and syncs. */
+  source: PassSourceSchema.nullable().optional(),
   actorType: z.string().nullable(),
   actorId: z.string().nullable(),
   createdAt: TimestampSchema,
@@ -104,7 +109,7 @@ export const PushBudgetSchema = z.object({
 export type PushBudgetDto = z.infer<typeof PushBudgetSchema>;
 
 export const PassDetailSchema = PassSummarySchema.extend({
-  pushBudget: PushBudgetSchema.default({ used: 0, limit: 3, resetsAt: null }),
+  pushBudget: PushBudgetSchema.default({ used: 0, limit: PUSH_BUDGET_DEFAULT, resetsAt: null }),
   /** Owner's display name and email (null when unowned); the summary carries only the id. */
   ownerName: z.string().nullable(),
   ownerEmail: z.string().nullable(),
@@ -137,7 +142,7 @@ export const PassListQuerySchema = z.object({
   orgId: IdSchema.optional(),
   templateId: IdSchema.optional(),
   connectionId: IdSchema.optional(),
-  status: PassStatusSchema.optional(),
+  status: PassListStatusSchema.optional(),
   holderEmail: z.string().max(254).optional(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']).optional(),
   /** true: on at least one device; false: on none. */

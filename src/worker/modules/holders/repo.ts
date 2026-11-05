@@ -1,8 +1,10 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
+import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 
 export interface HolderPass {
   id: string;
+  mode: Mode;
   orgId: string;
   holderEmail: string | null;
   ownerUserId: string | null;
@@ -12,6 +14,7 @@ export interface HolderPass {
 
 interface HolderDbRow {
   id: string;
+  mode: Mode;
   org_id: string;
   holder_email: string | null;
   owner_user_id: string | null;
@@ -21,6 +24,7 @@ interface HolderDbRow {
 
 const mapHolder = (r: HolderDbRow): HolderPass => ({
   id: r.id,
+  mode: r.mode,
   orgId: r.org_id,
   holderEmail: r.holder_email,
   ownerUserId: r.owner_user_id,
@@ -28,18 +32,20 @@ const mapHolder = (r: HolderDbRow): HolderPass => ({
   modifiedAt: r.modified_at,
 });
 
-const SELECT_HOLDER = `SELECT p.id, p.org_id, p.holder_email, p.owner_user_id, p.modified_at, u.name AS owner_name
+const SELECT_HOLDER = `SELECT p.id, p.mode, p.org_id, p.holder_email, p.owner_user_id, p.modified_at, u.name AS owner_name
   FROM passes p LEFT JOIN users u ON u.id = p.owner_user_id`;
 
 export async function getHolderPass(
   db: D1Database,
   passId: string,
-  orgScope: string | null,
+  scope: ScopeArg,
 ): Promise<HolderPass | null> {
+  const orgScope = scopeOrg(scope);
   const row = await first<HolderDbRow>(
     db,
-    `${SELECT_HOLDER} WHERE p.id = ? AND (? IS NULL OR p.org_id = ?) AND p.deleted_at IS NULL`,
-    [passId, orgScope, orgScope],
+    `${SELECT_HOLDER} WHERE p.id = ? AND (? IS NULL OR p.org_id = ?) AND (? IS NULL OR p.mode = ?)
+       AND p.deleted_at IS NULL`,
+    [passId, orgScope, orgScope, readMode(scope), readMode(scope)],
   );
   return row ? mapHolder(row) : null;
 }
@@ -48,15 +54,17 @@ export async function getHolderPass(
 export async function getHolderPasses(
   db: D1Database,
   passIds: string[],
-  orgScope: string | null,
+  scope: ScopeArg,
 ): Promise<Map<string, HolderPass>> {
+  const orgScope = scopeOrg(scope);
+  const mode = readMode(scope);
   const out = new Map<string, HolderPass>();
   for (const ids of chunk([...new Set(passIds)], 90)) {
     const rows = await all<HolderDbRow>(
       db,
       `${SELECT_HOLDER} WHERE p.id IN (${placeholders(ids.length)}) AND p.deleted_at IS NULL
-         AND (? IS NULL OR p.org_id = ?)`,
-      [...ids, orgScope, orgScope],
+         AND (? IS NULL OR p.org_id = ?) AND (? IS NULL OR p.mode = ?)`,
+      [...ids, orgScope, orgScope, mode, mode],
     );
     for (const row of rows) out.set(row.id, mapHolder(row));
   }

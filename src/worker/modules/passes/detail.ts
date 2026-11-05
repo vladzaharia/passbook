@@ -1,5 +1,6 @@
 import { validatePass } from '../../../passkit/index.ts';
 import type { PassJson, ValidationIssue } from '../../../passkit/types.ts';
+import type { PassSource } from '../../../shared/contracts/passes.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -22,6 +23,7 @@ import {
   listVersions,
   type Pass,
 } from './repo.ts';
+import type { ScopeArg } from './scope.ts';
 
 export function holderStateOf(pass: Pass): 'unassigned' | 'waiting' | 'owned' {
   if (pass.ownerUserId) return 'owned';
@@ -130,6 +132,7 @@ function versionSummary(v: {
   version: number;
   templateVersion: string;
   cause: string;
+  source: PassSource | null;
   actorType: string | null;
   actorId: string | null;
   createdAt: number;
@@ -139,6 +142,7 @@ function versionSummary(v: {
     version: v.version,
     templateVersion: v.templateVersion,
     cause: v.cause,
+    source: v.source,
     actorType: v.actorType,
     actorId: v.actorId,
     createdAt: v.createdAt,
@@ -192,7 +196,7 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
   };
 }
 
-export async function getPassDetail(ctx: ServiceContext, id: string, scope: string | null) {
+export async function getPassDetail(ctx: ServiceContext, id: string, scope: ScopeArg) {
   const pass = await getPass(ctx.env.DB, id, scope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   return detailOf(ctx, pass);
@@ -203,7 +207,7 @@ export async function getVersionDetail(
   ctx: ServiceContext,
   id: string,
   version: number,
-  scope: string | null,
+  scope: ScopeArg,
 ) {
   const pass = await getPass(ctx.env.DB, id, scope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
@@ -250,7 +254,7 @@ export async function diffVersions(
   id: string,
   from: number,
   to: number,
-  scope: string | null,
+  scope: ScopeArg,
 ): Promise<{ changes: FieldChange[] }> {
   if (!(await getPass(ctx.env.DB, id, scope)))
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');

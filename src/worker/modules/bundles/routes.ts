@@ -9,7 +9,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, authOf, orgScopeOf, svc } from '../passes/http.ts';
+import { actorFor, assertOrg, authOf, orgScopeOf, passScopeOf, svc } from '../passes/http.ts';
 import {
   createBundle,
   deleteBundle,
@@ -80,7 +80,7 @@ register(
     params: IdParamSchema,
     response: BundleSchema,
   },
-  async (c) => c.json(await getBundleDto(svc(c), c.req.valid('param').id, orgScopeOf(c))),
+  async (c) => c.json(await getBundleDto(svc(c), c.req.valid('param').id, passScopeOf(c))),
 );
 
 register(
@@ -101,7 +101,7 @@ register(
       actorFor(c),
       c.req.valid('param').id,
       c.req.valid('json'),
-      orgScopeOf(c),
+      passScopeOf(c),
     );
     return c.json({ ok: true as const }, 202);
   },
@@ -118,7 +118,7 @@ register(
     response: BundleSchema,
   },
   async (c) =>
-    c.json(await rotateBundleLink(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
+    c.json(await rotateBundleLink(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
 );
 
 register(
@@ -132,7 +132,7 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await deleteBundle(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c));
+    await deleteBundle(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c));
     return c.json({ ok: true as const });
   },
 );

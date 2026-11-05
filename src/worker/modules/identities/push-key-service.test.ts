@@ -9,7 +9,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { apnsMethod, createApnsTransport } from '../delivery/apns.ts';
 import { clearApnsTokens } from '../delivery/apns-jwt.ts';
 import { classifyApns } from '../delivery/push.ts';
-import { identityComponent } from '../status/checks.ts';
+import { identityComponent } from '../status/checks-identity.ts';
 import { probeApns } from './apns-probe.ts';
 import { makeP8 } from './push-key-fixtures.ts';
 import { clearPushKeyCache, loadPushKey } from './push-key-store.ts';

@@ -1,41 +1,50 @@
 import { REMOVE_MESSAGE_MAX } from '../../../shared/contracts/events.ts';
-import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { toSummary } from './detail.ts';
+import { getPassForWrite } from './pass-access.ts';
 import { publishPass } from './publish.ts';
 import { getPass } from './repo.ts';
-import { claimRemoval, getRemoval, releaseRemoval, setRemoval } from './repo-remove.ts';
+import {
+  claimRemoval,
+  claimRestore,
+  getRemoval,
+  latestVersionSource,
+  reinstateRemoval,
+  releaseRemoval,
+} from './repo-remove.ts';
+import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
 const causeOf = (actor: Actor) => (actor.type === 'api_key' ? 'api' : 'admin');
 
-async function required(ctx: ServiceContext, passId: string, scope: string | null) {
-  const pass = await getPass(ctx.env.DB, passId, scope);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return pass;
-}
-
 /**
  * Publishes the final version (voided, expired now, stripped; see remove-build.ts) and pushes it.
  * Wallet has no call that deletes a pass: the device files it under Expired passes and the holder
- * deletes it there. Removing a removed pass changes nothing.
+ * deletes it there. Removing a removed pass changes nothing, unless a crash left it marked removed
+ * with no removal version: then the publish runs again.
  */
 export async function removePass(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
   input: { message?: string | undefined },
-  scope: string | null,
+  scope: ScopeArg,
 ) {
-  const pass = await required(ctx, passId, scope);
-  if (pass.removedAt !== null) return toSummary(pass);
-  const message = input.message?.trim().slice(0, REMOVE_MESSAGE_MAX) || null;
   const db = ctx.env.DB;
-  const at = ctx.clock.now();
-  if (!(await claimRemoval(db, pass.id, { at, message, priorStatus: pass.status })))
-    return toSummary((await getPass(db, passId)) ?? pass);
+  const pass = await getPassForWrite(db, passId, scope);
+  let claimedAt: number | null = null;
+  if (pass.removedAt !== null) {
+    if ((await latestVersionSource(db, pass.id)) === 'remove') return toSummary(pass);
+  } else {
+    const text = input.message?.trim().slice(0, REMOVE_MESSAGE_MAX) || null;
+    const at = ctx.clock.now();
+    if (!(await claimRemoval(db, pass.id, { at, message: text, priorStatus: pass.status })))
+      return toSummary((await getPass(db, passId)) ?? pass);
+    claimedAt = at;
+  }
+  const message = (await getRemoval(db, pass.id))?.message ?? null;
   let published: Awaited<ReturnType<typeof publishPass>>;
   try {
     published = await publishPass(ctx, {
@@ -48,7 +57,7 @@ export async function removePass(
       mutate: () => ({ status: 'voided' }),
     });
   } catch (error) {
-    await releaseRemoval(db, pass.id, at);
+    if (claimedAt !== null) await releaseRemoval(db, pass.id, claimedAt);
     throw error;
   }
   await recordPassEvent(ctx, {
@@ -75,13 +84,14 @@ export async function restorePass(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
-  scope: string | null,
+  scope: ScopeArg,
 ) {
-  const pass = await required(ctx, passId, scope);
   const db = ctx.env.DB;
+  const pass = await getPassForWrite(db, passId, scope);
   const removal = await getRemoval(db, pass.id);
   if (!removal) return toSummary(pass);
-  await setRemoval(db, pass.id, null);
+  if (!(await claimRestore(db, pass.id, removal.at)))
+    return toSummary((await getPass(db, passId)) ?? pass);
   let published: Awaited<ReturnType<typeof publishPass>>;
   try {
     published = await publishPass(ctx, {
@@ -94,7 +104,7 @@ export async function restorePass(
       mutate: () => ({ status: removal.priorStatus }),
     });
   } catch (error) {
-    await setRemoval(db, pass.id, removal);
+    await reinstateRemoval(db, pass.id, removal);
     throw error;
   }
   await recordPassEvent(ctx, {

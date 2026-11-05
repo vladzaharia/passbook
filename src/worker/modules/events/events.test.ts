@@ -147,14 +147,12 @@ describe('GET /passes/{id}/events', () => {
   it('returns each event with its mode, in either caller mode', async () => {
     const pass = await kit.pass();
     await recordPassEvent(kit.ctx, { ...base(pass.id), mode: 'test', kind: 'email.captured' });
-    for (const headers of [
-      fake.admin(),
-      fake.admin({ mode: 'test' }),
-      fake.apiKey({ mode: 'test' }),
-    ]) {
+    for (const headers of [fake.admin(), fake.admin({ mode: 'test' }), fake.apiKey()]) {
       const page = PassEventListSchema.parse(await (await events(pass.id, headers)).json());
       expect(page.items.map((e) => e.mode)).toEqual(['test', 'live']);
     }
+    // A key of the other mode does not see the pass at all.
+    expect((await events(pass.id, fake.apiKey({ mode: 'test' }))).status).toBe(404);
   });
 });
 

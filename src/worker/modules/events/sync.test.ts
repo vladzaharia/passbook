@@ -194,30 +194,59 @@ describe('fetch attribution', () => {
 });
 
 describe('device log lines', () => {
-  it('attach to the pass that owns the serial they name', async () => {
-    const pass = await kit.pass();
-    const other = await kit.pass();
-    const res = await wallet('/log', {
+  const postLogs = (logs: string[]) =>
+    wallet('/log', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        logs: [
-          `Register task (for device dev-secret-1, pass type ${TYPE}, serial number ${pass.serial}) failed to update`,
-          'nothing about a pass',
-          `pass type ${TYPE} serial number ${other.serial} ok`,
-          `pass type pass.unknown.type serial number ${pass.serial} stray`,
-        ],
-      }),
+      body: JSON.stringify({ logs }),
     });
+  const logLines = async (pass: Pass) =>
+    PassEventListSchema.parse(await (await api(`/${pass.id}/events?kind=device.log`)).json()).items;
+
+  it('attach to the pass that owns the serial and the registered device they name', async () => {
+    const pass = await kit.pass();
+    const other = await kit.pass();
+    await register(pass, 'dev-secret-1');
+    const res = await postLogs([
+      `Register task (for device dev-secret-1, pass type ${TYPE}, serial number ${pass.serial}) failed to update`,
+      'nothing about a pass',
+      `pass type ${TYPE} serial number ${other.serial} ok`,
+      `pass type pass.unknown.type serial number ${pass.serial} stray`,
+    ]);
     expect(res.status).toBe(200);
-    const log = PassEventListSchema.parse(
-      await (await api(`/${pass.id}/events?kind=device.log`)).json(),
+    const log = await logLines(pass);
+    expect(log).toHaveLength(1);
+    expect(log[0]?.data.line).toContain('failed to update');
+    expect(log[0]?.data.line).not.toContain('dev-secret-1');
+    expect(log[0]?.data.line).toContain(await hashDevice('dev-secret-1'));
+    expect(log[0]?.data.unverified).toBe(true);
+    // A line with a serial but no registered device writes nothing into the pass's log.
+    expect(await logLines(other)).toEqual([]);
+  });
+
+  it('ignores a device that is registered to another pass', async () => {
+    const pass = await kit.pass();
+    const other = await kit.pass();
+    await register(other, 'dev-elsewhere');
+    await postLogs([
+      `device dev-elsewhere, pass type ${TYPE}, serial number ${pass.serial} failed`,
+    ]);
+    expect(await logLines(pass)).toEqual([]);
+  });
+
+  it('answers 200 with more than 100 candidate serials in one post', async () => {
+    const pass = await kit.pass();
+    await register(pass, 'dev-many');
+    const filler = Array.from(
+      { length: 120 },
+      (_, i) => `serial-filler-${String(i).padStart(4, '0')}`,
     );
-    expect(log.items).toHaveLength(1);
-    expect(log.items[0]?.data.line).toContain('failed to update');
-    expect(log.items[0]?.data.line).not.toContain('dev-secret-1');
-    expect(log.items[0]?.data.line).toContain(await hashDevice('dev-secret-1'));
-    expect(await kinds(other, '?kind=device.log')).toEqual(['device.log']);
+    const res = await postLogs([
+      `device dev-many pass type ${TYPE} serial number ${pass.serial} ${filler.slice(0, 5).join(' ')}`,
+      ...filler.map((serial) => `device dev-many pass type ${TYPE} serial number ${serial} x`),
+    ]);
+    expect(res.status).toBe(200);
+    expect((await logLines(pass)).length).toBeGreaterThan(0);
   });
 });
 

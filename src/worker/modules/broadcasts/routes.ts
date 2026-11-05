@@ -14,7 +14,7 @@ import {
 import { modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, authOf, orgScopeOf, svc } from '../passes/http.ts';
+import { actorFor, assertOrg, authOf, orgScopeOf, passScopeOf, svc } from '../passes/http.ts';
 import type { BroadcastScope } from './guards.ts';
 import {
   cancelBroadcast,
@@ -34,11 +34,7 @@ const canChange = (c: Ctx): boolean => {
   return auth.kind !== 'api_key' || auth.scopes.includes('passes:write');
 };
 
-const scopeOf = (c: Ctx): BroadcastScope => ({
-  orgScope: orgScopeOf(c),
-  mode: modeOf(authOf(c)),
-  canChange: canChange(c),
-});
+const scopeOf = (c: Ctx): BroadcastScope => ({ ...passScopeOf(c), canChange: canChange(c) });
 
 /** /api/v1/broadcasts: messages and scheduled changes for the passes a target matches. */
 export const broadcastsRoutes = createRouter();
@@ -117,7 +113,7 @@ register(
     params: IdParamSchema,
     response: BroadcastSchema,
   },
-  async (c) => c.json(await getBroadcastDto(svc(c), c.req.valid('param').id, orgScopeOf(c))),
+  async (c) => c.json(await getBroadcastDto(svc(c), c.req.valid('param').id, passScopeOf(c))),
 );
 
 register(
@@ -208,8 +204,7 @@ register(
       await listBroadcastItems(
         svc(c),
         c.req.valid('param').id,
-        orgScopeOf(c),
-        modeOf(auth),
+        passScopeOf(c),
         c.req.valid('query'),
       ),
     );

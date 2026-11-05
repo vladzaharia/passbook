@@ -1,7 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { bump, prune } from '../../platform/counters.ts';
-import { all, batch, first, run, stmt } from '../../platform/db.ts';
+import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
 
 export interface IdentityRef {
   id: string;
@@ -149,14 +149,34 @@ export async function passesBySerials(
   identityId: string,
   serials: string[],
 ): Promise<{ id: string; orgId: string; mode: Mode; serial: string }[]> {
-  if (serials.length === 0) return [];
-  const rows = await all<{ id: string; org_id: string; mode: Mode; serial: string }>(
+  const out: { id: string; orgId: string; mode: Mode; serial: string }[] = [];
+  // identity id + serials stay under D1's 100 bound parameters.
+  for (const part of chunk(serials, 99)) {
+    const rows = await all<{ id: string; org_id: string; mode: Mode; serial: string }>(
+      db,
+      `SELECT id, org_id, mode, serial FROM passes
+       WHERE identity_id = ? AND serial IN (${placeholders(part.length)}) AND deleted_at IS NULL`,
+      [identityId, ...part],
+    );
+    out.push(...rows.map((r) => ({ id: r.id, orgId: r.org_id, mode: r.mode, serial: r.serial })));
+  }
+  return out;
+}
+
+/** True when one of these Wallet device ids is registered to the pass. */
+export async function anyRegisteredDevice(
+  db: D1Database,
+  passId: string,
+  deviceIds: string[],
+): Promise<boolean> {
+  const ids = deviceIds.slice(0, 20);
+  if (ids.length === 0) return false;
+  const row = await first(
     db,
-    `SELECT id, org_id, mode, serial FROM passes
-     WHERE identity_id = ? AND serial IN (${serials.map(() => '?').join(', ')}) AND deleted_at IS NULL`,
-    [identityId, ...serials],
+    `SELECT 1 AS x FROM registrations WHERE pass_id = ? AND device_id IN (${placeholders(ids.length)}) LIMIT 1`,
+    [passId, ...ids],
   );
-  return rows.map((r) => ({ id: r.id, orgId: r.org_id, mode: r.mode, serial: r.serial }));
+  return row !== null;
 }
 
 /** Adds `lines` to the hourly window and returns the new total. */

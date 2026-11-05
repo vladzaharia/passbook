@@ -30,7 +30,9 @@ Limit: 600 requests per minute per key, then 429.
 
 A key is live or test (`mode` when it is created; shown with a Test badge and `wlt_test_` in the console,
 the secret format is the same). An admin session is test when it sends `x-passbook-mode: test`. Lists and
-counts show only the caller's mode; a get by id works in either and returns `mode`. A pass or bundle takes the
+counts show only the caller's mode. A key reads and changes only its own mode; another mode's pass or bundle is
+`404`. A session reads either mode by id (`mode` is returned) but changes only the mode it is in: otherwise
+`409 MODE_MISMATCH`. Bulk actions skip other-mode passes and list them as `MODE_MISMATCH`. A pass or bundle takes the
 creator's mode. Email for a test pass or bundle is never sent: it lands in the Test inbox. Test data older
 than `sandbox.purgeDays` (default 30) is deleted daily.
 

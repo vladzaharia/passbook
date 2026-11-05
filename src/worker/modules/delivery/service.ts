@@ -151,13 +151,18 @@ export async function queueEmail(
   },
 ): Promise<{ outboxId: string }> {
   const now = ctx.clock.now();
+  // Captured test mail has its own counters: it must not use up the caps of real holder email.
   const recipient = (await sha256Hex(`pass-email:${input.to.toLowerCase()}`)).slice(0, 32);
   const perRecipient = await bumpCounter(
     ctx.env.DB,
-    `pass-email:to:${recipient}`,
+    `pass-email:${input.mode}:to:${recipient}`,
     now - (now % HOUR),
   );
-  const perOrg = await bumpCounter(ctx.env.DB, `pass-email:org:${input.orgId}`, now - (now % DAY));
+  const perOrg = await bumpCounter(
+    ctx.env.DB,
+    `pass-email:${input.mode}:org:${input.orgId}`,
+    now - (now % DAY),
+  );
   if (perRecipient > EMAIL_RECIPIENT_HOURLY_CAP || perOrg > EMAIL_ORG_DAILY_CAP)
     throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
       headers: { 'retry-after': '3600' },

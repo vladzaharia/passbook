@@ -3,6 +3,7 @@ import { strictEmail } from '../../../shared/email.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import {
   addBlockAndClearOwner,
@@ -45,13 +46,14 @@ function emailOf(raw: string): string {
   return email;
 }
 
-async function load(ctx: ServiceContext, passId: string, scope: string | null) {
+async function load(ctx: ServiceContext, passId: string, scope: ScopeArg) {
   const pass = await getHolderPass(ctx.env.DB, passId, scope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  assertWritableMode(scope, pass.mode);
   return pass;
 }
 
-async function view(ctx: ServiceContext, passId: string, scope: string | null) {
+async function view(ctx: ServiceContext, passId: string, scope: ScopeArg) {
   const pass = await load(ctx, passId, scope);
   return toHolder(pass, await blockedUserIds(ctx.env.DB, passId));
 }
@@ -115,7 +117,7 @@ export async function assignHolder(
   ctx: ServiceContext,
   actor: Actor,
   input: { passId: string; email: string },
-  scope: string | null,
+  scope: ScopeArg,
 ) {
   await assignOne(ctx, actor, input, await load(ctx, input.passId, scope));
   return view(ctx, input.passId, scope);
@@ -125,7 +127,7 @@ export async function assignHoldersBulk(
   ctx: ServiceContext,
   actor: Actor,
   items: { passId: string; email: string }[],
-  scope: string | null,
+  scope: ScopeArg,
 ) {
   // Scope and validate everything first: a foreign pass must not leave earlier items applied.
   const passes = await getHolderPasses(
@@ -135,7 +137,9 @@ export async function assignHoldersBulk(
   );
   for (const item of items) {
     emailOf(item.email);
-    if (!passes.has(item.passId)) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    const found = passes.get(item.passId);
+    if (!found) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    assertWritableMode(scope, found.mode);
   }
   for (const item of items) {
     const pass = (await getHolderPass(ctx.env.DB, item.passId, scope)) ?? passes.get(item.passId);
@@ -158,7 +162,7 @@ export async function reassignHolder(
   ctx: ServiceContext,
   actor: Actor,
   input: { passId: string; email: string | null },
-  scope: string | null,
+  scope: ScopeArg,
 ) {
   const email = input.email === null ? null : emailOf(input.email);
   const pass = await load(ctx, input.passId, scope);
@@ -180,7 +184,7 @@ export async function unassignHolder(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
-  scope: string | null,
+  scope: ScopeArg,
 ) {
   const pass = await load(ctx, passId, scope);
   await reassign(ctx.env.DB, pass.id, null);
@@ -200,7 +204,7 @@ export async function clearBlock(
   ctx: ServiceContext,
   actor: Actor,
   input: { passId: string; userId: string },
-  scope: string | null,
+  scope: ScopeArg,
 ): Promise<void> {
   const pass = await load(ctx, input.passId, scope);
   const removed = await removeBlock(ctx.env.DB, pass.id, input.userId);

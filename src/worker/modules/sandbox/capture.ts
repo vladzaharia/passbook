@@ -23,7 +23,7 @@ export interface CaptureInput {
  */
 export async function captureEmail(ctx: ServiceContext, input: CaptureInput): Promise<void> {
   const { row, email } = input;
-  await insertCaptured(ctx.env.DB, {
+  const inserted = await insertCaptured(ctx.env.DB, {
     id: ctx.ids.id(),
     org_id: input.orgId,
     pass_id: input.passId ?? null,
@@ -45,6 +45,7 @@ export async function captureEmail(ctx: ServiceContext, input: CaptureInput): Pr
     'TEST_MODE',
     `captured:${row.id}`,
   );
+  if (!inserted) return;
   await recordPassEvent(ctx, {
     orgId: input.orgId,
     passId: input.eventPassId,

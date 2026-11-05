@@ -9,6 +9,7 @@ import { recordPassEvent } from '../events/record.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { createPassRow } from './create.ts';
 import { detailOf, linksOf, toSummary } from './detail.ts';
+import { getPassForWrite } from './pass-access.ts';
 import { type Mutation, publishPass } from './publish.ts';
 import {
   claimRefresh,
@@ -19,6 +20,7 @@ import {
   setDownloadToken,
   softDeletePass,
 } from './repo.ts';
+import type { ScopeArg } from './scope.ts';
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
 export interface Actor {
@@ -53,7 +55,7 @@ export async function updatePass(
   actor: Actor,
   passId: string,
   patch: PassPatch,
-  options: { scope: string | null; ifMatch?: number },
+  options: { scope: ScopeArg; ifMatch?: number },
 ) {
   const changedKeys: string[] = [];
   const result = await publishPass(ctx, {
@@ -107,10 +109,10 @@ async function setStatus(
   actor: Actor,
   passId: string,
   status: 'active' | 'voided',
-  scope: string | null,
+  scope: ScopeArg,
 ) {
-  const current = await getPass(ctx.env.DB, passId, scope);
-  if (current && current.removedAt !== null)
+  const current = await getPassForWrite(ctx.env.DB, passId, scope);
+  if (current.removedAt !== null)
     throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
   const result = await publishPass(ctx, {
     passId,
@@ -137,9 +139,9 @@ async function setStatus(
   return toSummary(result.pass);
 }
 
-export const voidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: string | null) =>
+export const voidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: ScopeArg) =>
   setStatus(ctx, actor, id, 'voided', scope);
-export const unvoidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: string | null) =>
+export const unvoidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: ScopeArg) =>
   setStatus(ctx, actor, id, 'active', scope);
 
 /**
@@ -150,10 +152,9 @@ export async function deletePass(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
-  scope: string | null,
+  scope: ScopeArg,
 ): Promise<void> {
-  let pass = await getPass(ctx.env.DB, passId, scope);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  let pass = await getPassForWrite(ctx.env.DB, passId, scope);
   if (pass.status === 'active') {
     pass = (
       await publishPass(ctx, {
@@ -188,10 +189,9 @@ export async function rotateLink(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
-  scope: string | null,
+  scope: ScopeArg,
 ) {
-  const pass = await getPass(ctx.env.DB, passId, scope);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   const token = ctx.ids.token();
   await setDownloadToken(ctx.env.DB, passId, token, ctx.clock.now());
   await recordAudit(ctx, {
@@ -218,10 +218,11 @@ export async function resendEmail(
   actor: Actor,
   passId: string,
   input: { to?: string; attach?: boolean },
-  scope: string | null,
+  scope: ScopeArg,
 ): Promise<void> {
-  const pass = await getPass(ctx.env.DB, passId, scope);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const pass = await getPassForWrite(ctx.env.DB, passId, scope);
+  if (pass.removedAt !== null)
+    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
   const to = input.to ?? pass.holderEmail;
   if (!to) throw new ValidationError('The pass has no holder email.', [], 'NO_RECIPIENT');
   // API keys may not turn resend into a mail relay.
@@ -269,12 +270,7 @@ export async function requestRefresh(
 
 export * from './connection-passes.ts';
 
-/** Throws PASS_NOT_FOUND unless the pass exists inside the scope. */
-export async function requirePass(
-  ctx: ServiceContext,
-  id: string,
-  scope: string | null,
-): Promise<void> {
-  if (!(await getPass(ctx.env.DB, id, scope)))
-    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+/** Throws unless the pass exists inside the scope and may be changed from it. */
+export async function requirePass(ctx: ServiceContext, id: string, scope: ScopeArg): Promise<void> {
+  await getPassForWrite(ctx.env.DB, id, scope);
 }

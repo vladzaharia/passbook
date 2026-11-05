@@ -216,9 +216,17 @@ export async function deleteIdentityRows(
   db: D1Database,
   id: string,
   credentialId: string | null,
+  team: string,
 ): Promise<void> {
   await batch(db, [
     stmt(db, 'DELETE FROM signing_identities WHERE id = ?', [id]),
+    // The team's push key goes with its last identity.
+    stmt(
+      db,
+      `DELETE FROM apns_keys WHERE team_identifier = ?
+       AND NOT EXISTS (SELECT 1 FROM signing_identities WHERE team_identifier = ?)`,
+      [team, team],
+    ),
     ...(credentialId ? [stmt(db, 'DELETE FROM credentials WHERE id = ?', [credentialId])] : []),
   ]);
 }

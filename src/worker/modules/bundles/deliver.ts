@@ -5,7 +5,7 @@ import { passEmailImages } from '../../email/pass-images.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
-import { retryOrGiveUp } from '../delivery/push.ts';
+import { failEmail, recordEmailOutcome } from '../delivery/email-outcome.ts';
 import { finishOutbox, type OutboxRow } from '../delivery/repo.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getOrg, getPass } from '../passes/repo.ts';
@@ -82,6 +82,14 @@ export async function deliverBundleEmail(
     });
     return;
   }
+  const target = {
+    orgId: bundle.org_id,
+    passId: first.id,
+    mode: bundle.mode,
+    templateId: null,
+    identityId: null,
+    bundleId,
+  };
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({
@@ -92,9 +100,9 @@ export async function deliverBundleEmail(
       fromName: email.fromName ?? platform['email.senderName'],
     }));
   } catch (error) {
-    ctx.log.warn('email.send_failed', { outboxId: row.id, attempts: row.attempts, error });
-    await retryOrGiveUp(ctx, row, lease, 'EMAIL_FAILED', 'failed');
+    await failEmail(ctx, claimed, target, error);
     return;
   }
+  await recordEmailOutcome(ctx, row, target, 'ok');
   await finishSent(ctx, row, lease, messageId);
 }

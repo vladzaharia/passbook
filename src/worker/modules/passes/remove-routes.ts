@@ -4,7 +4,7 @@ import {
   RemovePassSchema,
 } from '../../../shared/contracts/index.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
-import { actorFor, orgScopeOf, svc } from './http.ts';
+import { actorFor, passScopeOf, svc } from './http.ts';
 import { removePass, restorePass } from './remove.ts';
 
 export function registerRemoveRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
@@ -26,7 +26,7 @@ export function registerRemoveRoutes(passesRoutes: ReturnType<typeof createRoute
           actorFor(c),
           c.req.valid('param').id,
           c.req.valid('json'),
-          orgScopeOf(c),
+          passScopeOf(c),
         ),
       ),
   );
@@ -42,6 +42,6 @@ export function registerRemoveRoutes(passesRoutes: ReturnType<typeof createRoute
       response: PassActionResponseSchema,
     },
     async (c) =>
-      c.json(await restorePass(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
+      c.json(await restorePass(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
   );
 }

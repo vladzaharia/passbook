@@ -2,7 +2,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { hashDevice, type PassEventInput, recordPassEvents } from '../events/record.ts';
 import { pendingFetchDevices } from '../events/repo.ts';
 import type { Pass } from '../passes/repo.ts';
-import { identityByPassType, passesBySerials } from './repo.ts';
+import { anyRegisteredDevice, identityByPassType, passesBySerials } from './repo.ts';
 
 const SERIAL_LIKE = /[A-Za-z0-9][A-Za-z0-9._-]{7,63}/g;
 const PASS_TYPE = /pass type ([A-Za-z0-9._-]+)/i;
@@ -23,10 +23,16 @@ async function maskDevices(line: string): Promise<string> {
   );
 }
 
+/** The raw device ids a line names. */
+const deviceIdsOf = (line: string) =>
+  [...line.matchAll(DEVICE_ID)].map((m) => m[2] ?? m[0]).filter((id) => id !== undefined);
+
 /**
- * Wallet's log endpoint carries no device or pass. A line that names a pass type and a serial of
- * that identity is attached to that pass as `device.log`; other lines stay in the identity-level
- * log. A serial shared by several passes of the identity is skipped.
+ * Wallet's log endpoint carries no device or pass and takes unauthenticated posts. A line is
+ * attached to a pass as `device.log` only when it names the pass type, a serial of that identity and
+ * a device registered to that pass, so knowing a serial is not enough to write into a pass's Sync
+ * log. Attached lines carry `unverified`; other lines stay in the identity-level log. A serial
+ * shared by several passes of the identity is skipped.
  */
 export async function attachLogLines(ctx: ServiceContext, lines: string[]): Promise<void> {
   const identities = new Map<string, string | null>();
@@ -50,13 +56,13 @@ export async function attachLogLines(ctx: ServiceContext, lines: string[]): Prom
     for (const { line, serials } of mine) {
       const owners = serials.map((s) => bySerial.get(s)).find((l) => l !== undefined);
       const pass = owners?.length === 1 ? owners[0] : undefined;
-      if (!pass) continue;
+      if (!pass || !(await anyRegisteredDevice(ctx.env.DB, pass.id, deviceIdsOf(line)))) continue;
       inputs.push({
         orgId: pass.orgId,
         passId: pass.id,
         mode: pass.mode,
         kind: 'device.log',
-        data: { line: (await maskDevices(line)).slice(0, 300) },
+        data: { line: (await maskDevices(line)).slice(0, 300), unverified: true },
       });
     }
   }

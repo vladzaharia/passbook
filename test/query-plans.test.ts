@@ -1,6 +1,8 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { listAuditRows } from '../src/worker/modules/audit/repo.ts';
+import { listBundleRows } from '../src/worker/modules/bundles/repo.ts';
+import { listEvents } from '../src/worker/modules/events/repo.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { listUsers } from '../src/worker/modules/users/repo.ts';
 
@@ -44,6 +46,29 @@ const fullScans = (lines: string[], table: string) =>
   lines.filter((l) => new RegExp(`^SCAN ${table}( |$)(?!.*USING)`).test(l));
 
 describe('list and search query plans', () => {
+  it('passes: an org and mode list uses an index', async () => {
+    const lines = await plans((db) => listPasses(db, { orgId: 'o', mode: 'live', limit: 50 }));
+    expect(fullScans(lines, 'passes')).toEqual([]);
+  });
+
+  it('bundles: an org list uses bundles_org, a platform list bundles_mode', async () => {
+    const org = await plans((db) => listBundleRows(db, { orgScope: 'o', mode: 'live', limit: 50 }));
+    expect(org.join('\n')).toContain('bundles_org');
+    const pinned = await plans((db) =>
+      listBundleRows(db, { orgScope: null, orgId: 'o', mode: 'test', limit: 50 }),
+    );
+    expect(pinned.join('\n')).toContain('bundles_org');
+    const all = await plans((db) =>
+      listBundleRows(db, { orgScope: null, mode: 'live', limit: 50 }),
+    );
+    expect(fullScans(all, 'bundles')).toEqual([]);
+  });
+
+  it('events: a pass ledger page uses an index', async () => {
+    const lines = await plans((db) => listEvents(db, { passId: 'p', limit: 50 }));
+    expect(fullScans(lines, 'pass_events')).toEqual([]);
+  });
+
   it('passes: every filter and the search use an index', async () => {
     for (const filter of [
       { orgId: 'o' },
