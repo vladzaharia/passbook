@@ -4,10 +4,10 @@ import {
   ScanActRequestSchema,
   ScanAdminScopeSchema,
   ScanOutcomeSchema,
-  ScanSessionSchema,
   TimeZoneSchema,
   UuidV7Schema,
 } from './scan.ts';
+import { ScanSessionSchema } from './scan-session.ts';
 import {
   CreateScanEventSchema,
   CreateScannerSchema,

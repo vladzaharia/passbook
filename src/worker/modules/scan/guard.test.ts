@@ -10,9 +10,6 @@ import {
   makeScanEvent,
   makeScanner,
   makeScanStaff,
-  makeTemplate,
-  makeUser,
-  persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { type AppBindings, requestContext } from '../../platform/context.ts';
@@ -281,8 +278,6 @@ describe('requireScanActor: scope', () => {
   it('an admin scope naming another org or an unknown id gets the same 404', async () => {
     const other = await makeOrg(f);
     const otherEvent = await makeScanEvent(f, { orgId: other.id });
-    const tpl = makeTemplate({ id: f.ids.id() });
-    void tpl;
     const unknown = await post(app, env, fake.admin(), {
       scope: { orgId, eventId: 'nope', timeZone: 'UTC' },
     });
@@ -316,8 +311,6 @@ describe('requireScanActor: scope', () => {
   });
 
   it('a scanner reaches its event templates', async () => {
-    const user = await makeUser(f);
-    void user;
     const ev = await makeScanEvent(f, { orgId });
     const s = await makeScanner(f, { orgId, eventId: ev.id });
     expect(await (await get(app, env, '/ping', s.headers)).json()).toMatchObject({
