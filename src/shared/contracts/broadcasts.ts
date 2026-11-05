@@ -12,7 +12,7 @@ import {
 
 export const BROADCAST_MAX_TEMPLATES = 20;
 export const BROADCAST_MESSAGE_MAX = 256;
-const MAX_LEAD_MS = 366 * 24 * 3_600_000;
+export const BROADCAST_MAX_LEAD_MS = 366 * 24 * 3_600_000;
 
 /** `message` sets the template's messaging input; `change` sets any inputs. */
 export const BroadcastKindSchema = z.enum(['message', 'change']);
@@ -80,7 +80,13 @@ export const BroadcastSchema = z.object({
 });
 export type BroadcastDto = z.infer<typeof BroadcastSchema>;
 
-const ClearAfterSchema = z.number().int().min(60_000).max(MAX_LEAD_MS).nullable().optional();
+const ClearAfterSchema = z
+  .number()
+  .int()
+  .min(60_000)
+  .max(BROADCAST_MAX_LEAD_MS)
+  .nullable()
+  .optional();
 
 export const CreateBroadcastSchema = z
   .object({
@@ -107,12 +113,32 @@ export const CreateBroadcastSchema = z
       if (Object.keys(body.patch).length !== 1 || typeof text !== 'string')
         issue('patch', 'A message sets only "message" to text.');
       else if (text.length > BROADCAST_MESSAGE_MAX)
-        issue('patch', `Keep the message under ${BROADCAST_MESSAGE_MAX} characters.`);
+        issue('patch', `Keep the message to ${BROADCAST_MESSAGE_MAX} characters or fewer.`);
       else if (text.trim() === '' && body.clearAfter)
         issue('clearAfter', 'An empty message has nothing to clear.');
     } else if (body.clearAfter) issue('clearAfter', 'Only a message can be cleared later.');
   });
 export type CreateBroadcastBody = z.infer<typeof CreateBroadcastSchema>;
+
+/** Saves new values over a draft or a scheduled message that has not started. Same rules as create. */
+export const UpdateBroadcastSchema = CreateBroadcastSchema;
+
+export const BroadcastOutcomeSchema = z.enum(['updated', 'unchanged', 'failed']);
+export type BroadcastOutcome = z.infer<typeof BroadcastOutcomeSchema>;
+
+export const BroadcastItemSchema = z.object({
+  passId: IdSchema,
+  title: z.string().nullable(),
+  holderEmail: z.string().nullable(),
+  outcome: BroadcastOutcomeSchema,
+  /** Updated without a notification because the pass hit its daily limit. */
+  silent: z.boolean(),
+});
+export type BroadcastItemDto = z.infer<typeof BroadcastItemSchema>;
+export const BroadcastItemListQuerySchema = PageQuerySchema.extend({
+  outcome: BroadcastOutcomeSchema.optional(),
+});
+export const BroadcastItemListSchema = pageOf(BroadcastItemSchema);
 
 export const SendBroadcastSchema = z.object({ at: TimestampSchema.optional() });
 

@@ -11,6 +11,11 @@ export interface UpcomingEventsConfig {
   max?: number;
   /** How long an event without an end counts as running. */
   fallbackMinutes?: number;
+  /**
+   * A season pass: while events are listed, Wallet expires the pass after the last one and
+   * surfaces it around each one, `leadMinutes` early.
+   */
+  schedule?: { leadMinutes?: number };
 }
 
 const MAX_EVENTS = 10;
@@ -32,7 +37,24 @@ const configSchema: JsonSchemaObject = {
     timeZoneInput: { type: 'string', minLength: 1 },
     max: { type: 'integer', minimum: 1, maximum: MAX_EVENTS },
     fallbackMinutes: { type: 'integer', minimum: 1, maximum: 10080 },
+    schedule: {
+      type: 'object',
+      additionalProperties: false,
+      properties: { leadMinutes: { type: 'integer', minimum: 0, maximum: 1440 } },
+    },
   },
+};
+
+const DAY = 86_400_000;
+const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+const HEX64 = /^[0-9a-f]{64}$/i;
+const httpsUrl = (value: Json | undefined) => {
+  if (typeof value !== 'string') return false;
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
 };
 
 const ZONED = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/i;
@@ -74,9 +96,49 @@ function remoteImage(
   if (typeof record !== 'object' || record === null)
     throw new Error(`${label}: no image named ${key}.`);
   const { URL, SHA256, size, scale } = record;
+  if (!httpsUrl(URL)) throw new Error(`${label}: image ${key} needs an https URL.`);
+  if (typeof SHA256 !== 'string' || !HEX64.test(SHA256))
+    throw new Error(`${label}: image ${key} needs a 64-character SHA256.`);
+  if (typeof size !== 'number' || !Number.isInteger(size) || size <= 0)
+    throw new Error(`${label}: image ${key} needs a size in bytes.`);
   return {
     URLs: [{ URL, SHA256, size, ...(scale !== undefined ? { scale } : {}) }],
   } as Json;
+}
+
+interface Listed {
+  start: number | undefined;
+  until: number | undefined;
+}
+
+/** One relevance interval per event and an expiry after the last one. Wallet caps an interval at a day. */
+function schedule(pass: PassJson, events: readonly Listed[], leadMinutes: number): void {
+  const windows = events.flatMap((e) => {
+    if (e.start === undefined) return [];
+    const from = e.start - leadMinutes * MINUTE;
+    const until = Math.min(Math.max(e.until ?? e.start, e.start), from + DAY);
+    return [{ startDate: iso(from), endDate: iso(until) }];
+  });
+  if (windows.length > 0) {
+    // The pass's own window (a ticket's event) stays; listed events fill the rest of the cap.
+    const own = pass.relevantDates ?? [];
+    const seen = new Set(own.map((w) => `${w.startDate}|${w.endDate}`));
+    const extra = windows.filter((w) => !seen.has(`${w.startDate}|${w.endDate}`));
+    pass.relevantDates = [...own, ...extra.slice(0, Math.max(0, MAX_EVENTS - own.length))].sort(
+      (a, b) => Date.parse(a.startDate ?? '') - Date.parse(b.startDate ?? ''),
+    );
+  }
+  const first = events.find((e) => e.start !== undefined);
+  if (first?.start !== undefined) {
+    const own = pass.relevantDate ? Date.parse(pass.relevantDate) : Number.NaN;
+    if (Number.isNaN(own) || first.start < own) pass.relevantDate = iso(first.start);
+  }
+  const ends = events.flatMap((e) => (e.until === undefined ? [] : [e.until]));
+  if (ends.length > 0) {
+    const own = pass.expirationDate ? Date.parse(pass.expirationDate) : Number.NaN;
+    const last = Math.max(...ends);
+    if (Number.isNaN(own) || last > own) pass.expirationDate = iso(last);
+  }
 }
 
 /**
@@ -147,7 +209,9 @@ export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
       const urls: Row = {};
       for (const [from, to] of Object.entries(URL_KEYS)) {
         const url = text(row, from);
-        if (url) urls[to] = url;
+        if (!url) continue;
+        if (!httpsUrl(url)) throw new Error(`${label}: ${from} needs an https link.`);
+        urls[to] = url;
       }
       const pictures: Row = {};
       for (const key of ['headerImage', 'venueMap'] as const) {
@@ -173,17 +237,19 @@ export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
         ...(Object.keys(urls).length ? { URLs: urls } : {}),
         ...(Object.keys(pictures).length ? { images: pictures } : {}),
       };
-      return [{ entry, at: start?.ms ?? Number.POSITIVE_INFINITY }];
+      return [{ entry, at: start?.ms ?? Number.POSITIVE_INFINITY, start: start?.ms, until }];
     });
 
     const list = events
       .map((e, i) => ({ ...e, i }))
       .sort((a, b) => (a.at === b.at ? a.i - b.i : a.at < b.at ? -1 : 1))
-      .slice(0, config.max ?? MAX_EVENTS)
-      .map((e) => e.entry);
+      .slice(0, config.max ?? MAX_EVENTS);
     if (list.length > 0)
-      pass.upcomingPassInformation = list as unknown as PassJson['upcomingPassInformation'];
+      pass.upcomingPassInformation = list.map(
+        (e) => e.entry,
+      ) as unknown as PassJson['upcomingPassInformation'];
     else delete pass.upcomingPassInformation;
+    if (config.schedule && list.length > 0) schedule(pass, list, config.schedule.leadMinutes ?? 0);
   },
 };
 

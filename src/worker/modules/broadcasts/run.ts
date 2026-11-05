@@ -7,20 +7,31 @@ import {
   type BroadcastRow,
   casState,
   countItems,
-  countTargeted,
   getBroadcast,
   insertBroadcastStmt,
   setTargeted,
 } from './repo.ts';
+import { countTargeted } from './repo-target.ts';
 
-/** First workflow step: counts the target. False when the broadcast is not in `sending`. */
+/** First workflow step: counts the target. False when the broadcast cannot be sent (cancelled, already settled). */
 export async function startedBroadcast(
   ctx: ServiceContext,
   instanceId: string,
   broadcastId: string,
 ): Promise<boolean> {
-  const row = await getBroadcast(ctx.env.DB, broadcastId, null);
-  if (row?.state !== 'sending') return false;
+  let row = await getBroadcast(ctx.env.DB, broadcastId, null);
+  // A launch that looked failed (the create call errored) may revert to scheduled while this
+  // instance runs: take over instead of skipping.
+  if (row?.state === 'scheduled') {
+    await casState(ctx.env.DB, broadcastId, ['scheduled'], 'sending', {
+      startedAt: ctx.clock.now(),
+    });
+    row = await getBroadcast(ctx.env.DB, broadcastId, null);
+  }
+  if (row?.state !== 'sending') {
+    await finishRun(ctx.env.DB, instanceId, 'complete', ctx.clock.now());
+    return false;
+  }
   await setTargeted(
     ctx.env.DB,
     broadcastId,
@@ -71,10 +82,15 @@ export async function finishBroadcast(
   const counts = countsOf(row, await countItems(ctx.env.DB, [broadcastId]));
   const state = errorCode ? 'failed' : endState(counts);
   const now = ctx.clock.now();
-  if (await casState(ctx.env.DB, broadcastId, ['sending'], state, { finishedAt: now, errorCode })) {
-    if (state === 'sent' || state === 'partial') await scheduleClear(ctx, row);
-    ctx.log.info('broadcast.done', { broadcastId, state, ...counts });
-  }
+  const won = await casState(ctx.env.DB, broadcastId, ['sending'], state, {
+    finishedAt: now,
+    errorCode,
+  });
+  if (won) ctx.log.info('broadcast.done', { broadcastId, state, ...counts });
+  // A retry after a failed follow-up insert loses the CAS but still owes the follow-up; the
+  // unique parent index makes the insert idempotent.
+  const settled = won ? state : row.state;
+  if (settled === 'sent' || settled === 'partial') await scheduleClear(ctx, row);
   await finishRun(ctx.env.DB, instanceId, errorCode ? 'errored' : 'complete', now, {
     errorCode: errorCode ?? (state === 'sent' ? null : 'PARTIAL_FAILURE'),
   });

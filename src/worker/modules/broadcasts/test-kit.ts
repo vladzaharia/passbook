@@ -1,5 +1,6 @@
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
+import { run } from '../../platform/db.ts';
 import { createPassRow } from '../passes/create.ts';
 import type { Pass } from '../passes/repo.ts';
 import { type FakeWorkflow, type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
@@ -60,8 +61,29 @@ const passJson = (messaging: boolean): PassJson =>
     },
   }) as PassJson;
 
+/** The fake admin and the first fake API keys as real rows: a launch checks its creator is live. */
+async function seedCreators(db: D1Database): Promise<void> {
+  const keys = Array.from({ length: 40 }, (_, i) =>
+    run(
+      db,
+      `INSERT OR IGNORE INTO api_keys (id, name, prefix, key_hash, scopes, created_at)
+       VALUES (?, 'Test key', ?, ?, '[]', 0)`,
+      [`key-${i + 1}`, `pre${i + 1}`, `hash${i + 1}`],
+    ),
+  );
+  await Promise.all([
+    run(
+      db,
+      `INSERT OR IGNORE INTO users (id, name, primary_email, status, created_at, last_roles)
+       VALUES ('admin-1', 'Admin', 'admin-1@example.test', 'active', 0, '["admin","user"]')`,
+    ),
+    ...keys,
+  ]);
+}
+
 export async function broadcastKit(): Promise<BroadcastKit> {
   const kit = await setupKit();
+  await seedCreators(kit.env.DB);
   const broadcast: FakeWorkflow = {
     created: [],
     async create(options) {

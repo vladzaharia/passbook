@@ -14,6 +14,7 @@ import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from '.
 import { messagingIssues } from './messaging.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 import { validateRequires } from './requires.ts';
+import { reservedInputIssues, unknownPassValues } from './reserved.ts';
 
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
 export interface ImageTarget {
@@ -112,12 +113,7 @@ export function validateManifest(
   scanSchema(manifest.inputs, 'inputs', options, { nodes: 0 }, error);
   const properties = isRecord(manifest.inputs.properties) ? manifest.inputs.properties : {};
   const inputNames = new Set(Object.keys(properties));
-  if (inputNames.has('pass'))
-    error(
-      'INPUT_RESERVED',
-      '"pass" is reserved for server values; rename the input.',
-      'inputs.properties.pass',
-    );
+  issues.push(...reservedInputIssues(manifest));
 
   const sample = manifest.sample ?? {};
   try {
@@ -138,8 +134,8 @@ export function validateManifest(
       error('EXPR', problem, path);
       return;
     }
-    for (const m of (typeof expr === 'string' ? expr : '').matchAll(/\bpass\.(\w+)/g))
-      if (m[1] !== 'scanCode') warn('EXPR_PASS', `Unknown pass value "${m[1]}".`, path);
+    for (const name of unknownPassValues(typeof expr === 'string' ? expr : ''))
+      warn('EXPR_PASS', `Unknown pass value "${name}".`, path);
     const refs = exprReferences(expr);
     for (const name of refs.inputs)
       if (!inputNames.has(name)) warn('EXPR_INPUT', `Unknown input "${name}".`, path);
@@ -274,12 +270,18 @@ export function applyDefaults(manifest: TemplateManifest, input: Personalization
 export function checkInput(manifest: TemplateManifest, input: Personalization): ValidationIssue[] {
   const validator = new Validator(manifest.inputs as never, '2020-12', false);
   const result = validator.validate(applyDefaults(manifest, input));
-  return leafErrors(result.errors).map((e) => ({
-    severity: 'error' as const,
-    code: 'INPUT',
-    message: e.error,
-    path: e.instanceLocation.replace(/^#\/?/, ''),
-  }));
+  return leafErrors(result.errors).map((e) => {
+    const path = e.instanceLocation.replace(/^#\/?/, '');
+    const own = (manifest.inputs.properties as Record<string, unknown> | undefined)?.[path];
+    // A schema may say what a failed pattern means in plain words.
+    const said = isRecord(own) && e.keyword === 'pattern' ? own['x-pattern-message'] : undefined;
+    return {
+      severity: 'error' as const,
+      code: 'INPUT',
+      message: typeof said === 'string' ? said : e.error,
+      path,
+    };
+  });
 }
 
 export interface DisplayProjection {

@@ -12,6 +12,12 @@
   "coupon": {
     "backFields": [
       {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
         "key": "fine",
         "label": "Terms",
         "value": "One use per customer. Not combinable with other offers."

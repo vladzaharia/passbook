@@ -6,7 +6,7 @@ import { dispatchSafely } from '../delivery/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { publishPass } from '../passes/publish.ts';
-import { currentPassJson, getPass, type Pass } from '../passes/repo.ts';
+import { getPass, type Pass } from '../passes/repo.ts';
 import type { Actor } from '../passes/service.ts';
 import {
   type BroadcastRow,
@@ -14,10 +14,15 @@ import {
   handledPassIds,
   type ItemRow,
   insertItems,
-  targetPage,
 } from './repo.ts';
+import { hasVersionFrom } from './repo-items.ts';
+import { targetPage } from './repo-target.ts';
 
-export const CHUNK = 100;
+/**
+ * Passes per workflow step. A pass costs up to ~30 D1 queries (read, build, publish, events,
+ * item); a step may spend 1,000, so 25 passes leave room for the page and chunk reads.
+ */
+export const CHUNK = 25;
 
 const ACTOR_TYPES = ['user', 'api_key', 'system', 'connection'] as const;
 
@@ -42,12 +47,6 @@ async function messagingInput(
   return input;
 }
 
-async function expired(ctx: ServiceContext, pass: Pass): Promise<boolean> {
-  const raw = await currentPassJson(ctx.env.DB, pass.id);
-  const at = raw ? (JSON.parse(raw) as { expirationDate?: unknown }).expirationDate : undefined;
-  return typeof at === 'string' && Date.parse(at) <= ctx.clock.now();
-}
-
 /** Applies the broadcast to one pass. Never throws for a pass-level problem. */
 async function applyOne(
   ctx: ServiceContext,
@@ -60,7 +59,6 @@ async function applyOne(
   if (pass?.status !== 'active' || pass.removedAt !== null || pass.mode !== row.mode)
     return { ...base, outcome: 'unchanged' };
   try {
-    if (await expired(ctx, pass)) return { ...base, outcome: 'unchanged' };
     const patch = JSON.parse(row.patch) as Record<string, Json>;
     const values: Record<string, Json> = {};
     const expected = row.expect ? (JSON.parse(row.expect) as Record<string, Json>) : null;
@@ -90,7 +88,12 @@ async function applyOne(
       notify,
       mutate: (current) => ({ personalization: { ...current.personalization, ...values } }),
     });
-    if (!result.changed) return { ...base, outcome: 'unchanged' };
+    if (!result.changed) {
+      // A run that died after publishing leaves the new version but no item: count it once.
+      const source = row.kind === 'message' ? 'broadcast' : 'schedule';
+      const written = await hasVersionFrom(ctx.env.DB, passId, source, row.started_at ?? 0);
+      return { ...base, outcome: written ? 'updated' : 'unchanged' };
+    }
     await recordPassEvent(ctx, {
       orgId: row.org_id,
       passId,
@@ -129,7 +132,7 @@ export function targetFilter(
   };
 }
 
-/** One chunk of up to 100 passes. A pass that already has an outcome is skipped on retry. */
+/** One chunk of up to `CHUNK` passes. A pass that already has an outcome is skipped on retry. */
 export async function applyChunk(
   ctx: ServiceContext,
   broadcastId: string,

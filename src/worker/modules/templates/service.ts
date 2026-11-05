@@ -29,14 +29,13 @@ import {
   getOrgName,
   getTemplate,
   getVersion,
-  type ListedTemplate,
   listRecentImports,
-  listTemplates,
   listVersions,
   olderLivePasses,
   type TemplateRow,
   type VersionRow,
 } from './repo.ts';
+import { type ListedTemplate, listTemplates } from './repo-list.ts';
 import { syncBakedTemplates } from './sync.ts';
 
 type Summary = z.infer<typeof TemplateSummarySchema>;

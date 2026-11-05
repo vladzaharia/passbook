@@ -116,7 +116,7 @@
         "x-widget": "list",
         "x-itemLabel": "Beacon",
         "x-addLabel": "Add beacon",
-        "x-help": "Shows the card on the lock screen near a Bluetooth beacon. Up to 10.",
+        "x-help": "Can suggest the card on the lock screen near a Bluetooth beacon. Up to 10. Example: 8DEEFBB9-F738-4297-8040-96668BB44281.",
         "items": {
           "type": "object",
           "required": [
@@ -129,7 +129,7 @@
               "x-label": "UUID",
               "x-order": 10,
               "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
-              "x-placeholder": "8DEEFBB9-F738-4297-8040-96668BB44281"
+              "x-placeholder": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
             },
             "major": {
               "type": "integer",
@@ -161,7 +161,7 @@
         "x-order": 59,
         "maxLength": 256,
         "x-widget": "textarea",
-        "x-help": "Shown on the back. A change notifies the holder."
+        "x-help": "Shown on the back."
       }
     },
     "dependentRequired": {
@@ -217,11 +217,7 @@
       "to": {
         "field": "message"
       },
-      "value": "{{message}}",
-      "remove": {
-        "input": "message",
-        "empty": true
-      }
+      "value": "{{message}}"
     },
     {
       "to": {

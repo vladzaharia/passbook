@@ -42,6 +42,12 @@
     ],
     "backFields": [
       {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
         "key": "terms",
         "label": "Terms",
         "value": "No re-entry. Ticket is non-transferable."
@@ -92,7 +98,7 @@
       }
     ]
   },
-  "expirationDate": "2030-06-01T22:00:00-07:00",
+  "expirationDate": "2030-06-16T05:00:00Z",
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
   "labelColor": "rgb(199,210,254)",
@@ -115,6 +121,14 @@
     {
       "endDate": "2030-06-02T05:00:00Z",
       "startDate": "2030-06-02T00:00:00Z"
+    },
+    {
+      "endDate": "2030-06-09T05:00:00Z",
+      "startDate": "2030-06-09T00:00:00Z"
+    },
+    {
+      "endDate": "2030-06-16T05:00:00Z",
+      "startDate": "2030-06-16T00:00:00Z"
     }
   ],
   "semantics": {

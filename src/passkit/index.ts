@@ -25,6 +25,7 @@ export {
 } from './package/zip.ts';
 export { hexToRgb, normalizePass, stripDesignerIds } from './schema/normalize.ts';
 export { decodeStrings, parseStrings } from './schema/strings.ts';
+export { CONTRAST_MIN, contrastRatio, shownRatio } from './schema/validate-hig.ts';
 export type { PackageContents } from './schema/validate-package.ts';
 export type { CertificateInfo, SignedPass, SignPassOptions } from './sign/index.ts';
 export { buildManifest, certificateInfo, signManifest, signPass } from './sign/index.ts';

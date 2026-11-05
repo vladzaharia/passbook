@@ -66,7 +66,7 @@ describe('HIG lint', () => {
       'a change message on free text',
       'generic',
       (p) => {
-        back(p).push({ key: 'message', label: 'Message', value: 'Hi', changeMessage: '%@' });
+        back(p).push({ key: 'note', label: 'Note', value: 'Hi', changeMessage: '%@' });
       },
       'warning:CHANGE_MESSAGE_FREE_TEXT',
     ],

@@ -320,9 +320,16 @@ describe('starter-store-card', () => {
   });
 });
 
+/** The event starter's sample without its season list: one event, as a single ticket. */
+async function singleEvent(extra: Personalization = {}): Promise<Personalization> {
+  const { template } = await loadBaked('starter-event-ticket');
+  const { upcomingEvents: _season, ...rest } = template.manifest.sample;
+  return { ...rest, ...extra };
+}
+
 describe('starter-event-ticket', () => {
   it('declares the poster scheme with the classic fallback and the semantics it needs', async () => {
-    const pass = (await build('starter-event-ticket', material)).passJson;
+    const pass = (await build('starter-event-ticket', material, await singleEvent())).passJson;
     expect(pass.preferredStyleSchemes).toEqual(['posterEventTicket', 'eventTicket']);
     expect(Object.keys(pass.semantics as object)).toEqual(
       expect.arrayContaining([
@@ -347,8 +354,7 @@ describe('starter-event-ticket', () => {
   });
 
   it('drops the venue location when coordinates are missing and follows input times', async () => {
-    const { template } = await loadBaked('starter-event-ticket');
-    const { venueLat: _a, venueLng: _b, ...rest } = template.manifest.sample;
+    const { venueLat: _a, venueLng: _b, ...rest } = await singleEvent();
     const input: Personalization = {
       ...rest,
       startsAt: '2031-01-01T10:00:00Z',
@@ -364,18 +370,24 @@ describe('starter-event-ticket', () => {
   });
 
   it('builds events longer than 24 hours and expires at the end', async () => {
-    const { template } = await loadBaked('starter-event-ticket');
-    const built = await build('starter-event-ticket', material, {
-      ...template.manifest.sample,
-      startsAt: '2030-06-01T10:00:00Z',
-      endsAt: '2030-06-03T22:00:00Z',
-    });
+    const built = await build(
+      'starter-event-ticket',
+      material,
+      await singleEvent({ startsAt: '2030-06-01T10:00:00Z', endsAt: '2030-06-03T22:00:00Z' }),
+    );
     expect(built.passJson.relevantDates?.[0]).toMatchObject({
       startDate: '2030-06-01T08:00:00Z',
       endDate: '2030-06-02T08:00:00Z',
     });
     expect(built.passJson.expirationDate).toBe('2030-06-03T22:00:00Z');
     expect(built.report.issues.filter((i) => i.code === 'RELEVANT_DATE_RANGE')).toEqual([]);
+  });
+
+  it('expires a season pass after its last event and surfaces every event', async () => {
+    const pass = (await build('starter-event-ticket', material)).passJson;
+    // The finale has no end: it counts as running for three hours.
+    expect(pass.expirationDate).toBe('2030-06-16T05:00:00Z');
+    expect(pass.relevantDates).toHaveLength(3);
   });
 
   it('adds guide links only when given', async () => {

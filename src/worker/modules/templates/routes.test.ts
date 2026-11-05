@@ -361,7 +361,7 @@ describe('read', () => {
     expect((await call('/previews?ids=')).status).toBe(422);
   });
 
-  it('previews a shared starter with no org: no empty back field, no template name as the org', async () => {
+  it('previews a shared starter with no org: no empty back field but the message, no template name as the org', async () => {
     const res = await post(`/${encodeURIComponent('baked:starter-coupon')}/preview`, {});
     expect(res.status).toBe(200);
     const { passJson } = (await res.json()) as {
@@ -372,7 +372,8 @@ describe('read', () => {
     };
     expect(passJson.organizationName).toBe('Organization');
     const back = passJson.coupon.backFields;
-    expect(back.every((f) => f.value !== '')).toBe(true);
+    // The message field stays so the first message changes a field instead of adding one.
+    expect(back.filter((f) => f.value === '').map((f) => f.key)).toEqual(['message']);
     expect(back.find((f) => f.key === 'pass-service')?.value).toBe(env.PUBLIC_BASE_URL);
   });
 });

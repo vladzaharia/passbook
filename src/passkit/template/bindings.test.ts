@@ -9,6 +9,7 @@ function bind(
   input: Record<string, unknown>,
   extra = {},
   server: { scanCode?: string } = {},
+  properties: Record<string, unknown> = {},
 ) {
   const passJson = {
     formatVersion: 1,
@@ -31,7 +32,7 @@ function bind(
   const manifest: TemplateManifest = {
     schema: 1,
     name: 't',
-    inputs: { type: 'object', properties: {} },
+    inputs: { type: 'object', properties: properties as never },
     sample: {},
     bindings: bindings as TemplateManifest['bindings'],
     display: { title: 'x' },
@@ -66,6 +67,20 @@ describe('pass.scanCode', () => {
       },
     );
     expect(pass.barcodes?.[0]?.message).toBe('REAL');
+  });
+});
+
+describe('an input named pass', () => {
+  const to = { barcode: 0, prop: 'message' };
+  it('wins over the server scope in a template saved before the name was reserved', () => {
+    const { pass } = bind(
+      [{ to, value: '{{pass.code}}' }],
+      { pass: { code: 'mine' } },
+      {},
+      { scanCode: 'REAL' },
+      { pass: { type: 'object' } },
+    );
+    expect(pass.barcodes?.[0]?.message).toBe('mine');
   });
 });
 
