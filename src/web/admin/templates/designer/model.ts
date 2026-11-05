@@ -1,6 +1,5 @@
-import type { StyleTag } from '@/passkit/schema/constants.ts';
-import { slotsForStyles } from '@/passkit/schema/image-rules.ts';
 import { PASS_STYLES, type PassStyle } from '@/passkit/types.ts';
+import { drawnSlots } from '../../passes/detail/image-slots.ts';
 
 /** The designer edits the two JSON documents of a version as plain data. */
 export type Dict = Record<string, unknown>;
@@ -91,34 +90,14 @@ export function allKeys(pass: Dict): string[] {
   return groupsFor(styleOf(pass)).flatMap((g) => fieldsOf(pass, g).map(keyOf));
 }
 
-/** Style tags the pass draws: its dictionary plus the poster and semantic schemes. */
-export function tagsOf(pass: Dict): Set<StyleTag> {
-  const tags = new Set<StyleTag>([styleOf(pass)]);
-  const schemes = Array.isArray(pass.preferredStyleSchemes) ? pass.preferredStyleSchemes : [];
-  if (schemes.includes('posterEventTicket')) tags.add('PET');
-  if (schemes.includes('semanticBoardingPass')) tags.add('SBP');
-  return tags;
-}
-
-export const SLOT_LABEL: Record<string, string> = {
-  icon: 'Icon',
-  logo: 'Logo',
-  primaryLogo: 'Primary logo',
-  secondaryLogo: 'Secondary logo',
-  strip: 'Strip',
-  thumbnail: 'Thumbnail',
-  artwork: 'Artwork',
-  background: 'Background',
-  footer: 'Footer',
-};
-const SLOT_ORDER = Object.keys(SLOT_LABEL);
+export { SLOT_LABEL } from '../../passes/detail/image-slots.ts';
 
 /** Image slots the style draws, in a stable order; icon first. */
-export function slotsOf(pass: Dict, assets: readonly DraftAsset[]): string[] {
-  const hasArtwork = assets.some((a) => a.slot === 'artwork');
-  const used = slotsForStyles(tagsOf(pass), hasArtwork);
-  return SLOT_ORDER.filter((s) => used.has(s));
-}
+export const slotsOf = (pass: Dict, assets: readonly DraftAsset[]): string[] =>
+  drawnSlots(
+    pass,
+    assets.some((a) => a.slot === 'artwork'),
+  );
 
 export type Section =
   | 'template'

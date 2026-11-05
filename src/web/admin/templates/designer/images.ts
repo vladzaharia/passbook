@@ -1,4 +1,5 @@
-import { checkImageSize, IMAGE_RULES } from '@/passkit/schema/image-rules.ts';
+import { checkImageSize } from '@/passkit/schema/image-rules.ts';
+import { slotNeeds } from '../../passes/detail/image-slots.ts';
 import type { DesignDoc, DraftAsset } from './model.ts';
 
 export interface PngInfo {
@@ -26,17 +27,6 @@ export function toBase64(bytes: Uint8Array): string {
 
 export const assetName = (slot: string, scale: 1 | 2 | 3): string =>
   `${slot}${scale === 1 ? '' : `@${scale}x`}.png`;
-
-/** "38 x 38 pt: 114 x 114 px (@3x) or 76 x 76 px (@2x)", or the largest size for ranges. */
-export function slotHint(slot: string): string {
-  const rule = IMAGE_RULES[slot];
-  if (!rule) return 'PNG';
-  const [, w] = rule.width;
-  const [, h] = rule.height;
-  const exact = rule.width[0] === w && rule.height[0] === h;
-  if (exact) return `${w} × ${h} pt: ${w * 3} × ${h * 3} px (@3x) or ${w * 2} × ${h * 2} px (@2x)`;
-  return `Up to ${w} × ${h} pt: ${w * 3} × ${h * 3} px (@3x)`;
-}
 
 export type Placed =
   | { ok: true; asset: DraftAsset; warning?: string }
@@ -68,7 +58,7 @@ export function placeImage(slot: string, bytes: Uint8Array): Placed {
   }
   return {
     ok: false,
-    message: `${png.width} × ${png.height} px does not fit. Use ${slotHint(slot)}.`,
+    message: `${png.width} × ${png.height} px does not fit. ${slotNeeds(slot).replace(/^needs/, 'Use')}.`,
   };
 }
 

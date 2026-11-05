@@ -1,11 +1,9 @@
-import { type DragEvent, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
-import { cn } from '../../../lib/cn.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import {
   Badge,
-  Button,
   Card,
   CardBody,
   CardHeader,
@@ -18,7 +16,8 @@ import {
 } from '../../../ui/index.ts';
 import { usePassActions, usePassAssets } from '../api.ts';
 import { checkPng, MAX_ASSET_BYTES } from '../png.ts';
-import { fitScale, requiredSize, SLOT_LABEL, usedSlots } from './image-slots.ts';
+import { fitScale, SLOT_LABEL, slotNeeds, usedSlots } from './image-slots.ts';
+import { ImageSlotRow } from './image-slot-row.tsx';
 
 const KB = 1024;
 const SOFT_LIMIT = 200 * KB;
@@ -45,8 +44,6 @@ function SlotTile({
   onChanged: () => void;
 }) {
   const actions = usePassActions(pass.id);
-  const input = useRef<HTMLInputElement>(null);
-  const [over, setOver] = useState(false);
   const [error, setError] = useState<string>();
   const [heavy, setHeavy] = useState(false);
   const [natural, setNatural] = useState<[number, number]>();
@@ -80,105 +77,48 @@ function SlotTile({
       setError(errorMessage(cause));
     }
   }
-  const drop = (e: DragEvent) => {
-    e.preventDefault();
-    setOver(false);
-    if (!busy) void take(e.dataTransfer.files[0]);
-  };
-
+  const label = SLOT_LABEL[slot] ?? slot;
+  const url = file ? `${pass.assetBaseUrl.replace(/\/?$/, '/')}${file}` : null;
   return (
-    <li
-      data-new={fresh ? '' : undefined}
-      data-over={over || undefined}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setOver(true);
-      }}
-      onDragLeave={() => setOver(false)}
-      onDrop={drop}
-      className="wl-slot relative flex min-w-0 items-center gap-3 rounded-lg border border-border bg-surface-raised p-3"
-    >
-      <div
-        style={ground ? { background: ground } : undefined}
-        className={cn(
-          'wl-slot-thumb flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border',
-          !ground && 'wl-checker',
-        )}
-      >
-        {file ? (
-          <img
-            src={`${pass.assetBaseUrl.replace(/\/?$/, '/')}${file}`}
-            alt=""
-            onLoad={(e) =>
-              setNatural([e.currentTarget.naturalWidth, e.currentTarget.naturalHeight])
-            }
-            className="max-h-full max-w-full object-contain"
-          />
-        ) : null}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex min-w-0 items-center gap-2 text-sm text-fg-strong">
-          <span className="truncate">{SLOT_LABEL[slot] ?? slot}</span>
-          {shown ? <Badge tone="accent">Custom</Badge> : null}
-        </p>
-        <p className="truncate text-xs text-fg-muted tabular-nums">
-          {size ? `@${scale}x: ${size[0]} × ${size[1]} px · ` : ''}needs {requiredSize(slot, 2)} at
-          @2x
-        </p>
-        {error ? (
-          <p role="alert" className="mt-1 text-xs text-danger">
-            {error}
-          </p>
-        ) : heavy ? (
-          <p className="mt-1 text-xs text-warning">Over 200 KB; a smaller file loads faster.</p>
-        ) : null}
-      </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <input
-          ref={input}
-          type="file"
-          accept=".png,image/png"
-          hidden
-          onChange={(e) => {
-            void take(e.target.files?.[0]);
-            e.target.value = '';
-          }}
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          iconStart={<ACTION_ICON.upload aria-hidden />}
-          loading={busy}
-          busy="bob"
-          disabled={pass.status === 'voided'}
-          aria-label={`Replace ${SLOT_LABEL[slot] ?? slot}`}
-          onClick={() => input.current?.click()}
-        >
-          <span className="max-sm:sr-only">Replace</span>
-        </Button>
-        {shown ? (
+    <ImageSlotRow
+      label={label}
+      badge={shown ? <Badge tone="accent">Custom</Badge> : null}
+      thumb={{ url, onLoad: setNatural }}
+      ground={ground}
+      detail={size ? `@${scale}x: ${size[0]} × ${size[1]} px` : undefined}
+      needs={slotNeeds(slot)}
+      error={error}
+      warning={heavy ? 'Over 200 KB; a smaller file loads faster.' : undefined}
+      onFile={(f) => void take(f)}
+      busy={busy}
+      disabled={pass.status === 'voided'}
+      replaceLabel={`Replace ${label}`}
+      fresh={fresh}
+      trailing={
+        shown ? (
           <IconButton
             size="sm"
-            label={`Reset ${SLOT_LABEL[slot] ?? slot} to template`}
+            label={`Reset ${label} to template`}
             icon={<ACTION_ICON.delete aria-hidden />}
             onClick={() => setReset(true)}
           />
-        ) : null}
-      </div>
+        ) : null
+      }
+    >
       <ConfirmDialog
         open={reset}
         onOpenChange={setReset}
-        title={`Reset ${SLOT_LABEL[slot] ?? slot}?`}
+        title={`Reset ${label}?`}
         description="The pass goes back to the template's image."
         confirmLabel="Reset"
         destructive
         onConfirm={async () => {
           for (const o of overrides) await actions.removeAsset.mutateAsync(o.name);
-          toast.success(`${SLOT_LABEL[slot] ?? slot} reset`);
+          toast.success(`${label} reset`);
           onChanged();
         }}
       />
-    </li>
+    </ImageSlotRow>
   );
 }
 
