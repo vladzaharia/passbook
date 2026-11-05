@@ -104,7 +104,8 @@ export function scanPolicy(
       const own =
         scan.actorKey === actor.actorKey &&
         (actor.staffId === null || scan.staffId === actor.staffId);
-      if (own) return now - scan.at <= request.undoWindowMinutes * 60_000 ? ALLOW : FORBIDDEN;
+      if (own && now - scan.at <= request.undoWindowMinutes * 60_000) return ALLOW;
+      // Past the window an own scan is judged like anyone's.
       if (actor.principal === 'admin') return now - scan.at <= ADMIN_UNDO_MS ? ALLOW : FORBIDDEN;
       if (!scan.sameScannerToday) return FORBIDDEN;
       return managerOnly();

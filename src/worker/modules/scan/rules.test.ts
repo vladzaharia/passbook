@@ -145,6 +145,18 @@ describe('scanPolicy: Matrix B', () => {
       expect(allowed(terminal, own(9)).allow).toBe(true);
       expect(allowed(door, own(11)).allow).toBe(false);
     });
+    it("an own scan past the window is judged like anyone's (Matrix B)", () => {
+      const adminOwn = actor({ principal: 'admin', role: 'manager', actorKey: 's:1' });
+      expect(allowed(adminOwn, own(15)).allow).toBe(true);
+      expect(allowed(adminOwn, own(25 * 60)).allow).toBe(false);
+      expect(allowed(manager, own(11)).allow).toBe(true);
+      expect(allowed(door, own(11))).toEqual({ allow: false, why: 'needs_approval' });
+      expect(allowed(desk, own(11), true).allow).toBe(true);
+      expect(allowed(terminal, own(11))).toEqual({ allow: false, why: 'forbidden' });
+      expect(
+        allowed(door, { ...own(11), scan: { ...own(11).scan, sameScannerToday: false } }),
+      ).toEqual({ allow: false, why: 'forbidden' });
+    });
     it('own means the same staff member when one is signed in', () => {
       const staffed = actor({ staffId: 'a' });
       const r = { ...own(1), scan: { ...own(1).scan, staffId: 'b' } };
