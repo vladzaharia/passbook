@@ -51,7 +51,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
 
   // Remove from my passes.
   await tile.getByRole('button', { name: 'More actions' }).click();
-  await page.getByRole('menuitem', { name: 'Remove' }).click();
+  await page.getByRole('menuitem', { name: 'Remove from My passes' }).click();
   await page
     .getByRole('alertdialog', { name: 'Remove from my passes?' })
     .getByRole('button', { name: 'Remove' })
