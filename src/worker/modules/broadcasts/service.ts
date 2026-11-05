@@ -12,6 +12,7 @@ import { recordAudit } from '../audit/service.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
+import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { targetFilter } from './apply.ts';
@@ -21,8 +22,8 @@ import { launchBroadcast } from './start.ts';
 
 const MAX_LEAD_MS = 366 * 24 * 3_600_000;
 
-async function requireBroadcast(ctx: ServiceContext, id: string, orgScope: string | null) {
-  const row = await repo.getBroadcast(ctx.env.DB, id, orgScope);
+async function requireBroadcast(ctx: ServiceContext, id: string, scope: ScopeArg) {
+  const row = await repo.getBroadcast(ctx.env.DB, id, scope);
   if (!row) throw new NotFoundError('Message not found.', 'BROADCAST_NOT_FOUND');
   return row;
 }
@@ -125,9 +126,10 @@ export async function sendBroadcast(
   actor: Actor,
   id: string,
   at: number | undefined,
-  orgScope: string | null,
+  scope: ScopeArg,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, orgScope);
+  const row = await requireBroadcast(ctx, id, scope);
+  assertWritableMode(scope, row.mode, 'broadcast');
   if (at !== undefined) checkTime(ctx, at);
   if (!(await repo.casSchedule(ctx.env.DB, id, at ?? ctx.clock.now())))
     throw new ConflictError('Only a draft can be sent.', 'BROADCAST_NOT_DRAFT');
@@ -141,16 +143,17 @@ export async function sendBroadcast(
     detail: { scheduled: at !== undefined },
   });
   if (at === undefined) await launchBroadcast(ctx, row);
-  return getBroadcastDto(ctx, id, orgScope);
+  return getBroadcastDto(ctx, id, scope);
 }
 
 export async function cancelBroadcast(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
-  orgScope: string | null,
+  scope: ScopeArg,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, orgScope);
+  const row = await requireBroadcast(ctx, id, scope);
+  assertWritableMode(scope, row.mode, 'broadcast');
   const won = await repo.casState(ctx.env.DB, id, ['draft', 'scheduled'], 'cancelled', {
     finishedAt: ctx.clock.now(),
   });
@@ -167,15 +170,15 @@ export async function cancelBroadcast(
     targetType: 'broadcast',
     targetId: id,
   });
-  return getBroadcastDto(ctx, id, orgScope);
+  return getBroadcastDto(ctx, id, scope);
 }
 
 export async function getBroadcastDto(
   ctx: ServiceContext,
   id: string,
-  orgScope: string | null,
+  scope: ScopeArg,
 ): Promise<BroadcastDto> {
-  const row = await requireBroadcast(ctx, id, orgScope);
+  const row = await requireBroadcast(ctx, id, scope);
   return toDto(
     row,
     await repo.countItems(ctx.env.DB, [id]),

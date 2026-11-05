@@ -2,6 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, first, placeholders, run, stmt } from '../../platform/db.ts';
 import { notifiedWhere } from '../passes/repo-budget.ts';
 import { type PassListFilter, passFilterSql } from '../passes/repo-list.ts';
+import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 
 export type BroadcastKind = 'message' | 'change';
 export type BroadcastState =
@@ -82,13 +83,13 @@ export function insertBroadcastStmt(db: D1Database, b: NewBroadcast): D1Prepared
   );
 }
 
-/** `orgScope` null = platform-wide. A broadcast outside the scope reads as missing. Either mode. */
-export const getBroadcast = (db: D1Database, id: string, orgScope: string | null) =>
-  first<BroadcastRow>(db, 'SELECT * FROM broadcasts WHERE id = ? AND (? IS NULL OR org_id = ?)', [
-    id,
-    orgScope,
-    orgScope,
-  ]);
+/** `orgScope` null = platform-wide. A broadcast outside the scope reads as missing. Sessions: either mode; API keys: their own. */
+export const getBroadcast = (db: D1Database, id: string, scope: ScopeArg) =>
+  first<BroadcastRow>(
+    db,
+    'SELECT * FROM broadcasts WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?)',
+    [id, scopeOrg(scope), scopeOrg(scope), readMode(scope), readMode(scope)],
+  );
 
 export interface BroadcastListFilter {
   orgScope: string | null;

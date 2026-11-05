@@ -29,6 +29,7 @@ export function readMode(scope: ScopeArg): Mode | null {
 const NOUNS = {
   pass: ['Pass not found.', 'PASS_NOT_FOUND'],
   bundle: ['Bundle not found.', 'BUNDLE_NOT_FOUND'],
+  broadcast: ['Message not found.', 'BROADCAST_NOT_FOUND'],
 } as const;
 
 /** Throws when a write reaches across modes: 404 for API keys, 409 MODE_MISMATCH for sessions. */

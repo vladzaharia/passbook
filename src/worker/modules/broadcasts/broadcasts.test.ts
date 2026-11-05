@@ -355,6 +355,26 @@ describe('tenant, mode and scope isolation', () => {
     expect(testPass.mode).toBe('test');
   });
 
+  it('a test key cannot read, send or cancel a live broadcast; a Test session gets MODE_MISMATCH', async () => {
+    const live = await dto(
+      await post('/broadcasts', fake.admin(), message('Live draft', { send: 'draft' })),
+    );
+    const key = fake.apiKey({ mode: 'test', scopes: ['messages:write'] });
+    expect((await api(`/broadcasts/${live.id}`, { headers: key })).status).toBe(404);
+    expect((await post(`/broadcasts/${live.id}/send`, key)).status).toBe(404);
+    expect((await post(`/broadcasts/${live.id}/cancel`, key)).status).toBe(404);
+    const testAdmin = fake.admin({ mode: 'test' });
+    for (const action of ['send', 'cancel']) {
+      const res = await post(`/broadcasts/${live.id}/${action}`, testAdmin);
+      expect(res.status).toBe(409);
+      expect(await code(res)).toBe('MODE_MISMATCH');
+    }
+    expect((await dto(await api(`/broadcasts/${live.id}`, { headers: fake.admin() }))).state).toBe(
+      'draft',
+    );
+    expect(kit.broadcast.created.some((i) => i.id === `broadcast-${live.id}`)).toBe(false);
+  });
+
   it('a change also needs passes:write', async () => {
     const change = {
       orgId: kit.org.id,

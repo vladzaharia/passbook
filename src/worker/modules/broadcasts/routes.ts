@@ -11,7 +11,7 @@ import {
 import { modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, authOf, orgScopeOf, svc } from '../passes/http.ts';
+import { actorFor, assertOrg, authOf, orgScopeOf, passScopeOf, svc } from '../passes/http.ts';
 import {
   cancelBroadcast,
   createBroadcast,
@@ -104,7 +104,7 @@ register(
     params: IdParamSchema,
     response: BroadcastSchema,
   },
-  async (c) => c.json(await getBroadcastDto(svc(c), c.req.valid('param').id, orgScopeOf(c))),
+  async (c) => c.json(await getBroadcastDto(svc(c), c.req.valid('param').id, passScopeOf(c))),
 );
 
 register(
@@ -120,9 +120,9 @@ register(
   },
   async (c) => {
     const { id } = c.req.valid('param');
-    if ((await getBroadcastDto(svc(c), id, orgScopeOf(c))).kind === 'change') assertCanChange(c);
+    if ((await getBroadcastDto(svc(c), id, passScopeOf(c))).kind === 'change') assertCanChange(c);
     return c.json(
-      await sendBroadcast(svc(c), actorFor(c), id, c.req.valid('json').at, orgScopeOf(c)),
+      await sendBroadcast(svc(c), actorFor(c), id, c.req.valid('json').at, passScopeOf(c)),
     );
   },
 );
@@ -138,5 +138,5 @@ register(
     response: BroadcastSchema,
   },
   async (c) =>
-    c.json(await cancelBroadcast(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
+    c.json(await cancelBroadcast(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
 );

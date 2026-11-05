@@ -11,7 +11,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, orgScopeOf, svc } from '../passes/http.ts';
+import { actorFor, assertOrg, orgScopeOf, passScopeOf, svc } from '../passes/http.ts';
 import {
   assignHolder,
   assignHoldersBulk,
@@ -55,7 +55,7 @@ register(
     body: AssignHolderSchema,
     response: HolderSchema,
   },
-  async (c) => c.json(await assignHolder(svc(c), actorFor(c), c.req.valid('json'), orgScopeOf(c))),
+  async (c) => c.json(await assignHolder(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c))),
 );
 
 register(
@@ -71,7 +71,7 @@ register(
   async (c) => {
     const { items } = c.req.valid('json');
     return c.json({
-      items: await assignHoldersBulk(svc(c), actorFor(c), items, orgScopeOf(c)),
+      items: await assignHoldersBulk(svc(c), actorFor(c), items, passScopeOf(c)),
       nextCursor: null,
     });
   },
@@ -88,7 +88,7 @@ register(
     response: HolderSchema,
   },
   async (c) =>
-    c.json(await reassignHolder(svc(c), actorFor(c), c.req.valid('json'), orgScopeOf(c))),
+    c.json(await reassignHolder(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c))),
 );
 
 register(
@@ -102,7 +102,7 @@ register(
     response: HolderSchema,
   },
   async (c) =>
-    c.json(await unassignHolder(svc(c), actorFor(c), c.req.valid('json').passId, orgScopeOf(c))),
+    c.json(await unassignHolder(svc(c), actorFor(c), c.req.valid('json').passId, passScopeOf(c))),
 );
 
 register(
@@ -116,7 +116,7 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await clearBlock(svc(c), actorFor(c), c.req.valid('json'), orgScopeOf(c));
+    await clearBlock(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c));
     return c.json({ ok: true });
   },
 );
