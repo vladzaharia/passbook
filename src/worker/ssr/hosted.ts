@@ -82,6 +82,12 @@ export interface PageAction {
 export const actionHtml = ({ label, href, icon, primary }: PageAction) =>
   `<a class="btn${primary ? '' : ' outline'}" href="${escapeHtml(href)}">${icon ? iconHtml(icon) : ''}${escapeHtml(label)}</a>`;
 
+/** A POST as a button: sign-out and the one-time links' consume. */
+export const postButton = (action: string, label: string, fields: Record<string, string> = {}) =>
+  `<form method="post" action="${escapeHtml(action)}">${Object.entries(fields)
+    .map(([k, v]) => `<input type="hidden" name="${k}" value="${escapeHtml(v)}">`)
+    .join('')}<button class="btn" type="submit">${label}</button></form>`;
+
 export const calloutHtml = (message: string) =>
   `<p class="callout" role="alert">${iconHtml(OctagonX)}<span>${escapeHtml(message)}</span></p>`;
 

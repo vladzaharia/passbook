@@ -193,6 +193,26 @@ describe('hosted auth pages', () => {
     expect(outline(verify)).toEqual([['/account', 'Go to Account']]);
   });
 
+  it('renders no access once: the refusal route offers the same two ways, keeping next', () => {
+    const { html, status } = signInErrorPage(NONCE, 'NO_ACCESS', { next: '/account' });
+    expect(status).toBe(403);
+    expect(html).toBe(noAccessPage(NONCE, '/account'));
+    expect(html).toContain('Sign in with email instead');
+  });
+
+  it('offers a way out of a forbidden page by signing in as someone else', () => {
+    const html = renderErrorPage({ status: 403, nonce: NONCE });
+    expect(html).toContain('action="/auth/logout?next=%2Flogin"');
+    expect(html).toContain('Sign in as someone else');
+  });
+
+  it('words a disabled account without repeating its title', () => {
+    const html = refusal('ACCOUNT_DISABLED');
+    expect(html).toContain('<h1>Account disabled</h1>');
+    expect(html).toContain('Contact the organization that sent your pass.');
+    expect(html).not.toContain('Ask an admin');
+  });
+
   it('offers email and another Polaris ID on no access, worded as the app forbids', () => {
     const html = noAccessPage(NONCE);
     expect(html).toContain('<h1>You do not have access</h1>');
@@ -273,8 +293,15 @@ describe('click to replay the wallet', () => {
 describe('renderErrorPage', () => {
   // The SPA's words and weights: not found leads to My passes, an error retries, all outline.
   it.each([
-    [404, 'Page not found', undefined, '/', 'Go to My passes', 'lost'],
-    [403, 'You do not have access', undefined, '/', 'Go to My passes', 'login'],
+    [404, 'Page not found', 'Check the link, or open My passes.', '/', 'Go to My passes', 'lost'],
+    [
+      403,
+      'You do not have access',
+      'Sign in with the account that has access.',
+      '/',
+      'Go to My passes',
+      'login',
+    ],
     [429, 'Too many requests', 'Try again in a minute.', '', 'Retry', 'login'],
     [500, 'Something went wrong', 'Try again.', '', 'Retry', 'login'],
   ])(
