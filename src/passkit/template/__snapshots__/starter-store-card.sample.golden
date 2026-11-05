@@ -35,6 +35,12 @@
   "storeCard": {
     "backFields": [
       {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
         "key": "terms",
         "label": "Terms",
         "value": "Balance is not redeemable for cash."

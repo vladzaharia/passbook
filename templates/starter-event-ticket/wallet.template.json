@@ -252,7 +252,7 @@
         "x-order": 129,
         "maxLength": 256,
         "x-widget": "textarea",
-        "x-help": "Shown on the back. A change notifies the holder."
+        "x-help": "Shown on the back."
       }
     },
     "dependentRequired": {
@@ -351,11 +351,7 @@
       "to": {
         "field": "message"
       },
-      "value": "{{message}}",
-      "remove": {
-        "input": "message",
-        "empty": true
-      }
+      "value": "{{message}}"
     },
     {
       "to": {
@@ -573,7 +569,10 @@
       "version": 1,
       "config": {
         "input": "upcomingEvents",
-        "timeZoneInput": "venueTimeZone"
+        "timeZoneInput": "venueTimeZone",
+        "schedule": {
+          "leadMinutes": 120
+        }
       }
     }
   ],

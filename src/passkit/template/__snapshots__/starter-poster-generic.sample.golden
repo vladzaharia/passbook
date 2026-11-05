@@ -16,6 +16,12 @@
   "generic": {
     "backFields": [
       {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
         "key": "terms",
         "label": "Terms",
         "value": "Present the barcode when asked."

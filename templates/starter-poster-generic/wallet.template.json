@@ -95,6 +95,7 @@
       "phone": {
         "type": "string",
         "pattern": "^\\+[0-9]{7,15}$",
+        "x-pattern-message": "Enter a number with country code, like +14155550100.",
         "x-label": "Phone",
         "x-group": "Links",
         "x-order": 75,
@@ -107,7 +108,7 @@
         "x-order": 59,
         "maxLength": 256,
         "x-widget": "textarea",
-        "x-help": "Shown on the back. A change notifies the holder."
+        "x-help": "Shown on the back."
       }
     },
     "dependentRequired": {
@@ -131,11 +132,7 @@
       "to": {
         "field": "message"
       },
-      "value": "{{message}}",
-      "remove": {
-        "input": "message",
-        "empty": true
-      }
+      "value": "{{message}}"
     },
     {
       "to": {

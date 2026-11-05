@@ -27,6 +27,12 @@
     ],
     "backFields": [
       {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
         "key": "terms",
         "label": "Terms",
         "value": "Be at the gate 30 minutes before departure."
