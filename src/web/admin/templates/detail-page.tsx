@@ -153,14 +153,23 @@ function Loaded({
         actions={
           <>
             {archived ? null : (
-              <Button asChild iconStart={<ACTION_ICON.create aria-hidden />}>
-                <Link to="/admin/passes/new" search={newPass}>
-                  New pass
+              <Button
+                asChild
+                className="whitespace-nowrap"
+                iconStart={<ACTION_ICON.create aria-hidden />}
+              >
+                <Link to="/admin/passes/new" search={newPass} aria-label="New pass">
+                  New<span className="max-md:sr-only"> pass</span>
                 </Link>
               </Button>
             )}
             {archived ? null : (
-              <Button asChild variant="outline" iconStart={<ACTION_ICON.edit aria-hidden />}>
+              <Button
+                asChild
+                variant="outline"
+                className="whitespace-nowrap max-md:hidden"
+                iconStart={<ACTION_ICON.edit aria-hidden />}
+              >
                 <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
                   Design
                 </Link>
@@ -168,23 +177,40 @@ function Loaded({
             )}
             <Button
               variant="outline"
+              className="whitespace-nowrap max-md:hidden"
               iconStart={<ACTION_ICON.duplicate aria-hidden />}
               onClick={() => setDuplicate(true)}
             >
               Duplicate
             </Button>
-            {baked ? null : (
-              <MoreMenu>
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
-                    <ACTION_ICON.upload aria-hidden />
-                    Upload version
+            {/* Phones keep one action beside More: Design and Duplicate move into the menu. */}
+            <MoreMenu>
+              {archived ? null : (
+                <DropdownMenuItem asChild className="md:hidden">
+                  <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
+                    <ACTION_ICON.edit aria-hidden />
+                    Design
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {life.menu}
-              </MoreMenu>
-            )}
+              )}
+              <DropdownMenuItem className="md:hidden" onSelect={() => setDuplicate(true)}>
+                <ACTION_ICON.duplicate aria-hidden />
+                Duplicate
+              </DropdownMenuItem>
+              {baked ? null : (
+                <>
+                  <DropdownMenuSeparator className="md:hidden" />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
+                      <ACTION_ICON.upload aria-hidden />
+                      Upload version
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {life.menu}
+                </>
+              )}
+            </MoreMenu>
           </>
         }
       />

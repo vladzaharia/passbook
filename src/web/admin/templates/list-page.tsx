@@ -173,7 +173,7 @@ export function TemplatesListPage({
       )}
     </div>
   );
-  const truth = !list.isPending && !filtered && items.length === 0;
+  const truth = !list.isPending && !list.isError && !filtered && items.length === 0;
   const upload = (variant: 'primary' | 'outline') => (
     <Button asChild variant={variant} iconStart={<Upload aria-hidden />}>
       <Link to="/admin/templates/upload">Upload template</Link>
@@ -193,7 +193,11 @@ export function TemplatesListPage({
       <PageHeader title="Templates" actions={upload(truth ? 'outline' : 'primary')} />
       {uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
       {list.isError ? (
-        <ErrorState error={list.error} onRetry={() => void list.refetch()} />
+        <ErrorState
+          error={list.error}
+          title="Could not load templates"
+          onRetry={() => void list.refetch()}
+        />
       ) : truth ? (
         <EmptyState art="template" title="No templates yet" action={upload('primary')} />
       ) : view === 'gallery' ? (
