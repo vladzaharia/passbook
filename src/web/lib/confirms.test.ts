@@ -56,10 +56,11 @@ describe('confirm copy', () => {
     expect(cancelBroadcastConfirm('Sale', 'change', 'scheduled').confirmLabel).toBe(
       'Cancel change',
     );
-    expect(cancelBroadcastConfirm('Sale', 'message', 'draft')).toMatchObject({
-      title: 'Delete Sale?',
-      confirmLabel: 'Delete draft',
-    });
+    // The service moves a draft to 'cancelled' (it is not deleted), so the copy must not say delete.
+    const draft = cancelBroadcastConfirm('Sale', 'message', 'draft');
+    expect(draft).toMatchObject({ title: 'Cancel Sale?', confirmLabel: 'Cancel message' });
+    expect(draft.description).toBe('It moves to Cancelled. No pass changes.');
+    expect(JSON.stringify(draft)).not.toMatch(/delete|undone/i);
     expect(msg.cancelLabel).toBe('Keep it');
   });
 

@@ -120,22 +120,22 @@ export function revokeKeyConfirm(name: string): ConfirmCopy {
   };
 }
 
-/** Cancelling what has not started: a draft is deleted, a scheduled message or change is called off. */
+/** Cancelling what has not started. A draft is not deleted: the server moves it to Cancelled, same as a scheduled one. */
 export function cancelBroadcastConfirm(
   name: string,
   kind: 'message' | 'change',
   state: string,
 ): ConfirmCopy {
-  const draft = state === 'draft';
   const noun = kind === 'change' ? 'change' : 'message';
   return {
-    title: draft ? `Delete ${name}?` : `Cancel ${name}?`,
-    confirmLabel: draft ? 'Delete draft' : `Cancel ${noun}`,
-    description: draft
-      ? `The draft is deleted. ${CANNOT_UNDO}`
-      : kind === 'change'
-        ? 'No pass changes. You can schedule a new change later.'
-        : 'No pass changes. You can send a new one later.',
+    title: `Cancel ${name}?`,
+    confirmLabel: `Cancel ${noun}`,
+    description:
+      state === 'draft'
+        ? 'It moves to Cancelled. No pass changes.'
+        : kind === 'change'
+          ? 'No pass changes. You can schedule a new change later.'
+          : 'No pass changes. You can send a new one later.',
     typed: false,
     cancelLabel: 'Keep it',
   };
