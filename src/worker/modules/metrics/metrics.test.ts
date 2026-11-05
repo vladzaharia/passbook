@@ -252,3 +252,18 @@ describe('metrics api', () => {
     expect(((await ok.json()) as { source: string }).source).toBe('d1');
   });
 });
+
+describe('recent activity follows the mode', () => {
+  it('shows audit rows in live mode and none in test mode', async () => {
+    const { f, ctx } = setup();
+    const a = await orgWithPasses(f, 1);
+    await run(
+      base.DB,
+      "INSERT INTO audit_log (at, org_id, actor_type, action) VALUES (?, ?, 'user', 'pass.update')",
+      [Date.now(), a.org.id],
+    );
+    const q = { orgId: a.org.id, range: '24h' as const };
+    expect((await getOverview(ctx, q, 'live')).recent.length).toBeGreaterThan(0);
+    expect((await getOverview(ctx, q, 'test')).recent).toEqual([]);
+  });
+});

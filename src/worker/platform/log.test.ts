@@ -128,3 +128,20 @@ describe('request.failed', () => {
     expect(JSON.stringify(entry)).not.toContain('secret-token-value');
   });
 });
+
+describe('scan codes and barcodes', () => {
+  it('are redacted by key', () => {
+    const lines: Record<string, unknown>[] = [];
+    const log = createLogger({}, { sink: (line) => lines.push(JSON.parse(line)), now: () => 1 });
+    log.info('pass.scan', {
+      scanCode: 'S3CRET',
+      scan_code: 'S3CRET',
+      barcodeValue: 'B4RCODE',
+      ok: 1,
+    });
+    const entry = JSON.stringify(lines[0]);
+    expect(entry).not.toContain('S3CRET');
+    expect(entry).not.toContain('B4RCODE');
+    expect(lines[0]?.ok).toBe(1);
+  });
+});

@@ -140,12 +140,12 @@ export async function countsFor(
     const rows = await all<{ id: string } & OrgCounts>(
       db,
       `SELECT o.id AS id,
-         ${capped('passes', ` AND mode = '${mode}'`)} AS passes,
+         ${capped('passes', ' AND mode = ?')} AS passes,
          ${capped('templates', " AND status != 'deleted'")} AS templates,
          ${capped('connections', '')} AS connections,
          ${capped('api_keys', ' AND revoked_at IS NULL')} AS apiKeys
        FROM orgs o WHERE o.id IN (${placeholders(ids.length)})`,
-      ids,
+      [mode, ...ids],
     );
     for (const { id, ...counts } of rows) out.set(id, counts);
   }

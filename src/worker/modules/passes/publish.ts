@@ -10,6 +10,7 @@ import { dispatchSafely } from '../delivery/service.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { buildArtifact } from './builder.ts';
 import { notifiesHolder, overBudget, pushBudgetOf } from './change-messages.ts';
+import { getPassForWrite } from './pass-access.ts';
 import {
   casMeta,
   casPublish,
@@ -23,6 +24,7 @@ import {
 } from './repo.ts';
 import { getRemoval } from './repo-remove.ts';
 import { newScanCode } from './scan-code.ts';
+import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
 export const MAX_CAS_ATTEMPTS = 3;
@@ -37,7 +39,7 @@ export interface Mutation {
 
 export interface PublishOptions {
   passId: string;
-  orgScope?: string | null;
+  orgScope?: ScopeArg;
   cause: PassCause;
   /** Why beside the cause: scan, broadcast, schedule, remove, restore or designer. */
   source?: PassSource;
@@ -76,8 +78,7 @@ export async function publishPass(
 ): Promise<PublishResult> {
   const db = ctx.env.DB;
   for (let attempt = 1; attempt <= MAX_CAS_ATTEMPTS; attempt++) {
-    const current = await getPass(db, options.passId, options.orgScope ?? null);
-    if (!current) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    const current = await getPassForWrite(db, options.passId, options.orgScope ?? null);
     if (options.expectedVersion !== undefined && current.version !== options.expectedVersion)
       throw new PreconditionFailedError();
     const mutation = options.mutate?.(current) ?? {};
@@ -160,8 +161,11 @@ export async function publishPass(
     }
 
     // Push budget: a publish that would notify past the daily limit is rebuilt without messages.
+    // A removal is exempt: its message is the holder's only notice, and the silent rebuild would
+    // still carry it (it is applied after the strip), so the result would claim silence wrongly.
     let silenced = false;
     if (
+      !removal &&
       notifiesHolder(artifact.passJson, previousParsed) &&
       overBudget(await pushBudgetOf(ctx, current.id))
     ) {
