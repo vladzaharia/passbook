@@ -1,12 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
-import type { Mode } from '../../../shared/contracts/common.ts';
-import {
-  type ScannerSettings,
-  ScannerSettingsSchema,
-  type ScanRole,
-} from '../../../shared/contracts/scan.ts';
 import {
   modeFromRequest,
   SCANNER_COOKIE,
@@ -23,54 +17,14 @@ import { ipPrefix } from '../../platform/ip.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
-import { getScanner, type ScannerRow } from './repo-device.ts';
-import { eventTemplateIds, getEvent, type ScanEventRow, scannerTemplateIds } from './repo-scope.ts';
-import { effectiveRole } from './rules.ts';
+import { adminActor, type ScanActor, scannerActor, withRole } from './actor.ts';
+import { resolvedRowOf } from './auth-store.ts';
+import { getScanner } from './repo-device.ts';
+import { eventTemplateIds, readScannerScope } from './repo-scope.ts';
 import { rawScopeOf, resolveAdminScope } from './scope.ts';
-import { type BoundStaff, boundStaff } from './staff-binding.ts';
+import { bindingExpired, boundStaff } from './staff-binding.ts';
 
-export interface ScanActor {
-  principal: 'scanner' | 'admin';
-  orgId: string;
-  mode: Mode;
-  /** `s:<scannerId>` or `u:<userId>`: the idempotency namespace and "own". */
-  actorKey: string;
-  actor: { type: 'scanner' | 'user'; id: string };
-  scanner: ScannerRow | null;
-  event: ScanEventRow | null;
-  templateIds: string[];
-  timeZone: string;
-  /** Null only on routes exempt from staff sign-in, while it is required and missing. */
-  role: ScanRole | null;
-  staff: BoundStaff | null;
-  settings: ScannerSettings;
-  /** "Front door", or "Admin console". */
-  name: string;
-  /** A bearer terminal: its role, no staff, no approvals. */
-  terminal: boolean;
-}
-
-/** An admin scans with everything on. */
-export const ADMIN_SETTINGS: ScannerSettings = {
-  flow: 'choose',
-  defaultActionId: null,
-  roleWithoutSignIn: 'desk',
-  staffSignIn: false,
-  letInAgain: 'anyone',
-  reader: 'none',
-  lookup: true,
-  offline: false,
-  dailyAmount: null,
-};
-
-/** Used when a stored settings blob does not parse: the strictest posture. */
-const LOCKED_SETTINGS: ScannerSettings = {
-  ...ADMIN_SETTINGS,
-  flow: 'auto',
-  roleWithoutSignIn: 'door',
-  letInAgain: 'manager',
-  lookup: false,
-};
+export type { ScanActor } from './actor.ts';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -114,32 +68,32 @@ async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   return { admin: session };
 }
 
-function settingsOf(c: Context<AppBindings>, row: ScannerRow): ScannerSettings {
-  try {
-    const parsed = ScannerSettingsSchema.safeParse(JSON.parse(row.settings));
-    if (parsed.success) return parsed.data;
-  } catch {
-    // falls through to the log below
-  }
-  c.var.log.error('scan.settings_invalid', { code: 'SCAN_SETTINGS_INVALID', scannerId: row.id });
-  return LOCKED_SETTINGS;
-}
-
 export interface GuardOptions {
   /** `GET /scan/session`, `POST|DELETE /scan/staff` and `POST /scan/unpair` run before anyone signs in. */
   staffOptional?: boolean;
+  /** `GET /scan/session` and `POST /scan/unpair`: a customer or monitor screen may call them. */
+  screens?: boolean;
+}
+
+/** Org active, then the two rate limits (SA 2.5 steps 2 and 3). */
+async function admit(c: Context<AppBindings>, orgId: string, actorKey: string): Promise<void> {
+  if (!(await isOrgActive(serviceContext(c), orgId)))
+    throw new ForbiddenError('This organization is suspended.', 'ORG_INACTIVE');
+  await enforceRateLimit(c.env, 'RL_SCAN_ORG', `org:${orgId}`);
+  await enforceRateLimit(c.env, 'RL_SCAN', actorKey);
 }
 
 /**
- * Every scan route's guard, in SA 2.5 order: credential, org active, rate limits, staff binding.
- * Leaves a normalized `ScanActor` on the context.
+ * Every scan route's guard, in SA 2.5 order: credential, org active, rate limits, device role,
+ * staff binding. Leaves a normalized `ScanActor` on the context. A scanner's rows are read once
+ * the checks that need no rows have passed: the scanner row comes from the store's own read, and
+ * the event, templates and staff share one batch.
  */
 export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<AppBindings> {
   return createMiddleware(async (c, next) => {
     const credential = await credentialOf(c);
     const ctx = serviceContext(c);
     const rawScope = await rawScopeOf(c);
-    let actor: ScanActor;
     if ('scanner' in credential) {
       const auth = credential.scanner;
       await csrfGuard(c, auth);
@@ -149,75 +103,36 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
           [],
           'SCAN_SCOPE_NOT_ALLOWED',
         );
-      const row = await getScanner(c.env.DB, auth.scannerId);
-      if (!row) throw unauthenticated();
-      const eventRow = row.eventId ? await getEvent(c.env.DB, row.orgId, row.eventId) : null;
-      const settings = settingsOf(c, row);
+      await admit(c, auth.orgId, `s:${auth.scannerId}`);
+      if (auth.deviceRole !== 'scan' && !options.screens)
+        throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
+      const row = resolvedRowOf(auth) ?? (await getScanner(c.env.DB, auth.scannerId));
+      if (!row || row.orgId !== auth.orgId) throw unauthenticated();
       const terminal = auth.transport === 'bearer';
-      actor = {
-        principal: 'scanner',
-        orgId: row.orgId,
-        mode: auth.mode,
-        actorKey: `s:${row.id}`,
-        actor: { type: 'scanner', id: row.id },
-        scanner: row,
-        event: eventRow,
-        templateIds: eventRow
-          ? await eventTemplateIds(c.env.DB, eventRow.id)
-          : await scannerTemplateIds(c.env.DB, row.id),
-        timeZone: eventRow?.timeZone ?? row.timeZone,
-        role: null,
-        staff: null,
-        settings,
-        name: row.name,
-        terminal,
-      };
+      const staffId =
+        !terminal && row.staffId && !bindingExpired(row, ctx.clock.now()) ? row.staffId : null;
+      const scope = await readScannerScope(c.env.DB, row, staffId);
+      const actor = scannerActor(ctx, row, auth.mode, auth.transport, scope);
       c.set('auth', auth);
+      if (terminal) withRole(actor, null);
+      else {
+        withRole(actor, await boundStaff(ctx, row, scope.staff));
+        if (actor.role === null && !options.staffOptional)
+          throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
+      }
+      c.set('scanActor', actor);
     } else {
       const session = credential.admin;
       await csrfGuard(c, session);
       const mode = modeFromRequest(c);
       const scope = await resolveAdminScope(c, rawScope, mode);
-      actor = {
-        principal: 'admin',
-        orgId: scope.orgId,
-        mode,
-        actorKey: `u:${session.userId}`,
-        actor: { type: 'user', id: session.userId },
-        scanner: null,
-        event: scope.event,
-        templateIds:
-          scope.event && scope.templateIds.length === 0
-            ? await eventTemplateIds(c.env.DB, scope.event.id)
-            : scope.templateIds,
-        timeZone: scope.timeZone,
-        role: 'manager',
-        staff: null,
-        settings: ADMIN_SETTINGS,
-        name: 'Admin console',
-        terminal: false,
-      };
+      const actor = adminActor(session, mode, scope);
+      if (scope.event && scope.templateIds.length === 0)
+        actor.templateIds = await eventTemplateIds(c.env.DB, scope.orgId, scope.event.id);
       c.set('auth', { ...session, mode });
+      await admit(c, actor.orgId, actor.actorKey);
+      c.set('scanActor', actor);
     }
-
-    if (!(await isOrgActive(ctx, actor.orgId)))
-      throw new ForbiddenError('This organization is suspended.', 'ORG_INACTIVE');
-    await enforceRateLimit(c.env, 'RL_SCAN_ORG', `org:${actor.orgId}`);
-    await enforceRateLimit(c.env, 'RL_SCAN', actor.actorKey);
-
-    if (actor.scanner && !actor.terminal) {
-      actor.staff = await boundStaff(ctx, actor.scanner);
-      actor.role = effectiveRole({
-        principal: 'scanner',
-        staffRole: actor.staff?.role ?? null,
-        settings: actor.settings,
-      });
-      if (actor.role === null && !options.staffOptional)
-        throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
-    } else if (actor.terminal) {
-      actor.role = actor.settings.roleWithoutSignIn;
-    }
-    c.set('scanActor', actor);
     await next();
   });
 }

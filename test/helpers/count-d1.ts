@@ -11,8 +11,10 @@ export interface CountedD1 {
 export function countD1(real: D1Database): CountedD1 {
   let trips = 0;
   let log: string[] = [];
-  const wrapStatement = (st: D1PreparedStatement, text: string): D1PreparedStatement =>
-    new Proxy(st, {
+  const texts = new WeakMap<D1PreparedStatement, string>();
+  const reals = new WeakMap<D1PreparedStatement, D1PreparedStatement>();
+  const wrapStatement = (st: D1PreparedStatement, text: string): D1PreparedStatement => {
+    const proxy: D1PreparedStatement = new Proxy(st, {
       get(target, prop) {
         const value = Reflect.get(target, prop, target);
         if (prop === 'bind')
@@ -26,20 +28,18 @@ export function countD1(real: D1Database): CountedD1 {
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
-  const texts = new WeakMap<D1PreparedStatement, string>();
+    texts.set(proxy, text);
+    reals.set(proxy, st);
+    return proxy;
+  };
   const db = new Proxy(real, {
     get(target, prop) {
-      if (prop === 'prepare')
-        return (sql: string) => {
-          const wrapped = wrapStatement(target.prepare(sql), sql);
-          texts.set(wrapped, sql);
-          return wrapped;
-        };
+      if (prop === 'prepare') return (sql: string) => wrapStatement(target.prepare(sql), sql);
       if (prop === 'batch')
         return (statements: D1PreparedStatement[]) => {
           trips++;
           for (const s of statements) log.push(texts.get(s) ?? '?');
-          return target.batch(statements);
+          return target.batch(statements.map((s) => reals.get(s) ?? s));
         };
       if (prop === 'exec')
         return (sql: string) => {

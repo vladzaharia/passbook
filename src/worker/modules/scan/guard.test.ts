@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  countD1,
   type Fixtures,
   fakeAuth,
   fakeRateLimiter,
@@ -10,6 +11,8 @@ import {
   makeScanEvent,
   makeScanner,
   makeScanStaff,
+  makeTemplate,
+  persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { type AppBindings, requestContext } from '../../platform/context.ts';
@@ -24,7 +27,7 @@ let clock: ManualClock;
 let fake: ReturnType<typeof fakeAuth>;
 let orgId: string;
 
-async function build(over: Record<string, unknown> = {}) {
+async function build(over: Record<string, unknown> = {}, fakeStore = false) {
   clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
   const env = await makeEnv({
     RL_SCAN: fakeRateLimiter({ limit: 1000 }),
@@ -33,7 +36,9 @@ async function build(over: Record<string, unknown> = {}) {
   } as never);
   f = fixtures(env, clock);
   fake = fakeAuth(ORIGIN);
-  const stores = { ...fake.stores, scanners: createScannerStore(env, clock) };
+  const stores = fakeStore
+    ? fake.stores
+    : { ...fake.stores, scanners: createScannerStore(env, clock) };
   const app = new Hono<AppBindings>();
   app.use('*', requestContext({ stores, clock }));
   app.onError(handleError);
@@ -51,7 +56,12 @@ async function build(over: Record<string, unknown> = {}) {
   };
   app.get('/ping', requireScanActor(), summary as never);
   app.post('/ping', requireScanActor(), summary as never);
-  app.get('/session', requireScanActor({ staffOptional: true }), summary as never);
+  app.get('/session', requireScanActor({ staffOptional: true, screens: true }), summary as never);
+  app.post('/unpair', requireScanActor({ staffOptional: true, screens: true }), summary as never);
+  for (const path of ['/resolve', '/actions', '/lookup', '/scans/x/undo'])
+    app.post(path, requireScanActor(), summary as never);
+  for (const path of ['/scans', '/stats', '/summary', '/passes/x/assets/y'])
+    app.get(path, requireScanActor(), summary as never);
   orgId = (await makeOrg(f)).id;
   return { app, env };
 }
@@ -100,6 +110,24 @@ describe('requireScanActor: guard order (SA 2.5)', () => {
     const res = await get(app, env, '/ping', s.headers);
     expect(res.status).toBe(401);
     expect(await code(res)).toBe('SCANNER_REVOKED');
+  });
+
+  it('revoking the way the console does keeps the token matching, so the device hears why', async () => {
+    const s = await makeScanner(f, { orgId });
+    expect((await get(app, env, '/ping', s.headers)).status).toBe(200);
+    await run(
+      env.DB,
+      `UPDATE scanners SET revoked_at = ?, staff_id = NULL, staff_since = NULL, staff_seen_at = NULL
+       WHERE id = ?`,
+      [clock.now(), s.id],
+    );
+    expect(await code(await get(app, env, '/ping', s.headers))).toBe('SCANNER_REVOKED');
+  });
+
+  it('a device the retention job expires hears SCANNER_EXPIRED, not the pairing card', async () => {
+    const s = await makeScanner(f, { orgId });
+    await run(env.DB, 'UPDATE scanners SET expires_at = ? WHERE id = ?', [clock.now() - 1, s.id]);
+    expect(await code(await get(app, env, '/ping', s.headers))).toBe('SCANNER_EXPIRED');
   });
 
   it('an expired terminal and an idle device give SCANNER_EXPIRED', async () => {
@@ -269,6 +297,21 @@ describe('requireScanActor: scope', () => {
     expect(await code(q)).toBe('SCAN_SCOPE_NOT_ALLOWED');
   });
 
+  it('a body that is not JSON gets 422 SCAN_BODY_INVALID', async () => {
+    const s = await makeScanner(f, { orgId });
+    const res = await app.request(
+      `${ORIGIN}/ping`,
+      {
+        method: 'POST',
+        headers: { ...s.headers, 'content-type': 'application/json' },
+        body: '{nope',
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+    expect(await code(res)).toBe('SCAN_BODY_INVALID');
+  });
+
   it('an admin without a scope gets 422 SCAN_SCOPE_REQUIRED', async () => {
     const res = await post(app, env, fake.admin());
     expect(res.status).toBe(422);
@@ -310,23 +353,200 @@ describe('requireScanActor: scope', () => {
     expect(bad.status).toBe(404);
   });
 
-  it('a scanner reaches its event templates', async () => {
-    const ev = await makeScanEvent(f, { orgId });
+  it('an admin undoes with a scope in the body and reads an asset with it in the query', async () => {
+    const scope = { orgId, timeZone: 'UTC' };
+    const undo = await app.request(
+      `${ORIGIN}/scans/x/undo`,
+      {
+        method: 'POST',
+        headers: { ...fake.admin(), 'content-type': 'application/json' },
+        body: JSON.stringify({ idempotencyKey: 'k', scope }),
+      },
+      env,
+    );
+    expect(undo.status).toBe(200);
+    const asset = await get(
+      app,
+      env,
+      `/passes/x/assets/y?g=grant&orgId=${orgId}&timeZone=UTC`,
+      fake.admin(),
+    );
+    expect(asset.status).toBe(200);
+    const bare = await get(app, env, '/passes/x/assets/y?g=grant', fake.admin());
+    expect(await code(bare)).toBe('SCAN_SCOPE_REQUIRED');
+  });
+
+  it('a scanner reaches the live templates of its event, and not a deleted or foreign one', async () => {
+    const a = makeTemplate({ id: 'tpl-a', orgId });
+    const b = makeTemplate({ id: 'tpl-b', orgId });
+    const gone = makeTemplate({ id: 'tpl-gone', orgId });
+    const other = await makeOrg(f);
+    const foreign = makeTemplate({ id: 'tpl-foreign', orgId: other.id });
+    for (const t of [a, b, gone, foreign]) await persistTemplate(f, t.resolved);
+    await run(env.DB, "UPDATE templates SET status = 'deleted' WHERE id = 'tpl-gone'");
+    const ev = await makeScanEvent(f, {
+      orgId,
+      templateIds: ['tpl-a', 'tpl-b', 'tpl-gone', 'tpl-foreign'],
+    });
     const s = await makeScanner(f, { orgId, eventId: ev.id });
     expect(await (await get(app, env, '/ping', s.headers)).json()).toMatchObject({
-      templateIds: [],
+      templateIds: ['tpl-a', 'tpl-b'],
+    });
+    const own = await makeScanner(f, { orgId, templateIds: ['tpl-b', 'tpl-gone'] });
+    expect(await (await get(app, env, '/ping', own.headers)).json()).toMatchObject({
+      templateIds: ['tpl-b'],
     });
   });
 
+  it('an archived event, or one of the other mode, counts as no event', async () => {
+    const a = makeTemplate({ id: 'tpl-own', orgId });
+    await persistTemplate(f, a.resolved);
+    const archived = await makeScanEvent(f, { orgId, templateIds: [] });
+    await run(env.DB, 'UPDATE scan_events SET archived_at = 1 WHERE id = ?', [archived.id]);
+    const wrongMode = await makeScanEvent(f, { orgId, mode: 'test' });
+    for (const eventId of [archived.id, wrongMode.id]) {
+      const s = await makeScanner(f, { orgId, eventId, templateIds: ['tpl-own'] });
+      const res = await (await get(app, env, '/ping', s.headers)).json();
+      expect(res).toMatchObject({ templateIds: ['tpl-own'] });
+    }
+  });
+
   it('logs nothing that contains a token', async () => {
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((level) =>
+      vi.spyOn(console, level).mockImplementation(() => {}),
+    );
     const s = await makeScanner(f, { orgId });
     await get(app, env, '/ping', s.headers);
     await get(app, env, '/ping', { authorization: `Bearer wls_abcdefgh_${'A'.repeat(43)}` });
-    const text = [...spy.mock.calls, ...err.mock.calls].map((c) => String(c[0])).join('\n');
+    await get(app, env, '/ping', { ...s.headers, 'x-csrf-token': 'wrong' });
+    const text = spies
+      .flatMap((spy) => spy.mock.calls)
+      .map((call) =>
+        call.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '),
+      )
+      .join('\n');
     expect(text).not.toContain(s.token);
     expect(text).not.toContain('wls_abcdefgh');
     vi.restoreAllMocks();
+  });
+});
+
+describe('requireScanActor: screens (SA 2.5 step 4)', () => {
+  let app: Hono<AppBindings>;
+  let env: Awaited<ReturnType<typeof makeEnv>>;
+  beforeEach(async () => {
+    ({ app, env } = await build());
+  });
+
+  const screens = [
+    { kind: 'display', deviceRole: 'customer' },
+    { kind: 'display', deviceRole: 'monitor' },
+    { kind: 'device', deviceRole: 'customer' },
+  ] as const;
+
+  it.each(screens)(
+    'a $kind with role $deviceRole is refused on every scan route',
+    async (shape) => {
+      const s = await makeScanner(f, { orgId, ...shape });
+      for (const path of ['/resolve', '/actions', '/lookup', '/scans/x/undo']) {
+        const res = await app.request(
+          `${ORIGIN}${path}`,
+          {
+            method: 'POST',
+            headers: { ...s.headers, 'content-type': 'application/json' },
+            body: '{}',
+          },
+          env,
+        );
+        expect(res.status, path).toBe(403);
+        expect(await code(res), path).toBe('SCREEN_ONLY');
+      }
+      for (const path of ['/scans', '/stats', '/summary', '/passes/x/assets/y?g=1']) {
+        const res = await get(app, env, path, s.headers);
+        expect(res.status, path).toBe(403);
+        expect(await code(res), path).toBe('SCREEN_ONLY');
+      }
+    },
+  );
+
+  it('a screen reaches the session and may unpair', async () => {
+    const s = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'customer' });
+    expect((await get(app, env, '/session', s.headers)).status).toBe(200);
+    const unpair = await app.request(
+      `${ORIGIN}/unpair`,
+      { method: 'POST', headers: { ...s.headers, 'content-type': 'application/json' }, body: '{}' },
+      env,
+    );
+    expect(unpair.status).toBe(200);
+  });
+
+  it('a suspended org answers ORG_INACTIVE for a screen, before SCREEN_ONLY', async () => {
+    const s = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'monitor' });
+    await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [orgId]);
+    expect(await code(await get(app, env, '/scans', s.headers))).toBe('ORG_INACTIVE');
+  });
+
+  it('a rate limited screen answers 429 before SCREEN_ONLY', async () => {
+    ({ app, env } = await build({ RL_SCAN: fakeRateLimiter({ limit: 1 }) }));
+    const s = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'monitor' });
+    expect((await get(app, env, '/scans', s.headers)).status).toBe(403);
+    expect((await get(app, env, '/scans', s.headers)).status).toBe(429);
+  });
+
+  it('a device scanner and an admin have no screen role to refuse', async () => {
+    const s = await makeScanner(f, { orgId });
+    expect((await get(app, env, '/scans', s.headers)).status).toBe(200);
+    const admin = await post(app, env, fake.admin(), { scope: { orgId, timeZone: 'UTC' } });
+    expect(admin.status).toBe(200);
+  });
+});
+
+describe('requireScanActor: with the faked principal', () => {
+  it('fake.scanner reaches the guard when its scannerId names a makeScanner row', async () => {
+    const { app, env } = await build({}, true);
+    const row = await makeScanner(f, { orgId });
+    const ok = await get(app, env, '/ping', fake.scanner({ scannerId: row.id, orgId }));
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toMatchObject({ principal: 'scanner', key: `s:${row.id}` });
+    const screen = await get(
+      app,
+      env,
+      '/scans',
+      fake.scanner({ scannerId: row.id, orgId, deviceRole: 'customer' }),
+    );
+    expect(await code(screen)).toBe('SCREEN_ONLY');
+    const lost = await get(app, env, '/ping', fake.scanner({ scannerId: 'no-such-row', orgId }));
+    expect(await code(lost)).toBe('SCANNER_UNAUTHENTICATED');
+  });
+});
+
+describe('requireScanActor: round trips (SA 13.1)', () => {
+  it('a scan request costs at most 5 reads, with one scanner read and no write inside a minute', async () => {
+    const counted = countD1((await makeEnv()).DB);
+    const { app, env } = await build({ DB: counted.db });
+    const staff = await makeScanStaff(f, { orgId, role: 'desk' });
+    const ev = await makeScanEvent(f, { orgId });
+    const s = await makeScanner(f, {
+      orgId,
+      eventId: ev.id,
+      settings: { staffSignIn: true },
+      staffId: staff.id,
+    });
+    counted.reset();
+    const res = await get(app, env, '/ping', s.headers);
+    expect(res.status).toBe(200);
+    const sql = counted.sql();
+    expect(counted.count(), sql.join('\n')).toBeLessThanOrEqual(5);
+    expect(sql.filter((q) => /FROM scanners/.test(q))).toHaveLength(1);
+    expect(sql.filter((q) => /^\s*UPDATE scanners/.test(q))).toHaveLength(0);
+  });
+
+  it('the touch writes once the row is a minute old', async () => {
+    const counted = countD1((await makeEnv()).DB);
+    const { app, env } = await build({ DB: counted.db });
+    const s = await makeScanner(f, { orgId, lastSeenAt: clock.now() - 61_000 });
+    counted.reset();
+    await get(app, env, '/ping', s.headers);
+    expect(counted.sql().filter((q) => /^\s*UPDATE scanners/.test(q))).toHaveLength(1);
   });
 });

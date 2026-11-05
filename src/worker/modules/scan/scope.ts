@@ -23,7 +23,14 @@ export async function rawScopeOf(c: Context<AppBindings>): Promise<unknown> {
     };
   }
   if (!c.req.header('content-type')?.includes('json')) return undefined;
-  const body: unknown = await c.req.json().catch(() => undefined);
+  const text = await c.req.text();
+  if (text === '') return undefined;
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    throw new ValidationError('The request body is not valid JSON.', [], 'SCAN_BODY_INVALID');
+  }
   return body && typeof body === 'object' && 'scope' in body
     ? (body as { scope: unknown }).scope
     : undefined;

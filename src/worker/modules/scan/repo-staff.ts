@@ -1,5 +1,5 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -12,7 +12,7 @@ export interface ScanStaffRow {
   disabledAt: number | null;
 }
 
-interface Raw {
+export interface StaffRaw {
   id: string;
   org_id: string;
   name: string;
@@ -21,7 +21,7 @@ interface Raw {
   disabled_at: number | null;
 }
 
-const toRow = (r: Raw): ScanStaffRow => ({
+export const toStaff = (r: StaffRaw): ScanStaffRow => ({
   id: r.id,
   orgId: r.org_id,
   name: r.name,
@@ -32,22 +32,21 @@ const toRow = (r: Raw): ScanStaffRow => ({
 
 const COLUMNS = 'id, org_id, name, role, pin_hash, disabled_at';
 
+export const staffStatement = (db: Db, orgId: string, id: string): D1PreparedStatement =>
+  stmt(db, `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ?`, [id, orgId]);
+
 /** Scoped to the org: another org's staff id is the same as an unknown one. */
 export async function getStaff(db: Db, orgId: string, id: string): Promise<ScanStaffRow | null> {
-  const row = await first<Raw>(
-    db,
-    `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ?`,
-    [id, orgId],
-  );
-  return row ? toRow(row) : null;
+  const row = await staffStatement(db, orgId, id).first<StaffRaw>();
+  return row ? toStaff(row) : null;
 }
 
 export async function listActiveManagers(db: Db, orgId: string): Promise<ScanStaffRow[]> {
-  const rows = await all<Raw>(
+  const rows = await all<StaffRaw>(
     db,
     `SELECT ${COLUMNS} FROM scan_staff
      WHERE org_id = ? AND role = 'manager' AND disabled_at IS NULL ORDER BY name COLLATE NOCASE`,
     [orgId],
   );
-  return rows.map(toRow);
+  return rows.map(toStaff);
 }
