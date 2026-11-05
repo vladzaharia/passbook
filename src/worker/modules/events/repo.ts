@@ -129,16 +129,3 @@ export async function pendingFetchDevices(
   );
   return rows.map((r) => r.device);
 }
-
-export async function lastEventOfKind(
-  db: D1Database,
-  passId: string,
-  kind: EventKind,
-): Promise<EventRow | null> {
-  const rows = await all<EventRow>(
-    db,
-    'SELECT * FROM pass_events WHERE pass_id = ? AND kind = ? ORDER BY at DESC, id DESC LIMIT 1',
-    [passId, kind],
-  );
-  return rows[0] ?? null;
-}

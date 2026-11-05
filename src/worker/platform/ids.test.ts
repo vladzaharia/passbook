@@ -55,3 +55,12 @@ describe('ids', () => {
     expect(safeEqualBytes(new Uint8Array([1, 2]), new Uint8Array([1]))).toBe(false);
   });
 });
+
+describe('ordered ids', () => {
+  it('keep creation order inside one millisecond', () => {
+    const ids = createIds(new ManualClock());
+    const made = Array.from({ length: 50 }, () => ids.ordered(1_700_000_000_000));
+    expect([...made].sort()).toEqual(made);
+    expect(new Set(made).size).toBe(50);
+  });
+});
