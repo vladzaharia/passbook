@@ -1,19 +1,22 @@
 import { all, first, run } from '../../platform/db.ts';
 import { orgForPass } from '../orgs/repo.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
+import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
 
 export * from './repo-map.ts';
 
-/** `orgScope` null = platform-wide. A pass outside the scope reads as missing. */
+/** Null scope = platform-wide. A pass outside the scope (org, or an API key's mode) reads as missing. */
 export async function getPass(
   db: D1Database,
   id: string,
-  orgScope: string | null = null,
+  scope: ScopeArg = null,
 ): Promise<Pass | null> {
+  const orgScope = scopeOrg(scope);
+  const mode = readMode(scope);
   const row = await first<PassDbRow>(
     db,
-    `${PASS_SELECT} WHERE id = ? AND (? IS NULL OR org_id = ?) AND deleted_at IS NULL`,
-    [id, orgScope, orgScope],
+    `${PASS_SELECT} WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?) AND deleted_at IS NULL`,
+    [id, orgScope, orgScope, mode, mode],
   );
   return row ? mapPass(row) : null;
 }

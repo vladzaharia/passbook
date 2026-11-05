@@ -6,6 +6,7 @@ import { recordAudit } from '../audit/service.ts';
 import { imagesFromBinding } from '../templates/images-binding.ts';
 import type { ImageTools } from '../templates/package/images.ts';
 import { parseAssetName, validateAsset } from './assets.ts';
+import { getPassForWrite } from './pass-access.ts';
 import { publishPass } from './publish.ts';
 import {
   type AssetRow,
@@ -15,6 +16,7 @@ import {
   removeAsset,
   upsertAsset,
 } from './repo.ts';
+import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
 const toDto = (a: AssetRow) => ({
@@ -26,14 +28,9 @@ const toDto = (a: AssetRow) => ({
   createdAt: a.createdAt,
 });
 
-async function requirePass(ctx: ServiceContext, passId: string, scope: string | null) {
-  const pass = await getPass(ctx.env.DB, passId, scope);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return pass;
-}
-
-export async function listPassAssets(ctx: ServiceContext, passId: string, scope: string | null) {
-  await requirePass(ctx, passId, scope);
+export async function listPassAssets(ctx: ServiceContext, passId: string, scope: ScopeArg) {
+  if (!(await getPass(ctx.env.DB, passId, scope)))
+    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   return { items: (await listAssets(ctx.env.DB, passId)).map(toDto) };
 }
 
@@ -42,7 +39,7 @@ async function rebuildOrRestore(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
-  scope: string | null,
+  scope: ScopeArg,
   name: string,
   previous: AssetRow | null,
 ): Promise<void> {
@@ -121,10 +118,10 @@ export async function putPassAsset(
   passId: string,
   name: string,
   bytes: Uint8Array,
-  scope: string | null,
+  scope: ScopeArg,
   tools: ImageTools = imagesFromBinding(ctx.env.IMAGES, ctx.log),
 ) {
-  const pass = await requirePass(ctx, passId, scope);
+  const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   const row = await storeRow(ctx, passId, name, bytes);
   const extra = await derived2x(ctx, passId, name, bytes, tools);
   const previous = await upsertAsset(ctx.env.DB, passId, row);
@@ -162,9 +159,9 @@ export async function deletePassAsset(
   actor: Actor,
   passId: string,
   name: string,
-  scope: string | null,
+  scope: ScopeArg,
 ): Promise<void> {
-  const pass = await requirePass(ctx, passId, scope);
+  const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   const previous = (await listAssets(ctx.env.DB, passId)).find((a) => a.name === name);
   if (!previous || !(await removeAsset(ctx.env.DB, passId, name)))
     throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');

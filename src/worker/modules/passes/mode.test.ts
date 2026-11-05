@@ -98,16 +98,20 @@ describe('lists filter by the caller mode; get by id works in both', () => {
     expect(keyLive).toContain(live.id);
     expect(keyLive).not.toContain(test.id);
 
+    // Sessions read either mode by id; a key reads only its own.
     for (const headers of [
       fake.admin(),
       fake.admin({ mode: 'test' }),
-      fake.apiKey({ mode: 'live' }),
+      fake.apiKey({ mode: 'test' }),
     ]) {
       const got = PassDetailSchema.parse(
         await (await api(`/passes/${test.id}`, { headers })).json(),
       );
       expect(got.mode).toBe('test');
     }
+    expect(
+      (await api(`/passes/${test.id}`, { headers: fake.apiKey({ mode: 'live' }) })).status,
+    ).toBe(404);
     // A key of another org cannot read it in either mode.
     expect(
       (

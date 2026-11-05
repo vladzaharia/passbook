@@ -10,7 +10,8 @@ export interface PassListFilter {
   /** Any of these templates. */
   templateIds?: string[];
   connectionId?: string;
-  status?: PassStatus;
+  /** `voided` leaves out removed passes; `removed` is those alone. */
+  status?: PassStatus | 'removed';
   holderEmail?: string;
   holderState?: 'unassigned' | 'waiting' | 'owned';
   onDevice?: boolean;
@@ -44,7 +45,11 @@ export function passFilterSql(filter: PassListFilter): {
   if (filter.templateIds?.length)
     add(`template_id IN (${filter.templateIds.map(() => '?').join(', ')})`, ...filter.templateIds);
   if (filter.connectionId) add('connection_id = ?', filter.connectionId);
-  if (filter.status) add('status = ?', filter.status);
+  if (filter.status === 'removed') where.push('removed_at IS NOT NULL');
+  else if (filter.status) {
+    add('status = ?', filter.status);
+    if (filter.status === 'voided') where.push('removed_at IS NULL');
+  }
   if (filter.holderEmail) add('holder_email = ?', filter.holderEmail);
   if (filter.holderState) where.push(HOLDER_STATE_SQL[filter.holderState]);
   if (filter.onDevice !== undefined)

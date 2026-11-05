@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
   BindPassConnectionSchema,
-  CreatePassSchema,
   DiffQuerySchema,
   IdParamSchema,
   OkSchema,
@@ -12,21 +11,19 @@ import {
   RefreshPassResponseSchema,
   ResendEmailSchema,
   RotateLinkResponseSchema,
-  UpdatePassSchema,
 } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
-import { BadRequestError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { registerEventRoutes } from '../events/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
-import { createPassIdempotent } from './create.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
-import { actorFor, assertOrg, type C, orgScopeOf, svc } from './http.ts';
+import { actorFor, assertOrg, orgScopeOf, passScopeOf, svc } from './http.ts';
 import { registerRemoveRoutes } from './remove-routes.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
+import { registerWriteRoutes } from './routes-write.ts';
 import {
   deletePass,
   listPassSummaries,
@@ -35,7 +32,6 @@ import {
   resendEmail,
   rotateLink,
   unvoidPass,
-  updatePass,
   voidPass,
 } from './service.ts';
 
@@ -46,15 +42,6 @@ guard(
   passesRoutes,
   requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
 );
-
-function ifMatch(c: C): number | undefined {
-  const raw = c.req.header('if-match');
-  if (raw === undefined) return undefined;
-  const match = /^(?:W\/)?"?(\d{1,12})"?$/.exec(raw.trim());
-  if (!match?.[1])
-    throw new BadRequestError('If-Match must be the pass version.', 'IF_MATCH_INVALID');
-  return Number(match[1]);
-}
 
 register(
   passesRoutes,
@@ -93,50 +80,6 @@ register(
   passesRoutes,
   'passes',
   {
-    method: 'post',
-    path: '/',
-    summary: 'Create a pass (Idempotency-Key supported)',
-    body: CreatePassSchema,
-    status: 201,
-    response: PassDetailSchema,
-  },
-  async (c) => {
-    const body = c.req.valid('json');
-    assertOrg(c, body.orgId);
-    const key = c.req.header('idempotency-key')?.trim();
-    if (key !== undefined && (key.length < 1 || key.length > 200))
-      throw new BadRequestError(
-        'Idempotency-Key must be 1 to 200 characters.',
-        'IDEMPOTENCY_KEY_INVALID',
-      );
-    const detail = await createPassIdempotent(
-      svc(c),
-      {
-        orgId: body.orgId,
-        templateId: body.templateId,
-        ...(body.templateVersion ? { templateVersion: body.templateVersion } : {}),
-        ...(body.identityId ? { identityId: body.identityId } : {}),
-        input: body.input,
-        holderEmail: body.holderEmail ?? null,
-        externalId: body.externalId ?? null,
-        ...(body.serial ? { serial: body.serial } : {}),
-        connectionId: body.connectionId ?? null,
-        externalRef: body.externalRef ?? null,
-        sendEmail: body.sendEmail ?? false,
-        source: 'manual',
-        mode: modeOf(c.var.auth),
-        actor: actorFor(c),
-      },
-      key,
-    );
-    return c.json(detail, 201);
-  },
-);
-
-register(
-  passesRoutes,
-  'passes',
-  {
     method: 'get',
     path: '/{id}',
     summary: 'Get a pass',
@@ -144,29 +87,7 @@ register(
     response: PassDetailSchema,
   },
   async (c) => {
-    const detail = await getPassDetail(svc(c), c.req.valid('param').id, orgScopeOf(c));
-    return c.json(detail, 200, { etag: `"${detail.version}"` });
-  },
-);
-
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'patch',
-    path: '/{id}',
-    summary: 'Update a pass (If-Match: version)',
-    params: IdParamSchema,
-    body: UpdatePassSchema,
-    response: PassDetailSchema,
-  },
-  async (c) => {
-    const patch = c.req.valid('json');
-    const expected = ifMatch(c);
-    const detail = await updatePass(svc(c), actorFor(c), c.req.valid('param').id, patch, {
-      scope: orgScopeOf(c),
-      ...(expected !== undefined ? { ifMatch: expected } : {}),
-    });
+    const detail = await getPassDetail(svc(c), c.req.valid('param').id, passScopeOf(c));
     return c.json(detail, 200, { etag: `"${detail.version}"` });
   },
 );
@@ -188,7 +109,7 @@ register(
       actorFor(c),
       c.req.valid('param').id,
       c.req.valid('json'),
-      orgScopeOf(c),
+      passScopeOf(c),
     );
     return c.json(detail, 200, { etag: `"${detail.version}"` });
   },
@@ -205,7 +126,7 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await deletePass(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c));
+    await deletePass(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c));
     return c.json({ ok: true });
   },
 );
@@ -218,7 +139,7 @@ for (const [path, summary, action] of [
     passesRoutes,
     'passes',
     { method: 'post', path, summary, params: IdParamSchema, response: PassActionResponseSchema },
-    async (c) => c.json(await action(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
+    async (c) => c.json(await action(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
   );
 }
 
@@ -235,7 +156,7 @@ register(
   },
   async (c) => {
     const id = c.req.valid('param').id;
-    await requirePass(svc(c), id, orgScopeOf(c));
+    await requirePass(svc(c), id, passScopeOf(c));
     const { requestedAt } = await requestRefresh(svc(c), id, actorFor(c));
     return c.json({ accepted: true as const, requestedAt }, 202);
   },
@@ -252,7 +173,7 @@ register(
     response: RotateLinkResponseSchema,
   },
   async (c) =>
-    c.json(await rotateLink(svc(c), actorFor(c), c.req.valid('param').id, orgScopeOf(c))),
+    c.json(await rotateLink(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
 );
 
 register(
@@ -273,7 +194,7 @@ register(
       actorFor(c),
       c.req.valid('param').id,
       c.req.valid('json'),
-      orgScopeOf(c),
+      passScopeOf(c),
     );
     return c.json({ ok: true as const }, 202);
   },
@@ -291,7 +212,7 @@ register(
   },
   async (c) => {
     const p = c.req.valid('param');
-    return c.json(await getVersionDetail(svc(c), p.id, p.version, orgScopeOf(c)));
+    return c.json(await getVersionDetail(svc(c), p.id, p.version, passScopeOf(c)));
   },
 );
 
@@ -310,10 +231,13 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    return c.json(await diffVersions(svc(c), c.req.valid('param').id, q.from, q.to, orgScopeOf(c)));
+    return c.json(
+      await diffVersions(svc(c), c.req.valid('param').id, q.from, q.to, passScopeOf(c)),
+    );
   },
 );
 
+registerWriteRoutes(passesRoutes);
 registerAssetRoutes(passesRoutes);
 registerBulkRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);

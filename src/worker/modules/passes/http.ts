@@ -1,8 +1,9 @@
 import type { Context } from 'hono';
-import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
+import { type AuthContext, assertOrgAccess, modeOf } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import type { PassScope } from './scope.ts';
 import type { Actor } from './service.ts';
 
 export type C = Context<AppBindings>;
@@ -19,6 +20,16 @@ export function authOf(c: C): AuthContext {
 export function orgScopeOf(c: C): string | null {
   const auth = authOf(c);
   return auth.kind === 'api_key' ? auth.orgId : null;
+}
+
+/** Org and mode for by-id access (see PassScope). */
+export function passScopeOf(c: C): PassScope {
+  const auth = authOf(c);
+  return {
+    orgId: auth.kind === 'api_key' ? auth.orgId : null,
+    mode: modeOf(auth),
+    principal: auth.kind === 'api_key' ? 'api_key' : 'session',
+  };
 }
 
 export function assertOrg(c: C, orgId: string): void {

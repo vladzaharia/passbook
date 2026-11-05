@@ -48,14 +48,51 @@ export async function releaseRemoval(db: D1Database, passId: string, at: number)
   );
 }
 
-export async function setRemoval(
+/** Takes the removal away only if it is still the one read: two restores cannot both publish. */
+export async function claimRestore(
   db: D1Database,
   passId: string,
-  state: RemovalState | null,
+  removedAt: number,
+): Promise<boolean> {
+  const res = await run(
+    db,
+    `UPDATE passes SET removed_at = NULL, removal_message = NULL, removal_prior_status = NULL
+     WHERE id = ? AND removed_at = ?`,
+    [passId, removedAt],
+  );
+  return res.changes > 0;
+}
+
+/** Undoes a restore claim unless the pass was removed again meanwhile. */
+export async function reinstateRemoval(
+  db: D1Database,
+  passId: string,
+  state: RemovalState,
 ): Promise<void> {
   await run(
     db,
-    'UPDATE passes SET removed_at = ?, removal_message = ?, removal_prior_status = ? WHERE id = ?',
-    [state?.at ?? null, state?.message ?? null, state?.priorStatus ?? null, passId],
+    `UPDATE passes SET removed_at = ?, removal_message = ?, removal_prior_status = ?
+     WHERE id = ? AND removed_at IS NULL`,
+    [state.at, state.message, state.priorStatus, passId],
   );
+}
+
+/** Why the newest version was published; null when it has no source or there is none. */
+export async function latestVersionSource(db: D1Database, passId: string): Promise<string | null> {
+  const row = await first<{ source: string | null }>(
+    db,
+    'SELECT source FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT 1',
+    [passId],
+  );
+  return row?.source ?? null;
+}
+
+/** The version the removal published; stays after the pass.removed event is purged. */
+export async function removalVersion(db: D1Database, passId: string): Promise<number | null> {
+  const row = await first<{ version: number }>(
+    db,
+    "SELECT version FROM pass_versions WHERE pass_id = ? AND source = 'remove' ORDER BY version DESC LIMIT 1",
+    [passId],
+  );
+  return row?.version ?? null;
 }

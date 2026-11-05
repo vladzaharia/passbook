@@ -228,7 +228,9 @@ describe('POST /passes/{id}/remove and /restore', () => {
       404,
     );
     expect((await post(`/${pass.id}/remove`, { message: 'x'.repeat(201) })).status).toBe(422);
-    expect((await post(`/${pass.id}/remove`, {}, fake.admin({ mode: 'test' }))).status).toBe(200);
+    // A session changes only the mode it is in.
+    expect((await post(`/${pass.id}/remove`, {}, fake.admin({ mode: 'test' }))).status).toBe(409);
+    expect((await post(`/${pass.id}/remove`, {}, fake.apiKey({ mode: 'test' }))).status).toBe(404);
   });
 
   it('removes a selection in bulk and 404s the whole call for a foreign id', async () => {

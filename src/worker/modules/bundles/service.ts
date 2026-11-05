@@ -7,11 +7,14 @@ import {
 } from '../../../shared/contracts/bundles.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
+import { batch } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditStmt } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPass } from '../passes/repo.ts';
+import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import { enqueueBundleEmail } from './email-queue.ts';
 import * as repo from './repo.ts';
@@ -52,10 +55,21 @@ async function withMembers(ctx: ServiceContext, rows: repo.BundleRow[]): Promise
 async function requireBundle(
   ctx: ServiceContext,
   id: string,
-  orgScope: string | null,
+  orgScope: ScopeArg,
 ): Promise<repo.BundleRow> {
   const row = await repo.getBundle(ctx.env.DB, id, orgScope);
   if (!row) throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
+  return row;
+}
+
+/** For changes: a bundle of the other mode fails like a pass does (404 for keys, 409 for sessions). */
+async function requireBundleForWrite(
+  ctx: ServiceContext,
+  id: string,
+  orgScope: ScopeArg,
+): Promise<repo.BundleRow> {
+  const row = await requireBundle(ctx, id, orgScope);
+  assertWritableMode(orgScope, row.mode, 'bundle');
   return row;
 }
 
@@ -80,6 +94,10 @@ async function checkPasses(
     );
 }
 
+/**
+ * `holderEmail` with `sendEmail` relays the link to any address the caller names, so it counts
+ * against the same per-recipient and per-org email caps as pass emails.
+ */
 export async function createBundle(
   ctx: ServiceContext,
   actor: Actor,
@@ -103,26 +121,30 @@ export async function createBundle(
     passIds: input.passIds,
     now: ctx.clock.now(),
   };
-  await repo.insertBundle(ctx.env.DB, row);
-  await recordAudit(ctx, {
-    orgId: input.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'bundle.create',
-    targetType: 'bundle',
-    targetId: row.id,
-    detail: { passes: input.passIds.length, mode },
-  });
+  await batch(ctx.env.DB, [
+    ...repo.insertBundleStmts(ctx.env.DB, row),
+    auditStmt(ctx.env.DB, ctx, {
+      orgId: input.orgId,
+      actorType: actor.type,
+      actorId: actor.id,
+      action: 'bundle.create',
+      targetType: 'bundle',
+      targetId: row.id,
+      detail: { passes: input.passIds.length, mode },
+    }),
+  ]);
   if (input.sendEmail && holderEmail) {
     try {
       await enqueueBundleEmail(ctx, row.id, holderEmail);
     } catch (error) {
-      // The bundle exists; a capped email is resent on request, not a failed create.
-      if (!(error instanceof AppError) || error.code !== 'EMAIL_RATE_LIMITED') throw error;
-      ctx.log.warn('bundles.email_rate_limited', {
-        code: 'EMAIL_RATE_LIMITED',
+      // The bundle exists and a retry would create a second live link: a failed email is resent
+      // on request, never a failed create.
+      const code = error instanceof AppError ? error.code : 'BUNDLE_EMAIL_ENQUEUE';
+      ctx.log.warn('bundles.email_not_queued', {
+        code,
         orgId: input.orgId,
         bundleId: row.id,
+        ...(code === 'BUNDLE_EMAIL_ENQUEUE' ? { error } : {}),
       });
     }
   }
@@ -132,7 +154,7 @@ export async function createBundle(
 export async function getBundleDto(
   ctx: ServiceContext,
   id: string,
-  orgScope: string | null,
+  orgScope: ScopeArg,
 ): Promise<BundleDto> {
   const [dto] = await withMembers(ctx, [await requireBundle(ctx, id, orgScope)]);
   if (!dto) throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
@@ -156,18 +178,20 @@ export async function rotateBundleLink(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
-  orgScope: string | null,
+  orgScope: ScopeArg,
 ): Promise<BundleDto> {
-  const row = await requireBundle(ctx, id, orgScope);
-  await repo.setBundleToken(ctx.env.DB, id, ctx.ids.token(), ctx.clock.now());
-  await recordAudit(ctx, {
-    orgId: row.org_id,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'bundle.rotate_link',
-    targetType: 'bundle',
-    targetId: id,
-  });
+  const row = await requireBundleForWrite(ctx, id, orgScope);
+  await batch(ctx.env.DB, [
+    repo.setBundleTokenStmt(ctx.env.DB, id, ctx.ids.token(), ctx.clock.now()),
+    auditStmt(ctx.env.DB, ctx, {
+      orgId: row.org_id,
+      actorType: actor.type,
+      actorId: actor.id,
+      action: 'bundle.rotate_link',
+      targetType: 'bundle',
+      targetId: id,
+    }),
+  ]);
   return getBundleDto(ctx, id, orgScope);
 }
 
@@ -175,18 +199,20 @@ export async function deleteBundle(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
-  orgScope: string | null,
+  orgScope: ScopeArg,
 ): Promise<void> {
-  const row = await requireBundle(ctx, id, orgScope);
-  await repo.deleteBundle(ctx.env.DB, id);
-  await recordAudit(ctx, {
-    orgId: row.org_id,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'bundle.delete',
-    targetType: 'bundle',
-    targetId: id,
-  });
+  const row = await requireBundleForWrite(ctx, id, orgScope);
+  await batch(ctx.env.DB, [
+    repo.deleteBundleStmt(ctx.env.DB, id),
+    auditStmt(ctx.env.DB, ctx, {
+      orgId: row.org_id,
+      actorType: actor.type,
+      actorId: actor.id,
+      action: 'bundle.delete',
+      targetType: 'bundle',
+      targetId: id,
+    }),
+  ]);
 }
 
 export async function sendBundleEmail(
@@ -194,9 +220,9 @@ export async function sendBundleEmail(
   actor: Actor,
   id: string,
   input: { to?: string | undefined },
-  orgScope: string | null,
+  orgScope: ScopeArg,
 ): Promise<void> {
-  const row = await requireBundle(ctx, id, orgScope);
+  const row = await requireBundleForWrite(ctx, id, orgScope);
   const to = input.to ?? row.holder_email;
   if (!to) throw new ValidationError('The bundle has no email.', [], 'NO_RECIPIENT');
   // API keys may not turn this into a mail relay.
