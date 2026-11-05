@@ -42,6 +42,7 @@ import './scenes/wave.css';
 import './scenes/tear.css';
 import './scenes/nudge.css';
 import './scenes/tuck.css';
+import './scenes/stow.css';
 import './scenes/count.css';
 import './scenes/face.css';
 
