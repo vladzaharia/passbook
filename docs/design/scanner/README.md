@@ -30,4 +30,4 @@ on build structure, `scanner-architecture.md` on design.
 - **Research and briefs.** research/scanning/report.md (R), n8b-buddy.md and scanner-owner-answers.md were the
   inputs. Their decisions are in the revision notes at the top of the plan, SA and DM.
 
-`addendum/` holds the stations and Access card designs the plan cites (ST, AX) and the Phase 0 amendments.
+`addendum/` holds the stations and Access card designs the plan cites (ST, AX), the Phase 0 amendments and the customer and desk UX. Its sheets, shots, gen scripts and pass fixtures are not shipped; paths to them name where they belong.

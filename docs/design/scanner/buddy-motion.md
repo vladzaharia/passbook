@@ -16,14 +16,22 @@ File paths are relative to `scratchpad/next` unless they say otherwise.
 > **Revision 2026-11-04, owner:** "The 'Voided'/'Invalid' etc should have the buddy shaking his head." Every red
 > refusal now plays one beat, **`shake`** (§6.3), with eyes squeezed, brows sad and the pocket passes swinging behind.
 > `peek`, `tear`, `sign` and `empty` are retired, with their props (lens, flask plate, the tear). Amber keeps `wrist`.
-> Slate ends in a new **`sorry`** pose and never shakes (§6.4). Reference: `docs/design/scanner/b-final/ (motion mocks, not shipped) `, the strip
-> `docs/design/scanner/b-final/b-final-strip-refused-{light,dark}.png`, the stills
-> `b-final-still-refused-{light,dark}.png` and the refused video (not shipped).
+> Slate ends in a new **`sorry`** pose and never shakes (§6.4). Reference: `docs/design/scanner/b-final/motion/`, the strip
+> `docs/design/scanner/b-final/sheets/b-final-strip-refused-{light,dark}.png`, the stills
+> `b-final-still-refused-{light,dark}.png` and `docs/design/scanner/b-final/video/b-final-refused-{light,dark}.webm`.
 
 > **Revision 2026-11-04, owner answers:** the two blueprints get their own beats: the **Balance card** plays the new
 > **`coins`** (coins drop into the pocket; §6.1, §8) and the **Stamp card** plays `stamp` (the owner's "punches a stamp"; Redeem reward plays `punch`). **M2 fixed:** the
 > earliest cut is T0 + 350 (`NEXT_SCAN_AFTER_VERDICT` 350, SA §7.5), as the plan and the head shake already assume;
 > §2, §6, §7.5 and §9 follow.
+
+> **Revision 2026-11-05** (stations and Access cards): a new green beat **`gate`** for **Access granted** (§6.1, §8):
+> no prop, the gold pass is the barrier arm that lifts and waves the member through; re-entry within the visit gap
+> plays it too. Access refusals use the existing `shake` (`guest_expired` also droops the gold pass). New §17: the
+> buddy on a **Customer screen** (XL, the scanner's ok beats, `rummage` while the scanner reads, `sorry` and never the
+> shake for **Please see the desk**, `wave` on idle) and on a **Desk monitor** (S, one small reaction per 2 s). M8
+> gains one bounded loop: the customer `rummage`. Reference sheet: `addendum/access/sheets/access-gate-{light,dark}.png`
+> (nine frames, reduced motion, denied, re-entry wait); customer stills `addendum/shots/c-*`.
 
 ---
 
@@ -40,7 +48,7 @@ File paths are relative to `scratchpad/next` unless they say otherwise.
 | M12 | **One red beat: the head shake.** Every red refusal plays `shake`; the reason lives in the card's headline, sub and row. Only ME's one-meaning states keep a prop: expired (the gold pass greys and droops) and forbidden or org paused (the lock). Squeezed eyes belong to the red "no" alone. | Owner, 2026-11-04. Fewer props, one reading at the door: "no" is a head shake everywhere. |
 | M13 | **Slate apologises.** Our problem ends in the `sorry` pose: eyes up at you, brows raised, passes drawn in, after a small bow. Never a shake, never squeezed eyes. | Owner, 2026-11-04: slate is our fault, not the guest's. |
 | M7 | **Props ride inside the buddy's own SVG** through WalletArt's existing slots (`onCard`, `front`, `aside`), not a sibling `<svg>`. | A punch hole must move with the violet pass and a tear with the face; a sibling layer can't follow a part's transform (UXK §2.8 proposed a sibling). |
-| M8 | **No loops except the rummage**, which runs only while a lookup is pending and never past 4.7 s. NFC rings play once per trigger. | ME "No ambient loops"; WCAG 2.2.2; UXK's looping `rings` while armed changes to once. |
+| M8 | **No loops except the rummage**, which runs only while a lookup is pending (or, on a Customer screen, while the scanner reads, §17, capped at 3 s) and never past 4.7 s. NFC rings play once per trigger. | ME "No ambient loops"; WCAG 2.2.2; UXK's looping `rings` while armed changes to once. |
 | M9 | **The buddy never takes a tap on `/scan`.** No click replay, no hover blink, `pointer-events: none`. | UXD §6: a gloved "dismiss" tap must never be eaten. |
 | M10 | **Sound: seven chirps and two garnishes, synthesized, on by default.** Rising means yes, falling means no, flat repeats mean "look". | R §5.4, UXD §7.1, UXK §2.7, merged (section 11). |
 | M11 | **Celebrations come from data and never wait.** Device milestones: `fan`, the `reward` chirp and six sparks from the verdict icon. Admin moments reuse `wave`, `cheer`, `count` and the face's `cheer`. | ME Signature 9; BG "no celebratory copy". |
@@ -191,6 +199,20 @@ All result beats start at `--wl-beat-at` (150 ms) and last 550 ms; every time be
 
 Snap at cut: ≤ 2 units.
 
+**`gate`** (2026-11-05): **Access granted** on an access card, including a re-entry within the visit gap. Happy. No
+props (the gold pass moves: 0 nodes). Chirp `ok`.
+
+| T0 + ms | Motion |
+| --- | --- |
+| 150-230 | Anticipation: body squash 1.04 × .96; the gold pass tips down to horizontal across the pocket (the barrier arm: rotate −90° about its lower corner) |
+| 230-390 | The arm lifts: the gold pass swings up to +12° past vertical (`--wl-ease-bounce`); the trunk leans 3° toward the door side; eyes look up-left 1.2 |
+| 390-520 | Wave-through: the arm dips to 0° and back to +8° once (the "go on" wave); happy arcs widen 1.15 × 1.25 |
+| 520-640 | The arm settles to its rest angle; the trunk returns |
+| 640-700 | Rest; happy arcs |
+
+Snap at cut: ≤ 2 units (the arm is the gold pass, so a cut snaps it home like any pass). Reduced motion: the end pose
+with the arm up at +8°, happy. Customer screens play it at XL.
+
 **`fan`**: a milestone or a reward (section 9). Happy. Chirp `reward`. Six sparks from the verdict icon (`Celebrate`, chrome). The `cheer` keyframes at 550 ms:
 
 | T0 + ms | Motion |
@@ -330,8 +352,8 @@ the one visible jump and it reads as the next look.
 End pose: the sad rest, eyes open, with the expired state or the lock where they apply. Snap at T0 + 600: ≤ 0.7°
 (fan) and 0.71 units (body); at T0 + 350: 4.6° (trunk), 4.1° (fan), 1.4 units (look).
 
-Reference: `docs/design/scanner/b-final/ (motion mocks, not shipped) shake.css` (B's mock selectors) and `buddy-draft/beats.css` (production
-selectors), frames in `docs/design/scanner/b-final/b-final-strip-refused-{light,dark}.png`.
+Reference: `docs/design/scanner/b-final/motion/shake.css` (B's mock selectors) and `buddy-draft/beats.css` (production
+selectors), frames in `docs/design/scanner/b-final/sheets/b-final-strip-refused-{light,dark}.png`.
 
 **Retired by this revision:** `peek` (lens and shrug), `tear` (the `TEAR` drop), `sign` (the flask plate), `empty`,
 and `wrist dir="fwd"` in red. The lens and plate props leave `props.tsx`; `TEAR` stays in `ui/art` for the admin's
@@ -438,6 +460,9 @@ One table for door (UXD §5.3) and desk (UXK §6). Every reason gets a colour, a
 | --- | --- | --- | --- | --- | --- |
 | `checked_in` (+ re-entry, + override) | green | happy | `hop` | | `ok` |
 | `checked_out` | green | happy | `dip` | | `ok` |
+| access granted (`outcome.access` set; + re-entry in the gap, + override) | green | happy | `gate` | | `ok` |
+| `zone_not_included`, `outside_hours`, `guest_visits_used`, `suspended`; `not_yet_valid` on access | red | sad | `shake` | | `refused` |
+| `guest_expired` | red | sad | `shake` | (state `expired`) | `refused` |
 | `queued` (saved offline) | green | neutral | `stash` | clock | `ok` |
 | stamps added | green | happy | `stamp` | stamp | `ok` + `thump` |
 | points added / spent | green | happy | `sparkle` / `sparkle dir="out"` | sparks | `ok` |
@@ -598,7 +623,7 @@ Admin is silent: no sound outside `/scan`. Each moment follows ME: from data, on
 
 ## 12. Sound palette
 
-### 12.1 Engine (`src/web/scan/buddy/sound.ts`)
+### 12.1 Engine (`src/web/scan/buddy/sound.ts`; draft `buddy-draft/sound.ts`)
 
 **Synthesis.**
 - Web Audio, synthesized at runtime: no files and no CSP change (PM §7 item 5).
@@ -807,3 +832,50 @@ None need the owner. The motion decisions are made above. Left for others:
 - **Desk:** confirm that the phone flood leaves the card sheet's top edge, and its buddy, above the wash (section 3).
 - **h0:** sign off on the beat API and, if it's needed, the 0.25 kB kit raise.
 - **Architecture spec:** the `milestone` field, decided server-side, in the same atomic step as the event counter.
+
+---
+
+## 17. Customer screens and desk monitors (2026-11-05)
+
+Stations (SA §18, SD §16) add two faces of `/scan`. Same `Buddy` and beat API, same scan chunk, one seat each. The
+customer face picks the scanner's beat for each result with `beat-map.ts` from `screen`, `milestone` and the view's
+`cue { kind, unit }` (SA §18.4): `access` → `gate`, a count `add` → `stamp`, money → `coins`. Never from the band's
+words, which are copy.
+
+### 17.1 Customer screen
+
+| Moment | Seat and size | Motion | Mood | Chirp |
+| --- | --- | --- | --- | --- |
+| Idle (enter) | shelf, XL (phone 240, iPad 320) | `wave` once (the teal pass up like a hand), then rest | neutral | none |
+| `reading` beat from the scanner | same | `rummage` lean-in, eyes down into the pocket; ends at the result or after 3 s | neutral | none |
+| Ready (staff choosing) | same | `glance` up at the card | neutral | none |
+| Review (amount under review) | same | holds; eyes on the amount | neutral | none |
+| OK | same; the violet pass is the card (`card: 'out'`) | the scanner's beat for the result: `gate`, `hop`, `stamp`, `coins`, `punch`, `sparkle`; `fan` + sparks on a reward or milestone | happy | none by default |
+| Please see the desk (any heads-up or refusal) | same | the slate bow (§6.4, 350-560) into `sorry`. **Never `shake` and never `wrist`**: a customer is not told "no" by the buddy | sad, `sorry` | none |
+| Undone | same | `rewind`, then idle | flat | none |
+| Reconnecting | same | rest; no beat | curious | none |
+
+- **Silent by default.** Customer screens play no chirps (the scanner beside them already did); a station may turn
+  sound on later (not this wave).
+- **Holds** (SD §16.2): ok 4 s, see the desk 6 s, ready up to 60 s; returning to idle replays `wave` once.
+- **Cuts** as §7: a newer result cuts the beat in one frame; at most one beat per 350 ms, so two tills scanning at once
+  never strobe the screen.
+- **Reduced motion:** the end pose of each beat (gate arm up, `sorry`, the wave's peak held 600 ms then rest).
+
+### 17.2 Desk monitor
+
+| Moment | Seat and size | Motion |
+| --- | --- | --- |
+| Rest | the rail's seat (216 desk, 192 iPad) or the phone dock (152) | rest |
+| A new alert (a refusal) | same | one `shake`; at most one per 2 s, the newest wins; nothing during a replay (`hello { replayed }`) |
+| Green and amber rows | same | none (a busy door would make it jitter) |
+| Empty feed | moves into the empty card (one buddy per view) | `wave` once |
+| Reconnecting | same | rest, curious |
+
+No chirps unless the monitor's `screen.sound` is on, then only `refused` for a new alert.
+
+### 17.3 Tests
+
+`gate`: frames at 150, 230, 390, 520, 700 against the table; snap at a 350 cut ≤ 2 units; reduced-motion end pose.
+Customer map: every `ScanCustomerView.screen` maps to a beat, and no customer path can produce `shake` or `wrist`
+(a unit test over the map). Monitor: only alerts animate it, the 2 s throttle, no beats during replay.

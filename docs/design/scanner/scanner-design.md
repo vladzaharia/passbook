@@ -11,7 +11,7 @@ touches. 2026-11-04. Status: decided, ready to build with `scanner-architecture.
 >   D9, D10, D13 and new D15-D18; sections 2.2-2.3, 3, 4, 5.3-5.7, 6, 7, 9, 10.4-10.5, 13-15.
 > - **Customizable result content** (new 5.8): per-template slots, panels and rows from `scan.display`, with the
 >   verdict system-owned. Model: `docs/design/scanner/display-model.md` (**DM**).
-> - **The Scan screen editor** (new 10.8): a mode of the template designer. Sheets: `docs/design/scanner/display/`.
+> - **The Scan screen editor** (new 10.8): a mode of the template designer. Sheets: `docs/design/scanner/display/sheets/`.
 > - **Settled here:** keypad entry on a phone uses a dock tray; **Not found** reads "This code isn't a pass here.";
 >   a reached goal keeps the check and promotes **Redeem reward** in the dock; the first scan's time and staff move to
 >   the last-scan strip; the event staff note shows on Start, heads-up and refused.
@@ -25,6 +25,23 @@ touches. 2026-11-04. Status: decided, ready to build with `scanner-architecture.
 >   its own display and identity (5.3, 5.8); no item names in the ledger (15); "starter" is now
 >   **Blueprint** in every string, and **Use blueprint** replaces **Duplicate to edit** (10.8).
 
+> **Revision 2026-11-05** (stations and the Access card; sections 16 and 17, D19-D25):
+> - **Customer screen** (16.2): a phone or iPad facing the customer, the buddy large, one result at a time, every
+>   refusal **Please see the desk** on slate, never red. **Desk monitor** (16.3): a live feed with counters, filters,
+>   an alert strip and presence. **Roles on the device** (16.4): **Show to customer**, **Which scanner is it facing?**,
+>   hold the capsule for **Back to scanning?** with a staff PIN. **Station setup** in the console (16.5): the
+>   Scanners tab becomes **Devices**, grouped by station.
+> - **Access results** on the scanner (17.1): **Access granted** with the zone, the plan chip, a Visits panel, the
+>   `gate` beat; five red refusals with **Let in anyway** for a Manager. **Zones** tab and the plan editor (17.2),
+>   the **Access card** blueprint (17.3).
+> - Admin tabs are now **Devices · Events · Zones · Staff · Scans** (10.1).
+> - Layout, sizes and per-state copy in detail: `addendum/ux.md` (sections 16-17 here win where they differ; the
+>   differences are listed in 16.7).
+> - Sheets: `addendum/sheets/ux-{customer-phone,customer-ipad,monitor-desk,monitor-ipad,roles,access-phone,access-ipad}-*.png`,
+>   `addendum/sheets/x-admin-*.png` (console), `addendum/stations/sheets/stations-topology-*.png`,
+>   `addendum/access/sheets/access-{card,gate}-*.png`; screens `addendum/shots/{c,m,r,a,ad}-*.png` (phone 390 × 844,
+>   iPad 1180 × 820, desk 1440 × 900, light and dark), console `addendum/access/admin/shots/`.
+
 **Precedence.** `scanner-architecture.md` (SA) wins on principals, rights, data, API, reasons and timings. This file
 wins on everything a person sees: layout, copy, components, feedback, the buddy's seats and the admin pages. It
 replaces the overlapping parts of `ux-door.md` (UD), `ux-desk.md` (UK), `ux-admin.md` (UA) and `buddy-motion.md` (BM);
@@ -33,8 +50,8 @@ UA's empty states and toasts). Section 1 lists what changed from each. For the r
 z-order, type steps, colour tokens and motion timings, and DM wins on what the result says and who owns each slot;
 this file states the decisions and the copy.
 
-Visuals: **`docs/design/scanner/b-final/` is the source of truth for the `/scan` shell, every result and the desk
-panels**; `docs/design/scanner/display/` for the Scan screen editor; `docs/design/scanner/mockups/` for the admin pages and
+Visuals: **`docs/design/scanner/b-final/sheets/` is the source of truth for the `/scan` shell, every result and the desk
+panels**; `docs/design/scanner/display/sheets/` for the Scan screen editor; `mockups (not shipped) ` for the admin pages and
 the boot screens' content (section 14 lists what is superseded).
 
 ---
@@ -56,11 +73,18 @@ the boot screens' content (section 14 lists what is superseded).
 | D11 | **No event picker on the device.** The admin binds a scanner to one event or a set of templates (SA D6). An admin scanning with their own session picks an org and an event once, in the **Scan as admin** sheet. | Fewer taps at the door; "x of y" is exact. |
 | D12 | **Copy follows the camera, not a layout setting.** The front camera speaks to the guest ("Hold your code up to the camera"), the back camera to staff ("Point at the code"). | UD's Handheld/Stand setting only changed the camera and the copy. |
 | D13 | **The buddy is the primary interface: one seat, on the dock, XL** (192 × 144 phone, 256 × 192 iPad). Its middle pass becomes the card; its outer passes fan and carry the beats. Beats start 150 ms after the verdict and are still by 700 ms; a new scan cuts them (BM, SA D16). Sheets on top hide it. | The owner's brief: the buddy is the interface, and the card comes to it. |
-| D14 | **Admin: one nav item, Scanning,** with tabs **Scanners · Events · Staff · Scans**; NFC on the Apple identity page; scan actions in the designer (SA D19). | |
+| D14 | **Admin: one nav item, Scanning,** with tabs **Scanners · Events · Staff · Scans** (2026-11-05: **Devices · Events · Zones · Staff · Scans**); NFC on the Apple identity page; scan actions in the designer (SA D19). | |
 | D15 | **What the card says about the pass is the template's** (`scan.display`, DM): the `ok` icon and title, the meta line, chips, up to two panels of typed rows, notes. Everything that says the verdict is the system's. | The owner: "customize what the screen says per card"; staff keep one verdict language everywhere. |
 | D16 | **The Scan screen editor is a mode of the template designer** (10.8): the canvas is the real result card, presets start a panel, rows are added, removed and reordered, bindings are tokens. | One editor, one draft, one save; what you see is what scanners paint. |
 | D17 | **Refusals show no template content** except the org's refused note. The pass shows as a compact row with a neutral ticket tile, never its art. | A refused pass never looks admitted; an order panel or a refund reason never appears at a door. |
 | D18 | **The visual direction is isolated.** Only the screens (`ui`, `result`, `display`, `desk`) and the buddy carry geometry, tokens and motion; the display contract has none. | "A at the door, B at the desk" later would touch only those. |
+| D19 | **A Customer screen is the same `/scan` document with a customer face.** The buddy is the interface (XL, centred low), the card rises from its violet pass as on the scanner, the capsule names the org and station. No controls, no counts, no camera. | One app, one pairing; the buddy greets the customer as it greets staff. |
+| D20 | **Customers never see red or a reason.** Every heads-up and refusal is one slate card, **Please see the desk** (the station's line), the buddy bowing (`sorry`). Three access refusals add a sub the customer can act on. | The verdict is staff's to explain; a customer at a till must not read "Suspended". |
+| D21 | **A Desk monitor is a feed, not a scanner.** Counters, filters, rows newest first, one alert strip for the newest refusal, presence. It never acts; rows open a read-only detail. | The owner's "desk interface shows the scans in realtime". |
+| D22 | **Flip on the phone, unlock with a PIN.** A paired phone becomes a Customer screen from its menu; holding the capsule brings back **Back to scanning?** with a staff PIN. | Two handhelds, one facing the customer, with no console trip. |
+| D23 | **Access granted every time.** An access card never shows "already checked in"; a re-entry within the gap reads the same **Access granted**, with the last-scan strip saying **Again · 2 min ago**. | The owner: unlimited access, no "already scanned" screen. |
+| D24 | **The plan chip names the plan, its icon names the kind:** `Infinity` 24/7, `Clock3` Timed, `Ticket` Guest. Tones violet, teal, gold. | Staff read "Off-peak" and see at a glance it has hours. |
+| D25 | **Zones are a tree the admin draws once.** Scanners pick what they **Check**; plans pick what they grant. | A gym sets up its doors once; passes only pick a plan. |
 
 ---
 
@@ -162,6 +186,9 @@ One list for the action sheet and the dropdown; every item has an icon.
 8. **Switch staff** (`staffSignIn` on)
 9. **End shift** (`LogOut`)
 10. **Unpair this device** (danger), or **Stop scanning as admin**
+
+2026-11-05: **Show to customer** (`MonitorSmartphone`, sub **Turn this phone into a customer screen.**) sits after
+**Keep results until tapped / Camera**, for paired phones when the scanner's `customerToggle` is on (16.4).
 
 ---
 
@@ -732,7 +759,8 @@ by the n6 mode, and in Test mode carry the band.
 ### 10.1 Nav and frame
 
 - Nav: **Scanning** (`ScanLine`) in the Messages group, replacing **Scanners**. Route `/admin/scanning?tab=`
-  (`scanners` default, `events`, `staff`, `scans`); details `/admin/scanning/scanners/$id`,
+  (`devices` default, `events`, `zones`, `staff`, `scans`; 2026-11-05: **Devices** replaces Scanners, 16.5, and
+  `?tab=scanners` redirects; **Zones**, 17.2); details `/admin/scanning/scanners/$id`,
   `/admin/scanning/events/$id`.
 - `PageHeader` **Scanning**; one primary per tab: **New scanner**, **New event**, **Add staff**; Scans has **Export
   CSV** (outline). Palette: **New scanner**, **New event**, **Add staff**.
@@ -899,7 +927,7 @@ Outline: … Inputs · Barcode · **Scanning** · **NFC** · Relevance (n5's des
 - **Audit:** actor **Scanner: {Front door}**, Actor filter **Scanners**; codes per SA 2.11 with labels (**Scanner
   paired**, **PIN locked after 5 tries**, **Checked in again**, **Scans exported**, **Reader key made**…).
 
-### 10.8 Template designer: Scan screen (DM §10; sheets `docs/design/scanner/display/editor-*`)
+### 10.8 Template designer: Scan screen (DM §10; sheets `docs/design/scanner/display/sheets/editor-*`)
 
 The visual card editor for `scan.display`: a **Pass** / **Scan screen** `SegmentedControl` under the designer's page
 header. Both modes share one draft, one undo history and one **Save version**.
@@ -1001,14 +1029,14 @@ desk and motion state at 390 × 844 and 1180 × 820, light and dark:
 | `b-final-strip-checked-in-*`, `b-final-strip-interrupt-*` | motion frames D0 → 1400 ms; amber interrupted by red |
 | `b-final-annotated-{light,dark}.png` | slots and measurements |
 
-**Source of truth for the Scan screen editor: `docs/design/scanner/display/`** (`editor-1440-*`, `editor-820-and-390`,
+**Source of truth for the Scan screen editor: `docs/design/scanner/display/sheets/`** (`editor-1440-*`, `editor-820-and-390`,
 `cards-catalog-*`, `slots-annotated-*`, `in-context-390-*`, `motion-add-panel`). The canvas, catalog, slot map and
 in-context tiles are painted by the B-final kit, so they match `/scan`: Ticket with 4 columns on one line, the member
 photo in the identity row, the system holder line with the meta line under it, the fit meter "N of 6" per outcome tab
 (header cost included), and a display-only save that is live at once (**Version 5 is live on scanners. Passes are
 unchanged.**, no Activate).
 
-**`docs/design/scanner/mockups/` (v1), superseded where B applies.** The `scan-*` result tiles are **superseded** and must
+**`mockups (not shipped) ` (v1), superseded where B applies.** The `scan-*` result tiles are **superseded** and must
 not be matched: 04 Checked in, 05 Already checked in, 06 Refused, 07 Offline saved, 10 Desk add stamps, 11 Stamps
 added, 12 Redeem confirm, 13 Needs a Manager, 15 Milestone, 16 iPad door, 18 Test scanner live pass. The others keep
 their content and copy but take the B shell (capsule, live camera, dock, buddy on the dock) before they are matched:
@@ -1038,3 +1066,247 @@ Genuinely yours:
 3. **Hardware for device checks:** one VTAP100 and one Bluetooth barcode reader.
 4. **The personalization fix** before `nfc.enabled` is ever turned on.
 5. **Staff names in history** (SA 17): off for now.
+
+Added 2026-11-05 (defaults set; SA §17 items 6-11 hold the detail):
+6. **Flip back with a PIN** (no staff: a 2 s hold, flagged in the console). Fine, or require staff?
+7. **"Hi, Maya" on customer screens**, on by default per station. Keep, or default off?
+8. **Access card style** generic (photo on the card), pending Apple's NFC rule for generic passes.
+
+---
+
+## 16. Stations: customer screens, desk monitors and setup
+
+The owner: "one or more handheld scanners … a customer interface while a desk interface shows the scans in realtime
+… any combination." Concepts and data: SA §18 (detail `addendum/stations.md`). Layout and sizes: `addendum/ux.md` §1-§4, §6-§8; sheets `addendum/sheets/ux-{customer,monitor}-*`, `ux-roles-*`.
+Mockups: customer `addendum/shots/c-*`,
+monitor `m-*` (phone 390, iPad 1180 × 820 `-ipad`, desk 1440 × 900 `-desk`), device roles `r-*`, console `ad-*` and
+`addendum/sheets/x-admin-*.png`; every combination on one sheet: `addendum/stations/sheets/stations-topology-*.png`.
+CSS for the builders to read sizes from: `addendum/assets/x-{cust,mon,dev,admin}.css` on the rebuilt B-final kit.
+
+### 16.1 Who sees what
+
+| | Scanner | Customer screen | Desk monitor |
+| --- | --- | --- | --- |
+| Verdict | B card, tint, ring, `SCAN_COPY` | the same card at counter scale; ok in its colour; every heads-up and refusal one slate **Please see the desk** card | a feed row with the verdict shape and word |
+| Who | full name, photo per role | **Hi, Maya** (first name, ok and ready, when **Greet by first name** is on) | name, photo per audience |
+| Template content | role-filtered panels | only what `display.customer` names (DM §11) | the row's display on expand, per audience |
+| Controls | dock | none | filters, **Seen**, row detail; never an action |
+| Counts | own today | never | visits today, in now, refused, undone |
+
+### 16.2 Customer screen (`src/web/scan/customer/`)
+
+**Frame.** The scanner's frame without the camera or controls: the glass capsule on top (org mark tile, org name,
+station name; chips **Test**, **Reconnecting** after 2 s unhealthy, **Not set up**, **Keep this screen on** when wake
+lock is refused), the buddy XL on a plain shelf at the bottom (phone 240 wide, iPad 320), and the card layer between.
+Phone: the scanner's 40 px headline. iPad (1180 × 820, landscape or portrait): a split card up to 980 wide, headline
+64, the buddy 320.
+
+| State | Screen | Buddy |
+| --- | --- | --- |
+| **Idle** | the station's welcome (**Hold up your pass**) large above the buddy; how-to pills on the shelf: **Show the code**, plus **Hold near** only when a scanner in the station reads NFC and `nfc.enabled` is on | `wave` once on entering idle, then rest |
+| **Reading** (scanner's `reading` beat) | the welcome dims; the pill becomes **Checking…** with a spinner | `rummage` lean-in, eyes into the pocket, until the result or 3 s |
+| **Ready** (staff choosing, `showReady`) | a band-less white card: **Hi, Sam** · template name ("Prepaid card"), the customer panel if any; no tint | `hello` glance up |
+| **Review** (staff entering an amount, `showDraft`) | the ready card shows **To pay** and the amount large, **Balance after: $30.50** (count: **Adding 2 stamps**); **Cancel** beat returns to ready | holds, eyes on the amount |
+| **OK** | tint and ring in the verdict colour (as the scanner); the card rises from the violet pass: band glyph, `CUSTOMER_COPY` headline and sub ("Access granted" · pin **Pool**; "+2 stamps" · "9 of 10"; "Paid $12.00"); body **Hi, Maya** + chips, then the customer panel (stamps grid, balance with the struck previous value) and up to two system lines with icons (**Until 9:00 PM today**, **3 of 5 visits left**) | the scanner's beat for that result (`gate`, `stamp`, `coins`, `fan` on a reward) |
+| **Please see the desk** | slate tint and ring; a slate card with a person glyph, the station's refusal line, and only for `outside_hours` **Your plan opens at 4:00 PM.** (or **Sat 8:00 AM**; none when nothing opens this week) or for ended guests **Your guest pass has ended.** No name, no chips | `sorry`: a small bow, eyes up. **Never the head shake** at a customer |
+| **Reconnecting** | idle stays; **Reconnecting** chip; results resume on reconnect (only results under 10 s old replay) | still, curious |
+| **Not set up** | idle with a quiet **Not set up** chip (no station, or a station with no scanner) | rest |
+
+Holds: ok 4 s, see the desk 6 s, ready until the next event, the scanner's `idle` beat or 60 s; then idle with one
+wave. A pass found by lookup at the desk never shows here (SA §18.4). A newer result
+interrupts the shown one the way the scanner does (old card tucks 150 ms, new rises); the capsule's second line names
+the scanner that scanned when the station has more than one ("Till 2"). Undo of the shown scan returns to idle.
+Customer screens are home-screen web apps on iPad: the pairing face suggests Guided Access.
+
+### 16.3 Desk monitor (`src/web/scan/monitor/`)
+
+**Desk and iPad** (1440 × 900, 1180 × 820): capsule (watch name, scope line "Northside Gym · Gym floor, Pool, Studio,
+Sauna", **Live** chip, ⋯) over two columns.
+- **Rail** (left, 400): counters as tiles: **Visits today** (184 · **22 in the last hour**) or, on an event watch, **In
+  now 312 / 500** with "340 checked in · 28 out"; **Refused** and **Undone**. Below, presence: each scanner and screen
+  in scope with **Online** / **Offline**; the buddy sits on the presence card.
+- **Feed** (right): filters **All scanners** and **All zones** (or **All doors** on an event), segment counts **All 190
+  · Granted 183 · Heads-up 1 · Refused 6**; then a table: verdict shape (circle ok, triangle heads-up, octagon
+  refused; the shape alone says it) · **Who** (photo or template tile, name, plan or template chip, zone) · **Result**
+  (the verdict word, coloured for heads-up and refused) · **Where** (zone, scanner) · **Staff** (name, role) · **Time**
+  (clock time, "now", "1 min"). Newest on top; a new row lands at the top and its tint fades over 2 s. Undone rows are
+  struck. Footer **Last 15 minutes live · older scans in Scans**. The **Staff** column is desk width only (not on iPad). While a
+  row is hovered or the list is scrolled, new rows wait behind a **3 new** pill instead of moving the list.
+- **Alerts** (refusals only; heads-up rows never pin): an unseen refusal pins above the feed (red outline, octagon, headline, plan chip, "Maya Okafor · Pool
+  gate · Off-peak doesn't include Pool." (the staff sub, `SCAN_COPY`), photo, **Seen**), at most 3, newest first; announced in a polite live region; an
+  optional chirp (`screen.sound`).
+- **Row detail** (tap): a side sheet with the row's display for the monitor's audience; read only.
+
+**Phone** (390): one column; counters as a strip, filters scroll horizontally, rows compact (shape, photo, name, chip,
+zone, time), the buddy on the dock beside presence.
+
+| State | Shows |
+| --- | --- |
+| Empty | **No scans yet** · **Scans from Front desk, Pool gate and Studio door show here.**; the buddy waves |
+| Reconnecting | **Reconnecting** chip; an amber strip **Showing scans up to 6:43 PM.**; the feed keeps what it has; catch-up fills the gap |
+| Reset | the feed reloads from the snapshot (last 50) without a flash; **Can't load older scans** if D1 fails |
+| Not set up | an archived event or zone: **Not set up** card and the console flags it |
+
+The buddy sits on the rail's seat (216 desk, 192 iPad, 152 on the phone dock). It shakes its head once per new alert
+and otherwise rests: green rows never animate it (a busy door would make it jitter). Empty moves the one buddy into the
+empty card with one `wave`. Filters are per device and remembered, never change what the hub sends, and never hide an
+alert.
+
+The amber row in `m-feed` is the opt-in re-entry wait (**Entered 3 min ago**), the only access heads-up. (Fixed
+2026-11-05: it read **Expires tomorrow**, which isn't a reason.)
+
+### 16.4 Roles on the device (`src/web/scan/role/`, the boot role gate)
+
+- **Pairing a screen**: the confirm card reads **Pair as Customer screen** · **Front desk · Northside Gym**, with two
+  lines **Shows results to customers** *Never scans. An admin can change it.* and **No names but first names** *No
+  reasons, notes or photos.* (monitors: **Pair as Desk monitor** · **Shows scans as they happen**). **Cancel** ·
+  **Pair**.
+- **Show to customer** (menu, 2.4) → sheet **Which scanner is it facing?** *This phone shows that scanner's results.*;
+  groups **{this station}** then **Other scanners** (name, staff or Online); radio; **Cancel** · **Show to customer**.
+  The scanner it faces gets a quiet capsule chip (`MonitorSmartphone`) **Customer screen on**.
+- **Back to scanning**: press and hold the capsule; a 3 px ring fills around it with a **Keep holding** pill. With
+  staff: 1 s opens **Back to scanning?** *Enter a staff PIN.* with the shared keypad (D8) and **Cancel**; wrong PINs
+  say tries left; lockout as staff sign-in. Without staff: the ring takes 2 s and switches directly.
+- **A screen opening a scan route** (a stale tab, a hand-typed URL): the block card **This device is a screen.** ·
+  **Ask an admin to change it.**, the buddy flat.
+
+### 16.5 Station setup (console)
+
+Scanning › **Devices** (`/admin/scanning?tab=devices`); detail in `addendum/ux-work/ux-admin.md`, mocks `ad-*`.
+
+- **Header** **Scanning**; actions **New station** (outline, `MapPinned`) and **Add device** (primary).
+- **Grouped by station.** Group header: `MapPinned` tile, name, count line (**2 scanners · 1 customer screen · 1 desk
+  monitor**), a feed line (**Front gate, Front till → Counter iPad**), **Settings**, **Add device** (preset to it),
+  menu (**Rename**, **Archive station**). Last group **No station** (dashed): scanners with no screen and monitors
+  watching more than one place.
+- **Columns** (fixed widths so groups align): **Device** (role tile, name, device line) · **Role** pill · **Shows or
+  checks** (Scanner: **Checks** + zone chips, or the event, or **Accepts 2 templates**; Customer screen: **Every result
+  from {station}**; Desk monitor: **Watches this station · Desk**, **Watches** + zones **· Door**, **Watches
+  everything · Desk**) · **Status** · **Today** · **Last seen** · menu or **Pair**.
+- A phone switched on the device: device line **Safari on iPhone · switched on the device 6:02 PM** and
+  `LockKeyhole` **Staff PIN to switch back** (or **Anyone can switch it back**).
+- Role icons everywhere: Scanner `ScanLine`, Till `Store`, Customer screen `MonitorSmartphone` (violet tint), Desk
+  monitor `Monitor` (teal tint).
+- **Add device** (md): **What is it?** four tiles: **Scanner** *A phone or iPad that scans passes.* · **Customer
+  screen** *Faces the customer and shows each result.* · **Desk monitor** *Shows scans as they happen.* · **Till** *A
+  point-of-sale system with a token.* Customer screen: **Name**, **Station** (required, **New station** inline), callout
+  **Customer screens never show a reason, a staff note or a photo. Refusals read Please see the desk.** Desk monitor:
+  **Name**, **Station** (optional), **Watch** (**This station · Stations · Event · Zones · Everything**; chip pickers
+  **2 of 8**), **Shows** (**Door** *What a Door scanner sees.* · **Desk** *Also desk-only details.*). Footer
+  **Cancel** · **Create and pair**.
+- **Pairing a screen**: the existing pairing face with the role pill, **at Front desk · Northside Gym**, **On the
+  iPad**, the tip **Turn on Guided Access on the iPad to keep this screen in front.**, **Waiting for the iPad…**.
+- **Station settings** (lg): **Name** · **Welcome** (≤ 40; empty = **Hold up your pass**) · **Refusal line**
+  (placeholder **Please see the desk**) · switches **Greet by first name**, **Show the desk card**, **Show amounts under
+  review**, beside a live idle preview (aria-hidden). Footer **Archive station** (confirm **Archive Front desk?** ·
+  **Its devices leave the station. Customer screens show Not set up.**) · **Cancel** · **Save**.
+- **Scanner dialog** gains **Station**, **Role** (device kind only: **Scanner** · **Customer screen**) and **Checks**
+  (17.2).
+- **Phone** (390): one card per station, 60 px rows (role tile, name, **{Role} · {what it shows}**, status dot),
+  header action **Add**.
+
+### 16.6 Accessibility
+
+- Customer screens: the band headline and sub are announced once per result ("Access granted, Pool"; never the
+  name, which would be read aloud at a counter); idle is not announced;
+  verdict colour is never the only signal (glyph, word, slate vs colour); 4.5:1 text on every tint in both themes;
+  reduced motion cross-fades the card and shows the beat's end pose; **Keep results until tapped** has no meaning
+  here, so holds are fixed and the screen never needs a touch.
+- Monitors: the feed is a table with row headers; ordinary rows are not announced (the table is browsable); a new
+  alert is announced assertively once ("Refused, Pool gate"); verdict shapes plus words; alert **Seen** is a 44 px
+  button; filters are buttons with `aria-pressed`. Rows' red text is `#b91c1c` light and `#f87171` dark.
+- Device sheets: the hold has a keyboard and switch-access path (the capsule is a button; Enter and hold or a long
+  press; VoiceOver's custom action **Back to scanning**); the console's role change (**Make it a scanner**) is the
+  non-hold alternative.
+- Every screen at 390, 820 and 1180 (and monitors at 1440), light and dark, axe clean.
+
+### 16.7 Against `addendum/ux.md`
+
+`ux.md` is the layout and size reference for these faces. Where it differs, this file wins:
+- **Beats:** stamps added play `stamp` and a balance charge `coins` (BM §8), not `hop`.
+- **Empty monitor:** one `wave`, not a rummage (BM M8: no ambient loops).
+- **Let in anyway:** shown on all five overridable refusals whenever `letInAgain` isn't **never**; without a Manager
+  signed in, tapping opens **Manager PIN** (D9: locked actions stay visible). `a-zone`, `a-guestend`, `a-visits` and
+  `a-notyet` were re-rendered with **Let in anyway** · **Done** (2026-11-05).
+- **Announcements:** customer screens never speak the name.
+- **"In now" for access:** zones have no exits, so access watches show **Visits today**; occupancy needs exit scanners
+  (later). Event watches with re-entry keep **In now**.
+
+---
+
+## 17. Access cards
+
+The owner: "Access Card … gym memberships, business access … unlimited access … 24/7 vs timed/guest … zones." Rules
+and data: SA §19 (detail `addendum/access.md`). Mockups: scanner results `addendum/shots/a-*`; console
+`addendum/access/admin/shots/`; identity and art `addendum/access/sheets/access-card-*.png`; the `gate` beat
+`addendum/access/sheets/access-gate-*.png`.
+
+### 17.1 Results on the scanner
+
+| Result | Band | Card | Dock | Buddy |
+| --- | --- | --- | --- | --- |
+| Granted | green **Access granted**, sub pin **Pool** (or **Gym · until 4:00 PM**) | photo 96, name, meta (template), plan chip (`Infinity` **24/7**, `Clock3` **Off-peak**, `Ticket` **Guest**); Visits panel (**This month 12 visits** · **Last visit 2 days ago**; guests **Visits left 3 of 5** · **Until 9:00 PM**; **Guest of Maya Okafor** for Desk) | last-scan strip **Maya Okafor · Pool · 6:41 PM** with **Undo** | `gate` |
+| Again within the gap | the same **Access granted** | the same | strip **Again · 2 min ago** | `gate` |
+| Re-entry wait (opt-in) | amber **Entered 2 min ago** · **Next entry in 13 min.** | photo, name, plan chip | **Let in again** · **Done** | `wrist` |
+| Not in plan | red **Not in plan** · **Off-peak doesn't include Pool.** (on **Any zone**: **Off-peak opens no zone here.**) | compact row, plan chip, refused note **Ask at the front desk.** | **Let in anyway** · **Done** | `shake` |
+| Outside hours | red **Outside hours** · **Off-peak opens 4:00 PM.** | same | **Let in anyway** · **Done** | `shake` |
+| Not open yet | red **Not open yet** · **Opens Dec 1.** | same | **Let in anyway** · **Done** | `shake` |
+| Guest pass ended | red **Guest pass ended** · **Ended 9:00 PM.** | same, **Guest of** for Desk | **Let in anyway** · **Done** | `shake`, the gold pass greys and droops |
+| No visits left | red **No visits left** · **Used 5 of 5.** | same | **Let in anyway** · **Done** | `shake` |
+| Suspended | red **Suspended** · **Ask them to see the front desk.** | compact row, **Suspended** chip | **Done** | `shake` |
+
+- **Let in anyway** shows whenever the scanner's `letInAgain` isn't **never**; it always needs a Manager: signed in,
+  it acts; otherwise it opens **Manager PIN** (D9). Every overridable refusal shot shows **Let in anyway** · **Done**
+  (re-rendered 2026-11-05).
+- Customer screens show **Please see the desk** for all of these (16.2), with the one-line sub only for outside hours
+  and ended guests.
+- Desk `ready` on an access card shows the same card without a band, and the action area says **Opens 8:00 PM** in
+  the system line when outside hours.
+
+### 17.2 Zones and plans in the console
+
+Mockups `addendum/access/admin/shots/{zones,zone-new,zone-archive,plans,hours-edit,pass-form,pass-detail,
+scanner-zones,stills}-*.png`.
+
+- **Zones tab** (`?tab=zones`): `PageHeader` **Zones**, primary **New zone**. Empty: buddy `wave`, **No zones yet.** ·
+  **Zones let a pass open some doors and not others.** · **New zone**. A tree, roots first (building icon), children
+  indented with `CornerDownRight`: Name · Key (mono, muted) · Time zone (roots; children muted) · **Checked by** (**2
+  scanners** link) · **Plans** (**Off-peak, 24/7 Gold**) · menu (**Edit**, **Add a zone inside**, **Archive**).
+  **Show archived (n)**. Phone: indented list, second line "Key · 2 scanners".
+- **New zone** (sm): **Name** · **Inside** · **Time zone** (roots only; help **Hours at this site use this clock.**);
+  the key previews. **Archive Pool?** · **Its doors stop letting anyone in. 2 scanners check it; 3 plans grant it.**
+- **Scanner Checks**: chips with the zone tree in a popover (checkbox per zone, `aria-level`, ≤ 8, **2 of 8**); help
+  **Lets in a pass that opens either zone now. Empty: Any zone.**; status line `DoorOpen` **Open now for 24/7,
+  Off-peak. Closed for Guest day.** Event scanners: disabled, **Events check in once. Zones don't apply.**
+- **Designer › Access** (after Scanning): **Use as an access card** switch for non-blueprint templates; **Plans** list
+  (label, type pill, summary, **128 passes**, drag to reorder, **Add plan**); plan inspector **Name**, **Type** (tiles
+  **24/7** *Any time.* · **Timed** *Set weekly hours.* · **Guest** *A day or a few, with an optional visit limit.*),
+  **Hours** week grid (span chips per day, **Add hours**, **Closed**, **Copy Monday to weekdays**, "10 PM – 2 AM (next
+  day)"), **Zones** (**All zones** or picked, each with **Limit hours**; hours outside the plan struck and labelled
+  **Outside the plan**), guests **Lasts** (help **Ends at midnight.**) and **Visit limit**; **Rules** (**Count as one
+  visit within** 120 min, **Wait between entries** off, **Suspend when** {input} is {values}); an inert **On the
+  scanner** strip. Issues: **Off-peak: hours overlap on Monday.**, **Off-peak has no zones.**, **{n} passes use
+  Off-peak. Move them first.**, warning **Pool isn't a zone of Northside Gym yet.** with **Create zone**.
+- **Pass form**: **Access** group: **Plan** (label and summary per option), **Extra zones** (help **On top of the
+  plan's zones, in the plan's hours.**), **Starts** (**Now**), **Valid until** (**No end**; guests **Ends at
+  midnight**); **Guest**: **Visit limit**, **Guest of**; **Photo** (help **Shown to staff at the door.**).
+- **Pass detail › Access** card: plan, zones as chips, **Open now** / **Opens Sat 8:00 AM**, visits this month, last
+  visit (zone · time), **Reset visits** (guests).
+- **Org settings**: **Time zone**; changing it says **Hours at sites without their own time zone move to this
+  clock.**
+- Accessibility: the week grid is a table with a row header per day; spans are buttons ("Monday, 6 AM to 4 PM,
+  edit"); typed time entry; overlaps announce in the field error; the tree uses `aria-level`; 44 px targets on touch.
+
+### 17.3 The Access card blueprint
+
+- **Gallery** (`/admin/blueprints`): second after Membership, four columns at 1440 so it sits beside it. Tile per TI §4:
+  the drafting-grid stage tinted Cobalt `#1D3ABA` / labels `#CFE0FF`, the real pass still (photo thumbnail art: three
+  nested door arches in the foil hues), glyph `Key`, **Access card**, **Door access by plan and zone, with a photo for
+  ID checks.**, **Use**.
+- **Use blueprint**: **Organization**, **Name**; **Comes with** the three plans (`Infinity` **24/7** · All zones;
+  `Clock3` **Off-peak** · Mon–Fri 6 AM–4 PM, 8–11 PM · Sat–Sun 8 AM–8 PM; `Ticket` **Guest day** · All zones, ends at
+  midnight); callout **Add zones in Scanning, then pick them per plan.** · **Zones**; **Cancel** · **Continue**.
+- **The pass**: generic, Cobalt, header **Plan**, primary **Name**, secondary **Zones** and **Valid until**, auxiliary
+  **Member** and **Hours**, QR scan code, the member photo as thumbnail; back: **Message**, **Guest of**, **Hours**,
+  **Terms** (**Show this card at the door. It's for you only.**). Stills (with the QR) on
+  `addendum/access/sheets/access-card-*.png`.

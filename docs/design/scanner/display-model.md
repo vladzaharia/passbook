@@ -1675,7 +1675,9 @@ customer?: {
 `src/passkit/template/scan-display/customer.ts` (DS; pure, browser and worker). The band and the system lines come
 from `CUSTOMER_COPY` and the outcome; `greet`, `chips` and `panel` from the doc over the customer scope. On any throw:
 the system view (band only) and one `SCAN_DISPLAY_RENDER` log. The contract (SA §18.4) has no pass id, scan id,
-reason or image URL. The Worker calls it from `live/audiences.ts` with data the request already loaded; `needs` is the
+reason or image URL; it carries `cue { kind, unit }` so the face picks its beat without reading copy. Times are
+formatted here in `access.timeZone`, never on the screen. The Worker calls it from `live/audiences.ts` only when the
+request's `input` is a `code` (a lookup never reaches a customer, SA §18.4), with data the request already loaded; `needs` is the
 union of the actor's role, the monitor audiences present and the customer block, so history statements still ride in
 the existing batch (5.3).
 
@@ -1683,7 +1685,7 @@ the existing batch (5.3).
 | --- | --- | --- | --- | --- |
 | `ok` | `CUSTOMER_COPY` ok headline and sub ("Access granted · Pool", "+2 stamps · 9 of 10", "Paid $12.00") | yes | from the block | access: **Until 9:00 PM today** when `closesAt` is today; **2 of 5 visits left** for limited guests |
 | `ready` | **Hi, Sam** (or **Hello**) · template name | in the headline | from the block | none |
-| `see_desk` | the station's `refusedLine`; sub only for `outside_hours` (**Your plan opens at {time}.**) and `guest_expired`, `guest_visits_used` (**Your guest pass has ended.**) | no | none | none |
+| `see_desk` | the station's `refusedLine`; sub only for `outside_hours` (**Your plan opens {when}.**, none when nothing opens within 7 days) and `guest_expired`, `guest_visits_used` (**Your guest pass has ended.**) | no | none | none |
 
 ### 11.4 The `access` root
 

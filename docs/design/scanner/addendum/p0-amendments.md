@@ -95,7 +95,8 @@ Tests: `auth-store.test.ts` resolves a display row with both fields; `fake-auth`
 
 - After the rate limits on purpose: a misbehaving screen is throttled like any device, and an inactive org answers
   `ORG_INACTIVE` first, so every face shows the same block panel.
-- `screens: true` on `GET /scan/session` and `POST /scan/unpair` only. Stations add `GET /scan/live*` and
+- `screens: true` on `GET /scan/session` and `POST /scan/unpair` only. Later, SV.9 sets it on the asset route too
+  and refuses `customer` there itself (monitors read photos with an audience grant); no P0 change for that. Stations add `GET /scan/live*` and
   `POST /scan/role` later with their own guard (`requireLivePrincipal`, ST §4.8), not through this option.
 - Admin sessions have no device role and are never refused here.
 - Error: `ForbiddenError('This device is a screen.', 'SCREEN_ONLY')`; `reportDenied` as for other 403s.
@@ -151,6 +152,7 @@ export const ScanAccessSchema = z.object({
   nextOpenAt: TimestampSchema.nullable(),
   visits: z.object({ used: z.number().int(), limit: z.number().int().nullable() }).nullable(),
   visit: z.boolean(),
+  timeZone: TimeZoneSchema,   // the deciding zone's clock; the client formats {time} and {when} with it
 });
 // ScanOutcomeSchema and ScanCardSchema gain:
 access: ScanAccessSchema.nullable().default(null),
@@ -158,13 +160,16 @@ access: ScanAccessSchema.nullable().default(null),
 
 - The reason list stays unbound to kinds, so `not_yet_valid` can arrive as `refused` on access templates (AX §1.3)
   with no contract change.
+- `timeZone` is required, not optional: a zone's site can sit in another time zone than the scanner's `time_zone`
+  (an admin in New York sets up a Seattle door), and adding it after the freeze would make every client guess.
+  `TimeZoneSchema` already exists in `contracts/scan.ts`.
 - Fixtures stay valid through the default.
 
 `src/shared/copy/scan.ts`:
 
 | Key | Headline | Sub |
 | --- | --- | --- |
-| `zone_not_included` | **Not in plan** | **{plan} doesn't include {zone}.** |
+| `zone_not_included` | **Not in plan** | **{plan} doesn't include {zone}.** · no zone: **{plan} opens no zone here.** |
 | `outside_hours` | **Outside hours** | **{plan} opens {when}.** · none in 7 days: **{plan} has no hours this week.** |
 | `guest_expired` | **Guest pass ended** | **Ended {time}.** |
 | `guest_visits_used` | **No visits left** | **Used {limit} of {limit}.** |
@@ -210,7 +215,10 @@ Tests: `schema.test.ts` parses the Access card's doc (`addendum/access/pass/star
 copied as a fixture) with its `customer` block; 19 chip ids fail; an unknown key in `customer` fails; the icon list
 test counts 42. `node addendum/access/gen/check-package.mjs` then passes with no swaps.
 
-## P0-8. `/scan` headers
+## P0-8. `/scan` headers (optional in P0)
+
+Not needed for the freeze. Take it only if P0.5 is still open; otherwise IN.6 adds the line with the hub binding. The
+device check below stays in P0.5 either way, because its answer decides the CSP before ST starts.
 
 - `Permissions-Policy` on `/scan` (`SCAN_PERMISSIONS_POLICY` and `public/_headers`) adds `screen-wake-lock=(self)`.
   Today the feature is unlisted, so it defaults to self; naming it keeps customer screens and monitors awake if anyone

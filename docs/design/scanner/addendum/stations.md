@@ -5,6 +5,14 @@
 > (SA §2.5 step 4); the hub is declared in wrangler's `exports`, not `migrations`; `customer.chips` is ≤ 2 per header
 > with schema `max(18)`; three customer refusals carry a sub (AX C2); e2e is `16-scan-stations`. Phase 0 changes:
 > `p0-amendments.md`.
+>
+> **Review 2026-11-05** (SA §18 updated, it wins): customer bodies only for a presented code, never a lookup (18.4);
+> the scanner sends `idle` when the desk card closes; `ScanCustomerView.cue` for the beat; attachments expire in
+> 15 min, checked before every send, and revoke, unpair, role and watch kicks are awaited with a retry (a lost kick
+> is bounded, not harmless); the upgrade is a new `Request` that sets `x-pb-live`; publishes carry the device's
+> checked zones plus ancestors (`zones`), not the deciding zone; `undo` carries `ref` (customers match on it, no
+> `scanId`); customer times are formatted on the server in `access.timeZone`; screens' online state comes from
+> `hub.presence()`. Names below are updated to `device_role` and `exports`; §8's A-list is replaced by P0A.
 
 
 Addendum to `scanner-architecture.md` (**SA**), `display-model.md` (**DM**) and `scanner-plan.md` (**PL**) for the
@@ -163,10 +171,11 @@ The 8 cap comes from the hub's 10 tags per socket (RT §3; verified: 10 tags × 
 | Role, station, watch, screen settings, mode changed (console or device) | row updated, `configRev` bumped | `hub.kick({ dev }, 4409)` | reconnect at once after refetching `GET /scan/session` |
 | Station archived or renamed | members detached or renamed | `hub.kick({ st }, 4409)` | same |
 | Org suspended | `isOrgActive` false | `hub.kickAll(4403)` from the orgs suspend hook (g, additive) | block panel **Organization suspended** |
-| Session older than 12 h, or past token expiry | — | the hub closes 4401 on the next send or prune | reconnect; the upgrade re-runs auth |
+| Attachment older than 15 min, or past token expiry | — | the hub closes 4401 before the next send, or at prune | reconnect at once, no chip; the upgrade re-runs auth |
 
-Kicks run in `waitUntil` after the D1 batch. A missed kick is harmless: every upgrade and catch-up re-resolves the
-cookie with no isolate cache (SA §2.7), and the 12 h attachment expiry bounds any socket.
+Revoke, unpair, role and watch kicks are awaited after the D1 batch (one retry, 2 s cap); the rest run in
+`waitUntil`. A lost kick is bounded, not harmless: the hub checks the 15-minute attachment expiry before every send,
+and every upgrade and catch-up re-resolves the cookie with no isolate cache (SA §2.7).
 
 ### 2.4 Assets for monitors
 
@@ -198,7 +207,7 @@ customer?: {
 
 No `customer` block means `defaultCustomer(doc)`: greet on, no chips, and the first panel whose `preset.id` is
 `loyalty` or `balance` (the Stamp card's stamps, the Balance card's balance). Access card: AX's default doc sets
-`customer: { chips: ['plan'], panel: null }`, so a member sees "Access granted · Pool" and their plan chip.
+`customer: { chips: ['c_plan', 'c_timed', 'c_guest'], panel: null }`, so a member sees "Access granted · Pool" and their plan chip.
 
 A panel shown to the customer keeps its normal staff rendering too; the block only points at it.
 
@@ -328,11 +337,11 @@ Changes to RT, decided here:
 | Customer screen | `dev:<id>`, `aud:customer`, `st:<stationId>` |
 | Desk monitor | `dev:<id>`, `aud:door` or `aud:desk`, then its watch: `w:st:<id>` (1-8), `w:ev:<id>`, `w:zn:<id>` (1-8) or `w:org` |
 
-Publish `{ st, ev, zone, audiences }`:
+Publish `{ st, ev, zones, audiences }` (`zones`: the scanning device's checked zones plus ancestors, SA §18.5):
 
 ```
 targets = customers of st:<st>                 (body: audiences.customer)
-        ∪ w:org ∪ w:st:<st> ∪ w:ev:<ev> ∪ w:zn:<zone>   (body: audiences[aud])
+        ∪ w:org ∪ w:st:<st> ∪ w:ev:<ev> ∪ w:zn:<z> for z in zones   (body: audiences[aud])
 dedupe by socket; skip a socket whose body is missing
 ```
 
@@ -346,7 +355,7 @@ upgrade, never from the query string.
 LiveEventSchema = z.discriminatedUnion('t', [
   z.object({ t: z.literal('hello'), epoch, seq, replayed: z.number().int(), presence: LivePresenceSchema.array() }),
   z.object({ t: z.literal('scan'), epoch, seq, at, st, ref, body: z.union([ScanCustomerViewSchema, ScanMonitorRowSchema]) }),
-  z.object({ t: z.literal('undo'), epoch, seq, at, st, scanId: IdSchema }),
+  z.object({ t: z.literal('undo'), epoch, seq, at, st, ref: UuidV7Schema, scanId: IdSchema.nullable() }), // null to customers
   z.object({ t: z.literal('ready'), at, st, ref, body: ScanCustomerViewSchema }),            // ephemeral
   z.object({ t: z.literal('beat'), st, dev: IdSchema, k: z.enum(['reading', 'idle', 'review', 'cancel']),
              ref: UuidV7Schema.nullable(), amount: z.number().nullable(), actionId: z.string().nullable() }), // ephemeral
@@ -375,7 +384,7 @@ Customer screens; the hub caps beats at 10 per second per socket (close 1008 pas
   older than the newest.
 - Customer screen: shows an event only if its `at` ≥ the shown event's `at`; an older one is dropped. A `ready` for a
   `ref` is replaced by that `ref`'s `scan`. `review` and `cancel` beats apply only to the `ready` with the same `ref`.
-- `undo { scanId }`: monitors mark the row undone; a Customer screen showing that scan returns to idle.
+- `undo { ref, scanId }`: monitors mark the row undone by `scanId`; a Customer screen showing that `ref` returns to idle.
 
 ### 4.5 Reconnect and replay
 
@@ -424,9 +433,10 @@ unhealthy and steps down (2 s → 5 s), as RT warns.
 3. `requireLivePrincipal()`: the scanner cookie only (`ScannerStore.resolve`, no isolate cache); not revoked, not
    expired, org active. Bearer and sessions get 401 `SCANNER_UNAUTHENTICATED`.
 4. `RL_SCAN` on `actorKey`.
-5. `live.identify(ctx, row)` builds the attachment (audience, tags, `exp = min(token expiry, now + 12 h)`).
-6. Forward to `SCAN_HUB.getByName(org:mode)` with the attachment in `x-pb-live`; the hub is not routable from
-   outside, so it trusts the header. It keeps ≤ 3 sockets per device and closes the oldest with 4408.
+5. `live.identify(ctx, row)` builds the attachment (audience, tags, `exp = min(token expiry, now + 15 min)`).
+6. Forward a new `Request` (upgrade headers only, `x-pb-live` set here; a client's copy never passes) to
+   `SCAN_HUB.getByName(org:mode)`; the hub is not routable from outside and checks the attachment's org and mode
+   against its own name. It keeps ≤ 3 sockets per device and closes the oldest with 4408.
 
 No CSRF on the socket: the only client message is a beat, which changes nothing stored.
 
@@ -441,12 +451,12 @@ is the attachment; the constructor re-reads `epoch` and `seq` from SQLite inside
 ```jsonc
 // wrangler.jsonc
 "durable_objects": { "bindings": [{ "name": "SCAN_HUB", "class_name": "ScanHub" }] },
-"migrations": [{ "tag": "v1", "new_sqlite_classes": ["ScanHub"] }]
+"exports": { "ScanHub": { "type": "durable-object", "storage": "sqlite" } }
 ```
 
 `src/worker/index.ts`: `export { ScanHub } from './modules/scan/live/hub.ts';`. Then `npm run gen` for
 `worker-configuration.d.ts`. `vite dev` (Cloudflare plugin) and the worker test pool pick the binding up from
-`wrangler.jsonc`; no extra config. `tools/wrangler-config.test.ts` asserts the binding and the migration tag.
+`wrangler.jsonc`; no extra config. `tools/wrangler-config.test.ts` asserts the binding and the export.
 
 ### 4.11 Local dev and tests
 
@@ -510,9 +520,9 @@ Each starts `ctx.waitUntil`, catches, logs `scan.live.*` with `orgId` and `code`
 ### 5.4 Nothing to publish, nothing spent
 
 The guard's scanner query gains two scalar subqueries (no extra round trip):
-`EXISTS (SELECT 1 FROM scanners WHERE station_id = s.station_id AND role = 'customer' AND revoked_at IS NULL)` and
+`EXISTS (SELECT 1 FROM scanners WHERE station_id = s.station_id AND device_role = 'customer' AND revoked_at IS NULL)` and
 `(SELECT group_concat(DISTINCT json_extract(screen, '$.audience')) FROM scanners WHERE org_id = s.org_id AND mode =
-s.mode AND role = 'monitor' AND revoked_at IS NULL)` (index `scanners_org_role`). Both false or empty: no render, no
+s.mode AND device_role = 'monitor' AND revoked_at IS NULL)` (index `scanners_org_role`). Both false or empty: no render, no
 RPC. A test counts `SCAN_HUB` calls: 0 for an org without screens.
 
 ---
@@ -576,18 +586,18 @@ Then the scanner face returns in its station.
 ```sql
   kind TEXT NOT NULL CHECK (kind IN ('device', 'terminal', 'display')),
   -- what the device does now; a display never scans, a terminal never stops scanning
-  role TEXT NOT NULL DEFAULT 'scan' CHECK (role IN ('scan', 'customer', 'monitor')),
+  device_role TEXT NOT NULL DEFAULT 'scan' CHECK (device_role IN ('scan', 'customer', 'monitor')),
   ...
   CHECK (kind <> 'terminal' OR csrf_secret IS NULL),
-  CHECK (kind <> 'terminal' OR role = 'scan'),
-  CHECK (kind <> 'display' OR role <> 'scan')
+  CHECK (kind <> 'terminal' OR device_role = 'scan'),
+  CHECK (kind <> 'display' OR device_role <> 'scan')
 ```
 
 Both CHECKs sit on `CREATE TABLE scanners`; changing them after merge means rebuilding `scanners`, which has a child
 (`scanner_templates`). **Fallback if 0014 has already merged:** no rebuild either way; `0019` adds
-`role TEXT NOT NULL DEFAULT 'scan' CHECK (role IN (...) AND (kind <> 'terminal' OR role = 'scan'))` and
+`device_role TEXT NOT NULL DEFAULT 'scan' CHECK (device_role IN (...) AND (kind <> 'terminal' OR device_role = 'scan'))` and
 `screen_only INTEGER NOT NULL DEFAULT 0 CHECK (screen_only IN (0, 1) AND (screen_only = 0 OR (kind = 'device' AND
-role <> 'scan')))`, and screens are `kind: device` with `screen_only = 1` (SQLite checks an added column's
+device_role <> 'scan')))`, and screens are `kind: device` with `screen_only = 1` (SQLite checks an added column's
 cross-column CHECK against existing rows; verified on 3.54).
 
 ### 7.2 `migrations/0019_scan_stations.sql`
@@ -614,11 +624,11 @@ CREATE INDEX scan_stations_created_by ON scan_stations (created_by);
 
 ALTER TABLE scanners ADD COLUMN station_id TEXT REFERENCES scan_stations (id) ON DELETE SET NULL;
 -- MonitorWatchSchema; monitors only
-ALTER TABLE scanners ADD COLUMN watch TEXT CHECK (watch IS NULL OR (json_valid(watch) AND role = 'monitor'));
+ALTER TABLE scanners ADD COLUMN watch TEXT CHECK (watch IS NULL OR (json_valid(watch) AND device_role = 'monitor'));
 -- ScreenSettingsSchema: monitors { audience, alerts, sound }; null otherwise
 ALTER TABLE scanners ADD COLUMN screen TEXT CHECK (screen IS NULL OR json_valid(screen));
-CREATE INDEX scanners_station ON scanners (station_id, role) WHERE station_id IS NOT NULL;
-CREATE INDEX scanners_org_role ON scanners (org_id, mode, role) WHERE revoked_at IS NULL;
+CREATE INDEX scanners_station ON scanners (station_id, device_role) WHERE station_id IS NOT NULL;
+CREATE INDEX scanners_org_role ON scanners (org_id, mode, device_role) WHERE revoked_at IS NULL;
 
 -- The station a scan came from, for the monitor snapshot and the Scans log filter. Not a foreign key (SA 6.1).
 ALTER TABLE scans ADD COLUMN station_id TEXT;
@@ -753,7 +763,7 @@ caps, density and fail-safe; `customerIssues` codes.
 **Web** (jsdom, `vitest-axe`): customer and monitor faces in light and dark, reduced motion, the **Reconnecting** chip
 without layout shift, the alert's live-region announcement, flip and unlock sheets.
 
-**e2e** (`e2e/17-stations-*.spec.ts`, IN): scanner + Customer screen contexts, scan → screen shows the card in
+**e2e** (`e2e/16-scan-stations.spec.ts`, IN): scanner + Customer screen contexts, scan → screen shows the card in
 < 300 ms locally; scanner + monitor + screen, three scans in order; kill the screen's socket, scan twice, reconnect:
 the monitor shows both, the screen stays idle; flip a phone to customer and back with a PIN; revoke a screen in the
 console: its block panel appears within 2 s.
@@ -797,7 +807,7 @@ wss://wallet.plrs.im` in both `_headers` and `scanContentSecurityPolicy()`.
 | ST.4 | M3 | ST.2 | client `socket.ts`, `live-store`, wake lock; role gate (UI); customer and monitor faces (UI, BU beats) |
 | ST.5 | M3 | ST.1, ST.4 | device flip and unlock (server + sheets) |
 | ST.6 | M3 | ST.1 | console Devices tab and Add device steps (AD) |
-| ST.7 | M4 | all | e2e 17, device checks (latency, iOS lock and resume, wake lock), `docs/operations.md` hub runbook (kick, wipe) |
+| ST.7 | M4 | all | e2e `16-scan-stations`, device checks (latency, iOS lock and resume, wake lock), `docs/operations.md` hub runbook (kick, wipe) |
 
 AX (zones) lands independently; monitors gain `{ zoneIds }` and publishes carry `zone` when AX's `scans.zone_id`
 exists. Until then the zone watch is hidden in the console.

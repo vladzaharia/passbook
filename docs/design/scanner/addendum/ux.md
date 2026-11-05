@@ -1,7 +1,7 @@
 # Scanner addendum UX: customer screens, desk monitors, roles, Access cards
 
 States, layout and copy for the owner's two additions (multi-screen stations; the Access card). Concepts and wire
-contracts: `stations.md` (**ST**) and `access.md` (**AX**). Visual system: `../directions/b-final/README.md` (**BF**),
+contracts: `stations.md` (**ST**) and `access.md` (**AX**). Visual system: `../b-final.md` (**BF**),
 unchanged; this file only adds surfaces built from its parts. Motion: `../buddy-motion.md` (**BM**). 2026-11-05.
 
 Precedence: ST wins on stations, roles and the customer audience; AX on zones, plans and access copy; BF on geometry

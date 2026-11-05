@@ -3,20 +3,27 @@
 > **Folded 2026-11-05** into SA §19, DM §11, SD §17, BM §6.1 and the plan (§5.12, §5.15, M2A); those win. The
 > package's chip ids now match §4.4 (`c_plan`, `c_timed`, `c_guest`; `check-package.mjs` passes); e2e is
 > `16-scan-access`; Phase 0 changes: `p0-amendments.md`.
+>
+> **Review 2026-11-05** (SA §19 updated, it wins): `ScanAccess.timeZone` (clients format in the zone's clock); a
+> scanner on **Any zone** names no zone (**{plan} opens no zone here.** when nothing is covered); a zone id outside
+> the org's active zones grants nothing, never `*`; a guest's default end is written into `until` at issue; the gate
+> row's `action_id` is the literal `'access'`; undo is one step and only while the gate points at the grant
+> (`undoGate`); racing scans of a guest with one visit left both pass (count +1 once); monitors route on the
+> scanner's checked zones plus ancestors, not `scans.zone_id`. The reference evaluator has these (29 tests).
 
 Architecture and product design for door access (gyms, offices, clubs) on PassBook's scanner. 2026-11-05. Status:
 decided, ready to build after Phase 0 merges.
 
-Cited as **SA** `scanner-architecture.md`, **SD** `scanner-design.md`, **DM** `directions/display/display-model.md`,
-**BF** `directions/b-final/README.md`, **BM** `buddy-motion.md`, **PLAN** `scanner-plan.md`, **TI**
-`../template-identity/spec.md`, **ST** `addendum/stations.md` (stations, customer screens, monitors), **RT**
+Cited as **SA** `scanner-architecture.md`, **SD** `scanner-design.md`, **DM** `docs/design/scanner/display-model.md`,
+**BF** `docs/design/scanner/b-final.md`, **BM** `buddy-motion.md`, **PLAN** `scanner-plan.md`, **TI**
+`template-identity/spec.md` (not shipped), **ST** `addendum/stations.md` (stations, customer screens, monitors), **RT**
 `addendum/cloudflare-realtime.md`. Paths in code blocks are repo paths. **[U]** = verify on a device or with Apple.
 
 Files here:
 
 | Path | What |
 | --- | --- |
-| `access/gen/access-eval.mjs` + `.test.mjs` | Reference implementation of the decision (hours, DST, zones, guests, the visit gate, the hours text). `node --test access/gen/access-eval.test.mjs`: 24 cases, all pass. It is the spec in code for `src/passkit/template/access/**` |
+| `access/gen/access-eval.mjs` + `.test.mjs` | Reference implementation of the decision (hours, DST, zones, guests, the visit gate, the hours text). `node --test access/gen/access-eval.test.mjs`: 29 cases, all pass. It is the spec in code for `src/passkit/template/access/**` |
 | `access/pass/starter-access-card/` | The blueprint package: `wallet.template.json`, `pass.json`, `en.lproj/pass.strings` |
 | `access/pass/art/` | Thumbnail (three nested door arches in the foil hues), icon, logo; a sample member photo for mockups |
 | `access/gen/check-package.mjs` | Parses the package's `scan.display` with Phase 0's frozen schema (`wt/n8-p0`, read-only) and lints the access block |
@@ -97,7 +104,7 @@ Order is 3.4. Copy goes in `SCAN_REASON_COPY` (`src/shared/copy/scan.ts`); place
 | Reason | Kind | Headline | Sub | Overridable (Manager) | Beat |
 | --- | --- | --- | --- | --- | --- |
 | (granted) | ok | **Access granted** | `{zone}` · or `{zone} · until {time}` · or none | — | `gate` |
-| `zone_not_included` (new) | refused | **Not in plan** | **{plan} doesn't include {zone}.** | yes | shake |
+| `zone_not_included` (new) | refused | **Not in plan** | **{plan} doesn't include {zone}.** · no zone (Any zone): **{plan} opens no zone here.** | yes | shake |
 | `outside_hours` (new) | refused | **Outside hours** | **{plan} opens {when}.** (`when`: "8:00 PM", "Sat 8:00 AM"; none in 7 days: **{plan} has no hours this week.**) | yes | shake |
 | `not_yet_valid` (existing, refused here) | refused | **Not open yet** | **Opens {time}.** (existing copy) | yes | shake |
 | `guest_expired` (new) | refused | **Guest pass ended** | **Ended {time}.** | yes | shake, gold pass droops (`expired` state) |
@@ -225,7 +232,8 @@ the org), `ACCESS_WINDOW` (end ≤ start), `ACCESS_VISITS` (a visit limit on a n
 ### 2.5 Time zones and DST
 
 - **Which clock.** A zone's time zone is its nearest ancestor's `time_zone` (only roots set one: a site), else
-  `orgs.time_zone` (new, set in org settings, default from the creating admin's browser), else the scanner's. A
+  `orgs.time_zone` (new, set in org settings, default from the creating admin's browser), else the scanner's
+  `time_zone` (a console setting, never the device clock). `decide` returns the clock it used as `tz`. A
   multi-site org in two time zones gives each site root its own.
 - **Spans are wall clock.** `06:00-10:00` means 6 to 10 on the local clock every day of the year. Evaluation converts
   the instant to local parts with `Intl.DateTimeFormat(…, { timeZone })` (no tz data shipped), so a change of rules
@@ -293,7 +301,9 @@ Example, Northside Gym: **Capitol Hill** (root, America/Los_Angeles) → Main fl
 - Several zones: OR. The answer names the zone that decided: the first open covered zone in the scanner's order; when
   none is open, the soonest to open (its `nextOpenAt`).
 - A scanner with zones accepts templates as today; zones only matter for access templates.
-- Monitors (ST) can watch zones; a scan's `zone_id` is the deciding zone, null when the scanner has none.
+- Monitors (ST) can watch zones. A scan's `zone_id` is the deciding zone, null when the scanner has none; monitor
+  routing uses the scanner's checked zones and their ancestors instead (SA §18.5), so a Pool watch also sees a
+  `suspended` refusal at a Pool door.
 
 ### 3.4 Evaluation order (SA §2.6, amended)
 
@@ -324,7 +334,7 @@ Unknown plan id at scan (a version removed it despite 2.4): refused `zone_not_in
 
 ### 3.5 The gate
 
-One `scan_gates` row per pass, `action_id` = the access action, `scope = 'access'`, `kind = 'check_in'`, `state =
+One `scan_gates` row per pass, `action_id = 'access'` (a literal: renaming the action keeps the count), `scope = 'access'`, `kind = 'check_in'`, `state =
 'in'`. `count` holds **visits**, not grants. One UPSERT decides, as SA §7.3:
 
 ```sql
@@ -343,7 +353,9 @@ RETURNING last_scan_id, count, prev_last_at;
   fast-path batch (SA §7.3), so the row, gate and ledger commit together.
 - Lost: one read of the row says which: within the wait → heads-up `cooldown` (`cooldownRemainingMs`), else refused
   `guest_visits_used`.
-- Undo of a grant restores `prev_*` (SA release rule) and decrements `count` when the undone scan had `visit = 1`.
+- Undo of a grant only while `last_scan_id` is that grant (else `UNDO_SUPERSEDED`): the first grant ever deletes
+  the row; otherwise `last_at = prev_last_at`, `last_scan_id` = the undo's scan id, `prev_*` cleared (one step), and
+  `count − 1` when the grant had `visit = 1` (`undoGate`).
 - A new guest window (an edited `validFrom`) doesn't reset visits; **Reset visits** in the pass's Access card does
   (Manager-only console action, audited `pass.access_visits_reset`, deletes the gate row).
 - `visits.used` for the outcome is the returned `count`.
@@ -708,8 +720,9 @@ a2 `validateManifest` (one call), `templates/starter-access-card/**`, `_tools/pa
 **Worker (`vitest-pool-workers`, `makeEnv()`):**
 - the full order 10-16 with real D1: each reason once, in order (a suspended guest outside hours answers `suspended`).
 - multi-zone: a scanner on Pool and Studio; Off-peak at 11 AM grants Studio, refuses Pool alone.
-- guest limit under concurrency: two scanners scan a 1-visit guest's pass at once (two inserts racing): one `ok`,
-  one `guest_visits_used`; within the gap both `ok` and `count` stays 1.
+- guest limit under concurrency: two scanners scan a guest with one visit left at once: both `ok`, `count` rises
+  once, exactly one row has `visit = 1`; a guest with none left is refused at both; the first-ever pair of scans
+  inserts once.
 - undo of a visit decrements; undo of a non-visit grant doesn't.
 - isolation: a zone id of org B on org A's scanner → 404 on PATCH; org B's pass at org A's door is `not_found` with
   the body of a random code; a test scanner and a live scanner share zones but never passes; zone names never appear
@@ -722,7 +735,7 @@ a2 `validateManifest` (one call), `templates/starter-access-card/**`, `_tools/pa
 **Web:** the week grid (keyboard, overlap error, copy to weekdays), the zone tree (`aria-level`, archive dialog), the
 widgets in the pass form, axe at 1440/820/390 in both themes.
 
-**e2e (`e2e/17-scan-access.spec.ts`):** create zones and a scanner on Pool; Use blueprint; issue a 24/7 member, an
+**e2e (`e2e/16-scan-access.spec.ts`):** create zones and a scanner on Pool; Use blueprint; issue a 24/7 member, an
 Off-peak member and a 2-visit guest; scan at fixed clock times (test clock): granted with **Pool**, outside hours,
 not in plan, visits used, suspended after a status change, Let in anyway with a Manager PIN.
 
@@ -753,7 +766,7 @@ cap is the validator's (§8).
 | AX.2 (M2) | `accessCheck` and the gate in SV's flow, `overrideOf` widening, history predicate, `access` scope root, `PassScope.access`, build_key rule |
 | AX.3 (M3) | Zones tab, scanner Checks picker, Access designer section, pass widgets and detail card |
 | AX.4 (M3) | The blueprint package and art, `gate` beat (BU), customer lines and monitor zone (ST) |
-| AX.5 (M4) | e2e 17, device checks (a gym morning: 200 grants, two doors, a guest) |
+| AX.5 (M4) | e2e `16-scan-access`, device checks (a gym morning: 200 grants, two doors, a guest) |
 
 ---
 
@@ -769,7 +782,7 @@ Two changes to ST, both small:
 | # | ST says | AX needs | Why |
 | --- | --- | --- | --- |
 | C1 | `customer.chips`: ≤ 2 ids (§3.1, A7) | ≤ 2 ids **from any one header** (base or a variant); schema `max(18)`, `SCAN_DISPLAY_CUSTOMER_DENSITY` checks per header | DM ids are unique in the doc, so a plan chip that changes tone per variant has one id per variant. Only one header renders, so the customer still sees ≤ 2 chips. The blueprint names `c_plan`, `c_timed`, `c_guest` |
-| C2 | every refusal is **Please see the desk** with no sub (§3.4) | three refusals add a customer-safe sub: `outside_hours` **Your plan opens at {time}.**, `guest_expired` and `guest_visits_used` **Your guest pass has ended.** Never the zone, the plan's other hours or a suspension | the member can act on it (come back at 4) without staff; the customer mockups already show it |
+| C2 | every refusal is **Please see the desk** with no sub (§3.4) | three refusals add a customer-safe sub: `outside_hours` **Your plan opens {when}.** (none when nothing opens within 7 days), `guest_expired` and `guest_visits_used` **Your guest pass has ended.** Never the zone, the plan's other hours or a suspension | the member can act on it (come back at 4) without staff; the customer mockups already show it |
 
 ---
 
