@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   FlaskConical,
+  Inbox,
   Loader2,
   Lock,
   type LucideIcon,
@@ -48,11 +49,16 @@ export const HEALTH_STATUS = {
 export const PASS_STATUS = {
   active: { label: 'Active', tone: 'success', icon: CheckCircle2 },
   voided: { label: 'Voided', tone: 'neutral', icon: Ban },
+  expired: { label: 'Expired', tone: 'warning', icon: Clock },
   /** Taken off holders' devices: Wallet files it under Expired passes. */
   removed: { label: 'Removed', tone: 'neutral', icon: EyeOff },
   /** On the holder's own list: the pass is already in a Wallet. */
   in_wallet: { label: 'In Wallet', tone: 'success', icon: WalletCards },
 } as const satisfies Record<string, StatusEntry>;
+
+/** Wallet unregisters a pass when it is deleted and when its automatic updates are turned off. */
+const STOPPED_UPDATES = 'Stopped updates';
+const STOPPED_HINT = 'Deleted from Wallet, or automatic updates turned off.';
 
 /** Where a registered device stands against the pass's current version (events ledger). */
 export const DEVICE_SYNC_STATUS = {
@@ -67,18 +73,23 @@ export const DEVICE_SYNC_STATUS = {
     label: 'Push failing',
     tone: 'danger',
     icon: XCircle,
-    hint: 'Apple rejected the last push to this device.',
+    hint: 'The last push to this device failed.',
   },
   device_removed: {
-    label: 'Removed from device',
+    label: STOPPED_UPDATES,
     tone: 'neutral',
     icon: Ban,
-    hint: 'The device unregistered the pass.',
+    hint: STOPPED_HINT,
   },
   device_unknown: { label: 'No activity', tone: 'neutral', icon: CircleDashed },
   /** After a remove: the device fetched the final version, or the holder deleted the pass. */
   removal_fetched: { label: 'Removed', tone: 'success', icon: CheckCircle2 },
-  removal_deleted: { label: 'Deleted by holder', tone: 'success', icon: CheckCircle2 },
+  removal_deleted: {
+    label: STOPPED_UPDATES,
+    tone: 'success',
+    icon: CheckCircle2,
+    hint: STOPPED_HINT,
+  },
   removal_pending: { label: 'Waiting', tone: 'info', icon: Clock },
 } as const satisfies Record<string, StatusEntry>;
 
@@ -146,7 +157,7 @@ export const RUN_STATUS = {
   failed: { label: 'Failed', tone: 'danger', icon: XCircle },
   errored: { label: 'Errored', tone: 'danger', icon: XCircle },
   cancelled: { label: 'Cancelled', tone: 'neutral', icon: Ban },
-  captured: { label: 'Captured', tone: 'neutral', icon: FlaskConical },
+  captured: { label: 'Captured', tone: 'neutral', icon: Inbox },
   no_devices: { label: 'No devices', tone: 'neutral', icon: CircleDashed },
   revoked: { label: 'Revoked', tone: 'neutral', icon: Ban },
   disabled: { label: 'Disabled', tone: 'neutral', icon: Ban },

@@ -70,7 +70,7 @@ describe('Devices tab', () => {
     expect(rows[1]).toHaveTextContent('Push failing');
     expect(rows[1]).toHaveTextContent('Push failed v3: BadDeviceToken');
     expect(rows[1]).toHaveTextContent('Never fetched');
-    expect(rows[2]).toHaveTextContent('Removed from device');
+    expect(rows[2]).toHaveTextContent('Stopped updates');
     expect(screen.getByText('1 of 2 devices up to date')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
