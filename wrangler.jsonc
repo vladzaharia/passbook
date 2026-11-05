@@ -36,6 +36,7 @@
       "!/og-image.png",
       "!/pass-tilt.js",
       "!/robots.txt",
+      "!/scan.webmanifest",
       "!/templates/*",
       "!/theme-init.js"
     ]

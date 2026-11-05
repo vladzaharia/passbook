@@ -61,5 +61,7 @@ describe('path helpers', () => {
     expect(isAdminPath('/administrator')).toBe(false);
     expect(isPublicPath('/login')).toBe(true);
     expect(isPublicPath('/login/x')).toBe(false);
+    // /scan is its own document now; the SPA guard no longer lets it through.
+    expect(isPublicPath('/scan')).toBe(false);
   });
 });

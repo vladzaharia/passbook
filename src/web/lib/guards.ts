@@ -10,9 +10,9 @@ export function isAdminPath(pathname: string): boolean {
   return pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
 }
 
-/** Routes the session guard skips: the sign-in page and the staff scanner (its own pairing). */
+/** Routes the session guard skips: the sign-in page. */
 export function isPublicPath(pathname: string): boolean {
-  return pathname === '/login' || pathname === '/scan';
+  return pathname === '/login';
 }
 
 export async function requireSession(

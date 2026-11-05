@@ -60,6 +60,8 @@ const VITE_DEV_PATHS = [
   '!/@id/*',
   '!/@vite/*',
   '!/@react-refresh',
+  // The scanner is its own document (scan.html); Vite answers /scan with it.
+  '!/scan',
 ];
 
 /**
@@ -95,11 +97,49 @@ function devPublicAtSign(): Plugin {
  */
 const e2e = process.env.WALLET_E2E === '1';
 
+/** Radix packages that get their own chunk; the rest (tooltip, popper, primitives) share one. */
+const RADIX_OWN_CHUNK = new Set([
+  'checkbox',
+  'collection',
+  'dialog',
+  'dropdown-menu',
+  'label',
+  'menu',
+  'popover',
+  'roving-focus',
+  'select',
+  'switch',
+  'tabs',
+]);
+/** Only dialogs, menus, popovers and selects lock scroll and trap focus. */
+const RADIX_MODAL =
+  /node_modules[\\/](@radix-ui[\\/]react-(focus-scope|focus-guards)|react-remove-scroll|react-remove-scroll-bar|react-style-singleton|aria-hidden|use-callback-ref|use-sidecar|get-nonce)[\\/]/;
+
+function radixChunk(id: string): string {
+  if (RADIX_MODAL.test(id)) return 'radix-modal';
+  const pkg = /node_modules[\\/]@radix-ui[\\/]react-([a-z-]+)[\\/]/.exec(id)?.[1];
+  return pkg && RADIX_OWN_CHUNK.has(pkg) ? `radix-${pkg}` : 'radix';
+}
+
 const root = fileURLToPath(new URL('.', import.meta.url)).replace(/\/$/, '');
 
 export default defineConfig(({ command }) => ({
   publicDir: 'public',
-  environments: { wallet: { build: { minify: true } } },
+  environments: {
+    wallet: { build: { minify: true } },
+    // Two documents: the SPA and /scan (src/web/scan/main.tsx, no router). Client only: the
+    // Worker environment inherits top-level build options.
+    client: {
+      build: {
+        rolldownOptions: {
+          input: {
+            main: fileURLToPath(new URL('./index.html', import.meta.url)),
+            scan: fileURLToPath(new URL('./scan.html', import.meta.url)),
+          },
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,
@@ -116,6 +156,11 @@ export default defineConfig(({ command }) => ({
       ],
     },
   },
+  // The barcode decoder worker keeps a fixed file-name prefix: public/_headers and security-headers.ts
+  // give /assets/decode-worker-* its own CSP.
+  worker: {
+    rolldownOptions: { output: { entryFileNames: 'assets/decode-worker-[hash].js' } },
+  },
   build: {
     rolldownOptions: {
       output: {
@@ -127,13 +172,21 @@ export default defineConfig(({ command }) => ({
               test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
               priority: 30,
             },
+            // Query alone: /scan loads it without the router (SA 13.2).
             {
-              name: 'tanstack',
-              test: /node_modules[\\/]@tanstack[\\/](react-router|router-core|history|react-query|query-core|react-store|store)[\\/]/,
+              name: 'tanstack-query',
+              test: /node_modules[\\/]@tanstack[\\/](react-query|query-core)[\\/]/,
               priority: 20,
             },
             {
-              name: 'radix',
+              name: 'tanstack-router',
+              test: /node_modules[\\/]@tanstack[\\/](react-router|router-core|history|react-store|store)[\\/]/,
+              priority: 20,
+            },
+            // One chunk per Radix package, so a page loads only the primitives it uses (/scan: the
+            // tooltip and dialog, not select, dropdown and popover). Shared helpers stay together.
+            {
+              name: radixChunk,
               test: /node_modules[\\/](@radix-ui|react-remove-scroll|react-remove-scroll-bar|react-style-singleton|aria-hidden|use-callback-ref|use-sidecar|get-nonce|@floating-ui)[\\/]/,
               priority: 10,
             },

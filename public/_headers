@@ -11,6 +11,25 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Cloudflare merges every matching block, so these detach the /* values before setting their own:
+# two Content-Security-Policy headers are both enforced, and the camera policy would conflict.
+# security-headers.test.ts keeps them in step with security-headers.ts.
+/scan
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com; worker-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  ! Permissions-Policy
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=()
+  ! Referrer-Policy
+  Referrer-Policy: no-referrer
+
+/assets/decode-worker-*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'
+
+/scan.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=86400
+
 /apple/*
   Cache-Control: public, max-age=86400
   ! Cross-Origin-Resource-Policy

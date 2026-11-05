@@ -1,8 +1,8 @@
-import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Toaster } from '../ui/toaster.tsx';
 import { TooltipProvider } from '../ui/tooltip.tsx';
-import { ThemeProvider } from './theme.tsx';
+import { CoreProviders } from './core-providers.tsx';
 
 export function AppProviders({
   queryClient,
@@ -12,13 +12,11 @@ export function AppProviders({
   children: ReactNode;
 }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider delayDuration={400} skipDelayDuration={300}>
-          {children}
-          <Toaster />
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <CoreProviders queryClient={queryClient}>
+      <TooltipProvider delayDuration={400} skipDelayDuration={300}>
+        {children}
+        <Toaster />
+      </TooltipProvider>
+    </CoreProviders>
   );
 }

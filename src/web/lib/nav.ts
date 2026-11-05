@@ -40,7 +40,7 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
   [
     // No entity yet: the art and glyph arrive with the streams that build these pages.
     { label: 'Messages', to: '/admin/messages', icon: Megaphone, orgScoped: true },
-    { label: 'Scanners', to: '/admin/scanners', icon: ScanLine, orgScoped: true },
+    { label: 'Scanning', to: '/admin/scanning', icon: ScanLine, orgScoped: true },
     {
       label: 'Test inbox',
       to: '/admin/test-inbox',
