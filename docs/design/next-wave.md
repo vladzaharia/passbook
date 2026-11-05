@@ -428,3 +428,109 @@ Open risks:
   `passes.scan_code` and `passes.barcode_hash` already exist. There is no scan scope or scanner credential yet.
 - The broadcast entity reuses the `wallet` art; a dedicated art would fit better.
 - `isActive` on upcoming events still flips only on republish.
+
+## Final review
+
+Reviewed on 2026-11-05 against every screen, flow and module in the review inventory (63 surfaces, 35 flows, 36
+modules), with enforced coverage. Merged into `next/integration` in this order: worker-broadcasts, worker-passes,
+shared-ui, admin-core, admin-passes, designer-templates, holder-ssr-email, messages-inbox. `npm run check` is green
+(329 test files, 3674 tests, build and dry run), and e2e passes (53 tests, setup included). Migrations 0001 to 0018
+(16 files, `0018_broadcasts_mode.sql` new) apply in order on a fresh local D1.
+
+Findings per specialist (blocker / major / minor):
+
+| Specialist | Findings | Blocker | Major | Minor |
+| --- | --- | --- | --- | --- |
+| UX designer | 118 | 2 | 67 | 49 |
+| UI designer | 103 | 1 | 45 | 57 |
+| Motion designer | 12 | 0 | 6 | 6 |
+| Apple HIG and Wallet | 12 | 0 | 5 | 7 |
+| Security engineer | 46 | 0 | 12 | 34 |
+| Coding standards engineer | 57 | 0 | 15 | 42 |
+| **Total** | **348** | **3** | **150** | **195** |
+
+Triage merged duplicates into 167 findings (2 blockers, 94 majors, 71 minors) in 8 fix areas and dropped 9.
+Verifiers added 8 more across rounds, for 175 tracked. 171 were fixed by the fix areas. The other 4 were deferred
+on another area's work and were closed at integration.
+
+What was fixed:
+
+- Mode wall: by-id writes on passes, bulk actions, bundles, holders and broadcasts. Another mode is 404 for an API
+  key and 409 `MODE_MISMATCH` for a session. Pass detail is read-only for a pass of the other mode and offers the
+  switch.
+- Broadcasts: edit (`PATCH /{id}`), send again (`POST /{id}/retry`) and per-pass outcomes (`GET /{id}/items`, needs
+  `passes:read` for a key). Follow-ups settle on retry and chunks fit the query budget. The Messages detail page
+  shows a Passes card, one send confirm and a buddy that keeps its seat. Change messages name the field.
+- Removal: one removal callout on every tab, Restore in the header and the Fields tab, the removed state on `/p`,
+  `/b` and My passes, and a removal version from the pass version.
+- Delivery and sandbox: per-mode email caps, one outcome path for bundle email, captured email served with its own
+  CSP, and Test inbox email styles.
+- Shared UI: the scanner pages, route and nav item are gone. Broadcasts and bundles have their own art and entity.
+  There is one ProgressBar, and one Test strip shared by the console band and the SSR ribbon. Errors name what
+  failed, toasts clear the bottom bars, and tables, segmented controls and toggles fit at 390 px.
+- Designer and templates: built-ins open read only, one image slot row is shared with the pass Images tab, relevance
+  lists reuse the schema-form ListInput, a blank barcode text is flagged, row ids are ident-safe and Add or Replace
+  names each slot. Starters keep the message field and season pass dates.
+- Admin core: audit names messages, bundles and test emails. Status links message runs and rates a failing push as
+  failing. Settings checks ranges and has a push budget field. API keys show the real prefix and a Mode column.
+  Connections note Test mode. Push key removal names its dependents.
+- Holder surfaces: the email test strip comes from tokens, dark-client lines and links are fixed, there is one
+  no-access page, the add block is centred below 1024 px and the card text steps down only beside a thumbnail.
+
+Integration decisions:
+
+- `broadcasts/{guards,service,service-edit,routes}.ts`: worker-broadcasts and worker-passes walled broadcasts by
+  mode in two ways. They now share `PassScope`: `requireBroadcast` reads (keys their mode, sessions either) and
+  `requireWritableBroadcast` writes. Edit and retry follow the passes rule, so two tests changed: a session on the
+  other mode gets 409 `MODE_MISMATCH` rather than 404, and a Test session may read a live message's items, as it may
+  read the message.
+- `status/checks-identity.ts`: admin-core's "a failing APNs is failing" moved with the function worker-passes split
+  out.
+- Pass detail: removal progress lives in `callouts.tsx` and uses the shared ProgressBar. The stacked table keeps
+  shared-ui's 44 px lead column. The Images tab keeps the other-mode guard on the shared ImageSlotRow. Design uses
+  the design glyph in the header and the phone menu.
+- Messages merged last, after the routes it calls existed. The Passes card reads the contract's `BroadcastItem`
+  (`title`, `holderEmail`). Cancelling a draft says Cancel message on the button, the confirm and the toast, because
+  the server moves it to Cancelled. `broadcast.update` and `broadcast.retry` have audit labels.
+- Deferred items closed here: the Removed status filter (R058), the bundle art for "Not in a bundle" (R059) and
+  versions named by their source (R061).
+- Tests: the pass Images size error is matched on its own line (the new needs line also matched; this failed on the
+  designer branch alone too). A bad UUID reads "Check the format." `13-remove` restores from the Fields callout,
+  because the header and the callout both offer Restore.
+
+Browser check after the merge: 56 surfaces at 1440, 820 and 390 px in light and dark, 824 screenshots, with
+WebKit at 1440 and 390 px for login, the portal and the public pages. No scene failed. The check found three
+defects, all fixed:
+
+- Designer: from 1280 px, the Expiry field's date and time zone sat side by side (472 px). That widened every section
+  past its 22rem column and under the preview. The row now wraps, and the section list is held to its column. This
+  predates the merge.
+- Designer: a dry run with an error builds no pass, and the preview fell back to its loading skeleton. It now keeps
+  the last card that built while the Issues list says what to fix.
+- Audit: bundle chips used a different glyph from "Bundle created", because admin-core chose one before shared-ui
+  added the bundle entity. Both now use the bundle icon.
+
+Dropped at triage:
+
+- Capture-harness gaps and WebKit tiles broken by `upgrade-insecure-requests` over http: harness artifacts, not
+  product defects.
+- Quantizing the APNs token `iat` across isolates: speculative, with no 429 observed.
+- A conditional template activate (409 `TEMPLATE_CHANGED`): an unlikely two-admin race that needs an API change.
+- A draft asset store for designer dry runs: an admin-only performance redesign.
+- One RelTime/useNow: it spans four fix areas, so it is a follow-up.
+- Mixed import styles in Messages: no user impact.
+- Keeping Scanners behind a flag: it contradicts removing the scanner from this release.
+- Treating a device with no fetch of the current version as waiting: wrong. That device downloaded the version when
+  it added the pass. R046 says "Added with v{n}" instead.
+
+Open risks:
+
+- A version row names its source but does not link to its message, because versions carry no broadcast id.
+- A Test session can press Send or Cancel on a live draft it opened by URL. It gets the 409 toast, but the buttons
+  are not disabled the way pass detail's are.
+- "Status: Removed" truncates in the half-width filter at 390 px.
+- The capture harness was lost in the reboot and rebuilt for this pass (`scratchpad/review/capture`). It covers
+  fewer states than the review corpus: loading and error states held by route stubs are not reliable, and selection
+  actions under the More menu below 1024 px were not opened. Those were reviewed in code.
+- The earlier risks stand: Wallet's handling of removed passes and `upcomingPassInformation` is unverified on a
+  device, push keys are untested against Apple, and the Broadcast workflow ran only under local Workflows.
