@@ -24,6 +24,7 @@
     "src/passkit/**": ["exports", "types"],
     "src/worker/modules/scan/**": ["exports", "types"],
     "src/web/scan/{machine/types,timing,input/types}.ts": ["exports", "types"],
+    "src/web/scan/sound/player.ts": ["exports"],
     "src/shared/**": ["exports", "types"],
     "tools/lib/**": ["exports"],
     "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": ["exports"],

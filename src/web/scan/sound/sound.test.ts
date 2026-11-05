@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPlayer } from './player.ts';
+import { createPlayer, sound } from './player.ts';
 import { GARNISH, TONES } from './tones.ts';
 
 interface Param {
@@ -227,6 +227,11 @@ describe('sound', () => {
       s.play('ok');
       s.cut();
     }).not.toThrow();
+  });
+
+  it('exports the shared player with the C12 surface', () => {
+    for (const k of ['unlock', 'play', 'cut', 'setEnabled'] as const)
+      expect(typeof sound[k]).toBe('function');
   });
 
   it('fits 1.75 kB of source', () => {
