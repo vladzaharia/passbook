@@ -166,6 +166,46 @@ export interface ScanAction {
   allowOnConnected?: boolean;
 }
 
+export type AccessDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+/** `"HH:MM-HH:MM"`, 1-4 per day. An end before the start runs past midnight; `24:00` only as an end. */
+export type WeeklyHours = Partial<Record<AccessDay, string[]>>;
+export interface AccessGrant {
+  /** A zone key, `"*"` (every zone), or an input holding a key. */
+  zone: string | { input: string };
+  /** Narrows the plan's hours for this zone. */
+  hours?: WeeklyHours;
+}
+export interface AccessPlan {
+  /** `^[a-z][a-z0-9_]{0,31}$`; passes store it. */
+  id: string;
+  /** 1-24 characters. */
+  label: string;
+  kind: 'always' | 'timed' | 'guest';
+  /** Timed: required. Guest: optional. Always: none. */
+  hours?: WeeklyHours;
+  /** 1-24. */
+  zones: AccessGrant[];
+  /** Guest: the default visit limit, 1-999. None means unlimited in the window. */
+  visits?: number;
+  /** Guest: length when the pass has no end, 1-366. */
+  days?: number;
+}
+/** An Access card's plans. Types only in P0; `accessIssues` checks the body later. */
+export interface AccessManifest {
+  input: {
+    plan: string;
+    zones?: string;
+    from?: string;
+    until?: string;
+    visits?: string;
+    sponsor?: string;
+  };
+  /** 1-12. */
+  plans: AccessPlan[];
+  suspend?: { input: string; equals: string[] };
+  rules?: { visitGapMinutes?: number; reentryMinutes?: number | null };
+}
+
 export interface ScanManifest {
   /** 1-6. */
   actions: ScanAction[];
@@ -175,6 +215,8 @@ export interface ScanManifest {
   flags?: { input: string; label: string; equals?: string[]; stop?: boolean }[];
   /** The result screen. No display means `defaultScanDisplay` at read, never persisted. */
   display?: ScanDisplayDoc;
+  /** An Access card: plans and zones decide the verdict. Every check-in repeats. */
+  access?: AccessManifest;
 }
 
 export interface NfcManifest {

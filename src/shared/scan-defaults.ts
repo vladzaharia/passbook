@@ -51,8 +51,10 @@ export const DEFAULT_SCAN_ACTION: ScanAction = {
   kind: 'check_in',
 };
 
-function resolveAction(action: ScanAction): ResolvedScanAction {
-  const repeat = action.repeat ?? REPEAT[action.kind];
+function resolveAction(action: ScanAction, access: boolean): ResolvedScanAction {
+  // An access template lets a member in on every visit: no once, no daily, no already_done.
+  const repeat =
+    access && action.kind === 'check_in' ? 'always' : (action.repeat ?? REPEAT[action.kind]);
   const resolved: ResolvedScanAction = {
     ...action,
     repeat,
@@ -74,8 +76,8 @@ export function scanOf(
   manifest: Pick<TemplateManifest, 'scan'> | null | undefined,
 ): ResolvedScanManifest {
   const scan = manifest?.scan;
-  if (!scan) return { actions: [resolveAction(DEFAULT_SCAN_ACTION)] };
-  return { ...scan, actions: scan.actions.map(resolveAction) };
+  if (!scan) return { actions: [resolveAction(DEFAULT_SCAN_ACTION, false)] };
+  return { ...scan, actions: scan.actions.map((a) => resolveAction(a, scan.access !== undefined)) };
 }
 
 /** Whether the ready action can be armed so the next scans apply it, and how long it stays armed. */

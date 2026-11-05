@@ -6,6 +6,21 @@ const only = (action: Partial<ScanAction> & Pick<ScanAction, 'kind'>) =>
   scanOf({ scan: { actions: [{ id: 'a', label: 'A', ...action }] } }).actions[0];
 
 describe('scanOf', () => {
+  it('an access template checks in on every visit', () => {
+    const access = {
+      input: { plan: 'plan' },
+      plans: [{ id: 'all', label: 'All', kind: 'always' as const, zones: [{ zone: '*' }] }],
+    };
+    const actions = [
+      { id: 'in', label: 'In', kind: 'check_in' as const, repeat: 'once' as const },
+      { id: 'add', label: 'Add', kind: 'add' as const },
+    ];
+    const withAccess = scanOf({ scan: { actions, access } }).actions;
+    expect(withAccess[0]?.repeat).toBe('always');
+    expect(withAccess[1]?.repeat).toBe('cooldown');
+    expect(scanOf({ scan: { actions } }).actions[0]?.repeat).toBe('once');
+  });
+
   it('gives one check-in when there is no scan block', () => {
     for (const manifest of [undefined, null, {}]) {
       const { actions } = scanOf(manifest);
