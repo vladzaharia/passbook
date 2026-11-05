@@ -226,6 +226,26 @@ describe('items', () => {
   });
 });
 
+describe('items access', () => {
+  it('needs passes:read for a key, and the key mode', async () => {
+    const pass = await kit.makePass();
+    await isolate([pass.id]);
+    const made = await dto(await send('POST', '/broadcasts', fake.admin(), body('Same')));
+    const url = `/broadcasts/${made.id}/items`;
+    const blind = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    expect((await api(url, { headers: blind })).status).toBe(403);
+    const reader = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write', 'passes:read'] });
+    expect((await api(url, { headers: reader })).status).toBe(200);
+    const testKey = fake.apiKey({
+      orgId: kit.org.id,
+      scopes: ['messages:write', 'passes:read'],
+      mode: 'test',
+    });
+    expect((await api(url, { headers: testKey })).status).toBe(404);
+    expect((await api(url, { headers: fake.admin({ mode: 'test' }) })).status).toBe(404);
+  });
+});
+
 describe('launch checks', () => {
   it('fails a send whose org was suspended or whose creator was revoked', async () => {
     const pass = await kit.makePass();

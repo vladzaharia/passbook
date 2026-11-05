@@ -4,6 +4,7 @@ import type {
   BroadcastOutcome,
   CreateBroadcastBody,
 } from '../../../shared/contracts/broadcasts.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -113,9 +114,10 @@ export async function listBroadcastItems(
   ctx: ServiceContext,
   id: string,
   orgScope: string | null,
+  mode: Mode,
   query: { outcome?: BroadcastOutcome | undefined; cursor?: string | undefined; limit: number },
 ): Promise<{ items: BroadcastItemDto[]; nextCursor: string | null }> {
-  await requireBroadcast(ctx, id, orgScope);
+  await requireBroadcast(ctx, id, orgScope, mode);
   const { rows, nextCursor } = await listItems(ctx.env.DB, id, query);
   return {
     items: rows.map((r) => ({

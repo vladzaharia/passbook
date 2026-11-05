@@ -197,13 +197,21 @@ register(
     query: BroadcastItemListQuerySchema,
     response: BroadcastItemListSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    const auth = authOf(c);
+    if (auth.kind === 'api_key' && !auth.scopes.includes('passes:read'))
+      throw new ForbiddenError(
+        "Listing a message's passes needs the passes:read scope.",
+        'MISSING_SCOPE',
+      );
+    return c.json(
       await listBroadcastItems(
         svc(c),
         c.req.valid('param').id,
         orgScopeOf(c),
+        modeOf(auth),
         c.req.valid('query'),
       ),
-    ),
+    );
+  },
 );
