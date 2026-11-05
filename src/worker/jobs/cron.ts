@@ -9,6 +9,7 @@ import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { dailySandbox } from '../modules/sandbox/jobs.ts';
+import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import type { AppEnv } from '../platform/env.ts';
@@ -29,6 +30,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'passes.stale_reissue', run: reissueStalePasses },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
+    { name: 'scan.reconcile', run: reconcileScans },
+    { name: 'scan.backfill', run: backfillScanLookups },
   ],
   [DAILY_CRON]: [
     { name: 'passes.retention', run: dailyPasses },
@@ -40,6 +43,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
+    { name: 'scan.retention', run: dailyScans },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],
