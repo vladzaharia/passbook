@@ -2,6 +2,24 @@
 
 The one design for PassBook's scanner: access, server and client. Status: decided, ready to build. 2026-11-04.
 
+> **Revision 2026-11-05** (the owner's two new requirements: multi-screen stations and the Access card):
+> - **Stations, screens and realtime** (new section 18, D27-D31). Every paired thing stays a `scanners` row with a
+>   **kind** (`device`, `terminal`, new `display`) and a **device role** (`scan`, `customer`, `monitor`). A station
+>   groups the scanners and Customer screens at one counter; Desk monitors watch a scope. Results reach screens through
+>   one `ScanHub` Durable Object per org and mode (WebSocket Hibernation, HTTP catch-up), published after the D1 commit
+>   in `waitUntil`. The server renders a separate, customer-safe `ScanCustomerView`. 13.1's "No Durable Object" is
+>   amended: counts stay in D1; the hub only pushes and replays.
+> - **Access cards and zones** (new section 19, D32-D36). Access is a policy on a template (`scan.access`), not a new
+>   action kind: unlimited **Access granted**, never "already checked in". Plans (24/7, Timed, Guest) on the template,
+>   one per pass; zones are org data, nested, checked by scanners (0-8). Five new red reasons. 2.6 gains steps
+>   10a-10e and the access gate at 15.
+> - **Guard order** (2.5): a device-role step after the rate limits refuses screens with 403 `SCREEN_ONLY`.
+> - **Migrations:** `0014` takes the device kind and role now (`addendum/p0-amendments.md`); `0019_scan_stations.sql`
+>   and `0020_scan_access.sql` follow, additive.
+> - **Detail references:** `addendum/stations.md` (**ST**), `addendum/access.md` (**AX**),
+>   `addendum/cloudflare-realtime.md` (**RT**). This file summarizes them and wins where they differ; section 1 lists
+>   the conflicts (rows marked 11-05).
+
 > **Revision 2026-11-04** (the owner's three changes):
 > - **Result content is template data.** New section 4.6 adds the scan display: `scan.display` in the manifest
 >   (`ScanDisplayDoc`), the rendered `ScanDisplay` contract on `ScanCard` and `ScanOutcome`, the pure server renderer,
@@ -71,7 +89,7 @@ verify on a device.
 | 16 | **The buddy:** one per view, with **one seat on `/scan`: the dock** (XL, 192 × 144 phone, 256 × 192 iPad). Its middle (violet) pass is the result card while a result is up. Beats live in the scan chunk; a beat starts 150 ms after the verdict, lasts 550 ms, is still by T0 + 700 ms, and the next scan cuts it in one frame (BM, BF). |
 | 17 | **Proof outlives the ledger.** `scans` keeps check-in proof for `retention.scansDays` (default 396 days, 13 months). The Sync log (`pass_events`) keeps its 90 days. |
 | 18 | **Connection-owned inputs are refused** (`managed_elsewhere`) unless the action opts in with `allowOnConnected`, which marks the input manual. No outbound write-back; a pull feed `GET /api/v1/scans` serves POS and CRMs. |
-| 19 | **Console:** one nav item **Scanning** at `/admin/scanning`, tabs **Scanners · Events · Staff · Scans**. NFC setup lives on the Apple identity page. |
+| 19 | **Console:** one nav item **Scanning** at `/admin/scanning`, tabs **Scanners · Events · Staff · Scans** (2026-11-05: **Devices · Events · Zones · Staff · Scans**, D27, D34). NFC setup lives on the Apple identity page. |
 | 20 | **Audit gets a `scanner` actor** (a safe `audit_log` rebuild in `0014`). Individual scans go to `scans` and the ledger, never audit. |
 | 21 | **What a result says about a pass is template data.** `manifest.scan.display` (`ScanDisplayDoc`, DM) holds the `ok` icon and title, the meta line, chips, 0-2 panels of typed rows, notes, header variants and the holder line's source. Baked packages, blueprints and uploads ship one; the designer's **Scan screen** mode edits it. Blueprints never issue passes: **Use blueprint** makes a real, org-owned template with a copy of the display, so a scanner only ever sees real templates. No per-pass, per-scanner or per-event documents. |
 | 22 | **The system owns the verdict.** Tint, ring, verdict band (glyph, headline, sub), holder line, pass tile, flags, the action area, the last-scan strip and the buddy are system content the display can't reach. `heads_up` ignores the custom icon and title; `refused` shows no template content except `notes.refused`. Verdict copy is `SCAN_COPY` only. |
@@ -79,6 +97,16 @@ verify on a device.
 | 24 | **Scan history is computed from `scans`,** not a ledger table: visits, last visit, check-in state and the per-input value ledger, through one partial index (`scans_pass_ok`). A change made outside the scanner shows as one **Changed elsewhere** row. |
 | 25 | **A display-only template version activates on save** and moves no pass: `template_versions.build_key` excludes `scan.display`, so equal keys mean no rebuild, no push, no R2 write. Scanners read the display from the template's **active** version on their next request. |
 | 26 | **The result surface is the card (B strengthened, BF).** The camera stays live under a full-screen verdict tint and a 10 px ring; the buddy's violet pass rises into the result card; a different code is accepted from T0 + 350 and interrupts it. Desk `ready` is a panel over the dimmed camera, with the template's panels and a **system action area** (stepper, keypad, review in the card; the commit pair in the dock). The display contract carries no geometry or colour, so the visual direction stays a client choice. |
+| 27 | **Every paired thing is a device row in `scanners`.** `kind` is the ceiling (`device` a paired browser, `terminal` a till, `display` a screen-only browser); `device_role` is what it does now (`scan`, `customer`, `monitor`). One pairing flow, cookie, revocation, audit and console list for all. The console tab **Scanners** becomes **Devices** (18.1). |
+| 28 | **A station is the scanners and Customer screens at one counter or door.** A device is in at most one station, so a customer's name and balance only reach the screen beside them. **Desk monitors watch a scope** (own station, ≤ 8 stations, an event, ≤ 8 zones, or the whole org) with a Door or Desk audience, never Manager (18.2). |
+| 29 | **Screens never act.** A device whose role isn't `scan` gets 403 `SCREEN_ONLY` from the guard (2.5 step 4). Customer screens get only a `ScanCustomerView`: every refusal and heads-up reads **Please see the desk**, a first name at most, no reason, staff, note or photo (18.4). |
+| 30 | **Realtime is one `ScanHub` Durable Object per org and mode**, raw WebSocket Hibernation API, no framework. Scans stay HTTP; the Worker publishes after the D1 commit in `waitUntil`; the hub routes pre-rendered bodies by socket tags and keeps a short numbered buffer for replay; HTTP catch-up on the same buffer is the fallback. D1 stays the record. An org with no screens publishes nothing (18.5). |
+| 31 | **A paired phone flips itself** to Customer screen (**Show to customer**) and back with a staff PIN (a 2 s hold when the org has no staff). A `display` changes role only in the console (18.3). |
+| 32 | **Access is a policy on a template, not an action kind.** `scan.access` turns the template's `check_in` into a door grant: repeat `always`, verdict **Access granted**, no `already_done`. `ScanActionKind` stays the five (19.1). |
+| 33 | **Plans on the template, one per pass.** 1-12 plans: **24/7** (`always`), **Timed** (weekly hours), **Guest** (a window, optional visit limit). Per pass: plan, add-on zones, start, end, visit limit, sponsor. Hours are never per pass (19.2). |
+| 34 | **Zones are org data**, nested (a root site plus 3 levels), granted by key; a grant on a parent opens its children. A scanner checks 0-8 zones (OR); none means any zone. Hours are wall clock in the zone's time zone (root, else org, else scanner) (19.3). |
+| 35 | **Visits, not grants, are counted**: a grant more than `visitGapMinutes` (120) after the last starts a visit. One `scan_gates` row per pass (scope `access`) counts visits, enforces the guest limit and the optional re-entry wait. No anti-passback (19.4). |
+| 36 | **Five red reasons** (`zone_not_included`, `outside_hours`, `guest_expired`, `guest_visits_used`, `suspended`); `not_yet_valid` is red on access templates. A Manager may **Let in anyway** on the four soft ones plus `not_yet_valid` (19.5). |
 
 ---
 
@@ -129,6 +157,26 @@ verify on a device.
 | Fit budget | DM drafts: 7 units per result; BF: max 443 px, VIP at 6 units is 434 | 6 units with frames, minus a per-screen header cost; save error on `ok`, render-time cut elsewhere; overflow scrolls the body | Measured, not estimated; the verdict never moves |
 | Store card and stamps | SA draft: stamps on the store card; AS and its data: a USD `balance` | Two blueprints: **Balance card** (Charge, Top up, Set balance on `balance`; Balance display) and a new **Stamp card** (Add stamp, Redeem reward on `stamps`; Loyalty display) | Stamps on the store card would change its passes; a new blueprint changes none (owner, 2026-11-04) |
 | Band title | DM R16, first pass: literal only | Literal text plus the holder's name only; 2 lines cost 1 unit | Owner, 2026-11-04: "I like allowing names." |
+| Device role name (11-05) | ST, RT: `scanners.role`, `ScannerAuth.role` | `scanners.device_role`, `deviceRole` everywhere | `role` already means the staff ladder (`scan_staff.role`, `ScanActor.role`); one word, one meaning |
+| Where screens are refused (11-05) | ST A3: right after the credential | After the rate limits (2.5 step 4) | A looping screen is throttled like any device; a suspended org answers `ORG_INACTIVE` first on every face |
+| Hub config (11-05) | ST §4.10: `migrations: [{ tag, new_sqlite_classes }]` | RT: the declarative `exports` field | Checked against the live docs and wrangler 4.151.1; a Worker uses one or the other, and ours has no DO yet |
+| Desk monitor credential (11-05) | RT: admin sessions may open desk sockets; terminals get 60 s tickets | Only paired device cookies; no tickets | One principal, one revocation path (RT §10.2's own recommendation); terminals publish, never listen |
+| Audiences (11-05) | RT: `customer, door, desk, manager` | `customer`, `door`, `desk`, plus `scan` (presence only) | Monitors cap at Desk; approvals stay on scanners |
+| Close codes (11-05) | RT: station change and staff sign-out kick 4403 | 4403 revoke, unpair, expiry, org suspended; 4409 reconfigure; staff sign-out kicks nothing | 4403 sends a device to the block panel, wrong for a rename |
+| Replay (11-05) | RT: one 15-minute buffer for all audiences | Customer rows kept 30 s, replayed only if < 10 s old; staff rows 15 min / 500 | A reconnecting customer screen must never show the previous customer |
+| Customer chips (11-05) | ST: ≤ 2 ids in `customer.chips` | ≤ 2 from any one header (base or variant); schema `max(18)` | Display ids are unique in the doc, so a plan chip per variant has its own id; one header renders |
+| Customer refusal subs (11-05) | ST: every refusal **Please see the desk**, no sub | Plus a sub on three: `outside_hours` **Your plan opens {when}.** (none when nothing opens within 7 days); `guest_expired`, `guest_visits_used` **Your guest pass has ended.** Never the zone or a suspension | The member can act on it alone (AX C2) |
+| Blueprint chip ids (11-05) | Package draft: three chips with id `plan` | `c_plan`, `c_timed`, `c_guest`; the customer block names all three | DM ids are unique; the package was fixed and passes `check-package.mjs` |
+| Access milestones (11-05) | AX: M2-M4 tasks; ST: after M1 to M4 | Two milestones of their own: **M2A Access** and **M3A Stations**, both in the release (plan §1.2) | Access needs M2's Manager approvals; stations need M2's desk `ready` and review |
+| e2e names (11-05) | ST, AX: `e2e/17-*` | `e2e/16-scan-stations.spec.ts`, `16-scan-access.spec.ts` | 16 is the scanner wave's prefix |
+| Lookup on a customer screen (review 11-05) | ST: every resolve and act publishes a customer body | Only when the request's `input` is a `code`; a lookup reaches monitors only; the scanner sends `idle` when the desk card closes | Staff looking up someone else must not put that person on the counter screen |
+| Lost kicks (review 11-05) | ST, RT: kicks in `waitUntil`, "a missed kick is harmless", 12 h attachments | Revoke, unpair, role and watch kicks awaited with a retry; 15-minute attachments checked before every send | A lost kick left a revoked or re-roled screen receiving for up to 12 h |
+| Zone routing (review 11-05) | ST, AX: `w:zn:` on the scan's deciding zone | The device's checked zones plus ancestors | Refusals decided before the zone step have no zone, and a site watch missed its child zones |
+| Access times (review 11-05) | AX: the client formats access times in the device's zone | `ScanAccess.timeZone` (P0-5); customer times formatted on the server | A door's site can be in another time zone than the scanner's setting |
+| Guest end (review 11-05) | AX: computed at build and again at scan; the reference ignored `days` | Written into `until` at issue; `days` honoured | An org time zone change moved the door's end away from the face's **Until** |
+| Access undo and gate (review 11-05) | AX: "restore `prev_*`"; gate keyed by the action id; "one ok, one refused" for a 1-visit race | One-step undo while the gate points at the grant; `action_id = 'access'`; a race inside one visit lets both in | The old rules could double-restore, split counts on a rename, and the race claim contradicted the gap rule |
+| Any-zone scanners (review 11-05) | Reference: named the first org zone; an unknown zone id fell to `*` | `zone: null` and no sub; unknown ids grant nothing | The front desk said **Pool**; a stale id opened every door |
+| Customer beat (review 11-05) | BM: beat derived from the band's words | `ScanCustomerView.cue { kind, unit }` | Copy changes must not change motion |
 
 ---
 
@@ -236,8 +284,6 @@ export interface ScannerAuth {
   mode: Mode;
   transport: 'cookie' | 'bearer';
   csrfSecret: string | null;      // cookie only
-  scannerKind: 'device' | 'terminal' | 'display';
-  deviceRole: 'scan' | 'customer' | 'monitor';   // only 'scan' reaches the scan routes
 }
 export type AuthContext = SessionAuth | ApiKeyAuth | ScannerAuth;
 export interface ScannerStore {
@@ -287,13 +333,19 @@ export interface ScanActor {
    user session gets 403 `FORBIDDEN`; nothing gets 401 `SCANNER_UNAUTHENTICATED`. A scanner request that carries
    `scope` gets 422 `SCAN_SCOPE_NOT_ALLOWED` (a scanner's reach comes from its row only). An admin `scope` must name
    an existing org; its `eventId` and `templateIds` must belong to that org (and the event to the header's mode),
-   else 404 with the body of an unknown id.
+   else 404 with the body of an unknown id. An admin sends it as `scope` in a JSON body, or on a GET as
+   `?orgId&eventId&templateIds&timeZone` (`GET /session`, `/stats`, `/summary` and the asset `<img>`); an admin with
+   none gets 422 `SCAN_SCOPE_REQUIRED`, and a body that is not JSON gets 422 `SCAN_BODY_INVALID`.
 2. `isOrgActive` (`modules/orgs/active.ts`); suspended: 403 `ORG_INACTIVE`.
 3. `RL_SCAN_ORG` (`org:<id>`), then `RL_SCAN` (`actorKey`).
-4. Device role: a scanner whose `deviceRole` is not `scan` gets 403 `SCREEN_ONLY`, unless the route opts in with
-   `GuardOptions.screens` (`GET /scan/session`, `POST /scan/unpair`). Admin sessions have no device role.
+4. **Device role** (2026-11-05): a scanner principal with `deviceRole ≠ 'scan'` (a Customer screen or Desk monitor)
+   gets 403 `SCREEN_ONLY`, except on routes declared with `screens: true` (`GET /scan/session`, `POST /scan/unpair`).
+   Admin sessions have no device role. The live routes use their own guard (18.6).
 5. Staff binding: expire it past 15 min idle or 12 h; `staffSignIn` on and none bound: 403 `STAFF_REQUIRED`
    (except `GET /scan/session`, `POST /scan/staff`, `POST /scan/unpair`).
+
+`ScannerAuth` gains `scannerKind: 'device' | 'terminal' | 'display'` and `deviceRole: 'scan' | 'customer' |
+'monitor'`, read by `ScannerStore.resolve` in its existing statement (`addendum/p0-amendments.md` P0-2).
 
 `scanPolicy(ctx, actor, action, request)` in `modules/scan/rules.ts` is the only place rights are decided (2.4,
 2.6). Routes never check roles.
@@ -301,11 +353,12 @@ export interface ScanActor {
 ### 2.6 Evaluation order on every scan call
 
 Steps 1-4 are the guard (HTTP errors). Steps 5-16 answer 200 with an outcome, in this fixed order, so the same pass
-always gets the same answer:
+always gets the same answer. **Access templates** (a template with `scan.access`, on a scanner without an event) run
+steps 10a-10e after step 10, skip 11-12, and pass the access gate at 15 (section 19.4); everything else is unchanged.
 
 1. Credential resolves, not revoked or expired.
 2. Org active.
-3. Rate limits.
+3. Rate limits, then the device role (screens: 403 `SCREEN_ONLY`).
 4. Staff binding when required.
 5. Candidates **within the actor's org**, `deleted_at IS NULL` (section 8.3). None: `not_found`.
 6. Mode: keep the actor's mode. None left: one in the other mode gives `test_pass` or `live_pass` with **no card**
@@ -328,6 +381,11 @@ and record `override_of`. `overrideOf` must name a `scans` row of the same org, 
 `heads_up`, an overridable reason (`already_done`, `cooldown`, `not_yet_valid`, `ended`, `capacity_full`), written by
 the same `actor_key` in the last 10 minutes and not already overridden; anything else is 422
 `SCAN_OVERRIDE_INVALID`. Without this a Door device could skip every gate by quoting any scan id.
+
+**Access overrides** (19.5) widen this: on an access template, `overrideOf` may also name a `refused` row with
+`zone_not_included`, `outside_hours`, `not_yet_valid`, `guest_expired` or `guest_visits_used`, and the override needs
+a Manager (signed in, or a PIN approval) whatever `letInAgain` says, unless `letInAgain` is `never`. It skips 10b-10e
+and the gate's limit and wait, and still records a visit.
 
 ### 2.7 Credentials
 
@@ -389,7 +447,6 @@ replaces the token. Bearer only, no cookie, no CSRF.
 | `SCANNER_REVOKED` | 401 | block panel **Scanner removed** · **Ask an admin for a new code.** |
 | `SCANNER_EXPIRED` | 401 | block panel **Pairing expired** · **Ask an admin for a new code.** |
 | `ORG_INACTIVE` | 403 | block panel **Organization suspended** |
-| `SCREEN_ONLY` | 403 | block panel **This device is a screen.** · **Ask an admin to change it.** |
 | `STAFF_REQUIRED` | 403 | **Who's scanning?** sheet |
 | `FORBIDDEN` | 403 | (a user session) sign-in prompt |
 | `PAIRING_INVALID` | 400 | **Code not valid** · **Ask for a new one.** |
@@ -433,6 +490,11 @@ D1 counters (`platform/counters.ts`):
 | `scan:amt:<scannerId>` | scanner-local day | `dailyAmount` | `limit_reached` |
 | `scan:export:<userId>` | 1 h | 10 | 429 |
 
+Stations and access add **no binding and no counter** (2026-11-05): the live upgrade and the catch-up poll run under
+`RL_SCAN` (the 2 s poll is 30/min of 240); beats are capped in the hub at 10/s per socket (close 1008); the flip-back
+PIN reuses `scan:pin:*` and `scan:pinall:*`; display pairing reuses `RL_SCAN_PAIR`; zone and station writes are
+console routes under `requireAdmin`.
+
 Rules:
 1. **The org comes first in SQL.** `WHERE scan_code = ? AND org_id = ?`, `WHERE org_id = ? AND barcode_hash = ?`.
    Another tenant's code takes the same path to the same `not_found` body. This is also what makes a shared pass type
@@ -475,6 +537,13 @@ member's staff row follow their account. Nothing in this design blocks it.
 | `scan.export` | user | org |
 | `nfc.key_create`, `nfc.key_retire`, `identity.nfc_change` | user | signing_identity |
 | `auth.denied` (existing) | scanner joins | — |
+| `scan_station.create`, `.update`, `.archive`, `.assign` (18) | user | scan_station |
+| `scanner.role_change` (18; `detail`: `from`, `to`, `stationId`, `via: 'console' \| 'device'`, `unlockedBy`) | user or scanner | scanner |
+| `scanner.watch_change` (18) | user | scanner |
+| `scan_zone.create`, `.update`, `.archive`, `.restore` (19) | user | scan_zone |
+| `pass.access_visits_reset` (19) | user | pass |
+
+No new actor type: Customer screens and Desk monitors are `scanners` rows and audit as `scanner`.
 
 ---
 
@@ -674,6 +743,8 @@ ScanReasonSchema       = enum [
   // refused (red)
   'not_found', 'ambiguous', 'test_pass', 'live_pass', 'not_accepted', 'wrong_event',
   'removed', 'voided', 'expired', 'no_balance', 'managed_elsewhere', 'limit_reached',
+  // refused, access templates (19.5; P0-5)
+  'zone_not_included', 'outside_hours', 'guest_expired', 'guest_visits_used', 'suspended',
   // heads_up (amber)
   'already_done', 'cooldown', 'not_yet_valid', 'ended', 'capacity_full', 'check_required',
   'needs_approval', 'stale', 'in_progress',
@@ -777,7 +848,8 @@ ScanTargetSchema = union [ { eventId: IdSchema, checkedIn: boolean }, { noScanDa
 ### 4.3 Console API (`src/shared/contracts/scanners.ts`)
 
 ```ts
-ScannerKindSchema     = enum ['device', 'terminal']
+ScannerKindSchema     = enum ['device', 'terminal', 'display']        // display: 18.1 (P0-4)
+DeviceRoleSchema      = enum ['scan', 'customer', 'monitor']         // ScannerSchema.deviceRole; accepts null for display
 ScannerSettingsSchema = { flow, defaultActionId: string | null, roleWithoutSignIn: 'door' | 'desk', staffSignIn, letInAgain,
                           reader: 'none' | 'barcode' | 'nfc', lookup, offline, dailyAmount: int 1..10_000_000 | null }
 ScannerAcceptsSchema  = union [ { eventId: IdSchema }, { templateIds: IdSchema[] 1..20 } ]
@@ -953,7 +1025,7 @@ All JSON, zod-validated, problem+json errors, `Cache-Control: no-store` on scan 
 | `POST /pair/preview` | public, `sameOriginOnly`, `RL_SCAN_PAIR` | `{ code }` → `ScanPairPreview` |
 | `POST /pair` | same | `{ code }` → `ScanSession` + cookie |
 | `POST /unpair` | scanner cookie or none | → 204, always |
-| `GET /session` | scan actor (staff not required) | admin: `?orgId&eventId&templateIds&timeZone` → `ScanSession` |
+| `GET /session` | scan actor (staff not required) | admin: `?orgId&eventId&templateIds&timeZone` → `ScanSession` (the same query scopes an admin on every GET below, assets included; 2.5) |
 | `POST /staff`, `DELETE /staff` | scanner (staff not required) | `ScanStaffSignIn` → `ScanSession` |
 | `POST /resolve` | scan actor | `ScanResolveRequest` → `ScanOutcome` (`ready`, `heads_up`, `refused`) |
 | `POST /actions` | scan actor | `ScanActRequest` → `ScanOutcome` |
@@ -970,6 +1042,9 @@ assets. Every card and lookup row carries `g` = base64url(HMAC-SHA256(`derivedHm
 D1 read, useless without that actor's credential. Request logs carry the route pattern only, so `g` is never logged.
 | `GET /roster` (v2) | scanner with `offline`, accepts an event | `?cursor` → `ScanRoster` |
 | `POST /batch` (v2) | scanner with `offline` | `ScanBatchRequest` → `ScanBatchResult` |
+
+Stations add `/live`, `/live/events`, `/live/snapshot`, `/role/options` and `/role` (18.6). Every route above
+answers 403 `SCREEN_ONLY` to a Customer screen or Desk monitor, except `/session` and `/unpair`.
 
 ### 5.2 Console and integration
 
@@ -1008,7 +1083,7 @@ routes assert the org (`assertOrg`).
 | URL | Page |
 | --- | --- |
 | `/scan` (own entry) | the scanner; `#pair=` and, for admins, `?event=` are read once at boot |
-| `/admin/scanning?tab=scanners\|events\|staff\|scans` | Scanning |
+| `/admin/scanning?tab=devices\|events\|zones\|staff\|scans` | Scanning (2026-11-05: **Devices** replaces Scanners, `?tab=scanners` redirects; **Zones** added, 19.3) |
 | `/admin/scanning?tab=scans&scannerId&staffId&eventId&outcome&reason&from&to` | the scans log, filters in the URL |
 | `/admin/scanning/scanners/$scannerId` | scanner detail |
 | `/admin/scanning/events/$eventId` | live event dashboard |
@@ -1019,6 +1094,9 @@ Admin links into the scanner are plain `<a href="/scan…">` (a full document lo
 ---
 
 ## 6. Data model and migrations
+
+Stations add `0019_scan_stations.sql` (18.7) and Access cards `0020_scan_access.sql` (19.7); both are additive and
+need only the P0 amendment to `0014` below (`scanners.kind` + `display`, `device_role`).
 
 ### 6.1 `migrations/0014_scan.sql`
 
@@ -1081,7 +1159,8 @@ CREATE TABLE scanners (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
   mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
-  kind TEXT NOT NULL CHECK (kind IN ('device', 'terminal')),
+  kind TEXT NOT NULL CHECK (kind IN ('device', 'terminal', 'display')),   -- display: a screen (18.1)
+  device_role TEXT NOT NULL DEFAULT 'scan' CHECK (device_role IN ('scan', 'customer', 'monitor')),
   name TEXT NOT NULL,
   event_id TEXT REFERENCES scan_events (id) ON DELETE SET NULL,
   settings TEXT NOT NULL CHECK (json_valid(settings)),
@@ -1105,7 +1184,9 @@ CREATE TABLE scanners (
   updated_at INTEGER NOT NULL,
   revoked_at INTEGER,
   CHECK ((token_hash IS NULL) = (token_prefix IS NULL)),
-  CHECK (kind = 'device' OR csrf_secret IS NULL)
+  CHECK (kind <> 'terminal' OR csrf_secret IS NULL),
+  CHECK (kind <> 'terminal' OR device_role = 'scan'),
+  CHECK (kind <> 'display' OR device_role <> 'scan')
 );
 CREATE UNIQUE INDEX scanners_org_name ON scanners (org_id, mode, name COLLATE NOCASE) WHERE revoked_at IS NULL;
 CREATE INDEX scanners_org ON scanners (org_id, mode, id DESC);
@@ -1702,6 +1783,8 @@ Smart Tap is out of scope; a dual reader keeps that door open.
 
 ## 12. Security and threat model
 
+Stations and screens: 18.9. Access cards and zones: 19.9.
+
 ### 12.1 Threats
 
 | Threat | Mitigation |
@@ -1781,7 +1864,11 @@ asserts the worst-case doc under 5 ms. Compiled docs are cached per isolate (64 
 - Every answer carries `counts`, so a busy scanner never polls; idle scanners poll `stats` every 15 s.
 - Event `expected` is cached for 60 s in the row.
 - Load: 20 gates at 40 scans/min = 800/min ≈ 13/s, about 50 writes/s; inside `RL_SCAN_ORG` and D1's single writer.
-- No Durable Object: D1 counts on indexed tables are exact at this volume.
+- No Durable Object for counts: D1 counts on indexed tables are exact at this volume. **Amended 2026-11-05:** one
+  `ScanHub` per org and mode carries push and replay to screens (18.5). It holds no source of truth, the scan path
+  never awaits it (`waitUntil` after the commit), and an org without screens never calls it.
+- Live fan-out target: scan request start → Customer screen paint p95 ≤ 300 ms on venue Wi-Fi (estimate 160-220 ms;
+  18.5); measured in `16-scan-stations` and on devices.
 
 ### 13.2 Client
 
@@ -1819,7 +1906,10 @@ asserts the worst-case doc under 5 ms. Compiled docs are cached per isolate (64 
 
 ### 14.1 Worker (`vitest-pool-workers`, `makeEnv()`)
 
-`fakeAuth` gains `fake.scanner({ orgId, mode, settings, accepts, staff? })` (cookie and bearer forms).
+`fakeAuth` gains `fake.scanner({ scannerId, orgId, mode, transport, kind, deviceRole })` (cookie and bearer forms). It
+fakes the principal only: `requireScanActor` also reads the `scanners` row, so scan tests seed one with
+`makeScanner(f, { orgId, settings, templateIds, staffId, ... })` (`test/helpers/factories.ts`), the frozen helper for
+scan tests, and send its `headers`.
 
 - **Tenant isolation, every scan route:** org B's scan code, barcode, lookup number, pass id, search term, asset,
   scan id and event id through an org A scanner give `not_found`, an empty list or 404, with bodies equal to a random
@@ -1955,6 +2045,8 @@ mismatch across two orgs on one pass type ID; the verdict read at arm's length a
 | **3. Door depth** | re-entry, capacity, bundle check-in, live dashboard, summaries, milestones, buddy beats and the beat API, metrics and overview, feed and CSV, broadcast and list targets, Sync log, portal `lastScan`, terminals, the designer's real-pass sample (`/api/v1/scan-display/preview`) | dashboard live at 5 s; overview cards |
 | **4. NFC (off)** | manifest `nfc`, `vas_keys`, gates, build injection, scoped reissue, identity NFC card, browser keys, reader test, designer **NFC**, serial rule, docs | all gates tested; flag off in every environment |
 | **5. Offline** | v2 roster, decide, queue, batch; then v3 service worker | conflicts shown without interrupting the door |
+| **2A. Access** (after 2) | `0020`, zones, plans, the access steps and gate, Let in anyway, Zones tab, Access designer section, pass widgets, the Access card blueprint and the `gate` beat (19) | a gym morning: 24/7, Off-peak and a guest at two doors, each refusal once, a Manager lets one in |
+| **3A. Stations** (after 2) | `0019`, device roles in the console, the hub, publish, catch-up, Customer screen and Desk monitor faces, the device flip (18) | a phone flipped to a Customer screen shows a stamp within 300 ms; a monitor shows both after a dropped socket |
 | Later | door list (AS §7.3), outbound webhooks (a platform stream), server-side VAS decryption, native `readVAS` shell, org membership (2.10) | — |
 
 ### 16.2 AGENTS.md ownership row (replaces n8's)
@@ -2022,3 +2114,534 @@ Genuinely the owner's:
 
 Decided here for the editor (DM §10.7): the real-pass sample ships in M3 as a scope-only endpoint (5.2); canvas inline
 editing stays literal text only.
+
+Added 2026-11-05 (stations and Access cards; defaults are set, the owner may change them):
+
+6. **Unlocking a phone that faces customers** takes a staff PIN (any active staff member). With no staff, a 2 s hold
+   unlocks it and the console flags the device **Anyone can switch it back**. Default kept; say if flipping should
+   require staff.
+7. **First names on customer screens.** Granted and paid results greet "Hi, Maya" (station switch **Greet by first
+   name**, on by default). On a stolen pass it shows the real holder's first name to the person holding it. Default
+   on; say if it should default off.
+8. **Access card style:** generic, so the member photo is on the card. If Apple allows VAS NFC only on store cards,
+   door taps need an **Access card · tap** variant (19.6). Ask Apple with the NFC application.
+9. **Not yet valid is red on access cards** (amber on tickets); a Manager can still let them in.
+10. **Visits merge within 2 hours** by default (main door then pool is one visit).
+11. **Guests are text-sponsored** ("Guest of Maya Okafor") this wave; linking guests to members and a guests-per-member
+    cap come later. No holiday calendar this wave.
+
+---
+
+## 18. Stations, screens and realtime
+
+Owner: "a multi-screen system … one or more handheld scanners … a customer interface while a desk interface shows
+the scans in realtime … any combination." Detail: **ST** (`addendum/stations.md`), transport research **RT**
+(`addendum/cloudflare-realtime.md`); sheets `addendum/stations/sheets/stations-topology-*.png`. This section wins
+where they differ (section 1, rows 11-05).
+
+### 18.1 Devices, kinds and roles
+
+| Kind (ceiling) | Console name | Device roles | Who changes the role |
+| --- | --- | --- | --- |
+| `device` | **Scanner** (paired by code or **Pair here**) | `scan`, `customer` | the console; the device itself (18.3) |
+| `terminal` | **Till** (bearer token) | `scan` | nobody |
+| `display` | **Customer screen** or **Desk monitor** | `customer`, `monitor` | the console only |
+
+- One table (`scanners`): pairing, the cookie, **Pair again**, expiry, `last_seen_at`, revocation, audit and the
+  console list are the same for screens. A display never accepts templates or an event (`accepts` null) and never
+  binds staff.
+- The kind is what the device may ever do; the role is what it does now. A phone left facing a customer is still a
+  scanner underneath, so a PIN brings it back; an iPad paired as a screen can never scan.
+- UI names: the console tab **Devices** (was Scanners; `?tab=scanners` redirects to `?tab=devices`); roles
+  **Scanner**, **Customer screen**, **Desk monitor**, **Till**.
+
+### 18.2 Stations and watches
+
+- `scan_stations`: `name`, `mode` (fixed at creation), `settings` (`ScanStationSettingsSchema`: `welcome` ≤ 40,
+  default **Hold up your pass**; `refusedLine` ≤ 40, default **Please see the desk**; `greet` true; `showReady`
+  true; `showDraft` true), `archived_at`.
+- Members: scanners (devices and tills) and Customer screens; a device is in **at most one** station, of its own mode
+  (`STATION_MODE_MISMATCH` 422). A Customer screen shows every result from its station's scanners, newest wins, the
+  capsule naming the scanner that scanned. Admin sessions belong to no station.
+- Stations are optional. One phone at one door needs none.
+- **Desk monitors** have a `watch` (`MonitorWatchSchema`, exactly one of `{ station: true }`, `{ stationIds ≤ 8 }`,
+  `{ eventId }`, `{ zoneIds ≤ 8 }`, `{ org: true }`) and an audience in `screen.audience`: `door` or `desk` (default
+  `desk`), never `manager`. The 8 cap comes from the hub's 10 tags per socket. A monitor may sit in a station for the
+  presence list; it still receives what its watch says.
+- Edge cases (ST §1.5): two scanners on one Customer screen show the newest with the scanner's name; a scanner "on two
+  stations" is one station with two screens; an archived event or zone leaves a monitor **Not set up**; a mode change
+  detaches the device from its station in the same batch; following itself, a terminal, a screen or a revoked device
+  is `ROLE_NOT_ALLOWED`.
+
+### 18.3 Flip on the device
+
+- Scanner menu › **Show to customer** (hidden for terminals, admin sessions, and when `ScannerSettings.customerToggle`
+  is off; default on). Sheet **Which scanner is it facing?** lists this station's scanners, then the org's other
+  online scanners in this mode (`GET /scan/role/options`). `POST /scan/role { role: 'customer', followScannerId }`
+  joins that scanner's station (or creates one named after it, holding both), sets `device_role`, audits
+  `scanner.role_change` with `via: 'device'`, and kicks with 4409.
+- Back: press and hold the capsule 1 s → **Back to scanning?** With active staff: a staff PIN (any role), `POST
+  /scan/role { role: 'scan', unlock: { staffId, pin } }`, the same lockout counters as 2.7; with staff sign-in on, the
+  unlocking person is signed in. With no active staff: a 2 s hold (a filling ring) and the console flags it.
+- The server holds the role; a customer holding the phone can't reach the scanner.
+- State: `scan ⇄ customer` (kind `device`: device or console); `customer ⇄ monitor` (kind `display`: console only);
+  revoke or unpair from any state.
+
+### 18.4 What each face may do and see
+
+| | Scanner | Desk monitor | Customer screen |
+| --- | --- | --- | --- |
+| Scan routes (resolve, actions, undo, lookup, recent, stats, summary, roster, batch) | yes | 403 `SCREEN_ONLY` | 403 `SCREEN_ONLY` |
+| `GET /scan/session` | yes | yes (`screen` block) | yes (`screen` block) |
+| Live socket, catch-up | yes (presence; sends beats) | yes (monitor rows) | yes (customer views) |
+| `GET /scan/live/snapshot` | no | yes | no |
+| Asset route | actor grant (5.1) | audience grant | never |
+| Verdict copy | `SCAN_COPY` | `SCAN_COPY` | `CUSTOMER_COPY`: an ok headline, or **Please see the desk** |
+| Holder | full | full | first name, on ok and ready, when `greet` |
+| Photo, notes, flags, staff name, other holders, counts | per role | per audience | never |
+| Template content | role-filtered (4.6) | filtered for its audience | only what `display.customer` names, customer scope (DM §11) |
+
+**`ScanCustomerView`** (`contracts/scan-live.ts`, strict): `v`, `screen: 'ready' | 'ok' | 'see_desk'`, `ref` (the
+request's idempotency key), `at`, `where` (scanner name ≤ 40), `band { headline ≤ 28, sub ≤ 40 | null }`, `greet ≤ 24
+| null`, `chips ≤ 2`, `panel | null`, `lines ≤ 2` (icon + text ≤ 40: **Until 9:00 PM today**, **2 of 5 visits
+left**), `milestone`, `cue { kind: 'check_in' | 'access' | 'add' | 'take' | 'set' | 'use_up' | null, unit: 'count' |
+'money' | null }` (what `beat-map.ts` needs to pick the beat; never parsed from copy), `test`. No pass id, scan id,
+reason or image URL: the screen can't correlate holders.
+
+**Presented passes only.** Customer bodies (`ready` and `scan`) are rendered only when the request's `input` is a
+`code` (camera, wedge, NFC or a typed code). A lookup (`input.passId`) publishes to monitors only: a desk looking
+someone up must never put that holder's name or balance on the counter screen. When the desk card closes without an
+action, the scanner sends an `idle` beat, so a `ready` card never lingers for the next customer (the 60 s hold is
+the backstop).
+
+`CUSTOMER_COPY` (`src/shared/copy/scan-customer.ts`): idle = station `welcome`; `reading` beat **Checking…**; ok
+check-in **Checked in** (event: **You're in**, sub the event); access **Access granted**, sub the zone; count add
+"+2 stamps" sub "9 of 10"; money **Added $20.00** / **Paid $12.00**; reward **Enjoy your reward**; `use_up`
+**Redeemed**; `set` **Updated**; milestone reward **Reward ready**; `ready` **Hi, Sam** (or **Hello**) with the
+template name; `review` **To pay $12.00** · **Balance after: $30.50** (count: **Adding 2 stamps**); every heads-up,
+refusal, mode mismatch and not found: the station's `refusedLine` (**Please see the desk**) with no sub, except
+`outside_hours` **Your plan opens {when}.** (`when` as the staff copy, "at 4:00 PM" today or "Sat 8:00 AM", in
+`access.timeZone`; no sub when nothing opens within 7 days) and `guest_expired`, `guest_visits_used` **Your guest
+pass has ended.**; undone: back to idle. The server formats every customer time (the screen's clock is not
+trusted). The zone, the plan's other hours and a suspension never reach a customer.
+
+**`ScanMonitorRow`**: `ref`, `scanId | null` (a resolve-only refusal), `at`, `st`, `device { id, name }`, `staff`,
+`kind` (no `ready`), `reason`, `action`, `direction`, `method`, `holder`, `template { name, style }`, `value`
+(filtered), `zone`, `event`, `override`, `undone`, `display` (the outcome's display for the monitor's audience). One
+builder, `toMonitorRow()`, serves the live publish and the snapshot, so the feed reads the same before and after a
+reload.
+
+Monitor photos use an **audience grant**: `g = HMAC(derivedHmacKey(env, 'scan-asset'), 'aud:' ‖ orgId ‖ ':' ‖ mode ‖
+':' ‖ audience ‖ passId ‖ exp) ‖ exp`, 1 h, valid for a monitor principal of that org, mode and audience or higher.
+
+### 18.5 Transport: `ScanHub`
+
+- **Key** `env.SCAN_HUB.getByName(\`${orgId}:${mode}\`)`, SQLite-backed, raw Hibernation API, no framework. Live and
+  test never share a hub.
+- **Tags** (from the D1 row at upgrade, never the query): scanner `dev:<id>`, `aud:scan`, `st:<id>`; Customer screen
+  `dev:<id>`, `aud:customer`, `st:<id>`; Desk monitor `dev:<id>`, `aud:door|desk`, then `w:org`, `w:st:<id>` (1-8),
+  `w:ev:<id>` or `w:zn:<id>` (1-8). Attachment `{ dev, name, org, mode, role, aud, st, watch, exp }` < 1 KB, `exp =
+  min(token expiry, now + 15 min)`. The hub checks `exp` before every send and closes an expired socket with 4401;
+  the client reconnects at once with `since`/`epoch` (no **Reconnecting** chip: nothing is missed), which re-runs
+  auth. So a revoked, re-roled or re-watched device stops receiving within 15 minutes even if its kick is lost.
+- **Publish** `{ st, ev, zones, at, ref, audiences: { customer?, door?, desk? } }` over DO RPC in `waitUntil` after
+  the D1 commit. `zones` is the scanning device's checked zones plus their ancestors (≤ 32 ids, from the guard's
+  scanner read), not the deciding zone: a Pool watch sees every result at a door that checks Pool, including the
+  refusals decided before the zone step (`suspended`, `voided`, `not_found`), and a watch on a site sees its child
+  zones. Targets = Customer screens of `st:<st>` (customer body) ∪ `w:org` ∪ `w:st:<st>` ∪ `w:ev:<ev>` ∪ `w:zn:<z>`
+  for each z in `zones` (body for the socket's audience), deduped by socket; a socket whose body is missing gets
+  nothing. The
+  hub assigns `seq` (monotonic) and keeps `epoch` (new when its table is new).
+- **Who publishes:** `actions` (ok, heads-up, refused; never a replay) → `scan`; `resolve` → `ready` (customer body,
+  only with a Customer screen in the station and `showReady`), and heads-up/refused → `scan` with `scanId: null`;
+  undo → `undo`; v2 batch → `scan` to monitors only. Admin "Scan as admin" publishes to `w:org` and `w:ev` only.
+- **Rendering:** the Worker renders at most three bodies per scan (`customer`, `door`, `desk`) with the display model
+  and the data the request already loaded; the hub never builds content. `actor.live` (two scalar subqueries in the
+  guard's scanner read: a Customer screen in the station; the monitor audiences in the org and mode) skips rendering
+  and the RPC when nothing listens, so a single-phone org costs nothing. A test counts `SCAN_HUB` calls: 0.
+- **Buffer:** hub table `events(seq, at, st, aud, ev, zn, body)`; staff rows 15 min or 500; customer rows 30 s,
+  replayed only if under 10 s old. Hourly prune alarm while rows exist, not re-armed when empty.
+- **Messages** (`LiveEventSchema`): `hello { epoch, seq, replayed, presence }`, `scan { epoch, seq, at, st, ref,
+  body }`, `undo { epoch, seq, at, st, ref, scanId | null }` (`ref` is the undone scan's idempotency key; Customer
+  screens get `scanId: null` and match on `ref`), `ready { at, st, ref, body }` (ephemeral), `beat { st, dev, k:
+  reading | idle | review | cancel, ref?, amount?, actionId? }` (ephemeral), `presence` (ephemeral), `reset { epoch,
+  seq }`. Clients send one message, `beat`, scanners only (anything else closes 1008; 10/s cap); a beat reaches only
+  the sender's station's Customer screens and changes nothing stored. `ping`/`pong` are raw strings answered by
+  `setWebSocketAutoResponse`, so they never wake the hub.
+- **Order and dedupe:** clients keep a 200-entry `ref` set; monitors order by `at` desc then `seq`; a Customer screen
+  shows an event only if its `at` ≥ the shown one's; a `scan` replaces the `ready` of the same `ref`; `review` and
+  `cancel` beats apply only to the `ready` of the same `ref`.
+- **Reconnect:** `?since=<seq>&epoch=<epoch>`; replay the socket's rows, then `hello`; gap too large or a new epoch:
+  `reset` → monitors reload `GET /scan/live/snapshot`, Customer screens go idle. Client heartbeat: ping every 20 s while
+  visible, reconnect after 8 s without pong; on `visibilitychange`, `pageshow` and `online` ping and reconnect after
+  2 s; backoff 0.5 → 10 s with jitter. While unhealthy: `GET /scan/live/events?since&epoch` every 2 s for 2 min, then
+  5 s; **Reconnecting** chip after 2 s, no layout shift. Screens hold a Screen Wake Lock, re-requested on every
+  `visible`.
+- **Close codes** (`LIVE_CLOSE`): 4401 expired (reconnect re-runs auth), 4403 revoked, unpaired or org suspended (no
+  reconnect; boot gate block panel), 4408 replaced (≤ 3 sockets per device, oldest closed), 4409 reconfigure
+  (refetch the session, reconnect at once).
+- **Cost and latency:** ≈ $0.30-0.75 a month platform-wide at 200 orgs, 1,000 devices and 50k scans a day; idle ≈ $0.
+  Budget: request → commit ≤ 130 ms, renders ≤ 5 ms, RPC 5-30 ms, fan-out 1-5 ms, socket 10-40 ms: ≈ 160-220 ms
+  against the 300 ms p95 target. The `reading` beat (sent at decode) lands within 100 ms.
+- **Failure:** a throwing hub never changes the scan's response (logged `scan.live.publish_failed`, code
+  `LIVE_PUBLISH`); screens catch up on reconnect. Cloudflare runtime updates can drop every socket at once; jittered
+  backoff, the per-device cap and `RL_SCAN` bound the burst. Our own deploys keep hibernated sockets (deferred code
+  updates).
+
+### 18.6 Routes
+
+Device API (`/api/v1/scan`):
+
+| Method and path | Guard | Body or query → result |
+| --- | --- | --- |
+| `GET /live` | `requireLivePrincipal` (scanner cookie only, no isolate cache, not revoked or expired, org active), `Upgrade: websocket` else 426 `UPGRADE_REQUIRED`, `Origin` = `PUBLIC_BASE_URL` (or the legacy origin while both serve) else 403 `LIVE_ORIGIN`, `RL_SCAN` | `?since&epoch` → 101, forwarded to the hub as a new `Request` carrying only the upgrade headers and the attachment in `x-pb-live` (a client-sent `x-pb-live` never passes; the hub isn't routable from outside and also checks `ctx.id.name` = `org:mode` of the attachment) |
+| `GET /live/events` | live principal | `?since&epoch` → `LiveCatchUp` (`{ epoch, seq, events } \| { reset: true }`) |
+| `GET /live/snapshot` | live principal, role `monitor` | → `ScanLiveSnapshot` (`counts { visitsToday, refusedToday, inNow \| null }`, ≤ 50 rows, presence) |
+| `GET /role/options` | scanner principal, kind `device` | → `ScanFollowOptions` (≤ 50) |
+| `POST /role` | scanner principal, kind `device`, CSRF, `RL_SCAN` | `ScanRoleChange` → `ScanSession` |
+
+Bearer tokens and admin sessions get 401 `SCANNER_UNAUTHENTICATED` on the live routes. No CSRF on the socket: its only
+client message changes nothing stored.
+
+Console (`requireAdmin`, CSRF, mode from the header, org asserted): `GET`, `POST /api/v1/scan-stations`; `GET`,
+`PATCH /api/v1/scan-stations/{id}` (kicks members 4409); `POST /{id}/archive` (detaches, kicks); `POST /{id}/devices`
+(`{ scannerIds ≤ 50 }`); `POST /api/v1/scanners` accepts `kind: 'display'` with `deviceRole`, `stationId` or
+`watch`, `screen`; `PATCH /api/v1/scanners/{id}` adds `stationId`, `watch`, `screen`; `POST
+/api/v1/scanners/{id}/role` (`{ role, stationId?, watch? }`, any role the kind allows, no PIN); `GET
+/api/v1/scans?stationId=`. The Devices list shows a screen as online while the hub holds its socket (one
+`hub.presence()` RPC per list load and mode); scanners keep `last_seen_at` (2.7).
+
+Errors: `SCREEN_ONLY` 403, `ROLE_NOT_ALLOWED` 422, `STATION_MODE_MISMATCH` 422, `STATION_ARCHIVED` 422,
+`UNLOCK_REQUIRED` 403, `PIN_INVALID` 400, `LIVE_ORIGIN` 403, `UPGRADE_REQUIRED` 426.
+
+Revocation and changes: revoke, unpair and expiry → `hub.kick({ dev }, 4403)`; role, station, watch, screen settings
+or mode changes → 4409 for that device; station rename or archive → 4409 for `st:<id>`; org suspended →
+`kickAll(4403)` from the orgs suspend hook (g). Revoke, unpair, role and watch kicks are awaited after the batch (one
+retry, 2 s cap; a failure logs `LIVE_KICK` and doesn't fail the request); the rest run in `waitUntil`. A lost kick is
+bounded, not harmless: the hub checks the 15-minute attachment expiry before every send, and every upgrade and
+catch-up re-resolves the cookie.
+
+### 18.7 Data: `migrations/0019_scan_stations.sql`
+
+Additive, no rebuild; needs P0-1 (`device_role` in 0014).
+
+```sql
+-- Stations (a counter or door: scanners and customer screens), device placement, monitor watch, station on scans.
+
+CREATE TABLE scan_stations (
+  id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
+  name TEXT NOT NULL,
+  settings TEXT NOT NULL CHECK (json_valid(settings)),   -- ScanStationSettingsSchema
+  created_by TEXT REFERENCES users (id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  archived_at INTEGER
+);
+CREATE UNIQUE INDEX scan_stations_org_name ON scan_stations (org_id, mode, name COLLATE NOCASE) WHERE archived_at IS NULL;
+CREATE INDEX scan_stations_org ON scan_stations (org_id, mode, id DESC);
+CREATE INDEX scan_stations_created_by ON scan_stations (created_by);
+
+ALTER TABLE scanners ADD COLUMN station_id TEXT REFERENCES scan_stations (id) ON DELETE SET NULL;
+-- MonitorWatchSchema; monitors only
+ALTER TABLE scanners ADD COLUMN watch TEXT CHECK (watch IS NULL OR (json_valid(watch) AND device_role = 'monitor'));
+-- ScreenSettingsSchema: monitors { audience, alerts, sound }; null otherwise
+ALTER TABLE scanners ADD COLUMN screen TEXT CHECK (screen IS NULL OR json_valid(screen));
+CREATE INDEX scanners_station ON scanners (station_id, device_role) WHERE station_id IS NOT NULL;
+CREATE INDEX scanners_org_role ON scanners (org_id, mode, device_role) WHERE revoked_at IS NULL;
+
+-- The station a scan came from, for the monitor snapshot and the Scans log filter. Not a foreign key (6.1).
+ALTER TABLE scans ADD COLUMN station_id TEXT;
+CREATE INDEX scans_station ON scans (station_id, at DESC) WHERE station_id IS NOT NULL;
+```
+
+Checked 2026-11-05 on SQLite 3.54: 0001-0016 from `next/n8-p0` with P0-1 applied, then 0019 and 0020, apply cleanly;
+a watch on a non-monitor fails; deleting a station nulls `station_id`. The hub needs no D1 table.
+
+Wrangler and exports (integration owns both files):
+
+```jsonc
+// wrangler.jsonc
+"durable_objects": { "bindings": [{ "name": "SCAN_HUB", "class_name": "ScanHub" }] },
+"exports": { "ScanHub": { "type": "durable-object", "storage": "sqlite" } }
+```
+
+`src/worker/index.ts` exports `ScanHub` from `./modules/scan/live/hub.ts`; `npm run gen` updates
+`worker-configuration.d.ts`; `tools/wrangler-config.test.ts` asserts the binding and the export. The first deploy with
+the class is a `wrangler deploy` by the owner, never `versions upload`.
+
+### 18.8 Contracts
+
+| File | Names |
+| --- | --- |
+| `contracts/scan-live.ts` (new; ST) | `DeviceRoleSchema` (re-export), `ScanStationSettingsSchema`, `ScanStationSchema`, `Create/UpdateScanStationSchema`, `ScanStationListQuerySchema`, `ScanStationAssignSchema`, `MonitorWatchSchema`, `ScreenSettingsSchema`, `ScanRoleChangeSchema`, `ScanFollowOptionsSchema`, `ScanCustomerViewSchema`, `ScanMonitorRowSchema`, `LivePresenceSchema`, `LiveEventSchema`, `LiveClientMessageSchema`, `LiveCatchUpSchema`, `ScanLiveSnapshotSchema`, `LIVE_CLOSE` |
+| `contracts/scanners.ts` | P0: `kind` + `display`, `deviceRole`, `accepts` nullable. Later, additive: `station`, `watch`, `screen`, `CreateScannerSchema.kind` + `display` |
+| `contracts/scan.ts`, `scan-session.ts` | P0: session `scanner.kind` + `display`, `scanner.deviceRole`. Later: `ScanSession.screen`, `ScanSession.live { on }`, `ScanPairPreview.role`, `.stationName`, `ScannerSettings.customerToggle` (default true) |
+| `passkit/template/scan-display/schema.ts` | P0: `ScanDisplayDoc.customer` (DM §11) |
+| `copy/scan-customer.ts` (new; ST) | `CUSTOMER_COPY` |
+
+### 18.9 Security and privacy
+
+| Threat | Mitigation |
+| --- | --- |
+| A customer uses a facing phone to scan or look people up | The server holds the role; every scan route answers `SCREEN_ONLY`; flipping back needs a staff PIN (or the flagged hold) |
+| A customer screen leaks holder data | A separate, strict `ScanCustomerView`; allow-listed rows over a customer scope with every `x-scan` input removed; refusals carry no reason; no image URL; a recursive test scans every outcome fixture's customer body for the holder's data beyond the first name |
+| The previous customer appears after a reconnect | Customer rows replay only under 10 s and expire in 30 s; idle clears the card |
+| Cross-site WebSocket hijacking | `SameSite=Strict` cookie plus an `Origin` check on upgrade |
+| Org or mode crossing | Hub per org and mode; tags and attachment from the D1 row; isolation tests per org, mode and station |
+| A revoked screen keeps receiving | Kick 4403 awaited with a retry; upgrade and catch-up re-resolve the cookie; the hub drops a socket past its 15-minute attachment expiry before sending |
+| A desk lookup shows someone else on the counter screen | Customer bodies only for a presented code (18.4); a lookup publishes to monitors only; the scanner's `idle` beat clears a `ready` card |
+| A forged attachment | The route builds a new request and sets `x-pb-live` itself; the hub checks the attachment's org and mode against its own name |
+| A stolen monitor | Revoke as any device; monitors never see Manager-only content, never act, and their photo grants are bound to the audience and expire in 1 h |
+| Socket floods | ≤ 3 sockets per device, `RL_SCAN` on upgrade, 10 beats/s, 512-byte messages, strict client schema |
+| Logs | `scan.live.*` lines carry `orgId` and `code` only; never bodies, names or tickets |
+
+### 18.10 Files and tests
+
+Files (ST owns unless noted; plan §3): `modules/scan/{routes-stations,routes-live,routes-role,stations,role,
+repo-stations}.ts`, `modules/scan/live/{hub,hub-sql,tags,identify,audiences,rows,publish,snapshot,guard}.ts`,
+`src/web/scan/live/{socket,use-live,live-store,wake}.ts`, `contracts/scan-live.ts`, `copy/scan-customer.ts`;
+`passkit/template/scan-display/customer.ts` (DS); faces in `src/web/scan/{customer,monitor,role}/**` (CD, MN; layout in `addendum/ux.md`); the
+console Devices tab (AD). Tests: ST §7.6 (isolation, customer safety, monitor audience, guard, roles, hub replay and
+hibernation with `evictDurableObject(stub, { webSockets: 'hibernate' })`, prune with `runDurableObjectAlarm`, publish
+counts, upgrade refusals, a lookup publishing no customer body, an expired attachment receiving nothing, a Pool
+watch receiving a `suspended` refusal at a Pool door and a site watch receiving its child zone, undo reaching a
+Customer screen by `ref`), unit (`tags`, `live-store`, `CUSTOMER_COPY`, `renderCustomerView`), web (faces in both
+themes, reduced motion, **Reconnecting** without layout shift), e2e `16-scan-stations`.
+
+---
+
+## 19. Access cards and zones
+
+Owner: "Access Card … access control like gym memberships, business access … unlimited access is reasonable (so there
+wouldn't be an 'already scanned' screen) … 24/7 vs timed/guest access … one pass should be able to open one or more
+'zones' (where a scanner would be assigned to a zone to verify access)." Detail: **AX** (`addendum/access.md`, with
+the reference evaluator `addendum/access/gen/access-eval.mjs`, 29 tests passing, and the blueprint package
+`addendum/access/pass/starter-access-card/`).
+
+### 19.1 A grant
+
+A scan of an access-template pass by a template scanner ends in:
+
+| Result | Kind | Reason | Band | Records |
+| --- | --- | --- | --- | --- |
+| Granted | `ok` | null | **Access granted** · sub the zone, plus "until 4:00 PM" when access closes within 12 h | `scans` row (`zone_id`, `visit`, `access_plan`), the gate row |
+| Re-entry wait (opt-in) | `heads_up` | `cooldown` | **Entered 2 min ago** · **Next entry in 8 min.** | heads-up row; **Let in again** per `letInAgain` |
+| Denied | `refused` | 19.5 | reason copy | refused row |
+
+`scanOf` resolves the access template's `check_in` to `repeat: 'always'`: five doors in a morning are five grants and
+one visit. `ScanOutcome.access` and `ScanCard.access` (`ScanAccessSchema`, nullable, P0-5): `plan { id, label, kind
+}`, `zone | null` (null when the scanner checks no zones), `closesAt`, `nextOpenAt`, `visits { used, limit | null } |
+null`, `visit`, `timeZone` (the deciding zone's clock: the client formats `{time}` and `{when}` with it, never with the
+device's or the scanner's zone). The client paints
+**Access granted** when `access` is set; nothing else branches on it. On `ready` the same steps run without the gate,
+so the desk sees "Opens 8:00 PM" before acting.
+
+### 19.2 Plans (`scan.access` in the manifest)
+
+```ts
+type WeeklyHours = Partial<Record<'mon'|'tue'|'wed'|'thu'|'fri'|'sat'|'sun', string[]>>; // "HH:MM-HH:MM", 1-4/day
+interface AccessGrant { zone: string | { input: string }; hours?: WeeklyHours }          // key, "*", or an input
+interface AccessPlan { id: string; label: string; kind: 'always' | 'timed' | 'guest';
+  hours?: WeeklyHours; zones: AccessGrant[]; visits?: number; days?: number }
+interface AccessManifest {
+  input: { plan: string; zones?: string; from?: string; until?: string; visits?: string; sponsor?: string };
+  plans: AccessPlan[];                                         // 1-12
+  suspend?: { input: string; equals: string[] };
+  rules?: { visitGapMinutes?: number; reentryMinutes?: number | null };  // 120 (0-720); null (1-240)
+}
+```
+
+- Plans live in the template's **active** version (like the display, D25), so a rule change applies at the next scan.
+  `template_versions.build_key` includes `scan.access` only when a binding reads `{{access.…}}`, so a plan edit
+  reissues faces through the stale job only for templates that show plan data.
+- Per pass: the plan (an `access-plan` input), add-on zones (`access-zones`), start, end, visit limit (guests),
+  sponsor (text ≤ 80, `x-scan: desk`). A guest with no end ends at local midnight after the start day + `days` − 1
+  (default 1), in the org's time zone. The passes service writes that instant into the `until` input at create, and
+  on an update that moves a pass onto a guest plan with no end, so the face, Wallet's `expirationDate` and the door
+  agree even if the org's time zone or the plan's `days` change later. Using the Access card blueprint, or turning on
+  **Use as an access card**, asks for the org's time zone when it has none (default the browser's).
+- Validation: `accessIssues` (AX §2.4) at save and upload: `ACCESS_SHAPE`, `ACCESS_NO_CHECK_IN`, `ACCESS_PLAN_*`,
+  `ACCESS_INPUT`, `ACCESS_HOURS_*`, `ACCESS_ZONES_EMPTY`, `ACCESS_ZONE_KEY`, `ACCESS_GUEST_RANGE`,
+  `ACCESS_RULES_RANGE`, `ACCESS_PLAN_IN_USE`; warning `ACCESS_ZONE_UNKNOWN`. Pass inputs (passes service, 422):
+  `ACCESS_PLAN_UNKNOWN`, `ACCESS_ZONE_UNKNOWN`, `ACCESS_WINDOW`, `ACCESS_VISITS`.
+
+### 19.3 Zones
+
+- `scan_zones`: `name` (1-40, unique among active zones), `key` (slug, fixed once a template uses it), `parent_id`
+  (depth ≤ 4, no cycles), `time_zone` (roots only), `sort`, `archived_at`. Org data, not per mode: a test scanner opens
+  the same pool.
+- A pass's grants are its plan's zones plus its add-ons; `*` grants every zone. The grant that applies to a scanner
+  zone is the **nearest** of that zone and its ancestors, else `*`. Hours that apply = plan hours ∩ the grant's hours;
+  add-ons follow plan hours.
+- `scanner_zones`: 0-8 per scanner, in order; the console label **Checks**, empty **Any zone**. A scanner grants when
+  the pass opens any of its zones now; the answer names the first open zone, else the soonest to open. Event scanners
+  have no zones.
+- With no scanner zones (**Any zone**) the scanner grants when any of the org's active zones the pass covers is
+  open, and the answer names no zone (`zone: null`, no band sub). A scanner zone id that isn't one of the org's
+  active zones grants nothing (never falls through to `*`). Zones stay on a scanner moved onto an event but are
+  ignored there.
+- Hours are wall clock in the zone's time zone (nearest root, else `orgs.time_zone`, else the scanner's `time_zone`,
+  a console setting, never the device clock), via `Intl`.
+  DST: a span starting in the spring gap opens at the gap's end; the repeated autumn hour is open both times;
+  overnight spans belong to their start day; ends are exclusive; `nextOpenAt` looks 7 days ahead. No holidays in v1.
+- Org zones are read once per isolate for 60 s, keyed by org and `orgs.zones_rev` (bumped on every zone write).
+  `zones_rev`, the scanner's zone ids and their ancestors come from scalar subqueries in the guard's scanner read
+  (no extra round trip), so an archive takes effect at the next scan.
+
+### 19.4 Evaluation order and the gate
+
+Steps 1-9 unchanged. For an access template on a scanner without an event:
+
+| Step | Check | Answer |
+| --- | --- | --- |
+| 10 | `removed`, `voided`, `expired` | refused; on a guest plan `expired` → `guest_expired` |
+| 10a | suspend rule (`scan.access.suspend`) | refused `suspended` |
+| 10b | start (input) > now | refused `not_yet_valid` (`at`) |
+| 10c | guest: now ≥ guest end | refused `guest_expired` (`at`) |
+| 10d | no scanner zone covered by a grant | refused `zone_not_included` |
+| 10e | no covered zone open now | refused `outside_hours` (`nextOpenAt`) |
+| 11-12 | `scan.window`, event window | skipped |
+| 13 | stop flags under `auto` | heads-up `check_required` |
+| 14 | action rights, connection ownership | unchanged (`check_in` is Door) |
+| 15 | **access gate**: the re-entry wait, then the guest visit limit | heads-up `cooldown`; refused `guest_visits_used` |
+| 16 | effect | `ok` with `access` |
+
+10a-10e are `decide()` in `src/passkit/template/access/decide.ts` (pure; ported from `access-eval.mjs`), called from
+SV's `resolve.ts` and `act.ts` through `modules/scan/access.ts`. An unknown plan id at scan answers
+`zone_not_included` and logs `ACCESS_PLAN_UNKNOWN` with ids.
+
+**Gate:** one `scan_gates` row per pass, `action_id = 'access'` (a literal, so renaming the action or adding a second
+`check_in` keeps one count), `scope = 'access'`, `kind = 'check_in'`; `count` holds **visits**. One
+UPSERT decides (AX §3.5): the visit counter increments only when the grant is more than the gap after `last_at`; the
+`WHERE` refuses a grant inside the wait (unless an override) and a new visit past the limit (unless an override).
+Won: `ok`, `visit = (prev_last_at IS NULL OR now − prev_last_at > gap)`, in the check-in fast-path batch. Lost: one
+read says which: inside the wait → `cooldown`, else `guest_visits_used`. Undo works only while the gate still points
+at the grant (else 409 `UNDO_SUPERSEDED`, as 7.3): the first grant ever deletes the row; otherwise `last_at =
+prev_last_at`, `last_scan_id` = the undo's own scan id (one step only), `prev_*` cleared, and `count − 1` when the
+grant had `visit = 1` (`undoGate` in the reference). **Reset visits** (Manager-equivalent: admin console) deletes the
+row, audited. Racing scans: two doors scanning a guest with one visit left at once both pass (the second rides the
+visit the first opened; `count` rises once); a guest with none left is refused at both.
+
+**Events and access:** a templates scanner applies each template's own rule (an access card grants; a ticket checks in
+once). An event scanner checks every pass in once per event, access cards included; 10a-10c still run; zones, hours,
+the gate and `repeat: always` don't; the outcome is **Checked in**.
+
+### 19.5 Reasons, copy and overrides
+
+| Reason | Kind | Headline | Sub | Manager override |
+| --- | --- | --- | --- | --- |
+| (granted) | ok | **Access granted** | `{zone}` · `{zone} · until {time}` | — |
+| `zone_not_included` | refused | **Not in plan** | **{plan} doesn't include {zone}.** / no zone: **{plan} opens no zone here.** | yes |
+| `outside_hours` | refused | **Outside hours** | **{plan} opens {when}.** / **{plan} has no hours this week.** | yes |
+| `not_yet_valid` | refused (access only) | **Not open yet** | **Opens {time}.** | yes |
+| `guest_expired` | refused | **Guest pass ended** | **Ended {time}.** | yes |
+| `guest_visits_used` | refused | **No visits left** | **Used {limit} of {limit}.** | yes |
+| `suspended` | refused | **Suspended** | **Ask them to see the front desk.** | no |
+| `cooldown` | heads-up | **Entered {ago}** | **Next entry in {wait}.** | per `letInAgain` |
+
+**Let in anyway** shows in the dock on the five overridable refusals whenever `letInAgain` isn't `never`; it always
+needs a Manager (signed in, or a PIN approval), records a grant with `override_of`, and a guest override counts a
+visit, so `visits.used` can pass the limit (the monitor shows it). `suspended`, `voided`, `removed`, `expired` (non
+guest) and mode mismatches are never overridable.
+
+### 19.6 The Access card blueprint
+
+`templates/starter-access-card/` (`blueprint: true`, TI §6.3), gallery second: Membership, **Access**, Poster,
+Balance, Stamp, Coupon, Event, Boarding. Generic style, **Cobalt** `rgb(29,58,186)`, labels `rgb(207,224,255)`,
+icon `key`; `sharingProhibited: true`; header **Plan**, primary **Name**, secondary **Zones** and **Valid until**,
+auxiliary **Member** and **Hours**; barcode QR `{{pass.scanCode}}`, alt text `{{memberId}}`; `expirationDate` =
+`{{access.until}}`; the member photo is the per-pass thumbnail. Plans: **24/7** (`all_access`), **Off-peak**
+(`off_peak`: Mon-Fri 6 AM-4 PM and 8-11 PM, Sat-Sun 8 AM-8 PM), **Guest day** (`guest_day`); gap 120, no wait. Its
+`scan.display`: photo (`minRole: door`), plan chips `c_plan`/`c_timed`/`c_guest` (icons `infinity`, `clock`,
+`ticket`), a Visits panel (members: this month, last visit; guests: visits left, until; **Guest of** for Desk), refused
+note **Ask at the front desk.**, customer block `{ chips: [c_plan, c_timed, c_guest], panel: null }`. `access.*`
+reaches the build through `PassScope.access` (`accessScope()` in `passes/builder.ts`); a zone rename reissues the
+org's access passes that show it. Henry's gym templates can adopt access later with one version each and no reissue
+(AX §4.8).
+
+### 19.7 Data: `migrations/0020_scan_access.sql`
+
+Additive, independent of 0019. Touches `orgs` (g's table: two added columns; reported to g).
+
+```sql
+-- Access cards: zones, scanner zones, the org's time zone, and zone and visit on scans.
+
+CREATE TABLE scan_zones (
+  id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  key TEXT NOT NULL CHECK (length(key) BETWEEN 1 AND 40 AND key NOT GLOB '*[^a-z0-9-]*' AND substr(key, 1, 1) GLOB '[a-z0-9]'),
+  name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 40),
+  parent_id TEXT REFERENCES scan_zones (id) ON DELETE CASCADE,
+  time_zone TEXT,                  -- roots only (service rule); null = the org's
+  sort INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT REFERENCES users (id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  archived_at INTEGER,
+  CHECK (parent_id IS NULL OR time_zone IS NULL)
+);
+CREATE UNIQUE INDEX scan_zones_org_key ON scan_zones (org_id, key);
+CREATE UNIQUE INDEX scan_zones_org_name ON scan_zones (org_id, name COLLATE NOCASE) WHERE archived_at IS NULL;
+CREATE INDEX scan_zones_parent ON scan_zones (parent_id);
+CREATE INDEX scan_zones_created_by ON scan_zones (created_by);
+
+CREATE TABLE scanner_zones (
+  scanner_id TEXT NOT NULL REFERENCES scanners (id) ON DELETE CASCADE,
+  zone_id TEXT NOT NULL REFERENCES scan_zones (id) ON DELETE CASCADE,
+  sort INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (scanner_id, zone_id)
+) WITHOUT ROWID;
+CREATE INDEX scanner_zones_zone ON scanner_zones (zone_id);
+
+ALTER TABLE orgs ADD COLUMN time_zone TEXT;                         -- IANA; null until set
+ALTER TABLE orgs ADD COLUMN zones_rev INTEGER NOT NULL DEFAULT 0;   -- bumped on every zone write; isolate cache key
+
+-- The deciding zone, whether the grant started a visit, and the plan then. Not foreign keys (6.1: proof outlives config).
+ALTER TABLE scans ADD COLUMN zone_id TEXT;
+ALTER TABLE scans ADD COLUMN visit INTEGER CHECK (visit IS NULL OR visit IN (0, 1));
+ALTER TABLE scans ADD COLUMN access_plan TEXT;
+CREATE INDEX scans_zone ON scans (zone_id, at DESC) WHERE zone_id IS NOT NULL;
+```
+
+Depth, cycles and cross-org parents or scanner zones are service rules (`ZONE_DEPTH`, `ZONE_CYCLE`,
+`ZONE_ORG_MISMATCH` as a 404 body). `scan_gates` needs no change. Retention: nothing new.
+
+### 19.8 Contracts and routes
+
+| File | Names |
+| --- | --- |
+| `contracts/access.ts` (new; AX) | `ZoneKeySchema`, `WeeklyHoursSchema`, `ScanZoneSchema`, `Create/UpdateScanZoneSchema`, `ScanZoneListQuerySchema`, `ScannerZonesSchema` (`zoneIds ≤ 8`), `PassAccessSchema` (pass detail card) |
+| `contracts/scan.ts` | P0: five reasons, `ScanAccessSchema`, `ScanOutcome.access`, `ScanCard.access` |
+| `contracts/scanners.ts` | later, additive: `ScannerSchema.zones`, `Create/UpdateScannerSchema.zoneIds`, `ScanRecordSchema.zone`, `.visit`, `ScanListQuerySchema.zoneId` |
+| `contracts/orgs.ts` (g) | `OrgSchema.timeZone`, `UpdateOrgSchema.timeZone` |
+| `contracts/passes.ts` (d) | `PassDetail.access: PassAccessSchema \| null` |
+| `passkit/types.ts` | P0: `AccessManifest` and friends, `ScanManifest.access?` |
+
+Routes (`modules/scan/routes-zones.ts`, `requireAdmin`, mode-free, CSRF, audited): `GET`, `POST /api/v1/scan-zones`
+(tree order); `PATCH /api/v1/scan-zones/{id}`; `POST /{id}/archive`, `/restore` (children follow); `PATCH
+/api/v1/scanners/{id}` takes `zoneIds`; `POST /api/v1/passes/{id}/access/reset-visits`.
+
+### 19.9 Security and privacy
+
+- Zones, plans and sponsors never cross orgs: zone ids are checked against the org in the service (404 body); another
+  org's pass at a door is `not_found` with a random code's body; a test and a live scanner share zones, never passes.
+- The sponsor is `x-scan: desk`: Door scanners, Door monitors and customers never see it.
+- Customer screens get only the band (zone name on a grant), two system lines and the plan chip; a refusal never names
+  the zone, the plan's hours beyond the next opening, or a suspension.
+- Logs carry ids only: no zone names, inputs or sponsors.
+- The photo is the anti-sharing control (`sharingProhibited` on the pass, the photo at the door). No anti-passback.
+
+### 19.10 Files and tests
+
+Files (AX owns unless noted; plan §3): `src/passkit/template/access/{hours,decide,scope,validate,index}.ts`,
+`modules/scan/{access,zones,routes-zones,repo-zones,repo-access}.ts`, `contracts/access.ts`,
+`src/web/admin/scanning/zones/**`, `src/web/admin/templates/designer/access/**`,
+`src/web/admin/passes/inputs/{access-plan,access-zones}.tsx`; the blueprint package (BP). Tests: AX §6.4 (pure: spans,
+schedule, DST in New York, London, Kolkata and Lord Howe, zones, guests, the gate, validation; worker: the full order
+with real D1, multi-zone, the guest limit under concurrency, undo of a visit, isolation, history at a month edge,
+`ready` without a write, an event scanner checking an access card in once, undo superseded and one step only, a
+no-zone scanner naming no zone, a foreign zone id granting nothing, `guestUntil` with `days: 3` across a DST night
+and written into `until` at issue, `timeZone` on the outcome, log hygiene; web: the week grid, the zone
+tree, the pass widgets, axe at 1440/820/390 in both themes), e2e `16-scan-access`.

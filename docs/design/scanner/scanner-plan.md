@@ -28,6 +28,19 @@ How to build PassBook's scanner. Written for engineers who have only this file a
 >   memo column (§7); "starter" is **Blueprint** in strings and new code names; the earliest cut is T0 + 350
 >   in BM too (§1.5).
 
+> **Revision 2026-11-05** (the owner's multi-screen stations and the Access card):
+> - **Phase 0 takes eight small amendments now** (P0.8, `addendum/p0-amendments.md`): `display` devices and
+>   `device_role` in `0014`, the guard's `SCREEN_ONLY` step, the five access reasons, `ScanOutcome.access`, the
+>   manifest's `access` key, the display doc's `customer` block, two icons, and wake lock on `/scan`.
+> - **Five new streams** (§3, §5.11-5.15): **ST** stations and realtime (server and client socket), **AX** access and
+>   zones (pure rules, server, console Zones and the designer's Access section), **CD** the customer display face,
+>   **MN** the desk monitor face, **BP** the Access card blueprint. Existing streams take small, owned additions
+>   (§5.16). No file has two owners.
+> - **Two milestones:** **M2A Access** and **M3A Stations**, both after M2 and both in the release (§1.2).
+> - **Migrations** `0019_scan_stations.sql` (ST) and `0020_scan_access.sql` (AX) (§7). New frozen contracts C20-C25
+>   (§4.1). New e2e `16-scan-access`, `16-scan-stations` (§9); the definition of done gains stations and access (§10).
+> - Sources: SA §18-19 (with `addendum/{stations,access,cloudflare-realtime}.md` as detail), SD §16-17, DM §11, BM §17.
+
 **Base.** Branch `next/integration` (HEAD `237b4ce`, n6 and n7 already merged). Every path is relative to the repo
 root. The design docs live in `docs/design/scanner/` (copied there by task P0.7). Every later reference to a doc in
 this plan means that copy.
@@ -46,6 +59,8 @@ this plan means that copy.
 | PM | `platform-map.md` | facts about today's code |
 | R | `research/scanning/report.md` | background; its critic block overrides its body |
 | ME, UC, UP | `docs/design/{motion-and-expression,ui-consistency,ux-principles}.md` | platform design rules |
+| ST, AX, RT | `addendum/{stations,access,cloudflare-realtime}.md` | the detail behind SA §18-19 (SA wins where they differ) |
+| P0A | `addendum/p0-amendments.md` | the exact Phase 0 changes for stations and access (P0.8) |
 
 SA beats SD on data and behaviour. SD beats SA on what people see. DM and BF are detail references under SA and SD:
 DM for result content, BF for result visuals. **This plan beats both on file ownership, order,
@@ -108,7 +123,11 @@ Ship a first-class scanner on one Worker:
 | **M4 NFC (off)** | manifest `nfc`, `vas_keys`, five build gates, `nfc` injection, scoped reissue, serial rule, identity NFC card, reader keys made in the browser, Test a reader, designer **NFC** section, Settings switch, NFC runbook | Every gate is tested. The flag is off in every environment. A wedge read typed with `reader: 'nfc'` checks in as `method: 'nfc'` |
 | **M5 Offline** | v2: roster, local decide, IndexedDB queue, batch sync, conflicts. v3: a `/scan` service worker for an offline cold start | An offline event scanner checks in from the roster. Its queue syncs, and conflicts show without interrupting the door |
 
-**Release** needs M1 to M4. M5 follows and doesn't block it.
+| **M2A Access** | after M2 (Manager approvals for **Let in anyway**, the designer's Scanning section). `0020`; the pure access rules with the ported 24-case suite and the DST, zone, guest and gate tests; zones service and routes; scanner **Checks**; org time zone; the access steps 10a-10e and the gate in resolve and act; `overrideOf` widening; visits history; the `access` scope root and `PassScope.access`; the Zones tab, the designer's Access section, the pass widgets and the Access card on pass detail; the **Access card** blueprint with art and display; the `gate` beat; access results on the scanner | A gym morning on a test clock: a 24/7 member, an Off-peak member and a 2-visit guest at a Pool door and a Gym door get granted, outside hours, not in plan, visits used and suspended, once each; a Manager PIN lets one in; re-entry inside the gap shows **Access granted** again and counts one visit. `16-scan-access` is green |
+| **M3A Stations** | after M2 (desk `ready` and review feed the customer's **Hi, Sam** and **To pay**). `0019`; device roles and stations in the console (Devices tab, Add device, station settings, pairing a screen); `ScanHub`, the live routes, catch-up and snapshot; publish from resolve, act and undo; the customer renderer; the Customer screen and Desk monitor faces; the device flip and PIN unlock; zone watches once M2A is in | A phone flipped to a Customer screen shows a stamp within 300 ms of the scan locally; a monitor shows three scans in order, then both scans made while its socket was down; revoking a screen shows its block panel within 2 s. `16-scan-stations` is green |
+
+**Release** needs M1 to M4, M2A and M3A. M5 follows and doesn't block it. M2A and M3A run in parallel with M3 and M4;
+M3A's zone watch is hidden until M2A merges (`scans.zone_id` exists).
 
 ### 1.3 Later (not this wave)
 
@@ -420,16 +439,37 @@ routers are mounted but empty.
 
 **P0.7 Design docs into the repo**
 - Copy `scanner-architecture.md`, `scanner-design.md`, `buddy-motion.md`, `arch-client.md`, `ux-door.md`,
-  `ux-desk.md`, `ux-admin.md`, `docs/design/scanner/display-model.md` and this plan into `docs/design/scanner/`.
-- Copy `docs/design/scanner/b-final.md` to `docs/design/scanner/b-final.md` and `docs/design/scanner/b-final/*.png` into
+  `ux-desk.md`, `ux-admin.md`, `directions/display/display-model.md` and this plan into `docs/design/scanner/`.
+- Copy `directions/b-final/README.md` to `docs/design/scanner/b-final.md` and `directions/b-final/sheets/*.png` into
   `docs/design/scanner/b-final/`: the visual source of truth for `/scan`.
-- Copy `docs/design/scanner/display/*.png` into `docs/design/scanner/display/`: the source for the Scan screen editor.
+- Copy `directions/display/sheets/*.png` into `docs/design/scanner/display/`: the source for the Scan screen editor.
 - Copy `buddy-draft/{beats.css,props.tsx,sound.ts}` into `docs/design/scanner/buddy-draft/`. They are a reference,
   not built.
-- Copy only the `admin-*` mockup sheets (`docs/design/scanner/mockups/admin-*.png`) into `docs/design/scanner/mockups/`, after
+- Copy only the `admin-*` mockup sheets (`mockups/sheets/admin-*.png`) into `docs/design/scanner/mockups/`, after
   regenerating **Admin 01 Pairing** and **Admin 03 Designer** for SD §14's two fixes. The `scan-*` sheets are
   superseded and not copied.
+- 2026-11-05: copy `addendum/{stations,access,cloudflare-realtime,ux,p0-amendments}.md` into
+  `docs/design/scanner/addendum/`, and the sheets and shots they cite (`addendum/{sheets,shots}/`,
+  `addendum/stations/sheets/`, `addendum/access/{sheets,admin/shots}/`) and `addendum/ux.md` beside them; the reference evaluator
+  `addendum/access/gen/access-eval{,.test}.mjs` as a reference, not built.
 - Every later reference in this plan means the copy in `docs/design/scanner/`.
+
+**P0.8 Stations and access amendments** (2026-11-05; `addendum/p0-amendments.md`, the source of truth for this task)
+- **Files:** `migrations/0014_scan.sql`, `test/migrations.test.ts`; `platform/auth.ts`, `modules/scan/auth-store.ts`,
+  `test/helpers/fake-auth.ts`; `modules/scan/guard.ts` and its test; `contracts/{scanners,scan-session,scan}.ts`;
+  `copy/scan.ts`; `passkit/types.ts`, `shared/scan-defaults.ts`; `passkit/template/scan-display/{schema,icons}.ts`;
+  `platform/security-headers.ts`, `public/_headers`.
+- **Build:** P0-1 to P0-8: `kind` + `display` and `device_role` with its CHECKs; `ScannerAuth.scannerKind`,
+  `.deviceRole`; guard step 4 `SCREEN_ONLY` after the rate limits (`screens: true` on session and unpair);
+  `ScannerSchema.deviceRole`, `accepts` nullable, session `scanner.deviceRole`; five refused reasons, `ScanAccessSchema`
+  (with the required `timeZone`) on outcome and card, their copy and `SCREEN_ONLY` copy; `ScanManifest.access` (types) and `scanOf`'s
+  `repeat: 'always'`; `ScanDisplayDoc.customer` (`chips` max 18) and the `infinity`, `clock` icons;
+  `screen-wake-lock=(self)` on `/scan` only if P0.5 is still open (else IN.6 takes it; P0A P0-8).
+- **Tests first:** as listed per item in P0A (the CHECKs, the guard matrix for screens, the copy coverage, the
+  `scanOf` rule, the Access card doc parsing, the header test).
+- **Done when:** `node addendum/access/gen/check-package.mjs` parses the Access card's display with no icon swaps and
+  the customer block in place; `npm run check` is green. If P0.1-P0.4 are already committed, one commit per item on
+  `next/n8-p0` before the merge.
 
 **P0 exit:** `npm run check` is green, `0014` applies, and the contracts, the client types and the routers exist.
 Every stream can start.
@@ -438,7 +478,7 @@ Every stream can start.
 
 ## 3. Workstreams and owned paths
 
-Nine streams run in parallel after P0. No two streams own the same file, and no file is a shared touch of two
+Nine streams run in parallel after P0 (fourteen with the 2026-11-05 streams below). No two streams own the same file, and no file is a shared touch of two
 streams. Unlisted files belong to their usual `AGENTS.md` owner, and need a request.
 
 | Stream | Owns (after P0) | Shared touches (additive, reported) |
@@ -454,6 +494,37 @@ streams. Unlisted files belong to their usual `AGENTS.md` owner, and need a requ
 | **AD** admin | `src/web/admin/scanning/**`, `src/web/routes/admin/scanning/**` | `src/web/admin/identities/{nfc-card,reader-key-dialog,reader-test-dialog}.tsx` + `identity-cards.tsx` switch removal (n2); `src/web/admin/passes/detail/{sync-tab,sync-model}.ts(x)` (n1); `src/web/admin/passes/` list filters (i); `src/web/admin/overview/*` (h); `src/web/admin/messages/{audience,composer-state}.tsx` (n7); `src/web/admin/audit/labels.ts` (h); `src/web/admin/settings/*` Scanning group (h); `src/web/lib/{nav,entities,status,actions,confirms}.ts` (h0) |
 | **TD** template designer | `src/web/admin/templates/designer/scan/**` (the Scan screen mode, DM §10.2) | `src/web/admin/templates/designer/{section-scan,ops-scan,section-nfc,ops-nfc,model,apply,reducer,targets,outline,designer,designer-page,api,section-inputs}.ts(x)` and `designer.test.ts`, `designer-ui.test.tsx` (n5); `src/web/admin/templates/{template-overview,versions-panel}.tsx` (i) |
 | **IN** integration | `e2e/16-scan-*.spec.ts`, `e2e/helpers/scan.ts`, `e2e/fixtures/{make-y4m.ts,scan-qr.y4m}`, `e2e/helpers/scan-templates.ts`, `playwright.config.ts`, `tools/e2e-server.ts`, `docs/{api,operations,security}.md`, `docs/design/motion-and-expression.md`, foundation files after P0 | — |
+
+**Added 2026-11-05: stations and Access cards.** Five more streams. Paths are new unless noted.
+
+| Stream | Owns | Shared touches (additive, reported) |
+| --- | --- | --- |
+| **ST** stations and realtime | `migrations/0019_scan_stations.sql`; `src/worker/modules/scan/{routes-stations,routes-live,routes-role,stations,role,repo-stations}.ts`; `src/worker/modules/scan/live/**` (`hub`, `hub-sql`, `tags`, `identify`, `audiences`, `rows`, `publish`, `snapshot`, `guard`); `src/shared/contracts/scan-live.ts` (after P0); `src/shared/copy/scan-customer.ts`; `src/web/scan/live/**` (`socket`, `use-live`, `live-store`, `wake`) | `wrangler.jsonc`, `src/worker/index.ts`, `tools/wrangler-config.test.ts` (integration); `modules/orgs` suspend hook calling `live.kickAll` (g makes it, on request); `docs/operations.md` hub runbook (IN) |
+| **AX** access and zones | `migrations/0020_scan_access.sql`; `src/passkit/template/access/**` (`hours`, `decide`, `scope`, `validate`, `index`); `src/worker/modules/scan/{access,zones,routes-zones,repo-zones,repo-access}.ts`; `src/shared/contracts/access.ts`; `src/web/admin/scanning/zones/**`; `src/web/admin/templates/designer/access/**`; `src/web/admin/passes/inputs/{access-plan,access-zones}.tsx`, `src/web/admin/passes/detail/access-card.tsx` (i registers them) | `modules/orgs` time zone, `contracts/orgs.ts` and the org form's **Time zone** field (g and h make them, on request); `contracts/passes.ts` `PassDetail.access` (d); the pass form's widget registry and the detail page's card slot (i); |
+| **CD** customer display | `src/web/scan/customer/**` (`customer-face`, `customer-card`, `idle`, `see-desk`, `customer.css` with the `--c-*` tokens); `src/web/scan/role/**` (`show-to-customer`, `back-to-scanning`, `hold-ring`) | none |
+| **MN** desk monitor | `src/web/scan/monitor/**` (`monitor-face`, `rail`, `counters`, `presence`, `feed`, `feed-row`, `filters`, `alert`, `row-sheet`, `monitor.css`) | none |
+| **BP** Access card blueprint | `templates/starter-access-card/**` | `templates/_tools/painters.ts` (`accessThumb`, a2); the blueprint gallery order (`src/web/admin/blueprints/`, i) |
+
+Changes to existing ownership, so no file has two owners:
+- **AD** owns `src/web/admin/scanning/**` **except `zones/**`** (AX). AD hosts the **Zones** tab entry and builds
+  `devices/**` and `stations/**` (AD.9).
+- **UI** owns the boot role gate (`src/web/scan/boot/role-gate.tsx`) and the menu's **Show to customer** item; the
+  sheets behind it are CD's.
+- **TD** owns `designer/scan/customer-tab.tsx` (inside `designer/scan/**`) and registers AX's **Access** outline
+  entry in n5's `outline.ts`.
+- **SV** owns every call into ST and AX from its files (`guard.ts` `actor.live`, `resolve.ts`, `act.ts`, `undo.ts`,
+  `outcome.ts`, `rules.ts`). ST and AX export functions; SV calls them (§5.16).
+- **SC** owns the scanner console's new fields in its files (`scanners.ts`, `routes-scanners.ts`, `pairing.ts`,
+  `feed.ts`, `dto-console.ts`, `repo-scanners.ts`): device roles, station, watch, screen, zone ids.
+- **DS** owns `scan-display/customer.ts` and the history and scope changes (`repo-history.ts`, `scope.ts`).
+- **PT** owns `PassScope.access` in `passes/builder.ts`, the build-key rule in `templates/persist.ts` and access input
+  validation in `passes/service.ts`.
+- **BU** owns the `gate` beat and the customer and monitor buddy seats (`src/web/scan/buddy/**`).
+- **IN** owns `e2e/16-scan-{access,stations}.spec.ts`, `e2e/helpers/scan-live.ts` and the binding.
+
+Cross-stream imports for the new streams go one way: `src/passkit/template/access/**` imports nothing from `src/worker`
+or `src/web`; `modules/scan/live/**` imports SV's types, never its services; CD and MN import ST's `src/web/scan/live/**`
+and UI's display painter (C18), never each other.
 
 **The visual direction is isolated in UI and BU.** Geometry, z-order, type steps, colour tokens and motion (BF) live
 only in `src/web/scan/{ui,result,display,desk,buddy}/**`. DS, CC, SV, SC, PT and TD carry content, order and the
@@ -484,7 +555,7 @@ painter, so it follows the direction with no TD change.
 | C1 | Wire schemas: device API, console API, NFC, reasons, `ScanCard` (with `display`), `ScanOutcome` (with `display`), `ScanSession` (with `event.note`) | `src/shared/contracts/{scan,scanners,nfc}.ts` | P0.2 | SV, SC, PT, CC, UI, AD, DS |
 | C2 | Copy: every reason's headline, sub and actions | `src/shared/copy/scan.ts` | P0.2 | UI, AD, SC (CSV) |
 | C3 | Manifest types and defaults: `ScanManifest` (with `display`), `NfcManifest`, `scanOf` | `src/passkit/types.ts`, `src/shared/scan-defaults.ts` | P0.2 | PT, SV, DS, TD |
-| C4 | Principal: `ScannerAuth`, `ScannerStore`, `ScanActor`, `requireScanActor`, `fake.scanner` | `platform/auth.ts`, `modules/scan/guard.ts`, `test/helpers/fake-auth.ts` | P0.3-4 | SV, SC |
+| C4 | Principal: `ScannerAuth`, `ScannerStore`, `ScanActor`, `requireScanActor`, `makeScanner` (with `fake.scanner` for the principal alone) | `platform/auth.ts`, `modules/scan/guard.ts`, `test/helpers/fake-auth.ts` | P0.3-4 | SV, SC |
 | C5 | Publish hook: `PublishOptions.commit?: (w: { objectKey: string; version: number }) => D1PreparedStatement[]`. `casPublish` runs `db.batch([casUpdate, ...commit(w)])`. Each hooked statement guards itself with `EXISTS (SELECT 1 FROM passes WHERE id = ? AND object_key = ?)` | `modules/passes/publish.ts` | PT.1 (first PT merge) | SV.5 |
 | C6 | Validity: `validityOf(passJson, now) → { status: 'active' \| 'voided' \| 'expired', validFrom, validUntil }` | `src/shared/pass-view/validity.ts` | PT.1 | SV.1, UI |
 | C7 | Lookup keys: `lookupHashOf(value) = sha256hex(normalizeLookup(value))`, written on every publish when `manifest.scan.lookup` is set | `modules/passes/builder.ts` | PT.1 | SV.1 |
@@ -500,6 +571,13 @@ painter, so it follows the direction with no TD change.
 | C17 | Server display: `buildDisplay(ctx, { actor, pass, card, template, screen, scan, history }) → ScanDisplay \| null` (never throws); `historyStatements(db, needs, { passId, orgId, timeZone, now }) → { stmts: D1PreparedStatement[], read(results) }` | `src/worker/modules/scan/display.ts`, `repo-history.ts` | DS.3 | SV.1, SV.2 |
 | C18 | Display painter: `<DisplayPanels display width />`, `<ResultCard outcome card display session />`, `<IdentityRow />`, one component per row type, `scanIcon(id)` | `src/web/scan/{display,result}/*` | UI.6 | UI, TD (canvas) |
 | C19 | Save version: `SaveVersionRequest.activate: boolean \| 'display-only'`; `SaveVersionResponse.{activated, displayOnly}`; `TemplateVersionSchema.displayOnly` | `src/shared/contracts/templates.ts` | PT.7 | TD |
+
+| C20 | Live wire: `LiveEventSchema`, `LiveClientMessageSchema`, `ScanCustomerViewSchema`, `ScanMonitorRowSchema`, `LiveCatchUpSchema`, `ScanLiveSnapshotSchema`, `LIVE_CLOSE`; station, watch and role schemas | `src/shared/contracts/scan-live.ts` | ST.1 (first ST merge) | CD, MN, SC, AD, SV |
+| C21 | Live client: `openLive({ onEvent, onHealth }) → { beat(k, ref?, amount?, actionId?) }`; `useLive()`; `liveStore` (dedupe by `ref`, order, counters, customer newest-wins); `useWakeLock()` | `src/web/scan/live/*` | ST.4 | CD, MN, UI (beats from the scanner) |
+| C22 | Publish: `publishScan(ctx, actor, result)`, `publishReady(ctx, actor, card, ref)`, `publishUndo(ctx, scan)`, `kick(ctx, orgId, mode, match, code)`; `actor.live` (`{ customers: boolean, monitorAudiences }`) from the guard read | `modules/scan/live/publish.ts`, `guard.ts` | ST.3 (signatures stubbed in ST.1) | SV, SC |
+| C23 | Customer render: `renderCustomerView(doc, scope, opts) → ScanCustomerView`, `customerIssues(doc)`, `defaultCustomer(doc)` | `src/passkit/template/scan-display/customer.ts` | DS.6 | ST, TD |
+| C24 | Access rules: `decide(input) → Decision`, `accessScope(manifest, inputs, zones, tz, createdAt)`, `hoursText`, `zonesText`, `accessIssues(manifest, { zones? })`; server `accessCheck(ctx, actor, pass, manifest)`, `accessGateStatement(...)` | `src/passkit/template/access/index.ts`, `modules/scan/access.ts` | AX.1 (pure), AX.2 (server; stubbed in AX.1) | SV, PT, DS, TD |
+| C25 | Access contracts: `ScanZoneSchema` and friends, `ScannerZonesSchema`, `PassAccessSchema`, `WeeklyHoursSchema` | `src/shared/contracts/access.ts` | AX.1 | SC, AD, i, d |
 
 **Changing a frozen contract.**
 1. Open a PR against `next/integration` that changes only the contract file and its tests.
@@ -1610,7 +1688,7 @@ no React, no worker imports, no sizes or colours (the §3 lint test).
 ### 5.10 TD: template designer (Scanning, Scan screen, NFC)
 
 TD owns `designer/scan/**` and is the only stream that touches n5's designer files and i's template pages (§3). DM
-§10 is the spec; SD §10.5 and §10.8 give the copy; `docs/design/scanner/display/` are the visual target (the three model
+§10 is the spec; SD §10.5 and §10.8 give the copy; `directions/display/sheets/` are the visual target (the three model
 corrections of SD §14 win over the sheets).
 
 **TD.1 Designer Scanning section** (M2; needs PT.2) — was AD.6
@@ -1683,6 +1761,184 @@ corrections of SD §14 win over the sheets).
   error.
 - **Done when:** a rule visibly switches between two real passes.
 
+### 5.11 ST: stations and realtime (M3A)
+
+SA §18 is the spec; ST §4-§7 the detail; RT §6-§7 the prototype sketch. Wrangler and the Worker export are integration's
+files: ST asks, IN applies (IN.6).
+
+**ST.1 Stations, roles and contracts** (M3A; needs P0.8, M2 merged)
+- **Files:** `migrations/0019_scan_stations.sql` (SA §18.7 verbatim), `test/migrations.test.ts`
+  (`describe('0019_scan_stations')`), `test/query-plans.test.ts`; `contracts/scan-live.ts` (C20); `modules/scan/
+  {stations,role,repo-stations,routes-stations,routes-role}.ts`; stubs of `live/publish.ts` (C22 signatures, no-ops).
+- **Build:** station CRUD, assign, archive (detach in one batch), the mode rule; device role changes from the console
+  (`POST /api/v1/scanners/{id}/role`, any role the kind allows) and the device (`/scan/role/options`, `/scan/role`
+  with the PIN unlock and the no-staff hold rule; the implicit station on flip); audit rows (SA §2.11); errors
+  `ROLE_NOT_ALLOWED`, `STATION_MODE_MISMATCH`, `STATION_ARCHIVED`, `UNLOCK_REQUIRED`.
+- **Tests first:** the migration (tables, the watch CHECK, the FK-child index test, the partial indexes); flip to
+  customer joins or creates a station and audits `scanner.role_change` with `via: 'device'`; flip back needs a PIN
+  when staff exist, locks after 5 misses; a terminal or a display can't flip; following itself, a screen, a revoked or
+  another-mode device fails; a mode change detaches the station; org isolation on every route.
+- **Done when:** a station with a scanner and a Customer screen can be built through the API and the device flips both
+  ways.
+
+**ST.2 The hub and the live routes** (M3A; needs ST.1 and IN.6's binding)
+- **Files:** `live/{hub,hub-sql,tags,identify,guard,snapshot}.ts`, `routes-live.ts` and tests.
+- **Build:** `ScanHub` (fetch upgrade, `publish`, `read`, `kick`, `kickAll`, `webSocketMessage`, `webSocketClose`,
+  `alarm`), the tag scheme and attachment, the buffers (staff 15 min / 500; customer 30 s, replay < 10 s), epoch and
+  seq, the auto-response ping, ≤ 3 sockets per device, the 10/s beat cap, the 15-minute attachment expiry checked
+  before every send (4401), the `ctx.id.name` check against the attachment, `presence()` for the console's Devices
+  list; `requireLivePrincipal`, the Origin and upgrade checks, the upgrade forwarded as a new `Request` that sets
+  `x-pb-live` itself; `/live/events` and `/live/snapshot` (a zone watch selects by the scanners that check the
+  watched zones or their descendants, not by `scans.zone_id`, so refusals decided before the zone step show).
+- **Tests first** (SA §18.10, ST §7.6 Hub and Upgrade): replay since/epoch; `reset` on a new epoch; customer rows older
+  than 10 s never replay; `evictDurableObject(stub, { webSockets: 'hibernate' })` keeps sockets and attachments;
+  `runDurableObjectAlarm` prunes and doesn't re-arm when empty; a 4th socket closes the oldest with 4408; a beat from
+  a customer socket closes 1008; an expired attachment closes 4401 and receives nothing; a client-sent `x-pb-live`
+  is ignored; upgrade refusals (no cookie 401, wrong Origin 403, revoked 401, bearer 401, admin session 401).
+- **Done when:** two test sockets on one station and an `w:org` monitor receive a published event once each.
+
+**ST.3 Publish and audiences** (M3A; needs ST.2, DS.6, SV.9)
+- **Files:** `live/{publish,audiences,rows}.ts` (replacing the ST.1 stubs).
+- **Build:** `publishScan`, `publishReady`, `publishUndo` (`ref` and `scanId`; Customer screens get `ref` only),
+  `kick` (revoke, unpair, role and watch kicks awaited with one retry); `zones` on every publish = the device's
+  checked zones plus ancestors; customer bodies only when the request's `input` is a `code` (SA §18.4), plus the
+  `cue` field; per-audience rendering in `waitUntil`
+  (`renderCustomerView`, `buildDisplay` per monitor audience, `toMonitorRow`), each guarded; audience grants for monitor
+  photos (`assets.ts` change asked of SV); `scans.station_id` written by SV.9.
+- **Tests first:** once per non-replay scan, none for replays, none when the org has no screens (`SCAN_HUB` spy: 0
+  calls); a lookup (`input.passId`) publishes no customer body on `ready` or `scan`; a Pool watch gets a `suspended`
+  refusal at a Pool door and a site watch its child zone's grants; an undo reaches the Customer screen by `ref`; a throwing hub never changes the scan's response bytes; customer safety over every outcome fixture (ST §7.6);
+  a Door monitor's row omits desk-only inputs; isolation by org, mode, station, event and zone; `{ org: true }` gets
+  each event once.
+- **Done when:** a scan on a test scanner reaches a Customer screen socket and a monitor socket with the right bodies.
+
+**ST.4 Client socket and store** (M3A; needs ST.2)
+- **Files:** `src/web/scan/live/{socket,use-live,live-store,wake}.ts` (C21).
+- **Build:** RT §7.4 with ST §4.4-4.5: heartbeat, resume on `visibilitychange`, `pageshow` and `online`, jittered
+  backoff, the catch-up poll (2 s for 2 min, then 5 s), dedupe by `ref`, ordering, customer newest-wins and the
+  ready/review pairing, close-code handling, `useWakeLock`. No dependency; `socket.ts` + `use-live.ts` ≤ 3 kB in the
+  scan initial chunk.
+- **Tests first** (unit, a fake WebSocket and timers): duplicate `ref` dropped; an older customer event dropped;
+  4403 stops reconnecting; 4409 refetches the session; backoff caps at 10 s; the poll steps down; `reset` calls the
+  snapshot (monitor) or idles (customer).
+- **Done when:** CD and MN can render from `useLive()` against a hub in `vite dev`.
+
+**ST.5 Operations** (M3A; with IN)
+- `docs/operations.md`: the hub runbook (kick a device, wipe an org's hub and what clients do, the first
+  `wrangler deploy` with the class). The device checks of §8.2 for stations.
+
+### 5.12 AX: access and zones (M2A)
+
+SA §19 is the spec; AX §1-§6 the detail; `addendum/access/gen/access-eval.mjs` and its 29 tests the reference code.
+
+**AX.1 Pure rules, migration and zones** (M2A; needs P0.8, M1 merged)
+- **Files:** `migrations/0020_scan_access.sql` (SA §19.7 verbatim), migration and query-plan tests;
+  `src/passkit/template/access/**`; `contracts/access.ts` (C25); `modules/scan/{zones,routes-zones,repo-zones}.ts`;
+  stub `modules/scan/access.ts` (C24 signatures).
+- **Build:** port `access-eval.mjs` 1:1 into `hours.ts`, `decide.ts`, `scope.ts`, `validate.ts`; zone CRUD with depth,
+  cycle and org rules, `zones_rev` bumps, archive and restore with children; scanner zones (`PATCH /scanners/{id}`
+  `zoneIds`, through SC.9); org time zone (asked of g).
+- **Tests first:** the reference suite ported, plus Lord Howe and a runtime-rule snapshot (AX §6.4); every `accessIssues`
+  code; the migration (key CHECK rejects `Pool`, `a b`, `*`; a child with a time zone fails; cascades).
+- **Done when:** the pure suite is green and zones round-trip through the API.
+
+**AX.2 Access in the scan flow** (M2A; needs AX.1, SV.10)
+- **Files:** `modules/scan/{access,repo-access}.ts` (replacing the stub).
+- **Build:** `accessCheck` (10a-10e), `accessGateStatement` (the UPSERT of SA §19.4), the cached org zones read, the
+  unknown-plan log; `ScanOutcome.access` and `ScanCard.access`.
+- **Tests first** (worker, real D1): the full order, each reason once; multi-zone OR with the first open zone named; a
+  no-zone scanner names no zone; a foreign zone id grants nothing; two racing scanners on a guest with one visit left
+  both pass and `count` rises once, on a guest with none both refuse; undo of a visit decrements, of a non-visit
+  doesn't, an older grant answers `UNDO_SUPERSEDED`, a second undo in a row too; the gate row's `action_id` is
+  `'access'`; `ScanOutcome.access.timeZone` is the zone's; `ready` writes nothing;
+  an event scanner checks an access card in once, then `already_done`; logs carry ids only.
+- **Done when:** the gym morning of M2A passes in a worker test.
+
+**AX.3 Console: zones, scanner Checks, pass widgets** (M2A; needs AX.1, SC.9, AD.9's Zones tab entry)
+- **Files:** `src/web/admin/scanning/zones/**`, `src/web/admin/passes/inputs/{access-plan,access-zones}.tsx`,
+  `src/web/admin/passes/detail/access-card.tsx`; the scanner **Checks** picker component (exported to AD).
+- **Build:** SD §17.2: the tree, New zone, Archive, Show archived; phone list; the Checks picker with **Open now
+  for**; the plan select and extra zones widgets; the pass detail Access card with **Reset visits**.
+- **Tests first** (web): `aria-level` tree, the archive dialog copy, the picker's 8 cap, widget values; axe at 1440,
+  820 and 390 in both themes.
+
+**AX.4 Designer Access section** (M2A; needs AX.1, TD.8's outline entry)
+- **Files:** `src/web/admin/templates/designer/access/**`.
+- **Build:** SD §17.2: **Use as an access card**, the plan list and inspector, the week grid (copy Monday to weekdays,
+  overnight spans, Limit hours), Rules, the inert **On the scanner** strip, issue copy with **Create zone**.
+- **Tests first:** the week grid by keyboard, overlap error announced, copy to weekdays, `ACCESS_PLAN_IN_USE` copy;
+  ops pure and undoable (one step each).
+
+**AX.5 Gym morning** (M2A; with IN)
+- e2e `16-scan-access` (§9) and the device check "a gym morning" (§8.2).
+
+### 5.13 CD: the customer display (M3A)
+
+SD §16.2 and §16.4 are the spec; `addendum/ux.md` §2, §4, §6-§8 the sizes; `addendum/sheets/ux-customer-*`,
+`ux-roles-*`, `addendum/shots/c-*`, `r-*` and `addendum/assets/x-{cust,dev}.css` the visual target (on the B-final kit).
+
+**CD.1 Customer face** (M3A; needs ST.4, UI.6 (C18), BU.6)
+- **Files:** `src/web/scan/customer/**`.
+- **Build:** idle, reading, ready, review, ok, see the desk, reconnecting and not set up; the card rising from the
+  violet pass and tucking; holds (4 s, 6 s, 60 s); newest wins with the scanner's name; the how-to pills (**Hold near**
+  only with NFC on); wake lock and the **Keep this screen on** chip; the Test chip; phone and iPad layouts.
+- **Tests first** (web, a fake `useLive`): each state from a fixture view; no element renders a reason, a photo or a
+  name beyond `greet`; an older event is ignored; the result is announced once; reduced motion; axe at 390 and 1180,
+  light and dark; no layout shift on **Reconnecting**.
+
+**CD.2 Roles on the device** (M3A; needs ST.1, UI.7)
+- **Files:** `src/web/scan/role/**`.
+- **Build:** the pairing confirm lines for screens; **Which scanner is it facing?**; the capsule hold ring (1 s with
+  staff, 2 s without) with **Keep holding**; **Back to scanning?** with the shared keypad; the `SCREEN_ONLY` block card.
+- **Tests first:** hold timing with fake timers; the PIN sheet's tries-left copy; VoiceOver custom action; axe.
+
+### 5.14 MN: the desk monitor (M3A)
+
+SD §16.3 is the spec; `addendum/ux.md` §3 the sizes; `addendum/sheets/ux-monitor-*`, `addendum/shots/m-*` and
+`addendum/assets/x-mon.css` the visual target.
+
+**MN.1 Monitor face** (M3A; needs ST.4, UI.6, BU.6)
+- **Files:** `src/web/scan/monitor/**`.
+- **Build:** the rail (counters per watch, presence, the buddy), filters and segment counts, the feed table and phone
+  rows, alerts with **Seen** (≤ 3), the row sheet (read-only display for the audience), empty, reconnecting and reset
+  states; desk 1440, iPad 1180 and phone 390.
+- **Tests first** (web, fixture rows): ordering by `at` then `seq` with a late arrival; undone rows struck; alerts cap
+  and **Seen**; the **3 new** pill while scrolled; only alerts announced; the snapshot reset without a flash; axe at all three
+  sizes in both themes.
+
+### 5.15 BP: the Access card blueprint (M2A)
+
+**BP.1 Package and art** (M2A; needs P0.8, PT.3's blueprint rules, AX.1 for validation)
+- **Files:** `templates/starter-access-card/**` from `addendum/access/pass/starter-access-card/` (with `blueprint: true`
+  per TI §6.3), `accessThumb()` in `templates/_tools/painters.ts` (a2, shared touch), goldens.
+- **Build:** SA §19.6; plans 24/7, Off-peak, Guest day; the display with `c_plan`, `c_timed`, `c_guest` and the
+  customer block; the art at @2x and @3x from `addendum/access/pass/art/*.svg`; gallery order after Membership.
+- **Tests first:** the package validates (manifest, `accessIssues`, `scanDisplayIssues`, `customerIssues`); contrast ≥
+  4.5 for text and labels on Cobalt; build goldens for the blueprint sample and for a 24/7, an Off-peak and a guest
+  pass (with **Valid until** and `expirationDate`).
+- **Done when:** **Use blueprint** makes an access template that scans in the M2A e2e.
+
+### 5.16 Additions to existing streams
+
+| Task | Stream | Milestone | Needs | Delivers |
+| --- | --- | --- | --- | --- |
+| **SV.9 Live hooks** | SV | M3A | ST.1 (C22 stubs) | `actor.live` (the guard's two scalar subqueries, SA §18.5), `actor.station`, `actor.zones` (checked zones and ancestors, a third subquery, once 0020 exists); `input.code` vs `input.passId` passed to the publish calls; the asset route on `screens: true`, refusing `customer` itself; `scans.station_id` on insert; calls to `publishScan` (act), `publishReady` and refused `scan` (resolve), `publishUndo` (undo); the monitor audience grant in `assets.ts`. Tests: no extra D1 round trip (counting wrapper); zero publishes without screens |
+| **SV.10 Access hooks** | SV | M2A | AX.1 (C24 stubs) | the `accessCheck` call between steps 10 and 13 and the gate at 15 in `resolve.ts` and `act.ts`; `orgs.zones_rev` and the scanner's zone ids in the guard's scanner read (scalar subqueries, no round trip); the access undo rule in `undo.ts` (SA §19.4); `overrideOf` widening in `rules.ts` (SA §2.6); `ScanOutcome.access`; **Access granted** headline selection. Tests: the 2.6 order with access steps; overrides need a Manager and skip 10b-10e |
+| **SC.8 Device roles in the console API** | SC | M3A | ST.1 | `CreateScannerSchema.kind` + `display`, `deviceRole`, `stationId`, `watch`, `screen`; `ScannerSchema.station`, `.watch`, `.screen`; `ScanPairPreview.role`, `.stationName`; `GET /api/v1/scans?stationId=`; kicks (4409) on changes, 4403 on revoke. Tests: a display can't take `accepts`; a monitor's watch validates its ids in the org |
+| **SC.9 Scanner zones** | SC | M2A | AX.1 | `zoneIds` on create and update (≤ 8, org-checked, event scanners refused); `ScannerSchema.zones`; `ScanRecord.zone`, `.visit`; `?zoneId=` on the scans list |
+| **DS.6 Customer audience** | DS | M3A (may land in M2A) | P0.8 | `customer.ts` (C23), `customerIssues` in `scanDisplayIssues`, union `needs`. Tests: DM §11.8 |
+| **DS.7 Access bindings** | DS | M2A | AX.1 | the `access` scope root, `visit = 1` in `repo-history.ts` for access templates, `lastVisit.where` = zone. Tests: DM §11.8 |
+| **PT.8 Access in passes and templates** | PT | M2A | AX.1 | `PassScope.access` in `passes/builder.ts`; the build-key rule in `templates/persist.ts`; access input validation in `passes/service.ts` (create, update, bulk); a guest pass with no end gets `guestUntil()` written into its `until` input at create and when an update moves it onto a guest plan (SA §19.2); the org time zone prompt in Use blueprint for the Access card (with PT.3); a zone rename reissues the org's access passes that show it (bulk-reissue scoped by template). Tests: build goldens with `access.*`; 422 codes; a plan edit on a template without `access.*` bindings changes no build key |
+| **UI.7 Role gate and menu** | UI | M3A | ST.4, P0.8 | `boot/role-gate.tsx` picks scanner, customer or monitor face (lazy chunks of `scan.html`); the menu's **Show to customer**; the scanner's **Customer screen on** chip; the scanner sends `reading` at decode, `review`/`cancel` from the desk action area, and `idle` when the desk card closes without an action (C21). Tests: each role boots its face; the scan initial budget stays ≤ 150 kB |
+| **UI.8 Access results** | UI | M2A | SV.10, BU.6 | the access copy in the result card, the pin-led zone sub, **Again · 2 min ago** in the strip, **Let in anyway** in the dock for the five overridable reasons. Tests: snapshots of every row of SD §17.1 |
+| **BU.6 Gate beat** | BU | M2A | BU.3 | `gate` (BM §6.1), the beat-map rows, the reduced-motion pose. Tests: BM §17.3 |
+| **BU.7 Buddy on screens** | BU | M3A | BU.6, ST.4 | the customer seat (XL, `wave`, `rummage` while reading, `glance`, `sorry` never `shake`) and the monitor seat (S, throttled reactions) (BM §17). Tests: the map can't yield `shake` or `wrist` for a customer |
+| **AD.9 Devices tab and stations** | AD | M3A (Zones tab entry in M2A) | SC.8, ST.1 | rename Scanners to **Devices** (redirect `?tab=scanners`); the **Zones** tab entry hosting AX's page; `devices/**` and `stations/**`: grouping, Add device, pairing a screen, station settings, the scanner dialog's Station, Role and AX's **Checks** picker; phone layout (SD §16.5). Tests: web and axe at 1440 and 390 |
+| **AD.10 Audit labels** | AD | M2A, M3A | — | labels for `scan_station.*`, `scanner.role_change`, `scanner.watch_change`, `scan_zone.*`, `pass.access_visits_reset` (`admin/audit/labels.ts`, h) |
+| **TD.7 Customer tab** | TD | M3A | DS.6 | `designer/scan/customer-tab.tsx` (DM §11.7). Tests: pickers respect the per-header cap; greyed panels say why |
+| **TD.8 Access outline entry** | TD | M2A | AX.4 | registers **Access** after Scanning in `outline.ts` and routes its ops to AX's reducer (under 20 lines) |
+| **IN.6 Binding and specs** | IN | M3A, M2A | ST.1 | `wrangler.jsonc` `SCAN_HUB` binding and `exports` entry, `src/worker/index.ts` export, `npm run gen`, `tools/wrangler-config.test.ts`; `e2e/helpers/scan-live.ts` (two contexts, pair a screen, wait for `data-ref`); specs `16-scan-access` (M2A) and `16-scan-stations` (M3A) |
+
 ---
 
 ## 6. Integration order
@@ -1705,6 +1961,36 @@ P0 (P0.1 → P0.7, one merge)
  ├─ M4  PT.6 ─ AD.8 ─ TD.5  IN.2(nfc)  IN.3                            ── M4 gate = release candidate ──
  └─ M5  SV.8 ─ CC.7 ─ CC.8  IN.2(offline)                              ── M5 gate ──
 ```
+
+Stations and access (2026-11-05). P0.8 merges with P0. Both branches start once M2 has merged (AX.1 and BP.1's
+package work may start after M1 and wait to merge):
+
+```
+ ├─ M2A  AX.1 ─┬─ SV.10 ─ AX.2 ─ UI.8        DS.7   PT.8   SC.9 ─ AX.3   TD.8 ─ AX.4
+ │             └─ BP.1                       BU.6   AD.9(Zones entry)  AD.10   IN.6(16-scan-access) ── M2A gate ──
+ └─ M3A  ST.1 ─┬─ SV.9 ─ ST.3                DS.6 ─ TD.7   SC.8 ─ AD.9(Devices)
+               ├─ IN.6(binding) ─ ST.2 ─ ST.4 ─ UI.7 ─ CD.1 ─ CD.2   MN.1   BU.7
+               └─ ST.5   IN.6(16-scan-stations)                                     ── M3A gate ──
+```
+
+| Task | Merges after |
+| --- | --- |
+| P0.8 | inside P0, before the P0 merge |
+| AX.1, BP.1 | M2 gate |
+| SV.10 | AX.1 |
+| AX.2 | SV.10 |
+| UI.8 | SV.10, BU.6 |
+| AX.3 | SC.9 and AD.9's Zones tab entry |
+| AX.4 | TD.8 |
+| ST.1 | M2 gate |
+| ST.2 | ST.1, IN.6's binding |
+| ST.3 | ST.2, SV.9, DS.6 |
+| ST.4 | ST.2 |
+| UI.7 | ST.4 |
+| CD.1, MN.1 | ST.4, UI.6, BU.7 (CD.1 and MN.1 may merge with a placeholder seat if BU.7 is late) |
+| CD.2 | ST.1, UI.7 |
+| AD.9 (Devices) | SC.8 |
+| The zone watch in AD.9 and ST.3 | M2A gate (hidden until then) |
 
 **Hard edges** (merge after):
 
@@ -1758,14 +2044,23 @@ A gate passes when all of these hold:
 | --- | --- | --- | --- |
 | **0014** | `migrations/0014_scan.sql` | P0.1 | `scan_events`, `scan_event_templates`, `scan_staff`, `scanners`, `scanner_templates`, `scans`, `scan_gates`, `vas_keys`, `passes.lookup_hash` + `passes_lookup_hash`, `passes_org_title`, `passes_org_subtitle`, the `audit_log` rebuild with `scanner`, `scan_events.note` (≤ 140) and the partial index `scans_pass_ok` for display history. Verbatim from SA §6.1 |
 | **0018** | `migrations/0018_templates_build_key.sql` | PT.7 (M2) | `template_versions.build_key TEXT` and `template_versions_build (template_id, build_key)`; no backfill (the immutability trigger forbids it; `NULL` keeps today's behaviour). SA §6.1a |
+| **0014** (amended) | `migrations/0014_scan.sql` | P0.8 | `scanners.kind` + `display`; `device_role` with its two CHECKs; the terminal-only CSRF CHECK (P0A P0-1). Before the P0 merge |
+| **0019** | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
+| **0020** | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7) |
 
 **No ledger or visit table.** The balance ledger, visits and last visit are computed from `scans` (which already holds
 `amount`, `before_value`, `after_value`, `action_kind`, `outcome` and `at`) through `scans_pass_ok` (SA D24). No table
 stores rendered displays, and `scans` stays free of holder data. No memo column: ledger rows show the action label only
 (owner, 2026-11-04).
 
+0019 and 0020 are independent: either may merge first (D1 applies unapplied files by name; neither reads the other).
+Both were applied on SQLite 3.54 over `next/n8-p0`'s 0001-0016 with the amended 0014. The template-identity column
+(`templates.blueprint`, TI §6.3, "next free number") takes **0021** if it merges after these; the integration agent
+assigns the number at merge.
+
 No other migration is planned. If a stream needs a schema change after P0:
-- add `migrations/0019_scan_<topic>.sql` or later (`0017` is reserved for n5, `0018` is PT.7's);
+- add the next free number, `migrations/0021_scan_<topic>.sql` or later (`0017` is reserved for n5, `0018` is PT.7's,
+  `0019` ST's, `0020` AX's);
 - never rebuild a referenced table;
 - never depend on another stream's in-flight migration;
 - tell the integration agent in the report.
@@ -1800,6 +2095,19 @@ No other migration is planned. If a stream needs a schema change after P0:
 | A display render error at the door | A missing card body | `buildDisplay` never throws; the default display and one log (DS.3) | DS |
 | Bound text leaking data to a role | Privacy | Role filter on the doc and the scope before evaluation; secrets never in scope; tests per role (DS.1, DS.3) | DS |
 | Editor ops colliding with n5's designer changes | Merge pain in shared designer files | TD is the only stream in the designer; each hook under 20 lines; rebases on n5 first | TD |
+
+Added 2026-11-05:
+
+| Risk | Effect | Mitigation | Owner |
+| --- | --- | --- | --- |
+| iOS suspends sockets on lock or background [U] | A screen misses results | Resume on `visibilitychange`, `pageshow`, `online`; replay from `since`; the catch-up poll; wake lock in home-screen apps (iOS 18.4+) | ST |
+| A Cloudflare runtime update drops every socket at once | A reconnect burst | Jittered backoff, 3 sockets per device, `RL_SCAN` on upgrade; screens show **Reconnecting** only after 2 s | ST |
+| The 300 ms target missed on venue Wi-Fi [U] | A late customer card | `reading` beat at decode so the buddy reacts first; measured in e2e and on devices before M3A's gate; `locationHint` only if measured | ST |
+| WebKit blocks same-origin `wss:` under `connect-src 'self'` [U] | No socket | P0.8's device check; fallback adds explicit `wss://` origins to both policies | P0, IN |
+| A customer screen leaks staff data | Privacy | A separate strict view, allow-listed rows, the recursive fixture scan, no image URLs | DS, ST |
+| DST and time-zone edge cases at a door | A member refused at 6 AM on the clock-change day | `Intl`-based evaluation, the DST suite (New York, London, Kolkata, Lord Howe), a runtime snapshot test | AX |
+| Two scanners race a 1-visit guest | Two entries | The single gate UPSERT; the concurrency worker test | AX |
+| Generic passes not allowed for VAS NFC [U] | No door taps | NFC is off anyway; an **Access card · tap** storeCard variant is a package change | BP, owner |
 
 ### 8.2 Real-device checks (manual; results in each milestone's report)
 
@@ -1839,6 +2147,18 @@ No other migration is planned. If a stream needs a schema change after P0:
 **Desktop:**
 - **M1:** a webcam in Chrome and Safari; a USB barcode reader.
 
+**Stations (M3A):** an iPhone scanner and an iPad Customer screen (home-screen app, Guided Access) on venue-like Wi-Fi:
+- scan → screen card p95 over 50 scans ≤ 300 ms (log the numbers);
+- lock the iPad 30 s and 10 min, unlock: it reconnects, shows nothing stale, and replays only a result under 10 s old;
+- wake lock holds for 30 min in the home-screen app; refused in a Safari tab shows **Keep this screen on**;
+- a phone flipped to a Customer screen and back with a PIN; the flip survives a Safari relaunch;
+- a Desk monitor in desktop Chrome hidden for 10 min, then shown: the feed fills in from the catch-up;
+- airplane mode on the screen for 1 min during scans: **Reconnecting** without layout shift, then the feed catches up.
+
+**Access (M2A):** a gym morning with a test clock: 200 grants across two doors in 20 minutes, a guest with 2 visits,
+an Off-peak member at 3:59 and 4:00 PM, the Pool door's **Not in plan**, a Manager PIN override; the photo read at
+arm's length; DST: set the device and test clock across a spring-forward morning.
+
 ---
 
 ## 9. e2e specs to add
@@ -1857,6 +2177,8 @@ All under `e2e/`, using `e2e/helpers/scan.ts`. Reduced motion is the default; on
 | `16-scan-admin.spec.ts` | M3 | Create an event, assign a scanner; the dashboard shows the check-in within one poll; the Scans tab filter by reason; export CSV is audited; the pass Sync log **Scans** filter; the broadcast audience "Not checked in" count |
 | `16-scan-nfc.spec.ts` | M4 | NFC card states with the flag off; a reader key made in the browser (the SPKI posted, the private key never sent); Test a reader with a typed burst; a wedge read on a `reader: 'nfc'` scanner records `method: 'nfc'` |
 | `16-scan-offline.spec.ts` | M5 | Roster loaded; offline check-in gives **Saved offline**; reconnect syncs; a conflicting online scan gives `already_done` after the fact; a v3 cold offline load shows Start |
+| `16-scan-access.spec.ts` | M2A | Create zones (Capitol Hill › Main floor, Pool) and a scanner checking Pool; **Use blueprint** Access card; issue a 24/7 member, an Off-peak member and a 2-visit guest; scan at fixed test-clock times: granted with **Pool** and the `gate` beat's `data-beat`, again inside the gap (one visit), **Outside hours** with **Let in anyway** and a Manager PIN, **Not in plan** on a Studio-only plan, **No visits left** on the third visit, **Suspended** after a status change; an event scanner checks the member in once, then **Already checked in** |
+| `16-scan-stations.spec.ts` | M3A | Console: a station, a scanner and a Customer screen paired in a second context (**Pair here**), a Desk monitor in a third. Scan → the screen shows the card (`data-ref` changes) in < 300 ms locally; a refused pass shows **Please see the desk** with no reason in the DOM; three scans reach the monitor in order; kill the screen's socket, scan twice, reconnect: the monitor shows both, the screen stays idle; flip a phone to a Customer screen and back with a PIN; revoke the screen: its block panel within 2 s; a screen calling `POST /scan/resolve` gets 403 `SCREEN_ONLY` |
 | `16-scan-a11y.spec.ts` | M1-M3 | axe (`wcag2a`/`aa`/`21aa`/`22aa`, serious and critical fail) on pair, Start, aiming, each verdict kind, each owner example display, lookup, desk panel, action area, PIN panel, shift summary, the four admin tabs and the designer's Scan screen mode, at 390 × 844, 820 × 1180, 1180 × 820 and 1440 × 900, light and dark |
 
 ---
@@ -1904,6 +2226,22 @@ All under `e2e/`, using `e2e/helpers/scan.ts`. Reduced motion is the default; on
    and are logged as open.
 9. **Reports**: each stream's report lists the shared files it changed and any contract change PRs.
 
+**M2A and M3A are done** (both are in the release) when, in addition:
+- `16-scan-access` and `16-scan-stations` are green, and `16-scan-a11y` covers the Customer screen (each state), the
+  Desk monitor (desk, iPad, phone), the device role sheets, the Zones tab, the plan editor, the pass widgets and the
+  Devices tab, at 390, 820, 1180 and 1440, light and dark;
+- the visual check matches `addendum/sheets/ux-*`, `addendum/shots/{c,m,r,a,ad}-*`, `addendum/access/admin/shots/*` and the sheets
+  (`addendum/sheets/x-admin-*`, `addendum/access/sheets/*`, `addendum/stations/sheets/*`), with SD §16.3's and §17.1's
+  mockup fixes; one buddy per view; no layout shift on **Reconnecting**;
+- privacy: the customer-view fixture scan finds no reason, staff name, note, photo URL or name beyond the first; logs
+  carry no bodies, zone names, inputs or sponsors;
+- realtime: zero `SCAN_HUB` calls for an org without screens; the hub's hibernation, replay and prune tests pass; the
+  measured scan → screen p95 is logged (≤ 300 ms target; a miss is a reported risk, not a silent pass);
+- access: the ported reference suite and the DST cases pass; the guest-limit race test passes; the Access card
+  blueprint validates with goldens;
+- docs: `docs/api.md` gains **Access cards** (manifest `scan.access`, reasons) and **Live screens** (no public API;
+  how stations work); `docs/operations.md` the hub runbook; AGENTS.md rows for ST, AX, CD, MN, BP match §3.
+
 **M5 is done** when `16-scan-offline` is green and the offline device run (an iPhone in airplane mode, reconnecting)
 is logged.
 
@@ -1920,6 +2258,13 @@ Everything else is decided in the design docs and this plan. These are genuinely
 4. **Confirm B strengthened** for the result screens. Building can start now: if you later want "A at the door, B at
    the desk", only UI and BU change (§3).
 5. **Staff names in history rows**: off for now; a later, additive change (SA §17).
+
+6. **Flip back to scanning**: a staff PIN when the org has staff; otherwise a 2 s hold, flagged in the console. Say if
+   flipping should require staff.
+7. **"Hi, Maya" on customer screens**: on by default per station. Say if it should default off.
+8. **Access card defaults**: generic style (photo on the card), not-yet-valid red, visits merged within 2 hours,
+   text-sponsored guests, no holiday calendar (SA §17 items 8-11).
+9. **The first deploy with `ScanHub`** is a `wrangler deploy` by you (the class is new); agents never deploy.
 
 Settled by the owner, 2026-11-04: names in the band (the holder's name only, 2 lines for 1 more unit); the Balance
 card and Stamp card blueprints; no item names in the ledger.
