@@ -281,8 +281,11 @@ describe('scan records', () => {
       nextOpenAt: null,
       visits: { used: 1, limit: null },
       visit: true,
+      timeZone: 'America/Los_Angeles',
     };
     expect(ScanOutcomeSchema.parse({ ...outcome, access }).access).toEqual(access);
+    const { timeZone: _tz, ...noZone } = access;
+    expect(ScanOutcomeSchema.safeParse({ ...outcome, access: noZone }).success).toBe(false);
     const { access: _drop, ...without } = outcome;
     expect(ScanOutcomeSchema.parse(without).access).toBeNull();
     expect(ScanOutcomeSchema.safeParse({ ...outcome, reason: 'outside_hours' }).success).toBe(true);

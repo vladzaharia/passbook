@@ -34,6 +34,7 @@ describe('SCAN_COPY', () => {
       ).map((r) => SCAN_REASON_COPY[r].sub),
       SCAN_COPY.verdict.access.sub,
       SCAN_COPY.verdict.access.noHours,
+      SCAN_COPY.verdict.access.noZone,
     ];
     for (const line of lines)
       for (const [, key] of line.matchAll(/\{(\w+)\}/g)) expect(allowed).toContain(key);

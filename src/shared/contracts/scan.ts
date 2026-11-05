@@ -120,6 +120,8 @@ export const ScanAccessSchema = z.object({
   nextOpenAt: TimestampSchema.nullable(),
   visits: z.object({ used: z.number().int(), limit: z.number().int().nullable() }).nullable(),
   visit: z.boolean(),
+  /** The deciding zone's clock; the client formats {time} and {when} with it. */
+  timeZone: TimeZoneSchema,
 });
 export type ScanAccess = z.infer<typeof ScanAccessSchema>;
 export const ScanApprovalSchema = z.object({ staffId: IdSchema, pin: z.string().regex(/^\d{6}$/) });

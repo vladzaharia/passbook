@@ -96,6 +96,7 @@ export const SCAN_COPY = {
       headline: 'Access granted',
       sub: '{zone} · until {time}',
       noHours: '{plan} has no hours this week.',
+      noZone: '{plan} opens no zone here.',
     },
     letInAgain: 'Let in again.',
     stamps: { one: '+{n} stamp', other: '+{n} stamps' },
