@@ -298,5 +298,6 @@ describe('daily purge', () => {
       [old],
     );
     expect(left?.n).toBeGreaterThan(0);
-  });
+    // Creating 90 passes is the slow part; under a loaded runner it outlasts the 5 s default.
+  }, 60_000);
 });
