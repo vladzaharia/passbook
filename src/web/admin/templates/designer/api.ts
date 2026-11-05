@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   type SaveVersionResponse,
   SaveVersionResponseSchema,
@@ -51,7 +51,11 @@ export function useDesignCheck(templateId: string, doc: DesignDoc, enabled = tru
     staleTime: 60_000,
     retry: false,
   });
-  return { ...query, checking: settled !== doc || query.isFetching };
+  // A blocking issue builds no pass: keep the last card that built, and let the Issues list say why.
+  const built = query.data?.passJson ?? undefined;
+  const [lastBuilt, setLastBuilt] = useState(built);
+  if (built && built !== lastBuilt) setLastBuilt(built);
+  return { ...query, lastBuilt, checking: settled !== doc || query.isFetching };
 }
 
 export function useSaveVersion(templateId: string) {

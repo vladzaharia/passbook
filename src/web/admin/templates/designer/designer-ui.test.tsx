@@ -22,7 +22,13 @@ interface Posted {
 }
 
 function setup(
-  over: { template?: Record<string, unknown>; issues?: unknown[]; fail?: boolean } = {},
+  over: {
+    template?: Record<string, unknown>;
+    issues?: unknown[];
+    fail?: boolean;
+    /** The first dry run builds; later ones fail with no pass, as the server does on an error. */
+    nullOnError?: boolean;
+  } = {},
 ) {
   const posts: Posted[] = [];
   const activations: unknown[] = [];
@@ -54,7 +60,8 @@ function setup(
     '/api/v1/templates/tpl1/versions': (_url: URL, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body)) as Posted;
       posts.push(body);
-      const issues = over.issues ?? [];
+      // nullOnError: the first dry run builds; later ones fail with the issues and no pass.
+      const issues = over.nullOnError && posts.length === 1 ? [] : (over.issues ?? []);
       return json({
         saved: !body.dryRun,
         version: 'feedfacefeedface',
@@ -74,12 +81,16 @@ function setup(
             sha1: 'a'.repeat(40),
           },
         ],
-        passJson: {
-          ...body.passJson,
-          serialNumber: 'x',
-          passTypeIdentifier: 'p',
-          teamIdentifier: 't',
-        },
+        // The server builds no pass when an issue is an error.
+        passJson:
+          over.nullOnError && issues.length
+            ? null
+            : {
+                ...body.passJson,
+                serialNumber: 'x',
+                passTypeIdentifier: 'p',
+                teamIdentifier: 't',
+              },
         template: null,
       });
     },
@@ -401,6 +412,17 @@ describe('designer', () => {
     await user.click(await screen.findByRole('button', { name: /^Images/ }));
     const adds = await screen.findAllByRole('button', { name: /^Add / });
     for (const add of adds) expect(add).toHaveTextContent(/^Add$/);
+  });
+
+  it('keeps the last card while an error stops the pass from building', async () => {
+    const user = userEvent.setup();
+    const s = setup({ issues: [ISSUE], nullOnError: true });
+    await open(s);
+    const preview = await screen.findByTestId('designer-preview');
+    expect((await within(preview).findAllByText('Org')).length).toBeGreaterThan(0);
+    await user.type(await screen.findByLabelText('Logo text'), '!');
+    await screen.findByText('1 to fix');
+    expect(within(preview).getAllByText('Org').length).toBeGreaterThan(0);
   });
 
   it('will not save while the check has errors', async () => {

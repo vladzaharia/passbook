@@ -258,7 +258,7 @@ export function Designer({
           structure={<Outline />}
           preview={
             <DesignerPreview
-              passJson={readOnly ? readOnly.passJson : (check.data?.passJson ?? null)}
+              passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
               assets={state.doc.assets}
               assetBase={base_}
               checking={readOnly ? false : check.checking}
