@@ -1,4 +1,4 @@
-export type AuditActorType = 'user' | 'api_key' | 'system' | 'connection' | 'device';
+export type AuditActorType = 'user' | 'api_key' | 'system' | 'connection' | 'device' | 'scanner';
 
 export interface AuditEntry {
   orgId?: string | null;
