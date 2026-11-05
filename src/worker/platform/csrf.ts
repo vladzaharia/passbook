@@ -24,15 +24,17 @@ export const sameOriginOnly: MiddlewareHandler<AppBindings> = createMiddleware(a
   await next();
 });
 
-/** Same-origin plus X-CSRF-Token equal to the session's secret. Applies to cookie sessions only. */
+/** Same-origin plus X-CSRF-Token equal to the secret of a cookie session or scanner. Bearer scanners and API keys are exempt. */
 export async function csrfGuard(c: Context<AppBindings>, auth: AuthContext): Promise<void> {
-  if (SAFE_METHODS.has(c.req.method) || auth.kind !== 'session') return;
+  if (SAFE_METHODS.has(c.req.method) || auth.kind === 'api_key') return;
+  if (auth.kind === 'scanner' && auth.transport === 'bearer') return;
   if (!sameOrigin(c)) {
     reportDenied(c, 'CSRF_ORIGIN', auth);
     throw new ForbiddenError('Cross-origin requests are not allowed.', 'CSRF_ORIGIN');
   }
   const token = c.req.header(CSRF_HEADER);
-  if (!token || !(await safeEqual(token, auth.csrfSecret))) {
+  const secret = auth.csrfSecret;
+  if (!token || !secret || !(await safeEqual(token, secret))) {
     reportDenied(c, 'CSRF_TOKEN', auth);
     throw new ForbiddenError('Reload the page and try again.', 'CSRF_TOKEN');
   }

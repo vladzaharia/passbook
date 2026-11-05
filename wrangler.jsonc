@@ -130,7 +130,11 @@
     { "name": "RL_API_KEY", "namespace_id": "1005", "simple": { "limit": 600, "period": 60 } },
     { "name": "RL_WEBHOOK", "namespace_id": "1006", "simple": { "limit": 120, "period": 60 } },
     { "name": "RL_REFRESH", "namespace_id": "1007", "simple": { "limit": 3, "period": 60 } },
-    { "name": "RL_APPLE_IP", "namespace_id": "1008", "simple": { "limit": 3000, "period": 60 } }
+    { "name": "RL_APPLE_IP", "namespace_id": "1008", "simple": { "limit": 3000, "period": 60 } },
+    { "name": "RL_SCAN_PAIR", "namespace_id": "1010", "simple": { "limit": 30, "period": 60 } },
+    { "name": "RL_SCAN", "namespace_id": "1011", "simple": { "limit": 240, "period": 60 } },
+    { "name": "RL_SCAN_LOOKUP", "namespace_id": "1012", "simple": { "limit": 20, "period": 60 } },
+    { "name": "RL_SCAN_ORG", "namespace_id": "1013", "simple": { "limit": 3000, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

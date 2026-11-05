@@ -39,6 +39,10 @@ export const RATE_LIMITS = [
   'RL_API_KEY',
   'RL_WEBHOOK',
   'RL_REFRESH',
+  'RL_SCAN_PAIR',
+  'RL_SCAN',
+  'RL_SCAN_LOOKUP',
+  'RL_SCAN_ORG',
 ] as const satisfies readonly RateLimitName[];
 
 /**

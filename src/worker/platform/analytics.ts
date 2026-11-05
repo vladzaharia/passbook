@@ -13,7 +13,8 @@ export type EventName =
   | 'email.result'
   | 'sync.run'
   | 'refresh.requested'
-  | 'auth.sign_in';
+  | 'auth.sign_in'
+  | 'scan.result';
 
 export interface AnalyticsEvent {
   event: EventName;

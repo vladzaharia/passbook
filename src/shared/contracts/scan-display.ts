@@ -177,6 +177,7 @@ export const ScanDisplaySchema = z.object({
     refused: z.string().max(100).nullable(),
   }),
 });
+export type ScanDisplayScreen = z.infer<typeof ScanDisplayScreenSchema>;
 export type ScanDisplay = z.infer<typeof ScanDisplaySchema>;
 export type ScanDisplayRow = z.infer<typeof ScanDisplayRowSchema>;
 export type ScanDisplayPanel = z.infer<typeof ScanDisplayPanelSchema>;

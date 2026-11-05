@@ -10,7 +10,8 @@ export type Actor =
   | { type: 'api_key'; id: string }
   | { type: 'system'; id: string | null }
   | { type: 'connection'; id: string }
-  | { type: 'device'; id: string };
+  | { type: 'device'; id: string }
+  | { type: 'scanner'; id: string };
 
 export interface AppVariables {
   requestId: string;
@@ -30,9 +31,9 @@ export interface AppBindings {
 
 export function actorOf(auth: AuthContext | undefined): Actor {
   if (!auth) return { type: 'system', id: null };
-  return auth.kind === 'session'
-    ? { type: 'user', id: auth.userId }
-    : { type: 'api_key', id: auth.keyId };
+  if (auth.kind === 'session') return { type: 'user', id: auth.userId };
+  if (auth.kind === 'scanner') return { type: 'scanner', id: auth.scannerId };
+  return { type: 'api_key', id: auth.keyId };
 }
 
 export interface ContextOptions {

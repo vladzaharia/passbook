@@ -22,7 +22,7 @@ import {
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
 export interface Actor {
-  type: 'user' | 'api_key' | 'system' | 'connection';
+  type: 'user' | 'api_key' | 'system' | 'connection' | 'scanner';
   id: string | null;
 }
 
