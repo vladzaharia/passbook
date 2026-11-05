@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { MetricsOverviewSchema } from '@/shared/contracts/metrics.ts';
 import { api } from '@/web/lib/api.ts';
+import { useMode } from '@/web/lib/mode.ts';
 import { useArrival } from '@/web/lib/motion.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
@@ -12,6 +13,7 @@ import {
   Skeleton,
   useDelayed,
 } from '@/web/ui/index.ts';
+import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { ChartsCard } from './charts-card.tsx';
 import { GetStarted, setupDone, useGetStartedDismissed } from './get-started.tsx';
 import { Health } from './health.tsx';
@@ -71,6 +73,7 @@ export function OverviewPage({
 }) {
   const range = search.range ?? '7d';
   const { orgId } = useOrgScope();
+  const mode = useMode();
   const metrics = useMetrics(range, orgId);
   const arrived = useArrival(metrics.isPending);
   const busy = useDelayed(metrics.isPlaceholderData && metrics.isFetching, 150);
@@ -90,7 +93,11 @@ export function OverviewPage({
   );
   return (
     <>
-      <PageHeader title="Overview" actions={firstRun ? undefined : picker} />
+      <PageHeader
+        title="Overview"
+        meta={mode === 'test' ? <ModePill mode="test" /> : undefined}
+        actions={firstRun ? undefined : picker}
+      />
       <div className="flex flex-col gap-6">
         {metrics.isPending ? (
           <MetricsSkeleton />
