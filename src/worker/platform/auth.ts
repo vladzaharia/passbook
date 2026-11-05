@@ -70,9 +70,17 @@ export interface ApiKeyStore {
   resolve(rawKey: string): Promise<ApiKeyAuth | null>;
 }
 
-/** Implemented by modules/scan. Null for unknown, revoked or expired tokens. */
+/**
+ * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner
+ * was revoked or has expired throws a 401 with code SCANNER_REVOKED or SCANNER_EXPIRED, so the
+ * device can say why.
+ */
 export interface ScannerStore {
-  resolve(token: string, transport: 'cookie' | 'bearer'): Promise<ScannerAuth | null>;
+  resolve(
+    token: string,
+    transport: 'cookie' | 'bearer',
+    meta?: { ipPrefix: string | null },
+  ): Promise<ScannerAuth | null>;
 }
 
 export interface AuthStores {
