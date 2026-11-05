@@ -2,7 +2,7 @@ import { cn } from '@/web/lib/cn.ts';
 import { MetaLink } from '@/web/ui/index.ts';
 import type { Ref } from './labels.ts';
 
-const REF = 'max-w-full min-w-0 gap-1 align-bottom [&_svg]:size-3.5 [&_svg]:shrink-0';
+const REF = 'w-fit max-w-full min-w-0 gap-1 align-bottom [&_svg]:size-3.5 [&_svg]:shrink-0';
 
 /**
  * An actor or target, icon first. One that has a page is a MetaLink (muted, strong on hover); the

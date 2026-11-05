@@ -1,4 +1,4 @@
-import { Bot, type LucideIcon, Monitor, Settings } from 'lucide-react';
+import { Bot, Layers, type LucideIcon, Mail, Monitor, Settings } from 'lucide-react';
 import { humanize } from '@/web/lib/actions.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
 import type { AuditEntry } from './entry-drawer.tsx';
@@ -11,7 +11,11 @@ interface RefDef {
   icon?: LucideIcon;
   /** The page for this record, when it has one. */
   to?: (id: string) => string;
+  /** A fixed name for records that have no label of their own. */
+  name?: (id: string | null) => string;
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const REFS: Record<string, RefDef> = {
   pass: { label: 'Pass', kind: 'pass', to: (id) => `/admin/passes/${id}` },
@@ -25,9 +29,13 @@ const REFS: Record<string, RefDef> = {
   api_key: { label: 'API key', kind: 'apiKey', to: () => '/admin/api-keys' },
   device: { label: 'Device', kind: 'device' },
   session: { label: 'Session', icon: Monitor },
+  broadcast: { label: 'Message', kind: 'broadcast', to: (id) => `/admin/messages/${id}` },
+  bundle: { label: 'Bundle', icon: Layers },
+  captured_email: { label: 'Test email', icon: Mail, to: () => '/admin/test-inbox' },
   settings: {
     label: 'Settings',
     icon: Settings,
+    name: (id) => (id?.startsWith('org:') ? 'Organization settings' : 'Platform settings'),
     to: (id) => (id.startsWith('org:') ? `/admin/orgs/${id.slice(4)}` : '/admin/settings'),
   },
   system: { label: 'System', icon: Bot },
@@ -44,7 +52,8 @@ export interface Ref {
 function refOf(type: string, id: string | null, label: string | null | undefined): Ref {
   const def = REFS[type] ?? { label: humanize(type) };
   const icon = def.icon ?? (def.kind ? ENTITY[def.kind].icon : ENTITY.audit.icon);
-  const name = label ?? (id ? `${def.label} ${id.slice(-6)}` : def.label);
+  const name =
+    label ?? def.name?.(id) ?? (id && UUID.test(id) ? `${def.label} ${id.slice(-6)}` : def.label);
   return { kind: def.kind, icon, name, to: id && def.to ? def.to(id) : undefined };
 }
 
