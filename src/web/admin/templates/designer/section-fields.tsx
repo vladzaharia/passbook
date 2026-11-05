@@ -8,6 +8,7 @@ import { fieldSource } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { FieldEditor } from './field-editor.tsx';
 import { fieldsOf, GROUP_LABEL, type GroupId, keyOf, styleOf } from './model.ts';
+import { rowId } from './row-id.ts';
 
 const DRAG_TYPE = 'application/x-designer-field';
 
@@ -58,7 +59,7 @@ export function FieldsSection({ group }: { group: GroupId }) {
           return (
             <li
               key={key}
-              data-row-id={`field:${key}`}
+              data-row-id={rowId('field', key)}
               className="dz-row"
               data-new={added?.key === key ? added.n : undefined}
               data-open={open === key || undefined}

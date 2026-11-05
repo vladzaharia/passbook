@@ -92,7 +92,7 @@ function SlotTile({
       onFile={(f) => void take(f)}
       busy={busy}
       disabled={pass.status === 'voided'}
-      replaceLabel={`Replace ${label}`}
+      action="Replace"
       fresh={fresh}
       trailing={
         shown ? (

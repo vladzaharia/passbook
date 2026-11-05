@@ -2,6 +2,7 @@ import { BARCODE_FORMATS } from '@/passkit/schema/constants.ts';
 import { SwitchRow } from '../../../ui/index.ts';
 import { useDesigner } from './context.tsx';
 import { PickEdit, SourcePicker, TextEdit } from './controls.tsx';
+import { BARCODE_TEXT_EMPTY, barcodeTextMissing } from './local-issues.ts';
 import { type BarcodeSettings, readBarcode } from './ops-more.ts';
 
 const label = (f: string) =>
@@ -41,6 +42,7 @@ export function BarcodeSection() {
               label="Message text"
               value={s.staticMessage}
               merge="bc-message"
+              error={barcodeTextMissing(doc) ? BARCODE_TEXT_EMPTY : undefined}
               op={(v) => ({ op: 'barcode', settings: { ...s, staticMessage: v } })}
             />
           ) : null}

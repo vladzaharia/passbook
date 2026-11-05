@@ -183,34 +183,36 @@ function Loaded({
             >
               Duplicate
             </Button>
-            {/* Phones keep one action beside More: Design and Duplicate move into the menu. */}
-            <MoreMenu>
-              {archived ? null : (
-                <DropdownMenuItem asChild className="md:hidden">
-                  <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
-                    <ACTION_ICON.edit aria-hidden />
-                    Design
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem className="md:hidden" onSelect={() => setDuplicate(true)}>
-                <ACTION_ICON.duplicate aria-hidden />
-                Duplicate
-              </DropdownMenuItem>
-              {baked ? null : (
-                <>
-                  <DropdownMenuSeparator className="md:hidden" />
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
-                      <ACTION_ICON.upload aria-hidden />
-                      Upload version
+            {/* Phones keep one action beside More: Design and Duplicate move into the menu. A built-in has nothing else in it, so More is phone-only there. */}
+            <div className={baked ? 'contents md:hidden' : 'contents'}>
+              <MoreMenu>
+                {archived ? null : (
+                  <DropdownMenuItem asChild className="md:hidden">
+                    <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
+                      <ACTION_ICON.edit aria-hidden />
+                      Design
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {life.menu}
-                </>
-              )}
-            </MoreMenu>
+                )}
+                <DropdownMenuItem className="md:hidden" onSelect={() => setDuplicate(true)}>
+                  <ACTION_ICON.duplicate aria-hidden />
+                  Duplicate
+                </DropdownMenuItem>
+                {baked ? null : (
+                  <>
+                    <DropdownMenuSeparator className="md:hidden" />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
+                        <ACTION_ICON.upload aria-hidden />
+                        Upload version
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {life.menu}
+                  </>
+                )}
+              </MoreMenu>
+            </div>
           </>
         }
       />

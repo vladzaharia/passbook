@@ -17,6 +17,7 @@ import {
   typeLabel,
 } from './inputs.ts';
 import { isRecord } from './model.ts';
+import { rowId } from './row-id.ts';
 
 function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
   const { edit } = useDesigner();
@@ -127,7 +128,7 @@ export function InputsSection() {
         {specs.map((spec, i) => (
           <li
             key={spec.name}
-            data-row-id={`input:${spec.name}`}
+            data-row-id={rowId('input', spec.name)}
             className="dz-row"
             data-new={added?.key === spec.name ? added.n : undefined}
             data-open={open === spec.name || undefined}

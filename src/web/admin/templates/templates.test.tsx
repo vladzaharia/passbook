@@ -238,6 +238,8 @@ describe('template detail', () => {
       '/admin/passes?templateId=b1',
     );
     expect(screen.queryByText(/Customize|Any org/)).toBeNull();
+    // Nothing in More shows from md up on a built-in, so More itself is phone-only.
+    expect(screen.getByRole('button', { name: 'More' }).parentElement).toHaveClass('md:hidden');
     // More holds only what the bar hides on a phone: no upload, archive or delete.
     await user.click(screen.getByRole('button', { name: 'More' }));
     expect(screen.queryByRole('menuitem', { name: /Delete|Archive|Upload version/ })).toBeNull();

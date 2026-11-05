@@ -362,6 +362,47 @@ describe('designer', () => {
     expect(screen.getByLabelText('Logo text')).toHaveValue('Org!?');
   });
 
+  it('flags blank barcode text and blocks saving', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Barcode/ }));
+    await user.click(await screen.findByRole('combobox', { name: 'Message' }));
+    await user.click(await screen.findByRole('option', { name: 'Text in the template' }));
+    const text = await screen.findByLabelText('Message text');
+    await user.clear(text);
+    expect(await screen.findAllByText('Enter the barcode text, or pick an input.')).toHaveLength(2);
+    await user.click(await screen.findByRole('button', { name: 'Save version' }));
+    expect(s.posts.every((p) => p.dryRun)).toBe(true);
+  });
+
+  it('edits beacons as keyed rows: row state stays with its row through a move', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Relevance/ }));
+    const add = await screen.findByRole('button', { name: 'Add beacon' });
+    await user.click(add);
+    await user.click(add);
+    const uuids = await screen.findAllByLabelText(/^UUID/);
+    await user.type(uuids[0] as HTMLElement, 'nope');
+    await user.tab();
+    expect(await screen.findByText('Does not match the expected format.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Move Beacon 1 down' }));
+    const moved = await screen.findAllByLabelText(/^UUID/);
+    expect(moved[1]).toHaveValue('nope');
+    expect(moved[0]).toHaveValue('');
+  });
+
+  it('labels an empty image slot Add, with the visible word in its name', async () => {
+    const user = userEvent.setup();
+    const s = setup();
+    await open(s);
+    await user.click(await screen.findByRole('button', { name: /^Images/ }));
+    const adds = await screen.findAllByRole('button', { name: /^Add / });
+    for (const add of adds) expect(add).toHaveTextContent(/^Add$/);
+  });
+
   it('will not save while the check has errors', async () => {
     const user = userEvent.setup();
     const s = setup({ issues: [ISSUE] });

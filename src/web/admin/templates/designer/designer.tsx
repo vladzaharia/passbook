@@ -30,6 +30,7 @@ import { DesignerProvider } from './context.tsx';
 import { clearDraft, saveDraft } from './drafts.ts';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
+import { localIssues } from './local-issues.ts';
 import { type DesignDoc, findField, type Selection } from './model.ts';
 import { Outline } from './outline.tsx';
 import { DesignerPreview } from './preview.tsx';
@@ -155,7 +156,13 @@ export function Designer({
     dispatch({ type: k === 'y' || e.shiftKey ? 'redo' : 'undo' });
   }
 
-  const issues = readOnly ? readOnly.issues : (check.data?.report.issues ?? []);
+  const issues = useMemo(
+    () =>
+      readOnly
+        ? readOnly.issues
+        : [...localIssues(state.doc), ...(check.data?.report.issues ?? [])],
+    [readOnly, state.doc, check.data],
+  );
   const blocking = issues.filter((i) => i.severity === 'error').length;
   const flow = useSaveFlow({
     templateId,

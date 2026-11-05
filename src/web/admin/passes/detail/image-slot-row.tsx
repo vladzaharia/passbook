@@ -21,7 +21,8 @@ export interface ImageSlotRowProps {
   onFile: (file: File) => void;
   busy?: boolean;
   disabled?: boolean;
-  replaceLabel: string;
+  /** The button's verb: its visible text, and the start of its accessible name. */
+  action: 'Add' | 'Replace';
   /** Remove or reset, after Replace. */
   trailing?: ReactNode;
   fresh?: boolean;
@@ -30,7 +31,7 @@ export interface ImageSlotRowProps {
   children?: ReactNode;
 }
 
-/** One image slot, on the pass's Images tab and in the designer: thumb, label, size, Replace, drop. */
+/** One image slot, on the pass's Images tab and in the designer: thumb, label, size, Add or Replace, drop. */
 export function ImageSlotRow(props: ImageSlotRowProps) {
   const { label, badge, thumb, ground, detail, needs, error, warning, busy, disabled } = props;
   const input = useRef<HTMLInputElement>(null);
@@ -110,10 +111,10 @@ export function ImageSlotRow(props: ImageSlotRowProps) {
           loading={busy}
           busy="bob"
           disabled={disabled}
-          aria-label={props.replaceLabel}
+          aria-label={`${props.action} ${label}`}
           onClick={() => input.current?.click()}
         >
-          <span className="max-sm:sr-only">Replace</span>
+          <span className="max-sm:sr-only">{props.action}</span>
         </Button>
         {props.trailing}
       </div>

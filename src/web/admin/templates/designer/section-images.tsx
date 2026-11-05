@@ -46,7 +46,7 @@ function SlotDrop({ slot }: { slot: string }) {
       error={problem}
       warning={soft}
       onFile={(f) => void take(f)}
-      replaceLabel={`${current ? 'Replace' : 'Add'} ${label}`}
+      action={current ? 'Replace' : 'Add'}
       trailing={
         current && slot !== 'icon' ? (
           <IconButton
