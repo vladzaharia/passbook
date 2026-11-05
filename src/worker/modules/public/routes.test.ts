@@ -75,7 +75,8 @@ describe('GET /p/:token', () => {
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
     clearSettingsCache(kit.env.DB);
     const fallback = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(fallback).toContain('href="mailto:support@passbook.mobile"');
+    // The platform's inbox is never offered on an org's page.
+    expect(fallback).not.toContain('support@passbook.mobile');
     expect(fallback).not.toContain('gym.test');
   });
 
@@ -381,10 +382,10 @@ describe('GET /p/:token/assets/:name', () => {
 
   it("lists an overridden slot's files only, as the signed pass has them", async () => {
     const pass = await kit.pass();
-    await putPassAsset(kit.ctx, actor, pass.id, 'icon@2x.png', makePng(58, 58), null);
+    await putPassAsset(kit.ctx, actor, pass.id, 'logo@2x.png', makePng(58, 58), null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).toContain(`/p/${pass.downloadToken}/assets/icon@2x.png?v=`);
-    expect(html).not.toContain(`/p/${pass.downloadToken}/assets/icon.png?v=`);
+    expect(html).toContain(`/p/${pass.downloadToken}/assets/logo@2x.png?v=`);
+    expect(html).not.toContain(`/p/${pass.downloadToken}/assets/logo.png?v=`);
   });
 
   it('rejects names outside the pass image set', async () => {
