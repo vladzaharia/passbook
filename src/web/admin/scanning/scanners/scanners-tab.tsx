@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
-import type { ScannerDto } from '@/shared/contracts/scanners.ts';
+import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, DataTable, EmptyState, ErrorState, LoadMore } from '@/web/ui/index.ts';
@@ -18,6 +18,7 @@ export const flatScanners = (q: Pages): ScannerDto[] => q.data?.pages.flatMap((p
 export const duplicateDraft = (s: ScannerDto): ScannerDraft => ({
   ...draftOf(s),
   name: `${s.name} 2`.slice(0, 40),
+  adminUserId: '',
 });
 
 /**

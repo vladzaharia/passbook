@@ -25,6 +25,7 @@ export interface ScannerRow {
   staffSince: number | null;
   staffSeenAt: number | null;
   updatedAt: number;
+  hasScreens?: boolean;
 }
 
 interface Raw {
@@ -48,10 +49,13 @@ interface Raw {
   staff_since: number | null;
   staff_seen_at: number | null;
   updated_at: number;
+  has_screens: number;
 }
 
 const COLUMNS = `id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
-  csrf_secret, paired_at, expires_at, last_seen_at, revoked_at, staff_id, staff_since, staff_seen_at, updated_at`;
+  csrf_secret, paired_at, expires_at, last_seen_at, revoked_at, staff_id, staff_since, staff_seen_at, updated_at,
+  EXISTS(SELECT 1 FROM scanners screen WHERE screen.org_id=scanners.org_id AND screen.mode=scanners.mode
+    AND screen.device_role!='scan' AND screen.revoked_at IS NULL AND screen.token_hash IS NOT NULL) AS has_screens`;
 
 const toRow = (r: Raw): ScannerRow => ({
   id: r.id,
@@ -74,6 +78,7 @@ const toRow = (r: Raw): ScannerRow => ({
   staffSince: r.staff_since,
   staffSeenAt: r.staff_seen_at,
   updatedAt: r.updated_at,
+  hasScreens: r.has_screens === 1,
 });
 
 export async function getScannerByPrefix(db: Db, prefix: string): Promise<ScannerRow | null> {

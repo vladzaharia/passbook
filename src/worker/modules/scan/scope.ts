@@ -20,6 +20,7 @@ export async function rawScopeOf(c: Context<AppBindings>): Promise<unknown> {
       eventId: q.eventId,
       templateIds: q.templateIds ? q.templateIds.split(',').filter(Boolean) : undefined,
       timeZone: q.timeZone,
+      setupId: q.setupId,
     };
   }
   if (!c.req.header('content-type')?.includes('json')) return undefined;

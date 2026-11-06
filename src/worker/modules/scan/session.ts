@@ -36,9 +36,19 @@ function formatsOf(passJson: PassJson): Format[] {
 
 function stateOf(ctx: ServiceContext, actor: ScanActor): ScanSession['state'] {
   const now = ctx.clock.now();
-  if (actor.principal === 'scanner' && actor.settings.staffSignIn && actor.role === null)
+  if (
+    actor.scanner?.deviceRole === 'scan' &&
+    actor.principal === 'scanner' &&
+    actor.settings.staffSignIn &&
+    actor.role === null
+  )
     return 'staff_required';
-  if (actor.principal === 'scanner' && actor.templateIds.length === 0) return 'unassigned';
+  if (
+    actor.scanner?.deviceRole === 'scan' &&
+    actor.templateIds.length === 0 &&
+    !actor.settings.acceptAllTemplates
+  )
+    return 'unassigned';
   if (actor.event && now < actor.event.opensAt) return 'not_open';
   if (actor.event && now > actor.event.closesAt) return 'closed';
   return 'ready';
@@ -75,9 +85,14 @@ export async function buildSession(
   actor: ScanActor,
   dayStart?: number,
 ): Promise<ScanSession> {
+  if (actor.scanner && actor.scanner.deviceRole !== 'scan')
+    actor = { ...actor, event: null, templateIds: [], staff: null };
   const db = ctx.env.DB;
   const counts = planCounts(ctx, actor, dayStart);
-  const listStaff = actor.principal === 'scanner' && actor.settings.staffSignIn;
+  const listStaff =
+    actor.scanner?.deviceRole === 'scan' &&
+    actor.principal === 'scanner' &&
+    actor.settings.staffSignIn;
   const [results, templates, undoWindow] = await Promise.all([
     db.batch([
       orgNameStmt(db, actor.orgId),
@@ -91,7 +106,9 @@ export async function buildSession(
   ]);
   const orgName = (results[0]?.results?.[0] as { name: string } | undefined)?.name ?? '';
   const read = await counts.read(results.slice(2));
-  const formats = [...new Set(templates.flatMap((t) => t.formats))];
+  const formats = actor.settings.acceptAllTemplates
+    ? Object.values(FORMATS)
+    : [...new Set(templates.flatMap((t) => t.formats))];
   const staffRows = (results[1]?.results ?? []) as { id: string; name: string; role: ScanRole }[];
   const event = actor.event;
   const user = results[1]?.results?.[0] as

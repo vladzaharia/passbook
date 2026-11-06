@@ -15,6 +15,7 @@ import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { createPassRow } from '../passes/service.ts';
 import { DEFAULT_SETTINGS, dayStartMs, parseSettings, scannerDto } from './dto-console.ts';
+import { kickScreen } from './live.ts';
 import { createPairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
 import {
@@ -32,6 +33,7 @@ import {
   updateScannerStmt,
 } from './repo-scanners.ts';
 import { countOrgTemplates, eventTemplateIds } from './repo-scope.ts';
+import { adminSetupId, setupMeta, watchedScanners, watchOf } from './repo-setups.ts';
 
 type Accepts = z.infer<typeof CreateScannerSchema>['accepts'];
 
@@ -80,7 +82,12 @@ export async function scannerView(ctx: ServiceContext, id: string) {
 }
 
 /** Same org, same mode, and for templates a live template of the org: anything else is a 404. */
-async function checkAccepts(ctx: ServiceContext, orgId: string, mode: Mode, accepts: Accepts) {
+export async function checkAccepts(
+  ctx: ServiceContext,
+  orgId: string,
+  mode: Mode,
+  accepts: Accepts,
+) {
   const db = ctx.env.DB;
   if ('eventId' in accepts) {
     const event = await eventModeOf(db, orgId, accepts.eventId);
@@ -197,6 +204,7 @@ export async function updateScanner(
   } catch (error) {
     nameTaken(error);
   }
+  if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
   return scannerView(ctx, id);
 }
 
@@ -210,6 +218,25 @@ export async function changeMode(
   const db = ctx.env.DB;
   const row = await loadScanner(ctx, id);
   if (row.mode === input.mode) return scannerView(ctx, id);
+  const meta = await setupMeta(db, row.orgId, id);
+  if (meta?.admin_user_id && (await adminSetupId(db, row.orgId, input.mode, meta.admin_user_id)))
+    throw new ConflictError(
+      'Use the existing admin setup in that mode.',
+      'SCANNER_ADMIN_SETUP_EXISTS',
+    );
+  const watch = watchOf(meta);
+  if (
+    row.deviceRole !== 'scan' &&
+    watch &&
+    !watch.allOrg &&
+    (await watchedScanners(db, row.orgId, input.mode, watch.scannerIds)).length !==
+      new Set(watch.scannerIds).size
+  )
+    throw new ValidationError(
+      'Move the watched scanners to that mode first.',
+      [],
+      'SCANNER_WATCH_MODE',
+    );
   const detach = row.eventId !== null;
   if (detach && !input.detachEvent) throw modeMismatch();
   try {
@@ -228,6 +255,7 @@ export async function changeMode(
   } catch (error) {
     nameTaken(error);
   }
+  if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
   return scannerView(ctx, id);
 }
 
@@ -247,6 +275,7 @@ export async function revokeScanner(ctx: ServiceContext, userId: string, id: str
         targetId: id,
       }),
     ]);
+  if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
   return scannerView(ctx, id);
 }
 

@@ -17,6 +17,7 @@ import {
   installCredentialStmt,
   setPairCodeStmt,
 } from './repo-scanners-pair.ts';
+import { setupMeta } from './repo-setups.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -56,7 +57,11 @@ export async function createPairing(
   scanner: ConsoleScannerRow,
   origin: string,
 ): Promise<Pairing> {
-  if (scanner.kind !== 'device') throw notPairable();
+  if (
+    scanner.kind === 'terminal' ||
+    (await setupMeta(ctx.env.DB, scanner.orgId, scanner.id))?.admin_session
+  )
+    throw notPairable();
   const now = ctx.clock.now();
   const code = newPairCode();
   const expiresAt = now + PAIR_TTL_MS;
@@ -183,7 +188,7 @@ export async function unpair(ctx: ServiceContext, token: string | undefined): Pr
   if (!token || !SCANNER_TOKEN.test(token)) return;
   const row = await getScannerByPrefix(ctx.env.DB, token.slice(4, 12));
   const hash = await sha256Hex(token);
-  if (!row?.tokenHash || row.kind !== 'device' || !(await safeEqual(hash, row.tokenHash))) return;
+  if (!row?.tokenHash || row.kind === 'terminal' || !(await safeEqual(hash, row.tokenHash))) return;
   await batch(ctx.env.DB, [
     heldAuditStmt(
       ctx.env.DB,

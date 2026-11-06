@@ -98,7 +98,11 @@ function scopeOf(ctx: ServiceContext, input: BuildDisplayInput, found: Found): S
       style: found.ref.style,
       externalId: role === 'door' ? null : pass.externalId,
     },
-    scan: input.scan ?? { outcome: input.screen, at: ctx.clock.now(), direction: 'in' },
+    scan: input.scan ?? {
+      outcome: input.screen,
+      at: ctx.clock.now(),
+      direction: found.admission?.state.direction ?? 'in',
+    },
     history: (input.history ?? {}) as Json,
     event: actor.event
       ? {
@@ -111,7 +115,7 @@ function scopeOf(ctx: ServiceContext, input: BuildDisplayInput, found: Found): S
     scanner: { name: actor.name, role },
     lookups: manifest.lookups ?? {},
     goals: actionGoals(manifest),
-    assets: {},
+    assets: found.photoUrl && actor.settings.showPhoto !== false ? { photo: found.photoUrl } : {},
     templateVersion: String(template.version),
     now: ctx.clock.now(),
   };
@@ -130,12 +134,14 @@ export function buildDisplay(ctx: ServiceContext, input: BuildDisplayInput): Sca
     timeZone: input.actor.timeZone,
     now: ctx.clock.now(),
   };
+  const configured =
+    found.scan.display ?? defaultScanDisplay(found.template.manifest, found.passJson);
+  const doc =
+    found.photoUrl && input.actor.settings.showPhoto !== false && !configured.photo
+      ? { ...configured, photo: {} }
+      : configured;
   try {
-    return renderScanDisplay(
-      found.scan.display ?? defaultScanDisplay(found.template.manifest, found.passJson),
-      scopeOf(ctx, input, found),
-      options,
-    );
+    return renderScanDisplay(doc, scopeOf(ctx, input, found), options);
   } catch (error) {
     ctx.log.error('scan.display_failed', {
       code: 'SCAN_DISPLAY_FAILED',

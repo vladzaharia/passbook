@@ -21,7 +21,12 @@ export function searchPasses(
   email: boolean,
   keys?: { scanCode: string | null; barcodeHash: string; lookupHash: string },
 ): Promise<SearchRow[]> {
-  if (actor.principal === 'scanner' && !actor.templateIds.length) return Promise.resolve([]);
+  if (
+    actor.scanner?.deviceRole === 'scan' &&
+    !actor.templateIds.length &&
+    !actor.settings.acceptAllTemplates
+  )
+    return Promise.resolve([]);
   const where = ['p.org_id = ?', 'p.mode = ?', 'p.deleted_at IS NULL'];
   const params: SqlValue[] = [actor.orgId, actor.mode];
   if (actor.templateIds.length) {

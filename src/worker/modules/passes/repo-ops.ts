@@ -2,6 +2,7 @@ import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
 import { finishRun, startRun } from '../../platform/workflow-runs.ts';
 import { listAssets } from './repo-history.ts';
 import { mapPass, type Pass } from './repo-map.ts';
+import { memberPhoto } from './repo-member-photo.ts';
 
 export interface DeletedPass {
   objectKeys: string[];
@@ -10,7 +11,7 @@ export interface DeletedPass {
 
 /** Collects what must be cleaned outside D1, then removes the rows (children cascade). */
 export async function deletePassRows(db: D1Database, pass: Pass): Promise<DeletedPass> {
-  const [versions, assets, devices] = await Promise.all([
+  const [versions, assets, devices, photo] = await Promise.all([
     all<{ object_key: string | null }>(
       db,
       'SELECT object_key FROM pass_versions WHERE pass_id = ? AND object_key IS NOT NULL',
@@ -22,8 +23,10 @@ export async function deletePassRows(db: D1Database, pass: Pass): Promise<Delete
       'SELECT device_id, identity_id FROM registrations WHERE pass_id = ?',
       [pass.id],
     ),
+    memberPhoto(db, pass.orgId, pass.id),
   ]);
   const keys = new Set<string>([pass.objectKey]);
+  if (photo) keys.add(photo.r2_key);
   for (const v of versions) if (v.object_key) keys.add(v.object_key);
   for (const a of assets) keys.add(a.r2Key);
   await batch(db, [

@@ -4,6 +4,7 @@ import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
 import { usePassForeign } from '../pass-foreign.ts';
+import { CheckInCard } from './check-in-card.tsx';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
 import type { Tab } from './detail-page.tsx';
@@ -12,6 +13,7 @@ import { FieldsTab } from './fields-tab.tsx';
 import { HolderTab } from './holder-tab.tsx';
 import { ImagesTab } from './images-tab.tsx';
 import { ActivityTab } from './info-tabs.tsx';
+import { MemberPhotoCard } from './member-photo-card.tsx';
 import { SyncTab } from './sync-tab.tsx';
 import { VersionsTab } from './versions-tab.tsx';
 
@@ -54,8 +56,10 @@ export function PassTabs({
           <SkeletonKeyValue label="Loading fields" />
         )}
       </TabsContent>
-      <TabsContent value="holder">
+      <TabsContent value="holder" className="flex flex-col gap-4">
         <HolderTab pass={pass} foreign={foreign} />
+        <MemberPhotoCard pass={pass} foreign={foreign} />
+        <CheckInCard pass={pass} foreign={foreign} />
       </TabsContent>
       <TabsContent value="devices" className="min-w-0">
         <DevicesTab pass={pass} active={tab === 'devices'} />

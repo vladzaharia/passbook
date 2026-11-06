@@ -17,6 +17,7 @@ export interface LedgerFacts {
   method: string;
   override: boolean;
   approvedBy: string | null;
+  direction?: 'in' | 'out';
 }
 
 const KIND: Record<LedgerFacts['outcome'], EventKind> = {
@@ -44,13 +45,14 @@ export function ledgerRow(ctx: ServiceContext, actor: ScanActor, f: LedgerFacts)
     override: f.override,
     offline: false,
     notified: false,
+    ...(f.direction ? { direction: f.direction } : {}),
   };
   return {
     id: ctx.ids.ordered(at),
     org_id: f.pass.orgId,
     pass_id: f.pass.id,
     mode: f.pass.mode,
-    kind: KIND[f.outcome],
+    kind: f.outcome === 'ok' && f.direction === 'out' ? 'scan.checked_out' : KIND[f.outcome],
     device: null,
     actor_type: actor.actor.type,
     actor_id: actor.actor.id,

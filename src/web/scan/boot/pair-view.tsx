@@ -17,6 +17,7 @@ export function PairView({
   error,
   busy,
   inputRef,
+  onAdmin,
 }: {
   onPair: (code: string) => void;
   /** Opens the camera to read a pairing QR. */
@@ -24,6 +25,7 @@ export function PairView({
   error?: string | null;
   busy?: boolean;
   inputRef?: Ref<HTMLInputElement>;
+  onAdmin?: () => void;
 }) {
   const id = useId();
   const [code, setCode] = useState('');
@@ -67,6 +69,14 @@ export function PairView({
           </Button>
         ) : null}
       </form>
+      {onAdmin ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-center text-sm text-fg-muted">or</p>
+          <Button variant="outline" onClick={onAdmin}>
+            Scan as Admin
+          </Button>
+        </div>
+      ) : null}
       <p className="scan-card-line scan-pair-footer">
         <Lock aria-hidden size={16} />
         {b.pairFooter}

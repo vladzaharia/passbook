@@ -1,6 +1,7 @@
 import { stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
+import { restorePresenceStmts } from './repo-admission.ts';
 import type { GateKey } from './repo-gates.ts';
 import type { ScanRow } from './repo-scans.ts';
 
@@ -19,11 +20,27 @@ export function undoStatements(
   return [
     stmt(
       db,
-      `UPDATE scan_gates SET state = 'undone', count = max(0, count - 1), last_at = ?, last_scan_id = ?,
+      `UPDATE scan_gates SET state = CASE WHEN ? IS NOT NULL THEN COALESCE(prev_state,'undone') ELSE 'undone' END,
+      count = max(0, count - 1), last_at = ?, last_scan_id = ?,
       prev_state = NULL, prev_last_at = NULL, prev_scan_id = NULL
       WHERE pass_id = ? AND action_id = ? AND scope = ? AND last_scan_id = ?
-      AND EXISTS (SELECT 1 FROM scans WHERE id = ? AND undone_by IS NULL)`,
-      [now, id, gate.passId, gate.actionId, gate.scope, target.id, target.id],
+      AND EXISTS (SELECT 1 FROM scans WHERE id = ? AND undone_by IS NULL)
+      AND (? IS NULL OR EXISTS (SELECT 1 FROM scan_presence WHERE org_id=? AND pass_id=? AND scope=? AND last_scan_id=?))`,
+      [
+        target.presenceScope,
+        now,
+        id,
+        gate.passId,
+        gate.actionId,
+        gate.scope,
+        target.id,
+        target.id,
+        target.presenceScope,
+        target.orgId,
+        target.passId,
+        target.presenceScope,
+        target.id,
+      ],
     ),
     stmt(
       db,
@@ -80,5 +97,8 @@ export function undoStatements(
         id,
       ],
     ),
+    ...(target.presenceScope !== null && target.presenceScope !== undefined && target.passId
+      ? restorePresenceStmts(db, target.passId, target.id, id)
+      : []),
   ];
 }

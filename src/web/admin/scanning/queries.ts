@@ -1,5 +1,5 @@
 import { queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ScannerListSchema, ScannerSchema } from '@/shared/contracts/scanners.ts';
+import { ScannerSetupListSchema, ScannerSetupSchema } from '@/shared/contracts/scan-setups.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 
 /** The scanners page polls this often while it is visible; a changed pill rings once. */
@@ -26,7 +26,7 @@ export function useScannerPages(orgId: string | undefined, revoked: boolean, ena
       refetchInterval: SCANNERS_POLL_MS,
       initialPageParam: undefined as string | undefined,
       queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
-        api.get('/api/v1/scanners', ScannerListSchema, {
+        api.get('/api/v1/scan-setups', ScannerSetupListSchema, {
           query: { orgId, status: revoked ? 'revoked' : undefined, cursor: pageParam, limit: 50 },
           signal,
         }),
@@ -39,7 +39,7 @@ export const scannerQuery = (id: string, refetchInterval?: number) =>
   queryOptions({
     queryKey: scanningKeys.scanner(id),
     queryFn: ({ signal }) =>
-      api.get(`/api/v1/scanners/${encodeURIComponent(id)}`, ScannerSchema, { signal }),
+      api.get(`/api/v1/scan-setups/${encodeURIComponent(id)}`, ScannerSetupSchema, { signal }),
     ...(refetchInterval ? { refetchInterval } : {}),
   });
 

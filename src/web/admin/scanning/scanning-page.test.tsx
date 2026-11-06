@@ -11,7 +11,7 @@ import { ScanLink } from './scan-link.tsx';
 
 const empty = () => json({ items: [], nextCursor: null });
 const handlers = {
-  '/api/v1/scanners': empty,
+  '/api/v1/scan-setups': empty,
   '/api/v1/scan-events': empty,
   '/api/v1/scan-staff': empty,
   '/api/v1/scans': empty,

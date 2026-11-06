@@ -23,6 +23,7 @@ import {
   listVersions,
   type Pass,
 } from './repo.ts';
+import { memberPhotoAsset } from './repo-member-photo.ts';
 import type { ScopeArg } from './scope.ts';
 
 export function holderStateOf(pass: Pass): 'unassigned' | 'waiting' | 'owned' {
@@ -63,7 +64,11 @@ export async function assetNamesOf(
   pass: Pick<Pass, 'id' | 'orgId' | 'templateId' | 'templateVersion'>,
 ): Promise<string[]> {
   const names = new Set<string>();
-  const overrides = await listAssets(ctx.env.DB, pass.id);
+  const original = await listAssets(ctx.env.DB, pass.id);
+  const photo = await memberPhotoAsset(ctx.env.DB, pass.orgId, pass.id);
+  const overrides = photo
+    ? [...original.filter((a) => !/^thumbnail(?:@[23]x)?\.png$/.test(a.name)), photo]
+    : original;
   const replaced = replacedBy(overrides.map((a) => a.name));
   try {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);

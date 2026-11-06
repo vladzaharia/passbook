@@ -32,14 +32,24 @@ export function ResultCard({
   const d = o.display;
   const ok = o.kind === 'ok';
   const ready = o.kind === 'ready';
+  const noExit =
+    o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
+  const noReentry =
+    o.reason === 'already_done' && o.checkIn?.mode === 'in_out' && !o.checkIn.inside;
   const line = o.reason ? SCAN_REASON_COPY[o.reason] : null;
   const values = {
     template: o.template?.name ?? 'This pass',
     event: 'this event',
     date: formatDateTime(o.at),
     time: o.at ? formatTime(o.at) : '',
-    ago: o.previous ? formatTime(o.previous.at) : '',
-    scanner: o.previous?.scannerName ?? '',
+    ago: o.previous ? formatTime(o.previous.at) : o.at ? formatTime(o.at) : '',
+    scanner:
+      o.previous?.scannerName ??
+      (o.reason === 'still_inside'
+        ? 'Entry recorded'
+        : o.reason === 'already_done'
+          ? 'Earlier scan'
+          : ''),
     flag: o.flags[0] ?? 'Check required',
     action: o.action?.label ?? 'This action',
     in: o.counts.event?.arrived ?? 0,
@@ -54,13 +64,22 @@ export function ResultCard({
       ? 'Undone'
       : ok
         ? o.action?.kind === 'check_in'
-          ? SCAN_COPY.verdict.checkedIn
+          ? o.checkIn?.direction === 'out'
+            ? 'Checked out'
+            : SCAN_COPY.verdict.checkedIn
           : (o.action?.label ?? 'Done')
         : line
           ? scanLine(line.headline, values)
           : 'Choose an action';
-  const custom = ok && Boolean(d?.header.title) && o.action?.id !== 'undo';
-  const title = custom ? d?.header.title : systemTitle;
+  const custom =
+    ok && Boolean(d?.header.title) && o.action?.id !== 'undo' && o.checkIn?.direction !== 'out';
+  const title = noExit
+    ? 'Check-out not allowed'
+    : noReentry
+      ? 'No re-entry'
+      : custom
+        ? d?.header.title
+        : systemTitle;
   const CustomGlyph = ok && d?.header.icon ? scanIcon(d.header.icon) : null;
   const layout = custom ? 'custom' : o.kind === 'ok' || o.kind === 'heads_up' ? 'row' : 'stack';
   const notes = [
@@ -120,7 +139,13 @@ export function ResultCard({
             <h1 id="scan-result-heading" tabIndex={-1}>
               {title}
             </h1>
-            {line?.sub ? <p>{scanLine(line.sub, values)}</p> : null}
+            {noExit ? (
+              <p>This pass only allows check-ins.</p>
+            ) : noReentry ? (
+              <p>This event allows one entry.</p>
+            ) : line?.sub ? (
+              <p>{scanLine(line.sub, values)}</p>
+            ) : null}
           </div>
           {holdMs ? (
             <span

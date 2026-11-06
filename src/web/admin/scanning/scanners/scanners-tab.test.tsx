@@ -25,7 +25,7 @@ const scanners = [
 ];
 
 const handlers = (over: Record<string, never> = {}) => ({
-  '/api/v1/scanners': (url: URL) => {
+  '/api/v1/scan-setups': (url: URL) => {
     const revoked = url.searchParams.get('status') === 'revoked';
     return page(revoked ? scanners.filter((x) => x.status === 'revoked') : scanners.slice(0, 3));
   },
@@ -105,7 +105,7 @@ describe('Scanners tab', () => {
   it('shows the empty state with one primary, and fills it by order', async () => {
     await renderApp('/admin/scanning', {
       session: 'admin',
-      handlers: { '/api/v1/scanners': none, '/api/v1/scan-events': none },
+      handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
     expect(await screen.findByText('No scanners yet')).toBeInTheDocument();
     expect(NOW).toBeGreaterThan(0);
@@ -132,7 +132,7 @@ describe('New scanner dialog', () => {
   it('creates a browser scanner and turns into the pairing face', async () => {
     let body: Record<string, unknown> | undefined;
     const { dialog } = await open({
-      '/api/v1/scanners': ((_url: URL, init?: RequestInit) => {
+      '/api/v1/scan-setups': ((_url: URL, init?: RequestInit) => {
         if (init?.method === 'POST') {
           body = JSON.parse(String(init.body));
           return json({ ...s({ id: 's9', name: 'Back door' }), pairing: pairingFixture() });
@@ -158,7 +158,7 @@ describe('New scanner dialog', () => {
 
   it('maps a taken name onto its field', async () => {
     const { dialog } = await open({
-      '/api/v1/scanners': ((_u: URL, init?: RequestInit) =>
+      '/api/v1/scan-setups': ((_u: URL, init?: RequestInit) =>
         init?.method === 'POST' ? problem(409, 'SCANNER_NAME_TAKEN', 'taken') : page([])) as never,
     });
     const user = userEvent.setup();

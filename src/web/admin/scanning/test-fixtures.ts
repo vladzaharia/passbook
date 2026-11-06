@@ -1,14 +1,17 @@
-import type { ScannerDto } from '@/shared/contracts/scanners.ts';
+import type { ScannerSetup } from '@/shared/contracts/scan-setups.ts';
 
 export const NOW = 1_800_000_000_000;
 
 /** A paired, online browser scanner on one template; `over` changes any field. */
-export const scannerFixture = (over: Partial<ScannerDto> = {}): ScannerDto => ({
+export const scannerFixture = (over: Partial<ScannerSetup> = {}): ScannerSetup => ({
   id: 's1',
   orgId: 'o1',
   mode: 'live',
   kind: 'device',
   deviceRole: 'scan',
+  adminSession: false,
+  adminUser: null,
+  watch: null,
   name: 'Front door',
   accepts: { templateIds: ['t1'] },
   settings: {

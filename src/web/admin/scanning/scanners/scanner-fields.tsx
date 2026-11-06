@@ -9,8 +9,10 @@ import {
   Select,
   SwitchRow,
 } from '@/web/ui/index.ts';
+import { CheckInFields } from '../check-in-fields.tsx';
 import { useOrgTemplates, useScanEvents } from '../scanner-api.ts';
 import type { ScannerDraft } from './scanner-draft.ts';
+import { SetupFields } from './setup-fields.tsx';
 
 export interface ScannerFieldsProps {
   draft: ScannerDraft;
@@ -19,6 +21,7 @@ export interface ScannerFieldsProps {
   /** The org picker shows only with All organizations in scope. */
   orgs?: readonly { id: string; name: string }[] | undefined;
   autoFocus?: boolean;
+  newSetup?: boolean;
 }
 
 const FLOW = [
@@ -88,7 +91,14 @@ function TemplateRows({
 }
 
 /** The scanner's settings, as the New scanner dialog and the detail page's Settings card show them. */
-export function ScannerFields({ draft, onChange, errors, orgs, autoFocus }: ScannerFieldsProps) {
+export function ScannerFields({
+  draft,
+  onChange,
+  errors,
+  orgs,
+  autoFocus,
+  newSetup,
+}: ScannerFieldsProps) {
   const events = useScanEvents(draft.orgId || undefined, draft.accepts === 'event');
   const open = (events.data?.items ?? []).filter(
     (e) => e.status === 'upcoming' || e.status === 'live',
@@ -126,103 +136,136 @@ export function ScannerFields({ draft, onChange, errors, orgs, autoFocus }: Scan
           )}
         </FormField>
       ) : null}
-      <div className="flex flex-col gap-2">
-        <SegmentedControl
-          label="Accepts"
-          options={[
-            { value: 'event', label: 'An event' },
-            { value: 'templates', label: 'Templates' },
-          ]}
-          value={draft.accepts}
-          onValueChange={(accepts) => onChange({ accepts })}
-        />
-      </div>
-      {draft.accepts === 'event' ? (
-        <FormField
-          label="Event"
-          required
-          error={errors.eventId}
-          help={open.length === 0 && !events.isPending ? 'No events yet.' : undefined}
-        >
-          {(p) => (
-            <Select
-              {...p}
-              value={draft.eventId || undefined}
-              placeholder="Pick an event"
-              onValueChange={(eventId) => onChange({ eventId })}
-              options={open.map((e) => ({ value: e.id, label: e.name }))}
+      <SetupFields draft={draft} onChange={onChange} newSetup={newSetup} errors={errors} />
+      {draft.deviceRole === 'scan' ? (
+        <>
+          <div className="flex flex-col gap-2">
+            <SegmentedControl
+              label="Accepts"
+              options={[
+                { value: 'all', label: 'All passes' },
+                { value: 'event', label: 'An event' },
+                { value: 'templates', label: 'Templates' },
+              ]}
+              value={draft.accepts}
+              onValueChange={(accepts) => onChange({ accepts })}
             />
+          </div>
+          {draft.accepts === 'event' ? (
+            <FormField
+              label="Event"
+              required
+              error={errors.eventId}
+              help={open.length === 0 && !events.isPending ? 'No events yet.' : undefined}
+            >
+              {(p) => (
+                <Select
+                  {...p}
+                  value={draft.eventId || undefined}
+                  placeholder="Pick an event"
+                  onValueChange={(eventId) => onChange({ eventId })}
+                  options={open.map((e) => ({ value: e.id, label: e.name }))}
+                />
+              )}
+            </FormField>
+          ) : draft.accepts === 'templates' ? (
+            <TemplateRows draft={draft} onChange={onChange} error={errors.templateIds} />
+          ) : null}
+          <FormField label="On scan" help="Staff can still pick another action.">
+            {(p) => (
+              <Select
+                {...p}
+                value={draft.flow}
+                onValueChange={(v) => onChange({ flow: v as ScannerDraft['flow'] })}
+                options={FLOW}
+              />
+            )}
+          </FormField>
+          <CheckboxField
+            label="Ask staff for their PIN"
+            disabled={!draft.staffSignIn}
+            checked={draft.staffSignIn}
+            onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
+          />
+          <p className="text-xs text-fg-muted">Staff sign-in is unavailable.</p>
+          {draft.staffSignIn ? null : (
+            <FormField label="Without sign-in, scans as">
+              {(p) => (
+                <Select
+                  {...p}
+                  value={draft.roleWithoutSignIn}
+                  onValueChange={(v) =>
+                    onChange({ roleWithoutSignIn: v as ScannerDraft['roleWithoutSignIn'] })
+                  }
+                  options={ROLE}
+                />
+              )}
+            </FormField>
           )}
-        </FormField>
-      ) : (
-        <TemplateRows draft={draft} onChange={onChange} error={errors.templateIds} />
-      )}
-      <FormField label="On scan" help="Staff can still pick another action.">
-        {(p) => (
-          <Select
-            {...p}
-            value={draft.flow}
-            onValueChange={(v) => onChange({ flow: v as ScannerDraft['flow'] })}
-            options={FLOW}
+          <FormField label="Let in again">
+            {(p) => (
+              <Select
+                {...p}
+                value={draft.letInAgain}
+                onValueChange={(v) => onChange({ letInAgain: v as ScannerDraft['letInAgain'] })}
+                options={AGAIN}
+              />
+            )}
+          </FormField>
+          <FormField label="Reader">
+            {(p) => (
+              <Select
+                {...p}
+                value={draft.reader}
+                onValueChange={(v) => onChange({ reader: v as ScannerDraft['reader'] })}
+                options={READER}
+              />
+            )}
+          </FormField>
+          <SwitchRow
+            label="Look up by name"
+            checked={draft.lookup}
+            onCheckedChange={(lookup) => onChange({ lookup })}
           />
-        )}
-      </FormField>
-      <CheckboxField
-        label="Ask staff for their PIN"
-        disabled={!draft.staffSignIn}
-        checked={draft.staffSignIn}
-        onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
-      />
-      <p className="text-xs text-fg-muted">Staff sign-in is unavailable.</p>
-      {draft.staffSignIn ? null : (
-        <FormField label="Without sign-in, scans as">
-          {(p) => (
-            <Select
-              {...p}
-              value={draft.roleWithoutSignIn}
-              onValueChange={(v) =>
-                onChange({ roleWithoutSignIn: v as ScannerDraft['roleWithoutSignIn'] })
-              }
-              options={ROLE}
-            />
-          )}
-        </FormField>
-      )}
-      <FormField label="Let in again">
-        {(p) => (
-          <Select
-            {...p}
-            value={draft.letInAgain}
-            onValueChange={(v) => onChange({ letInAgain: v as ScannerDraft['letInAgain'] })}
-            options={AGAIN}
+          <FormField label="Daily limit" help="Optional. An amount, for scanners that take or add.">
+            {(p) => (
+              <NumberField
+                {...p}
+                value={draft.dailyAmount}
+                min={1}
+                onValueChange={(dailyAmount) => onChange({ dailyAmount })}
+              />
+            )}
+          </FormField>
+          <SwitchRow
+            label="Show member photos"
+            checked={draft.showPhoto}
+            onCheckedChange={(showPhoto) => onChange({ showPhoto })}
           />
-        )}
-      </FormField>
-      <FormField label="Reader">
-        {(p) => (
-          <Select
-            {...p}
-            value={draft.reader}
-            onValueChange={(v) => onChange({ reader: v as ScannerDraft['reader'] })}
-            options={READER}
+          <FormField label="Scan direction">
+            {(p) => (
+              <Select
+                {...p}
+                value={draft.direction}
+                onValueChange={(direction) =>
+                  onChange({ direction: direction as ScannerDraft['direction'] })
+                }
+                options={[
+                  { value: 'pass', label: 'Use pass rules' },
+                  { value: 'in', label: 'Entry only' },
+                  { value: 'out', label: 'Exit only' },
+                  { value: 'both', label: 'Entry and exit' },
+                ]}
+              />
+            )}
+          </FormField>
+          <CheckInFields
+            orgId={draft.orgId}
+            rules={draft.checkIn}
+            onChange={(checkIn) => onChange({ checkIn })}
           />
-        )}
-      </FormField>
-      <SwitchRow
-        label="Look up by name"
-        checked={draft.lookup}
-        onCheckedChange={(lookup) => onChange({ lookup })}
-      />
-      <FormField label="Daily limit" help="Optional. An amount, for scanners that take or add.">
-        {(p) => (
-          <NumberField
-            {...p}
-            value={draft.dailyAmount}
-            min={1}
-            onValueChange={(dailyAmount) => onChange({ dailyAmount })}
-          />
-        )}
-      </FormField>
+        </>
+      ) : null}
     </div>
   );
 }

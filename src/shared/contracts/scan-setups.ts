@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, ModeSchema, PlainLineSchema, TimestampSchema } from './common.ts';
+import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import {
   DeviceRoleSchema,
@@ -13,10 +13,12 @@ export const ScanWatchSchema = z.strictObject({
   allOrg: z.boolean().default(false),
 });
 export const ScannerSetupSchema = ScannerSchema.extend({
+  adminSession: z.boolean().default(false),
   adminUser: z.object({ id: IdSchema, name: z.string() }).nullable(),
   watch: ScanWatchSchema.nullable(),
 });
 export type ScannerSetup = z.infer<typeof ScannerSetupSchema>;
+export const ScannerSetupListSchema = pageOf(ScannerSetupSchema);
 
 export const CreateScannerSetupSchema = z.object({
   orgId: IdSchema,
@@ -67,3 +69,7 @@ export const ScanLiveSnapshotSchema = z.object({
   cursor: z.string().nullable(),
   rows: z.array(ScanLiveRowSchema).max(100),
 });
+export const ScanLiveMessageSchema = z.union([
+  ScanLiveSnapshotSchema,
+  z.object({ control: z.literal('reset') }),
+]);

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { countD1, makeOrg } from '../../../../test/helpers/index.ts';
+import { countD1, makeOrg, makePass } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { requestHashOf } from './act-claim.ts';
@@ -236,14 +236,16 @@ describe('act: concurrency', () => {
   it('the count milestone fires once, on the 100th arrival', async () => {
     const t = await kit.scanTemplate('Crowd', { actions: [CHECK_IN] });
     const ev = await kit.event({ templateIds: [t] });
-    const seed = await kit.scanPass(t);
-    for (let i = 0; i < 98; i++)
+    const template = await kit.registry.resolve(t);
+    for (let i = 0; i < 98; i++) {
+      const seed = await makePass(kit.fx, { orgId: kit.org.id, template });
       await run(
         kit.env.DB,
         `INSERT INTO scan_gates (pass_id, action_id, scope, org_id, mode, template_id, kind, state, count, first_at, last_at, last_scan_id)
          VALUES (?, ?, ?, ?, 'live', ?, 'check_in', 'in', 1, 1, 1, 'seed')`,
         [seed.id, `seed${i}`, `event:${ev.id}`, kit.org.id, t],
       );
+    }
     const passes = await Promise.all(Array.from({ length: 5 }, () => kit.scanPass(t)));
     const scanners = await Promise.all(passes.map(() => kit.scanner({ eventId: ev.id })));
     const results = await Promise.all(

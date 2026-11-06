@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { pageOf } from '@/shared/contracts/common.ts';
 import {
-  CreatedScannerSchema,
-  type CreateScannerSchema,
+  CreatedScannerSetupSchema,
+  type CreateScannerSetupSchema,
+  type UpdateScannerSetupSchema,
+} from '@/shared/contracts/scan-setups.ts';
+import {
   ScanEventSchema,
   ScannerPairingSchema,
   ScannerPairingStateSchema,
   TerminalTokenSchema,
-  type UpdateScannerSchema,
 } from '@/shared/contracts/scanners.ts';
 import { TemplateListSchema } from '@/shared/contracts/templates.ts';
 import { api } from '@/web/lib/api.ts';
@@ -23,8 +25,8 @@ export const PAIRING_POLL_MS = 2000;
 export function useCreateScanner() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: z.input<typeof CreateScannerSchema>) =>
-      api.post('/api/v1/scanners', CreatedScannerSchema, body),
+    mutationFn: (body: z.input<typeof CreateScannerSetupSchema>) =>
+      api.post('/api/v1/scan-setups', CreatedScannerSetupSchema, body),
     onSuccess: () => client.invalidateQueries({ queryKey: scanningKeys.scanners }),
   });
 }
@@ -32,7 +34,8 @@ export function useCreateScanner() {
 export function useUpdateScanner(id: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: z.input<typeof UpdateScannerSchema>) => api.action('PATCH', base(id), body),
+    mutationFn: (body: z.input<typeof UpdateScannerSetupSchema>) =>
+      api.action('PATCH', `/api/v1/scan-setups/${encodeURIComponent(id)}`, body),
     onSuccess: () => client.invalidateQueries({ queryKey: scanningKeys.scanners }),
   });
 }

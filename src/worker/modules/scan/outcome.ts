@@ -118,8 +118,11 @@ export function stopOutcome(
     template: stop.ref,
     at: stop.at,
     flags: stop.flags,
+    checkIn: stop.found?.admission?.state,
     overridable:
-      stop.kind === 'heads_up' && canOverride(actor, stop.reason, options.action, read.approvals),
+      stop.hard !== true &&
+      stop.kind === 'heads_up' &&
+      canOverride(actor, stop.reason, options.action, read.approvals),
     display: showPass
       ? safeDisplay(ctx, actor, stop.pass, stop.kind, {
           found: stop.found ?? undefined,

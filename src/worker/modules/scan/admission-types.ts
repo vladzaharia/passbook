@@ -1,0 +1,29 @@
+import type { CheckInPolicy, CheckInState } from '../../../shared/contracts/check-in.ts';
+import type { ScanEventRow } from './repo-scope.ts';
+
+export interface AdmissionPlan {
+  state: CheckInState;
+  rules: CheckInPolicy[];
+  scope: string;
+  event: ScanEventRow | null;
+  tracked: boolean;
+  previousScanId: string | null;
+  limitSince: number | null;
+  /** Explicit policy limits apply across every check-in action. */
+  limited: boolean;
+}
+
+export interface AdmissionHistory {
+  first_at: number | null;
+  last_at: number | null;
+  today_at: number | null;
+}
+
+export interface PresenceRow {
+  state: 'in' | 'out';
+  tracking: number;
+  entered_at: number | null;
+  first_at: number;
+  last_entry_at: number;
+  last_scan_id: string;
+}

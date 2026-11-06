@@ -1,5 +1,6 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { completedAdmission, planAdmission } from './admission.ts';
 import { planCounts } from './counts.ts';
 import { gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
@@ -23,7 +24,9 @@ export async function replayOutcome(
 ): Promise<ScanOutcome> {
   const db = ctx.env.DB;
   const candidate = row.passId ? await candidateById(db, actor.orgId, row.passId) : null;
-  const found = candidate ? await foundOf(ctx, candidate) : null;
+  const found = candidate ? await foundOf(ctx, candidate, actor) : null;
+  if (found && row.direction)
+    found.admission = (await planAdmission(ctx, actor, found, row.direction)).plan;
   const action = found?.scan.actions.find((a) => a.id === row.actionId) ?? null;
   const counts = planCounts(ctx, actor);
   const holder =
@@ -58,6 +61,13 @@ export async function replayOutcome(
     action: action ? { id: action.id, label: action.label, kind: action.kind } : null,
     template: found?.ref ?? null,
     at: row.at,
+    checkIn:
+      found?.admission && row.direction
+        ? completedAdmission(
+            { ...found.admission, state: { ...found.admission.state, direction: row.direction } },
+            row.at,
+          )
+        : undefined,
     previous:
       held?.scan_id && held.scan_id !== row.id
         ? {

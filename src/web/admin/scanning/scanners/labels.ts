@@ -1,3 +1,4 @@
+import type { ScannerSetup } from '@/shared/contracts/scan-setups.ts';
 import type { ScannerDto } from '@/shared/contracts/scanners.ts';
 
 export type ScannerStatus = 'revoked' | 'not_paired' | 'online' | 'offline';
@@ -10,8 +11,13 @@ export function scannerStatus(s: Pick<ScannerDto, 'status' | 'online'>): Scanner
 }
 
 /** "Saturday gala" (once the event name is known), "An event", or "2 templates". */
-export function acceptsText(s: Pick<ScannerDto, 'accepts'>, eventName?: string): string {
-  if (!s.accepts) return '—';
+export function acceptsText(
+  s: Pick<ScannerDto, 'accepts'> & Partial<Pick<ScannerSetup, 'settings' | 'deviceRole' | 'watch'>>,
+  eventName?: string,
+): string {
+  if (s.deviceRole === 'customer' || s.deviceRole === 'monitor')
+    return s.watch?.allOrg ? 'All scanners' : `${s.watch?.scannerIds.length ?? 0} scanners`;
+  if (!s.accepts) return s.settings?.acceptAllTemplates ? 'All passes' : '—';
   if ('eventId' in s.accepts) return eventName ?? 'An event';
   const n = s.accepts.templateIds.length;
   return `${n} ${n === 1 ? 'template' : 'templates'}`;
