@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
 import { ScanDisplaySchema } from './scan-display.ts';
 
@@ -85,6 +86,10 @@ export const ScanReasonSchema = z.enum([
 export type ScanReason = z.infer<typeof ScanReasonSchema>;
 
 export const ScannerSettingsSchema = z.object({
+  checkIn: CheckInPolicySchema.optional(),
+  direction: SetupDirectionSchema.optional(),
+  showPhoto: z.boolean().optional(),
+  acceptAllTemplates: z.boolean().optional(),
   flow: z.enum(['auto', 'choose']),
   defaultActionId: z.string().min(1).max(32).nullable(),
   roleWithoutSignIn: z.enum(['door', 'desk']),
@@ -109,6 +114,7 @@ export type ScanInput = z.infer<typeof ScanInputSchema>;
  * `<img>` loads, takes the same query next to `g`. A scanner never sends it.
  */
 export const ScanAdminScopeSchema = z.object({
+  setupId: IdSchema.optional(),
   orgId: IdSchema,
   eventId: IdSchema.optional(),
   templateIds: z.array(IdSchema).max(20).optional(),
@@ -201,6 +207,7 @@ export const ScanCardActionSchema = z.object({
 });
 export const ScanTemplateRefSchema = z.object({ name: z.string(), style: z.string() });
 export const ScanCardSchema = z.object({
+  checkIn: CheckInStateSchema.optional(),
   passId: IdSchema,
   version: z.number().int(),
   mode: ModeSchema,
@@ -263,6 +270,7 @@ export const ScanCountsSchema = z.object({
 });
 export const ScanMilestoneSchema = z.enum(['count', 'all_in', 'reward']);
 export const ScanOutcomeSchema = z.object({
+  checkIn: CheckInStateSchema.optional(),
   scanId: IdSchema.nullable(),
   kind: ScanOutcomeKindSchema,
   reason: ScanReasonSchema.nullable(),
