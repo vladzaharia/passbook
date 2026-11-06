@@ -32,6 +32,13 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
   ],
   [
     page('Messages', '/admin/messages', 'broadcast', true),
+    page('Scanning', '/admin/scanning', 'scanner', true, [
+      'scanners',
+      'staff',
+      'events',
+      'check in',
+      'nfc',
+    ]),
     {
       label: 'Test inbox',
       to: '/admin/test-inbox',

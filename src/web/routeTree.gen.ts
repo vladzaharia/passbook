@@ -31,6 +31,7 @@ import { Route as AdminOrgsOrgIdRouteImport } from './routes/admin/orgs/$orgId'
 import { Route as AdminPassesIndexRouteImport } from './routes/admin/passes/index'
 import { Route as AdminPassesPassIdRouteImport } from './routes/admin/passes/$passId'
 import { Route as AdminPassesNewRouteImport } from './routes/admin/passes/new'
+import { Route as AdminScanningIndexRouteImport } from './routes/admin/scanning/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as AdminStatusIndexRouteImport } from './routes/admin/status/index'
 import { Route as AdminTemplatesIndexRouteImport } from './routes/admin/templates/index'
@@ -39,6 +40,8 @@ import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templat
 import { Route as AdminTestInboxIndexRouteImport } from './routes/admin/test-inbox/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminScanningEventsEventIdRouteImport } from './routes/admin/scanning/events.$eventId'
+import { Route as AdminScanningScannersScannerIdRouteImport } from './routes/admin/scanning/scanners.$scannerId'
 import { Route as AdminTemplatesTemplateIdDesignRouteImport } from './routes/admin/templates/$templateId_.design'
 
 const IndexRoute = IndexRouteImport.update({
@@ -154,6 +157,11 @@ const AdminPassesNewRoute = AdminPassesNewRouteImport.update({
   path: '/passes/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminScanningIndexRoute = AdminScanningIndexRouteImport.update({
+  id: '/scanning/',
+  path: '/scanning/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -195,6 +203,18 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminScanningEventsEventIdRoute =
+  AdminScanningEventsEventIdRouteImport.update({
+    id: '/scanning/events/$eventId',
+    path: '/scanning/events/$eventId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminScanningScannersScannerIdRoute =
+  AdminScanningScannersScannerIdRouteImport.update({
+    id: '/scanning/scanners/$scannerId',
+    path: '/scanning/scanners/$scannerId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminTemplatesTemplateIdDesignRoute =
   AdminTemplatesTemplateIdDesignRouteImport.update({
     id: '/templates/$templateId_/design',
@@ -228,11 +248,14 @@ export interface FileRoutesByFullPath {
   '/admin/messages/': typeof AdminMessagesIndexRoute
   '/admin/orgs/': typeof AdminOrgsIndexRoute
   '/admin/passes/': typeof AdminPassesIndexRoute
+  '/admin/scanning/': typeof AdminScanningIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
+  '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
 export interface FileRoutesByTo {
@@ -260,11 +283,14 @@ export interface FileRoutesByTo {
   '/admin/messages': typeof AdminMessagesIndexRoute
   '/admin/orgs': typeof AdminOrgsIndexRoute
   '/admin/passes': typeof AdminPassesIndexRoute
+  '/admin/scanning': typeof AdminScanningIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/admin/status': typeof AdminStatusIndexRoute
   '/admin/templates': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox': typeof AdminTestInboxIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
+  '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
+  '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
 export interface FileRoutesById {
@@ -294,11 +320,14 @@ export interface FileRoutesById {
   '/admin/messages/': typeof AdminMessagesIndexRoute
   '/admin/orgs/': typeof AdminOrgsIndexRoute
   '/admin/passes/': typeof AdminPassesIndexRoute
+  '/admin/scanning/': typeof AdminScanningIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/status/': typeof AdminStatusIndexRoute
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
+  '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
 }
 export interface FileRouteTypes {
@@ -329,11 +358,14 @@ export interface FileRouteTypes {
     | '/admin/messages/'
     | '/admin/orgs/'
     | '/admin/passes/'
+    | '/admin/scanning/'
     | '/admin/settings/'
     | '/admin/status/'
     | '/admin/templates/'
     | '/admin/test-inbox/'
     | '/admin/users/'
+    | '/admin/scanning/events/$eventId'
+    | '/admin/scanning/scanners/$scannerId'
     | '/admin/templates/$templateId/design'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -361,11 +393,14 @@ export interface FileRouteTypes {
     | '/admin/messages'
     | '/admin/orgs'
     | '/admin/passes'
+    | '/admin/scanning'
     | '/admin/settings'
     | '/admin/status'
     | '/admin/templates'
     | '/admin/test-inbox'
     | '/admin/users'
+    | '/admin/scanning/events/$eventId'
+    | '/admin/scanning/scanners/$scannerId'
     | '/admin/templates/$templateId/design'
   id:
     | '__root__'
@@ -394,11 +429,14 @@ export interface FileRouteTypes {
     | '/admin/messages/'
     | '/admin/orgs/'
     | '/admin/passes/'
+    | '/admin/scanning/'
     | '/admin/settings/'
     | '/admin/status/'
     | '/admin/templates/'
     | '/admin/test-inbox/'
     | '/admin/users/'
+    | '/admin/scanning/events/$eventId'
+    | '/admin/scanning/scanners/$scannerId'
     | '/admin/templates/$templateId_/design'
   fileRoutesById: FileRoutesById
 }
@@ -566,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPassesNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/scanning/': {
+      id: '/admin/scanning/'
+      path: '/scanning'
+      fullPath: '/admin/scanning/'
+      preLoaderRoute: typeof AdminScanningIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/settings/': {
       id: '/admin/settings/'
       path: '/settings'
@@ -622,6 +667,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/scanning/events/$eventId': {
+      id: '/admin/scanning/events/$eventId'
+      path: '/scanning/events/$eventId'
+      fullPath: '/admin/scanning/events/$eventId'
+      preLoaderRoute: typeof AdminScanningEventsEventIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/scanning/scanners/$scannerId': {
+      id: '/admin/scanning/scanners/$scannerId'
+      path: '/scanning/scanners/$scannerId'
+      fullPath: '/admin/scanning/scanners/$scannerId'
+      preLoaderRoute: typeof AdminScanningScannersScannerIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/templates/$templateId_/design': {
       id: '/admin/templates/$templateId_/design'
       path: '/templates/$templateId/design'
@@ -653,11 +712,14 @@ interface AdminRouteRouteChildren {
   AdminMessagesIndexRoute: typeof AdminMessagesIndexRoute
   AdminOrgsIndexRoute: typeof AdminOrgsIndexRoute
   AdminPassesIndexRoute: typeof AdminPassesIndexRoute
+  AdminScanningIndexRoute: typeof AdminScanningIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
   AdminStatusIndexRoute: typeof AdminStatusIndexRoute
   AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
   AdminTestInboxIndexRoute: typeof AdminTestInboxIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+  AdminScanningEventsEventIdRoute: typeof AdminScanningEventsEventIdRoute
+  AdminScanningScannersScannerIdRoute: typeof AdminScanningScannersScannerIdRoute
   AdminTemplatesTemplateIdDesignRoute: typeof AdminTemplatesTemplateIdDesignRoute
 }
 
@@ -682,11 +744,14 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminMessagesIndexRoute: AdminMessagesIndexRoute,
   AdminOrgsIndexRoute: AdminOrgsIndexRoute,
   AdminPassesIndexRoute: AdminPassesIndexRoute,
+  AdminScanningIndexRoute: AdminScanningIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
   AdminStatusIndexRoute: AdminStatusIndexRoute,
   AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
   AdminTestInboxIndexRoute: AdminTestInboxIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
+  AdminScanningEventsEventIdRoute: AdminScanningEventsEventIdRoute,
+  AdminScanningScannersScannerIdRoute: AdminScanningScannersScannerIdRoute,
   AdminTemplatesTemplateIdDesignRoute: AdminTemplatesTemplateIdDesignRoute,
 }
 

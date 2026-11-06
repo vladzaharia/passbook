@@ -45,6 +45,7 @@ const ACTION_KEYWORDS: Record<string, string[]> = {
   'new-connection': ['create', 'add'],
   'new-org': ['create', 'add', 'tenant'],
   'new-key': ['create', 'add'],
+  'new-scanner': ['create', 'add', 'pair', 'device'],
   'switch-org': ['organization', 'scope'],
 };
 
@@ -216,6 +217,12 @@ export function AdminPalette({
                   label: 'New API key',
                   icon: Plus,
                   onSelect: go('/admin/api-keys', { new: '1' }),
+                },
+                {
+                  id: 'new-scanner',
+                  label: 'New scanner',
+                  icon: ENTITY.scanner.icon,
+                  onSelect: go('/admin/scanning', { new: '1' }),
                 },
                 {
                   id: 'switch-org',

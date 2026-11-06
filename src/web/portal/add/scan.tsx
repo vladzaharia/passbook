@@ -18,28 +18,36 @@ export function Scan({
   url,
   label,
   buddy,
+  lead,
+  dim,
   children,
 }: {
   /** The /p page the QR encodes: the iPhone that scans it adds with the badge there. */
   url: string;
   label: string;
   buddy?: RenderBuddy;
+  /** Replaces the iPhone's scan as the first way (the console's pairing face). */
+  lead?: ReactNode;
+  /** The code is spent: the console's pairing face dims it. */
+  dim?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <div className="wl-add-scan">
+    <div className="wl-add-scan" data-dim={dim ? '' : undefined}>
       <div className="wl-sign">
         {buddy?.({ size: 'lg', scene: 'nudge', at: 'end', className: 'wl-add-buddy' })}
         <QrTile value={url} label={label} />
       </div>
       <div className="wl-ways">
-        <div className="wl-way">
-          <p className="wl-way-label">
-            <Smartphone aria-hidden />
-            {HOLDER_COPY.iphone}
-          </p>
-          <p className="text-sm text-fg-muted">{HOLDER_COPY.scanLine}</p>
-        </div>
+        {lead ?? (
+          <div className="wl-way">
+            <p className="wl-way-label">
+              <Smartphone aria-hidden />
+              {HOLDER_COPY.iphone}
+            </p>
+            <p className="text-sm text-fg-muted">{HOLDER_COPY.scanLine}</p>
+          </div>
+        )}
         {children}
       </div>
     </div>

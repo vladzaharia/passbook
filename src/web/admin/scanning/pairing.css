@@ -1,0 +1,5 @@
+/* The pairing face reuses the add sign (portal/add/add.css). A spent code dims the QR only. */
+.wl-add-scan[data-dim] .wl-sign-qr {
+  opacity: 0.35;
+  transition: opacity var(--wl-dur-quick, 150ms) ease-out;
+}

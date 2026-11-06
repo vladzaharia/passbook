@@ -1,11 +1,16 @@
 import {
   AlertTriangle,
+  Archive,
   BadgeCheck,
   Ban,
+  CalendarCheck2,
+  CalendarClock,
   CheckCircle2,
+  CircleCheck,
   CircleDashed,
   CirclePause,
   Clock,
+  DoorOpen,
   Eye,
   EyeOff,
   FlaskConical,
@@ -13,13 +18,23 @@ import {
   Loader2,
   Lock,
   type LucideIcon,
+  Nfc,
+  OctagonX,
+  QrCode,
+  Radio,
   Shield,
+  ShieldCheck,
   Smartphone,
   Star,
+  Store,
+  TriangleAlert,
+  Undo2,
   Upload,
   User,
   UserCheck,
   WalletCards,
+  Wifi,
+  WifiOff,
   XCircle,
 } from 'lucide-react';
 import type { z } from 'zod';
@@ -193,6 +208,28 @@ export const MODE_STATUS = {
   },
 } as const satisfies Record<string, StatusEntry>;
 
+/** Scanning: scanner reachability, event windows, scan results, staff roles and NFC readiness. */
+export const SCAN_STATUS = {
+  online: { label: 'Online', tone: 'success', icon: Wifi },
+  offline: { label: 'Offline', tone: 'neutral', icon: WifiOff },
+  not_paired: { label: 'Not paired', tone: 'warning', icon: QrCode },
+  upcoming: { label: 'Upcoming', tone: 'info', icon: CalendarClock },
+  live: { label: 'Live', tone: 'success', icon: Radio },
+  ended: { label: 'Ended', tone: 'neutral', icon: CalendarCheck2 },
+  archived: { label: 'Archived', tone: 'neutral', icon: Archive },
+  scan_done: { label: 'Done', tone: 'success', icon: CircleCheck },
+  scan_heads_up: { label: 'Heads-up', tone: 'warning', icon: TriangleAlert },
+  scan_refused: { label: 'Refused', tone: 'danger', icon: OctagonX },
+  scan_undone: { label: 'Undone', tone: 'neutral', icon: Undo2 },
+  nfc_not_approved: { label: 'Not approved', tone: 'neutral', icon: Nfc },
+  nfc_approved: { label: 'Approved', tone: 'info', icon: Nfc },
+  nfc_ready: { label: 'Ready', tone: 'success', icon: Nfc },
+  role_door: { label: 'Door', tone: 'neutral', icon: DoorOpen },
+  role_desk: { label: 'Desk', tone: 'neutral', icon: Store },
+  role_manager: { label: 'Manager', tone: 'neutral', icon: ShieldCheck },
+  pin_locked: { label: 'Locked', tone: 'warning', icon: Lock },
+} as const satisfies Record<string, StatusEntry>;
+
 export const STATUS_VOCAB = {
   ...HEALTH_STATUS,
   ...PASS_STATUS,
@@ -206,6 +243,7 @@ export const STATUS_VOCAB = {
   ...BROADCAST_STATUS,
   ...MARKER_STATUS,
   ...MODE_STATUS,
+  ...SCAN_STATUS,
 } as const;
 export type StatusKey = keyof typeof STATUS_VOCAB;
 

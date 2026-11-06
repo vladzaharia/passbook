@@ -4,8 +4,10 @@ import {
   Braces,
   Building2,
   Cable,
+  CalendarCheck,
   FileBadge,
   History,
+  IdCard,
   Image,
   KeyRound,
   LayoutTemplate,
@@ -14,6 +16,7 @@ import {
   Megaphone,
   Milestone,
   Package,
+  ScanLine,
   ScrollText,
   SearchX,
   Send,
@@ -49,7 +52,8 @@ export const ENTITY = {
   },
   apiKey: { label: 'API key', plural: 'API keys', icon: KeyRound, art: 'key' },
   audit: { label: 'Audit entry', plural: 'audit entries', icon: ScrollText, art: 'log' },
-  activity: { label: 'Event', plural: 'events', icon: Milestone, art: 'activity' },
+  /** A pass's ledger row. "Event" is the real-world occasion (`event` below). */
+  activity: { label: 'Entry', plural: 'entries', icon: Milestone, art: 'activity' },
   status: { label: 'Component', plural: 'components', icon: Activity, art: 'pulse' },
   workflowRun: { label: 'Workflow run', plural: 'workflow runs', icon: Workflow, art: 'runs' },
   device: { label: 'Device', plural: 'devices', icon: Smartphone, art: 'phone' },
@@ -59,6 +63,10 @@ export const ENTITY = {
   image: { label: 'Image', plural: 'images', icon: Image, art: 'frames' },
   version: { label: 'Version', plural: 'versions', icon: History, art: 'layers' },
   mapping: { label: 'Mapping', plural: 'mappings', icon: ArrowRightLeft, art: 'mapping' },
+  // Scanning. Art is borrowed until BU.1 adds scanner, stub and badge (entities.test PENDING_ART).
+  scanner: { label: 'Scanner', plural: 'scanners', icon: ScanLine, art: 'phone' },
+  event: { label: 'Event', plural: 'events', icon: CalendarCheck, art: 'passes' },
+  staff: { label: 'Staff', plural: 'staff', icon: IdCard, art: 'people' },
   search: { label: 'Result', plural: 'results', icon: SearchX, art: 'lens' },
 } as const satisfies Record<string, Entity>;
 
