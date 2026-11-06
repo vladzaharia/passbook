@@ -93,10 +93,9 @@ describe('Scanning page', () => {
   it('links the event page back to Scanning with typed routes', async () => {
     await renderApp('/admin/scanning/events/e1', { session: 'admin', handlers });
     const crumbs = await screen.findByRole('navigation', { name: 'Breadcrumb' });
-    expect(within(crumbs).getByRole('link', { name: 'Scanning' })).toHaveAttribute(
-      'href',
-      '/admin/scanning',
-    );
+    const link = within(crumbs).getByRole('link', { name: 'Scanning' });
+    const destination = new URL(link.getAttribute('href') ?? '', 'https://wallet.test');
+    expect(destination.pathname).toBe('/admin/scanning');
   });
 });
 
