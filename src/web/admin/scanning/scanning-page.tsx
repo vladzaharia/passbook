@@ -1,15 +1,13 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
-import { EventsTab } from './events-tab.tsx';
 import { StaffTab } from './placeholder-tabs.tsx';
 import { useScannerPages } from './queries.ts';
 import { NewScannerDialog } from './scanners/new-scanner-dialog.tsx';
 import type { ScannerDraft } from './scanners/scanner-draft.ts';
 import { ScannersTab } from './scanners/scanners-tab.tsx';
-import { ScansTab } from './scans-tab.tsx';
 import {
   DEFAULT_TAB,
   SCANNING_TABS,
@@ -17,6 +15,9 @@ import {
   type ScanningTab,
   withTab,
 } from './search.ts';
+
+const EventsTab = lazy(() => import('./events-tab.tsx').then((m) => ({ default: m.EventsTab })));
+const ScansTab = lazy(() => import('./scans-tab.tsx').then((m) => ({ default: m.ScansTab })));
 
 const LABEL: Record<ScanningTab, string> = {
   scanners: 'Scanners',
@@ -78,13 +79,17 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           />
         </TabsContent>
         <TabsContent value="events">
-          <EventsTab />
+          <Suspense fallback={<p role="status">Loading events…</p>}>
+            <EventsTab />
+          </Suspense>
         </TabsContent>
         <TabsContent value="staff">
           <StaffTab />
         </TabsContent>
         <TabsContent value="scans">
-          <ScansTab search={search} />
+          <Suspense fallback={<p role="status">Loading scans…</p>}>
+            <ScansTab search={search} />
+          </Suspense>
         </TabsContent>
       </Tabs>
       {creating ? (

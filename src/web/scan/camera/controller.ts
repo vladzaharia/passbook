@@ -14,6 +14,9 @@ export function createCamera(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let generation = 0;
   let facing: 'environment' | 'user' = 'environment';
+  let torch = false;
+  let wideId: string | undefined;
+  let useWide = false;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const frame = () => {
@@ -42,6 +45,7 @@ export function createCamera(
     pending = false;
     for (const track of stream?.getTracks() ?? []) track.stop();
     stream = null;
+    torch = false;
     const v = video();
     if (v) v.srcObject = null;
   };
@@ -62,13 +66,24 @@ export function createCamera(
     try {
       const next = await navigator.mediaDevices.getUserMedia({
         audio: false,
-        video: { facingMode: { ideal: facing }, width: { ideal: 1280 } },
+        video: {
+          ...(useWide && wideId
+            ? { deviceId: { exact: wideId } }
+            : { facingMode: { ideal: facing } }),
+          width: { ideal: 1280 },
+        },
       });
       if (token !== generation) {
         for (const t of next.getTracks()) t.stop();
         return;
       }
       stream = next;
+      const devices = (await navigator.mediaDevices.enumerateDevices?.()) ?? [];
+      if (token !== generation) return;
+      wideId = devices.find(
+        (device) =>
+          device.kind === 'videoinput' && /ultra.?wide|back.?wide|0[.,]5/i.test(device.label),
+      )?.deviceId;
       const v = video();
       if (!v) {
         stop();
@@ -108,8 +123,22 @@ export function createCamera(
     resume,
     stop,
     slow: () => undefined,
+    hasTorch: () =>
+      Boolean(
+        (stream?.getVideoTracks()[0]?.getCapabilities?.() as { torch?: boolean } | undefined)
+          ?.torch,
+      ),
+    hasWide: () => Boolean(wideId),
+    async toggleTorch() {
+      const track = stream?.getVideoTracks()[0];
+      if (!track) return false;
+      await track.applyConstraints({ advanced: [{ torch: !torch } as MediaTrackConstraintSet] });
+      torch = !torch;
+      return torch;
+    },
     choose(choice: 'back' | 'back-wide' | 'front') {
       facing = choice === 'front' ? 'user' : 'environment';
+      useWide = choice === 'back-wide';
       if (stream) void start();
     },
   };

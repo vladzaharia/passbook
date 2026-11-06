@@ -7,8 +7,9 @@ import { gzipSync } from 'node:zlib';
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
 
-/** Initial gzip bytes measured after the admin-only libraries left the entry (217,649), plus 5%, plus wave 2 (Test mode, Messages). */
-export const BUDGET_BYTES = 232_500;
+/** Console entry: 239 kB measured with the M1 scanning interfaces and shared contracts; 1 kB headroom.
+ * Scanning pages, pass inspection, tables and search controls remain lazy. */
+export const BUDGET_BYTES = 240_000;
 /** The scanner's initial load (scan.html), in gzip bytes. */
 export const SCAN_BUDGET_BYTES = 150_000;
 /** Literal strings: this check matches text, so an identifier would not survive minification. */

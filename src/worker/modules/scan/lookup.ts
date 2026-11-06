@@ -8,6 +8,7 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import { barcodeHashOfCode, cleanCode, codeKeyOf, lookupHashOf } from './codes.ts';
 import { policyActor } from './dto.ts';
 import type { ScanActor } from './guard.ts';
 import { countMiss } from './misses.ts';
@@ -29,10 +30,19 @@ export async function lookup(
     throw new RateLimitedError(Math.ceil((hour + 3_600_000 - now) / 1000));
   const q = raw.trim();
   const email = strictEmail(q);
+  const clean = cleanCode(q);
+  const keys =
+    !email && q.length >= 3
+      ? {
+          scanCode: codeKeyOf(clean),
+          barcodeHash: await barcodeHashOfCode(clean),
+          lookupHash: await lookupHashOf(clean),
+        }
+      : undefined;
   const rows =
     (q.includes('@') && !email) || (!email && Array.from(q).length < 3)
       ? []
-      : await searchPasses(ctx.env.DB, actor, email ?? q, email !== null);
+      : await searchPasses(ctx.env.DB, actor, email ?? q, email !== null, keys);
   if (!rows.length) await countMiss(ctx, actor);
   await auditStmt(ctx.env.DB, ctx, {
     orgId: actor.orgId,

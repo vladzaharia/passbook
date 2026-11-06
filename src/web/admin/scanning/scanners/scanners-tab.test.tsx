@@ -135,7 +135,7 @@ describe('New scanner dialog', () => {
       '/api/v1/scanners': ((_url: URL, init?: RequestInit) => {
         if (init?.method === 'POST') {
           body = JSON.parse(String(init.body));
-          return json({ scanner: s({ id: 's9', name: 'Back door' }), pairing: pairingFixture() });
+          return json({ ...s({ id: 's9', name: 'Back door' }), pairing: pairingFixture() });
         }
         return page([]);
       }) as never,

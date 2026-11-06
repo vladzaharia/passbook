@@ -28,11 +28,17 @@ No remote migrations or Worker deployment were run during this integration.
 - Atomic check-in undo through device and console APIs; audit and pass ledger commit with it.
 - Camera decoding in a worker using self-hosted zxing wasm, keyboard input and the Android bridge.
 - Unconfirmed-request persistence, scope clearing, revocation handling, and camera lifecycle.
-- Console scanner pages, event creation/detail/archive and the scan log with undo.
+- B strengthened result bands, compact refusals, identity/chip rows, notes, held results and the iPad split card.
+- Camera aiming/checking overlays, frozen frames, supported torch and wide-camera choices, and reader fallback.
+- Full-height phone lookup and side sheets with explicit check-in review, masked addresses and pass previews.
+- Lazy pass inspection without barcodes, recent scans, undo state, shift totals and an end-shift guard.
+- Admin scope selection, scanner creation/pairing, event editing/assignment/readiness and scan-history filters/detail/undo.
 - Android builds on GitHub and signed pilot APK releases from `android-v<versionName>` tags on main.
 
 Shared integration fixes include `validityOf`, the lightweight Test label, audit vocabulary,
 scanner entry code splitting, decoder prebundling and the NFC import rejection assertion.
+The console's initial bundle budget is 240 kB gzip (239 kB measured after the scanning UI and contract changes);
+the independent scanner stays within 150 kB. Pages, lookup, pass inspection and admin tables load lazily.
 No new database migration was needed. `0014_scan.sql` is the existing Phase 0 migration.
 
 ## Validation
@@ -40,7 +46,12 @@ No new database migration was needed. `0014_scan.sql` is the existing Phase 0 mi
 Worker regression coverage includes capacity races across different passes, concurrent undo,
 idempotent undo replay, mode isolation, email masking and daylight-saving midnight boundaries.
 Browser coverage pairs an unauthenticated device, scans through the Android bridge, checks
-server acceptance and duplicate protection, undoes the scan, and decodes a real QR frame in wasm.
+server acceptance and duplicate protection, undoes the scan, and decodes a real QR frame in wasm. It also exercises manual lookup review, pass inspection,
+recent/shift sheets, scanner creation, event assignment, console undo and name/undone filters.
+The door layout is measured at 320, 390, 820 and 1180 px in light and dark, with axe checks.
+Review captures: [phone](review/m1-phone-light.png), [iPad](review/m1-ipad-dark.png),
+[lookup](review/m1-lookup.png), [event](review/m1-event-admin.png).
+
 Android unit tests, lint and signed assembly pass. APK updates use the original pilot signing identity.
 
 ## Remaining milestones and device checks

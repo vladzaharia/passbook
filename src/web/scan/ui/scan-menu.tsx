@@ -70,6 +70,7 @@ export interface ScanMenuProps {
   holdResults: boolean;
   onHoldResults: (v: boolean) => void;
   camera: CameraChoice;
+  hasWide?: boolean;
   onCamera: (v: CameraChoice) => void;
   /** The scanner has a reader: Camera off and Reader tips show. */
   hasReader?: boolean;
@@ -117,7 +118,9 @@ export function ScanMenu(p: ScanMenuProps) {
           onValueChange={(v) => p.onCamera(v as CameraChoice)}
         >
           <DropdownMenuRadioItem value="back">Back</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="back-wide">Back wide</DropdownMenuRadioItem>
+          {p.hasWide !== false ? (
+            <DropdownMenuRadioItem value="back-wide">Back wide</DropdownMenuRadioItem>
+          ) : null}
           <DropdownMenuRadioItem value="front">Front</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         {p.hasReader ? (

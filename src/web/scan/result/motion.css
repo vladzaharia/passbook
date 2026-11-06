@@ -1,0 +1,76 @@
+@media (prefers-reduced-motion: no-preference) {
+  .scan-result[data-phase="rising"] {
+    animation: scan-result-rise 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .scan-result[data-phase="rising"] .scan-result-band {
+    animation: scan-skin 60ms 150ms both;
+  }
+  .scan-result[data-phase="rising"] .scan-glyph-row {
+    animation: scan-glyph-pop 180ms 180ms both;
+  }
+  .scan-result[data-phase="rising"] .scan-verdict-text {
+    animation: scan-text-rise 160ms 210ms both;
+  }
+  .scan-result[data-phase="tucking"] {
+    animation: scan-result-tuck 180ms ease-in both;
+  }
+  .scan-result[data-milestone] {
+    outline: 3px solid var(--sd-tone-gold);
+    outline-offset: -3px;
+  }
+  @keyframes scan-result-rise {
+    from {
+      transform: translate(var(--fx, 0), var(--fy, 100px)) scale(var(--sx, 0.14), var(--sy, 0.2));
+      opacity: 0.3;
+    }
+    56% {
+      transform: translateY(-8px) scale(1.015);
+      opacity: 1;
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes scan-skin {
+    from {
+      background: var(--sd-tone-violet);
+    }
+  }
+  @keyframes scan-glyph-pop {
+    from {
+      transform: scale(0.7);
+      opacity: 0;
+    }
+  }
+  @keyframes scan-text-rise {
+    from {
+      transform: translateY(8px);
+      opacity: 0;
+    }
+  }
+  @keyframes scan-result-tuck {
+    to {
+      transform: translateY(80px) scale(0.8);
+      opacity: 0;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-result[data-phase="rising"] {
+    animation: scan-card-fade 120ms both;
+  }
+  .scan-result[data-phase="tucking"] {
+    animation: scan-card-fade 120ms reverse both;
+  }
+  .scan-hold-rail {
+    animation: none;
+  }
+  @keyframes scan-card-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

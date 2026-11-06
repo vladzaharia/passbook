@@ -242,12 +242,13 @@ export const UpdateScanStaffSchema = z.object({
 export const StaffPinSchema = z.object({ pin: z.string().regex(/^\d{6}$/) });
 
 export const ScanListQuerySchema = PageQuerySchema.extend({
+  q: z.string().trim().max(80).optional(),
   orgId: IdSchema.optional(),
   scannerId: IdSchema.optional(),
   staffId: IdSchema.optional(),
   eventId: IdSchema.optional(),
   passId: IdSchema.optional(),
-  outcome: ScanRecordOutcomeSchema.optional(),
+  outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']).optional(),
   reason: ScanReasonSchema.optional(),
   from: z.coerce.number().int().nonnegative().optional(),
   to: z.coerce.number().int().nonnegative().optional(),

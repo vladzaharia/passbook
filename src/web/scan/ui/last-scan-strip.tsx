@@ -32,7 +32,7 @@ export function LastScanStrip({
         onClick={onOpen}
         aria-label={
           entry
-            ? `Last scan: ${entry.title}, ${entry.meta}. Open Recent`
+            ? `Last scan: ${entry.title} ${entry.meta}. Open Recent`
             : 'No scans yet. Open Recent'
         }
       >
@@ -43,7 +43,12 @@ export function LastScanStrip({
           <span className="scan-strip-title" dir="auto">
             {entry ? entry.title : 'No scans yet'}
           </span>
-          {entry ? <span className="scan-strip-meta">{entry.meta}</span> : null}
+          {entry ? (
+            <>
+              {' '}
+              <span className="scan-strip-meta">{entry.meta}</span>
+            </>
+          ) : null}
         </span>
       </button>
       {entry?.undoable ? (

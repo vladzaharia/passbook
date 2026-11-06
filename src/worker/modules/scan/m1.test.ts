@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
+import { listScanRows } from './repo-feed.ts';
 import type { ScanKit } from './test-kit.ts';
 import { codeOf, key, setupScanKit } from './test-kit.ts';
 
@@ -26,6 +27,41 @@ const checkIn = async () => {
 };
 
 describe('M1 door integration', () => {
+  it('finds an exact scan code without exposing its value and filters undone scans', async () => {
+    const { pass, outcome } = await checkIn();
+    const lookup = await kit.post(kit.admin(), '/lookup', { q: pass.scanCode, scope: scope() });
+    expect(lookup.status).toBe(200);
+    const data = (await lookup.json()) as { items: { passId: string }[] };
+    expect(data.items.map((row) => row.passId)).toEqual([pass.id]);
+    expect(JSON.stringify(data)).not.toContain(pass.scanCode);
+    expect(
+      await listScanRows(kit.env.DB, {
+        orgId: kit.org.id,
+        mode: 'live',
+        outcome: 'undone',
+        limit: 50,
+      }),
+    ).toHaveLength(0);
+    await kit.post(kit.admin(), `/scans/${outcome.scanId}/undo`, {
+      idempotencyKey: key(),
+      scope: scope(),
+    });
+    const rows = await listScanRows(kit.env.DB, {
+      orgId: kit.org.id,
+      mode: 'live',
+      outcome: 'undone',
+      q: pass.id,
+      limit: 50,
+    });
+    expect(rows.map((row) => row.id)).toEqual([outcome.scanId]);
+    expect(
+      await listScanRows(kit.env.DB, { orgId: kit.org.id, mode: 'live', q: '%', limit: 50 }),
+    ).toHaveLength(0);
+    expect(
+      await listScanRows(kit.env.DB, { orgId: kit.org.id, mode: 'test', q: pass.id, limit: 50 }),
+    ).toHaveLength(0);
+  });
+
   it('undo commits once, changes counts and permits a new check-in', async () => {
     const { pass, outcome } = await checkIn();
     expect(outcome.kind).toBe('ok');
@@ -44,8 +80,10 @@ describe('M1 door integration', () => {
     });
     expect(await again.json()).toMatchObject({ kind: 'ok', counts: { today: 1 } });
     const events = await kit.env.DB.prepare(
-      "SELECT count(*) AS n FROM pass_events WHERE kind = 'scan.undone'",
-    ).first<{ n: number }>();
+      "SELECT count(*) AS n FROM pass_events WHERE kind = 'scan.undone' AND pass_id = ?",
+    )
+      .bind(pass.id)
+      .first<{ n: number }>();
     expect(events?.n).toBe(1);
   });
 

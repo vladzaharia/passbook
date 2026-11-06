@@ -30,6 +30,9 @@ function ScanBoot() {
           orgId,
           timeZone: params.get('timeZone') ?? localZone(),
           ...(eventId ? { eventId } : {}),
+          ...(params.get('templateIds')
+            ? { templateIds: params.get('templateIds')?.split(',') }
+            : {}),
         }
       : undefined,
   );
@@ -88,7 +91,7 @@ function ScanBoot() {
           card={
             <BootCard
               title="Staff sign-in required"
-              line="Ask an administrator to turn off staff sign-in for this M1 scanner."
+              line="Ask an administrator to turn off staff sign-in for this scanner."
             />
           }
         />
@@ -135,8 +138,12 @@ function ScanBoot() {
     />
   ) : session.phase === 'scope_required' ? (
     <AdminStart
-      onOrg={(orgId) => {
-        scope.current = { orgId, timeZone: localZone() };
+      onScope={(chosen) => {
+        scope.current = chosen;
+        const query = new URLSearchParams({ orgId: chosen.orgId, timeZone: chosen.timeZone });
+        if (chosen.eventId) query.set('eventId', chosen.eventId);
+        if (chosen.templateIds?.length) query.set('templateIds', chosen.templateIds.join(','));
+        history.replaceState(null, '', `/scan?${query}`);
         void session.refetch();
       }}
     />

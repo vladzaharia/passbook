@@ -72,6 +72,11 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       const query = c.req.valid('query');
       const filter = { ...query, mode: modeOf(auth) };
       if (auth?.kind === 'api_key') {
+        if (query.q !== undefined)
+          throw new ForbiddenError(
+            'Pass-name search is for administrators.',
+            'SCAN_SEARCH_FORBIDDEN',
+          );
         // An org-scoped key sees its org; a platform key may name one.
         const orgId = auth.orgId ?? query.orgId;
         if (query.orgId) assertOrgAccess(auth, query.orgId);

@@ -29,8 +29,8 @@
 }
 @media (min-width: 1024px) {
   .scan-capsule {
-    inset-block-start: calc(env(safe-area-inset-top, 0px) + 8px);
-    width: min(720px, calc(100% - 48px));
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 32px);
+    width: calc(100% - 48px);
     height: 60px;
     border-radius: 30px;
     padding-inline: 24px 8px;

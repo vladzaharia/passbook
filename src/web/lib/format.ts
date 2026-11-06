@@ -104,3 +104,16 @@ export function formatRelative(ms: number, now: number): string {
 export function daysUntil(ms: number, now: number): number {
   return Math.floor((ms - now) / 86_400_000);
 }
+
+/** Event time always uses the event's zone, with the abbreviation when it differs. */
+export function formatEventTime(ms: number, timeZone: string): string {
+  const local = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return new Intl.DateTimeFormat(LOCALE, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone,
+    ...(local !== timeZone ? { timeZoneName: 'short' as const } : {}),
+  }).format(ms);
+}

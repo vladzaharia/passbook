@@ -118,7 +118,11 @@ export function undo(s: MachineState, ev: Of<'undo'>, env: Env): Out {
 export function undone(s: MachineState, ev: Of<'undone'>, env: Env): Out {
   if (s.undo?.key !== ev.key) return same(s);
   const scanId = s.undo.scanId;
-  const recent = s.recent.map((r) => (r.scanId === scanId ? { ...r, undoable: false } : r));
+  const recent = s.recent.map((r) =>
+    r.scanId === scanId
+      ? { ...r, undoable: false, outcome: { ...r.outcome, action: ev.outcome.action } }
+      : r,
+  );
   const l = s.loop;
   const loop =
     l.s === 'member' && l.band?.scanId === scanId

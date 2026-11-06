@@ -61,7 +61,7 @@ export function NewScannerDialog({ open, onOpenChange, initial }: NewScannerDial
     setFormError(undefined);
     try {
       const created = await create.mutateAsync(createBody({ ...draft, orgId }));
-      setMade({ id: created.scanner.id, name: created.scanner.name, pairing: created.pairing });
+      setMade({ id: created.id, name: created.name, pairing: created.pairing });
     } catch (cause) {
       const coded = isApiError(cause) ? FIELD_OF[cause.code] : undefined;
       if (coded) setServer({ [coded[0]]: coded[1] });

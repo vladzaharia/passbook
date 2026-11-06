@@ -45,7 +45,9 @@ function TemplateRows({
   error,
 }: Pick<ScannerFieldsProps, 'draft' | 'onChange'> & { error?: string | undefined }) {
   const templates = useOrgTemplates(draft.orgId || undefined);
-  const items = (templates.data?.items ?? []).filter((t) => t.status === 'active');
+  const items = (templates.data?.items ?? []).filter(
+    (t) => t.status === 'active' && t.orgId === draft.orgId,
+  );
   const set = (id: string, on: boolean) =>
     onChange({
       templateIds: on ? [...draft.templateIds, id] : draft.templateIds.filter((x) => x !== id),
@@ -167,9 +169,11 @@ export function ScannerFields({ draft, onChange, errors, orgs, autoFocus }: Scan
       </FormField>
       <CheckboxField
         label="Ask staff for their PIN"
+        disabled={!draft.staffSignIn}
         checked={draft.staffSignIn}
         onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
       />
+      <p className="text-xs text-fg-muted">Staff sign-in is unavailable.</p>
       {draft.staffSignIn ? null : (
         <FormField label="Without sign-in, scans as">
           {(p) => (

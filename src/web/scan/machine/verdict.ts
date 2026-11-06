@@ -126,6 +126,7 @@ export function enterVerdict(s: MachineState, o: VerdictOpts, env: Env): Out {
   const state: MachineState = {
     ...s,
     ...layer,
+    overlay: null,
     loop: {
       s: 'verdict',
       input,

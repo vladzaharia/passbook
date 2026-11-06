@@ -1,0 +1,120 @@
+.scan-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scan-camera-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgb(4 6 12 / 0.35), transparent 40%, rgb(4 6 12 / 0.45));
+}
+.scan-aim {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 120ms linear;
+}
+.scan-aim[data-hidden] {
+  opacity: 0;
+}
+.scan-reticle {
+  position: absolute;
+  width: 236px;
+  height: 236px;
+  left: calc(50% - 118px);
+  top: clamp(130px, 24.4vh, 206px);
+}
+.scan-reticle i {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 4px solid white;
+  border-radius: 18px;
+}
+.scan-reticle i:nth-child(1) {
+  inset: 0 auto auto 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.scan-reticle i:nth-child(2) {
+  inset: 0 0 auto auto;
+  border-left: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0;
+}
+.scan-reticle i:nth-child(3) {
+  inset: auto auto 0 0;
+  border-right: 0;
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.scan-reticle i:nth-child(4) {
+  inset: auto 0 0 auto;
+  border-left: 0;
+  border-top: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.scan-aim[data-checking] .scan-reticle {
+  border: 3px solid var(--sd-accent);
+  border-radius: 18px;
+}
+.scan-aim[data-checking] i {
+  visibility: hidden;
+}
+.scan-live-pill {
+  position: absolute;
+  top: clamp(384px, 54.5vh, 460px);
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 16px;
+  min-height: 36px;
+  border-radius: 18px;
+  background: rgb(10 12 20 / 0.62);
+  backdrop-filter: blur(20px);
+  color: white;
+  white-space: nowrap;
+  font: 500 15px / 20px var(--pk-font-sans);
+}
+.scan-reader-stage {
+  position: absolute;
+  inset: 24% 24px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: white;
+}
+.scan-reader-stage p {
+  font: 600 22px / 28px var(--pk-font-sans);
+  margin: 0;
+}
+.scan-reader-stage span {
+  max-width: 320px;
+  font-size: 15px;
+  line-height: 20px;
+  color: #c3cbe0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-aim {
+    transition: none;
+  }
+}
+
+.scan-frozen-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-reader-stage[data-hidden] {
+  opacity: 0;
+}

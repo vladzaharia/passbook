@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { pageOf } from '@/shared/contracts/common.ts';
 import {
+  CreatedScannerSchema,
   type CreateScannerSchema,
   ScanEventSchema,
   ScannerPairingSchema,
   ScannerPairingStateSchema,
-  ScannerSchema,
   TerminalTokenSchema,
   type UpdateScannerSchema,
 } from '@/shared/contracts/scanners.ts';
@@ -16,12 +16,6 @@ import { scanningKeys } from './queries.ts';
 
 /** Console scanners write API (SA 5.2). The list and detail reads live in queries.ts. */
 const base = (id: string) => `/api/v1/scanners/${encodeURIComponent(id)}`;
-
-/** Create returns the scanner and, for a browser scanner, its first pairing. */
-const CreatedScannerSchema = z.object({
-  scanner: ScannerSchema,
-  pairing: ScannerPairingSchema.nullable(),
-});
 
 /** Pairing polls every 2 s while the face is open and the tab is visible. */
 export const PAIRING_POLL_MS = 2000;

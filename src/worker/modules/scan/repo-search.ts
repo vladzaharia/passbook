@@ -19,6 +19,7 @@ export function searchPasses(
   actor: ScanActor,
   q: string,
   email: boolean,
+  keys?: { scanCode: string | null; barcodeHash: string; lookupHash: string },
 ): Promise<SearchRow[]> {
   if (actor.principal === 'scanner' && !actor.templateIds.length) return Promise.resolve([]);
   const where = ['p.org_id = ?', 'p.mode = ?', 'p.deleted_at IS NULL'];
@@ -38,10 +39,20 @@ export function searchPasses(
     where.push('p.holder_email = ?');
     params.push(q);
   } else {
-    where.push(`p.id IN (SELECT id FROM passes WHERE org_id = ? AND display_title LIKE ? ESCAPE '\\' COLLATE NOCASE
-      UNION SELECT id FROM passes WHERE org_id = ? AND display_subtitle LIKE ? ESCAPE '\\' COLLATE NOCASE)`);
+    const matches = [
+      "SELECT id FROM passes WHERE org_id = ? AND display_title LIKE ? ESCAPE '\\' COLLATE NOCASE",
+      "SELECT id FROM passes WHERE org_id = ? AND display_subtitle LIKE ? ESCAPE '\\' COLLATE NOCASE",
+    ];
     params.push(actor.orgId, `${likeEscape(q)}%`, actor.orgId, `${likeEscape(q)}%`);
+    if (keys) {
+      matches.push(
+        'SELECT id FROM passes WHERE org_id = ? AND (scan_code = ? OR barcode_hash = ? OR lookup_hash = ?)',
+      );
+      params.push(actor.orgId, keys.scanCode, keys.barcodeHash, keys.lookupHash);
+    }
+    where.push(`p.id IN (${matches.join(' UNION ')})`);
   }
+
   return all<SearchRow>(
     db,
     `SELECT p.id, p.display_title AS title, p.display_subtitle AS subtitle, p.status,

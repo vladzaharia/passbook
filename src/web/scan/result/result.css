@@ -1,4 +1,6 @@
 .scan-result {
+  --v: var(--scan-system);
+  --v-on: var(--scan-system-on);
   pointer-events: auto;
   width: min(100%, var(--scan-card-w));
   max-height: 100%;
@@ -10,97 +12,220 @@
   color: var(--sd-body);
   box-shadow: 0 16px 48px rgb(0 0 0 / 0.3);
 }
+.scan-result[data-kind="ok"] {
+  --v: var(--scan-ok);
+  --v-on: var(--scan-ok-on);
+}
+.scan-result[data-kind="heads_up"] {
+  --v: var(--scan-heads);
+  --v-on: var(--scan-heads-on);
+}
+.scan-result[data-kind="refused"] {
+  --v: var(--scan-refused);
+  --v-on: var(--scan-refused-on);
+}
 .scan-result-band {
+  position: relative;
   flex: none;
-  padding: 24px;
-  background: var(--scan-system);
-  color: var(--scan-system-on);
+  padding: 22px 24px;
+  background: var(--v);
+  color: var(--v-on);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 104px;
+  overflow: hidden;
 }
-.scan-result[data-kind="ok"] .scan-result-band {
-  background: var(--scan-ok);
-  color: var(--scan-ok-on);
+.scan-result-band[data-layout="stack"],
+.scan-result-band[data-layout="custom"] {
+  display: block;
+  padding: 24px 24px 26px;
 }
-.scan-result[data-kind="heads_up"] .scan-result-band {
-  background: var(--scan-heads);
-  color: var(--scan-heads-on);
+.scan-glyph-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: none;
 }
-.scan-result[data-kind="refused"] .scan-result-band {
-  background: var(--scan-refused);
-  color: var(--scan-refused-on);
+.scan-verdict-glyph {
+  width: 63px;
+  height: 56px;
+  flex: none;
 }
-.scan-result[data-kind="ready"] .scan-result-band {
-  background: var(--sd-fill-gray);
-  color: var(--sd-strong);
+.scan-result-band[data-layout="stack"] .scan-verdict-glyph {
+  height: 64px;
+  width: 72px;
+}
+.scan-verdict-text {
+  min-width: 0;
 }
 .scan-result-band h1 {
-  margin: 12px 0 0;
-  font-size: 32px;
-  line-height: 36px;
+  margin: 0;
+  font-size: 40px;
+  line-height: 44px;
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.scan-result-band[data-layout="stack"] h1 {
+  margin-top: 14px;
+}
+.scan-result-band[data-layout="custom"] h1 {
+  margin-top: 10px;
 }
 .scan-result-band p {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   font-size: 17px;
   line-height: 22px;
+  font-weight: 500;
+}
+.scan-result-band .scan-verdict-eyebrow {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.scan-custom-glyph {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--v-on);
+  color: var(--v);
+}
+.scan-custom-glyph > svg {
+  width: 30px;
+  height: 30px;
+  stroke-width: 2.25;
+}
+.scan-custom-badge {
+  position: absolute;
+  right: -9px;
+  bottom: -9px;
+  width: 30px;
+  height: 30px;
+  background: var(--v);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--v-on);
+}
+.scan-custom-badge .scan-verdict-glyph {
+  width: 27px;
+  height: 24px;
 }
 .scan-result-body {
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 20px 24px;
+  padding: 14px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.scan-result-holder {
-  font-size: 21px;
-  line-height: 26px;
-  font-weight: 600;
+.scan-result-body:empty {
+  display: none;
+}
+.scan-ready-heading {
   margin: 0;
+  padding: 20px 24px 16px;
+  font-size: 22px;
+  line-height: 28px;
 }
-.scan-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.scan-stage-message {
+.scan-hold-rail {
   position: absolute;
-  inset: 30% 24px auto;
-  text-align: center;
-  color: #fff;
-  font-size: 20px;
+  inset: auto 0 0;
+  height: 4px;
+  background: currentColor;
+  opacity: 0.3;
+  transform-origin: left;
+  animation: scan-hold linear both;
 }
-@media (min-width: 640px) {
+@keyframes scan-hold {
+  to {
+    transform: scaleX(0);
+  }
+}
+.scan-detail-sheet {
+  width: min(100%, 440px);
+  max-width: 100%;
+}
+@media (min-width: 1024px) {
+  .scan-result {
+    flex-direction: row;
+    border-radius: 32px;
+  }
+  .scan-result:not(:has(.scan-result-body)) {
+    width: 600px;
+  }
+  .scan-result-band {
+    display: block;
+    width: 360px;
+    padding: 32px;
+    min-height: 240px;
+  }
+  .scan-result-band[data-layout] {
+    display: block;
+    padding: 32px;
+  }
+  .scan-result-band h1,
+  .scan-result-band[data-layout="custom"] h1 {
+    font-size: 52px;
+    line-height: 56px;
+    margin-top: 20px;
+  }
+  .scan-result-band p {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .scan-verdict-glyph,
+  .scan-result-band[data-layout="stack"] .scan-verdict-glyph {
+    width: 90px;
+    height: 80px;
+  }
+  .scan-result-band .scan-verdict-eyebrow {
+    font-size: 24px;
+    line-height: 30px;
+  }
+  .scan-result-body {
+    flex: 1;
+    padding: 20px 24px;
+    gap: 14px;
+  }
+  .scan-result-holder {
+    font-size: 32px;
+    line-height: 38px;
+  }
+  .scan-identity-meta,
+  .scan-result-notes {
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .scan-identity-photo {
+    width: 128px;
+    height: 128px;
+    border-radius: 22px;
+  }
+  .scan-result[data-kind="ready"] {
+    flex-direction: column;
+  }
+}
+@media (max-width: 359px), (max-height: 650px) {
   .scan-result-band h1 {
-    font-size: 44px;
-    line-height: 48px;
+    font-size: 32px;
+    line-height: 36px;
+  }
+  .scan-result-band,
+  .scan-result-band[data-layout] {
+    padding: 16px;
   }
 }
-@media (prefers-reduced-motion: no-preference) {
-  .scan-result[data-phase="rising"] {
-    animation: scan-result-rise 220ms ease-out both;
-  }
-  .scan-result[data-phase="tucking"] {
-    animation: scan-result-tuck 180ms ease-in both;
-  }
-  @keyframes scan-result-rise {
-    from {
-      opacity: 0;
-      transform: translateY(24px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-  @keyframes scan-result-tuck {
-    from {
-      opacity: 1;
-      transform: none;
-    }
-    to {
-      opacity: 0;
-      transform: translateY(24px) scale(0.98);
-    }
+
+@media (min-width: 1024px) {
+  .scan-result:not(:has(.scan-result-body)) .scan-result-band {
+    width: 100%;
   }
 }

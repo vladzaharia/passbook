@@ -89,7 +89,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
+          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json android/dist/NOTICE android/dist/kormax-LICENSE --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
       - name: Remove runner signing key
         if: always()
         run: rm -f "${{ runner.temp }}/passbook-reader-release.p12"

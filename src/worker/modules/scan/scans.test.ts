@@ -263,6 +263,7 @@ describe('GET /scans (API key)', () => {
     });
     const res = await get('', fake.apiKey({ orgId, scopes: ['scans:read'] }));
     expect(res.status).toBe(200);
+    expect((await get('?q=Anna', fake.apiKey({ orgId, scopes: ['scans:read'] }))).status).toBe(403);
     const rows = await items(res);
     expect(rows.map((r) => r.id)).toEqual([mine.id]);
     const keys = Object.keys(rows[0] ?? {});

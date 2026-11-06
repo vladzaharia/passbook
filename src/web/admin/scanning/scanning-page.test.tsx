@@ -47,7 +47,7 @@ describe('Scanning page', () => {
 
   it.each([
     ['events', 'No events yet'],
-    ['staff', 'No staff yet'],
+    ['staff', 'Staff sign-in unavailable'],
     ['scans', 'No scans yet'],
   ])('renders the %s tab with its empty state', async (tab, title) => {
     const { container } = await renderApp(`/admin/scanning?tab=${tab}`, {
@@ -79,7 +79,7 @@ describe('Scanning page', () => {
       session: 'admin',
       handlers,
     });
-    await screen.findByText('No staff yet');
+    await screen.findByText('Staff sign-in unavailable');
     await userEvent.setup().click(screen.getByRole('tab', { name: 'Scanners' }));
     await screen.findByText('No scanners yet');
     expect(router.state.location.search).not.toHaveProperty('tab');

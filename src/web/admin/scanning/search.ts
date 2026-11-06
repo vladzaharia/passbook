@@ -17,6 +17,7 @@ export const scanningSearchSchema = z.object({
   new: z
     .preprocess((v) => (v === 1 || v === '1' ? '1' : undefined), z.literal('1').optional())
     .catch(undefined),
+  q: z.string().trim().max(80).optional().catch(undefined),
   scannerId: id,
   staffId: id,
   eventId: id,

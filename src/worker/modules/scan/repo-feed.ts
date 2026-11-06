@@ -139,6 +139,7 @@ export interface ScanLogFilter {
   eventId?: string | undefined;
   passId?: string | undefined;
   outcome?: string | undefined;
+  q?: string | undefined;
   reason?: string | undefined;
   from?: number | undefined;
   to?: number | undefined;
@@ -163,7 +164,14 @@ function where(f: ScanLogFilter): { sql: string; params: SqlValue[] } {
   eq('s.staff_id', f.staffId);
   eq('s.event_id', f.eventId);
   eq('s.pass_id', f.passId);
-  eq('s.outcome', f.outcome);
+  if (f.outcome === 'undone') clauses.push('s.undone_at IS NOT NULL');
+  else eq('s.outcome', f.outcome);
+  if (f.q) {
+    clauses.push(
+      "(s.pass_id = ? OR EXISTS (SELECT 1 FROM passes qp WHERE qp.id = s.pass_id AND qp.display_title LIKE ? ESCAPE '\\'))",
+    );
+    params.push(f.q, `${f.q.replace(/[\\%_]/g, '\\$&')}%`);
+  }
   eq('s.reason', f.reason);
   if (f.from !== undefined) {
     clauses.push('s.at >= ?');

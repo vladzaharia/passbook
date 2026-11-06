@@ -4,21 +4,22 @@ import { formatTime } from '../lib/format.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
-import { Dialog, DialogContent } from '../ui/dialog.tsx';
 import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
-import { LookupSheet } from './lookup/lookup-sheet.tsx';
 import { localOutcome } from './machine/outcome.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
+import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
+import { CameraLayer } from './ui/camera-layer.tsx';
 import { CountChip, ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
-import { DockButton, DoorThumbRow } from './ui/dock.tsx';
+import { DoorDock } from './ui/door-dock.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
+import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
 import './buddy/beats.css';
 
 export function ScanLoop({
@@ -40,11 +41,32 @@ export function ScanLoop({
 }) {
   const { state: s, view, dispatch, now } = useScanMachine();
   const [sheet, setSheet] = useState<'lookup' | 'code' | null>(null);
-  const [recent, setRecent] = useState(false);
+  const [panel, setPanel] = useState<ScanPanel>(null);
+  const [pass, setPass] = useState<PassInspection | null>(null);
+  const [cameraError, setCameraError] = useState('');
+  const [shiftStart, setShiftStart] = useState(Date.now);
+  const showPanel = (value: typeof panel) => {
+    setPanel(value);
+    dispatch({
+      type: 'overlay',
+      open: value === 'tips' ? 'settings' : value === 'end' ? 'shift' : value,
+    });
+  };
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !s.overlay) dispatch({ type: 'dismiss' });
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [s.overlay, dispatch]);
   const [cameraChoice, setCameraChoice] = useState<CameraChoice>('back');
   const requestedRev = useRef(0);
   useEffect(() => {
-    if (s.overlay === null) setSheet(null);
+    if (s.overlay === null) {
+      setSheet(null);
+      setPanel(null);
+      setPass(null);
+    }
   }, [s.overlay]);
   const l = s.loop;
   const scanner = session.scanner;
@@ -59,6 +81,7 @@ export function ScanLoop({
             kind: 'ready',
             reason: 'choose',
             card: l.card,
+            display: l.card.display,
             local: false,
           }
         : null;
@@ -80,6 +103,7 @@ export function ScanLoop({
       holdResults={s.prefs.holdResults}
       onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
       camera={cameraChoice}
+      hasWide={runtime.camera.hasWide()}
       onCamera={(choice) => {
         setCameraChoice(choice);
         runtime.camera.choose(choice);
@@ -91,8 +115,9 @@ export function ScanLoop({
         dispatch({ type: 'camera', status: off ? 'disabled' : 'off' });
         if (!off && s.started) runtime.camera.start();
       }}
-      onShift={() => setRecent(true)}
-      onEndShift={() => location.reload()}
+      onReaderTips={() => showPanel('tips')}
+      onShift={() => showPanel('shift')}
+      onEndShift={() => showPanel('end')}
       leave={session.principal === 'admin' ? 'stop-admin' : 'unpair'}
       onLeave={leave}
     />
@@ -133,6 +158,7 @@ export function ScanLoop({
                 ? 'paused'
                 : 'scanning',
           menu,
+          onTitle: () => showPanel('shift'),
           chips: (
             <>
               <TestChip mode={scanner?.mode ?? getMode()} />
@@ -149,20 +175,13 @@ export function ScanLoop({
           ),
         }}
         camera={
-          <>
-            <video ref={videoRef} muted playsInline className="scan-video" aria-hidden />
-            {s.camera !== 'live' ? (
-              <p className="scan-stage-message">
-                {s.camera === 'starting'
-                  ? 'Opening camera…'
-                  : s.camera === 'blocked'
-                    ? 'Camera blocked. Allow camera access or type a code.'
-                    : s.camera === 'decoder_failed'
-                      ? 'Camera reader unavailable. Type a code.'
-                      : 'Scan a barcode or type a code'}
-              </p>
-            ) : null}
-          </>
+          <CameraLayer
+            videoRef={videoRef}
+            status={s.camera}
+            checking={l.s === 'checking' || l.s === 'applying'}
+            result={Boolean(result)}
+            reader={s.reader.kind !== 'none'}
+          />
         }
         card={
           s.block ? (
@@ -175,8 +194,16 @@ export function ScanLoop({
             </BootCard>
           ) : result && s.card ? (
             <ResultCard
+              key={s.card.id}
               outcome={result}
+              onPass={(card) => {
+                if (card) setPass({ card });
+                else if ('input' in l) setPass({ input: l.input });
+                dispatch({ type: 'overlay', open: 'settings' });
+              }}
               phase={s.card.phase}
+              eventNote={session.event?.note}
+              holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
             />
           ) : l.s === 'paused' ? (
@@ -199,35 +226,7 @@ export function ScanLoop({
           />
         }
         dockRow={
-          result ? (
-            <>
-              {result.overridable && result.action ? (
-                <DockButton
-                  variant="filled"
-                  onClick={() => dispatch({ type: 'override', actionId: result.action?.id ?? '' })}
-                >
-                  Let in again
-                </DockButton>
-              ) : null}
-              {result.reason === 'check_required' && result.action ? (
-                <DockButton
-                  variant="filled"
-                  onClick={() => dispatch({ type: 'override', actionId: result.action?.id ?? '' })}
-                >
-                  Check in
-                </DockButton>
-              ) : null}
-              <DockButton primary onClick={() => dispatch({ type: 'dismiss' })}>
-                Done
-              </DockButton>
-            </>
-          ) : (
-            <DoorThumbRow
-              canTorch={false}
-              onLookUp={() => open('lookup')}
-              onKeyboard={() => open('code')}
-            />
-          )
+          <DoorDock outcome={result} runtime={runtime} open={open} onError={setCameraError} />
         }
         strip={
           last
@@ -249,55 +248,34 @@ export function ScanLoop({
         }
         announcement={announcement}
         on={{
-          start: runtime.start,
-          openRecent: () => setRecent(true),
+          start: () => {
+            setShiftStart(Date.now());
+            runtime.start();
+          },
+          openRecent: () => showPanel('recent'),
           undo: () => {
             if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
           },
         }}
       />
-      <LookupSheet
-        open={sheet}
+      <ScanOverlays
+        orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
+        timeZone={session.event?.timeZone}
+        sheet={sheet}
+        panel={panel}
+        pass={pass}
         api={api}
-        onClose={() => open(null)}
-        onRead={(read) => {
-          open(null);
-          runtime.emit({ method: 'manual', ...read });
+        runtime={runtime}
+        open={open}
+        showPanel={showPanel}
+        closePass={() => {
+          setPass(null);
+          dispatch({ type: 'overlay', open: null });
         }}
+        shiftStart={shiftStart}
+        cameraError={cameraError}
+        clearError={() => setCameraError('')}
       />
-      <Dialog open={recent} onOpenChange={setRecent}>
-        <DialogContent title="Recent" size="sm">
-          {s.recent.length ? (
-            s.recent.map((row) => (
-              <div
-                key={row.scanId ?? row.at}
-                className="flex items-center justify-between gap-3 py-2"
-              >
-                <p>
-                  {row.outcome.display?.identity.holder ??
-                    row.outcome.action?.label ??
-                    row.outcome.reason}{' '}
-                  · {formatTime(row.at)}
-                </p>
-                {row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now ? (
-                  <Button
-                    variant="secondary"
-                    disabled={s.undo !== null}
-                    onClick={() => dispatch({ type: 'undo', scanId: row.scanId ?? '' })}
-                  >
-                    Undo
-                  </Button>
-                ) : null}
-              </div>
-            ))
-          ) : (
-            <p>No scans yet.</p>
-          )}
-          {s.unsure.length ? (
-            <p>{s.unsure.length} scans not confirmed yet. Keep this page open.</p>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

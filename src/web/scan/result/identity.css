@@ -1,0 +1,111 @@
+.scan-identity {
+  display: flex;
+  gap: 12px;
+  padding-inline: 12px;
+  align-items: center;
+  flex: none;
+  min-height: 44px;
+}
+.scan-identity-text {
+  min-width: 0;
+  flex: 1;
+}
+.scan-result-holder {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--sd-strong);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-identity-meta {
+  margin: 2px 0 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--sd-muted);
+}
+.scan-pass-tile {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--sd-chip-violet-bg);
+  color: var(--sd-chip-violet-fg);
+}
+.scan-identity[data-compact] .scan-pass-tile {
+  background: var(--sd-fill-gray);
+  color: var(--sd-muted);
+}
+.scan-identity-photo {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 18px;
+}
+.scan-pass-open {
+  border: 0;
+  background: none;
+  color: var(--sd-muted);
+  min-width: 28px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.scan-identity-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.scan-identity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding-inline: 10px;
+  border-radius: 14px;
+  font: 600 13px / 16px var(--pk-font-sans);
+}
+.scan-identity-chip[data-tone="gold"] {
+  background: var(--sd-chip-gold-bg);
+  color: var(--sd-chip-gold-fg);
+}
+.scan-identity-chip[data-tone="teal"] {
+  background: var(--sd-chip-teal-bg);
+  color: var(--sd-chip-teal-fg);
+}
+.scan-identity-chip[data-tone="violet"] {
+  background: var(--sd-chip-violet-bg);
+  color: var(--sd-chip-violet-fg);
+}
+.scan-identity-chip[data-tone="neutral"] {
+  background: var(--sd-chip-neutral-bg);
+  color: var(--sd-chip-neutral-fg);
+}
+.scan-result-notes {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--sd-inset);
+  font-size: 15px;
+  line-height: 20px;
+}
+.scan-result-notes > svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--sd-muted);
+}
+.scan-result-notes p {
+  margin: 0;
+}
+.scan-result-notes p + p {
+  margin-top: 8px;
+}
