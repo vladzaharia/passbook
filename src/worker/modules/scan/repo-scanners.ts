@@ -173,7 +173,8 @@ export interface NewScanner {
   id: string;
   orgId: string;
   mode: Mode;
-  kind: 'device' | 'terminal';
+  kind: 'device' | 'terminal' | 'display';
+  deviceRole?: 'scan' | 'customer' | 'monitor';
   name: string;
   eventId: string | null;
   settings: string;
@@ -188,12 +189,13 @@ export const insertScannerStmt = (db: Db, s: NewScanner): D1PreparedStatement =>
     db,
     `INSERT INTO scanners (id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, expires_at,
        created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'scan', ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       s.id,
       s.orgId,
       s.mode,
       s.kind,
+      s.deviceRole ?? 'scan',
       s.name,
       s.eventId,
       s.settings,

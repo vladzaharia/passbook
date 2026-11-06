@@ -18,16 +18,22 @@ const Paired = lazy(() => import('./paired.tsx').then((m) => ({ default: m.Paire
 const AdminStart = lazy(() =>
   import('./boot/admin-start.tsx').then((m) => ({ default: m.AdminStart })),
 );
+const LiveScreen = lazy(() =>
+  import('./live/live-screen.tsx').then((m) => ({ default: m.LiveScreen })),
+);
 
 function ScanBoot() {
   const csrf = useMemo(createCsrfHolder, []);
   const params = new URLSearchParams(location.search);
   const orgId = params.get('orgId');
   const eventId = params.get('eventId');
+  const setupId = params.get('setupId');
+  const [adminStart, setAdminStart] = useState(params.get('admin') === '1');
   const scope = useRef<z.infer<typeof ScanAdminScopeSchema> | undefined>(
-    orgId
+    orgId && setupId
       ? {
           orgId,
+          setupId,
           timeZone: params.get('timeZone') ?? localZone(),
           ...(eventId ? { eventId } : {}),
           ...(params.get('templateIds')
@@ -71,19 +77,9 @@ function ScanBoot() {
       previewPair(session.pairCode);
     }
   }, [session.pairCode, previewPair]);
-  if (session.phase === 'ready' && session.session && !preview) {
+  if (session.phase === 'ready' && session.session && !preview && !adminStart) {
     if (session.session.scanner?.deviceRole !== 'scan' && session.session.scanner !== null)
-      return (
-        <ScanShell
-          cardMode="boot"
-          card={
-            <BootCard
-              title="This device is a screen"
-              line="Pair a scanning device to check in passes."
-            />
-          }
-        />
-      );
+      return <LiveScreen session={session.session} refetch={session.refetch} />;
     if (session.session.state === 'staff_required')
       return (
         <ScanShell
@@ -136,15 +132,16 @@ function ScanBoot() {
           .finally(() => setBusy(false));
       }}
     />
-  ) : session.phase === 'scope_required' ? (
+  ) : adminStart ? (
     <AdminStart
+      onCancel={() => {
+        setAdminStart(false);
+        history.replaceState(null, '', '/scan');
+      }}
       onScope={(chosen) => {
-        scope.current = chosen;
         const query = new URLSearchParams({ orgId: chosen.orgId, timeZone: chosen.timeZone });
-        if (chosen.eventId) query.set('eventId', chosen.eventId);
-        if (chosen.templateIds?.length) query.set('templateIds', chosen.templateIds.join(','));
-        history.replaceState(null, '', `/scan?${query}`);
-        void session.refetch();
+        if (chosen.setupId) query.set('setupId', chosen.setupId);
+        location.assign(`/scan?${query}`);
       }}
     />
   ) : session.phase === 'loading' ? (
@@ -154,7 +151,15 @@ function ScanBoot() {
       <Button onClick={() => void session.refetch()}>Try again</Button>
     </BootCard>
   ) : (
-    <PairView onPair={previewPair} error={error} busy={busy} />
+    <PairView
+      onPair={previewPair}
+      error={error}
+      busy={busy}
+      onAdmin={() => {
+        if (session.phase === 'scope_required') setAdminStart(true);
+        else location.assign('/login?next=%2Fscan%3Fadmin%3D1');
+      }}
+    />
   );
   return <ScanShell cardMode="boot" card={card} />;
 }

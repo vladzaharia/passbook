@@ -6,6 +6,7 @@ import { auditStmt } from '../audit/repo.ts';
 import { deviceLabel } from './dto-console.ts';
 import type { ConsoleScannerRow } from './repo-scanners.ts';
 import { type Credential, installCredentialStmt } from './repo-scanners-pair.ts';
+import { setupMeta } from './repo-setups.ts';
 
 const DAY = 86_400_000;
 export const DEVICE_MAX_MS = 180 * DAY;
@@ -76,7 +77,11 @@ export async function pairHere(
   scanner: ConsoleScannerRow,
   agent: string | undefined,
 ): Promise<Issued> {
-  if (scanner.kind !== 'device') throw notPairable();
+  if (
+    scanner.kind === 'terminal' ||
+    (await setupMeta(ctx.env.DB, scanner.orgId, scanner.id))?.admin_session
+  )
+    throw notPairable();
   return withCredential(ctx, 'device', deviceLabel(agent), async (c) => {
     await batch(ctx.env.DB, [
       installCredentialStmt(ctx.env.DB, scanner.id, c, null),

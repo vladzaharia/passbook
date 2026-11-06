@@ -16,13 +16,16 @@ import {
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { openMemberPhoto } from '../passes/member-photo.ts';
 import { openPublicAsset } from '../public/service.ts';
 import { act } from './act.ts';
 import { assetGrantValid } from './assets.ts';
 import { planCounts } from './counts.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
+import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
+import { canShowMemberPhoto } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { buildSession } from './session.ts';
@@ -86,7 +89,14 @@ register(
     body: ScanResolveRequestSchema,
     response: ScanOutcomeSchema,
   },
-  async (c) => c.json(await resolveOutcome(serviceContext(c), scanActorOf(c), c.req.valid('json'))),
+  async (c) => {
+    const ctx = serviceContext(c),
+      actor = scanActorOf(c),
+      req = c.req.valid('json');
+    const out = await resolveOutcome(ctx, actor, req);
+    publishScan(ctx, actor, out, req.input.method);
+    return c.json(out);
+  },
 );
 
 register(
@@ -99,7 +109,14 @@ register(
     body: ScanActRequestSchema,
     response: ScanOutcomeSchema,
   },
-  async (c) => c.json(await act(serviceContext(c), scanActorOf(c), c.req.valid('json'))),
+  async (c) => {
+    const ctx = serviceContext(c),
+      actor = scanActorOf(c),
+      req = c.req.valid('json');
+    const out = await act(ctx, actor, req);
+    publishScan(ctx, actor, out, req.input.method);
+    return c.json(out);
+  },
 );
 
 register(
@@ -169,6 +186,10 @@ register(
       throw missing();
     const candidate = await candidateById(ctx.env.DB, actor.orgId, passId);
     if (!candidate || candidate.pass.mode !== actor.mode) throw missing();
+    if (name === 'member.png') {
+      if (!(await canShowMemberPhoto(ctx, actor, passId))) throw missing();
+      return openMemberPhoto(ctx, actor.orgId, passId);
+    }
     const asset = await openPublicAsset(ctx, candidate.pass, name);
     return new Response(asset.body, {
       headers: {
@@ -204,13 +225,11 @@ register(
     body: ScanUndoRequestSchema,
     response: ScanOutcomeSchema,
   },
-  async (c) =>
-    c.json(
-      await undo(
-        serviceContext(c),
-        scanActorOf(c),
-        c.req.valid('param').scanId,
-        c.req.valid('json'),
-      ),
-    ),
+  async (c) => {
+    const ctx = serviceContext(c),
+      actor = scanActorOf(c);
+    const out = await undo(ctx, actor, c.req.valid('param').scanId, c.req.valid('json'));
+    publishScan(ctx, actor, out, 'manual', true);
+    return c.json(out);
+  },
 );

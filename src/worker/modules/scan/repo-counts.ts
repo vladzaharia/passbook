@@ -16,8 +16,10 @@ export const todayStmt = (db: Db, actorKey: string, since: number) =>
 export const eventTotalsStmt = (db: Db, orgId: string, mode: Mode, eventId: string) =>
   stmt(
     db,
-    `SELECT COUNT(*) AS arrived, COALESCE(SUM(state = 'in'), 0) AS inside FROM scan_gates
-     WHERE org_id = ? AND mode = ? AND scope = ? AND kind = 'check_in' AND state IN ('in', 'out')`,
+    `SELECT COUNT(DISTINCT g.pass_id) AS arrived,
+     COUNT(DISTINCT CASE WHEN COALESCE(p.state,g.state)='in' THEN g.pass_id END) AS inside
+     FROM scan_gates g LEFT JOIN scan_presence p ON p.org_id=g.org_id AND p.pass_id=g.pass_id AND p.scope=g.scope
+     WHERE g.org_id = ? AND g.mode = ? AND g.scope = ? AND g.kind = 'check_in' AND g.state IN ('in', 'out')`,
     [orgId, mode, `event:${eventId}`],
   );
 

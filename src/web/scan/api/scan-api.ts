@@ -75,6 +75,7 @@ export function scopeQuery(scope: AdminScope | undefined): string {
   if (!scope) return '';
   const q = new URLSearchParams({ orgId: scope.orgId });
   if (scope.eventId) q.set('eventId', scope.eventId);
+  if (scope.setupId) q.set('setupId', scope.setupId);
   if (scope.templateIds?.length) q.set('templateIds', scope.templateIds.join(','));
   q.set('timeZone', scope.timeZone);
   return `?${q.toString()}`;
@@ -93,6 +94,7 @@ export function createScanApi(deps: ScanApiDeps) {
     const headers: Record<string, string> = {
       accept: 'application/json',
       ...(deps.scope?.() ? modeHeaders() : {}),
+      ...(deps.scope?.()?.setupId ? { 'x-passbook-scan-admin': '1' } : {}),
     };
     if (method !== 'GET') {
       const token = deps.csrf();

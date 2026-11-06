@@ -23,6 +23,8 @@ import { actorFor, assertOrg, orgScopeOf, passScopeOf, svc } from './http.ts';
 import { registerRemoveRoutes } from './remove-routes.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
+import { registerCheckInRoutes } from './routes-check-in.ts';
+import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerWriteRoutes } from './routes-write.ts';
 import {
   deletePass,
@@ -37,7 +39,7 @@ import {
 
 export const passesRoutes = createRouter({ bodyLimit: false });
 /** Image overrides have their own cap (routes-assets.ts). */
-passesRoutes.use('*', defaultBodyLimit(/\/assets\/[^/]+$/));
+passesRoutes.use('*', defaultBodyLimit(/\/(?:assets\/[^/]+|member-photo)$/));
 guard(
   passesRoutes,
   requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
@@ -239,6 +241,8 @@ register(
 
 registerWriteRoutes(passesRoutes);
 registerAssetRoutes(passesRoutes);
+registerMemberPhotoRoutes(passesRoutes);
+registerCheckInRoutes(passesRoutes);
 registerBulkRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);
 registerRemoveRoutes(passesRoutes);

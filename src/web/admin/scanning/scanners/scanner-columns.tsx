@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Ban, Copy, QrCode } from 'lucide-react';
-import type { ScannerDto } from '@/shared/contracts/scanners.ts';
-import { Button, RowActions, RowLink, StatusPill } from '@/web/ui/index.ts';
+import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
+import { Badge, Button, RowActions, RowLink, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { RelTime } from '../../passes/detail/rel-time.tsx';
 import { acceptsText, scannerStatus } from './labels.ts';
@@ -14,12 +14,20 @@ export interface ScannerActions {
 
 /** The second line under a name: what paired, or that nothing has. */
 export const deviceLine = (s: ScannerDto): string =>
-  s.kind === 'terminal' ? 'Till · token' : (s.pairedLabel ?? 'Not paired');
+  s.adminSession
+    ? `Admin · ${s.adminUser?.name ?? 'No owner'}`
+    : s.deviceRole === 'customer'
+      ? 'Customer screen'
+      : s.deviceRole === 'monitor'
+        ? 'Desk monitor'
+        : s.kind === 'terminal'
+          ? 'Till · token'
+          : (s.pairedLabel ?? 'Not paired');
 
 export function scannerActions(s: ScannerDto, a: ScannerActions) {
   const revoked = s.status === 'revoked';
   return [
-    ...(revoked
+    ...(revoked || s.adminSession || s.kind === 'terminal'
       ? []
       : [
           {
@@ -67,7 +75,11 @@ export function scannerColumns(
       meta: { nowrap: true },
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-2">
-          <StatusPill status={scannerStatus(row.original)} />
+          {row.original.adminSession && row.original.status !== 'revoked' ? (
+            <Badge>Admin session</Badge>
+          ) : (
+            <StatusPill status={scannerStatus(row.original)} />
+          )}
           <ModePill mode={row.original.mode} compact />
         </span>
       ),
@@ -122,7 +134,7 @@ export function scannerColumns(
         const s = row.original;
         const menu = scannerActions(s, a);
         // A scanner nobody has paired shows the safe action as a button, the rest in the menu.
-        const unpaired = s.status === 'not_paired';
+        const unpaired = s.status === 'not_paired' && !s.adminSession && s.kind !== 'terminal';
         return (
           <div className="flex items-center justify-end gap-1">
             {unpaired ? (

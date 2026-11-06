@@ -13,6 +13,7 @@ const TIME = new Intl.DateTimeFormat(LOCALE, {
   hour: 'numeric',
   minute: '2-digit',
 });
+const ZONED_TIME = new Map<string, Intl.DateTimeFormat>();
 const HOUR = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric' });
 const UTC_DAY = new Intl.DateTimeFormat(LOCALE, {
   month: 'short',
@@ -45,8 +46,14 @@ export function formatShortDate(ms: number): string {
 }
 
 /** 6:17 PM. */
-export function formatTime(ms: number): string {
-  return TIME.format(ms);
+export function formatTime(ms: number, timeZone?: string): string {
+  if (!timeZone) return TIME.format(ms);
+  let formatter = ZONED_TIME.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', timeZone });
+    ZONED_TIME.set(timeZone, formatter);
+  }
+  return formatter.format(ms);
 }
 
 /** Oct 31, 6 PM: a bucket an hour wide or more. */

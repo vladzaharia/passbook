@@ -1,3 +1,4 @@
+import { type CheckInPolicy, CheckInPolicySchema } from '../../../shared/contracts/check-in.ts';
 import { all, stmt } from '../../platform/db.ts';
 import { mapPass, type Pass, type PassDbRow } from '../passes/repo-map.ts';
 
@@ -7,15 +8,28 @@ type Db = D1Database;
 export interface Candidate {
   pass: Pass;
   passJson: string | null;
+  checkInRules?: CheckInPolicy;
+  hasPhoto?: boolean;
 }
 
-type Raw = PassDbRow & { pass_json: string | null };
+type Raw = PassDbRow & {
+  pass_json: string | null;
+  check_in_rules: string | null;
+  has_photo: number;
+};
 
 const SELECT = `SELECT p.*, (SELECT pass_json FROM pass_versions v
-    WHERE v.pass_id = p.id AND v.pass_json IS NOT NULL ORDER BY v.version DESC LIMIT 1) AS pass_json
+    WHERE v.pass_id = p.id AND v.pass_json IS NOT NULL ORDER BY v.version DESC LIMIT 1) AS pass_json,
+    (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS check_in_rules,
+    EXISTS(SELECT 1 FROM member_photos m WHERE m.org_id=p.org_id AND m.pass_id=p.id) AS has_photo
   FROM passes p WHERE p.org_id = ? AND p.deleted_at IS NULL`;
 
-const toCandidate = (r: Raw): Candidate => ({ pass: mapPass(r), passJson: r.pass_json });
+const toCandidate = (r: Raw): Candidate => ({
+  pass: mapPass(r),
+  passJson: r.pass_json,
+  checkInRules: CheckInPolicySchema.parse(JSON.parse(r.check_in_rules ?? '{}')),
+  hasPhoto: r.has_photo === 1,
+});
 
 /** Every lookup is `org_id = ?` first: another tenant's code is the same as no code. */
 const lookup = (db: Db, orgId: string, column: string, value: string, limit: number) =>

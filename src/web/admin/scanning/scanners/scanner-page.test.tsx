@@ -19,7 +19,7 @@ describe('Scanner page', () => {
   it('shows status, device and settings in a two-pane page', async () => {
     const { container } = await renderApp('/admin/scanning/scanners/s1', {
       session: 'admin',
-      handlers: { ...base, '/api/v1/scanners/s1': () => json(s()) },
+      handlers: { ...base, '/api/v1/scan-setups/s1': () => json(s()) },
     });
     expect(
       await screen.findByRole('heading', { name: 'Front door', level: 1 }),
@@ -47,7 +47,7 @@ describe('Scanner page', () => {
       session: 'admin',
       handlers: {
         ...base,
-        '/api/v1/scanners/s1': (_u, init) => {
+        '/api/v1/scan-setups/s1': (_u, init) => {
           if (init?.method === 'PATCH') {
             patch = JSON.parse(String(init.body));
             return new Response(null, { status: 204 });
@@ -71,7 +71,7 @@ describe('Scanner page', () => {
       session: 'admin',
       handlers: {
         ...base,
-        '/api/v1/scanners/s1': () => json(s({ mode: 'test' })),
+        '/api/v1/scan-setups/s1': () => json(s({ mode: 'test' })),
         '/api/v1/scanners/s1/mode': (_u, init) => {
           live = JSON.parse(String(init?.body)).mode === 'live';
           return new Response(null, { status: 204 });
@@ -93,7 +93,7 @@ describe('Scanner page', () => {
       session: 'admin',
       handlers: {
         ...base,
-        '/api/v1/scanners/s1': () => json(s({ kind: 'terminal', pairedLabel: null })),
+        '/api/v1/scan-setups/s1': () => json(s({ kind: 'terminal', pairedLabel: null })),
         '/api/v1/scanners/s1/token': () =>
           json({ token: 'wls_ab12cd34_secretsecretsecret', expiresAt: Date.now() + 1e9 }),
       },
@@ -116,7 +116,7 @@ describe('Scanner page', () => {
   it('keeps a revoked scanner read-only, with Duplicate left', async () => {
     await renderApp('/admin/scanning/scanners/s1', {
       session: 'admin',
-      handlers: { ...base, '/api/v1/scanners/s1': () => json(s({ status: 'revoked' })) },
+      handlers: { ...base, '/api/v1/scan-setups/s1': () => json(s({ status: 'revoked' })) },
     });
     expect(await screen.findByText('Revoked')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pair again' })).toBeNull();
@@ -129,7 +129,7 @@ describe('Scanner page', () => {
       session: 'admin',
       handlers: {
         ...base,
-        '/api/v1/scanners/nope': () => problem(404, 'not_found', 'No scanner.'),
+        '/api/v1/scan-setups/nope': () => problem(404, 'not_found', 'No scanner.'),
       },
     });
     expect(await screen.findByText(/scanner/i, { selector: 'h1, h2, p' })).toBeInTheDocument();

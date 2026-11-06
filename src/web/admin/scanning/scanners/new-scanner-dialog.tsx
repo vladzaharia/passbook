@@ -62,6 +62,7 @@ export function NewScannerDialog({ open, onOpenChange, initial }: NewScannerDial
     try {
       const created = await create.mutateAsync(createBody({ ...draft, orgId }));
       setMade({ id: created.id, name: created.name, pairing: created.pairing });
+      if (!created.pairing) close();
     } catch (cause) {
       const coded = isApiError(cause) ? FIELD_OF[cause.code] : undefined;
       if (coded) setServer({ [coded[0]]: coded[1] });
@@ -114,7 +115,7 @@ export function NewScannerDialog({ open, onOpenChange, initial }: NewScannerDial
               Cancel
             </Button>
             <Button type="submit" form="new-scanner" loading={create.isPending}>
-              Create and pair
+              {draft.adminUserId ? 'Create admin setup' : 'Create and pair'}
             </Button>
           </>
         }
@@ -122,6 +123,7 @@ export function NewScannerDialog({ open, onOpenChange, initial }: NewScannerDial
         <Form id="new-scanner" {...check.form} onValid={() => void submit()}>
           <ScannerFields
             autoFocus
+            newSetup
             draft={{ ...draft, orgId }}
             onChange={patch}
             errors={errors}

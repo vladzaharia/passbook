@@ -20,6 +20,7 @@ import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { applyRemoval, type Removal } from './remove-build.ts';
 import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
+import { memberPhotoAsset } from './repo-member-photo.ts';
 import { barcodeHashOf, lookupHashOf, lookupValueOf } from './scan-code.ts';
 
 export interface BuildRequest {
@@ -203,10 +204,14 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
   const identity = await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
-  const [passOverrides, contacts] = await Promise.all([
+  const [originalOverrides, contacts, photo] = await Promise.all([
     listAssets(ctx.env.DB, req.passId),
     backContactsFor(ctx, req.orgId, req.branding),
+    memberPhotoAsset(ctx.env.DB, req.orgId, req.passId),
   ]);
+  const passOverrides = photo
+    ? [...originalOverrides.filter((a) => parseAssetName(a.name).slot !== 'thumbnail'), photo]
+    : originalOverrides;
   const tenant = withBackContacts(
     tenantPassJson(resolved.passJson, req.orgName, branding),
     contacts,

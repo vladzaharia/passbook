@@ -18,6 +18,7 @@ import {
   listAssets,
   type Pass,
 } from '../passes/repo.ts';
+import { memberPhotoAsset } from '../passes/repo-member-photo.ts';
 import { getRemoval } from '../passes/repo-remove.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { getPassAsset } from './repo.ts';
@@ -84,11 +85,15 @@ export interface PassImage {
  * the slots they leave (an override replaces every scale of its slot, as in the signed pass).
  */
 export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassImage[]> {
-  const [template, passOverrides, org] = await Promise.all([
+  const [template, originalOverrides, org, photo] = await Promise.all([
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
     listAssets(ctx.env.DB, pass.id),
     getOrg(ctx.env.DB, pass.orgId),
+    memberPhotoAsset(ctx.env.DB, pass.orgId, pass.id),
   ]);
+  const passOverrides = photo
+    ? [...originalOverrides.filter((a) => !/^thumbnail(?:@[23]x)?\.png$/.test(a.name)), photo]
+    : originalOverrides;
   const branded = await brandingFiles(
     ctx.env.BUCKET,
     pass.orgId,
@@ -144,6 +149,13 @@ export async function openPublicAsset(
   name: string,
 ): Promise<PublicAsset> {
   if (!ASSET_NAME.test(name)) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
+  const photo =
+    name === 'thumbnail@3x.png' ? await memberPhotoAsset(ctx.env.DB, pass.orgId, pass.id) : null;
+  if (photo) {
+    const object = await ctx.env.BUCKET.get(photo.r2Key);
+    if (!object) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
+    return { body: object.body, etag: `"${photo.sha1}"` };
+  }
   const override = await getPassAsset(ctx.env.DB, pass.id, name);
   if (override) {
     const object = await ctx.env.BUCKET.get(override.r2Key);

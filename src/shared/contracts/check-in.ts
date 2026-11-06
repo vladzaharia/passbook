@@ -4,7 +4,7 @@ import { IdSchema, TimestampSchema } from './common.ts';
 export const CheckInModeSchema = z.enum(['single', 'daily', 'unlimited', 'in_out']);
 export const SetupDirectionSchema = z.enum(['in', 'out', 'both']);
 
-/** Omitted pass fields inherit template defaults; scanner fields add restrictions. */
+/** A scanner supplies a type when the pass omits one; explicit pass and scanner limits both apply. */
 export const CheckInPolicySchema = z
   .strictObject({
     mode: CheckInModeSchema.optional(),

@@ -18,6 +18,7 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { adminActor, type ScanActor, scannerActor, withRole } from './actor.ts';
+import { managedAdminActor } from './admin-setup.ts';
 import { resolvedRowOf } from './auth-store.ts';
 import { getScanner } from './repo-device.ts';
 import { eventTemplateIds, readScannerScope } from './repo-scope.ts';
@@ -57,7 +58,8 @@ async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   }
   const cookie = getCookie(c, SCANNER_COOKIE);
   const device = cookie ? await scanners.resolve(cookie, 'cookie', meta) : null;
-  if (device) return { scanner: device };
+  const adminChosen = c.req.header('x-passbook-scan-admin') === '1' || !!c.req.query('setupId');
+  if (device && !adminChosen) return { scanner: device };
   const sid = getCookie(c, SESSION_COOKIE);
   const session = sid ? await sessions.resolve(sid) : null;
   if (!session) throw unauthenticated();
@@ -128,11 +130,19 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       await csrfGuard(c, session);
       const mode = modeFromRequest(c);
       const scope = await resolveAdminScope(c, rawScope, mode);
-      const actor = adminActor(session, mode, scope);
-      if (scope.event && scope.templateIds.length === 0)
+      const setupId =
+        rawScope && typeof rawScope === 'object' && 'setupId' in rawScope
+          ? (rawScope as { setupId?: string }).setupId
+          : undefined;
+      const actor = setupId
+        ? await managedAdminActor(ctx, session, mode, scope.orgId, setupId)
+        : adminActor(session, mode, scope);
+      if (!setupId && scope.event && scope.templateIds.length === 0)
         actor.templateIds = await eventTemplateIds(c.env.DB, scope.orgId, scope.event.id);
       c.set('auth', { ...session, mode });
       await admit(c, actor.orgId, actor.actorKey);
+      if (actor.scanner && actor.scanner.deviceRole !== 'scan' && !options.screens)
+        throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
       c.set('scanActor', actor);
     }
     await next();

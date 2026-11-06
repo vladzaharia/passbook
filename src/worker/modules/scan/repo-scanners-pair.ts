@@ -47,7 +47,7 @@ export function installCredentialStmt(
        expires_at = ?, last_seen_at = ?, revoked_at = NULL, updated_at = ?,
        staff_id = NULL, staff_since = NULL, staff_seen_at = NULL,
        pair_code_hash = NULL
-     WHERE id = ? AND kind != 'display' ${codeHash ? 'AND pair_code_hash = ? AND pair_expires_at > ?' : ''}
+     WHERE id = ? AND NOT EXISTS (SELECT 1 FROM scanner_setups m WHERE m.scanner_id=scanners.id AND m.admin_session=1) ${codeHash ? 'AND pair_code_hash = ? AND pair_expires_at > ?' : ''}
      RETURNING id`,
     [
       c.tokenPrefix,
@@ -107,7 +107,7 @@ export const findByPairCode = (db: Db, hash: string, now: number): Promise<PairT
     db,
     `SELECT s.id, s.org_id, s.mode, s.name, o.name AS org_name
      FROM scanners s JOIN orgs o ON o.id = s.org_id AND o.status = 'active'
-     WHERE s.pair_code_hash = ? AND s.pair_expires_at > ? AND s.kind != 'display'`,
+     WHERE s.pair_code_hash = ? AND s.pair_expires_at > ? AND s.kind IN ('device','display') AND NOT EXISTS (SELECT 1 FROM scanner_setups m WHERE m.scanner_id=s.id AND m.admin_session=1)`,
     [hash, now],
   ).then((r) =>
     r ? { id: r.id, orgId: r.org_id, mode: r.mode, name: r.name, orgName: r.org_name } : null,
@@ -125,7 +125,7 @@ export const clearTokenStmt = (
     `UPDATE scanners SET token_prefix = NULL, token_hash = NULL, csrf_secret = NULL, paired_at = NULL,
        paired_label = NULL, expires_at = NULL, updated_at = ?,
        staff_id = NULL, staff_since = NULL, staff_seen_at = NULL
-     WHERE id = ? AND token_hash = ? AND kind = 'device'
+     WHERE id = ? AND token_hash = ? AND kind IN ('device','display')
      RETURNING id, org_id`,
     [now, id, tokenHash],
   );

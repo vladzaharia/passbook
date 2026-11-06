@@ -180,7 +180,13 @@ export async function buildCard(
       .slice(0, 4)
       .map((f) => ({ label: f.label, tone: 'warning' as const, stop: f.stop })),
     values: cardValues(found),
-    actions: found.scan.actions.slice(0, 6).map((a) => cardAction(actor, a, reads.gates, now)),
+    actions: found.scan.actions.slice(0, 6).map((a) => ({
+      ...cardAction(actor, a, reads.gates, now),
+      ...(a.kind === 'check_in' && found.admission?.state.direction === 'out'
+        ? { label: 'Check out' }
+        : {}),
+    })),
+    checkIn: found.admission?.state,
     display: parts.display,
     lastScans: reads.scans.map((s) => ({
       scanId: s.id,

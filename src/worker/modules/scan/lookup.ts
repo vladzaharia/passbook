@@ -11,6 +11,7 @@ import { getPlatformSettings } from '../settings/service.ts';
 import { barcodeHashOfCode, cleanCode, codeKeyOf, lookupHashOf } from './codes.ts';
 import { policyActor } from './dto.ts';
 import type { ScanActor } from './guard.ts';
+import { scanPhotoUrl } from './member-photo.ts';
 import { countMiss } from './misses.ts';
 import { searchPasses } from './repo-search.ts';
 import { scanPolicy } from './rules.ts';
@@ -52,22 +53,24 @@ export async function lookup(
     detail: { count: Math.min(rows.length, 10) },
   }).run();
   return {
-    items: rows.slice(0, 10).map((row) => ({
-      passId: row.id,
-      title: row.title ?? '',
-      subtitle: row.subtitle,
-      templateName: row.template_name,
-      status:
-        row.removed_at !== null
-          ? 'removed'
-          : row.status === 'voided'
-            ? 'voided'
-            : validityOf(JSON.parse(row.pass_json ?? '{}'), now).status,
-      maskedEmail: row.holder_email ? maskEmail(row.holder_email) : null,
-      photoUrl: null,
-      doorState: null,
-      lastScanAt: row.last_scan_at,
-    })),
+    items: await Promise.all(
+      rows.slice(0, 10).map(async (row) => ({
+        passId: row.id,
+        title: row.title ?? '',
+        subtitle: row.subtitle,
+        templateName: row.template_name,
+        status:
+          row.removed_at !== null
+            ? 'removed'
+            : row.status === 'voided'
+              ? 'voided'
+              : validityOf(JSON.parse(row.pass_json ?? '{}'), now).status,
+        maskedEmail: row.holder_email ? maskEmail(row.holder_email) : null,
+        photoUrl: await scanPhotoUrl(ctx, actor, row.id),
+        doorState: null,
+        lastScanAt: row.last_scan_at,
+      })),
+    ),
     more: rows.length > 10,
   };
 }

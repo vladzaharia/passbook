@@ -83,5 +83,6 @@ export function readyOutcome(found: Found, card: ScanCard, read: CountsRead): Sc
     reason: 'choose',
     card,
     template: found.ref,
+    checkIn: found.admission?.state,
   };
 }

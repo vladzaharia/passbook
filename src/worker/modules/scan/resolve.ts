@@ -1,14 +1,18 @@
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { PassJson, PassStyle } from '../../../passkit/types.ts';
 import { PASS_STYLES } from '../../../passkit/types.ts';
+import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
 import type { ScanInput, ScanReason } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { type ResolvedScanManifest, scanOf } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound, resolveTemplate } from '../passes/builder.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { planAdmission, policyAction } from './admission.ts';
+import type { AdmissionPlan } from './admission-types.ts';
 import { barcodeHashOfCode, cleanCode, codeKeyOf, lookupHashOf } from './codes.ts';
 import type { ScanActor } from './guard.ts';
+import { knownPhotoUrl } from './member-photo.ts';
 import {
   byBarcodeHashStmt,
   byExternalIdStmt,
@@ -32,6 +36,9 @@ export interface Found {
   template: ResolvedTemplate;
   scan: ResolvedScanManifest;
   ref: TemplateRef;
+  photoUrl?: string | null;
+  checkInRules?: CheckInPolicy;
+  admission?: AdmissionPlan;
 }
 
 /** Everything a stop step knows: the pass and template only when a step got far enough to find them. */
@@ -45,6 +52,7 @@ export interface Stop {
   at: number | null;
   flags: string[];
   found: Found | null;
+  hard?: boolean;
 }
 export type Evaluated = { stop: false; found: Found } | Stop;
 
@@ -53,6 +61,7 @@ export interface Waive {
   window?: boolean;
   /** The flags were acknowledged. */
   confirmed?: boolean;
+  direction?: 'in' | 'out';
 }
 
 const MINUTE = 60_000;
@@ -113,7 +122,8 @@ async function findCandidates(
 
 const accepts = (actor: ScanActor, pass: Pass) =>
   actor.templateIds.length === 0
-    ? actor.principal === 'admin'
+    ? (actor.principal === 'admin' && actor.scanner === null) ||
+      actor.settings.acceptAllTemplates === true
     : actor.templateIds.includes(pass.templateId);
 
 function matchesEvent(actor: ScanActor, pass: Pass): boolean {
@@ -123,7 +133,11 @@ function matchesEvent(actor: ScanActor, pass: Pass): boolean {
   return values.map(String).includes(String(pass.personalization[event.matchInput]));
 }
 
-export async function foundOf(ctx: ServiceContext, c: Candidate): Promise<Found | null> {
+export async function foundOf(
+  ctx: ServiceContext,
+  c: Candidate,
+  actor?: ScanActor,
+): Promise<Found | null> {
   try {
     const template = await resolveTemplate(
       ctx,
@@ -132,12 +146,24 @@ export async function foundOf(ctx: ServiceContext, c: Candidate): Promise<Found 
       c.pass.templateVersion,
     );
     const passJson = (c.passJson ? JSON.parse(c.passJson) : template.passJson) as PassJson;
+    const rules = c.checkInRules ?? {};
+    const scan = scanOf(template.manifest);
     return {
       pass: c.pass,
       passJson,
       template,
-      scan: scanOf(template.manifest),
+      scan: {
+        ...scan,
+        actions: scan.actions.map((action) =>
+          policyAction(action, {
+            ...rules,
+            mode: rules.mode ?? actor?.settings.checkIn?.mode,
+          }),
+        ),
+      },
+      checkInRules: rules,
       ref: { name: template.manifest.name, style: styleOf(passJson) },
+      photoUrl: actor && c.hasPhoto ? await knownPhotoUrl(ctx, actor, c, template) : null,
     };
   } catch (error) {
     if (isNotFound(error)) return null;
@@ -156,8 +182,18 @@ function windowStop(actor: ScanActor, found: Found, now: number, waive: Waive): 
   if (w && !waive.window) {
     const from = w.from ? instant(found.pass.personalization[w.from]) : null;
     const until = w.until ? instant(found.pass.personalization[w.until]) : null;
-    const opens = from === null ? null : from - (w.earlyMinutes ?? 0) * MINUTE;
-    const closes = until === null ? null : until + (w.lateMinutes ?? 0) * MINUTE;
+    const opens =
+      found.checkInRules?.validFrom !== undefined
+        ? found.checkInRules.validFrom
+        : from === null
+          ? null
+          : from - (w.earlyMinutes ?? 0) * MINUTE;
+    const closes =
+      found.checkInRules?.validUntil !== undefined
+        ? found.checkInRules.validUntil
+        : until === null
+          ? null
+          : until + (w.lateMinutes ?? 0) * MINUTE;
     if (opens !== null && now < opens)
       return stop('heads_up', 'not_yet_valid', { ...withFound, at: opens });
     if (closes !== null && now > closes)
@@ -191,7 +227,11 @@ export async function evaluate(
   input: ScanInput,
   waive: Waive = {},
 ): Promise<Evaluated> {
-  if (actor.principal === 'scanner' && actor.templateIds.length === 0)
+  if (
+    actor.principal === 'scanner' &&
+    actor.templateIds.length === 0 &&
+    !actor.settings.acceptAllTemplates
+  )
     return stop('refused', 'not_accepted');
   const all = await findCandidates(ctx, actor, input);
   const first = all[0];
@@ -214,9 +254,17 @@ export async function evaluate(
   const one = matched[0];
   if (!one) return stop('refused', 'wrong_event', { pass: accepted[0]?.pass ?? null });
   if (matched.length > 1) return stop('refused', 'ambiguous');
-  const found = await foundOf(ctx, one);
+  const found = await foundOf(ctx, one, actor);
   if (!found) return stop('refused', 'not_accepted', { pass: one.pass });
   const known = { pass: found.pass, ref: found.ref, found };
+  const configured =
+    Object.keys(found.checkInRules ?? {}).length > 0 ||
+    Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
+    actor.settings.direction === 'out' ||
+    actor.settings.direction === 'both';
+  const admission = configured ? await planAdmission(ctx, actor, found, waive.direction) : null;
+  found.admission = admission?.plan;
+  const exiting = admission?.plan.state.direction === 'out';
 
   const now = ctx.clock.now();
   if (found.pass.removedAt !== null)
@@ -224,9 +272,17 @@ export async function evaluate(
   const validity = validityOf(found.passJson, now);
   if (found.pass.status === 'voided' || validity.status === 'voided')
     return stop('refused', 'voided', { ...known, at: found.pass.modifiedAt });
-  if (validity.status === 'expired')
+  if (validity.status === 'expired' && !exiting)
     return stop('refused', 'expired', { ...known, at: validity.validUntil });
-  const held = windowStop(actor, found, now, waive);
+  if (admission?.reason)
+    return stop(
+      admission.reason === 'not_accepted' || admission.reason === 'wrong_event'
+        ? 'refused'
+        : 'heads_up',
+      admission.reason,
+      { ...known, at: admission.at, flags: admission.flags, hard: true },
+    );
+  const held = exiting ? null : windowStop(actor, found, now, waive);
   if (held) return held;
   const flagged = activeFlags(found).filter((f) => f.stop);
   if (flagged.length > 0 && !waive.confirmed)

@@ -37,6 +37,8 @@ export function SettingsCard({ scanner }: { scanner: ScannerDto }) {
         name: draft.name.trim(),
         accepts: acceptsOf(draft),
         settings: settingsOf(draft),
+        deviceRole: draft.deviceRole,
+        watch: draft.deviceRole === 'scan' ? null : draft.watch,
       });
       setEdits({});
       check.reset();

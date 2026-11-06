@@ -91,7 +91,7 @@ export function ScannerPage({ scannerId }: { scannerId: string }) {
         }
         actions={
           <>
-            {revoked ? null : pair}
+            {revoked || s.adminSession || s.kind === 'terminal' ? null : pair}
             {s.mode === 'test' && !revoked ? (
               <Button
                 variant="outline"
