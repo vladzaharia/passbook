@@ -1,0 +1,320 @@
+/* The display painter (BF "Rows", "Body", "Type steps"). Tokens are prefixed --sd-; dark is the
+   default, light follows the app's theme switch. Template tones colour stamps, progress fills,
+   list icons and the caption gift only. */
+:root {
+  --sd-inset: #171c28;
+  --sd-line: rgb(255 255 255 / 0.05);
+  --sd-rule: #212633;
+  --sd-strong: #ffffff;
+  --sd-body: #dbe4ff;
+  --sd-muted: #8f98ad;
+  --sd-fill-gray: rgb(118 124 140 / 0.24);
+  --sd-accent: #2dd4bf;
+  --sd-chip-gold-bg: #2e2410;
+  --sd-chip-gold-fg: #e8c27a;
+  --sd-chip-violet-bg: #2a1a4d;
+  --sd-chip-violet-fg: #cdb2ff;
+  --sd-chip-teal-bg: #0a2629;
+  --sd-chip-teal-fg: #5eead4;
+  --sd-chip-neutral-bg: #222838;
+  --sd-chip-neutral-fg: #c3cbe0;
+  --sd-note-info-bg: #0f1a2e;
+  --sd-note-info-fg: #b9d4ff;
+  --sd-tone-violet: #b48aff;
+  --sd-tone-teal: #2dd4bf;
+  --sd-tone-gold: #e8c27a;
+  --sd-tone-neutral: #8f98ad;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --sd-inset: #f2f4f9;
+    --sd-line: rgb(6 9 18 / 0.05);
+    --sd-rule: #dadee9;
+    --sd-strong: #060912;
+    --sd-body: #262d40;
+    --sd-muted: #48536b;
+    --sd-fill-gray: rgb(118 124 140 / 0.14);
+    --sd-accent: #0f766e;
+    --sd-chip-gold-bg: #fbf1d9;
+    --sd-chip-gold-fg: #7a5a12;
+    --sd-chip-violet-bg: #efe6ff;
+    --sd-chip-violet-fg: #5418c9;
+    --sd-chip-teal-bg: #d8f2ee;
+    --sd-chip-teal-fg: #0b5c55;
+    --sd-chip-neutral-bg: #eceef4;
+    --sd-chip-neutral-fg: #333b50;
+    --sd-note-info-bg: #e6f0ff;
+    --sd-note-info-fg: #12306b;
+    --sd-tone-violet: #7a2fff;
+    --sd-tone-teal: #0f766e;
+    --sd-tone-gold: #8a6514;
+    --sd-tone-neutral: #48536b;
+  }
+}
+[data-theme="light"] {
+  --sd-inset: #f2f4f9;
+  --sd-line: rgb(6 9 18 / 0.05);
+  --sd-rule: #dadee9;
+  --sd-strong: #060912;
+  --sd-body: #262d40;
+  --sd-muted: #48536b;
+  --sd-fill-gray: rgb(118 124 140 / 0.14);
+  --sd-accent: #0f766e;
+  --sd-chip-gold-bg: #fbf1d9;
+  --sd-chip-gold-fg: #7a5a12;
+  --sd-chip-violet-bg: #efe6ff;
+  --sd-chip-violet-fg: #5418c9;
+  --sd-chip-teal-bg: #d8f2ee;
+  --sd-chip-teal-fg: #0b5c55;
+  --sd-chip-neutral-bg: #eceef4;
+  --sd-chip-neutral-fg: #333b50;
+  --sd-note-info-bg: #e6f0ff;
+  --sd-note-info-fg: #12306b;
+  --sd-tone-violet: #7a2fff;
+  --sd-tone-teal: #0f766e;
+  --sd-tone-gold: #8a6514;
+  --sd-tone-neutral: #48536b;
+}
+
+/* Type steps: phone, then iPad. */
+:root {
+  --sd-t1: 500 12px / 16px;
+  --sd-t2: 600 13px / 16px;
+  --sd-t3: 400 15px / 20px;
+  --sd-t4: 500 17px / 22px;
+  --sd-t6: 600 28px / 32px;
+}
+@media (min-width: 820px) {
+  :root {
+    --sd-t1: 500 14px / 18px;
+    --sd-t2: 600 15px / 20px;
+    --sd-t3: 400 17px / 22px;
+    --sd-t4: 500 20px / 26px;
+    --sd-t6: 600 40px / 44px;
+  }
+}
+
+.sd {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  font-family: var(--pk-font-sans);
+  color: var(--sd-body);
+  font-variant-numeric: tabular-nums;
+}
+.sd-panel {
+  container: sd / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--sd-inset);
+  box-shadow: inset 0 0 0 0.5px var(--sd-line);
+  --tone: var(--sd-tone-neutral);
+}
+.sd-panel[data-tone="violet"] {
+  --tone: var(--sd-tone-violet);
+}
+.sd-panel[data-tone="teal"] {
+  --tone: var(--sd-tone-teal);
+}
+.sd-panel[data-tone="gold"] {
+  --tone: var(--sd-tone-gold);
+}
+.sd-panel:not([data-tone]) {
+  --tone: var(--sd-accent);
+}
+.sd-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 16px;
+  color: var(--sd-muted);
+  font: var(--sd-t2) var(--pk-font-sans);
+}
+.sd-panel-head > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--sd-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sd-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Chips */
+.sd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--sd-chip-neutral-bg);
+  color: var(--sd-chip-neutral-fg);
+  font: var(--sd-t2) var(--pk-font-sans);
+  white-space: nowrap;
+}
+.sd-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sd-chip > svg {
+  flex: none;
+}
+.sd-chip[data-tone="gold"] {
+  background: var(--sd-chip-gold-bg);
+  color: var(--sd-chip-gold-fg);
+}
+.sd-chip[data-tone="violet"] {
+  background: var(--sd-chip-violet-bg);
+  color: var(--sd-chip-violet-fg);
+}
+.sd-chip[data-tone="teal"] {
+  background: var(--sd-chip-teal-bg);
+  color: var(--sd-chip-teal-fg);
+}
+
+/* Heading, field, big */
+.sd-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--sd-muted);
+  font: var(--sd-t2) var(--pk-font-sans);
+}
+.sd-field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sd-field-label {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  max-width: 50%;
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+.sd-field-label > svg {
+  flex: none;
+}
+.sd-field-value {
+  min-width: 0;
+  color: var(--sd-strong);
+  font: var(--sd-t4) var(--pk-font-sans);
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+.sd-field[data-strong] .sd-field-value {
+  font-weight: 650;
+}
+.sd-field[data-long] {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+.sd-field[data-long] .sd-field-label {
+  max-width: none;
+}
+.sd-field[data-long] .sd-field-value {
+  text-align: start;
+}
+.sd-big,
+.sd-money {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sd-big-label {
+  color: var(--sd-muted);
+  font: var(--sd-t1) var(--pk-font-sans);
+}
+.sd-big-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.sd-big-value {
+  color: var(--sd-strong);
+  font: var(--sd-t6) var(--pk-font-sans);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.sd-big[data-tone="gold"] .sd-big-value {
+  color: var(--sd-chip-gold-fg);
+}
+.sd-big[data-tone="violet"] .sd-big-value {
+  color: var(--sd-chip-violet-fg);
+}
+.sd-big[data-tone="teal"] .sd-big-value {
+  color: var(--sd-chip-teal-fg);
+}
+.sd-big-unit {
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+
+/* Columns: the server's oneLine verdict holds under 400 px; at the wide width always one line. */
+.sd-cols {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  row-gap: 12px;
+}
+.sd-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-inline-start: 16px;
+}
+.sd-col:first-child {
+  padding-inline-start: 0;
+}
+.sd-col-label {
+  color: var(--sd-muted);
+  font: var(--sd-t1) var(--pk-font-sans);
+}
+.sd-col-value {
+  color: var(--sd-strong);
+  font: var(--sd-t4) var(--pk-font-sans);
+  overflow-wrap: anywhere;
+}
+.sd-cols[data-size="big"] .sd-col {
+  padding-inline-start: 12px;
+}
+.sd-cols[data-size="big"] .sd-col:first-child {
+  padding-inline-start: 0;
+}
+.sd-cols[data-size="big"] .sd-col + .sd-col {
+  border-inline-start: 0.5px solid var(--sd-rule);
+}
+.sd-cols[data-size="big"] .sd-col-value {
+  font: var(--sd-t6) var(--pk-font-sans);
+  letter-spacing: -0.02em;
+}
+@container sd (max-width: 399.98px) {
+  .sd-cols[data-one-line="false"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sd-cols[data-one-line="false"] .sd-col:nth-child(odd) {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+}

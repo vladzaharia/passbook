@@ -1,0 +1,231 @@
+/* The /scan shell (BF "Phone geometry", "z-order", "Colour tokens"). Verdict hues are the same in
+   both themes; the full-screen layers are deeper in dark, for a dark venue. Text, inset and chip
+   tokens are the display painter's --sd-* (display.css). */
+:root {
+  --scan-ok: #22c55e;
+  --scan-ok-on: #04170b;
+  --scan-heads: #f59e0b;
+  --scan-heads-on: #1f1600;
+  --scan-refused: #b91c1c;
+  --scan-refused-on: #ffffff;
+  --scan-system: #334155;
+  --scan-system-on: #ffffff;
+
+  --scan-scrim: rgb(0 0 0 / 0.38);
+  --scan-wash-ok: rgb(21 128 61 / 0.62);
+  --scan-wash-heads: rgb(180 83 9 / 0.62);
+  --scan-wash-refused: rgb(185 28 28 / 0.66);
+  --scan-wash-system: rgb(51 65 85 / 0.66);
+  --scan-ring-glow: 70%;
+
+  --scan-card: #0d111b;
+  --scan-glass: rgb(13 17 27 / 0.74);
+  --scan-glass-solid: rgb(13 17 27 / 0.92);
+  --scan-accent-on: #04201c;
+  --scan-camera: #05070c;
+
+  --scan-z-cam: 0;
+  --scan-z-tuck: 9;
+  --scan-z-dock: 10;
+  --scan-z-card: 11;
+  --scan-z-buddy: 12;
+  --scan-z-capsule: 20;
+  --scan-z-ring: 40;
+
+  --scan-dock-h: 166px;
+  --scan-card-top: 117px;
+  --scan-card-bottom: 284px;
+  --scan-card-w: 342px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --scan-scrim: rgb(4 6 12 / 0.3);
+    --scan-wash-ok: rgb(34 197 94 / 0.5);
+    --scan-wash-heads: rgb(245 158 11 / 0.56);
+    --scan-wash-refused: rgb(220 38 38 / 0.6);
+    --scan-wash-system: rgb(51 65 85 / 0.56);
+    --scan-ring-glow: 55%;
+    --scan-card: #ffffff;
+    --scan-glass: rgb(255 255 255 / 0.84);
+    --scan-glass-solid: rgb(255 255 255 / 0.92);
+    --scan-accent-on: #ffffff;
+  }
+}
+[data-theme="light"] {
+  --scan-scrim: rgb(4 6 12 / 0.3);
+  --scan-wash-ok: rgb(34 197 94 / 0.5);
+  --scan-wash-heads: rgb(245 158 11 / 0.56);
+  --scan-wash-refused: rgb(220 38 38 / 0.6);
+  --scan-wash-system: rgb(51 65 85 / 0.56);
+  --scan-ring-glow: 55%;
+  --scan-card: #ffffff;
+  --scan-glass-solid: rgb(255 255 255 / 0.92);
+  --scan-glass: rgb(255 255 255 / 0.84);
+  --scan-accent-on: #ffffff;
+}
+@media (min-width: 640px) {
+  :root {
+    --scan-card-w: 560px;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --scan-dock-h: 128px;
+    --scan-card-top: 108px;
+    --scan-card-bottom: 290px;
+    --scan-card-w: 980px;
+  }
+}
+
+/* The shell: layers in BF z-order. */
+.scan-shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--scan-camera);
+  color: var(--sd-strong);
+  font-family: var(--pk-font-sans);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.scan-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scan-cam {
+  z-index: var(--scan-z-cam);
+}
+.scan-tint {
+  z-index: var(--scan-z-cam);
+}
+.scan-scrim,
+.scan-wash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.scan-scrim {
+  background: var(--scan-scrim);
+}
+.scan-wash[data-kind="green"] {
+  background: var(--scan-wash-ok);
+}
+.scan-wash[data-kind="amber"] {
+  background: var(--scan-wash-heads);
+}
+.scan-wash[data-kind="red"] {
+  background: var(--scan-wash-refused);
+}
+.scan-wash[data-kind="slate"] {
+  background: var(--scan-wash-system);
+}
+.scan-tint[data-tint]:not([data-tint="none"]) .scan-scrim,
+.scan-tint[data-tint="green"] .scan-wash[data-kind="green"],
+.scan-tint[data-tint="amber"] .scan-wash[data-kind="amber"],
+.scan-tint[data-tint="red"] .scan-wash[data-kind="red"],
+.scan-tint[data-tint="slate"] .scan-wash[data-kind="slate"] {
+  opacity: 1;
+}
+.scan-ring {
+  z-index: var(--scan-z-ring);
+  opacity: 0;
+  --v: transparent;
+  box-shadow:
+    inset 0 0 0 10px var(--v),
+    inset 0 0 36px 12px color-mix(in oklab, var(--v) var(--scan-ring-glow), transparent);
+}
+.scan-ring[data-tint="green"] {
+  --v: var(--scan-ok);
+}
+.scan-ring[data-tint="amber"] {
+  --v: var(--scan-heads);
+}
+.scan-ring[data-tint="red"] {
+  --v: var(--scan-refused);
+}
+.scan-ring[data-tint="slate"] {
+  --v: var(--scan-system);
+}
+.scan-ring[data-tint]:not([data-tint="none"]) {
+  opacity: 1;
+}
+@media (min-width: 1024px) {
+  .scan-ring {
+    box-shadow:
+      inset 0 0 0 12px var(--v),
+      inset 0 0 56px 12px color-mix(in oklab, var(--v) var(--scan-ring-glow), transparent);
+  }
+}
+/* One tint transition per verdict: opacity only, 80 ms. Reduced motion: it switches at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .scan-scrim,
+  .scan-wash,
+  .scan-ring {
+    transition: opacity 80ms linear;
+  }
+}
+
+/* Card layer: boot cards and (UI.3) the result card sit in this box. */
+.scan-card-layer {
+  z-index: var(--scan-z-card);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-inline: 24px;
+  padding-block: var(--scan-card-top) var(--scan-card-bottom);
+}
+.scan-card-layer[data-mode="boot"] {
+  align-items: center;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 72px) 24px;
+}
+.scan-card {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, var(--scan-card-w));
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+  border-radius: 28px;
+  background: var(--scan-card);
+  color: var(--sd-body);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
+}
+.scan-card[data-tone="slate"] {
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.scan-card-title {
+  margin: 0;
+  color: var(--sd-strong);
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.scan-card[data-tone="slate"] .scan-card-title {
+  color: inherit;
+}
+.scan-card-line {
+  margin: 0;
+  color: var(--sd-muted);
+  font-size: 17px;
+  line-height: 22px;
+}
+.scan-card[data-tone="slate"] .scan-card-line {
+  color: inherit;
+  opacity: 0.92;
+}
+.scan-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scan-card-actions > * {
+  flex: 1 1 auto;
+}

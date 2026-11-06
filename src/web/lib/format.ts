@@ -26,6 +26,7 @@ const UTC_TIME = new Intl.DateTimeFormat(LOCALE, {
   timeZone: 'UTC',
 });
 const COUNT = new Intl.NumberFormat(LOCALE);
+const MONEY = new Map<string, Intl.NumberFormat>();
 const RELATIVE = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
 
 /** The one date-time format of the app: Oct 31, 2026, 6:17 PM. */
@@ -65,6 +66,23 @@ export function formatWallTime(local: string): string {
 /** 1,234. */
 export function formatCount(n: number): string {
   return COUNT.format(n);
+}
+
+/** $42.50, or -$12.00 / +$12.00 with `signed`. No currency: a plain two-decimal number. */
+export function formatMoney(amount: number, currency: string | null, signed = false): string {
+  let f = MONEY.get(currency ?? '');
+  if (!f) {
+    f = new Intl.NumberFormat(
+      LOCALE,
+      currency
+        ? { style: 'currency', currency }
+        : { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    );
+    MONEY.set(currency ?? '', f);
+  }
+  const text = f.format(Math.abs(amount));
+  if (amount < 0) return `\u2212${text}`;
+  return signed && amount > 0 ? `+${text}` : text;
 }
 
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [

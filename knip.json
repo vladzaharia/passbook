@@ -26,6 +26,8 @@
     "src/web/scan/{machine/types,timing,input/types}.ts": ["exports", "types"],
     "src/web/scan/offline/{db,unsure-store,wipe}.ts": ["exports"],
     "src/shared/**": ["exports", "types"],
+    "src/web/scan/{boot/admin-scope,ui/scan-menu}.tsx": ["files", "exports", "types"],
+    "src/web/scan/ui/{capsule,chips}.tsx": ["exports", "types"],
     "tools/lib/**": ["exports"],
     "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": ["exports"],
     "src/web/ui/art/index.ts": ["types"],
