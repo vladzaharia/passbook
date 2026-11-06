@@ -83,8 +83,11 @@ recovery and manual/reader input rather than a successful scan.
 Physical iPhone/iPad Safari and installed home-screen mode, Android Chrome/WebView and P400,
 front-only laptop cameras, low-end hardware, autofocus, torch, glare, distance and accessibility
 assistive technology still need the venue/device trials in `scanner-plan.md` and
-`android/ACCEPTANCE.md`. Android 13 emulator checks also passed: 11 unit tests, three bridge tests, four real WebView
-instrumentation checks, lint, assembly and native camera acquisition on WebView 109.
+`android/ACCEPTANCE.md`. Android 13 emulator checks also passed: 18 unit tests, three bridge tests, four real WebView
+instrumentation checks, lint, assembly and native camera acquisition on WebView 109. The first camera permission prompt was reproduced
+and fixed: the request survives the system dialog, waits for the Activity to resume and rechecks
+its origin. Pending requests are cancelled on navigation, browser cancellation and destruction.
+The fix ships in Reader 0.2.2 with the original update signing identity.
 These checks do not establish physical P400 or camera optics behavior.
 
 The existing APK loads the hosted `/scan` code, so these camera

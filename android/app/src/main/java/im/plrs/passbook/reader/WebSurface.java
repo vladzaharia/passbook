@@ -25,6 +25,7 @@ public final class WebSurface {
         void command(JSONObject message);
         void notice(String message);
         void camera(PermissionRequest request);
+        default void cameraCancelled(PermissionRequest request) {}
     }
     public final WebView view;
     private final Listener listener;
@@ -83,6 +84,7 @@ public final class WebSurface {
                 if (!trusted(request.getOrigin().toString())) { request.deny(); return; }
                 listener.camera(request);
             }
+            @Override public void onPermissionRequestCanceled(PermissionRequest request) { listener.cameraCancelled(request); }
         });
     }
 

@@ -6,10 +6,10 @@ The app opens `https://passbook.mobile/scan`. Pair it in Admin → Scanning, tap
 
 ## Install
 
-Install `dist/passbook-reader-0.2.1.apk` on the P400. Allow this installation source when Android asks, or use:
+Install `dist/passbook-reader-0.2.2.apk` on the P400. Allow this installation source when Android asks, or use:
 
 ```sh
-adb install -r android/dist/passbook-reader-0.2.1.apk
+adb install -r android/dist/passbook-reader-0.2.2.apk
 adb shell am start -n im.plrs.passbook.reader/.MainActivity
 ```
 

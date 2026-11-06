@@ -1,5 +1,8 @@
-# PassBook Reader 0.2.1
+# PassBook Reader 0.2.2
 
+- Camera access survives the first Android permission dialog and grants only in the foreground.
+- Navigation and browser cancellation revoke pending camera requests.
+- Hosted scanning now supports eight camera barcode formats, recovery and background/resume.
 - Opens the PassBook scanner at `https://passbook.mobile/scan` by default.
 - Pair in Admin → Scanning, tap Start, then scan hardware barcodes.
 - Barcode acceptance uses the server check-in rules, duplicate protection and undo.

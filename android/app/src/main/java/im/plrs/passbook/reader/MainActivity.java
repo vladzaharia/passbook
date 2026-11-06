@@ -45,7 +45,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private boolean foreground;
     private boolean armed = true;
     private boolean registered;
-    private PermissionRequest cameraRequest;
+    private final CameraPermissions cameraPermissions = new CameraPermissions();
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (foreground && config.barcodeAction().equals(intent.getAction())) {
@@ -139,22 +139,22 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     @Override protected void onResume() {
-        super.onResume(); foreground = true; web.view.onResume(); registerBarcode(); resumeReader();
+        super.onResume(); foreground = true; web.view.onResume(); registerBarcode(); resumeReader(); cameraPermissions.resume();
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
         foreground = false; nfc.stop(); gate.reset(); unregisterBarcode();
-        if (cameraRequest != null) { cameraRequest.deny(); cameraRequest = null; }
+        cameraPermissions.pause();
         web.view.onPause(); super.onPause();
     }
     @Override protected void onDestroy() {
-        handler.removeCallbacksAndMessages(null); nfc.destroy(); web.destroy(); super.onDestroy();
+        cameraPermissions.cancel(); handler.removeCallbacksAndMessages(null); nfc.destroy(); web.destroy(); super.onDestroy();
     }
     @Override public void onBackPressed() {
         if (web.view.canGoBack()) web.view.goBack();
         else super.onBackPressed();
     }
-    @Override public void reset() { gate.reset(); nfc.stop(); }
+    @Override public void reset() { cameraPermissions.cancel(); gate.reset(); nfc.stop(); }
     @Override public void notice(String text) { status.setTextColor(0xff34415d); status.setText(text); }
 
     private void resumeReader() {
@@ -239,24 +239,25 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     @Override public void camera(PermissionRequest request) {
-        if (!Arrays.equals(request.getResources(), new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE})) {
+        if (!foreground || !web.trusted(web.view.getUrl())
+            || !Arrays.equals(request.getResources(), new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE})) {
             request.deny(); return;
         }
-        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            request.grant(new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE}); return;
-        }
-        if (cameraRequest != null) cameraRequest.deny();
-        cameraRequest = request;
-        requestPermissions(new String[] {Manifest.permission.CAMERA}, 10);
+        boolean allowed = checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        cameraPermissions.request(new CameraPermissions.Request() {
+            public Object token() { return request; }
+            public boolean trusted() {
+                return web.trusted(request.getOrigin().toString()) && web.trusted(web.view.getUrl());
+            }
+            public void grant() { request.grant(new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE}); }
+            public void deny() { request.deny(); }
+        }, allowed);
+        if (!allowed) requestPermissions(new String[] {Manifest.permission.CAMERA}, 10);
     }
+    @Override public void cameraCancelled(PermissionRequest request) { cameraPermissions.cancel(request); }
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] grants) {
         super.onRequestPermissionsResult(request, permissions, grants);
-        if (request != 10 || cameraRequest == null) return;
-        if (foreground && grants.length == 1 && grants[0] == PackageManager.PERMISSION_GRANTED
-            && web.trusted(cameraRequest.getOrigin().toString()) && web.trusted(web.view.getUrl())) {
-            cameraRequest.grant(new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE});
-        } else cameraRequest.deny();
-        cameraRequest = null;
+        if (request == 10) cameraPermissions.result(grants.length == 1 && grants[0] == PackageManager.PERMISSION_GRANTED);
     }
 
     static JSONObject message(String event) {
