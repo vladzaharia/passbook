@@ -173,7 +173,8 @@ export async function createRuntime(
     store.dispatch({ type: 'visible', visible: !document.hidden });
     if (document.hidden) {
       camera.stop();
-      store.dispatch({ type: 'camera', status: 'off' });
+      if (store.getSnapshot().state.camera !== 'disabled')
+        store.dispatch({ type: 'camera', status: 'off' });
       native?.stop();
       void wake?.release();
       wake = null;
@@ -184,7 +185,10 @@ export async function createRuntime(
   document.addEventListener('visibilitychange', onVisible);
   const unsubscribe = store.subscribe(() => {
     const s = store.getSnapshot().state;
-    if (decodeActive(s, !document.hidden)) camera.resume();
+    // Keep initialization progressing while session/count updates arrive before the first frame.
+    const warming =
+      s.camera === 'starting' && decodeActive({ ...s, camera: 'live' }, !document.hidden);
+    if (warming || decodeActive(s, !document.hidden)) camera.resume();
     else camera.pause();
     if (s.loop.s === 'verdict')
       native?.result(

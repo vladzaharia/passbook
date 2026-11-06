@@ -22,7 +22,7 @@ export default defineConfig({
     { name: 'setup', testMatch: /auth\.setup\.ts/, use: { ...devices['Desktop Chrome'] } },
     {
       name: 'e2e',
-      testIgnore: /auth\.setup\.ts/,
+      testIgnore: /auth\.setup\.ts|17-scan-camera\.spec|18-scan-native-camera\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'] },
     },

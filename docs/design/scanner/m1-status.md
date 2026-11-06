@@ -16,8 +16,9 @@ Set its verifier URL to the installation's HTTPS origin followed by `/scan`, pai
 New installs default to `https://passbook.mobile/scan`; existing installs preserve their URL.
 Use BCScan keyboard output with Enter or configure the device's documented broadcast action.
 
-`SCAN_ENABLED` is enabled in the committed configuration. The existing installation still needs an owner deployment.
-No remote migrations or Worker deployment were run during this integration.
+`SCAN_ENABLED` is enabled. The owner-authorized production deployment completed on 2026-11-06,
+including migration `0014_scan.sql`. The scanner is available at https://passbook.mobile/scan.
+Camera verification and subsequent corrections: [audit](../../audits/2026-11-06-scanner-camera.md).
 
 ## Included
 

@@ -179,7 +179,8 @@ export function ScanLoop({
             videoRef={videoRef}
             status={s.camera}
             checking={l.s === 'checking' || l.s === 'applying'}
-            result={Boolean(result)}
+            result={Boolean(result) || l.s === 'paused' || Boolean(s.block)}
+            onRetry={runtime.camera.start}
             reader={s.reader.kind !== 'none'}
           />
         }

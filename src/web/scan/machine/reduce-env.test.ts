@@ -61,6 +61,13 @@ describe('start, camera and focus', () => {
 });
 
 describe('visibility and idle', () => {
+  it('resumes a reader-only scanner without starting its disabled camera', () => {
+    const hidden = step(fixtureState({ camera: 'disabled' }), { type: 'visible', visible: false });
+    const resumed = step(hidden.state, { type: 'resume' });
+    expect(resumed.state.camera).toBe('disabled');
+    expect(resumed.cmds.some((cmd) => cmd.c === 'camera')).toBe(false);
+  });
+
   it('hidden pauses; visible keeps it paused; resume restarts', () => {
     const hidden = step(states.ready(), { type: 'visible', visible: false });
     expect(hidden.state.loop).toEqual({ s: 'paused', reason: 'hidden' });

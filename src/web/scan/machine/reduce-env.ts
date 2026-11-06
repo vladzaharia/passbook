@@ -45,7 +45,9 @@ export function resume(s: MachineState, env: Env): Out {
     [
       { c: 'wake', op: 'request' },
       { c: 'audio', op: 'unlock' },
-      { c: 'camera', op: restart ? 'start' : 'resume' },
+      ...(s.camera === 'disabled'
+        ? []
+        : [{ c: 'camera', op: restart ? 'start' : 'resume' } as Cmd]),
     ],
   );
 }

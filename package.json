@@ -26,6 +26,7 @@
     "test:web": "vitest run --project web",
     "coverage": "vitest run --project unit --project web --coverage --coverage.include='src/{passkit,shared,web}/**/*.{ts,tsx}' --coverage.reportsDirectory=coverage/node && vitest run --project worker --coverage --coverage.provider=istanbul --coverage.include='src/worker/**/*.{ts,tsx}' --coverage.reportsDirectory=coverage/worker",
     "test:e2e": "playwright test",
+    "test:e2e:camera": "playwright test --config playwright.camera.config.ts",
     "db:local": "wrangler d1 migrations apply wallet-platform --local",
     "breakglass": "node tools/breakglass.ts",
     "credentials": "node tools/credentials.ts",

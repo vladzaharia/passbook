@@ -1,5 +1,7 @@
 import type { CodeFormat, RawRead } from '../input/types.ts';
 import type { CameraStatus } from '../machine/types.ts';
+import { createDecoder } from './decoder.ts';
+import { createFrames } from './frames.ts';
 
 export function createCamera(
   video: () => HTMLVideoElement | null,
@@ -8,51 +10,60 @@ export function createCamera(
   status: (s: CameraStatus) => void,
 ) {
   let stream: MediaStream | null = null;
-  let worker: Worker | null = null;
-  let active = false;
-  let pending = false;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let decoder: ReturnType<typeof createDecoder> | null = null;
+  let frames: ReturnType<typeof createFrames> | null = null;
   let generation = 0;
   let facing: 'environment' | 'user' = 'environment';
   let torch = false;
   let wideId: string | undefined;
   let useWide = false;
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  const frame = () => {
-    if (!active) return;
-    const v = video();
-    if (v && v.readyState >= 2 && ctx && !pending && worker) {
-      canvas.width = Math.min(v.videoWidth, 960);
-      canvas.height = Math.round((v.videoHeight * canvas.width) / Math.max(1, v.videoWidth));
-      ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
-      const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      pending = true;
-      worker.postMessage({ image, formats: formats() }, [image.data.buffer]);
-    }
-    timer = setTimeout(frame, 140);
-  };
-  const pause = () => {
-    active = false;
-    if (timer) clearTimeout(timer);
-    timer = null;
-  };
   const stop = () => {
     generation++;
-    pause();
-    worker?.terminate();
-    worker = null;
-    pending = false;
-    for (const track of stream?.getTracks() ?? []) track.stop();
+    frames?.pause();
+    frames = null;
+    decoder?.close();
+    decoder = null;
+    for (const track of stream?.getTracks() ?? []) {
+      track.onended = null;
+      track.stop();
+    }
     stream = null;
     torch = false;
     const v = video();
     if (v) v.srcObject = null;
   };
-  const resume = () => {
-    if (stream && !active) {
-      active = true;
-      frame();
+  const fail = (s: CameraStatus) => {
+    stop();
+    status(s);
+  };
+  const discover = async (token: number) => {
+    try {
+      const devices = (await navigator.mediaDevices.enumerateDevices?.()) ?? [];
+      if (token === generation)
+        wideId = devices.find(
+          (d) => d.kind === 'videoinput' && /ultra.?wide|back.?wide|0[.,]5/i.test(d.label),
+        )?.deviceId;
+    } catch {
+      // Device labels are optional. A denied enumeration disables only the wide-camera option.
+      if (token === generation) wideId = undefined;
+    }
+  };
+  const request = async (token: number) => {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          ...(useWide && wideId
+            ? { deviceId: { exact: wideId } }
+            : { facingMode: { ideal: facing } }),
+          width: { ideal: 1280 },
+        },
+      });
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'OverconstrainedError')) throw error;
+      if (token !== generation) return null;
+      // A stale device id or an unsupported constraint must not exclude an otherwise usable camera.
+      return navigator.mediaDevices.getUserMedia({ audio: false, video: true });
     }
   };
   const start = async () => {
@@ -64,54 +75,58 @@ export function createCamera(
     }
     status('starting');
     try {
-      const next = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          ...(useWide && wideId
-            ? { deviceId: { exact: wideId } }
-            : { facingMode: { ideal: facing } }),
-          width: { ideal: 1280 },
-        },
-      });
+      const next = await request(token);
+      if (!next) return;
       if (token !== generation) {
         for (const t of next.getTracks()) t.stop();
         return;
       }
       stream = next;
-      const devices = (await navigator.mediaDevices.enumerateDevices?.()) ?? [];
-      if (token !== generation) return;
-      wideId = devices.find(
-        (device) =>
-          device.kind === 'videoinput' && /ultra.?wide|back.?wide|0[.,]5/i.test(device.label),
-      )?.deviceId;
+      for (const track of next.getVideoTracks())
+        track.onended = () => {
+          if (token === generation) fail('unavailable');
+        };
+      void discover(token);
       const v = video();
-      if (!v) {
-        stop();
+      if (!v || next.getVideoTracks().length === 0) {
+        fail('unavailable');
         return;
       }
-      v.srcObject = stream;
+      v.muted = true;
+      v.playsInline = true;
+      v.srcObject = next;
       await v.play();
       if (token !== generation) return;
-      worker = new Worker(new URL('./decode-worker.ts', import.meta.url), { type: 'module' });
-      worker.onmessage = ({ data }: MessageEvent<{ read?: RawRead; error?: boolean }>) => {
-        pending = false;
-        if (data.error) {
-          stop();
-          status('decoder_failed');
-        } else if (active && data.read) emit(data.read);
-      };
-      worker.onerror = () => {
-        stop();
-        status('decoder_failed');
-      };
-      active = true;
-      status('live');
-      frame();
+      try {
+        const nextDecoder = createDecoder(() => {
+          if (token === generation) fail('decoder_failed');
+        });
+        if (token !== generation) {
+          nextDecoder.close();
+          return;
+        }
+        decoder = nextDecoder;
+      } catch {
+        fail('decoder_failed');
+        return;
+      }
+      frames = createFrames(
+        video,
+        decoder,
+        formats,
+        emit,
+        () => {
+          if (token === generation) fail('unavailable');
+        },
+        () => {
+          if (token === generation) status('live');
+        },
+      );
+      frames.resume();
     } catch (error) {
       if (token !== generation) return;
-      stop();
-      status(
-        error instanceof DOMException && error.name === 'NotAllowedError'
+      fail(
+        error instanceof DOMException && ['NotAllowedError', 'SecurityError'].includes(error.name)
           ? 'blocked'
           : 'unavailable',
       );
@@ -119,15 +134,22 @@ export function createCamera(
   };
   return {
     start: () => void start(),
-    pause,
-    resume,
     stop,
-    slow: () => undefined,
-    hasTorch: () =>
-      Boolean(
-        (stream?.getVideoTracks()[0]?.getCapabilities?.() as { torch?: boolean } | undefined)
-          ?.torch,
-      ),
+    pause: () => frames?.pause(),
+    resume: () => {
+      if (stream?.getVideoTracks().some((t) => t.readyState === 'live')) frames?.resume();
+    },
+    slow: () => frames?.slow(),
+    hasTorch: () => {
+      try {
+        return Boolean(
+          (stream?.getVideoTracks()[0]?.getCapabilities?.() as { torch?: boolean } | undefined)
+            ?.torch,
+        );
+      } catch {
+        return false;
+      } // Unsupported capability probing disables only the torch control.
+    },
     hasWide: () => Boolean(wideId),
     async toggleTorch() {
       const track = stream?.getVideoTracks()[0];
@@ -139,7 +161,7 @@ export function createCamera(
     choose(choice: 'back' | 'back-wide' | 'front') {
       facing = choice === 'front' ? 'user' : 'environment';
       useWide = choice === 'back-wide';
-      if (stream) void start();
+      void start();
     },
   };
 }

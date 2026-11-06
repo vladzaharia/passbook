@@ -9,6 +9,7 @@ describe('decodeActive', () => {
     expect(decodeActive(states.verdict('ok'), true)).toBe(true);
     expect(decodeActive(states.member(), true)).toBe(true);
     expect(decodeActive(states.checking(), true)).toBe(false);
+    expect(decodeActive(states.applying(), true)).toBe(false);
     expect(decodeActive(states.paused(), true)).toBe(false);
   });
 

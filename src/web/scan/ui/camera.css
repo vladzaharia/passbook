@@ -118,3 +118,7 @@
 .scan-reader-stage[data-hidden] {
   opacity: 0;
 }
+
+.scan-reader-stage button {
+  pointer-events: auto;
+}

@@ -18,6 +18,10 @@ const FORMATS: Record<string, Format> = {
   PKBarcodeFormatPDF417: 'pdf417',
   PKBarcodeFormatAztec: 'aztec',
   PKBarcodeFormatCode128: 'code128',
+  PKBarcodeFormatCode39: 'code39',
+  PKBarcodeFormatCodabar: 'codabar',
+  PKBarcodeFormatEAN13: 'ean13',
+  PKBarcodeFormatI2of5: 'itf',
 };
 
 /** The formats a template's pass can carry; a pass with none is still scanned by its code in a QR. */

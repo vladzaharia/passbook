@@ -12,6 +12,7 @@ export const decodeActive = (s: ScanState, visible: boolean): boolean =>
   s.camera === 'live' &&
   s.block === null &&
   s.loop.s !== 'checking' &&
+  s.loop.s !== 'applying' &&
   s.loop.s !== 'paused' &&
   (s.overlay === null || s.overlay === 'camera');
 
