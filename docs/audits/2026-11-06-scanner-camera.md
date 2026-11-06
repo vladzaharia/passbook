@@ -73,6 +73,27 @@ On macOS 27 the pinned Firefox needs isolated app data to avoid its protected re
 folder. The test config scopes that workaround to the child Firefox process; see
 [Playwright #42768](https://github.com/microsoft/playwright/issues/42768).
 
+## Production verification
+
+- Worker `wallet` serves https://passbook.mobile/scan, version
+  `81a4951b-e810-41af-bd25-0058246beca3`; no additional migration was needed.
+- The deployed WASM Worker decoded all eight formats in Chromium, Firefox and WebKit
+  (24 exact payload comparisons, including leading zeroes).
+- Android 13 / WebView 109 captured the synthetic QR through native `getUserMedia` and
+  decoded that camera frame with the deployed Worker. Camera acquisition was not replaced.
+- The first Android camera permission prompt grants successfully after accepting the dialog.
+- The signed GitHub 0.2.2 APK installs over 0.2.1 (version code 3 → 4), preserving the package's
+  first-install timestamp. Downloaded checksum and v2/v3 signatures verify against the original
+  update certificate, SHA-256 `6326e93c1ba6ae7339d9bef3e0f44c645cc6293e9a3c1d7fb0a63cfd10871d8a`.
+
+Local verification passed: `npm run check` (4,639 tests), coverage thresholds, the full
+56-test browser suite, the 13-test camera matrix, and the five-test door follow-up containing
+the native-reader return-to-result regression. Android passed 18 unit tests, three bridge tests,
+four WebView instrumentation checks, lint and signed assembly. The keyboard instrumentation
+waits for input focus to settle and sends Enter through Android's platform event path.
+
+Release: [Reader 0.2.2](https://github.com/vladzaharia/passbook/releases/tag/android-v0.2.2).
+
 ## Hardware limits
 
 Automated engine and viewport coverage does not establish physical device compatibility.
@@ -83,12 +104,10 @@ recovery and manual/reader input rather than a successful scan.
 Physical iPhone/iPad Safari and installed home-screen mode, Android Chrome/WebView and P400,
 front-only laptop cameras, low-end hardware, autofocus, torch, glare, distance and accessibility
 assistive technology still need the venue/device trials in `scanner-plan.md` and
-`android/ACCEPTANCE.md`. Android 13 emulator checks also passed: 18 unit tests, three bridge tests, four real WebView
-instrumentation checks, lint, assembly and native camera acquisition on WebView 109. The first camera permission prompt was reproduced
-and fixed: the request survives the system dialog, waits for the Activity to resume and rechecks
+`android/ACCEPTANCE.md`. The Android emulator checks do not establish physical P400 or
+camera optics behavior. The first camera permission prompt was reproduced and fixed: the request survives the system dialog, waits for the Activity to resume and rechecks
 its origin. Pending requests are cancelled on navigation, browser cancellation and destruction.
 The fix ships in Reader 0.2.2 with the original update signing identity.
-These checks do not establish physical P400 or camera optics behavior.
-
-The existing APK loads the hosted `/scan` code, so these camera
-changes do not require a new APK or signing identity. NFC verification remains a later milestone.
+Install Reader 0.2.2 for the native permission fix. Hosted scanner updates load from `/scan`
+after reloading the verifier and retain the same signing identity. NFC verification remains
+a later milestone.
