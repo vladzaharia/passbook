@@ -1,0 +1,119 @@
+import { batch, classifyD1Error } from '../../platform/db.ts';
+import { ValidationError } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditStmt } from '../audit/repo.ts';
+import { deviceLabel } from './dto-console.ts';
+import type { ConsoleScannerRow } from './repo-scanners.ts';
+import { type Credential, installCredentialStmt } from './repo-scanners-pair.ts';
+
+const DAY = 86_400_000;
+export const DEVICE_MAX_MS = 180 * DAY;
+export const TERMINAL_TTL_MS = 365 * DAY;
+
+export const notPairable = () =>
+  new ValidationError('Only browser devices pair with a code.', [], 'SCANNER_NOT_PAIRABLE');
+
+function prefixOf(ctx: ServiceContext): string {
+  let out = '';
+  while (out.length < 8) out += ctx.ids.token(6).replace(/[^A-Za-z0-9]/g, '');
+  return out.slice(0, 8);
+}
+
+export interface NewCredential extends Credential {
+  token: string;
+}
+
+/** `wls_<8>_<43>`: the prefix finds the row, the SHA-256 of the whole token is what is stored. */
+export async function newCredential(
+  ctx: ServiceContext,
+  kind: 'device' | 'terminal',
+  label: string | null,
+): Promise<NewCredential> {
+  const now = ctx.clock.now();
+  const tokenPrefix = prefixOf(ctx);
+  const token = `wls_${tokenPrefix}_${ctx.ids.token(32)}`;
+  return {
+    token,
+    tokenPrefix,
+    tokenHash: await sha256Hex(token),
+    csrfSecret: kind === 'device' ? ctx.ids.token(32) : null,
+    label,
+    expiresAt: now + (kind === 'device' ? DEVICE_MAX_MS : TERMINAL_TTL_MS),
+    now,
+  };
+}
+
+/** A prefix collision (2^-47 at 100k scanners) draws again. */
+export async function withCredential<T>(
+  ctx: ServiceContext,
+  kind: 'device' | 'terminal',
+  label: string | null,
+  attempt: (credential: NewCredential) => Promise<T>,
+): Promise<T> {
+  for (let tries = 0; ; tries++) {
+    const credential = await newCredential(ctx, kind, label);
+    try {
+      return await attempt(credential);
+    } catch (error) {
+      const info = classifyD1Error(error);
+      if (tries < 2 && info?.kind === 'unique' && /token_prefix/.test(info.detail)) continue;
+      throw error;
+    }
+  }
+}
+
+export interface Issued {
+  token: string;
+  csrfSecret: string | null;
+  expiresAt: number;
+}
+
+/** The admin's own browser becomes the scanner. Replaces the old device's token at once. */
+export async function pairHere(
+  ctx: ServiceContext,
+  userId: string,
+  scanner: ConsoleScannerRow,
+  agent: string | undefined,
+): Promise<Issued> {
+  if (scanner.kind !== 'device') throw notPairable();
+  return withCredential(ctx, 'device', deviceLabel(agent), async (c) => {
+    await batch(ctx.env.DB, [
+      installCredentialStmt(ctx.env.DB, scanner.id, c, null),
+      auditStmt(ctx.env.DB, ctx, {
+        orgId: scanner.orgId,
+        actorType: 'user',
+        actorId: userId,
+        action: 'scanner.pair',
+        targetType: 'scanner',
+        targetId: scanner.id,
+        detail: { via: 'console' },
+      }),
+    ]);
+    return { token: c.token, csrfSecret: c.csrfSecret, expiresAt: c.expiresAt };
+  });
+}
+
+/** A terminal's bearer token, shown once. Calling it again replaces the token. */
+export async function replaceTerminalToken(
+  ctx: ServiceContext,
+  userId: string,
+  scanner: ConsoleScannerRow,
+): Promise<{ token: string; expiresAt: number }> {
+  if (scanner.kind !== 'terminal')
+    throw new ValidationError('Only tills use a token.', [], 'SCANNER_NOT_TERMINAL');
+  return withCredential(ctx, 'terminal', null, async (c) => {
+    await batch(ctx.env.DB, [
+      installCredentialStmt(ctx.env.DB, scanner.id, c, null),
+      auditStmt(ctx.env.DB, ctx, {
+        orgId: scanner.orgId,
+        actorType: 'user',
+        actorId: userId,
+        action: 'scanner.token_replace',
+        targetType: 'scanner',
+        targetId: scanner.id,
+      }),
+    ]);
+    return { token: c.token, expiresAt: c.expiresAt };
+  });
+}
