@@ -42,6 +42,16 @@
 .wl-art[data-size="xl"] {
   --art-w: 1.75;
 }
+.wl-art[data-size="xl-scan"] {
+  --art-w: 3;
+}
+@media (min-width: 48rem) {
+  .wl-art[data-size="xl-scan"] {
+    width: 256px;
+    height: 192px;
+    --art-w: 3.25;
+  }
+}
 @media (max-width: 39.99rem) {
   .wl-art[data-size="xl"] {
     width: 112px;

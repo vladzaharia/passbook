@@ -25,6 +25,8 @@ export interface WalletArtProps extends ArtProps {
   front?: ReactNode;
   /** On the surface beside it, outside the body (wallet-states.tsx: the hourglass). */
   aside?: ReactNode;
+  /** A result card is up or tucking: the violet pass hides, the pocket shows a notch. */
+  card?: 'in' | 'out';
 }
 
 const CARD = 'M40 9h16a3 3 0 0 1 3 3v25a3 3 0 0 1-3 3H40a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3Z';
@@ -71,13 +73,14 @@ export function WalletArt({
   face,
   front,
   aside,
+  card: cardUp,
   ...props
 }: WalletArtProps) {
   const shade = useFoilId();
   const cards = state !== 'empty' && state !== 'lost';
   const brows = mood ? BROWS[mood] : undefined;
   return (
-    <Art name="wallet" state={state} {...props}>
+    <Art name="wallet" state={state} card={cardUp} {...props}>
       {seat ? (
         <>
           <defs>
@@ -116,6 +119,7 @@ export function WalletArt({
               <path data-part="gh" data-b="" className="dash" d={CARD} />
             )}
             {BODY}
+            {cardUp ? <path data-part="nt" className="m" d="M42 30.5h12" /> : null}
             {STITCH}
             {SCREEN}
             <g data-look="">

@@ -287,3 +287,10 @@ body:has([role="dialog"][data-state="open"] .wl-buddy) .wl-buddy:not([role="dial
     animation: wl-r-blink 200ms var(--art-mv) 380ms;
   }
 }
+
+[data-art="wallet"][data-card] [data-part="c2"] {
+  visibility: hidden;
+}
+[data-art="wallet"] [data-part="nt"] {
+  stroke-width: 2px;
+}

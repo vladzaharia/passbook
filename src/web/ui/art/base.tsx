@@ -5,7 +5,7 @@ import './art-details.css';
 import './art-wallet.css';
 
 /** S, M and L (motion-and-expression.md, The buddy); each draws its own line (art.css). */
-export type ArtSize = 'sm' | 'lg' | 'xl';
+export type ArtSize = 'sm' | 'lg' | 'xl' | 'xl-scan';
 
 export interface ArtProps {
   size?: ArtSize;
@@ -16,7 +16,7 @@ export interface ArtProps {
   still?: boolean;
 }
 
-export const DIM = { sm: [64, 48], lg: [96, 72], xl: [128, 96] } as const;
+export const DIM = { sm: [64, 48], lg: [96, 72], xl: [128, 96], 'xl-scan': [192, 144] } as const;
 
 // No DOM lib in the Worker typecheck (SSR renders the wallet).
 type El = { closest(s: string): EventTarget | null; dataset: Record<string, string | undefined> };
@@ -48,8 +48,15 @@ export function Art({
   still = false,
   state,
   pose,
+  card,
   children,
-}: ArtProps & { name: string; state?: string; pose?: string; children: ReactNode }) {
+}: ArtProps & {
+  name: string;
+  state?: string;
+  pose?: string;
+  card?: string;
+  children: ReactNode;
+}) {
   const ref = useRef<SVGSVGElement>(null);
   useBeatReplay(ref, beat);
   const [w, h] = DIM[size];
@@ -60,6 +67,7 @@ export function Art({
       data-size={size}
       data-state={state}
       data-pose={pose}
+      data-card={card}
       data-beat={beat ? undefined : 'off'}
       data-still={still || undefined}
       className={className ? `wl-art ${className}` : 'wl-art'}

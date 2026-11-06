@@ -33,6 +33,9 @@ export const ART_NAMES = [
   'wallet',
   'broadcast',
   'bundle',
+  'scanner',
+  'stub',
+  'badge',
 ] as const;
 export type ArtName = (typeof ART_NAMES)[number];
 export type EntityArtProps = ArtProps & { name: ArtName; state?: WalletState };
