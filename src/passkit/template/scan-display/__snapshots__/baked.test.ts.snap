@@ -1,0 +1,1703 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`henrys-blue default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Membership",
+          "type": "field",
+          "value": "{{fields.membership}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Home club",
+          "type": "field",
+          "value": "{{fields.homeClub}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`henrys-blue default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Membership",
+          "strong": false,
+          "type": "field",
+          "value": "Sample membership",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Home club",
+          "strong": false,
+          "type": "field",
+          "value": "Sample homeClub",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-blue default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Membership",
+          "strong": false,
+          "type": "field",
+          "value": "Sample membership",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Home club",
+          "strong": false,
+          "type": "field",
+          "value": "Sample homeClub",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-blue default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Membership",
+          "strong": false,
+          "type": "field",
+          "value": "Sample membership",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Home club",
+          "strong": false,
+          "type": "field",
+          "value": "Sample homeClub",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-blue default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-copper default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Membership",
+          "type": "field",
+          "value": "{{fields.membership}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Home club",
+          "type": "field",
+          "value": "{{fields.homeClub}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`henrys-copper default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Membership",
+          "strong": false,
+          "type": "field",
+          "value": "Sample membership",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Home club",
+          "strong": false,
+          "type": "field",
+          "value": "Sample homeClub",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-copper default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Membership",
+          "strong": false,
+          "type": "field",
+          "value": "Sample membership",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Home club",
+          "strong": false,
+          "type": "field",
+          "value": "Sample homeClub",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-copper default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Membership",
+          "strong": false,
+          "type": "field",
+          "value": "Sample membership",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Home club",
+          "strong": false,
+          "type": "field",
+          "value": "Sample homeClub",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`henrys-copper default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-boarding-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{pass.title}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "San Francisco",
+          "type": "field",
+          "value": "{{fields.origin}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "New York",
+          "type": "field",
+          "value": "{{fields.destination}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Passenger",
+          "type": "field",
+          "value": "{{fields.passenger}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Departs",
+          "type": "field",
+          "value": "{{fields.departs}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-boarding-pass default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "San Francisco",
+          "strong": false,
+          "type": "field",
+          "value": "Sample origin",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "New York",
+          "strong": false,
+          "type": "field",
+          "value": "Sample destination",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Passenger",
+          "strong": false,
+          "type": "field",
+          "value": "Sample passenger",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-boarding-pass default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "San Francisco",
+          "strong": false,
+          "type": "field",
+          "value": "Sample origin",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "New York",
+          "strong": false,
+          "type": "field",
+          "value": "Sample destination",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Passenger",
+          "strong": false,
+          "type": "field",
+          "value": "Sample passenger",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Departs",
+          "strong": false,
+          "type": "field",
+          "value": "Sample departs",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-boarding-pass default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "San Francisco",
+          "strong": false,
+          "type": "field",
+          "value": "Sample origin",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "New York",
+          "strong": false,
+          "type": "field",
+          "value": "Sample destination",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Passenger",
+          "strong": false,
+          "type": "field",
+          "value": "Sample passenger",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Departs",
+          "strong": false,
+          "type": "field",
+          "value": "Sample departs",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-boarding-pass default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-coupon default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{pass.title}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Offer",
+          "type": "field",
+          "value": "{{fields.offer}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Valid for",
+          "type": "field",
+          "value": "{{fields.terms}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-coupon default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "20% off",
+    "initials": "2O",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Offer",
+          "strong": false,
+          "type": "field",
+          "value": "Sample offer",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid for",
+          "strong": false,
+          "type": "field",
+          "value": "Sample terms",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-coupon default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "20% off",
+    "initials": "2O",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Offer",
+          "strong": false,
+          "type": "field",
+          "value": "Sample offer",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid for",
+          "strong": false,
+          "type": "field",
+          "value": "Sample terms",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-coupon default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "20% off",
+    "initials": "2O",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Offer",
+          "strong": false,
+          "type": "field",
+          "value": "Sample offer",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid for",
+          "strong": false,
+          "type": "field",
+          "value": "Sample terms",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-coupon default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "20% off",
+    "initials": "2O",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-event-ticket default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.attendee}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Event",
+          "type": "field",
+          "value": "{{fields.event}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Starts",
+          "type": "field",
+          "value": "{{fields.time}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Venue",
+          "type": "field",
+          "value": "{{fields.venue}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Room",
+          "type": "field",
+          "value": "{{fields.room}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-event-ticket default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Event",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Starts",
+          "strong": false,
+          "type": "field",
+          "value": "Sample time",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Venue",
+          "strong": false,
+          "type": "field",
+          "value": "Sample venue",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-event-ticket default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Event",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Starts",
+          "strong": false,
+          "type": "field",
+          "value": "Sample time",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Venue",
+          "strong": false,
+          "type": "field",
+          "value": "Sample venue",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Room",
+          "strong": false,
+          "type": "field",
+          "value": "Sample room",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-event-ticket default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Event",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Starts",
+          "strong": false,
+          "type": "field",
+          "value": "Sample time",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Venue",
+          "strong": false,
+          "type": "field",
+          "value": "Sample venue",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Room",
+          "strong": false,
+          "type": "field",
+          "value": "Sample room",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-event-ticket default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-generic default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.holder}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Since",
+          "type": "field",
+          "value": "{{fields.since}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-generic default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Since",
+          "strong": false,
+          "type": "field",
+          "value": "Sample since",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-generic default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Since",
+          "strong": false,
+          "type": "field",
+          "value": "Sample since",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-generic default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Since",
+          "strong": false,
+          "type": "field",
+          "value": "Sample since",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-generic default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-poster-generic default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.holder}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Since",
+          "type": "field",
+          "value": "{{fields.since}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-poster-generic default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Since",
+          "strong": false,
+          "type": "field",
+          "value": "Sample since",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-poster-generic default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Since",
+          "strong": false,
+          "type": "field",
+          "value": "Sample since",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-poster-generic default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Since",
+          "strong": false,
+          "type": "field",
+          "value": "Sample since",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-poster-generic default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-store-card default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.holder}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Balance",
+          "type": "field",
+          "value": "{{fields.balance}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-store-card default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Balance",
+          "strong": false,
+          "type": "field",
+          "value": "Sample balance",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-store-card default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Balance",
+          "strong": false,
+          "type": "field",
+          "value": "Sample balance",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-store-card default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Balance",
+          "strong": false,
+          "type": "field",
+          "value": "Sample balance",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-store-card default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
