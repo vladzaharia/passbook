@@ -1,6 +1,8 @@
 # Web verifier integration
 
-Copy `web/reader-client.js` into the verifier's assets. Keep your existing camera flow; native scans are another input to the same rules.
+PassBook `/scan` implements this bridge in `src/web/scan/input/android-reader.ts`. Native barcodes enter its normal input bus and receive acceptance only after the authenticated check-in API returns `ok`. Encrypted VAS is refused with an error acknowledgement until server decryption is available.
+
+For another verifier, copy `web/reader-client.js` into its assets. Native scans are another input to the same rules.
 
 ```js
 import { ReaderClient } from './reader-client.js';

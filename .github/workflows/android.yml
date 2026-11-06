@@ -1,0 +1,91 @@
+name: Android Reader
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+    tags: ['android-v*']
+  pull_request:
+    paths: ['android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - name: Install pinned Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Test and build
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:lint :app:assembleDebug
+          node --test web/reader-client.test.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: passbook-reader-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/android-v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Require a release from main
+        env:
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          git fetch origin main --depth=1
+          test "$RELEASE_COMMIT" = "$(git rev-parse origin/main)"
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Restore signing identity
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_READER_KEYSTORE_B64 }}
+          KEYSTORE_PATH: ${{ runner.temp }}/passbook-reader-release.p12
+        run: |
+          test -n "$KEYSTORE_B64"
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYSTORE_PATH"
+      - name: Build signed APK
+        env:
+          PASSBOOK_ANDROID_KEYSTORE: ${{ runner.temp }}/passbook-reader-release.p12
+          PASSBOOK_SIGNING_PASSWORD: ${{ secrets.ANDROID_READER_SIGNING_PASSWORD }}
+          ANDROID_RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 android/tools/release.py --ci
+      - name: Publish APK and verification files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
+      - name: Remove runner signing key
+        if: always()
+        run: rm -f "${{ runner.temp }}/passbook-reader-release.p12"

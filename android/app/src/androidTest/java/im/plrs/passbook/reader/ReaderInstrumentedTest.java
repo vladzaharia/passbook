@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 public class ReaderInstrumentedTest {
     @Before public void resetConfig() {
         InstrumentationRegistry.getInstrumentation().getTargetContext()
-            .getSharedPreferences("reader", 0).edit().clear().commit();
+            .getSharedPreferences("reader", 0).edit().clear().putString("url", "").commit();
     }
 
     @Test public void bundledDiagnosticsCapturesBarcodeAndVasWithoutAcceptingEither() throws Exception {

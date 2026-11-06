@@ -10,6 +10,7 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
                            String barcodeExtra) {
     public static final String LOCAL_ORIGIN = "https://appassets.androidplatform.net";
     public static final String HOME = LOCAL_ORIGIN + "/assets/index.html";
+    public static final String DEFAULT_VERIFIER = "https://passbook.mobile/scan";
     public static final String DEFAULT_ID = "pass.im.plrs.wallet";
 
     public ReaderConfig {
@@ -52,7 +53,7 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
 
     public static ReaderConfig load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("reader", Context.MODE_PRIVATE);
-        return new ReaderConfig(prefs.getString("url", ""), parseIds(prefs.getString("ids", DEFAULT_ID)),
+        return new ReaderConfig(prefs.getString("url", DEFAULT_VERIFIER), parseIds(prefs.getString("ids", DEFAULT_ID)),
             prefs.getString("action", ""), prefs.getString("extra", ""));
     }
 

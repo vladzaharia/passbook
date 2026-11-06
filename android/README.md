@@ -2,14 +2,14 @@
 
 Android app for NFC-enabled Apple Wallet passes and P400 hardware barcodes. Hosts an HTTPS web verifier and forwards scans through an origin-restricted bridge. NFC reads return encrypted VAS data; decrypt and decide acceptance on your backend.
 
-The pilot captures reads out of the box. Production acceptance needs a verifier implementing [BRIDGE.md](BRIDGE.md). This checkout has no web verification page or API yet. The bundled diagnostics never marks a pass accepted.
+The app opens `https://passbook.mobile/scan`. Pair it in Admin → Scanning, tap Start, and scan barcodes through the same check-in and undo rules as the web scanner. Apple VAS cryptograms remain unverified; use the barcode. The bundled diagnostics never marks a pass accepted.
 
 ## Install
 
-Install `dist/passbook-reader-0.1.0.apk` on the P400. Allow this installation source when Android asks, or use:
+Install `dist/passbook-reader-0.2.0.apk` on the P400. Allow this installation source when Android asks, or use:
 
 ```sh
-adb install -r android/dist/passbook-reader-0.1.0.apk
+adb install -r android/dist/passbook-reader-0.2.0.apk
 adb shell am start -n im.plrs.passbook.reader/.MainActivity
 ```
 
@@ -20,7 +20,7 @@ Verify `dist/SHA256SUMS` and `dist/signature.txt` before distributing. Debug and
 1. Enable NFC in Android Settings.
 2. In Reader Settings, enter your Apple Pass Type ID. The default is `pass.im.plrs.wallet`; change it to match your pass. Up to eight IDs are supported.
 3. Leave the verifier URL empty to test diagnostics. Open and authenticate the NFC pass in Wallet, then hold the phone against the **back** of the P400.
-4. Enter your verifier HTTPS URL after installing the web adapter. Successful reads alone remain unverified.
+4. Set the verifier URL to your PassBook HTTPS origin followed by `/scan`. Pair this browser using the code from Admin → Scanning. Tap Start before scanning.
 5. For hardware barcodes, configure BCScan for keyboard output with Enter as its suffix, tap **Scan barcode here**, and use a scan button. If your firmware provides broadcast output, enter its documented action and text extra in Reader Settings instead.
 
 The exact BCScan broadcast action is firmware-specific and is intentionally not guessed. Test barcodes from an iPhone display as well as printed ones. Codes retain leading zeroes. Camera fallback can run inside the web verifier after granting camera permission.
@@ -49,6 +49,6 @@ The API 35 toolchain and dependencies are pinned for the P400 pilot. Lint fails 
 
 ## Signing and updates
 
-`tools/release.py` checks the app, creates a dedicated signing identity if missing, signs the release APK, verifies it and writes checksums. It never uploads anything. The signing key and password are under the repository's ignored `.secrets/android-reader/`, mode 700/600. Back them up securely: future updates require this same key and an increased `versionCode`.
+`tools/release.py` checks the app, signs with the existing update identity, verifies the release APK and writes checksums. It refuses a missing signing key. It never uploads anything. The signing key and password are under the repository's ignored `.secrets/android-reader/`, mode 700/600. Back them up securely: future updates require this same key and an increased `versionCode`.
 
-No publishing remote is configured in this checkout. `dist/` is the local release package and is ignored by Git. Publish that package to your chosen release channel after providing its destination.
+GitHub builds debug APKs on Android changes. Tags `android-v<versionName>` from main build signed pilot releases at [GitHub Releases](https://github.com/vladzaharia/passbook/releases). The release job requires `ANDROID_READER_KEYSTORE_B64` and `ANDROID_READER_SIGNING_PASSWORD` repository secrets; it never creates an update key. `dist/` stays ignored.
