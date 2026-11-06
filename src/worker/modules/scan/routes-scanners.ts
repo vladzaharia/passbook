@@ -16,7 +16,8 @@ import { currentUserId, modeOf, requireAdmin } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { createPairing, pairHere, pairingState, replaceTerminalToken } from './pairing.ts';
+import { createPairing, pairingState } from './pairing.ts';
+import { pairHere, replaceTerminalToken } from './pairing-token.ts';
 import { setScannerCookie } from './routes-pair.ts';
 import {
   changeMode,

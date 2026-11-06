@@ -1,33 +1,26 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
-import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { SCANNER_TOKEN } from '../../platform/auth.ts';
 import { bump, read } from '../../platform/counters.ts';
-import { batch, classifyD1Error } from '../../platform/db.ts';
-import { AppError, RateLimitedError, ValidationError } from '../../platform/errors.ts';
+import { batch } from '../../platform/db.ts';
+import { AppError, RateLimitedError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
-import { getOrgRow } from '../orgs/repo.ts';
-import { deviceLabel, parseSettings } from './dto-console.ts';
-import { getScanner, getScannerByPrefix } from './repo-device.ts';
+import { deviceLabel } from './dto-console.ts';
+import { type Issued, notPairable, withCredential } from './pairing-token.ts';
+import { getScannerByPrefix } from './repo-device.ts';
+import type { ConsoleScannerRow } from './repo-scanners.ts';
 import {
-  type ConsoleScannerRow,
-  type Credential,
   clearTokenStmt,
   findByPairCode,
   heldAuditStmt,
   installCredentialStmt,
   setPairCodeStmt,
-} from './repo-scanners.ts';
-import { readScannerScope } from './repo-scope.ts';
+} from './repo-scanners-pair.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
-const DAY = 86_400_000;
 export const PAIR_TTL_MS = 10 * MINUTE;
-export const DEVICE_MAX_MS = 180 * DAY;
-export const TERMINAL_TTL_MS = 365 * DAY;
 export const PAIR_FAILS_PER_IP = 30;
 const PAIR_FLOOD = 500;
 const PAIR_FAIL_AUDITS_PER_HOUR = 100;
@@ -50,9 +43,6 @@ export function normalizePairCode(raw: string): string | null {
 }
 
 const invalid = () => new AppError('PAIRING_INVALID', 400, 'Code not valid. Ask for a new one.');
-const notPairable = () =>
-  new ValidationError('Only browser devices pair with a code.', [], 'SCANNER_NOT_PAIRABLE');
-
 export interface Pairing {
   code: string;
   url: string;
@@ -102,110 +92,6 @@ export function pairingState(scanner: ConsoleScannerRow, now: number): PairingSt
       device: { label: scanner.pairedLabel ?? 'Device', at: scanner.pairedAt },
     };
   return { state: 'expired', device: null };
-}
-
-function prefixOf(ctx: ServiceContext): string {
-  let out = '';
-  while (out.length < 8) out += ctx.ids.token(6).replace(/[^A-Za-z0-9]/g, '');
-  return out.slice(0, 8);
-}
-
-export interface NewCredential extends Credential {
-  token: string;
-}
-
-/** `wls_<8>_<43>`: the prefix finds the row, the SHA-256 of the whole token is what is stored. */
-export async function newCredential(
-  ctx: ServiceContext,
-  kind: 'device' | 'terminal',
-  label: string | null,
-): Promise<NewCredential> {
-  const now = ctx.clock.now();
-  const tokenPrefix = prefixOf(ctx);
-  const token = `wls_${tokenPrefix}_${ctx.ids.token(32)}`;
-  return {
-    token,
-    tokenPrefix,
-    tokenHash: await sha256Hex(token),
-    csrfSecret: kind === 'device' ? ctx.ids.token(32) : null,
-    label,
-    expiresAt: now + (kind === 'device' ? DEVICE_MAX_MS : TERMINAL_TTL_MS),
-    now,
-  };
-}
-
-/** A prefix collision (2^-47 at 100k scanners) draws again. */
-async function withCredential<T>(
-  ctx: ServiceContext,
-  kind: 'device' | 'terminal',
-  label: string | null,
-  attempt: (credential: NewCredential) => Promise<T>,
-): Promise<T> {
-  for (let tries = 0; ; tries++) {
-    const credential = await newCredential(ctx, kind, label);
-    try {
-      return await attempt(credential);
-    } catch (error) {
-      const info = classifyD1Error(error);
-      if (tries < 2 && info?.kind === 'unique' && /token_prefix/.test(info.detail)) continue;
-      throw error;
-    }
-  }
-}
-
-export interface Issued {
-  token: string;
-  csrfSecret: string | null;
-  expiresAt: number;
-}
-
-/** The admin's own browser becomes the scanner. Replaces the old device's token at once. */
-export async function pairHere(
-  ctx: ServiceContext,
-  userId: string,
-  scanner: ConsoleScannerRow,
-  agent: string | undefined,
-): Promise<Issued> {
-  if (scanner.kind !== 'device') throw notPairable();
-  return withCredential(ctx, 'device', deviceLabel(agent), async (c) => {
-    await batch(ctx.env.DB, [
-      installCredentialStmt(ctx.env.DB, scanner.id, c, null),
-      auditStmt(ctx.env.DB, ctx, {
-        orgId: scanner.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.pair',
-        targetType: 'scanner',
-        targetId: scanner.id,
-        detail: { via: 'console' },
-      }),
-    ]);
-    return { token: c.token, csrfSecret: c.csrfSecret, expiresAt: c.expiresAt };
-  });
-}
-
-/** A terminal's bearer token, shown once. Calling it again replaces the token. */
-export async function replaceTerminalToken(
-  ctx: ServiceContext,
-  userId: string,
-  scanner: ConsoleScannerRow,
-): Promise<{ token: string; expiresAt: number }> {
-  if (scanner.kind !== 'terminal')
-    throw new ValidationError('Only tills use a token.', [], 'SCANNER_NOT_TERMINAL');
-  return withCredential(ctx, 'terminal', null, async (c) => {
-    await batch(ctx.env.DB, [
-      installCredentialStmt(ctx.env.DB, scanner.id, c, null),
-      auditStmt(ctx.env.DB, ctx, {
-        orgId: scanner.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.token_replace',
-        targetType: 'scanner',
-        targetId: scanner.id,
-      }),
-    ]);
-    return { token: c.token, expiresAt: c.expiresAt };
-  });
 }
 
 const failKey = (ip: string | null) => `scan:pairfail:${ip ?? 'unknown'}`;
@@ -314,69 +200,4 @@ export async function unpair(ctx: ServiceContext, token: string | undefined): Pr
     ),
     clearTokenStmt(ctx.env.DB, row.id, hash, ctx.clock.now()),
   ]);
-}
-
-/**
- * What `POST /scan/pair` answers with. The posture only: SV.1's `GET /scan/session` is the full
- * session (templates, formats, counts) and the client reads it right after pairing.
- */
-export async function pairedSession(
-  ctx: ServiceContext,
-  scannerId: string,
-  csrfToken: string | null,
-): Promise<ScanSession> {
-  const db = ctx.env.DB;
-  const now = ctx.clock.now();
-  const row = await getScanner(db, scannerId);
-  if (!row) throw invalid();
-  const [scope, org] = await Promise.all([
-    readScannerScope(db, row, null),
-    getOrgRow(db, row.orgId),
-  ]);
-  const settings = parseSettings(row.settings);
-  const event = scope.event;
-  const state: ScanSession['state'] = settings.staffSignIn
-    ? 'staff_required'
-    : scope.templateIds.length === 0
-      ? 'unassigned'
-      : event && now < event.opensAt
-        ? 'not_open'
-        : event && now > event.closesAt
-          ? 'closed'
-          : 'ready';
-  return {
-    principal: 'scanner',
-    state,
-    scanner: {
-      id: row.id,
-      name: row.name,
-      kind: row.kind,
-      deviceRole: row.deviceRole,
-      mode: row.mode as Mode,
-      orgId: row.orgId,
-      orgName: org?.name ?? '',
-      timeZone: row.timeZone,
-      settings,
-    },
-    admin: null,
-    event: event
-      ? {
-          id: event.id,
-          name: event.name,
-          opensAt: event.opensAt,
-          closesAt: event.closesAt,
-          timeZone: event.timeZone,
-          reentry: event.reentry,
-          note: event.note,
-        }
-      : null,
-    templates: [],
-    formats: [],
-    staff: null,
-    staffList: null,
-    approvals: false,
-    csrfToken,
-    undoWindowMinutes: 10,
-    counts: { today: 0, event: null, asOf: now, configRev: row.updatedAt },
-  };
 }

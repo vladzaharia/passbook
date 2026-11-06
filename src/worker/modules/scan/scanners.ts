@@ -15,7 +15,8 @@ import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { createPassRow } from '../passes/service.ts';
 import { DEFAULT_SETTINGS, dayStartMs, parseSettings, scannerDto } from './dto-console.ts';
-import { createPairing, TERMINAL_TTL_MS } from './pairing.ts';
+import { createPairing } from './pairing.ts';
+import { TERMINAL_TTL_MS } from './pairing-token.ts';
 import {
   addTemplatesStmts,
   type ConsoleScannerRow,

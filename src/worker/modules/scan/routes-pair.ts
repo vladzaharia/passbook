@@ -13,7 +13,8 @@ import { ipPrefix } from '../../platform/ip.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { rateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { completePairing, pairedSession, previewPairing, unpair } from './pairing.ts';
+import { completePairing, previewPairing, unpair } from './pairing.ts';
+import { pairedSession } from './pairing-session.ts';
 
 /** 180 days, as the token's own expiry. */
 const COOKIE_MAX_AGE_S = 15_552_000;
