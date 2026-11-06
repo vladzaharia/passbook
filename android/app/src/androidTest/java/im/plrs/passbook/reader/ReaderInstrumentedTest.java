@@ -85,10 +85,10 @@ public class ReaderInstrumentedTest {
             awaitPage(scenario);
             scenario.onActivity(activity -> {
                 android.widget.EditText input = findInput(activity.getWindow().getDecorView());
-                input.requestFocus(); input.setText("000123");
-                input.dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_ENTER));
-                input.dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_ENTER));
+                assertTrue(input.requestFocus()); input.setText("000123");
             });
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_ENTER);
             awaitJavascript(scenario, "document.querySelector('#read').textContent", "Barcode read");
             scenario.onActivity(activity -> assertEquals("", findInput(activity.getWindow().getDecorView()).getText().toString()));
         }
@@ -137,6 +137,7 @@ public class ReaderInstrumentedTest {
 
     private void awaitJavascript(ActivityScenario<MainActivity> scenario, String expression, String expected) throws Exception {
         long deadline = System.currentTimeMillis() + 15000;
+        String lastValue = "";
         while (System.currentTimeMillis() < deadline) {
             CountDownLatch evaluated = new CountDownLatch(1);
             AtomicReference<String> result = new AtomicReference<>("");
@@ -145,10 +146,13 @@ public class ReaderInstrumentedTest {
                 view.evaluateJavascript(expression, value -> { result.set(value); evaluated.countDown(); });
             });
             assertTrue(evaluated.await(3, TimeUnit.SECONDS));
-            if (result.get().contains(expected)) return;
+            lastValue = result.get();
+            if (lastValue.contains(expected)) return;
             Thread.sleep(100);
         }
-        fail("Page never showed " + expected);
+        AtomicReference<String> nativeText = new AtomicReference<>("");
+        scenario.onActivity(activity -> nativeText.set(allText(activity.getWindow().getDecorView())));
+        fail("Page never showed " + expected + "; actual=" + lastValue + "; native=" + nativeText.get());
     }
 
     private static WebView findWeb(android.view.View view) {
@@ -159,6 +163,13 @@ public class ReaderInstrumentedTest {
             }
         }
         return null;
+    }
+    private static String allText(android.view.View view) {
+        String value = view instanceof TextView text ? text.getText().toString() + " | " : "";
+        if (view instanceof android.view.ViewGroup group) {
+            for (int i = 0; i < group.getChildCount(); i++) value += allText(group.getChildAt(i));
+        }
+        return value;
     }
     private static boolean findText(android.view.View view, String value) {
         if (view instanceof TextView text && text.getText().toString().equals(value)) return true;
