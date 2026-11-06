@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { CRON_HOOKS, DAILY_CRON, MINUTE_CRON } from '../../jobs/cron.ts';
+import { CRON_QUERY_BUDGET } from '../../jobs/query-counter.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { buildDisplay, historyStatements } from './display.ts';
 
@@ -31,12 +32,24 @@ describe('scanner routers', () => {
     }
   });
 
-  it('the OpenAPI document still builds, with no scan paths yet', async () => {
+  it('the OpenAPI document builds and lists the device API', async () => {
     const res = await call('/api/v1/openapi.json');
     expect(res.status).toBe(200);
     const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> };
     expect(doc.openapi).toBe('3.1.0');
-    expect(Object.keys(doc.paths).filter((p) => /scan|nfc/.test(p))).toEqual([]);
+    expect(
+      Object.keys(doc.paths)
+        .filter((p) => p.startsWith('/api/v1/scan/'))
+        .sort(),
+    ).toEqual([
+      '/api/v1/scan/actions',
+      '/api/v1/scan/passes/{passId}/assets/{name}',
+      '/api/v1/scan/resolve',
+      '/api/v1/scan/scans',
+      '/api/v1/scan/session',
+      '/api/v1/scan/stats',
+      '/api/v1/scan/summary',
+    ]);
   });
 });
 
@@ -47,7 +60,7 @@ describe('scan cron hooks', () => {
     expect(names(DAILY_CRON)).toContain('scan.retention');
   });
 
-  it('the hooks run inside the budget: no queries', async () => {
+  it('the hooks run inside the budget on an empty database', async () => {
     const queries: string[] = [];
     const counted = {
       ...env,
@@ -70,7 +83,7 @@ describe('scan cron hooks', () => {
       .filter((h) => h.name.startsWith('scan.'));
     expect(hooks).toHaveLength(3);
     for (const hook of hooks) await hook.run(ctx);
-    expect(queries).toEqual([]);
+    expect(queries.length).toBeLessThan(CRON_QUERY_BUDGET);
   });
 });
 
