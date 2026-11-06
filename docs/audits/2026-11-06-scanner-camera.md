@@ -111,3 +111,14 @@ The fix ships in Reader 0.2.2 with the original update signing identity.
 Install Reader 0.2.2 for the native permission fix. Hosted scanner updates load from `/scan`
 after reloading the verifier and retain the same signing identity. NFC verification remains
 a later milestone.
+
+## Check-in action follow-up
+
+A scanner configured with `flow: choose` showed a Check in action card but dispatched an
+unhandled `pick` event. The lookup confirmation had separate coverage and did not expose this
+gap. The action-card click now runs an available check-in with a fresh idempotency key, shows
+the applying state and waits for the server result. Stale/double clicks cannot send another
+mutation; blocked, locked and offline states cannot show a successful check-in.
+
+`e2e/20-scan-action.spec.ts` reproduces the missing click handler before the fix and verifies
+the named check-in request, visible success and exactly one persisted scan afterward.

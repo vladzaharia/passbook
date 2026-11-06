@@ -5,6 +5,7 @@
 import { pruneIgnore } from './ignore.ts';
 import type { Env, MachineState } from './internal.ts';
 import { same } from './internal.ts';
+import { pick } from './reduce-action.ts';
 import { answer, fail } from './reduce-answer.ts';
 import {
   arm,
@@ -58,8 +59,9 @@ export function reduce(state: ScanState, event: ScanEvent, deps: ScanMachineDeps
       return keepHeld(s);
     case 'tick':
       return tick(s, env);
-    // Desk regions arrive with CC.6: the picker, review, confirm, cancel, amount and approval.
     case 'pick':
+      return pick(s, event, env);
+    // Value-action regions arrive with CC.6: review, confirm, cancel, amount and approval.
     case 'amount':
     case 'review':
     case 'confirm':
