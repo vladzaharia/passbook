@@ -1,0 +1,277 @@
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="sparkle"][data-run] [data-look] {
+    animation: wl-b-follow 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* nod: balance set (neutral); rewind: undone (flat); dip: checked out (neutral). */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="nod"][data-run] [data-body] {
+    animation: wl-b-nod 300ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="nod"][data-run] [data-part="eyes"] {
+    animation: wl-r-blink 140ms var(--art-mv) calc(var(--wl-beat-at) + 120ms);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="rewind"][data-run] [data-part="c2"] {
+    animation: wl-b-rewind 400ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="dip"][data-run] [data-part="c3"] {
+    animation: wl-b-dip3 450ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* wrist: heads-up (curious). Brow up, the teal pass taps the clock twice; its hand sweeps. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wrist"][data-run] [data-k="clock"] {
+    animation: wl-b-pop 200ms var(--art-bo) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wrist"][data-run] [data-part="c1"] {
+    animation: wl-b-tap 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wrist"][data-run] [data-k="hand"] {
+    animation: wl-b-hand 300ms var(--art-sp) calc(var(--wl-beat-at) + 120ms) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wrist"][data-run] [data-trunk] {
+    animation: wl-b-lean 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wrist"][data-run] [data-part="br"] {
+    animation: wl-b-brow 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* tilt: not checked in (curious). */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="tilt"][data-run] [data-trunk] {
+    animation: wl-b-tilt 450ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* droop: expired (sad). The expired state's droop and glance, then a sigh. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="droop"][data-run] [data-part="c3"] {
+    animation: wl-w-droop 300ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="droop"][data-run] [data-look] {
+    animation: wl-w-glance 200ms var(--art-mv) calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="droop"][data-run] [data-body] {
+    animation: wl-s-sigh 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* shake: every red refusal (sad). A "no": the trunk turns on its feet, the face leads, eyes squeezed and
+     brows pinched; the fan swings 45 ms behind each turn. Within 6 deg and 3 units at every frame (cut-safe). */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="shake"][data-run] [data-trunk] {
+    animation: wl-b-shake 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="shake"][data-run] [data-look] {
+    animation: wl-b-shake-look 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="shake"][data-run] [data-part="eyes"] {
+    animation: wl-b-shake-eyes 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="shake"][data-run] [data-part="br"] {
+    animation: wl-b-shake-brow 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="shake"][data-run] [data-body] {
+    animation: wl-b-shake-body 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="shake"][data-run] [data-fan] {
+    animation: wl-b-shake-fan 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* sorry: the end of every slate beat. A small bow (cloud, wait; plug keeps its flinch), then it looks up at
+     you with its passes drawn in. Never a shake. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose="sorry"]:not([data-beat="plug"])[data-run] [data-body] {
+    animation: wl-b-bow 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose="sorry"][data-run] [data-look] {
+    animation: wl-b-sorry-look 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose="sorry"][data-run] :is([data-part="c1"], [data-part="c3"]) {
+    animation: wl-b-sorry-pass 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* cloud: no connection, no answer, not confirmed (sad). It drifts in over the head and sags. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="cloud"][data-run] [data-k="cloud"] {
+    animation: wl-b-cloud 400ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* plug: server error (sad). The prop's own entrance sparks; the buddy flinches, eyes wide (squeezed
+     eyes belong to the red "no"), then sighs. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="plug"][data-run] [data-body] {
+    animation: wl-b-flinch 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="plug"][data-run] [data-part="eyes"] {
+    animation: wl-b-widen 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* stash: saved offline (neutral, not confirmed). The gold pass goes in beside the clock. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="stash"][data-run] [data-k="clock"] {
+    animation: wl-b-pop 200ms var(--art-bo) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="stash"][data-run] [data-part="c3"] {
+    animation: wl-b-thumb 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Input beats, at 0: glance (a card opens), catch (a reader read), wake, rings (reader ready). */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="glance"][data-run] [data-part="eyes"] {
+    animation: wl-b-widen 300ms var(--art-sp);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="catch"][data-run] [data-part="c2"] {
+    animation: wl-b-catch 260ms ease-in;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="catch"][data-run] [data-body] {
+    animation: wl-b-nod 260ms var(--art-mv) 160ms backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wake"][data-run] [data-part="eyes"] {
+    animation: wl-b-open 140ms var(--art-out);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="wake"][data-run] [data-body] {
+    animation: wl-b-nod 300ms var(--art-mv);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="rings"][data-run] [data-k="ring"] {
+    animation: wl-b-ring 640ms var(--art-out) calc(var(--i, 0) * 320ms);
+  }
+}
+@keyframes wl-b-rummage {
+  50% {
+    translate: 0 6px;
+  }
+}
+@keyframes wl-b-jig {
+  50% {
+    rotate: 1.5deg;
+  }
+}
+@keyframes wl-b-hop {
+  14% {
+    translate: 0 0;
+    scale: 1.06 0.9;
+  }
+  34% {
+    translate: 0 -7px;
+    scale: 0.96 1.06;
+  }
+  52% {
+    translate: 0 0;
+    scale: 1.07 0.9;
+  }
+  64% {
+    scale: 0.98 1.03;
+  }
+  80% {
+    scale: 1.03 0.97;
+  }
+  92% {
+    scale: 1;
+  }
+}
+@keyframes wl-b-thumb {
+  14% {
+    translate: 0 1px;
+    rotate: 0deg;
+  }
+  34%,
+  56% {
+    translate: 0 -10px;
+    rotate: -18deg;
+  }
+  44% {
+    rotate: -24deg;
+  }
+  70% {
+    translate: 0 -4px;
+    rotate: -6deg;
+  }
+  80% {
+    translate: 0 3px;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-jolt {
+  78% {
+    translate: 0 0;
+  }
+  84% {
+    translate: 0 1.5px;
+  }
+}
+@keyframes wl-b-press {
+  30% {
+    scale: 1;
+  }
+  38% {
+    scale: 1.05 0.93;
+  }
+  52% {
+    scale: 1;
+  }
+}

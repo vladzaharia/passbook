@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
-import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
 import { BootCard } from '../ui/boot-card.tsx';
 import { fill, UI_COPY } from '../ui/copy.ts';
 

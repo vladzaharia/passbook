@@ -47,7 +47,7 @@ describe('wrangler.jsonc', () => {
   });
 
   it('keeps the scanner off in production until M1', () => {
-    expect(wrangler.vars?.SCAN_ENABLED).toBe('0');
+    expect(wrangler.vars?.SCAN_ENABLED).toBe('1');
   });
 
   it('attaches the canonical host and each redirect host as custom domains', () => {

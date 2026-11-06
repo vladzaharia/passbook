@@ -10,12 +10,7 @@ import { scanOf } from '../../../shared/scan-defaults.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { bump } from '../../platform/counters.ts';
 import { batch } from '../../platform/db.ts';
-import {
-  NotFoundError,
-  RateLimitedError,
-  UnavailableError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { NotFoundError, RateLimitedError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { csvRow, EXPORT_COLUMNS, exportCells } from './feed-csv.ts';
@@ -51,11 +46,6 @@ export type ConsoleUndo = (
   session: SessionAuth,
   input: ConsoleUndoInput,
 ) => Promise<ScanOutcome>;
-
-/** Stands in until SV.6a merges; the integration step swaps in the real service. */
-export const consoleUndo: ConsoleUndo = async () => {
-  throw new UnavailableError('Undo is not available yet.', 'SCAN_UNDO_UNAVAILABLE');
-};
 
 const KIND_LABEL: Record<string, string> = {
   check_in: 'Check in',

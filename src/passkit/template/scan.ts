@@ -10,7 +10,7 @@ import {
   type Report,
   typeOf,
 } from './scan-actions.ts';
-import { scanDisplayIssues } from './scan-display/index.ts';
+import { scanDisplayIssues } from './scan-display/validate.ts';
 
 import { nfcIssues } from './scan-nfc.ts';
 

@@ -21,11 +21,9 @@ import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
 import { ScanExportQuerySchema } from './dto-console.ts';
 import {
   type ConsoleUndo,
-  consoleUndo,
   exportScans,
   listScanFeed,
   listScanRecords,
@@ -33,6 +31,8 @@ import {
   scanRecord,
   UNDO_MAX_MS,
 } from './feed.ts';
+
+import { consoleUndo } from './undo.ts';
 
 const TAG = 'scans';
 
@@ -132,10 +132,11 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
     },
     async (c) => {
       const ctx = serviceContext(c);
-      const userId = currentUserId(c);
       const session = c.var.auth;
       if (session?.kind !== 'session') throw new UnauthenticatedError();
       const scan = await loadScanRow(ctx, c.req.valid('param').id);
+      if (scan.mode !== modeOf(c.var.auth))
+        throw new ForbiddenError('Switch mode to undo this scan.', 'SCAN_MODE_MISMATCH');
       if (ctx.clock.now() - scan.at > UNDO_MAX_MS)
         throw new ForbiddenError('Scans older than 30 days cannot be undone.', 'SCAN_UNDO_EXPIRED');
       const outcome = await deps.undo(ctx, session, {
@@ -144,15 +145,6 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
         mode: scan.mode,
         idempotencyKey: c.req.valid('json').idempotencyKey,
         maxAgeMs: UNDO_MAX_MS,
-      });
-      await recordAudit(ctx, {
-        orgId: scan.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scan.undo',
-        targetType: 'scan',
-        targetId: scan.id,
-        detail: { via: 'console', kind: scan.actionKind },
       });
       return c.json(outcome);
     },

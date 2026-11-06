@@ -1,0 +1,106 @@
+@keyframes wl-b-shake-fan {
+  0%,
+  6.4% {
+    rotate: 0deg;
+  }
+  16.4% {
+    rotate: 4.5deg;
+  }
+  24.5% {
+    rotate: -6deg;
+  }
+  40.9% {
+    rotate: 6deg;
+  }
+  57.3% {
+    rotate: -4deg;
+  }
+  71.8% {
+    rotate: 2deg;
+  }
+  83.6% {
+    rotate: -0.8deg;
+  }
+}
+@keyframes wl-b-bow {
+  0%,
+  36.4% {
+    translate: 0 0;
+    scale: 1;
+  }
+  54.5% {
+    translate: 0 1.6px;
+    scale: 1.01 0.97;
+  }
+  74.5% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes wl-b-sorry-look {
+  0%,
+  36.4% {
+    translate: 0 0;
+  }
+  54.5% {
+    translate: 0 0.8px;
+  }
+}
+@keyframes wl-b-sorry-pass {
+  0%,
+  36.4% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-cloud {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+@keyframes wl-b-flinch {
+  22% {
+    translate: 0 0;
+  }
+  32% {
+    translate: 1.5px 1px;
+    scale: 0.97 1.02;
+  }
+  50% {
+    translate: 0 0;
+    scale: 1;
+  }
+  72% {
+    translate: 0 -1.5px;
+    scale: 0.98 1.04;
+  }
+}
+@keyframes wl-b-widen {
+  35% {
+    scale: 1.2;
+  }
+}
+@keyframes wl-b-catch {
+  from {
+    opacity: 0;
+    translate: 0 -14px;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+@keyframes wl-b-open {
+  from {
+    scale: 1 0;
+  }
+}
+@keyframes wl-b-ring {
+  from {
+    opacity: 0.7;
+    scale: 0.6;
+  }
+  to {
+    opacity: 0;
+    scale: 1.5;
+  }
+}

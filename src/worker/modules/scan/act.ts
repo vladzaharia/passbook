@@ -122,6 +122,9 @@ async function attempt(
   };
   const claim: GateClaim = {
     ...gate,
+    ...(event?.capacity != null && override?.reason !== 'capacity_full'
+      ? { capacity: { eventId: event.id, max: event.capacity, reentry: event.reentry } }
+      : {}),
     orgId: actor.orgId,
     mode: found.pass.mode,
     templateId: found.pass.templateId,
@@ -216,11 +219,13 @@ async function attempt(
       }
     | undefined;
   const reason: ScanReason =
-    holder?.scan_state === 'pending'
-      ? 'in_progress'
-      : action.repeat === 'cooldown'
-        ? 'cooldown'
-        : 'already_done';
+    !holder && event?.capacity != null
+      ? 'capacity_full'
+      : holder?.scan_state === 'pending'
+        ? 'in_progress'
+        : action.repeat === 'cooldown'
+          ? 'cooldown'
+          : 'already_done';
   await db.batch([
     finalizeStmt(db, {
       id: scanId,

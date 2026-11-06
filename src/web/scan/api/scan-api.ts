@@ -26,7 +26,10 @@ import {
   type ScanStaffSignInSchema,
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
-import { ApiError, type ApiErrorInit } from '../../lib/errors.ts';
+import { modeHeaders } from '../../lib/mode.ts';
+import { ScanApiError } from './errors.ts';
+
+export { ScanApiError } from './errors.ts';
 
 const BASE = '/api/v1/scan';
 
@@ -46,20 +49,11 @@ function problemOf(data: unknown): Problem | null {
   return { code: o.code, title: str(o.title), detail: str(o.detail), requestId: str(o.requestId) };
 }
 
-/** An `ApiError` that also carries the `Retry-After` of a 429 or 409, in ms. */
-export class ScanApiError extends ApiError {
-  readonly retryAfterMs: number | undefined;
-  constructor(init: ApiErrorInit, retryAfterMs?: number) {
-    super(init);
-    this.name = 'ScanApiError';
-    this.retryAfterMs = retryAfterMs;
-  }
-}
-
 export interface ScanApiDeps {
   fetch?: typeof fetch;
   /** The scan session's CSRF secret, read per write. Undefined for a bearer or before the session. */
   csrf: () => string | undefined;
+  scope?: () => AdminScope | undefined;
   /** Waits before the one retry of a 409. */
   sleep?: (ms: number) => Promise<void>;
 }
@@ -96,7 +90,10 @@ export function createScanApi(deps: ScanApiDeps) {
     body: unknown,
     call: Call,
   ): Promise<{ res: Response; data: unknown }> {
-    const headers: Record<string, string> = { accept: 'application/json' };
+    const headers: Record<string, string> = {
+      accept: 'application/json',
+      ...(deps.scope?.() ? modeHeaders() : {}),
+    };
     if (method !== 'GET') {
       const token = deps.csrf();
       if (token) headers['x-csrf-token'] = token;
@@ -132,6 +129,11 @@ export function createScanApi(deps: ScanApiDeps) {
     body?: unknown,
     call: Call = {},
   ): Promise<z.infer<S>> {
+    const scope = deps.scope?.();
+    if (scope && body && typeof body === 'object' && !path.startsWith('/pair'))
+      body = { ...body, scope };
+    if (scope && method === 'GET' && !path.includes('orgId='))
+      path += `${path.includes('?') ? '&' : '?'}${scopeQuery(scope).slice(1)}`;
     let attempt = await once(method, path, body, call);
     // A scan still being applied by another request: wait as told, once, with the same key.
     if (attempt.res.status === 409) {

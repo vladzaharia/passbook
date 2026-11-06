@@ -30,10 +30,16 @@ describe('scanner routers', () => {
     expect(res.status).toBe(200);
     const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> };
     expect(doc.openapi).toBe('3.1.0');
-    expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining([
-      '/api/v1/scanners', '/api/v1/scan-events', '/api/v1/scans',
-      '/api/v1/scan/actions', '/api/v1/scan/resolve', '/api/v1/scan/session',
-    ]));
+    expect(Object.keys(doc.paths)).toEqual(
+      expect.arrayContaining([
+        '/api/v1/scanners',
+        '/api/v1/scan-events',
+        '/api/v1/scans',
+        '/api/v1/scan/actions',
+        '/api/v1/scan/resolve',
+        '/api/v1/scan/session',
+      ]),
+    );
   });
 });
 

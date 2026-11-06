@@ -373,7 +373,7 @@ describe('POST /scans/{id}/undo', () => {
     return a as unknown as ReturnType<typeof createApp>;
   }
 
-  it('runs the undo service as the admin, ties it to the scan, and audits it', async () => {
+  it('delegates the undo and its atomic audit to the service as the admin', async () => {
     const row = await seed();
     const calls: unknown[] = [];
     const target = mini(async (_ctx, session, input) => {
@@ -396,7 +396,7 @@ describe('POST /scans/{id}/undo', () => {
       env.DB,
       'SELECT action, target_id, actor_id FROM audit_log',
     );
-    expect(audit).toEqual([{ action: 'scan.undo', target_id: row.id, actor_id: userId }]);
+    expect(audit).toEqual([]);
   });
 
   it('refuses a scan over 30 days old, and an unknown scan', async () => {
@@ -412,13 +412,13 @@ describe('POST /scans/{id}/undo', () => {
     expect(await first(env.DB, 'SELECT 1 AS x FROM audit_log')).toBeNull();
   });
 
-  it('needs a valid key, an admin, and a service', async () => {
+  it('needs a valid key, an admin, and a gate that still names the scan', async () => {
     const row = await seed();
     expect((await post(`/${row.id}/undo`, { idempotencyKey: 'nope' })).status).toBe(422);
     expect((await post(`/${row.id}/undo`, { idempotencyKey: key }, fake.user())).status).toBe(403);
     const res = await post(`/${row.id}/undo`, { idempotencyKey: key });
-    expect(res.status).toBe(503);
-    expect(await codeOf(res)).toBe('SCAN_UNDO_UNAVAILABLE');
+    expect(res.status).toBe(409);
+    expect(await codeOf(res)).toBe('UNDO_SUPERSEDED');
   });
 });
 

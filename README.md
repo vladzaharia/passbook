@@ -20,3 +20,9 @@ Multi-tenant Apple Wallet pass platform on Cloudflare Workers (Hono API, React a
     npm run check      # gen, lint, types, tests, build
 
 `.npmrc` points `@polaris-key` at https://pkg.plrs.im/npm/polaris-key/.
+
+## Scanning and Android
+
+Scanner setup and M1 scope: [scanner integration](docs/design/scanner/m1-status.md).
+The Android reader uses the same `/scan` pairing and check-in APIs; see [Android setup](android/README.md).
+Install signed pilot APKs from [GitHub Releases](https://github.com/vladzaharia/passbook/releases).

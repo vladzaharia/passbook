@@ -66,7 +66,7 @@ export function safeDisplay(
       actor,
       pass: { id: pass.id, title: pass.displayTitle ?? '' },
       screen,
-      template: more.found?.ref,
+      template: more.found,
       history: more.history,
     });
   } catch (error) {

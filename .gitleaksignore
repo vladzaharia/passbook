@@ -1,0 +1,12 @@
+# Reviewed test-only keys, public NFC fixture, and code mistaken for a key assignment.
+# Fingerprints are exact: new findings in these files still fail.
+9920ea697432af34d5679ccf2174d909522e63b8:src/web/admin/scanning/scanners/scanner-page.test.tsx:generic-api-key:98
+f7cad029cd01e677e12d4766cf7d6e9049f41349:src/worker/modules/identities/push-key-fixtures.ts:private-key:4
+f7cad029cd01e677e12d4766cf7d6e9049f41349:src/worker/modules/identities/push-key.test.ts:private-key:23
+61fcaa6070787d563121d05c46e7596e2735af18:src/web/admin/identities/identities.test.tsx:private-key:316
+16851aab311a1d0819e435be48dfde3d8f26ecb2:src/web/admin/identities/identities.test.tsx:private-key:34
+e1b7e3479071c797ad881cc731c665b697789a5c:src/passkit/schema/fixtures.ts:generic-api-key:11
+57a7fac050fc21dbf138da7857a62efcf580c5a5:src/worker/modules/identities/pkcs12.test.ts:private-key:42
+57a7fac050fc21dbf138da7857a62efcf580c5a5:src/worker/modules/identities/service.ts:generic-api-key:97
+57a7fac050fc21dbf138da7857a62efcf580c5a5:src/worker/modules/identities/identities.test.ts:private-key:149
+57a7fac050fc21dbf138da7857a62efcf580c5a5:src/worker/modules/identities/p12-fixtures.ts:private-key:28

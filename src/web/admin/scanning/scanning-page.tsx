@@ -3,11 +3,13 @@ import { Plus } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
-import { EventsTab, ScansTab, StaffTab } from './placeholder-tabs.tsx';
+import { EventsTab } from './events-tab.tsx';
+import { StaffTab } from './placeholder-tabs.tsx';
 import { useScannerPages } from './queries.ts';
 import { NewScannerDialog } from './scanners/new-scanner-dialog.tsx';
 import type { ScannerDraft } from './scanners/scanner-draft.ts';
 import { ScannersTab } from './scanners/scanners-tab.tsx';
+import { ScansTab } from './scans-tab.tsx';
 import {
   DEFAULT_TAB,
   SCANNING_TABS,
@@ -82,7 +84,7 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           <StaffTab />
         </TabsContent>
         <TabsContent value="scans">
-          <ScansTab />
+          <ScansTab search={search} />
         </TabsContent>
       </Tabs>
       {creating ? (

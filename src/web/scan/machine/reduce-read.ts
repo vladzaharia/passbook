@@ -32,6 +32,7 @@ export function begin(s: MachineState, input: ScanInput, env: Env): Out {
   const from = s.loop;
   const base: MachineState = {
     ...s,
+    overlay: s.overlay === 'lookup' || s.overlay === 'camera' ? null : s.overlay,
     reader:
       input.method === 'wedge' || input.method === 'nfc' ? { ...s.reader, lastAt: now } : s.reader,
     ignore: from.s === 'verdict' ? settleShown(s.ignore, now) : s.ignore,

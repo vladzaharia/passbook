@@ -1,7 +1,7 @@
 /** HTTP and network errors to the machine's `fail` (SA 2.8, AC 5). */
 import { ApiError } from '../../lib/errors.ts';
 import type { FailInfo } from '../machine/ports.ts';
-import { ScanApiError } from './scan-api.ts';
+import { ScanApiError } from './errors.ts';
 
 /**
  * `principal` tells a scanner's 401 (the credential was revoked or expired) from an admin's (the

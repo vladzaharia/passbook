@@ -2,7 +2,7 @@ import { Camera, Info } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
-import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
 import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import { BootCard } from './boot-card.tsx';
 import { fill, UI_COPY } from './copy.ts';

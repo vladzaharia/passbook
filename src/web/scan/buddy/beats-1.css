@@ -1,0 +1,278 @@
+/* Scanner beats (src/web/scan/buddy/beats.css), lazy with /scan; spec: scanner-design/buddy-motion.md.
+   A result beat answers one scan: ScanBuddy sets data-beat and restarts data-run (runScene), the beat
+   waits --wl-beat-at (150 ms: colour and sound land first), plays 550 ms and ends at rest, so the
+   buddy is still by 700 ms after the verdict. A new scan restarts or unmounts it: that is the cut.
+   Input beats (catch, glance, wake, rings) start at 0. Reused keyframes, never copied: wl-s-cheer-*
+   (cheer.css), wl-s-sigh (common.css), wl-r-blink (rest.css), wl-w-droop and
+   wl-w-glance (wallet-states.css), wl-shake (motion.css). Units are the art's (viewBox 96 x 72).
+   Every red refusal plays shake (owner, 2026-11-04); slate ends in the sorry pose and never shakes. */
+.wl-buddy[data-scene="scan"] {
+  --wl-beat-at: 150ms;
+}
+.wl-buddy[data-scene="scan"] :is([data-trunk], [data-look]) {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+.wl-buddy[data-scene="scan"] [data-k] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Props that only exist mid-beat are invisible at rest and under reduced motion. */
+[data-k="chad"],
+[data-k="sp"],
+[data-k="ring"],
+[data-k="paw"],
+[data-k="zz"] {
+  opacity: 0;
+}
+[data-k="hand"] {
+  transform-origin: 50% 100%;
+}
+[data-k="stamp"],
+[data-k="hole"] {
+  transform-origin: center;
+}
+/* Poses: held while the scanner is in a state. Eyes and c2 glide on the engine's 200 ms spring. */
+.wl-buddy[data-pose="aim"] [data-look] {
+  translate: -1.2px 1.4px;
+}
+.wl-buddy[data-pose="aim"] [data-trunk] {
+  rotate: -3deg;
+}
+.wl-buddy[data-pose="lock"] [data-part="eyes"] {
+  --t: translate(var(--lx, 0px), var(--ly, 1px)) scale(1.25);
+}
+.wl-buddy[data-pose="pair"] [data-part="c2"] {
+  --t: translate(-2px, -9px) rotate(-10deg);
+}
+.wl-buddy[data-pose="pair"] [data-look] {
+  translate: -0.6px -1.4px;
+}
+.wl-buddy[data-pose="note"] [data-look] {
+  translate: calc(var(--gx, 0) * 1.5px) 1.4px;
+}
+.wl-buddy[data-pose="reader"] [data-trunk] {
+  rotate: 5deg;
+}
+.wl-buddy[data-pose="reader"] [data-look] {
+  translate: 1.5px 0;
+}
+.wl-buddy[data-pose="rummage"] [data-look] {
+  translate: 0 1.6px;
+}
+.wl-buddy[data-pose="rummage"] [data-part="c2"] {
+  --t: translateY(4px);
+}
+.wl-buddy[data-pose="sleep"] [data-part="eyes"] {
+  opacity: 0;
+}
+.wl-buddy[data-pose="sleep"] [data-k="zz"] {
+  opacity: 1;
+}
+.wl-buddy[data-pose="sleep"] [data-body] {
+  translate: 0 1.5px;
+}
+.wl-buddy[data-pose] :is([data-part="eyes"], [data-k="zz"]) {
+  transition: opacity 120ms linear;
+}
+/* sorry: slate's pose (ScanBuddy sets it with cloud, plug and wait), in every motion setting: eyes up at
+   you and a little wide, brows raised, the outer passes drawn in. */
+.wl-buddy[data-pose="sorry"] [data-look] {
+  translate: 0 -0.8px;
+}
+.wl-buddy[data-pose="sorry"] [data-part="eyes"] {
+  scale: 1.1;
+}
+.wl-buddy[data-pose="sorry"] [data-part="br"] {
+  translate: 0 -0.5px;
+}
+.wl-buddy[data-pose="sorry"] [data-part="c1"] {
+  rotate: 14deg;
+}
+.wl-buddy[data-pose="sorry"] [data-part="c3"] {
+  rotate: -14deg;
+}
+.wl-buddy[data-beat="shake"] [data-fan] {
+  transform-box: view-box;
+  transform-origin: 48px 58px;
+}
+.wl-buddy[data-beat="shake"] [data-part="eyes"] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Reduced motion: red holds a still "no": turned a little, eyes shut, brows pinched, the passes hanging
+   the other way. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="shake"] [data-trunk] {
+    rotate: -4deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="shake"] [data-look] {
+    translate: -1.8px 0.3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="shake"] [data-part="eyes"] {
+    scale: 1.12 0.28;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="shake"] [data-part="br"] {
+    translate: 0 0.8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="shake"] [data-fan] {
+    rotate: 4deg;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose] :is([data-look], [data-trunk]) {
+    transition:
+      translate 200ms var(--art-sp),
+      rotate 200ms var(--art-sp);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Pending only: the rummage loops while data-pose="rummage" (a lookup past 300 ms, at most 5 s). */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose="rummage"] :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+    animation: wl-b-rummage 600ms ease-in-out calc(var(--i, 0) * -200ms) infinite;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-pose="rummage"] [data-body] {
+    animation: wl-b-jig 300ms ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* hop: checked in (happy). Crouch, hop, the gold pass up like a thumb, then tucked away. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="hop"][data-run] [data-body] {
+    animation: wl-b-hop 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="hop"][data-run] [data-part="c3"] {
+    animation: wl-b-thumb 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="hop"], [data-beat="fan"])[data-run] [data-part="joy"] {
+    animation: wl-s-cheer-joy 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="hop"], [data-beat="stash"])[data-run]
+    :is([data-part="c1"], [data-part="c2"]) {
+    animation: wl-b-jolt 550ms ease-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* fan: a milestone or a reward (happy). The cheer, at beat speed. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="fan"][data-run] [data-body] {
+    animation: wl-s-cheer-body 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="fan"][data-run] [data-part="c2"] {
+    animation: wl-s-cheer-up 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="fan"][data-run] [data-part="c1"] {
+    animation: wl-s-cheer-l 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="fan"][data-run] [data-part="c3"] {
+    animation: wl-s-cheer-r 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* punch and stamp: the violet pass is presented, pressed at 200 ms (the impact), the mark pops. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"])[data-run] [data-body] {
+    animation: wl-b-press 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="punch"][data-run] [data-part="c2"] {
+    animation: wl-b-present 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="punch"][data-run] [data-k="hole"] {
+    animation: wl-b-pop 220ms var(--art-bo) calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="punch"][data-run] [data-k="chad"] {
+    animation: wl-b-chad 260ms ease-in calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="stamp"][data-run] [data-part="c3"] {
+    animation: wl-b-stamper 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="stamp"][data-run] [data-part="c2"] {
+    animation: wl-b-dip 550ms ease-out var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="stamp"][data-run] [data-k="stamp"] {
+    animation: wl-b-stamp 300ms var(--art-bo) calc(var(--wl-beat-at) + 200ms) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Open eyes on the card, the happy arcs at the end; punch winks first. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"], [data-beat="sparkle"])[data-run]
+    [data-part="eyes"] {
+    animation: wl-b-eyes 550ms linear var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"], [data-beat="sparkle"])[data-run]
+    [data-part="joy"] {
+    animation: wl-b-joy 550ms linear var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="punch"], [data-beat="stamp"])[data-run] [data-look] {
+    animation: wl-b-up 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="punch"][data-run] .e:last-child {
+    animation: wl-r-blink 120ms var(--art-mv) calc(var(--wl-beat-at) + 330ms);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* sparkle: points in (happy). Sparks drop into the pocket 60 ms apart; it gulps. dir=out: spend. */
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="sparkle"][data-run] [data-k="sp"] {
+    animation: wl-b-spark 300ms ease-in calc(var(--wl-beat-at) + var(--i, 0) * 60ms) backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="sparkle"][data-dir="out"][data-run] [data-k="sp"] {
+    animation-direction: reverse;
+    animation-timing-function: ease-out;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="sparkle"][data-run] [data-body] {
+    animation: wl-b-gulp 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+}

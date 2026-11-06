@@ -12,6 +12,7 @@ export function validityOf(
   const parsed = typeof pass.expirationDate === 'string' ? Date.parse(pass.expirationDate) : NaN;
   const validUntil = Number.isFinite(parsed) ? parsed : null;
   const at = typeof now === 'number' ? now : now.getTime();
-  const status = pass.voided === true ? 'voided' : validUntil !== null && validUntil < at ? 'expired' : 'active';
+  const status =
+    pass.voided === true ? 'voided' : validUntil !== null && validUntil < at ? 'expired' : 'active';
   return { status, validFrom: null, validUntil };
 }

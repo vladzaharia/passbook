@@ -120,7 +120,17 @@ export function undone(s: MachineState, ev: Of<'undone'>, env: Env): Out {
   const scanId = s.undo.scanId;
   const recent = s.recent.map((r) => (r.scanId === scanId ? { ...r, undoable: false } : r));
   const l = s.loop;
-  const loop = l.s === 'member' && l.band?.scanId === scanId ? { ...l, band: ev.outcome } : l;
+  const loop =
+    l.s === 'member' && l.band?.scanId === scanId
+      ? { ...l, band: ev.outcome }
+      : l.s === 'verdict' && l.outcome.scanId === scanId
+        ? {
+            ...l,
+            outcome: { ...ev.outcome, display: l.outcome.display },
+            since: env.now,
+            closeAt: env.now + 1200,
+          }
+        : l;
   const cmds: Cmd[] = [
     { c: 'sound', tone: 'undo' },
     { c: 'beat', beat: 'rewind' },

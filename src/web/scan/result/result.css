@@ -1,0 +1,106 @@
+.scan-result {
+  pointer-events: auto;
+  width: min(100%, var(--scan-card-w));
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--scan-card);
+  color: var(--sd-body);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.3);
+}
+.scan-result-band {
+  flex: none;
+  padding: 24px;
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.scan-result[data-kind="ok"] .scan-result-band {
+  background: var(--scan-ok);
+  color: var(--scan-ok-on);
+}
+.scan-result[data-kind="heads_up"] .scan-result-band {
+  background: var(--scan-heads);
+  color: var(--scan-heads-on);
+}
+.scan-result[data-kind="refused"] .scan-result-band {
+  background: var(--scan-refused);
+  color: var(--scan-refused-on);
+}
+.scan-result[data-kind="ready"] .scan-result-band {
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+}
+.scan-result-band h1 {
+  margin: 12px 0 0;
+  font-size: 32px;
+  line-height: 36px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.scan-result-band p {
+  margin: 8px 0 0;
+  font-size: 17px;
+  line-height: 22px;
+}
+.scan-result-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.scan-result-holder {
+  font-size: 21px;
+  line-height: 26px;
+  font-weight: 600;
+  margin: 0;
+}
+.scan-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scan-stage-message {
+  position: absolute;
+  inset: 30% 24px auto;
+  text-align: center;
+  color: #fff;
+  font-size: 20px;
+}
+@media (min-width: 640px) {
+  .scan-result-band h1 {
+    font-size: 44px;
+    line-height: 48px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-result[data-phase="rising"] {
+    animation: scan-result-rise 220ms ease-out both;
+  }
+  .scan-result[data-phase="tucking"] {
+    animation: scan-result-tuck 180ms ease-in both;
+  }
+  @keyframes scan-result-rise {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes scan-result-tuck {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+  }
+}

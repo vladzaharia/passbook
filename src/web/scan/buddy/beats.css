@@ -1,0 +1,13 @@
+@import "./beats-1.css";
+@import "./beats-2.css";
+@import "./beats-3.css";
+@import "./beats-4.css";
+
+.scan-buddy-seat {
+  position: absolute;
+  z-index: var(--scan-z-buddy);
+  inset-inline: 0;
+  bottom: calc(var(--scan-dock-h) + env(safe-area-inset-bottom, 0px));
+  height: 0;
+  pointer-events: none;
+}

@@ -25,6 +25,7 @@ export interface GateClaim extends GateKey {
   scanId: string;
   now: number;
   gate: GateRule;
+  capacity?: { eventId: string; max: number; reentry: boolean };
 }
 
 /**
@@ -38,10 +39,14 @@ export function upsertGateStmt(db: Db, g: GateClaim): D1PreparedStatement {
       : g.gate.rule === 'cooldown'
         ? 'scan_gates.last_at <= ?'
         : '1';
+  const capacity = g.capacity;
+  const room = capacity
+    ? `((SELECT count(*) FROM scan_gates WHERE org_id = ? AND mode = ? AND scope = ? AND kind = 'check_in' AND state IN (${capacity.reentry ? "'in'" : "'in', 'out'"})) < ? OR EXISTS (SELECT 1 FROM scan_gates WHERE pass_id = ? AND action_id = ? AND scope = ? AND state IN ('in', 'out')))`
+    : '1';
   return stmt(
     db,
     `INSERT INTO scan_gates (pass_id, action_id, scope, org_id, mode, template_id, kind, state, count, first_at, last_at, last_scan_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ? WHERE ${room}
      ON CONFLICT (pass_id, action_id, scope) DO UPDATE SET
        prev_state = state, prev_last_at = last_at, prev_scan_id = last_scan_id,
        state = excluded.state, count = count + 1, last_at = excluded.last_at, last_scan_id = excluded.last_scan_id
@@ -59,6 +64,17 @@ export function upsertGateStmt(db: Db, g: GateClaim): D1PreparedStatement {
       g.now,
       g.now,
       g.scanId,
+      ...(capacity
+        ? [
+            g.orgId,
+            g.mode,
+            `event:${capacity.eventId}`,
+            capacity.max,
+            g.passId,
+            g.actionId,
+            g.scope,
+          ]
+        : []),
       ...(g.gate.rule === 'cooldown' ? [g.now - g.gate.cooldownMs] : []),
     ],
   );

@@ -204,9 +204,9 @@ describe('TemplateImport pipeline', () => {
       expect(r.stages).toEqual(['extract', 'analyze', 'dry-run']);
     });
 
-    it('nfc in pass.json without an NFC identity', async () => {
+    it('NFC is supplied by the platform, never by pass.json', async () => {
       const pass = passJson({ nfc: { message: 'x', encryptionPublicKey: 'abc' } });
-      expect((await rejected(basicPackage({}, pass))).codes).toContain('NFC_NOT_ENTITLED');
+      expect((await rejected(basicPackage({}, pass))).codes).toContain('NFC_IN_PASS_JSON');
     });
 
     it('a restricted-schema violation in an uploaded manifest', async () => {

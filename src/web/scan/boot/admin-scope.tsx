@@ -6,7 +6,7 @@ import { Checkbox } from '../../ui/checkbox.tsx';
 import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import { FormField } from '../../ui/field.tsx';
 import { Label } from '../../ui/label.tsx';
-import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
 import { Select } from '../../ui/select.tsx';
 import { UI_COPY } from '../ui/copy.ts';
 

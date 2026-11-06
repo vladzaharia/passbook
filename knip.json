@@ -11,7 +11,7 @@
   ],
   "project": ["src/**/*.{ts,tsx}!", "tools/**/*.ts", "e2e/**/*.ts", "test/**/*.ts"],
   "ignore": [],
-  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss", "zxing-wasm"],
+  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss"],
   "ignoreBinaries": ["openssl"],
   "rules": {
     "nsExports": "off",

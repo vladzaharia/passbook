@@ -1,5 +1,7 @@
 import type { Mode } from '@/shared/contracts/common.ts';
-import { StatusIcon, StatusPill } from '../status-pill.tsx';
+import { StatusIcon } from '../status-pill.tsx';
+
+import { ModeLabel } from './mode-label.tsx';
 
 /**
  * The one Test marker: on rows, details, cards and keys. Live shows nothing. Rows that would all
@@ -18,6 +20,6 @@ export function ModePill({
   return compact ? (
     <StatusIcon status="test" className={className} />
   ) : (
-    <StatusPill status="test" className={className} />
+    <ModeLabel mode={mode} className={className} />
   );
 }

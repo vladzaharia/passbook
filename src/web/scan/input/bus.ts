@@ -17,7 +17,7 @@ export interface BusDeps {
 
 export function createBus(deps: BusDeps) {
   return {
-    emit(raw: RawRead): void {
+    emit(raw: RawRead): ScanInput {
       const n = normalizeRead(raw, deps.origins);
       const input: ScanInput = {
         method: raw.method,
@@ -31,6 +31,7 @@ export function createBus(deps: BusDeps) {
         ...(n.local ? { local: n.local } : {}),
       };
       deps.dispatch({ type: 'read', input });
+      return input;
     },
   };
 }

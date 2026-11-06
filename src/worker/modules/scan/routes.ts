@@ -4,8 +4,11 @@ import {
   ScanCountsSchema,
   ScanOutcomeSchema,
   ScanResolveRequestSchema,
+  ScanUndoRequestSchema,
 } from '../../../shared/contracts/scan.ts';
 import {
+  ScanLookupRequestSchema,
+  ScanLookupResultSchema,
   ScanRecentSchema,
   ScanSessionSchema,
   ScanSummarySchema,
@@ -19,9 +22,11 @@ import { assetGrantValid } from './assets.ts';
 import { planCounts } from './counts.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
+import { lookup } from './lookup.ts';
 import { candidateById } from './repo-lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { buildSession } from './session.ts';
+import { undo } from './undo.ts';
 
 /** Device API: /api/v1/scan. Pairing and staff sign-in are other files; lookup and undo are later tasks. */
 export const scanRoutes = createRouter();
@@ -34,7 +39,16 @@ const AssetParams = z.object({
 });
 
 scanRoutes.use('/session', requireScanActor({ staffOptional: true, screens: true }));
-for (const path of ['/resolve', '/actions', '/scans', '/summary', '/stats', '/passes/*'])
+for (const path of [
+  '/resolve',
+  '/actions',
+  '/scans',
+  '/summary',
+  '/stats',
+  '/passes/*',
+  '/lookup',
+  '/scans/*',
+])
   scanRoutes.use(path, requireScanActor());
 scanRoutes.use('*', async (c, next) => {
   await next();
@@ -51,8 +65,15 @@ register(
     query: DayStart,
     response: ScanSessionSchema,
   },
-  async (c) =>
-    c.json(await buildSession(serviceContext(c), scanActorOf(c), c.req.valid('query').dayStart)),
+  async (c) => {
+    const session = await buildSession(
+      serviceContext(c),
+      scanActorOf(c),
+      c.req.valid('query').dayStart,
+    );
+    if (c.var.auth?.kind === 'session') session.csrfToken = c.var.auth.csrfSecret;
+    return c.json(session);
+  },
 );
 
 register(
@@ -158,4 +179,38 @@ register(
       },
     });
   },
+);
+
+register(
+  scanRoutes,
+  'scan',
+  {
+    method: 'post',
+    path: '/lookup',
+    summary: 'Find a pass',
+    body: ScanLookupRequestSchema,
+    response: ScanLookupResultSchema,
+  },
+  async (c) => c.json(await lookup(serviceContext(c), scanActorOf(c), c.req.valid('json').q)),
+);
+register(
+  scanRoutes,
+  'scan',
+  {
+    method: 'post',
+    path: '/scans/{scanId}/undo',
+    summary: 'Undo a check-in',
+    params: z.object({ scanId: z.string().min(1).max(64) }),
+    body: ScanUndoRequestSchema,
+    response: ScanOutcomeSchema,
+  },
+  async (c) =>
+    c.json(
+      await undo(
+        serviceContext(c),
+        scanActorOf(c),
+        c.req.valid('param').scanId,
+        c.req.valid('json'),
+      ),
+    ),
 );

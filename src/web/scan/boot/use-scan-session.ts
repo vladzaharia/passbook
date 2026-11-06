@@ -26,7 +26,13 @@ export function createCsrfHolder() {
 }
 export type CsrfHolder = ReturnType<typeof createCsrfHolder>;
 
-export type SessionPhase = 'loading' | 'unpaired' | 'ready' | 'blocked' | 'error';
+export type SessionPhase =
+  | 'loading'
+  | 'unpaired'
+  | 'ready'
+  | 'blocked'
+  | 'error'
+  | 'scope_required';
 
 export interface ScanSessionHook {
   phase: SessionPhase;
@@ -60,9 +66,14 @@ export function useScanSession(
       csrf.set(session.csrfToken);
       return session;
     },
-    refetchInterval: REFETCH_MS,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchInterval:
+      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)
+        ? REFETCH_MS
+        : false,
+    refetchOnWindowFocus:
+      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay),
+    refetchOnReconnect:
+      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay),
     staleTime: 0,
     gcTime: 0,
     retry: false,
@@ -88,10 +99,11 @@ export function useScanSession(
 
   let phase: SessionPhase = 'loading';
   let block: ScanSessionHook['block'] = null;
-  if (session) phase = 'ready';
-  else if (query.isError) {
+  if (query.isError) {
     const fail = toFail(query.error);
-    if (isApiError(query.error) && query.error.code === 'SCANNER_UNAUTHENTICATED')
+    if (isApiError(query.error) && query.error.code === 'SCAN_SCOPE_REQUIRED')
+      phase = 'scope_required';
+    else if (isApiError(query.error) && query.error.code === 'SCANNER_UNAUTHENTICATED')
       phase = 'unpaired';
     else if (
       fail.error === 'revoked' ||
@@ -100,7 +112,15 @@ export function useScanSession(
     ) {
       phase = 'blocked';
       block = fail.error;
-    } else phase = 'error';
+    } else phase = session ? 'ready' : 'error';
   }
-  return { phase, session, pairCode, block, pair, refetch: again };
+  if (!query.isError && session) phase = 'ready';
+  return {
+    phase,
+    session: phase === 'ready' ? session : null,
+    pairCode,
+    block,
+    pair,
+    refetch: again,
+  };
 }

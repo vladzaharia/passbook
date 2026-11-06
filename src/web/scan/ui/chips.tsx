@@ -1,7 +1,7 @@
 import { CloudOff, Keyboard, X } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CountUp } from '../../ui/count-up.tsx';
-import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
 
 /** Test marker: first in the capsule, on test scanners only; live shows nothing. */
 export function TestChip({ mode }: { mode: Mode | undefined }) {

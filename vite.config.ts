@@ -195,6 +195,7 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
+  optimizeDeps: { include: ['zxing-wasm/reader'] },
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   plugins: [
     devPublicAtSign(),

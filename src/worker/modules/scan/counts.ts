@@ -15,15 +15,40 @@ const EXPECTED_TTL_MS = 60_000;
 
 /** Midnight of the local day in `timeZone`, by the clock the zone shows now. */
 export function localDayStart(now: number, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat('en-GB', {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-  }).formatToParts(now);
-  const at = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
-  return now - (((at('hour') * 60 + at('minute')) * 60 + at('second')) * 1000 + (now % 1000));
+  });
+  const local = (at: number) => {
+    const parts = formatter.formatToParts(at);
+    const value = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+    return Date.UTC(
+      value('year'),
+      value('month') - 1,
+      value('day'),
+      value('hour'),
+      value('minute'),
+      value('second'),
+    );
+  };
+  const shown = new Date(local(now));
+  const target = Date.UTC(shown.getUTCFullYear(), shown.getUTCMonth(), shown.getUTCDate());
+  let guess = target;
+  let later = guess;
+  for (let i = 0; i < 6; i++) {
+    const correction = target - local(guess);
+    if (correction === 0) return guess;
+    guess += correction;
+    later = Math.max(later, guess);
+  }
+  // Where daylight saving skips midnight, the first valid instant of that day is later.
+  return later;
 }
 
 /** `yyyy-mm-dd` of the local day, for `day:<date>` gates. */
