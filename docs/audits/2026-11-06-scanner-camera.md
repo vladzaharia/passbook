@@ -38,7 +38,8 @@ Review captures: [Chromium](../design/scanner/review/camera-chromium.png),
 - Set muted, inline playback explicitly. Skip empty video frames and transient capture errors.
 - Bound the optional frozen checking frame and fall back to live video if it cannot be captured.
 - Offer Use camera on reader-configured devices, and Retry camera after failures.
-- Preserve a deliberately disabled camera through background/resume.
+- Preserve a deliberately disabled camera through background/resume. Restart an armed native
+  reader when returning to a result; returning to Paused still requires Resume.
 
 ## Failure and flow coverage
 
@@ -82,5 +83,9 @@ recovery and manual/reader input rather than a successful scan.
 Physical iPhone/iPad Safari and installed home-screen mode, Android Chrome/WebView and P400,
 front-only laptop cameras, low-end hardware, autofocus, torch, glare, distance and accessibility
 assistive technology still need the venue/device trials in `scanner-plan.md` and
-`android/ACCEPTANCE.md`. The existing APK loads the hosted `/scan` code, so these camera
+`android/ACCEPTANCE.md`. Android 13 emulator checks also passed: 11 unit tests, three bridge tests, four real WebView
+instrumentation checks, lint, assembly and native camera acquisition on WebView 109.
+These checks do not establish physical P400 or camera optics behavior.
+
+The existing APK loads the hosted `/scan` code, so these camera
 changes do not require a new APK or signing identity. NFC verification remains a later milestone.

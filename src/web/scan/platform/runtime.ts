@@ -171,6 +171,10 @@ export async function createRuntime(
   const onOnline = () => store.dispatch({ type: 'online', online: navigator.onLine });
   const onVisible = () => {
     store.dispatch({ type: 'visible', visible: !document.hidden });
+    if (!document.hidden) {
+      const current = store.getSnapshot().state;
+      if (current.started && !current.block && current.loop.s !== 'paused') native?.start();
+    }
     if (document.hidden) {
       camera.stop();
       if (store.getSnapshot().state.camera !== 'disabled')

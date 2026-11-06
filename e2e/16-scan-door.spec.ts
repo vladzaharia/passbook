@@ -81,6 +81,20 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
         ),
       )
       .toBe('accepted');
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            window as unknown as { PassBookNative: { sent: { op: string }[] } }
+          ).PassBookNative.sent.at(-1)?.op,
+      ),
+    ).toBe('start');
     await nativeRead('duplicate');
     const scans = await api.get(`/api/v1/scans?orgId=${orgId}`);
     expect(
