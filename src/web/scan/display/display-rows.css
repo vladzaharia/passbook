@@ -1,0 +1,298 @@
+/* Progress */
+.sd-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sd-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--sd-muted);
+  font: var(--sd-t4) var(--pk-font-sans);
+}
+.sd-readout-now {
+  color: var(--sd-strong);
+  font: var(--sd-t6) var(--pk-font-sans);
+}
+.sd-arrow {
+  align-self: center;
+}
+.sd-stamps {
+  display: grid;
+  grid-template-columns: repeat(5, 44px);
+  justify-content: space-between;
+  row-gap: 10px;
+}
+@container sd (min-width: 400px) {
+  .sd-stamps {
+    grid-template-columns: repeat(var(--goal), 44px);
+  }
+}
+.sd-stamp {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--sd-muted) 45%, transparent);
+  color: var(--sd-inset);
+}
+.sd-stamp.is-filled {
+  background: var(--tone);
+  box-shadow: none;
+}
+.sd-stamp-badge {
+  position: absolute;
+  inset-block-end: -3px;
+  inset-inline-end: -3px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sd-strong);
+  box-shadow: 0 0 0 2px var(--sd-inset);
+  color: var(--sd-inset);
+}
+.sd-bar {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--sd-fill-gray);
+}
+.sd-bar-fill {
+  display: block;
+  width: var(--to);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tone);
+}
+.sd-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+.sd-caption b {
+  color: var(--sd-strong);
+  font-weight: 600;
+}
+.sd-caption-gift {
+  flex: none;
+  color: var(--tone);
+}
+
+/* Money */
+.sd-money-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.sd-money-old {
+  color: var(--sd-muted);
+  font: var(--sd-t4) var(--pk-font-sans);
+  text-decoration: line-through 1.5px;
+}
+.sd-money-new {
+  color: var(--sd-strong);
+  font: var(--sd-t6) var(--pk-font-sans);
+  letter-spacing: -0.02em;
+}
+.sd-money-change {
+  margin-inline-start: auto;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--sd-chip-neutral-bg);
+  color: var(--sd-chip-neutral-fg);
+  font: var(--sd-t2) var(--pk-font-sans);
+  line-height: 28px;
+}
+.sd-low {
+  margin: 0;
+  color: var(--sd-chip-gold-fg);
+  font: var(--sd-t2) var(--pk-font-sans);
+}
+
+/* History, image, list */
+.sd-history,
+.sd-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sd-history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.sd-history-item + .sd-history-item {
+  border-block-start: 0.5px solid var(--sd-rule);
+}
+.sd-history-disc {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--sd-fill-gray);
+  color: var(--sd-muted);
+}
+.sd-history-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.sd-history-title {
+  color: var(--sd-strong);
+  font: 500 15px / 20px var(--pk-font-sans);
+}
+.sd-history-detail {
+  color: var(--sd-muted);
+  font: var(--sd-t1) var(--pk-font-sans);
+}
+.sd-history-amount {
+  color: var(--sd-strong);
+  font: 500 15px / 20px var(--pk-font-sans);
+}
+.sd-history-empty {
+  margin: 0;
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+.sd-image {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.sd-image-img {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.sd-image[data-source="strip"] {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.sd-image[data-source="strip"] .sd-image-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  border-radius: 12px;
+}
+.sd-image-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sd-image-title {
+  color: var(--sd-strong);
+  font: var(--sd-t4) var(--pk-font-sans);
+}
+.sd-image-detail {
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+.sd-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px 16px;
+}
+.sd-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.sd-list-icon {
+  flex: none;
+  margin-block-start: 1px;
+  color: var(--tone);
+}
+.sd-list-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--sd-strong);
+  font: var(--sd-t4) var(--pk-font-sans);
+  overflow-wrap: anywhere;
+}
+.sd-list-detail {
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+@container sd (min-width: 400px) {
+  .sd-list[data-pair] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container sd (max-width: 399.98px) {
+  .sd-list[data-pair][data-one-line="true"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Note, divider */
+.sd-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--sd-chip-neutral-bg);
+  color: var(--sd-chip-neutral-fg);
+  font: var(--sd-t3) var(--pk-font-sans);
+  overflow-wrap: anywhere;
+}
+.sd-note > svg {
+  flex: none;
+  margin-block-start: 1px;
+}
+.sd-note[data-tone="info"] {
+  background: var(--sd-note-info-bg);
+  color: var(--sd-note-info-fg);
+}
+.sd-note[data-tone="attention"] {
+  background: var(--sd-chip-gold-bg);
+  color: var(--sd-chip-gold-fg);
+}
+.sd-divider {
+  height: 0.5px;
+  border: 0;
+  margin: 0 -12px;
+  background: var(--sd-rule);
+}
+
+/* The system progress fill and the new stamps are the only motion here; reduced motion: stills. */
+@media (prefers-reduced-motion: no-preference) {
+  .sd-bar-fill[data-moved] {
+    animation: sd-fill 600ms var(--wl-ease-out, ease-out) 200ms backwards;
+  }
+  .sd-stamp.is-new {
+    animation: sd-pop 280ms var(--wl-ease-spring, ease-out) backwards;
+    animation-delay: calc(200ms + var(--i, 0) * 90ms);
+  }
+}
+@keyframes sd-fill {
+  from {
+    width: var(--from);
+  }
+}
+@keyframes sd-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}

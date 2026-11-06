@@ -2,6 +2,7 @@ import type { ScanDisplay } from '../../../shared/contracts/scan-display.ts';
 import { cn } from '../../lib/cn.ts';
 import { DisplayPanel } from './panel.tsx';
 import './display.css';
+import './display-rows.css';
 
 /**
  * Paints a rendered `ScanDisplay`'s panels. It never renders a button, and a refused screen

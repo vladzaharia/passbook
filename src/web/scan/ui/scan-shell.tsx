@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import '../../styles/motion.css';
 import '../display/display.css';
+import '../display/display-rows.css';
 import './scan.css';
+import './scan-capsule.css';
+import './scan-dock.css';
 import { type Announcement, LiveAnnouncer } from './live-announcer.tsx';
 import { type Tint, VerdictRing, VerdictTint } from './verdict-tint.tsx';
 

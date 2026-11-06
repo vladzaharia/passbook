@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(join(import.meta.dirname, 'scan.css'), 'utf8');
+const css = ['scan.css', 'scan-capsule.css', 'scan-dock.css']
+  .map((f) => readFileSync(join(import.meta.dirname, f), 'utf8'))
+  .join('\n');
 const tok = (name: string) => new RegExp(`${name}:\\s*(#[0-9a-f]{6})`, 'i').exec(css)?.[1] ?? '';
 const lin = (c: number) => {
   const s = c / 255;
