@@ -1,13 +1,14 @@
-// Playwright webServer: mock Pocket ID + local D1 + vite dev on 5173.
+// Playwright webServer: mock Pocket ID + local D1 + Vite on 5173.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { rmSync } from 'node:fs';
+import { copyFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const children: ChildProcess[] = [];
+const mode = process.env.WALLET_E2E_PREVIEW === '1' ? 'preview' : 'dev';
 
 // Own vars file (picked up via CLOUDFLARE_ENV=e2e) so a developer's .dev.vars (other issuer, port,
 // client id) can never leak into the run. Regenerated every start; throwaway fixture keys only.
@@ -52,15 +53,21 @@ execFileSync(
   ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
   { cwd: root, stdio: 'inherit' },
 );
+if (mode === 'preview') {
+  execFileSync('npx', ['vite', 'build'], { cwd: root, stdio: 'inherit', env });
+  // Vite's emitted vars omit non-secret overrides such as the local OIDC issuer.
+  copyFileSync(varsFile, resolve(root, 'dist/wallet/.dev.vars'));
+}
 
 children.push(
   spawn('node', ['test/mock-oidc/server.ts', '5174'], { cwd: root, stdio: 'inherit', env }),
 );
 children.push(
-  spawn('npx', ['vite', 'dev', '--port', '5173', '--strictPort'], {
+  spawn('npx', ['vite', mode, '--port', '5173', '--strictPort'], {
     cwd: root,
     stdio: 'inherit',
-    env,
+    // Preview uses the environment already selected in its build output.
+    env: mode === 'preview' ? { ...env, CLOUDFLARE_ENV: undefined } : env,
   }),
 );
 

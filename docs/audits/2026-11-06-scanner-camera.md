@@ -65,8 +65,8 @@ npm run test:e2e
 npm run test:e2e:camera
 ```
 
-CI runs the camera suite in a separate test job after `check`, preserving browser traces,
-screenshots and per-format check-in timings. Tests use local D1 and an ephemeral local TLS
+CI runs the camera suite in a separate job against built Worker and client assets, preserving
+browser traces, screenshots and per-format check-in timings. Tests use local D1 and an ephemeral local TLS
 certificate; production credentials and camera recordings are not part of the fixtures.
 
 On macOS 27 the pinned Firefox needs isolated app data to avoid its protected real-browser
