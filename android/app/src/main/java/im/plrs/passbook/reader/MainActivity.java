@@ -306,8 +306,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             cameraAvailable = cameraManager != null && cameraManager.getCameraIdList().length > 0;
         } catch (CameraAccessException | SecurityException exception) {
             // A built-in camera remains present even if the camera service cannot enumerate it.
-            cameraAvailable = packages.hasSystemFeature(PackageManager.FEATURE_CAMERA)
-                || packages.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+            cameraAvailable = packages.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
         }
         boolean restricted = packages.isPermissionRevokedByPolicy(Manifest.permission.CAMERA, getPackageName());
         DevicePolicyManager policy = getSystemService(DevicePolicyManager.class);
