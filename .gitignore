@@ -14,6 +14,9 @@ test-results/
 artifacts/
 *.p12
 *.p8
+*.mobileprovision
+*.provisionprofile
+*.cer
 *.key
 *-key.pem
 .DS_Store

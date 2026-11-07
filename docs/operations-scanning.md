@@ -103,7 +103,7 @@ fails, the previous photo settings remain in place.
 
 ## Android
 
-Use the signed [PassBook Reader APK](https://github.com/vladzaharia/passbook/releases/tag/android-v0.2.2).
+Use the signed [PassBook Reader APK](https://github.com/vladzaharia/passbook/releases/tag/android-v0.2.3).
 The same web verifier supplies the policies, photos and display views; reload the verifier to
 receive updates. Camera access needs HTTPS and Android camera permission. Hardware barcode
 configuration and physical-device acceptance checks are in [android/README.md](../android/README.md).

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1DB96657192F74251BFA8EF2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EDABD69675BDED9E40571B1E /* Assets.xcassets */; };
 		338DC984FDCC09E57453C68D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A7D089EF4D0754A8269636 /* AppDelegate.swift */; };
 		4C4130A6F3DF60424057FC44 /* CustomerDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */; };
 		6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */; };
@@ -23,6 +24,7 @@
 		A95D31294A6AB9BF2B917503 /* PassBookScanner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PassBookScanner.entitlements; sourceTree = "<group>"; };
 		B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDisplay.swift; sourceTree = "<group>"; };
 		D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
+		EDABD69675BDED9E40571B1E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -30,6 +32,7 @@
 			isa = PBXGroup;
 			children = (
 				74A7D089EF4D0754A8269636 /* AppDelegate.swift */,
+				EDABD69675BDED9E40571B1E /* Assets.xcassets */,
 				B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */,
 				519E7915BE20BD1AFF130C2B /* Info.plist */,
 				450A839D95D7FE6874A73D9A /* NFCReader.swift */,
@@ -64,6 +67,7 @@
 			buildConfigurationList = 7EF85A542EA1863CD7E84641 /* Build configuration list for PBXNativeTarget "PassBookScanner" */;
 			buildPhases = (
 				CFDB5C438AC92FD65D9FC713 /* Sources */,
+				282DCFCA7B4F3E8E97941F02 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -85,6 +89,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					E2C6C95FF3B3A7E62B518451 = {
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 0BCD03B384B072E844AFEEE9 /* Build configuration list for PBXProject "PassBookScanner" */;
@@ -105,6 +112,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		282DCFCA7B4F3E8E97941F02 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DB96657192F74251BFA8EF2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		CFDB5C438AC92FD65D9FC713 /* Sources */ = {
@@ -182,9 +200,11 @@
 		964648DE234255EA952F1894 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PassBookScanner/PassBookScanner.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PassBookScanner/Info.plist;
@@ -192,6 +212,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = mobile.passbook.scanner;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
@@ -203,9 +224,11 @@
 		C2D3077D8F2A1C36D27D1FF2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PassBookScanner/PassBookScanner.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PassBookScanner/Info.plist;
@@ -213,6 +236,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = mobile.passbook.scanner;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
