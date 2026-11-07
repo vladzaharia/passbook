@@ -5,10 +5,11 @@
 import { SCAN_TIMING } from '../timing.ts';
 import { createRunner } from './commands.ts';
 import { nextDeadline } from './deadlines.ts';
+import { manualCheckIn } from './manual-check-in.ts';
 import type { ScanDeps } from './ports.ts';
 import { type ScanView, viewOf } from './present.ts';
 import { reduce } from './reduce.ts';
-import type { BuddyBeat, Cmd, ScanEvent, ScanState } from './types.ts';
+import type { BuddyBeat, Card, Cmd, ScanEvent, ScanState } from './types.ts';
 
 export interface ScanSnapshot {
   state: ScanState;
@@ -21,6 +22,7 @@ export interface ScanStore {
   getSnapshot(): ScanSnapshot;
   subscribe(listener: () => void): () => void;
   dispatch(event: ScanEvent): void;
+  checkIn(card: Card, actionId: string): void;
   /** Resends unsure entries now (also runs on a timer, on online and on visible). */
   retryUnsure(): void;
   dispose(): void;
@@ -161,6 +163,17 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
       return () => listeners.delete(listener);
     },
     dispatch,
+    checkIn(card, actionId) {
+      if (disposed || busy) return;
+      const result = manualCheckIn(state, card, actionId, {
+        now: deps.clock.now(),
+        id: deps.ids.id,
+      });
+      state = result.state;
+      runner.run(result.cmds);
+      rearm();
+      publish();
+    },
     retryUnsure: retry,
     dispose() {
       disposed = true;

@@ -25,8 +25,8 @@ export interface ScannerFieldsProps {
 }
 
 const FLOW = [
-  { value: 'auto', label: 'Do the first action at once' },
-  { value: 'choose', label: 'Show the actions' },
+  { value: 'auto', label: 'Check in automatically' },
+  { value: 'choose', label: 'Review before check-in' },
 ];
 const ROLE = [
   { value: 'door', label: 'Door' },
@@ -171,7 +171,10 @@ export function ScannerFields({
           ) : draft.accepts === 'templates' ? (
             <TemplateRows draft={draft} onChange={onChange} error={errors.templateIds} />
           ) : null}
-          <FormField label="On scan" help="Staff can still pick another action.">
+          <FormField
+            label="On scan, tap or entered code"
+            help="Name and email lookups always require confirmation."
+          >
             {(p) => (
               <Select
                 {...p}
@@ -223,7 +226,7 @@ export function ScannerFields({
             )}
           </FormField>
           <SwitchRow
-            label="Look up by name"
+            label="Look up people by name or email"
             checked={draft.lookup}
             onCheckedChange={(lookup) => onChange({ lookup })}
           />

@@ -30,6 +30,7 @@ import {
   setStyle,
   updateField,
 } from './ops-pass.ts';
+import { setLookupInput } from './scan/lookup.ts';
 
 /** Every edit the designer makes. Plain data, so the history can replay and tests can read it. */
 export type Op =
@@ -53,6 +54,7 @@ export type Op =
   | { op: 'input-move'; name: string; to: number }
   | { op: 'display'; part: 'title' | 'subtitle'; expr: string }
   | { op: 'barcode'; settings: BarcodeSettings }
+  | { op: 'scan-lookup'; input: string }
   | { op: 'list'; key: ListKey; items: Record<string, unknown>[] }
   | { op: 'image'; slot: string; asset: DraftAsset | null };
 
@@ -98,6 +100,8 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setDisplay(doc, o.part, o.expr);
     case 'barcode':
       return setBarcode(doc, o.settings);
+    case 'scan-lookup':
+      return setLookupInput(doc, o.input);
     case 'list':
       return setList(doc, o.key, o.items);
     case 'image':

@@ -213,6 +213,7 @@ export async function createRuntime(
     clear: () => wipeLocal(localStores),
     fields,
     emit,
+    checkIn: store.checkIn,
     camera,
     start() {
       store.dispatch({ type: 'start' });

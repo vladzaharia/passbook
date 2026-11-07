@@ -31,7 +31,7 @@ export const READER_TIPS = [
   'Hold the top of the iPhone near the reader.',
   'If asked, unlock with Face ID, then hold it near again.',
   'Still nothing? Scan the barcode instead.',
-  'No keyboard for Look up? Tap the keyboard button at the bottom of the screen.',
+  'Use Look up to enter a code, name or full email.',
 ] as const;
 
 const CHECK_ITEM =

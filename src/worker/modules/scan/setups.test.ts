@@ -53,7 +53,12 @@ describe('managed scanner setups', () => {
     const view = ScannerSetupSchema.parse(
       await (await send(`/scan-setups/${first.setupId}`)).json(),
     );
-    expect(view).toMatchObject({ adminSession: true, adminUser: { id: 'admin-1' }, accepts: null });
+    expect(view).toMatchObject({
+      adminSession: true,
+      adminUser: { id: 'admin-1' },
+      accepts: null,
+      settings: { flow: 'auto' },
+    });
     expect((await getScanner(kit.env.DB, first.setupId))?.tokenHash).toBeNull();
   });
 

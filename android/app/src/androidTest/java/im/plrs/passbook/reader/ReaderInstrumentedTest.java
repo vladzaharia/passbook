@@ -85,10 +85,16 @@ public class ReaderInstrumentedTest {
             awaitPage(scenario);
             scenario.onActivity(activity -> {
                 android.widget.EditText input = findInput(activity.getWindow().getDecorView());
-                assertTrue(input.requestFocus()); input.setText("000123");
+                findWeb(activity.getWindow().getDecorView()).evaluateJavascript(
+                    "const original=PassBookNative.onmessage;PassBookNative.onmessage=e=>{const m=JSON.parse(e.data);"
+                    + "if(m.event==='scan')document.body.dataset.hardwareCode=m.value;original(e)};document.body.dataset.captureReady='yes'", null);
+                assertTrue(input.requestFocus());
             });
+            awaitJavascript(scenario, "document.body.dataset.captureReady", "yes");
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            InstrumentationRegistry.getInstrumentation().sendStringSync("000123");
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_ENTER);
+            awaitJavascript(scenario, "document.body.dataset.hardwareCode", "000123");
             awaitJavascript(scenario, "document.querySelector('#read').textContent", "Barcode read");
             scenario.onActivity(activity -> assertEquals("", findInput(activity.getWindow().getDecorView()).getText().toString()));
         }

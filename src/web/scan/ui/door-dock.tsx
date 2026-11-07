@@ -12,7 +12,7 @@ export function DoorDock({
 }: {
   outcome: ScanOutcome | null;
   runtime: ScanRuntime;
-  open: (sheet: 'lookup' | 'code') => void;
+  open: (sheet: boolean) => void;
   onError: (message: string) => void;
 }) {
   const { state, dispatch } = useScanMachine();
@@ -30,8 +30,7 @@ export function DoorDock({
             .toggleTorch()
             .then(setTorch, () => onError('Torch unavailable. Check camera access.'));
         }}
-        onLookUp={() => open('lookup')}
-        onKeyboard={() => open('code')}
+        onLookUp={() => open(true)}
       />
     );
   const override = outcome.overridable && outcome.action;

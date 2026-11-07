@@ -107,7 +107,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     await page.screenshot({ path: 'test-results/scanner-m1-android.png', fullPage: true });
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     await page.getByRole('button', { name: 'Look up', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Name or full email' }).fill('Lookup');
+    await page.getByRole('textbox', { name: 'Name, email, code or ID' }).fill('Lookup');
     await page.getByRole('button', { name: /Lookup Guest/ }).click();
     await expect(page.getByRole('heading', { name: 'Lookup Guest' })).toBeFocused();
     // Picking a person resolves a card; the explicit primary is what checks them in.

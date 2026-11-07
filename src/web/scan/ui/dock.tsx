@@ -1,4 +1,4 @@
-import { Flashlight, Keyboard, Search } from 'lucide-react';
+import { Flashlight, Search } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 
@@ -41,18 +41,16 @@ export function DockButton({
   );
 }
 
-/** The door's thumb row: Look up (grows), torch, keyboard. The camera switch is in the menu. */
+/** The door's thumb row: unified lookup and torch. The camera switch is in the menu. */
 export function DoorThumbRow({
   onLookUp,
   onTorch,
   torchOn,
-  onKeyboard,
   canTorch = true,
 }: {
   onLookUp: () => void;
   onTorch?: () => void;
   torchOn?: boolean;
-  onKeyboard?: () => void;
   canTorch?: boolean;
 }) {
   return (
@@ -71,9 +69,6 @@ export function DoorThumbRow({
           <Flashlight aria-hidden size={22} />
         </DockButton>
       ) : null}
-      <DockButton shape="square" aria-label="Type a code" onClick={onKeyboard}>
-        <Keyboard aria-hidden size={22} />
-      </DockButton>
     </>
   );
 }

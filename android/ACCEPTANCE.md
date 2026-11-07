@@ -11,6 +11,7 @@ Run before calling this release production-ready. Emulator tests cannot establis
 - Hold a device in the field, retap, scan twice rapidly, tap two different passes, remove the phone mid-read, pause/resume, lock/unlock the P400 and navigate during a request. No stale result may grant acceptance.
 - Disconnect Wi-Fi, restart the verifier, return HTTP errors, delay results beyond 15 seconds and send malformed results. Each must remain unverified or show an error.
 - Scan printed and on-screen QR/Code128 barcodes with leading zeroes. Test BCScan keyboard+Enter and the firmware's documented broadcast mode. Compare exact values against the camera flow.
+- Pair each Bluetooth scanner in HID/keyboard mode, record its model and firmware, configure US layout plus Enter, and verify exact leading-zero IDs. Test both the native barcode field and the web lookup field, automatic and review flows, rapid scans, reconnect, sleep/wake and accidental focus on another control. Verify one accepted ledger entry per scan. Test USB HID readers separately.
 - Test real operator sign-in, session expiry and camera permission. Confirm the reader reconnects after login redirects.
 - Run at least 100 mixed scans at the intended venue, recording successful reads, time to decision and retries without recording credentials.
 - Install the signed APK over the prior signed version to verify updates preserve settings. Protect the signing key and test operator offboarding/device revocation on the backend.
