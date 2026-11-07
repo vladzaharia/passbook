@@ -10,6 +10,7 @@ import type { ScanActor } from './guard.ts';
 import { undoWindowMinutes } from './outcome.ts';
 import { orgNameStmt, staffListStmt, userNameStmt } from './repo-session.ts';
 import { styleOf } from './resolve.ts';
+import { scanWorkspace } from './scanning-workspace.ts';
 
 type Format = z.infer<typeof CodeFormatSchema>;
 
@@ -115,6 +116,7 @@ export async function buildSession(
     | { name: string | null; primary_email: string }
     | undefined;
   return {
+    workspace: await scanWorkspace(ctx, actor),
     principal: actor.principal,
     state: stateOf(ctx, actor),
     scanner: actor.scanner

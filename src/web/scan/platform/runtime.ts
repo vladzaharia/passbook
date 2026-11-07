@@ -55,7 +55,7 @@ export async function createRuntime(
     roster: db ? createIdbKeyValue(db, 'roster') : createMemoryKeyValue(),
     meta: db ? createIdbKeyValue(db, 'meta') : createMemoryKeyValue(),
   };
-  const scanner = session.scanner;
+  let scanner = session.scanner;
   try {
     await reconcileScope(localStores, {
       scannerId: scanner?.id ?? 'admin',
@@ -71,6 +71,7 @@ export async function createRuntime(
   }
   const state = initialState(clock.now());
   state.counts = session.counts;
+  state.posture = scanner?.settings.flow === 'choose' ? 'desk' : 'door';
   state.prefs.sound = sound.enabled();
   state.reader.kind =
     scanner?.settings.reader === 'nfc'
@@ -78,7 +79,11 @@ export async function createRuntime(
       : scanner?.settings.reader === 'barcode'
         ? 'barcode'
         : 'none';
-  state.camera = scanner?.settings.reader !== 'none' && scanner !== null ? 'disabled' : 'off';
+  state.camera =
+    session.workspace?.device.effectiveSurface === 'operator' ||
+    (scanner?.settings.reader !== 'none' && scanner !== null)
+      ? 'disabled'
+      : 'off';
   if (scanner) state.unsure = await hydrateUnsure(unsure, scanner.id, clock.now());
   const fields = new WedgeFields();
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
@@ -164,7 +169,7 @@ export async function createRuntime(
   const stopWedge = createWedgeSource({
     clock,
     fields,
-    reader: () => state.reader.kind,
+    reader: () => store.getSnapshot().state.reader.kind,
     onFocus: (focused) => store.dispatch({ type: 'focus', focused }),
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));
@@ -187,7 +192,32 @@ export async function createRuntime(
   window.addEventListener('online', onOnline);
   window.addEventListener('offline', onOnline);
   document.addEventListener('visibilitychange', onVisible);
+  let pending: ScanSession | null = null;
+  const applyPending = () => {
+    const next = pending;
+    const current = store.getSnapshot().state;
+    if (!next?.scanner || current.loop.s !== 'ready' || current.overlay) return;
+    pending = null;
+    const before = current.reader.kind;
+    const wasOperator = session.workspace?.device.effectiveSurface === 'operator';
+    session = next;
+    scanner = next.scanner;
+    if (store.configure(scanner.settings, next.counts) && before !== scanner.settings.reader) {
+      if (scanner.settings.reader !== 'none') camera.stop();
+      else if (current.started && next.workspace?.device.effectiveSurface !== 'operator')
+        camera.start();
+    }
+    if (next.workspace?.device.effectiveSurface === 'operator') {
+      camera.stop();
+      if (store.getSnapshot().state.camera !== 'disabled')
+        store.dispatch({ type: 'camera', status: 'disabled' });
+    } else if (wasOperator && scanner.settings.reader === 'none') {
+      store.dispatch({ type: 'camera', status: 'off' });
+      if (current.started) camera.start();
+    }
+  };
   const unsubscribe = store.subscribe(() => {
+    applyPending();
     const s = store.getSnapshot().state;
     // Keep initialization progressing while session/count updates arrive before the first frame.
     const warming =
@@ -215,6 +245,10 @@ export async function createRuntime(
     emit,
     checkIn: store.checkIn,
     camera,
+    update(next: ScanSession) {
+      pending = next;
+      applyPending();
+    },
     start() {
       store.dispatch({ type: 'start' });
       native?.start();

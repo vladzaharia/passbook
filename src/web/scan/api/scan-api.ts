@@ -26,6 +26,11 @@ import {
   type ScanStaffSignInSchema,
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
+import {
+  type ScanDeviceCapabilities,
+  ScanWorkspaceSchema,
+  SessionActivitySchema,
+} from '../../../shared/contracts/scanning-sessions.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import { ScanApiError } from './errors.ts';
 
@@ -177,6 +182,9 @@ export function createScanApi(deps: ScanApiDeps) {
   }
 
   return {
+    activity: (call?: Call) => request('GET', '/activity', SessionActivitySchema, undefined, call),
+    reportDevice: (capabilities: ScanDeviceCapabilities, call?: Call) =>
+      request('POST', '/device', ScanWorkspaceSchema.nullable(), { capabilities }, call),
     pairPreview: (code: string) =>
       request('POST', '/pair/preview', ScanPairPreviewSchema, { code }),
     pair: (code: string) => request('POST', '/pair', ScanSessionSchema, { code }),

@@ -18,10 +18,24 @@ describe('camera frames', () => {
     expect(accept('A', false, 1_200)).toBe(false);
     expect(accept('A', false, 2_600)).toBe(true);
   });
-  it('caps landscape and portrait frames and retains full frames for long/off-centre codes', () => {
-    expect(frameRegion(3840, 2160, false)).toMatchObject({ width: 640, height: 640 });
-    expect(frameRegion(2160, 3840, true)).toMatchObject({ x: 0, y: 0, width: 540, height: 960 });
-    expect(frameRegion(320, 240, true)).toMatchObject({ width: 320, height: 240 });
+  it('includes every edge on every frame and caps resolution without a central crop', () => {
+    expect(frameRegion(3840, 2160)).toEqual({
+      x: 0,
+      y: 0,
+      w: 3840,
+      h: 2160,
+      width: 1280,
+      height: 720,
+    });
+    expect(frameRegion(2160, 3840)).toEqual({
+      x: 0,
+      y: 0,
+      w: 2160,
+      h: 3840,
+      width: 720,
+      height: 1280,
+    });
+    expect(frameRegion(320, 240)).toEqual({ x: 0, y: 0, w: 320, h: 240, width: 320, height: 240 });
   });
   function setup() {
     const ctx = {
@@ -56,6 +70,7 @@ describe('camera frames', () => {
     t.frames.resume();
     t.frames.resume();
     await vi.advanceTimersByTimeAsync(0);
+    expect(t.ctx.drawImage).toHaveBeenCalledWith(t.video, 0, 0, 1280, 720, 0, 0, 1280, 720);
     expect(t.emit).toHaveBeenCalledWith({ method: 'camera', code: 'A' });
     expect(t.live).toHaveBeenCalledOnce();
     t.frames.pause();

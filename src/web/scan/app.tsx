@@ -40,6 +40,8 @@ export interface ScanAppViewProps {
   /** The dock's thumb row (the door's, the desk's). */
   dockRow?: ReactNode;
   camera?: ReactNode;
+  surface?: 'phone' | 'operator';
+  sidebar?: ReactNode;
   card?: ReactNode;
   buddy?: ReactNode;
   tint?: Tint;
@@ -67,6 +69,8 @@ export function ScanAppView({
   strip = null,
   dockRow,
   camera,
+  surface,
+  sidebar,
   card,
   buddy,
   tint = 'none',
@@ -105,6 +109,8 @@ export function ScanAppView({
   const showDock = screen.s === 'start' || screen.s === 'loop';
   return (
     <ScanShell
+      surface={surface}
+      sidebar={screen.s === 'loop' ? sidebar : null}
       camera={screen.s === 'loop' ? camera : null}
       tint={tint}
       cardMode={screen.s === 'loop' ? 'result' : 'boot'}

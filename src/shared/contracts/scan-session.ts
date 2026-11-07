@@ -16,6 +16,7 @@ import {
   UuidV7Schema,
 } from './scan.ts';
 import { DeviceRoleSchema, ScannerKindSchema } from './scanners.ts';
+import { ScanWorkspaceSchema } from './scanning-sessions.ts';
 
 /** The device API's session, pairing, staff, lookup, recent, summary and offline shapes (SA 4.2). */
 
@@ -28,6 +29,7 @@ const SessionTemplateSchema = z.object({
 });
 const SessionStaffSchema = z.object({ id: IdSchema, name: z.string(), role: ScanRoleSchema });
 export const ScanSessionSchema = z.object({
+  workspace: ScanWorkspaceSchema.nullable().optional(),
   principal: z.enum(['scanner', 'admin']),
   state: z.enum(['ready', 'staff_required', 'not_open', 'closed', 'unassigned']),
   scanner: z

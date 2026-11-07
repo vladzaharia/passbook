@@ -1,0 +1,139 @@
+import { Link } from '@tanstack/react-router';
+import { ArrowUpRight, Copy, MonitorSmartphone, Radio, ScanLine } from 'lucide-react';
+import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  DropdownMenuItem,
+  EmptyState,
+  ErrorState,
+  MoreMenu,
+  Skeleton,
+  StatusPill,
+} from '@/web/ui/index.ts';
+import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
+import { useScanningSessions } from './api.ts';
+import { sessionAccepts, sessionRuleLabel } from './draft.ts';
+
+export function SessionsTab({
+  onNew,
+  onDuplicate,
+}: {
+  onNew: () => void;
+  onDuplicate: (s: ScanningSession) => void;
+}) {
+  const { orgId } = useOrgScope();
+  const query = useScanningSessions(orgId);
+  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
+  if (query.isPending)
+    return (
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-52" />
+        ))}
+      </div>
+    );
+  if (!items.length)
+    return (
+      <EmptyState
+        art="scanner"
+        title="No scanning sessions"
+        description="Set shared admission rules, then pair scanners and displays."
+        action={<Button onClick={onNew}>New scanning session</Button>}
+      />
+    );
+  return (
+    <div className="grid gap-6">
+      <div className="flex flex-wrap gap-2 text-sm text-fg-muted">
+        <Badge>
+          <Radio aria-hidden />
+          {items.filter((s) => s.status === 'active').length} running
+        </Badge>
+        <Badge>
+          <MonitorSmartphone aria-hidden />
+          {items.reduce((n, s) => n + s.onlineCount, 0)} devices online
+        </Badge>
+      </div>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        {items.map((s) => (
+          <Card key={s.id} className="overflow-hidden">
+            <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  <Link
+                    className="inline-flex items-center gap-2 text-fg-strong hover:text-accent-fg"
+                    to="/admin/scanning/sessions/$sessionId"
+                    params={{ sessionId: s.id }}
+                  >
+                    {s.name}
+                    <ArrowUpRight className="size-4 shrink-0" aria-hidden />
+                  </Link>
+                </h2>
+                <p className="mt-1 truncate text-xs text-fg-muted">{s.orgName}</p>
+              </div>
+              <MoreMenu>
+                <DropdownMenuItem onSelect={() => onDuplicate(s)}>
+                  <Copy aria-hidden />
+                  Duplicate session
+                </DropdownMenuItem>
+              </MoreMenu>
+            </div>
+            <CardBody className="grid gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill
+                  status={s.status}
+                  tone={
+                    s.status === 'active'
+                      ? 'success'
+                      : s.status === 'paused'
+                        ? 'warning'
+                        : 'neutral'
+                  }
+                >
+                  {s.status === 'active' ? 'Running' : s.status === 'paused' ? 'Paused' : 'Ended'}
+                </StatusPill>
+                <ModePill mode={s.mode} />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Metric value={s.today} label="Today" />
+                <Metric value={s.deviceCount} label="Devices" />
+                <Metric value={s.onlineCount} label="Online" />
+              </div>
+              <p className="text-sm text-fg-muted">
+                {sessionAccepts(s)} · {sessionRuleLabel(s)}
+              </p>
+              <Button asChild variant="outline" iconStart={<ScanLine aria-hidden />}>
+                <a
+                  href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
+                >
+                  Scan as Admin
+                </a>
+              </Button>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+      {query.hasNextPage ? (
+        <Button
+          variant="outline"
+          loading={query.isFetchingNextPage}
+          onClick={() => void query.fetchNextPage()}
+        >
+          Load more sessions
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+export function Metric({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <p className="text-2xl font-semibold tabular-nums text-fg-strong">{value}</p>
+      <p className="text-xs text-fg-muted">{label}</p>
+    </div>
+  );
+}

@@ -1,5 +1,4 @@
 import type { z } from 'zod';
-import type { TemplateManifest } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import {
   type CreateScannerSchema,
@@ -13,17 +12,17 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { createPassRow } from '../passes/service.ts';
 import { DEFAULT_SETTINGS, dayStartMs, parseSettings, scannerDto } from './dto-console.ts';
+import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
 import { createPairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
+import { syncStandaloneModeStmt, syncStandaloneSessionStmt } from './repo-legacy-session.ts';
 import {
   addTemplatesStmts,
   type ConsoleScannerRow,
   countToday,
   eventModeOf,
-  firstTemplateManifest,
   getConsoleScanner,
   insertScannerStmt,
   listConsoleScanners,
@@ -32,8 +31,10 @@ import {
   setModeStmt,
   updateScannerStmt,
 } from './repo-scanners.ts';
-import { countOrgTemplates, eventTemplateIds } from './repo-scope.ts';
+import { releaseAdminDeviceStmt } from './repo-scanning-devices.ts';
+import { countOrgTemplates } from './repo-scope.ts';
 import { adminSetupId, setupMeta, watchedScanners, watchOf } from './repo-setups.ts';
+import { enrollmentStmts } from './scanning-enrollment.ts';
 
 type Accepts = z.infer<typeof CreateScannerSchema>['accepts'];
 
@@ -139,6 +140,7 @@ export async function createScanner(
         now,
       }),
       ...addTemplatesStmts(db, id, accepts.templateIds),
+      ...enrollmentStmts(ctx, id, userId, mode, { ...input, deviceRole: 'scan' }, settings),
       auditStmt(db, ctx, {
         orgId: input.orgId,
         actorType: 'user',
@@ -165,6 +167,7 @@ export async function updateScanner(
 ) {
   const db = ctx.env.DB;
   const row = await loadScanner(ctx, id);
+  await assertStandaloneSession(ctx, row.orgId, id);
   const accepts = input.accepts
     ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts)
     : null;
@@ -185,6 +188,7 @@ export async function updateScanner(
         now,
       ),
       ...(accepts ? replaceTemplatesStmts(db, id, accepts.templateIds) : []),
+      syncStandaloneSessionStmt(db, row.orgId, id, now),
       auditStmt(db, ctx, {
         orgId: row.orgId,
         actorType: 'user',
@@ -218,6 +222,7 @@ export async function changeMode(
   const db = ctx.env.DB;
   const row = await loadScanner(ctx, id);
   if (row.mode === input.mode) return scannerView(ctx, id);
+  await assertStandaloneSession(ctx, row.orgId, id);
   const meta = await setupMeta(db, row.orgId, id);
   if (meta?.admin_user_id && (await adminSetupId(db, row.orgId, input.mode, meta.admin_user_id)))
     throw new ConflictError(
@@ -242,6 +247,8 @@ export async function changeMode(
   try {
     await batch(db, [
       setModeStmt(db, id, input.mode, detach, ctx.clock.now()),
+      syncStandaloneModeStmt(db, row.orgId, id, input.mode),
+      syncStandaloneSessionStmt(db, row.orgId, id, ctx.clock.now()),
       auditStmt(db, ctx, {
         orgId: row.orgId,
         actorType: 'user',
@@ -266,6 +273,7 @@ export async function revokeScanner(ctx: ServiceContext, userId: string, id: str
   if (row.revokedAt === null)
     await batch(db, [
       revokeStmt(db, id, ctx.clock.now()),
+      releaseAdminDeviceStmt(db, row.orgId, id),
       auditStmt(db, ctx, {
         orgId: row.orgId,
         actorType: 'user',
@@ -279,39 +287,4 @@ export async function revokeScanner(ctx: ServiceContext, userId: string, id: str
   return scannerView(ctx, id);
 }
 
-/** One test pass of the first accepted template, filled from its sample inputs, with no holder. */
-export async function createSamplePass(ctx: ServiceContext, userId: string, id: string) {
-  const db = ctx.env.DB;
-  const row = await loadScanner(ctx, id);
-  if (row.mode !== 'test')
-    throw new ValidationError('Sample passes are for test scanners.', [], 'SAMPLE_TEST_ONLY');
-  const templateIds = row.eventId
-    ? await eventTemplateIds(db, row.orgId, row.eventId)
-    : row.templateIds;
-  const template = templateIds.length
-    ? await firstTemplateManifest(db, row.orgId, templateIds)
-    : null;
-  if (!template)
-    throw new ValidationError('Choose what this scanner accepts first.', [], 'SCANNER_UNASSIGNED');
-  const manifest = JSON.parse(template.manifest) as TemplateManifest;
-  const pass = await createPassRow(ctx, {
-    orgId: row.orgId,
-    templateId: template.id,
-    input: manifest.sample,
-    source: 'manual',
-    mode: 'test',
-    actor: { type: 'user', id: userId },
-  });
-  await batch(db, [
-    auditStmt(db, ctx, {
-      orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: 'scanner.sample_pass',
-      targetType: 'scanner',
-      targetId: id,
-      detail: { passId: pass.id, templateId: template.id },
-    }),
-  ]);
-  return { passId: pass.id, templateId: template.id };
-}
+export { createSamplePass } from './sample-pass.ts';

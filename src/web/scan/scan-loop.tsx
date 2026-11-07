@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
+import { errorMessage } from '../lib/errors.ts';
 import { formatTime } from '../lib/format.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
@@ -21,6 +22,10 @@ import type { Announcement } from './ui/live-announcer.tsx';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
 import './buddy/beats.css';
+
+const OperatorPanel = lazy(() =>
+  import('./operator/operator-panel.tsx').then((m) => ({ default: m.OperatorPanel })),
+);
 
 export function ScanLoop({
   runtime,
@@ -92,10 +97,15 @@ export function ScanLoop({
     }
   }, [session, s, counts.configRev, refetch]);
   const open = (next: boolean) => {
+    if (next && operator) {
+      document.querySelector<HTMLInputElement>('[data-operator-search]')?.focus();
+      return;
+    }
     dispatch({ type: 'overlay', open: next ? 'lookup' : null });
     setSheet(next);
   };
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
+  const operator = session.workspace?.device.effectiveSurface === 'operator';
   const menu = (
     <ScanMenu
       sound={s.prefs.sound}
@@ -103,6 +113,11 @@ export function ScanLoop({
       holdResults={s.prefs.holdResults}
       onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
       camera={cameraChoice}
+      cameraAvailable={!operator}
+      canSwitchStaff={Boolean(session.staff)}
+      onSwitchStaff={() =>
+        void api.staffSignOut().then(refetch, (error) => setCameraError(errorMessage(error)))
+      }
       hasWide={runtime.camera.hasWide()}
       onCamera={(choice) => {
         setCameraChoice(choice);
@@ -125,6 +140,14 @@ export function ScanLoop({
   return (
     <>
       <ScanAppView
+        surface={operator ? 'operator' : 'phone'}
+        sidebar={
+          operator ? (
+            <Suspense fallback={null}>
+              <OperatorPanel api={api} runtime={runtime} session={session} />
+            </Suspense>
+          ) : null
+        }
         screen={
           !s.started
             ? {
@@ -175,14 +198,16 @@ export function ScanLoop({
           ),
         }}
         camera={
-          <CameraLayer
-            videoRef={videoRef}
-            status={s.camera}
-            checking={l.s === 'checking' || l.s === 'applying'}
-            result={Boolean(result) || l.s === 'paused' || Boolean(s.block)}
-            onRetry={runtime.camera.start}
-            reader={s.reader.kind !== 'none'}
-          />
+          operator ? null : (
+            <CameraLayer
+              videoRef={videoRef}
+              status={s.camera}
+              checking={l.s === 'checking' || l.s === 'applying'}
+              result={Boolean(result) || l.s === 'paused' || Boolean(s.block)}
+              onRetry={runtime.camera.start}
+              reader={s.reader.kind !== 'none'}
+            />
+          )
         }
         card={
           s.block ? (

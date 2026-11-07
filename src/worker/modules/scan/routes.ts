@@ -13,6 +13,11 @@ import {
   ScanSessionSchema,
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
+import {
+  ReportScanDeviceSchema,
+  ScanWorkspaceSchema,
+  SessionActivitySchema,
+} from '../../../shared/contracts/scanning-sessions.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -28,6 +33,7 @@ import { lookup } from './lookup.ts';
 import { canShowMemberPhoto } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
+import { reportScanDevice, sessionActivityFor } from './scanning-workspace.ts';
 import { buildSession } from './session.ts';
 import { undo } from './undo.ts';
 
@@ -42,6 +48,7 @@ const AssetParams = z.object({
 });
 
 scanRoutes.use('/session', requireScanActor({ staffOptional: true, screens: true }));
+scanRoutes.use('/device', requireScanActor({ staffOptional: true, screens: true }));
 for (const path of [
   '/resolve',
   '/actions',
@@ -51,6 +58,7 @@ for (const path of [
   '/passes/*',
   '/lookup',
   '/scans/*',
+  '/activity',
 ])
   scanRoutes.use(path, requireScanActor());
 scanRoutes.use('*', async (c, next) => {
@@ -83,6 +91,36 @@ register(
   scanRoutes,
   'scan',
   {
+    method: 'get',
+    path: '/activity',
+    summary: 'Recent activity on this scanning session',
+    response: SessionActivitySchema,
+  },
+  async (c) => {
+    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c)));
+  },
+);
+
+register(
+  scanRoutes,
+  'scan',
+  {
+    method: 'post',
+    path: '/device',
+    summary: 'Report screen and input capabilities',
+    body: ReportScanDeviceSchema,
+    response: ScanWorkspaceSchema.nullable(),
+  },
+  async (c) =>
+    c.json(
+      await reportScanDevice(serviceContext(c), scanActorOf(c), c.req.valid('json').capabilities),
+    ),
+);
+
+register(
+  scanRoutes,
+  'scan',
+  {
     method: 'post',
     path: '/resolve',
     summary: 'Read a code',
@@ -94,7 +132,7 @@ register(
       actor = scanActorOf(c),
       req = c.req.valid('json');
     const out = await resolveOutcome(ctx, actor, req);
-    publishScan(ctx, actor, out, req.input.method);
+    publishScan(ctx, actor, out, req.input.method, false, 'code' in req.input);
     return c.json(out);
   },
 );
@@ -114,7 +152,7 @@ register(
       actor = scanActorOf(c),
       req = c.req.valid('json');
     const out = await act(ctx, actor, req);
-    publishScan(ctx, actor, out, req.input.method);
+    publishScan(ctx, actor, out, req.input.method, false, 'code' in req.input);
     return c.json(out);
   },
 );

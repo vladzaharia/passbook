@@ -95,6 +95,8 @@ export async function installCamera(
         index: -1,
         rotation: 0,
         portrait: false,
+        x: 0.5,
+        y: 0.5,
         denied: options.permissionDenied ?? false,
         attempts: 0,
         frames: 0,
@@ -146,7 +148,13 @@ export async function installCamera(
             1.6,
           );
           ctx.save();
-          ctx.translate(canvas.width / 2, canvas.height / 2);
+          const sideways = state.rotation % 180 !== 0;
+          const halfW = ((sideways ? image.height : image.width) * scale) / 2;
+          const halfH = ((sideways ? image.width : image.height) * scale) / 2;
+          ctx.translate(
+            Math.max(halfW + 8, Math.min(canvas.width - halfW - 8, canvas.width * state.x)),
+            Math.max(halfH + 8, Math.min(canvas.height - halfH - 8, canvas.height * state.y)),
+          );
           ctx.rotate((state.rotation * Math.PI) / 180);
           ctx.drawImage(
             image,
@@ -169,16 +177,23 @@ export async function installCamera(
   );
 }
 
-export async function showBarcode(page: Page, index: number, rotation = 0, portrait = false) {
+export async function showBarcode(
+  page: Page,
+  index: number,
+  rotation = 0,
+  portrait = false,
+  position = { x: 0.5, y: 0.5 },
+) {
   await page.evaluate(
-    ({ index, rotation, portrait }) => {
+    ({ index, rotation, portrait, position }) => {
       Object.assign((window as unknown as { cameraTest: object }).cameraTest, {
         index,
         rotation,
         portrait,
+        ...position,
       });
     },
-    { index, rotation, portrait },
+    { index, rotation, portrait, position },
   );
 }
 

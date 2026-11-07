@@ -22,6 +22,7 @@ import { managedAdminActor } from './admin-setup.ts';
 import { resolvedRowOf } from './auth-store.ts';
 import { getScanner } from './repo-device.ts';
 import { eventTemplateIds, readScannerScope } from './repo-scope.ts';
+import { bindScanningSession } from './scanning-workspace.ts';
 import { rawScopeOf, resolveAdminScope } from './scope.ts';
 import { bindingExpired, boundStaff } from './staff-binding.ts';
 
@@ -121,30 +122,46 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       if (terminal) withRole(actor, null);
       else {
         withRole(actor, await boundStaff(ctx, row, scope.staff));
-        if (actor.role === null && !options.staffOptional)
-          throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
       }
       c.set('scanActor', actor);
     } else {
       const session = credential.admin;
       await csrfGuard(c, session);
-      const mode = modeFromRequest(c);
-      const scope = await resolveAdminScope(c, rawScope, mode);
       const setupId =
         rawScope && typeof rawScope === 'object' && 'setupId' in rawScope
           ? (rawScope as { setupId?: string }).setupId
           : undefined;
+      const managedRow = setupId ? await getScanner(c.env.DB, setupId) : null;
+      const mode = managedRow?.mode ?? modeFromRequest(c);
+      const scope = await resolveAdminScope(c, rawScope, mode);
       const actor = setupId
         ? await managedAdminActor(ctx, session, mode, scope.orgId, setupId)
         : adminActor(session, mode, scope);
       if (!setupId && scope.event && scope.templateIds.length === 0)
         actor.templateIds = await eventTemplateIds(c.env.DB, scope.orgId, scope.event.id);
       c.set('auth', { ...session, mode });
+      actor.platformSessionId = session.sessionId;
       await admit(c, actor.orgId, actor.actorKey);
       if (actor.scanner && actor.scanner.deviceRole !== 'scan' && !options.screens)
         throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
       c.set('scanActor', actor);
     }
+    const actor = scanActorOf(c);
+    await bindScanningSession(ctx, actor);
+    if (actor.principal === 'scanner') withRole(actor, actor.staff);
+    if (actor.role === null && !options.staffOptional)
+      throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
+    if (
+      actor.scanningSession &&
+      actor.scanningSession.status !== 'active' &&
+      c.req.method === 'POST' &&
+      !c.req.path.endsWith('/device') &&
+      !c.req.path.endsWith('/unpair')
+    )
+      throw new ForbiddenError(
+        'This scanning session is paused. Resume it in Scanning.',
+        'SCANNING_SESSION_PAUSED',
+      );
     await next();
   });
 }

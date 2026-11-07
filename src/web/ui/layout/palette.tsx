@@ -220,7 +220,7 @@ export function AdminPalette({
                 },
                 {
                   id: 'new-scanner',
-                  label: 'New scanner',
+                  label: 'New scanning session',
                   icon: ENTITY.scanner.icon,
                   onSelect: go('/admin/scanning', { new: '1' }),
                 },
