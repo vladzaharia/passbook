@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { pairingFixture, scannerFixture } from '../test-fixtures.ts';
-import { managedSession } from './fixtures.test-support.ts';
+import { managedSession } from './test-fixtures.ts';
 
 function setup() {
   let session = structuredClone(managedSession);

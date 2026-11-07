@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { managedSession } from '../../admin/scanning/sessions/fixtures.test-support.ts';
+import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
 import { CoreProviders } from '../../lib/core-providers.tsx';
 import { ApiError } from '../../lib/errors.ts';
 import { json, sessionFixture as platformSession, stubFetch } from '../../lib/test-utils.tsx';

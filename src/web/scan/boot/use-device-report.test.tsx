@@ -1,6 +1,6 @@
 import { fireEvent, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { managedSession } from '../../admin/scanning/sessions/fixtures.test-support.ts';
+import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
 import '../../lib/test-utils.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { sessionFixture } from './session.test-support.ts';

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, renderApp } from '@/web/lib/test-utils.tsx';
 
-import { managedSession as session } from './fixtures.test-support.ts';
+import { managedSession as session } from './test-fixtures.ts';
 
 const handlers = {
   '/api/v1/scanning-sessions/session-1': () => json(session),

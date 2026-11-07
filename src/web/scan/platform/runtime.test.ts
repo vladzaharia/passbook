@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../lib/test-utils.tsx';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import { managedSession } from '../../admin/scanning/sessions/fixtures.test-support.ts';
+import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { sessionFixture } from '../boot/session.test-support.ts';
 import { fixtureCounts } from '../machine/fixtures.test-support.ts';
