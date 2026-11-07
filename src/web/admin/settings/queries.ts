@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SettingsListSchema } from '@/shared/contracts/settings.ts';
+import { SettingsListSchema } from '@/shared/contracts/settings-list.ts';
 import { api } from '@/web/lib/api.ts';
 
 export const settingsKey = (scope: string) => ['settings', scope] as const;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ScanLookupResultSchema } from '../../../shared/contracts/scan-session.ts';
+import { strictEmail } from '../../../shared/email.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { ScanApiError } from '../api/errors.ts';
 import type { ScanApi } from '../api/scan-api.ts';
@@ -9,7 +10,7 @@ import { scanId } from '../platform/id.ts';
 
 type Results = z.infer<typeof ScanLookupResultSchema>;
 const searchable = (q: string) =>
-  q.length >= 3 && q.length <= 120 && (!q.includes('@') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q));
+  q.length >= 3 && q.length <= 120 && (!q.includes('@') || strictEmail(q) !== null);
 
 export function useLookup(
   api: ScanApi,
