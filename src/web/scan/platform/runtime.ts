@@ -3,8 +3,8 @@ import { getMode } from '../../lib/mode.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
 import { createCamera } from '../camera/controller.ts';
-import { connectAndroidReader } from '../input/android-reader.ts';
 import { createBus } from '../input/bus.ts';
+import { connectNativeReader } from '../input/native-reader.ts';
 import type { RawRead } from '../input/types.ts';
 import { createWedgeSource, WedgeFields } from '../input/wedge-source.ts';
 import { decodeActive } from '../machine/derive.ts';
@@ -82,7 +82,7 @@ export async function createRuntime(
   if (scanner) state.unsure = await hydrateUnsure(unsure, scanner.id, clock.now());
   const fields = new WedgeFields();
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
-  let native: ReturnType<typeof connectAndroidReader> = null;
+  let native: ReturnType<typeof connectNativeReader> = null;
   let wake: WakeLockSentinel | null = null;
   const camera = createCamera(
     video,
@@ -152,7 +152,7 @@ export async function createRuntime(
     const loop = store.getSnapshot().state.loop;
     return 'input' in loop && loop.input.id === input.id ? input.id : null;
   };
-  native = connectAndroidReader({
+  native = connectNativeReader({
     read: emit,
     cancelled(id) {
       const l = store.getSnapshot().state.loop;
@@ -160,6 +160,8 @@ export async function createRuntime(
         store.dispatch({ type: 'fail', key: l.key, error: 'timeout' });
     },
     unsupported: () => notice('NFC verification is unavailable. Scan the barcode.', false),
+    capabilities: (value) =>
+      window.dispatchEvent(new CustomEvent('passbook:native-capabilities', { detail: value })),
   });
   const stopWedge = createWedgeSource({
     clock,
@@ -215,6 +217,9 @@ export async function createRuntime(
     emit,
     checkIn: store.checkIn,
     camera,
+    readNfc() {
+      native?.readNfc();
+    },
     start() {
       store.dispatch({ type: 'start' });
       native?.start();

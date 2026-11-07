@@ -10,6 +10,7 @@ const Scan = z.discriminatedUnion('source', [
     source: z.literal('barcode'),
     id: z.string().min(1).max(100),
     value: z.string().min(1).max(2048),
+    method: z.enum(['wedge', 'nfc']).optional(),
   }),
   z.object({
     source: z.literal('apple-vas'),
@@ -19,11 +20,12 @@ const Scan = z.discriminatedUnion('source', [
 ]);
 
 /** Native acknowledgement is emitted only after this exact read receives a server verdict. */
-export function connectAndroidReader(
+export function connectNativeReader(
   options: {
     read(read: RawRead): string | null;
     cancelled(inputId: string): void;
     unsupported(): void;
+    capabilities?(value: Record<string, unknown>): void;
   },
   bridge = (globalThis as { PassBookNative?: Bridge }).PassBookNative,
 ) {
@@ -42,6 +44,11 @@ export function connectAndroidReader(
       return;
     }
     if (message?.version !== 1) return;
+    if (message.event === 'ready' || message.event === 'capabilities') {
+      const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
+      if (capabilities.success) options.capabilities?.(capabilities.data);
+      return;
+    }
     if (message.event === 'timeout' || message.event === 'cancelled') {
       cancel();
       return;
@@ -56,7 +63,7 @@ export function connectAndroidReader(
       options.unsupported();
       return;
     }
-    const inputId = options.read({ method: 'wedge', code: scan.value });
+    const inputId = options.read({ method: scan.method ?? 'wedge', code: scan.value });
     if (!inputId) send({ op: 'result', id: scan.id, outcome: 'error' });
     else pending = { nativeId: scan.id, inputId };
   };
@@ -64,13 +71,14 @@ export function connectAndroidReader(
   send({ op: 'hello' });
   send({ op: 'stop' });
   return {
+    start: () => send({ op: 'start' }),
     result(inputId: string, outcome: 'accepted' | 'rejected' | 'error') {
       if (pending?.inputId !== inputId) return false;
       send({ op: 'result', id: pending.nativeId, outcome });
       pending = null;
       return true;
     },
-    start: () => send({ op: 'start' }),
+    readNfc: () => send({ op: 'nfcRead' }),
     stop: () => {
       cancel();
       send({ op: 'stop' });
