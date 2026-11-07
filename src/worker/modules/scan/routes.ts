@@ -132,7 +132,7 @@ register(
       actor = scanActorOf(c),
       req = c.req.valid('json');
     const out = await resolveOutcome(ctx, actor, req);
-    publishScan(ctx, actor, out, req.input.method);
+    publishScan(ctx, actor, out, req.input.method, false, 'code' in req.input);
     return c.json(out);
   },
 );
@@ -152,7 +152,7 @@ register(
       actor = scanActorOf(c),
       req = c.req.valid('json');
     const out = await act(ctx, actor, req);
-    publishScan(ctx, actor, out, req.input.method);
+    publishScan(ctx, actor, out, req.input.method, false, 'code' in req.input);
     return c.json(out);
   },
 );

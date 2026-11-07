@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
+import { errorMessage } from '../lib/errors.ts';
 import { formatTime } from '../lib/format.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
@@ -113,6 +114,10 @@ export function ScanLoop({
       onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
       camera={cameraChoice}
       cameraAvailable={!operator}
+      canSwitchStaff={Boolean(session.staff)}
+      onSwitchStaff={() =>
+        void api.staffSignOut().then(refetch, (error) => setCameraError(errorMessage(error)))
+      }
       hasWide={runtime.camera.hasWide()}
       onCamera={(choice) => {
         setCameraChoice(choice);

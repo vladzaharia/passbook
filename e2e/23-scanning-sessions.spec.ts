@@ -1,7 +1,13 @@
-import { type BrowserContext, expect, test } from '@playwright/test';
+import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { apiAs, createPass, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
 import { readSeed } from './helpers/seed.ts';
+
+async function hardwareCode(page: Page, value: string) {
+  // Real HID readers send Shift for uppercase keys; Playwright typing alone omits it.
+  for (const char of value) await page.keyboard.press(/[A-Z]/.test(char) ? `Shift+${char}` : char);
+  await page.keyboard.press('Enter');
+}
 
 test('shared sessions pair multiple devices, configure live, and keep lookup and customer display private', async ({
   browser,
@@ -43,7 +49,11 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await add.getByRole('button', { name: 'Create pairing code', exact: true }).click();
     const operator = await (await creation).json();
     await expect(page.getByRole('dialog', { name: `Pair ${deviceName}` })).toBeVisible();
-    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: `Pair ${deviceName}` })
+      .getByRole('button', { name: 'Close', exact: true })
+      .first()
+      .click();
     const display = await api.send('POST', `/api/v1/scanning-sessions/${sessionId}/devices`, {
       name: uid('Visitor display'),
       surface: 'customer',
@@ -80,14 +90,18 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     const pass = await createPass(api, orgId, { holder: 'Shared Session Member', memberId });
     const field = desk.getByRole('textbox', { name: 'Name, email, code or ID', exact: true });
     await field.fill('Shared Session Member');
+    const previewAsset = desk.waitForResponse((r) =>
+      r.url().includes(`/scan/passes/${pass.id}/assets/`),
+    );
     await desk.getByRole('button', { name: /Shared Session Member/ }).click();
+    expect((await previewAsset).status()).toBe(200);
     const ledger = async () =>
       (await api.get(`/api/v1/scans?orgId=${orgId}&passId=${pass.id}`)).items;
     expect(await ledger()).toHaveLength(0);
     await desk.getByRole('button', { name: 'Back', exact: true }).click();
     await field.fill('');
-    await field.pressSequentially(memberId, { delay: 5 });
-    await field.press('Enter');
+    await field.focus();
+    await hardwareCode(desk, memberId);
     await expect(desk.getByTestId('scan-result')).toContainText('Checked in');
     await expect(customer.getByRole('heading', { name: 'Checked in', exact: true })).toBeVisible();
     await expect(customer.getByTestId('scan-live')).not.toContainText('Shared Session Member');
@@ -99,6 +113,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       .getByRole('textbox', { name: 'Name, email, code or ID', exact: true })
       .press('Enter');
     await expect(phone.getByTestId('scan-result')).toContainText('Checked out');
+    await expect(customer.getByRole('heading', { name: 'Checked out', exact: true })).toBeVisible();
     await expect.poll(async () => (await ledger()).length).toBe(2);
     await phone.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(page.getByTestId('session-device').filter({ hasText: deviceName })).toContainText(
@@ -135,8 +150,8 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     // Configuration refresh keeps this device started. A hardware scanner follows review mode.
     await expect(desk.getByTestId('scan-start')).toHaveCount(0);
     await desk.waitForResponse((r) => r.url().includes('/scan/session') && r.status() === 200);
-    await field.pressSequentially(memberId, { delay: 5 });
-    await field.press('Enter');
+    await field.focus();
+    await hardwareCode(desk, memberId);
     await expect(desk.getByTestId('scan-result')).toContainText('Shared Session Member');
     expect(await ledger()).toHaveLength(2);
     await desk.getByRole('button', { name: 'Check in', exact: true }).click();

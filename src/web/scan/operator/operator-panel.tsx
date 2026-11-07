@@ -71,7 +71,7 @@ export function OperatorPanel({
           open
           api={api}
           allowPeople={session.scanner?.settings.lookup ?? false}
-          orgId={session.scanner?.orgId}
+          orgId={session.principal === 'admin' ? session.scanner?.orgId : undefined}
           timeZone={session.scanner?.timeZone}
           onEditing={editing}
           onCode={(code) => {

@@ -106,7 +106,10 @@ export function useScanSession(
     const fail = toFail(query.error);
     if (isApiError(query.error) && query.error.code === 'SCAN_SCOPE_REQUIRED')
       phase = 'scope_required';
-    else if (isApiError(query.error) && query.error.code === 'SCANNER_UNAUTHENTICATED')
+    else if (
+      isApiError(query.error) &&
+      ['SCANNER_UNAUTHENTICATED', 'FORBIDDEN'].includes(query.error.code)
+    )
       phase = 'unpaired';
     else if (
       fail.error === 'revoked' ||

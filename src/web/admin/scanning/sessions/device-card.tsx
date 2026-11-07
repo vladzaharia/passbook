@@ -16,9 +16,12 @@ export function DeviceCard({
   const now = useNow();
   const overrides = Object.keys(device.overrides).length;
   return (
-    <Card className={device.revoked ? 'opacity-60' : undefined} data-testid="session-device">
-      <CardBody className="grid h-full gap-4">
-        <div className="flex items-start gap-3">
+    <Card
+      className={`min-w-0 overflow-hidden ${device.revoked ? 'opacity-60' : ''}`}
+      data-testid="session-device"
+    >
+      <CardBody className="grid h-full min-w-0 grid-cols-1 gap-4">
+        <div className="flex min-w-0 items-start gap-3">
           <span className="rounded-lg bg-state-hover-tint p-3">
             <Icon aria-hidden className="size-6 text-fg-muted" />
           </span>
@@ -58,7 +61,7 @@ export function DeviceCard({
           </StatusPill>
           {device.signIn === 'admin' ? <Badge>Admin · {device.adminName}</Badge> : null}
         </div>
-        <div className="grid gap-1 text-xs text-fg-muted">
+        <div className="grid min-w-0 gap-1 text-xs text-fg-muted">
           <p>
             {device.capabilities
               ? `${device.capabilities.width} × ${device.capabilities.height}${device.capabilities.touch ? ' · Touch' : ''}`

@@ -240,18 +240,25 @@ test('Scan as Admin is optional and reuses this browser’s device in a shared s
     await page.getByTestId('scan-start').click();
     await page.getByRole('button', { name: 'Look up', exact: true }).click();
     await page.getByRole('textbox', { name: 'Name, email, code or ID' }).fill('Admin Action');
+    const asset = page.waitForResponse((r) =>
+      r.url().includes(`/scan/passes/${member.id}/assets/`),
+    );
     await page.getByRole('button', { name: /Admin Action Guest/ }).click();
+    const loaded = await asset;
+    expect(loaded.status()).toBe(200);
+    expect(new URL(loaded.url()).searchParams.get('setupId')).toBe(first);
     await page.getByRole('button', { name: 'Check in', exact: true }).click();
     await expect(page.getByTestId('scan-result')).toContainText('Checked in');
     const scans = await api.get(`/api/v1/scans?orgId=${org.id}&passId=${member.id}`);
     expect(scans.items).toMatchObject([{ scannerId: first, outcome: 'ok' }]);
     await page.goto(`/admin/scanning/sessions/${parent.id}?deviceId=${first}`);
-    await expect(
-      page.getByRole('heading', { name: parent.name, exact: true, level: 1 }),
-    ).toBeVisible();
     const configuration = page.getByRole('dialog', { name: `Configure ${setup.name}` });
     await expect(configuration).toContainText('Administrator sign-in');
     await expect(configuration.getByRole('button', { name: /^Pair/ })).toHaveCount(0);
+    await configuration.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: parent.name, exact: true, level: 1 }),
+    ).toBeVisible();
   } finally {
     await context.close();
     await api.dispose();

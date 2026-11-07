@@ -5,6 +5,7 @@ import type { ScanApi } from './api/scan-api.ts';
 import { WedgeFieldsContext } from './input/wedge-field.tsx';
 import type { ScanState } from './machine/types.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
+import { ScanAssetScope } from './platform/asset-scope.ts';
 import { createRuntime, type ScanRuntime } from './platform/runtime.ts';
 
 const ScanLoop = lazy(() => import('./scan-loop.tsx').then((m) => ({ default: m.ScanLoop })));
@@ -61,33 +62,45 @@ export function Paired({
   }, [runtime, onMachine]);
   if (!runtime) return <ScanShell cardMode="boot" card={<BootCard title="Loading scanner…" />} />;
   return (
-    <ScanStoreContext.Provider value={runtime.store}>
-      <WedgeFieldsContext.Provider value={runtime.fields}>
-        <Suspense fallback={null}>
-          <ScanLoop
-            runtime={runtime}
-            session={session}
-            api={api}
-            videoRef={videoRef}
-            announcement={announcement}
-            refetch={refetch}
-            leave={() => {
-              if (session.principal === 'admin') {
-                location.assign('/admin/scanning');
-                return;
-              }
-              void runtime
-                .clear()
-                .then(() => api.signOut())
-                .then(
-                  () => location.reload(),
-                  (error) =>
-                    setAnnouncement({ text: errorMessage(error), polite: false, n: Date.now() }),
-                );
-            }}
-          />
-        </Suspense>
-      </WedgeFieldsContext.Provider>
-    </ScanStoreContext.Provider>
+    <ScanAssetScope.Provider
+      value={
+        session.principal === 'admin' && session.scanner
+          ? {
+              orgId: session.scanner.orgId,
+              setupId: session.scanner.id,
+              timeZone: session.scanner.timeZone,
+            }
+          : undefined
+      }
+    >
+      <ScanStoreContext.Provider value={runtime.store}>
+        <WedgeFieldsContext.Provider value={runtime.fields}>
+          <Suspense fallback={null}>
+            <ScanLoop
+              runtime={runtime}
+              session={session}
+              api={api}
+              videoRef={videoRef}
+              announcement={announcement}
+              refetch={refetch}
+              leave={() => {
+                if (session.principal === 'admin') {
+                  location.assign('/admin/scanning');
+                  return;
+                }
+                void runtime
+                  .clear()
+                  .then(() => api.signOut())
+                  .then(
+                    () => location.reload(),
+                    (error) =>
+                      setAnnouncement({ text: errorMessage(error), polite: false, n: Date.now() }),
+                  );
+              }}
+            />
+          </Suspense>
+        </WedgeFieldsContext.Provider>
+      </ScanStoreContext.Provider>
+    </ScanAssetScope.Provider>
   );
 }

@@ -10,8 +10,7 @@ export function LookupSheet({ onClose, ...props }: LookupPanelProps & { onClose:
         className="scan-lookup-sheet"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => {
-          if (document.querySelector<HTMLInputElement>('[data-scan-code]')?.value)
-            event.preventDefault();
+          if (document.querySelector('[data-lookup-editing="true"]')) event.preventDefault();
         }}
       >
         <LookupPanel {...props} />

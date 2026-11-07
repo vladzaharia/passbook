@@ -89,3 +89,7 @@
 .scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
   z-index: 11;
 }
+
+.scan-shell[data-surface="operator"]:not(:has(.scan-result)) > .scan-buddy-seat {
+  display: none;
+}

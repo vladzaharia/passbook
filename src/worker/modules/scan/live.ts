@@ -43,6 +43,7 @@ export function publishScan(
   out: ScanOutcome,
   method: string,
   undo = false,
+  enteredCode = false,
 ) {
   if (!actor.scanner || (!actor.scanningSession && !actor.scanner.hasScreens) || out.replay) return;
   const row: ScanLiveRow = {
@@ -66,7 +67,7 @@ export function publishScan(
           : out.kind === 'heads_up'
             ? 'Check required'
             : 'Not accepted',
-    presented: method !== 'manual',
+    presented: method !== 'manual' || enteredCode,
   };
   ctx.waitUntil(
     (async () => {

@@ -57,6 +57,7 @@ export function LookupPanel({
     <fieldset
       className="scan-lookup-content min-w-0 border-0"
       aria-label="Pass lookup"
+      data-lookup-editing={Boolean(q || picked)}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           if (picked) lookup.back();

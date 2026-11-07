@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { normalize } from '../../../shared/pass-view/normalize.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import { PassCard, PassCardFlip } from '../../pass-card/PassCard.tsx';
+import { ScanAssetScope } from '../platform/asset-scope.ts';
 
 export function PassPreview({
   card,
@@ -16,6 +17,10 @@ export function PassPreview({
   timeZone?: string;
   still?: boolean;
 }) {
+  const scope = useContext(ScanAssetScope);
+  const setupId = scope?.setupId;
+  orgId = scope?.orgId ?? orgId;
+  timeZone = scope?.timeZone ?? timeZone;
   const p = card.passView;
   const [assets, setAssets] = useState<Record<string, string>>({});
   const [failed, setFailed] = useState(false);
@@ -30,6 +35,7 @@ export function PassPreview({
         if (orgId) {
           q.set('orgId', orgId);
           q.set('timeZone', timeZone ?? 'UTC');
+          if (setupId) q.set('setupId', setupId);
         }
         const response = await fetch(`${p.assetBaseUrl}${encodeURIComponent(name)}?${q}`, {
           signal: controller.signal,
@@ -55,7 +61,7 @@ export function PassPreview({
       controller.abort();
       for (const url of urls) URL.revokeObjectURL(url);
     };
-  }, [p, orgId, timeZone]);
+  }, [p, orgId, timeZone, setupId]);
   // The server removes capabilities; older cards must not paint codes either.
   const { barcode: _barcode, barcodes: _barcodes, nfc: _nfc, ...pass } = p.passJson as PassJson;
   const view = normalize(pass as PassJson, { assets });

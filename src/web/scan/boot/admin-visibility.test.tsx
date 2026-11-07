@@ -15,7 +15,10 @@ function setup(role: 'anon' | 'user' | 'admin', direct = false) {
   let identity = sessionFixture(role);
   const fetch = stubFetch({
     '/api/v1/session': () => json(identity),
-    '/api/v1/scan/session': () => problem(401, 'SCANNER_UNAUTHENTICATED', 'Pair this scanner.'),
+    '/api/v1/scan/session': () =>
+      role === 'user'
+        ? problem(403, 'FORBIDDEN', 'Admin access is required.')
+        : problem(401, 'SCANNER_UNAUTHENTICATED', 'Pair this scanner.'),
     '/api/v1/orgs': () => json({ items: [], nextCursor: null }),
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
