@@ -60,6 +60,27 @@ archive, thumbnail restoration, rollback, metadata removal, grants and role/mode
 Live-view tests use the real Durable Object RPC and WebSockets, including replacement
 credentials, revocation, source filtering, tenant isolation and customer redaction.
 
+The full browser suite passed 60 tests and the three-engine camera matrix passed 13.
+Coverage thresholds passed locally and in GitHub. Shared/web coverage was 88.03% lines
+and 79.26% branches; Worker coverage was 95.37% lines and 84.12% branches locally.
+The connection re-sync test now waits on the server's actual deduplication window and
+asserts a different workflow ID. CI browser jobs use `WALLET_E2E_PREVIEW=1` to build and
+preview the packaged Worker and assets, with the existing isolated D1/OIDC/signing fixtures.
+The development module runner crashed on Linux at the bundle page in two runs; browser
+checks retain zero retries and every existing assertion.
+
+## Production
+
+Deployed Worker version `ccc58e92-eef9-4f82-8cbc-ba9c8a48b1f6` serves
+https://passbook.mobile/scan. All three migrations applied after recording a D1 restore
+bookmark. A subsequent migration check reported none pending.
+
+The production page matched the built scanner entry `/assets/scan-Buz-gIBU.js`, displayed
+pairing and the optional admin entry, and emitted no browser errors. Health returned 200;
+unpaired session, setup, live-feed and member-photo requests returned 401. The deployed
+decoder read all eight formats in Chromium, Firefox and WebKit, including leading zeroes
+(24 exact payload comparisons).
+
 The unchanged Android host passed unit tests, bridge tests, lint and debug assembly.
 [Reader 0.2.2](https://github.com/vladzaharia/passbook/releases/tag/android-v0.2.2) loads the
 updated hosted verifier after a reload; these features require no native package change.
