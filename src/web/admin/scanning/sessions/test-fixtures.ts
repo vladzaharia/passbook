@@ -52,7 +52,7 @@ export const managedSession = ScanningSessionDetailSchema.parse({
           externalReader: { mode: 'keyboard', connected: null },
           customerDisplay: { supported: false, available: false, active: false },
         },
-        surfaces: ['phone', 'operator', 'customer'],
+        surfaces: ['phone', 'customer'],
         preferred: 'phone',
       },
       reportedAt: NOW,

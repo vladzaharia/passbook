@@ -37,7 +37,6 @@ describe('session administration', () => {
     expect(within(dialog).getByText('NDEF tag input')).toBeInTheDocument();
     expect(within(dialog).getByText('Wallet pass reader unavailable')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
-    expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /^Scanner/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /Customer display/ })).toBeEnabled();
     expect(within(dialog).queryByRole('button', { name: /Desk display/ })).not.toBeInTheDocument();
