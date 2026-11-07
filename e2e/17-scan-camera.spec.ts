@@ -95,7 +95,10 @@ test('decodes barcodes at all four corners and edges without moving them into th
       timeout: 15_000,
     });
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
-    await page.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
+    const hold = page.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' });
+    await hold.focus();
+    await hold.press('Space');
+    await expect(hold).toHaveAttribute('aria-checked', 'true');
     await page.keyboard.press('Escape');
     const positions = [
       { x: 0, y: 0 },
