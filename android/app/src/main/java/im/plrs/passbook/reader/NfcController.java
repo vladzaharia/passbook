@@ -1,6 +1,7 @@
 package im.plrs.passbook.reader;
 
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
@@ -32,7 +33,11 @@ public final class NfcController {
         adapter = NfcAdapter.getDefaultAdapter(activity);
     }
 
-    public boolean available() { return adapter != null && adapter.isEnabled(); }
+    public boolean supported() {
+        return adapter != null && activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC);
+    }
+    public boolean available() { return supported() && adapter.isEnabled(); }
+    public boolean isReading() { return enabled && available(); }
 
     public void start(List<String> identifiers) {
         stop();
@@ -45,7 +50,7 @@ public final class NfcController {
             adapter.enableReaderMode(activity, tag -> discover(tag, identifiers, current),
                 NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B
                     | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK | NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS, extras);
-        } catch (IllegalStateException | SecurityException exception) {
+        } catch (IllegalStateException | SecurityException | UnsupportedOperationException exception) {
             enabled = false;
             listener.error("NFC_UNAVAILABLE");
         }

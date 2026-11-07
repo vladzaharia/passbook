@@ -1,0 +1,4 @@
+# GitHub-hosted Xcode 27 preview label; actionlint's runner catalogue lags this image.
+self-hosted-runner:
+  labels:
+    - xcode-27

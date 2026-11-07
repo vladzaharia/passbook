@@ -5,6 +5,9 @@ type Db = D1Database;
 export const orgNameStmt = (db: Db, orgId: string) =>
   stmt(db, 'SELECT name FROM orgs WHERE id = ?', [orgId]);
 
+export const orgBrandingStmt = (db: Db, orgId: string) =>
+  stmt(db, 'SELECT branding FROM orgs WHERE id = ?', [orgId]);
+
 export const staffListStmt = (db: Db, orgId: string) =>
   stmt(
     db,

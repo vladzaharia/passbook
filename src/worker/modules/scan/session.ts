@@ -1,14 +1,15 @@
 import type { z } from 'zod';
 import type { PassJson } from '../../../passkit/types.ts';
+import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import type { CodeFormatSchema, ScanRole } from '../../../shared/contracts/scan.ts';
-import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
+import { ScanBrandingSchema, type ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { scanOf } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound, resolveTemplate } from '../passes/builder.ts';
 import { planCounts } from './counts.ts';
 import type { ScanActor } from './guard.ts';
 import { undoWindowMinutes } from './outcome.ts';
-import { orgNameStmt, staffListStmt, userNameStmt } from './repo-session.ts';
+import { orgBrandingStmt, orgNameStmt, staffListStmt, userNameStmt } from './repo-session.ts';
 import { styleOf } from './resolve.ts';
 import { scanWorkspace } from './scanning-workspace.ts';
 
@@ -97,6 +98,7 @@ export async function buildSession(
   const [results, templates, undoWindow] = await Promise.all([
     db.batch([
       orgNameStmt(db, actor.orgId),
+      orgBrandingStmt(db, actor.orgId),
       actor.principal === 'admin'
         ? userNameStmt(db, actor.actor.id)
         : staffListStmt(db, actor.orgId),
@@ -106,18 +108,26 @@ export async function buildSession(
     undoWindowMinutes(ctx),
   ]);
   const orgName = (results[0]?.results?.[0] as { name: string } | undefined)?.name ?? '';
-  const read = await counts.read(results.slice(2));
+  const storedBranding = OrgBrandingSchema.parse(
+    JSON.parse((results[1]?.results?.[0] as { branding?: string } | undefined)?.branding ?? '{}'),
+  );
+  const branding = ScanBrandingSchema.parse({
+    accent: storedBranding.accent ?? null,
+    logo: storedBranding.logo ?? null,
+  });
+  const read = await counts.read(results.slice(3));
   const formats = actor.settings.acceptAllTemplates
     ? Object.values(FORMATS)
     : [...new Set(templates.flatMap((t) => t.formats))];
-  const staffRows = (results[1]?.results ?? []) as { id: string; name: string; role: ScanRole }[];
+  const staffRows = (results[2]?.results ?? []) as { id: string; name: string; role: ScanRole }[];
   const event = actor.event;
-  const user = results[1]?.results?.[0] as
+  const user = results[2]?.results?.[0] as
     | { name: string | null; primary_email: string }
     | undefined;
   return {
     workspace: await scanWorkspace(ctx, actor),
     principal: actor.principal,
+    branding,
     state: stateOf(ctx, actor),
     scanner: actor.scanner
       ? {

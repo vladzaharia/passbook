@@ -33,6 +33,9 @@ describe('session administration', () => {
       handlers,
     });
     const dialog = await screen.findByRole('dialog', { name: 'Configure Admin phone' });
+    expect(within(dialog).getByText('iPhone/iPad')).toBeInTheDocument();
+    expect(within(dialog).getByText('NDEF tag input')).toBeInTheDocument();
+    expect(within(dialog).getByText('Wallet pass reader unavailable')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /^Scanner/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /Customer display/ })).toBeEnabled();

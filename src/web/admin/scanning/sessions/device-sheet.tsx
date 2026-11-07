@@ -78,6 +78,38 @@ export function DeviceSheet({
                   {device.capabilities.keyboard ? <Badge>Keyboard input</Badge> : null}
                   {device.capabilities.nativeBarcode ? <Badge>Android barcode reader</Badge> : null}
                   {device.capabilities.touch ? <Badge>Touch</Badge> : null}
+                  {device.capabilities.native ? (
+                    <>
+                      <Badge>
+                        {device.capabilities.native.platform === 'ios' ? 'iPhone/iPad' : 'Android'}
+                      </Badge>
+                      {device.capabilities.native.nfc.formats.includes('ndef') ? (
+                        <Badge>NDEF tag input</Badge>
+                      ) : null}
+                      {device.capabilities.native.camera.permission === 'denied' ? (
+                        <Badge>Camera access denied</Badge>
+                      ) : null}
+                      {device.capabilities.native.vas.available ? (
+                        <Badge>Wallet pass reader</Badge>
+                      ) : null}
+                      {device.capabilities.native.nfc.formats.includes('wallet-vas') &&
+                      !device.capabilities.native.vas.available ? (
+                        <Badge>VAS verification unavailable</Badge>
+                      ) : null}
+                      {device.capabilities.native.platform === 'ios' &&
+                      !device.capabilities.native.vas.available ? (
+                        <Badge>Wallet pass reader unavailable</Badge>
+                      ) : null}
+                      {device.capabilities.native.layout?.posture === 'half-folded' ? (
+                        <Badge>Half folded</Badge>
+                      ) : device.capabilities.native.layout?.posture === 'unfolded' ? (
+                        <Badge>Unfolded</Badge>
+                      ) : null}
+                      {device.capabilities.native.customerDisplay.active ? (
+                        <Badge>Customer display active</Badge>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
               </div>
             ) : (

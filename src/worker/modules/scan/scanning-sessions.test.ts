@@ -7,6 +7,7 @@ import {
   ScanningSessionDetailSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createApp } from '../../app.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import { createScannerStore } from './auth-store.ts';
 import { getScanner } from './repo-device.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
@@ -106,6 +107,55 @@ describe('shared scanning sessions', () => {
       overrides: { checkIn: { mode: 'unlimited' } },
     });
     expect(response.status).toBe(422);
+  });
+});
+
+describe('scanner organization branding', () => {
+  it('projects a minimal org brand and serves only the paired actor’s logo', async () => {
+    const x3 = makePng(480, 150);
+    const x2 = makePng(320, 100);
+    const encoded = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
+    const uploaded = await call('PUT', `/orgs/${kit.org.id}/branding/logo`, {
+      x3: encoded(x3),
+      x2: encoded(x2),
+    });
+    expect(uploaded.status).toBe(200);
+    const updated = await call('PATCH', `/orgs/${kit.org.id}`, {
+      branding: {
+        accent: '#0f766e',
+        passColors: { background: '#0f172a', foreground: '#ffffff', label: '#94a3b8' },
+      },
+    });
+    expect(updated.status).toBe(200);
+
+    const session = await parent('Branded session');
+    const scanner = await device(session.id, 'Branded scanner');
+    const headers = await pair(scanner.pairing?.code ?? '');
+    const sessionResponse = await call('GET', '/scan/session', undefined, headers);
+    expect(sessionResponse.status).toBe(200);
+    const scanSession = ScanSessionSchema.parse(await sessionResponse.json());
+    expect(scanSession.branding).toEqual({
+      accent: '#0f766e',
+      logo: expect.objectContaining({ w: 480, h: 150, sha: expect.any(String) }),
+    });
+
+    const image = await call('GET', '/scan/branding/logo', undefined, headers);
+    expect(image.status).toBe(200);
+    expect(image.headers.get('content-type')).toBe('image/png');
+    expect(image.headers.get('cache-control')).toBe('private, no-cache');
+    expect(image.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(new Uint8Array(await image.arrayBuffer())).toEqual(x3);
+
+    const etag = image.headers.get('etag');
+    expect(etag).toBeTruthy();
+    const cached = await call('GET', '/scan/branding/logo', undefined, {
+      ...headers,
+      'if-none-match': etag ?? '',
+    });
+    expect(cached.status).toBe(304);
+    expect(
+      (await call('GET', `/scan/branding/logo?orgId=${kit.org.id}`, undefined, headers)).status,
+    ).toBe(422);
   });
 });
 describe('legacy standalone monitors', () => {

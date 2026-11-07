@@ -14,6 +14,7 @@ export type BuddyScene =
   | 'flip'
   | 'cheer'
   | 'wave'
+  | 'sorry'
   | 'tear'
   | 'nudge'
   | 'tuck'

@@ -21,6 +21,7 @@ import {
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { brandingKey } from '../orgs/branding-files.ts';
 import { openMemberPhoto } from '../passes/member-photo.ts';
 import { openPublicAsset } from '../public/service.ts';
 import { act } from './act.ts';
@@ -42,6 +43,12 @@ export const scanRoutes = createRouter();
 
 // Admin scope rides the query on a GET (`?orgId&eventId&templateIds&timeZone`); the guard reads it.
 const DayStart = z.object({ dayStart: z.coerce.number().int().nonnegative().optional() });
+const BrandingLogoQuery = z.object({
+  v: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
+});
 const AssetParams = z.object({
   passId: z.string().min(1).max(64),
   name: z.string().regex(/^[A-Za-z0-9_@.-]{1,100}\.png$/),
@@ -49,6 +56,7 @@ const AssetParams = z.object({
 
 scanRoutes.use('/session', requireScanActor({ staffOptional: true, screens: true }));
 scanRoutes.use('/device', requireScanActor({ staffOptional: true, screens: true }));
+scanRoutes.use('/branding/logo', requireScanActor({ staffOptional: true, screens: true }));
 for (const path of [
   '/resolve',
   '/actions',
@@ -87,6 +95,32 @@ register(
   },
 );
 
+register(
+  scanRoutes,
+  'scan',
+  {
+    method: 'get',
+    path: '/branding/logo',
+    summary: 'Scanner organization logo',
+    query: BrandingLogoQuery,
+  },
+  async (c) => {
+    const actor = scanActorOf(c);
+    const image = await c.env.BUCKET.get(brandingKey(actor.orgId, 'logo', 3));
+    if (!image) throw new NotFoundError('Image not found.', 'IMAGE_NOT_FOUND');
+    const headers = {
+      'content-type': 'image/png',
+      'cache-control': 'private, no-cache',
+      etag: image.httpEtag,
+      'x-content-type-options': 'nosniff',
+    };
+    if (c.req.header('if-none-match') === image.httpEtag) {
+      await image.body.cancel();
+      return new Response(null, { status: 304, headers });
+    }
+    return new Response(image.body, { headers });
+  },
+);
 register(
   scanRoutes,
   'scan',

@@ -1,0 +1,135 @@
+.duo-customer-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 72px);
+  isolation: isolate;
+  background:
+    radial-gradient(
+      ellipse at 20% 10%,
+      color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 12%, transparent),
+      transparent 48%
+    ),
+    var(--pk-surface-page);
+  color: var(--pk-text-default);
+}
+.duo-customer-display-copy {
+  position: relative;
+  z-index: 1;
+  width: 68%;
+  max-width: 720px;
+}
+.duo-customer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(100%, 560px);
+  margin-bottom: clamp(28px, 5vw, 56px);
+  color: var(--pk-text-strong);
+}
+.duo-customer-brand-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: clamp(88px, 12vw, 160px);
+  height: clamp(40px, 5vw, 64px);
+  overflow: hidden;
+  border: 1px solid
+    color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 28%, var(--pk-border-subtle));
+  border-radius: 16px;
+  background: color-mix(
+    in oklab,
+    var(--scan-org-accent, var(--pk-accent)) 8%,
+    var(--pk-surface-raised)
+  );
+  color: var(--pk-text-strong);
+  font-size: 22px;
+  font-weight: 700;
+}
+.duo-customer-brand-logo {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  object-fit: contain;
+}
+.duo-customer-brand > p {
+  min-width: 0;
+  max-width: 24ch;
+  overflow-wrap: anywhere;
+  font-size: clamp(18px, 2.4vw, 28px);
+  font-weight: 650;
+  line-height: 1.2;
+}
+.duo-customer-display-eyebrow {
+  color: var(--pk-text-muted);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.duo-customer-display-copy h1 {
+  margin-top: 8px;
+  color: var(--pk-text-strong);
+  font-size: clamp(52px, 7.5vw, 108px);
+  font-weight: 700;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+.duo-customer-display-hint {
+  margin-top: 16px;
+  color: var(--pk-text-muted);
+  font-size: clamp(22px, 2.8vw, 32px);
+}
+.duo-customer-buddy {
+  position: absolute;
+  right: clamp(8px, 2vw, 32px);
+  bottom: max(24px, env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 0;
+  width: clamp(240px, 34vw, 520px);
+  aspect-ratio: 4 / 3;
+  pointer-events: none;
+}
+.duo-customer-buddy::before {
+  content: "";
+  position: absolute;
+  inset: auto 8% 4%;
+  height: 14%;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 12%, transparent);
+}
+.duo-customer-buddy .wl-buddy {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: 100%;
+  translate: 0;
+}
+.duo-customer-buddy-art .wl-art {
+  width: 100%;
+  height: auto;
+}
+@media (max-width: 600px) {
+  .duo-customer-display {
+    align-items: flex-start;
+    padding: 28px 24px max(220px, 60vw);
+  }
+  .duo-customer-display-copy {
+    width: 100%;
+    max-width: 100%;
+  }
+  .duo-customer-buddy {
+    right: 0;
+    width: clamp(200px, 60vw, 280px);
+  }
+}
+@media (max-height: 520px) and (min-width: 601px) {
+  .duo-customer-display {
+    padding-block: 24px;
+  }
+  .duo-customer-buddy {
+    width: min(34vw, 320px);
+  }
+}

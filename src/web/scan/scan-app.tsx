@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import { localZone } from '@/web/lib/timezones.ts';
 import type { ScanAdminScopeSchema } from '../../shared/contracts/scan.ts';
 import { errorMessage } from '../lib/errors.ts';
-import { Button } from '../ui/button.tsx';
+import { buttonVariants } from '../ui/button-variants.ts';
 import { createLazyScanApi } from './api/lazy-api.ts';
 import { useDeviceReport } from './boot/use-device-report.ts';
 import { usePlatformAdmin } from './boot/use-platform-admin.ts';
@@ -89,6 +89,7 @@ function ScanBoot() {
     if (session.session.workspace && session.session.workspace.session.status !== 'active')
       return (
         <ScanShell
+          branding={session.session.branding}
           cardMode="boot"
           card={
             <BootCard
@@ -102,9 +103,13 @@ function ScanBoot() {
               <p className="text-sm text-fg-muted">
                 Scanning will be available when this session is resumed.
               </p>
-              <Button variant="outline" onClick={() => void session.refetch()}>
+              <button
+                className={buttonVariants({ variant: 'outline' })}
+                type="button"
+                onClick={() => void session.refetch()}
+              >
                 Check session
-              </Button>
+              </button>
             </BootCard>
           }
         />
@@ -114,6 +119,7 @@ function ScanBoot() {
     if (session.session.state === 'staff_required')
       return (
         <ScanShell
+          branding={session.session.branding}
           cardMode="boot"
           card={<StaffStart session={session.session} api={api} refetch={session.refetch} />}
         />
@@ -121,10 +127,17 @@ function ScanBoot() {
     if (session.session.state === 'unassigned')
       return (
         <ScanShell
+          branding={session.session.branding}
           cardMode="boot"
           card={
             <BootCard title="Not set up" line="Assign templates in Scanning.">
-              <Button onClick={() => void session.refetch()}>Try again</Button>
+              <button
+                className={buttonVariants()}
+                type="button"
+                onClick={() => void session.refetch()}
+              >
+                Try again
+              </button>
             </BootCard>
           }
         />
@@ -174,7 +187,9 @@ function ScanBoot() {
     <BootCard title="Loading scanner…" />
   ) : session.phase === 'error' || session.phase === 'blocked' ? (
     <BootCard title="Scanner unavailable" line="Check the connection and try again.">
-      <Button onClick={() => void session.refetch()}>Try again</Button>
+      <button className={buttonVariants()} type="button" onClick={() => void session.refetch()}>
+        Try again
+      </button>
     </BootCard>
   ) : (
     <PairView
@@ -184,7 +199,7 @@ function ScanBoot() {
       onAdmin={admin ? () => setAdminStart(true) : undefined}
     />
   );
-  return <ScanShell cardMode="boot" card={card} />;
+  return <ScanShell branding={session.session?.branding} cardMode="boot" card={card} />;
 }
 
 export function ScanApp() {

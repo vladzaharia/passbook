@@ -19,6 +19,16 @@
   color: var(--sd-strong);
   box-shadow: inset 0 0 0 0.5px var(--sd-line);
 }
+.scan-capsule-logo {
+  flex: none;
+  width: 46px;
+  height: 28px;
+  padding: 1px;
+  border: 1px solid color-mix(in oklab, var(--scan-org-accent, var(--sd-accent)) 24%, transparent);
+  border-radius: 8px;
+  background: var(--scan-glass-solid);
+  object-fit: contain;
+}
 @media (prefers-reduced-transparency: reduce) {
   .scan-capsule,
   .scan-dock {
