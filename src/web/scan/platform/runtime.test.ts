@@ -133,4 +133,20 @@ describe('live scanner runtime configuration', () => {
       }),
     );
   });
+  it('keeps the iOS camera active when no native barcode reader is available', async () => {
+    const base = session('phone');
+    const barcode = {
+      ...base,
+      scanner: {
+        ...base.scanner!,
+        settings: { ...base.scanner!.settings, reader: 'barcode' as const },
+      },
+    };
+    setNativeCapabilities(managedSession.devices[0]!.capabilities!.native);
+    const api = { stats: vi.fn().mockResolvedValue(fixtureCounts()) } as unknown as ScanApi;
+    runtime = await createRuntime(barcode, api, () => null, vi.fn());
+    runtime.start();
+    expect(runtime.store.getSnapshot().state.camera).not.toBe('disabled');
+    expect(ports.camera.start).toHaveBeenCalled();
+  });
 });

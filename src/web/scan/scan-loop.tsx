@@ -83,8 +83,11 @@ export function ScanLoop({
     nativeCapabilities?.layout?.posture === 'half-folded';
   const operator = session.workspace?.device.effectiveSurface === 'operator';
   const deskSurface = operator || duoLayout;
+  const nativeBarcode =
+    session.workspace?.device.capabilities?.nativeBarcode ??
+    (nativeCapabilities?.platform === 'android');
   const readerUsable =
-    s.reader.kind === 'barcode' ||
+    (s.reader.kind === 'barcode' && nativeBarcode) ||
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
   const result: ScanOutcome | null =

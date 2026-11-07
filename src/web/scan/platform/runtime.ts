@@ -65,13 +65,14 @@ export async function createRuntime(
   const cameraDisabled = () => {
     if (hasDuoLayout()) return false;
     if (session.workspace?.device.effectiveSurface === 'operator') return true;
-    return (
-      scanner?.settings.reader === 'barcode' ||
-      (scanner?.settings.reader === 'nfc' &&
-        (getNativeCapabilities()?.vas.available ??
-          session.workspace?.device.capabilities?.native?.vas.available ??
-          false))
-    );
+    const native = getNativeCapabilities() ?? session.workspace?.device.capabilities?.native;
+    if (scanner?.settings.reader === 'barcode') {
+      return (
+        session.workspace?.device.capabilities?.nativeBarcode ??
+        (native?.platform === 'android')
+      );
+    }
+    return scanner?.settings.reader === 'nfc' && (native?.vas.available ?? false);
   };
   try {
     await reconcileScope(localStores, {
@@ -207,6 +208,7 @@ export async function createRuntime(
   const stopWedge = createWedgeSource({
     clock,
     fields,
+    reader: () => store.getSnapshot().state.reader.kind,
     onFocus: (focused) => store.dispatch({ type: 'focus', focused }),
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));
