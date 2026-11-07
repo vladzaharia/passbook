@@ -6,6 +6,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { revokeSession } from '../auth/repo-sessions.ts';
 import { scanHub } from './live.ts';
 import { type LiveAttachment, liveRecipient } from './live-auth.ts';
+import { liveRowFor } from './live-render.ts';
 import { getScanner } from './repo-device.ts';
 import {
   createScanningDevice,
@@ -90,18 +91,18 @@ describe('session display authorization', () => {
       { scannerId: sourceA.id, holder: 'Private name' },
     ]);
     expect((await hub.snapshot(monitor)).rows).toHaveLength(1);
-    const publicRows = (await hub.snapshot(customer)).rows;
-    expect(publicRows).toMatchObject([
-      {
-        scannerId: sourceA.id,
-        holder: null,
-        passId: null,
-        photoUrl: null,
-        scannerName: '',
-        label: 'Checked in',
-      },
-    ]);
-    expect(publicRows).toHaveLength(1);
+    const recipient = await liveRecipient(kit.ctx, customer);
+    if (!recipient) throw new Error('Missing customer recipient.');
+    expect(await liveRowFor(kit.ctx, recipient, row(sourceA.id))).toMatchObject({
+      scannerId: sourceA.id,
+      holder: null,
+      passId: null,
+      photoUrl: null,
+      scannerName: '',
+      label: 'Checked in',
+    });
+    expect(await liveRowFor(kit.ctx, recipient, row(sourceB.id))).toBeNull();
+    expect((await hub.snapshot(customer)).rows).toEqual([]);
   });
 
   it('allows an administrator device to use a display and revalidates its real platform session', async () => {
