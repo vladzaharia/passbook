@@ -58,8 +58,15 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
     '3 demo records',
   );
 
-  const firstBucket = Math.floor(Date.now() / SYNC_BUCKET_MS);
+  const syncResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(`/connections/${connectionId}/sync`) &&
+      response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Sync now' }).first().click();
+  const firstRun = (await (await syncResponse).json()) as { workflowInstanceId: string };
+  const firstBucket = Number(firstRun.workflowInstanceId.split('-').at(-1));
+  expect(Number.isSafeInteger(firstBucket)).toBe(true);
   const api = await apiAs('admin');
   await expect
     .poll(async () => (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items.length, {
@@ -90,7 +97,14 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   });
   // Admin syncs in the same bucket share one workflow instance (by design): wait for the next one.
   await expect.poll(() => Math.floor(Date.now() / SYNC_BUCKET_MS) > firstBucket).toBe(true);
+  const resyncResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(`/connections/${connectionId}/sync`) &&
+      response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Sync now' }).first().click();
+  const nextRun = (await (await resyncResponse).json()) as { workflowInstanceId: string };
+  expect(nextRun.workflowInstanceId).not.toBe(firstRun.workflowInstanceId);
   await expect
     .poll(
       async () => {
