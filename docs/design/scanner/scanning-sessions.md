@@ -3,17 +3,21 @@
 A session owns accepted passes, admission policy, time zone, staff requirements and device defaults.
 A device belongs to one session. Pairing adds a device; Scan as Admin adds or reuses this browser’s
 administrator device in the selected session. Administrator sign-in does not select a layout.
+`kind` identifies the endpoint (`device`, `terminal` or `display`); `deviceRole` identifies its purpose
+(`scan`, `monitor` or `customer`); `surface` selects the interface shown on a session device. These
+are separate choices, not interchangeable scanner types.
 
 Layouts work on phones, tablets and computers:
 
 - **Scanner**: camera, barcode reader, taps and code entry.
-- **Operator**: camera-free lookup, actions and recent session activity; stacked on a phone.
-- **Desk display**: read-only staff activity and permitted member photos.
+- **Operator**: pass lookup, code check-in, actions and session activity in one view.
 - **Customer display**: temporary generic verdicts, without names, photos or pass details.
 
-Automatic suggests Operator on wide screens and Scanner on smaller screens. Admins can select any
-responsive layout. Devices report viewport, touch, keyboard, camera availability and Android reader
-support without prompting for camera permission. These reports never grant authorization.
+Scanner, Operator and Customer display are available on every screen size. Automatic chooses Scanner
+on smaller screens and Operator on wide screens. Older Desk layouts in shared sessions become
+Operator when the device reports. Standalone Desk monitors remain read-only.
+Devices report viewport, touch, keyboard, camera availability and Android reader support without
+prompting for camera permission. These reports never grant authorization.
 
 Device overrides cover input flow, reader, entry/exit direction, people lookup and photos.
 Admission, pass scope and staff rights remain shared. Session defaults apply wherever no device

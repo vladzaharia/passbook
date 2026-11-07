@@ -1,42 +1,103 @@
+.scan-shell:has(> .scan-card-layer[data-mode="boot"]) > .scan-cam {
+  background:
+    radial-gradient(
+      ellipse at 18% 8%,
+      color-mix(in oklab, var(--pk-accent) 15%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 90% 92%,
+      color-mix(in oklab, var(--sd-tone-violet) 10%, transparent),
+      transparent 42%
+    ),
+    var(--pk-surface-page);
+}
+.scan-shell:has(> .scan-card-layer[data-mode="boot"]) > .scan-buddy-seat {
+  display: none;
+}
 .scan-layer.scan-card-layer[data-mode="boot"] {
-  padding: max(24px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
-    max(24px, env(safe-area-inset-bottom, 0px));
   align-items: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
+    max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+}
+.scan-shell:has(> .scan-capsule) > .scan-card-layer[data-mode="boot"] {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
+}
+.scan-shell:has(> .scan-dock) > .scan-card-layer[data-mode="boot"] {
+  padding-bottom: calc(var(--scan-dock-h) + env(safe-area-inset-bottom, 0px) + 12px);
 }
 .scan-card.scan-boot-card {
-  width: min(100%, 448px);
-  gap: 24px;
-  padding: 32px;
+  width: min(100%, 480px);
+  gap: 0;
+  padding: 0;
   border: 1px solid var(--pk-border-subtle);
   border-radius: 24px;
   background: var(--pk-surface-raised);
+  color: var(--pk-text-default);
   box-shadow: var(--pk-elevation-2);
 }
+.scan-card.scan-boot-card[data-tone="slate"] {
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-default);
+}
+.scan-card.scan-boot-card[data-tone="slate"] .scan-card-title {
+  color: var(--pk-text-strong);
+}
+.scan-card.scan-boot-card[data-tone="slate"] .scan-card-line {
+  color: var(--pk-text-muted);
+  opacity: 1;
+}
 .scan-boot-heading {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  padding: 28px 28px 24px;
   text-align: center;
+  background:
+    radial-gradient(
+      ellipse at 50% 0,
+      color-mix(in oklab, var(--pk-accent) 12%, transparent),
+      transparent 72%
+    ),
+    var(--pk-surface-raised);
 }
 .scan-boot-heading .scan-card-title {
-  font-size: 24px;
-  line-height: 30px;
+  color: var(--pk-text-strong);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.15;
 }
 .scan-boot-heading .scan-card-line {
-  font-size: 14px;
-  line-height: 21px;
   max-width: 34ch;
-  justify-self: center;
+  color: var(--pk-text-muted);
+  font-size: 15px;
+  line-height: 22px;
 }
 .scan-boot-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--pk-text-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.04em;
+}
+.scan-boot-eyebrow span {
+  color: var(--pk-accent);
 }
 .scan-boot-mascot {
   position: relative;
-  height: 92px;
-  margin-bottom: 8px;
+  width: 128px;
+  height: 100px;
+  margin: 8px 0;
+}
+.scan-boot-mascot::before {
+  content: "";
+  position: absolute;
+  inset: 4px 12px 0;
+  border: 1px solid color-mix(in oklab, var(--pk-accent) 22%, var(--pk-border-subtle));
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--pk-accent) 8%, transparent);
 }
 .scan-boot-mascot .wl-buddy {
   top: auto;
@@ -45,11 +106,20 @@
 }
 .scan-boot-body {
   display: grid;
+  align-content: center;
   gap: 16px;
   min-width: 0;
+  padding: 24px 28px 28px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.scan-boot-body:empty {
+  display: none;
 }
 .scan-boot-body .scan-pair-footer {
   justify-content: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--pk-border-subtle);
+  color: var(--pk-text-muted);
   font-size: 12px;
   line-height: 18px;
   text-align: center;
@@ -57,24 +127,91 @@
 .scan-boot-body button {
   min-height: 44px;
 }
-.scan-boot-body [data-testid="pair-code"] {
+.scan-boot-body .scan-start-event {
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 16px;
+  background: var(--pk-surface-sunken);
+}
+.scan-start-label {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  color: var(--pk-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.scan-start-label svg {
+  flex: none;
+  color: var(--pk-accent);
+}
+.scan-boot-body [data-testid="pair-code"] .wl-code {
+  width: 100%;
+  container-type: inline-size;
+}
+.scan-boot-body [data-testid="pair-code"] .wl-code-slots {
+  gap: clamp(1px, 1cqw, 4px);
+  font-size: clamp(14px, 6cqw, 24px);
+}
+.scan-boot-body [data-testid="pair-code"] .wl-code-slot {
+  width: clamp(12px, 5.5cqw, 22px);
+}
+.scan-boot-body [data-testid="pair-code"] .wl-code-slot[data-group-start] {
+  margin-inline-start: clamp(2px, 2cqw, 14px);
+}
+.scan-boot-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--pk-text-muted);
+  font-size: 12px;
+}
+.scan-boot-divider::before,
+.scan-boot-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--pk-border-subtle);
+}
+@media (min-width: 720px) {
+  .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-card:has(.scan-boot-body:not(:empty)) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    width: min(100%, 880px);
+  }
+  .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-heading {
+    justify-content: center;
+    padding: 36px;
+  }
+  .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-body {
+    padding: 40px;
+    border-top: 0;
+    border-left: 1px solid var(--pk-border-subtle);
+  }
+  .scan-shell:has(> .scan-capsule) > .scan-card-layer[data-mode="boot"] {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 108px);
+  }
 }
 @media (max-width: 360px) {
-  .scan-card.scan-boot-card {
-    padding: 24px 16px;
-    border-radius: 20px;
+  .scan-layer.scan-card-layer[data-mode="boot"] {
+    padding-inline: max(12px, env(safe-area-inset-left, 0px))
+      max(12px, env(safe-area-inset-right, 0px));
   }
-  .scan-boot-mascot {
-    height: 72px;
+  .scan-boot-heading,
+  .scan-boot-body {
+    padding-inline: 16px;
   }
 }
-@media (max-height: 620px) and (min-width: 640px) {
-  .scan-card.scan-boot-card {
-    width: min(100%, 760px);
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 32px;
+@media (max-height: 620px) {
+  .scan-boot-heading {
+    padding-block: 16px;
+  }
+  .scan-boot-mascot {
+    height: 76px;
+    margin-block: 0;
+  }
+  .scan-boot-body {
+    padding-block: 20px;
   }
 }

@@ -22,7 +22,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     });
     contexts.push(admin);
     const page = await admin.newPage();
-    await page.goto(`/admin/scanning?orgId=${orgId}`);
+    await page.goto(`/admin/scanning?orgId=${orgId}&tab=scanners`);
     await page.getByRole('button', { name: 'New scanning session', exact: true }).first().click();
     const dialog = page.getByRole('dialog', { name: 'New scanning session', exact: true });
     const name = uid('Shared membership');
@@ -36,11 +36,11 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await dialog.getByRole('button', { name: 'Create session', exact: true }).click();
     await page.waitForURL(/\/admin\/scanning\/sessions\//);
     const sessionId = new URL(page.url()).pathname.split('/').pop();
-    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Add device', exact: true }).first().click();
     const add = page.getByRole('dialog', { name: 'Add device', exact: true });
+    await expect(add).toBeVisible();
     const deviceName = uid('Operator browser');
     await add.getByRole('textbox', { name: 'Device name', exact: true }).fill(deviceName);
+    await add.getByRole('button', { name: /^Operator/ }).click();
     const creation = page.waitForResponse(
       (r) =>
         r.url().endsWith(`/scanning-sessions/${sessionId}/devices`) &&
@@ -54,6 +54,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       .getByRole('button', { name: 'Close', exact: true })
       .first()
       .click();
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     const display = await api.send('POST', `/api/v1/scanning-sessions/${sessionId}/devices`, {
       name: uid('Visitor display'),
       surface: 'customer',
@@ -84,8 +85,9 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       await scanner.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
       await scanner.keyboard.press('Escape');
     }
-    await expect(desk.getByRole('complementary', { name: 'Operator desk' })).toBeVisible();
+    await expect(desk.getByRole('complementary', { name: 'Operator view' })).toBeVisible();
     await expect(customer.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
+    await expect(phone.locator('.scan-shell')).toHaveAttribute('data-surface', 'phone');
     const memberId = uid('MEMBER').toUpperCase();
     const pass = await createPass(api, orgId, { holder: 'Shared Session Member', memberId });
     const field = desk.getByRole('textbox', { name: 'Name, email, code or ID', exact: true });
@@ -127,7 +129,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await configuration.getByRole('combobox', { name: 'Reader', exact: true }).click();
     await page.getByRole('option', { name: 'Camera', exact: true }).click();
     await configuration.getByRole('button', { name: 'Save device', exact: true }).click();
-    await expect(phone.getByRole('complementary', { name: 'Operator desk' })).toBeVisible({
+    await expect(phone.getByRole('complementary', { name: 'Operator view' })).toBeVisible({
       timeout: 20000,
     });
     await expect(phone.getByTestId('scan-start')).toHaveCount(0);
@@ -149,7 +151,11 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       .toBe('operator');
     // Configuration refresh keeps this device started. A hardware scanner follows review mode.
     await expect(desk.getByTestId('scan-start')).toHaveCount(0);
-    await desk.waitForResponse((r) => r.url().includes('/scan/session') && r.status() === 200);
+    const sessionRefresh = desk.waitForResponse(
+      (r) => r.url().includes('/api/v1/scan/session') && r.status() === 200,
+    );
+    await desk.bringToFront();
+    await sessionRefresh;
     await field.focus();
     await hardwareCode(desk, memberId);
     await expect(desk.getByTestId('scan-result')).toContainText('Shared Session Member');

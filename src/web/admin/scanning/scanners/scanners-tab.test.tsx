@@ -2,8 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { NOW, pairingFixture, scannerFixture as s, templateFixture } from '../test-fixtures.ts';
+import { json, renderApp } from '@/web/lib/test-utils.tsx';
+import { pairingFixture, scannerFixture as s, templateFixture } from '../test-fixtures.ts';
 
 const page = (items: unknown[]) => json({ items, nextCursor: null });
 const none = () => page([]);
@@ -105,71 +105,26 @@ describe('Scanners tab', () => {
     expect(screen.getByRole('dialog', { name: /Pair Front door/ })).toBeInTheDocument();
   });
 
-  it('shows the empty state with one primary, and fills it by order', async () => {
+  it('offers session creation when no devices are listed', async () => {
     await renderApp('/admin/scanning?tab=scanners', {
       session: 'admin',
       handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
-    expect(await screen.findByText('No scanners yet')).toBeInTheDocument();
-    expect(NOW).toBeGreaterThan(0);
+    expect(await screen.findByText('No devices yet')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(2);
   });
 });
 
-describe('New scanner dialog', () => {
-  const open = async (extra: Record<string, never> = {}) => {
-    const utils = await renderApp('/admin/scanning?tab=scanners&orgId=o1&new=1', {
+describe('device creation from Devices', () => {
+  it('opens the shared-session form instead of creating an independent scanner setup', async () => {
+    const { router } = await renderApp('/admin/scanning?tab=scanners&orgId=o1&new=1', {
       session: 'admin',
-      handlers: handlers(extra as never),
+      handlers: handlers(),
     });
-    return { ...utils, dialog: await screen.findByRole('dialog', { name: /New scanner/ }) };
-  };
-
-  it('opens from ?new=1 and needs a name and a template', async () => {
-    const { dialog, router } = await open();
+    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    expect(within(dialog).getByRole('tab', { name: 'Passes' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('tab', { name: 'Admission' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('tab', { name: 'Device defaults' })).toBeInTheDocument();
     await waitFor(() => expect(router.state.location.search).not.toHaveProperty('new'));
-    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Create and pair' }));
-    expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
-    expect(within(dialog).getByText('Pick at least one template.')).toBeInTheDocument();
-  });
-
-  it('creates a browser scanner and turns into the pairing face', async () => {
-    let body: Record<string, unknown> | undefined;
-    const { dialog } = await open({
-      '/api/v1/scan-setups': ((_url: URL, init?: RequestInit) => {
-        if (init?.method === 'POST') {
-          body = JSON.parse(String(init.body));
-          return json({ ...s({ id: 's9', name: 'Back door' }), pairing: pairingFixture() });
-        }
-        return page([]);
-      }) as never,
-      '/api/v1/scanners/s9/pairing': (() => json({ state: 'waiting', device: null })) as never,
-    });
-    const user = userEvent.setup();
-    await user.type(within(dialog).getByLabelText(/^Name/), 'Back door');
-    await user.click(await within(dialog).findByLabelText('Gala ticket'));
-    await user.click(within(dialog).getByRole('button', { name: 'Create and pair' }));
-    expect(await screen.findByText('K7QH2-M9XTR')).toBeInTheDocument();
-    expect(body).toMatchObject({
-      orgId: 'o1',
-      name: 'Back door',
-      kind: 'device',
-      accepts: { templateIds: ['t1'] },
-      settings: { staffSignIn: false, roleWithoutSignIn: 'door', flow: 'auto' },
-    });
-    expect(screen.getByRole('dialog', { name: /Pair Back door/ })).toBeInTheDocument();
-  });
-
-  it('maps a taken name onto its field', async () => {
-    const { dialog } = await open({
-      '/api/v1/scan-setups': ((_u: URL, init?: RequestInit) =>
-        init?.method === 'POST' ? problem(409, 'SCANNER_NAME_TAKEN', 'taken') : page([])) as never,
-    });
-    const user = userEvent.setup();
-    await user.type(within(dialog).getByLabelText(/^Name/), 'Front door');
-    await user.click(await within(dialog).findByLabelText('Gala ticket'));
-    await user.click(within(dialog).getByRole('button', { name: 'Create and pair' }));
-    expect(
-      await within(dialog).findByText('A scanner here already has this name.'),
-    ).toBeInTheDocument();
   });
 });

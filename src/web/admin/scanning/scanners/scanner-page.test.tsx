@@ -113,7 +113,7 @@ describe('Scanner page', () => {
     expect(screen.queryByText(/wls_ab12cd34/)).toBeNull();
   });
 
-  it('keeps a revoked scanner read-only, with Duplicate left', async () => {
+  it('keeps a revoked scanner read-only', async () => {
     await renderApp('/admin/scanning/scanners/s1', {
       session: 'admin',
       handlers: { ...base, '/api/v1/scan-setups/s1': () => json(s({ status: 'revoked' })) },

@@ -64,6 +64,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             if (!foreground || !NfcAdapter.ACTION_ADAPTER_STATE_CHANGED.equals(intent.getAction())) return;
             boolean available = nfc.available();
             if (available == lastNfcAvailable) return;
+            lastNfcAvailable = available;
             resumeReader(); reportCapabilities();
         }
     };
@@ -195,15 +196,17 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     @Override public void command(JSONObject json) {
+        if (json.optString("op").equals("hello")) {
+            if (foreground) resumeReader();
+            JSONObject ready = message("ready");
+            put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
+            put(ready, "diagnostics", config.isLocal()); put(ready, "appVersion", BuildConfig.VERSION_NAME);
+            put(ready, "capabilities", capabilities());
+            web.send(ready); return;
+        }
         if (!foreground) return;
         switch (json.optString("op")) {
-            case "hello":
-                resumeReader();
-                JSONObject ready = message("ready");
-                put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
-                put(ready, "diagnostics", config.isLocal()); put(ready, "appVersion", BuildConfig.VERSION_NAME);
-                put(ready, "capabilities", capabilities());
-                web.send(ready); break;
+
             case "start": armed = true; resumeReader(); reportCapabilities(); break;
             case "stop": armed = false; resumeReader(); reportCapabilities(); break;
             case "captured":

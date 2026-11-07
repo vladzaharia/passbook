@@ -1,4 +1,4 @@
-import { Lock, ScanLine } from 'lucide-react';
+import { Lock, ScanLine, ShieldCheck } from 'lucide-react';
 import { type FormEvent, type Ref, useId, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
@@ -71,8 +71,8 @@ export function PairView({
       </form>
       {onAdmin ? (
         <div className="flex flex-col gap-3">
-          <p className="text-center text-sm text-fg-muted">or</p>
-          <Button variant="outline" onClick={onAdmin}>
+          <p className="scan-boot-divider">or</p>
+          <Button variant="outline" iconStart={<ShieldCheck aria-hidden />} onClick={onAdmin}>
             Scan as Admin
           </Button>
         </div>

@@ -9,31 +9,15 @@ import { useScannerPages } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
 import { scannerColumns } from './scanner-columns.tsx';
 import { PairDialog, RevokeDialog } from './scanner-dialogs.tsx';
-import { draftOf, type ScannerDraft } from './scanner-draft.ts';
 
 type Pages = ReturnType<typeof useScannerPages>;
 export const flatScanners = (q: Pages): ScannerDto[] => q.data?.pages.flatMap((p) => p.items) ?? [];
-
-/** The Duplicate draft: the same settings under "Front door 2"; nothing of the pairing. */
-export const duplicateDraft = (s: ScannerDto): ScannerDraft => ({
-  ...draftOf(s),
-  name: `${s.name} 2`.slice(0, 40),
-  adminUserId: '',
-});
 
 /**
  * The Scanners tab: the org's scanners in the console's mode. Revoked ones sit behind "Show
  * revoked (n)", the same as API keys. The list refetches every 30 s while visible.
  */
-export function ScannersTab({
-  live,
-  newButton,
-  onDuplicate,
-}: {
-  live: Pages;
-  newButton: ReactNode;
-  onDuplicate: (draft: ScannerDraft) => void;
-}) {
+export function ScannersTab({ live, newButton }: { live: Pages; newButton: ReactNode }) {
   const { orgId } = useOrgScope();
   const now = useNow();
   const events = useScanEvents(orgId);
@@ -50,13 +34,12 @@ export function ScannersTab({
       scannerColumns(
         {
           onPair: setPairing,
-          onDuplicate: (s) => onDuplicate(duplicateDraft(s)),
           onRevoke: setRevoking,
         },
         now,
         eventName,
       ),
-    [now, eventName, onDuplicate],
+    [now, eventName],
   );
 
   const liveRows = flatScanners(live).filter((s) => s.status !== 'revoked');
@@ -68,6 +51,15 @@ export function ScannersTab({
   const more = revokedList.hasNextPage ? '+' : '';
   return (
     <>
+      <div className="mb-4 flex min-w-0 items-start gap-3 rounded-lg border border-border bg-surface-raised p-4">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-fg-strong">Scanners and displays</p>
+          <p className="mt-1 text-sm text-fg-muted">
+            Existing devices keep their setup. Create a session to add a Scanner, Operator or
+            Customer display.
+          </p>
+        </div>
+      </div>
       <DataTable
         caption="Scanners"
         loading={live.isPending}
@@ -77,8 +69,8 @@ export function ScannersTab({
         empty={
           <EmptyState
             art="phone"
-            title="No scanners yet"
-            description="Pair a phone, tablet or computer to check passes."
+            title="No devices yet"
+            description="Create a session, then choose Scanner, Operator or Customer display when adding a device."
             action={newButton}
           />
         }

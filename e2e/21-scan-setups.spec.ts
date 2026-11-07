@@ -95,7 +95,7 @@ test('admin uploads a member photo, opts it into Wallet and configures in/out ru
   }
 });
 
-test('paired customer and desk views follow real check-ins, exits and revocation', async ({
+test('paired customer and legacy desk views follow real check-ins, exits and revocation', async ({
   browser,
 }) => {
   const api = await apiAs('admin');
@@ -135,20 +135,14 @@ test('paired customer and desk views follow real check-ins, exits and revocation
     await api.send('PUT', `/api/v1/passes/${pass.id}/member-photo`, {
       png: await photoFixture(admin, true),
     });
-    await admin.goto(`/admin/scanning?orgId=${orgId}&tab=scanners&new=1`);
-    const dialog = admin.getByRole('dialog', { name: 'New scanner' });
     const customerName = uid('Customer view');
-    await dialog.getByRole('textbox', { name: 'Name', exact: true }).fill(customerName);
-    await dialog.getByRole('combobox', { name: 'View', exact: true }).click();
-    await admin.getByRole('option', { name: 'Customer screen', exact: true }).click();
-    await dialog.getByLabel(sourceName, { exact: true }).check();
-    await dialog.getByLabel(exitName, { exact: true }).check();
-    const creation = admin.waitForResponse(
-      (r) => r.url().endsWith('/api/v1/scan-setups') && r.request().method() === 'POST',
-    );
-    await dialog.getByRole('button', { name: 'Create and pair', exact: true }).click();
-    const customerSetup = await (await creation).json();
-    expect(customerSetup.deviceRole).toBe('customer');
+    const customerSetup = await api.send('POST', '/api/v1/scan-setups', {
+      orgId,
+      name: customerName,
+      deviceRole: 'customer',
+      timeZone: 'UTC',
+      watch: { scannerIds: [source.id, exit.id], allOrg: false },
+    });
     const monitor = await api.send('POST', '/api/v1/scan-setups', {
       orgId,
       name: uid('Desk view'),
@@ -163,6 +157,9 @@ test('paired customer and desk views follow real check-ins, exits and revocation
     contexts.push(customer.context, desk.context, scanner.context, exitScanner.context);
     await expect(customer.page.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
     await expect(desk.page.getByTestId('scan-live')).toHaveAttribute('data-view', 'monitor');
+    await expect(desk.page.getByTestId('scan-start')).toHaveCount(0);
+    await expect(desk.page.getByRole('button', { name: 'Look up', exact: true })).toHaveCount(0);
+    await expect(desk.page.getByRole('button', { name: 'Check in', exact: true })).toHaveCount(0);
     await expect(desk.page.getByRole('status')).toHaveText('Live');
     await scanner.page.getByTestId('scan-start').click();
     await exitScanner.page.getByTestId('scan-start').click();

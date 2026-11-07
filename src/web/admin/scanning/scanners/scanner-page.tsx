@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Ban, Copy, FlaskConical, KeyRound, QrCode, ScanQrCode } from 'lucide-react';
+import { Ban, FlaskConical, KeyRound, QrCode, ScanQrCode } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ENTITY } from '@/web/lib/entities.ts';
 import {
@@ -18,12 +18,10 @@ import { RelTime, useNow } from '../../passes/detail/rel-time.tsx';
 import { useScanner } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
 import { acceptsText, scannerStatus } from './labels.ts';
-import { NewScannerDialog } from './new-scanner-dialog.tsx';
 import { DangerCard, DeviceCard, SettingsCard } from './scanner-cards.tsx';
 import { GoLiveDialog, PairDialog, RevokeDialog, TokenDialog } from './scanner-dialogs.tsx';
-import { duplicateDraft } from './scanners-tab.tsx';
 
-type Dialog = 'pair' | 'revoke' | 'live' | 'token' | 'duplicate';
+type Dialog = 'pair' | 'revoke' | 'live' | 'token';
 
 /** `/admin/scanning/scanners/$scannerId`: status up top, settings left, device and danger beside. */
 export function ScannerPage({ scannerId }: { scannerId: string }) {
@@ -114,10 +112,6 @@ export function ScannerPage({ scannerId }: { scannerId: string }) {
               </Button>
             ) : null}
             <MoreMenu>
-              <DropdownMenuItem onSelect={() => setDialog('duplicate')}>
-                <Copy aria-hidden />
-                Duplicate
-              </DropdownMenuItem>
               {s.kind === 'terminal' && !revoked ? (
                 <DropdownMenuItem onSelect={() => setDialog('token')}>
                   <KeyRound aria-hidden />
@@ -148,9 +142,6 @@ export function ScannerPage({ scannerId }: { scannerId: string }) {
       {dialog === 'revoke' ? <RevokeDialog scanner={s} onClose={close} /> : null}
       {dialog === 'live' ? <GoLiveDialog scanner={s} onClose={close} /> : null}
       {dialog === 'token' ? <TokenDialog scanner={s} onClose={close} /> : null}
-      {dialog === 'duplicate' ? (
-        <NewScannerDialog open initial={duplicateDraft(s)} onOpenChange={(o) => !o && close()} />
-      ) : null}
     </>
   );
 }

@@ -1,5 +1,6 @@
+import { useNavigate } from '@tanstack/react-router';
 import { Copy, Pause, Play, Plus, ScanLine, Square } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { revokeScannerConfirm } from '@/web/lib/confirms.ts';
 import {
@@ -31,13 +32,26 @@ import { SessionSummary } from './session-summary.tsx';
 export function ScanningSessionPage({
   sessionId,
   deviceId,
+  addDevice = false,
 }: {
   sessionId: string;
   deviceId?: string;
+  addDevice?: boolean;
 }) {
   const query = useScanningSession(sessionId);
   const update = useUpdateSession(sessionId);
-  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | 'duplicate'>();
+  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | 'duplicate' | undefined>(
+    addDevice ? 'add' : undefined,
+  );
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (addDevice)
+      void navigate({
+        to: '.',
+        search: (prev) => ({ ...prev, addDevice: undefined }),
+        replace: true,
+      });
+  }, [addDevice, navigate]);
   const [selected, setSelected] = useState<string | undefined>(deviceId);
   const [pairing, setPairing] = useState<string>();
   const [revoking, setRevoking] = useState<ScanningDevice>();
@@ -146,12 +160,17 @@ export function ScanningSessionPage({
       <TwoPane aside={<SessionSummary session={s} onEdit={() => setDialog('rules')} />}>
         <section className="grid gap-4" aria-labelledby="session-devices-title">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2
-              id="session-devices-title"
-              className="flex items-center gap-2 text-base font-semibold"
-            >
-              Devices <Badge>{s.deviceCount}</Badge>
-            </h2>
+            <div>
+              <h2
+                id="session-devices-title"
+                className="flex items-center gap-2 text-base font-semibold"
+              >
+                Devices <Badge>{s.deviceCount}</Badge>
+              </h2>
+              <p className="mt-1 text-sm text-fg-muted">
+                Scanners and displays using this session’s rules.
+              </p>
+            </div>
             {s.devices.some((d) => d.revoked) ? (
               <CheckboxField
                 label="Show revoked devices"
@@ -170,7 +189,7 @@ export function ScanningSessionPage({
             <EmptyState
               art="scanner"
               title="Add your first device"
-              description="Pair a phone or display, or join with your administrator sign-in."
+              description="Pair a scanner, operator or display to use this session’s rules."
               action={
                 <Button onClick={() => setDialog('add')} disabled={!active}>
                   Add device

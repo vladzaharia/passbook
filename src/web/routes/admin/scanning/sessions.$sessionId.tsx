@@ -9,14 +9,22 @@ const SessionPage = lazy(() =>
 );
 function SessionRoute() {
   const { sessionId } = Route.useParams();
-  const { deviceId } = Route.useSearch();
+  const { addDevice, deviceId } = Route.useSearch();
   return (
     <Suspense fallback={<p role="status">Loading session…</p>}>
-      <SessionPage sessionId={sessionId} deviceId={deviceId} />
+      <SessionPage sessionId={sessionId} deviceId={deviceId} addDevice={addDevice === '1'} />
     </Suspense>
   );
 }
 export const Route = createFileRoute('/admin/scanning/sessions/$sessionId')({
-  validateSearch: z.object({ deviceId: z.string().min(1).max(64).optional().catch(undefined) }),
+  validateSearch: z.object({
+    addDevice: z
+      .preprocess(
+        (value) => (value === 1 || value === '1' ? '1' : undefined),
+        z.literal('1').optional(),
+      )
+      .catch(undefined),
+    deviceId: z.string().min(1).max(64).optional().catch(undefined),
+  }),
   component: SessionRoute,
 });
