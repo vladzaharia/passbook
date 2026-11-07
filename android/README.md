@@ -25,6 +25,12 @@ Verify `dist/SHA256SUMS` and `dist/signature.txt` before distributing. Debug and
 
 The exact BCScan broadcast action is firmware-specific and is intentionally not guessed. Test barcodes from an iPhone display as well as printed ones. Codes retain leading zeroes. Camera fallback can run inside the web verifier after granting camera permission.
 
+Bluetooth scanners work in HID/keyboard mode: pair in Android Settings, choose a US keyboard
+layout and Enter suffix, then focus **Scan barcode here**. USB HID readers use the same field.
+Scanned codes and IDs follow the setup's automatic/review setting. Name and email searches
+in **Look up** require an explicit **Check in**. Serial/SPP or proprietary BLE output needs a
+model-specific integration. The app's keyboard path does not open a raw Bluetooth connection.
+
 ## NFC limits
 
 The P400 documents ISO 14443 A/B, but real-device ISO-DEP and VAS compatibility still require [acceptance testing](ACCEPTANCE.md). No ECP support is claimed. Expect manual Wallet selection/authentication; Apple Watch behavior varies. This is an uncertified VAS reader implementation, based on Kormax's research, with no payment transaction support. Passes still need Apple's NFC entitlement and matching encryption configuration.

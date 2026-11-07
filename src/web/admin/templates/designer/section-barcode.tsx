@@ -4,6 +4,7 @@ import { useDesigner } from './context.tsx';
 import { PickEdit, SourcePicker, TextEdit } from './controls.tsx';
 import { BARCODE_TEXT_EMPTY, barcodeTextMissing } from './local-issues.ts';
 import { type BarcodeSettings, readBarcode } from './ops-more.ts';
+import { LookupSettings } from './scan/lookup-settings.tsx';
 
 const label = (f: string) =>
   f.replace('PKBarcodeFormat', '').replace(/([a-z0-9])([A-Z])/g, '$1 $2');
@@ -64,6 +65,7 @@ export function BarcodeSection() {
           ) : null}
         </>
       ) : null}
+      <LookupSettings />
     </div>
   );
 }

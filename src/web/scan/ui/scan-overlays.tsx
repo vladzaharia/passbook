@@ -31,13 +31,14 @@ export function ScanOverlays({
   clearError,
   orgId,
   timeZone,
+  allowPeople,
 }: {
-  sheet: 'lookup' | 'code' | null;
+  sheet: boolean;
   panel: ScanPanel;
   pass: PassInspection | null;
   api: ScanApi;
   runtime: ScanRuntime;
-  open: (sheet: 'lookup' | 'code' | null) => void;
+  open: (sheet: boolean) => void;
   showPanel: (panel: ScanPanel) => void;
   closePass: () => void;
   shiftStart: number;
@@ -45,6 +46,7 @@ export function ScanOverlays({
   clearError: () => void;
   orgId?: string;
   timeZone?: string;
+  allowPeople: boolean;
 }) {
   const { state } = useScanMachine();
   return (
@@ -55,11 +57,16 @@ export function ScanOverlays({
             orgId={orgId}
             timeZone={timeZone}
             open={sheet}
+            allowPeople={allowPeople}
             api={api}
-            onClose={() => open(null)}
-            onRead={(read) => {
-              open(null);
-              runtime.emit({ method: 'manual', ...read });
+            onClose={() => open(false)}
+            onCheckIn={(card, actionId) => {
+              open(false);
+              runtime.checkIn(card, actionId);
+            }}
+            onCode={(code) => {
+              open(false);
+              runtime.emit({ method: 'manual', code });
             }}
           />
         ) : null}

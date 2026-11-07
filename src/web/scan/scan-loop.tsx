@@ -40,7 +40,7 @@ export function ScanLoop({
   leave: () => void;
 }) {
   const { state: s, view, dispatch, now } = useScanMachine();
-  const [sheet, setSheet] = useState<'lookup' | 'code' | null>(null);
+  const [sheet, setSheet] = useState(false);
   const [panel, setPanel] = useState<ScanPanel>(null);
   const [pass, setPass] = useState<PassInspection | null>(null);
   const [cameraError, setCameraError] = useState('');
@@ -63,7 +63,7 @@ export function ScanLoop({
   const requestedRev = useRef(0);
   useEffect(() => {
     if (s.overlay === null) {
-      setSheet(null);
+      setSheet(false);
       setPanel(null);
       setPass(null);
     }
@@ -91,7 +91,7 @@ export function ScanLoop({
       void refetch();
     }
   }, [session, s, counts.configRev, refetch]);
-  const open = (next: 'lookup' | 'code' | null) => {
+  const open = (next: boolean) => {
     dispatch({ type: 'overlay', open: next ? 'lookup' : null });
     setSheet(next);
   };
@@ -260,6 +260,7 @@ export function ScanLoop({
         }}
       />
       <ScanOverlays
+        allowPeople={scanner?.settings.lookup ?? true}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
         sheet={sheet}

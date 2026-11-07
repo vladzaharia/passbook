@@ -34,6 +34,39 @@ An event with **Allow re-entry** off permits one entry and its exit.
 Changes to admission rules take effect immediately. Undo is audited and restores the previous
 entry state; it cannot undo a transition superseded by a newer scan.
 
+## Scan or look up a pass
+
+**Look up** accepts a full barcode, ID, name prefix or full email address. Enter a code or ID
+and press Enter (or **Find pass**). It follows the scanner's **On scan, tap or entered code**
+setting: automatic check-in by default, or review before check-in. Hardware keyboard scans use
+the same setting. Looking up a person by name or email never checks them in until **Check in**
+is pressed. Turning off people lookup still permits code entry.
+
+Names need at least three letters; email addresses must be complete. Exact pass IDs, serials,
+external IDs, barcode contents and configured lookup IDs can be searched without appearing in
+the pass's title or subtitle. Search remains limited to the scanner's organization, mode and
+accepted passes. Short IDs match exactly; they do not enable short name searches.
+
+To use a separate membership or ticket number, add a text input in the template designer and
+select it under **Barcode → Lookup ID**. It needs no visible field or barcode binding. The QR
+can continue to contain different data. Use text for IDs with leading zeros. Save and activate
+the template, then issue or reissue passes with that input populated. Existing passes gain the
+identifier when rebuilt against that version. Lookup IDs are normalized for case, spaces,
+hyphens, dots and slashes; keep them unique within the accepted passes. Duplicate matches
+require selecting a person and are never automatically admitted.
+
+## Bluetooth and USB scanners
+
+Pair a Bluetooth scanner in the device's operating system using **HID / keyboard** mode, or
+connect a USB keyboard scanner. Configure a US keyboard layout and Enter suffix. In a browser,
+start the scanner session and scan with focus on the page or in **Look up**. Avoid typing into
+other controls. HID input works independently of the camera reader setting.
+
+In the Android APK, focus **Scan barcode here** and scan. The native field forwards the exact
+text, including leading zeros, to the same verifier. Android integrated scanners can also use
+their documented broadcast configuration. Serial/SPP and proprietary BLE modes need a
+model-specific adapter; select HID mode when the scanner supports it.
+
 ## Use an admin session
 
 At `/scan`, choose **Scan as Admin** beneath the pairing form. Select an organization and start

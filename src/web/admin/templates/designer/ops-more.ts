@@ -9,6 +9,7 @@ import {
 import { type InputSpec, nameProblem, readInputs, scalarInputs, writeInputs } from './inputs.ts';
 import { type DesignDoc, type Dict, isRecord } from './model.ts';
 import { copy } from './ops-pass.ts';
+import { reconcileLookup } from './scan/lookup.ts';
 
 export interface BarcodeSettings {
   enabled: boolean;
@@ -115,7 +116,7 @@ export function updateInput(doc: DesignDoc, name: string, patch: Partial<InputSp
   );
   if (merged.name !== name)
     next = { ...next, manifest: renameInputRefs(next.manifest, name, merged.name) };
-  return next;
+  return reconcileLookup(next, name, merged.name);
 }
 
 export function removeInput(doc: DesignDoc, name: string): DesignDoc {
@@ -136,7 +137,7 @@ export function removeInput(doc: DesignDoc, name: string): DesignDoc {
     subtitle: keep(display.subtitle),
     search,
   };
-  return next;
+  return reconcileLookup(next, name);
 }
 
 export function moveInput(doc: DesignDoc, name: string, to: number): DesignDoc {

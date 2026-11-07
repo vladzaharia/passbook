@@ -268,7 +268,7 @@ export async function startAdminSetup(
           deviceRole: 'scan',
           adminUserId: userId,
           accepts: null,
-          settings: { ...ADMIN_SETTINGS, reader: 'none' },
+          settings: { ...ADMIN_SETTINGS, flow: 'auto', reader: 'none' },
         },
         origin,
       );

@@ -233,10 +233,8 @@ test('Scan as Admin is optional and reuses the organization’s managed session'
     const member = await createPass(api, org.id, { holder: 'Admin Action Guest' });
     await page.getByTestId('scan-start').click();
     await page.getByRole('button', { name: 'Look up', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Name or full email' }).fill('Admin Action');
+    await page.getByRole('textbox', { name: 'Name, email, code or ID' }).fill('Admin Action');
     await page.getByRole('button', { name: /Admin Action Guest/ }).click();
-    await page.getByRole('button', { name: 'Check in', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Choose an action' })).toBeVisible();
     await page.getByRole('button', { name: 'Check in', exact: true }).click();
     await expect(page.getByTestId('scan-result')).toContainText('Checked in');
     const scans = await api.get(`/api/v1/scans?orgId=${org.id}&passId=${member.id}`);

@@ -33,17 +33,14 @@ export async function lookup(
   const email = strictEmail(q);
   const clean = cleanCode(q);
   const keys =
-    !email && q.length >= 3
+    q.length > 0
       ? {
           scanCode: codeKeyOf(clean),
           barcodeHash: await barcodeHashOfCode(clean),
           lookupHash: await lookupHashOf(clean),
         }
       : undefined;
-  const rows =
-    (q.includes('@') && !email) || (!email && Array.from(q).length < 3)
-      ? []
-      : await searchPasses(ctx.env.DB, actor, email ?? q, email !== null, keys);
+  const rows = !q ? [] : await searchPasses(ctx.env.DB, actor, q, email, keys);
   if (!rows.length) await countMiss(ctx, actor);
   await auditStmt(ctx.env.DB, ctx, {
     orgId: actor.orgId,

@@ -18,7 +18,7 @@ export function searchPasses(
   db: D1Database,
   actor: ScanActor,
   q: string,
-  email: boolean,
+  email: string | null,
   keys?: { scanCode: string | null; barcodeHash: string; lookupHash: string },
 ): Promise<SearchRow[]> {
   if (
@@ -40,23 +40,25 @@ export function searchPasses(
     );
     params.push(`$.${actor.event.matchInput}`, ...values);
   }
+  const matches: string[] = [];
   if (email) {
-    where.push('p.holder_email = ?');
-    params.push(q);
-  } else {
-    const matches = [
+    matches.push('SELECT id FROM passes WHERE org_id = ? AND holder_email = ?');
+    params.push(actor.orgId, email);
+  } else if (!q.includes('@') && Array.from(q).length >= 3) {
+    matches.push(
       "SELECT id FROM passes WHERE org_id = ? AND display_title LIKE ? ESCAPE '\\' COLLATE NOCASE",
       "SELECT id FROM passes WHERE org_id = ? AND display_subtitle LIKE ? ESCAPE '\\' COLLATE NOCASE",
-    ];
+    );
     params.push(actor.orgId, `${likeEscape(q)}%`, actor.orgId, `${likeEscape(q)}%`);
-    if (keys) {
-      matches.push(
-        'SELECT id FROM passes WHERE org_id = ? AND (scan_code = ? OR barcode_hash = ? OR lookup_hash = ?)',
-      );
-      params.push(actor.orgId, keys.scanCode, keys.barcodeHash, keys.lookupHash);
-    }
-    where.push(`p.id IN (${matches.join(' UNION ')})`);
   }
+  if (keys) {
+    matches.push(
+      'SELECT id FROM passes WHERE org_id = ? AND (id = ? OR serial = ? OR external_id = ? OR scan_code = ? OR barcode_hash = ? OR lookup_hash = ?)',
+    );
+    params.push(actor.orgId, q, q, q, keys.scanCode, keys.barcodeHash, keys.lookupHash);
+  }
+  if (!matches.length) return Promise.resolve([]);
+  where.push(`p.id IN (${matches.join(' UNION ')})`);
 
   return all<SearchRow>(
     db,

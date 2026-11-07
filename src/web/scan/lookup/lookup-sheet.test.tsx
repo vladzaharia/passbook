@@ -7,7 +7,7 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { fixtureCard, fixtureOutcome } from '../machine/fixtures.test-support.ts';
 import { LookupSheet } from './lookup-sheet.tsx';
 
-function setup(open: 'lookup' | 'code' = 'lookup') {
+function setup(allowPeople = true) {
   const base = fixtureCard();
   const card = fixtureCard({
     actions: base.actions.slice(0, 1).map((action) => ({
@@ -42,20 +42,40 @@ function setup(open: 'lookup' | 'code' = 'lookup') {
   });
   const api = { lookup, resolve } as unknown as ScanApi;
   const onClose = vi.fn();
-  const onRead = vi.fn();
-  const view = render(<LookupSheet open={open} api={api} onClose={onClose} onRead={onRead} />);
-  return { ...view, card, api, lookup, resolve, onClose, onRead, user: userEvent.setup() };
+  const onCheckIn = vi.fn();
+  const onCode = vi.fn();
+  const view = render(
+    <LookupSheet
+      open
+      allowPeople={allowPeople}
+      api={api}
+      onClose={onClose}
+      onCheckIn={onCheckIn}
+      onCode={onCode}
+    />,
+  );
+  return {
+    ...view,
+    card,
+    api,
+    lookup,
+    resolve,
+    onClose,
+    onCheckIn,
+    onCode,
+    user: userEvent.setup(),
+  };
 }
 
 async function search(user: ReturnType<typeof userEvent.setup>, value = 'Anna') {
-  const field = screen.getByRole('textbox', { name: 'Name or full email' });
+  const field = screen.getByRole('textbox', { name: 'Name, email, code or ID' });
   await user.type(field, value);
   return field;
 }
 
 describe('lookup review and keyboard navigation', () => {
   it('resolves a selected person and checks in only after the explicit primary', async () => {
-    const { user, resolve, onRead, card } = setup();
+    const { user, resolve, onCheckIn, card } = setup();
     const field = await search(user);
     expect(field).toHaveFocus();
     const row = await screen.findByRole('button', { name: /Anna Popescu Gold/ });
@@ -70,12 +90,12 @@ describe('lookup review and keyboard navigation', () => {
       expect.objectContaining({ input: { passId: card.passId, method: 'manual' } }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
-    expect(onRead).not.toHaveBeenCalled();
+    expect(onCheckIn).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByRole('textbox')).toHaveValue('Anna');
     await user.click(await screen.findByRole('button', { name: /Anna Popescu Gold/ }));
     await user.click(await screen.findByRole('button', { name: 'Check in' }));
-    expect(onRead).toHaveBeenCalledWith({ passId: card.passId });
+    expect(onCheckIn).toHaveBeenCalledWith(card, 'check_in');
   });
 
   it('requires a name prefix, shows an email hint and clears with Escape before closing', async () => {
@@ -106,11 +126,18 @@ describe('lookup review and keyboard navigation', () => {
   });
 
   it('offers retry after a network failure and reports a capped result list', async () => {
-    const { user, lookup, card } = setup();
+    const { user, lookup, resolve, card } = setup();
     lookup.mockRejectedValueOnce(new Error('offline'));
     await search(user);
-    expect(await screen.findByText('Could not search. Check your connection.')).toBeVisible();
+    expect(
+      await screen.findByText('Could not look up this pass. Check your connection.'),
+    ).toBeVisible();
     lookup.mockResolvedValueOnce({ items: [], more: false });
+    resolve.mockResolvedValueOnce({
+      ...fixtureOutcome('refused', 'not_found'),
+      kind: 'refused',
+      reason: 'not_found',
+    });
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByText('No matches')).toBeVisible();
     lookup.mockResolvedValueOnce({
@@ -133,17 +160,79 @@ describe('lookup review and keyboard navigation', () => {
     ).toBeVisible();
   });
 
-  it('resolves a typed code without acting until review is confirmed', async () => {
-    const { user, resolve, onRead, card } = setup('code');
-    await user.type(screen.getByRole('textbox', { name: 'Code' }), '0001234');
+  it('submits an entered code through the scan path when people lookup is disabled', async () => {
+    const { user, resolve, onCheckIn, onCode } = setup(false);
+    await user.type(screen.getByRole('textbox', { name: 'Code or ID' }), '0001234');
     await user.click(screen.getByRole('button', { name: 'Find pass' }));
-    await screen.findByRole('heading', { name: 'Anna Popescu' });
+    expect(onCode).toHaveBeenCalledExactlyOnceWith('0001234');
+    expect(resolve).not.toHaveBeenCalled();
+    expect(onCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('submits a full code with slashes on Enter through the scan path', async () => {
+    const { user, resolve, onCheckIn, onCode } = setup();
+    const code = 'https://member.example.test/id/0001234';
+    await user.type(screen.getByRole('textbox'), `${code}{Enter}`);
+    await waitFor(() => expect(onCode).toHaveBeenCalledExactlyOnceWith(code));
     expect(resolve).toHaveBeenCalledWith(
-      expect.objectContaining({ input: { code: '0001234', method: 'manual' } }),
+      expect.objectContaining({ input: { code, method: 'manual' } }),
       expect.anything(),
     );
-    expect(onRead).not.toHaveBeenCalled();
+    expect(onCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('finds a person by full email on Enter and still requires confirmation', async () => {
+    const { user, resolve, lookup, onCheckIn, card } = setup();
+    resolve.mockResolvedValueOnce({
+      ...fixtureOutcome('refused', 'not_found'),
+      kind: 'refused',
+      reason: 'not_found',
+    });
+    await user.type(screen.getByRole('textbox'), 'anna@example.test{Enter}');
+    await screen.findByRole('heading', { name: 'Anna Popescu' });
+    expect(lookup).toHaveBeenCalledWith({ q: 'anna@example.test' }, expect.anything());
+    expect(resolve).toHaveBeenLastCalledWith(
+      expect.objectContaining({ input: { passId: card.passId, method: 'manual' } }),
+      expect.anything(),
+    );
+    expect(onCheckIn).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Check in' }));
-    expect(onRead).toHaveBeenCalledWith({ passId: card.passId });
+    expect(onCheckIn).toHaveBeenCalledExactlyOnceWith(card, 'check_in');
+  });
+
+  it('does not search partial emails', async () => {
+    const { user, lookup } = setup();
+    await user.type(screen.getByRole('textbox'), 'anna@exam');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(lookup).not.toHaveBeenCalled();
+    expect(screen.getByText('Use the full email address.')).toBeVisible();
+  });
+
+  it('ignores a late code resolution after the query changes', async () => {
+    const { user, resolve, onCheckIn, onCode } = setup();
+    let reply: (value: Awaited<ReturnType<ScanApi['resolve']>>) => void = () => {};
+    resolve.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          reply = done;
+        }),
+    );
+    await user.type(screen.getByRole('textbox'), 'OLD{Enter}');
+    const signal = resolve.mock.calls[0]?.[1]?.signal;
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'NEW');
+    expect(signal?.aborted).toBe(true);
+    reply({
+      ...fixtureOutcome('ready', 'choose'),
+      kind: 'ready',
+      reason: 'choose',
+      card: fixtureCard({ title: 'Old result' }),
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Old result' })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('NEW');
+    expect(onCode).not.toHaveBeenCalled();
+    expect(onCheckIn).not.toHaveBeenCalled();
   });
 });
