@@ -16,11 +16,13 @@ xcodebuild -project PassBookScanner.xcodeproj -scheme PassBookScanner \
 
 Signed device builds need provisioning for `mobile.passbook.scanner` and your Apple Developer team. Run on physical iPhone/iPad devices to validate camera, NFC and keyboard behavior. Validate Duo folding, hinge-safe layout and outside customer display on iPhone Duo; the outside display is system-managed and only appears when it is available during active camera capture. Simulator has no camera and cannot verify this flow.
 
+If the startup network load fails, tap **Retry**; the error overlay clears after the scanner page loads.
+
 ## TestFlight
 
 Before the first upload, the Account Holder must register `mobile.passbook.scanner`, enable **NFC Tag Reading** for its App ID, and create the matching App Store Connect app record.
 
-Create a GitHub environment named `iOS TestFlight` with required reviewers. Add `APPLE_TEAM_ID` as an environment variable and `ASC_KEY_ID`, `ASC_ISSUER_ID`, and base64-encoded `ASC_KEY_P8_BASE64` as environment secrets. Use an **Admin** App Store Connect team key so Xcode can manage signing profiles. Never commit the `.p8` file.
+Create a GitHub environment named `iOS TestFlight` with required reviewers. Set `APPLE_TEAM_ID` as a repository variable, and add `ASC_KEY_ID`, `ASC_ISSUER_ID`, and base64-encoded `ASC_KEY_P8_BASE64` as environment secrets. Use an **Admin** App Store Connect team key so Xcode can manage signing profiles. Never commit the `.p8` file.
 
 Run **Actions → iOS TestFlight** from `main` and enter the marketing version. The workflow runs `npm run check` and the browser E2E suite, archives with automatic signing, and uploads the build. After processing, add it to an internal TestFlight group; external testers require Beta App Review.
 
