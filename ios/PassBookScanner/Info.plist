@@ -13,7 +13,7 @@
 	<key>NSCameraUsageDescription</key><string>Scan pass barcodes with the camera.</string>
 	<key>NFCReaderUsageDescription</key><string>Read a supported NFC tag when you choose NFC scan.</string>
 	<key>UIApplicationSceneManifest</key>
-	<dict><key>UIApplicationSupportsMultipleScenes</key><false/><key>UISceneConfigurations</key><dict><key>UIWindowSceneSessionRoleApplication</key><array><dict><key>UISceneConfigurationName</key><string>Default Configuration</string><key>UISceneDelegateClassName</key><string>$(PRODUCT_MODULE_NAME).SceneDelegate</string></dict></array></dict></dict>
+	<dict><key>UIApplicationSupportsMultipleScenes</key><true/><key>UISceneConfigurations</key><dict><key>UIWindowSceneSessionRoleApplication</key><array><dict><key>UISceneConfigurationName</key><string>Default Configuration</string><key>UISceneDelegateClassName</key><string>$(PRODUCT_MODULE_NAME).SceneDelegate</string></dict></array></dict></dict>
 	<key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationPortraitUpsideDown</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
 	<key>WKAppBoundDomains</key><array><string>passbook.mobile</string></array>
 </dict>

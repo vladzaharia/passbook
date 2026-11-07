@@ -28,6 +28,79 @@ test('handshake and validated result round trip', () => {
   assert.equal(client.result('1', 'accepted'), false);
 });
 
+test('legacy encrypted VAS scans and error results retain their v1 wire format', () => {
+  const { sent, client, receive } = fixture();
+  let scan;
+  client.addEventListener('scan', (event) => {
+    scan = event.detail;
+  });
+  receive({
+    event: 'scan',
+    id: 'vas',
+    source: 'apple-vas',
+    passTypeIdentifier: 'pass.example.member',
+    cryptogram: 'AAAA',
+  });
+  assert.equal(scan.source, 'apple-vas');
+  assert.equal(scan.passTypeIdentifier, 'pass.example.member');
+  assert.equal(scan.cryptogram, 'AAAA');
+  assert.equal(client.result('vas', 'error'), true);
+  assert.deepEqual(sent[0], { version: 1, op: 'result', id: 'vas', outcome: 'error' });
+});
+
+test('capability updates preserve v1 fields and publish the latest snapshot', () => {
+  const { client, receive } = fixture();
+  const initial = {
+    platform: 'android',
+    appVersion: '0.2.3',
+    camera: { available: true, permission: 'unknown' },
+    keyboard: { supported: true, connected: null, connectionObservable: false },
+    nfc: { available: true, reading: true, formats: ['wallet-vas'] },
+    vas: {
+      deviceSupported: true,
+      available: false,
+      reader: 'android-native',
+      reason: 'No verifier',
+    },
+    externalReader: { mode: 'keyboard', connected: null },
+    customerDisplay: { supported: false, available: false, active: false },
+  };
+  receive({
+    event: 'ready',
+    nfc: true,
+    ecp: false,
+    diagnostics: false,
+    appVersion: '0.2.3',
+    capabilities: initial,
+  });
+  let update;
+  let count = 0;
+  client.addEventListener('capabilities', (event) => {
+    update = event.detail;
+    count++;
+  });
+  receive({ event: 'scan', id: 'pending', source: 'barcode', value: '000123' });
+  const next = {
+    ...initial,
+    camera: { available: true, permission: 'granted' },
+    nfc: { ...initial.nfc, available: false, reading: false },
+  };
+  receive({ event: 'capabilities', capabilities: next });
+  assert.deepEqual(update, next);
+  assert.deepEqual(client.capabilities.capabilities, next);
+  assert.equal(client.capabilities.nfc, false);
+  assert.equal(client.capabilities.ecp, false);
+  assert.equal(client.capabilities.diagnostics, false);
+  assert.equal(client.capabilities.appVersion, '0.2.3');
+  assert.equal(client.capabilities.capabilities.vas.available, false);
+  assert.equal(client.result('pending', 'accepted'), true);
+  receive({ event: 'capabilities', capabilities: null });
+  receive({ event: 'capabilities', capabilities: [] });
+  receive({ version: 2, event: 'capabilities', capabilities: initial });
+  assert.equal(count, 1);
+  assert.deepEqual(client.capabilities.capabilities, next);
+});
+
 test('timeouts and newer scans invalidate old decisions', () => {
   const { client, receive } = fixture();
   receive({ event: 'scan', id: '1' });

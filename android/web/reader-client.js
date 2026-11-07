@@ -19,6 +19,19 @@ export class ReaderClient extends EventTarget {
       if (message.event === 'ready') {
         this.capabilities = message;
         this.dispatchEvent(new Event('ready'));
+      } else if (
+        message.event === 'capabilities' &&
+        message.capabilities &&
+        typeof message.capabilities === 'object' &&
+        !Array.isArray(message.capabilities)
+      ) {
+        const nfc = message.capabilities.nfc?.available;
+        this.capabilities = {
+          ...this.capabilities,
+          ...(typeof nfc === 'boolean' ? { nfc } : {}),
+          capabilities: message.capabilities,
+        };
+        this.dispatchEvent(new CustomEvent('capabilities', { detail: message.capabilities }));
       } else if (message.event === 'scan' && typeof message.id === 'string') {
         this.#pending.clear();
         this.#pending.add(message.id);

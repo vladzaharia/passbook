@@ -10,6 +10,10 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     private var ready = false
     private var armed = false
     private var pendingID: String?
+    private var scanTimeout: Task<Void, Never>?
+    private var lastCapabilities: Data?
+    private let customerDisplay = CustomerDisplayModel()
+    private var customerRegistration: AnyObject?
 
     override func loadView() {
         let content = WKUserContentController()
@@ -35,20 +39,82 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        registerCustomerDisplay()
         let url = URL(string: "\(trustedOrigin)/scan")!
         webView.load(URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        refreshCapabilities()
+    }
+    @available(iOS 26.0, *)
+    override func updateProperties() {
+        super.updateProperties()
+        refreshCapabilities()
     }
 
     func pause() {
         armed = false
         pendingID = nil
+        scanTimeout?.cancel()
+        scanTimeout = nil
+        customerDisplay.status = .ready
         hardware.stop()
         send(["event": "cancelled"])
     }
 
-    func refreshCapabilities() {
-        send(["event": ready ? "capabilities" : "ready", "capabilities": hardware.capabilities])
+    func refreshCapabilities(force: Bool = false) {
+        guard webView.url?.host == trustedHost, webView.url?.scheme == "https" else { return }
+        var capabilities = hardware.capabilities
+        capabilities["layout"] = layoutCapabilities()
+        capabilities["customerDisplay"] = customerDisplayCapabilities()
+        guard let data = try? JSONSerialization.data(withJSONObject: capabilities, options: [.sortedKeys]) else { return }
+        if !force && lastCapabilities == data { return }
+        lastCapabilities = data
+        send(["event": ready ? "capabilities" : "ready", "capabilities": capabilities])
     }
+
+    private func layoutCapabilities() -> [String: Any] {
+        var posture = "unknown"
+        var division: Any = NSNull()
+        if #available(iOS 27.1, *),
+           let region = webView.reservedRegions(kind: .division, options: .includeInactive).first {
+            if region.isActive {
+                posture = "half-folded"
+                division = [
+                    "x": max(0, region.frame.minX),
+                    "y": max(0, region.frame.minY),
+                    "width": max(0, region.frame.width),
+                    "height": max(0, region.frame.height)
+                ]
+            } else {
+                posture = "unfolded"
+            }
+        }
+        return ["posture": posture, "division": division]
+    }
+    private func registerCustomerDisplay() {
+        guard #available(iOS 27.1, *) else { return }
+        let configuration = UISceneConfiguration()
+        configuration.delegateClass = CustomerSceneDelegate.self
+        let accessory = UISceneAccessory.cameraCapture(
+            sceneConfiguration: configuration,
+            userInfo: customerDisplay,
+        )
+        customerRegistration = registerSceneAccessory(accessory)
+    }
+
+    private func customerDisplayCapabilities() -> [String: Any] {
+        guard #available(iOS 27.1, *) else {
+            return ["supported": false, "available": false, "active": false]
+        }
+        let registration = customerRegistration as? UISceneAccessoryRegistration
+        let available = registration?.isAvailable ?? false
+        let active = available && (registration?.isEnabled ?? false)
+        return ["supported": true, "available": available, "active": active]
+    }
+
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "passbookNative", message.frameInfo.isMainFrame,
@@ -61,7 +127,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         switch op {
         case "hello":
             ready = true
-            refreshCapabilities()
+            refreshCapabilities(force: true)
         case "start":
             guard ready, UIApplication.shared.applicationState == .active else { return }
             armed = true
@@ -75,6 +141,13 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
                   let outcome = request["outcome"] as? String,
                   ["accepted", "rejected", "error"].contains(outcome) else { return }
             pendingID = nil
+            scanTimeout?.cancel()
+            scanTimeout = nil
+            customerDisplay.status = switch outcome {
+            case "accepted": .accepted
+            case "rejected": .rejected
+            default: .failed
+            }
         default: return
         }
     }
@@ -84,7 +157,15 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
               value.utf8.count <= 2048, !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return }
         let id = UUID().uuidString
         pendingID = id
-        send(["event": "scan", "id": id, "source": "barcode", "value": value, "method": method, "readAt": Int(Date().timeIntervalSince1970 * 1000)])
+        customerDisplay.status = .checking
+        scanTimeout = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(15))
+            guard let self, !Task.isCancelled, self.pendingID == id else { return }
+            self.pendingID = nil
+            self.scanTimeout = nil
+            self.customerDisplay.status = .failed
+            self.send(["event": "timeout"])
+        }
     }
 
     private func send(_ fields: [String: Any]) {
@@ -114,7 +195,13 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        ready = false; armed = false; pendingID = nil; hardware.stop();
+        ready = false
+        armed = false
+        pendingID = nil
+        scanTimeout?.cancel()
+        scanTimeout = nil
+        customerDisplay.status = .ready
+        hardware.stop()
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { refreshCapabilities() }
@@ -134,7 +221,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     }
 
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void) {
-        guard origin.host == trustedHost, origin.protocol == "https", frame.isMainFrame,
+        guard type == .camera, origin.host == trustedHost, origin.protocol == "https", frame.isMainFrame,
               UIApplication.shared.applicationState == .active else { decisionHandler(.deny); return }
         hardware.requestCameraPermission { [weak self] granted in
             guard let self, UIApplication.shared.applicationState == .active,

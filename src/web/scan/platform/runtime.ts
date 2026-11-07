@@ -25,6 +25,7 @@ import {
 import { sound } from '../sound/player.ts';
 import type { Announcement } from '../ui/live-announcer.tsx';
 import { scanId } from './id.ts';
+import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 
 export async function createRuntime(
   session: ScanSession,
@@ -56,6 +57,22 @@ export async function createRuntime(
     meta: db ? createIdbKeyValue(db, 'meta') : createMemoryKeyValue(),
   };
   let scanner = session.scanner;
+  const hasDuoLayout = () => {
+    const layout =
+      getNativeCapabilities()?.layout ?? session.workspace?.device.capabilities?.native?.layout;
+    return layout?.posture === 'unfolded' || layout?.posture === 'half-folded';
+  };
+  const cameraDisabled = () => {
+    if (hasDuoLayout()) return false;
+    if (session.workspace?.device.effectiveSurface === 'operator') return true;
+    return (
+      scanner?.settings.reader === 'barcode' ||
+      (scanner?.settings.reader === 'nfc' &&
+        (getNativeCapabilities()?.vas.available ??
+          session.workspace?.device.capabilities?.native?.vas.available ??
+          false))
+    );
+  };
   try {
     await reconcileScope(localStores, {
       scannerId: scanner?.id ?? 'admin',
@@ -79,15 +96,12 @@ export async function createRuntime(
       : scanner?.settings.reader === 'barcode'
         ? 'barcode'
         : 'none';
-  state.camera =
-    session.workspace?.device.effectiveSurface === 'operator' ||
-    (scanner?.settings.reader !== 'none' && scanner !== null)
-      ? 'disabled'
-      : 'off';
+  state.camera = cameraDisabled() ? 'disabled' : 'off';
   if (scanner) state.unsure = await hydrateUnsure(unsure, scanner.id, clock.now());
   const fields = new WedgeFields();
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
   let native: ReturnType<typeof connectNativeReader> = null;
+  let vasFallbackNoticeShown = false;
   let wake: WakeLockSentinel | null = null;
   const camera = createCamera(
     video,
@@ -157,6 +171,18 @@ export async function createRuntime(
     const loop = store.getSnapshot().state.loop;
     return 'input' in loop && loop.input.id === input.id ? input.id : null;
   };
+  const syncCameraMode = () => {
+    const current = store.getSnapshot().state;
+    if (cameraDisabled()) {
+      if (current.camera !== 'disabled') {
+        camera.stop();
+        store.dispatch({ type: 'camera', status: 'disabled' });
+      }
+    } else if (current.camera === 'disabled') {
+      store.dispatch({ type: 'camera', status: 'off' });
+      if (current.started) camera.start();
+    }
+  };
   native = connectNativeReader({
     read: emit,
     cancelled(id) {
@@ -165,13 +191,22 @@ export async function createRuntime(
         store.dispatch({ type: 'fail', key: l.key, error: 'timeout' });
     },
     unsupported: () => notice('NFC verification is unavailable. Scan the barcode.', false),
-    capabilities: (value) =>
-      window.dispatchEvent(new CustomEvent('passbook:native-capabilities', { detail: value })),
+    capabilities(value) {
+      setNativeCapabilities(value);
+      if (
+        !vasFallbackNoticeShown &&
+        scanner?.settings.reader === 'nfc' &&
+        getNativeCapabilities()?.vas.available === false
+      ) {
+        notice('Wallet pass reading is unavailable. Scan the barcode.', false);
+        vasFallbackNoticeShown = true;
+      }
+      syncCameraMode();
+    },
   });
   const stopWedge = createWedgeSource({
     clock,
     fields,
-    reader: () => store.getSnapshot().state.reader.kind,
     onFocus: (focused) => store.dispatch({ type: 'focus', focused }),
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));
@@ -200,23 +235,10 @@ export async function createRuntime(
     const current = store.getSnapshot().state;
     if (!next?.scanner || current.loop.s !== 'ready' || current.overlay) return;
     pending = null;
-    const before = current.reader.kind;
-    const wasOperator = session.workspace?.device.effectiveSurface === 'operator';
     session = next;
     scanner = next.scanner;
-    if (store.configure(scanner.settings, next.counts) && before !== scanner.settings.reader) {
-      if (scanner.settings.reader !== 'none') camera.stop();
-      else if (current.started && next.workspace?.device.effectiveSurface !== 'operator')
-        camera.start();
-    }
-    if (next.workspace?.device.effectiveSurface === 'operator') {
-      camera.stop();
-      if (store.getSnapshot().state.camera !== 'disabled')
-        store.dispatch({ type: 'camera', status: 'disabled' });
-    } else if (wasOperator && scanner.settings.reader === 'none') {
-      store.dispatch({ type: 'camera', status: 'off' });
-      if (current.started) camera.start();
-    }
+    store.configure(scanner.settings, next.counts);
+    syncCameraMode();
   };
   const unsubscribe = store.subscribe(() => {
     applyPending();

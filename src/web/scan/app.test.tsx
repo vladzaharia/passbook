@@ -79,6 +79,25 @@ describe('every boot state', () => {
       });
     }
   }
+  it('keeps the camera and desk in separate Duo panes around the reported hinge', () => {
+    const duo = {
+      surface: 'duo' as const,
+      layout: {
+        posture: 'half-folded' as const,
+        division: { x: 420, y: 0, width: 24, height: 800 },
+      },
+      camera: <div data-testid="duo-camera" />,
+      sidebar: <aside data-testid="duo-desk" />,
+    };
+    const { container, rerender } = render(view({ s: 'loop' }, duo));
+    const shell = container.querySelector<HTMLElement>('.scan-shell');
+    expect(screen.getByTestId('duo-camera')).toBeInTheDocument();
+    expect(screen.getByTestId('duo-desk')).toBeInTheDocument();
+    expect(shell?.style.getPropertyValue('--duo-scan-width')).toBe('420px');
+    expect(shell?.style.getPropertyValue('--duo-desk-left')).toBe('444px');
+    rerender(view({ s: 'loop' }, { ...duo, layout: { posture: 'unfolded', division: null } }));
+    expect(shell?.style.getPropertyValue('--duo-scan-width')).toBe(`${window.innerWidth / 2}px`);
+  });
 
   it('slate blocks are alerts and focus their one action', () => {
     for (const kind of BLOCKS) {

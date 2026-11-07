@@ -1,10 +1,10 @@
 # iOS scanner
 
-Native iPhone/iPad shell for the shared `/scan` web application. Camera decoding remains in the web scanner; native code supplies permission/lifecycle handling, NDEF text/URI reads, and a versioned bridge. iOS does not expose reliable generic HID keyboard connection state; wedge data is handled by the web scanner.
+Native iPhone/iPad shell for the shared `/scan` web application. Camera decoding remains in the web scanner; native code supplies camera permission/lifecycle handling, HID wedge input reporting, an NDEF tag-read bridge, Duo posture geometry, and an optional camera-capture customer display.
 
 ## Build and run
 
-Requires current Xcode and XcodeGen. iOS 27.1+ SDK APIs are needed for planned iPhone Duo support.
+Requires current Xcode and XcodeGen. The app targets iOS 17; iOS 27.1+ is required for iPhone Duo reserved-region and camera-capture accessory APIs.
 
 ```sh
 cd ios
@@ -14,13 +14,13 @@ xcodebuild -project PassBookScanner.xcodeproj -scheme PassBookScanner \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-Set the development team and bundle identifier in Xcode before signing on a device. Run on a physical device to validate camera, NFC, keyboard, and iPhone Duo display behavior; the simulator does not provide a camera or NFC reader.
+Set the development team and bundle identifier in Xcode before signing on a device. Run on physical iPhone/iPad devices to validate camera, NFC and keyboard behavior. Validate Duo folding, hinge-safe layout and outside customer display on iPhone Duo; the outside display is system-managed and only appears when it is available during active camera capture. Simulator has no camera and cannot verify this flow.
 
 ## Hardware limits
 
 - Camera: WKWebView uses the existing `getUserMedia` scanner. Native code grants capture only to the trusted `https://passbook.mobile` main frame while foregrounded.
 - Reader: USB/Bluetooth HID keyboard wedges are handled by iOS and received by the web scanner. iOS does not expose generic HID presence; this app does not claim generic USB serial, Bluetooth SPP, or ExternalAccessory access.
-- NFC: this build reads user-started NDEF text/URI tags only. It does not read Apple Wallet passes. Apple documents Wallet VAS reading through ProximityReader/Tap to Pay with the required entitlement and PSP token; server-side verification is also needed before accepting a pass.
-- iPhone Duo: reserved-region and outside-display support is planned for iOS 27.1+ and requires physical-device validation. The current shell uses one web view and does not yet implement Duo panes or an outside display.
+- NFC: Core NFC reads user-started NDEF text/URI tags, but the current scanner UI does not expose an NDEF action and this does not read Apple Wallet passes. Apple documents Wallet VAS reading through ProximityReader/Tap to Pay with the required entitlement and PSP token; server-side verification is also needed before accepting a pass.
+- iPhone Duo: the app uses UIKit reserved-region geometry to split the single web scanner into scan and desk panes, keeping the hinge clear. The outside customer screen uses a camera-capture scene accessory; the system controls availability and may withdraw it at any time.
 
 See `PassBookScanner/PassBookScanner.entitlements` and `PassBookScanner/Info.plist` for the NDEF entitlement and privacy descriptions. Wallet VAS support remains blocked on Apple reader entitlement, PSP integration, and server-side verification.

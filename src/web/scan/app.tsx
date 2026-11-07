@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { NativeScannerCapabilities } from '../../shared/contracts/scanning-sessions.ts';
 import { type BlockKind, BlockPanel } from './boot/block-panel.tsx';
 import { PairConfirm } from './boot/pair-confirm.tsx';
 import { PairView } from './boot/pair-view.tsx';
@@ -40,7 +41,8 @@ export interface ScanAppViewProps {
   /** The dock's thumb row (the door's, the desk's). */
   dockRow?: ReactNode;
   camera?: ReactNode;
-  surface?: 'phone' | 'operator';
+  surface?: 'phone' | 'operator' | 'duo';
+  layout?: NativeScannerCapabilities['layout'];
   sidebar?: ReactNode;
   card?: ReactNode;
   buddy?: ReactNode;
@@ -70,6 +72,7 @@ export function ScanAppView({
   dockRow,
   camera,
   surface,
+  layout,
   sidebar,
   card,
   buddy,
@@ -110,6 +113,7 @@ export function ScanAppView({
   return (
     <ScanShell
       surface={surface}
+      layout={layout}
       sidebar={screen.s === 'loop' ? sidebar : null}
       camera={screen.s === 'loop' ? camera : null}
       tint={tint}

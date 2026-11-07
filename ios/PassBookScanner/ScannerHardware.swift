@@ -17,7 +17,7 @@ final class ScannerHardware {
             "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1",
             "camera": ["available": AVCaptureDevice.default(for: .video) != nil, "permission": permission(status)],
             "keyboard": ["supported": true, "connected": NSNull(), "connectionObservable": false],
-            "nfc": ["ndefAvailable": NFCReader.available, "reading": readingNFC],
+            "nfc": ["available": NFCReader.available, "reading": readingNFC, "formats": NFCReader.available ? ["ndef"] : []],
             "vas": ["deviceSupported": PaymentCardReader.isSupported, "available": false, "reader": "proximityReader", "reason": "Wallet VAS needs Apple reader entitlement, a supported payment provider, and server verification."],
             "externalReader": ["mode": "keyboard", "connected": NSNull()],
             "customerDisplay": ["supported": false, "available": false, "active": false]

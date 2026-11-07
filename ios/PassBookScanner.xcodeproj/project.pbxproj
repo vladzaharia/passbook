@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		338DC984FDCC09E57453C68D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A7D089EF4D0754A8269636 /* AppDelegate.swift */; };
+		4C4130A6F3DF60424057FC44 /* CustomerDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */; };
 		6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */; };
 		6D1FCCB54701B4A2D4207DED /* NFCReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450A839D95D7FE6874A73D9A /* NFCReader.swift */; };
 		FC422B0D93C808F6A4200D61 /* ScannerHardware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3044A2068995C6D60B178E54 /* ScannerHardware.swift */; };
@@ -20,6 +21,7 @@
 		74A7D089EF4D0754A8269636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A693F3E3C1C80DFE9E699407 /* PassBookScanner.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PassBookScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A95D31294A6AB9BF2B917503 /* PassBookScanner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PassBookScanner.entitlements; sourceTree = "<group>"; };
+		B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDisplay.swift; sourceTree = "<group>"; };
 		D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -28,6 +30,7 @@
 			isa = PBXGroup;
 			children = (
 				74A7D089EF4D0754A8269636 /* AppDelegate.swift */,
+				B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */,
 				519E7915BE20BD1AFF130C2B /* Info.plist */,
 				450A839D95D7FE6874A73D9A /* NFCReader.swift */,
 				A95D31294A6AB9BF2B917503 /* PassBookScanner.entitlements */,
@@ -109,6 +112,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				338DC984FDCC09E57453C68D /* AppDelegate.swift in Sources */,
+				4C4130A6F3DF60424057FC44 /* CustomerDisplay.swift in Sources */,
 				6D1FCCB54701B4A2D4207DED /* NFCReader.swift in Sources */,
 				FC422B0D93C808F6A4200D61 /* ScannerHardware.swift in Sources */,
 				6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */,

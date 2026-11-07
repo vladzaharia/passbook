@@ -1,0 +1,69 @@
+.scan-shell[data-surface="duo"] {
+  --scan-card-w: 560px;
+}
+
+.scan-shell[data-surface="duo"] > .scan-cam,
+.scan-shell[data-surface="duo"] > .scan-tint,
+.scan-shell[data-surface="duo"] > .scan-card-layer,
+.scan-shell[data-surface="duo"] > .scan-ring {
+  inset: auto;
+  left: var(--duo-scan-left);
+  top: var(--duo-scan-top);
+  right: auto;
+  bottom: auto;
+  width: var(--duo-scan-width);
+  height: var(--duo-scan-height);
+}
+
+.scan-shell[data-surface="duo"] > .scan-dock {
+  inset: auto;
+  left: var(--duo-scan-left);
+  right: auto;
+  bottom: var(--duo-scan-bottom);
+  width: var(--duo-scan-width);
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  height: calc(var(--scan-dock-h) - 42px + max(42px, env(safe-area-inset-bottom, 0px) + 8px));
+  padding: 24px 16px max(42px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  border-radius: 28px 28px 0 0;
+}
+
+.scan-shell[data-surface="duo"] .scan-capsule {
+  top: calc(var(--duo-scan-top) + env(safe-area-inset-top, 0px) + 8px);
+  left: calc(var(--duo-scan-left) + 12px);
+  right: auto;
+  width: min(366px, calc(var(--duo-scan-width) - 24px));
+  margin: 0;
+}
+
+.scan-shell[data-surface="duo"] .scan-buddy-seat {
+  left: var(--duo-scan-left);
+  right: auto;
+  bottom: calc(var(--duo-scan-bottom) + var(--scan-dock-h) - 12px);
+  width: min(192px, var(--duo-scan-width));
+}
+
+.scan-shell[data-surface="duo"] .scan-operator {
+  inset: auto;
+  left: var(--duo-desk-left);
+  top: var(--duo-desk-top);
+  right: auto;
+  bottom: var(--duo-desk-bottom);
+  width: var(--duo-desk-width);
+  height: var(--duo-desk-height);
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 16px);
+  overflow-y: auto;
+  background: var(--pk-surface-page);
+  box-sizing: border-box;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.scan-shell[data-surface="duo"] .scan-operator-activity {
+  border-top: 1px solid var(--pk-border-subtle);
+  border-left: 0;
+  padding: 16px 0 0;
+}
