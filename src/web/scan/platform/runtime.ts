@@ -68,8 +68,7 @@ export async function createRuntime(
     const native = getNativeCapabilities() ?? session.workspace?.device.capabilities?.native;
     if (scanner?.settings.reader === 'barcode') {
       return (
-        session.workspace?.device.capabilities?.nativeBarcode ??
-        (native?.platform === 'android')
+        session.workspace?.device.capabilities?.nativeBarcode ?? native?.platform === 'android'
       );
     }
     return scanner?.settings.reader === 'nfc' && (native?.vas.available ?? false);
@@ -208,7 +207,6 @@ export async function createRuntime(
   const stopWedge = createWedgeSource({
     clock,
     fields,
-    reader: () => store.getSnapshot().state.reader.kind,
     onFocus: (focused) => store.dispatch({ type: 'focus', focused }),
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));

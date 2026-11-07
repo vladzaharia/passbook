@@ -9,8 +9,8 @@ import type {
 } from '../../../shared/contracts/scanning-sessions.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { clearNativeCapabilities, setNativeCapabilities } from '../platform/native-capabilities.ts';
-import { deviceCapabilities, useDeviceReport } from './use-device-report.ts';
 import { sessionFixture } from './session.test-support.ts';
+import { deviceCapabilities, useDeviceReport } from './use-device-report.ts';
 
 const iosCapabilities: NativeScannerCapabilities = {
   platform: 'ios',

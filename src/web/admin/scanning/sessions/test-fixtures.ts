@@ -54,7 +54,6 @@ export const managedSession = ScanningSessionDetailSchema.parse({
         },
         surfaces: ['phone', 'operator', 'customer'],
         preferred: 'phone',
-        preferred: 'phone',
       },
       reportedAt: NOW,
       paired: true,

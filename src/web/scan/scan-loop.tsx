@@ -85,7 +85,7 @@ export function ScanLoop({
   const deskSurface = operator || duoLayout;
   const nativeBarcode =
     session.workspace?.device.capabilities?.nativeBarcode ??
-    (nativeCapabilities?.platform === 'android');
+    nativeCapabilities?.platform === 'android';
   const readerUsable =
     (s.reader.kind === 'barcode' && nativeBarcode) ||
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);

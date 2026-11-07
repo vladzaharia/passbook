@@ -154,7 +154,9 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
 
     private func sendScan(_ value: String, method: String) {
         guard ready, armed, UIApplication.shared.applicationState == .active, pendingID == nil,
-              value.utf8.count <= 2048, !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return }
+              method == "nfc" || method == "wedge",
+              value.utf8.count <= 2048,
+              !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return }
         let id = UUID().uuidString
         pendingID = id
         customerDisplay.status = .checking
@@ -166,6 +168,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             self.customerDisplay.status = .failed
             self.send(["event": "timeout"])
         }
+        send(["event": "scan", "id": id, "source": "barcode", "value": value, "method": method])
     }
 
     private func send(_ fields: [String: Any]) {
