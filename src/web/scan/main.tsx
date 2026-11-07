@@ -21,7 +21,9 @@ installChunkReload();
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root');
 const customerDisplay = new URLSearchParams(location.search).get('customer-display') === '1';
-const visual = import.meta.env.DEV && new URLSearchParams(location.search).get('visual') === '1';
+const visual =
+  (import.meta.env.DEV || import.meta.env.VITE_E2E === '1') &&
+  new URLSearchParams(location.search).get('visual') === '1';
 const VisualGallery = visual
   ? lazy(() =>
       import('./visual-gallery.tsx').then((module) => ({ default: module.ScanVisualGallery })),
