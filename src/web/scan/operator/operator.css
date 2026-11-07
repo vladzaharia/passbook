@@ -13,8 +13,51 @@
 
   user-select: text;
 }
-.scan-operator > header {
-  padding-bottom: 20px;
+.scan-operator-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.scan-operator-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid color-mix(in oklab, var(--pk-accent) 30%, var(--pk-border-subtle));
+  border-radius: 15px;
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent-fg);
+}
+.scan-operator-eyebrow {
+  color: var(--pk-text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.scan-operator-lookup,
+.scan-operator-activity {
+  min-width: 0;
+  align-self: start;
+  padding: 24px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 20px;
+  background: var(--pk-surface-raised);
+}
+.scan-operator-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: var(--pk-text-muted);
+}
+.scan-operator-section-heading h2 {
+  color: var(--pk-text-strong);
+  font-size: 16px;
+  font-weight: 650;
 }
 .scan-operator .scan-lookup-content {
   padding: 0;
@@ -31,19 +74,15 @@
 .scan-operator .scan-lookup-empty {
   padding-block: 24px;
 }
-.scan-operator-activity {
-  margin-top: 0;
-  border-top: 1px solid var(--pk-border-subtle);
-  padding-top: 20px;
-}
-.scan-operator-activity > h2 {
-  margin-bottom: 12px;
+.scan-operator-activity ol {
+  min-width: 0;
 }
 .scan-operator-activity li {
   display: flex;
   align-items: start;
   gap: 10px;
   padding-block: 10px;
+  border-bottom: 1px solid var(--pk-border-subtle);
 }
 .scan-activity-dot {
   width: 8px;
@@ -63,18 +102,11 @@
 @media (min-width: 900px) {
   .scan-operator {
     grid-template-columns: minmax(300px, 440px) minmax(0, 1fr);
-    gap: 32px 64px;
+    gap: 24px;
     padding-top: 120px;
   }
   .scan-operator > header {
     grid-column: 1 / -1;
-    padding-bottom: 0;
-  }
-  .scan-operator-activity {
-    border-top: 0;
-    border-left: 1px solid var(--pk-border-subtle);
-    padding-top: 0;
-    padding-left: 32px;
   }
   .scan-shell[data-surface="operator"] {
     --scan-card-w: 600px;

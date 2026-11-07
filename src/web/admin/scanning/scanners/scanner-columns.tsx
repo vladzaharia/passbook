@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Ban, Copy, QrCode } from 'lucide-react';
+import { Ban, QrCode } from 'lucide-react';
 import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
 import { Badge, Button, RowActions, RowLink, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
@@ -8,7 +8,6 @@ import { acceptsText, scannerStatus } from './labels.ts';
 
 export interface ScannerActions {
   onPair: (s: ScannerDto) => void;
-  onDuplicate: (s: ScannerDto) => void;
   onRevoke: (s: ScannerDto) => void;
 }
 
@@ -36,7 +35,6 @@ export function scannerActions(s: ScannerDto, a: ScannerActions) {
             onSelect: () => a.onPair(s),
           },
         ]),
-    { label: 'Duplicate', icon: Copy, onSelect: () => a.onDuplicate(s) },
     ...(revoked
       ? []
       : [{ label: 'Revoke', icon: Ban, destructive: true, onSelect: () => a.onRevoke(s) }]),

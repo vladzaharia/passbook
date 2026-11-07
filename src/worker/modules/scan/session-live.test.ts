@@ -105,8 +105,8 @@ describe('session display authorization', () => {
     expect((await hub.snapshot(customer)).rows).toEqual([]);
   });
 
-  it('allows an administrator device to use a display and revalidates its real platform session', async () => {
-    const session = await parent('Admin display session');
+  it('allows an administrator device to use a customer display and revalidates its real platform session', async () => {
+    const session = await parent('Admin customer display session');
     const joined = await joinAdminScanningSession(
       kit.ctx,
       'admin-1',
@@ -115,14 +115,14 @@ describe('session display authorization', () => {
       'https://wallet.test',
     );
     const device = await updateScanningDevice(kit.ctx, 'admin-1', session.id, joined.setupId, {
-      surface: 'desk',
+      surface: 'customer',
     });
     const auth = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
     const attachment: LiveAttachment = {
       orgId: kit.org.id,
       mode: 'live',
       scannerId: device.id,
-      role: 'monitor',
+      role: 'customer',
       tokenHash: '',
       revision: device.updatedAt,
       expiresAt: kit.clock.now() + 60000,

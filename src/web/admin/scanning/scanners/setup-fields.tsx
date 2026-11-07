@@ -1,14 +1,12 @@
-import { Button, CheckboxField, FormField, Select } from '@/web/ui/index.ts';
-import { useUserList } from '../../users/queries.ts';
+import { Badge, Button, CheckboxField, FormField } from '@/web/ui/index.ts';
 import { useScannerPages } from '../queries.ts';
 import type { ScannerFieldsProps } from './scanner-fields.tsx';
 
 export function SetupFields({
   draft,
   onChange,
-  newSetup,
   errors,
-}: Pick<ScannerFieldsProps, 'draft' | 'onChange' | 'newSetup' | 'errors'>) {
+}: Pick<ScannerFieldsProps, 'draft' | 'onChange' | 'errors'>) {
   const scanners = useScannerPages(
     draft.orgId || undefined,
     false,
@@ -22,37 +20,32 @@ export function SetupFields({
       ) ?? [];
   return (
     <>
-      <FormField label="View">
-        {(p) => (
-          <Select
-            {...p}
-            value={draft.deviceRole}
-            disabled={!newSetup && !!draft.adminUserId}
-            onValueChange={(deviceRole) =>
-              onChange({
-                deviceRole: deviceRole as typeof draft.deviceRole,
-                adminUserId: '',
-                watch: {
-                  ...draft.watch,
-                  allOrg: deviceRole === 'customer' ? false : draft.watch.allOrg,
-                },
-                ...(deviceRole === 'scan' && draft.kind === 'display' ? { kind: 'device' } : {}),
-              })
-            }
-            options={[
-              { value: 'scan', label: 'Scanner' },
-              { value: 'customer', label: 'Customer screen' },
-              { value: 'monitor', label: 'Desk monitor' },
-            ]}
-          />
+      <FormField
+        label="Legacy device role"
+        help={
+          draft.deviceRole === 'monitor'
+            ? 'This standalone monitor remains read-only. Create a session device for the action-capable Operator view.'
+            : 'New devices use session layouts: Scanner, Operator or Customer display.'
+        }
+      >
+        {() => (
+          <div className="flex min-h-9 items-center">
+            <Badge>
+              {draft.deviceRole === 'scan'
+                ? 'Scanner'
+                : draft.deviceRole === 'monitor'
+                  ? 'Desk monitor'
+                  : 'Customer display'}
+            </Badge>
+          </div>
         )}
       </FormField>
-      {newSetup && draft.deviceRole === 'scan' ? (
-        <AdminOwner draft={draft} onChange={onChange} />
-      ) : null}
       {draft.deviceRole !== 'scan' ? (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">Follow scanners</legend>
+          <p className="text-xs text-fg-muted">
+            This display shows results from the selected scanners.
+          </p>
           {draft.deviceRole === 'monitor' ? (
             <CheckboxField
               label="All scanners in this organization"
@@ -103,42 +96,6 @@ export function SetupFields({
             </p>
           ) : null}
         </fieldset>
-      ) : null}
-    </>
-  );
-}
-
-function AdminOwner({ draft, onChange }: Pick<ScannerFieldsProps, 'draft' | 'onChange'>) {
-  const users = useUserList({ status: 'active' });
-  const admins =
-    users.data?.pages.flatMap((p) => p.items).filter((u) => u.lastRoles.includes('admin')) ?? [];
-  return (
-    <>
-      <FormField
-        label="Admin session"
-        help="Optional. Uses the admin’s sign-in instead of a pairing code."
-      >
-        {(p) => (
-          <Select
-            {...p}
-            value={draft.adminUserId || 'paired'}
-            onValueChange={(id) => onChange({ adminUserId: id === 'paired' ? '' : id })}
-            options={[
-              { value: 'paired', label: 'Pair a device' },
-              ...admins.map((u) => ({ value: u.id, label: u.name ?? u.primaryEmail })),
-            ]}
-          />
-        )}
-      </FormField>
-      {users.hasNextPage ? (
-        <Button
-          variant="outline"
-          size="sm"
-          loading={users.isFetchingNextPage}
-          onClick={() => void users.fetchNextPage()}
-        >
-          More admins
-        </Button>
       ) : null}
     </>
   );

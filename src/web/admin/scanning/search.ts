@@ -8,8 +8,8 @@ const id = z.string().min(1).max(64).optional().catch(undefined);
 
 /**
  * `/admin/scanning?tab=`. Everything but `tab` is a filter the Scans tab reads (and links from
- * dashboards and rows fill); filters ride along when the tab changes. `new=1` opens the tab's
- * create dialog (the command palette's actions).
+ * dashboards and rows fill); filters ride along when the tab changes. `new=1` opens the shared
+ * session form from either the Sessions or Devices tab.
  */
 export const scanningSearchSchema = z.object({
   tab: z.enum(SCANNING_TABS).optional().catch(undefined),

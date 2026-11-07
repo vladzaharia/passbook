@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { pageOf } from '@/shared/contracts/common.ts';
-import {
-  CreatedScannerSetupSchema,
-  type CreateScannerSetupSchema,
-  type UpdateScannerSetupSchema,
-} from '@/shared/contracts/scan-setups.ts';
+import type { UpdateScannerSetupSchema } from '@/shared/contracts/scan-setups.ts';
 import {
   ScanEventSchema,
   ScannerPairingSchema,
@@ -21,15 +17,6 @@ const base = (id: string) => `/api/v1/scanners/${encodeURIComponent(id)}`;
 
 /** Pairing polls every 2 s while the face is open and the tab is visible. */
 export const PAIRING_POLL_MS = 2000;
-
-export function useCreateScanner() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (body: z.input<typeof CreateScannerSetupSchema>) =>
-      api.post('/api/v1/scan-setups', CreatedScannerSetupSchema, body),
-    onSuccess: () => client.invalidateQueries({ queryKey: scanningKeys.scanners }),
-  });
-}
 
 export function useUpdateScanner(id: string) {
   const client = useQueryClient();

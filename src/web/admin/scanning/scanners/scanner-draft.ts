@@ -1,10 +1,8 @@
-import type { z } from 'zod';
 import type { CheckInPolicy } from '@/shared/contracts/check-in.ts';
-import type { CreateScannerSetupSchema, ScannerSetup } from '@/shared/contracts/scan-setups.ts';
+import type { ScannerSetup } from '@/shared/contracts/scan-setups.ts';
 import type { ScannerDto } from '@/shared/contracts/scanners.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 
-/** The scanner form's values as text and booleans; one shape for the dialog and the detail page. */
+/** Scanner settings in editable admin forms, represented as text and booleans. */
 export interface ScannerDraft {
   name: string;
   orgId: string;
@@ -111,17 +109,3 @@ export const settingsOf = (d: ScannerDraft) => ({
   direction: d.direction === 'pass' ? undefined : d.direction,
   showPhoto: d.showPhoto,
 });
-
-export function createBody(d: ScannerDraft): z.input<typeof CreateScannerSetupSchema> {
-  return {
-    orgId: d.orgId,
-    name: d.name.trim(),
-    kind: d.kind,
-    deviceRole: d.deviceRole,
-    accepts: d.deviceRole === 'scan' ? acceptsOf(d) : null,
-    watch: d.deviceRole === 'scan' ? null : d.watch,
-    ...(d.adminUserId ? { adminUserId: d.adminUserId } : {}),
-    settings: settingsOf(d),
-    timeZone: localZone(),
-  };
-}

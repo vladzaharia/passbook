@@ -31,7 +31,7 @@ export function AddDeviceDialog({
       <DialogContent
         title={made ? `Pair ${made.name}` : 'Add device'}
         size="lg"
-        description={made ? undefined : `Pair another device with ${session.name}.`}
+        description={made ? undefined : `Add a scanner, operator or display to ${session.name}.`}
         footer={
           made ? undefined : (
             <>
@@ -67,9 +67,8 @@ export function AddDeviceDialog({
               )}
             </FormField>
             <SurfacePicker value={surface} onChange={setSurface} />
-            <p className="text-sm text-fg-muted">
-              Uses this session’s admission rules and device defaults. Its layout and overrides can
-              be changed after pairing.
+            <p className="text-xs text-fg-muted">
+              You can change the layout and device-specific settings after pairing.
             </p>
           </div>
         )}

@@ -33,6 +33,7 @@ export function DeviceSheet({
     name !== device.name ||
     surface !== device.surface ||
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
+  const layout = surface === 'desk' ? 'operator' : surface;
   async function submit() {
     setError('');
     try {
@@ -56,8 +57,14 @@ export function DeviceSheet({
         <SheetContent title={`Configure ${device.name}`} className="sm:w-[440px]">
           <div className="grid gap-6 p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={device.online ? 'success' : 'neutral'}>
-                {device.online ? 'Online' : 'Offline'}
+              <Badge tone={device.online && !device.revoked ? 'success' : 'neutral'}>
+                {device.revoked
+                  ? 'Revoked'
+                  : device.online
+                    ? 'Online'
+                    : device.paired
+                      ? 'Offline'
+                      : 'Needs pairing'}
               </Badge>
               <Badge>{device.signIn === 'admin' ? 'Administrator sign-in' : 'Paired device'}</Badge>
             </div>
@@ -110,7 +117,7 @@ export function DeviceSheet({
               onChange={setSurface}
               capabilities={device.capabilities}
             />
-            {surface !== 'desk' && surface !== 'customer' ? (
+            {layout !== 'customer' ? (
               <section className="grid gap-4 border-t border-border pt-4">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="text-sm font-semibold">Device overrides</h2>
@@ -124,6 +131,9 @@ export function DeviceSheet({
                     Reset
                   </Button>
                 </div>
+                <p className="text-xs text-fg-muted">
+                  These settings inherit from the session unless changed here.
+                </p>
                 <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
               </section>
             ) : (

@@ -24,7 +24,7 @@ export function CheckInFields({
   const set = (patch: Partial<CheckInPolicy>) => onChange({ ...rules, ...patch });
   const effective = { ...defaults, ...rules };
   return (
-    <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-4">
+    <fieldset disabled={disabled} className="grid min-w-0 gap-4 @[36rem]:grid-cols-2">
       <FormField label="Check-in type">
         {(p) => (
           <Select

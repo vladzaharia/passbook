@@ -129,6 +129,9 @@ function SessionDefaults({
 }) {
   return (
     <div className="grid gap-4">
+      <p className="text-sm text-fg-muted">
+        Devices use these defaults unless individually overridden.
+      </p>
       <FormField
         label="On scan, tap or entered code"
         help="Name and email lookups always require confirmation."
@@ -168,6 +171,23 @@ function SessionDefaults({
         checked={draft.showPhoto}
         onCheckedChange={(showPhoto) => set({ showPhoto })}
       />
+    </div>
+  );
+}
+
+function SessionStaff({
+  draft,
+  set,
+}: {
+  draft: ScannerDraft;
+  set: (patch: Partial<ScannerDraft>) => void;
+}) {
+  return (
+    <section className="mt-6 grid gap-4 border-t border-border pt-6">
+      <div>
+        <h3 className="text-sm font-semibold text-fg-strong">Staff access</h3>
+        <p className="mt-1 text-xs text-fg-muted">These permissions apply across the session.</p>
+      </div>
       <SwitchRow
         label="Require staff sign-in"
         checked={draft.staffSignIn}
@@ -202,7 +222,7 @@ function SessionDefaults({
           />
         )}
       </FormField>
-    </div>
+    </section>
   );
 }
 export function SessionFields({
@@ -216,13 +236,16 @@ export function SessionFields({
 }) {
   const [tab, setTab] = useState('passes');
   return (
-    <Tabs value={tab} onValueChange={setTab}>
+    <Tabs value={tab} onValueChange={setTab} className="@container min-w-0">
       <TabsList aria-label="Session settings">
         <TabsTrigger value="passes">Passes</TabsTrigger>
         <TabsTrigger value="rules">Admission</TabsTrigger>
         <TabsTrigger value="defaults">Device defaults</TabsTrigger>
       </TabsList>
       <TabsContent value="passes">
+        <p className="mb-4 text-sm text-fg-muted">
+          Name the session and choose the passes its devices can accept.
+        </p>
         <SessionScope draft={draft} set={set} orgs={orgs} />
       </TabsContent>
       <TabsContent value="rules">
@@ -235,6 +258,7 @@ export function SessionFields({
           rules={draft.checkIn}
           onChange={(checkIn) => set({ checkIn })}
         />
+        <SessionStaff draft={draft} set={set} />
       </TabsContent>
       <TabsContent value="defaults">
         <SessionDefaults draft={draft} set={set} />

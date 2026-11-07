@@ -33,9 +33,10 @@ describe('session administration', () => {
       handlers,
     });
     const dialog = await screen.findByRole('dialog', { name: 'Configure Admin phone' });
-    expect(within(dialog).getByRole('button', { name: /Operator/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /^Scanner/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /Customer display/ })).toBeEnabled();
+    expect(within(dialog).queryByRole('button', { name: /Desk display/ })).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: /^Pair/ })).not.toBeInTheDocument();
     const user = userEvent.setup();
     await user.type(within(dialog).getByRole('textbox', { name: 'Device name' }), ' updated');
@@ -47,5 +48,16 @@ describe('session administration', () => {
     expect(within(dialog).getByRole('textbox', { name: 'Device name' })).toHaveValue(
       'Admin phone updated',
     );
+  });
+  it('opens the view picker after creating a session from Devices', async () => {
+    await renderApp('/admin/scanning/sessions/session-1?addDevice=1', {
+      session: 'admin',
+      handlers,
+    });
+    const dialog = await screen.findByRole('dialog', { name: 'Add device' });
+    expect(within(dialog).getByRole('button', { name: /^Scanner/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Customer display/ })).toBeEnabled();
+    expect(within(dialog).queryByRole('button', { name: /Desk display/ })).not.toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+import { Check, CircleAlert, Monitor, ScanLine, TriangleAlert, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
@@ -5,6 +6,14 @@ import { formatTime } from '../../lib/format.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import './live-screen.css';
 import { Button } from '../../ui/button.tsx';
+
+const RESULT_ICON = {
+  ok: Check,
+  heads_up: TriangleAlert,
+  refused: CircleAlert,
+  ready: ScanLine,
+  undo: Undo2,
+};
 
 export function LiveScreen({
   session,
@@ -115,52 +124,70 @@ export function LiveScreen({
       data-testid="scan-live"
       data-view={customer ? 'customer' : 'monitor'}
     >
-      <header className="scan-live-header flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-fg-muted">
-            {customer ? 'Welcome' : 'Desk display'}
-          </p>
-          <h1 className="text-xl font-semibold">{session.scanner?.name}</h1>
-          <p className="text-sm text-fg-muted">{session.scanner?.orgName}</p>
+      <header className="scan-live-header">
+        <div className="scan-live-brand">
+          <span className="scan-live-brand-icon" aria-hidden>
+            {customer ? <ScanLine size={22} /> : <Monitor size={22} />}
+          </span>
+          <div className="scan-live-brand-text">
+            <p className="scan-live-eyebrow">{customer ? 'Customer display' : 'Desk monitor'}</p>
+            <h1>{session.scanner?.name}</h1>
+            <p className="scan-live-org">{session.scanner?.orgName}</p>
+          </div>
         </div>
         <span role="status" className="scan-live-status" data-connected={connected}>
           {connected ? 'Live' : 'Reconnecting…'}
         </span>
       </header>
       {customer ? (
-        <section aria-live="polite" className="scan-live-welcome">
+        <section
+          aria-live="polite"
+          className="scan-live-welcome"
+          data-kind={latest?.kind ?? 'ready'}
+        >
           <div className="scan-live-buddy">
             <Buddy scene="peek" size="lg" mood={latest?.kind === 'refused' ? 'flat' : 'happy'} />
           </div>
-          <h2 className="text-4xl font-semibold sm:text-6xl">{latest?.label ?? 'Ready'}</h2>
-          {!latest ? <p className="text-fg-muted">Present your pass to the scanner.</p> : null}
+          <p className="scan-live-eyebrow">{latest ? 'Pass scanned' : 'Ready to scan'}</p>
+          <h2>{latest?.label ?? 'Ready'}</h2>
+          {!latest ? (
+            <p className="scan-live-welcome-hint">Present your pass to the scanner.</p>
+          ) : null}
         </section>
       ) : (
         <section aria-label="Recent scans" className="scan-live-recent">
-          <h2 className="mb-4 text-lg font-semibold">Recent scans</h2>
+          <div className="scan-live-section-heading">
+            <div>
+              <p className="scan-live-eyebrow">Session activity</p>
+              <h2>Recent scans</h2>
+            </div>
+          </div>
           {recent.length ? (
             <ol className="scan-live-grid">
-              {recent.map((row) => (
-                <li
-                  key={row.id}
-                  className="flex items-center gap-4 rounded-2xl border border-border bg-surface-raised p-5"
-                >
-                  {row.photoUrl ? (
-                    <img
-                      src={row.photoUrl}
-                      alt={row.holder ?? 'Member'}
-                      className="size-16 rounded-lg object-cover"
-                    />
-                  ) : null}
-                  <div className="flex-1">
-                    <p className="font-semibold">{row.holder ?? row.label}</p>
-                    <p>{row.label}</p>
-                    <p className="text-sm text-fg-muted">
-                      {row.scannerName} · {formatTime(row.at, session.scanner?.timeZone)}
-                    </p>
-                  </div>
-                </li>
-              ))}
+              {recent.map((row) => {
+                const Icon = RESULT_ICON[row.kind];
+                return (
+                  <li key={row.id} className="scan-live-row" data-kind={row.kind}>
+                    <div className="scan-live-avatar">
+                      {row.photoUrl ? (
+                        <img src={row.photoUrl} alt={row.holder ?? 'Member'} />
+                      ) : (
+                        <ScanLine aria-hidden size={22} />
+                      )}
+                    </div>
+                    <div className="scan-live-row-body">
+                      <p className="scan-live-row-name">{row.holder ?? row.label}</p>
+                      {row.holder ? <p className="scan-live-row-label">{row.label}</p> : null}
+                      <p className="scan-live-row-meta">
+                        {row.scannerName} · {formatTime(row.at, session.scanner?.timeZone)}
+                      </p>
+                    </div>
+                    <span className="scan-live-result-icon" aria-hidden>
+                      <Icon size={18} />
+                    </span>
+                  </li>
+                );
+              })}
             </ol>
           ) : (
             <div className="scan-live-empty">

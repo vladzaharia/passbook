@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
+import { CreatedScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
   CreatedScanningDeviceSchema,
   ScanningSessionDetailSchema,
@@ -107,6 +108,53 @@ describe('shared scanning sessions', () => {
     expect(response.status).toBe(422);
   });
 });
+describe('legacy standalone monitors', () => {
+  it('remain read-only when they report device capabilities', async () => {
+    const source = await kit.scanner();
+    const created = await call('POST', '/scan-setups', {
+      orgId: kit.org.id,
+      name: 'Legacy desk monitor',
+      deviceRole: 'monitor',
+      timeZone: 'UTC',
+      watch: { scannerIds: [source.id], allOrg: false },
+    });
+    expect(created.status).toBe(201);
+    const setup = CreatedScannerSetupSchema.parse(await created.json());
+    const headers = await pair(setup.pairing?.code ?? '');
+    const report = await call(
+      'POST',
+      '/scan/device',
+      {
+        capabilities: {
+          width: 1440,
+          height: 900,
+          touch: false,
+          camera: 'available',
+          keyboard: true,
+          nativeBarcode: false,
+          surfaces: ['phone', 'operator', 'customer'],
+          preferred: 'operator',
+        },
+      },
+      headers,
+    );
+    expect(report.status).toBe(200);
+    expect(await report.json()).toMatchObject({
+      device: { surface: 'desk', effectiveSurface: 'desk' },
+    });
+    const action = await call(
+      'POST',
+      '/scan/resolve',
+      {
+        idempotencyKey: kit.fx.ids.id(),
+        input: { code: 'x', method: 'camera' },
+        clientTs: kit.clock.now(),
+      },
+      headers,
+    );
+    expect(action.status).toBe(403);
+  });
+});
 
 async function parent(name: string) {
   const response = await call('POST', '/scanning-sessions', {
@@ -167,7 +215,7 @@ describe('session device authorization and live configuration', () => {
     ).toBe(403);
   });
 
-  it('reports supported surfaces from viewport and keeps read-only displays read-only after resize', async () => {
+  it('keeps scanner, operator and customer views available across screen sizes', async () => {
     const session = await parent('Capabilities');
     const made = await device(session.id, 'Wide scanner');
     const headers = await pair(made.pairing?.code ?? '');
@@ -194,7 +242,7 @@ describe('session device authorization and live configuration', () => {
     expect(await small.json()).toMatchObject({
       device: {
         effectiveSurface: 'phone',
-        capabilities: { surfaces: ['phone', 'operator', 'desk', 'customer'] },
+        capabilities: { surfaces: ['phone', 'operator', 'customer'] },
       },
     });
     const wide = await report(1200);
@@ -220,6 +268,116 @@ describe('session device authorization and live configuration', () => {
         )
       ).status,
     ).toBe(403);
+    expect(
+      (
+        await call('PATCH', `/scanning-sessions/${session.id}/devices/${made.id}`, {
+          surface: 'operator',
+        })
+      ).status,
+    ).toBe(200);
+    expect(await (await report(390)).json()).toMatchObject({
+      device: { effectiveSurface: 'operator' },
+    });
+    const operatorAction = await call(
+      'POST',
+      '/scan/resolve',
+      {
+        idempotencyKey: kit.fx.ids.id(),
+        input: { code: 'x', method: 'camera' },
+        clientTs: kit.clock.now(),
+      },
+      headers,
+    );
+    expect(operatorAction.status).toBe(200);
+  });
+  it('folds the persisted desk layout into the operator view', async () => {
+    const session = await parent('Legacy desk');
+    const made = await device(session.id, 'Legacy desk', 'desk');
+    const headers = await pair(made.pairing?.code ?? '');
+    const report = await call(
+      'POST',
+      '/scan/device',
+      {
+        capabilities: {
+          width: 390,
+          height: 844,
+          touch: true,
+          camera: 'available',
+          keyboard: true,
+          nativeBarcode: false,
+          surfaces: ['phone', 'customer'],
+          preferred: 'phone',
+        },
+      },
+      headers,
+    );
+    expect(report.status).toBe(200);
+    expect(await report.json()).toMatchObject({
+      device: {
+        surface: 'desk',
+        effectiveSurface: 'operator',
+        capabilities: { surfaces: ['phone', 'operator', 'customer'] },
+      },
+    });
+    expect(
+      (
+        await call(
+          'POST',
+          '/scan/resolve',
+          {
+            idempotencyKey: kit.fx.ids.id(),
+            input: { code: 'x', method: 'camera' },
+            clientTs: kit.clock.now(),
+          },
+          headers,
+        )
+      ).status,
+    ).toBe(200);
+  });
+  it('keeps standalone legacy desk monitors read-only when they report capabilities', async () => {
+    const source = await kit.scanner();
+    const created = await call('POST', '/scan-setups', {
+      orgId: kit.org.id,
+      name: `Legacy desk monitor ${kit.fx.ids.token(8)}`,
+      deviceRole: 'monitor',
+      timeZone: 'UTC',
+      watch: { scannerIds: [source.id], allOrg: false },
+    });
+    expect(created.status).toBe(201);
+    const setup = CreatedScannerSetupSchema.parse(await created.json());
+    const headers = await pair(setup.pairing?.code ?? '');
+    const report = await call(
+      'POST',
+      '/scan/device',
+      {
+        capabilities: {
+          width: 1440,
+          height: 900,
+          touch: false,
+          camera: 'available',
+          keyboard: true,
+          nativeBarcode: false,
+          surfaces: ['phone', 'operator', 'customer'],
+          preferred: 'operator',
+        },
+      },
+      headers,
+    );
+    expect(report.status).toBe(200);
+    expect(await report.json()).toMatchObject({
+      device: { surface: 'desk', effectiveSurface: 'desk' },
+    });
+    const action = await call(
+      'POST',
+      '/scan/resolve',
+      {
+        idempotencyKey: kit.fx.ids.id(),
+        input: { code: 'x', method: 'camera' },
+        clientTs: kit.clock.now(),
+      },
+      headers,
+    );
+    expect(action.status).toBe(403);
   });
 
   it('applies admission immediately, preserves device overrides, and pauses every input route', async () => {
