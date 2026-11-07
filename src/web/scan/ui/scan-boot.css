@@ -1,9 +1,9 @@
-.scan-card-layer[data-mode="boot"] {
+.scan-layer.scan-card-layer[data-mode="boot"] {
   padding: max(24px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
     max(24px, env(safe-area-inset-bottom, 0px));
   align-items: center;
 }
-.scan-boot-card {
+.scan-card.scan-boot-card {
   width: min(100%, 448px);
   gap: 24px;
   padding: 32px;
@@ -62,7 +62,7 @@
   justify-content: center;
 }
 @media (max-width: 360px) {
-  .scan-boot-card {
+  .scan-card.scan-boot-card {
     padding: 24px 16px;
     border-radius: 20px;
   }
@@ -71,7 +71,7 @@
   }
 }
 @media (max-height: 620px) and (min-width: 640px) {
-  .scan-boot-card {
+  .scan-card.scan-boot-card {
     width: min(100%, 760px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
