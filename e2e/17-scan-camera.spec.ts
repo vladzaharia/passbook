@@ -94,6 +94,9 @@ test('decodes barcodes at all four corners and edges without moving them into th
     await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible({
       timeout: 15_000,
     });
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
+    await page.keyboard.press('Escape');
     const positions = [
       { x: 0, y: 0 },
       { x: 1, y: 0 },
@@ -146,7 +149,7 @@ test('camera permission denial and disconnect recover with Retry camera', async 
       (window as unknown as { cameraTest: { denied: boolean } }).cameraTest.denied = false;
     });
     await page.getByRole('button', { name: 'Retry camera' }).click();
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible();
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible();
     await page.evaluate(() => {
       Object.defineProperty(document, 'hidden', { configurable: true, value: true });
       document.dispatchEvent(new Event('visibilitychange'));
@@ -157,7 +160,7 @@ test('camera permission denial and disconnect recover with Retry camera', async 
       document.dispatchEvent(new Event('visibilitychange'));
     });
     await page.getByRole('button', { name: 'Resume', exact: true }).click();
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible();
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible();
     await page.evaluate(() => {
       const track = (window as unknown as { cameraTest: { track: MediaStreamTrack } }).cameraTest
         .track;
@@ -198,7 +201,7 @@ test('a decoder download failure offers recovery and lookup pauses camera reads'
     ).toBeVisible();
     await page.unroute('**/*.wasm*');
     await page.getByRole('button', { name: 'Retry camera' }).click();
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible();
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Look up', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await showBarcode(page, 0);
