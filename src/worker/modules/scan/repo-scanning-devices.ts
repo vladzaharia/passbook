@@ -7,6 +7,7 @@ export interface ScanningDeviceRow {
   org_id: string;
   mode: 'live' | 'test';
   name: string;
+  kind: 'device' | 'terminal' | 'display';
   surface: ScanningDevice['surface'];
   effective_surface: ScanSurface;
   overrides: string;
@@ -21,7 +22,7 @@ export interface ScanningDeviceRow {
   updated_at: number;
   device_key: string | null;
 }
-const SELECT = `SELECT d.*,s.name,s.token_hash,s.last_seen_at,s.revoked_at,s.settings,s.updated_at,
+const SELECT = `SELECT d.*,s.name,s.kind,s.token_hash,s.last_seen_at,s.revoked_at,s.settings,s.updated_at,
   COALESCE(u.name,'Administrator') AS admin_name FROM scanning_devices d
   JOIN scanners s ON s.id=d.scanner_id AND s.org_id=d.org_id
   LEFT JOIN users u ON u.id=d.admin_user_id`;
@@ -116,12 +117,11 @@ export const linkedDeviceRoleStmt = (
   role: string,
   now: number,
 ) =>
-  stmt(db, `UPDATE scanners SET device_role=?,updated_at=? WHERE org_id=? AND id=?`, [
-    role,
-    now,
-    orgId,
-    scannerId,
-  ]);
+  stmt(
+    db,
+    `UPDATE scanners SET device_role=?,kind=CASE WHEN kind='display' AND ?='scan' THEN 'device' ELSE kind END,updated_at=? WHERE org_id=? AND id=?`,
+    [role, role, now, orgId, scannerId],
+  );
 
 export const releaseAdminDeviceStmt = (db: D1Database, orgId: string, id: string) =>
   stmt(db, 'UPDATE scanning_devices SET device_key=NULL WHERE org_id=? AND scanner_id=?', [

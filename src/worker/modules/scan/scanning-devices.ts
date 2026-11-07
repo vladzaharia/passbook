@@ -104,6 +104,12 @@ export async function updateScanningDevice(
     );
   const surface = input.surface ?? device.surface;
   const effective = surfaceFor(surface, caps);
+  if (device.kind === 'terminal' && roleForSurface(effective) !== 'scan')
+    throw new ValidationError(
+      'A terminal cannot be used as a display.',
+      [],
+      'SCAN_SURFACE_UNSUPPORTED',
+    );
   const overrides = input.overrides ?? JSON.parse(device.overrides);
   const settings = ScannerSettingsSchema.parse({ ...parseSettings(parent.settings), ...overrides });
   const now = Math.max(ctx.clock.now(), device.updated_at + 1);
