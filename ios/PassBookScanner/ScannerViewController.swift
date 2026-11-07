@@ -14,6 +14,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     private var lastCapabilities: Data?
     private let customerDisplay = CustomerDisplayModel()
     private var customerRegistration: AnyObject?
+    private var loadErrorView: UIView?
 
     override func loadView() {
         let content = WKUserContentController()
@@ -40,6 +41,10 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         registerCustomerDisplay()
+        loadScanner()
+    }
+
+    private func loadScanner() {
         let url = URL(string: "\(trustedOrigin)/scan")!
         webView.load(URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
     }
@@ -207,20 +212,53 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         hardware.stop()
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { refreshCapabilities() }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        loadErrorView?.removeFromSuperview()
+        loadErrorView = nil
+        refreshCapabilities()
+    }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { showLoadError() }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { showLoadError() }
 
     private func showLoadError() {
+        guard loadErrorView == nil else { return }
+
         let label = UILabel()
-        label.text = "Could not load the scanner. Check your connection and reload."
+        label.text = "Could not load the scanner. Check your connection."
         label.numberOfLines = 0
         label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
-        NSLayoutConstraint.activate([label.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24), label.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24), label.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
+
+        let retryButton = UIButton(type: .system)
+        retryButton.setTitle("Retry", for: .normal)
+        retryButton.accessibilityIdentifier = "scannerLoadRetry"
+        retryButton.addAction(UIAction { [weak self] _ in self?.loadScanner() }, for: .touchUpInside)
+
+        let stack = UIStackView(arrangedSubviews: [label, retryButton])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 16
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let overlay = UIView()
+        overlay.backgroundColor = .systemBackground
+        overlay.accessibilityIdentifier = "scannerLoadError"
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addSubview(stack)
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: overlay.safeAreaLayoutGuide.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: overlay.safeAreaLayoutGuide.trailingAnchor, constant: -24),
+            stack.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
+        ])
+        loadErrorView = overlay
     }
 
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void) {
