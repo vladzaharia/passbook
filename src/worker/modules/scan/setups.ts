@@ -14,9 +14,11 @@ import { orgIsActive } from '../orgs/repo.ts';
 import { getUser } from '../users/repo.ts';
 import { ADMIN_SETTINGS } from './actor.ts';
 import { DEFAULT_SETTINGS, parseSettings } from './dto-console.ts';
+import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
 import { createPairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
+import { syncStandaloneSessionStmt } from './repo-legacy-session.ts';
 import {
   addTemplatesStmts,
   insertScannerStmt,
@@ -35,6 +37,7 @@ import {
   watchOf,
 } from './repo-setups.ts';
 import { checkAccepts, listScanners, loadScanner, scannerView } from './scanners.ts';
+import { type DeviceEnrollment, enrollmentStmts } from './scanning-enrollment.ts';
 
 type Create = z.infer<typeof CreateScannerSetupSchema>;
 type Update = z.infer<typeof UpdateScannerSetupSchema>;
@@ -57,6 +60,7 @@ export async function listSetups(
       const meta = metadata.find((m) => m.scanner_id === scanner.id);
       return {
         ...scanner,
+        sessionId: meta?.session_id ?? undefined,
         adminSession: meta?.admin_session === 1,
         adminUser: meta?.admin_user_id
           ? { id: meta.admin_user_id, name: meta.admin_name ?? 'Admin' }
@@ -114,6 +118,7 @@ export async function setupView(ctx: ServiceContext, id: string) {
   const meta = await setupMeta(ctx.env.DB, scanner.orgId, id);
   return {
     ...scanner,
+    sessionId: meta?.session_id ?? undefined,
     adminSession: meta?.admin_session === 1,
     adminUser: meta?.admin_user_id
       ? { id: meta.admin_user_id, name: meta.admin_name ?? 'Admin' }
@@ -128,6 +133,7 @@ export async function createSetup(
   mode: Mode,
   input: Create,
   origin: string,
+  enrollment?: DeviceEnrollment,
 ) {
   const { orgId, kind, deviceRole } = input;
   if (!(await orgIsActive(ctx.env.DB, orgId)))
@@ -137,10 +143,10 @@ export async function createSetup(
     const owner = await getUser(ctx.env.DB, input.adminUserId);
     if (owner?.status !== 'active')
       throw new NotFoundError('Admin user not found.', 'USER_NOT_FOUND');
-    if (kind !== 'device' || deviceRole !== 'scan')
-      throw new ValidationError('Admin sessions use a scanner setup.', [], 'SCANNER_ADMIN_ROLE');
+    if (kind !== 'device')
+      throw new ValidationError('Admin sign-in uses a browser device.', [], 'SCANNER_ADMIN_ROLE');
   }
-  await checkWatch(ctx, orgId, mode, deviceRole, input.watch);
+  if (!enrollment) await checkWatch(ctx, orgId, mode, deviceRole, input.watch);
   const accepts = input.accepts ? await checkAccepts(ctx, orgId, mode, input.accepts) : null;
   const settings = ScannerSettingsSchema.parse({
     ...DEFAULT_SETTINGS,
@@ -169,6 +175,7 @@ export async function createSetup(
       }),
       ...addTemplatesStmts(ctx.env.DB, id, accepts?.templateIds ?? []),
       insertSetupStmt(ctx.env.DB, id, orgId, mode, input.adminUserId ?? null, input.watch),
+      ...enrollmentStmts(ctx, id, userId, mode, input, settings, enrollment),
       auditStmt(ctx.env.DB, ctx, {
         orgId,
         actorType: 'user',
@@ -191,11 +198,10 @@ export async function createSetup(
 
 export async function updateSetup(ctx: ServiceContext, userId: string, id: string, input: Update) {
   const row = await loadScanner(ctx, id);
+  await assertStandaloneSession(ctx, row.orgId, id);
   const meta = await setupMeta(ctx.env.DB, row.orgId, id);
   const role = input.deviceRole ?? row.deviceRole;
   roleAllowed(row.kind, role);
-  if (meta?.admin_session && role !== 'scan')
-    throw new ValidationError('Admin sessions use a scanner setup.', [], 'SCANNER_ADMIN_ROLE');
   const watch = input.watch === undefined ? watchOf(meta) : input.watch;
   await checkWatch(ctx, row.orgId, row.mode, role, watch, id);
   const accepts = input.accepts
@@ -227,6 +233,7 @@ export async function updateSetup(ctx: ServiceContext, userId: string, id: strin
         ? []
         : replaceTemplatesStmts(ctx.env.DB, id, accepts?.templateIds ?? [])),
       setSetupWatchStmt(ctx.env.DB, row.orgId, id, role === 'scan' ? null : watch),
+      syncStandaloneSessionStmt(ctx.env.DB, row.orgId, id, now),
       auditStmt(ctx.env.DB, ctx, {
         orgId: row.orgId,
         actorType: 'user',

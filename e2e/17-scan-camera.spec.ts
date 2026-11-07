@@ -39,7 +39,7 @@ test('all eight camera barcode formats check in continuously across phone, table
       await route.continue();
     });
     await pairCamera(page, scanner.pairing.code);
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible({
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible({
       timeout: 15_000,
     });
     const measures = [];
@@ -80,6 +80,61 @@ test('all eight camera barcode formats check in continuously across phone, table
   }
 });
 
+test('decodes barcodes at all four corners and edges without moving them into the guide', async ({
+  page,
+}, info) => {
+  const api = await apiAs('admin');
+  try {
+    const { scanner, items } = await cameraFixture(api, readSeed().org.id);
+    await installCamera(
+      page,
+      items.map((i) => i.image),
+    );
+    await pairCamera(page, scanner.pairing.code);
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    const hold = page.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' });
+    await hold.focus();
+    await hold.press('Space');
+    await expect(hold).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('Escape');
+    const positions = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 1, y: 1 },
+      { x: 0, y: 0.5 },
+      { x: 1, y: 0.5 },
+      { x: 0.5, y: 0 },
+      { x: 0.5, y: 1 },
+    ];
+    const timings = [];
+    for (const [i, position] of positions.entries()) {
+      const request = page.waitForRequest(
+        (r) => r.url().endsWith('/api/v1/scan/actions') && r.method() === 'POST',
+      );
+      const start = Date.now();
+      await showBarcode(page, i, 0, false, position);
+      await request;
+      timings.push({ format: items[i]?.format, position, milliseconds: Date.now() - start });
+      await expect(page.getByTestId('scan-result')).toContainText(`Camera ${items[i]?.format}`, {
+        timeout: 8_000,
+      });
+      await expect(page.getByTestId('scan-result')).toContainText('Checked in');
+      await showBarcode(page, -1);
+      await page.getByRole('button', { name: 'Done', exact: true }).click();
+    }
+    await info.attach('off-center-decode-timings', {
+      body: JSON.stringify(timings),
+      contentType: 'application/json',
+    });
+  } finally {
+    await api.dispose();
+  }
+});
+
 test('camera permission denial and disconnect recover with Retry camera', async ({ page }) => {
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
@@ -97,7 +152,7 @@ test('camera permission denial and disconnect recover with Retry camera', async 
       (window as unknown as { cameraTest: { denied: boolean } }).cameraTest.denied = false;
     });
     await page.getByRole('button', { name: 'Retry camera' }).click();
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible();
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible();
     await page.evaluate(() => {
       Object.defineProperty(document, 'hidden', { configurable: true, value: true });
       document.dispatchEvent(new Event('visibilitychange'));
@@ -108,7 +163,7 @@ test('camera permission denial and disconnect recover with Retry camera', async 
       document.dispatchEvent(new Event('visibilitychange'));
     });
     await page.getByRole('button', { name: 'Resume', exact: true }).click();
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible();
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible();
     await page.evaluate(() => {
       const track = (window as unknown as { cameraTest: { track: MediaStreamTrack } }).cameraTest
         .track;
@@ -149,7 +204,7 @@ test('a decoder download failure offers recovery and lookup pauses camera reads'
     ).toBeVisible();
     await page.unroute('**/*.wasm*');
     await page.getByRole('button', { name: 'Retry camera' }).click();
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible();
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Look up', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await showBarcode(page, 0);

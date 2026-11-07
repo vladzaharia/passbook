@@ -2,6 +2,8 @@
  * The scan store: holds the state, runs the reducer, executes its commands over injected ports,
  * re-arms one timer for the next deadline, and keeps the buddy's delayed beat.
  */
+
+import type { ScanCounts, ScannerSettings } from '../../../shared/contracts/scan.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import { createRunner } from './commands.ts';
 import { nextDeadline } from './deadlines.ts';
@@ -23,6 +25,7 @@ export interface ScanStore {
   subscribe(listener: () => void): () => void;
   dispatch(event: ScanEvent): void;
   checkIn(card: Card, actionId: string): void;
+  configure(settings: ScannerSettings, counts: ScanCounts): boolean;
   /** Resends unsure entries now (also runs on a timer, on online and on visible). */
   retryUnsure(): void;
   dispose(): void;
@@ -163,6 +166,24 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
       return () => listeners.delete(listener);
     },
     dispatch,
+    configure(settings, counts) {
+      if (disposed || busy || state.overlay || state.loop.s !== 'ready') return false;
+      const changed = state.counts?.configRev !== counts.configRev;
+      const reader = settings.reader;
+      state = {
+        ...state,
+        posture: settings.flow === 'choose' ? 'desk' : 'door',
+        reader: { ...state.reader, kind: reader },
+        counts,
+        armed: changed ? null : state.armed,
+        ignore: changed ? [] : state.ignore,
+        camera:
+          reader !== 'none' ? 'disabled' : state.reader.kind !== 'none' ? 'off' : state.camera,
+      };
+      rearm();
+      publish();
+      return true;
+    },
     checkIn(card, actionId) {
       if (disposed || busy) return;
       const result = manualCheckIn(state, card, actionId, {

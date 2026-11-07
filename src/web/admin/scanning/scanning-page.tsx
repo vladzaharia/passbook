@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
+import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
 import { StaffTab } from './placeholder-tabs.tsx';
@@ -15,15 +16,18 @@ import {
   type ScanningTab,
   withTab,
 } from './search.ts';
+import { NewSessionDialog } from './sessions/session-dialog.tsx';
+import { SessionsTab } from './sessions/sessions-tab.tsx';
 
 const EventsTab = lazy(() => import('./events-tab.tsx').then((m) => ({ default: m.EventsTab })));
 const ScansTab = lazy(() => import('./scans-tab.tsx').then((m) => ({ default: m.ScansTab })));
 
 const LABEL: Record<ScanningTab, string> = {
-  scanners: 'Scanners',
+  sessions: 'Sessions',
+  scanners: 'Devices',
   events: 'Events',
   staff: 'Staff',
-  scans: 'Scans',
+  scans: 'Activity',
 };
 
 /**
@@ -37,11 +41,13 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
   const live = useScannerPages(orgId, false);
   // New scanner, or Duplicate with the other scanner's settings.
   const [creating, setCreating] = useState<{ initial?: ScannerDraft } | undefined>();
+  const [creatingSession, setCreatingSession] = useState<{ initial?: ScanningSession }>();
   useEffect(() => {
     if (search.new !== '1') return;
-    setCreating({});
+    if (search.tab === 'scanners') setCreating({});
+    else setCreatingSession({});
     void navigate({ to: '.', search: (prev) => ({ ...prev, new: undefined }), replace: true });
-  }, [search.new, navigate]);
+  }, [search.new, search.tab, navigate]);
   const noScanners =
     !live.isPending && !live.isError && !live.data?.pages.some((p) => p.items.length);
 
@@ -61,7 +67,16 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
     <>
       <PageHeader
         title="Scanning"
-        actions={tab === 'scanners' ? newScanner(noScanners ? 'outline' : 'primary') : undefined}
+        description="Manage scanning sessions, devices and admission rules."
+        actions={
+          tab === 'sessions' ? (
+            <Button iconStart={<Plus aria-hidden />} onClick={() => setCreatingSession({})}>
+              New scanning session
+            </Button>
+          ) : tab === 'scanners' ? (
+            newScanner(noScanners ? 'outline' : 'primary')
+          ) : undefined
+        }
       />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList aria-label="Scanning">
@@ -71,6 +86,12 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
             </TabsTrigger>
           ))}
         </TabsList>
+        <TabsContent value="sessions">
+          <SessionsTab
+            onNew={() => setCreatingSession({})}
+            onDuplicate={(initial) => setCreatingSession({ initial })}
+          />
+        </TabsContent>
         <TabsContent value="scanners">
           <ScannersTab
             live={live}
@@ -97,6 +118,16 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           open
           initial={creating.initial}
           onOpenChange={(o) => !o && setCreating(undefined)}
+        />
+      ) : null}
+      {creatingSession ? (
+        <NewSessionDialog
+          initial={creatingSession.initial}
+          onClose={() => setCreatingSession(undefined)}
+          onCreated={(sessionId) => {
+            setCreatingSession(undefined);
+            void navigate({ to: '/admin/scanning/sessions/$sessionId', params: { sessionId } });
+          }}
         />
       ) : null}
     </>

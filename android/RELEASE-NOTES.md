@@ -1,4 +1,11 @@
-# PassBook Reader 0.2.2
+# PassBook Reader 0.2.3
+
+- Shared scanning sessions pair multiple scanners and displays under one admission policy.
+- Scanner, camera-free Operator, Desk and Customer layouts adapt to phones, tablets and computers.
+- Administrators join as devices; session and device settings update while scanning stays started.
+- Camera decoding covers the whole frame, including its edges; aiming marks are only a guide.
+- Keyboard and Android barcode inputs retain the same configured automatic or review flow.
+
 
 - Camera access survives the first Android permission dialog and grants only in the foreground.
 - Navigation and browser cancellation revoke pending camera requests.

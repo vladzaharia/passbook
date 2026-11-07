@@ -12,19 +12,16 @@ export function createReadFilter() {
     return true;
   };
 }
-/** Crop the aiming area; every fourth frame includes off-centre/long barcodes. */
-export function frameRegion(width: number, height: number, full: boolean) {
-  const side = Math.min(width, height) * 0.7;
-  const w = full ? width : side;
-  const h = full ? height : side;
-  const scale = Math.min(1, (full ? 960 : 640) / Math.max(w, h));
+/** The guide never crops decoding: every frame includes all four edges. */
+export function frameRegion(width: number, height: number) {
+  const scale = Math.min(1, 1280 / Math.max(width, height));
   return {
-    x: (width - w) / 2,
-    y: (height - h) / 2,
-    w,
-    h,
-    width: Math.max(1, Math.round(w * scale)),
-    height: Math.max(1, Math.round(h * scale)),
+    x: 0,
+    y: 0,
+    w: width,
+    h: height,
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
   };
 }
 export function createFrames(
@@ -41,7 +38,6 @@ export function createFrames(
   const openedAt = performance.now();
   let active = false;
   let epoch = 0;
-  let frameNumber = 0;
   let interval = 125;
   let announced = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -72,7 +68,7 @@ export function createFrames(
       v.videoHeight > 0 &&
       decoder.available()
     ) {
-      const r = frameRegion(v.videoWidth, v.videoHeight, frameNumber++ % 4 === 3);
+      const r = frameRegion(v.videoWidth, v.videoHeight);
       canvas.width = r.width;
       canvas.height = r.height;
       try {

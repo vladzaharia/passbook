@@ -5,6 +5,8 @@ import type { ScanAdminScopeSchema } from '../../shared/contracts/scan.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { Button } from '../ui/button.tsx';
 import { createLazyScanApi } from './api/lazy-api.ts';
+import { useDeviceReport } from './boot/use-device-report.ts';
+import { usePlatformAdmin } from './boot/use-platform-admin.ts';
 import { createCsrfHolder, useScanSession } from './boot/use-scan-session.ts';
 import type { ScanState } from './machine/types.ts';
 import { BootCard } from './ui/boot-card.tsx';
@@ -22,7 +24,12 @@ const LiveScreen = lazy(() =>
   import('./live/live-screen.tsx').then((m) => ({ default: m.LiveScreen })),
 );
 
+const StaffStart = lazy(() =>
+  import('./boot/staff-start.tsx').then((m) => ({ default: m.StaffStart })),
+);
+
 function ScanBoot() {
+  const { admin } = usePlatformAdmin();
   const csrf = useMemo(createCsrfHolder, []);
   const params = new URLSearchParams(location.search);
   const orgId = params.get('orgId');
@@ -48,6 +55,7 @@ function ScanBoot() {
   );
   const [machine, setMachine] = useState<ScanState | null>(null);
   const session = useScanSession(api, csrf, machine);
+  useDeviceReport(api, session.session, session.refetch);
   const [preview, setPreview] = useState<{
     code: string;
     scannerName: string;
@@ -78,18 +86,36 @@ function ScanBoot() {
     }
   }, [session.pairCode, previewPair]);
   if (session.phase === 'ready' && session.session && !preview && !adminStart) {
+    if (session.session.workspace && session.session.workspace.session.status !== 'active')
+      return (
+        <ScanShell
+          cardMode="boot"
+          card={
+            <BootCard
+              title={
+                session.session.workspace.session.status === 'paused'
+                  ? 'Session paused'
+                  : 'Session ended'
+              }
+              line={session.session.workspace.session.name}
+            >
+              <p className="text-sm text-fg-muted">
+                Scanning will be available when this session is resumed.
+              </p>
+              <Button variant="outline" onClick={() => void session.refetch()}>
+                Check session
+              </Button>
+            </BootCard>
+          }
+        />
+      );
     if (session.session.scanner?.deviceRole !== 'scan' && session.session.scanner !== null)
       return <LiveScreen session={session.session} refetch={session.refetch} />;
     if (session.session.state === 'staff_required')
       return (
         <ScanShell
           cardMode="boot"
-          card={
-            <BootCard
-              title="Staff sign-in required"
-              line="Ask an administrator to turn off staff sign-in for this scanner."
-            />
-          }
+          card={<StaffStart session={session.session} api={api} refetch={session.refetch} />}
         />
       );
     if (session.session.state === 'unassigned')
@@ -105,7 +131,7 @@ function ScanBoot() {
       );
     return (
       <Paired
-        key={`${session.session.scanner?.id ?? 'admin'}:${session.session.counts.configRev}:${session.session.event?.id ?? ''}`}
+        key={session.session.scanner?.id ?? 'admin'}
         session={session.session}
         api={api}
         refetch={session.refetch}
@@ -132,7 +158,7 @@ function ScanBoot() {
           .finally(() => setBusy(false));
       }}
     />
-  ) : adminStart ? (
+  ) : adminStart && admin ? (
     <AdminStart
       onCancel={() => {
         setAdminStart(false);
@@ -155,10 +181,7 @@ function ScanBoot() {
       onPair={previewPair}
       error={error}
       busy={busy}
-      onAdmin={() => {
-        if (session.phase === 'scope_required') setAdminStart(true);
-        else location.assign('/login?next=%2Fscan%3Fadmin%3D1');
-      }}
+      onAdmin={admin ? () => setAdminStart(true) : undefined}
     />
   );
   return <ScanShell cardMode="boot" card={card} />;

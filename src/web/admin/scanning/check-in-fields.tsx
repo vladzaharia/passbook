@@ -10,14 +10,16 @@ export function CheckInFields({
   onChange,
   orgId,
   disabled = false,
+  timeZone,
 }: {
   rules: CheckInPolicy;
   defaults?: CheckInPolicy;
   onChange: (rules: CheckInPolicy) => void;
   orgId: string;
   disabled?: boolean;
+  timeZone?: string;
 }) {
-  const zone = localZone();
+  const zone = timeZone ?? localZone();
   const events = useScanEvents(orgId || undefined);
   const set = (patch: Partial<CheckInPolicy>) => onChange({ ...rules, ...patch });
   const effective = { ...defaults, ...rules };

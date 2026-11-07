@@ -1,0 +1,53 @@
+import { ScanningSessionDetailSchema } from '@/shared/contracts/scanning-sessions.ts';
+import { NOW, scannerFixture } from '../test-fixtures.ts';
+
+export const managedSession = ScanningSessionDetailSchema.parse({
+  id: 'session-1',
+  orgId: 'o1',
+  orgName: 'Northwind',
+  mode: 'live',
+  name: 'Membership desk',
+  status: 'active',
+  accepts: null,
+  settings: {
+    ...scannerFixture().settings,
+    acceptAllTemplates: true,
+    lookup: true,
+    checkIn: { mode: 'in_out' },
+  },
+  timeZone: 'UTC',
+  createdAt: NOW,
+  updatedAt: NOW,
+  deviceCount: 1,
+  onlineCount: 1,
+  today: 4,
+  devices: [
+    {
+      id: 'device-1',
+      sessionId: 'session-1',
+      name: 'Admin phone',
+      surface: 'operator',
+      effectiveSurface: 'operator',
+      overrides: {},
+      settings: scannerFixture().settings,
+      capabilities: {
+        width: 390,
+        height: 844,
+        touch: true,
+        camera: 'available',
+        keyboard: true,
+        nativeBarcode: false,
+        surfaces: ['phone', 'operator', 'desk', 'customer'],
+        preferred: 'phone',
+      },
+      reportedAt: NOW,
+      paired: true,
+      online: true,
+      revoked: false,
+      lastSeenAt: NOW,
+      updatedAt: NOW,
+      signIn: 'admin',
+      adminName: 'Administrator',
+    },
+  ],
+});

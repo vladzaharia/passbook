@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { formatTime } from '../../lib/format.ts';
+import { Buddy } from '../../ui/art/buddy.tsx';
+import './live-screen.css';
 import { Button } from '../../ui/button.tsx';
 
 export function LiveScreen({
@@ -15,6 +17,14 @@ export function LiveScreen({
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(Date.now());
   const customer = session.scanner?.deviceRole === 'customer';
+  const scope =
+    session.principal === 'admin' && session.scanner
+      ? new URLSearchParams({
+          orgId: session.scanner.orgId,
+          setupId: session.scanner.id,
+          timeZone: session.scanner.timeZone,
+        }).toString()
+      : '';
   useEffect(() => {
     let disposed = false;
     let socket: WebSocket | null = null;
@@ -42,7 +52,7 @@ export function LiveScreen({
     const connect = () => {
       if (disposed) return;
       socket = new WebSocket(
-        `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/v1/scan/live`,
+        `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/v1/scan/live${scope ? `?${scope}` : ''}`,
       );
       socket.onopen = () => {
         if (!disposed) setConnected(true);
@@ -71,7 +81,7 @@ export function LiveScreen({
       if (disposed || socket?.readyState === WebSocket.OPEN) return;
       try {
         const response = await fetch(
-          `/api/v1/scan/live${cursor ? `?after=${encodeURIComponent(cursor)}` : ''}`,
+          `/api/v1/scan/live?${scope}${cursor ? `&after=${encodeURIComponent(cursor)}` : ''}`,
           { credentials: 'same-origin', cache: 'no-store', signal: controller.signal },
         );
         if (response.status === 401 || response.status === 403) {
@@ -96,36 +106,45 @@ export function LiveScreen({
       clearTimeout(retry);
       socket?.close();
     };
-  }, [refetch]);
+  }, [refetch, scope]);
   const recent = rows.filter((row) => now - row.at < (customer ? 10_000 : 15 * 60_000));
   const latest = recent[0];
   return (
     <main
-      className="min-h-dvh bg-surface p-6 text-fg"
+      className="scan-live-page min-h-dvh bg-surface text-fg"
       data-testid="scan-live"
       data-view={customer ? 'customer' : 'monitor'}
     >
-      <header className="mb-8 flex items-center justify-between gap-3">
+      <header className="scan-live-header flex items-center justify-between gap-3">
         <div>
+          <p className="text-xs uppercase tracking-wider text-fg-muted">
+            {customer ? 'Welcome' : 'Desk display'}
+          </p>
           <h1 className="text-xl font-semibold">{session.scanner?.name}</h1>
           <p className="text-sm text-fg-muted">{session.scanner?.orgName}</p>
         </div>
-        <span role="status">{connected ? 'Live' : 'Reconnecting…'}</span>
+        <span role="status" className="scan-live-status" data-connected={connected}>
+          {connected ? 'Live' : 'Reconnecting…'}
+        </span>
       </header>
       {customer ? (
-        <section
-          aria-live="polite"
-          className="flex min-h-[60dvh] items-center justify-center text-center"
-        >
-          <h2 className="text-5xl font-semibold">{latest?.label ?? 'Ready'}</h2>
+        <section aria-live="polite" className="scan-live-welcome">
+          <div className="scan-live-buddy">
+            <Buddy scene="peek" size="lg" mood={latest?.kind === 'refused' ? 'flat' : 'happy'} />
+          </div>
+          <h2 className="text-4xl font-semibold sm:text-6xl">{latest?.label ?? 'Ready'}</h2>
+          {!latest ? <p className="text-fg-muted">Present your pass to the scanner.</p> : null}
         </section>
       ) : (
-        <section aria-label="Recent scans">
+        <section aria-label="Recent scans" className="scan-live-recent">
           <h2 className="mb-4 text-lg font-semibold">Recent scans</h2>
           {recent.length ? (
-            <ol className="divide-y divide-border">
+            <ol className="scan-live-grid">
               {recent.map((row) => (
-                <li key={row.id} className="flex items-center gap-4 py-4">
+                <li
+                  key={row.id}
+                  className="flex items-center gap-4 rounded-2xl border border-border bg-surface-raised p-5"
+                >
                   {row.photoUrl ? (
                     <img
                       src={row.photoUrl}
@@ -144,11 +163,17 @@ export function LiveScreen({
               ))}
             </ol>
           ) : (
-            <p className="text-fg-muted">No recent scans.</p>
+            <div className="scan-live-empty">
+              <div className="scan-live-buddy">
+                <Buddy scene="peek" size="lg" mood="happy" />
+              </div>
+              <p className="font-medium">Ready for the first scan</p>
+              <p className="text-sm text-fg-muted">Activity from this session appears here.</p>
+            </div>
           )}
         </section>
       )}
-      <footer className="mt-8">
+      <footer className="scan-live-footer">
         <Button variant="outline" onClick={() => void refetch()}>
           Refresh setup
         </Button>

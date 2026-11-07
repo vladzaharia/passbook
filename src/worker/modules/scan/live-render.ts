@@ -44,6 +44,11 @@ export async function liveRowFor(
       g: await mintAssetGrant(ctx.env, actor.actorKey, row.passId, ctx.clock.now()),
       source: row.scannerId,
     });
+    if (actor.principal === 'admin' && actor.scanner) {
+      params.set('orgId', actor.orgId);
+      params.set('setupId', actor.scanner.id);
+      params.set('timeZone', actor.timeZone);
+    }
     photoUrl = `${assetBaseUrl(row.passId).replace('/passes/', '/live/passes/')}member.png?${params}`;
   }
   return { ...row, photoUrl };

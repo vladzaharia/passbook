@@ -1,5 +1,6 @@
+import { useNavigate } from '@tanstack/react-router';
 import { Ban, Copy, FlaskConical, KeyRound, QrCode, ScanQrCode } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ENTITY } from '@/web/lib/entities.ts';
 import {
   Button,
@@ -27,6 +28,17 @@ type Dialog = 'pair' | 'revoke' | 'live' | 'token' | 'duplicate';
 /** `/admin/scanning/scanners/$scannerId`: status up top, settings left, device and danger beside. */
 export function ScannerPage({ scannerId }: { scannerId: string }) {
   const scanner = useScanner(scannerId);
+  const navigate = useNavigate();
+  const sessionId = scanner.data?.sessionId;
+  useEffect(() => {
+    if (sessionId)
+      void navigate({
+        to: '/admin/scanning/sessions/$sessionId',
+        params: { sessionId },
+        search: { deviceId: scannerId },
+        replace: true,
+      });
+  }, [sessionId, scannerId, navigate]);
   const events = useScanEvents(scanner.data?.orgId, scanner.data?.accepts !== null);
   const now = useNow();
   const [dialog, setDialog] = useState<Dialog>();

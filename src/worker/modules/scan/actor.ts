@@ -31,6 +31,8 @@ export interface ScanActor {
   name: string;
   /** A bearer terminal: its role, no staff, no approvals. */
   terminal: boolean;
+  scanningSession?: { id: string; status: 'active' | 'paused' | 'ended'; updatedAt: number };
+  platformSessionId?: string;
 }
 
 /** An admin scans with everything on. */

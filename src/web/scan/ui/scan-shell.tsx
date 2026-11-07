@@ -11,6 +11,8 @@ import { type Tint, VerdictRing, VerdictTint } from './verdict-tint.tsx';
 export interface ScanShellProps {
   /** The camera feed, the reader stage or nothing; always behind the tint. */
   camera?: ReactNode;
+  surface?: 'phone' | 'operator';
+  sidebar?: ReactNode;
   tint?: Tint;
   /** Boot cards and the result card, in the card layer. */
   card?: ReactNode;
@@ -31,6 +33,8 @@ export interface ScanShellProps {
  */
 export function ScanShell({
   camera,
+  surface = 'phone',
+  sidebar,
   tint = 'none',
   card,
   cardMode = 'result',
@@ -40,7 +44,7 @@ export function ScanShell({
   announcement = null,
 }: ScanShellProps) {
   return (
-    <main aria-label="Scanner" className="scan-shell" lang="en">
+    <main aria-label="Scanner" className="scan-shell" data-surface={surface} lang="en">
       <div className="scan-layer scan-cam" data-testid="scan-camera">
         {camera}
       </div>
@@ -53,6 +57,7 @@ export function ScanShell({
         {buddy}
       </div>
       {capsule}
+      {sidebar}
       <VerdictRing tint={tint} />
       <LiveAnnouncer message={announcement} />
     </main>
