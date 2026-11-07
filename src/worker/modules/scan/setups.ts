@@ -60,7 +60,7 @@ export async function listSetups(
       const meta = metadata.find((m) => m.scanner_id === scanner.id);
       return {
         ...scanner,
-        sessionId: meta?.session_id,
+        sessionId: meta?.session_id ?? undefined,
         adminSession: meta?.admin_session === 1,
         adminUser: meta?.admin_user_id
           ? { id: meta.admin_user_id, name: meta.admin_name ?? 'Admin' }
@@ -118,7 +118,7 @@ export async function setupView(ctx: ServiceContext, id: string) {
   const meta = await setupMeta(ctx.env.DB, scanner.orgId, id);
   return {
     ...scanner,
-    sessionId: meta?.session_id,
+    sessionId: meta?.session_id ?? undefined,
     adminSession: meta?.admin_session === 1,
     adminUser: meta?.admin_user_id
       ? { id: meta.admin_user_id, name: meta.admin_name ?? 'Admin' }

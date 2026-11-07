@@ -5,7 +5,7 @@ import { all, chunk, first, placeholders, stmt } from '../../platform/db.ts';
 
 export interface SetupMeta {
   scanner_id: string;
-  session_id?: string;
+  session_id?: string | null;
   admin_session: number;
   admin_user_id: string | null;
   admin_name: string | null;

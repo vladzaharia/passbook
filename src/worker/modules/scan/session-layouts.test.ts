@@ -1,10 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeUser } from '../../../../test/helpers/index.ts';
+import { ScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
 import { CreateScannerSchema } from '../../../shared/contracts/scanners.ts';
 import { getScanner } from './repo-device.ts';
+import { setSetupWatchStmt } from './repo-setups.ts';
 import { createScanner } from './scanners.ts';
 import { updateScanningDevice } from './scanning-devices.ts';
-import { createSetup } from './setups.ts';
+import { createSetup, setupView } from './setups.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -13,6 +15,14 @@ beforeAll(async () => {
   await makeUser(kit.fx, { id: 'admin-1' });
 });
 describe('legacy device layout compatibility', () => {
+  it('keeps an unenrolled legacy setup readable', async () => {
+    const scanner = await kit.scanner();
+    await setSetupWatchStmt(kit.env.DB, kit.org.id, scanner.id, null).run();
+    const view = ScannerSetupSchema.parse(await setupView(kit.ctx, scanner.id));
+    expect(view.sessionId).toBeUndefined();
+    expect(view.id).toBe(scanner.id);
+  });
+
   it('converts a display browser to a scanner while retaining its pairing state', async () => {
     const source = await kit.scanner();
     const display = await createSetup(
