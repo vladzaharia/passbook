@@ -11,6 +11,7 @@ import { ScanLink } from './scan-link.tsx';
 
 const empty = () => json({ items: [], nextCursor: null });
 const handlers = {
+  '/api/v1/scanning-sessions': empty,
   '/api/v1/scan-setups': empty,
   '/api/v1/scan-events': empty,
   '/api/v1/scan-staff': empty,
@@ -36,12 +37,12 @@ describe('Scanning nav and entities', () => {
 });
 
 describe('Scanning page', () => {
-  it('shows the empty scanners tab with its one primary', async () => {
+  it('shows the empty sessions tab with its one primary', async () => {
     const { container } = await renderApp('/admin/scanning', { session: 'admin', handlers });
     expect(await screen.findByRole('heading', { name: 'Scanning', level: 1 })).toBeInTheDocument();
-    expect(await screen.findByText('No scanners yet')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Scanners' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getAllByRole('button', { name: 'New scanner' })).toHaveLength(2);
+    expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(2);
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -80,14 +81,14 @@ describe('Scanning page', () => {
       handlers,
     });
     await screen.findByText('Staff sign-in unavailable');
-    await userEvent.setup().click(screen.getByRole('tab', { name: 'Scanners' }));
-    await screen.findByText('No scanners yet');
+    await userEvent.setup().click(screen.getByRole('tab', { name: 'Sessions' }));
+    await screen.findByText('No scanning sessions');
     expect(router.state.location.search).not.toHaveProperty('tab');
   });
 
   it('ignores an unknown tab', async () => {
     await renderApp('/admin/scanning?tab=nope', { session: 'admin', handlers });
-    expect(await screen.findByText('No scanners yet')).toBeInTheDocument();
+    expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
   });
 
   it('links the event page back to Scanning with typed routes', async () => {

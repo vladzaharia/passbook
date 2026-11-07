@@ -62,7 +62,7 @@ export function CameraLayer({
             <i />
             <i />
           </div>
-          <p className="scan-live-pill">{checking ? 'Checking…' : 'Point at the barcode'}</p>
+          <p className="scan-live-pill">{checking ? 'Checking…' : 'Scan anywhere in view'}</p>
         </div>
       ) : (
         <div

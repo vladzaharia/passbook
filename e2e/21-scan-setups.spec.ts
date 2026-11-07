@@ -135,7 +135,7 @@ test('paired customer and desk views follow real check-ins, exits and revocation
     await api.send('PUT', `/api/v1/passes/${pass.id}/member-photo`, {
       png: await photoFixture(admin, true),
     });
-    await admin.goto(`/admin/scanning?orgId=${orgId}&new=1`);
+    await admin.goto(`/admin/scanning?orgId=${orgId}&tab=scanners&new=1`);
     const dialog = admin.getByRole('dialog', { name: 'New scanner' });
     const customerName = uid('Customer view');
     await dialog.getByRole('textbox', { name: 'Name', exact: true }).fill(customerName);
@@ -203,7 +203,7 @@ test('paired customer and desk views follow real check-ins, exits and revocation
   }
 });
 
-test('Scan as Admin is optional and reuses the organization’s managed session', async ({
+test('Scan as Admin is optional and reuses this browser’s device in a shared session', async ({
   browser,
 }) => {
   const api = await apiAs('admin');
@@ -213,21 +213,27 @@ test('Scan as Admin is optional and reuses the organization’s managed session'
   });
   try {
     const org = readSeed().org;
+    const parent = await api.send('POST', '/api/v1/scanning-sessions', {
+      orgId: org.id,
+      name: uid('Admin shared session'),
+      timeZone: 'UTC',
+      settings: { lookup: true },
+    });
     const page = await context.newPage();
-    await page.goto('/scan');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/scan?orgId=${org.id}&sessionId=${parent.id}`);
     await expect(page.getByTestId('scan-pair')).toBeVisible();
     await page.getByRole('button', { name: 'Scan as Admin', exact: true }).click();
     await page.getByRole('combobox', { name: 'Organization', exact: true }).click();
     await page.getByRole('option', { name: org.name, exact: true }).click();
-    await page.getByRole('button', { name: 'Start admin session', exact: true }).click();
+    await page.getByRole('button', { name: 'Join session', exact: true }).click();
     await page.waitForURL(/setupId=/);
     await expect(page.getByTestId('scan-start')).toBeVisible();
     const first = new URL(page.url()).searchParams.get('setupId');
-    const next = await api.send('POST', '/api/v1/scan-setups/admin-session', {
-      orgId: org.id,
-      timeZone: 'UTC',
-    });
-    expect(next.setupId).toBe(first);
+    await page.goto(`/scan?admin=1&orgId=${org.id}&sessionId=${parent.id}`);
+    await page.getByRole('button', { name: 'Join session', exact: true }).click();
+    await page.waitForURL(/setupId=/);
+    expect(new URL(page.url()).searchParams.get('setupId')).toBe(first);
     const setup = await api.get(`/api/v1/scan-setups/${first}`);
     expect(setup.adminSession).toBe(true);
     const member = await createPass(api, org.id, { holder: 'Admin Action Guest' });
@@ -239,16 +245,13 @@ test('Scan as Admin is optional and reuses the organization’s managed session'
     await expect(page.getByTestId('scan-result')).toContainText('Checked in');
     const scans = await api.get(`/api/v1/scans?orgId=${org.id}&passId=${member.id}`);
     expect(scans.items).toMatchObject([{ scannerId: first, outcome: 'ok' }]);
-    await page.goto(`/admin/scanning?orgId=${org.id}`);
-    const row = page
-      .getByRole('row')
-      .filter({ has: page.getByRole('link', { name: setup.name, exact: true }) });
-    await expect(row.getByRole('button', { name: /^Pair/ })).toHaveCount(0);
-    await page.getByRole('link', { name: setup.name, exact: true }).click();
+    await page.goto(`/admin/scanning/sessions/${parent.id}?deviceId=${first}`);
     await expect(
-      page.getByRole('heading', { name: setup.name, exact: true, level: 1 }),
+      page.getByRole('heading', { name: parent.name, exact: true, level: 1 }),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Pair/ })).toHaveCount(0);
+    const configuration = page.getByRole('dialog', { name: `Configure ${setup.name}` });
+    await expect(configuration).toContainText('Administrator sign-in');
+    await expect(configuration.getByRole('button', { name: /^Pair/ })).toHaveCount(0);
   } finally {
     await context.close();
     await api.dispose();

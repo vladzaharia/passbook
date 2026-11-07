@@ -25,6 +25,7 @@ import { scanEventsRoutes } from './modules/scan/routes-events.ts';
 import { scanLiveRoutes } from './modules/scan/routes-live.ts';
 import { scanPairRoutes } from './modules/scan/routes-pair.ts';
 import { scannersRoutes } from './modules/scan/routes-scanners.ts';
+import { scanningSessionsRoutes } from './modules/scan/routes-scanning-sessions.ts';
 import { scansRoutes } from './modules/scan/routes-scans.ts';
 import { scanSetupsRoutes } from './modules/scan/routes-setups.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
@@ -129,6 +130,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/scan', scanRoutes);
   app.route('/api/v1/scanners', scannersRoutes);
   app.route('/api/v1/scan-setups', scanSetupsRoutes);
+  app.route('/api/v1/scanning-sessions', scanningSessionsRoutes);
   app.route('/api/v1/scan/live', scanLiveRoutes);
   app.route('/api/v1/scan-events', scanEventsRoutes);
   app.route('/api/v1/scan-staff', scanStaffRoutes);

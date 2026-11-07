@@ -216,6 +216,11 @@ export const archiveEventStmts = (db: Db, id: string, now: number): D1PreparedSt
     'UPDATE scan_events SET archived_at = ?, updated_at = ? WHERE id = ? AND archived_at IS NULL',
     [now, now, id],
   ),
+  stmt(
+    db,
+    `UPDATE scanning_sessions SET accepts=NULL,settings=json_set(settings,'$.acceptAllTemplates',json('false')),updated_at=MAX(updated_at+1,?) WHERE json_extract(accepts,'$.eventId')=?`,
+    [now, id],
+  ),
   stmt(db, 'UPDATE scanners SET event_id = NULL, updated_at = ? WHERE event_id = ?', [now, id]),
 ];
 

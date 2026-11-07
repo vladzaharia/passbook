@@ -20,7 +20,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     memberId: uid('ADMINDOOR'),
   });
   try {
-    await page.goto(`/admin/scanning?orgId=${orgId}`);
+    await page.goto(`/admin/scanning?orgId=${orgId}&tab=scanners`);
     await page.getByRole('button', { name: 'New scanner', exact: true }).first().click();
     await page.getByRole('textbox', { name: 'Name', exact: true }).fill(scannerName);
     await page.getByRole('checkbox', { name: template.name, exact: true }).check();

@@ -51,6 +51,9 @@ export function Paired({
     };
   }, [api]);
   useEffect(() => {
+    runtime?.update(session);
+  }, [runtime, session]);
+  useEffect(() => {
     if (!runtime) return;
     const update = () => onMachine(runtime.store.getSnapshot().state);
     update();

@@ -5,6 +5,7 @@ import { all, chunk, first, placeholders, stmt } from '../../platform/db.ts';
 
 export interface SetupMeta {
   scanner_id: string;
+  session_id?: string;
   admin_session: number;
   admin_user_id: string | null;
   admin_name: string | null;
@@ -15,7 +16,7 @@ export async function setupMetas(db: D1Database, orgId: string | null, ids: stri
     chunk(ids, 90).map((part) =>
       all<SetupMeta>(
         db,
-        `SELECT m.*,COALESCE(u.name,u.primary_email) AS admin_name FROM scanner_setups m
+        `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,COALESCE(u.name,u.primary_email) AS admin_name FROM scanner_setups m
     LEFT JOIN users u ON u.id=m.admin_user_id WHERE (? IS NULL OR m.org_id=?)
     AND m.scanner_id IN (${placeholders(part.length)})`,
         [orgId, orgId, ...part],
@@ -28,7 +29,7 @@ export async function setupMetas(db: D1Database, orgId: string | null, ids: stri
 export const setupMeta = (db: D1Database, orgId: string, scannerId: string) =>
   first<SetupMeta>(
     db,
-    `SELECT m.*,COALESCE(u.name,u.primary_email) AS admin_name FROM scanner_setups m
+    `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,COALESCE(u.name,u.primary_email) AS admin_name FROM scanner_setups m
     LEFT JOIN users u ON u.id=m.admin_user_id WHERE m.org_id=? AND m.scanner_id=?`,
     [orgId, scannerId],
   );

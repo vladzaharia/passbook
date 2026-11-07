@@ -1,0 +1,91 @@
+.scan-operator {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  padding: 96px max(20px, calc((100vw - 1120px) / 2)) calc(var(--scan-dock-h) + 40px);
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  overflow-y: auto;
+  background: var(--pk-surface-page);
+  color: var(--pk-text-default);
+
+  user-select: text;
+}
+.scan-operator > header {
+  padding-bottom: 20px;
+}
+.scan-operator .scan-lookup-content {
+  padding: 0;
+}
+.scan-operator .scan-lookup-confirm {
+  min-height: 0;
+}
+.scan-operator .scan-pass-preview {
+  max-height: 180px;
+}
+.scan-operator .scan-lookup-results {
+  min-height: 0;
+}
+.scan-operator .scan-lookup-empty {
+  padding-block: 24px;
+}
+.scan-operator-activity {
+  margin-top: 0;
+  border-top: 1px solid var(--pk-border-subtle);
+  padding-top: 20px;
+}
+.scan-operator-activity > h2 {
+  margin-bottom: 12px;
+}
+.scan-operator-activity li {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  padding-block: 10px;
+}
+.scan-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--scan-heads);
+  margin-top: 6px;
+  flex: none;
+}
+.scan-activity-dot[data-outcome="ok"] {
+  background: var(--scan-ok);
+}
+.scan-activity-dot[data-outcome="refused"] {
+  background: var(--scan-refused);
+}
+
+@media (min-width: 900px) {
+  .scan-operator {
+    grid-template-columns: minmax(300px, 440px) minmax(0, 1fr);
+    gap: 32px 64px;
+    padding-top: 120px;
+  }
+  .scan-operator > header {
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
+  .scan-operator-activity {
+    border-top: 0;
+    border-left: 1px solid var(--pk-border-subtle);
+    padding-top: 0;
+    padding-left: 32px;
+  }
+  .scan-shell[data-surface="operator"] {
+    --scan-card-w: 600px;
+  }
+}
+.scan-shell[data-surface="operator"] > .scan-cam {
+  background: var(--pk-surface-page);
+}
+.scan-shell[data-surface="operator"] > .scan-tint {
+  z-index: 2;
+}
+.scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
+  z-index: 11;
+}

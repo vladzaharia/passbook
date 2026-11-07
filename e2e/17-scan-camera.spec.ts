@@ -39,7 +39,7 @@ test('all eight camera barcode formats check in continuously across phone, table
       await route.continue();
     });
     await pairCamera(page, scanner.pairing.code);
-    await expect(page.getByText('Point at the barcode', { exact: true })).toBeVisible({
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible({
       timeout: 15_000,
     });
     const measures = [];
@@ -75,6 +75,55 @@ test('all eight camera barcode formats check in continuously across phone, table
       contentType: 'application/json',
     });
     await page.screenshot({ path: `test-results/${testInfo.project.name}-camera.png` });
+  } finally {
+    await api.dispose();
+  }
+});
+
+test('decodes barcodes at all four corners and edges without moving them into the guide', async ({
+  page,
+}, info) => {
+  const api = await apiAs('admin');
+  try {
+    const { scanner, items } = await cameraFixture(api, readSeed().org.id);
+    await installCamera(
+      page,
+      items.map((i) => i.image),
+    );
+    await pairCamera(page, scanner.pairing.code);
+    await expect(page.getByText('Scan anywhere in view', { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    const positions = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 1, y: 1 },
+      { x: 0, y: 0.5 },
+      { x: 1, y: 0.5 },
+      { x: 0.5, y: 0 },
+      { x: 0.5, y: 1 },
+    ];
+    const timings = [];
+    for (const [i, position] of positions.entries()) {
+      const request = page.waitForRequest(
+        (r) => r.url().endsWith('/api/v1/scan/actions') && r.method() === 'POST',
+      );
+      const start = Date.now();
+      await showBarcode(page, i, 0, false, position);
+      await request;
+      timings.push({ format: items[i]?.format, position, milliseconds: Date.now() - start });
+      await expect(page.getByTestId('scan-result')).toContainText(`Camera ${items[i]?.format}`, {
+        timeout: 8_000,
+      });
+      await expect(page.getByTestId('scan-result')).toContainText('Checked in');
+      await showBarcode(page, -1);
+      await page.getByRole('button', { name: 'Done', exact: true }).click();
+    }
+    await info.attach('off-center-decode-timings', {
+      body: JSON.stringify(timings),
+      contentType: 'application/json',
+    });
   } finally {
     await api.dispose();
   }

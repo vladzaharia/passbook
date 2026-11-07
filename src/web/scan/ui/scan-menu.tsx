@@ -70,6 +70,7 @@ export interface ScanMenuProps {
   holdResults: boolean;
   onHoldResults: (v: boolean) => void;
   camera: CameraChoice;
+  cameraAvailable?: boolean;
   hasWide?: boolean;
   onCamera: (v: CameraChoice) => void;
   /** The scanner has a reader: Camera off and Reader tips show. */
@@ -112,18 +113,22 @@ export function ScanMenu(p: ScanMenuProps) {
           Keep results until tapped
         </CheckItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Camera</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={p.camera}
-          onValueChange={(v) => p.onCamera(v as CameraChoice)}
-        >
-          <DropdownMenuRadioItem value="back">Back</DropdownMenuRadioItem>
-          {p.hasWide !== false ? (
-            <DropdownMenuRadioItem value="back-wide">Back wide</DropdownMenuRadioItem>
-          ) : null}
-          <DropdownMenuRadioItem value="front">Front</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        {p.hasReader ? (
+        {p.cameraAvailable !== false ? (
+          <>
+            <DropdownMenuLabel>Camera</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={p.camera}
+              onValueChange={(v) => p.onCamera(v as CameraChoice)}
+            >
+              <DropdownMenuRadioItem value="back">Back</DropdownMenuRadioItem>
+              {p.hasWide !== false ? (
+                <DropdownMenuRadioItem value="back-wide">Back wide</DropdownMenuRadioItem>
+              ) : null}
+              <DropdownMenuRadioItem value="front">Front</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </>
+        ) : null}
+        {p.hasReader && p.cameraAvailable !== false ? (
           <>
             <CheckItem
               icon={<CameraOff aria-hidden />}

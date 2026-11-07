@@ -1,0 +1,80 @@
+.scan-card-layer[data-mode="boot"] {
+  padding: max(24px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
+    max(24px, env(safe-area-inset-bottom, 0px));
+  align-items: center;
+}
+.scan-boot-card {
+  width: min(100%, 448px);
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 24px;
+  background: var(--pk-surface-raised);
+  box-shadow: var(--pk-elevation-2);
+}
+.scan-boot-heading {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+.scan-boot-heading .scan-card-title {
+  font-size: 24px;
+  line-height: 30px;
+}
+.scan-boot-heading .scan-card-line {
+  font-size: 14px;
+  line-height: 21px;
+  max-width: 34ch;
+  justify-self: center;
+}
+.scan-boot-eyebrow {
+  color: var(--pk-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.scan-boot-mascot {
+  position: relative;
+  height: 92px;
+  margin-bottom: 8px;
+}
+.scan-boot-mascot .wl-buddy {
+  top: auto;
+  bottom: 0;
+  translate: -50% 0;
+}
+.scan-boot-body {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.scan-boot-body .scan-pair-footer {
+  justify-content: center;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+.scan-boot-body button {
+  min-height: 44px;
+}
+.scan-boot-body [data-testid="pair-code"] {
+  display: flex;
+  justify-content: center;
+}
+@media (max-width: 360px) {
+  .scan-boot-card {
+    padding: 24px 16px;
+    border-radius: 20px;
+  }
+  .scan-boot-mascot {
+    height: 72px;
+  }
+}
+@media (max-height: 620px) and (min-width: 640px) {
+  .scan-boot-card {
+    width: min(100%, 760px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+  }
+}

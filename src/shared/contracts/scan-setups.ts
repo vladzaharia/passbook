@@ -13,6 +13,7 @@ export const ScanWatchSchema = z.strictObject({
   allOrg: z.boolean().default(false),
 });
 export const ScannerSetupSchema = ScannerSchema.extend({
+  sessionId: IdSchema.optional(),
   adminSession: z.boolean().default(false),
   adminUser: z.object({ id: IdSchema, name: z.string() }).nullable(),
   watch: ScanWatchSchema.nullable(),

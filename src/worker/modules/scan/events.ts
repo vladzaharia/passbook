@@ -14,6 +14,7 @@ import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { assertStandaloneSession } from './legacy-session.ts';
 import {
   archiveEventStmts,
   assignScannersStmts,
@@ -30,6 +31,7 @@ import {
   templateManifests,
   updateEventStmt,
 } from './repo-events.ts';
+import { syncStandaloneSessionStmt } from './repo-legacy-session.ts';
 import { countOrgTemplates } from './repo-scope.ts';
 
 const EXPECTED_TTL_MS = 60_000;
@@ -282,9 +284,13 @@ export async function assignScanners(
   if (found.some((s) => s.mode !== row.mode)) throw modeMismatch('A scanner');
   if (found.some((s) => s.deviceRole !== 'scan'))
     throw new ValidationError('Only scanning devices take an event.', [], 'SCANNER_CANNOT_SCAN');
+  await Promise.all(ids.map((scannerId) => assertStandaloneSession(ctx, row.orgId, scannerId)));
   if (ids.length > 0)
     await batch(db, [
       ...assignScannersStmts(db, id, row.orgId, ids, ctx.clock.now()),
+      ...ids.map((scannerId) =>
+        syncStandaloneSessionStmt(db, row.orgId, scannerId, ctx.clock.now()),
+      ),
       auditStmt(db, ctx, {
         orgId: row.orgId,
         actorType: 'user',

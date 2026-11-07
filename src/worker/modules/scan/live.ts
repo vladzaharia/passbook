@@ -12,7 +12,11 @@ export const scanHub = (ctx: ServiceContext, orgId: string, mode: string) =>
 
 export function liveAttachment(ctx: ServiceContext, actor: ScanActor): LiveAttachment {
   const row = actor.scanner;
-  if (actor.principal !== 'scanner' || actor.terminal || !row?.tokenHash)
+  if (
+    actor.terminal ||
+    !row ||
+    (actor.principal === 'scanner' ? !row.tokenHash : !actor.platformSessionId)
+  )
     throw new UnauthenticatedError('Pair this screen to continue.', 'SCANNER_UNAUTHENTICATED');
   if (row.deviceRole === 'scan')
     throw new ForbiddenError('Choose a screen view in Scanning.', 'SCREEN_REQUIRED');
@@ -21,9 +25,15 @@ export function liveAttachment(ctx: ServiceContext, actor: ScanActor): LiveAttac
     mode: actor.mode,
     scannerId: row.id,
     role: row.deviceRole,
-    tokenHash: row.tokenHash,
+    tokenHash: row.tokenHash ?? '',
     revision: row.updatedAt,
-    expiresAt: Math.min(row.expiresAt ?? 0, ctx.clock.now() + 15 * 60_000),
+    expiresAt: Math.min(
+      actor.principal === 'admin' ? Infinity : (row.expiresAt ?? 0),
+      ctx.clock.now() + 15 * 60_000,
+    ),
+    ...(actor.principal === 'admin' && actor.platformSessionId
+      ? { admin: { sessionId: actor.platformSessionId, userId: actor.actor.id } }
+      : {}),
   };
 }
 
@@ -34,7 +44,7 @@ export function publishScan(
   method: string,
   undo = false,
 ) {
-  if (!actor.scanner?.hasScreens || out.replay) return;
+  if (!actor.scanner || (!actor.scanningSession && !actor.scanner.hasScreens) || out.replay) return;
   const row: ScanLiveRow = {
     id: out.scanId ?? ctx.ids.ordered(),
     at: ctx.clock.now(),

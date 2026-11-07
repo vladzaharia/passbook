@@ -36,7 +36,7 @@ const handlers = (over: Record<string, never> = {}) => ({
 
 describe('Scanners tab', () => {
   it('lists scanners with status, accepts and a ghost Pair on the unpaired one', async () => {
-    const { container } = await renderApp('/admin/scanning?orgId=o1', {
+    const { container } = await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
       handlers: handlers(),
     });
@@ -55,7 +55,10 @@ describe('Scanners tab', () => {
   });
 
   it('keeps revoked scanners behind Show revoked', async () => {
-    await renderApp('/admin/scanning?orgId=o1', { session: 'admin', handlers: handlers() });
+    await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
+      session: 'admin',
+      handlers: handlers(),
+    });
     await screen.findByText('Side door');
     expect(screen.queryByText('Old gate')).toBeNull();
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Show revoked (1)' }));
@@ -64,7 +67,7 @@ describe('Scanners tab', () => {
 
   it('revokes with a plain confirm that says the scans stay', async () => {
     let revoked = false;
-    await renderApp('/admin/scanning?orgId=o1', {
+    await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/scanners/s1/revoke': (_u: URL, init?: RequestInit) => {
@@ -83,7 +86,7 @@ describe('Scanners tab', () => {
   });
 
   it('asks before pairing a paired scanner again, then shows the pairing face', async () => {
-    await renderApp('/admin/scanning?orgId=o1', {
+    await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/scanners/s1/pairing': (_u: URL, init?: RequestInit) =>
@@ -103,7 +106,7 @@ describe('Scanners tab', () => {
   });
 
   it('shows the empty state with one primary, and fills it by order', async () => {
-    await renderApp('/admin/scanning', {
+    await renderApp('/admin/scanning?tab=scanners', {
       session: 'admin',
       handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
@@ -114,7 +117,7 @@ describe('Scanners tab', () => {
 
 describe('New scanner dialog', () => {
   const open = async (extra: Record<string, never> = {}) => {
-    const utils = await renderApp('/admin/scanning?orgId=o1&new=1', {
+    const utils = await renderApp('/admin/scanning?tab=scanners&orgId=o1&new=1', {
       session: 'admin',
       handlers: handlers(extra as never),
     });

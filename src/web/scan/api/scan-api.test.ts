@@ -169,6 +169,8 @@ describe('createScanApi', () => {
     expect(Object.keys(api).sort()).toEqual(
       [
         'act',
+        'activity',
+        'reportDevice',
         'batch',
         'lookup',
         'pair',

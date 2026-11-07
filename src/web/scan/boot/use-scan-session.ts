@@ -3,7 +3,7 @@
  * online and every 5 minutes, and between scans when the counts carry a new `configRev`.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { isApiError } from '../../lib/errors.ts';
 import type { ScanApi } from '../api/scan-api.ts';
@@ -11,7 +11,7 @@ import { toFail } from '../api/to-fail.ts';
 import type { ScanState } from '../machine/types.ts';
 import { takePairCode } from './pair-link.ts';
 
-const REFETCH_MS = 5 * 60_000;
+const REFETCH_MS = 10_000;
 const KEY = ['scan', 'session'] as const;
 
 /** The CSRF secret lives here, in memory only: never in storage, never in a URL. */
@@ -78,7 +78,10 @@ export function useScanSession(
     gcTime: 0,
     retry: false,
   });
-  const session = query.data ?? null;
+  const presented = useRef<ScanSession | null>(null);
+  if (!machine || (machine.loop.s === 'ready' && !machine.overlay && !machine.card))
+    presented.current = query.data ?? null;
+  const session = presented.current ?? query.data ?? null;
   const { refetch } = query;
 
   useEffect(() => {

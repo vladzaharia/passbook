@@ -9,6 +9,7 @@ import {
   setExpected,
   todayStmt,
 } from './repo-counts.ts';
+import { scanningSessionTodayStmt } from './repo-scanning-sessions.ts';
 
 const DAY = 86_400_000;
 const EXPECTED_TTL_MS = 60_000;
@@ -86,7 +87,9 @@ export function planCounts(ctx: ServiceContext, actor: ScanActor, dayStart?: num
   const since = trustedDayStart(now, dayStart) ?? localDayStart(now, actor.timeZone);
   const event = actor.event;
   const stmts = [
-    todayStmt(db, actor.actorKey, since),
+    actor.scanningSession
+      ? scanningSessionTodayStmt(db, actor.orgId, actor.scanningSession.id, actor.mode, since)
+      : todayStmt(db, actor.actorKey, since),
     managersStmt(db, actor.orgId),
     ...(event
       ? [
@@ -100,7 +103,11 @@ export function planCounts(ctx: ServiceContext, actor: ScanActor, dayStart?: num
     async read(results) {
       const today = rowOf<{ n: number }>(results[0])?.n ?? 0;
       const approvals = rowOf<{ has: number }>(results[1])?.has === 1;
-      const configRev = Math.max(actor.scanner?.updatedAt ?? 0, event?.updatedAt ?? 0);
+      const configRev = Math.max(
+        actor.scanner?.updatedAt ?? 0,
+        event?.updatedAt ?? 0,
+        actor.scanningSession?.updatedAt ?? 0,
+      );
       let eventCounts: ScanCounts['event'] = null;
       if (event) {
         const totals = rowOf<{ arrived: number; inside: number }>(results[2]);
