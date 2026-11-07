@@ -1,5 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowUpRight, Copy, MonitorSmartphone, Radio, ScanLine } from 'lucide-react';
+import {
+  Activity,
+  ArrowUpRight,
+  Copy,
+  ListChecks,
+  MonitorSmartphone,
+  Radio,
+  ScanLine,
+} from 'lucide-react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
@@ -39,12 +47,39 @@ export function SessionsTab({
     );
   if (!items.length)
     return (
-      <EmptyState
-        art="scanner"
-        title="No scanning sessions"
-        description="Set shared admission rules, then pair scanners and displays."
-        action={<Button onClick={onNew}>New scanning session</Button>}
-      />
+      <div>
+        <div className="grid gap-4 rounded-lg border border-border bg-surface-raised p-4 sm:grid-cols-3">
+          {[
+            {
+              icon: ListChecks,
+              title: '1. Set shared rules',
+              detail: 'Choose passes and admission.',
+            },
+            {
+              icon: MonitorSmartphone,
+              title: '2. Add devices',
+              detail: 'Pair scanners and displays.',
+            },
+            { icon: Activity, title: '3. Follow activity', detail: 'See check-ins in one place.' },
+          ].map(({ icon: Icon, title, detail }) => (
+            <div key={title} className="flex min-w-0 items-start gap-3">
+              <span className="rounded-md bg-surface-sunken p-2">
+                <Icon className="size-4 text-fg-muted" aria-hidden />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-fg-strong">{title}</p>
+                <p className="mt-1 text-xs text-fg-muted">{detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <EmptyState
+          art="scanner"
+          title="No scanning sessions"
+          description="Create a session to share admission rules across devices."
+          action={<Button onClick={onNew}>New scanning session</Button>}
+        />
+      </div>
     );
   return (
     <div className="grid gap-6">

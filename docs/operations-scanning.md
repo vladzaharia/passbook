@@ -2,13 +2,15 @@
 
 ## Set up a device
 
-1. Open **Scanning → New scanner** in the admin panel.
-2. Choose the organization, accepted passes or event, and **Scanner** view.
-3. Choose camera input (**Reader: None**) or a hardware barcode reader.
-4. Create the setup and enter its pairing code at `/scan` or in PassBook Reader.
+1. Open **Scanning → New scanning session**.
+2. Choose the organization, accepted passes, time zone and admission rules.
+3. Choose **Add device**, then select **Scanner**, **Operator** or **Customer display**. All three views
+   are available on every screen size; **Automatic** chooses Scanner on smaller screens and Operator
+   on wide screens.
+4. Create a pairing code and enter it at `/scan` or in PassBook Reader.
 
-Each device has its own pairing code. Pairing again replaces that device's credential.
-Changes to a scanner's settings apply at its next session refresh or between scans.
+Session devices share admission rules and can use per-device input overrides. Each device has its own
+pairing code. Pairing again replaces that device's credential.
 
 ## Choose check-in rules
 
@@ -69,32 +71,28 @@ model-specific adapter; select HID mode when the scanner supports it.
 
 ## Use an admin session
 
-At `/scan`, choose **Scan as Admin** beneath the pairing form. Select an organization and start
-the session. PassBook creates or reuses that user's managed setup for the organization and mode.
-Edit it in **Scanning** like any other setup. Admin sessions use platform sign-in and do not
-issue pairing credentials. The setup list shows the owner and hides pairing actions.
+At `/scan`, choose **Scan as Admin** beneath the pairing form. Select an organization and session,
+then join. PassBook creates or reuses that user's managed device. Admin devices use platform
+sign-in and do not issue pairing credentials; their layout can be changed in the session.
 
-## Add customer screens and desk monitors
+## Add customer displays and operators
 
-Create a setup with **Customer screen** or **Desk monitor** view, choose the scanners it follows,
-then pair the screen with its own code. Multiple screens can follow the same scanners; each screen
-can follow up to eight scanners. A desk monitor may follow the entire organization.
+In a session, choose **Add device** and select **Customer display** or **Operator**. Customer displays
+show a short, generic verdict for a presented code, without member names or photos. They do not show
+manual lookups and return to Ready after the result expires.
 
-Customer screens show a short, generic verdict for a physically presented barcode. They show
-no member names or photos, never display manual lookup results, and return to Ready after the
-result expires. Reconnecting does not replay a previous customer's result.
-
-Desk monitors show recent scans and permitted member photos. Both screen views are read-only.
-Revoking or reconfiguring a screen clears its feed and reconnects it through current authorization.
-Live history is limited to 100 results and 15 minutes, isolated by organization and mode.
+Operator combines code scanning, pass lookup and session activity. Staff can review or check in from
+the same view. Previously enrolled standalone Desk monitors remain read-only; new session devices use
+Operator for staff activity and actions.
 
 ## Add a member photo
 
 Open **Pass → Holder → Member photo**. Choose an image smaller than 10 MB. The browser centre-crops
 it to a 270-pixel square; the server removes ancillary image metadata before storage.
 
-The photo appears in authorized scanner results and desk monitors. **Show member photos** on a
-scanner can hide it. Template photo role restrictions still apply. Customer screens never get it.
+Photos appear in authorized Scanner and Operator views and on legacy standalone Desk monitors.
+**Show member photos** can hide them. Template photo role restrictions still apply; Customer displays
+never receive photos.
 
 Photos stay out of Wallet by default. Enable **Include photo in Wallet pass** to publish it as the
 thumbnail. Generic passes and event tickets without a strip image support this option. Disabling

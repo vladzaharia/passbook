@@ -10,13 +10,23 @@ export function SessionSummary({
   session: ScanningSession;
   onEdit: () => void;
 }) {
-  const rows = [
+  const shared = [
     ['Accepts', sessionAccepts(session)],
     ['Admission', sessionRuleLabel(session)],
-    ['On scan', session.settings.flow === 'auto' ? 'Automatic check-in' : 'Review'],
-    ['Default reader', session.settings.reader === 'none' ? 'Camera' : 'Hardware scanner'],
-    ['People lookup', session.settings.lookup ? 'On' : 'Off'],
+    [
+      'Staff access',
+      session.settings.staffSignIn
+        ? 'Staff sign-in'
+        : session.settings.roleWithoutSignIn === 'desk'
+          ? 'Desk staff'
+          : 'Check-in staff',
+    ],
     ['Time zone', session.timeZone],
+  ];
+  const defaults = [
+    ['On scan', session.settings.flow === 'auto' ? 'Automatic check-in' : 'Review'],
+    ['Reader', session.settings.reader === 'none' ? 'Camera' : 'Hardware scanner'],
+    ['People lookup', session.settings.lookup ? 'On' : 'Off'],
   ];
   return (
     <Card>
@@ -28,18 +38,30 @@ export function SessionSummary({
           </Button>
         }
       />
-      <CardBody>
-        <dl className="grid gap-4">
-          {rows.map(([label, value]) => (
-            <div key={label} className="grid gap-1 text-sm">
-              <dt className="text-fg-muted">{label}</dt>
-              <dd className="font-medium text-fg-strong">{value}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-6 border-t border-border pt-4 text-xs text-fg-muted">
-          Admission applies across devices. Device defaults can be overridden on each device.
-        </p>
+      <CardBody className="grid gap-6">
+        <div>
+          <h3 className="mb-3 text-xs font-semibold text-fg-muted">SHARED RULES</h3>
+          <dl className="grid gap-3">
+            {shared.map(([label, value]) => (
+              <div key={label} className="grid gap-1 text-sm">
+                <dt className="text-fg-muted">{label}</dt>
+                <dd className="font-medium text-fg-strong">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="border-t border-border pt-4">
+          <h3 className="mb-1 text-xs font-semibold text-fg-muted">DEVICE DEFAULTS</h3>
+          <p className="mb-3 text-xs text-fg-muted">Can be overridden per device.</p>
+          <dl className="grid gap-3">
+            {defaults.map(([label, value]) => (
+              <div key={label} className="grid gap-1 text-sm">
+                <dt className="text-fg-muted">{label}</dt>
+                <dd className="font-medium text-fg-strong">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </CardBody>
     </Card>
   );

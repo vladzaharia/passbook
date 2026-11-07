@@ -37,7 +37,7 @@ export const managedSession = ScanningSessionDetailSchema.parse({
         camera: 'available',
         keyboard: true,
         nativeBarcode: false,
-        surfaces: ['phone', 'operator', 'desk', 'customer'],
+        surfaces: ['phone', 'customer'],
         preferred: 'phone',
       },
       reportedAt: NOW,

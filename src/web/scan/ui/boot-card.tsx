@@ -27,12 +27,14 @@ export function BootCard({
       aria-labelledby="scan-card-title"
     >
       <header className="scan-boot-heading">
+        <span className="scan-boot-eyebrow">
+          PassBook <span aria-hidden>·</span> Scanning
+        </span>
         <div className="scan-boot-mascot" aria-hidden>
           <Suspense fallback={null}>
             <Buddy scene="peek" size="lg" mood="happy" />
           </Suspense>
         </div>
-        <span className="scan-boot-eyebrow">PassBook · Scanning</span>
         <h1 id="scan-card-title" ref={titleRef} tabIndex={-1} className="scan-card-title">
           {title}
         </h1>

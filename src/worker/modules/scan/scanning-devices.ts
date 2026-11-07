@@ -90,18 +90,6 @@ export async function updateScanningDevice(
   const caps = device.capabilities
     ? ScanDeviceCapabilitiesSchema.parse(JSON.parse(device.capabilities))
     : null;
-  if (
-    input.surface &&
-    input.surface !== 'auto' &&
-    input.surface !== device.surface &&
-    caps &&
-    !caps.surfaces.includes(input.surface)
-  )
-    throw new ValidationError(
-      'Choose a layout supported by this device’s current screen.',
-      [],
-      'SCAN_SURFACE_UNSUPPORTED',
-    );
   const surface = input.surface ?? device.surface;
   const effective = surfaceFor(surface, caps);
   if (device.kind === 'terminal' && roleForSurface(effective) !== 'scan')

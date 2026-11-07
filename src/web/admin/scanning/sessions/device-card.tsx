@@ -12,7 +12,10 @@ export function DeviceCard({
   device: ScanningDevice;
   onConfigure: () => void;
 }) {
-  const Icon = SURFACE_ICON[device.effectiveSurface];
+  const Icon =
+    SURFACE_ICON[
+      device.surface === 'auto' && !device.capabilities ? 'auto' : device.effectiveSurface
+    ];
   const now = useNow();
   const overrides = Object.keys(device.overrides).length;
   return (
@@ -22,12 +25,18 @@ export function DeviceCard({
     >
       <CardBody className="grid h-full min-w-0 grid-cols-1 gap-4">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="rounded-lg bg-state-hover-tint p-3">
+          <span className="shrink-0 rounded-lg border border-border bg-surface-sunken p-3">
             <Icon aria-hidden className="size-6 text-fg-muted" />
           </span>
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-semibold text-fg-strong">{device.name}</h3>
-            <p className="text-xs text-fg-muted">{SCAN_SURFACE_LABELS[device.effectiveSurface]}</p>
+            <p className="text-xs text-fg-muted">
+              {device.surface === 'auto'
+                ? device.capabilities
+                  ? `Automatic · ${SCAN_SURFACE_LABELS[device.effectiveSurface]}`
+                  : 'Automatic · waiting for device'
+                : SCAN_SURFACE_LABELS[device.effectiveSurface]}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -59,7 +68,9 @@ export function DeviceCard({
                   ? 'Offline'
                   : 'Needs pairing'}
           </StatusPill>
-          {device.signIn === 'admin' ? <Badge>Admin · {device.adminName}</Badge> : null}
+          {device.signIn === 'admin' ? (
+            <Badge>Admin · {device.adminName ?? 'Administrator'}</Badge>
+          ) : null}
         </div>
         <div className="grid min-w-0 gap-1 text-xs text-fg-muted">
           <p>

@@ -1,4 +1,4 @@
-import { Camera, Info } from 'lucide-react';
+import { CalendarDays, Camera, Info, Layers } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
@@ -46,6 +46,9 @@ export function StartPanel(p: StartPanelProps) {
     >
       {p.event ? (
         <div className="scan-start-event">
+          <span className="scan-start-label">
+            <CalendarDays aria-hidden size={15} /> Event
+          </span>
           <span className="scan-start-event-name" dir="auto">
             {p.event.name}
           </span>
@@ -53,9 +56,14 @@ export function StartPanel(p: StartPanelProps) {
           {p.event.count ? <span className="scan-card-line">{p.event.count}</span> : null}
         </div>
       ) : p.templates?.length ? (
-        <p className="scan-card-line" dir="auto">
-          {p.templates.join(' · ')}
-        </p>
+        <div className="scan-start-event">
+          <span className="scan-start-label">
+            <Layers aria-hidden size={15} /> Accepted passes
+          </span>
+          <p className="scan-card-line" dir="auto">
+            {p.templates.join(' · ')}
+          </p>
+        </div>
       ) : null}
       {p.event?.note ? (
         <p className="scan-start-note" dir="auto">

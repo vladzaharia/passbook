@@ -1,3 +1,4 @@
+import { Activity, Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
@@ -57,14 +58,25 @@ export function OperatorPanel({
     };
   }, [api]);
   return (
-    <aside className="scan-operator" aria-label="Operator desk">
-      <header>
-        <p className="text-xs uppercase tracking-wider text-fg-muted">Operator</p>
-        <h2 className="text-lg font-semibold">
-          {session.workspace?.session.name ?? 'Check-in desk'}
-        </h2>
+    <aside className="scan-operator" aria-label="Operator view">
+      <header className="scan-operator-header">
+        <span className="scan-operator-icon" aria-hidden>
+          <Search size={20} />
+        </span>
+        <div>
+          <p className="scan-operator-eyebrow">Operator</p>
+          <h2 className="text-lg font-semibold">
+            {session.workspace?.session.name ?? 'Check-in desk'}
+          </h2>
+          <p className="mt-1 text-sm text-fg-muted">
+            Look up passes, check in by code, and review activity.
+          </p>
+        </div>
       </header>
-      <section aria-label="Find a pass">
+      <section className="scan-operator-lookup" aria-label="Find a pass">
+        <div className="scan-operator-section-heading">
+          <h2>Find a pass</h2>
+        </div>
         <LookupPanel
           key={generation}
           inline
@@ -85,7 +97,10 @@ export function OperatorPanel({
         />
       </section>
       <section className="scan-operator-activity" aria-label="Session activity">
-        <h2 className="text-sm font-semibold">Session activity</h2>
+        <div className="scan-operator-section-heading">
+          <h2>Session activity</h2>
+          <Activity aria-hidden size={18} />
+        </div>
         {unavailable ? (
           <p role="status" className="text-sm text-fg-muted">
             Activity unavailable. Retrying…

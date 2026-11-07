@@ -40,7 +40,7 @@ describe('device capability reporting', () => {
       height: 844,
       camera: 'available',
       touch: true,
-      surfaces: ['phone', 'operator', 'desk', 'customer'],
+      surfaces: ['phone', 'operator', 'customer'],
       preferred: 'phone',
     });
     expect(getUserMedia).not.toHaveBeenCalled();

@@ -76,7 +76,8 @@ export async function reportScanDevice(
     : null;
   if (!device) return null;
   const capabilities = reportedCapabilities(raw);
-  const effective = surfaceFor(device.surface, capabilities);
+  const legacyStandaloneDesk = device.surface === 'desk' && device.session_id === device.scanner_id;
+  const effective = legacyStandaloneDesk ? 'desk' : surfaceFor(device.surface, capabilities);
   const now = ctx.clock.now();
   try {
     await batch(ctx.env.DB, [

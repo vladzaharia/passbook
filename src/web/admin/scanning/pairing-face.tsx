@@ -32,9 +32,8 @@ function useClock(on: boolean): number {
 }
 
 /**
- * The pairing face, shared by New scanner, Pair and Pair again: the code as a QR on the buddy's
- * sign and typed, a countdown, and a poll for the scanner. Paired, the buddy waves once; spent,
- * it droops and the QR dims.
+ * The code as a QR on the buddy's sign and typed, a countdown, and a poll for the scanner. Paired,
+ * the buddy waves once; spent, it droops and the QR dims.
  */
 export function PairingFace({
   scanner,

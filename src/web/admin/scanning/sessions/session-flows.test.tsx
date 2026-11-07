@@ -63,7 +63,9 @@ describe('session configuration flows', () => {
     await user.click(await screen.findByRole('button', { name: 'New scanning session' }));
     const dialog = screen.getByRole('dialog', { name: 'New scanning session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Evening entry');
+    expect(within(dialog).getByText(/choose the passes/i)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('tab', { name: 'Admission' }));
+    expect(within(dialog).getByText('Staff access')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('combobox', { name: 'Check-in type' }));
     await user.click(screen.getByRole('option', { name: 'Track in / out' }));
     await user.click(within(dialog).getByRole('tab', { name: 'Device defaults' }));
@@ -110,7 +112,16 @@ describe('session configuration flows', () => {
     await user.click(await screen.findByRole('button', { name: 'Add device' }));
     const dialog = screen.getByRole('dialog', { name: 'Add device' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Device name' }), 'Visitor phone');
+    const automatic = within(dialog).getByRole('button', { name: /^Automatic/ });
+    expect(automatic).toHaveAttribute('aria-pressed', 'true');
+    expect(automatic).toHaveTextContent('Scanner or Operator');
+    expect(within(dialog).getByText('CHECK-IN')).toBeInTheDocument();
+    expect(within(dialog).getByText('CUSTOMER DISPLAY')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: /^Customer display/ }));
+    expect(within(dialog).getByRole('button', { name: /^Customer display/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await user.click(within(dialog).getByRole('button', { name: 'Create pairing code' }));
     expect(await screen.findByRole('dialog', { name: 'Pair Visitor phone' })).toBeInTheDocument();
     expect(s.saved()).toMatchObject({ name: 'Visitor phone', surface: 'customer' });

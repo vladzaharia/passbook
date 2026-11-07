@@ -45,7 +45,7 @@ export function NewSessionDialog({
       <DialogContent
         title={initial ? 'Duplicate session' : 'New scanning session'}
         size="lg"
-        description="Set shared rules, then add the devices that will use them."
+        description="Devices in a session share accepted passes, admission rules and staff access."
         footer={
           <>
             <Button variant="outline" onClick={onClose}>
@@ -99,7 +99,7 @@ export function SessionRulesDialog({
       <DialogContent
         title="Session rules"
         size="lg"
-        description="Admission applies across all devices. Device defaults apply where no override is set."
+        description="Passes, admission and staff access are shared. Device defaults can be overridden."
         footer={
           <>
             <Button variant="outline" onClick={onClose}>
