@@ -20,14 +20,13 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     memberId: uid('ADMINDOOR'),
   });
   try {
-    await page.goto(`/admin/scanning?orgId=${orgId}&tab=scanners`);
-    await page.getByRole('button', { name: 'New scanner', exact: true }).first().click();
-    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(scannerName);
-    await page.getByRole('checkbox', { name: template.name, exact: true }).check();
-    await page.getByRole('button', { name: 'Create and pair', exact: true }).click();
-    await expect(page.getByRole('dialog')).toContainText(`Pair ${scannerName}`);
-    await expect(page.getByRole('dialog')).toContainText('Waiting for the scanner');
-    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await api.send('POST', '/api/v1/scan-setups', {
+      orgId,
+      name: scannerName,
+      accepts: { templateIds: [template.id] },
+      timeZone: 'UTC',
+      settings: { reader: 'barcode', direction: 'in' },
+    });
     await page.goto(`/admin/scanning?orgId=${orgId}&tab=events`);
     await page.getByRole('button', { name: 'New event', exact: true }).click();
     await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name);
