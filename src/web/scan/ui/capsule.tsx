@@ -1,5 +1,6 @@
 import { Ellipsis } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
+import { ScanOrgLogo } from '../platform/scan-branding.tsx';
 
 export type CapsuleState = 'scanning' | 'checking' | 'offline' | 'paused';
 
@@ -21,18 +22,21 @@ export function Capsule({
   chips,
   menu,
   onTitle,
+  logoUrl,
+  orgName = '',
 }: {
   name: string;
   staff?: string | null;
   state: CapsuleState;
-  /** Chips in order: Test, Ready, Reader, Sync, Count. */
   chips?: ReactNode;
-  /** The ⋯ trigger (ScanMenu). */
   menu?: ReactNode;
   onTitle?: () => void;
+  logoUrl?: string | null;
+  orgName?: string;
 }) {
   return (
     <header className="scan-capsule" data-testid="scan-capsule">
+      {logoUrl ? <ScanOrgLogo className="scan-capsule-logo" src={logoUrl} name={orgName} /> : null}
       <button type="button" className="scan-capsule-title" onClick={onTitle}>
         <span className="scan-capsule-name">
           {name}

@@ -89,6 +89,7 @@ function ScanBoot() {
     if (session.session.workspace && session.session.workspace.session.status !== 'active')
       return (
         <ScanShell
+          branding={session.session.branding}
           cardMode="boot"
           card={
             <BootCard
@@ -118,6 +119,7 @@ function ScanBoot() {
     if (session.session.state === 'staff_required')
       return (
         <ScanShell
+          branding={session.session.branding}
           cardMode="boot"
           card={<StaffStart session={session.session} api={api} refetch={session.refetch} />}
         />
@@ -125,6 +127,7 @@ function ScanBoot() {
     if (session.session.state === 'unassigned')
       return (
         <ScanShell
+          branding={session.session.branding}
           cardMode="boot"
           card={
             <BootCard title="Not set up" line="Assign templates in Scanning.">
@@ -196,7 +199,7 @@ function ScanBoot() {
       onAdmin={admin ? () => setAdminStart(true) : undefined}
     />
   );
-  return <ScanShell cardMode="boot" card={card} />;
+  return <ScanShell branding={session.session?.branding} cardMode="boot" card={card} />;
 }
 
 export function ScanApp() {

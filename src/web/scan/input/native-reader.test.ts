@@ -40,6 +40,69 @@ describe('native scanner adapter', () => {
     expect(s.sent.at(-1)).toEqual({ version: 1, op: 'start' });
   });
 
+  it('forwards generic accessory statuses without weakening native scan acknowledgements', () => {
+    const s = setup();
+    expect(s.client?.customerStatus('checking', 'camera-1')).toBe(false);
+    s.event({
+      event: 'ready',
+      capabilities: {
+        customerDisplay: { supported: true, available: true, active: true },
+      },
+    });
+    expect(s.sent.at(-1)).toEqual({
+      version: 1,
+      op: 'customerStatus',
+      status: 'checking',
+    });
+    expect(s.client?.customerStatus('checking', 'camera-1')).toBe(false);
+    expect(s.client?.customerStatus('accepted', 'camera-1')).toBe(true);
+    expect(s.sent.at(-1)).toEqual({
+      version: 1,
+      op: 'customerStatus',
+      status: 'accepted',
+    });
+    expect(s.client?.customerStatus('ready')).toBe(false);
+    expect(s.client?.result('camera-1', 'accepted')).toBe(false);
+  });
+
+  it('does not send customer display commands on Android or unsupported iOS', () => {
+    const s = setup();
+    s.event({
+      event: 'ready',
+      capabilities: {
+        customerDisplay: { supported: false, available: false, active: false },
+      },
+    });
+    expect(s.client?.customerStatus('checking', 'web-1')).toBe(false);
+    expect(s.sent.filter((message) => message.op === 'customerStatus')).toEqual([]);
+  });
+
+  it('sends only validated display branding when the accessory is available', () => {
+    const s = setup();
+    const branding = {
+      name: 'Northwind',
+      accent: '#0f766e',
+      logoSha: 'a'.repeat(64),
+    };
+    expect(s.client?.customerBranding(branding)).toBe(false);
+    s.event({
+      event: 'ready',
+      capabilities: {
+        customerDisplay: { supported: true, available: true, active: true },
+      },
+    });
+    expect(s.sent.at(-1)).toEqual({
+      version: 1,
+      op: 'customerBranding',
+      branding,
+    });
+    expect(s.client?.customerBranding({ ...branding, holder: 'Private pass data' })).toBe(false);
+    expect(s.sent.at(-1)).toEqual({
+      version: 1,
+      op: 'customerBranding',
+      branding,
+    });
+  });
   it('reports capabilities and preserves NFC as a distinct scan method', () => {
     const s = setup();
     const capabilities = { nfc: { ndefAvailable: true }, vas: { available: false } };

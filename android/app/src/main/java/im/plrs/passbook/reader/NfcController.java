@@ -21,23 +21,21 @@ public final class NfcController {
     private final Activity activity;
     private final Listener listener;
     private final NfcAdapter adapter;
-    private final boolean readerFeatureSupported;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicBoolean reading = new AtomicBoolean();
     private volatile IsoDep active;
     private volatile int generation;
     private volatile boolean enabled;
-    private boolean readerUnsupported;
 
     public NfcController(Activity activity, Listener listener) {
         this.activity = activity;
         this.listener = listener;
         adapter = NfcAdapter.getDefaultAdapter(activity);
-        readerFeatureSupported = adapter != null
-            && activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC);
     }
 
-    public boolean supported() { return readerFeatureSupported && !readerUnsupported; }
+    public boolean supported() {
+        return adapter != null && activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC);
+    }
     public boolean available() { return supported() && adapter.isEnabled(); }
     public boolean isReading() { return enabled && available(); }
 
@@ -52,11 +50,7 @@ public final class NfcController {
             adapter.enableReaderMode(activity, tag -> discover(tag, identifiers, current),
                 NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B
                     | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK | NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS, extras);
-        } catch (UnsupportedOperationException exception) {
-            readerUnsupported = true;
-            enabled = false;
-            listener.error("NFC_UNAVAILABLE");
-        } catch (IllegalStateException | SecurityException exception) {
+        } catch (IllegalStateException | SecurityException | UnsupportedOperationException exception) {
             enabled = false;
             listener.error("NFC_UNAVAILABLE");
         }

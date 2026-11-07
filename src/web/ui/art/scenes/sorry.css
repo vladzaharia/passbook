@@ -1,0 +1,57 @@
+/* Sorry: bow, then look up with a soft expression; never shake or point at the guest. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="sorry"][data-run] .wl-art [data-body] {
+    animation: wl-s-sorry-bow 560ms var(--art-mv);
+  }
+  .wl-buddy[data-scene="sorry"][data-run] .wl-art [data-look] {
+    animation: wl-s-sorry-look 560ms ease-in-out;
+  }
+  .wl-buddy[data-scene="sorry"][data-run] .wl-art [data-fan] {
+    animation: wl-s-sorry-fan 560ms ease-in-out;
+  }
+}
+
+@keyframes wl-s-sorry-bow {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+  32%,
+  48% {
+    translate: 0 4px;
+    scale: 0.98 1.02;
+  }
+  72% {
+    translate: 0 1px;
+    scale: 1;
+  }
+}
+
+@keyframes wl-s-sorry-look {
+  0%,
+  32% {
+    translate: 0 0;
+  }
+  48% {
+    translate: 0 1.2px;
+  }
+  72%,
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes wl-s-sorry-fan {
+  0%,
+  32%,
+  100% {
+    rotate: 0deg;
+  }
+  48% {
+    rotate: 3deg;
+  }
+  72% {
+    rotate: 0deg;
+  }
+}

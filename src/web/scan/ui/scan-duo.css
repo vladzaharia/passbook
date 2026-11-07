@@ -47,12 +47,12 @@
 
 .scan-shell[data-surface="duo"] .scan-operator {
   inset: auto;
-  left: var(--duo-desk-left);
-  top: var(--duo-desk-top);
+  left: var(--duo-operator-left);
+  top: var(--duo-operator-top);
   right: auto;
-  bottom: var(--duo-desk-bottom);
-  width: var(--duo-desk-width);
-  height: var(--duo-desk-height);
+  bottom: var(--duo-operator-bottom);
+  width: var(--duo-operator-width);
+  height: var(--duo-operator-height);
   padding: calc(env(safe-area-inset-top, 0px) + 24px) 16px
     calc(env(safe-area-inset-bottom, 0px) + 16px);
   overflow-y: auto;

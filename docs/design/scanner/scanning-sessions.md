@@ -13,6 +13,10 @@ Layouts work on phones, tablets and computers:
 - **Operator**: pass lookup, code check-in, actions and session activity in one view.
 - **Customer display**: temporary generic verdicts, without names, photos or pass details.
 
+The session organization’s accent and logo brand the scanner, operator and customer views. Logo requests
+are session-authenticated and derive their organization scope from the scan actor; the native Duo bridge
+sends only the display name, accent and logo hash.
+
 Scanner, Operator and Customer display are available on every screen size. Automatic chooses Scanner
 on smaller screens and Operator on wide screens. Older Desk layouts in shared sessions become
 Operator when the device reports. Standalone Desk monitors remain read-only.

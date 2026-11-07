@@ -2,7 +2,7 @@
   background:
     radial-gradient(
       ellipse at 18% 8%,
-      color-mix(in oklab, var(--pk-accent) 15%, transparent),
+      color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 15%, transparent),
       transparent 48%
     ),
     radial-gradient(
@@ -57,7 +57,7 @@
   background:
     radial-gradient(
       ellipse at 50% 0,
-      color-mix(in oklab, var(--pk-accent) 12%, transparent),
+      color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 12%, transparent),
       transparent 72%
     ),
     var(--pk-surface-raised);
@@ -95,9 +95,10 @@
   content: "";
   position: absolute;
   inset: 4px 12px 0;
-  border: 1px solid color-mix(in oklab, var(--pk-accent) 22%, var(--pk-border-subtle));
+  border: 1px solid
+    color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 22%, var(--pk-border-subtle));
   border-radius: 50%;
-  background: color-mix(in oklab, var(--pk-accent) 8%, transparent);
+  background: color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 8%, transparent);
 }
 .scan-boot-mascot .wl-buddy {
   top: auto;

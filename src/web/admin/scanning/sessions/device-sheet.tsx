@@ -100,7 +100,9 @@ export function DeviceSheet({
                       !device.capabilities.native.vas.available ? (
                         <Badge>Wallet pass reader unavailable</Badge>
                       ) : null}
-                      {device.capabilities.native.layout?.posture === 'unfolded' ? (
+                      {device.capabilities.native.layout?.posture === 'half-folded' ? (
+                        <Badge>Half folded</Badge>
+                      ) : device.capabilities.native.layout?.posture === 'unfolded' ? (
                         <Badge>Unfolded</Badge>
                       ) : null}
                       {device.capabilities.native.customerDisplay.active ? (

@@ -12,6 +12,9 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     private var pendingID: String?
     private var scanTimeout: Task<Void, Never>?
     private var lastCapabilities: Data?
+    private var capabilitiesSent = false
+    private var customerDisplayExpiry: Task<Void, Never>?
+    private var customerDisplayGeneration = 0
     private let customerDisplay = CustomerDisplayModel()
     private var customerRegistration: AnyObject?
     private var loadErrorView: UIView?
@@ -64,7 +67,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         pendingID = nil
         scanTimeout?.cancel()
         scanTimeout = nil
-        customerDisplay.status = .ready
+        setCustomerDisplayStatus(.ready)
         hardware.stop()
         send(["event": "cancelled"])
     }
@@ -77,7 +80,20 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         guard let data = try? JSONSerialization.data(withJSONObject: capabilities, options: [.sortedKeys]) else { return }
         if !force && lastCapabilities == data { return }
         lastCapabilities = data
-        send(["event": ready ? "capabilities" : "ready", "capabilities": capabilities])
+        let first = !capabilitiesSent
+        capabilitiesSent = true
+        var message: [String: Any] = [
+            "event": first ? "ready" : "capabilities",
+            "capabilities": capabilities,
+        ]
+        if first {
+            let nfc = capabilities["nfc"] as? [String: Any]
+            message["nfc"] = nfc?["available"] as? Bool ?? false
+            message["ecp"] = false
+            message["diagnostics"] = false
+            message["appVersion"] = capabilities["appVersion"] as? String ?? "1"
+        }
+        send(message)
     }
 
     private func layoutCapabilities() -> [String: Any] {
@@ -85,17 +101,13 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         var division: Any = NSNull()
         if #available(iOS 27.1, *),
            let region = webView.reservedRegions(kind: .division, options: .includeInactive).first {
-            if region.isActive {
-                posture = "half-folded"
-                division = [
-                    "x": max(0, region.frame.minX),
-                    "y": max(0, region.frame.minY),
-                    "width": max(0, region.frame.width),
-                    "height": max(0, region.frame.height)
-                ]
-            } else {
-                posture = "unfolded"
-            }
+            posture = region.isActive ? "half-folded" : "unfolded"
+            division = [
+                "x": max(0, region.frame.minX),
+                "y": max(0, region.frame.minY),
+                "width": max(0, region.frame.width),
+                "height": max(0, region.frame.height)
+            ]
         }
         return ["posture": posture, "division": division]
     }
@@ -118,6 +130,23 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         let available = registration?.isAvailable ?? false
         let active = available && (registration?.isEnabled ?? false)
         return ["supported": true, "available": available, "active": active]
+    }
+    private func setCustomerDisplayStatus(
+        _ status: CustomerScanStatus,
+        expiresAfter: Duration? = nil
+    ) {
+        customerDisplayExpiry?.cancel()
+        customerDisplayExpiry = nil
+        customerDisplayGeneration += 1
+        let generation = customerDisplayGeneration
+        customerDisplay.status = status
+        guard let expiresAfter else { return }
+        customerDisplayExpiry = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: expiresAfter)
+            guard let self, !Task.isCancelled, self.customerDisplayGeneration == generation else { return }
+            self.customerDisplayExpiry = nil
+            self.customerDisplay.status = .ready
+        }
     }
 
 
@@ -148,10 +177,25 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             pendingID = nil
             scanTimeout?.cancel()
             scanTimeout = nil
-            customerDisplay.status = switch outcome {
-            case "accepted": .accepted
-            case "rejected": .rejected
-            default: .failed
+        case "customerBranding":
+            guard ready,
+                  let payload = request["branding"] as? [String: Any],
+                  let branding = CustomerDisplayBranding(payload: payload) else { return }
+            customerDisplay.branding = branding
+        case "customerStatus":
+            guard ready, armed, UIApplication.shared.applicationState == .active,
+                  let status = request["status"] as? String else { return }
+            let display = customerDisplayCapabilities()
+            guard display["supported"] as? Bool == true,
+                  display["available"] as? Bool == true else { return }
+            switch status {
+            case "ready": setCustomerDisplayStatus(.ready)
+            case "checking": setCustomerDisplayStatus(.checking)
+            case "accepted": setCustomerDisplayStatus(.accepted, expiresAfter: .seconds(4))
+            case "checkedOut": setCustomerDisplayStatus(.checkedOut, expiresAfter: .seconds(4))
+            case "rejected": setCustomerDisplayStatus(.rejected, expiresAfter: .seconds(6))
+            case "failed": setCustomerDisplayStatus(.failed, expiresAfter: .seconds(6))
+            default: return
             }
         default: return
         }
@@ -164,13 +208,11 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
               !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return }
         let id = UUID().uuidString
         pendingID = id
-        customerDisplay.status = .checking
         scanTimeout = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(15))
             guard let self, !Task.isCancelled, self.pendingID == id else { return }
             self.pendingID = nil
             self.scanTimeout = nil
-            self.customerDisplay.status = .failed
             self.send(["event": "timeout"])
         }
         send(["event": "scan", "id": id, "source": "barcode", "value": value, "method": method])
@@ -204,11 +246,12 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         ready = false
+        capabilitiesSent = false
         armed = false
         pendingID = nil
         scanTimeout?.cancel()
         scanTimeout = nil
-        customerDisplay.status = .ready
+        setCustomerDisplayStatus(.ready)
         hardware.stop()
     }
 

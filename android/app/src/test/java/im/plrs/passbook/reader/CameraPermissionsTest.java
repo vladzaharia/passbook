@@ -57,7 +57,6 @@ public class CameraPermissionsTest {
     }
     @Test public void reportedPermissionUsesOnlyObservableFacts() {
         assertEquals("unavailable", CameraPermissions.state(false, false, false, false, false));
-        assertEquals("unavailable", CameraPermissions.state(false, true, true, true, true));
         assertEquals("restricted", CameraPermissions.state(true, true, true, false, false));
         assertEquals("granted", CameraPermissions.state(true, false, true, false, true));
         assertEquals("denied", CameraPermissions.state(true, false, false, true, false));

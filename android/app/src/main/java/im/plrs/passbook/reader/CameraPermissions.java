@@ -12,8 +12,8 @@ final class CameraPermissions {
     private boolean foreground;
     private boolean allowed;
 
-// Android cannot always distinguish a first request from a permanent denial in
-// shouldShowRequestPermissionRationale. When neither is known, do not guess.
+    // Android does not distinguish a first request from a permanent denial in
+    // shouldShowRequestPermissionRationale. Do not guess when neither is known.
     static String state(boolean available, boolean restricted, boolean granted,
                         boolean rationale, boolean knownDenied) {
         if (!available) return "unavailable";

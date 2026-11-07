@@ -152,7 +152,7 @@ export function OrgForm({ org }: { org: Org }) {
                 fallback={DEFAULT_ACCENT}
                 empty="Teal"
                 error={errors.accent}
-                help="The organization's avatar in the console. Empty uses teal."
+                help="Subtle accent on scan screens and the org avatar. Empty uses teal."
                 onChange={(accent) => patch({ accent })}
               />
             </FormGrid>

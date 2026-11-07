@@ -1,0 +1,12 @@
+.scan-visual-camera {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 75% 20%,
+      color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 18%, #18212e),
+      transparent 48%
+    ),
+    radial-gradient(ellipse at 18% 82%, #1d2431, transparent 44%),
+    linear-gradient(145deg, #101722, #080b12);
+}

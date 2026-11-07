@@ -5,6 +5,7 @@ import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { sessionFixture } from '../boot/session.test-support.ts';
 import { fixtureCounts } from '../machine/fixtures.test-support.ts';
+import { localOutcome } from '../machine/outcome.ts';
 import { clearNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 import { createRuntime, type ScanRuntime } from './runtime.ts';
 
@@ -14,6 +15,8 @@ const ports = vi.hoisted(() => ({
     start: vi.fn(),
     stop: vi.fn(),
     result: vi.fn(),
+    customerStatus: vi.fn(),
+    customerBranding: vi.fn(),
     dispose: vi.fn(),
     capabilities: undefined as ((value: Record<string, unknown>) => void) | undefined,
   },
@@ -88,6 +91,41 @@ describe('live scanner runtime configuration', () => {
     expect(ports.camera.stop).toHaveBeenCalled();
     await runtime.clear();
   });
+
+  it('projects web camera and manual scan states as generic customer-display statuses', async () => {
+    const base = {
+      ...session('operator', 'choose'),
+      branding: {
+        accent: '#0f766e',
+        logo: { sha: 'a'.repeat(64), w: 480, h: 150 },
+      },
+    };
+    const accepted = {
+      ...localOutcome('system', 'server', fixtureCounts()),
+      kind: 'ok' as const,
+      local: false,
+    };
+    const api = {
+      stats: vi.fn().mockResolvedValue(fixtureCounts()),
+      resolve: vi.fn().mockResolvedValue(accepted),
+    } as unknown as ScanApi;
+    runtime = await createRuntime(base, api, () => null, vi.fn());
+    expect(ports.native.customerBranding).toHaveBeenCalledWith({
+      name: 'Henry',
+      accent: '#0f766e',
+      logoSha: 'a'.repeat(64),
+    });
+    runtime.start();
+
+    const inputId = runtime.emit({ method: 'manual', code: '000123' });
+    expect(inputId).toBeTruthy();
+    expect(ports.native.customerStatus).toHaveBeenCalledWith('checking', inputId);
+
+    await vi.waitFor(() => {
+      expect(ports.native.result).toHaveBeenCalledWith(inputId, 'accepted');
+      expect(ports.native.customerStatus).toHaveBeenCalledWith('accepted', inputId);
+    });
+  });
   it('defers changes during a lookup and applies them when the operator is ready', async () => {
     const { runtime } = await start('phone');
     runtime.store.dispatch({ type: 'overlay', open: 'lookup' });
@@ -128,7 +166,7 @@ describe('live scanner runtime configuration', () => {
     expect(ports.camera.start).toHaveBeenCalled();
     expect(announce).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: 'Wallet pass reading is unavailable. Scan the barcode.',
+        text: 'Wallet pass verification is unavailable. Scan the barcode.',
         polite: false,
       }),
     );

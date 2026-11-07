@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ScanBranding } from '../../shared/contracts/scan-session.ts';
 import type { NativeScannerCapabilities } from '../../shared/contracts/scanning-sessions.ts';
 import { type BlockKind, BlockPanel } from './boot/block-panel.tsx';
 import { PairConfirm } from './boot/pair-confirm.tsx';
@@ -36,12 +37,15 @@ export interface ScanAppViewProps {
     chips?: ReactNode;
     menu?: ReactNode;
     onTitle?: () => void;
+    logoUrl?: string | null;
+    orgName?: string;
   } | null;
   strip?: StripEntry | null;
   /** The dock's thumb row (the door's, the desk's). */
   dockRow?: ReactNode;
   camera?: ReactNode;
   surface?: 'phone' | 'operator' | 'duo';
+  branding?: ScanBranding | null;
   layout?: NativeScannerCapabilities['layout'];
   sidebar?: ReactNode;
   card?: ReactNode;
@@ -78,6 +82,7 @@ export function ScanAppView({
   buddy,
   tint = 'none',
   announcement = null,
+  branding,
   on = {},
 }: ScanAppViewProps) {
   const noop = () => undefined;
@@ -113,6 +118,7 @@ export function ScanAppView({
   return (
     <ScanShell
       surface={surface}
+      branding={branding}
       layout={layout}
       sidebar={screen.s === 'loop' ? sidebar : null}
       camera={screen.s === 'loop' ? camera : null}
@@ -139,6 +145,8 @@ export function ScanAppView({
         capsule && (screen.s === 'start' || screen.s === 'loop') ? (
           <Capsule
             name={capsule.name}
+            logoUrl={capsule.logoUrl ?? null}
+            orgName={capsule.orgName ?? ''}
             staff={capsule.staff ?? null}
             state={capsule.state}
             chips={capsule.chips}

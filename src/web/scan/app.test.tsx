@@ -79,7 +79,34 @@ describe('every boot state', () => {
       });
     }
   }
-  it('keeps the camera and desk in separate Duo panes around the reported hinge', () => {
+
+  it('applies a bounded org mark and accent to the scanner shell', () => {
+    const branding = {
+      accent: '#0f766e',
+      logo: { sha: 'a'.repeat(64), w: 480, h: 150 },
+    };
+    const logoUrl = `/api/v1/scan/branding/logo?v=${branding.logo.sha}`;
+    const { container } = render(
+      view(
+        { s: 'loop' },
+        {
+          branding,
+          capsule: {
+            name: 'Front door',
+            orgName: 'Northwind',
+            logoUrl,
+            state: 'scanning',
+          },
+        },
+      ),
+    );
+    const shell = container.querySelector<HTMLElement>('.scan-shell');
+    const logo = container.querySelector('.scan-capsule-logo');
+    expect(shell?.style.getPropertyValue('--scan-org-accent')).toBe('#0f766e');
+    expect(logo).toHaveAttribute('src', logoUrl);
+    expect(logo).toHaveAttribute('alt', 'Northwind logo');
+  });
+  it('keeps the camera and operator pane clear of vertical and horizontal Duo hinges', () => {
     const duo = {
       surface: 'duo' as const,
       layout: {
@@ -87,16 +114,38 @@ describe('every boot state', () => {
         division: { x: 420, y: 0, width: 24, height: 800 },
       },
       camera: <div data-testid="duo-camera" />,
-      sidebar: <aside data-testid="duo-desk" />,
+      sidebar: <aside data-testid="duo-operator" />,
     };
     const { container, rerender } = render(view({ s: 'loop' }, duo));
     const shell = container.querySelector<HTMLElement>('.scan-shell');
     expect(screen.getByTestId('duo-camera')).toBeInTheDocument();
-    expect(screen.getByTestId('duo-desk')).toBeInTheDocument();
+    expect(screen.getByTestId('duo-operator')).toBeInTheDocument();
     expect(shell?.style.getPropertyValue('--duo-scan-width')).toBe('420px');
-    expect(shell?.style.getPropertyValue('--duo-desk-left')).toBe('444px');
+    expect(shell?.style.getPropertyValue('--duo-operator-left')).toBe('444px');
+    rerender(
+      view(
+        { s: 'loop' },
+        {
+          ...duo,
+          layout: { posture: 'unfolded', division: { x: 420, y: 0, width: 24, height: 800 } },
+        },
+      ),
+    );
+    expect(shell?.style.getPropertyValue('--duo-scan-width')).toBe('420px');
+    expect(shell?.style.getPropertyValue('--duo-operator-left')).toBe('444px');
     rerender(view({ s: 'loop' }, { ...duo, layout: { posture: 'unfolded', division: null } }));
     expect(shell?.style.getPropertyValue('--duo-scan-width')).toBe(`${window.innerWidth / 2}px`);
+    rerender(
+      view(
+        { s: 'loop' },
+        {
+          ...duo,
+          layout: { posture: 'half-folded', division: { x: 0, y: 390, width: 800, height: 24 } },
+        },
+      ),
+    );
+    expect(shell?.style.getPropertyValue('--duo-scan-height')).toBe('390px');
+    expect(shell?.style.getPropertyValue('--duo-operator-top')).toBe('414px');
   });
 
   it('slate blocks are alerts and focus their one action', () => {

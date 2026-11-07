@@ -27,6 +27,14 @@ import type { Announcement } from '../ui/live-announcer.tsx';
 import { scanId } from './id.ts';
 import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 
+function customerBrandingOf(session: ScanSession) {
+  return {
+    name: session.scanner?.orgName ?? session.admin?.orgs[0]?.name ?? 'PassBook',
+    accent: session.branding?.accent ?? null,
+    logoSha: session.branding?.logo?.sha ?? null,
+  };
+}
+
 export async function createRuntime(
   session: ScanSession,
   api: ScanApi,
@@ -190,7 +198,7 @@ export async function createRuntime(
       if ((l.s === 'checking' || l.s === 'applying') && l.input.id === id)
         store.dispatch({ type: 'fail', key: l.key, error: 'timeout' });
     },
-    unsupported: () => notice('NFC verification is unavailable. Scan the barcode.', false),
+    unsupported: () => notice('Wallet pass verification is unavailable. Scan the barcode.', false),
     capabilities(value) {
       setNativeCapabilities(value);
       if (
@@ -198,12 +206,13 @@ export async function createRuntime(
         scanner?.settings.reader === 'nfc' &&
         getNativeCapabilities()?.vas.available === false
       ) {
-        notice('Wallet pass reading is unavailable. Scan the barcode.', false);
+        notice('Wallet pass verification is unavailable. Scan the barcode.', false);
         vasFallbackNoticeShown = true;
       }
       syncCameraMode();
     },
   });
+  native?.customerBranding(customerBrandingOf(session));
   const stopWedge = createWedgeSource({
     clock,
     fields,
@@ -248,15 +257,26 @@ export async function createRuntime(
       s.camera === 'starting' && decodeActive({ ...s, camera: 'live' }, !document.hidden);
     if (warming || decodeActive(s, !document.hidden)) camera.resume();
     else camera.pause();
-    if (s.loop.s === 'verdict')
-      native?.result(
-        s.loop.input.id,
+    if (s.loop.s === 'checking' || s.loop.s === 'applying')
+      native?.customerStatus('checking', s.loop.input.id);
+    if (s.loop.s === 'verdict') {
+      const outcome =
         !s.loop.outcome.local && s.loop.outcome.kind === 'ok'
           ? 'accepted'
           : s.loop.outcome.kind === 'refused'
             ? 'rejected'
-            : 'error',
-      );
+            : 'error';
+
+      native?.result(s.loop.input.id, outcome);
+      const displayStatus =
+        outcome === 'error'
+          ? 'failed'
+          : outcome === 'accepted' && s.loop.outcome.checkIn?.direction === 'out'
+            ? 'checkedOut'
+            : outcome;
+      native?.customerStatus(displayStatus, s.loop.input.id);
+    }
+    if (s.loop.s === 'ready' || s.loop.s === 'paused') native?.customerStatus('ready');
     if (s.block) {
       camera.stop();
       native?.stop();
@@ -273,6 +293,7 @@ export async function createRuntime(
       native?.readNfc();
     },
     update(next: ScanSession) {
+      native?.customerBranding(customerBrandingOf(next));
       pending = next;
       applyPending();
     },

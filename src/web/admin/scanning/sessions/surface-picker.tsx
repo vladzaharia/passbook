@@ -113,6 +113,13 @@ export function SurfacePicker({
       <p className="text-sm text-fg-muted">
         Choose how this device will be used. Admission rules remain shared by the session.
       </p>
+      {capabilities?.native?.layout?.posture === 'half-folded' ||
+      capabilities?.native?.layout?.posture === 'unfolded' ? (
+        <p className="text-xs text-fg-muted">
+          On Duo, Scanner and Operator share the inside displays. Customer display makes this paired
+          device screen-only; the outside face is managed by iOS.
+        </p>
+      ) : null}
       {choice('auto')}
       <div className="grid min-w-0 gap-3 @[34rem]:grid-cols-2">
         <div className="grid min-w-0 content-start gap-2">

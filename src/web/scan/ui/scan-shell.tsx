@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
+import type { ScanBranding } from '../../../shared/contracts/scan-session.ts';
 import type { NativeScannerCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
+import { scanBrandStyle } from '../platform/scan-branding.tsx';
 import '../../styles/motion.css';
 import '../display/display.css';
 import '../display/display-rows.css';
@@ -17,27 +19,28 @@ type DuoStyle = CSSProperties & {
   '--duo-scan-width': string;
   '--duo-scan-height': string;
   '--duo-scan-bottom': string;
-  '--duo-desk-left': string;
-  '--duo-desk-top': string;
-  '--duo-desk-width': string;
-  '--duo-desk-height': string;
-  '--duo-desk-bottom': string;
+  '--duo-operator-left': string;
+  '--duo-operator-top': string;
+  '--duo-operator-width': string;
+  '--duo-operator-height': string;
+  '--duo-operator-bottom': string;
 };
 
 function duoStyle(layout?: NativeScannerCapabilities['layout']): DuoStyle {
   const width = Math.max(1, window.innerWidth);
   const height = Math.max(1, window.innerHeight);
-  const division = layout?.posture === 'half-folded' ? layout.division : null;
+  const duoPosture = layout?.posture === 'half-folded' || layout?.posture === 'unfolded';
+  const division = duoPosture ? layout.division : null;
   let scan: PaneBox = { x: 0, y: 0, width: width / 2, height };
-  let desk: PaneBox = { x: width / 2, y: 0, width: width / 2, height };
+  let operatorPane: PaneBox = { x: width / 2, y: 0, width: width / 2, height };
   if (division && division.height >= division.width) {
-    const deskX = division.x + division.width;
+    const operatorX = division.x + division.width;
     scan = { x: 0, y: 0, width: division.x, height };
-    desk = { x: deskX, y: 0, width: Math.max(1, width - deskX), height };
+    operatorPane = { x: operatorX, y: 0, width: Math.max(1, width - operatorX), height };
   } else if (division) {
-    const deskY = division.y + division.height;
+    const operatorY = division.y + division.height;
     scan = { x: 0, y: 0, width, height: division.y };
-    desk = { x: 0, y: deskY, width, height: Math.max(1, height - deskY) };
+    operatorPane = { x: 0, y: operatorY, width, height: Math.max(1, height - operatorY) };
   }
   return {
     '--duo-scan-left': `${scan.x}px`,
@@ -45,11 +48,11 @@ function duoStyle(layout?: NativeScannerCapabilities['layout']): DuoStyle {
     '--duo-scan-width': `${Math.max(1, scan.width)}px`,
     '--duo-scan-height': `${Math.max(1, scan.height)}px`,
     '--duo-scan-bottom': `${Math.max(0, height - scan.y - scan.height)}px`,
-    '--duo-desk-left': `${desk.x}px`,
-    '--duo-desk-top': `${desk.y}px`,
-    '--duo-desk-width': `${Math.max(1, desk.width)}px`,
-    '--duo-desk-height': `${Math.max(1, desk.height)}px`,
-    '--duo-desk-bottom': `${Math.max(0, height - desk.y - desk.height)}px`,
+    '--duo-operator-left': `${operatorPane.x}px`,
+    '--duo-operator-top': `${operatorPane.y}px`,
+    '--duo-operator-width': `${Math.max(1, operatorPane.width)}px`,
+    '--duo-operator-height': `${Math.max(1, operatorPane.height)}px`,
+    '--duo-operator-bottom': `${Math.max(0, height - operatorPane.y - operatorPane.height)}px`,
   };
 }
 
@@ -58,6 +61,7 @@ export interface ScanShellProps {
   camera?: ReactNode;
   surface?: 'phone' | 'operator' | 'duo';
   layout?: NativeScannerCapabilities['layout'];
+  branding?: ScanBranding | null;
   sidebar?: ReactNode;
   tint?: Tint;
   /** Boot cards and the result card, in the card layer. */
@@ -89,13 +93,18 @@ export function ScanShell({
   buddy,
   capsule,
   announcement = null,
+  branding,
 }: ScanShellProps) {
+  const style = {
+    ...(surface === 'duo' ? duoStyle(layout) : {}),
+    ...(scanBrandStyle(branding) ?? {}),
+  };
   return (
     <main
       aria-label="Scanner"
       className="scan-shell"
       data-surface={surface}
-      style={surface === 'duo' ? duoStyle(layout) : undefined}
+      style={style}
       lang="en"
     >
       <div className="scan-layer scan-cam" data-testid="scan-camera">

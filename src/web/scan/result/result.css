@@ -163,7 +163,7 @@
   }
   .scan-result-band {
     display: block;
-    width: 360px;
+    width: min(360px, 55%);
     padding: 32px;
     min-height: 240px;
   }
@@ -218,14 +218,32 @@
     font-size: 32px;
     line-height: 36px;
   }
+  .scan-result-body {
+    gap: 8px;
+    padding: 10px;
+  }
   .scan-result-band,
   .scan-result-band[data-layout] {
     padding: 16px;
+  }
+  .scan-result-band[data-layout="custom"] {
+    padding: 12px;
+  }
+  .scan-result-band[data-layout="custom"] h1 {
+    font-size: 32px;
+    margin-top: 6px;
+    line-height: 32px;
   }
 }
 
 @media (min-width: 1024px) {
   .scan-result:not(:has(.scan-result-body)) .scan-result-band {
     width: 100%;
+  }
+}
+@media (min-width: 1024px) and (max-height: 650px) {
+  .scan-result-band {
+    width: min(260px, 42%);
+    min-height: 0;
   }
 }

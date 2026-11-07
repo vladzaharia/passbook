@@ -206,7 +206,6 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         }
         if (!foreground) return;
         switch (json.optString("op")) {
-
             case "start": armed = true; resumeReader(); reportCapabilities(); break;
             case "stop": armed = false; resumeReader(); reportCapabilities(); break;
             case "captured":

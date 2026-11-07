@@ -1,11 +1,13 @@
 import { Check, CircleAlert, Monitor, ScanLine, TriangleAlert, Undo2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { formatTime } from '../../lib/format.ts';
-import { Buddy } from '../../ui/art/buddy.tsx';
+import { Buddy } from '../../ui/art/index.ts';
+import { CustomerBuddy, type CustomerBuddyStatus } from './customer-buddy.tsx';
 import './live-screen.css';
 import { Button } from '../../ui/button.tsx';
+import { ScanOrgLogo, scanBrandLogoUrl, scanBrandStyle } from '../platform/scan-branding.tsx';
 
 const RESULT_ICON = {
   ok: Check,
@@ -15,6 +17,28 @@ const RESULT_ICON = {
   undo: Undo2,
 };
 
+function customerBuddyStatus(row: ScanLiveRow | undefined): CustomerBuddyStatus {
+  if (!row) return 'ready';
+  switch (row.kind) {
+    case 'ok':
+      return row.direction === 'out' ? 'checkedOut' : 'accepted';
+    case 'ready':
+      return 'review';
+    case 'undo':
+      return 'undone';
+    case 'heads_up':
+    case 'refused':
+      return 'needsStaff';
+  }
+}
+
+const CUSTOMER_HOLD_MS: Record<ScanLiveRow['kind'], number> = {
+  ok: 4_000,
+  heads_up: 6_000,
+  refused: 6_000,
+  ready: 60_000,
+  undo: 2_400,
+};
 export function LiveScreen({
   session,
   refetch,
@@ -25,7 +49,12 @@ export function LiveScreen({
   const [rows, setRows] = useState<ScanLiveRow[]>([]);
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [buddyReplay, setBuddyReplay] = useState(0);
+  const lastBuddyRow = useRef<string | null>(null);
   const customer = session.scanner?.deviceRole === 'customer';
+  const branding = session.branding ?? null;
+  const logoUrl = scanBrandLogoUrl(branding, session);
+  const orgName = session.scanner?.orgName ?? '';
   const scope =
     session.principal === 'admin' && session.scanner
       ? new URLSearchParams({
@@ -116,18 +145,44 @@ export function LiveScreen({
       socket?.close();
     };
   }, [refetch, scope]);
-  const recent = rows.filter((row) => now - row.at < (customer ? 10_000 : 15 * 60_000));
+  const recent = rows.filter(
+    (row) => now - row.at < (customer ? CUSTOMER_HOLD_MS[row.kind] : 15 * 60_000),
+  );
   const latest = recent[0];
+  const latestId = latest?.id;
+  const latestAt = latest?.at;
+  const latestKind = latest?.kind;
+  useEffect(() => {
+    if (!customer || latestId === undefined || latestAt === undefined || latestKind === undefined)
+      return;
+    const delay = Math.max(0, latestAt + CUSTOMER_HOLD_MS[latestKind] - Date.now()) + 1;
+    const expiry = window.setTimeout(() => setNow(Date.now()), delay);
+    return () => window.clearTimeout(expiry);
+  }, [customer, latestId, latestAt, latestKind]);
+  useEffect(() => {
+    const id = latestId ?? null;
+    if (lastBuddyRow.current === id) return;
+    lastBuddyRow.current = id;
+    setBuddyReplay((replay) => replay + 1);
+  }, [latestId]);
   return (
     <main
       className="scan-live-page min-h-dvh bg-surface text-fg"
+      style={scanBrandStyle(branding)}
       data-testid="scan-live"
       data-view={customer ? 'customer' : 'monitor'}
     >
       <header className="scan-live-header">
         <div className="scan-live-brand">
-          <span className="scan-live-brand-icon" aria-hidden>
-            {customer ? <ScanLine size={22} /> : <Monitor size={22} />}
+          <span className="scan-live-brand-icon" data-has-logo={logoUrl ? '' : undefined}>
+            <ScanOrgLogo
+              className="scan-live-logo"
+              src={logoUrl}
+              name={orgName}
+              fallback={
+                customer ? <ScanLine size={22} aria-hidden /> : <Monitor size={22} aria-hidden />
+              }
+            />
           </span>
           <div className="scan-live-brand-text">
             <p className="scan-live-eyebrow">{customer ? 'Customer display' : 'Desk monitor'}</p>
@@ -145,14 +200,20 @@ export function LiveScreen({
           className="scan-live-welcome"
           data-kind={latest?.kind ?? 'ready'}
         >
-          <div className="scan-live-buddy">
-            <Buddy scene="peek" size="lg" mood={latest?.kind === 'refused' ? 'flat' : 'happy'} />
+          <div className="scan-live-customer-copy">
+            <p className="scan-live-eyebrow">{latest ? 'Pass scanned' : 'Ready to scan'}</p>
+            <h2>{latest?.label ?? 'Ready'}</h2>
+            {!latest ? (
+              <p className="scan-live-welcome-hint">Present your pass to the scanner.</p>
+            ) : null}
           </div>
-          <p className="scan-live-eyebrow">{latest ? 'Pass scanned' : 'Ready to scan'}</p>
-          <h2>{latest?.label ?? 'Ready'}</h2>
-          {!latest ? (
-            <p className="scan-live-welcome-hint">Present your pass to the scanner.</p>
-          ) : null}
+          <div aria-hidden="true" className="scan-live-buddy">
+            <CustomerBuddy
+              className="scan-live-customer-buddy-art"
+              status={customerBuddyStatus(latest)}
+              replay={buddyReplay}
+            />
+          </div>
         </section>
       ) : (
         <section aria-label="Recent scans" className="scan-live-recent">
@@ -200,11 +261,13 @@ export function LiveScreen({
           )}
         </section>
       )}
-      <footer className="scan-live-footer">
-        <Button variant="outline" onClick={() => void refetch()}>
-          Refresh setup
-        </Button>
-      </footer>
+      {customer ? null : (
+        <footer className="scan-live-footer">
+          <Button variant="outline" onClick={() => void refetch()}>
+            Refresh setup
+          </Button>
+        </footer>
+      )}
     </main>
   );
 }

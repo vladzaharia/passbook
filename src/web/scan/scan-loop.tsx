@@ -12,6 +12,7 @@ import { localOutcome } from './machine/outcome.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
+import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
@@ -76,13 +77,15 @@ export function ScanLoop({
   }, [s.overlay]);
   const l = s.loop;
   const scanner = session.scanner;
+  const branding = session.branding ?? null;
+  const logoUrl = scanBrandLogoUrl(branding, session);
   const counts = s.counts ?? session.counts;
   const nativeCapabilities = useNativeCapabilities();
   const duoLayout =
     nativeCapabilities?.layout?.posture === 'unfolded' ||
     nativeCapabilities?.layout?.posture === 'half-folded';
   const operator = session.workspace?.device.effectiveSurface === 'operator';
-  const deskSurface = operator || duoLayout;
+  const operatorPane = operator || duoLayout;
   const nativeBarcode =
     session.workspace?.device.capabilities?.nativeBarcode ??
     nativeCapabilities?.platform === 'android';
@@ -110,7 +113,7 @@ export function ScanLoop({
     }
   }, [session, s, counts.configRev, refetch]);
   const open = (next: boolean) => {
-    if (next && deskSurface) {
+    if (next && operatorPane) {
       document.querySelector<HTMLInputElement>('[data-operator-search]')?.focus();
       return;
     }
@@ -152,10 +155,11 @@ export function ScanLoop({
   return (
     <>
       <ScanAppView
+        branding={branding}
         surface={duoLayout ? 'duo' : operator ? 'operator' : 'phone'}
         layout={nativeCapabilities?.layout}
         sidebar={
-          deskSurface ? (
+          operatorPane ? (
             <Suspense fallback={null}>
               <OperatorPanel api={api} runtime={runtime} session={session} />
             </Suspense>
@@ -184,6 +188,8 @@ export function ScanLoop({
             : { s: 'loop' }
         }
         capsule={{
+          logoUrl,
+          orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
           name: scanner?.name ?? 'Scan as admin',
           staff: session.staff?.name,
           state: !s.online
