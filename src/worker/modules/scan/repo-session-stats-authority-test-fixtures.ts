@@ -129,7 +129,7 @@ export async function atCountBatch<T>(
           const entries = byStatement.filter((entry): entry is Captured => !!entry);
           const selected =
             !hits &&
-            entries.some((entry) => /INSERT\s+INTO\s+credential_ref_keyset/i.test(entry.sql));
+            entries.some((entry) => /WITH\s+session_scope\s+AS\s+MATERIALIZED/i.test(entry.sql));
           if (selected) {
             hits++;
             captured.push(...entries);

@@ -291,9 +291,11 @@ describe('read grant final-clock authority', () => {
       { q: GROUP },
       {
         beforeGrantBatch: async () => {
-          expect(await run(real, 'DELETE FROM member_photos WHERE pass_id=?', [hidden.id])).toEqual(
-            { changes: 1 },
-          );
+          // Trigger-counted meta.changes are not exact, so check the row itself.
+          await run(real, 'DELETE FROM member_photos WHERE pass_id=?', [hidden.id]);
+          expect(
+            await first(real, 'SELECT 1 AS n FROM member_photos WHERE pass_id=?', [hidden.id]),
+          ).toBeNull();
           removed = true;
         },
       },

@@ -1,7 +1,6 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
@@ -23,7 +22,6 @@ import {
 } from './scanning-workspace-observation.ts';
 import {
   candidatesOf,
-  keysetUnavailable,
   prepareProjection,
   sameCandidate,
   unavailable,
@@ -71,8 +69,8 @@ export async function scanningSessionActivity(
   const initial = activityReadPlan(ctx.env.DB, row, authority, ctx.clock.now());
   if (!initial) return null;
   const proofCache: ScanEventProofCache = new Map();
-  const reads = await ctx.env.DB.batch([initial.initialize, initial.select]);
-  const candidates = candidatesOf(reads[1]);
+  const reads = await ctx.env.DB.batch([initial]);
+  const candidates = candidatesOf(reads[0]);
   if (candidates === null) return null;
   const ids = candidates.flatMap((candidate) => (candidate.passId ? [candidate.id] : []));
   const proofs = await historyProofSnapshotsForOrg(
@@ -94,7 +92,7 @@ export async function scanningSessionActivity(
   const now = ctx.clock.now();
   const final = activityReadPlan(ctx.env.DB, row, authority, now);
   if (!final) return null;
-  const statements: D1PreparedStatement[] = [final.select];
+  const statements: D1PreparedStatement[] = [final];
   const groups: { id: string; start: number; end: number }[] = [];
   for (const projection of projections) {
     if (!projection) continue;
@@ -104,13 +102,7 @@ export async function scanningSessionActivity(
     for (const predicate of predicates)
       statements.push(activityProofFenceStmt(ctx.env.DB, row, projection.candidate.id, predicate));
     statements.push(
-      activityCredentialFenceStmt(
-        ctx.env.DB,
-        row,
-        projection.candidate,
-        projection.refs,
-        authority.credentialKeysetCommitment,
-      ),
+      activityCredentialFenceStmt(ctx.env.DB, row, projection.candidate, projection.refs),
     );
     groups.push({ id: projection.candidate.id, start, end: statements.length });
   }
@@ -176,10 +168,7 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
     throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   if (!observed) {
     if (guard.params.length >= 99) throw unavailable();
-    const [, result] = await ctx.env.DB.batch([
-      credentialRefKeysetInitializeStmt(ctx.env.DB, base.credentialKeysetCommitment, guard),
-      activityStandaloneStatusStmt(ctx.env.DB, guard, base.credentialKeysetCommitment),
-    ]);
+    const [result] = await ctx.env.DB.batch([activityStandaloneStatusStmt(ctx.env.DB, guard)]);
     const status = result?.results?.[0];
     if (
       !status ||
@@ -188,7 +177,6 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
       status.authorized !== 1
     )
       throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
-    if (!('keyset' in status) || status.keyset !== 1) throw keysetUnavailable();
     return { items: [] };
   }
   if (!observed.scope)

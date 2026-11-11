@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScannerFixture } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { setOrgBranding, setOrgStatus } from '../orgs/repo.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -28,7 +29,7 @@ beforeAll(async () => {
 async function photoPass(scanner?: ScannerFixture) {
   const device = scanner ?? (await kit.scanner({ templateIds: [template] }));
   const pass = await kit.scanPass(template);
-  await putMemberPhoto(kit.ctx, system, pass.id, { png: encoded, includeInPass: true }, null);
+  await putMemberPhoto(jobCtxOf(kit), system, pass.id, { png: encoded, includeInPass: true }, null);
   const grant = await photoAssetGrantFor(kit, device, pass.id);
   const image = (value = grant) =>
     kit.get(device.headers, `/passes/${pass.id}/assets/member.png?g=${value}`);
@@ -162,7 +163,7 @@ describe('scanner asset lineage', () => {
 
   it('does not revive an old grant after the same photo is deleted and restored', async () => {
     const { pass, grant, image, device } = await photoPass();
-    await deleteMemberPhoto(kit.ctx, system, pass.id, null);
+    await deleteMemberPhoto(jobCtxOf(kit), system, pass.id, null);
     await putMemberPhoto(kit.ctx, system, pass.id, { png: encoded, includeInPass: true }, null);
     await missing(await image(grant));
     expect((await image(await photoAssetGrantFor(kit, device, pass.id))).status).toBe(200);
@@ -364,7 +365,13 @@ describe('scanner asset lineage', () => {
       'ref',
       pass.id,
     ]);
-    await putMemberPhoto(kit.ctx, system, pass.id, { png: encoded, includeInPass: true }, null);
+    await putMemberPhoto(
+      jobCtxOf(kit),
+      system,
+      pass.id,
+      { png: encoded, includeInPass: true },
+      null,
+    );
     const grant = await photoAssetGrantFor(kit, device, pass.id);
     await run(
       kit.env.DB,

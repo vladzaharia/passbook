@@ -17,7 +17,7 @@ beforeAll(async () => {
   kit = await setupScanKit();
 });
 
-const { act, approve, card, last, simple } = cardLastScansSplitFixture(() => kit);
+const { act, card, last, simple } = cardLastScansSplitFixture(() => kit);
 
 describe('card last-scan privacy', () => {
   it('propagates a missing proof-key configuration instead of treating it as untrusted history', async () => {
@@ -144,13 +144,11 @@ describe('card last-scan privacy', () => {
 
   it.each([
     'missing event',
-    'unsigned event',
     'missing projection',
     'missing commitment',
     'malformed authority',
     'action mismatch',
     'release hash mismatch',
-    'event MAC mismatch',
     'personalization mismatch',
   ] as const)('omits historical rows when the approved provenance has a %s', async (mutation) => {
     const { pass, scanner } = await simple('Verified entry');
@@ -162,17 +160,11 @@ describe('card last-scan privacy', () => {
         "DELETE FROM pass_events WHERE pass_id=? AND json_extract(data,'$.scanId')=?",
         [pass.id, scanId],
       );
-    } else if (
-      mutation === 'unsigned event' ||
-      mutation === 'missing projection' ||
-      mutation === 'missing commitment'
-    ) {
+    } else if (mutation === 'missing projection' || mutation === 'missing commitment') {
       const path =
-        mutation === 'unsigned event'
-          ? '$.authority.eventProof'
-          : mutation === 'missing projection'
-            ? '$.authority.eventProjection'
-            : '$.authority.evaluatedPersonalizationHash';
+        mutation === 'missing projection'
+          ? '$.authority.eventProjection'
+          : '$.authority.evaluatedPersonalizationHash';
       await run(
         kit.env.DB,
         `UPDATE pass_events SET data=json_remove(data,?)
@@ -198,9 +190,7 @@ describe('card last-scan privacy', () => {
           ? '$.authority'
           : mutation === 'action mismatch'
             ? '$.actionId'
-            : mutation === 'release hash mismatch'
-              ? '$.authority.activeReleaseCandidateHash'
-              : '$.authority.eventProof.mac';
+            : '$.authority.activeReleaseCandidateHash';
       await run(
         kit.env.DB,
         `UPDATE pass_events SET data=json_set(data,?,?)
@@ -208,32 +198,6 @@ describe('card last-scan privacy', () => {
         [path, 'tampered', pass.id, scanId],
       );
     }
-    expect(
-      (await card(scanner.headers, pass.id)).lastScans.find((row) => row.scanId === scanId),
-    ).toBeUndefined();
-  });
-
-  it('verifies the real legacy MAC across a later approved head and rejects tampering', async () => {
-    const templateId = await kit.scanTemplate(
-      'Legacy history',
-      {
-        actions: [{ id: 'enter', label: 'Legacy entry', kind: 'check_in' }],
-      },
-      { releaseModes: [] },
-    );
-    const template = await kit.registry.resolve(templateId);
-    const pass = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
-    const scanner = await kit.scanner({ templateIds: [templateId] });
-    const scanId = await act(scanner.headers, pass.id);
-    expect(last(await card(scanner.headers, pass.id), scanId).actionLabel).toBe('Legacy entry');
-    await approve(templateId, template.version);
-    expect(last(await card(scanner.headers, pass.id), scanId).actionLabel).toBe('Legacy entry');
-    await run(
-      kit.env.DB,
-      `UPDATE pass_events SET data=json_set(data,'$.authority.eventProof.mac',?)
-      WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
-      ['0'.repeat(64), pass.id, scanId],
-    );
     expect(
       (await card(scanner.headers, pass.id)).lastScans.find((row) => row.scanId === scanId),
     ).toBeUndefined();
@@ -256,11 +220,14 @@ describe('card last-scan privacy', () => {
           : await kit.scanPass(templateId);
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const other = await kit.scanner({ templateIds: [templateId] });
-      await run(kit.env.DB, 'UPDATE scanners SET name=? WHERE id=?', ['Proven lobby', scanner.id]);
+      await run(kit.env.DB, 'UPDATE scanners SET name=? WHERE id=?', [
+        `Proven lobby ${kind}`,
+        scanner.id,
+      ]);
       const scanId = await act(scanner.headers, pass.id);
       expect(last(await card(scanner.headers, pass.id), scanId)).toMatchObject({
         actionLabel: 'Proven entry',
-        scannerName: 'Proven lobby',
+        scannerName: `Proven lobby ${kind}`,
         undoable: true,
       });
 

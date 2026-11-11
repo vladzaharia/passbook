@@ -1,9 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
-import { first, run, stmt } from '../../platform/db.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import {
-  type ActionRequest,
   effects,
   request,
   type Scenario,
@@ -55,13 +53,19 @@ async function legacyExtraScenario(): Promise<Scenario> {
 
 describe('check-in finalize and ledger fences', () => {
   it.each(['released', 'legacy'] as const)(
-    'commits the unchanged %s candidate with its signed ledger and retention proof',
+    'commits the unchanged %s candidate with its ledger event and retention row',
     async (kind) => {
       const s =
         kind === 'legacy'
           ? await legacyExtraScenario()
           : await scenario(base, { event: true, tracked: true, photo: true });
-      const outcome = await send(s);
+      // A legacy pass has no scan code; scan it by id.
+      const outcome = await send(
+        s,
+        kind === 'legacy'
+          ? request(s, { input: { passId: s.pass.id, method: 'manual' } })
+          : request(s),
+      );
       expect(outcome).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
       if (!outcome.scanId) throw new Error('Missing finalized check-in');
       await signed(s, outcome.scanId);

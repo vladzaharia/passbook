@@ -299,7 +299,7 @@ describe('live photo streams', () => {
           if (!candidate) throw new Error('Missing removal candidate.');
           const now = kit.clock.now();
           const state = { at: now, message: null, priorStatus: candidate.pass.status };
-          const generation = await claimRemoval(kit.env.DB, fixture.pass.id, state, {
+          const generation = await claimRemoval(kit.ctx, fixture.pass.id, state, {
             pass: candidate.pass,
             generation: candidate.pass.lifecycleGeneration,
             now,

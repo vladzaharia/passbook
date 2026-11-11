@@ -6,6 +6,7 @@ import { CRON_HOOKS, DAILY_CRON, MINUTE_CRON } from '../../jobs/cron.ts';
 import { CRON_QUERY_BUDGET } from '../../jobs/query-counter.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { buildDisplay } from './display.ts';
 import { isFinalizedDisplayHistory, prepareDisplayHistory } from './scan-display-history.ts';
@@ -70,7 +71,7 @@ describe('scan cron hooks', () => {
         },
       }),
     } as unknown as AppEnv;
-    const ctx = createServiceContext(counted);
+    const ctx = jobCtxOf({ ctx: createServiceContext(counted) });
     const hooks = [MINUTE_CRON, DAILY_CRON]
       .flatMap((cron) => CRON_HOOKS[cron] ?? [])
       .filter((h) => h.name.startsWith('scan.'));

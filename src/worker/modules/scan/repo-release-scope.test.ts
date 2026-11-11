@@ -22,11 +22,10 @@ import {
 
 const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
 let kit: ScanKit;
-let credentialKeysetCommitment: string;
 
 beforeEach(async () => {
   kit = await setupScanKit();
-  credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
 async function actorFor(scannerId: string) {
@@ -147,9 +146,7 @@ describe('approved scanner release scopes', () => {
     expect(
       (await readValidEventScope(kit.env.DB, kit.org.id, 'live', event.id))?.templateIds,
     ).toEqual([template.id]);
-    expect(
-      (await getConsoleEvent(kit.env.DB, event.id, credentialKeysetCommitment))?.templateIds,
-    ).toEqual([template.id]);
+    expect((await getConsoleEvent(kit.env.DB, event.id))?.templateIds).toEqual([template.id]);
     expect(await readValidEventScope(kit.env.DB, other.id, 'live', foreign.id)).toBeNull();
     expect(await current(await actorFor(scanner.id), template.id)).toBe(true);
     const stamps = await captureTemplateStamps(kit.env.DB, kit.org.id, 'live', [template.id]);

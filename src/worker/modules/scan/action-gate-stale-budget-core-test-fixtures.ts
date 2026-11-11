@@ -19,10 +19,8 @@ import {
   insertManagedScannerSetup,
   insertManagedSession,
   signedScanEvent,
-  signedScanRetention,
 } from './repo-action-gate-stale-budget-test-fixtures.ts';
 import { scanById } from './repo-scans.ts';
-import { verifyScanEventProvenance } from './scan-event-proof.ts';
 import {
   codeOf,
   grantScanMembership,
@@ -202,7 +200,7 @@ export function request(s: Scenario, extra: Record<string, unknown> = {}): Actio
 
 export async function send(s: Scenario, body: ActionRequest = request(s)) {
   const response = await s.post(body);
-  expect(response.status).toBe(200);
+  expect(response.status, await response.clone().text()).toBe(200);
   return ScanOutcomeSchema.parse(await response.json());
 }
 

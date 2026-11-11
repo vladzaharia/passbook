@@ -3,25 +3,14 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanEventDto, ScanEventListQuerySchema } from '../../../shared/contracts/index.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import type { Grant } from '../../platform/authority.ts';
-import {
-  AppError,
-  ForbiddenError,
-  NotFoundError,
-  UnavailableError,
-} from '../../platform/errors.ts';
+import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { actorCsrfFence } from './actor-csrf.ts';
-import { captureCredentialKeyset, credentialKeysetContext } from './credential-keyset-authority.ts';
 import { sessionGrant } from './repo-admin-grant.ts';
 import { eventCacheChecks } from './repo-event-authority.ts';
-import {
-  type EventAuthority,
-  eventKeysetGuard,
-  eventReadAuthorityState,
-  eventSessionAuthorityValid,
-} from './repo-event-keyset.ts';
+import { type EventAuthority, eventSessionAuthorityValid } from './repo-event-keyset.ts';
 import {
   type ConsoleEventRow,
   getAuthorizedConsoleEvent,
@@ -120,7 +109,6 @@ export async function captureEventAuthority(
   session: SessionAuth,
   authority: TenantPassWrite,
 ): Promise<EventAuthority> {
-  const proofCtx = credentialKeysetContext(ctx);
   if (authority.kind !== 'session') throw new ForbiddenError();
   const actor = adminActor(session, authority.mode, {
     orgId: authority.orgId,
@@ -128,50 +116,13 @@ export async function captureEventAuthority(
     templateIds: [],
     timeZone: 'UTC',
   });
-  actor.tenantAuthority = await captureScanTenantAuthority(proofCtx, session, authority);
+  actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
   actor.platformSessionId = session.sessionId;
   actor.role = tenantScanRole(authority);
   if (!actor.role) throw new ForbiddenError();
-  const csrfFence = await actorCsrfFence(proofCtx, actor);
+  const csrfFence = await actorCsrfFence(ctx, actor);
   if (!csrfFence) throw new ForbiddenError();
-  return { ...authority, csrfFence, credentialEnv: proofCtx.env };
-}
-
-/** Capture the keyset only in the exact session and, for a detail or mutation, target scope. */
-export async function captureEventKeyset(
-  ctx: ServiceContext,
-  authority: EventAuthority,
-  eventId?: string,
-): Promise<string | null> {
-  const commitment = await captureCredentialKeyset(
-    { ...ctx, env: { ...authority.credentialEnv, DB: ctx.env.DB } },
-    eventKeysetGuard(authority, ctx.clock.now(), eventId),
-  );
-  if (commitment || eventId === undefined) return commitment;
-  if (!(await eventSessionAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
-    throw new ForbiddenError();
-  throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
-}
-
-/** The final response check also covers empty pages and is bound to the original keyset. */
-async function readAuthorityValid(
-  ctx: ServiceContext,
-  authority: EventAuthority,
-  credentialKeysetCommitment: string,
-): Promise<boolean> {
-  const state = await eventReadAuthorityState(
-    ctx.env.DB,
-    authority,
-    ctx.clock.now(),
-    credentialKeysetCommitment,
-  );
-  if (!state.authority) return false;
-  if (!state.keyset)
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
-  return true;
+  return { ...authority, csrfFence };
 }
 
 export async function listEvents(
@@ -182,14 +133,11 @@ export async function listEvents(
 ) {
   if (!canReadEvents(authority) || query.orgId !== authority.orgId || mode !== authority.mode)
     return { items: [], nextCursor: null };
-  const credentialKeysetCommitment = await captureEventKeyset(ctx, authority);
-  if (!credentialKeysetCommitment) return { items: [], nextCursor: null };
   const initial = await listConsoleEvents(ctx.env.DB, {
     ...query,
     mode,
     now: ctx.clock.now(),
     authority,
-    credentialKeysetCommitment,
     limit: query.limit + 1,
   });
   const cacheBudget = { remaining: LIST_CACHE_WRITES };
@@ -201,7 +149,6 @@ export async function listEvents(
     mode,
     now,
     authority,
-    credentialKeysetCommitment,
     limit: query.limit + 1,
   });
   const page = rows.slice(0, query.limit);
@@ -234,19 +181,11 @@ async function scopedEventRow(
   ctx: ServiceContext,
   id: string,
   authority: EventAuthority,
-  credentialKeysetCommitment: string,
   now: number,
 ): Promise<ConsoleEventRow> {
-  const row = await getAuthorizedConsoleEvent(
-    ctx.env.DB,
-    id,
-    authority,
-    now,
-    credentialKeysetCommitment,
-  );
+  const row = await getAuthorizedConsoleEvent(ctx.env.DB, id, authority, now);
   if (!row) {
-    if (!(await readAuthorityValid(ctx, authority, credentialKeysetCommitment)))
-      throw new ForbiddenError();
+    if (!(await eventSessionAuthorityValid(ctx.env.DB, authority, now))) throw new ForbiddenError();
     throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   }
   if (row.orgId !== authority.orgId || row.mode !== authority.mode)
@@ -260,12 +199,10 @@ export async function eventView(
   authority: EventAuthority,
 ): Promise<ScanEventDto> {
   if (!canReadEvents(authority)) throw new ForbiddenError();
-  const credentialKeysetCommitment = await captureEventKeyset(ctx, authority, id);
-  if (!credentialKeysetCommitment) throw new ForbiddenError();
-  const row = await scopedEventRow(ctx, id, authority, credentialKeysetCommitment, ctx.clock.now());
+  const row = await scopedEventRow(ctx, id, authority, ctx.clock.now());
   await refreshExpectedCache(ctx, row, authority);
   const now = ctx.clock.now();
-  const current = await scopedEventRow(ctx, id, authority, credentialKeysetCommitment, now);
+  const current = await scopedEventRow(ctx, id, authority, now);
   return toDto(current, now);
 }
 

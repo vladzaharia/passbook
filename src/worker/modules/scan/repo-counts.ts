@@ -2,14 +2,12 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { noScopedReleaseSql } from '../templates/repo-releases.ts';
 import type { ScanActor } from './actor.ts';
 import { packedPredicate } from './repo-action-authority.ts';
 import { actorAuthorityPredicates } from './repo-actor-authority.ts';
 import type { ConsoleEventRow } from './repo-events.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
 import type { ScanEventRow } from './repo-scope.ts';
-import { legacyPassSql } from './repo-scope-release-predicates.ts';
 import { usableScanTemplateSql } from './repo-scope-releases.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 
@@ -85,10 +83,7 @@ function admissionReleaseChecks(actor: ScanActor, fences: Predicate[]): Predicat
       WHERE selected.scanner_id=?/* scan-ephemeral-scanner-id */`;
   return {
     sql: `count_admission_scope AS MATERIALIZED (
-      SELECT (${effectiveReleaseIdSql(current)}) AS release_id,
-        (${noScopedReleaseSql(current)}) AS no_history,
-        EXISTS (SELECT 1 FROM passes legacy_scope_pass
-          WHERE ${legacyPassSql('legacy_scope_pass', current)}) AS has_legacy
+      SELECT (${usableScanTemplateSql(current)}) AS usable
       ${source}
     )`,
     params: [session?.id ?? actor.scanner.id],
@@ -220,7 +215,7 @@ export function setExpectedStmt(
           ${
             admission
               ? `AND NOT EXISTS (SELECT 1 FROM count_admission_scope a
-            WHERE NOT (a.release_id IS NOT NULL OR (a.no_history AND a.has_legacy)))`
+            WHERE NOT a.usable)`
               : ''
           }
       ))

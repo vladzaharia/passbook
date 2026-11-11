@@ -184,7 +184,7 @@ describe('event read authority', () => {
         '0'.repeat(64),
       ]);
       await expect(
-        getAuthorizedConsoleEvent(env.DB, eventId, authority, clock.now(), commitment),
+        getAuthorizedConsoleEvent(env.DB, eventId, authority, clock.now()),
       ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
       const filter = {
         orgId,

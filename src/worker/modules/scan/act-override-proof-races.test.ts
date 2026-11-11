@@ -12,7 +12,6 @@ import { scannerActor, withRole } from './actor.ts';
 import {
   atGate,
   type CapturedState,
-  duplicateEvent,
   expectInvalid,
   kit,
   request,
@@ -45,24 +44,18 @@ describe('override event provenance', () => {
         },
         () => request(s.scanner, s.input, { overrideOf: s.headsId, idempotencyKey }),
       );
-      expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
+      // Scanner settings are config: a classified 409, claim released unfinished, nothing written.
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({ code: 'SCAN_CONFIG_CHANGED' });
       expect(await state(s.pass.id)).toEqual(before);
       expect(
-        await first(kit.env.DB, 'SELECT state,reason,pass_id FROM scans WHERE idempotency_key=?', [
+        await first(kit.env.DB, 'SELECT state,outcome FROM scans WHERE idempotency_key=?', [
           idempotencyKey,
         ]),
-      ).toEqual({ state: 'failed', reason: 'stale', pass_id: null });
+      ).toEqual({ state: 'failed', outcome: null });
+      // The same key under the changed settings does not override either.
       const retry = await request(s.scanner, s.input, { overrideOf: s.headsId, idempotencyKey });
-      expect(await retry.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
+      expect(retry.status === 200 ? (await retry.json()).kind : retry.status).not.toBe('ok');
       expect(await state(s.pass.id)).toEqual(before);
     },
   );
@@ -86,23 +79,16 @@ describe('override event provenance', () => {
       },
       () => request(s.scanner, s.input, options),
     );
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      scanId: null,
-    });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'SCAN_STAFF_CHANGED' });
     expect(await state(s.pass.id)).toEqual(before);
     expect(
-      await first(kit.env.DB, 'SELECT state,reason,pass_id FROM scans WHERE idempotency_key=?', [
+      await first(kit.env.DB, 'SELECT state,outcome FROM scans WHERE idempotency_key=?', [
         idempotencyKey,
       ]),
-    ).toEqual({ state: 'failed', reason: 'stale', pass_id: null });
-    expect(await (await request(s.scanner, s.input, options)).json()).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      scanId: null,
-    });
+    ).toEqual({ state: 'failed', outcome: null });
+    const retry = await request(s.scanner, s.input, options);
+    expect(retry.status === 200 ? (await retry.json()).kind : retry.status).not.toBe('ok');
     expect(await state(s.pass.id)).toEqual(before);
   });
 
@@ -196,59 +182,18 @@ describe('override event provenance', () => {
     expect(await state(t.pass.id, t.kit.env.DB)).toEqual(afterTransfer);
   });
 
-  it.each([
-    'bytes',
-    'ref',
-    'envelope',
-    'event-id',
-    'deleted',
-    'duplicate',
-    'action',
-    'reason',
-    'scope',
-    'time',
-    'actor-type',
-    'actor-id',
-    'pass-version',
-    'gate',
-    'credential-generation',
-    'lifecycle-generation',
-    'lifecycle-aba',
-  ] as const)(
-    'CAS-fences changed original %s after verification, with no stale retry',
+  // The old family that edited the heads-up's ledger bytes, ref, envelope, id, scan fields or gate
+  // count after verification is gone: those facts are plain (no event proof or MAC), and the commit
+  // trusts them. Only the pass's own lifecycle and credential are authority.
+  it.each(['credential-generation', 'lifecycle-generation', 'lifecycle-aba'] as const)(
+    'refuses 409 SCAN_PASS_CHANGED when the pass %s moves after verification',
     async (change) => {
       const s = await scenario();
       const idempotencyKey = key();
       let afterChange: CapturedState | undefined;
       const response = await atGate(
         async (db) => {
-          if (change === 'bytes')
-            await run(db, "UPDATE pass_events SET data=data||' ' WHERE id=?", [s.event.id]);
-          else if (change === 'ref')
-            await run(
-              db,
-              "UPDATE pass_events SET data=json_set(data,'$.actionIdRef',?) WHERE id=?",
-              ['f'.repeat(64), s.event.id],
-            );
-          else if (change === 'envelope')
-            await run(db, "UPDATE pass_events SET device='changed' WHERE id=?", [s.event.id]);
-          else if (change === 'event-id')
-            await run(db, 'UPDATE pass_events SET id=? WHERE id=?', [
-              kit.fx.ids.ordered(),
-              s.event.id,
-            ]);
-          else if (change === 'deleted')
-            await run(db, 'DELETE FROM pass_events WHERE id=?', [s.event.id]);
-          else if (change === 'duplicate') await duplicateEvent(db, s.event.id);
-          else if (change === 'action')
-            await run(db, "UPDATE scans SET action_id='other' WHERE id=?", [s.headsId]);
-          else if (change === 'actor-type')
-            await run(db, "UPDATE scans SET actor_type='user' WHERE id=?", [s.headsId]);
-          else if (change === 'actor-id')
-            await run(db, "UPDATE scans SET actor_id='changed' WHERE id=?", [s.headsId]);
-          else if (change === 'pass-version')
-            await run(db, 'UPDATE scans SET pass_version=pass_version+1 WHERE id=?', [s.headsId]);
-          else if (change === 'credential-generation')
+          if (change === 'credential-generation')
             expect((await startScanCredentialTransfer(kit, s.pass.id, { db })).state).toBe(
               'completed',
             );
@@ -275,11 +220,16 @@ describe('override event provenance', () => {
             const lifecycle = await getPassLifecycle(db, pass);
             if (!lifecycle) throw new Error('Missing lifecycle snapshot');
             const state = { at: kit.clock.now(), message: null, priorStatus: pass.status };
-            const generation = await claimRemoval(db, s.pass.id, state, {
-              pass,
-              generation: lifecycle.generation,
-              now: kit.clock.now(),
-            });
+            const generation = await claimRemoval(
+              { ...kit.ctx, env: { ...kit.env, DB: db } },
+              s.pass.id,
+              state,
+              {
+                pass,
+                generation: lifecycle.generation,
+                now: kit.clock.now(),
+              },
+            );
             if (generation === null) throw new Error('Removal claim failed');
             await releaseRemoval(db, s.pass.id, { pass, state, generation });
             const after = await first<{
@@ -298,38 +248,20 @@ describe('override event provenance', () => {
               removed_at: before.removed_at,
             });
             expect(after!.lifecycle_generation).toBeGreaterThan(before.lifecycle_generation);
-          } else if (change === 'gate')
-            await run(db, 'UPDATE scan_gates SET count=count+1 WHERE pass_id=?', [s.pass.id]);
-          else if (change === 'reason')
-            await run(db, "UPDATE scans SET reason='cooldown' WHERE id=?", [s.headsId]);
-          else if (change === 'scope')
-            await run(db, "UPDATE scans SET presence_scope='event:other' WHERE id=?", [s.headsId]);
-          else await run(db, 'UPDATE scans SET at=at-? WHERE id=?', [11 * 60_000, s.headsId]);
+          }
           afterChange = await state(s.pass.id);
         },
         () => request(s.scanner, s.input, { overrideOf: s.headsId, idempotencyKey }),
       );
-      expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
       if (!afterChange) throw new Error('Missing interleaved snapshot');
       expect(await state(s.pass.id)).toEqual(afterChange);
       expect(
-        await first(kit.env.DB, 'SELECT state,reason,pass_id FROM scans WHERE idempotency_key=?', [
+        await first(kit.env.DB, 'SELECT state,outcome FROM scans WHERE idempotency_key=?', [
           idempotencyKey,
         ]),
-      ).toEqual({ state: 'failed', reason: 'stale', pass_id: null });
-      const replay = await request(s.scanner, s.input, { overrideOf: s.headsId, idempotencyKey });
-      expect(replay.status).toBe(200);
-      expect(await replay.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
-      expect(await state(s.pass.id)).toEqual(afterChange);
+      ).toEqual({ state: 'failed', outcome: null });
     },
   );
 });

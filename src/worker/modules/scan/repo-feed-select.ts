@@ -1,5 +1,3 @@
-import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { noScopedReleaseSql } from '../templates/repo-releases.ts';
 import {
   legacyScanProvenanceSql,
   recordedScanProvenanceSql,
@@ -10,20 +8,6 @@ import { releaseBuildCompatibilitySql } from './repo-release-build.ts';
 import { scanPasslessCandidateSql } from './repo-scan-passless.ts';
 import { scanRetentionCandidateSql } from './repo-scan-retention.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
-
-export const policyScope = {
-  templateIdSql: 'p.template_id',
-  orgIdSql: 'p.org_id',
-  modeSql: 'p.mode',
-  providerSql: "'apple'",
-};
-
-const currentPassScope = {
-  templateIdSql: 'current_pass.template_id',
-  orgIdSql: 'current_pass.org_id',
-  modeSql: 'current_pass.mode',
-  providerSql: "'apple'",
-};
 
 const recordedProofCandidateSql = (scan: 's' | 'cs') => `EXISTS (
   SELECT 1 FROM pass_events proof_event
@@ -74,7 +58,7 @@ export const policyCandidateSql = (scan: 's' | 'cs', nowSql = '?') => `(CASE
       AND t.status != 'deleted'
     JOIN template_versions pinned_version
       ON pinned_version.template_id = p.template_id AND pinned_version.version = p.template_version
-    LEFT JOIN template_releases policy_release ON policy_release.id = (${effectiveReleaseIdSql(policyScope)})
+    LEFT JOIN template_releases policy_release ON policy_release.id = p.release_id
     WHERE p.id = ${scan}.pass_id AND p.org_id = ${scan}.org_id AND p.mode = ${scan}.mode
       AND p.template_id = ${scan}.template_id
       AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.status = 'active'
@@ -89,7 +73,7 @@ export const policyCandidateSql = (scan: 's' | 'cs', nowSql = '?') => `(CASE
       AND ${walletSnapshotPredicateSql({ nowSql })}
       AND CASE WHEN policy_release.id IS NOT NULL
         THEN ${releaseBuildCompatibilitySql('policy_release.version')}
-        WHEN p.release_id IS NULL THEN (${noScopedReleaseSql(policyScope)})
+        WHEN p.release_id IS NULL THEN 1
         ELSE 0 END
       AND ${recordedProofCandidateSql(scan)}
   ) THEN 1 ELSE 0 END)`;
@@ -162,7 +146,7 @@ export const SELECT = `SELECT s.id, s.org_id, s.mode, s.at, s.outcome, s.reason,
     AND current_wallet.version = (SELECT v.version FROM pass_versions v
       WHERE v.pass_id = current_pass.id AND v.version <= current_pass.version
       ORDER BY v.version DESC LIMIT 1)
-  LEFT JOIN template_releases current_head ON current_head.id = (${effectiveReleaseIdSql(currentPassScope)})
+  LEFT JOIN template_releases current_head ON current_head.id = current_pass.release_id
   LEFT JOIN orgs current_org ON current_org.id = current_pass.org_id
   LEFT JOIN connections current_connection ON current_connection.id = current_pass.connection_id
     AND current_connection.org_id = current_pass.org_id AND current_connection.enabled = 1

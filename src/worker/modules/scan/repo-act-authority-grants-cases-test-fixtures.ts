@@ -1,11 +1,10 @@
 import { expect, it } from 'vitest';
-import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { expectBlocked, photoGrantFixture, raceGate } from './act-authority-test-fixtures.ts';
-import { act, CHECK_IN, expectUnavailable, kit, out, rows, tpl } from './act-test-fixtures.ts';
+import { act, CHECK_IN, kit, out, rows, tpl } from './act-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
 export function registerAuthorityGrants() {

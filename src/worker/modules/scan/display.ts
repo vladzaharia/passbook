@@ -27,6 +27,7 @@ import {
   visibleSource,
 } from './card-semantics.ts';
 import { authorizedDocument, safeDefaultSources } from './display-document-policy.ts';
+import { isOwnPhotoUrl } from './display-photo-url.ts';
 import { type CardPrivacy, cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
 import type { Found } from './resolve.ts';
@@ -220,9 +221,8 @@ function safeRendered(
 ): ScanDisplay | null {
   const safe = (value: unknown, key = ''): boolean => {
     if (typeof value === 'string' && FORMAT_VALUES[key]?.includes(value)) return true;
-    // The photo URL carries a random pass id, which can read as a phone number: judge the rest.
     if (key === 'url' && typeof value === 'string' && value === input.photoUrl)
-      return privacy.safe(input.pass ? value.replaceAll(input.pass.id, 'pass') : value);
+      return isOwnPhotoUrl(value);
     if (
       (typeof value === 'number' || typeof value === 'boolean') &&
       Object.hasOwn(RENDER_CONTROL_KEYS, key)

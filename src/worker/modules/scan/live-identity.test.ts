@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
@@ -89,14 +90,14 @@ describe('live identity authority', () => {
     expect(initial).toMatchObject({ passId: pass.id, holder: 'Visible Member', photoUrl: null });
     expect(JSON.stringify(initial)).not.toContain('STALE PRIVATE');
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       system,
       pass.id,
       { input: { memberName: 'Other Member' } },
       { scope: null },
     );
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       system,
       pass.id,
       { input: { memberName: 'Visible Member' } },

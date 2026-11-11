@@ -1,7 +1,7 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it, vi } from 'vitest';
-import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';

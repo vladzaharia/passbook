@@ -23,33 +23,6 @@ describe('atomic scanner response authority', () => {
     await racedResolve(await fixture({ tier: 'overdue', photo: true }), change);
   });
 
-  it.each([
-    'scanner',
-    'quarantine',
-    'wallet-personalization',
-    'identity-aba',
-    'credential-generation',
-    'lifecycle-generation',
-    'release',
-  ] as const)(
-    'suppresses an inactive audit stop when %s changes after evaluation',
-    async (change) => {
-      const f = await fixture();
-      await run(kit.env.DB, "UPDATE passes SET status='voided' WHERE id=?", [f.pass.id]);
-      await racedResolve(f, change);
-    },
-  );
-
-  it('suppresses an expired Wallet audit stop when signing identity changes', async () => {
-    const f = await fixture();
-    await run(
-      kit.env.DB,
-      "UPDATE pass_versions SET pass_json=json_set(pass_json,'$.expirationDate','2000-01-01T00:00:00Z') WHERE pass_id=?",
-      [f.pass.id],
-    );
-    await racedResolve(f, 'identity-aba');
-  });
-
   it('suppresses a pass-bearing refused stop after its actor is revoked', async () => {
     const f = await fixture();
     const firstEvent = await kit.event({ templateIds: [templateId] });

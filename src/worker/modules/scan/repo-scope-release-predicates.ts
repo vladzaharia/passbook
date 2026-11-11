@@ -1,6 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { noScopedReleaseSql, type ReleaseScopeSql } from '../templates/repo-releases.ts';
+import type { ReleaseScopeSql } from '../templates/repo-releases.ts';
 import type {
   ScopedReleaseHead,
   SessionLegacyStamp,
@@ -28,6 +28,21 @@ export function effectiveReleaseBindingPredicate(
       AND bound_release.version = (${binding.versionSql})
       AND bound_release.candidate_hash = (${binding.candidateHashSql}))
     INTERSECT ${effectiveReleaseIdSql(scope)}
+  )`;
+}
+
+/**
+ * The captured release row still exists unchanged for this template. Use of a scope never depends on the
+ * release staying the head, so a release approved or withdrawn meanwhile does not refuse the request.
+ */
+function boundReleasePredicate(binding: ReleaseBindingSql, scope: ReleaseScopeSql): string {
+  return `EXISTS (
+    SELECT 1 FROM template_releases bound_release
+    WHERE (bound_release.id = (${binding.idSql}) AND bound_release.generation = (${binding.generationSql})
+      AND bound_release.version = (${binding.versionSql})
+      AND bound_release.candidate_hash = (${binding.candidateHashSql}))
+      AND bound_release.template_id = (${scope.templateIdSql}) AND bound_release.mode = (${scope.modeSql})
+      AND bound_release.provider = 'apple'
   )`;
 }
 
@@ -153,7 +168,7 @@ export function sessionTemplateStampsPredicate(
     seen.add(item.templateId);
   }
   const scope = { templateIdSql: 't.id', orgIdSql, modeSql, providerSql: "'apple'" };
-  const head = effectiveReleaseBindingPredicate(
+  const head = boundReleasePredicate(
     {
       idSql: "json_extract(r.value,'$.id')",
       generationSql: "json_extract(r.value,'$.generation')",
@@ -174,7 +189,7 @@ export function sessionTemplateStampsPredicate(
     AND NOT EXISTS (SELECT 1 FROM json_each(?) l
       LEFT JOIN templates t ON t.id=json_extract(l.value,'$.templateId')
         AND (t.org_id=${orgIdSql} OR t.org_id IS NULL) AND t.status!='deleted'
-      WHERE t.id IS NULL OR NOT (${noScopedReleaseSql(scope)})
+      WHERE t.id IS NULL
         OR EXISTS (${legacyEvidence} EXCEPT ${capturedEvidence})
         OR EXISTS (${capturedEvidence} EXCEPT ${legacyEvidence}))`,
     params: [JSON.stringify(releases), JSON.stringify(legacy)],

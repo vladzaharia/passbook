@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { grantInsertConfirmed } from './asset-grant-results.ts';
@@ -21,7 +22,7 @@ export function registerLookupReleaseSnapshotGrantCase() {
     });
     const pass = await kit.scanPass(templateId);
     await putMemberPhoto(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       {

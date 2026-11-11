@@ -4,10 +4,6 @@ import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
-import {
-  credentialRefKeysetInitializeStmt,
-  credentialRefKeysetSql,
-} from '../passes/repo-credential-keyset.ts';
 import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
 import { packScanPredicate } from './repo-secret-binds.ts';
 import type { SessionCountAuthority } from './scanning-session-dto.ts';
@@ -120,8 +116,7 @@ export async function scanningSessionStats(
     !authority ||
     authority.orgId !== row.org_id ||
     authority.mode !== row.mode ||
-    (authority.sessionId !== undefined && authority.sessionId !== row.id) ||
-    !/^[0-9a-f]{64}$/.test(authority.credentialKeysetCommitment)
+    (authority.sessionId !== undefined && authority.sessionId !== row.id)
   )
     return null;
   const current = authority.guardAt(now);
@@ -139,28 +134,25 @@ export async function scanningSessionStats(
     sql: `(${current.sql}) AND (${rowGuard.sql})`,
     params: [...current.params, ...rowGuard.params],
   };
-  // Keep the existing conservative bind budget for the guarded initializer and
-  // authority read; the independent count statements use only their scope binds.
   if (guard.params.length >= 94) return null;
-  // D1 executes a batch in one transaction. Resolving the actor/keyset fence and
+  // D1 executes a batch in one transaction. Resolving the actor fence and the
   // ledger aggregate in separate statements avoids SQLite accumulating their
   // expression depths, while all three results still share the same snapshot.
-  const [, authorityResult, deviceResult, todayResult] = await db.batch<{
-    keyset?: number;
+  const [authorityResult, deviceResult, todayResult] = await db.batch<{
+    authorized?: number;
     devices?: number;
     online?: number;
     n?: number;
   }>([
-    credentialRefKeysetInitializeStmt(db, authority.credentialKeysetCommitment, guard),
     stmt(
       db,
       `WITH session_scope AS MATERIALIZED (
         SELECT id, org_id, mode FROM scanning_sessions
         WHERE id=?/* scan-ephemeral-session-id */ AND org_id=? AND mode=?
       )
-      SELECT (${credentialRefKeysetSql.replace('?', '?/* scan-ephemeral-proof */')}) AS keyset
+      SELECT 1 AS authorized
       FROM session_scope WHERE (${guard.sql})`,
-      [row.id, row.org_id, row.mode, authority.credentialKeysetCommitment, ...guard.params],
+      [row.id, row.org_id, row.mode, ...guard.params],
     ),
     stmt(
       db,
@@ -177,11 +169,6 @@ export async function scanningSessionStats(
   ]);
   const authorization = authorityResult?.results?.[0];
   if (!authorization) return null;
-  if (authorization.keyset !== 1)
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
   const deviceStats = deviceResult?.results?.[0];
   const todayStats = todayResult?.results?.[0];
   if (

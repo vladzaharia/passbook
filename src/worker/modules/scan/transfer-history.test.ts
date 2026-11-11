@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { makeScanner, makeSession } from '../../../../test/helpers/index.ts';
-import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import {

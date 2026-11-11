@@ -113,7 +113,11 @@ describe('managed scanner setups', () => {
 
   it('pairs a dedicated screen and keeps it read only', async () => {
     const source = await kit.scanner();
-    const event = await kit.event({});
+    // An event scope with no templates is invalid (fails closed), so the event gets one.
+    const template = await kit.scanTemplate('Display event', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+    });
+    const event = await kit.event({ templateIds: [template] });
     const response = await send('/scan-setups', 'POST', {
       orgId: kit.org.id,
       name: 'Customer display',
@@ -124,7 +128,7 @@ describe('managed scanner setups', () => {
       timeZone: 'UTC',
       watch: { scannerIds: [source.id] },
     });
-    expect(response.status).toBe(201);
+    expect(response.status, await response.clone().text()).toBe(201);
     const screen = CreatedScannerSetupSchema.parse(await response.json());
     const paired = await send(
       '/scan/pair',

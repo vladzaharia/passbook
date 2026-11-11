@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { publishPass } from '../passes/publish.ts';
 import { genericAssetGrantFor } from './asset-test-fixtures.ts';
 import { assetWalletActive } from './assets.ts';
@@ -111,7 +112,7 @@ describe('scanner asset Wallet identity', () => {
 
   it('permits metadata-only personalization changes but invalidates the older grant', async () => {
     const { scanner, pass, image } = await fixture();
-    const published = await publishPass(kit.ctx, {
+    const published = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       actor: { type: 'system', id: null },

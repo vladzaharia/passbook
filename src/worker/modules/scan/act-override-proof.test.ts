@@ -22,10 +22,8 @@ describe('override event provenance', () => {
   it.each([false, true])('commits one authenticated override (legacy=%s)', async (legacy) => {
     const s = await scenario({ legacy });
     const data = JSON.parse(s.event.data);
-    expect(data.authority.eventProof).toMatchObject({
-      releaseClass: legacy ? 'legacy' : 'approved',
-      mac: expect.stringMatching(/^[0-9a-f]{64}$/),
-    });
+    expect(data.authority.releaseClass).toBe(legacy ? 'legacy' : 'approved');
+    expect(data.authority).not.toHaveProperty('eventProof');
     expect(data.actionIdRef).toMatch(/^[0-9a-f]{64}$/);
     expect(data).not.toHaveProperty('actionId');
 

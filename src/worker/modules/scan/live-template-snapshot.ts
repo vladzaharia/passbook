@@ -272,7 +272,18 @@ export async function verifyLiveTemplateSnapshot(
         : await templateContentHash(ctx, active.resolved, s.active.extras);
     if (s.issued && !(await releaseValid(s, s.pinned, pinned, s.issued, false, pinnedHash)))
       return null;
-    if (s.release && !(await releaseValid(s, s.active, active, s.release, true, activeHash)))
+    // The pass's own release is judged like the issued one; only a head that is not the issued release must be current.
+    if (
+      s.release &&
+      !(await releaseValid(
+        s,
+        s.active,
+        active,
+        s.release,
+        s.release.id !== s.issued?.id,
+        activeHash,
+      ))
+    )
       return null;
     return { pinned: pinned.resolved, active: active.resolved };
   } catch (error) {

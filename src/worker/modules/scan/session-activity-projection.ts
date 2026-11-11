@@ -19,11 +19,6 @@ interface PreparedProjection {
 
 export const unavailable = () =>
   new UnavailableError('Scanning activity is unavailable.', 'SCANNING_ACTIVITY_UNAVAILABLE');
-export const keysetUnavailable = () =>
-  new UnavailableError(
-    'Credential references are unavailable.',
-    'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-  );
 
 /** Distinguish an empty authorized page from a missing read or stale authority. */
 export function candidatesOf(result: D1Result | undefined): ActivityCandidate[] | null {
@@ -32,7 +27,6 @@ export function candidatesOf(result: D1Result | undefined): ActivityCandidate[] 
   const status = rows[0];
   if (!status) throw unavailable();
   if (status.authorized !== 1) return null;
-  if (status.keyset !== 1) throw keysetUnavailable();
   if (status.id === null) {
     if (rows.length !== 1) throw unavailable();
     return [];
@@ -41,7 +35,6 @@ export function candidatesOf(result: D1Result | undefined): ActivityCandidate[] 
   for (const row of rows) {
     if (
       row.authorized !== 1 ||
-      row.keyset !== 1 ||
       typeof row.id !== 'string' ||
       typeof row.at !== 'number' ||
       !Number.isSafeInteger(row.at) ||

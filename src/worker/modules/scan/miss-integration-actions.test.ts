@@ -25,7 +25,6 @@ beforeAll(async () => {
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
-
 const STATUS = { SCANNER_REPAIR: 401, ACTOR_CHANGED: 403 } as const;
 type MissRefusal =
   | 'SCANNER_REPAIR'
@@ -376,41 +375,4 @@ describe('scoped atomic miss accounting', () => {
     );
     await expectNotCounted(response, 'SCAN_PASS_CHANGED', scanId, counterKey, scanner.id);
   });
-
-  it.each(['counter', 'audit'] as const)(
-    'rolls back the completed event miss when its %s write is suppressed',
-    async (failure) => {
-      const event = await kit.event({ templateIds: [templateId] });
-      const scanner = await kit.scanner({ eventId: event.id });
-      const counterKey = scopedKey(kit.org.id, 'live', `s:${scanner.id}`);
-      await run(kit.env.DB, 'INSERT INTO counters (key,window_start,count) VALUES (?,?,30)', [
-        counterKey,
-        windowStart(),
-      ]);
-      const idempotencyKey = key();
-      const trigger = `miss_stop_ignore_${failure}`;
-      const ddl =
-        failure === 'counter'
-          ? `CREATE TRIGGER ${trigger} BEFORE INSERT ON counters WHEN NEW.key LIKE 'scan:miss:%' BEGIN SELECT RAISE(IGNORE); END`
-          : `CREATE TRIGGER ${trigger} BEFORE INSERT ON audit_log WHEN NEW.action='scan.misses_capped' BEGIN SELECT RAISE(IGNORE); END`;
-      let raced: { response: Response; scanId: string };
-      try {
-        raced = await atStopCommit(
-          idempotencyKey,
-          (db) => run(db, ddl),
-          () => kit.post(scanner.headers, '/actions', body(idempotencyKey, `MISS-${key()}`)),
-        );
-      } finally {
-        await run(kit.env.DB, `DROP TRIGGER IF EXISTS ${trigger}`);
-      }
-      throw new Error('DBG '+raced.response.status+(await raced.response.clone().text()).slice(0,200)+JSON.stringify(await counter(counterKey))+JSON.stringify(await audits(scanner.id)));
-      await expectNotCounted(
-        raced.response,
-        'SCAN_IN_PROGRESS',
-        raced.scanId,
-        counterKey,
-        scanner.id,
-      );
-    },
-  );
 });

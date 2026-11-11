@@ -1,8 +1,7 @@
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
 import { chunk, stmt } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { issuedReleasePredicateSql, noScopedReleaseSql } from '../templates/repo-releases.ts';
+import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import {
   type LiveTemplateSnapshot,
@@ -140,28 +139,19 @@ const JOINS = `JOIN credential_ref_keyset credential_keyset ON credential_keyset
     WHERE v.pass_id=p.id AND v.version<=p.version ORDER BY v.version DESC LIMIT 1
   )
   LEFT JOIN member_photos photo ON photo.pass_id=p.id AND photo.org_id=p.org_id
-  LEFT JOIN template_releases ar ON ar.id=(${effectiveReleaseIdSql({
-    templateIdSql: 'p.template_id',
-    orgIdSql: 'p.org_id',
-    modeSql: 'p.mode',
-    providerSql: "'apple'",
-  })})
+  LEFT JOIN template_releases ar ON ar.id=p.release_id
   LEFT JOIN signing_identities si ON si.id=p.identity_id AND (si.org_id IS NULL OR si.org_id=p.org_id)
   LEFT JOIN template_versions pinned ON pinned.template_id=p.template_id
     AND pinned.version=p.template_version
   LEFT JOIN template_versions legacy ON legacy.template_id=p.template_id
-    AND legacy.version=p.template_version AND p.release_id IS NULL AND ar.id IS NULL
-    AND (${noScopedReleaseSql({
-      templateIdSql: 'p.template_id',
-      orgIdSql: 'p.org_id',
-      modeSql: 'p.mode',
-      providerSql: "'apple'",
-    })})
+    AND legacy.version=p.template_version AND p.release_id IS NULL
   LEFT JOIN templates snapshot_template ON snapshot_template.id=p.template_id
   LEFT JOIN template_versions snapshot_active ON snapshot_active.template_id=p.template_id
     AND snapshot_active.version=COALESCE(ar.version,legacy.version)`;
 
 const ELIGIBLE = `p.deleted_at IS NULL AND p.test_data_quarantined = 0
+    AND EXISTS(SELECT 1 FROM templates ot WHERE ot.id=p.template_id
+      AND (ot.org_id IS NULL OR ot.org_id=p.org_id) AND ot.status!='deleted')
     AND (p.release_id IS NULL OR (${issuedReleasePredicateSql(
       { releaseIdSql: 'p.release_id', versionSql: 'p.template_version' },
       {

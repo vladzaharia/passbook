@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg, type ScannerFixture } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { putMemberPhoto, updateMemberPhoto } from '../passes/member-photo.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
@@ -57,7 +58,7 @@ async function asset(scanner: ScannerFixture, passId: string, name: string, gran
   return kit.get(scanner.headers, path(passId, name, grant));
 }
 async function withPhoto(passId: string, includeInPass: boolean) {
-  await putMemberPhoto(kit.ctx, system, passId, { png: encodedPhoto, includeInPass }, null);
+  await putMemberPhoto(jobCtxOf(kit), system, passId, { png: encodedPhoto, includeInPass }, null);
 }
 async function expectImage(response: Response, bytes: Uint8Array, privatePhoto = false) {
   expect(response.status).toBe(200);
@@ -139,7 +140,7 @@ describe('scanner pass asset privacy', () => {
 
     const notIncluded = await kit.scanPass(template);
     await putPassAsset(
-      kit.ctx,
+      jobCtxOf(kit),
       system,
       notIncluded.id,
       'thumbnail@3x.png',

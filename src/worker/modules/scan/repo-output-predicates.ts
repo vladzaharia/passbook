@@ -44,7 +44,7 @@ const stagedSource =
 /** Pack only nonsecret binds; labeled scalar slots remain separate through nested fences. */
 export function packOutputPredicate(input: OutputPredicate): OutputPredicate {
   const packed = packScanPredicate(input.sql, input.params, 'output_bound_snapshot');
-  if (!packed || !packed.sql.startsWith(packedSource) || !packed.sql.endsWith(')'))
+  if (!packed?.sql.startsWith(packedSource) || !packed.sql.endsWith(')'))
     return { sql: '0', params: [] };
   const expression = packed.sql.slice(packedSource.length, -1);
   return { sql: `${stagedSource}${expression}))`, params: packed.params };

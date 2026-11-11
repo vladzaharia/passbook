@@ -11,7 +11,6 @@ import {
 import { safeEqualBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
-import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import { scanScannerCsrfProof } from './actor.ts';
 import { planCounts } from './counts.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
@@ -154,35 +153,21 @@ async function sessionFor(
         : null;
   const [results, undoWindow] = await Promise.all([
     db.batch([
-      ...(counts
-        ? [
-            credentialRefKeysetInitializeStmt(
-              db,
-              countAuthority.credentialKeysetCommitment,
-              countGuard,
-            ),
-            sessionCountStatusStmt(db, guard, scope, countAuthority.credentialKeysetCommitment),
-          ]
-        : []),
+      ...(counts ? [sessionCountStatusStmt(db, guard, scope)] : []),
       orgNameStmt(db, actor.orgId),
       ...(peopleStmt ? [peopleStmt] : []),
       ...(counts?.stmts ?? []),
     ]),
     undoWindowMinutes(ctx),
   ]);
-  const base = counts ? 2 : 0;
+  const base = counts ? 1 : 0;
   if (counts) {
-    const status = results[1]?.results?.[0] as
-      | { authorized: number; scope_current: number; keyset: number }
+    const status = results[0]?.results?.[0] as
+      | { authorized: number; scope_current: number }
       | undefined;
     if (status?.authorized !== 1) throw await authorityLost(ctx, sourceActor);
     if (status.scope_current !== 1)
       return sessionFor(ctx, sourceActor, dayStart, true, countAuthority);
-    if (status.keyset !== 1)
-      throw new UnavailableError(
-        'Credential references are unavailable.',
-        'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      );
   }
   const orgName = (results[base]?.results?.[0] as { name: string } | undefined)?.name ?? '';
   const peopleRows = peopleStmt ? (results[base + 1]?.results ?? []) : [];
@@ -236,10 +221,7 @@ async function sessionFor(
     ctx.clock.now(),
     scopedTemplates?.releases ?? [],
     scopedTemplates?.legacy ?? [],
-    {
-      scopeRedacted: scopedTemplates === null,
-      ...(counts ? { credentialKeysetCommitment: countAuthority.credentialKeysetCommitment } : {}),
-    },
+    { scopeRedacted: scopedTemplates === null },
   );
   if (!fences.authorityCurrent || (!fences.stampsCurrent && !scopedTemplates))
     throw await authorityLost(ctx, sourceActor);

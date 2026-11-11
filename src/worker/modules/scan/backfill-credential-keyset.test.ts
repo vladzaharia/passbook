@@ -20,7 +20,7 @@ async function keysetTrigger(db: D1Database, name: string): Promise<string> {
   return trigger.sql;
 }
 
-async function withMutableKeyset(db: D1Database, commitment: string, work: () => Promise<void>) {
+async function _withMutableKeyset(db: D1Database, commitment: string, work: () => Promise<void>) {
   const trigger = await keysetTrigger(db, 'credential_ref_keyset_no_update');
   await run(db, 'DROP TRIGGER credential_ref_keyset_no_update');
   try {

@@ -12,6 +12,8 @@ describe('scan display photo URL', () => {
   it.each([
     '/api/v1/scan/passes/01a1cb28-5eef-7134-8435-08a2d8a1361f/assets/member.png?g=abc',
     '/api/v1/scan/passes/01a1cb2a-1a16-7671-8928-1a566ce95b23/assets/member.png?g=abc',
+    // Admin URLs carry org, zone and setup ids in the query; digit runs there read as phones.
+    '/api/v1/scan/passes/01a1cb28-5eef-7134-8435-08a2d8a1361f/assets/member.png?g=abc&orgId=555-123-4567&timeZone=UTC&setupId=2125551234',
   ])('keeps %s', (photoUrl) => {
     const found = fixture();
     found.pass.id = photoUrl.split('/passes/')[1]?.split('/')[0] ?? found.pass.id;
@@ -27,5 +29,25 @@ describe('scan display photo URL', () => {
       buildDisplay(ctx, { ...inputOf(found, 'manager'), photoUrl }),
     );
     expect(shown.identity.photo?.url).toBe(photoUrl);
+  });
+
+  it.each([
+    'https://evil.example/api/v1/scan/passes/p1/assets/member.png?g=abc',
+    '/api/v1/scan/passes/p1/assets/member.png?g=abc&x=1',
+    '/elsewhere/member.png?g=abc',
+  ])('drops a photo URL that is not ours: %s', (photoUrl) => {
+    const found = fixture();
+    const display: ScanDisplayDoc = {
+      v: 1,
+      holder: '{{inputs.memberName}}',
+      photo: {},
+      header: { chips: [{ id: 'c_priority', text: 'Priority', tone: 'teal' }] },
+    };
+    found.template.manifest.scan!.display = display;
+    found.scan.display = display;
+    const shown = ScanDisplaySchema.parse(
+      buildDisplay(ctx, { ...inputOf(found, 'manager'), photoUrl }),
+    );
+    expect(shown.identity.photo?.url ?? null).toBeNull();
   });
 });

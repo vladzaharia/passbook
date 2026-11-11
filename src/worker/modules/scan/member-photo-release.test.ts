@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -53,7 +54,7 @@ describe('scanner member photo release authority', () => {
   it('separates generic and photo capabilities across both photo asset names', async () => {
     const pass = await kit.scanPass(template);
     await putMemberPhoto(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { png, includeInPass: true },

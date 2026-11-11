@@ -15,7 +15,7 @@ beforeEach(async () => {
 });
 
 describe('scan display preview tenant authorization', () => {
-  it('does not return a scope after a template revision changes and changes back', async () => {
+  it('still returns a scope after a template revision changes and changes back', async () => {
     const { f, org, own, clock, memberSession, atPreviewAudit, preview } = fixture;
     const session = await memberSession(['pass_operator']);
     const next = makeTemplate({ id: own.templateId, orgId: org.id, version: 'v2' });
@@ -35,8 +35,9 @@ describe('scan display preview tenant authorization', () => {
       },
       () => preview(own, session.headers),
     );
-    expect(response.status).toBe(404);
-    expect(await response.text()).not.toContain('scope');
+    // A template revision (even A-B-A) is content, not authority: the preview is still served.
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('scope');
   });
 
   it('masks a preview when the current template policy becomes unavailable during audit', async () => {

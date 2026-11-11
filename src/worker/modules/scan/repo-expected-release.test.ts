@@ -8,11 +8,10 @@ import { approveScanReleases, type ScanKit, setupScanKit } from './test-kit.ts';
 
 const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
 let kit: ScanKit;
-let credentialKeysetCommitment: string;
 
 beforeEach(async () => {
   kit = await setupScanKit();
-  credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
 describe('expected count release eligibility', () => {
@@ -46,7 +45,7 @@ describe('expected count release eligibility', () => {
     await approveScanReleases(kit, templateId, { modes: ['live'], version: pinned.version });
     await kit.scanPass(templateId);
     const event = await kit.event({ templateIds: [templateId] });
-    const row = await getConsoleEvent(kit.env.DB, event.id, credentialKeysetCommitment);
+    const row = await getConsoleEvent(kit.env.DB, event.id);
     if (!row) throw new Error('Missing event.');
     const actorEvent = {
       orgId: kit.org.id,
@@ -87,7 +86,7 @@ describe('expected count release eligibility', () => {
     );
     const pass = await kit.scanPass(templateId);
     const event = await kit.event({ templateIds: [templateId] });
-    const row = await getConsoleEvent(kit.env.DB, event.id, credentialKeysetCommitment);
+    const row = await getConsoleEvent(kit.env.DB, event.id);
     if (!row) throw new Error('Missing event.');
     const actorEvent = {
       orgId: kit.org.id,
@@ -164,7 +163,7 @@ describe('expected count release eligibility', () => {
       [pass.id, pass.version],
     );
     const event = await kit.event({ templateIds: [templateId] });
-    const row = await getConsoleEvent(kit.env.DB, event.id, credentialKeysetCommitment);
+    const row = await getConsoleEvent(kit.env.DB, event.id);
     if (!row) throw new Error('Missing event.');
     expect(await countExpected(kit.env.DB, row, kit.clock.now())).toBe(1);
     expect(

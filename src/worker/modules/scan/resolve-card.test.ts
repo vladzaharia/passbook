@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassJson } from '../../../passkit/types.ts';
 import { normalize } from '../../../shared/pass-view/normalize.ts';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -271,7 +272,7 @@ describe('resolve: the card', () => {
     const notIncluded = await kit.scanPass(templateId);
     const system = { type: 'system' as const, id: null };
     const png = btoa(String.fromCharCode(...photo));
-    await putMemberPhoto(kit.ctx, system, included.id, { png, includeInPass: true }, null);
+    await putMemberPhoto(jobCtxOf(kit), system, included.id, { png, includeInPass: true }, null);
     await putMemberPhoto(kit.ctx, system, notIncluded.id, { png, includeInPass: false }, null);
     const lowRole = await kit.scanner({
       templateIds: [templateId],

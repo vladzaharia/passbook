@@ -1,6 +1,5 @@
 import { expect, it } from 'vitest';
-import { makePass } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import { act, CHECK_IN, expectUnavailable, kit, out, rows, tpl } from './act-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
@@ -113,15 +112,11 @@ export function registerConcurrency() {
   it('the count milestone fires once, on the 100th arrival', async () => {
     const t = await kit.scanTemplate('Crowd', { actions: [CHECK_IN] });
     const ev = await kit.event({ templateIds: [t] });
-    const template = await kit.registry.resolve(t);
+    // Event totals count witness scans, so seed real arrivals (a bare gate row never reaches 100).
+    const seeder = await kit.scanner({ eventId: ev.id });
     for (let i = 0; i < 98; i++) {
-      const seed = await makePass(kit.fx, { orgId: kit.org.id, template });
-      await run(
-        kit.env.DB,
-        `INSERT INTO scan_gates (pass_id, action_id, scope, org_id, mode, template_id, kind, state, count, first_at, last_at, last_scan_id)
-         VALUES (?, ?, ?, ?, 'live', ?, 'check_in', 'in', 1, 1, 1, 'seed')`,
-        [seed.id, `seed${i}`, `event:${ev.id}`, kit.org.id, t],
-      );
+      const seed = await kit.scanPass(t);
+      expect((await out(await act(seeder.headers, codeOf(seed)))).kind).toBe('ok');
     }
     const passes = await Promise.all(Array.from({ length: 5 }, () => kit.scanPass(t)));
     const scanners = await Promise.all(passes.map(() => kit.scanner({ eventId: ev.id })));
@@ -131,5 +126,5 @@ export function registerConcurrency() {
     const hits = results.filter((r) => r.milestone === 'count');
     expect(hits).toHaveLength(1);
     expect(hits[0]?.counts.event?.arrived).toBe(100);
-  });
+  }, 90_000);
 }

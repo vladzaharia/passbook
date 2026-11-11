@@ -118,9 +118,16 @@ describe('bounded scanner action replay', () => {
       Object.assign(kit.env, { DB: intercepted.db });
       try {
         const response = await kit.post(scanner.headers, '/actions', request);
+        expect(intercepted.fired()).toBe(true);
+        if (mutation === 'csrf') {
+          // A rotated scanner secret is a credential change: classified, not a masked miss.
+          expect(response.status).toBe(401);
+          expect(await response.json()).toMatchObject({ code: 'SCANNER_REPAIR' });
+          expect(await effectCounts(real, original.scanId!, pass.id)).toEqual(before);
+          return;
+        }
         expect(response.status).toBe(200);
         const replay = ScanOutcomeSchema.parse(await response.json());
-        expect(intercepted.fired()).toBe(true);
         if (mutation === 'wallet')
           expect(replay).toMatchObject({
             kind: 'ok',

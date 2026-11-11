@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putPassCheckIn } from '../passes/check-in.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -97,7 +98,7 @@ describe('card last-scan privacy', () => {
     const { templateId, pass, scanner } = await simple();
     const png = btoa(String.fromCharCode(...makePng(270, 270)));
     await putMemberPhoto(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       {

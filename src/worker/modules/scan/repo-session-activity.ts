@@ -2,10 +2,6 @@ import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import { ScannerAcceptsSchema } from '../../../shared/contracts/scanners.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import {
-  credentialRefKeysetInitializeStmt,
-  credentialRefKeysetSql,
-} from '../passes/repo-credential-keyset.ts';
-import {
   scanLedgerCommonScopeSql,
   scanLedgerPassOrRetentionCandidateSql,
 } from './repo-feed-scope.ts';
@@ -34,7 +30,6 @@ export interface ActivityCandidate {
 
 export type ActivityReadRow = { [K in keyof ActivityCandidate]: ActivityCandidate[K] | null } & {
   authorized: number;
-  keyset: number;
 };
 
 type Predicate = { sql: string; params: readonly SqlValue[] };
@@ -76,19 +71,18 @@ function activityScope(row: ScanningSessionRow): Predicate | null {
   };
 }
 
-/** Both singleton initialization and activity selection use this exact actor and parent. */
+/** Activity selection uses this exact actor and parent. */
 export function activityReadPlan(
   db: D1Database,
   row: ScanningSessionRow,
   authority: SessionCountAuthority,
   now: number,
-): { initialize: D1PreparedStatement; select: D1PreparedStatement } | null {
+): D1PreparedStatement | null {
   if (
     !authority ||
     authority.orgId !== row.org_id ||
     authority.mode !== row.mode ||
-    (authority.sessionId !== undefined && authority.sessionId !== row.id) ||
-    !/^[0-9a-f]{64}$/.test(authority.credentialKeysetCommitment)
+    (authority.sessionId !== undefined && authority.sessionId !== row.id)
   )
     return null;
   const original = authority.guardAt(now);
@@ -108,18 +102,15 @@ export function activityReadPlan(
     sql: `(${original.sql}) AND (${parent.sql})`,
     params: [...original.params, ...parent.params],
   };
-  // The SELECT also binds the keyset, scope, organization, session and mode.
-  if (guard.params.length + scope.params.length + 4 >= 100) return null;
-  const keyset = credentialRefKeysetSql.replace('?', '?/* scan-ephemeral-proof */');
+  // The SELECT also binds the scope, organization, session and mode.
+  if (guard.params.length + scope.params.length + 3 >= 100) return null;
   // Bound D1 expression depth by evaluating the common guards before the candidate
   // predicates. Passless rows have neither a pass nor any retention proof, so the
   // two candidate branches are disjoint and preserve the original ledger scope.
-  return {
-    initialize: credentialRefKeysetInitializeStmt(db, authority.credentialKeysetCommitment, guard),
-    select: stmt(
-      db,
-      `WITH authorized_activity AS (
-        SELECT (${guard.sql}) AS authorized, (${keyset}) AS keyset
+  return stmt(
+    db,
+    `WITH authorized_activity AS (
+        SELECT (${guard.sql}) AS authorized
       ), scoped_activity AS MATERIALIZED (
         SELECT s.id FROM scans s
         JOIN scanning_devices a ON a.scanner_id=s.scanner_id
@@ -157,20 +148,12 @@ export function activityReadPlan(
             ORDER BY version DESC LIMIT 1)
         LEFT JOIN template_versions pinned ON pinned.template_id=p.template_id AND pinned.version=p.template_version
         ORDER BY s.at DESC,s.id DESC LIMIT 20
-      ) SELECT authorized_activity.authorized,authorized_activity.keyset,activity_rows.*
+      ) SELECT authorized_activity.authorized,activity_rows.*
         FROM authorized_activity LEFT JOIN activity_rows
-          ON authorized_activity.authorized=1 AND authorized_activity.keyset=1
+          ON authorized_activity.authorized=1
         ORDER BY activity_rows.at DESC,activity_rows.id DESC`,
-      [
-        ...guard.params,
-        authority.credentialKeysetCommitment,
-        row.org_id,
-        row.id,
-        row.mode,
-        ...scope.params,
-      ],
-    ),
-  };
+    [...guard.params, row.org_id, row.id, row.mode, ...scope.params],
+  );
 }
 
 /** Compare credential source bytes and current tombstones in the final read batch. */
@@ -179,7 +162,6 @@ export function activityCredentialFenceStmt(
   row: ScanningSessionRow,
   candidate: ActivityCandidate,
   refs: readonly string[],
-  commitment: string,
 ): D1PreparedStatement {
   return stmt(
     db,
@@ -192,8 +174,7 @@ export function activityCredentialFenceStmt(
       AND p.lookup_hash IS ?/* scan-ephemeral-lookup-hash */
       AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones retired
         WHERE retired.org_id=s.org_id AND retired.mode=s.mode
-          AND retired.credential_hash IN (SELECT value FROM json_each(?/* scan-ephemeral-credential-refs */)))
-      AND (${credentialRefKeysetSql.replace('?', '?/* scan-ephemeral-proof */')})`,
+          AND retired.credential_hash IN (SELECT value FROM json_each(?/* scan-ephemeral-credential-refs */)))`,
     [
       candidate.id,
       row.org_id,
@@ -204,7 +185,6 @@ export function activityCredentialFenceStmt(
       candidate.barcodeHash,
       candidate.lookupHash,
       JSON.stringify(refs),
-      commitment,
     ],
   );
 }

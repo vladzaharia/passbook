@@ -217,7 +217,7 @@ describe('live connection lineage', () => {
     await persistTemplate(kit.fx, second, { registry: kit.registry });
     const newer = await approveAppleRelease(kit, { templateId: id, version });
     const now = kit.clock.now();
-    await updatePass(kit.ctx, system, pass.id, { templateVersion: version }, { scope: null });
+    await updatePass(jobCtxOf(kit), system, pass.id, { templateVersion: version }, { scope: null });
     const changed = await getPass(kit.env.DB, pass.id);
     if (!changed) throw new Error('Missing updated pass.');
     expect(changed.releaseId).toBe(newer.id);
@@ -234,7 +234,7 @@ describe('live connection lineage', () => {
       reason: 'Restore the approved version for lineage testing.',
     });
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       system,
       pass.id,
       { templateVersion: original.version },
@@ -360,14 +360,14 @@ describe('live connection lineage', () => {
     expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
     const now = kit.clock.now();
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       system,
       before.id,
       { input: { memberName: 'Different member' } },
       { scope: null },
     );
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       system,
       before.id,
       { input: { memberName: originalName } },

@@ -4,7 +4,7 @@ import { makeSession, makeUser, runOne } from '../../../../test/helpers/index.ts
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import type { Pass } from '../passes/repo.ts';
 import {

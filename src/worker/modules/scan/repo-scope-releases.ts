@@ -1,7 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { noScopedReleaseSql, type ReleaseScopeSql } from '../templates/repo-releases.ts';
+import type { ReleaseScopeSql } from '../templates/repo-releases.ts';
 import {
   effectiveReleaseBindingPredicate,
   legacyPassSql,
@@ -16,8 +16,14 @@ export {
 
 /** Configured scopes remain restricted, including when they contain only eligible legacy passes. */
 export function usableScanTemplateSql(scope: ReleaseScopeSql): string {
-  return `((${effectiveReleaseIdSql(scope)}) IS NOT NULL OR ((${noScopedReleaseSql(scope)})
-    AND (${scope.providerSql})='apple' AND EXISTS (SELECT 1 FROM passes legacy_scope_pass
+  return `((${scope.providerSql})='apple' AND EXISTS (SELECT 1 FROM templates use_template
+      WHERE use_template.id=(${scope.templateIdSql}) AND use_template.status!='deleted'
+        AND (use_template.org_id IS NULL OR use_template.org_id=(${scope.orgIdSql})))
+    AND (EXISTS (SELECT 1 FROM template_releases use_release
+      WHERE use_release.template_id=(${scope.templateIdSql}) AND use_release.mode=(${scope.modeSql})
+        AND use_release.provider='apple'
+        AND (use_release.org_id IS (${scope.orgIdSql}) OR use_release.org_id IS NULL))
+    OR EXISTS (SELECT 1 FROM passes legacy_scope_pass
       WHERE ${legacyPassSql('legacy_scope_pass', scope)})))`;
 }
 
@@ -107,7 +113,7 @@ export function captureTemplateStampsStmt(
     db,
     `SELECT selected.value AS template_id, head.id AS release_id, head.generation, head.version,
       head.candidate_hash,
-      CASE WHEN t.id IS NOT NULL AND head.id IS NULL AND (${noScopedReleaseSql(scope)}) THEN
+      CASE WHEN t.id IS NOT NULL AND head.id IS NULL THEN
         (SELECT json_group_array(json_object('version',template_version,'identityId',identity_id,
           'identityRevision',identity_revision)) FROM (
           SELECT DISTINCT p.template_version,p.identity_id,si.revision AS identity_revision FROM passes p
@@ -117,7 +123,10 @@ export function captureTemplateStampsStmt(
     FROM json_each(?) selected CROSS JOIN (SELECT ? AS org_id, ? AS mode) scope
     LEFT JOIN templates t ON t.id=selected.value AND (t.org_id=scope.org_id OR t.org_id IS NULL)
       AND t.status!='deleted'
-    LEFT JOIN template_releases head ON head.id=(${effectiveReleaseIdSql(scope)})`,
+    LEFT JOIN template_releases head ON head.id=COALESCE((${effectiveReleaseIdSql(scope)}),
+      (SELECT lr.id FROM template_releases lr WHERE lr.template_id=t.id AND lr.mode=scope.mode
+        AND lr.provider='apple' AND (lr.org_id IS scope.org_id OR lr.org_id IS NULL)
+        ORDER BY (lr.org_id IS NOT NULL) DESC, lr.generation DESC LIMIT 1))`,
     [JSON.stringify(templateIds), orgId, mode],
   );
 }

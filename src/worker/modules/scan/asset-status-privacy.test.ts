@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -71,7 +72,7 @@ describe('scanner asset pass status', () => {
       const scanner = await kit.scanner({ templateIds: [template], mode });
       const pass = await kit.scanPass(template, {}, { mode });
       await putMemberPhoto(
-        kit.ctx,
+        jobCtxOf(kit),
         system,
         pass.id,
         {

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { makePass } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { setOrgStatus } from '../orgs/repo.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
@@ -34,7 +35,7 @@ beforeAll(async () => {
 async function photoPass() {
   const device = await kit.scanner({ templateIds: [template] });
   const pass = await kit.scanPass(template);
-  await putMemberPhoto(kit.ctx, system, pass.id, { png: encoded, includeInPass: true }, null);
+  await putMemberPhoto(jobCtxOf(kit), system, pass.id, { png: encoded, includeInPass: true }, null);
   const grant = await photoAssetGrantFor(kit, device, pass.id);
   const image = () => kit.get(device.headers, `/passes/${pass.id}/assets/member.png?g=${grant}`);
   return { device, pass, image };
@@ -250,7 +251,7 @@ describe('scanner asset stream races', () => {
     async (name) => {
       const fixture = await photoPass();
       if (name === 'icon.png')
-        await putPassAsset(kit.ctx, system, fixture.pass.id, name, makePng(38, 38), null, {});
+        await putPassAsset(jobCtxOf(kit), system, fixture.pass.id, name, makePng(38, 38), null, {});
       const photo = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
       const override = await getPassAsset(kit.env.DB, fixture.pass.id, name);
       const key = name === 'icon.png' ? override?.r2Key : photo?.r2_key;

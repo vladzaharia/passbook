@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -40,7 +41,7 @@ async function setup() {
   const attachment = liveAttachment(kit.ctx, await assetActorFor(kit, monitor));
   const actor = await assetActorFor(kit, source);
   const pass = await kit.scanPass(template, { memberName: 'LIVE-PRIVATE-MEMBER' });
-  await putMemberPhoto(kit.ctx, system, pass.id, { png: encoded, includeInPass: true }, null);
+  await putMemberPhoto(jobCtxOf(kit), system, pass.id, { png: encoded, includeInPass: true }, null);
   const result = await resolveOutcome(kit.ctx, actor, {
     idempotencyKey: key(),
     input: codeOf(pass),

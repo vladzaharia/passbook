@@ -1,6 +1,5 @@
 import type { SqlValue } from '../../platform/db.ts';
-import { activeReleaseIdSql, noScopedReleaseSql } from '../templates/repo-releases.ts';
-import { legacyPassSql } from './repo-scope-release-predicates.ts';
+import { usableScanTemplateSql } from './repo-scope-releases.ts';
 
 /*
  * Event and session parts of the actor predicate that stay column-based: the release proofs of an
@@ -49,18 +48,14 @@ function eventTemplateProofsSql(filter: string): string {
   return `COALESCE((WITH actor_event AS MATERIALIZED (
       SELECT e.* FROM scan_events e WHERE ${filter}
       ), actor_event_templates AS MATERIALIZED (
-        SELECT et.event_id,t.id AS template_id,(${activeReleaseIdSql(EVENT_SCOPE)}) AS release_id,
-          (${noScopedReleaseSql(EVENT_SCOPE)}) AS no_history,
-          EXISTS (SELECT 1 FROM passes legacy_scope_pass
-            WHERE ${legacyPassSql('legacy_scope_pass', EVENT_SCOPE)}) AS has_legacy
+        SELECT et.event_id,t.id AS template_id,(${usableScanTemplateSql(EVENT_SCOPE)}) AS usable
         FROM actor_event e JOIN scan_event_templates et ON et.event_id=e.id
         LEFT JOIN templates t ON t.id=et.template_id
           AND (t.org_id=e.org_id OR t.org_id IS NULL) AND t.status!='deleted'
       )
       SELECT (SELECT COUNT(*) FROM scan_event_templates et WHERE et.event_id=e.id) BETWEEN 1 AND 20
         AND NOT EXISTS (SELECT 1 FROM actor_event_templates et WHERE et.event_id=e.id
-          AND (et.template_id IS NULL OR NOT (et.release_id IS NOT NULL
-            OR (et.no_history AND ('apple')='apple' AND et.has_legacy))))
+          AND (et.template_id IS NULL OR NOT et.usable))
       FROM actor_event e),0)`;
 }
 

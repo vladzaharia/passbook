@@ -1,7 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { stmt } from '../../platform/db.ts';
-import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { issuedReleasePredicateSql, noScopedReleaseSql } from '../templates/repo-releases.ts';
+import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import { decodeBoundLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
@@ -92,7 +91,7 @@ function releaseSql(alias: string): string {
  *   LEFT JOIN template_versions snapshot_active ON snapshot_active.template_id=p.template_id
  *     AND snapshot_active.version=COALESCE(ar.version,legacy.version)
  * Existing aliases p, pinned, ar and legacy are the candidate's pass, immutable pinned row,
- * effective scoped Apple release and no-history legacy row. Do not replace this with a later read.
+ * the pass's own issued release (not the head) and, for a pass without a release, its own version row. Do not replace this with a later read.
  */
 export function liveTemplateSnapshotColumnsSql(): string {
   return `${snapshotExpressionSql()} AS live_template_snapshot`;
@@ -108,16 +107,15 @@ function snapshotExpressionSql(): string {
     'active', json(${versionSql('snapshot_active')}),
     'release', json(${releaseSql('ar')}),
     'issued', json((SELECT ${releaseSql('issued')} FROM template_releases issued
-      WHERE issued.id=p.release_id)),
-    'noHistory', CASE WHEN (${noScopedReleaseSql(scope)}) THEN 1 ELSE 0 END
+      WHERE issued.id=p.release_id))
   )`;
 }
 
 const snapshotJoins = `LEFT JOIN templates snapshot_template ON snapshot_template.id=p.template_id
   LEFT JOIN template_versions pinned ON pinned.template_id=p.template_id AND pinned.version=p.template_version
-  LEFT JOIN template_releases ar ON ar.id=(${effectiveReleaseIdSql(scope)})
+  LEFT JOIN template_releases ar ON ar.id=p.release_id
   LEFT JOIN template_versions legacy ON legacy.template_id=p.template_id AND legacy.version=p.template_version
-    AND p.release_id IS NULL AND ar.id IS NULL AND (${noScopedReleaseSql(scope)})
+    AND p.release_id IS NULL
   LEFT JOIN template_versions snapshot_active ON snapshot_active.template_id=p.template_id
     AND snapshot_active.version=COALESCE(ar.version,legacy.version)`;
 

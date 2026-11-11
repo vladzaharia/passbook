@@ -93,7 +93,6 @@ export function registerCommitFenceRefusals() {
     const pass = await kit.scanPass(template);
     const scanner = await kit.scanner({ templateIds: [template], settings: { direction: 'both' } });
     const idempotencyKey = key();
-    let beforeGate: unknown;
     const response = await atCommit(
       'check-in',
       async (db) => {

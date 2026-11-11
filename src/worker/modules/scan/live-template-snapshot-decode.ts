@@ -52,7 +52,6 @@ export interface Snapshot {
   active: VersionSnapshot;
   release: ReleaseSnapshot | null;
   issued: ReleaseSnapshot | null;
-  noHistory: 0 | 1;
 }
 
 export function object(value: unknown): value is Record<string, unknown> {
@@ -162,8 +161,7 @@ export function decodeBoundLiveTemplateSnapshot(
     !version(value.pinned) ||
     !version(value.active) ||
     (value.release !== null && !release(value.release)) ||
-    (value.issued !== null && !release(value.issued)) ||
-    (value.noHistory !== 0 && value.noHistory !== 1)
+    (value.issued !== null && !release(value.issued))
   )
     return null;
   const s = value as unknown as Snapshot;
@@ -185,7 +183,6 @@ export function decodeBoundLiveTemplateSnapshot(
     return null;
   if (s.release === null) {
     return p.releaseId === null &&
-      s.noHistory === 1 &&
       binding.activeReleaseId === null &&
       binding.activeReleaseGeneration === null &&
       binding.activeReleaseVersion === null &&
@@ -203,8 +200,6 @@ export function decodeBoundLiveTemplateSnapshot(
       s.pinned.buildKey === s.active.buildKey);
   const displayVersion = compatible ? r.version : null;
   return (purpose === 'read' || compatible) &&
-    s.noHistory === 0 &&
-    s.owner.status === 'active' &&
     r.id === binding.activeReleaseId &&
     r.generation === binding.activeReleaseGeneration &&
     r.version === binding.activeReleaseVersion &&

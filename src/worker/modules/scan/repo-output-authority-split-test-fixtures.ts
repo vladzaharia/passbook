@@ -108,11 +108,16 @@ export async function rollbackRemoval(db: D1Database, passId: string, now: numbe
   const lifecycle = await getPassLifecycle(db, pass);
   if (!lifecycle) throw new Error('Missing lifecycle snapshot.');
   const state = { at: now, message: null, priorStatus: pass.status };
-  const generation = await claimRemoval(db, passId, state, {
-    pass,
-    generation: lifecycle.generation,
-    now,
-  });
+  const generation = await claimRemoval(
+    { ...kit.ctx, env: { ...kit.env, DB: db } },
+    passId,
+    state,
+    {
+      pass,
+      generation: lifecycle.generation,
+      now,
+    },
+  );
   if (generation === null) throw new Error('Unable to claim removal.');
   await releaseRemoval(db, passId, { pass, state, generation });
   const after = await getPassLifecycle(db, pass);

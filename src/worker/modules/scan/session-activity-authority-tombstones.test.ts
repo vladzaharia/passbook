@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { makePass, makeScanner, makeTemplate, runOne } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
-import {
-  credentialRefKeysetCommitment,
-  ensureCredentialRefKeyset,
-} from '../passes/credential-keyset.ts';
+import { runOne } from '../../../../test/helpers/index.ts';
+import { first } from '../../platform/db.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import type { Pass } from '../passes/repo.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
@@ -17,7 +13,6 @@ import {
   consoleRows,
   deviceRows,
 } from './repo-session-activity-authority-test-fixtures.ts';
-import { freshFixture } from './repo-session-stats-authority-test-fixtures.ts';
 import { type ScanKit, startScanCredentialTransfer } from './test-kit.ts';
 
 interface Fixture {
@@ -132,7 +127,7 @@ describe('mode-scoped activity credential fences', () => {
     },
   );
 
-  it('accepts an empty own-reference fence for a proven scan only with its captured keyset', async () => {
+  it('accepts an empty own-reference fence for a proven scan', async () => {
     const f = await activityFixture();
     const row = await scanningSessionRow(f.kit.env.DB, f.kit.org.id, f.sessionId);
     const candidate = await first<ActivityCandidate>(
@@ -145,73 +140,8 @@ describe('mode-scoped activity credential fences', () => {
       [f.scanId],
     );
     if (!row || !candidate) throw new Error('Missing the proven activity candidate');
-    const commitment = await credentialRefKeysetCommitment(f.kit.env);
-    expect(
-      await activityCredentialFenceStmt(f.kit.env.DB, row, candidate, [], commitment).first(),
-    ).toEqual({ id: f.scanId });
-    const other = commitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    expect(
-      await activityCredentialFenceStmt(f.kit.env.DB, row, candidate, [], other).first(),
-    ).toBeNull();
-  });
-
-  it('still requires the exact keyset for an explicit empty own-reference fence', async () => {
-    const f = await freshFixture();
-    const template = makeTemplate({ id: f.fx.ids.id(), orgId: f.org.id });
-    const pass = await makePass(f.fx, { orgId: f.org.id, template: template.resolved });
-    const scanner = await makeScanner(f.fx, { orgId: f.org.id });
-    const id = f.fx.ids.id();
-    await run(
-      f.env.DB,
-      `INSERT INTO scans
-      (id,org_id,mode,pass_id,template_id,scanner_id,actor_type,actor_id,actor_key,
-       idempotency_key,request_hash,method,state,outcome,at)
-      VALUES (?,?,'live',?,?,?,'scanner',?,?,?,?,'manual','done','refused',?)`,
-      [
-        id,
-        f.org.id,
-        pass.id,
-        template.resolved.id,
-        scanner.id,
-        scanner.id,
-        `s:${scanner.id}`,
-        f.fx.ids.id(),
-        'request',
-        f.clock.now(),
-      ],
-    );
-    // This is a direct SQL fence test, not a substitute for the signed HTTP fixtures above.
-    const candidate: ActivityCandidate = {
-      id,
-      at: f.clock.now(),
-      deviceId: scanner.id,
-      deviceName: '',
-      passId: pass.id,
-      eventId: null,
-      templateId: template.resolved.id,
-      outcome: 'refused',
-      direction: null,
-      serial: pass.serial,
-      scanCode: null,
-      barcodeHash: null,
-      lookupHash: null,
-      barcodeMessage: null,
-      lookupValue: null,
-    };
-    const commitment = await credentialRefKeysetCommitment(f.env);
-    expect(
-      await first(f.env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
-    ).toBeNull();
-    expect(
-      await activityCredentialFenceStmt(f.env.DB, f.row, candidate, [], commitment).first(),
-    ).toBeNull();
-    expect(await ensureCredentialRefKeyset(f.env.DB, f.env)).toBe(commitment);
-    expect(
-      await activityCredentialFenceStmt(f.env.DB, f.row, candidate, [], commitment).first(),
-    ).toEqual({ id });
-    const other = commitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    expect(
-      await activityCredentialFenceStmt(f.env.DB, f.row, candidate, [], other).first(),
-    ).toBeNull();
+    expect(await activityCredentialFenceStmt(f.kit.env.DB, row, candidate, []).first()).toEqual({
+      id: f.scanId,
+    });
   });
 });

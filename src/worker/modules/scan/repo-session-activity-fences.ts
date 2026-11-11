@@ -1,5 +1,4 @@
 import { type SqlValue, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import {
   type HistoryProofFence,
   historyProofSnapshotPredicates,
@@ -35,12 +34,6 @@ export function activityProofFenceStmt(
 export function activityStandaloneStatusStmt(
   db: D1Database,
   guard: OutputPredicate,
-  commitment: string,
 ): D1PreparedStatement {
-  return stmt(
-    db,
-    `SELECT (${guard.sql}) AS authorized,
-        (${credentialRefKeysetSql.replace('?', '?/* scan-ephemeral-proof */')}) AS keyset`,
-    [...guard.params, commitment],
-  );
+  return stmt(db, `SELECT (${guard.sql}) AS authorized`, guard.params);
 }

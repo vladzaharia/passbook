@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { updatePass } from '../passes/service.ts';
 import { livePassCommitmentValid } from './live-pass-commitment.ts';
 import { openLiveSourceProof } from './live-provenance.ts';
@@ -101,7 +102,7 @@ describe('live metadata-only pass personalization', () => {
     expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
 
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       fixture.pass.id,
       { input: { memberNo: 'METADATA-ONLY-123' } },

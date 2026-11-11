@@ -1,6 +1,5 @@
 import { likeEscape, type SqlValue, stmt } from '../../platform/db.ts';
-import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { issuedReleasePredicateSql, noScopedReleaseSql } from '../templates/repo-releases.ts';
+import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { ScanActor } from './actor.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
 import { eventMatch } from './repo-event-match.ts';
@@ -76,12 +75,10 @@ const RELEASE_SCOPE = {
   modeSql: 'p.mode',
   providerSql: "'apple'",
 };
-const HEAD = effectiveReleaseIdSql(RELEASE_SCOPE);
 const ISSUED = issuedReleasePredicateSql(
   { releaseIdSql: 'p.release_id', versionSql: 'p.template_version' },
   RELEASE_SCOPE,
 );
-const NO_HISTORY = noScopedReleaseSql(RELEASE_SCOPE);
 /** Shared exact eligibility for the indexed page and its final window fence. */
 function searchWhere(
   actor: ScanActor,
@@ -123,9 +120,10 @@ function searchWhere(
     `(${tombstones.sql})`,
     `(${walletSnapshotPredicateSql({ nowSql: '?' })})`,
     `(p.release_id IS NULL OR (${ISSUED}))`,
-    `((${HEAD}) IS NOT NULL OR (p.release_id IS NULL AND (${NO_HISTORY})
-      AND EXISTS (SELECT 1 FROM template_versions pinned
-        WHERE pinned.template_id=p.template_id AND pinned.version=p.template_version)))`,
+    `EXISTS (SELECT 1 FROM templates ot WHERE ot.id=p.template_id
+      AND (ot.org_id IS NULL OR ot.org_id=p.org_id) AND ot.status!='deleted')`,
+    `EXISTS (SELECT 1 FROM template_versions pinned
+      WHERE pinned.template_id=p.template_id AND pinned.version=p.template_version)`,
   ];
   const params: SqlValue[] = [actor.orgId, actor.mode, ...tombstones.params, now];
   if (actor.templateIds.length) {

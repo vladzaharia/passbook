@@ -1,8 +1,7 @@
 /* The count query shared by the cache write (repo-counts.ts) and the uncached reads. */
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
-import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { issuedReleasePredicateSql, noScopedReleaseSql } from '../templates/repo-releases.ts';
+import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import { eventMatch, eventMatchSql } from './repo-event-match.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
@@ -20,8 +19,6 @@ const passScope = {
 const ELIGIBLE_PASS = `EXISTS (
   SELECT 1 FROM templates scoped_t
   JOIN template_versions pinned ON pinned.template_id=p.template_id AND pinned.version=p.template_version
-  LEFT JOIN template_releases head ON head.id=(${effectiveReleaseIdSql(passScope)})
-  LEFT JOIN template_versions active ON active.template_id=p.template_id AND active.version=head.version
   WHERE ((scoped_t.id=p.template_id AND (scoped_t.org_id=p.org_id OR scoped_t.org_id IS NULL)
       AND scoped_t.status!='deleted')
     AND ((typeof(p.credential_generation)='integer' AND p.credential_generation>=1)
@@ -31,10 +28,7 @@ const ELIGIBLE_PASS = `EXISTS (
       AND (p.release_id IS NULL OR (${issuedReleasePredicateSql(
         { releaseIdSql: 'p.release_id', versionSql: 'p.template_version' },
         passScope,
-      )})))
-      AND ((head.id IS NULL AND p.release_id IS NULL AND (${noScopedReleaseSql(passScope)}))
-        OR (head.id IS NOT NULL AND (p.template_version=head.version
-          OR (pinned.build_key IS NOT NULL AND active.build_key=pinned.build_key)))))
+      )}))))
 )`;
 
 /**
@@ -78,28 +72,21 @@ export function expectedCountQuery(
         AND (p.test_data_quarantined = 0 AND p.template_id IN (SELECT value FROM json_each(?) WHERE type='text'))
     ), release_checks AS MATERIALIZED (
       SELECT p.*,
-        (${effectiveReleaseIdSql(passScope)}) AS count_head_id,
         (${issuedReleasePredicateSql(
           { releaseIdSql: 'p.release_id', versionSql: 'p.template_version' },
           passScope,
-        )}) AS count_issued_valid,
-        (${noScopedReleaseSql(passScope)}) AS count_no_history
+        )}) AS count_issued_valid
       FROM selected p
     ), eligible AS MATERIALIZED (
       SELECT p.* FROM release_checks p
       JOIN templates scoped_t ON scoped_t.id=p.template_id
       JOIN template_versions pinned ON pinned.template_id=p.template_id AND pinned.version=p.template_version
-      LEFT JOIN template_releases head ON head.id=p.count_head_id
-      LEFT JOIN template_versions active ON active.template_id=p.template_id AND active.version=head.version
       WHERE ((scoped_t.org_id=p.org_id OR scoped_t.org_id IS NULL) AND scoped_t.status!='deleted')
         AND ((typeof(p.credential_generation)='integer' AND p.credential_generation>=1)
           AND (typeof(p.lifecycle_generation)='integer' AND p.lifecycle_generation>=0))
         AND (NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
           WHERE transfer.pass_id=p.id AND transfer.state='pending')
           AND (p.release_id IS NULL OR p.count_issued_valid))
-        AND ((head.id IS NULL AND p.release_id IS NULL AND p.count_no_history)
-          OR (head.id IS NOT NULL AND (p.template_version=head.version
-            OR (pinned.build_key IS NOT NULL AND active.build_key=pinned.build_key))))
     )
     SELECT COUNT(*) FROM eligible p
       WHERE (${walletSnapshotPredicateSql({ nowSql: '?' })})${match.input === null ? '' : MATCH_CURRENT_INPUT}`,

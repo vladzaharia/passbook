@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { raceGate } from './act-authority-test-fixtures.ts';
-import { act, expectUnavailable, kit, out, rows, tpl } from './act-test-fixtures.ts';
+import { act, kit, out, rows, tpl } from './act-test-fixtures.ts';
 import { reconcileScans } from './jobs.ts';
 import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';

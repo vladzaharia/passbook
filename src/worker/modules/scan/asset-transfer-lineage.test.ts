@@ -82,7 +82,7 @@ async function removalRollback(passId: string) {
   const lifecycle = await getPassLifecycle(kit.env.DB, pass);
   if (!lifecycle) throw new Error('Lifecycle fixture missing');
   const state = { at: kit.clock.now(), message: null, priorStatus: pass.status };
-  const generation = await claimRemoval(kit.env.DB, passId, state, {
+  const generation = await claimRemoval(kit.ctx, passId, state, {
     pass,
     generation: lifecycle.generation,
     now: kit.clock.now(),

@@ -14,7 +14,6 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
-import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { captureEventAuthority, eventView, listEvents } from './events.ts';
 import { archiveEvent, assignScanners, createEvent, updateEvent } from './events-mutations.ts';
 import { getConsoleEventTarget } from './repo-events.ts';
@@ -27,7 +26,7 @@ scanEventsRoutes.use('*', limitBody(64 * 1024));
 const TAG = 'scan-events';
 
 async function eventAuthority(c: C, id: string, capability: 'scanning:read' | 'scanning:manage') {
-  const ctx = credentialKeysetContext(serviceContext(c));
+  const ctx = serviceContext(c);
   const auth = c.var.auth;
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   const event = await getConsoleEventTarget(ctx.env.DB, id);
@@ -52,7 +51,7 @@ register(
     response: pageOf(ScanEventSchema),
   },
   async (c) => {
-    const ctx = credentialKeysetContext(serviceContext(c));
+    const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const query = c.req.valid('query');
@@ -79,7 +78,7 @@ register(
     response: ScanEventSchema,
   },
   async (c) => {
-    const ctx = credentialKeysetContext(serviceContext(c));
+    const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const input = c.req.valid('json');

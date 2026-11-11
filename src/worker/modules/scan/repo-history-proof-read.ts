@@ -2,8 +2,6 @@ import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { EventRow } from '../events/repo.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import { noScopedReleaseSql } from '../templates/repo-releases.ts';
 import {
   currentWalletPrivateValuesSql,
   legacyScanProvenanceSql,
@@ -15,12 +13,6 @@ import { HISTORICAL_SCOPE_SQL } from './repo-scan-history.ts';
 import type { Raw } from './repo-scan-map.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
-const SCOPE = {
-  templateIdSql: 'p.template_id',
-  orgIdSql: 'p.org_id',
-  modeSql: 'p.mode',
-  providerSql: "'apple'",
-};
 const EVENT_WALLET =
   "CASE WHEN json_valid(l.data) THEN json_extract(l.data,'$.authority.walletVersion') END";
 const EVENT_PINNED =
@@ -177,9 +169,9 @@ export function historyProofRowsStmt(
       AND event_pinned.version=(${pending ? 'p.template_version' : EVENT_PINNED})
     LEFT JOIN template_versions event_wallet ON event_wallet.template_id=${pending ? 'p.template_id' : 's.template_id'}
       AND event_wallet.version=recorded.template_version
-    LEFT JOIN template_releases ar ON ar.id=(${effectiveReleaseIdSql(SCOPE)})
+    LEFT JOIN template_releases ar ON ar.id=p.release_id
     LEFT JOIN template_versions legacy ON legacy.template_id=p.template_id AND legacy.version=p.template_version
-      AND p.release_id IS NULL AND ar.id IS NULL AND (${noScopedReleaseSql(SCOPE)})
+      AND p.release_id IS NULL
     LEFT JOIN template_versions event_active ON event_active.template_id=${pending ? 'p.template_id' : 's.template_id'}
       AND event_active.version=(${pending ? 'COALESCE(ar.version,legacy.version)' : EVENT_ACTIVE})
     LEFT JOIN template_versions current_pinned ON current_pinned.template_id=p.template_id

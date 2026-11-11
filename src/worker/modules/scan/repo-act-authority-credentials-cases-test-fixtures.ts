@@ -4,7 +4,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { act as actService } from './act.ts';
 import { expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
-import { CHECK_IN, expectUnavailable, kit, out, rows, tpl } from './act-test-fixtures.ts';
+import { CHECK_IN, expectUnavailable, kit, rows, tpl } from './act-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
 import { getScanner } from './repo-device.ts';

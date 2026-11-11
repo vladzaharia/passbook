@@ -1,11 +1,7 @@
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import {
-  activeReleasePredicate,
-  issuedReleasePredicateSql,
-  noScopedReleaseSql,
-} from '../templates/repo-releases.ts';
+import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import {
   noCredentialTombstonesSql,
   validCredentialKeysetCommitment,
@@ -27,7 +23,6 @@ const ISSUED_RELEASE_SQL = issuedReleasePredicateSql(
   { releaseIdSql: 'p.release_id', versionSql: 'p.template_version' },
   PASS_RELEASE_SCOPE,
 );
-const NO_SCOPED_RELEASE_SQL = noScopedReleaseSql(PASS_RELEASE_SCOPE);
 
 /** Release head observed with the evaluated candidate, not a later database read. */
 export interface ReleaseSnapshot {
@@ -250,15 +245,23 @@ export function evaluatedPolicyPredicate(
   let active: Predicate;
   const scope = PASS_RELEASE_SCOPE;
   if (completeRelease(release) && activeTemplateVersion === release.activeReleaseVersion) {
-    const head = activeReleasePredicate(
-      {
-        id: release.activeReleaseId,
-        generation: release.activeReleaseGeneration,
-        version: release.activeReleaseVersion,
-        candidateHash: release.activeReleaseCandidateHash,
-      },
-      scope,
-    );
+    // The pass's own issued release, not the head: a newer or withdrawn head does not refuse it.
+    const head = {
+      sql: `p.release_id=? AND ${issuedReleasePredicateSql(
+        {
+          releaseIdSql: 'p.release_id',
+          versionSql: 'p.template_version',
+          generationSql: '?',
+          candidateHashSql: '?',
+        },
+        scope,
+      )}`,
+      params: [
+        release.activeReleaseId,
+        release.activeReleaseGeneration,
+        release.activeReleaseCandidateHash,
+      ] as SqlValue[],
+    };
     const compatible =
       purpose === 'commit'
         ? releaseBuildCompatibilityPredicate(release.activeReleaseVersion)
@@ -271,7 +274,7 @@ export function evaluatedPolicyPredicate(
     active = {
       sql: `p.release_id IS NULL AND p.template_version=? AND EXISTS (
         SELECT 1 FROM template_versions v WHERE v.template_id=p.template_id AND v.version=p.template_version
-      ) AND (${NO_SCOPED_RELEASE_SQL})`,
+      )`,
       params: [activeTemplateVersion],
     };
   } else return { sql: '0', params: [] };

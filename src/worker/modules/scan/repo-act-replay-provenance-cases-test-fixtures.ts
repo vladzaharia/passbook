@@ -12,8 +12,6 @@ import {
 } from './act-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { getScanner } from './repo-device.ts';
-import { candidateById } from './repo-lookup.ts';
-import { scanByKey } from './repo-scans.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { codeOf, key, proofedScanActor } from './test-kit.ts';
 

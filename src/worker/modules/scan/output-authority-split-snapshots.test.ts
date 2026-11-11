@@ -38,9 +38,8 @@ import {
   rollbackRemoval,
   templateId,
 } from './repo-output-authority-split-test-fixtures.ts';
-import { outputPredicatesCurrent, packOutputPredicate } from './repo-output-predicates.ts';
+import { packOutputPredicate } from './repo-output-predicates.ts';
 import { readScannerScope } from './repo-scope.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { grantScanMembership, key, proofedScanActor } from './test-kit.ts';
 
@@ -368,63 +367,6 @@ describe('atomic scanner response authority', () => {
         release: current,
       }),
     ).toBe(true);
-  });
-
-  it('binds the original platform session hash and CSRF as labeled scalar values', async () => {
-    const f = await fixture();
-    const user = await makeUser(kit.fx);
-    await grantScanMembership(kit.fx, kit.org.id, user.id);
-    const session = await makeSession(kit.fx, { userId: user.id, roles: ['user'] });
-    const auth = await createSessionStore(kit.env, kit.clock).resolve(session.cookieValue);
-    if (!auth) throw new Error('Missing session.');
-    const authority = await tenantAuthorityOf(kit.ctx, auth, kit.org.id, 'scanning:read');
-    if (authority.kind !== 'session') throw new Error('Missing tenant authority.');
-    const actor = adminActor(auth, 'live', {
-      orgId: kit.org.id,
-      event: null,
-      templateIds: [templateId],
-      timeZone: 'UTC',
-    });
-    actor.platformSessionId = auth.sessionId;
-    actor.tenantAuthority = await captureScanTenantAuthority(kit.ctx, auth, authority);
-    actor.role = tenantScanRole(authority);
-    const read = actorCsrfAuthorityStmt(kit.env.DB, actor);
-    if (!read) throw new Error('Missing session authority statement.');
-    const snapshot = await actorCsrfSnapshotFromResult(kit.ctx, actor, await read.all());
-    if (!snapshot?.session) throw new Error('Missing verified session snapshot.');
-    const csrf = actorCsrfSnapshotFence(actor, snapshot);
-    if (!csrf) throw new Error('Missing session scalar fence.');
-    const packed = packOutputPredicate(
-      outputAuthorityPredicate({
-        actor,
-        event: null,
-        now: kit.clock.now(),
-        templateId,
-        pass: f.candidate.pass,
-        credentialTombstoneRefs: [],
-        credentialKeysetCommitment: f.candidate.credentialKeysetCommitment,
-        connectionGeneration: f.candidate.connectionGeneration,
-        activeTemplateVersion: f.candidate.activeTemplateVersion,
-        orgRevision: f.candidate.orgRevision,
-        templateRevision: f.candidate.templateRevision,
-        release: f.candidate,
-        displayTemplateVersion: f.candidate.displayTemplateVersion,
-        checkInRules: f.candidate.checkInRules,
-        lookupHash: f.candidate.lookupHash,
-        extra: csrf,
-      }),
-    );
-    expect(packed.params[0]).not.toContain(auth.sessionId);
-    expect(packed.params[0]).not.toContain(snapshot.session.secret);
-    expect(packed.params.slice(1)).toContain(auth.sessionId);
-    expect(packed.params.slice(1)).toContain(snapshot.session.secret);
-    const slots = scanSecretSlots(packed.sql, packed.params.length);
-    expect(slots?.some((slot) => slot.label === 'session-id')).toBe(true);
-    expect(slots?.some((slot) => slot.label === 'csrf:actor:session')).toBe(true);
-    expect((await outputPredicatesCurrent(kit.env.DB, [packed]))[0]).toBe(true);
-    expect(
-      actorCsrfSnapshotFence({ ...actor, platformSessionId: 'different-hash' }, snapshot),
-    ).toBeNull();
   });
 
   it('checks a large set of original snapshots in one D1 read transaction', async () => {

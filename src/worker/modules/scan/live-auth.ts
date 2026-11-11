@@ -12,6 +12,7 @@ import {
   sameSession,
   tenantReadAuthority,
 } from './live-auth-guards.ts';
+import { liveLifetimeStmt } from './live-lifetime.ts';
 import { liveActorSchema } from './live-provenance.ts';
 import { liveRecipientFencesCurrent } from './repo-live-authority.ts';
 import { type LiveWatchStamp, liveRecipientWatchStmt } from './repo-live-recipient.ts';
@@ -21,7 +22,6 @@ import {
   type SessionReleaseStamp,
   templateStampsFromResult,
 } from './repo-scope-releases.ts';
-import { liveLifetimeStmt } from './live-lifetime.ts';
 import { type ScanAuthorityEpochs, scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 import {
   captureObservedScanningSession,

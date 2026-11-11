@@ -15,6 +15,7 @@ import {
   visibleScan,
 } from './card-semantics.ts';
 import type { BuildDisplayInput } from './display.ts';
+import { isOwnPhotoUrl } from './display-photo-url.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import { projectScanInputs } from './projection-privacy.ts';
 import type { Found } from './resolve.ts';
@@ -69,12 +70,8 @@ export function scopeOf(
     scanner: { name: safe(actor.name) ?? '', role },
     lookups: safe(manifest.lookups ?? {}) ?? {},
     goals: safe(goals) ?? {},
-    // The URL is built from ids and a grant token. Its pass id is random, and random UUID digit runs
-    // can read as a phone number, which dropped the URL at random: judge everything but the id.
     assets:
-      input.photoUrl &&
-      actor.settings.showPhoto !== false &&
-      privacy.safe(input.photoUrl.replaceAll(pass.id, 'pass'))
+      input.photoUrl && actor.settings.showPhoto !== false && isOwnPhotoUrl(input.photoUrl)
         ? { photo: input.photoUrl }
         : {},
     templateVersion: safe(String(template.version)) ?? '',

@@ -1,6 +1,5 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
-import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { listConsoleEvents } from './repo-events.ts';
 import { listScanRows } from './repo-feed.ts';
 import { listConsoleScanners } from './repo-scanners.ts';
@@ -88,7 +87,6 @@ describe('console list query plans (SC)', () => {
   });
 
   it('events: an org list, with each status, uses scan_events_org', async () => {
-    const credentialKeysetCommitment = await ensureCredentialRefKeyset(env.DB, env);
     for (const status of [undefined, 'upcoming', 'live', 'ended', 'archived'] as const) {
       const lines = await plans((db) =>
         listConsoleEvents(db, {
@@ -97,7 +95,6 @@ describe('console list query plans (SC)', () => {
           now: 5,
           limit: 51,
           status,
-          credentialKeysetCommitment,
         }),
       );
       expect(fullScans(lines, 'e')).toEqual([]);

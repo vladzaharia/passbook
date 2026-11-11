@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { publishPass } from '../passes/publish.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
@@ -103,7 +104,7 @@ describe('card last-scan privacy', () => {
     );
     await run(kit.env.DB, 'UPDATE scanners SET name=? WHERE id=?', ['WalletSensitive', scanner.id]);
     const scanId = await act(scanner.headers, pass.id);
-    await publishPass(kit.ctx, {
+    await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'resign',
       actor: { type: 'system', id: null },

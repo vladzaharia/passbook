@@ -184,8 +184,17 @@ describe('atomic scanner response authority', () => {
         actionId: 'check_in',
       });
       expect(race.fired()).toBe(true);
-      expect(response.status).toBe(409);
-      noDisclosure(await response.text(), f.pass.id);
+      // The revoked scanner gets the bare refusal: no pass, card, display or grant in the body.
+      expect(response.status).toBe(200);
+      const text = await response.text();
+      expect(JSON.parse(text)).toMatchObject({
+        kind: 'refused',
+        reason: 'not_found',
+        scanId: null,
+        card: null,
+        display: null,
+      });
+      noDisclosure(text, f.pass.id);
     } finally {
       Object.assign(kit.env, { DB: real });
     }

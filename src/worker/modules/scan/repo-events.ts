@@ -1,8 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first, likeEscape, type SqlValue, stmt } from '../../platform/db.ts';
-import { UnavailableError } from '../../platform/errors.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
 import type { EventAuthority } from './repo-event-keyset.ts';
@@ -127,15 +125,8 @@ export async function getConsoleEventTarget(db: Db, id: string) {
   );
 }
 
-export async function getConsoleEvent(
-  db: Db,
-  id: string,
-  credentialKeysetCommitment: string,
-): Promise<ConsoleEventRow | null> {
-  const row = await first<Raw>(db, `${SELECT} WHERE e.id = ? AND ${credentialRefKeysetSql}`, [
-    id,
-    credentialKeysetCommitment,
-  ]);
+export async function getConsoleEvent(db: Db, id: string): Promise<ConsoleEventRow | null> {
+  const row = await first<Raw>(db, `${SELECT} WHERE e.id = ?`, [id]);
   return row ? toRow(row) : null;
 }
 
@@ -163,27 +154,22 @@ export function authorizedEventStmt(
   id: string,
   authority: EventAuthority,
   now: number,
-  credentialKeysetCommitment: string,
 ): D1PreparedStatement {
   if (
     authority.kind !== 'session' ||
     (authority.capability !== 'scanning:read' && authority.capability !== 'scanning:manage')
   )
-    return stmt(db, `${SELECT_WITH_COUNT} WHERE 0 AND ${credentialRefKeysetSql}`, [
-      now,
-      credentialKeysetCommitment,
-    ]);
+    return stmt(db, `${SELECT_WITH_COUNT} WHERE 0`, [now]);
   return stmt(
     db,
     `${SELECT_WITH_COUNT} WHERE e.id=? AND e.mode=? AND ${tenantPassAuthoritySql(authority, 'e')}
-      AND (${authority.csrfFence.sql}) AND ${credentialRefKeysetSql}`,
+      AND (${authority.csrfFence.sql})`,
     [
       now,
       id,
       authority.mode,
       ...tenantPassAuthorityParams(authority, now),
       ...authority.csrfFence.params,
-      credentialKeysetCommitment,
     ],
   );
 }
@@ -193,12 +179,11 @@ export function consoleEventFromResult(result: D1Result): ConsoleEventRow | null
   return row ? toRow(row) : null;
 }
 
-/** Empty results still carry session and keyset status from the projection's transaction. */
+/** Empty results still carry session status from the projection's transaction. */
 function eventReadStatusStmt(
   db: Db,
   authority: EventAuthority | undefined,
   now: number,
-  credentialKeysetCommitment: string,
 ): D1PreparedStatement {
   const access = authority
     ? `${tenantPassAuthoritySql(authority)} AND (${authority.csrfFence.sql})`
@@ -206,21 +191,11 @@ function eventReadStatusStmt(
   const params = authority
     ? [...tenantPassAuthorityParams(authority, now), ...authority.csrfFence.params]
     : [];
-  return stmt(db, `SELECT (${access}) AS authority, ${credentialRefKeysetSql} AS keyset`, [
-    ...params,
-    credentialKeysetCommitment,
-  ]);
+  return stmt(db, `SELECT (${access}) AS authority`, params);
 }
 
 function eventReadStatus(result: D1Result | undefined): boolean {
-  const state = result?.results[0] as { authority: number; keyset: number } | undefined;
-  if (state?.authority !== 1) return false;
-  if (state.keyset !== 1)
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
-  return true;
+  return (result?.results[0] as { authority: number } | undefined)?.authority === 1;
 }
 
 /** Bind the exact tenant session to the event and its relationship counts in one read. */
@@ -229,7 +204,6 @@ export async function getAuthorizedConsoleEvent(
   id: string,
   authority: EventAuthority,
   now: number,
-  credentialKeysetCommitment: string,
 ): Promise<ConsoleEventRow | null> {
   if (
     authority.kind !== 'session' ||
@@ -237,8 +211,8 @@ export async function getAuthorizedConsoleEvent(
   )
     return null;
   const [projection, status] = await db.batch([
-    authorizedEventStmt(db, id, authority, now, credentialKeysetCommitment),
-    eventReadStatusStmt(db, authority, now, credentialKeysetCommitment),
+    authorizedEventStmt(db, id, authority, now),
+    eventReadStatusStmt(db, authority, now),
   ]);
   return eventReadStatus(status) && projection ? consoleEventFromResult(projection) : null;
 }
@@ -251,14 +225,13 @@ export interface EventFilter {
   now: number;
   cursor?: string | undefined;
   limit: number;
-  credentialKeysetCommitment: string;
   authority?: EventAuthority | undefined;
 }
 
 /** Newest opening first. An org list rides `scan_events_org`. */
 export async function listConsoleEvents(db: Db, f: EventFilter): Promise<ConsoleEventRow[]> {
-  const where = ['e.mode = ?', credentialRefKeysetSql];
-  const params: SqlValue[] = [f.mode, f.credentialKeysetCommitment];
+  const where = ['e.mode = ?'];
+  const params: SqlValue[] = [f.mode];
   if (f.orgId) {
     where.push('e.org_id = ?');
     params.push(f.orgId);
@@ -298,7 +271,7 @@ export async function listConsoleEvents(db: Db, f: EventFilter): Promise<Console
       `${SELECT_WITH_COUNT} WHERE ${where.join(' AND ')} ORDER BY e.opens_at DESC, e.id DESC LIMIT ?`,
       [f.now, ...params, f.limit],
     ),
-    eventReadStatusStmt(db, f.authority, f.now, f.credentialKeysetCommitment),
+    eventReadStatusStmt(db, f.authority, f.now),
   ]);
   if (!eventReadStatus(status)) return [];
   return (page?.results ?? []).map((row) => toRow(row as unknown as Raw));

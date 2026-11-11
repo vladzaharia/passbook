@@ -1,7 +1,6 @@
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import { first, type SqlValue, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './actor.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import {
@@ -73,11 +72,8 @@ export async function sessionReadFencesCurrent(
   now: number,
   releases: readonly SessionReleaseStamp[],
   legacy: readonly SessionLegacyStamp[],
-  options?: { scopeRedacted: boolean; credentialKeysetCommitment?: string },
+  options?: { scopeRedacted: boolean },
 ): Promise<{ authorityCurrent: boolean; stampsCurrent: boolean }> {
-  const keyset = options?.credentialKeysetCommitment;
-  if (keyset !== undefined && !/^[a-f0-9]{64}$/.test(keyset))
-    return { authorityCurrent: false, stampsCurrent: false };
   const redacted = options?.scopeRedacted === true;
   const authority = readAuthorityPredicate(actor, Math.max(now, ctx.clock.now()), redacted);
   const stampIds = new Set<string>();
@@ -103,11 +99,7 @@ export async function sessionReadFencesCurrent(
   const packedAuthority = packedScanAuthorityPredicate(actor, authority);
   const db = ctx.env.DB;
   const statements = [
-    stmt(
-      db,
-      `SELECT ((${packedAuthority.sql})${keyset === undefined ? '' : ` AND (${credentialRefKeysetSql})`}) AS authority_current`,
-      [...packedAuthority.params, ...(keyset === undefined ? [] : [keyset])],
-    ),
+    stmt(db, `SELECT (${packedAuthority.sql}) AS authority_current`, packedAuthority.params),
     ...[stamps, ...additional].map((predicate) =>
       stmt(
         db,

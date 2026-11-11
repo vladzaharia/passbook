@@ -33,7 +33,7 @@ describe('live authority revocation', () => {
     expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
     const now = kit.clock.now();
     const state = { at: now, message: null, priorStatus: before.pass.status };
-    const generation = await claimRemoval(kit.env.DB, fixture.pass.id, state, {
+    const generation = await claimRemoval(kit.ctx, fixture.pass.id, state, {
       pass: before.pass,
       generation: before.pass.lifecycleGeneration,
       now,
