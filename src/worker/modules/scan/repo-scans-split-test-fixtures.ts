@@ -27,6 +27,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { createScannerStore } from './auth-store.ts';
 import { grantScanMembership, key } from './test-kit.ts';
 
@@ -79,6 +80,8 @@ export async function recordVersion(id: string) {
 beforeEach(async () => {
   clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
   env = await makeEnv();
+  // Service-made passes initialize the keyset; these fixtures insert pass rows directly.
+  await ensureCredentialRefKeyset(env.DB, env);
   f = fixtures(env, clock);
   ctx = createServiceContext(env, { clock });
   fake = fakeAuth(ORIGIN);

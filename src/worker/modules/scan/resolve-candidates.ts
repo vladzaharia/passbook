@@ -184,8 +184,15 @@ export const accepts = (actor: ScanActor, pass: Pass) =>
     : actor.templateIds.includes(pass.templateId);
 
 export function matchesEvent(actor: ScanActor, pass: Pass): boolean {
-  const event = actor.event;
-  if (!event) return true;
+  return actor.event ? eventAcceptsPass(actor, actor.event, pass) : true;
+}
+
+/** An event takes a pass by its org, mode, archive state and pass filter. */
+export function eventAcceptsPass(
+  actor: Pick<ScanActor, 'orgId' | 'mode'>,
+  event: NonNullable<ScanActor['event']>,
+  pass: Pass,
+): boolean {
   if (event.orgId !== actor.orgId || event.mode !== actor.mode || event.archivedAt !== null)
     return false;
   const match = eventMatch(event.matchInput, event.matchValues);

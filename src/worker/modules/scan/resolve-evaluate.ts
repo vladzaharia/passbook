@@ -20,6 +20,7 @@ import {
   candidateCredentialSnapshotValid,
   candidateWallet,
   findCandidates,
+  eventAcceptsPass,
   matchesEvent,
 } from './resolve-candidates.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
@@ -168,6 +169,10 @@ async function evaluateObserved(
       ? await planAdmission(ctx, actor, found, configured ? waive.direction : 'in', extraReads)
       : null;
   const admission = configured ? planned : null;
+  // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
+  const selected = admission?.plan.event;
+  if (selected && !eventAcceptsPass(actor, selected, found.pass))
+    return stop('refused', 'wrong_event');
   found.admission = admission?.plan;
   if (eventAdmission && planned) {
     found.eventAdmission = planned.plan;

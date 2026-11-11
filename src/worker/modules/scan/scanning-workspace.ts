@@ -2,7 +2,12 @@ import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  UnauthenticatedError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listMyOrgMemberships } from '../orgs/access.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
@@ -19,6 +24,7 @@ import {
   packedScanAuthorityPredicate,
   sessionReadAuthorityPredicate,
 } from './repo-session-authority.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import {
   conflictsWithAllScope,
   deviceDto,
@@ -232,7 +238,18 @@ export async function scanWorkspace(
   const guard = guardAt(ctx.clock.now());
   if (!guard)
     throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
-  const session = await sessionDto(ctx, observed.parent, { ...authority, guard, guardAt });
+  const session = await sessionDto(ctx, observed.parent, { ...authority, guard, guardAt }).catch(
+    async (error: unknown) => {
+      // A lost credential unpairs the device; any other refusal keeps the generic not-found.
+      if (
+        error instanceof AppError &&
+        error.code === 'SCANNING_SESSION_NOT_FOUND' &&
+        (await scannerCredentialLost(ctx, sourceActor))
+      )
+        throw new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
+      throw error;
+    },
+  );
   const current =
     JSON.stringify(session.accepts) === observed.accepts &&
     !!session.settings.acceptAllTemplates === !!actor.settings.acceptAllTemplates;

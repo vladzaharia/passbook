@@ -153,7 +153,8 @@ describe('approved action: volatile change is not authority', () => {
     ['pass image epoch', 'UPDATE passes SET image_generation=image_generation+1 WHERE id=?'],
     ['pass content version', 'UPDATE passes SET version=version+1 WHERE id=?'],
   ] as const)('admits and signs the action after a changed %s', async (name, sql) => {
-    const s = await scenario(base, { photo: true });
+    // The photo grant binds the pass's image epoch and version, so a photo scan legitimately refuses on them.
+    const s = await scenario(base, { photo: false });
     const body = request(s);
     const id =
       name === 'organization' ? s.kit.org.id : name === 'template' ? s.template : s.pass.id;

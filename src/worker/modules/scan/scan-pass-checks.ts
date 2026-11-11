@@ -10,6 +10,7 @@ export interface ScanPassFacts {
     Pass,
     | 'status'
     | 'removedAt'
+    | 'deletedAt'
     | 'credentialGeneration'
     | 'lifecycleGeneration'
     | 'templateId'
@@ -34,6 +35,7 @@ export function scanPassChecks(passId: string, facts: ScanPassFacts): Check[] {
       {
         status: pass.status,
         removed_at: pass.removedAt,
+        deleted_at: pass.deletedAt,
         credential_generation: pass.credentialGeneration,
         lifecycle_generation: pass.lifecycleGeneration,
         template_id: pass.templateId,

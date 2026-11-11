@@ -5,6 +5,7 @@ import {
 } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { scanOf } from '../../../shared/scan-defaults.ts';
+import { UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
@@ -26,6 +27,7 @@ import type { ScanRow } from './repo-scans.ts';
 import { foundOf } from './resolve.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 
 /** A validated historical receipt with no current-policy-derived data or mutation affordances. */
 export function minimalReceipt(row: ScanRow): ScanOutcome {
@@ -265,20 +267,23 @@ export async function replayOutcome(
     )
       return finishReceipt();
   }
-  if (
-    !(await replayCurrent(
-      ctx,
-      actor,
-      req,
-      row,
-      credentialContext,
-      csrfSnapshot,
-      evidence,
-      candidate,
-      currentEvent,
-    ))
-  )
-    return receipt;
+  const current = await replayCurrent(
+    ctx,
+    actor,
+    req,
+    row,
+    credentialContext,
+    csrfSnapshot,
+    evidence,
+    candidate,
+    currentEvent,
+  ).catch(async (error: unknown) => {
+    // A credential lost or replaced during the final read unpairs the device instead of answering as a miss.
+    if (error instanceof StaleScanAuthority && (await scannerCredentialLost(ctx, actor)))
+      throw new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
+    throw error;
+  });
+  if (!current) return receipt;
   const reason = ScanReasonSchema.safeParse(row.reason);
   const kind = row.outcome ?? 'refused';
   return {

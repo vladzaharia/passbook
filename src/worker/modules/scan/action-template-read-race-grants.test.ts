@@ -153,10 +153,18 @@ describe('policy-selected event action grants', () => {
     );
     const request = body(kit, f.pass.id);
     const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-    expectUnavailable(await action(kit, f.scanner.headers, request), f.pass.id);
-    expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-      before,
-    );
+    expect(await action(kit, f.scanner.headers, request)).toMatchObject({
+      kind: 'refused',
+      reason: 'wrong_event',
+      card: null,
+      display: null,
+      action: null,
+    });
+    // The refusal is logged; it mints no grant and moves no gate, presence or event.
+    expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual({
+      ...(before as Record<string, number>),
+      scans: (before as { scans: number }).scans + 1,
+    });
   });
 
   // After event evaluation: scanner credentials are authority (the grant refuses or drops the output);

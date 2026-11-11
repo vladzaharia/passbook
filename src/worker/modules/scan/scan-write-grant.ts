@@ -1,6 +1,6 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
-import { exists, type GrantCond, not } from '../../platform/authority-cond.ts';
+import { exists, type GrantCond, not, tenantCheck } from '../../platform/authority-cond.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, readPart, writePart } from '../../platform/authority-include.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
@@ -23,6 +23,8 @@ export interface ScanWriteInput {
   approver?: { id: string; authEpoch: number } | null;
   /** Held: the answer shown names this gate holder and must still be true. */
   holder?: { passId: string; actionId: string; scope: string; lastScanId: string } | null;
+  /** A passless miss: none of the presented credential's references may be retired by a transfer. */
+  credentialRefs?: { current: readonly string[]; other: readonly string[] };
   target?: string;
   codes?: DenialOptions['codes'];
   /** Unguarded tables the grant's parts write. */
@@ -46,6 +48,7 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
         ...(templateId ? { templateId } : {}),
       }),
       ...(i.pass ? scanPassChecks(i.pass.id, i.pass.facts) : []),
+      ...credentialChecks(i.credentialRefs),
       ...(i.approver
         ? [
             rowIs(
@@ -81,6 +84,23 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       ...i.codes,
     },
   });
+}
+
+function credentialChecks(refs: ScanWriteInput['credentialRefs']) {
+  const sql = (mode: string) => `NOT EXISTS (SELECT 1 FROM pass_credential_tombstones x
+    WHERE x.org_id = {org} AND x.mode = ${mode} AND x.credential_hash IN (SELECT value FROM json_each(?)))`;
+  return [
+    ...(refs?.current.length
+      ? [tenantCheck('lineage', sql('{mode}'), [JSON.stringify(refs.current)])]
+      : []),
+    ...(refs?.other.length
+      ? [
+          tenantCheck('lineage', sql("(CASE {mode} WHEN 'live' THEN 'test' ELSE 'live' END)"), [
+            JSON.stringify(refs.other),
+          ]),
+        ]
+      : []),
+  ];
 }
 
 /** Every table a scan write grant may name; each purpose lists what it writes. */

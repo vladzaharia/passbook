@@ -1,6 +1,7 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { toHex } from '../../platform/ids.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
 import { historyProofFields, PRIVATE_LABELS } from './repo-history-proof-fields.ts';
@@ -267,9 +268,10 @@ export function historyProofSnapshotPredicates(
       LEFT JOIN template_versions hp_event_active ON hp_event_active.template_id=${scanAlias}.template_id
         AND hp_event_active.version=CASE WHEN json_valid(hp_ledger.data)
           THEN json_extract(hp_ledger.data,'$.authority.activeTemplateVersion') END
-      LEFT JOIN template_releases hp_release ON hp_release.id=hp_pass.release_id
+      LEFT JOIN template_releases hp_release ON hp_release.id=(${usedReleaseIdSql('hp_pass')})
       LEFT JOIN template_versions hp_legacy ON hp_legacy.template_id=hp_pass.template_id
         AND hp_legacy.version=hp_pass.template_version AND hp_pass.release_id IS NULL
+        AND hp_release.id IS NULL
 
       LEFT JOIN template_versions hp_current_pinned ON hp_current_pinned.template_id=hp_pass.template_id
         AND hp_current_pinned.version=hp_pass.template_version

@@ -109,7 +109,7 @@ describe('bounded scanner action replay', () => {
             ['0'.repeat(64), pass.id],
           );
         } else {
-          await run(real, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [
+          await run(real, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
             'replaced-scanner-secret',
             scanner.id,
           ]);

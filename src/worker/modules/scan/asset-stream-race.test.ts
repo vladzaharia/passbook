@@ -241,6 +241,13 @@ describe('scanner asset stream races', () => {
         spy.mockRestore();
       }
       expect(opened).toBe(true);
+      if (change === 'template') {
+        // Authority is the template's status and org, not its history: A-B-A is the same template.
+        expect(cancelled).toBe(0);
+        expect(response.status).toBe(200);
+        await response.body?.cancel();
+        return;
+      }
       expect(cancelled).toBe(1);
       await missing(response);
     },
@@ -290,7 +297,7 @@ describe('scanner asset stream races', () => {
     },
   );
 
-  it('cancels a photo when its approved release changes during R2 access', async () => {
+  it('serves a photo when a release is approved during R2 access (content, not authority)', async () => {
     const fixture = await photoPass();
     const photo = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
     const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
@@ -317,8 +324,9 @@ describe('scanner asset stream races', () => {
       spy.mockRestore();
     }
     expect(opened).toBe(true);
-    expect(cancelled).toBe(1);
-    await missing(response);
+    expect(cancelled).toBe(0);
+    expect(response.status).toBe(200);
+    await response.body?.cancel();
   });
 
   it('cancels a photo after signing identity A→B→A during the R2 read', async () => {

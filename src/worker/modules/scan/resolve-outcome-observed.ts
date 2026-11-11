@@ -19,6 +19,7 @@ import { currentFound } from './resolve-outcome-current.ts';
 import {
   acceptedFilter,
   candidateEligible,
+  candidateDetectionProof,
   candidateReadProof,
   currentInputActor,
   inputCandidates,
@@ -137,8 +138,7 @@ export async function resolveObserved(
       (candidate) => candidate.pass.mode !== actor.mode,
     );
     if (!other.length) return unknown();
-    const proofs = (now: number) =>
-      other.map((candidate) => candidateReadProof(actor, candidate, credentials, now));
+    const proofs = () => other.map((candidate) => candidateDetectionProof(actor, candidate, credentials));
     const absence = await inputCandidates(ctx, actor, req.input, credentials, candidateEligible);
     if (
       !(await currentInputActor(

@@ -134,6 +134,8 @@ export function registerOverrides() {
     const t = await kit.scanTemplate('Small room', { actions: [CHECK_IN] });
     const ev = await kit.event({ templateIds: [t] });
     await run(kit.env.DB, 'UPDATE scan_events SET capacity = 1 WHERE id = ?', [ev.id]);
+    // Managers seeded by earlier cases of the shared org would make the override approvable.
+    await run(kit.env.DB, 'UPDATE scan_staff SET disabled_at = 1 WHERE org_id = ?', [kit.org.id]);
     const s = await kit.scanner({ eventId: ev.id });
     const [p, q] = [await kit.scanPass(t), await kit.scanPass(t)];
     expect((await out(await act(s.headers, codeOf(p)))).kind).toBe('ok');

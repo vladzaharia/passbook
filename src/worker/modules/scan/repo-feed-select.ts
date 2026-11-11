@@ -1,3 +1,4 @@
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import {
   legacyScanProvenanceSql,
   recordedScanProvenanceSql,
@@ -58,7 +59,7 @@ export const policyCandidateSql = (scan: 's' | 'cs', nowSql = '?') => `(CASE
       AND t.status != 'deleted'
     JOIN template_versions pinned_version
       ON pinned_version.template_id = p.template_id AND pinned_version.version = p.template_version
-    LEFT JOIN template_releases policy_release ON policy_release.id = p.release_id
+    LEFT JOIN template_releases policy_release ON policy_release.id = (${usedReleaseIdSql('p')})
     WHERE p.id = ${scan}.pass_id AND p.org_id = ${scan}.org_id AND p.mode = ${scan}.mode
       AND p.template_id = ${scan}.template_id
       AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.status = 'active'
@@ -146,7 +147,7 @@ export const SELECT = `SELECT s.id, s.org_id, s.mode, s.at, s.outcome, s.reason,
     AND current_wallet.version = (SELECT v.version FROM pass_versions v
       WHERE v.pass_id = current_pass.id AND v.version <= current_pass.version
       ORDER BY v.version DESC LIMIT 1)
-  LEFT JOIN template_releases current_head ON current_head.id = current_pass.release_id
+  LEFT JOIN template_releases current_head ON current_head.id = (${usedReleaseIdSql('current_pass')})
   LEFT JOIN orgs current_org ON current_org.id = current_pass.org_id
   LEFT JOIN connections current_connection ON current_connection.id = current_pass.connection_id
     AND current_connection.org_id = current_pass.org_id AND current_connection.enabled = 1

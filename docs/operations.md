@@ -288,15 +288,14 @@ What the new Worker does with 0024 data:
 - **Uploaded templates** get a `legacy` live release at their active version from the bootstrap.
 - **Baked templates** (unassigned or assigned to an org by PATCH) get a `system` release from the
   baked sync. `--promote` starts it right after serving and waits until every live pass has a
-  head (step 3); the minute cron (`templates.sync`) is the fallback. Until then passes of baked
-  templates cannot be scanned, refreshed or issued.
-- **Passes on an older template version** than the release head are refused by the scanner
-  (`not_found`) and by refresh (`TEMPLATE_RELEASE_CONFLICT`) until the minute cron's reissue moves
-  them (`template.reissue_started`, a bulk workflow; holders get a Wallet update). A new baked
-  build always makes every baked pass stale.
-- **Archived templates** keep their passes in Wallets, but the scanner refuses them
-  (`SCAN_PASS_CHANGED`) until the template is active. The bootstrap gives archived templates no
-  release.
+  head (step 3); the minute cron (`templates.sync`) is the fallback. Until then new passes of baked
+  templates cannot be issued; existing passes keep scanning and refreshing at their own version.
+- **Passes on an older template version** than the release head keep scanning and refreshing at
+  their own version. The minute cron's reissue moves them to the head (`template.reissue_started`, a
+  bulk workflow; holders get a Wallet update). A new baked build makes every baked pass stale.
+- **Archived templates** keep scanning and refreshing their existing passes at their own version.
+  They have no release head, so new passes cannot be issued from them until the template is active.
+  Only a deleted template stops its passes.
 - **Queued pass and bundle emails** carry no binding. The bootstrap binds them to their pass or
   bundle; sent on the legacy intent path (`delivery.legacy_intent`).
 - **Queued pushes** are bound by migration 0045. Queue messages for `connection.webhook` and
@@ -332,8 +331,8 @@ the last commit to `wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop
    ```
 
    Pending pass and bundle email is bound by the bootstrap.
-6. Archived templates with live passes. These stop scanning after the cutover. Un-archive the ones
-   that must keep scanning before Order step 1, so the bootstrap gives them a release:
+6. Archived templates with live passes. Their passes keep scanning; un-archive one only to issue new
+   passes from it:
 
    ```sql verify-archived
    SELECT t.id, t.origin, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id

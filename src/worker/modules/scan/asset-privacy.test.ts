@@ -157,12 +157,12 @@ describe('scanner pass asset privacy', () => {
       await asset(scanner, notIncluded.id, 'thumbnail@3x.png', grant),
       overrideThumbnail,
     );
-    await updateMemberPhoto(kit.ctx, system, notIncluded.id, true, null);
+    await updateMemberPhoto(jobCtxOf(kit), system, notIncluded.id, true, null);
     for (const name of photoNames) {
       await expectMissing(await asset(scanner, notIncluded.id, name, grant));
       await expectMissing(await asset(scanner, notIncluded.id, name, photoGrant));
     }
-    await updateMemberPhoto(kit.ctx, system, notIncluded.id, false, null);
+    await updateMemberPhoto(jobCtxOf(kit), system, notIncluded.id, false, null);
     await expectMissing(await asset(scanner, notIncluded.id, 'member.png', grant));
     await expectMissing(await asset(scanner, notIncluded.id, 'member.png', photoGrant));
     await expectMissing(await asset(scanner, notIncluded.id, 'thumbnail@3x.png', grant));

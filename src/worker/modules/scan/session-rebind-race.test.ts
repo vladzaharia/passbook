@@ -336,16 +336,16 @@ function outcome(phase: Phase, change: Change): Outcome {
     change === 'scanner name';
   if (phase === 'final guard' || phase === 'final report') {
     // Template status and the release head are not scanner, session or event authority.
-    // A bound session takes its templates from its own accepts, not from the scanner's list, and an
-    // event rename moves no epoch.
+    // An event rename moves no epoch.
     if (
       change === 'parent revision' ||
       change === 'template status' ||
       change === 'release head' ||
-      change === 'event row' ||
-      change === 'scanner templates'
+      change === 'event row'
     )
       return ok;
+    // A lost or rotated credential unpairs the device; the rest keeps the generic not-found.
+    if (credential) return { status: 401, code: 'SCANNER_REPAIR' };
     return { status: 404, code: 'SCANNING_SESSION_NOT_FOUND' };
   }
   if (phase === 'unbind') {
@@ -354,11 +354,10 @@ function outcome(phase: Phase, change: Change): Outcome {
       volatile ||
       change === 'template status' ||
       change === 'release head' ||
-      change === 'event row' ||
-      change === 'scanner templates'
+      change === 'event row'
     )
       return ok;
-    // Configuration that moved after the actor derived it: 409, and the client refetches.
+    // Configuration that moved (a scanner template change bumps the scanner's config epoch) after the actor derived it: 409, and the client refetches.
     return { status: 409, code: 'SCAN_CONFIG_CHANGED' };
   }
   if (phase === 'before report') {

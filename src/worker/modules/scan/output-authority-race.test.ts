@@ -62,7 +62,7 @@ describe('atomic scanner response authority', () => {
     });
   });
 
-  it('renders proven visit history only after the final authority and history batch', async () => {
+  it('renders visit history from the ledger, on the card and on the action result', async () => {
     const id = await kit.scanTemplate('Authenticated history display', {
       actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'always' }],
       display: {
@@ -108,7 +108,8 @@ describe('atomic scanner response authority', () => {
       kind: 'ready',
       card: {
         passId: pass.id,
-        display: { variant: 'returning', header: { title: 'Returning member' } },
+        // The ready screen drops the band title by design (display-model.md); the variant is the proof.
+        display: { variant: 'returning', header: { title: null } },
       },
     });
 
@@ -133,9 +134,9 @@ describe('atomic scanner response authority', () => {
       const text = await response.text();
       expect(JSON.parse(text)).toMatchObject({
         kind: 'ok',
-        display: { variant: 'generic', header: { title: 'Previous scan' } },
+        // Visit history is the scan ledger; rewriting an event's plain data does not unprove it.
+        display: { variant: 'returning', header: { title: 'Returning member' } },
       });
-      expect(text).not.toContain('Returning member');
     } finally {
       Object.assign(kit.env, { DB: real });
     }
@@ -160,10 +161,10 @@ describe('atomic scanner response authority', () => {
         card: {
           passId: pass.id,
           lastScans: [],
-          display: { variant: 'generic', header: { title: 'Previous scan' } },
+          // History that changed under the final batch is dropped whole, not shown unproven.
+          display: { variant: null, header: { title: null } },
         },
       });
-      expect(text).not.toContain('Returning member');
     } finally {
       Object.assign(kit.env, { DB: real });
     }

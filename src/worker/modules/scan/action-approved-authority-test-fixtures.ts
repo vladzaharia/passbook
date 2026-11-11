@@ -53,7 +53,8 @@ export async function raceApproved(
               if (member === 'bind')
                 return (...params: unknown[]) => {
                   const bound = statement.bind(...params);
-                  grantStatements.add(bound);
+                  // The claim batch also opens with a grant; the race belongs to the commit that follows.
+                  if (!params.includes('org_mode.scan.claim')) grantStatements.add(bound);
                   return bound;
                 };
               const value = Reflect.get(statement, member, statement);

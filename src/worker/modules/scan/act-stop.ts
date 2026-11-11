@@ -142,6 +142,14 @@ export async function finishStop(
     now,
     event: authority.event ?? null,
     ...(authority.templateId ? { templateId: authority.templateId } : {}),
+    ...(!checked && s.countMiss
+      ? {
+          credentialRefs: {
+            current: s.credentialTombstoneRefs,
+            other: s.otherModeCredentialTombstoneRefs,
+          },
+        }
+      : {}),
     ...(checked ? { pass: { id: checked.id, facts: { pass: checked, credential: {} } } } : {}),
     tables: SCAN_STOP_TABLES,
   });

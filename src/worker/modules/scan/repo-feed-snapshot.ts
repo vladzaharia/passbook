@@ -1,5 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { policyCandidateSql } from './repo-feed-select.ts';
 import {
   HEX_SLICE,
@@ -135,7 +136,7 @@ function scanLogSnapshotSql(dataSql: string, sliced: ReadonlyMap<number, number>
             SELECT v.version FROM pass_versions v WHERE v.pass_id=p.id AND v.version<=p.version
             ORDER BY v.version DESC LIMIT 1
           )
-          LEFT JOIN template_releases key_head ON key_head.id=p.release_id
+          LEFT JOIN template_releases key_head ON key_head.id=(${usedReleaseIdSql('p')})
           LEFT JOIN orgs key_org ON key_org.id=p.org_id
           LEFT JOIN templates key_template ON key_template.id=p.template_id
             AND (key_template.org_id IS NULL OR key_template.org_id=p.org_id)

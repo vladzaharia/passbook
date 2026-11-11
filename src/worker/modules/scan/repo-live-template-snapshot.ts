@@ -1,6 +1,7 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { decodeBoundLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
@@ -113,9 +114,9 @@ function snapshotExpressionSql(): string {
 
 const snapshotJoins = `LEFT JOIN templates snapshot_template ON snapshot_template.id=p.template_id
   LEFT JOIN template_versions pinned ON pinned.template_id=p.template_id AND pinned.version=p.template_version
-  LEFT JOIN template_releases ar ON ar.id=p.release_id
+  LEFT JOIN template_releases ar ON ar.id=(${usedReleaseIdSql('p')})
   LEFT JOIN template_versions legacy ON legacy.template_id=p.template_id AND legacy.version=p.template_version
-    AND p.release_id IS NULL
+    AND p.release_id IS NULL AND ar.id IS NULL
   LEFT JOIN template_versions snapshot_active ON snapshot_active.template_id=p.template_id
     AND snapshot_active.version=COALESCE(ar.version,legacy.version)`;
 

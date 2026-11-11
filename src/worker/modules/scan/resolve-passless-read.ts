@@ -6,6 +6,7 @@ import type { ScanActor } from './guard.ts';
 import { prepareReadMiss } from './misses.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { passOutputPredicate } from './repo-output-authority.ts';
+import { detectionOutputPredicate } from './repo-output-detection.ts';
 import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
 import { inputActorFence, inputCandidatesPredicate } from './repo-resolve-passless-read.ts';
 
@@ -133,4 +134,21 @@ export async function currentInputActor(
   const status = miss.result(results.slice(1 + proofStmts.length));
   miss.throwIfCapped(status);
   return status === 'counted';
+}
+
+/** Proof for a cross-mode detection: the other-mode credential is still the one observed. */
+export function candidateDetectionProof(
+  actor: ScanActor,
+  candidate: Candidate,
+  credentials: CredentialTombstoneSnapshot,
+): OutputPredicate {
+  const refs =
+    candidate.pass.mode === actor.mode
+      ? credentials.credentialTombstoneRefs
+      : credentials.otherModeCredentialTombstoneRefs;
+  return detectionOutputPredicate({
+    pass: candidate.pass,
+    credentialTombstoneRefs: refs,
+    credentialKeysetCommitment: credentials.credentialKeysetCommitment,
+  });
 }
