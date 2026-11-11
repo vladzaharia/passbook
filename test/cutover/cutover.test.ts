@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildBootstrap, snapshotSql } from '../../tools/lib/bootstrap-tenancy.ts';
+import { buildBootstrap } from '../../tools/lib/bootstrap-tenancy.ts';
 import { missingSecrets, parseVersionId } from '../../tools/lib/deploy-plan.ts';
 import { makeEnv } from '../helpers/index.ts';
+import { runBootstrap } from './run-bootstrap.ts';
 
 const NOW = 1_800_000_000_000;
 
@@ -38,31 +39,7 @@ async function seed(db: D1Database) {
   for (const sql of statements) await db.prepare(sql).run();
 }
 
-async function bootstrap(db: D1Database) {
-  const row = await db.prepare(snapshotSql('owner@example.com')).first<{ snapshot: string }>();
-  const snapshot = JSON.parse(row?.snapshot ?? '{}');
-  const result = await buildBootstrap(
-    {
-      owner: snapshot.owner ?? null,
-      orgs: snapshot.orgs ?? [],
-      templates: snapshot.templates ?? [],
-    },
-    'owner@example.com',
-    NOW,
-  );
-  const statements = result.sql
-    .split(/;\n(?=INSERT)/)
-    .map((s) =>
-      s
-        .replace(/^--.*\n/, '')
-        .replace(/\s*\n\s*/g, ' ')
-        .trim()
-        .replace(/;$/, ''),
-    )
-    .filter(Boolean);
-  for (const sql of statements) await db.prepare(sql).run();
-  return result;
-}
+const bootstrap = (db: D1Database) => runBootstrap(db, 'owner@example.com', NOW);
 
 describe('bootstrap-tenancy', () => {
   it('adds one org_admin membership per live org and a legacy release per uploaded template', async () => {
@@ -123,7 +100,11 @@ describe('bootstrap-tenancy', () => {
 
   it('refuses an unknown owner', async () => {
     await expect(
-      buildBootstrap({ owner: null, orgs: [], templates: [] }, 'nobody@example.com', NOW),
+      buildBootstrap(
+        { owner: null, orgs: [], templates: [], emails: [] },
+        'nobody@example.com',
+        NOW,
+      ),
     ).rejects.toThrow('No user nobody@example.com');
   });
 });

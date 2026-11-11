@@ -459,12 +459,13 @@ Revoke the session instead.
 
 ### 6.2 Cutover window
 
-**`tools/deploy.ts` (cutover agent):**
+**`tools/deploy.ts` (cutover agent), run as `--migrate-only` and `--promote` (§6.4):**
 1. Secret list.
 2. `versions upload`.
 3. Bookmark.
-4. Migrate 0025-0052.
-5. `versions deploy`.
+4. Migrate 0025-0054. `--migrate-only` stops here.
+5. `tools/bootstrap-tenancy.ts`: memberships, legacy releases, queued mail bound (owner runs it, remote).
+6. `versions deploy` (`--promote`).
 
 Between steps 4 and 5 the baseline Worker serves against the new schema. Migrations 0025-0051 already break some baseline writes. `0052` adds one known break (the baseline `ensureOrgStmt`, below): every new column has a default, guards reject only decreases, grants are unused, and the no-replace guards refuse only a statement that hits an existing key.
 
@@ -511,6 +512,34 @@ Forward-only database. Once migrations have run, roll forward only (owner answer
 **Tests:**
 - Rollback with new-shape messages is exercised on a preview database.
 - A Time Travel restore to the bookmark is the last resort; it loses writes made after the migration (W1-03).
+
+### 6.4 Cutover rehearsal and decisions (2026-11-11)
+
+`test/cutover/` migrates a populated 0024 database through 0054, runs the bootstrap and the baked sync, and exercises it. Shapes: unassigned baked, baked assigned to an org, baked assigned with no passes, uploaded active, uploaded archived, uploaded with no passes. Each has live passes (except the empty ones), a pre-cutover check-in, a queued push and a queued pass email. The runbook is `docs/operations.md`, "Cutover from schema 0024"; its SQL blocks are executed by the test.
+
+**Findings and fixes:**
+
+| Finding | Fix |
+| --- | --- |
+| Queued pass email (`{ to, attach }`, no `intent`) cancelled as `DELIVERY_UNBOUND`; the legacy intent path was unreachable for real 0024 rows. | `bootstrap-tenancy` writes `payload.intent` (no `actor`, so `legacy: true`) for unsent pass mail from the pass's current state. SQL cannot hash the download token, so this is the tool's job, not a migration's. The row is bound only while the pass is the one the snapshot saw. |
+| Assigned baked templates have no release until the baked sync runs. | See below: the sync owns it. No code change. |
+| Passes pinned to an older template version are refused (scan `not_found`, refresh `TEMPLATE_RELEASE_CONFLICT`); a new baked build makes every baked pass stale. | None needed: `reissueStaleTemplates` (minute cron) queues the upgrade. Documented, with a before and after query. |
+| Archived uploaded templates: no effective release; scan refused (`SCAN_PASS_CHANGED`). Refresh still works through legacy maintenance (the scope has no release history). Migration 0038 refuses a `legacy` release for a non-active template. | Not fixed in SQL. By design `effectiveReleaseIdSql` requires `status = 'active'`. Pre-check: un-archive what must keep scanning before the bootstrap. |
+| Deploy ran migrate and promote in one command, leaving no slot for the bootstrap. | `--migrate-only` and `--promote`. |
+| `wrangler d1 execute --command` with the snapshot SQL was fragile to quote. | The tool writes `.wrangler/bootstrap-snapshot.sql` (`--print-remote`) and the owner runs `--file`. |
+| Compound `SELECT` is capped at 5 terms in D1 (found by running the runbook queries). | The count query is one `json_object`. |
+
+**Assigned baked templates: the baked sync creates the org-scoped release, not the bootstrap.**
+
+- `effectiveReleaseIdSql` honors a `legacy` release only for `origin = 'uploaded'`; a baked template needs a `system` release with `org_id = templates.org_id`. A bootstrap `legacy` release for a baked template would be ignored, or would need the predicate widened (module code) and a second provenance for baked content.
+- A `system` release needs the verified content hash, the `template_version_hashes` row and the sealed preview extras. Only the sync computes them.
+- The sync already scopes by the stored `templates.org_id`, so a PATCH assignment (or a manifest `org`) from the old Worker gets its org release and an unassigned template gets the platform release. The test proves both, including the legacy `templates.baked_hash` adoption path.
+- Cost: from promote to the first `templates.sync` tick (the minute cron), baked passes cannot be scanned or refreshed. Uploaded templates are covered from the bootstrap. The runbook shortens it by opening Admin, Templates, and checks `verify-heads`.
+- Adoption needs `CF_VERSION` (`version_metadata` binding) so the new build's upload time is ordered after the old Worker's last sync; without it a changed hash counts as superseded and the sync skips.
+
+**Deploy mode.** `wrangler.jsonc` is identical at `main` and HEAD, so the normal version flow applies (§6.2); `--first` would serve before the bootstrap.
+
+**In-window old writes.** `authority-baseline.test.ts` pins the list above. Beyond holder edit and `ensureOrgStmt`, the 0042 trigger also aborts the old attach hooks: pass create for a holder with an account, delete of an owned pass, owner release (`DELETE /api/v1/me/passes/{id}`), and sign-in attach for a holder with a waiting pass. The WAF rule covers the admin and integration writes; sign-in and sync failures last seconds and retry (operations.md, "Temporary WAF rule").
 
 ## 7. Implementation plan (B1, M6)
 

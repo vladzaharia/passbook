@@ -90,7 +90,8 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    a release adds a queue consumer, a workflow or a Durable Object class. After it, check
    `npx wrangler queues info wallet-jobs` lists the Worker as consumer; later releases use the
    default versions flow.
-   An existing database also needs [Cutover](#cutover-from-schema-0024).
+   An existing database (schema 0024) is not deployed this way: follow
+   [Cutover](#cutover-from-schema-0024), which splits the run with `--migrate-only` and `--promote`.
 10. **First admin**: a new database has no memberships. Run
     `node tools/bootstrap-tenancy.ts --owner <your email> --apply` locally, or the printed remote
     commands, after signing in once. Then sign in through Pocket ID as a `wallet-admins` member
@@ -277,43 +278,199 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 
 ## Cutover from schema 0024
 
-For passbook.mobile: live passes are in Wallets, D1 is at 0024, migrations 0025-0051 have never run
-in production. Data is preserved. The migrations backfill removed passes (0030), queued pushes
-(0045) and allow legacy releases (0031/0038); `tools/bootstrap-tenancy.ts` adds memberships and
-releases.
+For passbook.mobile: live passes are in Wallets, D1 is at 0024, migrations 0025-0054 have never run
+in production. All data is preserved. The owner runs every remote step; an agent never does.
+`test/cutover/` rehearses this order on a 0024 database with every template shape. Rollback is
+roll forward only. Design and decisions: `docs/design/authority-epochs.md` §6.
 
-Before:
+What the new Worker does with 0024 data:
 
-1. `npm run check` passes on the commit to deploy. A second person reviews the diff and the plan.
-2. Drain the queues. Stop sources of new work (connection syncs, broadcasts, bulk actions), then
-   wait until pending counts are zero in the Cloudflare dashboard (Queues). Queued messages were
-   built by the old Worker; the new one acks unknown shapes as invalid.
-3. Measure the credential-reference keyset initializer, which scans `scan.*` rows once, on the
-   first call after deploy: `SELECT count(*) FROM pass_events WHERE kind LIKE 'scan.%'`
-   (`--remote`, read only). About 40 µs per row (5,000 rows 0.2 s, 50,000 rows 2 s on a laptop).
-   Past roughly 500,000 rows it may exceed D1's per-query limit; tell the engineers first.
-4. `node tools/deploy.ts --check`, then `npm run deploy`, and read the plan.
+- **Uploaded templates** get a `legacy` live release at their active version from the bootstrap.
+- **Baked templates** (unassigned or assigned to an org by PATCH) get a `system` release from the
+  baked sync, which the minute cron runs (`templates.sync`). Until it has run, passes of baked
+  templates cannot be scanned, refreshed or issued. Normally under a minute after promote.
+- **Passes on an older template version** than the release head are refused by the scanner
+  (`not_found`) and by refresh (`TEMPLATE_RELEASE_CONFLICT`) until the minute cron's reissue moves
+  them (`template.reissue_started`, a bulk workflow; holders get a Wallet update). A new baked
+  build always makes every baked pass stale.
+- **Archived templates** keep their passes in Wallets, but the scanner refuses them
+  (`SCAN_PASS_CHANGED`) until the template is active. The bootstrap gives archived templates no
+  release.
+- **Queued pass emails** carry no binding. The bootstrap binds them to their pass; sent as the
+  legacy intent path (`delivery.legacy_intent`). Unbound bundle emails cancel (`DELIVERY_UNBOUND`).
+- **Queued pushes** are bound by migration 0045. Queue messages for `connection.webhook` and
+  `pass.refresh` built by the old Worker are logged and retained as ignored; `email.send` and
+  `push.deliver` messages carry only an outbox id and work.
+- **Memberships**: the bootstrap makes `--owner` `org_admin` in every non-deleted org. Other
+  platform admins (`wallet-admins`) need no membership.
 
-Deploy:
+### Deploy mode
 
-5. `npm run deploy -- --apply`. The old Worker keeps serving until the new version is promoted.
-   The pre-cutover Worker is not supported on the migrated schema (new triggers reject its
-   writes), so from the migration to the promote, pass writes and pushes fail. Keep that gap to
-   seconds and do not leave a failed run half done. If it stops after the migration, fix and
-   re-run the promote: `npx wrangler versions deploy <version>@100%`.
-6. Bootstrap, in the order printed by `node tools/bootstrap-tenancy.ts --owner <email>`: read a
-   snapshot, review the plan, apply the SQL. One accepted invitation and `org_admin` membership
-   per org for the owner, and one `legacy` live release per uploaded template and org at its
-   active version. It is idempotent and writes `audit_log` rows (`org_membership.bootstrap`,
-   `template_release.bootstrap`). The owner must have signed in once (a `users` row).
-7. Verify: the owner sees each org's passes, a connector create succeeds, a pass in Wallet
-   refreshes (push), `GET /health` is 200, and Status is green.
+Use the normal version flow, split in two runs: `--migrate-only`, bootstrap, `--promote`.
+`wrangler.jsonc` is identical at `main` and HEAD (`git diff main HEAD -- wrangler.jsonc` is empty):
+same `wallet-jobs` and `wallet-jobs-dlq` consumers, same four workflows, same `ScanHub` Durable
+Object, same crons. Nothing needs `wrangler deploy` to register. `--first` would serve the new
+Worker the moment the migrations finish, before the bootstrap binds queued mail and releases.
+Confirm production runs the `main` config: `npx wrangler deployments list` shows a deploy newer than
+the last commit to `wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop and decide again.
 
-Rollback: roll forward. Once the migrations have run, ship fixes as a new Worker version.
-Promoting an earlier version built for the new schema is an emergency degraded mode only
-(`docs/design/authority-epochs.md` §6.3). The pre-cutover Worker is not supported after the
-migrations, and restoring a bookmark would lose tombstones, retired ids and every pass change
-since. During a gradual deploy an older version serves templates from the database.
+### Pre-checks
+
+1. `npm run check` passes on the commit to deploy. A second person reviews the diff and this plan.
+2. `npm run deploy:check -- --secrets` prints "ready to deploy".
+3. `npm run deploy` (dry run) prints the plan. The owner has signed in once (a `users` row).
+4. D1 Time Travel: `npx wrangler d1 time-travel info wallet-platform` and note the bookmark. The
+   deploy records its own in `.wrangler/d1-bookmarks.log`.
+5. Queues. Stop sources of new work (connection syncs, broadcasts, bulk actions). Dashboard, Queues:
+   `wallet-jobs` and `wallet-jobs-dlq` at zero backlog. Then read-only SQL, each as
+   `npx wrangler d1 execute wallet-platform --remote --command "<sql>"`:
+
+   ```sql verify-outbox
+   SELECT kind, state, count(*) AS n FROM outbox
+   WHERE state IN ('pending', 'enqueued', 'processing') GROUP BY kind, state
+   ```
+
+   ```sql verify-bundle-email
+   SELECT count(*) AS n FROM outbox
+   WHERE kind = 'email' AND state IN ('pending', 'enqueued', 'processing')
+     AND json_extract(payload, '$.bundleId') IS NOT NULL
+   ```
+
+   Pending bundle email must be 0 (wait or cancel); pass email is bound by the bootstrap.
+6. Archived templates with live passes. These stop scanning after the cutover. Un-archive the ones
+   that must keep scanning before Order step 1, so the bootstrap gives them a release:
+
+   ```sql verify-archived
+   SELECT t.id, t.origin, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE t.status != 'active' AND p.deleted_at IS NULL AND p.status = 'active' GROUP BY t.id, p.org_id
+   ```
+7. Passes on an old template version. Expect one bulk reissue per row after the cutover:
+
+   ```sql verify-stale-before
+   SELECT p.template_id, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE p.deleted_at IS NULL AND p.status = 'active' AND p.template_version != t.active_version
+   GROUP BY p.template_id, p.org_id
+   ```
+8. Record the counts; they must not drop:
+
+   ```sql verify-counts
+   SELECT json_object(
+     'users', (SELECT count(*) FROM users), 'orgs', (SELECT count(*) FROM orgs),
+     'templates', (SELECT count(*) FROM templates), 'template_versions', (SELECT count(*) FROM template_versions),
+     'passes', (SELECT count(*) FROM passes), 'pass_versions', (SELECT count(*) FROM pass_versions),
+     'devices', (SELECT count(*) FROM devices), 'registrations', (SELECT count(*) FROM registrations),
+     'scans', (SELECT count(*) FROM scans), 'outbox', (SELECT count(*) FROM outbox),
+     'api_keys', (SELECT count(*) FROM api_keys), 'sessions', (SELECT count(*) FROM sessions),
+     'download_tokens', (SELECT count(DISTINCT download_token) FROM passes),
+     'auth_tokens', (SELECT count(auth_token) FROM passes)) AS counts
+   ```
+
+### Temporary WAF rule
+
+Cloudflare console, passbook.mobile zone, Security, WAF, Custom rules. Name `cutover`, action Block,
+custom response 503 `text/plain`, body `Maintenance. Back in a few minutes.` Create it first in the
+list and deploy it before step 1; delete it in step 6. The expression:
+
+```
+(http.host in {"passbook.mobile" "wallet.plrs.im"}
+  and http.request.method in {"POST" "PUT" "PATCH" "DELETE"}
+  and (starts_with(http.request.uri.path, "/api/v1/holders/")
+    or starts_with(http.request.uri.path, "/api/v1/passes")
+    or starts_with(http.request.uri.path, "/api/v1/me/passes/")))
+```
+
+Why these paths. Between migrate and promote the old Worker serves the new schema, and trigger
+`pass_credential_transfer_required` (0042) aborts any write to `holder_email`, `owner_user_id`,
+`serial`, `auth_token`, `identity_id`, `org_id`, `mode` or a set `scan_code` on `passes`:
+
+| Old write | Route | Result |
+| --- | --- | --- |
+| assign, reassign, unassign holder | `POST /api/v1/holders/assign`, `assign-bulk`, `reassign`, `unassign`, `clear-block` | fails |
+| remove an owned pass from an account | `DELETE /api/v1/me/passes/{id}` | fails |
+| create a pass for a holder who has an account (attach hook) | `POST /api/v1/passes` (also API keys) | pass inserted, request fails |
+| delete an owned pass | `DELETE /api/v1/passes/{id}` | fails |
+| other pass writes | `PATCH`, `/bulk`, `/bulk-reissue`, `/{id}/refresh`, `/rotate-link`, `/remove`, `/restore` | blocked as a precaution |
+
+Not blocked, because pass pages, Wallet updates and scanning must keep working (owner answer 5).
+These fail for seconds and succeed on retry after promote: sign-in of a holder who has a waiting
+pass (`/auth/oidc/callback`, `/auth/magic/consume`; the attach step aborts), and connection syncs
+or webhooks that create a pass for a holder with an account. The old baked sync batch
+(`ensureOrgStmt`) fails on an existing org slug, but only runs when the baked hash changes; the old
+Worker does not change it. `src/worker/platform/authority-baseline.test.ts` pins the old writes.
+
+### Order
+
+0. WAF rule on. Sources of new work stopped.
+1. `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not serving),
+   records a bookmark, applies 0025-0054, stops. The old Worker still serves.
+2. Bootstrap. The tool never touches production; it prints the commands:
+
+   ```
+   node tools/bootstrap-tenancy.ts --owner <email> --print-remote
+   npx wrangler d1 execute wallet-platform --remote --json --file .wrangler/bootstrap-snapshot.sql > .wrangler/bootstrap-snapshot.json
+   node tools/bootstrap-tenancy.ts --owner <email> --snapshot .wrangler/bootstrap-snapshot.json
+   npx wrangler d1 execute wallet-platform --remote --file .wrangler/bootstrap-tenancy.sql
+   ```
+
+   Read the plan the third command prints: one `org ...` line per org, one `template ...` line per
+   active uploaded template, one `email ...` line per queued pass email. The snapshot holds download
+   tokens; the tool deletes it after reading. Idempotent. Rerun it fresh if anything fails.
+3. `npm run deploy -- --promote --apply`. Serves the uploaded version at 100%.
+4. Baked sync. The minute cron runs `templates.sync` within a minute. To start it sooner, open
+   Admin, Templates while signed in. Then check that every live pass has a release head:
+
+   ```sql verify-heads
+   SELECT t.id, t.origin, t.status, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE p.deleted_at IS NULL AND p.mode = 'live' AND p.status = 'active'
+     AND NOT EXISTS (SELECT 1 FROM template_release_heads h
+       WHERE h.template_id = t.id AND h.mode = 'live' AND h.provider = 'apple'
+         AND h.org_scope = CASE WHEN t.origin = 'uploaded' OR t.org_id IS NOT NULL THEN p.org_id ELSE '' END)
+   GROUP BY t.id, t.origin, t.status, p.org_id
+   ```
+
+   Only archived templates may be listed. Anything else: wait one more minute, then see "If a
+   step fails".
+5. Verify, one query each:
+
+   ```sql verify-memberships
+   SELECT o.id, o.slug FROM orgs o WHERE o.status != 'deleted' AND NOT EXISTS (
+     SELECT 1 FROM org_memberships m WHERE m.org_id = o.id AND m.revoked_at IS NULL AND m.roles LIKE '%"org_admin"%')
+   ```
+
+   ```sql verify-email-unbound
+   SELECT count(*) AS n FROM outbox WHERE kind = 'email' AND state IN ('pending', 'enqueued')
+     AND json_extract(payload, '$.intent') IS NULL AND json_extract(payload, '$.bundleId') IS NULL
+   ```
+
+   ```sql verify-stale-after
+   SELECT p.template_id, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   JOIN template_release_heads h ON h.template_id = t.id AND h.mode = 'live' AND h.provider = 'apple'
+     AND h.org_scope = CASE WHEN t.origin = 'uploaded' OR t.org_id IS NOT NULL THEN p.org_id ELSE '' END
+   JOIN template_releases r ON r.id = h.release_id
+   WHERE p.deleted_at IS NULL AND p.mode = 'live' AND p.status = 'active' AND p.template_version != r.version
+   GROUP BY p.template_id, p.org_id
+   ```
+
+   Memberships and unbound mail return no rows or 0. Stale shrinks to 0 as the reissue runs. Rerun
+   `verify-counts`: nothing below the pre-check numbers (`scans`, `outbox`, `pass_versions` only
+   grow). Then in the product: the owner sees each org's passes, one baked and one uploaded pass
+   scan, a pass in Wallet refreshes (push), `GET /health` is 200, Status is green, and
+   `wallet-jobs-dlq` is empty.
+6. Delete the WAF rule. Restart the stopped sources.
+
+### If a step fails
+
+Roll forward. Never restore D1 to undo a deploy; a restore drops every write since the bookmark
+(registrations, scans, tombstones).
+
+| Where | What to do |
+| --- | --- |
+| Pre-checks or step 1 before the migration | Nothing changed. Fix and rerun. |
+| Step 1, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort only if no fix is possible: Time Travel restore to the step 1 bookmark, which loses Wallet registrations and scans written since. |
+| Step 2 | Stop before promote. The SQL is idempotent: take a fresh snapshot and rerun. A refused statement names the trigger; fix the tool, not the data. |
+| Step 3 | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. |
+| Step 4, heads missing after two minutes | Cron or sync failed: check logs for `templates.baked_sync_skipped` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS). Fix and ship a new version. Scanning of baked passes stays refused until then. |
+| Step 5 fails, Worker misbehaves | Ship a fixed version through the same two-run flow (`--migrate-only` finds nothing to migrate). Emergency degraded mode only to stop an outage: `npx wrangler queues pause-delivery wallet-jobs`, keep the WAF rule, promote the previous version with `npx wrangler versions deploy <previous>@100%`, then roll forward and resume delivery. The old Worker is not supported on the migrated schema. |
 
 ## Day two
 

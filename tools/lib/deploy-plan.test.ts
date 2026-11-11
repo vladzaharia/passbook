@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deployFlags, missingSecrets } from './deploy-plan.ts';
+import { deployFlags, deployStage, missingSecrets } from './deploy-plan.ts';
 
 describe('deployFlags', () => {
   it('reads argv', () => {
@@ -20,5 +20,17 @@ describe('missingSecrets', () => {
   it('returns names only', () => {
     const list = JSON.stringify([{ name: 'A', type: 'secret_text' }]);
     expect(missingSecrets(['A', 'B'], list)).toEqual(['B']);
+  });
+});
+
+describe('deployStage', () => {
+  it('runs everything unless a stage is named', () => {
+    expect(deployStage(new Set(['--apply']))).toBe('all');
+    expect(deployStage(new Set(['--migrate-only']))).toBe('migrate');
+    expect(deployStage(new Set(['--promote', '--first']))).toBe('promote');
+  });
+
+  it('refuses both stages in one run', () => {
+    expect(() => deployStage(new Set(['--migrate-only', '--promote']))).toThrow('separate runs');
   });
 });

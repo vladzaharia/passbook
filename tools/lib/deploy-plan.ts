@@ -51,3 +51,16 @@ export function deployFlags(argv: readonly string[], env: Record<string, string 
     if (env[`npm_config_${name.replaceAll('-', '_')}`] === 'true') flags.add(`--${name}`);
   return flags;
 }
+
+export type DeployStage = 'all' | 'migrate' | 'promote';
+
+/**
+ * `--migrate-only` stops after the migrations so the cutover bootstrap can run before anything serves
+ * the new schema; `--promote` then serves what was uploaded. Neither: the whole flow in one run.
+ */
+export function deployStage(flags: ReadonlySet<string>): DeployStage {
+  const migrate = flags.has('--migrate-only');
+  const promote = flags.has('--promote');
+  if (migrate && promote) throw new Error('--migrate-only and --promote are separate runs.');
+  return migrate ? 'migrate' : promote ? 'promote' : 'all';
+}

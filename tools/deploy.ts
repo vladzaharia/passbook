@@ -6,13 +6,16 @@
 //                                    promote the version
 //   npm run deploy -- --first --apply  first deploy, or one that adds queue consumers, workflows or
 //                                    Durable Object classes: bookmark D1, migrate, then wrangler deploy
+//   npm run deploy -- --migrate-only --apply   upload, bookmark, migrate; stop (cutover: bootstrap next)
+//   npm run deploy -- --promote --apply         serve the version uploaded by --migrate-only
+//                                    (with --first: `wrangler deploy` after --migrate-only --first)
 // Refuses while wrangler.jsonc still has placeholder ids or keys, or a required secret is unset.
 // Migrations are forward-only. Once they run, roll forward; the previous Worker version is an
 // emergency degraded mode only (docs/operations.md, Rollback). Never restore D1 to undo a deploy.
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { deployFlags, missingSecrets, parseVersionId } from './lib/deploy-plan.ts';
+import { deployFlags, deployStage, missingSecrets, parseVersionId } from './lib/deploy-plan.ts';
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
 
@@ -57,20 +60,24 @@ if (args.has('--check')) {
 // `versions upload` cannot create the Worker, apply Durable Object class changes or (as far as
 // Cloudflare documents) register queue consumers and workflows; only `wrangler deploy` does.
 const first = args.has('--first');
-const plan = first
-  ? [
-      `wrangler secret list   (fails unless all of ${required.join(', ') || 'none'} are set)`,
-      `wrangler d1 time-travel info ${database}   (bookmark recorded in .wrangler/d1-bookmarks.log)`,
-      `wrangler d1 migrations apply ${database} --remote`,
-      'wrangler deploy   (registers queue consumers, workflows and Durable Object classes; serves at once)',
-    ]
-  : [
-      `wrangler secret list   (fails unless all of ${required.join(', ') || 'none'} are set)`,
-      'wrangler versions upload   (a new version, not yet serving)',
-      `wrangler d1 time-travel info ${database}   (bookmark recorded in .wrangler/d1-bookmarks.log)`,
-      `wrangler d1 migrations apply ${database} --remote`,
-      'wrangler versions deploy <version>@100%   (promote)',
-    ];
+const stage = deployStage(args);
+const versionFile = resolve(root, '.wrangler/deploy-version.txt');
+const steps = {
+  secrets: `wrangler secret list   (fails unless all of ${required.join(', ') || 'none'} are set)`,
+  upload: 'wrangler versions upload   (a new version, not yet serving)',
+  bookmark: `wrangler d1 time-travel info ${database}   (bookmark recorded in .wrangler/d1-bookmarks.log)`,
+  migrate: `wrangler d1 migrations apply ${database} --remote`,
+  readVersion: 'read the version id saved by --migrate-only (.wrangler/deploy-version.txt)',
+  promote: first
+    ? 'wrangler deploy   (registers queue consumers, workflows and Durable Object classes; serves at once)'
+    : 'wrangler versions deploy <version>@100%   (promote)',
+};
+const plan = [
+  steps.secrets,
+  ...(stage === 'promote' ? (first ? [] : [steps.readVersion]) : first ? [] : [steps.upload]),
+  ...(stage === 'promote' ? [] : [steps.bookmark, steps.migrate]),
+  ...(stage === 'migrate' ? [] : [steps.promote]),
+];
 if (!args.has('--apply')) {
   console.log(`${plan.join('\n')}\nDry run. Re-run with --apply.`);
   process.exit(0);
@@ -79,6 +86,18 @@ if (!args.has('--apply')) {
 checkSecrets();
 
 mkdirSync(resolve(root, '.wrangler'), { recursive: true });
+const promote = (versionId: string | null) =>
+  console.log(
+    versionId ? wrangler('versions', 'deploy', `${versionId}@100%`, '--yes') : wrangler('deploy'),
+  );
+
+if (stage === 'promote') {
+  const saved = first ? null : readFileSync(versionFile, 'utf8').trim();
+  if (!first && !saved) throw new Error('No saved version id. Run --migrate-only first.');
+  promote(saved);
+  process.exit(0);
+}
+
 const outputFile = resolve(root, '.wrangler/deploy-output.ndjson');
 writeFileSync(outputFile, '');
 let versionId: string | null = null;
@@ -91,6 +110,7 @@ if (!first) {
   });
   versionId = parseVersionId(readFileSync(outputFile, 'utf8'), uploaded);
   if (!versionId) throw new Error('No version id from wrangler versions upload. Not migrating.');
+  writeFileSync(versionFile, `${versionId}\n`);
   console.log(`Uploaded Worker version ${versionId}; previous version keeps serving.`);
 }
 
@@ -104,6 +124,6 @@ console.log(
   `D1 bookmark ${bookmark}. Last resort only: a restore drops everything written since, including pass tombstones.`,
 );
 console.log(wrangler('d1', 'migrations', 'apply', database, '--remote'));
-console.log(
-  versionId ? wrangler('versions', 'deploy', `${versionId}@100%`, '--yes') : wrangler('deploy'),
-);
+if (stage === 'migrate')
+  console.log('Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.');
+else promote(versionId);
