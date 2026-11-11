@@ -1,5 +1,4 @@
 import type { SqlValue } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './actor.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import { usableScanTemplateSql } from './repo-scope-releases.ts';
@@ -51,7 +50,6 @@ export function summaryAuthority(
   const authority = packedScanAuthorityPredicate(actor, minimal);
   return {
     sql: `s.actor_key=?/* scan-ephemeral-actor-key */ AND s.org_id=? AND s.mode=? AND s.at>=? AND s.at<=?
-      AND ${credentialRefKeysetSql}
       AND s.state='done' AND s.action_kind IS NOT 'undo'
       AND ${historicalScopeSql} AND (${authority.sql}) AND (${csrf.sql})`,
     params: [
@@ -60,7 +58,6 @@ export function summaryAuthority(
       actor.mode,
       from,
       to,
-      actor.credentialKeysetCommitment ?? null,
       ...authority.params,
       ...csrf.params,
     ],

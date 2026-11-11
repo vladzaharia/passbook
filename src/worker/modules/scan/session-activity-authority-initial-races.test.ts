@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeSession, runOne } from '../../../../test/helpers/index.ts';
+import { run } from '../../platform/db.ts';
 import {
   ACTIVITY_NAME,
   activityFixture,
@@ -16,10 +17,6 @@ const races = [
   ['device', 'changed binding'],
   ['console', 'revoked membership'],
   ['console', 'rotated session'],
-  ['device', 'event revision'],
-  ['console', 'event revision'],
-  ['device', 'release head'],
-  ['console', 'release head'],
 ] as const;
 
 describe('initial session activity authority batch', () => {
@@ -67,14 +64,6 @@ describe('initial session activity authority batch', () => {
               f.auth.sessionId,
             ]);
           }
-          if (change === 'event revision')
-            await runOne(
-              db,
-              "UPDATE scan_events SET name='Changed',updated_at=updated_at+1 WHERE id=?",
-              [f.event.id],
-            );
-          if (change === 'release head')
-            await approveScanReleases(f.kit, f.template, { modes: ['live'], db });
         },
         { phase: 'initial' },
       );
@@ -85,6 +74,35 @@ describe('initial session activity authority batch', () => {
         f.pass.id,
         ACTIVITY_NAME,
       );
+    },
+  );
+
+  it.each([
+    ['device', 'event revision'],
+    ['console', 'event revision'],
+    ['device', 'release head'],
+    ['console', 'release head'],
+  ] as const)(
+    'still serves a %s read when %s changes after the original authorization',
+    async (consumer, change) => {
+      const f = await activityFixture();
+      const operation = consumer === 'device' ? f.device : f.console;
+      const response = await atActivityRead(
+        f.kit.env,
+        operation,
+        async (db) => {
+          // An event edit or a new release head is content: it moves no authority epoch the read holds.
+          if (change === 'event revision')
+            await run(
+              db,
+              "UPDATE scan_events SET name='Changed',updated_at=updated_at+1 WHERE id=?",
+              [f.event.id],
+            );
+          else await approveScanReleases(f.kit, f.template, { modes: ['live'], db });
+        },
+        { phase: 'final' },
+      );
+      expect(response.status).toBe(200);
     },
   );
 });

@@ -246,39 +246,43 @@ describe('scanner recent and summary privacy', () => {
     const real = env.DB;
     let fired = false;
     let invalidate: 'pass' | 'scanner' = 'pass';
-    const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-      new Proxy(statement, {
-        get(target, prop) {
-          if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-          if (prop === 'first')
-            return async () => {
-              const row = await target.first<{ id: string }>();
-              if (!fired && row?.id === passId) {
-                fired = true;
-                if (invalidate === 'pass')
-                  await run(real, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
-                    passId,
-                  ]);
-                else
-                  await run(real, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
-                    clock.now(),
-                    scanner.id,
-                  ]);
-              }
-              return row;
-            };
-          const value = Reflect.get(target, prop, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
+    // Fire once, just before the first batch that reads the actor's scan ledger: after the
+    // candidate rows were read, before the final authority read.
+    const sqlOf = new WeakMap<object, string>();
     const db = new Proxy(real, {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            return sql.includes('FROM passes p') && sql.includes('WHERE p.org_id = ?')
-              ? wrap(statement)
-              : statement;
+            sqlOf.set(statement, sql);
+            return new Proxy(statement, {
+              get(inner, name) {
+                if (name === 'bind')
+                  return (...values: unknown[]) => {
+                    const bound = inner.bind(...values);
+                    sqlOf.set(bound, sql);
+                    return bound;
+                  };
+                const member = Reflect.get(inner, name, inner);
+                return typeof member === 'function' ? member.bind(inner) : member;
+              },
+            });
+          };
+        if (prop === 'batch')
+          return async (statements: D1PreparedStatement[]) => {
+            if (!fired && statements.some((s) => sqlOf.get(s)?.includes('s.actor_key'))) {
+              fired = true;
+              if (invalidate === 'pass')
+                await run(real, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
+                  passId,
+                ]);
+              else
+                await run(real, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
+                  clock.now(),
+                  scanner.id,
+                ]);
+            }
+            return target.batch(statements);
           };
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
@@ -288,8 +292,8 @@ describe('scanner recent and summary privacy', () => {
     try {
       const recent = await scannerGet(scanner.headers, '/scans');
       expect(recent.status).toBe(200);
-      expect(await recent.json()).toEqual({ items: [] });
       expect(fired).toBe(true);
+      expect(await recent.json()).toEqual({ items: [] });
       await run(real, 'UPDATE passes SET test_data_quarantined = 0 WHERE id = ?', [passId]);
       fired = false;
       const summary = await scannerGet(scanner.headers, '/summary');

@@ -4,6 +4,10 @@ import type { SqlValue } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { EventRow } from '../events/repo.ts';
+import {
+  captureCredentialKeyEnv,
+  credentialRefKeysetCommitment,
+} from '../passes/credential-keyset.ts';
 import type { ScanActor } from './actor.ts';
 import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import {
@@ -235,20 +239,25 @@ async function scopedHistoryProofSnapshots(
 }
 
 /** Actor-owned, bounded verified snapshots. Cache is scoped to this request. */
-export function historyProofSnapshots(
+export async function historyProofSnapshots(
   ctx: ServiceContext,
   actor: ScanActor,
   ids: readonly string[],
   cache: Map<string, VerifiedHistoryProof | null>,
   proofCache?: ScanEventProofCache,
 ): Promise<Map<string, VerifiedHistoryProof>> {
+  const pinned = credentialKeysetContext(ctx);
+  // Reads do not capture a keyset on the actor; the request's own key ring names it.
+  const commitment =
+    actor.credentialKeysetCommitment ??
+    (await credentialRefKeysetCommitment(captureCredentialKeyEnv(pinned.env)));
   return scopedHistoryProofSnapshots(
-    credentialKeysetContext(ctx),
+    pinned,
     ids,
     cache,
     's.actor_key=?/* scan-ephemeral-actor-key */ AND s.org_id=? AND s.mode=?',
     [actor.actorKey, actor.orgId, actor.mode],
-    actor.credentialKeysetCommitment,
+    commitment,
     proofCache,
   );
 }

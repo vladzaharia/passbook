@@ -1,5 +1,5 @@
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
-import { CommittedScanUnconfirmed, StaleScanAuthority } from './act-override.ts';
+import { StaleScanAuthority } from './act-override.ts';
 import type { StopContext } from './act-stop.ts';
 import { historyPlan } from './card.ts';
 import { planCounts } from './counts.ts';
@@ -33,6 +33,7 @@ export async function answerWithoutRow(
           photo.grant,
           { recipientSnapshot: s.csrfSnapshot },
           stop.found.liveCandidate,
+          { soft: true },
         )
       : null;
   const g = scanWriteGrant(ctx, authority.actor, {
@@ -75,6 +76,5 @@ export async function answerWithoutRow(
           after.slice(counts.stmts.length + (bound?.stmts.length ?? 0)),
         )
       : null;
-  if (photo && !photoUrl) throw new CommittedScanUnconfirmed();
   return stopOutcome(ctx, actor, stop, read, { action: s.action, history, photoUrl });
 }

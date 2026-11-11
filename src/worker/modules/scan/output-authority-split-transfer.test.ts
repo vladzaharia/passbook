@@ -19,9 +19,9 @@ import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { getScanner } from './repo-device.ts';
 import { type Candidate, candidateById } from './repo-lookup.ts';
 import { type OutputAuthority, outputAuthorityCurrent } from './repo-output-authority.ts';
+import { providerFixture } from './repo-output-authority-provider-test-fixtures.ts';
 import {
   finishProviderTransfer,
-  providerFixture,
   raceFence,
   system,
 } from './repo-output-authority-split-test-fixtures.ts';

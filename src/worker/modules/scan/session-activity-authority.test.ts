@@ -180,8 +180,9 @@ describe('session activity authority', () => {
       if (change === 'release head')
         await approveScanReleases(f.kit, f.template, { modes: ['live'], db });
     });
-    // A rename, the scanner's own template list and a release head move no epoch.
-    if (change === 'event row' || change === 'scanner templates' || change === 'release head') {
+    // A rename and a release head move no epoch. The scanner's own template list is its scope, so a
+    // change to it ends the read with the other credential changes.
+    if (change === 'event row' || change === 'release head') {
       expect(response.status).toBe(200);
       return;
     }

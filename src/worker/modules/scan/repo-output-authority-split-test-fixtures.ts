@@ -9,7 +9,6 @@ import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { claimRemoval, getPassLifecycle, releaseRemoval } from '../passes/repo-remove.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
 import { getWalletInstanceById, getWalletOperation } from '../wallet-providers/instance.ts';
 import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import { runWalletProviderOperation } from '../wallet-providers/sync-operation.ts';
@@ -157,20 +156,6 @@ export async function finishProviderTransfer(
   expect(await getWalletInstanceById(db, scope)).toMatchObject({ lifecycle: 'retired' });
   expect(await finishCredentialTransfer(jobCtxOf(kit), transferId)).toMatchObject({
     state: 'completed',
-  });
-}
-
-export async function providerFixture() {
-  const template = await kit.registry.resolve(templateId);
-  const apple = await approveAppleRelease(kit, { templateId, version: template.version });
-  const pass = await kit.scanPass(
-    templateId,
-    { memberName: 'Transfer Source Member' },
-    { holderEmail: 'transfer-old@example.test' },
-  );
-  return setupSamsungCallbacks({
-    promoted: false,
-    source: { kit: { ...kit, template }, apple, pass, barcode: 'qr' },
   });
 }
 

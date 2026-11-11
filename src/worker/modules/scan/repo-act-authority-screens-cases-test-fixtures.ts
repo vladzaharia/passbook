@@ -85,9 +85,9 @@ export function registerAuthorityScreens() {
     expect(found && scanInputVisible(found, actor, 'tier')).toBe(false);
     const idempotencyKey = key();
     const response = await act(scanner.headers, codeOf(pass), { idempotencyKey });
-    // The approved policy needs a manager and this scanner has none, so the check-in is refused.
+    // The head's policy needs a manager and this scanner has none, so the check-in waits for approval.
     expect(response.status).toBe(200);
-    expect(await out(response)).toMatchObject({ kind: 'refused' });
+    expect(await out(response)).toMatchObject({ kind: 'heads_up', reason: 'needs_approval' });
     expect(await rows('SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id])).toHaveLength(0);
     expect(
       await first(kit.env.DB, 'SELECT template_version FROM passes WHERE id=?', [pass.id]),

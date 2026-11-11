@@ -132,6 +132,7 @@ export async function finishStop(
           photo.grant,
           { recipientSnapshot: s.csrfSnapshot },
           stop.found.liveCandidate,
+          { soft: true },
         )
       : null;
 

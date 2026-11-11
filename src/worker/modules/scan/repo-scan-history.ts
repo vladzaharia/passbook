@@ -1,5 +1,4 @@
 import { all, type SqlValue, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './actor.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
 import { projectionAuthority, summaryAuthority } from './repo-history-authority.ts';
@@ -134,7 +133,6 @@ export function recentScansStmt(
      FROM scans s LEFT JOIN passes p ON p.id=s.pass_id
      WHERE s.actor_key = ?/* scan-ephemeral-actor-key */ AND s.org_id = ? AND s.mode = ? AND s.state = 'done'
        AND ${HISTORICAL_SCOPE_SQL}
-       AND ${credentialRefKeysetSql}
        AND (${authority.sql})
       AND (${csrf.sql})
        ${before ? 'AND (s.at < ? OR (s.at = ? AND s.id < ?/* scan-ephemeral-scan-id */))' : ''}
@@ -144,7 +142,6 @@ export function recentScansStmt(
       actor.actorKey,
       actor.orgId,
       actor.mode,
-      actor.credentialKeysetCommitment ?? null,
       ...authority.params,
       ...csrf.params,
       ...cursor,
@@ -285,6 +282,7 @@ export function historyProofFenceStmts(
       });
       const authority = packedScanAuthorityPredicate(actor, minimal);
       const fragments =
+        actor.credentialKeysetCommitment === undefined ||
         proof.credentialKeysetCommitment === actor.credentialKeysetCommitment
           ? historyProofSnapshotPredicates(proof, 's', now)
           : [{ sql: '0', params: [] }];

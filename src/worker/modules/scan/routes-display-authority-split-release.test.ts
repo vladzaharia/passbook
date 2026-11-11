@@ -178,7 +178,7 @@ describe('scan display preview tenant authorization', () => {
     expect(await previewAudits(session.userId)).toEqual([]);
   });
 
-  it('does not reopen legacy fallback when a release head becomes ineligible', async () => {
+  it('serves the pass own release when the template is archived', async () => {
     const { env, clock, org, own, memberSession, releaseState, preview, previewAudits } = fixture;
     const reader = await memberSession(['pass_operator']);
     const admin = await memberSession(['org_admin']);
@@ -188,8 +188,12 @@ describe('scan display preview tenant authorization', () => {
     expect(await releaseState(own.passId)).toMatchObject({ absent: 0, head: expect.any(String) });
     await setArchived(createServiceContext(env, { clock }), auth, own.templateId, true);
     expect(await releaseState(own.passId)).toEqual({ absent: 0, head: null });
-    expect((await preview(own, reader.headers)).status).toBe(404);
-    expect(await previewAudits(reader.userId)).toEqual([{ org_id: org.id, target_id: own.passId }]);
+    // An archived template has no head; the pass's own issued release still serves the preview.
+    expect((await preview(own, reader.headers)).status).toBe(200);
+    expect(await previewAudits(reader.userId)).toEqual([
+      { org_id: org.id, target_id: own.passId },
+      { org_id: org.id, target_id: own.passId },
+    ]);
   });
 
   it('does not disclose a legacy scope if an approved head appears before return', async () => {

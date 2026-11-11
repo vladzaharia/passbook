@@ -261,7 +261,7 @@ export async function setupScanKit(options: { clockStart?: number } = {}): Promi
         manifest,
         passJson: {
           ...base.passJson,
-          barcodes: [{ format: 'PKBarcodeFormatQR', message: 'x', messageEncoding: 'iso-8859-1' }],
+          barcodes: [{ format: 'PKBarcodeFormatQR', message: 'x', messageEncoding: 'utf-8' }],
           ...(options.passStyle ?? {}),
         } as PassJson,
         assets: { 'icon.png': ICON_PNG, ...options.assets },

@@ -7,7 +7,7 @@ import {
   validCredentialKeysetCommitment,
   validCredentialTombstoneRefs,
 } from './repo-credential-tombstones.ts';
-import { releaseBuildCompatibilityPredicate } from './repo-release-build.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
@@ -209,7 +209,7 @@ export function evaluatedPolicyPredicate(
   orgRevision: number | null | undefined,
   templateRevision: number | null | undefined,
   release: ReleaseSnapshot | null | undefined,
-  purpose: 'read' | 'commit',
+  _purpose: 'read' | 'commit',
   now: number,
   walletStatus: WalletStatus,
 ): Predicate {
@@ -276,19 +276,12 @@ export function evaluatedPolicyPredicate(
         ...bound.params,
       ] as SqlValue[],
     };
-    const compatible =
-      purpose === 'commit'
-        ? releaseBuildCompatibilityPredicate(release.activeReleaseVersion)
-        : null;
-    active = {
-      sql: `(${head.sql})${compatible ? ` AND ${compatible.sql}` : ''}`,
-      params: compatible ? [...head.params, ...compatible.params] : head.params,
-    };
+    active = { sql: `(${head.sql})`, params: head.params };
   } else if (legacyRelease(release)) {
     active = {
       sql: `p.release_id IS NULL AND p.template_version=? AND EXISTS (
         SELECT 1 FROM template_versions v WHERE v.template_id=p.template_id AND v.version=p.template_version
-      )`,
+      ) AND (${usedReleaseIdSql('p')}) IS NULL`,
       params: [activeTemplateVersion],
     };
   } else return { sql: '0', params: [] };

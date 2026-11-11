@@ -297,7 +297,7 @@ describe('scanner asset stream races', () => {
     },
   );
 
-  it('serves a photo when a release is approved during R2 access (content, not authority)', async () => {
+  it('cancels a photo when its approved release changes during R2 access', async () => {
     const fixture = await photoPass();
     const photo = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
     const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
@@ -324,9 +324,8 @@ describe('scanner asset stream races', () => {
       spy.mockRestore();
     }
     expect(opened).toBe(true);
-    expect(cancelled).toBe(0);
-    expect(response.status).toBe(200);
-    await response.body?.cancel();
+    expect(cancelled).toBe(1);
+    await missing(response);
   });
 
   it('cancels a photo after signing identity A→B→A during the R2 read', async () => {

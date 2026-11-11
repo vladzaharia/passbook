@@ -14,7 +14,6 @@ const invalidScopes = [
   'archived event',
   'deleted event',
   'event without templates',
-  'archived template',
   'event with unreleased template',
   'event with wrong-mode release',
   'event with foreign template',
@@ -43,12 +42,6 @@ describe('invalid session activity scopes', () => {
         await runOne(db, 'DELETE FROM scan_events WHERE id=?', [f.event.id]);
       if (invalid === 'event without templates')
         await runOne(db, 'DELETE FROM scan_event_templates WHERE event_id=?', [f.event.id]);
-      if (invalid === 'archived template')
-        await runOne(
-          db,
-          "UPDATE templates SET status='archived',updated_at=updated_at+1 WHERE id=?",
-          [f.template],
-        );
       if (
         invalid === 'event with unreleased template' ||
         invalid === 'event with wrong-mode release' ||

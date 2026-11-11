@@ -234,6 +234,13 @@ describe('scanner member photo release authority', () => {
         await setTemplateStatus(kit.env.DB, templateId, 'archived', kit.clock.now());
         await setTemplateStatus(kit.env.DB, templateId, 'active', kit.clock.now());
       }
+      if (race === 'template') {
+        // Status A-B-A leaves the same template standing: the grant stands too.
+        expect(
+          grantInsertConfirmed(await kit.env.DB.batch(bindPending(kit.clock.now(), undefined))),
+        ).toBe(true);
+        return;
+      }
       await expect(kit.env.DB.batch(bindPending(kit.clock.now(), undefined))).rejects.toThrow(
         'scan_asset_authority_failed',
       );

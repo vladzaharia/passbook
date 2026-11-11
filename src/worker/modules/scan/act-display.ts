@@ -36,7 +36,9 @@ export async function prepareCommittedDisplay(
   const planned = await historyPlan(ctx, actor, found, history);
   const grant =
     photo && original
-      ? await prepareAssetGrantInsertion(ctx, photo.grant, { recipientSnapshot: csrf }, original)
+      ? await prepareAssetGrantInsertion(ctx, photo.grant, { recipientSnapshot: csrf }, original, {
+          soft: true,
+        })
       : null;
   return {
     bind(now, authority) {

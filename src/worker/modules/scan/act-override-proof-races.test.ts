@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { makeScanner } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -24,6 +25,7 @@ import { readScannerScope } from './repo-scope.ts';
 import { key, proofedScanActor, startScanCredentialTransfer } from './test-kit.ts';
 
 beforeAll(setupOverrideProof);
+const providerEnv = installKeysetTestEnv();
 
 describe('override event provenance', () => {
   it.each(['role', 'policy'] as const)(
@@ -102,7 +104,10 @@ describe('override event provenance', () => {
   });
 
   it('fences a real transfer started after verification, without retrying the stale override', async () => {
-    const t = await setupSamsungCallbacks({ holderEmail: 'previous@example.test' });
+    const t = await setupSamsungCallbacks({
+      holderEmail: 'previous@example.test',
+      db: (await providerEnv()).DB,
+    });
     const scanner = await makeScanner(t.kit.fx, {
       orgId: t.kit.org.id,
       templateIds: [t.kit.template.id],
@@ -137,51 +142,50 @@ describe('override event provenance', () => {
     if (!expected || !before) throw new Error('Missing transfer source');
     const idempotencyKey = key();
     let afterTransfer: CapturedState | undefined;
-    const result = await atGate(
-      async (db) => {
-        await startCredentialTransfer(
-          jobCtxOf(t.kit),
-          { type: 'system', id: null },
-          t.pass.id,
-          {
-            holderEmail: 'next@example.test',
-            ownerUserId: null,
-          },
-          null,
-          { kind: 'tenant-holder', expected },
-        );
-        expect(
-          await first(
+    await expect(
+      atGate(
+        async (db) => {
+          await startCredentialTransfer(
+            jobCtxOf(t.kit),
+            { type: 'system', id: null },
+            t.pass.id,
+            {
+              holderEmail: 'next@example.test',
+              ownerUserId: null,
+            },
+            null,
+            { kind: 'tenant-holder', expected },
+          );
+          expect(
+            await first(
+              db,
+              "SELECT state FROM pass_credential_transfers WHERE pass_id=? AND state='pending'",
+              [t.pass.id],
+            ),
+          ).toEqual({ state: 'pending' });
+          const current = await first<{ credential_generation: number; link_generation: number }>(
             db,
-            "SELECT state FROM pass_credential_transfers WHERE pass_id=? AND state='pending'",
+            'SELECT credential_generation,link_generation FROM passes WHERE id=?',
             [t.pass.id],
-          ),
-        ).toEqual({ state: 'pending' });
-        const current = await first<{ credential_generation: number; link_generation: number }>(
-          db,
-          'SELECT credential_generation,link_generation FROM passes WHERE id=?',
-          [t.pass.id],
-        );
-        expect(current!.credential_generation).toBeGreaterThan(before.credential_generation);
-        expect(current!.link_generation).toBeGreaterThan(before.link_generation);
-        afterTransfer = await state(t.pass.id, db);
-      },
-      () => action(idempotencyKey, heads.scanId!),
-      t.kit.env,
-    );
-    expect(result.outcome).toMatchObject({ kind: 'refused', reason: 'not_found', scanId: null });
+          );
+          expect(current!.credential_generation).toBeGreaterThan(before.credential_generation);
+          expect(current!.link_generation).toBeGreaterThan(before.link_generation);
+          afterTransfer = await state(t.pass.id, db);
+        },
+        () => action(idempotencyKey, heads.scanId!),
+        t.kit.env,
+      ),
+    ).rejects.toThrow('The pass changed');
     if (!afterTransfer) throw new Error('Missing transfer snapshot');
     expect(await state(t.pass.id, t.kit.env.DB)).toEqual(afterTransfer);
+    // The transfer is authority: nothing was recorded for the stale override.
     expect(
-      await first(t.kit.env.DB, 'SELECT state,reason,pass_id FROM scans WHERE idempotency_key=?', [
-        idempotencyKey,
-      ]),
-    ).toEqual({ state: 'failed', reason: 'stale', pass_id: null });
-    expect((await action(idempotencyKey, heads.scanId)).outcome).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      scanId: null,
-    });
+      await first(
+        t.kit.env.DB,
+        "SELECT 1 AS n FROM scans WHERE idempotency_key=? AND state='done'",
+        [idempotencyKey],
+      ),
+    ).toBeNull();
     expect(await state(t.pass.id, t.kit.env.DB)).toEqual(afterTransfer);
   });
 

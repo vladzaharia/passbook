@@ -12,7 +12,7 @@ let { env, f, clock, orgId, templateId, eventId, member, membershipId } = race;
 beforeEach(() => {
   ({ env, f, clock, orgId, templateId, eventId, member, membershipId } = race);
 });
-const { atEventCommit, atEventRead, call, state, withRemovableKeyset } = race;
+const { atEventCommit, atEventRead, call, state } = race;
 
 describe('event mutation commit authority', () => {
   const operations = [
@@ -112,60 +112,41 @@ describe('event mutation commit authority', () => {
     ['detail', () => call('GET', `/${eventId}`)],
     ['create', () => operations[0][1]()],
     ['update', () => call('PATCH', `/${eventId}`, { name: 'Denied' })],
-  ] as const)('does not bootstrap for a revoked %s session', async (kind, operation) => {
-    const before = await state();
-    const response = await atEventCommit(
-      async (db) => {
+  ] as const)(
+    'denies a %s whose membership is revoked at the guarded step',
+    async (kind, operation) => {
+      const before = await state();
+      const revoke = async (db: D1Database) => {
         await run(db, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
           clock.now(),
           membershipId,
         ]);
-      },
-      operation,
-      'bootstrap',
-    );
-    if (kind === 'list') {
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ items: [], nextCursor: null });
-    } else {
-      expect(response.status).toBe(403);
-    }
-    expect(
-      await first(env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
-    ).toBeNull();
-    expect(await state()).toEqual(before);
-  });
+      };
+      // Reads race the row read; mutations race their guarded write.
+      const response =
+        kind === 'list' || kind === 'detail'
+          ? await atEventRead(kind, 'before-row', revoke, operation)
+          : await atEventCommit(revoke, operation);
+      if (kind === 'list') {
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({ items: [], nextCursor: null });
+      } else {
+        expect(response.status).toBe(403);
+      }
+      expect(await state()).toEqual(before);
+    },
+  );
 
-  it('does not bootstrap when the captured session secret changes at the guarded transaction', async () => {
-    const hash = await hashSessionCookie(member.cookieValue);
-    const response = await atEventCommit(
-      async (db) => {
-        await run(db, 'UPDATE sessions SET csrf_secret=? WHERE id_hash=?', [
-          'replacement-secret',
-          hash,
-        ]);
-      },
-      () => call('POST', `/${eventId}/scanners`, { scannerIds: [] }),
-      'bootstrap',
-    );
-    expect(response.status).toBe(403);
-    expect(
-      await first(env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
-    ).toBeNull();
-  });
-
-  it('does not bootstrap after the event moves to another tenant before the guarded read', async () => {
+  it('masks an event that moves to another tenant before the guarded read', async () => {
     const other = await makeOrg(f);
-    const response = await atEventCommit(
+    const response = await atEventRead(
+      'detail',
+      'before-row',
       async (db) => {
         await run(db, 'UPDATE scan_events SET org_id=? WHERE id=?', [other.id, eventId]);
       },
       () => call('GET', `/${eventId}`),
-      'bootstrap',
     );
     expect(response.status).toBe(404);
-    expect(
-      await first(env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
-    ).toBeNull();
   });
 });

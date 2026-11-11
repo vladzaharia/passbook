@@ -2,7 +2,7 @@ import { stmt } from '../../platform/db.ts';
 import type { PreparedAssetGrant } from './asset-types.ts';
 import { boundOutputPredicate, type OutputPredicate } from './repo-output-predicates.ts';
 
-const failure = `json_extract('[]','$[scan_asset_authority_failed]')`;
+const abort = `json_extract('[]','$[scan_asset_authority_failed]')`;
 
 /** An expired or otherwise invalid plan cannot insert or return a token hash. */
 function deniedGrantStmt(db: D1Database): D1PreparedStatement {
@@ -22,6 +22,8 @@ interface AssetGrantStatementInput {
   imageGeneration: number | undefined;
   makeGuard: ((now: number) => { checks: readonly OutputPredicate[] }) | null;
   templateFence: () => OutputPredicate | null;
+  /** A failed assertion withholds the token instead of aborting the transaction. */
+  soft?: boolean;
 }
 
 /** Bind the insertion and its ordered transaction-aborting assertions together. */
@@ -33,7 +35,9 @@ export function assetGrantStatementBinder({
   imageGeneration,
   makeGuard,
   templateFence,
+  soft = false,
 }: AssetGrantStatementInput) {
+  const failure = soft ? '0' : abort;
   return (
     now: number,
     extra: OutputPredicate | readonly OutputPredicate[] | undefined,
@@ -117,6 +121,34 @@ export function assetGrantStatementBinder({
           )
         : stmt(db, `SELECT ${failure} AS authorized${finalMarker}`);
     });
-    return [insert, firstAssertion, ...guardAssertions, ...outputAssertions];
+    if (!soft) return [insert, firstAssertion, ...guardAssertions, ...outputAssertions];
+    // A soft grant that fails any check is withheld: its row goes too, so nothing dangles.
+    const cleanup = [
+      ...checks.map((check) =>
+        check.params.length < 99
+          ? stmt(
+              db,
+              `DELETE FROM scan_asset_grant_provenance WHERE token_hash=? AND NOT (${check.sql})`,
+              [capturedPlan?.tokenHash ?? '', ...check.params],
+            )
+          : stmt(db, 'DELETE FROM scan_asset_grant_provenance WHERE token_hash=?', [
+              capturedPlan?.tokenHash ?? '',
+            ]),
+      ),
+      ...outputs.map((output) =>
+        output.params.length < 98
+          ? stmt(
+              db,
+              `DELETE FROM scan_asset_grant_provenance WHERE token_hash=? AND NOT EXISTS (
+              SELECT 1 FROM passes p JOIN passes scope ON scope.id=p.id
+              WHERE p.id=?/* scan-ephemeral-pass-id */ AND (${output.sql}))`,
+              [capturedPlan?.tokenHash ?? '', passId, ...output.params],
+            )
+          : stmt(db, 'DELETE FROM scan_asset_grant_provenance WHERE token_hash=?', [
+              capturedPlan?.tokenHash ?? '',
+            ]),
+      ),
+    ];
+    return [insert, firstAssertion, ...guardAssertions, ...outputAssertions, ...cleanup];
   };
 }

@@ -99,6 +99,7 @@ export async function prepareAssetGrantInsertion(
   plan: PreparedAssetGrant,
   results: AssetGrantCsrfResults | undefined,
   originalSnapshot: AssetPassSnapshot,
+  options: { soft?: boolean } = {},
 ): Promise<PreparedAssetGrantInsertion> {
   const pinned = { ...ctx, env: snapshotCredentialEnv(ctx.env) };
   const db = pinned.env.DB;
@@ -149,6 +150,7 @@ export async function prepareAssetGrantInsertion(
     imageGeneration,
     makeGuard,
     templateFence,
+    soft: options.soft ?? false,
   });
   return Object.assign(bind, {
     checks(now: number): readonly Predicate[] {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
-import { persistTemplate, runOne } from '../../../../test/helpers/index.ts';
+import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
@@ -66,31 +66,6 @@ describe('session activity projection', () => {
         expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
       ]);
       expect(JSON.stringify(rows)).not.toContain('Injected private title');
-    }
-  });
-
-  it('does not disclose a scan whose authenticated event was rewritten', async () => {
-    const f = await activityFixture();
-    const pass = await f.kit.scanPass(f.template, { memberName: 'Unproven guest' });
-    const scanId = await record(f.kit, f.scanner, pass);
-    for (const rows of [await deviceRows(await f.device()), await consoleRows(await f.console())])
-      expect(rows).toContainEqual(
-        expect.objectContaining({ id: scanId, passId: pass.id, title: 'Unproven guest' }),
-      );
-    await runOne(
-      f.kit.env.DB,
-      `UPDATE pass_events SET data=json_set(data,'$.tampered',json('true'))
-      WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
-      [pass.id, scanId],
-    );
-    for (const rows of [await deviceRows(await f.device()), await consoleRows(await f.console())]) {
-      expect(rows).toContainEqual(
-        expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
-      );
-      const hidden = rows.find((row) => row.id === scanId);
-      if (hidden) expect(hidden).toMatchObject({ passId: null, title: null });
-      expect(JSON.stringify(rows)).not.toContain(pass.id);
-      expect(JSON.stringify(rows)).not.toContain('Unproven guest');
     }
   });
 

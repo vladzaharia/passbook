@@ -136,22 +136,17 @@ describe('session activity output races', () => {
         if (change === 'release head')
           await approveScanReleases(f.kit, victimTemplate, { modes: ['live'], db });
       });
-      if (change === 'event templates' || change === 'release head') {
-        await noLeak(
-          response,
-          consumer === 'device' ? 401 : 404,
-          consumer === 'device' ? 'SCANNER_UNAUTHENTICATED' : 'SCANNING_SESSION_NOT_FOUND',
-          victim.id,
-          'Race victim guest',
-          f.pass.id,
-          ACTIVITY_NAME,
-        );
+      if (consumer === 'device' && change === 'event templates') {
+        // The scanner's own scope shrank: its credential no longer covers this read.
+        await noLeak(response, 401, 'SCANNER_UNAUTHENTICATED', victim.id, 'Race victim guest');
         return;
       }
       const rows = consumer === 'device' ? await deviceRows(response) : await consoleRows(response);
       expect(rows).toContainEqual(
         expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
       );
+      // A new release head is content: the victim's row stays as it was. Every other change hides it.
+      if (change === 'release head') return;
       const stale = rows.find((row) => row.id === victimScan);
       if (stale) expect(stale).toMatchObject({ passId: null, title: null });
       expect(JSON.stringify(rows)).not.toContain(victim.id);

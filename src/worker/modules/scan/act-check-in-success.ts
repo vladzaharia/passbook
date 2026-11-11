@@ -187,6 +187,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
           photo.grant,
           { recipientSnapshot: csrfSnapshot },
           originalCandidate,
+          { soft: true },
         )
       : null;
 

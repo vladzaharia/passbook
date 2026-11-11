@@ -86,6 +86,7 @@ export async function chooseAction(input: ChooseInput): Promise<ScanEvaluation> 
         photo.grant,
         { recipientSnapshot: csrfSnapshot },
         found.liveCandidate,
+        { soft: true },
       )
     : null;
   const g = scanWriteGrant(ctx, authorityActor, {
