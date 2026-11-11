@@ -14,6 +14,7 @@ export async function runBootstrap(db: D1Database, owner: string, now: number) {
       orgs: raw.orgs ?? [],
       templates: raw.templates ?? [],
       emails: raw.emails ?? [],
+      bundleEmails: raw.bundleEmails ?? [],
     },
     owner,
     now,

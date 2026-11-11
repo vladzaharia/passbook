@@ -287,8 +287,9 @@ What the new Worker does with 0024 data:
 
 - **Uploaded templates** get a `legacy` live release at their active version from the bootstrap.
 - **Baked templates** (unassigned or assigned to an org by PATCH) get a `system` release from the
-  baked sync, which the minute cron runs (`templates.sync`). Until it has run, passes of baked
-  templates cannot be scanned, refreshed or issued. Normally under a minute after promote.
+  baked sync. `--promote` starts it right after serving and waits until every live pass has a
+  head (step 3); the minute cron (`templates.sync`) is the fallback. Until then passes of baked
+  templates cannot be scanned, refreshed or issued.
 - **Passes on an older template version** than the release head are refused by the scanner
   (`not_found`) and by refresh (`TEMPLATE_RELEASE_CONFLICT`) until the minute cron's reissue moves
   them (`template.reissue_started`, a bulk workflow; holders get a Wallet update). A new baked
@@ -296,8 +297,8 @@ What the new Worker does with 0024 data:
 - **Archived templates** keep their passes in Wallets, but the scanner refuses them
   (`SCAN_PASS_CHANGED`) until the template is active. The bootstrap gives archived templates no
   release.
-- **Queued pass emails** carry no binding. The bootstrap binds them to their pass; sent as the
-  legacy intent path (`delivery.legacy_intent`). Unbound bundle emails cancel (`DELIVERY_UNBOUND`).
+- **Queued pass and bundle emails** carry no binding. The bootstrap binds them to their pass or
+  bundle; sent on the legacy intent path (`delivery.legacy_intent`).
 - **Queued pushes** are bound by migration 0045. Queue messages for `connection.webhook` and
   `pass.refresh` built by the old Worker are logged and retained as ignored; `email.send` and
   `push.deliver` messages carry only an outbox id and work.
@@ -330,13 +331,7 @@ the last commit to `wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop
    WHERE state IN ('pending', 'enqueued', 'processing') GROUP BY kind, state
    ```
 
-   ```sql verify-bundle-email
-   SELECT count(*) AS n FROM outbox
-   WHERE kind = 'email' AND state IN ('pending', 'enqueued', 'processing')
-     AND json_extract(payload, '$.bundleId') IS NOT NULL
-   ```
-
-   Pending bundle email must be 0 (wait or cancel); pass email is bound by the bootstrap.
+   Pending pass and bundle email is bound by the bootstrap.
 6. Archived templates with live passes. These stop scanning after the cutover. Un-archive the ones
    that must keep scanning before Order step 1, so the bootstrap gives them a release:
 
@@ -351,7 +346,9 @@ the last commit to `wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop
    WHERE p.deleted_at IS NULL AND p.status = 'active' AND p.template_version != t.active_version
    GROUP BY p.template_id, p.org_id
    ```
-8. Record the counts; they must not drop:
+8. Create the API key for step 3 (`templates:read` only) and keep it in `WALLET_API_KEY`. It must exist before
+   the promote.
+9. Record the counts; they must not drop:
 
    ```sql verify-counts
    SELECT json_object(
@@ -415,9 +412,14 @@ Worker does not change it. `src/worker/platform/authority-baseline.test.ts` pins
    Read the plan the third command prints: one `org ...` line per org, one `template ...` line per
    active uploaded template, one `email ...` line per queued pass email. The snapshot holds download
    tokens; the tool deletes it after reading. Idempotent. Rerun it fresh if anything fails.
-3. `npm run deploy -- --promote --apply`. Serves the uploaded version at 100%.
-4. Baked sync. The minute cron runs `templates.sync` within a minute. To start it sooner, open
-   Admin, Templates while signed in. Then check that every live pass has a release head:
+3. `WALLET_API_KEY=<key> npm run deploy -- --promote --apply`. Serves the uploaded version at 100%,
+   then closes the baked-template window: every 10 s it calls `GET /api/v1/templates` with the key
+   (this runs the baked sync) and runs `verify-heads` below, for at most 3 minutes. It exits 0 when
+   no active template has a live pass without a head, and exits 1 listing the ones that do.
+   The key is an org API key with the `templates:read` scope (Admin, API keys), created in the
+   pre-checks and deleted in step 6. Without `WALLET_API_KEY` the script only polls and the minute
+   cron runs the sync, so the window is up to a minute longer.
+4. The head check, which step 3 runs for you (rerun it by hand if step 3 failed):
 
    ```sql verify-heads
    SELECT t.id, t.origin, t.status, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
@@ -428,8 +430,7 @@ Worker does not change it. `src/worker/platform/authority-baseline.test.ts` pins
    GROUP BY t.id, t.origin, t.status, p.org_id
    ```
 
-   Only archived templates may be listed. Anything else: wait one more minute, then see "If a
-   step fails".
+   Only archived templates may be listed. Anything else: see "If a step fails".
 5. Verify, one query each:
 
    ```sql verify-memberships
@@ -439,7 +440,7 @@ Worker does not change it. `src/worker/platform/authority-baseline.test.ts` pins
 
    ```sql verify-email-unbound
    SELECT count(*) AS n FROM outbox WHERE kind = 'email' AND state IN ('pending', 'enqueued')
-     AND json_extract(payload, '$.intent') IS NULL AND json_extract(payload, '$.bundleId') IS NULL
+     AND json_extract(payload, '$.intent') IS NULL
    ```
 
    ```sql verify-stale-after
@@ -456,7 +457,7 @@ Worker does not change it. `src/worker/platform/authority-baseline.test.ts` pins
    grow). Then in the product: the owner sees each org's passes, one baked and one uploaded pass
    scan, a pass in Wallet refreshes (push), `GET /health` is 200, Status is green, and
    `wallet-jobs-dlq` is empty.
-6. Delete the WAF rule. Restart the stopped sources.
+6. Delete the WAF rule and the API key. Restart the stopped sources.
 
 ### If a step fails
 
@@ -468,8 +469,8 @@ Roll forward. Never restore D1 to undo a deploy; a restore drops every write sin
 | Pre-checks or step 1 before the migration | Nothing changed. Fix and rerun. |
 | Step 1, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort only if no fix is possible: Time Travel restore to the step 1 bookmark, which loses Wallet registrations and scans written since. |
 | Step 2 | Stop before promote. The SQL is idempotent: take a fresh snapshot and rerun. A refused statement names the trigger; fix the tool, not the data. |
-| Step 3 | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. |
-| Step 4, heads missing after two minutes | Cron or sync failed: check logs for `templates.baked_sync_skipped` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS). Fix and ship a new version. Scanning of baked passes stays refused until then. |
+| Step 3, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. |
+| Step 3, exit 1 after promote | The new Worker serves; some live passes have no head. Check logs for `templates.baked_sync_skipped` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version. Do not roll back. Rerunning `--promote --apply` only repeats the wait. |
 | Step 5 fails, Worker misbehaves | Ship a fixed version through the same two-run flow (`--migrate-only` finds nothing to migrate). Emergency degraded mode only to stop an outage: `npx wrangler queues pause-delivery wallet-jobs`, keep the WAF rule, promote the previous version with `npx wrangler versions deploy <previous>@100%`, then roll forward and resume delivery. The old Worker is not supported on the migrated schema. |
 
 ## Day two

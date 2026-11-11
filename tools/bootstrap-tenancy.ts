@@ -65,6 +65,7 @@ function parseSnapshot(output: string): BootstrapSnapshot {
     orgs: raw.orgs ?? [],
     templates: raw.templates ?? [],
     emails: raw.emails ?? [],
+    bundleEmails: raw.bundleEmails ?? [],
   };
 }
 

@@ -299,6 +299,13 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   }
   // A pass in the second org on the shared starter (unassigned baked templates serve every org).
   await pass('baked-unassigned', 'org-b', 4, starter.version, 'other@example.com');
+  // A bundle of the first two baked-unassigned passes, with its email still queued.
+  add(`INSERT INTO bundles (id, org_id, mode, name, token, holder_email, created_at)
+    VALUES ('bundle-1', 'org-a', 'live', 'Pair', 'bundle-token-1', 'holder@example.com', ${AT})`);
+  add(`INSERT INTO bundle_passes (bundle_id, pass_id, position) VALUES
+    ('bundle-1', 'pass-baked-unassigned-1', 0), ('bundle-1', 'pass-baked-unassigned-2', 1)`);
+  add(`INSERT INTO outbox (id, org_id, kind, pass_id, payload, state, created_at) VALUES
+    ('bmail-1', 'org-a', 'email', 'pass-baked-unassigned-1', '{"to":"holder@example.com","bundleId":"bundle-1"}', 'pending', ${AT})`);
   for (const s of stmts) await db.prepare(s).run();
   return { db, scanners, passes, templateIds, baked, assets };
 }

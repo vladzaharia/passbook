@@ -97,7 +97,6 @@ describe('cutover: runbook queries', () => {
   it('has every query the runbook names', () => {
     expect([...runbook.keys()].sort()).toEqual([
       'verify-archived',
-      'verify-bundle-email',
       'verify-counts',
       'verify-email-unbound',
       'verify-heads',
@@ -110,10 +109,9 @@ describe('cutover: runbook queries', () => {
 
   it('pre-checks: no pending bundle mail; archived and stale versions are listed', async () => {
     expect(await rows('verify-outbox')).toEqual([
-      { kind: 'email', state: 'pending', n: 4 },
+      { kind: 'email', state: 'pending', n: 5 },
       { kind: 'push', state: 'pending', n: 4 },
     ]);
-    expect(await rows('verify-bundle-email')).toEqual([{ n: 0 }]);
     expect(await rows('verify-archived')).toEqual([
       { id: 'up-archived', origin: 'uploaded', org_id: 'org-a', passes: 4 },
     ]);

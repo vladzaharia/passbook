@@ -93,6 +93,25 @@ describe.each(ALL)('cutover: %s', (shape) => {
   });
 });
 
+describe('cutover: bundle email', () => {
+  it('sends the bundle email the old Worker queued', async () => {
+    const queued = await kit.env.DB.prepare(
+      "SELECT payload FROM outbox WHERE id = 'bmail-1'",
+    ).first<{
+      payload: string;
+    }>();
+    expect(JSON.parse(queued?.payload ?? '{}').intent).toMatchObject({
+      bundleId: 'bundle-1',
+      positions: [0, 1],
+    });
+    await deliverEmail(jobCtxOf(kit), 'bmail-1');
+    const row = await kit.env.DB.prepare(
+      "SELECT state, error_code FROM outbox WHERE id = 'bmail-1'",
+    ).first();
+    expect(row).toEqual({ state: 'sent', error_code: null });
+  });
+});
+
 describe.each(SERVED)('cutover: %s scanning', (shape) => {
   it('checks in a pass by its pre-cutover barcode, before any republish', async () => {
     const res = await checkIn(shape, passOf(shape, 5).barcode);

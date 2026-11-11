@@ -19,6 +19,47 @@ export interface BootstrapSnapshot {
   }[];
   /** Pass emails queued by the old Worker (`{ to, attach }` payload, no `intent`) that have not been sent. */
   emails?: QueuedEmail[];
+  bundleEmails?: QueuedBundleEmail[];
+}
+
+export interface SnapshotPass {
+  id: string;
+  org_id: string;
+  mode: 'live' | 'test';
+  test_data_quarantined: number;
+  holder_email: string | null;
+  owner_user_id: string | null;
+  version: number;
+  identity_id: string;
+  credential_generation: number;
+  lifecycle_generation: number;
+  template_id: string;
+  template_version: string;
+  release_id: string | null;
+  web_service_url: string;
+  link_generation: number;
+  object_key: string;
+  /** Only here to be hashed; the tool deletes the snapshot file after reading it. */
+  download_token: string;
+  status: 'active' | 'voided';
+  removed_at: number | null;
+}
+
+/** A bundle email queued by the old Worker (`{ to, bundleId }` payload, no `intent`). */
+export interface QueuedBundleEmail {
+  outbox_id: string;
+  outbox_pass_id: string;
+  to: string;
+  bundle: {
+    id: string;
+    org_id: string;
+    mode: 'live' | 'test';
+    name: string;
+    token: string;
+    holder_email: string | null;
+  };
+  /** In bundle order. */
+  members: { position: number; pass: SnapshotPass }[];
 }
 
 export interface QueuedEmail {
@@ -26,31 +67,18 @@ export interface QueuedEmail {
   to: string;
   /** SQLite hands a comparison back as 0 or 1. */
   attach: boolean | number;
-  pass: {
-    id: string;
-    org_id: string;
-    mode: 'live' | 'test';
-    test_data_quarantined: number;
-    holder_email: string | null;
-    owner_user_id: string | null;
-    version: number;
-    identity_id: string;
-    credential_generation: number;
-    lifecycle_generation: number;
-    template_id: string;
-    template_version: string;
-    release_id: string | null;
-    web_service_url: string;
-    link_generation: number;
-    object_key: string;
-    /** Only here to be hashed; the tool deletes the snapshot file after reading it. */
-    download_token: string;
-    status: 'active' | 'voided';
-    removed_at: number | null;
-  };
+  pass: SnapshotPass;
 }
 
 const q = (value: string) => `'${value.replaceAll("'", "''")}'`;
+
+const passJson = (a: string) => `json_object('id', ${a}.id, 'org_id', ${a}.org_id,
+      'mode', ${a}.mode, 'test_data_quarantined', ${a}.test_data_quarantined, 'holder_email', ${a}.holder_email,
+      'owner_user_id', ${a}.owner_user_id, 'version', ${a}.version, 'identity_id', ${a}.identity_id,
+      'credential_generation', ${a}.credential_generation, 'lifecycle_generation', ${a}.lifecycle_generation,
+      'template_id', ${a}.template_id, 'template_version', ${a}.template_version, 'release_id', ${a}.release_id,
+      'web_service_url', ${a}.web_service_url, 'link_generation', ${a}.link_generation, 'object_key', ${a}.object_key,
+      'download_token', ${a}.download_token, 'status', ${a}.status, 'removed_at', ${a}.removed_at)`;
 
 /** One row, one column: the snapshot as JSON. Run it with wrangler d1 execute --json. */
 export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
@@ -68,16 +96,19 @@ export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
     WHERE t.origin = 'uploaded' AND t.status = 'active' AND NOT EXISTS (SELECT 1 FROM template_releases r
       WHERE r.template_id = t.id AND r.org_id = s.org_id AND r.mode = 'live' AND r.provider = 'apple')),
   'emails', (SELECT json_group_array(json_object('outbox_id', o.id, 'to', json_extract(o.payload, '$.to'),
-      'attach', json_extract(o.payload, '$.attach') = 1, 'pass', json_object('id', p.id, 'org_id', p.org_id,
-      'mode', p.mode, 'test_data_quarantined', p.test_data_quarantined, 'holder_email', p.holder_email,
-      'owner_user_id', p.owner_user_id, 'version', p.version, 'identity_id', p.identity_id,
-      'credential_generation', p.credential_generation, 'lifecycle_generation', p.lifecycle_generation,
-      'template_id', p.template_id, 'template_version', p.template_version, 'release_id', p.release_id,
-      'web_service_url', p.web_service_url, 'link_generation', p.link_generation, 'object_key', p.object_key,
-      'download_token', p.download_token, 'status', p.status, 'removed_at', p.removed_at)))
+      'attach', json_extract(o.payload, '$.attach') = 1, 'pass', ${passJson('p')}))
     FROM outbox o JOIN passes p ON p.id = o.pass_id
     WHERE o.kind = 'email' AND o.state IN ('pending', 'enqueued') AND json_extract(o.payload, '$.intent') IS NULL
-      AND json_extract(o.payload, '$.bundleId') IS NULL AND typeof(json_extract(o.payload, '$.to')) = 'text')
+      AND json_extract(o.payload, '$.bundleId') IS NULL AND typeof(json_extract(o.payload, '$.to')) = 'text'),
+  'bundleEmails', (SELECT json_group_array(json_object('outbox_id', o.id, 'outbox_pass_id', o.pass_id,
+      'to', json_extract(o.payload, '$.to'), 'bundle', json_object('id', b.id, 'org_id', b.org_id, 'mode', b.mode,
+      'name', b.name, 'token', b.token, 'holder_email', b.holder_email),
+      'members', (SELECT json_group_array(json(m.j)) FROM (SELECT json_object('position', bp.position,
+          'pass', ${passJson('mp')}) AS j FROM bundle_passes bp JOIN passes mp ON mp.id = bp.pass_id
+          WHERE bp.bundle_id = b.id AND mp.deleted_at IS NULL ORDER BY bp.position) m)))
+    FROM outbox o JOIN bundles b ON b.id = json_extract(o.payload, '$.bundleId')
+    WHERE o.kind = 'email' AND o.state IN ('pending', 'enqueued') AND json_extract(o.payload, '$.intent') IS NULL
+      AND typeof(json_extract(o.payload, '$.to')) = 'text')
 ) AS snapshot`;
 
 export interface BootstrapResult {
@@ -119,43 +150,70 @@ export async function buildBootstrap(
       audit(org.id, 'org_membership.bootstrap', 'org_membership', 'org_memberships', membership),
     );
   }
+  const bindingOf = async (p: SnapshotPass) => ({
+    passId: p.id,
+    orgId: p.org_id,
+    mode: p.mode,
+    testDataQuarantined: p.test_data_quarantined === 1,
+    holderEmail: p.holder_email,
+    ownerUserId: p.owner_user_id,
+    version: p.version,
+    identityId: p.identity_id,
+    credentialGeneration: p.credential_generation,
+    lifecycleGeneration: p.lifecycle_generation,
+    templateId: p.template_id,
+    templateVersion: p.template_version,
+    releaseId: p.release_id,
+    webServiceUrl: p.web_service_url,
+    linkGeneration: p.link_generation,
+    objectKey: p.object_key,
+    downloadTokenHash: await sha256Hex(p.download_token),
+    status: p.status,
+    removedAt: p.removed_at,
+  });
+  const passUnchanged = (p: SnapshotPass) => `EXISTS (SELECT 1 FROM passes p WHERE p.id = ${q(p.id)}
+      AND p.version = ${p.version} AND p.credential_generation = ${p.credential_generation}
+      AND p.link_generation = ${p.link_generation} AND p.lifecycle_generation = ${p.lifecycle_generation}
+      AND p.download_token = ${q(p.download_token)})`;
+  // Each runs only while the passes are the ones the snapshot saw; a changed pass leaves the row unbound,
+  // and delivery cancels it as DELIVERY_UNBOUND.
   for (const e of snapshot.emails ?? []) {
-    const p = e.pass;
     const intent = {
       format: 1,
       to: e.to,
       attach: e.attach === true || e.attach === 1,
-      pass: {
-        passId: p.id,
-        orgId: p.org_id,
-        mode: p.mode,
-        testDataQuarantined: p.test_data_quarantined === 1,
-        holderEmail: p.holder_email,
-        ownerUserId: p.owner_user_id,
-        version: p.version,
-        identityId: p.identity_id,
-        credentialGeneration: p.credential_generation,
-        lifecycleGeneration: p.lifecycle_generation,
-        templateId: p.template_id,
-        templateVersion: p.template_version,
-        releaseId: p.release_id,
-        webServiceUrl: p.web_service_url,
-        linkGeneration: p.link_generation,
-        objectKey: p.object_key,
-        downloadTokenHash: await sha256Hex(p.download_token),
-        status: p.status,
-        removedAt: p.removed_at,
-      },
+      pass: await bindingOf(e.pass),
     };
-    plan.push(`email ${e.outbox_id}: bind the queued pass email to pass ${p.id}`);
-    // Runs only while the pass still is the one the snapshot saw; a changed pass leaves the row unbound,
-    // and delivery cancels it as DELIVERY_UNBOUND.
+    plan.push(`email ${e.outbox_id}: bind the queued pass email to pass ${e.pass.id}`);
+    sql.push(`UPDATE outbox SET payload = json_set(payload, '$.intent', json(${q(JSON.stringify(intent))}))
+  WHERE id = ${q(e.outbox_id)} AND kind = 'email' AND state IN ('pending', 'enqueued')
+    AND json_extract(payload, '$.intent') IS NULL AND ${passUnchanged(e.pass)};`);
+  }
+  for (const e of snapshot.bundleEmails ?? []) {
+    const first = e.members[0]?.pass;
+    // The outbox row hangs on the bundle's first pass; delivery refuses anything else.
+    if (!first || first.id !== e.outbox_pass_id) {
+      plan.push(`bundle email ${e.outbox_id}: left unbound (first member changed)`);
+      continue;
+    }
+    const intent = {
+      format: 1,
+      to: e.to,
+      bundleId: e.bundle.id,
+      orgId: e.bundle.org_id,
+      mode: e.bundle.mode,
+      holderEmail: e.bundle.holder_email,
+      name: e.bundle.name,
+      tokenHash: await sha256Hex(e.bundle.token),
+      positions: e.members.map((m) => m.position),
+      members: await Promise.all(e.members.map((m) => bindingOf(m.pass))),
+    };
+    plan.push(`bundle email ${e.outbox_id}: bind the queued bundle email to bundle ${e.bundle.id}`);
     sql.push(`UPDATE outbox SET payload = json_set(payload, '$.intent', json(${q(JSON.stringify(intent))}))
   WHERE id = ${q(e.outbox_id)} AND kind = 'email' AND state IN ('pending', 'enqueued')
     AND json_extract(payload, '$.intent') IS NULL
-    AND EXISTS (SELECT 1 FROM passes p WHERE p.id = ${q(p.id)} AND p.version = ${p.version}
-      AND p.credential_generation = ${p.credential_generation} AND p.link_generation = ${p.link_generation}
-      AND p.lifecycle_generation = ${p.lifecycle_generation} AND p.download_token = ${q(p.download_token)});`);
+    AND EXISTS (SELECT 1 FROM bundles b WHERE b.id = ${q(e.bundle.id)} AND b.token = ${q(e.bundle.token)})
+    AND ${e.members.map((m) => passUnchanged(m.pass)).join('\n    AND ')};`);
   }
   for (const t of snapshot.templates) {
     const release = uuidv7(now);
