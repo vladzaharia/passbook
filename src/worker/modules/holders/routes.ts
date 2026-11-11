@@ -5,26 +5,51 @@ import {
   HolderListQuerySchema,
   HolderListSchema,
   HolderSchema,
+  IdParamSchema,
   OkSchema,
   ReassignHolderSchema,
   UnassignHolderSchema,
 } from '../../../shared/contracts/index.ts';
-import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { methodScope, modeOf } from '../../platform/auth.ts';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, orgScopeOf, passScopeOf, svc } from '../passes/http.ts';
+import {
+  actorFor,
+  authOf,
+  type C,
+  passScopeOf,
+  requireTenantSessionOrApiKey,
+  svc,
+  tenantAuthorityOf,
+} from '../passes/http.ts';
+import { tenantPassForRead } from '../passes/pass-access.ts';
+import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import {
   assignHolder,
   assignHoldersBulk,
   clearBlock,
+  getHolder,
   listHolders,
   reassignHolder,
   unassignHolder,
 } from './service.ts';
 
+function holderAuthority(c: C) {
+  return async (orgId: string) => {
+    try {
+      return await tenantAuthorityOf(svc(c), authOf(c), orgId, 'passes:operate');
+    } catch (error) {
+      if (error instanceof ForbiddenError)
+        throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+      throw error;
+    }
+  };
+}
+
 export const holdersRoutes = createRouter();
 guard(
   holdersRoutes,
-  requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'holders:write' })),
+  requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'holders:write' })),
 );
 
 register(
@@ -38,10 +63,40 @@ register(
     response: HolderListSchema,
   },
   async (c) => {
+    const ctx = svc(c);
     const q = c.req.valid('query');
-    if (q.orgId) assertOrg(c, q.orgId);
-    const orgId = orgScopeOf(c) ?? q.orgId;
-    return c.json(await listHolders(svc(c), { ...q, orgId, mode: modeOf(c.var.auth) }));
+    const auth = authOf(c);
+    const orgId = q.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+    if (!orgId)
+      throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+    const authority = await tenantAuthorityOf(ctx, auth, orgId, 'passes:read');
+    const page = await listHolders(ctx, { ...q, orgId, mode: modeOf(c.var.auth) });
+    if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+      throw new ForbiddenError();
+    return c.json(page);
+  },
+);
+
+register(
+  holdersRoutes,
+  'holders',
+  {
+    method: 'get',
+    path: '/{id}',
+    summary: 'Get a holder assignment and any pending transfer',
+    params: IdParamSchema,
+    response: HolderSchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const id = c.req.valid('param').id;
+    const { scope, pass } = await tenantPassForRead(ctx, authOf(c), id, passScopeOf(c));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), pass.orgId, 'passes:read');
+    const holder = await getHolder(ctx, id, scope);
+    if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+      throw new ForbiddenError();
+    await tenantPassForRead(ctx, authOf(c), id, scope);
+    return c.json(holder);
   },
 );
 
@@ -55,7 +110,16 @@ register(
     body: AssignHolderSchema,
     response: HolderSchema,
   },
-  async (c) => c.json(await assignHolder(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c))),
+  async (c) =>
+    c.json(
+      await assignHolder(
+        svc(c),
+        actorFor(c),
+        c.req.valid('json'),
+        passScopeOf(c),
+        holderAuthority(c),
+      ),
+    ),
 );
 
 register(
@@ -71,7 +135,13 @@ register(
   async (c) => {
     const { items } = c.req.valid('json');
     return c.json({
-      items: await assignHoldersBulk(svc(c), actorFor(c), items, passScopeOf(c)),
+      items: await assignHoldersBulk(
+        svc(c),
+        actorFor(c),
+        items,
+        passScopeOf(c),
+        holderAuthority(c),
+      ),
       nextCursor: null,
     });
   },
@@ -83,12 +153,20 @@ register(
   {
     method: 'post',
     path: '/reassign',
-    summary: 'Reassign an owned pass (clears the owner)',
+    summary: 'Stage a holder reassignment',
     body: ReassignHolderSchema,
     response: HolderSchema,
   },
   async (c) =>
-    c.json(await reassignHolder(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c))),
+    c.json(
+      await reassignHolder(
+        svc(c),
+        actorFor(c),
+        c.req.valid('json'),
+        passScopeOf(c),
+        holderAuthority(c),
+      ),
+    ),
 );
 
 register(
@@ -97,12 +175,20 @@ register(
   {
     method: 'post',
     path: '/unassign',
-    summary: 'Remove the holder',
+    summary: 'Stage removal of the holder',
     body: UnassignHolderSchema,
     response: HolderSchema,
   },
   async (c) =>
-    c.json(await unassignHolder(svc(c), actorFor(c), c.req.valid('json').passId, passScopeOf(c))),
+    c.json(
+      await unassignHolder(
+        svc(c),
+        actorFor(c),
+        c.req.valid('json').passId,
+        passScopeOf(c),
+        holderAuthority(c),
+      ),
+    ),
 );
 
 register(
@@ -116,7 +202,7 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await clearBlock(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c));
+    await clearBlock(svc(c), actorFor(c), c.req.valid('json'), passScopeOf(c), holderAuthority(c));
     return c.json({ ok: true });
   },
 );

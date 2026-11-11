@@ -1,6 +1,6 @@
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
+import type { ScanRecordDto } from '../../../shared/contracts/scanners.ts';
 import { SCAN_REASON_COPY } from '../../../shared/copy/scan.ts';
-import type { ScanLogRow } from './repo-feed.ts';
 
 export const EXPORT_COLUMNS = [
   'Time (UTC)',
@@ -40,12 +40,13 @@ function reasonText(reason: string | null): string | null {
   return line && !line.includes('{') ? line : reason;
 }
 
-export function exportCells(row: ScanLogRow, label: string | null): (string | number | null)[] {
+/** Export only an already-authorized console projection, never the raw scan row. */
+export function exportCells(row: ScanRecordDto): (string | number | null)[] {
   return [
     new Date(row.at).toISOString(),
     row.outcome ? RESULT[row.outcome] : null,
     reasonText(row.reason),
-    label,
+    row.actionLabel,
     row.passTitle,
     row.templateName,
     row.eventName,

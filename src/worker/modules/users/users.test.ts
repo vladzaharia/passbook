@@ -9,8 +9,10 @@ import {
   makeUser,
 } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { harness, type TestHarness } from '../auth/test-support.ts';
+import { harness, type TestHarness, waitingPass } from '../auth/test-support.ts';
+import { setUserStatus } from './service.ts';
 
 let h: TestHarness;
 const f = () => fixtures(h.env, h.clock);
@@ -120,8 +122,11 @@ describe('detail', () => {
     );
     await makeSession(f1, { userId: user.id });
     const org = await makeOrg(f1);
-    const pass = await makePass(f1, { orgId: org.id, template: makeTemplate().resolved });
-    await run(h.env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
+    const pass = await makePass(f1, {
+      orgId: org.id,
+      template: makeTemplate().resolved,
+      ownerUserId: user.id,
+    });
     await send('POST', `/api/v1/users/${user.id}/sessions/revoke`, a.headers);
 
     const res = await get(`/api/v1/users/${user.id}`, a.headers);
@@ -185,6 +190,43 @@ describe('disable and enable', () => {
     expect(actions?.n).toBe(2);
   });
 
+  it('commits revocation before a concurrent re-enable and leaves new sessions intact', async () => {
+    const a = await admin();
+    const user = await makeUser(f());
+    const oldSession = await makeSession(f(), { userId: user.id });
+    const store = createSessionStore(h.env, h.clock);
+    const ctx = createServiceContext(h.env, { clock: h.clock });
+    let interleaved = false;
+    let newCookie = '';
+    const db = new Proxy(h.env.DB, {
+      get(target, prop) {
+        if (prop === 'batch')
+          return async (statements: D1PreparedStatement[]) => {
+            const results = await target.batch(statements);
+            interleaved = true;
+            const newSession = await makeSession(f(), { userId: user.id });
+            newCookie = newSession.cookieValue;
+            await setUserStatus(ctx, a.user.id, user.id, 'active');
+            expect(await store.resolve(oldSession.cookieValue)).toBeNull();
+            expect(await store.resolve(newCookie)).not.toBeNull();
+            return results;
+          };
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    await setUserStatus({ ...ctx, env: { ...h.env, DB: db } }, a.user.id, user.id, 'disabled');
+    expect(interleaved).toBe(true);
+    expect(await store.resolve(oldSession.cookieValue)).toBeNull();
+    expect(await store.resolve(newCookie)).not.toBeNull();
+    const revoked = await first<{ revoked_at: number | null }>(
+      h.env.DB,
+      'SELECT revoked_at FROM sessions WHERE user_id = ? AND revoked_at IS NOT NULL',
+      [user.id],
+    );
+    expect(revoked?.revoked_at).toBe(h.clock.now());
+  });
+
   it('refuses to disable yourself and unknown users', async () => {
     const a = await admin();
     const self = await send('PATCH', `/api/v1/users/${a.user.id}`, a.headers, {
@@ -219,12 +261,7 @@ describe('emails', () => {
     const a = await admin();
     const user = await makeUser(f());
     const email = `wait-${tag()}@example.test`;
-    const org = await makeOrg(f());
-    const pass = await makePass(f(), {
-      orgId: org.id,
-      template: makeTemplate().resolved,
-      holderEmail: email,
-    });
+    const pass = await waitingPass(email);
     await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email });
     const row = await first<{ owner_user_id: string | null }>(
       h.env.DB,

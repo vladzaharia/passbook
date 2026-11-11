@@ -7,16 +7,14 @@ import type {
 import type { ApiKeyStore } from '../../platform/auth.ts';
 import { API_SCOPES, type ApiKeyAuth, type ApiScope } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
-import { batch } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { parseJsonArray } from '../../platform/json-column.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
-import { recordAudit } from '../audit/service.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { type ApiKeyAuthority, authorityOrgId, delegableScopes } from './access.ts';
 import * as repo from './repo.ts';
 
 export type ApiKeyDto = z.infer<typeof ApiKeySchema>;
@@ -46,10 +44,12 @@ function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKe
 export async function listApiKeys(
   ctx: ServiceContext,
   query: z.infer<typeof ApiKeyListQuerySchema>,
+  authority: ApiKeyAuthority,
 ): Promise<{ items: ApiKeyDto[]; nextCursor: string | null; revokedCount: number }> {
+  const orgId = authorityOrgId(authority);
   const [rows, revokedCount] = await Promise.all([
-    repo.listKeys(ctx.env.DB, { ...query, limit: query.limit + 1 }),
-    repo.countRevoked(ctx.env.DB, query.orgId),
+    repo.listKeys(ctx.env.DB, { ...query, orgId, limit: query.limit + 1 }),
+    repo.countRevoked(ctx.env.DB, orgId),
   ]);
   const page = rows.slice(0, query.limit);
   return {
@@ -61,11 +61,24 @@ export async function listApiKeys(
 
 export async function createApiKey(
   ctx: ServiceContext,
-  actorUserId: string,
+  authority: ApiKeyAuthority,
   input: z.infer<typeof CreateApiKeySchema>,
 ): Promise<ApiKeyDto & { secret: string }> {
   const now = ctx.clock.now();
-  const orgId = input.orgId ?? null;
+  const orgId = input.orgId;
+  if (
+    orgId !== authorityOrgId(authority) ||
+    (authority.kind === 'session' && authority.capability !== 'integrations:manage')
+  ) {
+    throw new ForbiddenError();
+  }
+  const delegable = delegableScopes(authority);
+  if (input.scopes.some((scope) => !delegable.includes(scope))) {
+    throw new ForbiddenError(
+      'A key cannot hold scopes beyond your own access.',
+      'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    );
+  }
   if (input.expiresAt != null && input.expiresAt <= now) {
     throw new ValidationError('Expiry must be in the future.', [], 'EXPIRY_PAST');
   }
@@ -81,51 +94,49 @@ export async function createApiKey(
     prefix,
     key_hash: await sha256Hex(secret),
     scopes: JSON.stringify([...new Set(input.scopes)]),
-    mode: input.mode,
-    created_by: actorUserId,
+    mode: authority.kind === 'session' ? authority.mode : input.mode,
+    created_by: authority.userId,
     created_at: now,
     last_used_at: null,
     expires_at: input.expiresAt ?? null,
     revoked_at: null,
   };
-  await batch(ctx.env.DB, [
-    repo.insertKeyStmt(ctx.env.DB, row),
-    auditStmt(ctx.env.DB, ctx, {
-      orgId,
-      actorType: 'user',
-      actorId: actorUserId,
-      action: 'api_key.create',
-      targetType: 'api_key',
-      targetId: row.id,
-      detail: {
-        name: row.name,
-        scopes: parseScopes(row.scopes),
-        mode: row.mode,
-        expiresAt: row.expires_at,
-      },
-    }),
-  ]);
+  await repo.createKey(ctx, row, authority, {
+    orgId,
+    actorType: 'user',
+    actorId: authority.userId,
+    action: 'api_key.create',
+    targetType: 'api_key',
+    targetId: row.id,
+    detail: {
+      name: row.name,
+      scopes: parseScopes(row.scopes),
+      mode: row.mode,
+      expiresAt: row.expires_at,
+    },
+  });
   return { ...toDto(row), secret };
 }
 
 /** Idempotent: revoking a revoked key succeeds. */
 export async function revokeApiKey(
   ctx: ServiceContext,
-  actorUserId: string,
+  authority: ApiKeyAuthority,
   id: string,
 ): Promise<void> {
-  const key = await repo.getKey(ctx.env.DB, id);
-  if (!key) throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
-  if (await repo.revokeKey(ctx.env.DB, id, ctx.clock.now())) {
-    await recordAudit(ctx, {
-      orgId: key.org_id,
-      actorType: 'user',
-      actorId: actorUserId,
-      action: 'api_key.revoke',
-      targetType: 'api_key',
-      targetId: id,
-    });
+  if (authority.kind === 'session' && authority.capability !== 'integrations:manage') {
+    throw new ForbiddenError();
   }
+  const key = await repo.getKey(ctx.env.DB, id, authorityOrgId(authority));
+  if (!key) throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
+  await repo.revokeKey(ctx, id, authority, {
+    orgId: key.org_id,
+    actorType: 'user',
+    actorId: authority.userId,
+    action: 'api_key.revoke',
+    targetType: 'api_key',
+    targetId: id,
+  });
 }
 
 /** Resolves a presented key. Null for anything invalid; throws 429 when the key is over its limit. */

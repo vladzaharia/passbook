@@ -5,7 +5,7 @@ import { ScanAdminScopeSchema } from '../../../shared/contracts/scan.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { NotFoundError, ValidationError, zodIssues } from '../../platform/errors.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
-import { countOrgTemplates, getEvent, type ScanEventRow } from './repo-scope.ts';
+import { countOrgTemplates, readValidEventScope, type ScanEventRow } from './repo-scope.ts';
 
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -45,14 +45,14 @@ export interface ResolvedScope {
 }
 
 /**
- * Validates an admin's scope. An org, event or template that does not exist, is in another org, or
- * (for the event) is in another mode answers 404 with the body of any unknown id.
+ * Validates an admin's scope. Unknown or foreign ids, invalid events, and templates without an
+ * approved release in the request's mode all answer 404 with the body of any unknown id.
  */
 export async function resolveAdminScope(
   c: Context<AppBindings>,
   raw: unknown,
   mode: Mode,
-): Promise<ResolvedScope> {
+): Promise<ResolvedScope & { eventTemplateIds: string[] }> {
   const parsed = ScanAdminScopeSchema.safeParse(raw);
   if (!parsed.success)
     throw new ValidationError(
@@ -63,13 +63,22 @@ export async function resolveAdminScope(
   const scope: z.infer<typeof ScanAdminScopeSchema> = parsed.data;
   const db = c.env.DB;
   if (!(await orgIsReadable(db, scope.orgId))) throw new NotFoundError();
-  const event = scope.eventId ? await getEvent(db, scope.orgId, scope.eventId) : null;
-  if (scope.eventId && (!event || event.mode !== mode)) throw new NotFoundError();
+  const eventScope = scope.eventId
+    ? await readValidEventScope(db, scope.orgId, mode, scope.eventId)
+    : null;
+  if (scope.eventId && !eventScope) throw new NotFoundError();
+  const event = eventScope?.event ?? null;
   const templateIds = [...new Set(scope.templateIds ?? [])];
   if (
     templateIds.length > 0 &&
-    (await countOrgTemplates(db, scope.orgId, templateIds)) !== templateIds.length
+    (await countOrgTemplates(db, scope.orgId, mode, templateIds)) !== templateIds.length
   )
     throw new NotFoundError();
-  return { orgId: scope.orgId, event, templateIds, timeZone: event?.timeZone ?? scope.timeZone };
+  return {
+    orgId: scope.orgId,
+    event,
+    eventTemplateIds: eventScope?.templateIds ?? [],
+    templateIds,
+    timeZone: event?.timeZone ?? scope.timeZone,
+  };
 }

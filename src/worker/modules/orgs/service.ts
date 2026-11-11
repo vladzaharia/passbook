@@ -8,7 +8,12 @@ import type {
   UpdateOrgSchema,
 } from '../../../shared/contracts/orgs.ts';
 import type { Actor } from '../../platform/context.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
 import { markPassesStale } from './branding-stale.ts';
@@ -23,22 +28,39 @@ import {
   type OrgRow,
   setOrgStatus as setOrgStatusRow,
   slugTaken,
-  updateOrgRow,
 } from './repo.ts';
+import {
+  insertOrgAsAdmin,
+  moveOrgStatusAsAdmin,
+  type OrgAdmin,
+  type OrgWriteAuthority,
+  updateOrgRow,
+} from './repo-org-writes.ts';
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
 
 export function toDto(row: OrgRow): OrgDto {
+  const { logo, icon, ...branding } = JSON.parse(row.branding) as Branding;
+  const image = (value: NonNullable<Branding['logo']>) => ({
+    sha: value.sha,
+    w: value.w,
+    h: value.h,
+  });
   return {
     id: row.id,
     slug: row.slug,
     name: row.name,
     status: row.status,
     defaultIdentityId: row.default_identity_id,
-    branding: JSON.parse(row.branding) as Branding,
+    branding: {
+      ...branding,
+      ...(logo ? { logo: image(logo) } : {}),
+      ...(icon ? { icon: image(icon) } : {}),
+    },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    configRevision: row.config_revision,
   };
 }
 
@@ -102,6 +124,7 @@ export async function createOrg(
   ctx: ServiceContext,
   actor: Actor,
   input: z.infer<typeof CreateOrgSchema>,
+  admin?: OrgAdmin,
 ): Promise<OrgDto> {
   await checkSlug(ctx, input.slug);
   await checkIdentity(ctx, null, input.defaultIdentityId ?? null);
@@ -115,8 +138,10 @@ export async function createOrg(
     branding: JSON.stringify(input.branding ?? {}),
     created_at: now,
     updated_at: now,
+    config_revision: 1,
   };
-  await insertOrg(ctx.env.DB, row);
+  if (admin) await insertOrgAsAdmin(ctx, row, admin);
+  else await insertOrg(ctx.env.DB, row);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.id,
@@ -133,6 +158,7 @@ export async function updateOrg(
   actor: Actor,
   id: string,
   input: z.infer<typeof UpdateOrgSchema>,
+  authority?: OrgWriteAuthority,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
   if (input.slug !== undefined && input.slug !== before.slug) await checkSlug(ctx, input.slug, id);
@@ -146,11 +172,13 @@ export async function updateOrg(
       input.defaultIdentityId === undefined ? before.default_identity_id : input.defaultIdentityId,
     branding: input.branding ? keepImages(input.branding, before.branding) : before.branding,
     updated_at: ctx.clock.now(),
+    config_revision: input.configRevision ?? before.config_revision,
   };
-  await updateOrgRow(ctx.env.DB, next);
-  const passesToUpdate = await markPassesStale(ctx, id, before, next);
+  const saved = await updateOrgRow(ctx, next, authority);
+  if (!saved) throw new ForbiddenError();
+  const passesToUpdate = await markPassesStale(ctx, id, before, saved);
   const view = (row: OrgRow) => ({ ...toDto(row) }) as Record<string, unknown>;
-  const changes = diffFields(view(before), view(next), [
+  const changes = diffFields(view(before), view(saved), [
     'slug',
     'name',
     'status',
@@ -167,7 +195,7 @@ export async function updateOrg(
       targetId: id,
       detail: { changes },
     });
-  return withUpdates(toDto(next), passesToUpdate);
+  return withUpdates(toDto(saved), passesToUpdate);
 }
 
 const statusAction = (status: 'active' | 'suspended') =>
@@ -190,11 +218,17 @@ export async function setOrgStatus(
   actor: Actor,
   id: string,
   status: 'active' | 'suspended',
+  admin?: OrgAdmin,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
   if (before.status === status) return toDto(before);
   const now = ctx.clock.now();
-  await setOrgStatusRow(ctx.env.DB, id, status, now);
+  const saved = admin
+    ? (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
+      ? await getOrgRow(ctx.env.DB, id)
+      : null
+    : await setOrgStatusRow(ctx.env.DB, id, status, now);
+  if (!saved) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: id,
@@ -203,13 +237,19 @@ export async function setOrgStatus(
     targetId: id,
     detail: { changes: { status: { from: before.status, to: status } } },
   });
-  return toDto({ ...before, status, updated_at: now });
+  return toDto(saved);
 }
 
 /** Soft delete: passes and audit rows keep their org reference. */
-export async function deleteOrg(ctx: ServiceContext, actor: Actor, id: string): Promise<void> {
+export async function deleteOrg(
+  ctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  admin?: OrgAdmin,
+): Promise<void> {
   const row = await requireOrg(ctx, id);
-  await markOrgDeleted(ctx.env.DB, id, ctx.clock.now());
+  if (admin) await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
+  else await markOrgDeleted(ctx.env.DB, id, ctx.clock.now());
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: id,

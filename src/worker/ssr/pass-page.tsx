@@ -2,6 +2,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
 import type { Mode } from '../../shared/contracts/common.ts';
+import type { WalletOffer } from '../../shared/contracts/me.ts';
+import type {
+  WalletProvider,
+  WalletProviderIssuance,
+} from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import type { DeviceInfo } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
@@ -57,6 +62,11 @@ export interface PassPageProps {
   /** The pass's own title (display title, else its description). */
   passTitle: string;
   downloadHref: string;
+  walletOffers: readonly WalletOffer[];
+  /** The release gate per native wallet, when the caller has it. */
+  issuance?: Partial<Record<WalletProvider, WalletProviderIssuance>>;
+  /** Scriptless presentation page; never the QR that opens this page. */
+  barcodeHref?: string | undefined;
   /** The absolute URL of this page: the add QR encodes it. */
   publicUrl: string;
   /** The holder's page in the portal (sign-in first when needed). */
@@ -116,6 +126,9 @@ function PassBody(props: PassPageProps) {
           removalMessage={props.removal?.message ?? null}
           device={props.device}
           downloadHref={props.downloadHref}
+          walletOffers={props.walletOffers}
+          {...(props.issuance ? { issuance: props.issuance } : {})}
+          barcodeHref={props.barcodeHref}
           publicUrl={props.publicUrl}
           support={props.support}
           rise
@@ -147,7 +160,9 @@ export function renderPassPage(props: PassPageProps): string {
     : voided
       ? HOLDER_COPY.voided
       : active
-        ? HOLDER_COPY.previewActive
+        ? props.walletOffers.length > 0
+          ? HOLDER_COPY.previewWallets
+          : HOLDER_COPY.previewActive
         : HOLDER_COPY.expired;
   return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }

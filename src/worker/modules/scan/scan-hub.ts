@@ -2,13 +2,47 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext } from '../../platform/service-context.ts';
-import { type LiveAttachment, liveRecipient } from './live-auth.ts';
-import { liveRowFor } from './live-render.ts';
+import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
+import { snapshotCredentialEnv } from './credential-input.ts';
+import { openLiveAttachment } from './live-attachment.ts';
+import {
+  cloneLiveAttachment,
+  type LiveAttachment,
+  type LiveRecipient,
+  liveRecipient,
+} from './live-auth.ts';
+import { LIVE_ROW_TTL_MS } from './live-lifetime.ts';
+import { type InternalLiveRow, openLiveSourceProof } from './live-provenance.ts';
+import { liveRowFor, liveRowsFor } from './live-render.ts';
 import { getScanner } from './repo-device.ts';
 
-const TTL = 15 * 60_000;
 const RING = 'recent';
+
+/** Pin one key ring for every asynchronous live operation. */
+function liveContext(env: AppEnv) {
+  const ctx = createDetachedContext(env);
+  return { ...ctx, env: snapshotCredentialEnv(env) };
+}
+
+// Old rows without an authenticated source proof cannot authorize a live disclosure.
+type StoredLiveRow = ScanLiveRow & { sourceProof?: string };
+
+function internalRow(row: StoredLiveRow): InternalLiveRow {
+  return {
+    id: row.id,
+    at: row.at,
+    scannerId: row.scannerId,
+    scannerName: row.scannerName,
+    passId: row.passId,
+    holder: null,
+    photoUrl: null,
+    kind: row.kind,
+    direction: row.direction,
+    label: row.label,
+    presented: row.presented,
+    sourceProof: typeof row.sourceProof === 'string' ? row.sourceProof : '',
+  };
+}
 
 /** One org and mode per object. HTTP mutations remain in D1; this is a bounded display feed. */
 export class ScanHub extends DurableObject<AppEnv> {
@@ -16,9 +50,10 @@ export class ScanHub extends DurableObject<AppEnv> {
     const raw = request.headers.get('x-pb-live');
     if (!raw || request.headers.get('upgrade')?.toLowerCase() !== 'websocket')
       return new Response(null, { status: 400 });
-    const attachment = JSON.parse(raw) as LiveAttachment;
-    const ctx = createServiceContext(this.env);
-    if (!(await liveRecipient(ctx, attachment))) return new Response(null, { status: 401 });
+    const ctx = liveContext(this.env);
+    const attachment = await openLiveAttachment(ctx.env, raw);
+    const recipient = attachment ? await liveRecipient(ctx, attachment) : null;
+    if (!attachment || !recipient) return new Response(null, { status: 401 });
     if (!(await this.tenant(attachment.orgId, attachment.mode)))
       return new Response(null, { status: 403 });
     const pair = new WebSocketPair();
@@ -26,39 +61,56 @@ export class ScanHub extends DurableObject<AppEnv> {
     const previous = this.ctx.getWebSockets(attachment.scannerId);
     for (const socket of previous.slice(0, Math.max(0, previous.length - 2)))
       socket.close(4408, 'Too many screens');
-    server.serializeAttachment(attachment);
+    server.serializeAttachment(raw);
     this.ctx.acceptWebSocket(server, [attachment.scannerId]);
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     await this.schedule(attachment.expiresAt);
-    server.send(JSON.stringify(await this.snapshot(attachment)));
+    server.send(JSON.stringify(await this.snapshotFor(ctx, attachment, undefined, recipient)));
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  async publish(input: { orgId: string; mode: Mode; row: ScanLiveRow }): Promise<boolean> {
-    if (!(await this.tenant(input.orgId, input.mode))) return false;
-    const { row } = input;
-    const source = await getScanner(this.env.DB, row.scannerId);
+  async publish(input: { orgId: string; mode: Mode; row: InternalLiveRow }): Promise<boolean> {
+    const ctx = liveContext(this.env);
+    const { orgId, mode } = input;
+    const row = internalRow(input.row);
+    if (!row.sourceProof) return false;
+    const proof = await openLiveSourceProof(ctx.env, row.sourceProof);
+    if (
+      !proof ||
+      proof.actor.orgId !== orgId ||
+      proof.actor.mode !== mode ||
+      proof.actor.scanner?.id !== row.scannerId ||
+      proof.eventId !== row.id ||
+      proof.passId !== row.passId ||
+      proof.at !== row.at
+    )
+      return false;
+    if (!(await this.tenant(orgId, mode))) return false;
+    const source = await getScanner(ctx.env.DB, row.scannerId);
     if (
       !source ||
-      source.orgId !== input.orgId ||
-      source.mode !== input.mode ||
+      source.orgId !== orgId ||
+      source.mode !== mode ||
       source.deviceRole !== 'scan' ||
       source.revokedAt !== null
     )
       return false;
-    const now = createServiceContext(this.env).clock.now();
-    const previous = (await this.ctx.storage.get<ScanLiveRow[]>(RING)) ?? [];
+    const now = ctx.clock.now();
+    const previous = (await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [];
     if (previous.some((r) => r.id === row.id)) return true;
-    const rows = [...previous.filter((r) => now - r.at < TTL), row]
-      .sort((a, b) => a.at - b.at || a.id.localeCompare(b.id))
+    const rows = [...previous.filter((r) => now - r.at < LIVE_ROW_TTL_MS).map(internalRow), row]
+      // Random event IDs have no chronological order. Stable sorting preserves arrival
+      // order for same-millisecond events so reconnect cursors cannot skip them.
+      .sort((a, b) => a.at - b.at)
       .slice(-100);
     await this.ctx.storage.put(RING, rows);
-    await this.schedule(now + TTL);
+    await this.schedule(now + LIVE_ROW_TTL_MS);
     await Promise.all(
       this.ctx.getWebSockets().map(async (socket) => {
-        const attachment = socket.deserializeAttachment() as LiveAttachment;
-        const ctx = createServiceContext(this.env);
-        const recipient = await liveRecipient(ctx, attachment);
+        const sealed: unknown = socket.deserializeAttachment();
+        const attachment =
+          typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
+        const recipient = attachment ? await liveRecipient(ctx, attachment) : null;
         if (!recipient) {
           socket.close(4409, 'Setup changed');
           return;
@@ -71,20 +123,59 @@ export class ScanHub extends DurableObject<AppEnv> {
   }
 
   async snapshot(attachment: LiveAttachment, after?: string | null) {
-    const ctx = createServiceContext(this.env);
-    const recipient = await liveRecipient(ctx, attachment);
+    const ctx = liveContext(this.env);
+    return this.snapshotFor(ctx, attachment, after);
+  }
+
+  private async snapshotFor(
+    ctx: ServiceContext,
+    attachment: LiveAttachment,
+    after?: string | null,
+    authenticated?: LiveRecipient,
+  ) {
+    const captured = cloneLiveAttachment(attachment);
+    if (!captured) return { rows: [], cursor: null };
+    const recipient = authenticated ?? (await liveRecipient(ctx, captured));
     if (!recipient) return { rows: [], cursor: null };
-    if (!(await this.tenant(attachment.orgId, attachment.mode))) return { rows: [], cursor: null };
-    const ring = ((await this.ctx.storage.get<ScanLiveRow[]>(RING)) ?? []).filter(
-      (r) => ctx.clock.now() - r.at < TTL,
-    );
+    if (!(await this.tenant(captured.orgId, captured.mode))) return { rows: [], cursor: null };
+    const ring = ((await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [])
+      .filter((r) => ctx.clock.now() - r.at < LIVE_ROW_TTL_MS)
+      .map(internalRow);
     // A customer reconnect never replays a previous person's result.
-    if (attachment.role === 'customer') return { rows: [], cursor: ring.at(-1)?.id ?? null };
+    if (captured.role === 'customer') return { rows: [], cursor: ring.at(-1)?.id ?? null };
     const index = after ? ring.findIndex((r) => r.id === after) : -1;
-    const rows = (
-      await Promise.all(ring.slice(index + 1).map((row) => liveRowFor(ctx, recipient, row)))
-    ).filter((r) => r !== null);
+    const rows = await liveRowsFor(ctx, recipient, ring.slice(index + 1));
     return { rows, cursor: ring.at(-1)?.id ?? null };
+  }
+
+  /** Server-side only: grants can redeem proof for a retained, unexpired event. */
+  async sourceProof(eventId: string): Promise<string | null> {
+    const ctx = liveContext(this.env);
+    const now = ctx.clock.now();
+    const rows = (await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [];
+    const row = rows.find((entry) => entry.id === eventId && now - entry.at < LIVE_ROW_TTL_MS);
+    if (typeof row?.sourceProof !== 'string' || !row.sourceProof) return null;
+    const sealed = row.sourceProof;
+    const proof = await openLiveSourceProof(ctx.env, sealed);
+    if (!proof) return null;
+
+    // Decryption yields to other requests. Recheck retention and expiry afterwards, and
+    // bind every stored row identity field to its authenticated source proof.
+    const retained = (await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [];
+    const currentNow = ctx.clock.now();
+    const current = retained.find(
+      (entry) => entry.id === eventId && currentNow - entry.at < LIVE_ROW_TTL_MS,
+    );
+    if (
+      !current ||
+      current.sourceProof !== sealed ||
+      proof.eventId !== current.id ||
+      proof.passId !== current.passId ||
+      proof.at !== current.at ||
+      proof.actor.scanner?.id !== current.scannerId
+    )
+      return null;
+    return sealed;
   }
 
   async kick(scannerId: string) {
@@ -107,18 +198,26 @@ export class ScanHub extends DurableObject<AppEnv> {
   }
 
   override async alarm() {
-    const now = createServiceContext(this.env).clock.now();
-    const rows = ((await this.ctx.storage.get<ScanLiveRow[]>(RING)) ?? []).filter(
-      (r) => now - r.at < TTL,
+    const ctx = liveContext(this.env);
+    const now = ctx.clock.now();
+    const rows = ((await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? []).filter(
+      (r) => now - r.at < LIVE_ROW_TTL_MS,
     );
     if (rows.length) await this.ctx.storage.put(RING, rows);
     else await this.ctx.storage.delete(RING);
     for (const socket of this.ctx.getWebSockets()) {
-      const attachment = socket.deserializeAttachment() as LiveAttachment;
-      if (attachment.expiresAt <= now) socket.close(4401, 'Reconnect');
+      const sealed: unknown = socket.deserializeAttachment();
+      const attachment =
+        typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
+      if (
+        !attachment ||
+        attachment.expiresAt <= ctx.clock.now() ||
+        !(await liveRecipient(ctx, attachment))
+      )
+        socket.close(4401, 'Reconnect');
       else await this.schedule(attachment.expiresAt);
     }
-    if (rows.length) await this.schedule((rows[0]?.at ?? now) + TTL);
+    if (rows.length) await this.schedule((rows[0]?.at ?? now) + LIVE_ROW_TTL_MS);
   }
 
   private async schedule(at: number) {
@@ -139,10 +238,9 @@ export class ScanHub extends DurableObject<AppEnv> {
   private send(socket: WebSocket, text: string) {
     try {
       socket.send(text);
-    } catch (error) {
-      createServiceContext(this.env).log.warn('scan.live_socket_failed', {
+    } catch {
+      createDetachedContext(this.env).log.warn('scan.live_socket_failed', {
         code: 'SCAN_LIVE_SOCKET_FAILED',
-        error,
       });
       socket.close(1011, 'Connection failed');
     }

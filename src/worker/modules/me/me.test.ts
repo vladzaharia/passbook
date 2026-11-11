@@ -12,6 +12,7 @@ import { NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { fakeLimiter, harness, type TestHarness } from '../auth/test-support.ts';
+import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
 import { type MeDeps, refreshMyPass, removeMyPass } from './service.ts';
 
 let h: TestHarness;
@@ -28,17 +29,15 @@ async function setup() {
   const session = await makeSession(f1, { userId: user.id });
   const org = await makeOrg(f1, { name: 'Acme' });
   const template = makeTemplate();
-  const own = async (holder?: string) => {
+  const own = async (holder?: string, mode: 'live' | 'test' = 'live') => {
     const pass = await makePass(f1, {
       orgId: org.id,
       template: template.resolved,
       holderEmail: holder,
+      ownerUserId: user.id,
+      mode,
     });
-    await run(h.env.DB, 'UPDATE passes SET owner_user_id = ?, display_title = ? WHERE id = ?', [
-      user.id,
-      'My pass',
-      pass.id,
-    ]);
+    await run(h.env.DB, 'UPDATE passes SET display_title = ? WHERE id = ?', ['My pass', pass.id]);
     return pass;
   };
   return { user, session, org, template, own, f1 };
@@ -62,6 +61,19 @@ describe('passes', () => {
     expect(await one.text()).not.toContain('secret-device-token');
   });
 
+  it('returns an empty wallet offer array without approved native providers', async () => {
+    const { session, own } = await setup();
+    const mine = await own();
+    const list = (await (await get('/api/v1/me/passes', session.headers)).json()) as {
+      items: { id: string; walletOffers: unknown[] }[];
+    };
+    const detail = (await (await get(`/api/v1/me/passes/${mine.id}`, session.headers)).json()) as {
+      walletOffers: unknown[];
+    };
+    expect(list.items.find((item) => item.id === mine.id)?.walletOffers).toEqual([]);
+    expect(detail.walletOffers).toEqual([]);
+  });
+
   it('redacts barcode payloads from both list and detail when presentation is not allowed', async () => {
     const { session, own, org } = await setup();
     const active = await own();
@@ -70,40 +82,65 @@ describe('passes', () => {
     const expired = await own();
     const removed = await own();
     const deleted = await own();
-    const quarantined = await own();
-    const barcode = { format: 'PKBarcodeFormatQR', message: 'private-code', altText: 'private-alt' };
+    const quarantined = await own(undefined, 'test');
+    const barcode = {
+      format: 'PKBarcodeFormatQR',
+      message: 'private-code',
+      altText: 'private-alt',
+    };
     for (const pass of [active, voided, jsonVoided, expired, removed, deleted, quarantined]) {
       const json = {
         description: 'Visible description',
         barcode,
         barcodes: [barcode],
         ...(pass.id === jsonVoided.id ? { voided: true } : {}),
-        ...(pass.id === expired.id ? { expirationDate: new Date(h.clock.now() - 1000).toISOString() } : {}),
+        ...(pass.id === expired.id
+          ? { expirationDate: new Date(h.clock.now() - 1000).toISOString() }
+          : {}),
       };
       await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
-        JSON.stringify(json), pass.id,
+        JSON.stringify(json),
+        pass.id,
       ]);
     }
     await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided.id]);
-    await run(h.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [h.clock.now(), removed.id]);
-    await run(h.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [h.clock.now(), deleted.id]);
-    await run(h.env.DB, "UPDATE passes SET mode = 'test', test_data_quarantined = 1 WHERE id = ?", [
+    await run(h.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [
+      h.clock.now(),
+      removed.id,
+    ]);
+    await run(h.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [
+      h.clock.now(),
+      deleted.id,
+    ]);
+    await run(h.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
       quarantined.id,
     ]);
-    const list = await (await get('/api/v1/me/passes', session.headers)).json() as {
-      items: { id: string; presentationEligible: boolean; passJson: Record<string, unknown> }[];
+    const list = (await (await get('/api/v1/me/passes', session.headers)).json()) as {
+      items: {
+        id: string;
+        presentationEligible: boolean;
+        walletOffers: unknown[];
+        passJson: Record<string, unknown>;
+      }[];
     };
     expect(list.items.some((item) => item.id === quarantined.id)).toBe(false);
     expect((await get(`/api/v1/me/passes/${quarantined.id}`, session.headers)).status).toBe(404);
     for (const pass of [active, voided, jsonVoided, expired, removed, deleted]) {
-      const detail = await (await get(`/api/v1/me/passes/${pass.id}`, session.headers)).json() as {
+      const detail = (await (
+        await get(`/api/v1/me/passes/${pass.id}`, session.headers)
+      ).json()) as {
         presentationEligible: boolean;
+        walletOffers: unknown[];
         passJson: Record<string, unknown>;
       };
       const item = list.items.find((candidate) => candidate.id === pass.id);
       const eligible = pass.id === active.id;
       expect(item?.presentationEligible).toBe(eligible);
       expect(detail.presentationEligible).toBe(eligible);
+      if (!eligible) {
+        expect(item?.walletOffers).toEqual([]);
+        expect(detail.walletOffers).toEqual([]);
+      }
       expect(detail.passJson.description).toBe('Visible description');
       for (const json of [item?.passJson, detail.passJson]) {
         expect(json?.barcode).toEqual(eligible ? barcode : undefined);
@@ -111,11 +148,15 @@ describe('passes', () => {
       }
     }
     await run(h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
-    const suspended = await (await get(`/api/v1/me/passes/${active.id}`, session.headers)).json() as {
+    const suspended = (await (
+      await get(`/api/v1/me/passes/${active.id}`, session.headers)
+    ).json()) as {
       presentationEligible: boolean;
+      walletOffers: unknown[];
       passJson: Record<string, unknown>;
     };
     expect(suspended.presentationEligible).toBe(false);
+    expect(suspended.walletOffers).toEqual([]);
     expect(suspended.passJson).not.toHaveProperty('barcode');
     expect(suspended.passJson).not.toHaveProperty('barcodes');
     expect(suspended.passJson.description).toBe('Visible description');
@@ -128,12 +169,12 @@ describe('passes', () => {
       JSON.stringify({ description: 'Hello', organizationName: 'Acme' }),
       mine.id,
     ]);
-    const stranger = await makePass(f1, { orgId: org.id, template: template.resolved });
     const otherUser = await makeUser(f1);
-    await run(h.env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [
-      otherUser.id,
-      stranger.id,
-    ]);
+    await makePass(f1, {
+      orgId: org.id,
+      template: template.resolved,
+      ownerUserId: otherUser.id,
+    });
     const res = await get('/api/v1/me/passes', session.headers);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -235,7 +276,8 @@ describe('passes', () => {
         return { requestedAt: 42, coalesced: false, cooldownSeconds: 30 };
       },
       removePassFromUser: async (...args) => {
-        calls.push(['remove', args[1], args[2]]);
+        calls.push(['remove', args[1], args[2], args[4]]);
+        return { transferId: 'transfer-1', state: 'completed' };
       },
     };
     beforeEach(() => {
@@ -243,7 +285,7 @@ describe('passes', () => {
     });
 
     it('refresh calls the passes seam as the user', async () => {
-      const { user, org, own } = await setup();
+      const { user, org, own, template } = await setup();
       const mine = await own();
       const ctx = createServiceContext(h.env, { clock: h.clock });
       expect(await refreshMyPass(ctx, user.id, mine.id, deps)).toEqual({
@@ -251,10 +293,29 @@ describe('passes', () => {
         requestedAt: 42,
         cooldownSeconds: 30,
       });
-      expect(calls).toEqual([['refresh', mine.id, { type: 'user', id: user.id }, {
-        orgId: org.id, mode: 'live', version: 1, linkGeneration: 1, status: 'active',
-        connectionId: null, externalRef: null, ownerUserId: user.id,
-      }]]);
+      expect(calls).toEqual([
+        [
+          'refresh',
+          mine.id,
+          { type: 'user', id: user.id },
+          {
+            orgId: org.id,
+            mode: 'live',
+            version: 1,
+            linkGeneration: 1,
+            status: 'active',
+            identityId: PLATFORM_IDENTITY_ID,
+            templateId: template.resolved.id,
+            templateVersion: template.resolved.version,
+            releaseId: null,
+            credentialGeneration: 1,
+            lifecycleGeneration: 0,
+            connectionId: null,
+            externalRef: null,
+            ownerUserId: user.id,
+          },
+        ],
+      ]);
     });
 
     it('refresh refuses voided passes and over-limit callers', async () => {
@@ -292,18 +353,41 @@ describe('passes', () => {
       );
     });
 
-    it('remove calls the holders seam and audits', async () => {
-      const { user, own } = await setup();
+    it('remove returns the holders seam outcome', async () => {
+      const { user, org, own } = await setup();
       const mine = await own();
-      const ctx = createServiceContext(h.env, { clock: h.clock });
-      expect(await removeMyPass(ctx, user.id, mine.id, deps)).toEqual({ ok: true });
-      expect(calls).toEqual([['remove', mine.id, user.id]]);
-      const audit = await first(
+      const stored = await first<{ revision: number }>(
         h.env.DB,
-        "SELECT 1 FROM audit_log WHERE action = 'pass.remove_from_user' AND target_id = ?",
+        'SELECT revision FROM passes WHERE id = ?',
         [mine.id],
       );
-      expect(audit).not.toBeNull();
+      if (!stored) throw new Error('Missing pass fixture');
+      const ctx = createServiceContext(h.env, { clock: h.clock });
+      expect(await removeMyPass(ctx, user.id, 'session', mine.id, deps)).toEqual({
+        transferId: 'transfer-1',
+        state: 'completed',
+      });
+      expect(calls).toEqual([
+        [
+          'remove',
+          mine.id,
+          user.id,
+          {
+            orgId: org.id,
+            mode: 'live',
+            holderEmail: null,
+            ownerUserId: user.id,
+            version: 1,
+            revision: stored.revision,
+            rowVersion: expect.any(Number),
+            lifecycleGeneration: 0,
+            credentialGeneration: 1,
+            releaseId: null,
+            downloadToken: mine.downloadToken,
+            linkGeneration: 1,
+          },
+        ],
+      ]);
     });
 
     it('both refuse a pass the user does not own', async () => {
@@ -313,7 +397,7 @@ describe('passes', () => {
       await expect(refreshMyPass(ctx, user.id, stranger.id, deps)).rejects.toBeInstanceOf(
         NotFoundError,
       );
-      await expect(removeMyPass(ctx, user.id, stranger.id, deps)).rejects.toBeInstanceOf(
+      await expect(removeMyPass(ctx, user.id, 'session', stranger.id, deps)).rejects.toBeInstanceOf(
         NotFoundError,
       );
       expect(calls).toHaveLength(0);

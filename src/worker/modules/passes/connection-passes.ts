@@ -1,20 +1,17 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { strictEmail } from '../../../shared/email.ts';
-import { ConflictError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
-import { createPassRow } from './create.ts';
-import { type Mutation, publishPass } from './publish.ts';
-import {
-  applyConnectionState,
-  connectionForPass,
-  type ConnectionPassContext,
-  type FieldSources,
-  findByConnectionRef,
-  getPass,
-  matchesConnectionPass,
-  validConnectionPassContext,
-} from './repo.ts';
+import { blockedUserIds, verifiedCandidates } from '../holders/repo.ts';
+import { checkedPass, retainedRelease, stalePass } from './connection-passes-context.ts';
+import { type CredentialTransferResult, startCredentialTransfer } from './credential-transfer.ts';
+import { publishPass } from './publish.ts';
+import { applyConnectionState } from './repo.ts';
+import type { ConnectionPassContext } from './repo-connection-context.ts';
+import { readCredentialTransfer } from './repo-credential-transfer-read.ts';
+import type { FieldSources, Pass } from './repo-map.ts';
+import { captureConnectionTransferPending } from './repo-read-connection.ts';
+import { getPass } from './repo-read-pass.ts';
 
 export interface ConnectionRecordInput extends ConnectionPassContext {
   /** Mapped template inputs. Fields marked `manual` in field_sources are skipped. */
@@ -23,162 +20,204 @@ export interface ConnectionRecordInput extends ConnectionPassContext {
   cause: 'connection' | 'user_refresh';
 }
 
-const stalePass = () => new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
+interface ConnectionPassResult {
+  version: number;
+  ownerUserId: string | null;
+  linkGeneration: number;
+  identityId: string;
+  credentialGeneration: number;
+  lifecycleGeneration: number;
+  credentialKeysetCommitment: string;
+  templateId: string;
+  templateVersion: string;
+  releaseId: string | null;
+  transferPending: false;
+  /** The committed artifact already enqueued or coalesced its own push. */
+  pushQueued: boolean;
+}
 
-async function checkedPass(ctx: ServiceContext, context: ConnectionPassContext) {
-  if (!validConnectionPassContext(context)) throw stalePass();
-  const pass = await getPass(ctx.env.DB, context.passId);
-  if (!pass) throw stalePass();
-  if (
-    pass.orgId !== context.orgId || pass.mode !== context.mode ||
-    pass.connectionId !== context.connectionId || pass.externalRef !== context.externalRef
-  )
-    throw new ConflictError('The pass is not linked to this connection.', 'PASS_CONNECTION_MISMATCH');
-  if (!(await matchesConnectionPass(ctx.env.DB, context))) throw stalePass();
-  return pass;
+function mappedFields(
+  current: Pass,
+  fields: Personalization,
+): {
+  personalization: Personalization;
+  fieldSources: FieldSources;
+} {
+  const personalization: Personalization = { ...current.personalization };
+  const fieldSources: FieldSources = { ...current.fieldSources };
+  for (const [key, value] of Object.entries(fields)) {
+    if (current.fieldSources[key] === 'manual') continue;
+    personalization[key] = value;
+    fieldSources[key] = 'connection';
+  }
+  return { personalization, fieldSources };
 }
 
 /** Applies upstream data; publishes only if the built pass changed. */
 export async function applyConnectionRecord(
   ctx: ServiceContext,
   input: ConnectionRecordInput,
-): Promise<{ changed: boolean; version: number; ownerUserId: string | null; linkGeneration: number }> {
+): Promise<ConnectionPassResult & { changed: boolean }> {
+  input = structuredClone(input);
   const pass = await checkedPass(ctx, input);
-  const email = input.holderEmail ? strictEmail(input.holderEmail) : null;
-  if (input.holderEmail && !email)
+  const email = input.holderEmail == null ? null : strictEmail(input.holderEmail);
+  if (input.holderEmail != null && !email) {
     ctx.log.warn('pass.holder_email_invalid', { passId: pass.id, code: 'EMAIL_INVALID' });
-  const holderChange = email && !pass.ownerUserId && email !== pass.holderEmail
-    ? { email, token: ctx.ids.token(), now: ctx.clock.now() }
-    : null;
-  if (holderChange?.token === pass.downloadToken)
-    throw new ConflictError('The download link could not be rotated.', 'PASS_CONFLICT');
+    throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
+  }
+  if (email && email !== pass.holderEmail) {
+    const proof = input.retainedReleaseProof;
+    const capturedRelease = proof ? await retainedRelease(ctx, pass, proof) : undefined;
+    const [candidates, blocked] = await Promise.all([
+      verifiedCandidates(ctx.env.DB, email),
+      blockedUserIds(ctx.env.DB, pass.id),
+    ]);
+    const eligible = candidates.filter((candidate) => !blocked.includes(candidate));
+    const ownerUserId = eligible.length === 1 ? (eligible[0] ?? null) : null;
+    const original = pass;
+    let transfer: CredentialTransferResult;
+    try {
+      transfer = await startCredentialTransfer(
+        ctx,
+        { type: 'connection', id: input.connectionId },
+        pass.id,
+        { holderEmail: email, ownerUserId },
+        null,
+        {
+          kind: 'connection',
+          expected: pass,
+          connection: input,
+          content: mappedFields(pass, input.fields),
+          audit: {
+            orgId: pass.orgId,
+            actorType: 'connection',
+            actorId: input.connectionId,
+            action: 'holder.assign',
+            targetType: 'pass',
+            targetId: pass.id,
+            detail: { changed: true },
+          },
+        },
+      );
+    } catch (error) {
+      if (proof && error instanceof ConflictError && error.code === 'PASS_CONFLICT')
+        await retainedRelease(ctx, pass, proof, capturedRelease);
+      throw error;
+    }
+    if (transfer.state !== 'completed') {
+      if (proof) await retainedRelease(ctx, pass, proof, capturedRelease);
+      throw new ConflictError(
+        'The holder transfer is pending provider retirement.',
+        'CONNECTION_TRANSFER_PENDING',
+      );
+    }
+
+    // Adopt only this transfer's exact, committed transition, never a later pass snapshot.
+    const [lineage, completed] = await Promise.all([
+      readCredentialTransfer(ctx.env.DB, transfer.transferId),
+      getPass(ctx.env.DB, input.passId),
+    ]);
+    if (
+      !lineage ||
+      !completed ||
+      lineage.state !== 'completed' ||
+      lineage.pass_id !== original.id ||
+      lineage.org_id !== original.orgId ||
+      lineage.mode !== original.mode ||
+      lineage.source_generation !== original.credentialGeneration ||
+      lineage.source_version !== original.version ||
+      lineage.source_revision !== original.revision ||
+      lineage.source_lifecycle_generation !== original.lifecycleGeneration ||
+      lineage.source_link_generation !== original.linkGeneration + 1 ||
+      lineage.target_holder_email !== email ||
+      lineage.target_owner_user_id !== ownerUserId ||
+      lineage.requested_by_type !== 'connection' ||
+      lineage.requested_by_id !== input.connectionId ||
+      completed.version !== lineage.source_version + 1 ||
+      completed.credentialGeneration !== lineage.target_generation ||
+      completed.lifecycleGeneration !== lineage.source_lifecycle_generation ||
+      completed.linkGeneration !== lineage.source_link_generation ||
+      completed.holderEmail !== email ||
+      completed.ownerUserId !== ownerUserId
+    )
+      throw stalePass();
+    if ((await captureConnectionTransferPending(ctx.env.DB, completed)) !== false)
+      throw stalePass();
+    const context: ConnectionPassContext = {
+      ...input,
+      expectedVersion: completed.version,
+      expectedRowVersion: completed.rowVersion,
+      ownerUserId: completed.ownerUserId,
+      linkGeneration: completed.linkGeneration,
+      identityId: completed.identityId,
+      credentialGeneration: completed.credentialGeneration,
+      lifecycleGeneration: completed.lifecycleGeneration,
+      transferPending: false,
+    };
+    const checked = await checkedPass(ctx, context);
+    if (
+      checked.revision !== completed.revision ||
+      checked.credentialGeneration !== completed.credentialGeneration ||
+      checked.lifecycleGeneration !== completed.lifecycleGeneration ||
+      checked.serial !== completed.serial ||
+      checked.authToken !== completed.authToken ||
+      checked.holderEmail !== completed.holderEmail ||
+      checked.objectKey !== completed.objectKey ||
+      checked.templateVersion !== completed.templateVersion ||
+      checked.releaseId !== completed.releaseId
+    )
+      throw stalePass();
+    if (input.retainedReleaseProof) await retainedRelease(ctx, checked, input.retainedReleaseProof);
+    return {
+      changed: true,
+      version: completed.version,
+      ownerUserId: completed.ownerUserId,
+      linkGeneration: completed.linkGeneration,
+      identityId: completed.identityId,
+      credentialGeneration: completed.credentialGeneration,
+      lifecycleGeneration: completed.lifecycleGeneration,
+      templateId: completed.templateId,
+      templateVersion: completed.templateVersion,
+      releaseId: completed.releaseId,
+      credentialKeysetCommitment: input.credentialKeysetCommitment,
+      transferPending: false,
+      pushQueued: true,
+    };
+  }
   const result = await publishPass(ctx, {
     passId: input.passId,
     cause: input.cause,
     actor: { type: 'connection', id: input.connectionId },
     connectionContext: input,
+    ...(input.retainedReleaseProof
+      ? {
+          expectedRelease: {
+            id: input.retainedReleaseProof.id,
+            generation: input.retainedReleaseProof.generation,
+          },
+        }
+      : {}),
     expectedHolder: pass,
-    connectionState: { syncErrorCode: null, holderChange },
-    mutate: (current): Mutation => {
-      const personalization: Personalization = { ...current.personalization };
-      const fieldSources: FieldSources = { ...current.fieldSources };
-      for (const [key, value] of Object.entries(input.fields)) {
-        if (current.fieldSources[key] === 'manual') continue;
-        personalization[key] = value;
-        fieldSources[key] = 'connection';
-      }
-      return { personalization, fieldSources };
-    },
+    connectionState: { syncErrorCode: null },
+    mutate: (current) => mappedFields(current, input.fields),
   });
-  if (result.pass.holderEmail !== pass.holderEmail) {
-    await recordAudit(ctx, {
-      orgId: pass.orgId,
-      actorType: 'connection',
-      actorId: input.connectionId,
-      action: 'holder.assign',
-      targetType: 'pass',
-      targetId: pass.id,
-      detail: { changed: true },
-    });
-    if (result.pass.ownerUserId) {
-      await recordAudit(ctx, {
-        orgId: pass.orgId,
-        actorType: 'connection',
-        actorId: input.connectionId,
-        action: 'holder.attach',
-        targetType: 'pass',
-        targetId: pass.id,
-        detail: { via: 'email', userId: result.pass.ownerUserId },
-      });
-    }
-  }
+  if ((await captureConnectionTransferPending(ctx.env.DB, result.pass)) !== false)
+    throw stalePass();
   return {
     changed: result.changed,
     version: result.pass.version,
     ownerUserId: result.pass.ownerUserId,
     linkGeneration: result.pass.linkGeneration,
+    identityId: result.pass.identityId,
+    credentialGeneration: result.pass.credentialGeneration,
+    lifecycleGeneration: result.pass.lifecycleGeneration,
+    credentialKeysetCommitment: input.credentialKeysetCommitment,
+    templateId: result.pass.templateId,
+    templateVersion: result.pass.templateVersion,
+    releaseId: result.pass.releaseId,
+    transferPending: false,
+    pushQueued: result.changed,
   };
-}
-
-export interface CreateFromConnectionInput {
-  orgId: string;
-  mode: 'live';
-  templateId: string;
-  templateVersion: string;
-  generation: number;
-  connectionId: string;
-  externalRef: string;
-  fields: Personalization;
-  holderEmail?: string | null;
-  sendEmail: boolean;
-}
-
-/** Idempotent per (connection, externalRef): an existing pass is returned unchanged. */
-export async function createPassFromConnection(
-  ctx: ServiceContext,
-  input: CreateFromConnectionInput,
-): Promise<{ passId: string }> {
-  if (
-    input.mode !== 'live' || !input.orgId || !input.templateId || !input.templateVersion ||
-    !input.connectionId || !input.externalRef ||
-    !Number.isSafeInteger(input.generation) || input.generation < 1
-  )
-    throw stalePass();
-  const connection = await connectionForPass(ctx.env.DB, input.connectionId, input.orgId, 'live');
-  if (!connection)
-    throw new ConflictError('The connection is unavailable.', 'PASS_CONNECTION_MISMATCH');
-  if (connection.generation !== input.generation) throw stalePass();
-  const eligibleWinner = async (passId: string): Promise<string> => {
-    const pass = await getPass(ctx.env.DB, passId);
-    if (
-      !pass || pass.status !== 'active' || pass.mode !== 'live' ||
-      pass.orgId !== input.orgId || pass.connectionId !== input.connectionId ||
-      pass.externalRef !== input.externalRef ||
-      !(await matchesConnectionPass(ctx.env.DB, {
-        passId, orgId: input.orgId, mode: 'live', status: 'active',
-        expectedVersion: pass.version, connectionId: input.connectionId,
-        ownerUserId: pass.ownerUserId, linkGeneration: pass.linkGeneration,
-        externalRef: input.externalRef, generation: input.generation,
-      }))
-    )
-      throw new ConflictError('The existing pass cannot be synchronized.', 'PASS_CONNECTION_MISMATCH');
-    return passId;
-  };
-  const existing = await findByConnectionRef(
-    ctx.env.DB,
-    input.orgId,
-    input.connectionId,
-    input.externalRef,
-  );
-  if (existing) return { passId: await eligibleWinner(existing) };
-  try {
-    const pass = await createPassRow(ctx, {
-      orgId: input.orgId,
-      templateId: input.templateId,
-      mode: input.mode,
-      templateVersion: input.templateVersion,
-      connectionGeneration: input.generation,
-      input: input.fields,
-      holderEmail: input.holderEmail ?? null,
-      connectionId: input.connectionId,
-      externalRef: input.externalRef,
-      sendEmail: input.sendEmail,
-      source: 'connection',
-      actor: { type: 'connection', id: input.connectionId },
-    });
-    return { passId: pass.id };
-  } catch (error) {
-    // A concurrent sync won the unique (connection, ref) index: use its pass, send no email.
-    if (!(error instanceof ConflictError) || error.code !== 'PASS_REF_TAKEN') throw error;
-    const winner = await findByConnectionRef(
-      ctx.env.DB,
-      input.orgId,
-      input.connectionId,
-      input.externalRef,
-    );
-    if (!winner) throw error;
-    return { passId: await eligibleWinner(winner) };
-  }
 }
 
 /** Upstream record missing: flag or void only the exact pass that was fetched. */
@@ -186,7 +225,8 @@ export async function markPassMissing(
   ctx: ServiceContext,
   context: ConnectionPassContext,
   mode: 'flag' | 'void',
-): Promise<{ version: number; ownerUserId: string | null; linkGeneration: number }> {
+): Promise<ConnectionPassResult> {
+  context = structuredClone(context);
   const pass = await checkedPass(ctx, context);
   if (mode === 'void' && context.status === 'active') {
     const result = await publishPass(ctx, {
@@ -194,17 +234,55 @@ export async function markPassMissing(
       cause: 'connection',
       actor: { type: 'connection', id: context.connectionId },
       connectionContext: context,
+      ...(context.retainedReleaseProof
+        ? {
+            expectedRelease: {
+              id: context.retainedReleaseProof.id,
+              generation: context.retainedReleaseProof.generation,
+            },
+          }
+        : {}),
       expectedHolder: pass,
-      connectionState: { syncErrorCode: 'RECORD_MISSING', holderChange: null },
+      connectionState: { syncErrorCode: 'RECORD_MISSING' },
       mutate: () => ({ status: 'voided' }),
     });
+    if ((await captureConnectionTransferPending(ctx.env.DB, result.pass)) !== false)
+      throw stalePass();
     return {
       version: result.pass.version,
       ownerUserId: result.pass.ownerUserId,
       linkGeneration: result.pass.linkGeneration,
+      identityId: result.pass.identityId,
+      credentialGeneration: result.pass.credentialGeneration,
+      lifecycleGeneration: result.pass.lifecycleGeneration,
+      credentialKeysetCommitment: context.credentialKeysetCommitment,
+      templateId: result.pass.templateId,
+      templateVersion: result.pass.templateVersion,
+      releaseId: result.pass.releaseId,
+      transferPending: false,
+      pushQueued: result.changed,
     };
   }
-  const state = await applyConnectionState(ctx.env.DB, context, pass, 'RECORD_MISSING');
-  if (!state) throw stalePass();
-  return { version: state.version, ownerUserId: state.ownerUserId, linkGeneration: state.linkGeneration };
+  const proof = context.retainedReleaseProof;
+  const release = proof ? await retainedRelease(ctx, pass, proof) : undefined;
+  const state = await applyConnectionState(ctx.env.DB, context, pass, 'RECORD_MISSING', release);
+  if (!state) {
+    if (proof) await retainedRelease(ctx, pass, proof, release);
+    throw stalePass();
+  }
+  if ((await captureConnectionTransferPending(ctx.env.DB, pass)) !== false) throw stalePass();
+  return {
+    version: state.version,
+    ownerUserId: state.ownerUserId,
+    linkGeneration: state.linkGeneration,
+    identityId: pass.identityId,
+    credentialGeneration: pass.credentialGeneration,
+    lifecycleGeneration: pass.lifecycleGeneration,
+    credentialKeysetCommitment: context.credentialKeysetCommitment,
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    releaseId: pass.releaseId,
+    transferPending: false,
+    pushQueued: false,
+  };
 }

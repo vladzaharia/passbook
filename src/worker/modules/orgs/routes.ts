@@ -1,3 +1,4 @@
+import type { Context } from 'hono';
 import { z } from 'zod';
 import {
   BrandingSlotParamSchema,
@@ -14,19 +15,61 @@ import {
   UpdateOrgSchema,
   UploadBrandingImageSchema,
 } from '../../../shared/contracts/index.ts';
+import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { modeOf, requireAdmin } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
+import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { deleteBrandingImage, getBrandingImage, putBrandingImage } from './branding.ts';
 import { renderEmailPreview } from './email-preview.ts';
+import { membershipRoutes } from './membership-routes.ts';
+import type { OrgAdmin } from './repo-org-writes.ts';
 import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus, updateOrg } from './service.ts';
 
+// Platform provisioning deliberately exposes only the directory projection, not workspace data.
+const PlatformOrgSummarySchema = OrgSummarySchema.pick({
+  id: true,
+  slug: true,
+  name: true,
+  status: true,
+  createdAt: true,
+  counts: true,
+  countsCapped: true,
+});
+const PlatformOrgListSchema = OrgListSchema.extend({ items: z.array(PlatformOrgSummarySchema) });
+
 export const orgsRoutes = createRouter();
-guard(orgsRoutes, requireAdmin);
+// Membership endpoints have their own guards, including a public invitation landing page.
+orgsRoutes.route('/', membershipRoutes);
+guard(orgsRoutes, requireTenantSession);
+// Directory and lifecycle are platform operations, not tenant workspace access.
+orgsRoutes.use('/', requireAdmin);
+orgsRoutes.use('/:id/status', requireAdmin);
+orgsRoutes.use('/:id', (c, next) =>
+  c.req.method === 'GET' || c.req.method === 'HEAD' || c.req.method === 'DELETE'
+    ? requireAdmin(c, next)
+    : next(),
+);
 // Two base64 PNGs of at most 200 KB each, plus JSON overhead.
 orgsRoutes.use('*', limitBody(1024 * 1024));
+
+/** The signed-in admin session: requireAdmin already proved it, and the platform grant re-checks it at commit. */
+function adminOf(c: Context<AppBindings>): OrgAdmin | undefined {
+  const auth = c.var.auth;
+  return auth?.kind === 'session' ? { userId: auth.userId, sessionId: auth.sessionId } : undefined;
+}
+
+async function authorizeOrg(c: Context<AppBindings>, id: string, capability: OrgCapability) {
+  const auth = c.var.auth;
+  if (auth?.kind !== 'session') throw new UnauthenticatedError();
+  const authority = await tenantAuthorityOf(serviceContext(c), auth, id, capability);
+  if (authority.kind !== 'session') throw new ForbiddenError();
+  return authority;
+}
 
 register(
   orgsRoutes,
@@ -36,9 +79,12 @@ register(
     path: '/',
     summary: 'List organizations',
     query: OrgListQuerySchema,
-    response: OrgListSchema,
+    response: PlatformOrgListSchema,
   },
-  async (c) => c.json(await listOrgs(serviceContext(c), c.req.valid('query'), modeOf(c.var.auth))),
+  async (c) => {
+    const page = await listOrgs(serviceContext(c), c.req.valid('query'), modeOf(c.var.auth));
+    return c.json({ ...page, items: page.items.map((org) => PlatformOrgSummarySchema.parse(org)) });
+  },
 );
 register(
   orgsRoutes,
@@ -52,7 +98,10 @@ register(
     response: OrgSchema,
   },
   async (c) =>
-    c.json(await createOrg(serviceContext(c), requestActor(c), c.req.valid('json')), 201),
+    c.json(
+      await createOrg(serviceContext(c), requestActor(c), c.req.valid('json'), adminOf(c)),
+      201,
+    ),
 );
 register(
   orgsRoutes,
@@ -60,11 +109,32 @@ register(
   {
     method: 'get',
     path: '/{id}',
-    summary: 'Get an organization',
+    summary: 'Get an organization for platform provisioning',
+    params: IdParamSchema,
+    response: PlatformOrgSummarySchema,
+  },
+  async (c) =>
+    c.json(
+      PlatformOrgSummarySchema.parse(
+        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth)),
+      ),
+    ),
+);
+register(
+  orgsRoutes,
+  'orgs',
+  {
+    method: 'get',
+    path: '/{id}/workspace',
+    summary: 'Get an organization workspace',
     params: IdParamSchema,
     response: OrgSummarySchema,
   },
-  async (c) => c.json(await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth))),
+  async (c) => {
+    const id = c.req.valid('param').id;
+    await authorizeOrg(c, id, 'org:read');
+    return c.json(await getOrg(serviceContext(c), id, modeOf(c.var.auth)));
+  },
 );
 register(
   orgsRoutes,
@@ -77,15 +147,15 @@ register(
     body: UpdateOrgSchema,
     response: OrgSchema,
   },
-  async (c) =>
-    c.json(
-      await updateOrg(
-        serviceContext(c),
-        requestActor(c),
-        c.req.valid('param').id,
-        c.req.valid('json'),
-      ),
-    ),
+  async (c) => {
+    const id = c.req.valid('param').id;
+    const input = c.req.valid('json');
+    const authority = await authorizeOrg(c, id, 'org:manage');
+    // The status route is platform-only; PATCH must not be a tenant lifecycle bypass.
+    if (input.status !== undefined && !authority.sessionRoles.includes('admin'))
+      throw new ForbiddenError();
+    return c.json(await updateOrg(serviceContext(c), requestActor(c), id, input, authority));
+  },
 );
 register(
   orgsRoutes,
@@ -96,17 +166,14 @@ register(
     summary: 'Suspend or reactivate an organization',
     params: IdParamSchema,
     body: OrgStatusSchema,
-    response: OrgSchema,
+    response: PlatformOrgSummarySchema,
   },
-  async (c) =>
-    c.json(
-      await setOrgStatus(
-        serviceContext(c),
-        requestActor(c),
-        c.req.valid('param').id,
-        c.req.valid('json').status,
-      ),
-    ),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const id = c.req.valid('param').id;
+    await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, adminOf(c));
+    return c.json(PlatformOrgSummarySchema.parse(await getOrg(ctx, id, modeOf(c.var.auth))));
+  },
 );
 register(
   orgsRoutes,
@@ -119,16 +186,21 @@ register(
     body: UploadBrandingImageSchema,
     response: OrgSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    const { id, slot } = c.req.valid('param');
+    const authority = await authorizeOrg(c, id, 'org:manage');
+    return c.json(
       await putBrandingImage(
         serviceContext(c),
         requestActor(c),
-        c.req.valid('param').id,
-        c.req.valid('param').slot,
+        id,
+        slot,
         c.req.valid('json'),
+        undefined,
+        authority,
       ),
-    ),
+    );
+  },
 );
 register(
   orgsRoutes,
@@ -140,15 +212,13 @@ register(
     params: BrandingSlotParamSchema,
     response: OrgSchema,
   },
-  async (c) =>
-    c.json(
-      await deleteBrandingImage(
-        serviceContext(c),
-        requestActor(c),
-        c.req.valid('param').id,
-        c.req.valid('param').slot,
-      ),
-    ),
+  async (c) => {
+    const { id, slot } = c.req.valid('param');
+    const authority = await authorizeOrg(c, id, 'org:manage');
+    return c.json(
+      await deleteBrandingImage(serviceContext(c), requestActor(c), id, slot, authority),
+    );
+  },
 );
 register(
   orgsRoutes,
@@ -165,10 +235,11 @@ register(
   },
   async (c) => {
     const p = c.req.valid('param');
+    await authorizeOrg(c, p.id, 'org:read');
     const bytes = await getBrandingImage(serviceContext(c), p.id, p.slot, p.scale === '3x' ? 3 : 2);
     return c.body(bytes, 200, {
       'content-type': 'image/png',
-      'cache-control': 'private, max-age=60',
+      'cache-control': 'private, no-cache',
       'x-content-type-options': 'nosniff',
     });
   },
@@ -184,6 +255,7 @@ register(
     query: EmailPreviewQuerySchema,
   },
   async (c) => {
+    await authorizeOrg(c, c.req.valid('param').id, 'templates:read');
     const { buddy, supportEmail, supportUrl } = c.req.valid('query');
     const html = await renderEmailPreview(
       serviceContext(c),
@@ -215,7 +287,7 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await deleteOrg(serviceContext(c), requestActor(c), c.req.valid('param').id);
+    await deleteOrg(serviceContext(c), requestActor(c), c.req.valid('param').id, adminOf(c));
     return c.json({ ok: true });
   },
 );

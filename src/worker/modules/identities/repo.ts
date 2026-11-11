@@ -1,29 +1,28 @@
 import { certificateInfo } from '../../../passkit/sign/index.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { PLATFORM_IDENTITY_ID, readEnvIdentity } from './env-identity.ts';
 
 /** Upserts the env-sourced platform signing identity row (needed by passes.identity_id FK). Idempotent. */
 export async function ensurePlatformIdentity(env: AppEnv, now: number): Promise<void> {
   const identity = readEnvIdentity(env);
   const info = await certificateInfo(identity.material.certificate);
-  const existing = await first<{ cert_sha256: string | null }>(
-    env.DB,
-    'SELECT cert_sha256 FROM signing_identities WHERE id = ?',
-    [PLATFORM_IDENTITY_ID],
+  const materialSha256 = await sha256Hex(
+    JSON.stringify([identity.material.privateKey, identity.material.intermediate]),
   );
-  if (existing?.cert_sha256 === info.sha256) return;
   await run(
     env.DB,
     `INSERT INTO signing_identities
        (id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, cert_pem, cert_sha256,
-        not_before, not_after, apns_binding, is_default, created_at)
-     VALUES (?, NULL, 'Platform', ?, ?, 'env', 'PLATFORM', ?, ?, ?, ?, ?,
+        not_before, not_after, apns_binding, env_material_sha256, is_default, created_at)
+     VALUES (?, NULL, 'Platform', ?, ?, 'env', 'PLATFORM', ?, ?, ?, ?, ?, ?,
        NOT EXISTS (SELECT 1 FROM signing_identities WHERE is_default = 1), ?)
      ON CONFLICT (id) DO UPDATE SET
        pass_type_identifier = excluded.pass_type_identifier, team_identifier = excluded.team_identifier,
        cert_pem = excluded.cert_pem, cert_sha256 = excluded.cert_sha256,
-       not_before = excluded.not_before, not_after = excluded.not_after, apns_binding = excluded.apns_binding`,
+       not_before = excluded.not_before, not_after = excluded.not_after, apns_binding = excluded.apns_binding,
+       env_material_sha256 = excluded.env_material_sha256`,
     [
       PLATFORM_IDENTITY_ID,
       identity.passTypeIdentifier,
@@ -33,6 +32,7 @@ export async function ensurePlatformIdentity(env: AppEnv, now: number): Promise<
       info.notBefore.getTime(),
       info.notAfter.getTime(),
       identity.apnsBinding,
+      materialSha256,
       now,
     ],
   );
@@ -56,6 +56,7 @@ export interface IdentityRow {
   nfc_enabled: number;
   is_default: number;
   created_at: number;
+  revision: number;
 }
 
 export interface CredentialBlob {
@@ -66,7 +67,7 @@ export interface CredentialBlob {
 }
 
 const COLUMNS = `id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, credential_id,
-  cert_pem, cert_sha256, not_before, not_after, apns_binding, apns_health, nfc_enabled, is_default, created_at`;
+  cert_pem, cert_sha256, not_before, not_after, apns_binding, apns_health, nfc_enabled, is_default, created_at, revision`;
 
 export function listIdentityRows(db: D1Database): Promise<IdentityRow[]> {
   return all<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities ORDER BY created_at, id`);

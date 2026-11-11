@@ -150,6 +150,7 @@ const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedA
   NO_ACCESS: { status: 403, art: 'no-access' },
   ACCOUNT_DISABLED: { status: 403, art: 'no-access' },
   NO_EMAIL: { status: 403, art: 'no-access' },
+  EMAIL_UNVERIFIED: { status: 403, art: 'no-access' },
   EMAIL_CONFLICT: { status: 403, art: 'no-access' },
   EMAIL_PROOF_SENT: { status: 403, art: 'login' },
   SESSION_REQUIRED: { status: 403, art: 'no-access' },

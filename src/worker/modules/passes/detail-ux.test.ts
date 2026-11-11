@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
 import {
   BulkPassActionResponseSchema,
   PassDetailSchema,
@@ -7,40 +7,44 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { enqueuePush } from '../delivery/service.ts';
 import { putBrandingImage } from '../orgs/branding.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { getPass } from './repo.ts';
-import { ICON_PNG, type Kit, setupKit } from './test-kit.ts';
+import { approveAppleRelease } from './apple-release-test-fixtures.ts';
+import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
+import { getPass } from './repo-read-pass.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
 let kit: Kit;
+let auth: TenantTestAuth;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
-});
+  auth = await setupTenantTestAuth(kit);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
+}, 60_000);
 
 const api = (path: string, init: RequestInit = {}) =>
   app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);
-const post = (path: string, body: unknown, headers = fake.admin()) =>
+const post = (path: string, body: unknown, headers = auth.admin()) =>
   api(path, {
     method: 'POST',
     headers: { ...headers, 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 const detail = async (id: string) =>
-  PassDetailSchema.parse(await (await api(`/passes/${id}`, { headers: fake.admin() })).json());
+  PassDetailSchema.parse(await (await api(`/passes/${id}`, { headers: auth.admin() })).json());
 
 describe('detail after a refresh', () => {
   it('parses with the contract once the outbox holds a push row', async () => {
     const pass = await kit.pass();
     expect((await post(`/passes/${pass.id}/refresh`, {})).status).toBe(202);
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(jobCtxOf(kit), pass.id, 'refresh');
     await kit.settle();
-    const res = await api(`/passes/${pass.id}`, { headers: fake.admin() });
+    const res = await api(`/passes/${pass.id}`, { headers: auth.admin() });
     const parsed = PassDetailSchema.safeParse(await res.json());
     expect(parsed.success).toBe(true);
     expect(parsed.data?.deliveries[0]?.id).toMatch(/^push:.+:refresh:/);
@@ -55,7 +59,11 @@ describe('devices', () => {
     await kit.device(on, 'device-library-abc123', 'token-1');
     const list = async (q: string) =>
       PassListSchema.parse(
-        await (await api(`/passes?limit=200&${q}`, { headers: fake.admin() })).json(),
+        await (
+          await api(`/passes?orgId=${encodeURIComponent(kit.org.id)}&limit=200&${q}`, {
+            headers: auth.admin(),
+          })
+        ).json(),
       ).items;
     const all1 = await list('');
     expect(all1.find((p) => p.id === on.id)?.deviceCount).toBe(1);
@@ -100,10 +108,11 @@ describe('bulk actions', () => {
 
   it('rejects ids from another org and changes nothing', async () => {
     const orgB = await makeOrg(kit.fx, { name: 'Other Org' });
+    await approveAppleRelease(kit, { orgId: orgB.id, mode: 'live' });
     const mine = await kit.pass({ memberName: 'Mine' });
     const theirs = await kit.pass({ memberName: 'Theirs', orgId: orgB.id });
     const ids = [mine.id, theirs.id];
-    const scopedKey = fake.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] });
+    const scopedKey = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] });
     expect((await post('/passes/bulk', { action: 'void', ids }, scopedKey)).status).toBe(404);
     expect((await post('/passes/bulk', { action: 'void', ids, orgId: kit.org.id })).status).toBe(
       404,
@@ -155,11 +164,19 @@ describe('change messages', () => {
       },
       assets: { 'icon.png': ICON_PNG },
     });
-    await persistTemplate(kit.fx, resolved);
+    await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      mode: 'live',
+      templateId: resolved.id,
+      version: resolved.version,
+    });
     const created = await post('/passes', {
       orgId: kit.org.id,
       templateId: resolved.id,
-      templateVersion: resolved.version,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
       mode: 'live',
       input: { memberName: 'Ana', message: 'Hello' },
     });
@@ -169,7 +186,7 @@ describe('change messages', () => {
       const res = await api(`/passes/${id}`, {
         method: 'PATCH',
         headers: {
-          ...fake.admin(),
+          ...auth.admin(),
           'content-type': 'application/json',
           'if-match': `"${current.version}"`,
         },
@@ -201,14 +218,22 @@ describe('tenant identity', () => {
       passJson: { ...kit.template.passJson, logoText: 'Wallet', description: 'Wallet store card' },
       assets: { 'icon.png': ICON_PNG },
     });
-    await persistTemplate(kit.fx, resolved);
+    await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      mode: 'live',
+      templateId: resolved.id,
+      version: resolved.version,
+    });
     const create = async () =>
       PassDetailSchema.parse(
         await (
           await post('/passes', {
             orgId: kit.org.id,
             templateId: resolved.id,
-            templateVersion: resolved.version,
+            templateVersion: release.version,
+            releaseId: release.id,
+            releaseGeneration: release.generation,
             mode: 'live',
             input: { memberName: 'Maya Chen' },
           })

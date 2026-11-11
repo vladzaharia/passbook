@@ -110,6 +110,8 @@ export const PushBudgetSchema = z.object({
 export type PushBudgetDto = z.infer<typeof PushBudgetSchema>;
 
 export const PassDetailSchema = PassSummarySchema.extend({
+  /** A verified waiting holder cannot be attached until this pass is replaced with fresh credentials. */
+  reissueRequired: z.boolean(),
   pushBudget: PushBudgetSchema.default({ used: 0, limit: PUSH_BUDGET_DEFAULT, resetsAt: null }),
   /** Owner's display name and email (null when unowned); the summary carries only the id. */
   ownerName: z.string().nullable(),
@@ -140,7 +142,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
 export type PassDetailDto = z.infer<typeof PassDetailSchema>;
 
 export const PassListQuerySchema = z.object({
-  orgId: IdSchema.optional(),
+  /** Literal `null` selects global scope for a global API key; org-bound keys may omit it. */
+  orgId: IdSchema.transform((value) => (value === 'null' ? null : value)).optional(),
   templateId: IdSchema.optional(),
   connectionId: IdSchema.optional(),
   status: PassListStatusSchema.optional(),
@@ -172,11 +175,17 @@ export const PassListQuerySchema = z.object({
 export const PassListSchema = pageOf(PassSummarySchema);
 
 export const CreatePassSchema = z.object({
-  orgId: IdSchema,
+  /** Org-bound API keys may omit it. */
+  orgId: IdSchema.optional(),
   templateId: IdSchema,
-  /** The exact environment and active template revision shown at issuance review. */
-  mode: ModeSchema,
-  templateVersion: z.string().min(1),
+  /**
+   * The exact environment and approved release shown at issuance review. Sessions must send all
+   * four; API keys may omit them to issue from the scope's current approved release.
+   */
+  mode: ModeSchema.optional(),
+  templateVersion: z.string().min(1).optional(),
+  releaseId: IdSchema.optional(),
+  releaseGeneration: z.number().int().positive().optional(),
   identityId: IdSchema.optional(),
   input: z.record(z.string(), JsonSchema),
   holderEmail: z.string().max(254).optional(),

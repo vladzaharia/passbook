@@ -3,10 +3,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { packagePassObjects } from '../passes/package-objects.ts';
-import { getPass, type Pass } from '../passes/repo.ts';
+import type { Pass } from '../passes/repo.ts';
 import { isTokenShape, type PublicPageModel, pageModel } from '../public/service.ts';
 import { bundleAssetPath } from './assets.ts';
-import { type BundleRow, getBundleByToken, listAddablePasses, membersOf } from './repo.ts';
+import { bindBundle, bundleEmailSnapshot, matchesBundle } from './email-binding.ts';
+import { type BundleRow, getBundleByToken } from './repo.ts';
+import { currentBundleMembers } from './repo-public.ts';
 
 const notFound = () => new NotFoundError('This link is not valid.', 'LINK_NOT_FOUND');
 
@@ -28,22 +30,33 @@ export async function bundleMembers(
   ctx: ServiceContext,
   bundle: BundleRow,
 ): Promise<BundleMember[]> {
-  const members = await membersOf(ctx.env.DB, [bundle.id]);
-  const passes = await Promise.all(members.map((m) => getPass(ctx.env.DB, m.pass_id)));
-  return Promise.all(
-    passes
-      .flatMap((pass) => (pass ? [pass] : []))
-      .map(async (pass) => {
-        const model = await pageModel(ctx, pass);
-        const assets = Object.fromEntries(
-          Object.entries(model.assets).flatMap(([name, path]) => {
-            const own = bundleAssetPath(path, pass.downloadToken, bundle.token, pass.id);
-            return own === null ? [] : [[name, own]];
-          }),
-        );
-        return { pass, model: { ...model, assets } };
-      }),
+  const snapshot = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
+  if (!snapshot) {
+    await assertBundleMembers(ctx, bundle, []);
+    return [];
+  }
+  if (snapshot.bundle.token !== bundle.token) throw notFound();
+  const binding = await bindBundle(snapshot, '');
+  const members = await Promise.all(
+    snapshot.passes.map(async (pass) => {
+      const model = await pageModel(ctx, pass);
+      const assets = Object.fromEntries(
+        Object.entries(model.assets).flatMap(([name, path]) => {
+          const own = bundleAssetPath(path, pass.downloadToken, bundle.token, pass.id);
+          return own === null ? [] : [[name, own]];
+        }),
+      );
+      return { pass, model: { ...model, assets } };
+    }),
   );
+  const current = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
+  if (!current || !(await matchesBundle(current, binding))) throw notFound();
+  await assertBundleMembers(
+    ctx,
+    bundle,
+    members.map((member) => member.pass),
+  );
+  return members;
 }
 
 /** A pass of this bundle (any state); anything else reads as a dead link. */
@@ -52,10 +65,57 @@ export async function bundlePass(
   bundle: BundleRow,
   passId: string,
 ): Promise<Pass> {
-  const members = await membersOf(ctx.env.DB, [bundle.id]);
-  const pass = members.some((m) => m.pass_id === passId) ? await getPass(ctx.env.DB, passId) : null;
-  if (!pass) throw notFound();
+  const snapshot = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
+  const pass = snapshot?.passes.find((member) => member.id === passId);
+  if (!snapshot || snapshot.bundle.token !== bundle.token || !pass) throw notFound();
+  await assertBundleMember(ctx, bundle, pass);
   return pass;
+}
+
+/** Recheck after reading a mutable asset and before handing its bytes to the caller. */
+export async function assertBundleMember(
+  ctx: ServiceContext,
+  bundle: BundleRow,
+  pass: Pass,
+): Promise<void> {
+  await assertBundleMembers(ctx, bundle, [pass]);
+}
+
+/** Recheck all disclosed members in the same D1 snapshot. */
+export async function assertBundleMembers(
+  ctx: ServiceContext,
+  bundle: BundleRow,
+  passes: readonly Pass[],
+): Promise<void> {
+  if (!(await currentBundleMembers(ctx.env.DB, bundle, passes))) throw notFound();
+}
+
+/** A lazy object read may cross a transfer; never emit a chunk without a fresh fence. */
+export function fenceBundleStream(
+  ctx: ServiceContext,
+  bundle: BundleRow,
+  passes: readonly Pass[],
+  source: ReadableStream<Uint8Array>,
+): ReadableStream<Uint8Array> {
+  const reader = source.getReader();
+  return new ReadableStream<Uint8Array>(
+    {
+      async pull(controller) {
+        try {
+          await assertBundleMembers(ctx, bundle, passes);
+          const chunk = await reader.read();
+          await assertBundleMembers(ctx, bundle, passes);
+          if (chunk.done) controller.close();
+          else controller.enqueue(chunk.value);
+        } catch (error) {
+          await reader.cancel(error).catch(() => undefined);
+          throw error;
+        }
+      },
+      cancel: (reason) => reader.cancel(reason),
+    },
+    { highWaterMark: 0 },
+  );
 }
 
 /** A pass that can be added: not voided, not removed. */
@@ -71,14 +131,21 @@ export async function addablePass(
 
 /** The `.pkpasses` body of the bundle's addable passes; voided and removed ones are left out. */
 export async function bundleArchive(ctx: ServiceContext, bundle: BundleRow) {
-  const rows = await listAddablePasses(ctx.env.DB, bundle.id);
-  if (rows.length === 0) throw new NotFoundError('No passes to add.', 'BUNDLE_EMPTY');
+  const snapshot = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
+  const passes =
+    snapshot && snapshot.bundle.token === bundle.token
+      ? snapshot.passes.filter((pass) => pass.status === 'active' && pass.removedAt === null)
+      : [];
+  if (passes.length === 0) throw new NotFoundError('No passes to add.', 'BUNDLE_EMPTY');
+  await assertBundleMembers(ctx, bundle, passes);
+  const body = packagePassObjects(
+    ctx.env.BUCKET,
+    passes.map((pass) => ({ id: pass.id, objectKey: pass.objectKey, objectSize: pass.objectSize })),
+  );
   return {
-    body: packagePassObjects(
-      ctx.env.BUCKET,
-      rows.map((r) => ({ id: r.id, objectKey: r.object_key, objectSize: r.object_size })),
-    ),
-    passIds: rows.map((r) => r.id),
+    body: fenceBundleStream(ctx, bundle, passes, body),
+    passIds: passes.map((pass) => pass.id),
+    passes,
   };
 }
 

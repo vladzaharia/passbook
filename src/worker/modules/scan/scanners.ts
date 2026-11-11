@@ -2,108 +2,40 @@ import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import {
   type CreateScannerSchema,
-  type ScannerListQuerySchema,
-  type ScannerModeSchema,
   ScannerSettingsSchema,
   type UpdateScannerSchema,
 } from '../../../shared/contracts/index.ts';
-import { batch, classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { classifyD1Error } from '../../platform/db.ts';
+import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { DEFAULT_SETTINGS, dayStartMs, parseSettings, scannerDto } from './dto-console.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
 import { createPairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
-import { syncStandaloneModeStmt, syncStandaloneSessionStmt } from './repo-legacy-session.ts';
 import {
-  addTemplatesStmts,
-  type ConsoleScannerRow,
-  countToday,
-  eventModeOf,
-  getConsoleScanner,
-  insertScannerStmt,
-  listConsoleScanners,
-  replaceTemplatesStmts,
-  revokeStmt,
-  setModeStmt,
-  updateScannerStmt,
-} from './repo-scanners.ts';
-import { releaseAdminDeviceStmt } from './repo-scanning-devices.ts';
-import { countOrgTemplates } from './repo-scope.ts';
-import { adminSetupId, setupMeta, watchedScanners, watchOf } from './repo-setups.ts';
-import { enrollmentStmts } from './scanning-enrollment.ts';
+  adminGrant,
+  audited,
+  eventsOpen,
+  scannerEpoch,
+  sessionEpoch,
+  templatesUsable,
+} from './repo-admin-grant.ts';
+import { addScannerTemplates, replaceScannerTemplates } from './repo-admin-unguarded.ts';
+import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
+import { addScannerInsert, addScannerPatch } from './repo-scanners.ts';
+import { scanningDeviceRow } from './repo-scanning-devices.ts';
+import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
+import { checkAccepts, requireScannerSettings } from './scanner-validation.ts';
+import { loadScanner, scannerView } from './scanner-views.ts';
+import { addEnrollment } from './scanning-enrollment.ts';
 
-type Accepts = z.infer<typeof CreateScannerSchema>['accepts'];
+/** A scanner edit that lost a race answers 409 and the console refetches (no unpairing). */
+export const SCANNER_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
 
-const modeMismatch = () =>
-  new ValidationError(
-    'This event is in a different mode than the scanner.',
-    [],
-    'SCAN_MODE_MISMATCH',
-  );
-
-async function withToday(ctx: ServiceContext, rows: ConsoleScannerRow[]) {
-  const now = ctx.clock.now();
-  const counts = await countToday(
-    ctx.env.DB,
-    rows
-      .filter((r) => r.kind !== 'display')
-      .map((r) => ({ id: r.id, since: dayStartMs(r.timeZone, now) })),
-  );
-  return rows.map((r) => scannerDto(r, now, counts.get(r.id) ?? 0));
-}
-
-export async function listScanners(
-  ctx: ServiceContext,
-  mode: Mode,
-  query: z.infer<typeof ScannerListQuerySchema>,
-) {
-  const rows = await listConsoleScanners(ctx.env.DB, { ...query, mode, limit: query.limit + 1 });
-  const page = rows.slice(0, query.limit);
-  return {
-    items: await withToday(ctx, page),
-    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
-  };
-}
-
-/** A scanner by id, or 404. The console may open a scanner in either mode. */
-export async function loadScanner(ctx: ServiceContext, id: string): Promise<ConsoleScannerRow> {
-  const row = await getConsoleScanner(ctx.env.DB, id);
-  if (!row) throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
-  return row;
-}
-
-export async function scannerView(ctx: ServiceContext, id: string) {
-  const [dto] = await withToday(ctx, [await loadScanner(ctx, id)]);
-  if (!dto) throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
-  return dto;
-}
-
-/** Same org, same mode, and for templates a live template of the org: anything else is a 404. */
-export async function checkAccepts(
-  ctx: ServiceContext,
-  orgId: string,
-  mode: Mode,
-  accepts: Accepts,
-) {
-  const db = ctx.env.DB;
-  if ('eventId' in accepts) {
-    const event = await eventModeOf(db, orgId, accepts.eventId);
-    if (!event || event.archived_at !== null)
-      throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
-    if (event.mode !== mode) throw modeMismatch();
-    return { eventId: accepts.eventId, templateIds: [] as string[] };
-  }
-  const templateIds = [...new Set(accepts.templateIds)];
-  if ((await countOrgTemplates(db, orgId, templateIds)) !== templateIds.length)
-    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
-  return { eventId: null, templateIds };
-}
-
-function nameTaken(error: unknown): never {
+export function nameTaken(error: unknown): never {
   const info = classifyD1Error(error);
   if (info?.kind === 'unique' && /scanners\.name|scanners_org_name/.test(info.detail))
     throw new ConflictError('Another scanner already has that name.', 'SCANNER_NAME_TAKEN');
@@ -116,46 +48,62 @@ export async function createScanner(
   mode: Mode,
   input: z.infer<typeof CreateScannerSchema>,
   origin: string,
+  authority: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
   if (!(await orgIsActive(db, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const accepts = await checkAccepts(ctx, input.orgId, mode, input.accepts);
   const settings = ScannerSettingsSchema.parse({ ...DEFAULT_SETTINGS, ...input.settings });
+  if (settings.checkIn?.eventId)
+    await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
   const now = ctx.clock.now();
   const id = ctx.ids.id();
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.scanner.create',
+    userId,
+    authority,
+    input.orgId,
+    [
+      ...eventsOpen([accepts.eventId, settings.checkIn?.eventId]),
+      ...templatesUsable(accepts.templateIds),
+    ],
+    SCANNER_CODES,
+    id,
+  );
+  addScannerInsert(g, {
+    id,
+    kind: input.kind,
+    name: input.name,
+    eventId: accepts.eventId,
+    settings: JSON.stringify(settings),
+    timeZone: input.timeZone,
+    expiresAt: input.kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
+    createdBy: userId,
+    now,
+  });
+  addScannerTemplates(g, id, accepts.templateIds);
+  addEnrollment(ctx, g, id, userId, { ...input, deviceRole: 'scan' }, settings);
+  g.add(
+    audited(g, ctx, {
+      orgId: input.orgId,
+      actorType: 'user',
+      actorId: userId,
+      action: 'scanner.create',
+      targetType: 'scanner',
+      targetId: id,
+      detail: { kind: input.kind, mode, accepts: accepts.eventId ? 'event' : 'templates' },
+    }),
+  );
   try {
-    await batch(db, [
-      insertScannerStmt(db, {
-        id,
-        orgId: input.orgId,
-        mode,
-        kind: input.kind,
-        name: input.name,
-        eventId: accepts.eventId,
-        settings: JSON.stringify(settings),
-        timeZone: input.timeZone,
-        expiresAt: input.kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
-        createdBy: userId,
-        now,
-      }),
-      ...addTemplatesStmts(db, id, accepts.templateIds),
-      ...enrollmentStmts(ctx, id, userId, mode, { ...input, deviceRole: 'scan' }, settings),
-      auditStmt(db, ctx, {
-        orgId: input.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.create',
-        targetType: 'scanner',
-        targetId: id,
-        detail: { kind: input.kind, mode, accepts: accepts.eventId ? 'event' : 'templates' },
-      }),
-    ]);
+    await g.commit();
   } catch (error) {
     nameTaken(error);
   }
   const row = await loadScanner(ctx, id);
-  const pairing = input.kind === 'device' ? await createPairing(ctx, userId, row, origin) : null;
+  const pairing =
+    input.kind === 'device' ? await createPairing(ctx, userId, row, origin, authority) : null;
   return { ...(await scannerView(ctx, id)), pairing };
 }
 
@@ -164,127 +112,109 @@ export async function updateScanner(
   userId: string,
   id: string,
   input: z.infer<typeof UpdateScannerSchema>,
+  authority: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
-  const row = await loadScanner(ctx, id);
+  const row = await loadScanner(ctx, id, authority.mode);
   await assertStandaloneSession(ctx, row.orgId, id);
+  const [device, parent] = await Promise.all([
+    scanningDeviceRow(db, row.orgId, id),
+    scanningSessionForDevice(db, row.orgId, id),
+  ]);
+  if (!!device !== !!parent || (parent && parent.id !== id))
+    throw new ConflictError(
+      'This scanner changed. Reload its settings and try again.',
+      'SCANNER_CHANGED',
+    );
   const accepts = input.accepts
     ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts)
     : null;
-  const settings = input.settings
-    ? ScannerSettingsSchema.parse({ ...parseSettings(row.settings), ...input.settings })
-    : null;
+  const settings =
+    input.settings !== undefined || accepts
+      ? ScannerSettingsSchema.parse({
+          ...requireScannerSettings(row.settings),
+          ...input.settings,
+          ...(accepts ? { acceptAllTemplates: false } : {}),
+        })
+      : null;
+  const parentSettings =
+    parent && settings
+      ? ScannerSettingsSchema.parse({
+          ...requireScannerSettings(parent.settings),
+          ...input.settings,
+          ...(accepts ? { acceptAllTemplates: false } : {}),
+        })
+      : null;
+  if (input.settings?.checkIn?.eventId)
+    await checkAccepts(ctx, row.orgId, row.mode, { eventId: input.settings.checkIn.eventId });
   const now = ctx.clock.now();
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.scanner.update',
+    userId,
+    authority,
+    row.orgId,
+    [
+      scannerEpoch(id, row.configEpoch),
+      ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
+      ...eventsOpen([accepts?.eventId, input.settings?.checkIn?.eventId]),
+      ...templatesUsable(accepts?.templateIds ?? []),
+    ],
+    SCANNER_CODES,
+    id,
+  );
+  addScannerPatch(
+    g,
+    id,
+    {
+      ...(input.name === undefined ? {} : { name: input.name }),
+      ...(settings ? { settings: JSON.stringify(settings) } : {}),
+      ...(accepts ? { eventId: accepts.eventId } : {}),
+    },
+    now,
+  );
+  if (accepts) replaceScannerTemplates(g, id, accepts.templateIds);
+  if (parent)
+    addScannerPatchSessionSync(
+      g,
+      id,
+      {
+        ...(input.name === undefined ? {} : { name: input.name }),
+        ...(parentSettings ? { settings: JSON.stringify(parentSettings) } : {}),
+        ...(accepts
+          ? {
+              accepts: JSON.stringify(
+                accepts.eventId
+                  ? { eventId: accepts.eventId }
+                  : { templateIds: accepts.templateIds },
+              ),
+            }
+          : {}),
+      },
+      now,
+    );
+  g.add(
+    audited(g, ctx, {
+      orgId: row.orgId,
+      actorType: 'user',
+      actorId: userId,
+      action: 'scanner.update',
+      targetType: 'scanner',
+      targetId: id,
+      detail: {
+        fields: [
+          ...(input.name === undefined ? [] : ['name']),
+          ...(input.accepts ? ['accepts'] : []),
+          ...Object.keys(input.settings ?? {}).map((k) => `settings.${k}`),
+        ],
+      },
+    }),
+  );
   try {
-    await batch(db, [
-      updateScannerStmt(
-        db,
-        id,
-        {
-          ...(input.name === undefined ? {} : { name: input.name }),
-          ...(settings ? { settings: JSON.stringify(settings) } : {}),
-          ...(accepts ? { eventId: accepts.eventId } : {}),
-        },
-        now,
-      ),
-      ...(accepts ? replaceTemplatesStmts(db, id, accepts.templateIds) : []),
-      syncStandaloneSessionStmt(db, row.orgId, id, now),
-      auditStmt(db, ctx, {
-        orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.update',
-        targetType: 'scanner',
-        targetId: id,
-        detail: {
-          fields: [
-            ...(input.name === undefined ? [] : ['name']),
-            ...(input.accepts ? ['accepts'] : []),
-            ...Object.keys(input.settings ?? {}).map((k) => `settings.${k}`),
-          ],
-        },
-      }),
-    ]);
+    await g.commit();
   } catch (error) {
     nameTaken(error);
   }
   if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
   return scannerView(ctx, id);
 }
-
-/** Go live / Move to Test mode. The token stays; `configRev` moves so the device refetches. */
-export async function changeMode(
-  ctx: ServiceContext,
-  userId: string,
-  id: string,
-  input: z.infer<typeof ScannerModeSchema>,
-) {
-  const db = ctx.env.DB;
-  const row = await loadScanner(ctx, id);
-  if (row.mode === input.mode) return scannerView(ctx, id);
-  await assertStandaloneSession(ctx, row.orgId, id);
-  const meta = await setupMeta(db, row.orgId, id);
-  if (meta?.admin_user_id && (await adminSetupId(db, row.orgId, input.mode, meta.admin_user_id)))
-    throw new ConflictError(
-      'Use the existing admin setup in that mode.',
-      'SCANNER_ADMIN_SETUP_EXISTS',
-    );
-  const watch = watchOf(meta);
-  if (
-    row.deviceRole !== 'scan' &&
-    watch &&
-    !watch.allOrg &&
-    (await watchedScanners(db, row.orgId, input.mode, watch.scannerIds)).length !==
-      new Set(watch.scannerIds).size
-  )
-    throw new ValidationError(
-      'Move the watched scanners to that mode first.',
-      [],
-      'SCANNER_WATCH_MODE',
-    );
-  const detach = row.eventId !== null;
-  if (detach && !input.detachEvent) throw modeMismatch();
-  try {
-    await batch(db, [
-      setModeStmt(db, id, input.mode, detach, ctx.clock.now()),
-      syncStandaloneModeStmt(db, row.orgId, id, input.mode),
-      syncStandaloneSessionStmt(db, row.orgId, id, ctx.clock.now()),
-      auditStmt(db, ctx, {
-        orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.mode_change',
-        targetType: 'scanner',
-        targetId: id,
-        detail: { from: row.mode, to: input.mode, detachedEvent: detach },
-      }),
-    ]);
-  } catch (error) {
-    nameTaken(error);
-  }
-  if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
-  return scannerView(ctx, id);
-}
-
-/** Idempotent: a second revoke changes and audits nothing. */
-export async function revokeScanner(ctx: ServiceContext, userId: string, id: string) {
-  const db = ctx.env.DB;
-  const row = await loadScanner(ctx, id);
-  if (row.revokedAt === null)
-    await batch(db, [
-      revokeStmt(db, id, ctx.clock.now()),
-      releaseAdminDeviceStmt(db, row.orgId, id),
-      auditStmt(db, ctx, {
-        orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.revoke',
-        targetType: 'scanner',
-        targetId: id,
-      }),
-    ]);
-  if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
-  return scannerView(ctx, id);
-}
-
-export { createSamplePass } from './sample-pass.ts';

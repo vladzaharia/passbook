@@ -1,19 +1,56 @@
-import { batch, classifyD1Error } from '../../platform/db.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import type { Grant } from '../../platform/authority.ts';
+import { epochIs } from '../../platform/authority-checks.ts';
+import { classifyD1Error } from '../../platform/db.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { deviceLabel } from './dto-console.ts';
+import { adminGrant, audited } from './repo-admin-grant.ts';
 import type { ConsoleScannerRow } from './repo-scanners.ts';
-import { type Credential, installCredentialStmt } from './repo-scanners-pair.ts';
+import {
+  addAdminCredential,
+  type Credential,
+  requirePairingAuthority,
+} from './repo-scanners-pair.ts';
 import { setupMeta } from './repo-setups.ts';
 
 const DAY = 86_400_000;
 export const DEVICE_MAX_MS = 180 * DAY;
 export const TERMINAL_TTL_MS = 365 * DAY;
 
+const PAIR_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
+
 export const notPairable = () =>
   new ValidationError('Only browser devices pair with a code.', [], 'SCANNER_NOT_PAIRABLE');
+
+/** A revoked scanner is paired again only when the request says `restore`. True when it restores one. */
+export function restoring(scanner: ConsoleScannerRow, restore: boolean): boolean {
+  if (scanner.revokedAt === null) return false;
+  if (!restore)
+    throw new ConflictError(
+      'This scanner was removed from use. Restore it to pair it again.',
+      'SCANNER_REVOKED',
+    );
+  return true;
+}
+
+export const addRestoreAudit = (
+  g: Grant,
+  ctx: ServiceContext,
+  userId: string,
+  scanner: ConsoleScannerRow,
+) =>
+  g.add(
+    audited(g, ctx, {
+      orgId: scanner.orgId,
+      actorType: 'user',
+      actorId: userId,
+      action: 'scanner.restore',
+      targetType: 'scanner',
+      targetId: scanner.id,
+    }),
+  );
 
 function prefixOf(ctx: ServiceContext): string {
   let out = '';
@@ -76,16 +113,30 @@ export async function pairHere(
   userId: string,
   scanner: ConsoleScannerRow,
   agent: string | undefined,
+  authority: TenantPassWrite,
+  restore = false,
 ): Promise<Issued> {
+  requirePairingAuthority(authority, userId, scanner.orgId);
   if (
     scanner.kind === 'terminal' ||
     (await setupMeta(ctx.env.DB, scanner.orgId, scanner.id))?.admin_session
   )
     throw notPairable();
+  const restored = restoring(scanner, restore);
   return withCredential(ctx, 'device', deviceLabel(agent), async (c) => {
-    await batch(ctx.env.DB, [
-      installCredentialStmt(ctx.env.DB, scanner.id, c, null),
-      auditStmt(ctx.env.DB, ctx, {
+    const g = adminGrant(
+      ctx,
+      'org_mode.scan.pairing.here',
+      userId,
+      authority,
+      scanner.orgId,
+      [epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch)],
+      PAIR_CODES,
+      scanner.id,
+    );
+    addAdminCredential(g, scanner.id, scanner.kind, c);
+    g.add(
+      audited(g, ctx, {
         orgId: scanner.orgId,
         actorType: 'user',
         actorId: userId,
@@ -94,7 +145,9 @@ export async function pairHere(
         targetId: scanner.id,
         detail: { via: 'console' },
       }),
-    ]);
+    );
+    if (restored) addRestoreAudit(g, ctx, userId, scanner);
+    await g.commit();
     return { token: c.token, csrfSecret: c.csrfSecret, expiresAt: c.expiresAt };
   });
 }
@@ -104,13 +157,27 @@ export async function replaceTerminalToken(
   ctx: ServiceContext,
   userId: string,
   scanner: ConsoleScannerRow,
+  authority: TenantPassWrite,
+  restore = false,
 ): Promise<{ token: string; expiresAt: number }> {
+  requirePairingAuthority(authority, userId, scanner.orgId);
   if (scanner.kind !== 'terminal')
     throw new ValidationError('Only tills use a token.', [], 'SCANNER_NOT_TERMINAL');
+  const restored = restoring(scanner, restore);
   return withCredential(ctx, 'terminal', null, async (c) => {
-    await batch(ctx.env.DB, [
-      installCredentialStmt(ctx.env.DB, scanner.id, c, null),
-      auditStmt(ctx.env.DB, ctx, {
+    const g = adminGrant(
+      ctx,
+      'org_mode.scan.pairing.token',
+      userId,
+      authority,
+      scanner.orgId,
+      [epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch)],
+      PAIR_CODES,
+      scanner.id,
+    );
+    addAdminCredential(g, scanner.id, scanner.kind, c);
+    g.add(
+      audited(g, ctx, {
         orgId: scanner.orgId,
         actorType: 'user',
         actorId: userId,
@@ -118,7 +185,9 @@ export async function replaceTerminalToken(
         targetType: 'scanner',
         targetId: scanner.id,
       }),
-    ]);
+    );
+    if (restored) addRestoreAudit(g, ctx, userId, scanner);
+    await g.commit();
     return { token: c.token, expiresAt: c.expiresAt };
   });
 }

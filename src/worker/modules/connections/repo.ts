@@ -1,5 +1,17 @@
 import type { Json } from '../../../shared/contracts/common.ts';
-import { all, first, likeEscape, run, type SqlValue } from '../../platform/db.ts';
+import type { Check } from '../../platform/authority-checks.ts';
+import { first, type SqlValue } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import {
+  type ConnectionActor,
+  commitOrNull,
+  connectionGrant,
+  connectionIs,
+  rowCount,
+  workflowTracked,
+} from './repo-grants.ts';
+import { validCredentialKeysetCommitment } from './repo-passes.ts';
+import { type ConnectionSql, toRow } from './repo-row.ts';
 
 export type OnMissing = 'keep' | 'flag' | 'void';
 export type Mode = 'poll' | 'webhook' | 'hybrid' | 'manual' | 'snapshot';
@@ -44,76 +56,6 @@ export interface ConnectionRow {
   updatedAt: number;
 }
 
-interface ConnectionSql {
-  id: string;
-  org_id: string;
-  connector_type: string;
-  connector_version: number;
-  name: string;
-  config: string;
-  credential_id: string | null;
-  webhook_credential_id: string | null;
-  mapping: string | null;
-  default_template_id: string | null;
-  holder_email_field: string | null;
-  auto_create: number;
-  auto_email: number;
-  on_missing: OnMissing;
-  mode: Mode;
-  interval_seconds: number | null;
-  max_concurrency: number | null;
-  requests_per_minute: number | null;
-  enabled: number;
-  generation: number;
-  health: Health;
-  consecutive_failures: number;
-  breaker_open_until: number | null;
-  cursor: string | null;
-  next_run_at: number | null;
-  last_run_at: number | null;
-  last_success_at: number | null;
-  last_error_code: string | null;
-  last_error_at: number | null;
-  created_at: number;
-  updated_at: number;
-}
-
-function toRow(r: ConnectionSql): ConnectionRow {
-  return {
-    id: r.id,
-    orgId: r.org_id,
-    connectorType: r.connector_type,
-    connectorVersion: r.connector_version,
-    name: r.name,
-    config: JSON.parse(r.config) as Record<string, Json>,
-    credentialId: r.credential_id,
-    webhookCredentialId: r.webhook_credential_id,
-    mapping: r.mapping ? (JSON.parse(r.mapping) as Record<string, MappingEntry>) : null,
-    defaultTemplateId: r.default_template_id,
-    holderEmailField: r.holder_email_field,
-    autoCreate: r.auto_create === 1,
-    autoEmail: r.auto_email === 1,
-    onMissing: r.on_missing,
-    mode: r.mode,
-    intervalSeconds: r.interval_seconds,
-    maxConcurrency: r.max_concurrency,
-    requestsPerMinute: r.requests_per_minute,
-    enabled: r.enabled === 1,
-    generation: r.generation,
-    health: r.health,
-    consecutiveFailures: r.consecutive_failures,
-    breakerOpenUntil: r.breaker_open_until,
-    cursor: r.cursor,
-    nextRunAt: r.next_run_at,
-    lastRunAt: r.last_run_at,
-    lastSuccessAt: r.last_success_at,
-    lastErrorCode: r.last_error_code,
-    lastErrorAt: r.last_error_at,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
-
 /** Patchable columns; the SQL column name is fixed here, never taken from input. */
 const COLUMNS = {
   name: 'name',
@@ -132,7 +74,6 @@ const COLUMNS = {
   maxConcurrency: 'max_concurrency',
   requestsPerMinute: 'requests_per_minute',
   enabled: 'enabled',
-  generation: 'generation',
   health: 'health',
   consecutiveFailures: 'consecutive_failures',
   breakerOpenUntil: 'breaker_open_until',
@@ -155,42 +96,69 @@ function encode(value: SqlValue | object): SqlValue {
     : (value as SqlValue);
 }
 
-export async function insertConnection(db: D1Database, row: ConnectionRow): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO connections (id, org_id, connector_type, connector_version, name, config, credential_id,
-       webhook_credential_id, mapping, default_template_id, holder_email_field, auto_create, auto_email,
-       on_missing, mode, interval_seconds, max_concurrency, requests_per_minute, enabled, generation,
-       health, consecutive_failures, next_run_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      row.id,
-      row.orgId,
-      row.connectorType,
-      row.connectorVersion,
-      row.name,
-      JSON.stringify(row.config),
-      row.credentialId,
-      row.webhookCredentialId,
-      row.mapping ? JSON.stringify(row.mapping) : null,
-      row.defaultTemplateId,
-      row.holderEmailField,
-      row.autoCreate,
-      row.autoEmail,
-      row.onMissing,
-      row.mode,
-      row.intervalSeconds,
-      row.maxConcurrency,
-      row.requestsPerMinute,
-      row.enabled,
-      row.generation,
-      row.health,
-      row.consecutiveFailures,
-      row.nextRunAt,
-      row.createdAt,
-      row.updatedAt,
-    ],
-  );
+/** Creates the connection in the actor's org. `generation` starts at 1 (trigger-owned afterwards). */
+const INSERT_COLUMNS = [
+  'id',
+  'connector_type',
+  'connector_version',
+  'name',
+  'config',
+  'credential_id',
+  'webhook_credential_id',
+  'mapping',
+  'default_template_id',
+  'holder_email_field',
+  'auto_create',
+  'auto_email',
+  'on_missing',
+  'mode',
+  'interval_seconds',
+  'max_concurrency',
+  'requests_per_minute',
+  'enabled',
+  'health',
+  'consecutive_failures',
+  'next_run_at',
+  'created_at',
+  'updated_at',
+];
+
+function insertValues(row: ConnectionRow): SqlValue[] {
+  return [
+    row.id,
+    row.connectorType,
+    row.connectorVersion,
+    row.name,
+    JSON.stringify(row.config),
+    row.credentialId,
+    row.webhookCredentialId,
+    row.mapping ? JSON.stringify(row.mapping) : null,
+    row.defaultTemplateId,
+    row.holderEmailField,
+    row.autoCreate ? 1 : 0,
+    row.autoEmail ? 1 : 0,
+    row.onMissing,
+    row.mode,
+    row.intervalSeconds,
+    row.maxConcurrency,
+    row.requestsPerMinute,
+    row.enabled ? 1 : 0,
+    row.health,
+    row.consecutiveFailures,
+    row.nextRunAt,
+    row.createdAt,
+    row.updatedAt,
+  ];
+}
+
+export async function insertConnection(
+  ctx: ServiceContext,
+  row: ConnectionRow,
+  actor: ConnectionActor,
+): Promise<void> {
+  const g = connectionGrant(ctx, actor, 'create', [], row.id);
+  g.insertSelect('connections', INSERT_COLUMNS, insertValues(row));
+  await g.commit();
 }
 
 export async function getConnection(db: D1Database, id: string): Promise<ConnectionRow | null> {
@@ -198,111 +166,70 @@ export async function getConnection(db: D1Database, id: string): Promise<Connect
   return r ? toRow(r) : null;
 }
 
-export async function listConnections(
-  db: D1Database,
-  q: {
-    orgId?: string | undefined;
-    health?: Health | undefined;
-    q?: string | undefined;
-    cursor?: string | undefined;
-    limit: number;
-  },
-): Promise<ConnectionRow[]> {
-  const where: string[] = [];
-  const params: SqlValue[] = [];
-  const term = q.q?.trim().toLowerCase();
-  if (term) {
-    where.push("lower(name) LIKE ? ESCAPE '\\'");
-    params.push(`%${likeEscape(term)}%`);
-  }
-  if (q.orgId) {
-    where.push('org_id = ?');
-    params.push(q.orgId);
-  }
-  if (q.health) {
-    where.push('health = ?');
-    params.push(q.health);
-  }
-  if (q.cursor) {
-    where.push('id < ?');
-    params.push(q.cursor);
-  }
-  const rows = await all<ConnectionSql>(
-    db,
-    `SELECT * FROM connections ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC LIMIT ?`,
-    [...params, q.limit],
-  );
-  return rows.map(toRow);
+/** What a connection write requires of the row it changes. Absent fields are not compared. */
+export interface PatchGuard {
+  actor: ConnectionActor;
+  generation?: number;
+  /** The sync mode the caller read. */
+  syncMode?: Mode;
+  /** Refuse unless the connection is enabled. */
+  enabled?: boolean;
+  /** The sync workflow that pinned this credential keyset must still be tracked. */
+  keyset?: { commitment: string; instanceId: string } | { commitment: string; source: 'webhook' };
 }
 
-/** Applies a patch; `ifGeneration` makes the write a no-op when the run is stale. Returns rows changed. */
+/**
+ * Applies a patch to the connection in the actor's org. Returns 1 when it applied, 0 when the
+ * connection no longer matches the guard (changed, disabled, gone, or its org was suspended for a job).
+ * Epoch columns are trigger-owned: a patch of a config column moves `generation` by itself.
+ */
 export async function patchConnection(
-  db: D1Database,
+  ctx: ServiceContext,
   id: string,
   patch: ConnectionPatch,
-  ifGeneration?: number,
-  ifActiveOrgId?: string,
+  guard: PatchGuard,
 ): Promise<number> {
   const keys = Object.keys(patch) as (keyof typeof COLUMNS)[];
   if (keys.length === 0) return 0;
-  const sets = keys.map((k) => `${COLUMNS[k]} = ?`).join(', ');
-  const params: SqlValue[] = keys.map((k) => encode(patch[k] as SqlValue | object));
-  params.push(id);
-  let sql = `UPDATE connections SET ${sets} WHERE id = ?`;
-  if (ifGeneration !== undefined) {
-    sql += ' AND generation = ?';
-    params.push(ifGeneration);
+  const checks: Check[] = [
+    connectionIs({
+      id,
+      ...(guard.generation === undefined ? {} : { generation: guard.generation }),
+      ...(guard.syncMode === undefined ? {} : { syncMode: guard.syncMode }),
+      ...(guard.enabled ? { enabled: true } : {}),
+    }),
+  ];
+  const keyset = guard.keyset;
+  if (keyset !== undefined) {
+    if (!validCredentialKeysetCommitment(keyset.commitment)) return 0;
+    if ('instanceId' in keyset) {
+      if (typeof keyset.instanceId !== 'string' || !keyset.instanceId) return 0;
+      checks.push(workflowTracked(keyset.instanceId, id, keyset.commitment));
+    } else if (keyset.source !== 'webhook') return 0;
   }
-  if (ifActiveOrgId !== undefined) {
-    sql += ` AND org_id = ? AND enabled = 1
-      AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = connections.org_id AND o.status = 'active')`;
-    params.push(ifActiveOrgId);
-  }
-  return (await run(db, sql, params)).changes;
+  const g = connectionGrant(ctx, guard.actor, 'update', checks, id);
+  const set: Record<string, SqlValue> = {};
+  for (const k of keys) set[COLUMNS[k]] = encode(patch[k] as SqlValue | object);
+  g.update('connections', { set, where: { id }, returning: ['id'] });
+  const results = await commitOrNull(g, guard.actor);
+  return results ? rowCount(results.at(-1)) : 0;
 }
 
-export async function deleteConnection(db: D1Database, id: string): Promise<void> {
-  await run(db, 'DELETE FROM connections WHERE id = ?', [id]);
-}
-
-export async function getGeneration(db: D1Database, id: string): Promise<number | null> {
-  const r = await first<{ generation: number }>(
-    db,
-    'SELECT generation FROM connections WHERE id = ?',
-    [id],
+/** True when this call deleted the connection (RETURNING; D1 counts cascaded children in `changes`). */
+export async function deleteConnection(
+  ctx: ServiceContext,
+  id: string,
+  actor: ConnectionActor,
+  generation?: number,
+): Promise<boolean> {
+  const g = connectionGrant(
+    ctx,
+    actor,
+    'delete',
+    [connectionIs({ id, ...(generation === undefined ? {} : { generation }) })],
+    id,
   );
-  return r?.generation ?? null;
-}
-
-export async function listDueConnections(db: D1Database, now: number, limit: number) {
-  const rows = await all<ConnectionSql>(
-    db,
-    `SELECT c.* FROM connections c JOIN orgs o ON o.id = c.org_id
-     WHERE c.enabled = 1 AND o.status = 'active'
-       AND c.next_run_at IS NOT NULL AND c.next_run_at <= ?
-       AND (c.breaker_open_until IS NULL OR c.breaker_open_until <= ?)
-     ORDER BY c.next_run_at LIMIT ?`,
-    [now, now, limit],
-  );
-  return rows.map(toRow);
-}
-
-export async function summary(db: D1Database) {
-  const counts = await all<{ health: string; n: number }>(
-    db,
-    'SELECT health, COUNT(*) AS n FROM connections GROUP BY health',
-  );
-  const attention = await all<{
-    id: string;
-    org_id: string;
-    name: string;
-    health: Health;
-    last_error_code: string | null;
-    last_error_at: number | null;
-  }>(
-    db,
-    `SELECT id, org_id, name, health, last_error_code, last_error_at FROM connections
-     WHERE enabled = 1 AND health IN ('failing', 'degraded') ORDER BY last_error_at DESC LIMIT 20`,
-  );
-  return { counts, attention };
+  g.delete('connections', { where: { id }, returning: ['id'] });
+  const results = await commitOrNull(g, actor);
+  return results ? rowCount(results.at(-1)) === 1 : false;
 }

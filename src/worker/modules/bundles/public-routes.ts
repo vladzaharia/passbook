@@ -20,10 +20,13 @@ import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
 import {
   addablePass,
+  assertBundleMember,
+  assertBundleMembers,
   bundleArchive,
   bundleForToken,
   bundleMembers,
   bundlePass,
+  fenceBundleStream,
   recordBundleEvents,
 } from './public-service.ts';
 
@@ -81,14 +84,6 @@ register(
         };
       });
       const org = members[0]?.model.orgName ?? '';
-      ctx.waitUntil(
-        recordBundleEvents(
-          ctx,
-          bundle,
-          'bundle.opened',
-          members.map((m) => m.pass.id),
-        ),
-      );
       const html = renderBundlePage({
         nonce,
         theme,
@@ -102,6 +97,19 @@ register(
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(ctx, bundle.org_id),
       });
+      await assertBundleMembers(
+        ctx,
+        bundle,
+        members.map((member) => member.pass),
+      );
+      ctx.waitUntil(
+        recordBundleEvents(
+          ctx,
+          bundle,
+          'bundle.opened',
+          members.map((m) => m.pass.id),
+        ),
+      );
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
@@ -127,7 +135,13 @@ register(
     const ctx = svc(c);
     const bundle = await bundleForToken(ctx, c.req.valid('param').token);
     const archive = await bundleArchive(ctx, bundle);
-    await recordBundleEvents(ctx, bundle, 'bundle.downloaded', archive.passIds);
+    try {
+      await recordBundleEvents(ctx, bundle, 'bundle.downloaded', archive.passIds);
+      await assertBundleMembers(ctx, bundle, archive.passes);
+    } catch (error) {
+      await archive.body.cancel();
+      throw error;
+    }
     return new Response(archive.body, {
       headers: {
         'content-type': PKPASSES_CONTENT_TYPE,
@@ -154,9 +168,18 @@ register(
     const bundle = await bundleForToken(ctx, p.token);
     const pass = await addablePass(ctx, bundle, p.passId);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
-    if (response.status === 200)
-      await recordBundleEvents(ctx, bundle, 'bundle.downloaded', [pass.id]);
-    return response;
+    try {
+      await assertBundleMember(ctx, bundle, pass);
+      if (response.status === 200)
+        await recordBundleEvents(ctx, bundle, 'bundle.downloaded', [pass.id]);
+      await assertBundleMember(ctx, bundle, pass);
+    } catch (error) {
+      await response.body?.cancel();
+      throw error;
+    }
+    return response.body
+      ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body), response)
+      : response;
   },
 );
 
@@ -175,6 +198,12 @@ register(
     const bundle = await bundleForToken(ctx, p.token);
     const pass = await bundlePass(ctx, bundle, p.passId);
     const asset = await openPublicAsset(ctx, pass, p.name);
+    try {
+      await assertBundleMember(ctx, bundle, pass);
+    } catch (error) {
+      await asset.body.cancel();
+      throw error;
+    }
     const headers = {
       'content-type': 'image/png',
       etag: asset.etag,
@@ -186,6 +215,6 @@ register(
       await asset.body.cancel();
       return new Response(null, { status: 304, headers });
     }
-    return new Response(asset.body, { headers });
+    return new Response(fenceBundleStream(ctx, bundle, [pass], asset.body), { headers });
   },
 );

@@ -1,8 +1,11 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema, AuditQuerySchema } from '../../../shared/contracts/audit.ts';
+import type { OrgMembership } from '../../../shared/contracts/org-membership.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireOrgCapability } from '../orgs/access.ts';
+import { redactForRead, safeLabel } from './redact.ts';
 import { type AuditRow, auditStmt, labelKey, listAuditRows, loadLabels } from './repo.ts';
 import type { AuditEntry } from './types.ts';
 
@@ -28,34 +31,72 @@ function decodeCursor(cursor: string | undefined): number | undefined {
   return id;
 }
 
-function toDto(row: AuditRow, labels: Map<string, string>): Dto {
+type AuditScope =
+  | { kind: 'tenant'; orgId: string; userId: string; membershipId: string }
+  | { kind: 'platform' };
+
+// UUIDs are identifiers, not capability tokens. Other secret-looking values are omitted.
+function safeId(id: string | null): string | null {
+  if (!id) return null;
+  return /^(?:org:)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    ? id
+    : safeLabel(id);
+}
+
+function toDto(row: AuditRow, labels: Map<string, string | null>, tenant: boolean): Dto {
+  const actorKey = row.actor_id ? labelKey(row.actor_type, row.actor_id) : null;
+  const targetKey =
+    row.target_type && row.target_id ? labelKey(row.target_type, row.target_id) : null;
+  const actorId = !tenant || (actorKey && labels.has(actorKey)) ? safeId(row.actor_id) : null;
+  const targetId = !tenant || (targetKey && labels.has(targetKey)) ? safeId(row.target_id) : null;
   return {
     id: row.id,
     at: row.at,
     orgId: row.org_id,
     actorType: row.actor_type,
-    actorId: row.actor_id,
-    actorLabel: row.actor_id ? (labels.get(labelKey(row.actor_type, row.actor_id)) ?? null) : null,
+    actorId,
+    actorLabel: actorId && actorKey ? (labels.get(actorKey) ?? null) : null,
     action: row.action,
     targetType: row.target_type,
-    targetId: row.target_id,
-    targetLabel:
-      row.target_type && row.target_id
-        ? (labels.get(labelKey(row.target_type, row.target_id)) ?? null)
-        : null,
-    requestId: row.request_id,
-    detail: row.detail ? JSON.parse(row.detail) : null,
+    targetId,
+    targetLabel: targetId && targetKey ? (labels.get(targetKey) ?? null) : null,
+    requestId: safeId(row.request_id),
+    detail: row.detail ? (redactForRead(JSON.parse(row.detail), tenant) as Dto['detail']) : null,
   };
 }
 
-export async function listAudit(
+export async function listTenantAudit(ctx: ServiceContext, userId: string, query: Query) {
+  if (!query.orgId) throw new ValidationError('Choose an organization.', [], 'ORG_REQUIRED');
+  const membership: OrgMembership = await requireOrgCapability(
+    ctx,
+    userId,
+    query.orgId,
+    'audit:read',
+  );
+  return listAudit(ctx, query, {
+    kind: 'tenant',
+    orgId: query.orgId,
+    userId,
+    membershipId: membership.id,
+  });
+}
+
+export async function listPlatformAudit(ctx: ServiceContext, query: Query) {
+  return listAudit(ctx, query, { kind: 'platform' });
+}
+
+async function listAudit(
   ctx: ServiceContext,
   query: Query,
+  scope: AuditScope,
 ): Promise<{ items: Dto[]; nextCursor: string | null }> {
   const rows = await listAuditRows(
     ctx.env.DB,
     {
-      orgId: query.orgId,
+      orgId: scope.kind === 'tenant' ? scope.orgId : query.orgId,
+      ...(scope.kind === 'tenant'
+        ? { tenant: { userId: scope.userId, membershipId: scope.membershipId } }
+        : {}),
       actorId: query.actorId,
       action: query.action,
       excludeAction: query.excludeAction,
@@ -73,9 +114,13 @@ export async function listAudit(
     ...(r.actor_id ? [{ type: r.actor_type, id: r.actor_id }] : []),
     ...(r.target_type && r.target_id ? [{ type: r.target_type, id: r.target_id }] : []),
   ]);
-  const labels = await loadLabels(ctx.env.DB, refs);
+  const labels = await loadLabels(
+    ctx.env.DB,
+    refs,
+    scope.kind === 'tenant' ? scope.orgId : undefined,
+  );
   return {
-    items: page.map((r) => toDto(r, labels)),
+    items: page.map((r) => toDto(r, labels, scope.kind === 'tenant')),
     nextCursor: rows.length > query.limit && last ? String(last.id) : null,
   };
 }

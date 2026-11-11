@@ -1,22 +1,38 @@
 import { behaviorPlugins } from '../../../generated/behaviors.ts';
 import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
-import type { AssetEntry, ValidationIssue, ValidationReport } from '../../../passkit/types.ts';
-import { ForbiddenError } from '../../platform/errors.ts';
+import type { ValidationIssue, ValidationReport } from '../../../passkit/types.ts';
+import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { TemplateAuthority } from './access.ts';
 import { dryRunReport } from './dry-run-report.ts';
 import { imagesFromBinding } from './images-binding.ts';
-import { type Analysis, analyzePackage } from './package/analyze.ts';
+import { persistAuthorizedStage } from './import-pipeline-persist.ts';
+import {
+  assertStageAuthority,
+  getBytes,
+  getJson,
+  importAuthority,
+  putJson,
+  type Saved,
+  stage,
+} from './import-pipeline-staging.ts';
+import { analyzePackage } from './package/analyze.ts';
 import type { ImageTools } from './package/images.ts';
 import { extractArchive, ImportError } from './package/unzip.ts';
-import { commitVersion, planTemplate, slugify } from './persist.ts';
-import { r2Key } from './registry.ts';
-import { getImport, setWorkflowRun, updateImport } from './repo.ts';
+import {
+  advanceImport,
+  getImport,
+  matchesImport,
+  recordImportFailure,
+  startImportRun,
+} from './repo.ts';
 
 export interface ImportParams {
   uploadId: string;
   orgId: string | null;
   objectKey: string;
   createdBy: string | null;
+  authority: TemplateAuthority;
 }
 
 export interface StageResult {
@@ -24,30 +40,6 @@ export interface StageResult {
 }
 
 const behaviors = createBehaviorRegistry([...behaviorPlugins]);
-const stage = (p: ImportParams) => `uploads/${p.uploadId}/`;
-
-interface Saved {
-  name: string | null;
-  analysis: Omit<Analysis, 'files' | 'tooling'> & { hasTooling: boolean };
-}
-
-async function putJson(ctx: ServiceContext, key: string, value: unknown): Promise<void> {
-  await ctx.env.BUCKET.put(key, JSON.stringify(value), {
-    httpMetadata: { contentType: 'application/json' },
-  });
-}
-
-async function getJson<T>(ctx: ServiceContext, key: string): Promise<T> {
-  const object = await ctx.env.BUCKET.get(key);
-  if (!object) throw new Error(`Missing staged object ${key}`);
-  return (await object.json()) as T;
-}
-
-async function getBytes(ctx: ServiceContext, key: string): Promise<Uint8Array> {
-  const object = await ctx.env.BUCKET.get(key);
-  if (!object) throw new Error(`Missing staged object ${key}`);
-  return new Uint8Array(await object.arrayBuffer());
-}
 
 /** Records a failed import. The workflow ends normally: invalid input is not retryable. */
 export async function failImport(
@@ -55,24 +47,41 @@ export async function failImport(
   p: ImportParams,
   issues: ValidationIssue[],
   code: string,
-): Promise<void> {
+): Promise<boolean> {
+  if (p.authority != null) {
+    try {
+      importAuthority(p);
+    } catch (error) {
+      if (!(error instanceof ForbiddenError)) throw error;
+      return false;
+    }
+  }
   const report: ValidationReport = { ok: false, issues };
-  const now = ctx.clock.now();
-  await updateImport(ctx.env.DB, p.uploadId, { step: 'failed', report, error: code }, now);
-  await setWorkflowRun(ctx.env.DB, p.uploadId, 'errored', now, { errorCode: code });
-  ctx.log.info('templates.import_rejected', { orgId: p.orgId, code });
+  const recorded = await recordImportFailure(ctx.env.DB, p, report, code, ctx.clock.now());
+  if (recorded) ctx.log.info('templates.import_rejected', { orgId: p.orgId, code });
+  return recorded;
+}
+
+async function rejectImport(
+  ctx: ServiceContext,
+  p: ImportParams,
+  issues: ValidationIssue[],
+  code: string,
+): Promise<void> {
+  if (!(await failImport(ctx, p, issues, code))) throw new ForbiddenError();
 }
 
 export async function startImport(ctx: ServiceContext, p: ImportParams): Promise<void> {
-  const now = ctx.clock.now();
-  await setWorkflowRun(ctx.env.DB, p.uploadId, 'running', now);
-  await updateImport(ctx.env.DB, p.uploadId, { step: 'extract' }, now);
+  const authority = importAuthority(p);
+  if (!(await startImportRun(ctx.env.DB, p, authority, ctx.clock.now())))
+    throw new ForbiddenError();
 }
 
 export async function extractStage(ctx: ServiceContext, p: ImportParams): Promise<StageResult> {
+  const authority = await assertStageAuthority(ctx, p);
   const zip = await ctx.env.BUCKET.get(p.objectKey);
   if (!zip) {
-    await failImport(
+    await rejectImport(
       ctx,
       p,
       [
@@ -88,13 +97,18 @@ export async function extractStage(ctx: ServiceContext, p: ImportParams): Promis
   }
   try {
     const { files } = extractArchive(new Uint8Array(await zip.arrayBuffer()));
-    for (const [path, bytes] of files) await ctx.env.BUCKET.put(`${stage(p)}x/${path}`, bytes);
+    for (const [path, bytes] of files) {
+      await assertStageAuthority(ctx, p);
+      await ctx.env.BUCKET.put(`${stage(p)}x/${path}`, bytes);
+    }
+    await assertStageAuthority(ctx, p);
     await putJson(ctx, `${stage(p)}files.json`, [...files.keys()]);
-    await updateImport(ctx.env.DB, p.uploadId, { step: 'analyze' }, ctx.clock.now());
+    if (!(await advanceImport(ctx.env.DB, p, authority, 'extract', 'analyze', ctx.clock.now())))
+      throw new ForbiddenError();
     return { ok: true };
   } catch (error) {
     if (!(error instanceof ImportError)) throw error;
-    await failImport(
+    await rejectImport(
       ctx,
       p,
       [{ severity: 'error', code: error.code, message: error.message }],
@@ -109,6 +123,7 @@ export async function analyzeStage(
   p: ImportParams,
   images: ImageTools = imagesFromBinding(ctx.env.IMAGES, ctx.log),
 ): Promise<StageResult> {
+  const authority = await assertStageAuthority(ctx, p);
   const record = await getImport(ctx.env.DB, p.uploadId);
   const names = await getJson<string[]>(ctx, `${stage(p)}files.json`);
   const input = new Map<string, Uint8Array>();
@@ -121,33 +136,44 @@ export async function analyzeStage(
     behaviors,
   });
   if (!('version' in result)) {
-    await failImport(ctx, p, result.report.issues, 'IMPORT_INVALID');
+    await rejectImport(ctx, p, result.report.issues, 'IMPORT_INVALID');
     return { ok: false };
   }
-  for (const [path, bytes] of result.files) await ctx.env.BUCKET.put(`${stage(p)}b/${path}`, bytes);
+  for (const [path, bytes] of result.files) {
+    await assertStageAuthority(ctx, p);
+    await ctx.env.BUCKET.put(`${stage(p)}b/${path}`, bytes);
+  }
   const { files: _files, tooling, ...rest } = result;
-  if (tooling) await ctx.env.BUCKET.put(`${stage(p)}tooling.json`, tooling);
+  if (tooling) {
+    await assertStageAuthority(ctx, p);
+    await ctx.env.BUCKET.put(`${stage(p)}tooling.json`, tooling);
+  }
   const saved: Saved = {
     name: record?.name ?? null,
     analysis: { ...rest, hasTooling: tooling !== null },
   };
+  await assertStageAuthority(ctx, p);
   await putJson(ctx, `${stage(p)}analysis.json`, saved);
-  await updateImport(ctx.env.DB, p.uploadId, { step: 'dry-run' }, ctx.clock.now());
+  if (!(await advanceImport(ctx.env.DB, p, authority, 'analyze', 'dry-run', ctx.clock.now())))
+    throw new ForbiddenError();
   return { ok: true };
 }
 
 export async function dryRunStage(ctx: ServiceContext, p: ImportParams): Promise<StageResult> {
+  const authority = await assertStageAuthority(ctx, p);
   const saved = await getJson<Saved>(ctx, `${stage(p)}analysis.json`);
   const a = saved.analysis;
   const report = await dryRunReport(ctx, p.orgId, { ...a, report: a.report }, (name) =>
     getBytes(ctx, `${stage(p)}b/${name}`),
   );
   if (!report.ok) {
-    await failImport(ctx, p, report.issues, 'IMPORT_INVALID');
+    await rejectImport(ctx, p, report.issues, 'IMPORT_INVALID');
     return { ok: false };
   }
+  await assertStageAuthority(ctx, p);
   await putJson(ctx, `${stage(p)}analysis.json`, { ...saved, analysis: { ...a, report } });
-  await updateImport(ctx.env.DB, p.uploadId, { step: 'persist' }, ctx.clock.now());
+  if (!(await advanceImport(ctx.env.DB, p, authority, 'dry-run', 'persist', ctx.clock.now())))
+    throw new ForbiddenError();
   return { ok: true };
 }
 
@@ -155,16 +181,21 @@ export async function persistStage(
   ctx: ServiceContext,
   p: ImportParams,
 ): Promise<{ templateId: string; version: string } | null> {
-  const saved = await getJson<Saved>(ctx, `${stage(p)}analysis.json`);
-  const a = saved.analysis;
-  const name = a.manifest.name;
-  const slug = slugify(name);
-  let plan: Awaited<ReturnType<typeof planTemplate>>;
   try {
-    plan = await planTemplate(ctx, p.orgId, slug);
+    return await persistAuthorizedStage(ctx, p);
   } catch (error) {
-    if (!(error instanceof ForbiddenError)) throw error;
-    await failImport(
+    if (
+      !(error instanceof ForbiddenError) &&
+      !(
+        error instanceof ConflictError &&
+        (error.code === 'TEMPLATE_ARCHIVED' ||
+          error.code === 'TEMPLATE_VERSION_CONFLICT' ||
+          error.code === 'TEMPLATE_ASSET_CONFLICT')
+      )
+    ) {
+      throw error;
+    }
+    await rejectImport(
       ctx,
       p,
       [{ severity: 'error', code: error.code, message: error.message }],
@@ -172,59 +203,21 @@ export async function persistStage(
     );
     return null;
   }
-  const assets: AssetEntry[] = a.assets.map((x) => ({
-    ...x,
-    source: { kind: 'r2', key: r2Key(p.orgId, plan.templateId, a.version, x.name) },
-  }));
-  for (const asset of assets) {
-    if (asset.source.kind !== 'r2') continue;
-    await ctx.env.BUCKET.put(asset.source.key, await getBytes(ctx, `${stage(p)}b/${asset.name}`));
-  }
-  if (a.hasTooling)
-    await ctx.env.BUCKET.put(
-      r2Key(p.orgId, plan.templateId, a.version, 'tooling.json'),
-      await getBytes(ctx, `${stage(p)}tooling.json`),
-    );
-  const committed = await commitVersion(ctx, {
-    plan,
-    orgId: p.orgId,
-    slug,
-    name,
-    description: a.manifest.description ?? null,
-    createdBy: p.createdBy,
-    body: {
-      version: a.version,
-      manifest: a.manifest,
-      passJson: a.passJson,
-      assets,
-      report: a.report,
-      styles: a.styles,
-    },
-  });
-  const now = ctx.clock.now();
-  await updateImport(
-    ctx.env.DB,
-    p.uploadId,
-    { step: 'done', templateId: committed.templateId, version: a.version, report: a.report },
-    now,
-  );
-  await setWorkflowRun(ctx.env.DB, p.uploadId, 'complete', now, { targetId: committed.templateId });
-  ctx.log.info('templates.imported', {
-    orgId: p.orgId,
-    templateId: committed.templateId,
-    created: committed.versionCreated,
-  });
-  return { templateId: committed.templateId, version: a.version };
 }
 
 /** Removes staged objects (the upload and everything under uploads/<id>/). */
 export async function cleanupStage(ctx: ServiceContext, p: ImportParams): Promise<void> {
+  if (!(await matchesImport(ctx.env.DB, p))) throw new ForbiddenError();
   let cursor: string | undefined;
   do {
     const page = await ctx.env.BUCKET.list({ prefix: stage(p), cursor, limit: 500 });
     const keys = page.objects.map((o) => o.key);
-    if (keys.length) await ctx.env.BUCKET.delete(keys);
+    if (keys.length) {
+      if (!(await matchesImport(ctx.env.DB, p))) throw new ForbiddenError();
+      await ctx.env.BUCKET.delete(keys);
+    }
     cursor = page.truncated ? page.cursor : undefined;
   } while (cursor);
+  if (!(await matchesImport(ctx.env.DB, p))) throw new ForbiddenError();
   await ctx.env.BUCKET.delete(p.objectKey);
 }

@@ -1,22 +1,28 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { persistTemplate } from '../../../../test/helpers/index.ts';
+import { makePass, persistTemplate } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex, toBase32 } from '../../platform/ids.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import type { TemplateRelease } from '../templates/releases.ts';
+import { approveAppleRelease } from './apple-release-test-fixtures.ts';
+import { buildArtifact } from './builder.ts';
 import { createPassRow } from './create.ts';
+import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
 import { publishPass } from './publish.ts';
-import { getPass } from './repo.ts';
+import { getOrg } from './repo-read-issuance.ts';
+import { getPass } from './repo-read-pass.ts';
 import { barcodeHashOf } from './scan-code.ts';
-import { ICON_PNG, type Kit, setupKit } from './test-kit.ts';
 
 let kit: Kit;
-let scanTemplateId: string;
+let scanRelease: TemplateRelease;
 
 beforeAll(async () => {
   kit = await setupKit();
   const base = kit.template;
   const resolved = kit.registry.add({
     id: 'tpl-scan',
+    orgId: kit.org.id,
     manifest: {
       ...base.manifest,
       name: 'Scan template',
@@ -31,18 +37,26 @@ beforeAll(async () => {
     } as PassJson,
     assets: { 'icon.png': ICON_PNG },
   });
-  await persistTemplate(kit.fx, resolved);
-  scanTemplateId = resolved.id;
+  await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+  scanRelease = await approveAppleRelease(kit, {
+    orgId: kit.org.id,
+    mode: 'live',
+    templateId: resolved.id,
+    version: resolved.version,
+  });
 });
 
-const make = async (templateId = scanTemplateId) =>
-  createPassRow(kit.ctx, {
+const make = () =>
+  createPassRow(jobCtxOf(kit), {
     orgId: kit.org.id,
-    templateId,
-    templateVersion: (await kit.registry.resolve(templateId)).version,
+    templateId: scanRelease.templateId,
+    templateVersion: scanRelease.version,
+    releaseId: scanRelease.id,
+    releaseGeneration: scanRelease.generation,
     input: { memberName: 'Scan Me' },
     source: 'manual',
     mode: 'live',
+    execution: { kind: 'system' },
     actor: { type: 'system', id: null },
   });
 
@@ -76,7 +90,7 @@ describe('scan code', () => {
 
   it('keeps the same code across publishes and writes the hash each time', async () => {
     const pass = await make();
-    const { pass: next } = await publishPass(kit.ctx, {
+    const { pass: next } = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       actor: { type: 'user', id: 'u1' },
@@ -86,20 +100,68 @@ describe('scan code', () => {
     expect(next.barcodeHash).toBe(await sha256Hex(pass.scanCode ?? ''));
   });
 
-  it('is backfilled on the next publish of an older pass, even an otherwise identical one', async () => {
-    const pass = await make();
-    await run(kit.env.DB, 'UPDATE passes SET scan_code = NULL, barcode_hash = NULL WHERE id = ?', [
-      pass.id,
-    ]);
-    const { pass: next } = await publishPass(kit.ctx, {
+  it('backfills an older pass on its next publish', async () => {
+    const pass = await makePass(kit.fx, {
+      orgId: kit.org.id,
+      template: await kit.registry.resolve(scanRelease.templateId, scanRelease.version),
+      registry: kit.registry,
+      scanCode: null,
+      personalization: { memberName: 'Scan Me' },
+    });
+    expect((await getPass(kit.env.DB, pass.id))?.scanCode).toBeNull();
+    const { pass: next, changed } = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       actor: { type: 'user', id: 'u1' },
     });
     expect(next.scanCode).toMatch(/^[A-Z2-7]{26}$/);
-    expect(next.scanCode).not.toBe(pass.scanCode);
+    expect(changed).toBe(true);
     expect(await message(pass.id)).toBe(next.scanCode);
     expect(next.barcodeHash).toBe(await sha256Hex(next.scanCode ?? ''));
+    expect((await getPass(kit.env.DB, pass.id))?.scanCode).toBe(next.scanCode);
+  });
+
+  it('backfills a missing scan code even when the rendered artifact is identical', async () => {
+    const fixture = await makePass(kit.fx, {
+      orgId: kit.org.id,
+      template: kit.template,
+      registry: kit.registry,
+      scanCode: null,
+      personalization: { memberName: 'Legacy' },
+    });
+    const pass = await getPass(kit.env.DB, fixture.id);
+    const org = await getOrg(kit.env.DB, kit.org.id);
+    if (!pass || !org) throw new Error('Missing legacy pass or organization');
+    expect(pass.scanCode).toBeNull();
+    const artifact = await buildArtifact(kit.ctx, {
+      orgId: pass.orgId,
+      orgName: org.name,
+      branding: org.branding,
+      passId: pass.id,
+      serial: pass.serial,
+      authToken: pass.authToken,
+      webServiceUrl: pass.webServiceUrl,
+      identityId: pass.identityId,
+      templateId: pass.templateId,
+      templateVersion: pass.templateVersion,
+      personalization: pass.personalization,
+      status: pass.status,
+    });
+    await kit.env.BUCKET.put(pass.objectKey, artifact.bytes);
+    await run(
+      kit.env.DB,
+      'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ? AND version = ?',
+      [JSON.stringify(artifact.passJson), pass.id, pass.version],
+    );
+    const { pass: next, changed } = await publishPass(jobCtxOf(kit), {
+      passId: pass.id,
+      cause: 'admin',
+      actor: { type: 'user', id: 'u1' },
+    });
+    expect(changed).toBe(false);
+    expect(next.objectKey).toBe(pass.objectKey);
+    expect(next.scanCode).toMatch(/^[A-Z2-7]{26}$/);
+    expect(next.barcodeHash).toBeNull();
     expect((await getPass(kit.env.DB, pass.id))?.scanCode).toBe(next.scanCode);
   });
 

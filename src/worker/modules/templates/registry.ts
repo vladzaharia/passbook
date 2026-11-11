@@ -3,14 +3,16 @@ import type {
   TemplateRegistry,
   TemplateSummary,
 } from '../../../passkit/template/registry.ts';
-import type { AssetEntry, PassJson } from '../../../passkit/types.ts';
+import type { AssetEntry } from '../../../passkit/types.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { NotFoundError } from '../../platform/errors.ts';
-import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
-import type { BakedTemplate } from './baked-types.ts';
+import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
+import { sha1Hex } from './package/hash.ts';
 import { stylesOf } from './package/slots.ts';
+import { ReleaseContentError, readReleaseExtra } from './release-content.ts';
 import { getTemplate, getVersion } from './repo.ts';
 import { listTemplates } from './repo-list.ts';
+import { listVersionExtras } from './repo-preview-extras.ts';
 import { generatedSource, type SyncSource, syncBakedTemplates } from './sync.ts';
 
 export const BAKED_PREFIX = 'baked:';
@@ -49,19 +51,6 @@ export function clearTemplateCache(env: AppEnv, templateId?: string): void {
   for (const key of [...cache.keys()]) if (key.startsWith(`${templateId}@`)) cache.delete(key);
 }
 
-function fromBaked(t: BakedTemplate, orgId: string | null): ResolvedTemplate {
-  return {
-    id: t.id,
-    version: t.version,
-    orgId,
-    origin: 'baked',
-    manifest: t.manifest,
-    passJson: t.passJson as PassJson,
-    assets: t.assets as AssetEntry[],
-    styles: t.styles,
-  };
-}
-
 export class CompositeTemplateRegistry implements TemplateRegistry {
   readonly #env: AppEnv;
   readonly #source: SyncSource;
@@ -71,7 +60,7 @@ export class CompositeTemplateRegistry implements TemplateRegistry {
   constructor(env: AppEnv, options: RegistryOptions = {}) {
     this.#env = env;
     this.#source = options.source ?? generatedSource;
-    this.#ctx = options.ctx ?? createServiceContext(env);
+    this.#ctx = options.ctx ?? createDetachedContext(env);
     let cache = caches.get(env.DB);
     if (!cache) {
       cache = new Map();
@@ -104,25 +93,16 @@ export class CompositeTemplateRegistry implements TemplateRegistry {
 
   async resolve(id: string, version?: string): Promise<ResolvedTemplate> {
     const notFound = () => new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
-    if (id.startsWith(BAKED_PREFIX)) {
-      await syncBakedTemplates(this.#ctx, this.#source);
-      const baked = this.#source.templates.find((t) => t.id === id);
-      if (baked && (!version || version === baked.version)) {
-        const key = `${id}@${baked.version}`;
-        const hit = this.#cache.get(key);
-        if (hit) return hit;
-        const row = await getTemplate(this.#env.DB, id);
-        const resolved = fromBaked(baked, row?.orgId ?? null);
-        this.#cache.set(key, resolved);
-        return resolved;
-      }
-    }
+    // Baked assets are copied to immutable version storage during sync. Resolve the stored
+    // version, not the current bundle's static files, so issuance uses the approved bytes.
+    if (id.startsWith(BAKED_PREFIX)) await syncBakedTemplates(this.#ctx, this.#source);
     const row = await getTemplate(this.#env.DB, id);
     if (!row || row.status === 'deleted') throw notFound();
     const wanted = version ?? row.activeVersion;
     if (!wanted) throw notFound();
     const cached = this.#cache.get(`${id}@${wanted}`);
-    if (cached) return cached;
+    // A cached resolution is valid only while the template still belongs to the same org.
+    if (cached && cached.orgId === row.orgId && cached.origin === row.origin) return cached;
     const v = await getVersion(this.#env.DB, id, wanted);
     if (!v) throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');
     const resolved: ResolvedTemplate = {
@@ -142,19 +122,30 @@ export class CompositeTemplateRegistry implements TemplateRegistry {
   async openAsset(template: ResolvedTemplate, name: string): Promise<ReadableStream<Uint8Array>> {
     const entry = template.assets.find((a) => a.name === name);
     if (!entry) throw new NotFoundError('Asset not found.', 'ASSET_NOT_FOUND');
-    return this.#openSource(entry.source);
+    return this.#openSource(entry);
   }
 
-  /** Static preview files that are not part of the pass bundle (baked only). */
+  /** Extras are versioned and verified just like the approved bundle assets. */
   async openExtra(template: ResolvedTemplate, name: string): Promise<ReadableStream<Uint8Array>> {
-    const extra = this.#source.templates
-      .find((t) => t.id === template.id && t.version === template.version)
-      ?.extras.find((e) => e.name === name);
-    if (!extra) throw new NotFoundError('Asset not found.', 'ASSET_NOT_FOUND');
-    return this.#openSource({ kind: 'static', path: extra.path });
+    try {
+      const extras = await listVersionExtras(this.#env.DB, template.id, template.version);
+      const extra = extras.find((entry) => entry.name === name);
+      if (!extra) throw new NotFoundError('Asset not found.', 'ASSET_NOT_FOUND');
+      const bytes = await readReleaseExtra(this.#ctx, extra);
+      return new Response(bytes as BufferSource).body as ReadableStream<Uint8Array>;
+    } catch (error) {
+      if (!(error instanceof ReleaseContentError)) throw error;
+      this.#ctx.log.error('templates.extra_unavailable', {
+        code: 'TEMPLATE_EXTRA_UNAVAILABLE',
+        templateId: template.id,
+        error,
+      });
+      throw new NotFoundError('Asset not found.', 'ASSET_NOT_FOUND');
+    }
   }
 
-  async #openSource(source: AssetEntry['source']): Promise<ReadableStream<Uint8Array>> {
+  async #openSource(entry: AssetEntry): Promise<ReadableStream<Uint8Array>> {
+    const { source } = entry;
     const missing = () => new NotFoundError('Asset not found.', 'ASSET_NOT_FOUND');
     if (source.kind === 'static') {
       const response = await this.#env.ASSETS.fetch(
@@ -168,7 +159,15 @@ export class CompositeTemplateRegistry implements TemplateRegistry {
     if (source.kind === 'r2') {
       const object = await this.#env.BUCKET.get(source.key);
       if (!object) throw missing();
-      return object.body;
+      // The pass build trusts the metadata sha1 and crc32, so the bytes are checked once here, before
+      // the asset cache can keep them.
+      const bytes = new Uint8Array(await object.arrayBuffer());
+      if (bytes.length !== entry.size || (await sha1Hex(bytes)) !== entry.sha1.toLowerCase())
+        throw new ConflictError(
+          'The approved template content or release policy changed.',
+          'TEMPLATE_CONTENT_CHANGED',
+        );
+      return new Response(bytes as BufferSource).body as ReadableStream<Uint8Array>;
     }
     throw missing();
   }

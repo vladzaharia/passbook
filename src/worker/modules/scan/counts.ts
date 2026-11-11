@@ -1,18 +1,20 @@
 import type { ScanCounts } from '../../../shared/contracts/scan.ts';
+import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './guard.ts';
 import {
-  eventCacheStmt,
-  eventTotalsStmt,
-  expectedCount,
+  expectedCountAfterCacheStmt,
+  expectedCountFromResults,
+  expectedCountStmt,
   managersStmt,
-  setExpected,
+  setExpectedStmt,
   todayStmt,
 } from './repo-counts.ts';
+import { eventTotalsStmt } from './repo-event-attendance.ts';
 import { scanningSessionTodayStmt } from './repo-scanning-sessions.ts';
+import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 const DAY = 86_400_000;
-const EXPECTED_TTL_MS = 60_000;
 
 /** Midnight of the local day in `timeZone`, by the clock the zone shows now. */
 export function localDayStart(now: number, timeZone: string): number {
@@ -73,54 +75,93 @@ export interface CountsRead {
 }
 
 export interface CountsPlan {
-  /** Run these in a batch after every write of the request; hand the results back to `read`. */
+  /** Run these contiguously in one batch after the request's writes, then hand results to `read`. */
   stmts: D1PreparedStatement[];
   read(results: D1Result[]): Promise<CountsRead>;
 }
 
 const rowOf = <T>(result: D1Result | undefined) => (result?.results?.[0] ?? null) as T | null;
 
-/** Counts ride in the request's last batch (SA 13.1): one statement each, no round trip of their own. */
-export function planCounts(ctx: ServiceContext, actor: ScanActor, dayStart?: number): CountsPlan {
+/**
+ * Counts, including the event cache CAS, ride in the request's existing batch.
+ * Pass/action paths supply their already-verified actor CSRF fence as `cacheGuard`;
+ * standalone aggregate GETs may use the ordinary actor authority fence alone.
+ */
+export function planCounts(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  dayStart?: number,
+  authorityActor: ScanActor = actor,
+  cacheGuard?: { sql: string; params: readonly SqlValue[] },
+): CountsPlan {
+  return buildCounts(ctx, actor, dayStart, authorityActor, cacheGuard, false);
+}
+
+/**
+ * Counts that ride the commit batch, after the grant's release. They see the scan's own writes and
+ * nothing a concurrent scan wrote later, so a milestone (the Nth arrival) belongs to one scan. No
+ * cache write: the expected count is read directly.
+ */
+export function planCommitCounts(ctx: ServiceContext, actor: ScanActor, dayStart?: number) {
+  return buildCounts(ctx, actor, dayStart, actor, undefined, true);
+}
+
+function buildCounts(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  dayStart: number | undefined,
+  authorityActor: ScanActor,
+  cacheGuard: { sql: string; params: readonly SqlValue[] } | undefined,
+  inCommit: boolean,
+): CountsPlan {
   const db = ctx.env.DB;
-  const now = ctx.clock.now();
-  const since = trustedDayStart(now, dayStart) ?? localDayStart(now, actor.timeZone);
-  const event = actor.event;
-  const stmts = [
-    actor.scanningSession
-      ? scanningSessionTodayStmt(db, actor.orgId, actor.scanningSession.id, actor.mode, since)
-      : todayStmt(db, actor.actorKey, since),
-    managersStmt(db, actor.orgId),
-    ...(event
-      ? [
-          eventTotalsStmt(db, actor.orgId, actor.mode, event.id),
-          eventCacheStmt(db, actor.orgId, event.id),
-        ]
-      : []),
-  ];
+  const event = actor.event ? { ...actor.event } : null;
+  const templateIds = [...actor.templateIds];
+  const orgId = actor.orgId;
+  const mode = actor.mode;
+  const actorKey = actor.actorKey;
+  const timeZone = actor.timeZone;
+  const sessionId = actor.scanningSession?.id;
+  const configRev = Math.max(
+    actor.scanner?.updatedAt ?? 0,
+    event?.updatedAt ?? 0,
+    actor.scanningSession?.updatedAt ?? 0,
+  );
+  const guard = cacheGuard ? { sql: cacheGuard.sql, params: [...cacheGuard.params] } : undefined;
+  const authority = cloneObservedScanActor(authorityActor);
+  // Bind the injected clock as late as possible, when the caller assembles its batch.
+  let asOf = ctx.clock.now();
+  let prepared: D1PreparedStatement[] | undefined;
   return {
-    stmts,
+    get stmts() {
+      if (!prepared) {
+        asOf = ctx.clock.now();
+        const since = trustedDayStart(asOf, dayStart) ?? localDayStart(asOf, timeZone);
+        prepared = [
+          sessionId
+            ? scanningSessionTodayStmt(db, orgId, sessionId, mode, since)
+            : todayStmt(db, actorKey, orgId, mode, since),
+          managersStmt(db, orgId),
+        ];
+        if (event) {
+          prepared.push(eventTotalsStmt(db, orgId, mode, event.id));
+          const cache = inCommit
+            ? null
+            : setExpectedStmt(db, authority, event, templateIds, asOf, guard);
+          if (cache)
+            prepared.push(cache, expectedCountAfterCacheStmt(db, event, templateIds, asOf));
+          else prepared.push(expectedCountStmt(db, event, templateIds, asOf));
+        }
+      }
+      return prepared;
+    },
     async read(results) {
       const today = rowOf<{ n: number }>(results[0])?.n ?? 0;
       const approvals = rowOf<{ has: number }>(results[1])?.has === 1;
-      const configRev = Math.max(
-        actor.scanner?.updatedAt ?? 0,
-        event?.updatedAt ?? 0,
-        actor.scanningSession?.updatedAt ?? 0,
-      );
       let eventCounts: ScanCounts['event'] = null;
       if (event) {
         const totals = rowOf<{ arrived: number; inside: number }>(results[2]);
-        const cache = rowOf<{ expected: number | null; expected_at: number | null }>(results[3]);
-        let expected = cache?.expected ?? 0;
-        if (
-          cache?.expected === null ||
-          cache?.expected === undefined ||
-          (cache.expected_at ?? 0) < now - EXPECTED_TTL_MS
-        ) {
-          expected = await expectedCount(db, event, actor.templateIds);
-          await setExpected(db, event.id, expected, now);
-        }
+        const expected = expectedCountFromResults(results[3], results[4]);
         eventCounts = {
           arrived: totals?.arrived ?? 0,
           inside: event.reentry ? (totals?.inside ?? 0) : null,
@@ -128,7 +169,7 @@ export function planCounts(ctx: ServiceContext, actor: ScanActor, dayStart?: num
           capacity: event.capacity,
         };
       }
-      return { counts: { today, event: eventCounts, asOf: now, configRev }, approvals };
+      return { counts: { today, event: eventCounts, asOf, configRev }, approvals };
     },
   };
 }

@@ -9,40 +9,42 @@ import {
   PassListQuerySchema,
   PassListSchema,
   RefreshPassResponseSchema,
-  ResendEmailSchema,
   RotateLinkResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
-import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { methodScope, modeOf } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
+import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { registerEventRoutes } from '../events/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
-import { actorFor, assertOrg, orgScopeOf, passScopeOf, svc } from './http.ts';
-import { getPassForWrite } from './pass-access.ts';
+import {
+  actorFor,
+  authOf,
+  passScopeOf,
+  requireTenantSessionOrApiKey,
+  svc,
+  tenantAuthorityOf,
+} from './http.ts';
+import { requireTenantPassRead, tenantPassForRead, tenantPassForWrite } from './pass-access.ts';
+import { rotateLink } from './pass-service-delivery.ts';
+import { requestRefresh } from './pass-service-refresh.ts';
 import { registerRemoveRoutes } from './remove-routes.ts';
+import { registerActionRoutes } from './routes-actions.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerWriteRoutes } from './routes-write.ts';
-import {
-  deletePass,
-  listPassSummaries,
-  requestRefresh,
-  resendEmail,
-  rotateLink,
-  unvoidPass,
-  voidPass,
-} from './service.ts';
+import { deletePass, listPassSummaries, unvoidPass, voidPass } from './service.ts';
 
 export const passesRoutes = createRouter({ bodyLimit: false });
 /** Image overrides have their own cap (routes-assets.ts). */
 passesRoutes.use('*', defaultBodyLimit(/\/(?:assets\/[^/]+|member-photo)$/));
 guard(
   passesRoutes,
-  requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
+  requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
 );
 
 register(
@@ -57,13 +59,32 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    if (q.orgId) assertOrg(c, q.orgId);
+    const ctx = svc(c);
+    const auth = authOf(c);
+    // A key bound to an org lists that org by default. A global key must say so: `orgId=null` is explicit.
+    const orgId =
+      q.orgId !== undefined
+        ? q.orgId
+        : auth.kind === 'api_key' && auth.orgId !== null
+          ? auth.orgId
+          : undefined;
+    if (orgId === undefined)
+      throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+    if (orgId === null) {
+      if (auth.kind !== 'api_key' || auth.orgId !== null)
+        throw new ForbiddenError(
+          'A global API key is required for platform-wide pass lists.',
+          'ORG_FORBIDDEN',
+        );
+    } else {
+      await requireTenantPassRead(ctx, auth, orgId);
+    }
     const holderEmail = q.holderEmail ? strictEmail(q.holderEmail) : undefined;
     if (q.holderEmail && !holderEmail) return c.json({ items: [], nextCursor: null });
     return c.json(
-      await listPassSummaries(svc(c), {
-        orgId: orgScopeOf(c) ?? q.orgId,
-        mode: modeOf(c.var.auth),
+      await listPassSummaries(ctx, {
+        orgId,
+        mode: modeOf(auth),
         ...(q.templateId ? { templateId: q.templateId } : {}),
         ...(q.connectionId ? { connectionId: q.connectionId } : {}),
         ...(q.status ? { status: q.status } : {}),
@@ -89,7 +110,12 @@ register(
     response: PassDetailSchema,
   },
   async (c) => {
-    const detail = await getPassDetail(svc(c), c.req.valid('param').id, passScopeOf(c));
+    const ctx = svc(c);
+    const id = c.req.valid('param').id;
+    const auth = authOf(c);
+    const { scope, pass } = await tenantPassForRead(ctx, auth, id, passScopeOf(c));
+    const authority = await tenantAuthorityOf(ctx, auth, pass.orgId, 'passes:read');
+    const detail = await getPassDetail(ctx, id, scope, authority);
     return c.json(detail, 200, { etag: `"${detail.version}"` });
   },
 );
@@ -106,12 +132,16 @@ register(
     response: PassDetailSchema,
   },
   async (c) => {
+    const ctx = svc(c);
+    const id = c.req.valid('param').id;
+    const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
     const detail = await bindPassConnection(
-      svc(c),
+      ctx,
       actorFor(c),
-      c.req.valid('param').id,
+      id,
       c.req.valid('json'),
-      passScopeOf(c),
+      scope,
+      authority,
     );
     return c.json(detail, 200, { etag: `"${detail.version}"` });
   },
@@ -128,7 +158,10 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await deletePass(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c));
+    const ctx = svc(c);
+    const id = c.req.valid('param').id;
+    const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+    await deletePass(ctx, actorFor(c), id, scope, authority);
     return c.json({ ok: true });
   },
 );
@@ -141,7 +174,12 @@ for (const [path, summary, action] of [
     passesRoutes,
     'passes',
     { method: 'post', path, summary, params: IdParamSchema, response: PassActionResponseSchema },
-    async (c) => c.json(await action(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      return c.json(await action(ctx, actorFor(c), id, scope, authority));
+    },
   );
 }
 
@@ -157,17 +195,30 @@ register(
     response: RefreshPassResponseSchema,
   },
   async (c) => {
+    const ctx = svc(c);
     const id = c.req.valid('param').id;
-    const pass = await getPassForWrite(svc(c).env.DB, id, passScopeOf(c));
-    const { requestedAt } = await requestRefresh(svc(c), id, actorFor(c), {
-      orgId: pass.orgId,
-      mode: pass.mode,
-      version: pass.version,
-      linkGeneration: pass.linkGeneration,
-      status: pass.status,
-      connectionId: pass.connectionId,
-      externalRef: pass.externalRef,
-    });
+    const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+    const { requestedAt } = await requestRefresh(
+      ctx,
+      id,
+      actorFor(c),
+      {
+        orgId: pass.orgId,
+        identityId: pass.identityId,
+        templateId: pass.templateId,
+        templateVersion: pass.templateVersion,
+        releaseId: pass.releaseId,
+        mode: pass.mode,
+        version: pass.version,
+        linkGeneration: pass.linkGeneration,
+        credentialGeneration: pass.credentialGeneration,
+        lifecycleGeneration: pass.lifecycleGeneration,
+        status: pass.status,
+        connectionId: pass.connectionId,
+        externalRef: pass.externalRef,
+      },
+      authority,
+    );
     return c.json({ accepted: true as const, requestedAt }, 202);
   },
 );
@@ -182,31 +233,11 @@ register(
     params: IdParamSchema,
     response: RotateLinkResponseSchema,
   },
-  async (c) =>
-    c.json(await rotateLink(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
-);
-
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'post',
-    path: '/{id}/resend-email',
-    summary: 'Email the pass to the holder',
-    params: IdParamSchema,
-    body: ResendEmailSchema,
-    status: 202,
-    response: OkSchema,
-  },
   async (c) => {
-    await resendEmail(
-      svc(c),
-      actorFor(c),
-      c.req.valid('param').id,
-      c.req.valid('json'),
-      passScopeOf(c),
-    );
-    return c.json({ ok: true as const }, 202);
+    const ctx = svc(c);
+    const id = c.req.valid('param').id;
+    const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+    return c.json(await rotateLink(ctx, actorFor(c), id, scope, authority));
   },
 );
 
@@ -222,7 +253,11 @@ register(
   },
   async (c) => {
     const p = c.req.valid('param');
-    return c.json(await getVersionDetail(svc(c), p.id, p.version, passScopeOf(c)));
+    const ctx = svc(c);
+    const auth = authOf(c);
+    const { scope, pass } = await tenantPassForRead(ctx, auth, p.id, passScopeOf(c));
+    const authority = await tenantAuthorityOf(ctx, auth, pass.orgId, 'passes:read');
+    return c.json(await getVersionDetail(ctx, p.id, p.version, scope, authority));
   },
 );
 
@@ -241,13 +276,17 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    return c.json(
-      await diffVersions(svc(c), c.req.valid('param').id, q.from, q.to, passScopeOf(c)),
-    );
+    const ctx = svc(c);
+    const id = c.req.valid('param').id;
+    const auth = authOf(c);
+    const { scope, pass } = await tenantPassForRead(ctx, auth, id, passScopeOf(c));
+    const authority = await tenantAuthorityOf(ctx, auth, pass.orgId, 'passes:read');
+    return c.json(await diffVersions(ctx, id, q.from, q.to, scope, authority));
   },
 );
 
 registerWriteRoutes(passesRoutes);
+registerActionRoutes(passesRoutes);
 registerAssetRoutes(passesRoutes);
 registerMemberPhotoRoutes(passesRoutes);
 registerCheckInRoutes(passesRoutes);

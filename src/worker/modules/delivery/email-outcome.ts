@@ -2,7 +2,9 @@ import { writeEvent } from '../../platform/analytics.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { retryOrGiveUp } from './push.ts';
-import { finishOutbox, type OutboxRow } from './repo.ts';
+import { EMAIL_OUTCOME_UNKNOWN } from './repo-binding.ts';
+import type { OutboxRow } from './repo-outbox-map.ts';
+import { finishOutbox } from './repo-outbox-processing.ts';
 
 /** A failure that retrying cannot fix. */
 export class PermanentEmailError extends Error {}
@@ -70,4 +72,23 @@ export async function failEmail(
   }
   ctx.log.warn('email.send_failed', { outboxId: row.id, attempts: row.attempts, error });
   await retryOrGiveUp(ctx, row, lease, 'EMAIL_FAILED', 'failed');
+}
+
+/** The provider may have accepted the message; never record failure or retry it automatically. */
+export async function uncertainEmail(
+  ctx: ServiceContext,
+  claimed: { row: OutboxRow; lease: string },
+  target: EmailTarget,
+): Promise<void> {
+  const { row, lease } = claimed;
+  await finishOutbox(ctx.env.DB, row.id, lease, 'partial', ctx.clock.now(), EMAIL_OUTCOME_UNKNOWN);
+  writeEvent(ctx.env, {
+    event: 'email.result',
+    orgId: target.orgId,
+    templateId: target.templateId,
+    identityId: target.identityId,
+    outcome: 'unknown',
+    mode: target.mode,
+  });
+  ctx.log.warn('email.outcome_unknown', { outboxId: row.id, code: EMAIL_OUTCOME_UNKNOWN });
 }

@@ -1,12 +1,12 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScannerSettings } from '../../../shared/contracts/scan.ts';
 import type {
   ScanDeviceOverrides,
   ScanSurface,
 } from '../../../shared/contracts/scanning-sessions.ts';
+import type { Grant } from '../../platform/authority.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { insertScanningDeviceStmt } from './repo-scanning-devices.ts';
-import { insertScanningSessionStmt } from './repo-scanning-sessions.ts';
+import { addScanningDeviceInsert } from './repo-scanning-devices.ts';
+import { addScanningSessionInsert } from './repo-scanning-sessions.ts';
 
 export interface DeviceEnrollment {
   sessionId: string;
@@ -14,13 +14,14 @@ export interface DeviceEnrollment {
   overrides: ScanDeviceOverrides;
   deviceKey?: string;
 }
-export function enrollmentStmts(
+
+/** A standalone scanner gets its own session; every scanner gets its device row. */
+export function addEnrollment(
   ctx: ServiceContext,
+  g: Grant,
   id: string,
   userId: string,
-  mode: Mode,
   input: {
-    orgId: string;
     name: string;
     deviceRole: 'scan' | 'monitor' | 'customer';
     timeZone: string;
@@ -29,7 +30,7 @@ export function enrollmentStmts(
   },
   settings: ScannerSettings,
   enrollment?: DeviceEnrollment,
-) {
+): void {
   const now = ctx.clock.now();
   const surface =
     enrollment?.surface ??
@@ -38,37 +39,28 @@ export function enrollmentStmts(
       : input.deviceRole === 'monitor'
         ? 'desk'
         : 'phone');
-  return [
-    ...(enrollment
-      ? []
-      : [
-          insertScanningSessionStmt(
-            ctx.env.DB,
-            {
-              id,
-              org_id: input.orgId,
-              mode,
-              name: input.name,
-              status: 'active',
-              accepts: input.accepts ? JSON.stringify(input.accepts) : null,
-              settings: JSON.stringify(settings),
-              time_zone: input.timeZone,
-              created_at: now,
-              updated_at: now,
-            },
-            userId,
-          ),
-        ]),
-    insertScanningDeviceStmt(ctx.env.DB, {
-      id,
-      sessionId: enrollment?.sessionId ?? id,
-      orgId: input.orgId,
-      mode,
-      surface,
-      effectiveSurface: surface === 'auto' ? 'phone' : surface,
-      overrides: enrollment?.overrides ?? {},
-      adminUserId: input.adminUserId,
-      deviceKey: enrollment?.deviceKey ?? (input.adminUserId ? id : undefined),
-    }),
-  ];
+  if (!enrollment)
+    addScanningSessionInsert(
+      g,
+      {
+        id,
+        name: input.name,
+        status: 'active',
+        accepts: input.accepts ? JSON.stringify(input.accepts) : null,
+        settings: JSON.stringify(settings),
+        time_zone: input.timeZone,
+        created_at: now,
+        updated_at: now,
+      },
+      userId,
+    );
+  addScanningDeviceInsert(g, {
+    id,
+    sessionId: enrollment?.sessionId ?? id,
+    surface,
+    effectiveSurface: surface === 'auto' ? 'phone' : surface,
+    overrides: enrollment?.overrides ?? {},
+    adminUserId: input.adminUserId,
+    deviceKey: enrollment?.deviceKey ?? (input.adminUserId ? id : undefined),
+  });
 }

@@ -3,29 +3,57 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import type {
   CreateScanningSessionSchema,
-  ScanningSessionQuerySchema,
   UpdateScanningSessionSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { batch, classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { rowIs } from '../../platform/authority-checks.ts';
+import { classifyD1Error } from '../../platform/db.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { tenantScanRole } from './actor.ts';
+import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { DEFAULT_SETTINGS, parseSettings } from './dto-console.ts';
 import { kickScreen } from './live.ts';
+import {
+  adminGrant,
+  audited,
+  eventsOpen,
+  sessionEpoch,
+  templatesUsable,
+} from './repo-admin-grant.ts';
+import { addSessionPropagation, sessionDevicesAre } from './repo-scanner-configuration-sync.ts';
+import { getConsoleScanner } from './repo-scanners.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import {
-  claimConfigRevisionStmt,
-  insertScanningSessionStmt,
-  listScanningSessionRows,
+  addScanningSessionInsert,
+  addScanningSessionUpdate,
   type ScanningSessionRow,
   scanningSessionRow,
-  updateScanningSessionStmt,
 } from './repo-scanning-sessions.ts';
-import { scanningSessionActivity } from './repo-session-activity.ts';
-import { propagateSessionStmts } from './repo-session-propagation.ts';
-import { checkAccepts } from './scanners.ts';
-import { deviceDto, sessionDto } from './scanning-session-dto.ts';
+import { readScannerScope } from './repo-scope.ts';
+import { checkAccepts } from './scanner-validation.ts';
+import {
+  assertSessionReadAuthority,
+  assertSessionWriteCountAuthority,
+} from './scanning-session-authority.ts';
+import {
+  conflictsWithAllScope,
+  deviceDto,
+  effectiveSessionSettings,
+  resolveSessionScope,
+  type SessionCountAuthority,
+  sessionDto,
+} from './scanning-session-dto.ts';
+import { scanningSessionActivity } from './session-activity.ts';
+
+export { startAdminSetup } from './scanning-session-admin-setup.ts';
+
+const SESSION_CODES = {
+  config: 'SCANNING_SESSION_CHANGED',
+  lineage: 'SCANNING_SESSION_CHANGED',
+  stale: 'SCANNING_SESSION_CHANGED',
+} as const;
 
 export async function loadScanningSession(
   ctx: ServiceContext,
@@ -38,39 +66,74 @@ export async function loadScanningSession(
     throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   return row;
 }
-export async function listScanningSessions(
+export async function scanningSessionDetail(
   ctx: ServiceContext,
+  id: string,
   mode: Mode,
-  query: z.infer<typeof ScanningSessionQuerySchema>,
+  authority: TenantPassWrite,
+  countAuthority: SessionCountAuthority,
 ) {
-  const rows = await listScanningSessionRows(ctx.env.DB, mode, query);
-  const page = rows.slice(0, query.limit);
-  return {
-    items: await Promise.all(page.map((row) => sessionDto(ctx, row))),
-    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
-  };
+  assertSessionReadAuthority(mode, authority, countAuthority);
+  return scanningSessionDetailForAuthority(ctx, id, mode, countAuthority);
 }
-export async function scanningSessionDetail(ctx: ServiceContext, id: string, mode?: Mode) {
-  const row = await loadScanningSession(ctx, id, mode);
-  const [session, devices] = await Promise.all([
-    sessionDto(ctx, row),
+
+async function scanningSessionDetailForAuthority(
+  context: ServiceContext,
+  id: string,
+  mode: Mode,
+  countAuthority: SessionCountAuthority,
+) {
+  const ctx = credentialKeysetContext(context);
+  const row = await loadScanningSession(ctx, id, mode, countAuthority.orgId);
+  const [session, devices, scope] = await Promise.all([
+    sessionDto(ctx, row, countAuthority),
     scanningDeviceRows(ctx.env.DB, row.org_id, id),
+    resolveSessionScope(ctx, row),
   ]);
-  return {
-    ...session,
-    devices: devices.map((d) => deviceDto(d, ctx.clock.now())),
-    activity: await scanningSessionActivity(ctx.env.DB, row.org_id, id, row.mode),
-  };
+  const deviceViews = await Promise.all(
+    devices.map(async (d) => {
+      const settings = effectiveSessionSettings(row, d);
+      const scanner = await getConsoleScanner(ctx.env.DB, d.scanner_id);
+      const invalidScannerScope =
+        !scanner ||
+        scanner.mode !== row.mode ||
+        !(await readScannerScope(ctx.env.DB, scanner, null)).valid;
+      const conflict =
+        !!scanner && !!settings && (await conflictsWithAllScope(ctx, scanner, scope, settings));
+      return deviceDto(
+        d,
+        ctx.clock.now(),
+        settings
+          ? {
+              ...settings,
+              acceptAllTemplates:
+                !invalidScannerScope && !conflict && session.settings.acceptAllTemplates === true,
+            }
+          : { ...parseSettings(d.settings), acceptAllTemplates: false, lookup: false },
+      );
+    }),
+  );
+  const role = countAuthority.tenant ? tenantScanRole(countAuthority.tenant) : null;
+  if (!role) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
+  const activity = await scanningSessionActivity(ctx, row, countAuthority, role);
+  if (activity === null)
+    throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
+  return { ...session, devices: deviceViews, activity };
 }
 export async function createScanningSession(
   ctx: ServiceContext,
   userId: string,
   mode: Mode,
   input: z.infer<typeof CreateScanningSessionSchema>,
+  authority: TenantPassWrite,
+  countAuthority: SessionCountAuthority,
 ) {
+  assertSessionWriteCountAuthority(userId, authority, countAuthority);
+  if (countAuthority.orgId !== input.orgId || countAuthority.mode !== mode)
+    throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  if (input.accepts) await checkAccepts(ctx, input.orgId, mode, input.accepts);
+  const accepts = input.accepts ? await checkAccepts(ctx, input.orgId, mode, input.accepts) : null;
   const settings = ScannerSettingsSchema.parse({
     ...DEFAULT_SETTINGS,
     lookup: true,
@@ -81,24 +144,35 @@ export async function createScanningSession(
     await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
   const now = ctx.clock.now();
   const id = ctx.ids.id();
-  await batch(ctx.env.DB, [
-    insertScanningSessionStmt(
-      ctx.env.DB,
-      {
-        id,
-        org_id: input.orgId,
-        mode,
-        name: input.name,
-        status: 'active',
-        accepts: input.accepts ? JSON.stringify(input.accepts) : null,
-        settings: JSON.stringify(settings),
-        time_zone: input.timeZone,
-        created_at: now,
-        updated_at: now,
-      },
-      userId,
-    ),
-    auditStmt(ctx.env.DB, ctx, {
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.session.create',
+    userId,
+    authority,
+    input.orgId,
+    [
+      ...eventsOpen([accepts?.eventId, settings.checkIn?.eventId]),
+      ...templatesUsable(accepts?.templateIds ?? []),
+    ],
+    SESSION_CODES,
+    id,
+  );
+  addScanningSessionInsert(
+    g,
+    {
+      id,
+      name: input.name,
+      status: 'active',
+      accepts: input.accepts ? JSON.stringify(input.accepts) : null,
+      settings: JSON.stringify(settings),
+      time_zone: input.timeZone,
+      created_at: now,
+      updated_at: now,
+    },
+    userId,
+  );
+  g.add(
+    audited(g, ctx, {
       orgId: input.orgId,
       actorType: 'user',
       actorId: userId,
@@ -107,63 +181,124 @@ export async function createScanningSession(
       targetId: id,
       detail: { mode },
     }),
-  ]);
-  return scanningSessionDetail(ctx, id, mode);
+  );
+  await g.commit();
+  return scanningSessionDetailForAuthority(ctx, id, mode, countAuthority);
 }
 export async function updateScanningSession(
   ctx: ServiceContext,
   userId: string,
   id: string,
   input: z.infer<typeof UpdateScanningSessionSchema>,
+  authority: TenantPassWrite,
+  countAuthority: SessionCountAuthority,
 ) {
-  const row = await loadScanningSession(ctx, id);
+  assertSessionWriteCountAuthority(userId, authority, countAuthority);
+  const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
+  if (countAuthority.orgId !== row.org_id || countAuthority.mode !== row.mode)
+    throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   if (input.revision !== undefined && input.revision !== row.updated_at)
     throw new ConflictError(
       'This session changed. Reload its settings and try again.',
       'SCANNING_SESSION_CHANGED',
     );
-  const accepts =
-    input.accepts === undefined ? (row.accepts ? JSON.parse(row.accepts) : null) : input.accepts;
-  const accepted = accepts ? await checkAccepts(ctx, row.org_id, row.mode, accepts) : null;
-  const settings = ScannerSettingsSchema.parse({
-    ...parseSettings(row.settings),
-    ...input.settings,
-    acceptAllTemplates:
-      input.accepts === undefined
-        ? (parseSettings(row.settings).acceptAllTemplates ?? false)
-        : accepts === null,
-  });
-  if (settings.checkIn?.eventId)
-    await checkAccepts(ctx, row.org_id, row.mode, { eventId: settings.checkIn.eventId });
+  const accepted =
+    input.accepts === undefined
+      ? undefined
+      : input.accepts === null
+        ? null
+        : await checkAccepts(ctx, row.org_id, row.mode, input.accepts);
+  const settingsChanged = input.settings !== undefined || input.accepts !== undefined;
+  const previousSettings = settingsChanged ? effectiveSessionSettings(row) : null;
+  if (settingsChanged && !previousSettings)
+    throw new ValidationError(
+      'Correct this scanning session’s settings in Scanning.',
+      [],
+      'SCANNING_SESSION_SETTINGS_INVALID',
+    );
+  const settings = settingsChanged
+    ? ScannerSettingsSchema.parse({
+        ...previousSettings,
+        ...input.settings,
+        acceptAllTemplates:
+          input.accepts === undefined
+            ? (previousSettings?.acceptAllTemplates ?? false)
+            : input.accepts === null,
+      })
+    : null;
+  if (input.settings?.checkIn?.eventId)
+    await checkAccepts(ctx, row.org_id, row.mode, { eventId: input.settings.checkIn.eventId });
   const next: ScanningSessionRow = {
     ...row,
     name: input.name ?? row.name,
     status: input.status ?? row.status,
     time_zone: input.timeZone ?? row.time_zone,
-    accepts: accepts ? JSON.stringify(accepts) : null,
-    settings: JSON.stringify(settings),
-    updated_at: Math.max(ctx.clock.now(), row.updated_at + 1),
+    accepts:
+      input.accepts === undefined
+        ? row.accepts
+        : input.accepts === null
+          ? null
+          : JSON.stringify(input.accepts),
+    settings: settings ? JSON.stringify(settings) : row.settings,
   };
+  const now = ctx.clock.now();
+  const devices = await scanningDeviceRows(ctx.env.DB, row.org_id, id);
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.session.update',
+    userId,
+    authority,
+    row.org_id,
+    [
+      sessionEpoch(id, row.config_epoch),
+      ...(input.revision === undefined
+        ? []
+        : [rowIs('scanning_sessions', id, { updated_at: input.revision }, 'stale')]),
+      sessionDevicesAre(id, devices),
+      ...eventsOpen([accepted?.eventId, input.settings?.checkIn?.eventId]),
+      ...templatesUsable(accepted?.templateIds ?? []),
+    ],
+    SESSION_CODES,
+    id,
+  );
+  addScanningSessionUpdate(
+    g,
+    id,
+    {
+      ...(input.name === undefined ? {} : { name: input.name }),
+      ...(input.status === undefined ? {} : { status: input.status }),
+      ...(input.timeZone === undefined ? {} : { time_zone: input.timeZone }),
+      ...(accepted === undefined ? {} : { accepts: next.accepts }),
+      ...(settings ? { settings: next.settings } : {}),
+    },
+    now,
+  );
+  addSessionPropagation(
+    g,
+    next,
+    devices,
+    {
+      settings: settingsChanged,
+      timeZone: input.timeZone !== undefined,
+      ...(accepted === undefined
+        ? {}
+        : { accepts: accepted ?? { eventId: null, templateIds: [] } }),
+    },
+    now,
+  );
+  g.add(
+    audited(g, ctx, {
+      orgId: row.org_id,
+      actorType: 'user',
+      actorId: userId,
+      action: 'scanning.session_update',
+      targetType: 'scanning_session',
+      targetId: id,
+      detail: { status: next.status },
+    }),
+  );
   try {
-    await batch(ctx.env.DB, [
-      claimConfigRevisionStmt(ctx.env.DB, 'session', id, row.updated_at),
-      updateScanningSessionStmt(ctx.env.DB, next),
-      ...propagateSessionStmts(
-        ctx.env.DB,
-        next,
-        accepted?.templateIds ?? [],
-        accepted?.eventId ?? null,
-      ),
-      auditStmt(ctx.env.DB, ctx, {
-        orgId: row.org_id,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanning.session_update',
-        targetType: 'scanning_session',
-        targetId: id,
-        detail: { status: next.status },
-      }),
-    ]);
+    await g.commit();
   } catch (error) {
     if (classifyD1Error(error)?.kind === 'unique')
       throw new ConflictError(
@@ -172,7 +307,6 @@ export async function updateScanningSession(
       );
     throw error;
   }
-  const devices = await scanningDeviceRows(ctx.env.DB, row.org_id, id);
   await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
-  return scanningSessionDetail(ctx, id);
+  return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

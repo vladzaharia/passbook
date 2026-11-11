@@ -1,23 +1,24 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BroadcastSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
-import { getPass } from '../passes/repo.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { applyChunk } from './apply.ts';
 import { insertItems } from './repo.ts';
 import { failStuckBroadcasts, launchBroadcast } from './start.ts';
-import { type BroadcastKit, broadcastKit } from './test-kit.ts';
+import { type BroadcastAuth, type BroadcastKit, broadcastAuth, broadcastKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let auth: BroadcastAuth;
 let kit: BroadcastKit;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await broadcastKit();
-  app = createApp({ stores: fake.stores });
+  auth = await broadcastAuth(kit, ORIGIN);
+  app = createApp({ stores: auth.stores });
 });
 
 const api = (path: string, init: RequestInit & { headers?: Record<string, string> } = {}) =>
@@ -25,7 +26,7 @@ const api = (path: string, init: RequestInit & { headers?: Record<string, string
 const post = (path: string, body: unknown = {}) =>
   api(path, {
     method: 'POST',
-    headers: { ...fake.admin(), 'content-type': 'application/json' },
+    headers: { ...auth.admin(), 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 const dto = async (res: Response) => BroadcastSchema.parse(await res.json());
@@ -55,7 +56,7 @@ async function sendNow(body: Record<string, unknown>) {
   const instance = kit.broadcast.created.at(before);
   await runBroadcast(kit.env, instance?.id ?? '', { broadcastId: made.id }, stepRun);
   await kit.settle();
-  return dto(await api(`/broadcasts/${made.id}`, { headers: fake.admin() }));
+  return dto(await api(`/broadcasts/${made.id}`, { headers: auth.admin() }));
 }
 const versionsOf = async (passId: string) =>
   (
@@ -132,7 +133,7 @@ describe('target', () => {
     let cursor: string | null = null;
     let chunks = 0;
     do {
-      ({ nextCursor: cursor } = await applyChunk(kit.ctx, made.id, cursor, 2));
+      ({ nextCursor: cursor } = await applyChunk(jobCtxOf(kit), made.id, cursor, 2));
       chunks++;
     } while (cursor);
     expect(chunks).toBe(3);
@@ -148,7 +149,7 @@ describe('target', () => {
       made.id,
       passes[0]?.id,
     ]);
-    await applyChunk(kit.ctx, made.id, null, 100);
+    await applyChunk(jobCtxOf(kit), made.id, null, 100);
     const again = await first<{ outcome: string }>(
       kit.env.DB,
       'SELECT outcome FROM broadcast_items WHERE broadcast_id = ? AND pass_id = ?',
@@ -173,14 +174,14 @@ describe('stuck broadcasts', () => {
     expect(made.state).toBe('sending');
     kit.clock.advance(10 * 60_000);
     instanceStatus('running');
-    await failStuckBroadcasts(kit.ctx);
-    expect((await dto(await api(`/broadcasts/${made.id}`, { headers: fake.admin() }))).state).toBe(
+    await failStuckBroadcasts(jobCtxOf(kit));
+    expect((await dto(await api(`/broadcasts/${made.id}`, { headers: auth.admin() }))).state).toBe(
       'sending',
     );
     kit.clock.advance(6 * 60_000);
     instanceStatus('complete');
-    await failStuckBroadcasts(kit.ctx);
-    const failed = await dto(await api(`/broadcasts/${made.id}`, { headers: fake.admin() }));
+    await failStuckBroadcasts(jobCtxOf(kit));
+    const failed = await dto(await api(`/broadcasts/${made.id}`, { headers: auth.admin() }));
     expect(failed).toMatchObject({ state: 'failed', errorCode: 'BROADCAST_FAILED' });
   });
 
@@ -193,10 +194,10 @@ describe('stuck broadcasts', () => {
       throw new Error('Instance already exists');
     };
     instanceStatus('errored');
-    const started = await launchBroadcast(kit.ctx, { id: draft.id, org_id: kit.org.id });
+    const started = await launchBroadcast(jobCtxOf(kit), { id: draft.id, org_id: kit.org.id });
     kit.broadcast.create = original;
     expect(started).toBe(false);
-    expect((await dto(await api(`/broadcasts/${draft.id}`, { headers: fake.admin() }))).state).toBe(
+    expect((await dto(await api(`/broadcasts/${draft.id}`, { headers: auth.admin() }))).state).toBe(
       'failed',
     );
   });
@@ -215,7 +216,7 @@ describe('stuck broadcasts', () => {
       runBroadcast(kit.env, `broadcast-${made.id}`, { broadcastId: made.id }, flaky),
     ).rejects.toThrow('d1 down');
     expect(calls).toBe(2);
-    expect((await dto(await api(`/broadcasts/${made.id}`, { headers: fake.admin() }))).state).toBe(
+    expect((await dto(await api(`/broadcasts/${made.id}`, { headers: auth.admin() }))).state).toBe(
       'failed',
     );
   });
@@ -228,7 +229,7 @@ describe('follow-up link', () => {
     const sent = await sendNow(messageBody('Back soon', { clearAfter: 3_600_000 }));
     expect(sent.followUp?.at).toBeGreaterThan(kit.clock.now());
     const child = await dto(
-      await api(`/broadcasts/${sent.followUp?.id}`, { headers: fake.admin() }),
+      await api(`/broadcasts/${sent.followUp?.id}`, { headers: auth.admin() }),
     );
     expect(child.parentId).toBe(sent.id);
     expect(child.followUp).toBeNull();

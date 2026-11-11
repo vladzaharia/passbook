@@ -10,6 +10,7 @@ import { svc } from '../passes/http.ts';
 import { recordPassFetch } from './log-events.ts';
 import { personalize } from './personalize.ts';
 import {
+  assertAppleCredential,
   authorizePass,
   recordDeviceLogs,
   registerDevice,
@@ -116,14 +117,21 @@ register(
   },
   async (c) => {
     const p = c.req.valid('param');
+    const ctx = svc(c);
     const { pass } = await authorizePass(
-      svc(c),
+      ctx,
       p.passTypeId,
       p.serial,
       c.req.header('authorization'),
     );
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
-    const ctx = svc(c);
+    try {
+      await assertAppleCredential(ctx, pass);
+    } catch (error) {
+      // The R2 body is already open; a refused credential must not leave it unread.
+      await response.body?.cancel().catch(() => undefined);
+      throw error;
+    }
     ctx.waitUntil(recordPassFetch(ctx, pass, response.status));
     return response;
   },

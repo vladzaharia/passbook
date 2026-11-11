@@ -23,7 +23,7 @@ import {
  */
 async function sendIdentityProof(
   ctx: ServiceContext,
-  ownerId: string,
+  ownerId: string | null,
   email: string,
   claims: OidcClaims,
   sign: SignInContext,
@@ -76,11 +76,13 @@ export async function signInOidc(
   if (!user) {
     const owner =
       (await repo.findUserByEmail(db, email)) ?? (await repo.findUserByPrimaryEmail(db, email));
-    if (owner && !trust) {
-      if (owner.status !== 'active') {
+    // A new subject never establishes an identity from an address its provider did not verify;
+    // the mail round trip proves it instead.
+    if ((owner && !trust) || (!identity && claims.emailVerified !== true)) {
+      if (owner && owner.status !== 'active') {
         throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
       }
-      await sendIdentityProof(ctx, owner.id, email, claims, sign);
+      await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
     }
     user = owner ?? (await createUser(ctx, email, claims.name ?? null));
     linkVia = owner ? 'trusted_email' : 'new_user';
@@ -112,6 +114,8 @@ export async function signInOidc(
   }
 
   const result = await startSession(ctx, user.id, roles, 'oidc', claims.name ?? null, sign);
-  if (verified) await attachWaitingPassesForEmail(ctx, user.id, email);
+  if (claims.emailVerified === true && verified) {
+    await attachWaitingPassesForEmail(ctx, user.id, email);
+  }
   return result;
 }

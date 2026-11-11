@@ -13,7 +13,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { emailsOf } from '../auth/repo.ts';
 import { BREAKGLASS_PROVIDER, OIDC_PROVIDER } from '../auth/service.ts';
-import { revokeAllForUser } from '../auth/sessions.ts';
 import * as repo from './repo.ts';
 
 export type UserDto = z.infer<typeof UserSchema>;
@@ -144,14 +143,16 @@ export async function setUserStatus(
   actorId: string,
   id: string,
   status: 'active' | 'disabled',
+  adminSessionId?: string,
 ): Promise<UserDto> {
   const user = await requireUser(ctx, id);
   if (status === 'disabled' && id === actorId) {
     throw new ConflictError('You cannot disable your own account.', 'SELF_DISABLE');
   }
-  if (user.status !== status) {
-    await repo.setStatus(ctx.env.DB, id, status);
-    if (status === 'disabled') await revokeAllForUser(ctx, id);
+  const changed = adminSessionId
+    ? await repo.setStatusAsAdmin(ctx, id, status, { userId: actorId, sessionId: adminSessionId })
+    : await repo.setStatus(ctx.env.DB, id, status, ctx.clock.now());
+  if (changed) {
     await recordAudit(ctx, {
       actorType: 'user',
       actorId,

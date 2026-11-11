@@ -5,18 +5,18 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { BadRequestError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
-import { isOrgActive } from '../orgs/active.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { publishPass } from '../passes/publish.ts';
-import { getPassBySerial } from '../passes/repo.ts';
+import { getPassBySerial } from '../passes/repo-read-pass.ts';
 import { withoutPersonalizationFiles } from './personalize-files.ts';
+import { devicePrincipal } from './repo-credential.ts';
 import { identityByPassType } from './repo.ts';
 import {
-  getPersonalization,
+  getCredentialPersonalization,
   insertPersonalization,
   markPersonalizationPublished,
+  personalizationCredentialCurrent,
 } from './repo-personalize.ts';
 
 const text = (max: number) => z.string().max(max).optional();
@@ -85,12 +85,13 @@ export async function personalize(
   if (
     !identity ||
     !pass ||
+    pass.testDataQuarantined ||
     pass.deletedAt !== null ||
     pass.status === 'voided' ||
-    !identity.nfcEnabled ||
-    !(await isOrgActive(ctx, pass.orgId))
+    !identity.nfcEnabled
   )
     throw unavailable();
+  if (!(await personalizationCredentialCurrent(db, pass))) throw unavailable();
   const deps = depsOf(ctx.env);
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const required = await requiredFields(deps.registry, template);
@@ -104,7 +105,8 @@ export async function personalize(
     );
 
   const tokenHash = await sha256Hex(token);
-  let row = await getPersonalization(db, pass.id);
+  let row = await getCredentialPersonalization(db, pass);
+  if (!(await personalizationCredentialCurrent(db, pass))) throw unavailable();
   if (row && row.tokenSha256 !== tokenHash)
     throw new ConflictError('This pass is already personalized.', 'ALREADY_PERSONALIZED');
   if (!row) {
@@ -113,43 +115,41 @@ export async function personalize(
       JSON.stringify(info),
       credentialAad(pass.id, pass.orgId, 'personalization'),
     );
-    const stored = await insertPersonalization(db, {
-      passId: pass.id,
+    await insertPersonalization(ctx, {
+      pass,
       tokenSha256: tokenHash,
       envelope,
+      fields: required,
       now: ctx.clock.now(),
     });
-    row = await getPersonalization(db, pass.id);
+    row = await getCredentialPersonalization(db, pass);
+    if (!(await personalizationCredentialCurrent(db, pass))) throw unavailable();
     if (!row || row.tokenSha256 !== tokenHash)
       throw new ConflictError('This pass is already personalized.', 'ALREADY_PERSONALIZED');
-    if (stored)
-      await recordAudit(ctx, {
-        orgId: pass.orgId,
-        actorType: 'device',
-        action: 'pass.personalized',
-        targetType: 'pass',
-        targetId: pass.id,
-        detail: { fields: required },
-      });
   }
 
   // Retried requests republish until one succeeds.
   if (row.publishedAt === null) {
+    if (!(await personalizationCredentialCurrent(db, pass))) throw unavailable();
     await publishPass(withoutPersonalizationFiles(ctx), {
       passId: pass.id,
       cause: 'user_refresh',
       actor: { type: 'system', id: null },
+      holder: devicePrincipal(pass),
       force: true,
+      expectedPass: { version: pass.version, status: pass.status, objectKey: pass.objectKey },
     });
-    await markPersonalizationPublished(db, pass.id, ctx.clock.now());
+    if (!(await markPersonalizationPublished(ctx, pass, tokenHash))) throw unavailable();
   }
 
   const resolved = await deps.identities.byId(identity.id);
-  return signManifest(new TextEncoder().encode(token), resolved.material, {
+  const signed = await signManifest(new TextEncoder().encode(token), resolved.material, {
     now: new Date(ctx.clock.now()),
     expectedIdentity: {
       passTypeIdentifier: resolved.passTypeIdentifier,
       teamIdentifier: resolved.teamIdentifier,
     },
   });
+  if (!(await personalizationCredentialCurrent(db, pass))) throw unavailable();
+  return signed;
 }

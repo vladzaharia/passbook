@@ -1,82 +1,21 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
-import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
-import { sha256Hex } from '../../platform/ids.ts';
-import { revokeSession } from '../auth/repo-sessions.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
+import { run } from '../../platform/db.ts';
 import { scanHub } from './live.ts';
-import { type LiveAttachment, liveRecipient } from './live-auth.ts';
+import { openLiveAttachment, sealLiveAttachment } from './live-attachment.ts';
+import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
-import { getScanner } from './repo-device.ts';
-import {
-  createScanningDevice,
-  joinAdminScanningSession,
-  updateScanningDevice,
-} from './scanning-devices.ts';
-import { createScanningSession } from './scanning-sessions.ts';
-import { type ScanKit, setupScanKit } from './test-kit.ts';
+import { captureObservedScanningSession } from './scanning-workspace-observation.ts';
+import { type SessionLiveFixtures, sessionLiveFixtures } from './session-live-test-fixtures.ts';
 
-let kit: ScanKit;
+let fixtures: SessionLiveFixtures;
 beforeAll(async () => {
-  kit = await setupScanKit();
-  await makeUser(kit.fx, { id: 'admin-1' });
+  fixtures = await sessionLiveFixtures();
 });
-const parent = (name: string) =>
-  createScanningSession(
-    kit.ctx,
-    'admin-1',
-    'live',
-    CreateScanningSessionSchema.parse({ orgId: kit.org.id, name, timeZone: 'UTC' }),
-  );
-const child = (sessionId: string, name: string, surface: 'phone' | 'desk' | 'customer' = 'phone') =>
-  createScanningDevice(
-    kit.ctx,
-    'admin-1',
-    'live',
-    sessionId,
-    { name, surface, overrides: {} },
-    'https://wallet.test',
-  );
-async function pairedAttachment(
-  sessionId: string,
-  name: string,
-  role: 'desk' | 'customer',
-): Promise<LiveAttachment> {
-  const device = await child(sessionId, name, role);
-  const paired = await kit.post({ origin: 'https://wallet.test' }, '/pair', {
-    code: device.pairing?.code,
-  });
-  expect(paired.status).toBe(200);
-  const row = await getScanner(kit.env.DB, device.id);
-  if (!row?.tokenHash || !row.expiresAt) throw new Error('Missing paired screen fixture.');
-  return {
-    orgId: kit.org.id,
-    mode: 'live',
-    scannerId: device.id,
-    role: role === 'desk' ? 'monitor' : 'customer',
-    tokenHash: row.tokenHash,
-    revision: row.updatedAt,
-    expiresAt: row.expiresAt,
-  };
-}
-function row(scannerId: string): ScanLiveRow {
-  return {
-    id: kit.ctx.ids.ordered(),
-    at: kit.clock.now(),
-    scannerId,
-    scannerName: 'Entry scanner',
-    passId: null,
-    holder: 'Private name',
-    photoUrl: null,
-    kind: 'ok',
-    direction: 'in',
-    label: 'Checked in',
-    presented: true,
-  };
-}
 
 describe('session display authorization', () => {
   it('follows new devices in its own session and excludes another session', async () => {
+    const { kit, parent, child, pairedAttachment, row, withSourceProof } = fixtures;
     const a = await parent('Display session A');
     const b = await parent('Display session B');
     const monitor = await pairedAttachment(a.id, 'A desk', 'desk');
@@ -85,15 +24,28 @@ describe('session display authorization', () => {
     const sourceA = await child(a.id, 'A scanner');
     const sourceB = await child(b.id, 'B scanner');
     const hub = scanHub(kit.ctx, kit.org.id, 'live');
-    for (const source of [sourceA, sourceB])
-      await hub.publish({ orgId: kit.org.id, mode: 'live', row: row(source.id) });
+    for (const source of [sourceA, sourceB]) {
+      const paired = await kit.post({ origin: 'https://wallet.test' }, '/pair', {
+        code: source.pairing?.code,
+      });
+      expect(paired.status).toBe(200);
+      expect(
+        await hub.publish({
+          orgId: kit.org.id,
+          mode: 'live',
+          row: await withSourceProof(row(source.id)),
+        }),
+      ).toBe(true);
+    }
     expect((await hub.snapshot(monitor)).rows).toMatchObject([
-      { scannerId: sourceA.id, holder: 'Private name' },
+      { scannerId: sourceA.id, holder: null, passId: null },
     ]);
     expect((await hub.snapshot(monitor)).rows).toHaveLength(1);
     const recipient = await liveRecipient(kit.ctx, customer);
     if (!recipient) throw new Error('Missing customer recipient.');
-    expect(await liveRowFor(kit.ctx, recipient, row(sourceA.id))).toMatchObject({
+    expect(
+      await liveRowFor(kit.ctx, recipient, await withSourceProof(row(sourceA.id))),
+    ).toMatchObject({
       scannerId: sourceA.id,
       holder: null,
       passId: null,
@@ -101,41 +53,60 @@ describe('session display authorization', () => {
       scannerName: '',
       label: 'Checked in',
     });
-    expect(await liveRowFor(kit.ctx, recipient, row(sourceB.id))).toBeNull();
+    expect(await liveRowFor(kit.ctx, recipient, await withSourceProof(row(sourceB.id)))).toBeNull();
     expect((await hub.snapshot(customer)).rows).toEqual([]);
   });
 
-  it('allows an administrator device to use a customer display and revalidates its real platform session', async () => {
-    const session = await parent('Admin customer display session');
-    const joined = await joinAdminScanningSession(
-      kit.ctx,
-      'admin-1',
-      'live',
-      { sessionId: session.id, deviceKey: '33333333-3333-4333-8333-333333333333' },
-      'https://wallet.test',
-    );
-    const device = await updateScanningDevice(kit.ctx, 'admin-1', session.id, joined.setupId, {
-      surface: 'customer',
-    });
-    const auth = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
-    const attachment: LiveAttachment = {
-      orgId: kit.org.id,
-      mode: 'live',
-      scannerId: device.id,
-      role: 'customer',
-      tokenHash: '',
-      revision: device.updatedAt,
-      expiresAt: kit.clock.now() + 60000,
-      admin: { sessionId: await sha256Hex(auth.cookieValue), userId: 'admin-1' },
-    };
-    expect(await liveRecipient(kit.ctx, attachment)).not.toBeNull();
-    expect(
-      await liveRecipient(kit.ctx, {
-        ...attachment,
-        admin: { ...attachment.admin!, userId: 'other-admin' },
-      }),
-    ).toBeNull();
-    await revokeSession(kit.env.DB, attachment.admin!.sessionId, kit.clock.now());
-    expect(await liveRecipient(kit.ctx, attachment)).toBeNull();
+  it('restores the original paired workspace after encrypted transport and rejects crossed authority', async () => {
+    const { kit, parent, pairedAttachment } = fixtures;
+    const session = await parent('Hibernating display');
+    const attachment = await pairedAttachment(session.id, 'Hibernating desk', 'desk');
+    const otherSession = await parent('Other display');
+    const other = await pairedAttachment(otherSession.id, 'Other desk', 'desk');
+    const foreignOrg = await makeOrg(kit.fx);
+    if (!attachment.scannerCsrfProof || !other.scannerCsrfProof)
+      throw new Error('Missing paired scanner proofs.');
+    expect(attachment.actor.scanner?.csrfSecret).toBeNull();
+    expect(attachment.actor.scanningSession?.id).toBe(session.id);
+    expect(attachment.observation).not.toBeNull();
+    expect(other.scannerCsrfProof).not.toBe(attachment.scannerCsrfProof);
+    const sealed = await sealLiveAttachment(kit.env, attachment);
+    expect(sealed).not.toContain(attachment.tokenHash);
+    expect(sealed).not.toContain(attachment.scannerCsrfProof);
+    const resumed = await openLiveAttachment(kit.env, sealed);
+    if (!resumed) throw new Error('Missing resumed live attachment.');
+    expect(resumed.actor.scanner?.csrfSecret).toBeNull();
+    expect(resumed.actor.scannerCsrfProof).toBe(attachment.scannerCsrfProof);
+    const recipient = await liveRecipient(kit.ctx, resumed);
+    if (!recipient) throw new Error('Resumed paired display was rejected.');
+    expect(captureObservedScanningSession(recipient.actor)).toEqual(attachment.observation);
+    for (const crossed of [
+      { ...resumed, orgId: foreignOrg.id },
+      { ...resumed, mode: 'test' as const },
+      { ...resumed, scannerId: other.scannerId },
+      { ...resumed, session: other.session },
+      { ...resumed, scannerCsrfProof: other.scannerCsrfProof },
+    ]) {
+      expect(await liveRecipient(kit.ctx, crossed)).toBeNull();
+    }
   });
+});
+
+it('does not deliver to a screen whose pinned event became invalid', async () => {
+  const { kit, parent, pairedAttachment } = fixtures;
+  const session = await parent('Invalid pinned display');
+  const attachment = await pairedAttachment(session.id, 'Invalid customer', 'customer');
+  const templateId = await kit.scanTemplate('Invalid display template', {
+    actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+  });
+  const event = await kit.event({ templateIds: [templateId] });
+  await run(kit.env.DB, 'UPDATE scan_events SET archived_at=? WHERE id=?', [
+    kit.clock.now(),
+    event.id,
+  ]);
+  await run(kit.env.DB, 'UPDATE scanners SET event_id=? WHERE id=?', [
+    event.id,
+    attachment.scannerId,
+  ]);
+  expect(await liveRecipient(kit.ctx, attachment)).toBeNull();
 });

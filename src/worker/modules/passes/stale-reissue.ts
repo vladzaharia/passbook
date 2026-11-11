@@ -17,9 +17,8 @@ const PER_RUN = 20;
 const system = { type: 'system', id: null } as const;
 
 /**
- * Minute cron hook: the one path that rebuilds passes whose source changed. An org whose branding
- * went quiet, and a template whose active version changed (deploy, upload, activation, sync), each
- * get one bulk reissue of their live passes, however many changes came before.
+ * Minute cron hook: quiet branding changes and newly approved template releases each get a bulk
+ * reissue. Template releases are claimed separately for each effective organization and mode.
  */
 export async function reissueStalePasses(ctx: ServiceContext): Promise<void> {
   await reissueStaleBranding(ctx);
@@ -42,9 +41,9 @@ export async function reissueStaleBranding(ctx: ServiceContext): Promise<void> {
 }
 
 /**
- * Live passes on an older version of an active template move to the active one. Each active
- * version is queued once: passes that cannot take it stay where they are, are logged per pass
- * (`bulk_reissue.pass_failed`) and show as blocked on the template.
+ * Live passes on an older, non-equivalent version move to the approved release for their
+ * organization and mode. Each release is queued once; passes that cannot take it stay where
+ * they are and are logged per pass (`bulk_reissue.pass_failed`).
  */
 export async function reissueStaleTemplates(ctx: ServiceContext): Promise<void> {
   const db = ctx.env.DB;
@@ -52,21 +51,52 @@ export async function reissueStaleTemplates(ctx: ServiceContext): Promise<void> 
   for (const template of due) {
     if (!(await claimTemplateReissue(db, template))) continue;
     try {
-      const stale = await countStalePasses(db, template.id, template.version);
+      const stale = await countStalePasses(
+        db,
+        template.id,
+        template.version,
+        template.orgId,
+        template.mode,
+      );
       if (stale === 0) continue;
-      const instanceId = await startBulkReissue(ctx, system, {
+      const instanceId = await startBulkReissue(
+        ctx,
+        system,
+        {
+          templateId: template.id,
+          version: template.version,
+          orgId: template.orgId,
+          cause: 'template_upgrade',
+        },
+        {
+          mode: template.mode,
+          expectedRelease: { id: template.releaseId, generation: template.generation },
+        },
+      );
+      ctx.log.info('template.reissue_started', {
         templateId: template.id,
-        version: template.version,
-        ...(template.orgId ? { orgId: template.orgId } : {}),
-        cause: 'template_upgrade',
+        orgId: template.orgId,
+        mode: template.mode,
+        releaseId: template.releaseId,
+        stale,
+        instanceId,
       });
-      ctx.log.info('template.reissue_started', { templateId: template.id, stale, instanceId });
     } catch (error) {
-      // A template that cannot be resolved will not resolve next minute either: keep the mark.
+      // A superseded claim and transient failures may be retried; permanent template errors stay
+      // marked. Releasing is conditional, so it cannot undo a newer release's claim.
       const permanent = error instanceof AppError && error.status < 500;
-      if (!permanent) await releaseTemplateReissue(db, template);
+      if (
+        !permanent ||
+        (error instanceof AppError &&
+          (error.code === 'TEMPLATE_RELEASE_CONFLICT' ||
+            error.code === 'TEMPLATE_RELEASE_REQUIRED'))
+      )
+        await releaseTemplateReissue(db, template);
       ctx.log.error('template.reissue_failed', {
         templateId: template.id,
+        orgId: template.orgId,
+        mode: template.mode,
+        releaseId: template.releaseId,
         code: 'TEMPLATE_REISSUE',
         error,
       });

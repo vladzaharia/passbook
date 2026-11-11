@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createBehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
 import { type Analysis, analyzePackage } from './analyze.ts';
 import { basicPackage, makePng, passJson } from './fixtures.ts';
+import { buildKey, crc32, sha1Hex } from './hash.ts';
 import { ImageInvalid, type ImageTools } from './images.ts';
 
 const behaviors = createBehaviorRegistry([
@@ -39,6 +40,18 @@ const manifest = (patch: Record<string, unknown> = {}) =>
     display: { title: '{{name}}' },
     ...patch,
   });
+
+/** Adds an ancillary text chunk so equal-sized PNGs differ only in their bytes. */
+function withPngComment(image: Uint8Array, value: number): Uint8Array {
+  const chunk = new Uint8Array([0, 0, 0, 3, 116, 69, 88, 116, 107, 0, value, 0, 0, 0, 0]);
+  new DataView(chunk.buffer).setUint32(11, crc32(chunk, 4, 11));
+  const png = new Uint8Array(image.length + chunk.length);
+  const end = image.length - 12;
+  png.set(image.subarray(0, end));
+  png.set(chunk, end);
+  png.set(image.subarray(end), end + chunk.length);
+  return png;
+}
 
 describe('analyzePackage', () => {
   it('accepts a minimal package and generates a manifest', async () => {
@@ -137,7 +150,178 @@ describe('analyzePackage', () => {
     expect(analysis.extras.map((e) => e.name)).toEqual(['strip.png']);
     expect(analysis.files.has('strip.png')).toBe(false);
   });
+});
 
+it('retains unused preview-only images but leaves unlisted variants as extras', async () => {
+  const preview = makePng(375, 144);
+  const unlisted = makePng(750, 288);
+  const { analysis, ok } = await analyze(
+    basicPackage({
+      'wallet.template.json': manifest({ previewOnlyAssets: ['strip.png'] }),
+      'strip.png': preview,
+      'strip@2x.png': unlisted,
+    }),
+  );
+  expect(ok).toBe(true);
+  expect(analysis.files.get('strip.png')).toEqual(preview);
+  expect(analysis.assets.find((a) => a.name === 'strip.png')).toEqual({
+    name: 'strip.png',
+    slot: 'strip',
+    scale: 1,
+    size: preview.length,
+    sha1: await sha1Hex(preview),
+    crc32: crc32(preview),
+    width: 375,
+    height: 144,
+  });
+  expect(analysis.extras).toEqual([
+    { name: 'strip@2x.png', size: unlisted.length, sha1: await sha1Hex(unlisted) },
+  ]);
+  expect(analysis.files.has('strip@2x.png')).toBe(false);
+  expect(analysis.report.issues).not.toContainEqual(
+    expect.objectContaining({ code: 'SLOT_UNUSED', path: 'strip.png' }),
+  );
+  expect(analysis.report.issues).toContainEqual(
+    expect.objectContaining({ code: 'SLOT_UNUSED', path: 'strip@2x.png' }),
+  );
+});
+
+it('still rejects invalid unused preview-only images', async () => {
+  const { ok, codes } = await analyze(
+    basicPackage({
+      'wallet.template.json': manifest({ previewOnlyAssets: ['strip.png'] }),
+      'strip.png': 'not a PNG',
+    }),
+  );
+  expect(ok).toBe(false);
+  expect(codes).toContain('error:IMAGE_INVALID');
+});
+
+it('retains only named localized previews without changing shipped-image diagnostics', async () => {
+  const strip = makePng(375, 144);
+  const footer = makePng(268, 15);
+  const { analysis, ok, codes } = await analyze(
+    basicPackage({
+      'wallet.template.json': manifest({
+        previewOnlyAssets: ['fr.lproj/strip.png', 'de.lproj/footer.png'],
+      }),
+      'fr.lproj/strip.png': strip,
+      'de.lproj/footer.png': footer,
+      'de.lproj/strip.png': strip,
+    }),
+  );
+  expect(ok).toBe(true);
+  expect(analysis.files.get('fr.lproj/strip.png')).toEqual(strip);
+  expect(analysis.files.get('de.lproj/footer.png')).toEqual(footer);
+  expect(analysis.assets.find((a) => a.name === 'fr.lproj/strip.png')).toMatchObject({
+    slot: 'strip',
+    locale: 'fr',
+  });
+  expect(analysis.assets.find((a) => a.name === 'de.lproj/footer.png')).toMatchObject({
+    slot: 'footer',
+    locale: 'de',
+  });
+  expect(analysis.extras.map((e) => e.name)).toEqual(['de.lproj/strip.png']);
+  expect(codes).not.toContain('warning:LOCALIZED_IMAGES');
+});
+
+it('hashes unused preview bytes into the content version but not the build key', async () => {
+  const image = makePng(375, 144);
+  const first = withPngComment(image, 65);
+  const second = withPngComment(image, 66);
+  const previewManifest = manifest({ previewOnlyAssets: ['strip.png'] });
+  const a = await analyze(
+    basicPackage({ 'wallet.template.json': previewManifest, 'strip.png': first }),
+  );
+  const b = await analyze(
+    basicPackage({ 'wallet.template.json': previewManifest, 'strip.png': second }),
+  );
+  expect(a.ok).toBe(true);
+  expect(b.ok).toBe(true);
+  expect(first.length).toBe(second.length);
+  expect(a.analysis.assets.find((asset) => asset.name === 'strip.png')?.sha1).toBe(
+    await sha1Hex(first),
+  );
+  expect(b.analysis.assets.find((asset) => asset.name === 'strip.png')?.sha1).toBe(
+    await sha1Hex(second),
+  );
+  expect(await sha1Hex(first)).not.toBe(await sha1Hex(second));
+  expect(a.analysis.version).not.toBe(b.analysis.version);
+  expect(await buildKey(a.analysis)).toBe(await buildKey(b.analysis));
+
+  const baked = await analyzePackage(
+    basicPackage({ 'wallet.template.json': previewManifest, 'strip.png': first }),
+    { uploaded: false, fallbackName: 'Fallback', behaviors },
+  );
+  expect(baked.report.ok).toBe(true);
+  if (!('version' in baked)) throw new Error('Expected a valid baked package.');
+  expect(baked.files.get('strip.png')).toEqual(first);
+  expect(baked.assets.find((asset) => asset.name === 'strip.png')?.sha1).toBe(await sha1Hex(first));
+  expect(baked.extras).toEqual([]);
+  expect(baked.version).toBe(a.analysis.version);
+});
+
+it('hashes unused extras for baked versions but not uploaded versions', async () => {
+  const image = makePng(375, 144);
+  const first = withPngComment(image, 65);
+  const second = withPngComment(image, 66);
+  const filesA = basicPackage({ 'strip.png': first });
+  const filesB = basicPackage({ 'strip.png': second });
+  const options = { uploaded: false, fallbackName: 'Fallback', behaviors };
+  const a = await analyzePackage(filesA, options);
+  const b = await analyzePackage(filesB, options);
+  expect(a.report.ok).toBe(true);
+  expect(b.report.ok).toBe(true);
+  if (!('version' in a) || !('version' in b)) throw new Error('Expected valid baked packages.');
+  expect(a.assets.some((asset) => asset.name === 'strip.png')).toBe(false);
+  expect(a.extras).toEqual([{ name: 'strip.png', size: first.length, sha1: await sha1Hex(first) }]);
+  expect(b.extras).toEqual([
+    { name: 'strip.png', size: second.length, sha1: await sha1Hex(second) },
+  ]);
+  expect(a.version).not.toBe(b.version);
+
+  const renamed = await analyzePackage(basicPackage({ 'fr.lproj/strip.png': first }), options);
+  expect(renamed.report.ok).toBe(true);
+  if (!('version' in renamed)) throw new Error('Expected a valid baked package.');
+  expect(renamed.extras).toEqual([
+    { name: 'fr.lproj/strip.png', size: first.length, sha1: await sha1Hex(first) },
+  ]);
+  expect(renamed.version).not.toBe(a.version);
+
+  const uploadedA = await analyze(filesA);
+  const uploadedB = await analyze(filesB);
+  expect(uploadedA.ok).toBe(true);
+  expect(uploadedB.ok).toBe(true);
+  expect(uploadedA.analysis.version).toBe(uploadedB.analysis.version);
+});
+
+it('hashes generated baked extras even when their source image is unchanged', async () => {
+  const files = basicPackage({ 'venueMap@3x.png': makePng(30, 30) });
+  const derived = makePng(20, 20);
+  const first = withPngComment(derived, 65);
+  const second = withPngComment(derived, 66);
+  const options = { uploaded: false, fallbackName: 'Fallback', behaviors };
+  const a = await analyzePackage(files, {
+    ...options,
+    images: { resize: async () => first },
+  });
+  const b = await analyzePackage(files, {
+    ...options,
+    images: { resize: async () => second },
+  });
+  expect(a.report.ok).toBe(true);
+  expect(b.report.ok).toBe(true);
+  if (!('version' in a) || !('version' in b)) throw new Error('Expected valid baked packages.');
+  expect(a.extras.find((asset) => asset.name === 'venueMap@2x.png')?.sha1).toBe(
+    await sha1Hex(first),
+  );
+  expect(b.extras.find((asset) => asset.name === 'venueMap@2x.png')?.sha1).toBe(
+    await sha1Hex(second),
+  );
+  expect(a.version).not.toBe(b.version);
+});
+
+describe('analyzePackage images', () => {
   it('keeps poster slots only for poster styles', async () => {
     const poster = passJson({ posterGeneric: { primaryFields: [{ key: 'a', value: 'b' }] } });
     delete poster.generic;

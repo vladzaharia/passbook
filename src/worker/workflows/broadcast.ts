@@ -1,9 +1,9 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import { applyChunk } from '../modules/broadcasts/apply.ts';
-import { finishBroadcast, startedBroadcast } from '../modules/broadcasts/run.ts';
+import { finishBroadcast, sendStepAllowed, startedBroadcast } from '../modules/broadcasts/run.ts';
 import type { BroadcastParams } from '../modules/broadcasts/start.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { createServiceContext } from '../platform/service-context.ts';
+import { createJobContext } from '../platform/service-context.ts';
 
 const MAX_CHUNKS = 10_000;
 const CHUNK_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
@@ -18,7 +18,7 @@ export async function runBroadcast(
   step: StepLike,
   exec?: ExecutionContext,
 ): Promise<{ state: string }> {
-  const ctx = createServiceContext(env, {
+  const ctx = createJobContext(env, 'broadcast', {
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'broadcast', instanceId, broadcastId: params.broadcastId },
   });
@@ -30,6 +30,7 @@ export async function runBroadcast(
     let cursor: string | null = null;
     for (let n = 0; n < MAX_CHUNKS; n++) {
       const from: string | null = cursor;
+      if (!(await step.do(`gate-${n}`, () => sendStepAllowed(ctx, params.broadcastId)))) break;
       const result: { nextCursor: string | null } = await step.do(`chunk-${n}`, CHUNK_RETRY, () =>
         applyChunk(ctx, params.broadcastId, from),
       );

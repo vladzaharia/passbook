@@ -1,14 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fixtures, makeEnv, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run as sqlRun } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
-import { cleanupStage } from './import-pipeline.ts';
+import { cleanupStage, extractStage, persistStage, startImport } from './import-pipeline.ts';
 import { basicPackage, makePng, passJson, zipOf } from './package/fixtures.ts';
-import { getImport, getVersion } from './repo.ts';
+import { createTemplateRegistry } from './registry.ts';
+import { getImport, getVersion, insertImport } from './repo.ts';
 import { syncBakedTemplates } from './sync.ts';
-import { bakedFrom, fakeAssets, importZip, sourceOf } from './testing.ts';
+import { bakedFrom, fakeAssets, importZip, sourceOf, templateAuthor } from './testing.ts';
 
 let env: AppEnv;
 let clock: ManualClock;
@@ -75,7 +76,7 @@ describe('TemplateImport pipeline', () => {
       slug: 'gym-card',
       name: 'Gym Card',
       origin: 'uploaded',
-      active_version: version,
+      active_version: null,
       status: 'active',
       created_by: userId,
     });
@@ -83,6 +84,11 @@ describe('TemplateImport pipeline', () => {
 
     const v = await getVersion(env.DB, templateId, version);
     expect(v?.report.ok).toBe(true);
+    const registry = createTemplateRegistry(env);
+    expect(await registry.resolve(templateId, version)).toMatchObject({ id: templateId, version });
+    await expect(registry.resolve(templateId)).rejects.toMatchObject({
+      code: 'TEMPLATE_NOT_FOUND',
+    });
     expect(v?.assets.map((a) => a.name)).toEqual(['icon.png', 'icon@2x.png']);
     expect(v?.assets[0]?.source).toEqual({
       kind: 'r2',
@@ -107,7 +113,7 @@ describe('TemplateImport pipeline', () => {
     expect((await env.BUCKET.list({ prefix: `uploads/${r.p.uploadId}/` })).objects).toEqual([]);
   });
 
-  it('re-uploading the same slug adds a version and activates it; identical content is idempotent', async () => {
+  it('re-uploading the same slug adds inactive versions; identical content is idempotent', async () => {
     const first1 = await run(basicPackage(), 'Reupload');
     const id = first1.result?.templateId ?? '';
     const second = await run(basicPackage({ 'logo.png': makePng(120, 40) }), 'Reupload');
@@ -122,13 +128,80 @@ describe('TemplateImport pipeline', () => {
       [id],
     );
     expect(versions).toHaveLength(2);
-    const t = await first<{ active_version: string }>(
+    const t = await first<{ active_version: string | null }>(
       env.DB,
       'SELECT active_version FROM templates WHERE id = ?',
       [id],
     );
-    expect(t?.active_version).toBe(second.result?.version);
+    expect(t?.active_version).toBeNull();
   });
+
+  it('replays a completed persist without activating or duplicating its draft', async () => {
+    const imported = await run(basicPackage(), 'Retry Draft');
+    expect(await persistStage(imported.ctx, imported.p)).toEqual(imported.result);
+    const id = imported.result?.templateId ?? '';
+    expect(
+      await first<{ active_version: string | null }>(
+        env.DB,
+        'SELECT active_version FROM templates WHERE id = ?',
+        [id],
+      ),
+    ).toEqual({ active_version: null });
+    expect(
+      await first<{ n: number }>(
+        env.DB,
+        'SELECT COUNT(*) AS n FROM template_versions WHERE template_id = ?',
+        [id],
+      ),
+    ).toEqual({ n: 1 });
+    expect(await getImport(env.DB, imported.p.uploadId)).toMatchObject({
+      step: 'done',
+      workflowStatus: 'complete',
+    });
+  });
+
+  it('does not change an already released version when a new draft is imported', async () => {
+    const firstImport = await run(basicPackage(), 'Released Reupload');
+    const id = firstImport.result?.templateId ?? '';
+    const released = firstImport.result?.version ?? '';
+    // Model the separately approved release; importing must not perform this transition.
+    await sqlRun(env.DB, 'UPDATE templates SET active_version = ? WHERE id = ?', [released, id]);
+    const draft = await run(basicPackage({ 'logo.png': makePng(120, 40) }), 'Released Reupload');
+    expect(draft.result?.templateId).toBe(id);
+    expect(draft.result?.version).not.toBe(released);
+    expect(
+      await first<{ active_version: string | null }>(
+        env.DB,
+        'SELECT active_version FROM templates WHERE id = ?',
+        [id],
+      ),
+    ).toEqual({ active_version: released });
+    expect(await getVersion(env.DB, id, draft.result?.version ?? '')).not.toBeNull();
+  });
+
+  it.each(['archived', 'deleted'] as const)(
+    'does not import a new version into a %s template',
+    async (status) => {
+      const name = `Closed ${status}`;
+      const initial = await run(basicPackage(), name);
+      const id = initial.result?.templateId ?? '';
+      await sqlRun(env.DB, 'UPDATE templates SET status = ? WHERE id = ?', [status, id]);
+      const attempt = await run(basicPackage({ 'logo.png': makePng(120, 40) }), name);
+      expect(attempt.result).toBeNull();
+      expect(await getImport(env.DB, attempt.p.uploadId)).toMatchObject({
+        step: 'failed',
+        error: 'TEMPLATE_ARCHIVED',
+        workflowStatus: 'errored',
+      });
+      expect(
+        await first<{ n: number }>(
+          env.DB,
+          'SELECT COUNT(*) AS n FROM template_versions WHERE template_id = ?',
+          [id],
+        ),
+      ).toEqual({ n: 1 });
+    },
+  );
 
   it('derives manifest name from the name parameter', async () => {
     const r = await run(basicPackage(), 'Named Upload');
@@ -224,11 +297,24 @@ describe('TemplateImport pipeline', () => {
     });
 
     it('a missing upload object', async () => {
-      const r = await run(basicPackage());
-      await env.BUCKET.delete(r.p.objectKey);
-      const { extractStage } = await import('./import-pipeline.ts');
-      const again = await extractStage(r.ctx, r.p);
-      expect(again.ok).toBe(false);
+      const uploader = await templateAuthor(env, clock, orgId);
+      const ctx = createServiceContext(env, { clock });
+      const uploadId = ctx.ids.id();
+      const p = {
+        uploadId,
+        orgId,
+        objectKey: `uploads/${uploadId}.zip`,
+        createdBy: uploader.userId,
+        authority: uploader.authority,
+      };
+      await insertImport(env.DB, { ...p, name: null, now: clock.now() });
+      await startImport(ctx, p);
+      expect((await extractStage(ctx, p)).ok).toBe(false);
+      expect(await getImport(env.DB, uploadId)).toMatchObject({
+        step: 'failed',
+        error: 'UPLOAD_MISSING',
+        workflowStatus: 'errored',
+      });
     });
 
     it('does not create rows or objects for rejected imports', async () => {

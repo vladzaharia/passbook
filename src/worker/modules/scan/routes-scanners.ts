@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   CreatedScannerSchema,
   CreateScannerSchema,
@@ -12,30 +13,30 @@ import {
   TerminalTokenSchema,
   UpdateScannerSchema,
 } from '../../../shared/contracts/index.ts';
-import { currentUserId, modeOf, requireAdmin } from '../../platform/auth.ts';
+import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { createPairing, pairingState } from './pairing.ts';
 import { pairHere, replaceTerminalToken } from './pairing-token.ts';
 import { setScannerCookie } from './routes-pair.ts';
-import {
-  changeMode,
-  createSamplePass,
-  createScanner,
-  listScanners,
-  loadScanner,
-  revokeScanner,
-  scannerView,
-  updateScanner,
-} from './scanners.ts';
+import { createSamplePass } from './sample-pass.ts';
+import { changeMode } from './scanner-mode.ts';
+import { listScanners, loadScanner, scannerView } from './scanner-views.ts';
+import { createScanner, updateScanner } from './scanners.ts';
+import { revokeScanner } from './scanning-devices.ts';
+import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
 
 /** Console scanners: /api/v1/scanners. Mode comes from the console's header, never the body. */
 export const scannersRoutes = createRouter();
-guard(scannersRoutes, requireAdmin);
+guard(scannersRoutes, requireTenantSession);
 scannersRoutes.use('*', limitBody(64 * 1024));
 
 const TAG = 'scanners';
+/** `?restore=true` lets a pairing, pair-here or token call bring a removed scanner back (audited). */
+const RestoreQuerySchema = z.object({ restore: z.enum(['true']).optional() });
+const restoreOf = (q: z.infer<typeof RestoreQuerySchema>) => q.restore === 'true';
 const originOf = (url: string) => new URL(url).origin;
 
 register(
@@ -48,8 +49,15 @@ register(
     query: ScannerListQuerySchema,
     response: ScannerListSchema,
   },
-  async (c) =>
-    c.json(await listScanners(serviceContext(c), modeOf(c.var.auth), c.req.valid('query'))),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const mode = modeOf(c.var.auth);
+    return c.json(
+      await readableScanningPage(ctx, authOf(c), c.req.valid('query'), (query) =>
+        listScanners(ctx, mode, query),
+      ),
+    );
+  },
 );
 register(
   scannersRoutes,
@@ -62,17 +70,25 @@ register(
     status: 201,
     response: CreatedScannerSchema,
   },
-  async (c) =>
-    c.json(
-      await createScanner(
-        serviceContext(c),
-        currentUserId(c),
-        modeOf(c.var.auth),
-        c.req.valid('json'),
-        originOf(c.req.url),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const input = c.req.valid('json');
+    const authority = await tenantAuthorityOf(ctx, authOf(c), input.orgId, 'scanning:manage');
+    return c.json(
+      scopedScanningView(
+        await createScanner(
+          ctx,
+          currentUserId(c),
+          modeOf(c.var.auth),
+          input,
+          originOf(c.req.url),
+          authority,
+        ),
+        input.orgId,
       ),
       201,
-    ),
+    );
+  },
 );
 register(
   scannersRoutes,
@@ -84,7 +100,12 @@ register(
     params: IdParamSchema,
     response: ScannerSchema,
   },
-  async (c) => c.json(await scannerView(serviceContext(c), c.req.valid('param').id)),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:read');
+    return c.json(scopedScanningView(await scannerView(ctx, row.id), row.orgId));
+  },
 );
 register(
   scannersRoutes,
@@ -97,15 +118,17 @@ register(
     body: UpdateScannerSchema,
     response: ScannerSchema,
   },
-  async (c) =>
-    c.json(
-      await updateScanner(
-        serviceContext(c),
-        currentUserId(c),
-        c.req.valid('param').id,
-        c.req.valid('json'),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    return c.json(
+      scopedScanningView(
+        await updateScanner(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
+        row.orgId,
       ),
-    ),
+    );
+  },
 );
 register(
   scannersRoutes,
@@ -115,12 +138,23 @@ register(
     path: '/{id}/pairing',
     summary: 'A new pairing code (replaces any live one)',
     params: IdParamSchema,
+    query: RestoreQuerySchema,
     response: ScannerPairingSchema,
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id);
-    return c.json(await createPairing(ctx, currentUserId(c), row, originOf(c.req.url)));
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    return c.json(
+      await createPairing(
+        ctx,
+        currentUserId(c),
+        row,
+        originOf(c.req.url),
+        authority,
+        restoreOf(c.req.valid('query')),
+      ),
+    );
   },
 );
 register(
@@ -135,7 +169,8 @@ register(
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id);
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:read');
     return c.json(pairingState(row, ctx.clock.now()));
   },
 );
@@ -147,14 +182,24 @@ register(
     path: '/{id}/pair-here',
     summary: 'Make this browser the scanner',
     params: IdParamSchema,
+    query: RestoreQuerySchema,
     response: ScannerSchema,
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id);
-    const issued = await pairHere(ctx, currentUserId(c), row, c.req.header('user-agent'));
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const issued = await pairHere(
+      ctx,
+      currentUserId(c),
+      row,
+      c.req.header('user-agent'),
+      authority,
+      restoreOf(c.req.valid('query')),
+    );
+    const view = scopedScanningView(await scannerView(ctx, row.id), row.orgId);
     setScannerCookie(c, issued.token);
-    return c.json(await scannerView(ctx, row.id));
+    return c.json(view);
   },
 );
 register(
@@ -165,14 +210,26 @@ register(
     path: '/{id}/token',
     summary: 'A till token, shown once (replaces the old one)',
     params: IdParamSchema,
+    query: RestoreQuerySchema,
     response: TerminalTokenSchema,
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id);
-    return c.json(await replaceTerminalToken(ctx, currentUserId(c), row), 200, {
-      'cache-control': 'no-store',
-    });
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    return c.json(
+      await replaceTerminalToken(
+        ctx,
+        currentUserId(c),
+        row,
+        authority,
+        restoreOf(c.req.valid('query')),
+      ),
+      200,
+      {
+        'cache-control': 'no-store',
+      },
+    );
   },
 );
 register(
@@ -185,8 +242,14 @@ register(
     params: IdParamSchema,
     response: ScannerSchema,
   },
-  async (c) =>
-    c.json(await revokeScanner(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    return c.json(
+      scopedScanningView(await revokeScanner(ctx, currentUserId(c), row.id, authority), row.orgId),
+    );
+  },
 );
 register(
   scannersRoutes,
@@ -199,15 +262,17 @@ register(
     body: ScannerModeSchema,
     response: ScannerSchema,
   },
-  async (c) =>
-    c.json(
-      await changeMode(
-        serviceContext(c),
-        currentUserId(c),
-        c.req.valid('param').id,
-        c.req.valid('json'),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    return c.json(
+      scopedScanningView(
+        await changeMode(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
+        row.orgId,
       ),
-    ),
+    );
+  },
 );
 register(
   scannersRoutes,
@@ -220,9 +285,15 @@ register(
     status: 201,
     response: ScannerSamplePassSchema,
   },
-  async (c) =>
-    c.json(
-      await createSamplePass(serviceContext(c), currentUserId(c), c.req.valid('param').id),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const row = await loadScanner(ctx, c.req.valid('param').id);
+    const auth = { ...authOf(c), mode: 'test' as const };
+    const authority = await tenantAuthorityOf(ctx, auth, row.orgId, 'scanning:manage');
+    const passAuthority = await tenantAuthorityOf(ctx, auth, row.orgId, 'passes:operate');
+    return c.json(
+      await createSamplePass(ctx, currentUserId(c), row.id, authority, passAuthority),
       201,
-    ),
+    );
+  },
 );

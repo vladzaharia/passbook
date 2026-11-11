@@ -40,6 +40,7 @@ async function d1Series(ctx: ServiceContext, w: repo.Window, scope: repo.Scope):
     pushFailures,
     emails,
     emailFailures,
+    emailUnknown,
     syncRuns,
     signIns,
   ] = await Promise.all([
@@ -47,10 +48,11 @@ async function d1Series(ctx: ServiceContext, w: repo.Window, scope: repo.Scope):
     repo.updatedRows(db, w, scope, ['admin', 'api', 'connection', 'template_upgrade', 'resign']),
     repo.updatedRows(db, w, scope, ['user_refresh']),
     repo.registrationRows(db, w, scope),
-    repo.outboxRows(db, w, scope, 'push', false),
-    repo.outboxRows(db, w, scope, 'push', true),
-    repo.outboxRows(db, w, scope, 'email', false),
-    repo.outboxRows(db, w, scope, 'email', true),
+    repo.outboxRows(db, w, scope, 'push', 'all'),
+    repo.outboxRows(db, w, scope, 'push', 'failed'),
+    repo.outboxRows(db, w, scope, 'email', 'all'),
+    repo.outboxRows(db, w, scope, 'email', 'failed'),
+    repo.outboxRows(db, w, scope, 'email', 'unknown'),
     repo.syncRunRows(db, w, scope),
     repo.signInRows(db, w, scope),
   ]);
@@ -63,6 +65,7 @@ async function d1Series(ctx: ServiceContext, w: repo.Window, scope: repo.Scope):
     pushFailures,
     emails,
     emailFailures,
+    emailUnknown,
     syncRuns,
     signIns,
   };
@@ -105,7 +108,8 @@ function aeSeries(events: EventRow[]): Rows {
         break;
       case 'email.result':
         add('emails', row);
-        if (failed) add('emailFailures', row);
+        if (row.outcome === 'unknown') add('emailUnknown', row);
+        else if (failed) add('emailFailures', row);
         break;
       default:
         break;
@@ -133,6 +137,7 @@ const SERIES_KEYS: SeriesKey[] = [
   'pushFailures',
   'emails',
   'emailFailures',
+  'emailUnknown',
   'syncRuns',
   'signIns',
   'scans',
@@ -162,9 +167,17 @@ export async function getOverview(
   ctx: ServiceContext,
   query: MetricsQuery,
   mode: Mode = 'live',
+  audience: 'tenant' | 'platform' = query.orgId ? 'tenant' : 'platform',
 ): Promise<MetricsOverview> {
+  if (query.orgId && !(await orgIsReadable(ctx.env.DB, query.orgId)))
+    throw new ValidationError(
+      'Unknown organization.',
+      [{ path: 'orgId', message: 'Not found.' }],
+      'ORG_NOT_FOUND',
+    );
+
   const now = ctx.clock.now();
-  const key = JSON.stringify([query.orgId, query.templateId, query.range, mode]);
+  const key = JSON.stringify([audience, query.orgId, query.templateId, query.range, mode]);
   const byKey = cache.get(ctx.env.DB) ?? new Map();
   cache.set(ctx.env.DB, byKey);
   const hit = byKey.get(key);
@@ -177,19 +190,16 @@ export async function getOverview(
   const start = Math.floor((now - range.ms) / range.bucketMs) * range.bucketMs;
   const end = Math.floor(now / range.bucketMs) * range.bucketMs;
   const w: repo.Window = { since: start, bucketMs: range.bucketMs };
-
-  if (query.orgId && !(await orgIsReadable(ctx.env.DB, query.orgId)))
-    throw new ValidationError(
-      'Unknown organization.',
-      [{ path: 'orgId', message: 'Not found.' }],
-      'ORG_NOT_FOUND',
-    );
+  // Platform directory filters expose aggregates, never tenant-specific detail.
+  const platformDirectory = audience === 'platform' && Boolean(query.orgId || query.templateId);
 
   const [totals, loaded, recent, setup] = await Promise.all([
     repo.passTotals(ctx.env.DB, scope),
     load(ctx, w, scope, now),
-    repo.recentAudit(ctx.env.DB, scope, 10),
-    repo.setupCounts(ctx.env.DB),
+    platformDirectory
+      ? Promise.resolve([])
+      : repo.recentAudit(ctx.env.DB, scope, 10, audience === 'tenant'),
+    repo.setupCounts(ctx.env.DB, scope, audience === 'tenant' ? mode : 'live', !platformDirectory),
   ]);
   const series = Object.fromEntries(
     SERIES_KEYS.map((k) => [k, fill(loaded.rows[k], start, end, range.bucketMs)]),
@@ -216,6 +226,7 @@ export async function getOverview(
       pushFailures: sum('pushFailures'),
       emails: sum('emails'),
       emailFailures: sum('emailFailures'),
+      emailUnknown: sum('emailUnknown'),
       syncRuns: sum('syncRuns'),
       signIns: sum('signIns'),
       scans: sum('scans'),
@@ -226,7 +237,10 @@ export async function getOverview(
     live: [],
     recent: recent.map((r) => ({
       at: r.at,
-      action: r.action,
+      action:
+        audience === 'tenant' && !/^[a-z_]{1,32}\.[a-z_]{1,32}$/.test(r.action)
+          ? 'activity'
+          : r.action,
       orgId: r.org_id,
       targetId: r.target_id,
     })),

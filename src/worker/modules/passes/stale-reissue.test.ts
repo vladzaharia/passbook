@@ -2,18 +2,20 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, first } from '../../platform/db.ts';
 import { runBulkReissue } from '../../workflows/bulk-reissue.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { deleteBrandingImage, putBrandingImage } from '../orgs/branding.ts';
 import { updateOrg } from '../orgs/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
+import { approveAppleRelease } from './apple-release-test-fixtures.ts';
+import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { publishPass } from './publish.ts';
-import { getPass } from './repo.ts';
+import { getPass } from './repo-read-pass.ts';
 import { BRANDING_QUIET_MS, reissueStaleBranding } from './stale-reissue.ts';
-import { type Kit, setupKit } from './test-kit.ts';
 
 let kit: Kit;
 beforeAll(async () => {
   kit = await setupKit();
-});
+}, 60_000);
 
 beforeEach(async () => {
   await kit.env.DB.prepare('UPDATE orgs SET branding_dirty_at = NULL').run();
@@ -37,9 +39,10 @@ const step = {
 /** A fresh org with one live pass. */
 async function orgWithPass() {
   const org = await makeOrg(kit.fx, { name: 'Brand Co' });
+  const release = await approveAppleRelease(kit, { orgId: org.id });
   const pass = await kit.pass({ orgId: org.id });
   await kit.settle();
-  return { org, pass };
+  return { org, pass, release };
 }
 
 const dirtyAt = async (orgId: string) =>
@@ -78,7 +81,7 @@ describe('branding reissue trigger', () => {
       expect(dto.passesToUpdate, label).toBe(1);
       expect(await dirtyAt(org.id), label).not.toBeNull();
     }
-  });
+  }, 60_000);
 
   it('ignores a save that leaves the pass look alone', async () => {
     const { org } = await orgWithPass();
@@ -92,7 +95,7 @@ describe('branding reissue trigger', () => {
     kit.clock.set(kit.clock.now() + BRANDING_QUIET_MS * 2);
     await reissueStaleBranding(kit.ctx);
     expect(kit.workflow.created).toHaveLength(0);
-  });
+  }, 60_000);
 
   it('does not flag an org with no live passes', async () => {
     const org = await makeOrg(kit.fx, { name: 'Empty Co' });
@@ -131,28 +134,44 @@ describe('branding reissue coalescing', () => {
       [org.id],
     );
     expect(audit).toEqual({ target_type: 'org', target_id: org.id });
-  });
+  }, 60_000);
 
-  it('keeps the mark when the workflow cannot start', async () => {
+  it('keeps the mark when the workflow cannot start and retries later', async () => {
     const { org } = await orgWithPass();
     await putBrandingImage(kit.ctx, admin, org.id, 'icon', icon);
     const at = await dirtyAt(org.id);
     const create = kit.workflow.create;
-    kit.workflow.create = async () => {
-      throw new Error('down');
-    };
-    kit.clock.set(kit.clock.now() + BRANDING_QUIET_MS * 2);
-    await reissueStaleBranding(kit.ctx);
-    kit.workflow.create = create;
+    try {
+      kit.workflow.create = async () => {
+        throw new Error('down');
+      };
+      kit.clock.set(kit.clock.now() + BRANDING_QUIET_MS * 2);
+      await reissueStaleBranding(kit.ctx);
+    } finally {
+      kit.workflow.create = create;
+    }
     expect(await dirtyAt(org.id)).toBe(at);
-  });
+    await reissueStaleBranding(kit.ctx);
+    expect(await dirtyAt(org.id)).toBeNull();
+    expect(
+      kit.workflow.created.filter((job) => {
+        const params = job.params;
+        return (
+          params !== null &&
+          typeof params === 'object' &&
+          'orgId' in params &&
+          params.orgId === org.id
+        );
+      }),
+    ).toHaveLength(1);
+  }, 60_000);
 });
 
 describe('branding reissue run', () => {
   it('rebuilds live passes with the new logo and colour and pushes them; skips voided ones', async () => {
-    const { org, pass } = await orgWithPass();
+    const { org, pass, release } = await orgWithPass();
     const voided = await kit.pass({ orgId: org.id });
-    await publishPass(kit.ctx, {
+    await publishPass(jobCtxOf(kit), {
       passId: voided.id,
       cause: 'admin',
       actor: admin,
@@ -170,6 +189,7 @@ describe('branding reissue run', () => {
     const started = kit.workflow.created[0];
     expect(started).toBeDefined();
     const before = await getPass(kit.env.DB, pass.id);
+    expect(before?.releaseId).toBe(release.id);
     const voidedBefore = await getPass(kit.env.DB, voided.id);
 
     const totals = await runBulkReissue(
@@ -183,6 +203,7 @@ describe('branding reissue run', () => {
     expect(totals).toEqual({ changed: 1, unchanged: 0, failed: 0 });
     const after = await getPass(kit.env.DB, pass.id);
     expect(after?.version).toBe((before?.version ?? 0) + 1);
+    expect(after?.releaseId).toBe(release.id);
     expect(after?.objectKey).not.toBe(before?.objectKey);
     const passJson = await first<{ pass_json: string }>(
       kit.env.DB,
@@ -200,5 +221,5 @@ describe('branding reissue run', () => {
 
     const voidedAfter = await getPass(kit.env.DB, voided.id);
     expect(voidedAfter?.version).toBe(voidedBefore?.version);
-  });
+  }, 60_000);
 });

@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, chunk, first, likeEscape, placeholders, run, stmt } from '../../platform/db.ts';
+import { all, chunk, first, likeEscape, placeholders, run } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
 
@@ -12,6 +12,8 @@ export interface OrgRow {
   branding: string;
   created_at: number;
   updated_at: number;
+  /** Moves with name, slug, branding, default identity and org settings; the CAS for edits. */
+  config_revision: number;
 }
 
 export interface OrgCounts {
@@ -21,7 +23,8 @@ export interface OrgCounts {
   apiKeys: number;
 }
 
-const COLUMNS = 'id, slug, name, status, default_identity_id, branding, created_at, updated_at';
+const COLUMNS =
+  'id, slug, name, status, default_identity_id, branding, created_at, updated_at, config_revision';
 
 export function getOrgRow(db: D1Database, id: string): Promise<OrgRow | null> {
   return first<OrgRow>(db, `SELECT ${COLUMNS} FROM orgs WHERE id = ? AND status != 'deleted'`, [
@@ -53,25 +56,44 @@ export function listOrgRows(db: D1Database, before: string | undefined, limit: n
   );
 }
 
+/** Replaces the branding without authority or CAS: for trusted internal callers and fixtures only. */
+export function setOrgBranding(
+  db: D1Database,
+  id: string,
+  branding: string,
+  now: number,
+): Promise<OrgRow | null> {
+  return first<OrgRow>(
+    db,
+    `UPDATE orgs SET branding = ?, updated_at = MAX(updated_at + 1, ?)
+     WHERE id = ? AND status != 'deleted' RETURNING ${COLUMNS}`,
+    [branding, now, id],
+  );
+}
+
+/**
+ * Trusted-caller status change (fixtures, service callers without a session). Scheduled broadcasts are
+ * cancelled by the `orgs_inactive_cancels_broadcasts` trigger, on every path. Routes use `platform.org.status`.
+ */
 export async function setOrgStatus(
   db: D1Database,
   id: string,
   status: 'active' | 'suspended',
   now: number,
-): Promise<void> {
-  await run(db, 'UPDATE orgs SET status = ?, updated_at = ? WHERE id = ?', [status, now, id]);
+): Promise<OrgRow | null> {
+  const saved = await first<{ id: string }>(
+    db,
+    `UPDATE orgs SET status = ?, updated_at = MAX(updated_at + 1, ?)
+     WHERE id = ? AND status != 'deleted' RETURNING id`,
+    [status, now, id],
+  );
+  return saved ? getOrgRow(db, id) : null;
 }
 
-export async function setOrgBranding(
+export async function insertOrg(
   db: D1Database,
-  id: string,
-  branding: string,
-  now: number,
+  row: Omit<OrgRow, 'config_revision'>,
 ): Promise<void> {
-  await run(db, 'UPDATE orgs SET branding = ?, updated_at = ? WHERE id = ?', [branding, now, id]);
-}
-
-export async function insertOrg(db: D1Database, row: OrgRow): Promise<void> {
   await run(
     db,
     `INSERT INTO orgs (id, slug, name, status, default_identity_id, branding, created_at, updated_at)
@@ -89,25 +111,10 @@ export async function insertOrg(db: D1Database, row: OrgRow): Promise<void> {
   );
 }
 
-export async function updateOrgRow(
-  db: D1Database,
-  row: Pick<
-    OrgRow,
-    'id' | 'slug' | 'name' | 'status' | 'default_identity_id' | 'branding' | 'updated_at'
-  >,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE orgs SET slug = ?, name = ?, status = ?, default_identity_id = ?, branding = ?, updated_at = ?
-     WHERE id = ?`,
-    [row.slug, row.name, row.status, row.default_identity_id, row.branding, row.updated_at, row.id],
-  );
-}
-
 export async function markOrgDeleted(db: D1Database, id: string, now: number): Promise<void> {
   await run(
     db,
-    "UPDATE orgs SET status = 'deleted', default_identity_id = NULL, updated_at = ? WHERE id = ?",
+    "UPDATE orgs SET status = 'deleted', default_identity_id = NULL, updated_at = MAX(updated_at + 1, ?) WHERE id = ? AND status != 'deleted'",
     [now, id],
   );
 }
@@ -206,17 +213,4 @@ export function orgForPass(db: D1Database, orgId: string) {
   }>(db, 'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?', [
     orgId,
   ]);
-}
-
-/** Creates a baked org on first sight; an existing slug is left as it is. */
-export function ensureOrgStmt(
-  db: D1Database,
-  o: { id: string; slug: string; name: string; now: number },
-): D1PreparedStatement {
-  return stmt(
-    db,
-    `INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT (slug) DO NOTHING`,
-    [o.id, o.slug, o.name, o.now, o.now],
-  );
 }

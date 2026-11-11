@@ -1,7 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createPassRow } from '../passes/create.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
-import { EMAIL_RECIPIENT_HOURLY_CAP, enqueuePassEmail } from './service.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import { jobCtxOf } from './delivery-test-fixtures.ts';
+import { EMAIL_RECIPIENT_HOURLY_CAP, enqueuePassEmail } from './issuance-intent.ts';
+
+const job = () => jobCtxOf(kit);
 
 let kit: Kit;
 beforeAll(async () => {
@@ -9,13 +12,15 @@ beforeAll(async () => {
 });
 
 const make = (mode: 'live' | 'test') =>
-  createPassRow(kit.ctx, {
+  createPassRow(jobCtxOf(kit), {
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: `Caps ${mode}` },
     source: 'manual',
     mode,
     actor: { type: 'system', id: null },
+    execution: { kind: 'system' },
   });
 
 describe('email caps are per mode', () => {
@@ -24,12 +29,12 @@ describe('email caps are per mode', () => {
     const live = await make('live');
     const to = 'shared@example.com';
     for (let i = 0; i < EMAIL_RECIPIENT_HOURLY_CAP; i++)
-      await enqueuePassEmail(kit.ctx, { passId: test.id, to, attach: false });
+      await enqueuePassEmail(job(), { passId: test.id, to, attach: false, expected: test });
     await expect(
-      enqueuePassEmail(kit.ctx, { passId: test.id, to, attach: false }),
+      enqueuePassEmail(job(), { passId: test.id, to, attach: false, expected: test }),
     ).rejects.toMatchObject({ code: 'EMAIL_RATE_LIMITED' });
     await expect(
-      enqueuePassEmail(kit.ctx, { passId: live.id, to, attach: false }),
+      enqueuePassEmail(job(), { passId: live.id, to, attach: false, expected: live }),
     ).resolves.toHaveProperty('outboxId');
   });
 
@@ -37,9 +42,9 @@ describe('email caps are per mode', () => {
     const live = await make('live');
     const to = 'live-only@example.com';
     for (let i = 0; i < EMAIL_RECIPIENT_HOURLY_CAP; i++)
-      await enqueuePassEmail(kit.ctx, { passId: live.id, to, attach: false });
+      await enqueuePassEmail(job(), { passId: live.id, to, attach: false, expected: live });
     await expect(
-      enqueuePassEmail(kit.ctx, { passId: live.id, to, attach: false }),
+      enqueuePassEmail(job(), { passId: live.id, to, attach: false, expected: live }),
     ).rejects.toMatchObject({ code: 'EMAIL_RATE_LIMITED' });
   });
 });

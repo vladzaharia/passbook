@@ -1,46 +1,41 @@
 import type { z } from 'zod';
-import type { TemplateManifest } from '../../../passkit/types.ts';
-import type { Json, Mode } from '../../../shared/contracts/common.ts';
-import type {
-  CreateScanEventSchema,
-  ScanEventAssignSchema,
-  ScanEventDto,
-  ScanEventListQuerySchema,
-  UpdateScanEventSchema,
-} from '../../../shared/contracts/index.ts';
-import { scanOf } from '../../../shared/scan-defaults.ts';
-import { batch } from '../../platform/db.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
-import { orgIsActive } from '../orgs/repo.ts';
-import { assertStandaloneSession } from './legacy-session.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import type { ScanEventDto, ScanEventListQuerySchema } from '../../../shared/contracts/index.ts';
+import type { SessionAuth } from '../../platform/auth.ts';
+import type { Grant } from '../../platform/authority.ts';
 import {
-  archiveEventStmts,
-  assignScannersStmts,
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  UnavailableError,
+} from '../../platform/errors.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
+import { actorCsrfFence } from './actor-csrf.ts';
+import { captureCredentialKeyset, credentialKeysetContext } from './credential-keyset-authority.ts';
+import { sessionGrant } from './repo-admin-grant.ts';
+import { eventCacheChecks } from './repo-event-authority.ts';
+import {
+  type EventAuthority,
+  eventKeysetGuard,
+  eventReadAuthorityState,
+  eventSessionAuthorityValid,
+} from './repo-event-keyset.ts';
+import {
   type ConsoleEventRow,
-  countExpected,
-  type EventValues,
-  getConsoleEvent,
-  insertEventStmt,
+  getAuthorizedConsoleEvent,
+  getCommittedConsoleEvent,
   listConsoleEvents,
-  replaceEventTemplatesStmts,
-  restoreEventStmt,
-  scannersInOrg,
-  setExpectedStmt,
-  templateManifests,
-  updateEventStmt,
 } from './repo-events.ts';
-import { syncStandaloneSessionStmt } from './repo-legacy-session.ts';
-import { countOrgTemplates } from './repo-scope.ts';
+import { addEventCache } from './repo-events-write.ts';
+import { releaseHeadsComplete } from './repo-scope-releases.ts';
+
+export { checkTemplates, checkWindow } from './events-validation.ts';
 
 const EXPECTED_TTL_MS = 60_000;
-/** A list recounts at most this many stale events; the rest show their last count. */
-const LIST_RECOUNTS = 10;
-const SCALAR = new Set(['string', 'number', 'integer', 'boolean']);
-
-const modeMismatch = (what: string) =>
-  new ValidationError(`${what} is in a different mode.`, [], 'SCAN_MODE_MISMATCH');
+/** Every returned count is live; at most ten cache writes are attempted per page. */
+const LIST_CACHE_WRITES = 10;
 
 export function eventStatus(row: ConsoleEventRow, now: number): ScanEventDto['status'] {
   if (row.archivedAt !== null) return 'archived';
@@ -49,6 +44,8 @@ export function eventStatus(row: ConsoleEventRow, now: number): ScanEventDto['st
 }
 
 function toDto(row: ConsoleEventRow, now: number): ScanEventDto {
+  const expected = row.liveExpected;
+  if (expected === null) throw new Error('Event count was not included in the scoped read.');
   return {
     id: row.id,
     orgId: row.orgId,
@@ -65,241 +62,225 @@ function toDto(row: ConsoleEventRow, now: number): ScanEventDto {
     note: row.note,
     status: eventStatus(row, now),
     arrived: row.arrived,
-    expected: row.expected ?? 0,
+    expected,
     scanners: row.scanners,
   };
 }
 
-/** Recounts `expected` when it is older than a minute (or was cleared by an edit). */
-async function refreshed(ctx: ServiceContext, row: ConsoleEventRow): Promise<ConsoleEventRow> {
+/**
+ * Cache the initial live count only while the event is the one the count was derived from. A cache
+ * fill is best effort: losing a race to an edit, or the access, skips it and never fails the read.
+ */
+async function refreshExpectedCache(
+  ctx: ServiceContext,
+  row: ConsoleEventRow,
+  authority: EventAuthority,
+  cacheBudget?: { remaining: number },
+): Promise<void> {
+  const n = row.liveExpected;
+  if (n === null) throw new Error('Event count was not included in the scoped read.');
+  if (!releaseHeadsComplete(row.releaseHeads)) return;
   const now = ctx.clock.now();
-  if (row.expectedAt !== null && row.expectedAt > now - EXPECTED_TTL_MS) return row;
-  const n = await countExpected(ctx.env.DB, row);
-  await setExpectedStmt(ctx.env.DB, row.id, n, now).run();
-  return { ...row, expected: n, expectedAt: now };
+  if (row.expected === n && row.expectedAt !== null && row.expectedAt > now - EXPECTED_TTL_MS)
+    return;
+  if (cacheBudget?.remaining === 0) return;
+  if (cacheBudget) cacheBudget.remaining -= 1;
+  if (authority.kind !== 'session') return;
+  try {
+    const g = sessionGrant(
+      ctx,
+      'org_mode.scan.event.cache',
+      authority,
+      eventCacheChecks(row),
+      row.id,
+    );
+    addEventCache(g, row.id, n, now);
+    await g.commit();
+  } catch (error) {
+    if (!(error instanceof AppError) || error.status >= 500) throw error;
+    ctx.log.info('scan.event_cache_skipped', { orgId: row.orgId, code: error.code });
+  }
+}
+
+/** A mutation returns only data selected under authority inside its committing transaction. */
+export function committedEventView(ctx: ServiceContext, row: ConsoleEventRow): ScanEventDto {
+  return toDto(row, ctx.clock.now());
+}
+
+function canReadEvents(authority: EventAuthority): boolean {
+  return (
+    authority.kind === 'session' &&
+    (authority.capability === 'scanning:read' || authority.capability === 'scanning:manage')
+  );
+}
+
+/** Capture the original session proof and retain its SQL secret only as ephemeral scalar binds. */
+export async function captureEventAuthority(
+  ctx: ServiceContext,
+  session: SessionAuth,
+  authority: TenantPassWrite,
+): Promise<EventAuthority> {
+  const proofCtx = credentialKeysetContext(ctx);
+  if (authority.kind !== 'session') throw new ForbiddenError();
+  const actor = adminActor(session, authority.mode, {
+    orgId: authority.orgId,
+    event: null,
+    templateIds: [],
+    timeZone: 'UTC',
+  });
+  actor.tenantAuthority = await captureScanTenantAuthority(proofCtx, session, authority);
+  actor.platformSessionId = session.sessionId;
+  actor.role = tenantScanRole(authority);
+  if (!actor.role) throw new ForbiddenError();
+  const csrfFence = await actorCsrfFence(proofCtx, actor);
+  if (!csrfFence) throw new ForbiddenError();
+  return { ...authority, csrfFence, credentialEnv: proofCtx.env };
+}
+
+/** Capture the keyset only in the exact session and, for a detail or mutation, target scope. */
+export async function captureEventKeyset(
+  ctx: ServiceContext,
+  authority: EventAuthority,
+  eventId?: string,
+): Promise<string | null> {
+  const commitment = await captureCredentialKeyset(
+    { ...ctx, env: { ...authority.credentialEnv, DB: ctx.env.DB } },
+    eventKeysetGuard(authority, ctx.clock.now(), eventId),
+  );
+  if (commitment || eventId === undefined) return commitment;
+  if (!(await eventSessionAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+    throw new ForbiddenError();
+  throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
+}
+
+/** The final response check also covers empty pages and is bound to the original keyset. */
+async function readAuthorityValid(
+  ctx: ServiceContext,
+  authority: EventAuthority,
+  credentialKeysetCommitment: string,
+): Promise<boolean> {
+  const state = await eventReadAuthorityState(
+    ctx.env.DB,
+    authority,
+    ctx.clock.now(),
+    credentialKeysetCommitment,
+  );
+  if (!state.authority) return false;
+  if (!state.keyset)
+    throw new UnavailableError(
+      'Credential references are unavailable.',
+      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+    );
+  return true;
 }
 
 export async function listEvents(
   ctx: ServiceContext,
   mode: Mode,
   query: z.infer<typeof ScanEventListQuerySchema>,
+  authority: EventAuthority,
 ) {
+  if (!canReadEvents(authority) || query.orgId !== authority.orgId || mode !== authority.mode)
+    return { items: [], nextCursor: null };
+  const credentialKeysetCommitment = await captureEventKeyset(ctx, authority);
+  if (!credentialKeysetCommitment) return { items: [], nextCursor: null };
+  const initial = await listConsoleEvents(ctx.env.DB, {
+    ...query,
+    mode,
+    now: ctx.clock.now(),
+    authority,
+    credentialKeysetCommitment,
+    limit: query.limit + 1,
+  });
+  const cacheBudget = { remaining: LIST_CACHE_WRITES };
+  for (const row of initial.slice(0, query.limit))
+    await refreshExpectedCache(ctx, row, authority, cacheBudget);
   const now = ctx.clock.now();
-  const rows = await listConsoleEvents(ctx.env.DB, { ...query, mode, now, limit: query.limit + 1 });
+  const rows = await listConsoleEvents(ctx.env.DB, {
+    ...query,
+    mode,
+    now,
+    authority,
+    credentialKeysetCommitment,
+    limit: query.limit + 1,
+  });
   const page = rows.slice(0, query.limit);
-  let budget = LIST_RECOUNTS;
-  const items: ScanEventDto[] = [];
-  for (const row of page) {
-    const stale = row.expectedAt === null || row.expectedAt <= now - EXPECTED_TTL_MS;
-    items.push(toDto(stale && budget-- > 0 ? await refreshed(ctx, row) : row, now));
-  }
-  return { items, nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null };
+  return {
+    items: page.map((row) => toDto(row, now)),
+    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
+  };
 }
 
-async function loadEvent(ctx: ServiceContext, id: string): Promise<ConsoleEventRow> {
-  const row = await getConsoleEvent(ctx.env.DB, id);
-  if (!row) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
+/** The mutation target in the managing session's org and mode. The grant proves the authority at commit. */
+export async function loadManageEvent(
+  ctx: ServiceContext,
+  id: string,
+  userId: string,
+  authority: EventAuthority,
+): Promise<ConsoleEventRow> {
+  if (
+    authority.kind !== 'session' ||
+    authority.capability !== 'scanning:manage' ||
+    authority.userId !== userId
+  )
+    throw new ForbiddenError();
+  const row = await getCommittedConsoleEvent(ctx.env.DB, id, authority.orgId, ctx.clock.now());
+  if (!row || row.mode !== authority.mode)
+    throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   return row;
 }
 
-export async function eventView(ctx: ServiceContext, id: string): Promise<ScanEventDto> {
-  return toDto(await refreshed(ctx, await loadEvent(ctx, id)), ctx.clock.now());
-}
-
-/** Every template needs a check-in, and a match input must be a scalar input of each. */
-async function checkTemplates(
+async function scopedEventRow(
   ctx: ServiceContext,
-  orgId: string,
-  templateIds: string[],
-  matchInput: string | null,
-): Promise<void> {
-  const db = ctx.env.DB;
-  if ((await countOrgTemplates(db, orgId, templateIds)) !== templateIds.length)
-    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
-  for (const t of await templateManifests(db, orgId, templateIds)) {
-    const manifest = JSON.parse(t.manifest) as TemplateManifest;
-    if (!scanOf(manifest).actions.some((a) => a.kind === 'check_in'))
-      throw new ValidationError(
-        `${manifest.name} has no check-in action.`,
-        [{ path: 'templateIds', message: 'Choose templates that check people in.' }],
-        'EVENT_TEMPLATE_NO_CHECK_IN',
-      );
-    if (matchInput) {
-      const prop = (manifest.inputs.properties?.[matchInput] ?? null) as { type?: Json } | null;
-      if (
-        !prop ||
-        typeof prop.type !== 'string' ||
-        !SCALAR.has(prop.type) ||
-        /["\\]/.test(matchInput)
-      )
-        throw new ValidationError(
-          `${manifest.name} has no single-value input called ${matchInput}.`,
-          [{ path: 'match.input', message: 'Match on an input that holds one value.' }],
-          'EVENT_MATCH_INPUT',
-        );
-    }
-  }
-}
-
-function checkWindow(opensAt: number, closesAt: number): void {
-  if (closesAt <= opensAt)
-    throw new ValidationError('Closing must be after opening.', [
-      { path: 'closesAt', message: 'Closing must be after opening.' },
-    ]);
-}
-
-export async function createEvent(
-  ctx: ServiceContext,
-  userId: string,
-  mode: Mode,
-  input: z.infer<typeof CreateScanEventSchema>,
-) {
-  const db = ctx.env.DB;
-  if (!(await orgIsActive(db, input.orgId)))
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  const templateIds = [...new Set(input.templateIds)];
-  await checkTemplates(ctx, input.orgId, templateIds, input.match?.input ?? null);
-  const now = ctx.clock.now();
-  const values: EventValues = {
-    id: ctx.ids.id(),
-    orgId: input.orgId,
-    mode,
-    name: input.name,
-    matchInput: input.match?.input ?? null,
-    matchValues: input.match?.values ?? null,
-    opensAt: input.opensAt,
-    closesAt: input.closesAt,
-    timeZone: input.timeZone,
-    capacity: input.capacity ?? null,
-    reentry: input.reentry ?? false,
-    note: input.note ?? null,
-  };
-  await batch(db, [
-    insertEventStmt(db, values, userId, now),
-    ...replaceEventTemplatesStmts(db, values.id, templateIds),
-    auditStmt(db, ctx, {
-      orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: 'scan_event.create',
-      targetType: 'scan_event',
-      targetId: values.id,
-      detail: { mode, templates: templateIds.length, capacity: values.capacity },
-    }),
-  ]);
-  return eventView(ctx, values.id);
-}
-
-export async function updateEvent(
-  ctx: ServiceContext,
-  userId: string,
   id: string,
-  input: z.infer<typeof UpdateScanEventSchema>,
-) {
-  const db = ctx.env.DB;
-  const row = await loadEvent(ctx, id);
-  const match =
-    input.match === undefined
-      ? row.matchInput && row.matchValues
-        ? { input: row.matchInput, values: row.matchValues }
-        : null
-      : input.match;
-  const templateIds = input.templateIds ? [...new Set(input.templateIds)] : row.templateIds;
-  const opensAt = input.opensAt ?? row.opensAt;
-  const closesAt = input.closesAt ?? row.closesAt;
-  checkWindow(opensAt, closesAt);
-  if (input.templateIds || input.match !== undefined)
-    await checkTemplates(ctx, row.orgId, templateIds, match?.input ?? null);
-  const now = ctx.clock.now();
-  const values: EventValues = {
+  authority: EventAuthority,
+  credentialKeysetCommitment: string,
+  now: number,
+): Promise<ConsoleEventRow> {
+  const row = await getAuthorizedConsoleEvent(
+    ctx.env.DB,
     id,
-    orgId: row.orgId,
-    mode: row.mode,
-    name: input.name ?? row.name,
-    matchInput: match?.input ?? null,
-    matchValues: match?.values ?? null,
-    opensAt,
-    closesAt,
-    timeZone: input.timeZone ?? row.timeZone,
-    capacity: input.capacity === undefined ? row.capacity : input.capacity,
-    reentry: input.reentry ?? row.reentry,
-    note: input.note === undefined ? row.note : input.note,
-  };
-  const { archived, ...fields } = input;
-  const archive = archived === true && row.archivedAt === null;
-  const restore = archived === false && row.archivedAt !== null;
-  await batch(db, [
-    updateEventStmt(db, values, now),
-    ...(input.templateIds ? replaceEventTemplatesStmts(db, id, templateIds) : []),
-    ...(archive ? archiveEventStmts(db, id, now) : []),
-    ...(restore ? [restoreEventStmt(db, id, now)] : []),
-    auditStmt(db, ctx, {
-      orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: archive ? 'scan_event.archive' : 'scan_event.update',
-      targetType: 'scan_event',
-      targetId: id,
-      detail: { fields: Object.keys(fields), ...(restore ? { restored: true } : {}) },
-    }),
-  ]);
-  return eventView(ctx, id);
-}
-
-export async function archiveEvent(ctx: ServiceContext, userId: string, id: string) {
-  const row = await loadEvent(ctx, id);
-  if (row.archivedAt === null) {
-    const db = ctx.env.DB;
-    await batch(db, [
-      ...archiveEventStmts(db, id, ctx.clock.now()),
-      auditStmt(db, ctx, {
-        orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scan_event.archive',
-        targetType: 'scan_event',
-        targetId: id,
-        detail: { detached: row.scanners },
-      }),
-    ]);
+    authority,
+    now,
+    credentialKeysetCommitment,
+  );
+  if (!row) {
+    if (!(await readAuthorityValid(ctx, authority, credentialKeysetCommitment)))
+      throw new ForbiddenError();
+    throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   }
-  return eventView(ctx, id);
+  if (row.orgId !== authority.orgId || row.mode !== authority.mode)
+    throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
+  return row;
 }
 
-/** Moves scanners onto the event. Another org's scanner is a 404, another mode's a 422. */
-export async function assignScanners(
+export async function eventView(
   ctx: ServiceContext,
-  userId: string,
   id: string,
-  input: z.infer<typeof ScanEventAssignSchema>,
-) {
-  const db = ctx.env.DB;
-  const row = await loadEvent(ctx, id);
-  if (row.archivedAt !== null)
-    throw new ValidationError('This event is archived.', [], 'EVENT_ARCHIVED');
-  const ids = [...new Set(input.scannerIds)];
-  const found = await scannersInOrg(db, row.orgId, ids);
-  if (found.length !== ids.length)
-    throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
-  if (found.some((s) => s.mode !== row.mode)) throw modeMismatch('A scanner');
-  if (found.some((s) => s.deviceRole !== 'scan'))
-    throw new ValidationError('Only scanning devices take an event.', [], 'SCANNER_CANNOT_SCAN');
-  await Promise.all(ids.map((scannerId) => assertStandaloneSession(ctx, row.orgId, scannerId)));
-  if (ids.length > 0)
-    await batch(db, [
-      ...assignScannersStmts(db, id, row.orgId, ids, ctx.clock.now()),
-      ...ids.map((scannerId) =>
-        syncStandaloneSessionStmt(db, row.orgId, scannerId, ctx.clock.now()),
-      ),
-      auditStmt(db, ctx, {
-        orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scan_event.assign',
-        targetType: 'scan_event',
-        targetId: id,
-        detail: { scanners: ids.length },
-      }),
-    ]);
-  return eventView(ctx, id);
+  authority: EventAuthority,
+): Promise<ScanEventDto> {
+  if (!canReadEvents(authority)) throw new ForbiddenError();
+  const credentialKeysetCommitment = await captureEventKeyset(ctx, authority, id);
+  if (!credentialKeysetCommitment) throw new ForbiddenError();
+  const row = await scopedEventRow(ctx, id, authority, credentialKeysetCommitment, ctx.clock.now());
+  await refreshExpectedCache(ctx, row, authority);
+  const now = ctx.clock.now();
+  const current = await scopedEventRow(ctx, id, authority, credentialKeysetCommitment, now);
+  return toDto(current, now);
+}
+
+/**
+ * Commit the grant, then answer with the committed event. The grant is the authority check: a
+ * refusal is a classified 403 or 409 and nothing is written; once it commits it is not undone.
+ */
+export async function commitEvent(
+  ctx: ServiceContext,
+  g: Grant,
+  eventId: string,
+  orgId: string,
+): Promise<ConsoleEventRow> {
+  await g.commit();
+  const row = await getCommittedConsoleEvent(ctx.env.DB, eventId, orgId, ctx.clock.now());
+  if (!row) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
+  return row;
 }

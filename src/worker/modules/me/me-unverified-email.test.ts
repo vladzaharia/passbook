@@ -1,15 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  fixtures,
-  makeOrg,
-  makePass,
-  makeSession,
-  makeTemplate,
-  makeUser,
-} from '../../../../test/helpers/index.ts';
+import { fixtures, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
-import { fakeLimiter, harness, type SentMail, type TestHarness } from '../auth/test-support.ts';
+import {
+  fakeLimiter,
+  harness,
+  type SentMail,
+  type TestHarness,
+  waitingPass,
+} from '../auth/test-support.ts';
 import { attachWaitingPassesForEmail } from '../holders/service.ts';
 
 let h: TestHarness;
@@ -47,10 +46,6 @@ const ownerOf = async (passId: string) =>
       [passId],
     )
   )?.owner_user_id;
-async function waitingPass(email: string) {
-  const org = await makeOrg(f());
-  return makePass(f(), { orgId: org.id, template: makeTemplate().resolved, holderEmail: email });
-}
 const giveTo = (userId: string, email: string) =>
   run(
     h.env.DB,

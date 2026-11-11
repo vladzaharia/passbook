@@ -1,15 +1,9 @@
 import type { Context } from 'hono';
-import { z } from 'zod';
 import {
   ConnectionCreatedSchema,
   ConnectionDetailSchema,
-  ConnectionListQuerySchema,
-  ConnectionListSchema,
   ConnectionRunListSchema,
   ConnectionRunsQuerySchema,
-  ConnectionsSummarySchema,
-  ConnectorInfoSchema,
-  ConnectorListSchema,
   CreateConnectionSchema,
   IdParamSchema,
   OkSchema,
@@ -18,25 +12,37 @@ import {
   TestConfigSchema,
   TestConnectionResponseSchema,
   UpdateConnectionSchema,
-  WebhookAckSchema,
 } from '../../../shared/contracts/index.ts';
-import { connectors } from '../../connectors/registry.ts';
-import { modeOf, requireAdmin } from '../../platform/auth.ts';
+import { methodScope, modeOf } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { actorOf } from '../../platform/context.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
-import { serviceContext } from '../../platform/service-context.ts';
+import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import { requireTenantSessionOrApiKey } from '../passes/http.ts';
+import { authorizeConnection, authorizeStoredConnection as authorizeStored } from './access.ts';
 import * as actions from './actions.ts';
-import { connectorInfo } from './dto.ts';
+import { registerConnectorCatalogRoutes } from './catalog-routes.ts';
+import { registerConnectionListRoutes } from './list-routes.ts';
 import * as service from './service.ts';
 import { testConfig } from './test-config.ts';
-import { receiveWebhook } from './webhooks.ts';
+import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
+import { registerWebhookRetentionRoutes } from './webhook-retention-routes.ts';
 
 type C = Context<AppBindings>;
 const actor = (c: C) => actorOf(c.var.auth);
 const sctx = (c: C) => serviceContext(c);
+
+async function authorizeStoredConnection(
+  c: C,
+  ctx: ServiceContext,
+  id: string,
+  capability: 'integrations:read' | 'integrations:manage',
+) {
+  const connection = await service.requireConnection(ctx, id);
+  return authorizeStored(ctx, c.var.auth, connection.orgId, capability);
+}
 
 /** Stored connections have no Test environment; do not expose Live data in Test. */
 function assertLive(c: C): void {
@@ -47,43 +53,14 @@ function assertLive(c: C): void {
 
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();
-guard(connectionsRoutes, requireAdmin);
-register(
+guard(
   connectionsRoutes,
-  'connections',
-  {
-    method: 'get',
-    path: '/',
-    summary: 'List connections',
-    query: ConnectionListQuerySchema,
-    response: ConnectionListSchema,
-  },
-  async (c) => {
-    if (modeOf(c.var.auth) === 'test') return c.json({ items: [], nextCursor: null });
-    return c.json(
-      await service.listAll(
-        sctx(c),
-        c.req.valid('query') as z.infer<typeof ConnectionListQuerySchema>,
-      ),
-    );
-  },
+  requireTenantSessionOrApiKey(
+    methodScope({ read: 'connections:read', write: 'connections:write' }),
+  ),
 );
-register(
-  connectionsRoutes,
-  'connections',
-  {
-    method: 'get',
-    path: '/summary',
-    summary: 'Connection health summary',
-    response: ConnectionsSummarySchema,
-  },
-  async (c) =>
-    c.json(
-      modeOf(c.var.auth) === 'test'
-        ? { total: 0, byHealth: {}, attention: [] }
-        : await actions.healthSummary(sctx(c)),
-    ),
-);
+registerWebhookRetentionRoutes(connectionsRoutes);
+registerConnectionListRoutes(connectionsRoutes);
 register(
   connectionsRoutes,
   'connections',
@@ -97,14 +74,15 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(
-      await service.create(
-        sctx(c),
-        actor(c),
-        c.req.valid('json') as z.infer<typeof CreateConnectionSchema>,
-      ),
-      201,
+    const ctx = sctx(c);
+    const input = c.req.valid('json');
+    const authority = await authorizeConnection(
+      ctx,
+      c.var.auth,
+      input.orgId,
+      'integrations:manage',
     );
+    return c.json(await service.create(ctx, actor(c), input, authority), 201);
   },
 );
 register(
@@ -119,7 +97,10 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(await service.getDetail(sctx(c), (c.req.valid('param') as { id: string }).id));
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    await authorizeStoredConnection(c, ctx, id, 'integrations:read');
+    return c.json(await service.getDetail(ctx, id));
   },
 );
 register(
@@ -135,14 +116,10 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(
-      await service.update(
-        sctx(c),
-        actor(c),
-        (c.req.valid('param') as { id: string }).id,
-        c.req.valid('json') as z.infer<typeof UpdateConnectionSchema>,
-      ),
-    );
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
+    return c.json(await service.update(ctx, actor(c), id, c.req.valid('json'), authority));
   },
 );
 register(
@@ -157,7 +134,10 @@ register(
   },
   async (c) => {
     assertLive(c);
-    await service.remove(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id);
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
+    await service.remove(ctx, actor(c), id, authority);
     return c.json({ ok: true as const });
   },
 );
@@ -165,7 +145,7 @@ connectionsRoutes.use('/test-config', async (c, next) => {
   assertLive(c);
   await next();
 });
-// Test reaches outside hosts with admin-supplied URLs: paced per admin on top of safe fetch.
+// Test reaches outside hosts with user-supplied URLs: paced per user on top of safe fetch.
 connectionsRoutes.use(
   '/test-config',
   rateLimit('RL_API_KEY', (c) => `test-config:${actor(c).id ?? clientIp(c)}`),
@@ -182,9 +162,15 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(
-      await testConfig(sctx(c), actor(c), c.req.valid('json') as z.infer<typeof TestConfigSchema>),
+    const ctx = sctx(c);
+    const input = c.req.valid('json');
+    const authority = await authorizeConnection(
+      ctx,
+      c.var.auth,
+      input.orgId,
+      'integrations:manage',
     );
+    return c.json(await testConfig(ctx, actor(c), input, authority));
   },
 );
 register(
@@ -199,7 +185,10 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(await actions.test(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id));
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
+    return c.json(await actions.test(ctx, actor(c), id, authority));
   },
 );
 register(
@@ -215,10 +204,10 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(
-      await actions.syncNow(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id),
-      202,
-    );
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
+    return c.json(await actions.syncNow(ctx, actor(c), id, authority), 202);
   },
 );
 register(
@@ -234,13 +223,10 @@ register(
   },
   async (c) => {
     assertLive(c);
-    return c.json(
-      await actions.runs(
-        sctx(c),
-        (c.req.valid('param') as { id: string }).id,
-        c.req.valid('query') as z.infer<typeof ConnectionRunsQuerySchema>,
-      ),
-    );
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    await authorizeStoredConnection(c, ctx, id, 'integrations:read');
+    return c.json(await actions.runs(ctx, id, c.req.valid('query')));
   },
 );
 register(
@@ -255,60 +241,23 @@ register(
   },
   async (c) => {
     assertLive(c);
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
     const { webhookSecret, connection } = await actions.rotateWebhookSecret(
-      sctx(c),
+      ctx,
       actor(c),
-      (c.req.valid('param') as { id: string }).id,
+      id,
+      authority,
     );
     return c.json({ ...connection, webhookSecret });
   },
 );
 
-/** /api/v1/connectors */
+/** /api/v1/connectors: platform catalog or a tenant-scoped integration catalog. */
 export const connectorsRoutes = createRouter();
-guard(connectorsRoutes, requireAdmin);
-register(
-  connectorsRoutes,
-  'connectors',
-  { method: 'get', path: '/', summary: 'List connector types', response: ConnectorListSchema },
-  (c: C) => c.json({ items: connectors.list().map(connectorInfo) }),
-);
-register(
-  connectorsRoutes,
-  'connectors',
-  {
-    method: 'get',
-    path: '/{type}',
-    summary: 'Get a connector type',
-    params: z.object({ type: z.string() }),
-    response: ConnectorInfoSchema,
-  },
-  (c) => {
-    const def = connectors.get((c.req.valid('param') as { type: string }).type);
-    if (!def) throw new NotFoundError('Connector type not found.', 'CONNECTOR_NOT_FOUND');
-    return c.json(connectorInfo(def));
-  },
-);
+registerConnectorCatalogRoutes(connectorsRoutes);
 
 /** /hooks/connections: signed inbound webhooks, no session. */
 export const hooksRoutes = createRouter();
-guard(
-  hooksRoutes,
-  rateLimit('RL_WEBHOOK', (c) => `${c.req.path}:${clientIp(c)}`),
-);
-register(
-  hooksRoutes,
-  'connections',
-  {
-    method: 'post',
-    path: '/connections/{id}',
-    summary: 'Inbound webhook (signature verified)',
-    params: IdParamSchema,
-    status: 202,
-    response: WebhookAckSchema,
-  },
-  async (c) => {
-    await receiveWebhook(sctx(c), (c.req.valid('param') as { id: string }).id, c.req.raw);
-    return c.json({ accepted: true as const }, 202);
-  },
-);
+registerConnectionWebhookRoutes(hooksRoutes);

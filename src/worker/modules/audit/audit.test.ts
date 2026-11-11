@@ -7,14 +7,14 @@ import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { dailyAudit } from './jobs.ts';
-import { diffFields, redact, redactDetail } from './redact.ts';
+import { diffFields, redact, redactDetail, redactForRead, safeLabel } from './redact.ts';
 import { recordAudit } from './service.ts';
 
 const fake = fakeAuth();
 let appEnv: AppEnv;
 const app = createApp({ stores: fake.stores });
 const get = (query: string, headers = fake.admin()) =>
-  app.request(`/api/v1/audit${query}`, { headers }, appEnv);
+  app.request(`/api/v1/audit/platform${query}`, { headers }, appEnv);
 
 type Page = {
   items: { id: number; action: string; orgId: string | null; detail: unknown }[];
@@ -45,6 +45,16 @@ describe('redaction', () => {
     expect(out.personalization).toBe('[redacted]');
     expect(out.nested.ok).toBe(1);
     expect(out.long).toHaveLength(503);
+  });
+
+  it('masks supported email punctuation in labels and legacy detail', () => {
+    for (const char of "!#$%&'*+/=?^_`{|}~-") {
+      const email = `private${char}@example.test`;
+      expect(safeLabel(`Operator <${email}>`)).toBeNull();
+      expect(redactForRead({ note: `Contact ${email}` }, false)).toMatchObject({
+        note: '[redacted]',
+      });
+    }
   });
 
   it('replaces oversized detail and diffs only changed fields', () => {

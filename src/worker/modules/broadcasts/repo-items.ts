@@ -1,4 +1,5 @@
 import type { BroadcastOutcome } from '../../../shared/contracts/broadcasts.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { all } from '../../platform/db.ts';
 
 export interface ItemListRow {
@@ -13,10 +14,12 @@ export interface ItemListRow {
 export async function listItems(
   db: D1Database,
   broadcastId: string,
+  orgId: string,
+  mode: Mode,
   f: { outcome?: BroadcastOutcome | undefined; cursor?: string | undefined; limit: number },
 ): Promise<{ rows: ItemListRow[]; nextCursor: string | null }> {
-  const where = ['i.broadcast_id = ?'];
-  const params: (string | number)[] = [broadcastId];
+  const where = ['i.broadcast_id = ?', 'b.org_id = ?', 'b.mode = ?'];
+  const params: (string | number)[] = [broadcastId, orgId, mode];
   if (f.outcome) {
     where.push('i.outcome = ?');
     params.push(f.outcome);
@@ -28,7 +31,9 @@ export async function listItems(
   const rows = await all<ItemListRow>(
     db,
     `SELECT i.pass_id, p.display_title AS title, p.holder_email, i.outcome, i.silent
-     FROM broadcast_items i JOIN passes p ON p.id = i.pass_id
+     FROM broadcast_items i
+     JOIN broadcasts b ON b.id = i.broadcast_id
+     JOIN passes p ON p.id = i.pass_id AND p.org_id = b.org_id AND p.mode = b.mode
      WHERE ${where.join(' AND ')} ORDER BY i.pass_id LIMIT ?`,
     [...params, f.limit + 1],
   );

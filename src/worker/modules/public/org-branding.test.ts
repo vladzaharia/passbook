@@ -3,9 +3,10 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putBrandingImage } from '../orgs/branding.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -45,7 +46,7 @@ describe('org branding images on passes', () => {
   it('lets a per-pass override win over the org image of its slot', async () => {
     const pass = await kit.pass();
     const own = makePng(320, 100);
-    await putPassAsset(kit.ctx, admin, pass.id, 'logo@2x.png', own, null);
+    await putPassAsset(jobCtxOf(kit), admin, pass.id, 'logo@2x.png', own, null);
     const files = unzipSync(await bytesOf(await get(`/p/${pass.downloadToken}/pass.pkpass`)));
     expect(files['logo@2x.png']).toEqual(own);
     expect(files['logo@3x.png']).toBeUndefined();

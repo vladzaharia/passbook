@@ -129,7 +129,11 @@ export function validateNfc(ctx: ValidationContext): void {
   if (nfc.requiresAuthentication !== undefined && typeof nfc.requiresAuthentication !== 'boolean')
     error('NFC', 'nfc.requiresAuthentication must be a boolean.', 'nfc.requiresAuthentication');
   if (nfc.requiresAuthentication === true && pass.sharingProhibited !== true)
-    warn('NFC', 'Set sharingProhibited with requiresAuthentication.', 'nfc.requiresAuthentication');
+    error(
+      'NFC',
+      'Set sharingProhibited with requiresAuthentication.',
+      'nfc.requiresAuthentication',
+    );
   if (hasStyle(ctx, 'PET') && nfc.requiresAuthentication === undefined)
     warn(
       'NFC',

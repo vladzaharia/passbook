@@ -9,8 +9,8 @@ import {
 } from '../../../shared/contracts/events.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getPass } from '../passes/repo.ts';
-import type { ScopeArg } from '../passes/scope.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
+import { readMode, type ScopeArg } from '../passes/scope.ts';
 import { type EventRow, listEvents } from './repo.ts';
 
 type EventPage = z.infer<typeof PassEventListSchema>;
@@ -24,6 +24,18 @@ function decodeCursor(cursor: string | undefined): { at: number; id: string } | 
   return { at: Number(match[1]), id: match[2] };
 }
 
+/** Authority snapshots, proofs, CSRF scalars and keyset commitments never leave the ledger, old rows included. */
+const INTERNAL_KEY = /^authority$|proof|csrf|keyset/i;
+
+export function withoutInternalFields(value: Json): Json {
+  if (Array.isArray(value)) return value.map(withoutInternalFields);
+  if (value === null || typeof value !== 'object') return value;
+  const out: Record<string, Json> = {};
+  for (const [key, item] of Object.entries(value))
+    if (!INTERNAL_KEY.test(key) && item !== undefined) out[key] = withoutInternalFields(item);
+  return out;
+}
+
 export function toEventDto(row: EventRow): EventPage['items'][number] {
   return {
     id: row.id,
@@ -33,7 +45,7 @@ export function toEventDto(row: EventRow): EventPage['items'][number] {
     device: row.device,
     actorType: row.actor_type as EventActorType | null,
     actorId: row.actor_id,
-    data: JSON.parse(row.data) as Record<string, Json>,
+    data: withoutInternalFields(JSON.parse(row.data) as Json) as Record<string, Json>,
     at: row.at,
   };
 }
@@ -48,14 +60,15 @@ export async function listPassEvents(
   orgScope: ScopeArg,
   query: z.infer<typeof PassEventListQuerySchema>,
 ): Promise<EventPage> {
-  if (!(await getPass(ctx.env.DB, passId, orgScope)))
-    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const pass = await getPass(ctx.env.DB, passId, orgScope);
+  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const after = decodeCursor(query.cursor);
   const kinds: EventKind[] = [
     ...new Set([...(query.kind ?? []), ...(query.group ? EVENT_GROUPS[query.group] : [])]),
   ];
   const rows = await listEvents(ctx.env.DB, {
     passId,
+    fence: { orgId: pass.orgId, mode: readMode(orgScope) },
     ...(kinds.length ? { kinds } : {}),
     ...(after ? { after } : {}),
     limit: query.limit + 1,

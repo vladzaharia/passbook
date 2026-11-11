@@ -1,9 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { pushBudgetOf } from '../passes/change-messages.ts';
 import { getPassDetail } from '../passes/detail.ts';
 import { publishPass } from '../passes/publish.ts';
-import { currentPassJson, getPass } from '../passes/repo.ts';
+import { currentPassJson, getPass } from '../passes/repo-read-pass.ts';
 import { type BroadcastKit, broadcastKit } from './test-kit.ts';
 
 let kit: BroadcastKit;
@@ -13,7 +14,7 @@ beforeAll(async () => {
 
 const actor = { type: 'system', id: null } as const;
 const setGate = (passId: string, gate: string, notify = true) =>
-  publishPass(kit.ctx, {
+  publishPass(jobCtxOf(kit), {
     passId,
     cause: 'admin',
     actor,
@@ -36,7 +37,7 @@ describe('push budget', () => {
     expect(await pushBudgetOf(kit.ctx, pass.id)).toMatchObject({ used: 3, limit: 3 });
 
     // A connection-style publish (notify omitted) keeps the template's message; the budget strips it.
-    const fourth = await publishPass(kit.ctx, {
+    const fourth = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'connection',
       actor,
@@ -92,7 +93,7 @@ describe('push budget', () => {
     const before = await pushes();
     const versions = (await getPass(kit.env.DB, pass.id, null))?.version;
     // {} -> {message: ''} renders as before: the field is removed when empty.
-    const cleared = await publishPass(kit.ctx, {
+    const cleared = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       actor,
@@ -100,7 +101,7 @@ describe('push budget', () => {
       mutate: (p) => ({ personalization: { ...p.personalization, message: '' } }),
     });
     // An input the template never renders.
-    const note = await publishPass(kit.ctx, {
+    const note = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       actor,

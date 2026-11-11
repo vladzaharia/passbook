@@ -23,9 +23,13 @@ export const ApiKeySchema = z.object({
   expiresAt: TimestampSchema.nullable(),
   revokedAt: TimestampSchema.nullable(),
 });
+/** The literal query value `null` selects platform-wide keys. */
+export const ApiKeyScopeQuerySchema = z.object({
+  orgId: z.union([z.literal('null').transform(() => null), IdSchema]),
+});
 export const ApiKeyListQuerySchema = PageQuerySchema.extend({
-  /** Keys of one org; platform keys (no org) are left out. */
-  orgId: IdSchema.optional(),
+  /** An exact organization ID, or `null` for platform-wide keys. */
+  orgId: ApiKeyScopeQuerySchema.shape.orgId,
   /** `live`: not revoked (expired included); `revoked`: revoked only. Both when absent. */
   state: z.enum(['live', 'revoked']).optional(),
 });
@@ -35,7 +39,7 @@ export const ApiKeyListSchema = pageOf(ApiKeySchema).extend({
   revokedCount: z.number().int().nonnegative().default(0),
 });
 export const CreateApiKeySchema = z.object({
-  orgId: IdSchema.nullable().optional(),
+  orgId: IdSchema.nullable(),
   name: z.string().min(1).max(120),
   scopes: z.array(ApiScopeSchema).min(1),
   mode: ModeSchema.default('live'),

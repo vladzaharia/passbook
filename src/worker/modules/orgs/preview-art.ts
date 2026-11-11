@@ -25,8 +25,8 @@ export async function previewTemplate(ctx: ServiceContext, orgId: string) {
 
 /**
  * The icon and logo the org's passes carry, as on the pass page: the org's uploads, else the
- * template's. Admin routes on `origin` serve them (the preview frame has the admin session); a
- * holder's capability URL never appears.
+ * template's. Tenant-authorized routes on `origin` serve them; a holder's capability URL never
+ * appears.
  */
 export async function previewImages(
   ctx: ServiceContext,
@@ -43,7 +43,7 @@ export async function previewImages(
       .filter((a) => a.name.endsWith('.png') && !taken(a.name))
       .map((a) => ({
         name: a.name,
-        path: `${base}/${a.name}`,
+        path: `${base}/${a.name}?orgId=${encodeURIComponent(orgId)}`,
         width: a.width ?? null,
         height: a.height ?? null,
       })),

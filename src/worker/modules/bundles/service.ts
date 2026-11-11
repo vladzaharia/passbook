@@ -1,26 +1,36 @@
 import type { z } from 'zod';
-import {
-  BUNDLE_MAX_PASSES,
-  type BundleListSchema,
-  type BundleSchema,
-  type CreateBundleSchema,
+import type {
+  BundleListSchema,
+  BundleSchema,
+  CreateBundleSchema,
 } from '../../../shared/contracts/bundles.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
-import { batch } from '../../platform/db.ts';
+import type { AuthContext } from '../../platform/auth.ts';
+import type { Grant } from '../../platform/authority.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
-import { recordAudit } from '../audit/service.ts';
-import { getPass } from '../passes/repo.ts';
+import { sendOnce } from '../delivery/idempotent-send.ts';
+import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import { enqueueBundleEmail } from './email-queue.ts';
 import * as repo from './repo.ts';
+import { bundleMutationGrant, createBundleGrant } from './repo-writes.ts';
+import { checkPasses } from './service-pass-validation.ts';
 
 export type BundleDto = z.infer<typeof BundleSchema>;
 type BundlePage = z.infer<typeof BundleListSchema>;
+
+/** System execution is reserved for trusted workflows and fixtures; HTTP supplies its principal. */
+export type BundleWriteExecution = { kind: 'system' } | { kind: 'tenant'; auth: AuthContext };
+
+function executionAuth(execution: BundleWriteExecution): AuthContext | undefined {
+  if (execution?.kind === 'system') return undefined;
+  if (execution?.kind === 'tenant' && execution.auth) return execution.auth;
+  throw new ForbiddenError();
+}
 
 export const bundleUrl = (ctx: ServiceContext, token: string) => `${baseUrl(ctx.env)}/b/${token}`;
 
@@ -61,42 +71,39 @@ async function requireBundle(
   ctx: ServiceContext,
   id: string,
   orgScope: ScopeArg,
-): Promise<repo.BundleRow> {
+  auth?: AuthContext,
+  capability: 'passes:read' | 'passes:operate' = 'passes:read',
+): Promise<{ row: repo.BundleRow; authority?: TenantPassWrite }> {
   const row = await repo.getBundle(ctx.env.DB, id, orgScope);
   if (!row) throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
-  return row;
+  if (!auth) return { row };
+  try {
+    return { row, authority: await tenantAuthorityOf(ctx, auth, row.org_id, capability) };
+  } catch (error) {
+    if (!(error instanceof ForbiddenError)) throw error;
+    if (capability === 'passes:operate') {
+      try {
+        await tenantAuthorityOf(ctx, auth, row.org_id, 'passes:read');
+      } catch (readError) {
+        if (readError instanceof ForbiddenError)
+          throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
+        throw readError;
+      }
+      throw error;
+    }
+    throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
+  }
 }
 
-/** For changes: a bundle of the other mode fails like a pass does (404 for keys, 409 for sessions). */
-async function requireBundleForWrite(
-  ctx: ServiceContext,
-  id: string,
-  orgScope: ScopeArg,
-): Promise<repo.BundleRow> {
-  const row = await requireBundle(ctx, id, orgScope);
-  assertWritableMode(orgScope, row.mode, 'bundle');
-  return row;
-}
-
-/** Every pass must be in the org and in the caller's mode, or the bundle is refused. */
-async function checkPasses(
-  ctx: ServiceContext,
-  orgId: string,
-  mode: Mode,
-  passIds: string[],
-): Promise<void> {
-  if (new Set(passIds).size !== passIds.length)
-    throw new ValidationError('A pass is listed twice.', [], 'BUNDLE_DUPLICATE_PASS');
-  if (passIds.length > BUNDLE_MAX_PASSES)
-    throw new ValidationError('A bundle holds at most 10 passes.', [], 'BUNDLE_TOO_MANY');
-  const passes = await Promise.all(passIds.map((id) => getPass(ctx.env.DB, id, orgId)));
-  if (passes.some((p) => !p)) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  if (passes.some((p) => p?.mode !== mode))
-    throw new ValidationError(
-      `A ${mode} bundle holds ${mode} passes only.`,
-      [],
-      'BUNDLE_MODE_MISMATCH',
-    );
+/** A lost lineage on a mutation reads as a missing bundle, as it did before grants. */
+async function commitBundleMutation(g: Grant): Promise<void> {
+  try {
+    await g.commit();
+  } catch (error) {
+    if (error instanceof AppError && error.code === 'BUNDLE_NOT_FOUND')
+      throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
+    throw error;
+  }
 }
 
 /**
@@ -108,13 +115,18 @@ export async function createBundle(
   actor: Actor,
   mode: Mode,
   input: z.infer<typeof CreateBundleSchema>,
+  execution: BundleWriteExecution,
 ): Promise<BundleDto> {
+  const auth = executionAuth(execution);
+  const authority = auth
+    ? await tenantAuthorityOf(ctx, auth, input.orgId, 'passes:operate')
+    : undefined;
   const holderEmail = input.holderEmail ? strictEmail(input.holderEmail) : null;
   if (input.holderEmail && !holderEmail)
     throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   if (input.sendEmail && !holderEmail)
     throw new ValidationError('Add an email to send the bundle.', [], 'NO_RECIPIENT');
-  await checkPasses(ctx, input.orgId, mode, input.passIds);
+  const passes = await checkPasses(ctx, input.orgId, mode, input.passIds);
   const row = {
     id: ctx.ids.id(),
     orgId: input.orgId,
@@ -123,24 +135,19 @@ export async function createBundle(
     token: ctx.ids.token(),
     holderEmail,
     actor: { type: actor.type, id: actor.id },
-    passIds: input.passIds,
+    passes,
     now: ctx.clock.now(),
   };
-  await batch(ctx.env.DB, [
-    ...repo.insertBundleStmts(ctx.env.DB, row),
-    auditStmt(ctx.env.DB, ctx, {
-      orgId: input.orgId,
-      actorType: actor.type,
-      actorId: actor.id,
-      action: 'bundle.create',
-      targetType: 'bundle',
-      targetId: row.id,
-      detail: { passes: input.passIds.length, mode },
-    }),
-  ]);
+  await createBundleGrant(ctx, row, authority, { passes: input.passIds.length, mode }).commit();
   if (input.sendEmail && holderEmail) {
     try {
-      await enqueueBundleEmail(ctx, row.id, holderEmail);
+      await enqueueBundleEmail(
+        ctx,
+        row.id,
+        holderEmail,
+        { token: row.token, holderEmail },
+        authority,
+      );
     } catch (error) {
       // The bundle exists and a retry would create a second live link: a failed email is resent
       // on request, never a failed create.
@@ -160,13 +167,15 @@ export async function getBundleDto(
   ctx: ServiceContext,
   id: string,
   orgScope: ScopeArg,
+  auth?: AuthContext,
 ): Promise<BundleDto> {
-  const [dto] = await withMembers(ctx, [await requireBundle(ctx, id, orgScope)]);
+  const { row } = await requireBundle(ctx, id, orgScope, auth);
+  const [dto] = await withMembers(ctx, [row]);
   if (!dto) throw new NotFoundError('Bundle not found.', 'BUNDLE_NOT_FOUND');
   return dto;
 }
 
-/** Lists the caller's mode only; `orgScope` pins an org-scoped API key to its org. */
+/** Lists one authorized organization's bundles in the caller's mode. */
 export async function listBundles(
   ctx: ServiceContext,
   filter: Omit<repo.BundleListFilter, 'limit'> & { limit: number },
@@ -184,19 +193,27 @@ export async function rotateBundleLink(
   actor: Actor,
   id: string,
   orgScope: ScopeArg,
+  execution: BundleWriteExecution,
 ): Promise<BundleDto> {
-  const row = await requireBundleForWrite(ctx, id, orgScope);
-  await batch(ctx.env.DB, [
-    repo.setBundleTokenStmt(ctx.env.DB, id, ctx.ids.token(), ctx.clock.now()),
-    auditStmt(ctx.env.DB, ctx, {
+  const { row, authority } = await requireBundle(
+    ctx,
+    id,
+    orgScope,
+    executionAuth(execution),
+    'passes:operate',
+  );
+  assertWritableMode(orgScope, row.mode, 'bundle');
+  await commitBundleMutation(
+    bundleMutationGrant(ctx, {
+      id,
       orgId: row.org_id,
-      actorType: actor.type,
-      actorId: actor.id,
-      action: 'bundle.rotate_link',
-      targetType: 'bundle',
-      targetId: id,
+      mode: row.mode,
+      authority,
+      actor,
+      action: 'rotate_link',
+      token: ctx.ids.token(),
     }),
-  ]);
+  );
   return getBundleDto(ctx, id, orgScope);
 }
 
@@ -205,19 +222,26 @@ export async function deleteBundle(
   actor: Actor,
   id: string,
   orgScope: ScopeArg,
+  execution: BundleWriteExecution,
 ): Promise<void> {
-  const row = await requireBundleForWrite(ctx, id, orgScope);
-  await batch(ctx.env.DB, [
-    repo.deleteBundleStmt(ctx.env.DB, id),
-    auditStmt(ctx.env.DB, ctx, {
+  const { row, authority } = await requireBundle(
+    ctx,
+    id,
+    orgScope,
+    executionAuth(execution),
+    'passes:operate',
+  );
+  assertWritableMode(orgScope, row.mode, 'bundle');
+  await commitBundleMutation(
+    bundleMutationGrant(ctx, {
+      id,
       orgId: row.org_id,
-      actorType: actor.type,
-      actorId: actor.id,
-      action: 'bundle.delete',
-      targetType: 'bundle',
-      targetId: id,
+      mode: row.mode,
+      authority,
+      actor,
+      action: 'delete',
     }),
-  ]);
+  );
 }
 
 export async function sendBundleEmail(
@@ -226,20 +250,47 @@ export async function sendBundleEmail(
   id: string,
   input: { to?: string | undefined },
   orgScope: ScopeArg,
+  execution: BundleWriteExecution,
+  idempotencyKey?: string,
 ): Promise<void> {
-  const row = await requireBundleForWrite(ctx, id, orgScope);
+  const { row, authority } = await requireBundle(
+    ctx,
+    id,
+    orgScope,
+    executionAuth(execution),
+    'passes:operate',
+  );
+  assertWritableMode(orgScope, row.mode, 'bundle');
   const to = input.to ?? row.holder_email;
   if (!to) throw new ValidationError('The bundle has no email.', [], 'NO_RECIPIENT');
   // API keys may not turn this into a mail relay.
   if (actor.type !== 'user' && to.toLowerCase() !== row.holder_email?.toLowerCase())
     throw new ValidationError('Only the bundle email can be used.', [], 'RECIPIENT_NOT_HOLDER');
-  await enqueueBundleEmail(ctx, id, to);
-  await recordAudit(ctx, {
-    orgId: row.org_id,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'bundle.send_email',
-    targetType: 'bundle',
-    targetId: id,
-  });
+  const send = () =>
+    enqueueBundleEmail(
+      ctx,
+      id,
+      to,
+      { token: row.token, holderEmail: row.holder_email },
+      authority,
+      actor,
+    );
+  if (idempotencyKey === undefined || !authority) {
+    await send();
+    return;
+  }
+  await sendOnce(
+    ctx,
+    {
+      orgId: row.org_id,
+      scope: `bundle-send:${id}`,
+      key: idempotencyKey,
+      request: [id, input.to?.toLowerCase() ?? null],
+      authority,
+    },
+    async () => {
+      await send();
+      return { ok: true as const };
+    },
+  );
 }

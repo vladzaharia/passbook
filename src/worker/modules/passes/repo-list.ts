@@ -89,7 +89,10 @@ export async function listPasses(
   const { where, params } = passFilterSql(filter);
   const rows = await all<PassDbRow>(
     db,
-    `${PASS_SELECT} WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
+    `${PASS_SELECT} WHERE ${where.join(' AND ')}
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+        WHERE t.pass_id = passes.id AND t.state = 'pending')
+      ORDER BY id DESC LIMIT ?`,
     [...params, filter.limit + 1],
   );
   const page = rows.slice(0, filter.limit).map(mapPass);

@@ -59,5 +59,9 @@ export async function servePassFile(
   if (!object) throw new NotFoundError('The pass file is missing.', 'PASS_FILE_MISSING');
   headers.set('content-length', String(object.size));
   headers.set('content-disposition', `attachment; filename="${passFileName(pass)}"`);
-  return new Response(request.method === 'HEAD' ? null : object.body, { status: 200, headers });
+  if (request.method === 'HEAD') {
+    await object.body.cancel();
+    return new Response(null, { status: 200, headers });
+  }
+  return new Response(object.body, { status: 200, headers });
 }

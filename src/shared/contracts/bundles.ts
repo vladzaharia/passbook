@@ -44,6 +44,7 @@ export const BundleSchema = z.object({
 export type BundleDto = z.infer<typeof BundleSchema>;
 
 export const BundleListQuerySchema = PageQuerySchema.extend({
+  /** Org-bound API keys may omit it. */
   orgId: OrgIdSchema.optional(),
   /** Only the bundles holding this pass. */
   passId: IdSchema.optional(),

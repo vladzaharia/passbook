@@ -52,12 +52,19 @@ describe('first-run setup counts', () => {
       scanners: 0,
     });
 
-    // A scope narrows the totals, not the checklist: it is about the platform.
+    // The same checklist is tenant-scoped when the metrics request has an org.
     const other = await makeOrg(f);
     clearMetricsCache(env.DB);
     const scoped = await getOverview(ctx, { orgId: other.id, range: '7d' });
     expect(scoped.totals.passes).toBe(0);
-    expect(scoped.setup).toEqual({ ...after, orgs: after.orgs + 1 });
+    expect(scoped.setup).toEqual({
+      orgs: 1,
+      assignedTemplates: 0,
+      passes: 0,
+      passEmailsSent: 0,
+      latestPassId: null,
+      scanners: 0,
+    });
   });
 
   it('skips the short cache until the first pass email, then caches again', async () => {

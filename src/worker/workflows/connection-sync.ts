@@ -1,13 +1,15 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import { executeSync, type StepLike } from '../modules/connections/sync-runner.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { createServiceContext } from '../platform/service-context.ts';
+import { createJobContext } from '../platform/service-context.ts';
 
 export interface ConnectionSyncParams {
   /** Organization captured when the run was scheduled; never adopt a reassigned connection. */
   orgId: string;
   connectionId: string;
   generation: number;
+  /** Credential reference keyset captured before the enqueue was committed. */
+  credentialKeysetCommitment: string;
   trigger: 'schedule' | 'webhook' | 'admin';
   /** connection_runs id; defaults to the instance id. */
   runId?: string;
@@ -19,7 +21,7 @@ export class ConnectionSync extends WorkflowEntrypoint<AppEnv, ConnectionSyncPar
     event: WorkflowEvent<ConnectionSyncParams>,
     step: WorkflowStep,
   ): Promise<void> {
-    const sctx = createServiceContext(this.env, {
+    const sctx = createJobContext(this.env, 'connection-sync', {
       ctx: this.ctx,
       base: { workflow: 'connection-sync' },
     });

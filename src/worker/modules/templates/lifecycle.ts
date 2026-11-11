@@ -2,9 +2,13 @@ import { zipSync } from 'fflate';
 import type { AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { audit } from './mutations.ts';
-import { clearTemplateCache, createTemplateRegistry } from './registry.ts';
-import { setStatus } from './repo.ts';
+import {
+  archiveTemplate,
+  authorizeTemplateMutation,
+  resolveCurrentTemplate,
+  restoreTemplate,
+} from './mutations.ts';
+import { createTemplateRegistry } from './registry.ts';
 import { detail, loadTemplate } from './service.ts';
 
 /** Archived templates keep serving their passes; new passes cannot use them. */
@@ -17,24 +21,25 @@ export async function setArchived(
   const row = await loadTemplate(ctx, auth, id);
   if (row.origin === 'baked')
     throw new ForbiddenError('Built-in templates cannot be archived.', 'TEMPLATE_BAKED');
-  const next = archived ? 'archived' : 'active';
-  if (row.status !== next) {
-    await setStatus(ctx.env.DB, id, next, ctx.clock.now());
-    clearTemplateCache(ctx.env, id);
-    await audit(ctx, auth, row, archived ? 'template.archive' : 'template.restore');
+  const authority = await authorizeTemplateMutation(ctx, auth, row, 'templates:publish');
+  if (archived) {
+    if (row.status !== 'archived') await archiveTemplate(ctx, auth, row, authority);
+  } else if (row.status === 'archived') {
+    await restoreTemplate(ctx, auth, row, authority);
   }
   return detail(ctx, auth, id);
 }
 
-/** The active version as an uploadable package: pass.json, wallet.template.json and the images. */
+/** Export the active version or, for an unpublished template, its latest draft. */
 export async function templatePackage(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   id: string,
+  orgId?: string,
 ): Promise<{ bytes: Uint8Array; fileName: string }> {
-  const row = await loadTemplate(ctx, auth, id);
+  const row = await loadTemplate(ctx, auth, id, orgId);
   const registry = createTemplateRegistry(ctx.env, { ctx });
-  const template = await registry.resolve(id);
+  const template = await resolveCurrentTemplate(ctx, registry, row);
   const { org: _org, ...manifest } = template.manifest as typeof template.manifest & {
     org?: unknown;
   };

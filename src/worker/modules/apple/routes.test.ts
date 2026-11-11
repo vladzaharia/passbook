@@ -3,10 +3,13 @@ import { fakeAuth, fakeRateLimiter, makeOrg } from '../../../../test/helpers/ind
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { getPass, type Pass } from '../passes/repo.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { updatePass } from '../passes/service.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { dailyApple } from './jobs.ts';
+import { anyRegisteredDevice, passesBySerials } from './repo.ts';
 import { passRateKey } from './routes.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -34,6 +37,67 @@ const register = (
     headers: { ...headers, 'content-type': 'application/json' },
     body: JSON.stringify({ pushToken }),
   });
+
+describe('quarantined legacy test passes', () => {
+  it('treats stale registrations as unknown and omits them from device updates', async () => {
+    const blocked = await kit.pass({ mode: 'test' });
+    const normal = await kit.pass();
+    expect((await register(blocked, 'quarantine-shared')).status).toBe(201);
+    expect((await register(blocked, 'quarantine-only')).status).toBe(201);
+    expect((await register(normal, 'quarantine-shared')).status).toBe(201);
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [blocked.id]);
+
+    const rejected = await register(blocked, 'quarantine-shared', token('b'));
+    const unknown = await call(`/devices/quarantine-shared/registrations/${TYPE}/unknown-serial`, {
+      method: 'POST',
+      headers: { ...authHeader(blocked), 'content-type': 'application/json' },
+      body: JSON.stringify({ pushToken: token('b') }),
+    });
+    expect(rejected.status).toBe(401);
+    // Only the per-request id may differ between the two problem documents.
+    const withoutRequestId = async (response: Response) => ({
+      ...(await response.json<Record<string, unknown>>()),
+      requestId: undefined,
+    });
+    expect(await withoutRequestId(rejected)).toEqual(await withoutRequestId(unknown));
+    expect((await register(blocked, 'quarantine-new')).status).toBe(401);
+    expect(
+      (
+        await call(`/devices/quarantine-shared/registrations/${TYPE}/${blocked.serial}`, {
+          method: 'DELETE',
+          headers: authHeader(blocked),
+        })
+      ).status,
+    ).toBe(401);
+    const fetch = await call(`/passes/${TYPE}/${blocked.serial}`, {
+      headers: { ...authHeader(blocked), 'if-none-match': `"${blocked.objectSha256}"` },
+    });
+    expect(fetch.status).toBe(401);
+    expect(fetch.headers.get('etag')).toBeNull();
+    const stored = await first<{ push_token: string }>(
+      kit.env.DB,
+      'SELECT push_token FROM registrations WHERE device_id = ? AND pass_id = ?',
+      ['quarantine-shared', blocked.id],
+    );
+    expect(stored?.push_token).toBe(token('a'));
+    expect((await call(`/devices/quarantine-only/registrations/${TYPE}`)).status).toBe(204);
+    const updates = await call(`/devices/quarantine-shared/registrations/${TYPE}`);
+    expect(updates.status).toBe(200);
+    expect(await updates.json()).toMatchObject({ serialNumbers: [normal.serial] });
+    expect(
+      (await call(`/passes/${TYPE}/${normal.serial}`, { headers: authHeader(normal) })).status,
+    ).toBe(200);
+    expect((await register(normal, 'quarantine-shared')).status).toBe(200);
+
+    const candidates = await passesBySerials(kit.env.DB, normal.identityId, [
+      blocked.serial,
+      normal.serial,
+    ]);
+    expect(candidates.map((p) => p.id)).toEqual([normal.id]);
+    expect(await anyRegisteredDevice(kit.env.DB, blocked, ['quarantine-shared'])).toBe(false);
+    expect(await anyRegisteredDevice(kit.env.DB, normal, ['quarantine-shared'])).toBe(true);
+  });
+});
 
 describe('register', () => {
   it('returns 201 for a new registration and 200 when it repeats, updating the token', async () => {
@@ -185,7 +249,7 @@ describe('serials since a tag', () => {
     expect(none.status).toBe(204);
 
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       a.id,
       { input: { memberName: 'Changed' } },
@@ -241,6 +305,38 @@ describe('latest pass', () => {
     expect([bytes[0], bytes[1]]).toEqual([0x50, 0x4b]);
   });
 
+  it('cancels the open R2 body when the credential is revoked mid-request', async () => {
+    const pass = await kit.pass();
+    let cancelled = false;
+    const bucket = {
+      get: async () => {
+        await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
+          pass.id,
+        ]);
+        return {
+          size: 3,
+          body: new ReadableStream<Uint8Array>({
+            pull: (controller) => controller.enqueue(new Uint8Array([1, 2, 3])),
+            cancel: () => {
+              cancelled = true;
+            },
+          }),
+        };
+      },
+    } as unknown as R2Bucket;
+    try {
+      const res = await app.request(
+        `${ORIGIN}/wallet/v1/passes/${TYPE}/${pass.serial}`,
+        { headers: authHeader(pass) },
+        { ...kit.env, BUCKET: bucket },
+      );
+      expect(res.status).toBe(401);
+      expect(cancelled).toBe(true);
+    } finally {
+      await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 0 WHERE id = ?', [pass.id]);
+    }
+  });
+
   it('answers 304 for If-Modified-Since and If-None-Match, and 200 once the pass changed', async () => {
     const pass = await kit.pass();
     const first1 = await get(pass);
@@ -258,7 +354,7 @@ describe('latest pass', () => {
     kit.clock.advance(5000);
     await run(kit.env.DB, 'UPDATE passes SET modified_at = modified_at WHERE id = ?', [pass.id]);
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'Newer' } },
@@ -274,7 +370,7 @@ describe('latest pass', () => {
   it('never hides an update made in the same second as the last one', async () => {
     const pass = await kit.pass();
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'Quick' } },
@@ -354,7 +450,7 @@ describe('retention', () => {
     await run(kit.env.DB, "INSERT INTO revisions (pass_id, at) VALUES ('p-old', ?)", [
       now - 8 * day,
     ]);
-    await dailyApple(kit.ctx);
+    await dailyApple(jobCtxOf(kit));
     const lines = await all<{ line: string }>(kit.env.DB, 'SELECT line FROM wallet_logs');
     expect(lines.map((l) => l.line)).toEqual(['new']);
     expect(await first(kit.env.DB, "SELECT 1 FROM revisions WHERE pass_id = 'p-old'")).toBeNull();

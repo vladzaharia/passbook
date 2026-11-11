@@ -123,6 +123,147 @@ describe('pass email', () => {
     );
   });
 
+  it.each([
+    { providers: [] as const },
+    { providers: ['google'] as const },
+    { providers: ['samsung'] as const },
+    { providers: ['google', 'samsung'] as const },
+  ])('renders every available wallet and no others: $providers', ({ providers }) => {
+    const offers = providers.map((provider) => ({
+      provider,
+      href: `/p/t/wallet/${provider}`,
+      installation: 'unknown' as const,
+    }));
+    const { html, text } = render({ publicBaseUrl: 'https://w.test', walletOffers: offers });
+    expect(html).toContain('href="https://w.test/p/t/pass.pkpass"');
+    expect(html).toContain('alt="Add to Apple Wallet"');
+    expect(text).toContain('Add to Apple Wallet: https://w.test/p/t/pass.pkpass');
+    expect(html).toContain('href="https://w.test/p/t"');
+    expect(text).toContain('Open your pass: https://w.test/p/t');
+    for (const [provider, label, asset] of [
+      ['google', 'Add to Google Wallet', '/icons/wallet-providers/google/add-to-google-wallet.svg'],
+      [
+        'samsung',
+        'Add to Samsung Wallet',
+        '/icons/wallet-providers/samsung/add-to-samsung-wallet.png',
+      ],
+    ] as const) {
+      if (providers.some((p) => p === provider)) {
+        expect(html).toContain(`href="https://w.test/p/t/wallet/${provider}"`);
+        expect(html).toContain(`src="https://w.test${asset}" alt="${label}"`);
+        expect(text).toContain(`${label}: https://w.test/p/t/wallet/${provider}`);
+      } else {
+        expect(html).not.toContain(asset);
+        expect(html).not.toContain(label);
+        expect(text).not.toContain(label);
+      }
+    }
+  });
+
+  it('keeps text links for mail clients that cannot show the badges', () => {
+    const { html } = render({
+      publicBaseUrl: 'https://w.test',
+      walletOffers: [
+        { provider: 'google', href: '/p/t/wallet/google', installation: 'unknown' },
+        { provider: 'samsung', href: '/p/t/wallet/samsung', installation: 'unknown' },
+      ],
+    });
+    expect(html).toContain(
+      'alt="Add to Google Wallet" width="283" height="50" style="display:block;width:283px;max-width:100%;height:auto;',
+    );
+    expect(html).toContain(
+      'alt="Add to Samsung Wallet" width="242" height="50" style="display:block;width:242px;max-width:100%;height:auto;',
+    );
+    const withoutImages = html.replace(/<img [^>]*>/g, '');
+    expect(withoutImages).toMatch(
+      /href="https:\/\/w\.test\/p\/t\/wallet\/google"[^>]*>Add to Google Wallet<\/a>/,
+    );
+    expect(withoutImages).toMatch(
+      /href="https:\/\/w\.test\/p\/t\/wallet\/samsung"[^>]*>Add to Samsung Wallet<\/a>/,
+    );
+  });
+
+  it('does not make installation claims for available offers', () => {
+    const { html, text } = render({
+      publicBaseUrl: 'https://w.test',
+      walletOffers: [
+        { provider: 'google', href: '/p/t/wallet/google', installation: 'unknown' },
+        { provider: 'samsung', href: '/p/t/wallet/samsung', installation: 'unknown' },
+      ],
+    });
+    for (const provider of ['google', 'samsung']) {
+      expect(html).toContain(`href="https://w.test/p/t/wallet/${provider}"`);
+      expect(text).toContain(`https://w.test/p/t/wallet/${provider}`);
+    }
+    expect(html.toLowerCase()).not.toMatch(/\b(installed|removed)\b/);
+    expect(text.toLowerCase()).not.toMatch(/\b(installed|removed)\b/);
+  });
+
+  it('escapes capability links in HTML and retains them as text', () => {
+    const { html, text } = render({
+      orgName: 'A&B <Gym>',
+      manageUrl: 'https://w.test/p/t&x',
+      publicBaseUrl: 'https://w.test',
+      walletOffers: [
+        { provider: 'google', href: '/p/t&x/wallet/google', installation: 'unknown' },
+        { provider: 'samsung', href: '/p/t&x/wallet/samsung', installation: 'unknown' },
+      ],
+    });
+    expect(html).toContain('A&amp;B &lt;Gym&gt;');
+    for (const provider of ['google', 'samsung']) {
+      expect(html).toContain(`href="https://w.test/p/t&amp;x/wallet/${provider}"`);
+      expect(text).toContain(`https://w.test/p/t&x/wallet/${provider}`);
+    }
+    expect(html).not.toContain('A&B <Gym>');
+  });
+
+  it('omits links that are not capabilities for this pass and never exposes their tokens', () => {
+    const { html, text } = render({
+      publicBaseUrl: 'https://w.test',
+      walletOffers: [
+        {
+          provider: 'google',
+          href: 'https://pay.google.test/save/private-google-jwt',
+          installation: 'unknown',
+        },
+        {
+          provider: 'samsung',
+          href: '/p/t/wallet/samsung?token=private-samsung-token',
+          installation: 'unknown',
+        },
+        { provider: 'google', href: '/p/other-pass/wallet/google', installation: 'unknown' },
+        {
+          provider: 'samsung',
+          href: '/p/t/wallet/samsung" onmouseover="bad',
+          installation: 'unknown',
+        },
+      ],
+    });
+    for (const value of [
+      'private-google-jwt',
+      'private-samsung-token',
+      'other-pass',
+      'onmouseover',
+      'Add to Google Wallet',
+      'Add to Samsung Wallet',
+    ]) {
+      expect(html).not.toContain(value);
+      expect(text).not.toContain(value);
+    }
+    expect(html).toContain('alt="Add to Apple Wallet"');
+  });
+
+  it('needs an absolute public base before rendering native offers', () => {
+    const walletOffers = [
+      { provider: 'google' as const, href: '/p/t/wallet/google', installation: 'unknown' as const },
+    ];
+    for (const publicBaseUrl of [undefined, '/relative', 'javascript:alert(1)']) {
+      const email = render({ publicBaseUrl, walletOffers });
+      expect(email.html).not.toContain('Add to Google Wallet');
+      expect(email.text).not.toContain('Add to Google Wallet');
+    }
+  });
+
   it('wraps the pair without media queries, side by side or stacked, and in a row in Outlook', () => {
     const { html } = render();
     const { width } = EMAIL_BADGE;

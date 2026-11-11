@@ -57,6 +57,8 @@ export const TemplateVersionSchema = z.object({
   assets: z.array(AssetEntrySchema),
   report: ValidationReportSchema,
   active: z.boolean(),
+  /** A different version with the same known pass build key as the active version. */
+  displayOnly: z.boolean(),
   /** Live passes on this version. */
   passCount: z.number().int().default(0),
 });
@@ -76,6 +78,8 @@ export const TemplateDetailSchema = TemplateSummarySchema.extend({
   passesOnOlderVersions: z.number().int().default(0),
   /** Of those, the passes the update could not move: their fields no longer fit the active version. */
   passesBlocked: z.number().int().default(0),
+  /** Archived, uploaded and never released: Restore flips it back without a release. */
+  restorable: z.boolean().default(false),
 });
 
 const BoolQuery = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');
@@ -144,9 +148,6 @@ export function bakedTemplateId(slug: string): string {
   return `baked:${slug}`;
 }
 
-export const ActivateVersionSchema = z.object({
-  version: z.string(),
-});
 export const CloneTemplateSchema = z.object({
   orgId: IdSchema,
   name: z.string().min(1).max(120).optional(),

@@ -1,27 +1,42 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import {
+  makeApiKey,
+  makeOrg,
+  makeSession,
+  type SessionFixture,
+} from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { denyAllStores } from '../../platform/auth.ts';
 import { all, run } from '../../platform/db.ts';
+import { createApiKeyStore } from '../api-keys/service.ts';
+import { createSessionStore } from '../auth/sessions.ts';
 import { setDeps } from './deps.ts';
 import { sampleFields } from './test-config.ts';
-import { type Kit, makeKit } from './test-kit.ts';
+import { addMembership, type Kit, makeKit } from './test-kit.ts';
 
 let kit: Kit;
-let fake: ReturnType<typeof fakeAuth>;
+let session: SessionFixture;
 let app: ReturnType<typeof createApp>;
 beforeEach(async () => {
   kit = await makeKit();
-  fake = fakeAuth();
-  app = createApp({ stores: fake.stores, clock: kit.clock });
+  session = await makeSession(kit, { userId: kit.actor.id, roles: ['admin', 'user'] });
+  await addMembership(kit, kit.actor.id, ['org_admin']);
+  app = createApp({
+    stores: {
+      ...denyAllStores,
+      sessions: createSessionStore(kit.env, kit.clock),
+      apiKeys: createApiKeyStore(kit.env, kit.clock),
+    },
+    clock: kit.clock,
+  });
 });
 
-const admin = () => fake.session({ userId: kit.actor.id, roles: ['admin', 'user'] });
-async function call(method: string, path: string, body?: unknown) {
+async function call(method: string, path: string, body?: unknown, headers = session.headers) {
   const res = await app.request(
     path,
     {
       method,
-      headers: { ...admin(), ...(body ? { 'content-type': 'application/json' } : {}) },
+      headers: { ...headers, ...(body ? { 'content-type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
     },
     kit.env,
@@ -98,6 +113,76 @@ describe('POST /connections/test-config', () => {
     expect(JSON.stringify(res.json)).not.toContain('tok-secret');
   });
 
+  it('uses an org-bound write key for a secret-bearing unsaved test without persisting secrets', async () => {
+    const writeKey = await makeApiKey(kit, { orgId: kit.org.id, scopes: ['connections:write'] });
+    const readKey = await makeApiKey(kit, { orgId: kit.org.id, scopes: ['connections:read'] });
+    const other = await makeOrg(kit);
+    const seen: string[] = [];
+    setDeps({
+      fetchImpl: async (_input, init) => {
+        seen.push(new Headers(init?.headers).get('authorization') ?? '');
+        return new Response(JSON.stringify({ data: { name: 'Maya' } }), {
+          headers: { 'content-type': 'application/json' },
+        });
+      },
+    });
+    const input = {
+      orgId: kit.org.id,
+      connectorType: 'http-json',
+      config: {
+        baseUrl: 'https://api.example.com/v1',
+        recordPath: '/members/{ref}',
+        recordPointer: '/data',
+        testRef: 'm-1',
+        auth: { type: 'bearer' },
+      },
+      secrets: { token: 'unsaved-api-token' },
+    };
+    const deniedScope = await call(
+      'POST',
+      '/api/v1/connections/test-config',
+      input,
+      readKey.headers,
+    );
+    expect(deniedScope.status).toBe(403);
+    expect(deniedScope.json.code).toBe('MISSING_SCOPE');
+    expect(
+      (
+        await call(
+          'POST',
+          '/api/v1/connections/test-config',
+          { ...input, orgId: other.id },
+          writeKey.headers,
+        )
+      ).status,
+    ).toBe(403);
+    expect(seen).toEqual([]);
+    const result = await call('POST', '/api/v1/connections/test-config', input, writeKey.headers);
+    expect(result.status).toBe(200);
+    expect(result.json).toMatchObject({
+      ok: true,
+      sample: [{ pointer: '/name', preview: 'Maya' }],
+    });
+    expect(JSON.stringify(result.json)).not.toContain('unsaved-api-token');
+    expect(seen).toEqual(['Bearer unsaved-api-token', 'Bearer unsaved-api-token']);
+    expect(
+      await all(kit.env.DB, 'SELECT id FROM connections WHERE org_id = ?', [kit.org.id]),
+    ).toEqual([]);
+    expect(
+      await all(kit.env.DB, 'SELECT id FROM credentials WHERE org_id = ?', [kit.org.id]),
+    ).toEqual([]);
+    const audits = await all(
+      kit.env.DB,
+      'SELECT actor_type, actor_id, detail FROM audit_log WHERE org_id = ?',
+      [kit.org.id],
+    );
+    expect(audits).toEqual([
+      expect.objectContaining({ actor_type: 'api_key', actor_id: writeKey.id }),
+    ]);
+    expect(JSON.stringify(audits)).not.toContain('unsaved-api-token');
+    expect(JSON.stringify(audits)).not.toContain(writeKey.secret);
+  });
+
   it('refuses private hosts and reports failures by code', async () => {
     const unsafe = await call('POST', '/api/v1/connections/test-config', {
       orgId: kit.org.id,
@@ -132,7 +217,7 @@ describe('list', () => {
       made.json.id,
       kit.org.id,
     ]);
-    const res = await call('GET', '/api/v1/connections?q=member');
+    const res = await call('GET', `/api/v1/connections?orgId=${kit.org.id}&q=member`);
     expect(res.json.items.map((i: { name: string }) => i.name)).toEqual(['Member sync']);
     expect(res.json.items[0].passCount).toBe(0);
   });

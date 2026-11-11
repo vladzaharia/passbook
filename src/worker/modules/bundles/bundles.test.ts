@@ -3,11 +3,14 @@ import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
 import { BundleListSchema, BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { EMAIL_RECIPIENT_HOURLY_CAP } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
-import { EMAIL_RECIPIENT_HOURLY_CAP } from '../delivery/service.ts';
-import { createPassRow } from '../passes/create.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { voidPass } from '../passes/service.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { seedBundlePrincipal } from './test-auth-fixtures.ts';
+
+const job = () => jobCtxOf(kit);
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);
@@ -17,13 +20,15 @@ let other: { id: string };
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  app = createApp({ stores: fake.stores, clock: kit.clock });
   other = await makeOrg(kit.fx, { name: 'Other Org' });
 });
 
 type Headers = Record<string, string>;
-const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>
-  app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);
+const api = async (path: string, init: RequestInit & { headers?: Headers } = {}) => {
+  if (init.headers) await seedBundlePrincipal(kit, fake, init.headers);
+  return app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);
+};
 const post = (path: string, headers: Headers, body: unknown = {}) =>
   api(path, {
     method: 'POST',
@@ -33,15 +38,7 @@ const post = (path: string, headers: Headers, body: unknown = {}) =>
 const create = (headers: Headers, body: Record<string, unknown>) =>
   post('/bundles', headers, { orgId: kit.org.id, name: 'Family', ...body });
 const makePass = (orgId = kit.org.id, mode: 'live' | 'test' = 'live') =>
-  createPassRow(kit.ctx, {
-    orgId,
-    templateId: kit.template.id,
-    templateVersion: kit.template.version,
-    input: { memberName: 'Bundle Test' },
-    source: 'manual',
-    mode,
-    actor: { type: 'system', id: null },
-  });
+  kit.pass({ orgId, mode, memberName: 'Bundle Test' });
 const bundleOf = async (res: Response) => BundleSchema.parse(await res.json());
 const code = async (res: Response) => ((await res.json()) as { code: string }).code;
 
@@ -102,7 +99,7 @@ describe('POST /bundles', () => {
     const a = await makePass();
     const readOnly = fake.apiKey({ scopes: ['passes:read'] });
     expect((await create(readOnly, { passIds: [a.id] })).status).toBe(403);
-    expect((await api('/bundles', { headers: readOnly })).status).toBe(200);
+    expect((await api(`/bundles?orgId=${kit.org.id}`, { headers: readOnly })).status).toBe(200);
     expect(
       (await api('/bundles', { headers: fake.apiKey({ scopes: ['templates:read'] }) })).status,
     ).toBe(403);
@@ -140,9 +137,9 @@ describe('list and get', () => {
     const stranger = fake.apiKey({ orgId: kit.org.id });
     expect((await api(`/bundles/${l.id}`, { headers: stranger })).status).toBe(404);
     expect(
-      BundleListSchema.parse(await (await api('/bundles', { headers: stranger })).json()).items.map(
-        (b) => b.id,
-      ),
+      BundleListSchema.parse(
+        await (await api(`/bundles?orgId=${kit.org.id}`, { headers: stranger })).json(),
+      ).items.map((b) => b.id),
     ).not.toContain(l.id);
   });
 });
@@ -215,7 +212,7 @@ describe('send-email', () => {
       bundleId: bundle.id,
     });
     const before = kit.mailer.sent.length;
-    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, job());
     expect(kit.mailer.sent).toHaveLength(before + 1);
     const mail = kit.mailer.sent.at(-1);
     expect(mail?.to).toBe('mia@example.com');
@@ -281,7 +278,7 @@ describe('send-email', () => {
     expect(res.status).toBe(404);
   });
 
-  it('the email still sends when the first pass was deleted; a removed pass reads voided', async () => {
+  it('cancels queued email when the bundle members change; a removed pass reads voided', async () => {
     const a = await makePass();
     const b = await makePass();
     const bundle = await bundleOf(
@@ -301,9 +298,11 @@ describe('send-email', () => {
     const got = await bundleOf(await api(`/bundles/${bundle.id}`, { headers: fake.admin() }));
     expect(got.passes).toEqual([expect.objectContaining({ id: b.id, status: 'voided' })]);
     const before = kit.mailer.sent.length;
-    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, kit.ctx);
-    expect(kit.mailer.sent).toHaveLength(before + 1);
-    expect(kit.mailer.sent.at(-1)?.to).toBe('first-gone@example.com');
+    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, job());
+    expect(kit.mailer.sent).toHaveLength(before);
+    expect(
+      await first(kit.env.DB, 'SELECT state, error_code FROM outbox WHERE id = ?', [row?.id]),
+    ).toEqual({ state: 'cancelled', error_code: 'DELIVERY_STALE' });
   });
 
   it('a test-mode bundle never sends: captured, sent/TEST_MODE, email.captured', async () => {
@@ -321,7 +320,7 @@ describe('send-email', () => {
       [t.id],
     );
     const before = kit.mailer.sent.length;
-    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, job());
     expect(kit.mailer.sent).toHaveLength(before);
     expect(
       await first(kit.env.DB, 'SELECT state, error_code FROM outbox WHERE id = ?', [row?.id]),
@@ -359,7 +358,7 @@ describe('voided passes', () => {
     const a = await makePass();
     const b = await makePass();
     const bundle = await bundleOf(await create(fake.admin(), { passIds: [a.id, b.id] }));
-    await voidPass(kit.ctx, { type: 'user', id: 'admin-1' }, a.id, null);
+    await voidPass(jobCtxOf(kit), { type: 'system', id: null }, a.id, null);
     const token = bundle.url.split('/b/')[1];
     const html = await (await app.request(`${ORIGIN}/b/${token}`, {}, kit.env)).text();
     expect(html).toContain(`/b/${token}/${b.id}/pass.pkpass`);

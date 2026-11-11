@@ -1,162 +1,199 @@
-import type { Envelope } from '../../platform/crypto.ts';
-import { all, first, run } from '../../platform/db.ts';
+import {
+  type ConnectionMode,
+  ConnectionModeSchema,
+} from '../../../shared/contracts/connections.ts';
+import { type Check, exactlyOne, rawCheck } from '../../platform/authority-checks.ts';
+import { first, type SqlValue } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import {
+  type ConnectionActor,
+  commitOrNull,
+  connectionGrant,
+  connectionIs,
+  rowCount,
+  workflowTracked,
+} from './repo-grants.ts';
+import { validSyncEpochs } from './repo-pass-snapshot.ts';
+import {
+  type SyncPass,
+  validCredentialKeysetCommitment,
+  validPassReleaseBinding,
+} from './repo-passes.ts';
 
-// Credentials
+export { listRuns, runStats } from './repo-run-queries.ts';
 
-export interface CredentialRow {
-  id: string;
-  orgId: string | null;
-  envelope: Envelope;
-}
-
-function bytes(value: unknown): Uint8Array {
-  if (value instanceof ArrayBuffer) return new Uint8Array(value);
-  if (ArrayBuffer.isView(value))
-    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-  return Uint8Array.from(value as number[]);
-}
-
-export async function insertCredential(
-  db: D1Database,
-  c: {
-    id: string;
-    orgId: string;
-    kind: 'connector' | 'webhook';
-    envelope: Envelope;
-    fingerprint: string;
-    createdBy: string | null;
-    now: number;
-  },
-): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, fingerprint, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      c.id,
-      c.orgId,
-      c.kind,
-      c.envelope.kekVersion,
-      c.envelope.iv,
-      c.envelope.wrappedDek,
-      c.envelope.ciphertext,
-      c.fingerprint,
-      c.createdBy,
-      c.now,
-    ],
-  );
-}
-
-export async function getCredential(
-  db: D1Database,
-  orgId: string,
-  id: string,
-): Promise<CredentialRow | null> {
-  const r = await first<{
-    id: string;
-    org_id: string | null;
-    kek_version: number;
-    iv: unknown;
-    wrapped_dek: unknown;
-    ciphertext: unknown;
-  }>(
-    db,
-    'SELECT id, org_id, kek_version, iv, wrapped_dek, ciphertext FROM credentials WHERE id = ? AND org_id = ?',
-    [id, orgId],
-  );
-  if (!r) return null;
-  return {
-    id: r.id,
-    orgId: r.org_id,
-    envelope: {
-      kekVersion: r.kek_version,
-      iv: bytes(r.iv),
-      wrappedDek: bytes(r.wrapped_dek),
-      ciphertext: bytes(r.ciphertext),
+const passSnapshotChecks = (id: string, connectionId: string, p: PassSnapshot): Check[] => [
+  exactlyOne(
+    'passes',
+    {
+      id,
+      connection_id: connectionId,
+      external_ref: p.externalRef,
+      status: 'active',
+      version: p.version,
+      identity_id: p.identityId,
+      credential_generation: p.credentialGeneration,
+      lifecycle_generation: p.lifecycleGeneration,
+      owner_user_id: p.ownerUserId,
+      link_generation: p.linkGeneration,
+      template_id: p.templateId,
+      template_version: p.templateVersion,
+      release_id: p.releaseId,
+      deleted_at: null,
+      removed_at: null,
+      test_data_quarantined: 0,
     },
+    undefined,
+    'lineage',
+  ),
+  rawCheck(
+    'lineage',
+    "NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = ? AND t.state = 'pending')",
+    [id],
+  ),
+];
+
+type PassSnapshot = NonNullable<NonNullable<RunInsert['expected']>['pass']>;
+
+interface RunInsert {
+  id: string;
+  connectionId: string;
+  trigger: string;
+  actorId?: string | null;
+  passId?: string | null;
+  startedAt: number;
+  expected?: {
+    orgId: string;
+    generation: number;
+    mode?: ConnectionMode;
+    credentialKeysetCommitment?: string;
+    workflowInstanceId?: string;
+    /** Configuration tests may also run against disabled connections. */
+    allowDisabled?: boolean;
+    pass?: Pick<
+      SyncPass,
+      | 'id'
+      | 'version'
+      | 'identityId'
+      | 'credentialGeneration'
+      | 'lifecycleGeneration'
+      | 'credentialKeysetCommitment'
+      | 'transferPending'
+      | 'ownerUserId'
+      | 'linkGeneration'
+      | 'templateId'
+      | 'templateVersion'
+      | 'releaseId'
+    > & { mode: 'live'; status: 'active'; externalRef: string };
   };
 }
 
-export async function deleteCredentials(db: D1Database, ids: (string | null)[]): Promise<void> {
-  for (const id of ids) if (id) await run(db, 'DELETE FROM credentials WHERE id = ?', [id]);
-}
-
-// Runs
-
-export interface RunRow {
-  id: string;
-  trigger: 'schedule' | 'webhook' | 'admin' | 'user' | 'test' | 'backfill';
-  startedAt: number;
-  finishedAt: number | null;
-  outcome: 'running' | 'unchanged' | 'changed' | 'error' | 'skipped';
-  recordsSeen: number | null;
-  passesChanged: number | null;
-  errorCode: string | null;
-  errorDetail: string | null;
-  httpStatus: number | null;
-  durationMs: number | null;
-}
-
+/** True when this call inserted the run; an existing id or a context that moved is false. */
 export async function insertRun(
+  ctx: ServiceContext,
+  r: RunInsert,
+  actor: ConnectionActor,
+): Promise<boolean> {
+  const p = r.expected?.pass;
+  const keyset = r.expected?.credentialKeysetCommitment;
+  const workflow = r.expected?.workflowInstanceId;
+  const mode = r.expected?.mode;
+  if (
+    (mode !== undefined && !ConnectionModeSchema.options.includes(mode)) ||
+    (keyset !== undefined && !validCredentialKeysetCommitment(keyset)) ||
+    (workflow !== undefined &&
+      (typeof workflow !== 'string' || !workflow || workflow !== r.id || keyset === undefined)) ||
+    (r.expected !== undefined && r.expected.orgId !== actor.orgId) ||
+    (r.passId && !p) ||
+    (p &&
+      (r.passId !== p.id ||
+        keyset !== p.credentialKeysetCommitment ||
+        typeof p.identityId !== 'string' ||
+        !p.identityId ||
+        !validSyncEpochs(p) ||
+        !validPassReleaseBinding(p)))
+  )
+    return false;
+  const checks: Check[] = [
+    connectionIs({
+      id: r.connectionId,
+      ...(r.expected ? { generation: r.expected.generation } : {}),
+      ...(mode === undefined ? {} : { syncMode: mode }),
+      ...(r.expected && !r.expected.allowDisabled ? { enabled: true } : {}),
+    }),
+    rawCheck('lineage', 'NOT EXISTS (SELECT 1 FROM connection_runs WHERE id = ?)', [r.id]),
+  ];
+  if (workflow !== undefined && keyset !== undefined)
+    checks.push(workflowTracked(workflow, r.connectionId, keyset));
+  if (p) checks.push(...passSnapshotChecks(p.id, r.connectionId, p));
+  const g = connectionGrant(ctx, actor, 'run.start', checks, r.id);
+  g.insertJoined('connection_runs', {
+    parents: { connection_id: r.connectionId },
+    columns: ['id', 'trigger', 'actor_id', 'pass_id', 'started_at', 'outcome'],
+    values: [r.id, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt, 'running'],
+    returning: ['id'],
+  });
+  const results = await commitOrNull(g, actor);
+  return results ? rowCount(results.at(-1)) === 1 : false;
+}
+
+/** An already-enqueued workflow is usable only with its original run and keyset. */
+export async function syncRunCurrent(
   db: D1Database,
-  r: {
-    id: string;
+  expected: {
+    runId: string;
     connectionId: string;
-    trigger: string;
-    actorId?: string | null;
-    passId?: string | null;
-    startedAt: number;
-    expected?: {
-      orgId: string;
-      generation: number;
-      pass?: {
-        id: string;
-        mode: 'live';
-        status: 'active';
-        version: number;
-        ownerUserId: string | null;
-        linkGeneration: number;
-        externalRef: string;
-      };
-    };
+    orgId: string;
+    trigger: 'schedule' | 'webhook' | 'admin';
+    generation: number;
+    mode: ConnectionMode;
+    credentialKeysetCommitment: string;
   },
 ): Promise<boolean> {
-  if (!r.expected) {
-    const res = await run(
+  if (
+    !expected.runId ||
+    !expected.connectionId ||
+    !expected.orgId ||
+    (expected.trigger !== 'schedule' &&
+      expected.trigger !== 'webhook' &&
+      expected.trigger !== 'admin') ||
+    !ConnectionModeSchema.options.includes(expected.mode) ||
+    !Number.isSafeInteger(expected.generation) ||
+    expected.generation < 1 ||
+    !validCredentialKeysetCommitment(expected.credentialKeysetCommitment)
+  )
+    return false;
+  return (
+    (await first(
       db,
-      `INSERT OR IGNORE INTO connection_runs (id, connection_id, trigger, actor_id, pass_id, started_at, outcome)
-       VALUES (?, ?, ?, ?, ?, ?, 'running')`,
-      [r.id, r.connectionId, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt],
-    );
-    return res.changes === 1;
-  }
-  const p = r.expected.pass;
-  const res = await run(
-    db,
-    `INSERT OR IGNORE INTO connection_runs (id, connection_id, trigger, actor_id, pass_id, started_at, outcome)
-     SELECT ?, c.id, ?, ?, ?, ?, 'running' FROM connections c JOIN orgs o ON o.id = c.org_id
-     WHERE c.id = ? AND c.org_id = ? AND c.enabled = 1 AND c.generation = ? AND o.status = 'active'
-     ${p ? `AND EXISTS (SELECT 1 FROM passes p WHERE p.id = ? AND p.org_id = c.org_id
-       AND p.mode = ? AND p.status = ? AND p.version = ? AND p.owner_user_id IS ?
-       AND p.link_generation = ? AND p.connection_id = c.id AND p.external_ref = ?
-       AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0)` : ''}`,
-    [
-      r.id, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt,
-      r.connectionId, r.expected.orgId, r.expected.generation,
-      ...(p ? [p.id, p.mode, p.status, p.version, p.ownerUserId, p.linkGeneration, p.externalRef] : []),
-    ],
+      `SELECT 1 FROM connection_runs r
+     JOIN connections c ON c.id = r.connection_id
+     JOIN orgs o ON o.id = c.org_id
+     JOIN workflow_runs w ON w.instance_id = r.id AND w.kind = 'connection_sync'
+       AND w.org_id = c.org_id AND w.target_id = c.id
+     WHERE r.id = ? AND c.id = ? AND c.org_id = ? AND r.trigger = ? AND c.generation = ? AND c.mode = ?
+       AND r.outcome = 'running'
+       AND c.enabled = 1 AND o.status = 'active'
+       AND (r.trigger <> 'schedule' OR c.mode IN ('poll', 'hybrid'))
+       AND w.credential_keyset_commitment = ?`,
+      [
+        expected.runId,
+        expected.connectionId,
+        expected.orgId,
+        expected.trigger,
+        expected.generation,
+        expected.mode,
+        expected.credentialKeysetCommitment,
+      ],
+    )) !== null
   );
-  return res.changes === 1;
-}
-
-export async function deleteRun(db: D1Database, id: string): Promise<void> {
-  await run(db, "DELETE FROM connection_runs WHERE id = ? AND outcome = 'running'", [id]);
 }
 
 export async function finishRun(
-  db: D1Database,
+  ctx: ServiceContext,
   r: {
     id: string;
+    connectionId: string;
     finishedAt: number;
     outcome: 'unchanged' | 'changed' | 'error' | 'skipped';
     recordsSeen: number;
@@ -164,81 +201,87 @@ export async function finishRun(
     errorCode: string | null;
     errorDetail: string | null;
     httpStatus: number | null;
+    credentialKeysetCommitment?: string;
+    workflowInstanceId?: string;
+    staleWorkflowScope?: { orgId: string; connectionId: string };
+    expected?: {
+      connectionId: string;
+      orgId: string;
+      generation: number;
+      mode?: ConnectionMode;
+      requireEnabled?: boolean;
+    };
   },
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE connection_runs SET finished_at = ?, outcome = ?, records_seen = ?, passes_changed = ?,
-       error_code = ?, error_detail = ?, http_status = ?, duration_ms = ? - started_at
-     WHERE id = ? AND outcome = 'running'`,
-    [
-      r.finishedAt,
-      r.outcome,
-      r.recordsSeen,
-      r.passesChanged,
-      r.errorCode,
-      r.errorDetail,
-      r.httpStatus,
-      r.finishedAt,
-      r.id,
-    ],
+  actor: ConnectionActor,
+): Promise<boolean> {
+  const keyset = r.credentialKeysetCommitment;
+  const workflow = r.workflowInstanceId;
+  const staleScope = r.staleWorkflowScope;
+  if (
+    (r.expected?.mode !== undefined && !ConnectionModeSchema.options.includes(r.expected.mode)) ||
+    (r.expected?.requireEnabled !== undefined && typeof r.expected.requireEnabled !== 'boolean') ||
+    (keyset !== undefined && !validCredentialKeysetCommitment(keyset)) ||
+    (workflow !== undefined &&
+      (typeof workflow !== 'string' || !workflow || workflow !== r.id || keyset === undefined)) ||
+    (r.expected !== undefined &&
+      (r.expected.orgId !== actor.orgId || r.expected.connectionId !== r.connectionId))
+  )
+    return false;
+  if (
+    staleScope !== undefined &&
+    (!staleScope ||
+      r.outcome !== 'skipped' ||
+      workflow === undefined ||
+      keyset === undefined ||
+      r.expected !== undefined ||
+      typeof staleScope.orgId !== 'string' ||
+      staleScope.orgId !== actor.orgId ||
+      typeof staleScope.connectionId !== 'string' ||
+      staleScope.connectionId !== r.connectionId)
+  )
+    return false;
+  const e = r.expected;
+  // A stale close has no expectation to compare and must finish while the org is suspended.
+  const closing = e === undefined;
+  const checks: Check[] = [
+    connectionIs({
+      id: r.connectionId,
+      ...(e ? { generation: e.generation } : {}),
+      ...(e?.mode === undefined ? {} : { syncMode: e.mode }),
+      ...(e?.requireEnabled ? { enabled: true } : {}),
+    }),
+  ];
+  if (workflow !== undefined && keyset !== undefined)
+    checks.push(workflowTracked(workflow, r.connectionId, keyset));
+  const g = connectionGrant(
+    ctx,
+    actor,
+    'run.finish',
+    checks,
+    r.id,
+    closing && actor.authority === undefined,
   );
-}
-
-export async function listRuns(
-  db: D1Database,
-  connectionId: string,
-  q: { cursor?: string | undefined; limit: number },
-): Promise<RunRow[]> {
-  const rows = await all<{
-    id: string;
-    trigger: string;
-    started_at: number;
-    finished_at: number | null;
-    outcome: string;
-    records_seen: number | null;
-    passes_changed: number | null;
-    error_code: string | null;
-    error_detail: string | null;
-    http_status: number | null;
-    duration_ms: number | null;
-  }>(
-    db,
-    `SELECT id, trigger, started_at, finished_at, outcome, records_seen, passes_changed, error_code, error_detail, http_status, duration_ms
-     FROM connection_runs WHERE connection_id = ?
-       ${q.cursor ? 'AND (started_at, id) < (SELECT started_at, id FROM connection_runs WHERE id = ?)' : ''}
-     ORDER BY started_at DESC, id DESC LIMIT ?`,
-    q.cursor ? [connectionId, q.cursor, q.limit] : [connectionId, q.limit],
+  const started = await first<{ started_at: number }>(
+    ctx.env.DB,
+    'SELECT started_at FROM connection_runs WHERE id = ?',
+    [r.id],
   );
-  return rows.map((r) => ({
-    id: r.id,
-    trigger: r.trigger as RunRow['trigger'],
-    startedAt: r.started_at,
-    finishedAt: r.finished_at,
-    outcome: r.outcome as RunRow['outcome'],
-    recordsSeen: r.records_seen,
-    passesChanged: r.passes_changed,
-    errorCode: r.error_code,
-    errorDetail: r.error_detail,
-    httpStatus: r.http_status,
-    durationMs: r.duration_ms,
-  }));
-}
-
-export async function runStats(db: D1Database, connectionId: string) {
-  const rows = await all<{ outcome: string; duration_ms: number | null }>(
-    db,
-    `SELECT outcome, duration_ms FROM connection_runs
-     WHERE connection_id = ? AND outcome != 'running' AND trigger IN ('schedule', 'webhook', 'admin')
-     ORDER BY started_at DESC, id DESC LIMIT 100`,
-    [connectionId],
-  );
-  const passCount = await first<{ n: number }>(
-    db,
-    `SELECT COUNT(*) AS n FROM passes p JOIN connections c
-       ON c.id = p.connection_id AND c.org_id = p.org_id
-     WHERE p.connection_id = ? AND p.mode = 'live' AND p.test_data_quarantined = 0`,
-    [connectionId],
-  );
-  return { rows, passCount: passCount?.n ?? 0 };
+  if (!started) return false;
+  const set: Record<string, SqlValue> = {
+    finished_at: r.finishedAt,
+    duration_ms: r.finishedAt - started.started_at,
+    outcome: r.outcome,
+    records_seen: r.recordsSeen,
+    passes_changed: r.passesChanged,
+    error_code: r.errorCode,
+    error_detail: r.errorDetail,
+    http_status: r.httpStatus,
+  };
+  g.joined('connection_runs', {
+    set,
+    where: { id: r.id, connection_id: r.connectionId, outcome: 'running' },
+    returning: ['id'],
+  });
+  const results = await commitOrNull(g, actor);
+  return results ? rowCount(results.at(-1)) === 1 : false;
 }

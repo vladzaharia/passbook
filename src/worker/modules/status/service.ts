@@ -21,6 +21,7 @@ import {
   SEVERITY,
   worst,
 } from './checks.ts';
+import { checkKek, checkTerminalFailures } from './checks-health.ts';
 import { identityComponent } from './checks-identity.ts';
 import { checkCron } from './cron-check.ts';
 import { recentWorkflowRuns } from './repo.ts';
@@ -96,6 +97,8 @@ export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Pro
     checkRateLimits(ctx),
     checkBreakglass(ctx),
     checkTurnstile(ctx),
+    checkKek(ctx),
+    checkTerminalFailures(ctx),
   ]);
   const components: Component[] = parts
     .flat()

@@ -1,53 +1,56 @@
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import {
-  ActivateVersionSchema,
   CloneTemplateSchema,
   DeleteTemplateResponseSchema,
+  EligibleTemplateListSchema,
+  EligibleTemplateQuerySchema,
   IdParamSchema,
   ImportStatusSchema,
   PreviewRequestSchema,
   PreviewResponseSchema,
-  TemplateAssetParamSchema,
   TemplateDetailSchema,
   TemplateListQuerySchema,
   TemplateListSchema,
-  TemplateVersionDetailSchema,
-  TemplateVersionParamSchema,
   UpdateManifestSchema,
   UpdateTemplateSchema,
   UploadTemplateQuerySchema,
   UploadTemplateResponseSchema,
 } from '../../../shared/contracts/index.ts';
-import { methodScope, requireAdmin, requireApiKeyOrAdmin } from '../../platform/auth.ts';
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { activateVersion, cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
+import { requireTenantSession, requireTenantSessionOrApiKey } from '../passes/http.ts';
+import { eligibleTemplates } from './eligible.ts';
+import { cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
+import { TemplateScopeQuerySchema } from './route-scope.ts';
 import {
   registerLifecycle,
   registerPreviewBatch,
   registerUploadList,
   registerVersions,
 } from './routes-more.ts';
-import { detail, importStatus, list, openVersionAsset, preview, versionDetail } from './service.ts';
+import { registerTemplateReleases } from './routes-releases.ts';
+import { registerVersionReads } from './routes-version-reads.ts';
+import { detail, importStatus, list, preview } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
 import { VERSION_BODY_LIMIT } from './version-files.ts';
 
 export const templatesRoutes = createRouter({ bodyLimit: false });
 /** The archive upload and the version save (base64 images) have their own caps below. */
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/versions)$/));
-// Reads accept an API key (templates:read); writes are admin only.
+// Template reads allow scoped API keys; mutations require a session and are authorized per org.
 templatesRoutes.use('*', async (c, next) =>
   c.req.method === 'GET'
-    ? requireApiKeyOrAdmin(methodScope({ read: 'templates:read', write: 'templates:read' }))(
-        c,
-        next,
-      )
-    : requireAdmin(c, next),
+    ? requireTenantSessionOrApiKey(
+        /\/templates\/eligible\/?$/.test(c.req.path)
+          ? ['templates:read', 'passes:read']
+          : 'templates:read',
+      )(c, next)
+    : requireTenantSession(c, next),
 );
 templatesRoutes.use(
   '/uploads',
@@ -100,11 +103,8 @@ register(
   },
   async (c) =>
     c.json(
-      await acceptUpload(
-        serviceContext(c),
-        c.var.auth,
-        c.req.valid('query'),
-        await archiveBytes(c),
+      await acceptUpload(serviceContext(c), c.var.auth, c.req.valid('query'), () =>
+        archiveBytes(c),
       ),
       202,
     ),
@@ -118,9 +118,18 @@ register(
     path: '/uploads/{id}',
     summary: 'Template import status',
     params: IdParamSchema,
+    query: TemplateScopeQuerySchema,
     response: ImportStatusSchema,
   },
-  async (c) => c.json(await importStatus(serviceContext(c), c.var.auth, c.req.valid('param').id)),
+  async (c) =>
+    c.json(
+      await importStatus(
+        serviceContext(c),
+        c.var.auth,
+        c.req.valid('param').id,
+        c.req.valid('query').orgId,
+      ),
+    ),
 );
 
 registerUploadList(templatesRoutes);
@@ -131,12 +140,34 @@ register(
   'templates',
   {
     method: 'get',
+    path: '/eligible',
+    summary: 'List release-backed templates available to an organization',
+    query: EligibleTemplateQuerySchema,
+    response: EligibleTemplateListSchema,
+  },
+  async (c) => c.json(await eligibleTemplates(serviceContext(c), c.var.auth, c.req.valid('query'))),
+);
+
+register(
+  templatesRoutes,
+  'templates',
+  {
+    method: 'get',
     path: '/{id}',
     summary: 'Get a template',
     params: IdParamSchema,
+    query: TemplateScopeQuerySchema,
     response: TemplateDetailSchema,
   },
-  async (c) => c.json(await detail(serviceContext(c), c.var.auth, c.req.valid('param').id)),
+  async (c) =>
+    c.json(
+      await detail(
+        serviceContext(c),
+        c.var.auth,
+        c.req.valid('param').id,
+        c.req.valid('query').orgId,
+      ),
+    ),
 );
 
 register(
@@ -183,7 +214,7 @@ register(
   {
     method: 'post',
     path: '/{id}/clone',
-    summary: 'Clone into an uploaded copy',
+    summary: 'Clone into an inactive uploaded draft',
     params: IdParamSchema,
     body: CloneTemplateSchema,
     status: 201,
@@ -205,31 +236,9 @@ register(
   templatesRoutes,
   'templates',
   {
-    method: 'post',
-    path: '/{id}/activate',
-    summary: 'Activate a version',
-    params: IdParamSchema,
-    body: ActivateVersionSchema,
-    response: TemplateDetailSchema,
-  },
-  async (c) =>
-    c.json(
-      await activateVersion(
-        serviceContext(c),
-        c.var.auth,
-        c.req.valid('param').id,
-        c.req.valid('json'),
-      ),
-    ),
-);
-
-register(
-  templatesRoutes,
-  'templates',
-  {
     method: 'put',
     path: '/{id}/manifest',
-    summary: 'Replace the manifest (creates a version)',
+    summary: 'Save the manifest as an inactive version',
     params: IdParamSchema,
     body: UpdateManifestSchema,
     response: TemplateDetailSchema,
@@ -253,58 +262,24 @@ register(
     path: '/{id}/preview',
     summary: 'Render pass.json for input',
     params: IdParamSchema,
+    query: TemplateScopeQuerySchema,
     body: PreviewRequestSchema,
     response: PreviewResponseSchema,
   },
   async (c) =>
     c.json(
-      await preview(serviceContext(c), c.var.auth, c.req.valid('param').id, c.req.valid('json')),
+      await preview(
+        serviceContext(c),
+        c.var.auth,
+        c.req.valid('param').id,
+        c.req.valid('json'),
+        c.req.valid('query').orgId,
+      ),
     ),
 );
 
-register(
-  templatesRoutes,
-  'templates',
-  {
-    method: 'get',
-    path: '/{id}/versions/{version}',
-    summary: 'Template version with its validation report',
-    params: TemplateVersionParamSchema,
-    response: TemplateVersionDetailSchema,
-  },
-  async (c) => {
-    const p = c.req.valid('param');
-    return c.json(await versionDetail(serviceContext(c), c.var.auth, p.id, p.version));
-  },
-);
-
-register(
-  templatesRoutes,
-  'templates',
-  {
-    method: 'get',
-    path: '/{id}/versions/{version}/assets/{name}',
-    summary: 'Template asset bytes',
-    params: TemplateAssetParamSchema,
-  },
-  async (c) => {
-    const p = c.req.valid('param');
-    const asset = await openVersionAsset(serviceContext(c), c.var.auth, p.id, p.version, p.name);
-    const etag = asset.sha1 ? `"${asset.sha1}"` : null;
-    // Versions are content hashes, so a given URL never changes.
-    const headers: Record<string, string> = {
-      'cache-control': 'private, max-age=31536000, immutable',
-      'content-type': asset.contentType,
-      'x-content-type-options': 'nosniff',
-      ...(etag ? { etag } : {}),
-    };
-    if (etag && c.req.header('if-none-match') === etag) {
-      await asset.stream.cancel();
-      return new Response(null, { status: 304, headers });
-    }
-    return new Response(asset.stream, { headers });
-  },
-);
+registerVersionReads(templatesRoutes);
 
 registerVersions(templatesRoutes);
 registerLifecycle(templatesRoutes);
+registerTemplateReleases(templatesRoutes);

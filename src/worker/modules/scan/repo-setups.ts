@@ -1,7 +1,9 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
-import { all, chunk, first, placeholders, stmt } from '../../platform/db.ts';
+import type { Grant } from '../../platform/authority.ts';
+import { maxNow } from '../../platform/authority-expr.ts';
+import { all, chunk, first, placeholders } from '../../platform/db.ts';
 
 export interface SetupMeta {
   scanner_id: string;
@@ -44,53 +46,30 @@ export const adminSetupId = async (db: D1Database, orgId: string, mode: Mode, us
     )
   )?.scanner_id ?? null;
 
-export const insertSetupStmt = (
-  db: D1Database,
+/** Moving to another role ends a staff sign-in the old role allowed. */
+export const addDeviceRole = (
+  g: Grant,
   scannerId: string,
-  orgId: string,
-  mode: Mode,
-  userId: string | null,
-  watch: unknown,
-) =>
-  stmt(
-    db,
-    'INSERT INTO scanner_setups(scanner_id,org_id,mode,admin_session,admin_user_id,watch) VALUES(?,?,?,?,?,?)',
-    [scannerId, orgId, mode, userId ? 1 : 0, userId, watch ? JSON.stringify(watch) : null],
-  );
-
-export const setSetupWatchStmt = (
-  db: D1Database,
-  orgId: string,
-  scannerId: string,
-  watch: unknown,
-) =>
-  stmt(
-    db,
-    `INSERT INTO scanner_setups(scanner_id,org_id,mode,watch)
-    SELECT id,org_id,mode,? FROM scanners WHERE org_id=? AND id=?
-    ON CONFLICT(scanner_id) DO UPDATE SET watch=excluded.watch`,
-    [watch ? JSON.stringify(watch) : null, orgId, scannerId],
-  );
-
-export const setDeviceRoleStmt = (
-  db: D1Database,
-  orgId: string,
-  scannerId: string,
+  currentRole: string,
   role: string,
   now: number,
 ) =>
-  stmt(
-    db,
-    `UPDATE scanners SET device_role=?,updated_at=?,
-    staff_id=CASE WHEN device_role!=? THEN NULL ELSE staff_id END,
-    staff_since=CASE WHEN device_role!=? THEN NULL ELSE staff_since END,
-    staff_seen_at=CASE WHEN device_role!=? THEN NULL ELSE staff_seen_at END
-    WHERE org_id=? AND id=?`,
-    [role, now, role, role, role, orgId, scannerId],
-  );
+  g.update('scanners', {
+    set: {
+      device_role: role,
+      updated_at: maxNow(now),
+      ...(currentRole === role ? {} : { staff_id: null, staff_since: null, staff_seen_at: null }),
+    },
+    where: { id: scannerId },
+    require: 'one',
+  });
 
-export const clearSetupAcceptsStmt = (db: D1Database, orgId: string, scannerId: string) =>
-  stmt(db, 'UPDATE scanners SET event_id=NULL WHERE org_id=? AND id=?', [orgId, scannerId]);
+export const addSetupAcceptsClear = (g: Grant, scannerId: string, now: number) =>
+  g.update('scanners', {
+    set: { event_id: null, updated_at: maxNow(now) },
+    where: { id: scannerId },
+    require: 'one',
+  });
 
 export async function watchedScanners(db: D1Database, orgId: string, mode: Mode, ids: string[]) {
   if (!ids.length) return [];

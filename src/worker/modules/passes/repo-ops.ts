@@ -1,54 +1,13 @@
-import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { finishRun, startRun } from '../../platform/workflow-runs.ts';
-import { listAssets } from './repo-history.ts';
-import { mapPass, type Pass } from './repo-map.ts';
-import { memberPhoto } from './repo-member-photo.ts';
-
-export interface DeletedPass {
-  objectKeys: string[];
-  deviceIds: { deviceId: string; identityId: string }[];
-}
-
-/** Collects what must be cleaned outside D1, then removes the rows (children cascade). */
-export async function deletePassRows(db: D1Database, pass: Pass): Promise<DeletedPass> {
-  const [versions, assets, devices, photo] = await Promise.all([
-    all<{ object_key: string | null }>(
-      db,
-      'SELECT object_key FROM pass_versions WHERE pass_id = ? AND object_key IS NOT NULL',
-      [pass.id],
-    ),
-    listAssets(db, pass.id),
-    all<{ device_id: string; identity_id: string }>(
-      db,
-      'SELECT device_id, identity_id FROM registrations WHERE pass_id = ?',
-      [pass.id],
-    ),
-    memberPhoto(db, pass.orgId, pass.id),
-  ]);
-  const keys = new Set<string>([pass.objectKey]);
-  if (photo) keys.add(photo.r2_key);
-  for (const v of versions) if (v.object_key) keys.add(v.object_key);
-  for (const a of assets) keys.add(a.r2Key);
-  await batch(db, [
-    stmt(db, 'DELETE FROM passes WHERE id = ?', [pass.id]),
-    ...devices.map((d) =>
-      stmt(
-        db,
-        `DELETE FROM devices WHERE device_id = ? AND identity_id = ?
-         AND NOT EXISTS (SELECT 1 FROM registrations r WHERE r.device_id = devices.device_id AND r.identity_id = devices.identity_id)`,
-        [d.device_id, d.identity_id],
-      ),
-    ),
-  ]);
-  return {
-    objectKeys: [...keys],
-    deviceIds: devices.map((d) => ({ deviceId: d.device_id, identityId: d.identity_id })),
-  };
-}
-
-export async function deleteObjects(bucket: R2Bucket, keys: string[]): Promise<void> {
-  for (const part of chunk(keys, 500)) await bucket.delete(part);
-}
+import type { TenantPassWrite } from './http.ts';
+import {
+  platformAdminSessionParams,
+  platformAdminSessionSql,
+  tenantPassAuthorityParams,
+  tenantPassAuthoritySql,
+} from './repo-authority.ts';
 
 export interface IdempotencyRow {
   requestHash: string;
@@ -62,14 +21,44 @@ export async function claimIdempotencyKey(
   requestHash: string,
   resourceId: string,
   now: number,
+  authority?: TenantPassWrite,
+  additionalAuthority?: TenantPassWrite,
 ): Promise<boolean> {
+  if (
+    (authority?.kind === 'session' && authority.capability !== 'passes:operate') ||
+    (authority?.kind === 'api_key' && authority.scope !== 'passes:write')
+  )
+    return false;
+  if (additionalAuthority && !authority) return false;
   return (
     (
       await run(
         db,
-        `INSERT OR IGNORE INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
-         VALUES (?, ?, ?, ?, ?)`,
-        [orgId, key, requestHash, resourceId, now],
+        authority
+          ? `INSERT OR IGNORE INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
+             SELECT ?, ?, ?, ?, ? WHERE ? = ? AND ${tenantPassAuthoritySql(authority)}
+             ${additionalAuthority ? `AND ? = ? AND ${tenantPassAuthoritySql(additionalAuthority)}` : ''}`
+          : `INSERT OR IGNORE INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
+             VALUES (?, ?, ?, ?, ?)`,
+        authority
+          ? [
+              orgId,
+              key,
+              requestHash,
+              resourceId,
+              now,
+              orgId,
+              authority.orgId,
+              ...tenantPassAuthorityParams(authority, now),
+              ...(additionalAuthority
+                ? [
+                    orgId,
+                    additionalAuthority.orgId,
+                    ...tenantPassAuthorityParams(additionalAuthority, now),
+                  ]
+                : []),
+            ]
+          : [orgId, key, requestHash, resourceId, now],
       )
     ).changes === 1
   );
@@ -88,20 +77,21 @@ export async function getIdempotencyKey(
   return row ? { requestHash: row.request_hash, resourceId: row.resource_id } : null;
 }
 
-export async function finishIdempotencyKey(
+/** Release only this reservation, and never one whose pass exists (including hidden rows). */
+export async function releaseIdempotencyKey(
   db: D1Database,
   orgId: string,
   key: string,
-  resourceId: string | null,
+  resourceId: string,
+  requestHash: string,
 ): Promise<void> {
-  if (resourceId === null)
-    await run(db, 'DELETE FROM idempotency_keys WHERE org_id = ? AND key = ?', [orgId, key]);
-  else
-    await run(db, 'UPDATE idempotency_keys SET resource_id = ? WHERE org_id = ? AND key = ?', [
-      resourceId,
-      orgId,
-      key,
-    ]);
+  await run(
+    db,
+    `DELETE FROM idempotency_keys WHERE org_id = ? AND key = ? AND resource_id = ?
+      AND request_hash = ?
+      AND NOT EXISTS (SELECT 1 FROM passes WHERE passes.id = idempotency_keys.resource_id)`,
+    [orgId, key, resourceId, requestHash],
+  );
 }
 
 export async function passesForReissue(
@@ -110,6 +100,7 @@ export async function passesForReissue(
     templateId: string | null;
     orgId: string | null;
     identityId?: string | null;
+    mode?: Mode | null;
     afterId: string | null;
     limit: number;
     skipVersion: string | null;
@@ -119,8 +110,17 @@ export async function passesForReissue(
   return all<{ id: string }>(
     db,
     `SELECT id FROM passes WHERE (? IS NULL OR template_id = ?) AND (? IS NULL OR org_id = ?)
-       AND (? IS NULL OR identity_id = ?) AND id > ? AND deleted_at IS NULL AND test_data_quarantined = 0
-       AND (? IS NULL OR template_version != ?)
+       AND (? IS NULL OR identity_id = ?) AND (? IS NULL OR mode = ?)
+       AND id > ? AND deleted_at IS NULL AND test_data_quarantined = 0
+       AND (? IS NULL OR (template_version != ? AND NOT EXISTS (
+         SELECT 1 FROM template_versions current_version
+         JOIN template_versions target_version
+           ON target_version.template_id = current_version.template_id
+          AND target_version.version = ?
+          AND target_version.build_key = current_version.build_key
+         WHERE current_version.template_id = passes.template_id
+           AND current_version.version = passes.template_version
+       )))
        AND (? = 0 OR status = 'active') ORDER BY id LIMIT ?`,
     [
       q.templateId,
@@ -129,7 +129,10 @@ export async function passesForReissue(
       q.orgId,
       q.identityId ?? null,
       q.identityId ?? null,
+      q.mode ?? null,
+      q.mode ?? null,
       q.afterId ?? '',
+      q.skipVersion,
       q.skipVersion,
       q.skipVersion,
       q.activeOnly ? 1 : 0,
@@ -151,6 +154,59 @@ export async function insertWorkflowRun(
   await startRun(db, row);
 }
 
+/** Reserve a tenant bulk workflow only while the initiating authority is still valid. */
+export async function insertTenantBulkWorkflowRun(
+  db: D1Database,
+  row: { instanceId: string; orgId: string; targetId: string | null; now: number },
+  authority: TenantPassWrite,
+): Promise<boolean> {
+  if (
+    (authority.kind === 'session' && authority.capability !== 'passes:operate') ||
+    (authority.kind === 'api_key' && authority.scope !== 'passes:write')
+  )
+    return false;
+  const inserted = await first<{ instance_id: string }>(
+    db,
+    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
+     SELECT ?, 'bulk_reissue', ?, ?, 'queued', ?
+     WHERE ? = ? AND ${tenantPassAuthoritySql(authority)}
+     RETURNING instance_id`,
+    [
+      row.instanceId,
+      row.orgId,
+      row.targetId,
+      row.now,
+      row.orgId,
+      authority.orgId,
+      ...tenantPassAuthorityParams(authority, row.now),
+    ],
+  );
+  return inserted !== null;
+}
+
+/** Reserve an unscoped bulk workflow only while the initiating platform admin remains valid. */
+export async function insertPlatformAdminBulkWorkflowRun(
+  db: D1Database,
+  row: { instanceId: string; orgId: null; targetId: string | null; now: number },
+  platformSession: { userId: string; sessionId: string },
+): Promise<boolean> {
+  if (row.orgId !== null) return false;
+  const inserted = await first<{ instance_id: string }>(
+    db,
+    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
+     SELECT ?, 'bulk_reissue', NULL, ?, 'queued', ?
+     WHERE ${platformAdminSessionSql}
+     RETURNING instance_id`,
+    [
+      row.instanceId,
+      row.targetId,
+      row.now,
+      ...platformAdminSessionParams(platformSession, row.now),
+    ],
+  );
+  return inserted !== null;
+}
+
 export const setWorkflowStatus = (
   db: D1Database,
   instanceId: string,
@@ -158,29 +214,3 @@ export const setWorkflowStatus = (
   now: number,
   errorCode: string | null = null,
 ) => finishRun(db, instanceId, status, now, { errorCode });
-
-/**
- * Hides the pass from every list and lookup but the device protocol, and unlinks it from its
- * owner and connection. The retention job removes it later.
- */
-export async function softDeletePass(db: D1Database, id: string, now: number): Promise<void> {
-  await run(
-    db,
-    `UPDATE passes SET deleted_at = ?, owner_user_id = NULL, connection_id = NULL, external_ref = NULL,
-       next_sync_at = NULL WHERE id = ?`,
-    [now, id],
-  );
-}
-
-export async function expiredDeletedPasses(
-  db: D1Database,
-  before: number,
-  limit: number,
-): Promise<Pass[]> {
-  const rows = await all<Parameters<typeof mapPass>[0]>(
-    db,
-    'SELECT * FROM passes WHERE deleted_at IS NOT NULL AND deleted_at < ? LIMIT ?',
-    [before, limit],
-  );
-  return rows.map(mapPass);
-}

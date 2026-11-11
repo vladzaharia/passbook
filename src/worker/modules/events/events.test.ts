@@ -1,21 +1,24 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { PassEventListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { dailyEvents } from './jobs.ts';
 import { hashDevice, recordPassEvent, recordPassEvents, sanitizeEventData } from './record.ts';
+import { type EventAuth, eventAuth, eventMember, eventStores } from './test-auth-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let credentials: EventAuth;
 let kit: Kit;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  credentials = await eventAuth(kit);
+  app = createApp({ stores: eventStores(kit), clock: kit.clock });
 });
 
 type Headers = Record<string, string>;
@@ -113,22 +116,30 @@ describe('GET /passes/{id}/events', () => {
       await recordPassEvent(kit.ctx, { ...base(pass.id), kind: 'page.opened', data: { i } });
     }
     const first = PassEventListSchema.parse(
-      await (await events(pass.id, fake.admin(), '?limit=4')).json(),
+      await (await events(pass.id, credentials.member.session.headers, '?limit=4')).json(),
     );
     expect(first.items).toHaveLength(4);
     expect(first.items.map((e) => e.data.i)).toEqual([4, 3, 2, 1]);
     expect(first.nextCursor).not.toBeNull();
     const second = PassEventListSchema.parse(
-      await (await events(pass.id, fake.admin(), `?limit=4&cursor=${first.nextCursor}`)).json(),
+      await (
+        await events(
+          pass.id,
+          credentials.member.session.headers,
+          `?limit=4&cursor=${first.nextCursor}`,
+        )
+      ).json(),
     );
     expect(second.items.map((e) => e.kind)).toEqual(['page.opened', 'pass.issued']);
     expect(second.nextCursor).toBeNull();
     const only = PassEventListSchema.parse(
-      await (await events(pass.id, fake.admin(), '?kind=pass.issued')).json(),
+      await (await events(pass.id, credentials.member.session.headers, '?kind=pass.issued')).json(),
     );
     expect(only.items.map((e) => e.kind)).toEqual(['pass.issued']);
-    expect((await events(pass.id, fake.admin(), '?kind=bogus')).status).toBe(422);
-    const bad = await events(pass.id, fake.admin(), '?cursor=garbage');
+    expect((await events(pass.id, credentials.member.session.headers, '?kind=bogus')).status).toBe(
+      422,
+    );
+    const bad = await events(pass.id, credentials.member.session.headers, '?cursor=garbage');
     expect(bad.status).toBe(422);
     expect(await bad.json()).toMatchObject({ code: 'INVALID_CURSOR' });
   });
@@ -136,23 +147,110 @@ describe('GET /passes/{id}/events', () => {
   it('needs passes:read and stays inside the key org', async () => {
     const pass = await kit.pass();
     const other = await makeOrg(kit.fx, { name: 'Other' });
+    const outsider = await makeUser(kit.fx);
+    const session = await makeSession(kit.fx, { userId: outsider.id });
+    const noScope = await makeApiKey(kit.fx, { scopes: ['templates:read'] });
+    const foreignKey = await makeApiKey(kit.fx, { orgId: other.id });
     expect((await events(pass.id, {})).status).toBe(401);
-    expect((await events(pass.id, fake.user())).status).toBe(403);
-    expect((await events(pass.id, fake.apiKey({ scopes: ['templates:read'] }))).status).toBe(403);
-    expect((await events(pass.id, fake.apiKey({ orgId: kit.org.id }))).status).toBe(200);
-    expect((await events(pass.id, fake.apiKey({ orgId: other.id }))).status).toBe(404);
-    expect((await events('missing', fake.admin())).status).toBe(404);
+    expect((await events(pass.id, session.headers)).status).toBe(404);
+    expect((await events(pass.id, noScope.headers)).status).toBe(403);
+    expect((await events(pass.id, credentials.key.headers)).status).toBe(200);
+    expect((await events(pass.id, foreignKey.headers)).status).toBe(404);
+    expect((await events('missing', credentials.member.session.headers)).status).toBe(404);
+  });
+
+  it('requires current membership and read capability for events and devices', async () => {
+    const pass = await kit.pass();
+    const foreignOrg = await makeOrg(kit.fx);
+    const foreign = await eventMember(kit, foreignOrg.id);
+    const noRead = await eventMember(kit, kit.org.id, ['template_author']);
+    const outsider = await makeUser(kit.fx);
+    const platformAdmin = await makeSession(kit.fx, {
+      userId: outsider.id,
+      roles: ['admin', 'user'],
+    });
+    const member = await eventMember(kit, kit.org.id);
+    const ordinarySession = await makeSession(kit.fx, { userId: member.user.id });
+    const key = await makeApiKey(kit.fx, { orgId: kit.org.id });
+    const noScope = await makeApiKey(kit.fx, { orgId: kit.org.id, scopes: ['templates:read'] });
+    const wrongMode = await makeApiKey(kit.fx, { orgId: kit.org.id, mode: 'test' });
+    for (const resource of ['events', 'devices']) {
+      const request = (headers: Headers) =>
+        app.request(`${ORIGIN}/api/v1/passes/${pass.id}/${resource}`, { headers }, kit.env);
+      expect((await request(member.session.headers)).status).toBe(200);
+      expect((await request(ordinarySession.headers)).status).toBe(200);
+      expect((await request(platformAdmin.headers)).status).toBe(404);
+      expect((await request(foreign.session.headers)).status).toBe(404);
+      expect((await request(noRead.session.headers)).status).toBe(404);
+      expect((await request(key.headers)).status).toBe(200);
+      expect((await request(noScope.headers)).status).toBe(403);
+      expect((await request(wrongMode.headers)).status).toBe(404);
+    }
+    await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+      kit.clock.now(),
+      member.membership,
+    ]);
+    await run(kit.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+      kit.clock.now(),
+      key.id,
+    ]);
+    for (const resource of ['events', 'devices']) {
+      const path = `${ORIGIN}/api/v1/passes/${pass.id}/${resource}`;
+      expect((await app.request(path, { headers: member.session.headers }, kit.env)).status).toBe(
+        404,
+      );
+      expect((await app.request(path, { headers: key.headers }, kit.env)).status).toBe(401);
+    }
+    const revokedSession = await eventMember(kit, kit.org.id);
+    await run(kit.env.DB, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+      kit.clock.now(),
+      await sha256Hex(revokedSession.session.cookieValue),
+    ]);
+    for (const resource of ['events', 'devices']) {
+      const path = `${ORIGIN}/api/v1/passes/${pass.id}/${resource}`;
+      expect(
+        (await app.request(path, { headers: revokedSession.session.headers }, kit.env)).status,
+      ).toBe(401);
+    }
   });
 
   it('returns each event with its mode, in either caller mode', async () => {
     const pass = await kit.pass();
     await recordPassEvent(kit.ctx, { ...base(pass.id), mode: 'test', kind: 'email.captured' });
-    for (const headers of [fake.admin(), fake.admin({ mode: 'test' }), fake.apiKey()]) {
+    for (const headers of [
+      credentials.member.session.headers,
+      { ...credentials.member.session.headers, 'x-passbook-mode': 'test' },
+      credentials.key.headers,
+    ]) {
       const page = PassEventListSchema.parse(await (await events(pass.id, headers)).json());
       expect(page.items.map((e) => e.mode)).toEqual(['test', 'live']);
     }
     // A key of the other mode does not see the pass at all.
-    expect((await events(pass.id, fake.apiKey({ mode: 'test' }))).status).toBe(404);
+    const testKey = await makeApiKey(kit.fx, { orgId: kit.org.id, mode: 'test' });
+    expect((await events(pass.id, testKey.headers)).status).toBe(404);
+  });
+});
+
+describe('event DTO', () => {
+  it('never returns authority, proof, csrf or keyset fields, including on old rows', async () => {
+    const pass = await kit.pass();
+    const data = {
+      title: 'Door',
+      authority: { scannerRevision: 3, sessionCsrfProof: 'x' },
+      nested: { keep: 1, scannerCsrfProof: 'y', credentialKeysetCommitment: 'z' },
+      list: [{ undoProof: 'p', ok: true }],
+    };
+    await run(
+      kit.env.DB,
+      `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
+       VALUES (?, ?, ?, 'live', 'email.captured', NULL, NULL, NULL, ?, ?)`,
+      ['legacy-door-row', kit.org.id, pass.id, JSON.stringify(data), kit.clock.now()],
+    );
+    const res = await events(pass.id, credentials.member.session.headers);
+    const page = PassEventListSchema.parse(await res.json());
+    const item = page.items.find((e) => e.id === 'legacy-door-row');
+    expect(item?.data).toEqual({ title: 'Door', nested: { keep: 1 }, list: [{ ok: true }] });
+    expect(JSON.stringify(page)).not.toMatch(/authority|proof|csrf|keyset/i);
   });
 });
 
@@ -161,11 +259,11 @@ describe('publish records pass.issued and pass.updated', () => {
     const { publishPass } = await import('../passes/publish.ts');
     const pass = await kit.pass();
     kit.clock.advance(1000);
-    await publishPass(kit.ctx, {
+    await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       source: 'broadcast',
-      actor: { type: 'user', id: 'u1' },
+      actor: { type: 'system', id: null },
       mutate: () => ({ personalization: { memberName: 'Changed' } }),
     });
     const list = await rows(pass.id);
@@ -189,10 +287,10 @@ describe('publish records pass.issued and pass.updated', () => {
     );
     expect(version).toEqual({ source: 'broadcast', cause: 'admin' });
     // The trigger consumes the pending source: a later publish without one has none.
-    await publishPass(kit.ctx, {
+    await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
-      actor: { type: 'user', id: 'u1' },
+      actor: { type: 'system', id: null },
       mutate: () => ({ personalization: { memberName: 'Again' } }),
     });
     expect(
@@ -210,11 +308,11 @@ describe('publish records pass.issued and pass.updated', () => {
     const { publishPass } = await import('../passes/publish.ts');
     const pass = await kit.pass();
     kit.clock.advance(1000);
-    await publishPass(kit.ctx, {
+    await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       notify: true,
-      actor: { type: 'user', id: 'u1' },
+      actor: { type: 'system', id: null },
       mutate: () => ({ personalization: { memberName: 'Notified' } }),
     });
     const updated = (await rows(pass.id)).find((r) => r.kind === 'pass.updated');

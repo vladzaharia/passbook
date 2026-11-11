@@ -35,8 +35,23 @@ export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatem
   );
 }
 
+/** The organization and key-mode of the pass already authorized by the caller. */
+export interface PassReadFence {
+  orgId: string;
+  mode: Mode | null;
+}
+
+const passReadFenceSql = `EXISTS (SELECT 1 FROM passes p
+  WHERE p.id = ? AND p.org_id = ? AND (? IS NULL OR p.mode = ?)
+    AND p.deleted_at IS NULL AND p.test_data_quarantined = 0)`;
+
+function passReadFenceParams(passId: string, fence: PassReadFence) {
+  return [passId, fence.orgId, fence.mode, fence.mode];
+}
+
 export interface EventFilter {
   passId: string;
+  fence: PassReadFence;
   kinds?: readonly EventKind[];
   /** The last event of the previous page. */
   after?: { at: number; id: string };
@@ -45,8 +60,8 @@ export interface EventFilter {
 
 /** Newest first. The (pass_id, at) index serves the order; id breaks ties. */
 export function listEvents(db: D1Database, f: EventFilter): Promise<EventRow[]> {
-  const where = ['pass_id = ?'];
-  const params: (string | number)[] = [f.passId];
+  const where = ['pass_id = ?', passReadFenceSql];
+  const params: (string | number | null)[] = [f.passId, ...passReadFenceParams(f.passId, f.fence)];
   if (f.kinds?.length) {
     where.push(`kind IN (${f.kinds.map(() => '?').join(', ')})`);
     params.push(...f.kinds);
@@ -87,7 +102,11 @@ export interface LatestDeviceEvent {
  * The newest event per (device, kind, step) of a pass, for the kinds that decide a device's state.
  * `step` separates a device's "asked for updates" check-in from its pass-file fetch.
  */
-export function latestDeviceEvents(db: D1Database, passId: string): Promise<LatestDeviceEvent[]> {
+export function latestDeviceEvents(
+  db: D1Database,
+  passId: string,
+  fence: PassReadFence,
+): Promise<LatestDeviceEvent[]> {
   return all<LatestDeviceEvent>(
     db,
     `SELECT device, kind, at, data FROM (
@@ -96,9 +115,10 @@ export function latestDeviceEvents(db: D1Database, passId: string): Promise<Late
          ORDER BY at DESC, id DESC) AS rn
        FROM pass_events
        WHERE pass_id = ? AND device IS NOT NULL
-         AND kind IN ('device.registered', 'device.unregistered', 'device.fetched', 'push.sent', 'push.failed'))
+         AND kind IN ('device.registered', 'device.unregistered', 'device.fetched', 'push.sent', 'push.failed')
+         AND ${passReadFenceSql})
      WHERE rn = 1`,
-    [passId],
+    [passId, ...passReadFenceParams(passId, fence)],
   );
 }
 
@@ -106,26 +126,11 @@ export function latestDeviceEvents(db: D1Database, passId: string): Promise<Late
 export function registrationsOfPass(
   db: D1Database,
   passId: string,
+  fence: PassReadFence,
 ): Promise<{ device_id: string; created_at: number }[]> {
-  return all(db, 'SELECT device_id, created_at FROM registrations WHERE pass_id = ?', [passId]);
-}
-
-/** The earliest device that checked in since `since` and has not fetched the file after it. */
-export async function pendingFetchDevices(
-  db: D1Database,
-  passId: string,
-  since: number,
-): Promise<string[]> {
-  const rows = await all<{ device: string }>(
+  return all(
     db,
-    `SELECT l.device FROM pass_events l
-     WHERE l.pass_id = ? AND l.kind = 'device.fetched' AND l.at >= ?
-       AND json_extract(l.data, '$.step') = 'listed' AND l.device IS NOT NULL
-       AND NOT EXISTS (SELECT 1 FROM pass_events f
-         WHERE f.pass_id = l.pass_id AND f.device = l.device AND f.kind = 'device.fetched'
-           AND json_extract(f.data, '$.step') = 'file' AND f.at >= l.at)
-     ORDER BY l.at, l.id LIMIT 1`,
-    [passId, since],
+    `SELECT device_id, created_at FROM registrations WHERE pass_id = ? AND ${passReadFenceSql}`,
+    [passId, ...passReadFenceParams(passId, fence)],
   );
-  return rows.map((r) => r.device);
 }

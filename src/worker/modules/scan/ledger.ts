@@ -31,7 +31,6 @@ export function ledgerRow(ctx: ServiceContext, actor: ScanActor, f: LedgerFacts)
   const at = ctx.clock.now();
   const data: Record<string, Json> = {
     scanId: f.scanId,
-    actionId: f.action?.id ?? null,
     actionKind: f.action?.kind ?? null,
     outcome: f.outcome,
     reason: f.reason,
@@ -39,7 +38,6 @@ export function ledgerRow(ctx: ServiceContext, actor: ScanActor, f: LedgerFacts)
     version: f.pass.version,
     eventId: actor.event?.id ?? null,
     scannerId: actor.scanner?.id ?? null,
-    scannerName: actor.scanner?.name ?? null,
     staffId: actor.staff?.id ?? null,
     approvedBy: f.approvedBy,
     override: f.override,

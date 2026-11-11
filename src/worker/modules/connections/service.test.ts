@@ -39,6 +39,18 @@ const audit = (action: string) =>
     [action, kit.org.id],
   );
 
+describe('listAll', () => {
+  it('allows trusted service callers to list across organizations or filter by org', async () => {
+    const other = await makeOrg(kit);
+    const own = await createDemo(kit);
+    const foreign = await createDemo(kit, { orgId: other.id });
+    const allConnections = await service.listAll(kit.sctx, { limit: 20 });
+    expect(allConnections.items.map((item) => item.id).sort()).toEqual([own.id, foreign.id].sort());
+    const scoped = await service.listAll(kit.sctx, { orgId: kit.org.id, limit: 20 });
+    expect(scoped.items.map((item) => item.id)).toEqual([own.id]);
+  });
+});
+
 describe('create', () => {
   it('stores a demo connection with defaults and schedules it', async () => {
     const dto = await createDemo(kit);
@@ -70,7 +82,7 @@ describe('create', () => {
     expect(JSON.stringify(dto)).not.toContain('tok-super-secret');
     const detail = await service.getDetail(kit.sctx, dto.id);
     expect(JSON.stringify(detail)).not.toContain('tok-super-secret');
-    const list = await service.listAll(kit.sctx, { limit: 50 });
+    const list = await service.listAll(kit.sctx, { orgId: kit.org.id, limit: 50 });
     expect(JSON.stringify(list)).not.toContain('tok-super-secret');
 
     const row = await first<{ ciphertext: ArrayBuffer; fingerprint: string; kind: string }>(
@@ -455,7 +467,7 @@ describe('test and sync now', () => {
       .bind(dto.id)
       .run();
     await createDemo(kit, { name: 'fine' });
-    const s = await actions.healthSummary(kit.sctx);
+    const s = await actions.healthSummary(kit.sctx, kit.org.id);
     expect(s.total).toBeGreaterThanOrEqual(2);
     expect(s.byHealth.failing).toBeGreaterThanOrEqual(1);
     expect(s.attention.map((a) => a.id)).toContain(dto.id);

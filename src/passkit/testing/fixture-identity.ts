@@ -55,7 +55,7 @@ async function makeCertificate(options: {
  */
 export async function createFixtureIdentity(
   identity: PassIdentity = FIXTURE_IDENTITY,
-  options: { now?: Date; days?: number } = {},
+  options: { now?: Date; days?: number; caDays?: number } = {},
 ): Promise<SigningMaterial & { identity: PassIdentity }> {
   const now = options.now ?? new Date();
   const algorithm = {
@@ -78,7 +78,7 @@ export async function createFixtureIdentity(
     serial: 1,
     publicKey: caKeys.publicKey,
     signingKey: caKeys.privateKey,
-    days: 3,
+    days: options.caDays ?? 3,
     now,
   });
   const leaf = await makeCertificate({

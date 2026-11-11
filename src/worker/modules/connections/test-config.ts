@@ -7,10 +7,12 @@ import type {
 import type { AnyConnector, ConnectorContext, UpstreamRecord } from '../../connectors/types.ts';
 import type { Actor } from '../../platform/context.ts';
 import { baseUrl } from '../../platform/env.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { createSafeFetch } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
+import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { getDeps } from './deps.ts';
+import { recordConnectionAudit } from './repo-sync.ts';
 import { classify } from './runtime.ts';
 import { auditActor } from './service.ts';
 import { assertOrg, assertSafeUrls, parseWith, requireConnector } from './validate.ts';
@@ -66,16 +68,23 @@ export async function testConfig(
   sctx: ServiceContext,
   actor: Actor,
   input: Input,
+  authority?: ConnectionAuthority,
 ): Promise<Result> {
+  if (authority && authority.orgId !== input.orgId) throw new ForbiddenError();
+  await assertConnectionAuthority(sctx, authority);
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   const config = parseWith(def.configSchema, input.config, 'config');
   const secrets = def.secretSchema
     ? parseWith(def.secretSchema, input.secrets ?? {}, 'secrets')
     : undefined;
-  if (def.urls) await assertSafeUrls(sctx, def.urls(config));
+  if (def.urls) {
+    await assertConnectionAuthority(sctx, authority);
+    await assertSafeUrls(sctx, def.urls(config));
+  }
   const startedAt = sctx.clock.now();
   if (!def.listChanges && !def.urls) {
+    await assertConnectionAuthority(sctx, authority);
     // Push-only connectors fetch nothing; records arrive in signed webhooks.
     return { ok: true, detail: 'Records arrive by webhook.', durationMs: 0 };
   }
@@ -96,7 +105,9 @@ export async function testConfig(
   };
   let result: Result;
   try {
+    await assertConnectionAuthority(sctx, authority);
     const outcome = (await def.test?.(cc)) ?? { ok: true as const };
+    await assertConnectionAuthority(sctx, authority);
     const record = await firstRecord(def, cc);
     result = {
       ok: true,
@@ -105,18 +116,23 @@ export async function testConfig(
       ...(record ? { sample: sampleFields(record) } : {}),
     };
   } catch (error) {
+    await assertConnectionAuthority(sctx, authority);
     const failure = classify(error);
     if (failure.code === 'INTERNAL')
-      sctx.log.error('connection.test_config_failed', { orgId: input.orgId, error });
+      sctx.log.error('connection.test_config_failed', { orgId: input.orgId, code: failure.code });
     result = { ok: false, errorCode: failure.code, durationMs: sctx.clock.now() - startedAt };
   }
-  await recordAudit(sctx, {
-    orgId: input.orgId,
-    ...auditActor(actor),
-    action: 'connection.test',
-    targetType: 'connection',
-    targetId: null,
-    detail: { connectorType: def.type, ok: result.ok, errorCode: result.errorCode ?? null },
-  });
+  await recordConnectionAudit(
+    sctx,
+    {
+      orgId: input.orgId,
+      ...auditActor(actor),
+      action: 'connection.test',
+      targetType: 'connection',
+      targetId: null,
+      detail: { connectorType: def.type, ok: result.ok, errorCode: result.errorCode ?? null },
+    },
+    authority,
+  );
   return result;
 }

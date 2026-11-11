@@ -107,12 +107,36 @@ describe('http-json fetchRecord', () => {
     expect(calls).toHaveLength(0);
   });
 
-  it('ignores an invalid holder email', async () => {
+  it('preserves a malformed nonempty holder email for downstream rejection', async () => {
     const { ctx } = harness({ ...base, holderEmailPointer: '/email' }, {}, () => ({
       body: { email: 'not-an-email', a: 1 },
     }));
-    const res = await connector.fetchRecord(ctx, 'x');
-    expect(res.status === 'ok' && res.holderEmail).toBeFalsy();
+    expect(await connector.fetchRecord(ctx, 'x')).toEqual({
+      status: 'ok',
+      record: { email: 'not-an-email', a: 1 },
+      holderEmail: 'not-an-email',
+    });
+  });
+
+  it.each([null, '', '  ', undefined])(
+    'omits an absent or empty holder email (%s)',
+    async (email) => {
+      const { ctx } = harness({ ...base, holderEmailPointer: '/email' }, {}, () => ({
+        body: { email, a: 1 },
+      }));
+      const result = await connector.fetchRecord(ctx, 'x');
+      expect(result.status).toBe('ok');
+      expect(result).not.toHaveProperty('holderEmail');
+    },
+  );
+
+  it.each([0, false, {}, []])('rejects a non-string holder email (%j)', async (email) => {
+    const { ctx } = harness({ ...base, holderEmailPointer: '/email' }, {}, () => ({
+      body: { email, a: 1 },
+    }));
+    await expect(connector.fetchRecord(ctx, 'x')).rejects.toMatchObject({
+      code: 'INVALID_PAYLOAD',
+    });
   });
 
   it('maps 404 to not_found', async () => {
@@ -287,6 +311,18 @@ describe('http-json verifyWebhook', () => {
       await hook({ id: 'evt-1', refs: ['a', 'b', 'a', 3] }),
     );
     expect(res).toEqual({ eventId: 'evt-1', refs: ['a', 'b', '3'] });
+  });
+
+  it('declares refs-only and fetches webhook refs from the source', async () => {
+    const { ctx, calls } = harness(base, {}, () => ({ body: { name: 'Alex' } }), secret);
+    const res = await connector.verifyWebhook?.(ctx, await hook({ id: 'evt-1', refs: ['a'] }));
+    expect(connector.webhookReferenceMode).toBe('refs-only');
+    expect(res).toEqual({ eventId: 'evt-1', refs: ['a'] });
+    expect(await connector.fetchRecord(ctx, 'a')).toMatchObject({
+      status: 'ok',
+      record: { name: 'Alex' },
+    });
+    expect(calls.map((call) => call.url)).toEqual(['https://api.example.com/v1/a']);
   });
 
   it('derives a stable event id from the signature when the body has none', async () => {

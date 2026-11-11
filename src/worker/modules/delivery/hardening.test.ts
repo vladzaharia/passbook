@@ -3,12 +3,18 @@ import { renderPassEmail } from '../../email/pass.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { purgeLogs } from '../apple/repo.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import type { Pass } from '../passes/repo.ts';
 import { createMtlsApnsTransport } from './apns.ts';
+import { jobCtxOf } from './delivery-test-fixtures.ts';
+import { EMAIL_RECIPIENT_HOURLY_CAP, enqueuePassEmail } from './issuance-intent.ts';
 import { handleEmailSend, handlePushDeliver, sweepDelivery } from './jobs.ts';
 import { classifyApns } from './push.ts';
-import { dropRegistrations, failExhausted, getOutbox } from './repo.ts';
-import { EMAIL_RECIPIENT_HOURLY_CAP, enqueuePassEmail, enqueuePush } from './service.ts';
+import { getOutbox } from './repo.ts';
+import { failExhausted } from './repo-outbox-processing.ts';
+import { enqueuePush } from './service.ts';
+
+const job = () => jobCtxOf(kit);
 
 let kit: Kit;
 beforeAll(async () => {
@@ -18,8 +24,13 @@ beforeAll(async () => {
 let seq = 0;
 const address = () => `holder${++seq}@example.com`;
 
-async function emailFor(pass: { id: string }, to = address(), attach = false) {
-  const { outboxId } = await enqueuePassEmail(kit.ctx, { passId: pass.id, to, attach });
+async function emailFor(pass: Pass, to = address(), attach = false) {
+  const { outboxId } = await enqueuePassEmail(job(), {
+    passId: pass.id,
+    to,
+    attach,
+    expected: pass,
+  });
   return outboxId;
 }
 
@@ -49,24 +60,22 @@ function captureEvents(): { points: { blobs: string[] }[]; stop(): void } {
 }
 
 describe('email.result events', () => {
-  it('writes ok after a send and failed after a failed attempt', async () => {
+  it('writes ok after acceptance and unknown after an ambiguous provider error', async () => {
     const events = captureEvents();
     try {
       const pass = await kit.pass();
       const id = await emailFor(pass);
-      await handleEmailSend({ kind: 'email.send', outboxId: id }, kit.ctx);
+      await handleEmailSend({ kind: 'email.send', outboxId: id }, job());
       kit.mailer.fail = new Error('down');
       const retry = await emailFor(pass);
-      await expect(
-        handleEmailSend({ kind: 'email.send', outboxId: retry }, kit.ctx),
-      ).rejects.toMatchObject({ code: 'EMAIL_FAILED' });
+      await handleEmailSend({ kind: 'email.send', outboxId: retry }, job());
       kit.mailer.fail = null;
       const results = events.points
         .filter((p) => p.blobs[0] === 'email.result')
         .map((p) => [p.blobs[1], p.blobs[4]]);
       expect(results).toEqual([
         [pass.orgId, 'ok'],
-        [pass.orgId, 'failed'],
+        [pass.orgId, 'unknown'],
       ]);
     } finally {
       kit.mailer.fail = null;
@@ -86,7 +95,7 @@ describe('email content', () => {
       kit.org.id,
     ]);
     const pass = await kit.pass();
-    await handleEmailSend({ kind: 'email.send', outboxId: await emailFor(pass) }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId: await emailFor(pass) }, job());
     const sent = kit.mailer.sent.at(-1);
     expect(sent?.html).not.toContain('#123abc');
     expect(sent?.html).toContain('help@gym.test');
@@ -122,16 +131,16 @@ describe('email delivery', () => {
     );
     const before = kit.mailer.sent.length;
     try {
-      await handleEmailSend({ kind: 'email.send', outboxId: id }, kit.ctx);
+      await handleEmailSend({ kind: 'email.send', outboxId: id }, job());
     } finally {
       await run(kit.env.DB, 'DROP TRIGGER fail_finish');
     }
     expect(kit.mailer.sent.length).toBe(before + 1);
     expect(await getOutbox(kit.env.DB, id)).toMatchObject({ state: 'processing' });
-    // Lease expires; the sweeper hands the row back and the re-run only finishes it.
+    // Lease expires; the sweeper settles the already-recorded provider id without resending.
     kit.clock.advance(10 * 60_000);
-    await sweepDelivery(kit.ctx);
-    await handleEmailSend({ kind: 'email.send', outboxId: id }, kit.ctx);
+    await sweepDelivery(job());
+    await handleEmailSend({ kind: 'email.send', outboxId: id }, job());
     expect(kit.mailer.sent.length).toBe(before + 1);
     expect(await getOutbox(kit.env.DB, id)).toMatchObject({ state: 'sent' });
   });
@@ -140,7 +149,7 @@ describe('email delivery', () => {
     const pass = await kit.pass();
     const id = await emailFor(pass, address(), true);
     await kit.env.BUCKET.delete(pass.objectKey);
-    await handleEmailSend({ kind: 'email.send', outboxId: id }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId: id }, job());
     expect(await getOutbox(kit.env.DB, id)).toMatchObject({
       state: 'failed',
       errorCode: 'EMAIL_PERMANENT',
@@ -152,13 +161,13 @@ describe('email delivery', () => {
     const pass = await kit.pass();
     await kit.device(pass, `dev-s-${pass.id}`, 'e'.repeat(64));
     const id = await emailFor(pass);
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(job(), pass.id, 'refresh');
     await kit.settle();
     const push = await pushRow(pass.id);
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [pass.orgId]);
     const sent = kit.mailer.sent.length;
     const pushed = kit.apns.sent.length;
-    await handleEmailSend({ kind: 'email.send', outboxId: id }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId: id }, job());
     await handlePushDeliver({ kind: 'push.deliver', outboxId: push }, kit.ctx);
     await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [pass.orgId]);
     expect(kit.mailer.sent.length).toBe(sent);
@@ -192,7 +201,7 @@ describe('email caps', () => {
 describe('outbox claims', () => {
   it('fails a row only when its attempts are used up', async () => {
     const pass = await kit.pass();
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(job(), pass.id, 'refresh');
     await kit.settle();
     const id = await pushRow(pass.id);
     await run(
@@ -217,9 +226,14 @@ describe('dead tokens', () => {
     const two = await kit.pass();
     await kit.device(one, 'dead-dev', 'f'.repeat(64));
     await kit.device(two, 'dead-dev', 'f'.repeat(64));
-    await dropRegistrations(kit.env.DB, one.identityId, [
-      { deviceId: 'dead-dev', pushToken: 'f'.repeat(64) },
-    ]);
+    await enqueuePush(job(), one.id, 'refresh');
+    await kit.settle();
+    kit.apns.results.set('f'.repeat(64), { status: 400, reason: 'BadDeviceToken' });
+    try {
+      await handlePushDeliver({ kind: 'push.deliver', outboxId: await pushRow(one.id) }, kit.ctx);
+    } finally {
+      kit.apns.results.delete('f'.repeat(64));
+    }
     const left = await first(
       kit.env.DB,
       "SELECT 1 FROM registrations WHERE device_id = 'dead-dev'",
@@ -236,9 +250,14 @@ describe('dead tokens on a shared device', () => {
     const other = await kit.pass();
     await kit.device(mine, 'shared-dev', 'a'.repeat(64));
     await kit.device(other, 'shared-dev', 'b'.repeat(64));
-    await dropRegistrations(kit.env.DB, mine.identityId, [
-      { deviceId: 'shared-dev', pushToken: 'b'.repeat(64) },
-    ]);
+    await enqueuePush(job(), other.id, 'refresh');
+    await kit.settle();
+    kit.apns.results.set('b'.repeat(64), { status: 400, reason: 'BadDeviceToken' });
+    try {
+      await handlePushDeliver({ kind: 'push.deliver', outboxId: await pushRow(other.id) }, kit.ctx);
+    } finally {
+      kit.apns.results.delete('b'.repeat(64));
+    }
     const left = await all<{ pass_id: string }>(
       kit.env.DB,
       "SELECT pass_id FROM registrations WHERE device_id = 'shared-dev'",

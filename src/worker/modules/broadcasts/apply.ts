@@ -1,12 +1,13 @@
-import type { BroadcastTarget } from '../../../shared/contracts/broadcasts.ts';
+import { BroadcastTargetSchema } from '../../../shared/contracts/broadcasts.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { dispatchSafely } from '../delivery/service.ts';
+import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { publishPass } from '../passes/publish.ts';
-import { getPass, type Pass } from '../passes/repo.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import {
   type BroadcastRow,
@@ -53,11 +54,17 @@ async function applyOne(
   row: BroadcastRow,
   cache: MessagingInputs,
   passId: string,
-): Promise<ItemRow> {
+): Promise<ItemRow | null> {
   const base = { passId, silent: false };
   const pass = await getPass(ctx.env.DB, passId, row.org_id);
-  if (pass?.status !== 'active' || pass.removedAt !== null || pass.mode !== row.mode)
-    return { ...base, outcome: 'unchanged' };
+  if (
+    !pass ||
+    pass.orgId !== row.org_id ||
+    pass.mode !== row.mode ||
+    pass.status !== 'active' ||
+    pass.removedAt !== null
+  )
+    return null;
   try {
     const patch = JSON.parse(row.patch) as Record<string, Json>;
     const values: Record<string, Json> = {};
@@ -86,7 +93,18 @@ async function applyOne(
       actor: actorOf(row),
       dispatch: false,
       notify,
-      mutate: (current) => ({ personalization: { ...current.personalization, ...values } }),
+      mutate: (current) => {
+        // A pass may have changed since selection. publishPass reruns this check on each retry,
+        // and its CAS commits only against the same org, mode, status and removal snapshot.
+        if (
+          current.orgId !== row.org_id ||
+          current.mode !== row.mode ||
+          current.status !== 'active' ||
+          current.removedAt !== null
+        )
+          throw new ConflictError('Pass no longer matches the broadcast.', 'PASS_CONFLICT');
+        return { personalization: { ...current.personalization, ...values } };
+      },
     });
     if (!result.changed) {
       // A run that died after publishing leaves the new version but no item: count it once.
@@ -119,7 +137,7 @@ export function targetFilter(
   cursor: string | null,
   limit: number,
 ) {
-  const target = JSON.parse(row.target) as BroadcastTarget;
+  const target = BroadcastTargetSchema.parse(JSON.parse(row.target));
   return {
     orgId: row.org_id,
     mode: row.mode,
@@ -127,6 +145,7 @@ export function targetFilter(
     ...(target.onDevice !== undefined ? { onDevice: target.onDevice } : {}),
     ...(target.holderState ? { holderState: target.holderState } : {}),
     ...(target.q ? { q: target.q } : {}),
+    ...(target.scan ? { scan: target.scan } : {}),
     ...(cursor ? { cursor } : {}),
     limit,
   };
@@ -148,6 +167,7 @@ export async function applyChunk(
   for (const passId of page.ids) {
     if (done.has(passId)) continue;
     const item = await applyOne(ctx, row, cache, passId);
+    if (!item) continue;
     await insertItems(ctx.env.DB, broadcastId, [item]);
     if (item.outcome === 'updated') updated++;
   }

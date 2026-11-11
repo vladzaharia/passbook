@@ -1,41 +1,100 @@
-import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
+import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { insertEventStmt } from '../events/repo.ts';
+import { commitCheckInSuccess } from './act-check-in-success.ts';
 import type { ActRequest } from './act-claim.ts';
-import type { checkOverride } from './act-override.ts';
-import { completedAdmission, planAdmission } from './admission.ts';
-import { historyPlan } from './card.ts';
-import type { CountsPlan } from './counts.ts';
+import { gateWasHeld, type HeldGateSnapshot } from './act-gate-preflight.ts';
+import { finishHeldGate } from './act-held.ts';
+import { type Override, StaleScanAuthority } from './act-override.ts';
+import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
+import { snapshotActionContext, snapshotActionFound } from './act-snapshot.ts';
+import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { gateRule, gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
-import { ledgerRow, recordResult } from './ledger.ts';
-import { blankOutcome, canOverride, safeDisplay, undoWindowMinutes } from './outcome.ts';
-import { recordPresenceStmt } from './repo-admission.ts';
-import { type GateClaim, type GateKey, gateHolderStmt, upsertGateStmt } from './repo-gates.ts';
-import { finalizeStmt, ledgerIfWonStmt } from './repo-scans.ts';
-import { activeFlags, type Found } from './resolve.ts';
+import type { PreparedPhotoGrant } from './member-photo.ts';
+import type * as gates from './repo-gates.ts';
+import * as snapshots from './repo-scan-effect.ts';
+import type { Found } from './resolve.ts';
+import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
+import type { PinReservation } from './staff-pin.ts';
 
 interface CommitInput {
   ctx: ServiceContext;
   actor: ScanActor;
+  authorityActor: ScanActor;
   req: ActRequest;
   scanId: string;
+  claimAt: number;
+  requestHash: string;
+  credentialTombstoneRefs: readonly string[];
+  credentialKeysetCommitment: string;
+  csrfSnapshot: ActorCsrfSnapshot;
+  preflight: ActionPreflight;
+  held: HeldGateSnapshot;
+  history: ActionHistoryPreflight | null;
+  photo: PreparedPhotoGrant | null;
+  undoWindow: number;
   found: Found;
   action: ResolvedScanAction;
-  override: Awaited<ReturnType<typeof checkOverride>>;
+  override: Override | null;
   approvedBy: string | null;
-  counts: CountsPlan;
+  approvedAuthEpoch: number | null;
+  reservation: PinReservation | null;
+  onFailureCommitted(): void;
 }
-const MINUTE = 60_000;
-
 export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
-  const { ctx, actor, req, scanId, found, action, override, approvedBy, counts } = input;
-  const db = ctx.env.DB;
+  const {
+    ctx: originalCtx,
+    actor: inputActor,
+    authorityActor: inputAuthority,
+    found: originalFound,
+    req: originalReq,
+    csrfSnapshot,
+    preflight,
+    held,
+    history,
+    photo,
+    override,
+    reservation,
+    onFailureCommitted,
+    ...source
+  } = input;
+  const ctx = snapshotActionContext(originalCtx);
+  const actor = cloneObservedScanActor(inputActor);
+  const authorityActor = cloneObservedScanActor(inputAuthority);
+  const originalCandidate = originalFound.liveCandidate ?? null;
+  const found = snapshotActionFound(originalFound);
+  const { input: requestInput, approval, ...request } = originalReq;
+  const req = {
+    ...structuredClone(request),
+    input: { ...requestInput },
+    ...(approval ? { approval: { ...approval } } : {}),
+  };
+  const {
+    scanId,
+    claimAt,
+    action,
+    approvedBy,
+    approvedAuthEpoch,
+    requestHash,
+    credentialTombstoneRefs,
+    credentialKeysetCommitment,
+    undoWindow,
+  } = structuredClone(source);
+  const _db = ctx.env.DB;
   const now = ctx.clock.now();
   const event = actor.event;
+  if (
+    !snapshots.credentialSnapshotMatches(
+      req.input,
+      credentialTombstoneRefs,
+      found.credentialTombstoneRefs,
+    ) ||
+    found.credentialKeysetCommitment !== credentialKeysetCommitment
+  )
+    throw new StaleScanAuthority();
   // Step 15 and the effect: gate, finalize and ledger in one batch, counts behind them.
-  const gate: GateKey = {
+  const gate: gates.GateKey = {
     passId: found.pass.id,
     actionId: action.id,
     scope:
@@ -43,7 +102,32 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
         ? found.admission.scope
         : gateScope(action, actor, now),
   };
-  const claim: GateClaim = {
+  if (!found.admission && event && (!found.eventAdmission || found.eventAdmissionReason))
+    throw new StaleScanAuthority();
+  const presencePlan = found.admission ?? found.eventAdmission;
+  const presenceScope = presencePlan?.scope ?? gate.scope;
+  if (
+    preflight.gate.passId !== gate.passId ||
+    preflight.gate.actionId !== gate.actionId ||
+    preflight.gate.scope !== gate.scope ||
+    preflight.presenceScope !== presenceScope ||
+    !(await preflight.prepared.keysetCurrent)
+  )
+    throw new StaleScanAuthority();
+  const { passFence, observed } = preflight;
+  const previousGate = observed.gateBefore;
+  if (
+    (previousGate &&
+      (previousGate.orgId !== actor.orgId ||
+        previousGate.mode !== found.pass.mode ||
+        previousGate.templateId !== found.pass.templateId ||
+        previousGate.kind !== action.kind)) ||
+    (observed.presenceBefore && observed.presenceBefore.orgId !== actor.orgId)
+  )
+    throw new StaleScanAuthority();
+  if (presencePlan && !snapshots.samePresence(presencePlan.presence, observed.presenceBefore))
+    throw new StaleScanAuthority();
+  const seed = {
     ...gate,
     ...(event?.capacity != null &&
     found.admission?.state.direction !== 'out' &&
@@ -54,10 +138,33 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     mode: found.pass.mode,
     templateId: found.pass.templateId,
     kind: action.kind,
-    state: found.admission?.state.direction ?? 'in',
-    admission: found.admission,
+    state: found.admission?.state.direction ?? ('in' as const),
+    admission: presencePlan,
+    method: req.input.method,
+    claimEventId: authorityActor.event?.id ?? null,
+    idempotencyKey: req.idempotencyKey,
+    requestHash,
+    credentialTombstoneRefs,
+    credentialKeysetCommitment,
     scanId,
+    claimAt,
     now,
+  };
+  const effect = snapshots.claimEffect(observed, seed);
+  const claim: gates.GateClaim = {
+    ...seed,
+    presenceScope,
+    effect,
+    authority: {
+      actor: authorityActor,
+      pass: found.pass,
+      passFence,
+      event,
+      approvedBy,
+      approvedAuthEpoch,
+      override,
+      adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
+    },
     gate:
       override && (override.reason === 'already_done' || override.reason === 'cooldown')
         ? { rule: 'always' }
@@ -74,143 +181,66 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     approvedBy,
     direction: found.admission?.state.direction,
   };
-  const history = historyPlan(ctx, actor, found);
-  const results = await db.batch([
-    upsertGateStmt(db, claim),
-    finalizeStmt(
-      db,
-      {
-        id: scanId,
-        outcome: 'ok',
-        reason: null,
-        passId: found.pass.id,
-        templateId: found.pass.templateId,
-        actionId: action.id,
-        actionKind: action.kind,
-        passVersion: found.pass.version,
-        overrideOf: req.overrideOf ?? null,
-        approvedBy,
-        direction: found.admission?.state.direction,
-        presenceScope: found.admission?.scope,
-        eventId: event?.id,
-      },
-      gate,
-    ),
-    ledgerIfWonStmt(
-      db,
-      ledgerRow(ctx, actor, { ...facts, outcome: 'ok', reason: null }),
-      gate,
-      scanId,
-    ),
-    gateHolderStmt(db, gate),
-    ...(found.admission
-      ? [recordPresenceStmt(db, actor.orgId, gate, scanId, now, found.admission)]
-      : []),
-    ...counts.stmts,
-    ...history.stmts,
-  ]);
-  const offset = found.admission ? 5 : 4;
-  const read = await counts.read(results.slice(offset, offset + counts.stmts.length));
-  const display = (screen: 'ok' | 'heads_up') =>
-    safeDisplay(ctx, actor, found.pass, screen, {
-      found,
-      history: history.read(results.slice(offset + counts.stmts.length)),
-    });
-  const asAction = { id: action.id, label: action.label, kind: action.kind };
-  if (
-    (results[0]?.results?.[0] as { last_scan_id?: string } | undefined)?.last_scan_id === scanId
-  ) {
-    recordResult(ctx, actor, found.pass.templateId, 'ok');
-    const arrived = read.counts.event?.arrived ?? 0;
-    const expected = read.counts.event?.expected ?? 0;
-    const window = await undoWindowMinutes(ctx);
-    return {
-      ...blankOutcome('ok', read),
-      scanId,
-      action: asAction,
-      template: found.ref,
-      at: now,
-      flags: activeFlags(found).map((f) => f.label),
-      milestone:
-        read.counts.event && expected > 0 && arrived === expected
-          ? 'all_in'
-          : arrived > 0 && Math.floor(arrived / 100) > Math.floor((arrived - 1) / 100)
-            ? 'count'
-            : null,
-      undoUntil: now + window * MINUTE,
-      display: display('ok'),
-      checkIn: found.admission ? completedAdmission(found.admission, now) : undefined,
-    };
-  }
-
-  // The gate was held. The holder's row says who, where and when.
-  const holder = results[3]?.results?.[0] as
-    | {
-        scan_id: string | null;
-        at: number;
-        scan_state: string | null;
-        last_at: number;
-        scanner_name: string | null;
-        staff_name: string | null;
-        override_of: string | null;
-      }
-    | undefined;
-  const fresh = found.admission
-    ? await planAdmission(ctx, actor, found, found.admission.state.direction)
-    : null;
-  const reason: ScanReason =
-    fresh?.reason ??
-    (event?.capacity != null &&
-    ((event.reentry ? read.counts.event?.inside : read.counts.event?.arrived) ?? 0) >=
-      event.capacity
-      ? 'capacity_full'
-      : holder?.scan_state === 'pending'
-        ? 'in_progress'
-        : action.repeat === 'cooldown'
-          ? 'cooldown'
-          : 'already_done');
-  await db.batch([
-    finalizeStmt(db, {
-      id: scanId,
-      outcome: 'heads_up',
-      reason,
-      passId: found.pass.id,
-      templateId: found.pass.templateId,
-      actionId: action.id,
-      actionKind: action.kind,
-      passVersion: found.pass.version,
-      overrideOf: null,
-      approvedBy: null,
-    }),
-    insertEventStmt(
-      db,
-      ledgerRow(ctx, actor, { ...facts, outcome: 'heads_up', reason, override: false }),
-    ),
-  ]);
-  recordResult(ctx, actor, found.pass.templateId, reason);
-  const remaining =
-    reason === 'cooldown' && holder
-      ? Math.max(0, holder.last_at + (action.cooldownMinutes ?? 5) * MINUTE - now)
-      : null;
-  return {
-    ...blankOutcome('heads_up', read),
-    scanId,
-    reason,
-    action: asAction,
-    template: found.ref,
-    at: holder?.at ?? null,
-    cooldownRemainingMs: remaining,
-    previous: holder?.scan_id
-      ? {
-          scanId: holder.scan_id,
-          at: holder.at,
-          scannerName: holder.scanner_name ?? 'Scanner',
-          staffName: holder.staff_name,
-          actionLabel: action.label,
-          override: holder.override_of !== null,
-        }
-      : null,
-    overridable: !fresh?.reason && canOverride(actor, reason, action, read.approvals),
-    display: display('heads_up'),
+  const stopAuthority = {
+    actor: authorityActor,
+    event,
+    templateId: found.pass.templateId,
+    adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
+    passFence,
+    approvedBy,
+    approvedAuthEpoch,
   };
+  const capacityRequired = !!seed.capacity;
+  if (capacityRequired && held.capacityFull === null) throw new StaleScanAuthority();
+  if (
+    (capacityRequired && held.capacityFull === true) ||
+    gateWasHeld(observed.gateBefore, claim.gate, now)
+  )
+    return finishHeldGate({
+      ctx,
+      actor,
+      found,
+      action,
+      scanId,
+      claimAt,
+      credentialKeysetCommitment,
+      gate,
+      claim,
+      observed,
+      stopAuthority,
+      holderResult: held.holder,
+      capacityRequired,
+      capacityFull: held.capacityFull === true,
+      history: history?.preloaded,
+      photo,
+      csrfSnapshot,
+      originalCandidate,
+      facts,
+      dayStart: req.dayStart,
+      reservation,
+      onFailureCommitted,
+    });
+  return commitCheckInSuccess({
+    ctx,
+    actor,
+    found,
+    req,
+    csrfSnapshot,
+    history,
+    photo,
+    reservation,
+    action,
+    undoWindow,
+    gate,
+    claim,
+    presencePlan,
+    stopAuthority,
+    originalCandidate,
+    facts,
+    approver:
+      approvedBy && approvedAuthEpoch !== null
+        ? { id: approvedBy, authEpoch: approvedAuthEpoch }
+        : null,
+    onFailureCommitted,
+  });
 }

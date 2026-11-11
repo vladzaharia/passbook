@@ -1,18 +1,25 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { makeSession } from '../../../../test/helpers/index.ts';
 import { ScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
 import { CreateScannerSchema } from '../../../shared/contracts/scanners.ts';
+import { createSessionStore } from '../auth/sessions.ts';
+import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { getScanner } from './repo-device.ts';
-import { setSetupWatchStmt } from './repo-setups.ts';
+import { setSetupWatchStmt } from './repo-setups-test-support.ts';
 import { createScanner } from './scanners.ts';
 import { updateScanningDevice } from './scanning-devices.ts';
-import { createSetup, setupView } from './setups.ts';
+import { setupView } from './setup-views.ts';
+import { createSetup } from './setups.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
+let authority: TenantPassWrite;
 beforeAll(async () => {
   kit = await setupScanKit();
-  await makeUser(kit.fx, { id: 'admin-1' });
+  const fixture = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
+  const auth = await createSessionStore(kit.env, kit.clock).resolve(fixture.cookieValue);
+  if (!auth) throw new Error('Missing admin session.');
+  authority = await tenantAuthorityOf(kit.ctx, auth, kit.org.id, 'scanning:manage');
 });
 describe('legacy device layout compatibility', () => {
   it('keeps an unenrolled legacy setup readable', async () => {
@@ -38,15 +45,21 @@ describe('legacy device layout compatibility', () => {
         watch: { scannerIds: [source.id], allOrg: false },
       },
       'https://wallet.test',
+      authority,
     );
     expect(
       (await kit.post({ origin: 'https://wallet.test' }, '/pair', { code: display.pairing?.code }))
         .status,
     ).toBe(200);
     const before = await getScanner(kit.env.DB, display.id);
-    const changed = await updateScanningDevice(kit.ctx, 'admin-1', display.id, display.id, {
-      surface: 'phone',
-    });
+    const changed = await updateScanningDevice(
+      kit.ctx,
+      'admin-1',
+      display.id,
+      display.id,
+      { surface: 'phone' },
+      authority,
+    );
     expect(changed.effectiveSurface).toBe('phone');
     expect(await getScanner(kit.env.DB, display.id)).toMatchObject({
       kind: 'device',
@@ -70,9 +83,17 @@ describe('legacy device layout compatibility', () => {
         timeZone: 'UTC',
       }),
       'https://wallet.test',
+      authority,
     );
     await expect(
-      updateScanningDevice(kit.ctx, 'admin-1', terminal.id, terminal.id, { surface: 'customer' }),
+      updateScanningDevice(
+        kit.ctx,
+        'admin-1',
+        terminal.id,
+        terminal.id,
+        { surface: 'customer' },
+        authority,
+      ),
     ).rejects.toMatchObject({ code: 'SCAN_SURFACE_UNSUPPORTED' });
     expect(await getScanner(kit.env.DB, terminal.id)).toMatchObject({
       kind: 'terminal',

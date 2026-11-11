@@ -17,8 +17,7 @@ export interface RoleInput {
 /** SA 2.2. Null only when staff sign-in is required and nobody is signed in. */
 export function effectiveRole(input: RoleInput): ScanRole | null {
   if (input.principal === 'admin') return 'manager';
-  if (input.staffRole) return input.staffRole;
-  return input.settings.staffSignIn ? null : input.settings.roleWithoutSignIn;
+  return input.settings.staffSignIn ? input.staffRole : input.settings.roleWithoutSignIn;
 }
 
 /** The slice of a ScanActor the policy reads. */
@@ -47,6 +46,7 @@ export type PolicyRequest =
   | { kind: 'check_out' }
   | { kind: 'let_in_again' }
   | { kind: 'cooldown_override' }
+  | { kind: 'capacity_override' }
   | { kind: 'undo'; scan: UndoTarget; now: number; undoWindowMinutes: number }
   | { kind: 'bundle' }
   | { kind: 'card' };
@@ -54,6 +54,14 @@ export type PolicyRequest =
 export type PolicyVerdict =
   | { allow: true; view?: 'summary' }
   | { allow: false; why: 'needs_approval' | 'forbidden' };
+
+/** Which policy lets an override through. A full event always needs a manager, whatever `letInAgain` says. */
+export function overridePolicyKind(
+  reason: string | null,
+): 'let_in_again' | 'cooldown_override' | 'capacity_override' {
+  if (reason === 'capacity_full') return 'capacity_override';
+  return reason === 'cooldown' ? 'cooldown_override' : 'let_in_again';
+}
 
 const ALLOW: PolicyVerdict = { allow: true };
 const FORBIDDEN: PolicyVerdict = { allow: false, why: 'forbidden' };
@@ -98,6 +106,7 @@ export function scanPolicy(
       if (actor.settings.letInAgain === 'anyone') return actor.terminal ? FORBIDDEN : ALLOW;
       return managerOnly();
     case 'cooldown_override':
+    case 'capacity_override':
       return managerOnly();
     case 'undo': {
       const { scan, now } = request;

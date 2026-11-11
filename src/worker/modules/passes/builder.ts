@@ -19,7 +19,8 @@ import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { applyRemoval, type Removal } from './remove-build.ts';
-import { type AssetRow, listAssets, type PassStatus } from './repo.ts';
+import type { PassStatus } from './repo.ts';
+import { type AssetRow, listAssets } from './repo-history-assets.ts';
 import { memberPhotoAsset } from './repo-member-photo.ts';
 import { barcodeHashOf, lookupHashOf, lookupValueOf } from './scan-code.ts';
 
@@ -49,6 +50,8 @@ export interface BuildRequest {
   silent?: boolean;
   /** Set while the pass is removed from Wallet: every build stays the stripped, voided version. */
   removal?: Removal;
+  /** Excludes the current holder's uploaded assets and member photo from this build. */
+  omitPassAssets?: boolean;
 }
 
 export interface Artifact {
@@ -205,9 +208,11 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   const identity = await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
   const [originalOverrides, contacts, photo] = await Promise.all([
-    listAssets(ctx.env.DB, req.passId),
+    req.omitPassAssets ? Promise.resolve([] as AssetRow[]) : listAssets(ctx.env.DB, req.passId),
     backContactsFor(ctx, req.orgId, req.branding),
-    memberPhotoAsset(ctx.env.DB, req.orgId, req.passId),
+    req.omitPassAssets
+      ? Promise.resolve(null)
+      : memberPhotoAsset(ctx.env.DB, req.orgId, req.passId),
   ]);
   const passOverrides = photo
     ? [...originalOverrides.filter((a) => parseAssetName(a.name).slot !== 'thumbnail'), photo]

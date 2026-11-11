@@ -2,12 +2,16 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { all, run } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { updateSettings } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
+import { jobCtxOf } from './delivery-test-fixtures.ts';
+import { enqueuePassEmail } from './issuance-intent.ts';
 import { handleEmailSend } from './jobs.ts';
-import { enqueuePassEmail } from './service.ts';
+
+const job = () => jobCtxOf(kit);
 
 let kit: Kit;
 beforeAll(async () => {
@@ -20,17 +24,32 @@ let sends = 0;
 
 /** Each send to a new address, under the per-recipient hourly cap. */
 async function sendOne(given?: Pass) {
-  const pass = given ?? (await kit.pass());
-  const { outboxId } = await enqueuePassEmail(kit.ctx, {
+  const source = given ?? (await kit.pass());
+  const pass = await getPass(kit.env.DB, source.id);
+  if (!pass) throw new Error('pass missing');
+  const { outboxId } = await enqueuePassEmail(job(), {
     passId: pass.id,
     to: `holder-${++sends}@example.com`,
     attach: false,
+    expected: pass,
   });
-  await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+  await handleEmailSend({ kind: 'email.send', outboxId }, job());
   const sent = kit.mailer.sent.at(-1);
   if (!sent) throw new Error('nothing sent');
   return sent;
 }
+
+describe('pass email wallet availability', () => {
+  it('sends the Apple action without native offers for an unconfigured account', async () => {
+    const pass = await kit.pass();
+    const { html, text } = await sendOne(pass);
+    const base = baseUrl(kit.env);
+    expect(html).toContain(`href="${base}/p/${pass.downloadToken}/pass.pkpass"`);
+    expect(text).toContain(`Add to Apple Wallet: ${base}/p/${pass.downloadToken}/pass.pkpass`);
+    expect(html).not.toContain('/icons/wallet-providers/');
+    expect(text).not.toMatch(/Add to (Google|Samsung) Wallet/);
+  });
+});
 
 describe('pass email buddy (email.buddy)', () => {
   it('is off by default, then follows the org setting, audited', async () => {
@@ -79,7 +98,7 @@ describe("the pass's icon and logo", () => {
     expect(plain.html).not.toContain('/assets/logo');
 
     // An override at @2x: 200×60 px is 100×30 pt, under the email's 36.
-    await putPassAsset(kit.ctx, actor, pass.id, 'logo@2x.png', makePng(200, 60), null);
+    await putPassAsset(jobCtxOf(kit), actor, pass.id, 'logo@2x.png', makePng(200, 60), null);
     const { html } = await sendOne(pass);
     expect(html).toMatch(
       new RegExp(
@@ -90,7 +109,7 @@ describe("the pass's icon and logo", () => {
 
   it("set the pass's logoText beside the logo unless the org's logo has the name", async () => {
     const pass = await kit.pass();
-    await putPassAsset(kit.ctx, actor, pass.id, 'logo@2x.png', makePng(100, 100), null);
+    await putPassAsset(jobCtxOf(kit), actor, pass.id, 'logo@2x.png', makePng(100, 100), null);
     await run(
       kit.env.DB,
       "UPDATE pass_versions SET pass_json = json_set(pass_json, '$.logoText', ?) WHERE pass_id = ?",

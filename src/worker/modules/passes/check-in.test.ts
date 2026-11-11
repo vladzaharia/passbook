@@ -1,23 +1,25 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassCheckInSchema } from '../../../shared/contracts/check-in.ts';
 import { createApp } from '../../app.ts';
 import { type ScanKit, setupScanKit } from '../scan/test-kit.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
 let kit: ScanKit;
+let auth: TenantTestAuth;
 let app: ReturnType<typeof createApp>;
 let template: string;
 beforeAll(async () => {
   kit = await setupScanKit();
-  app = createApp({ stores: fake.stores });
+  auth = await setupTenantTestAuth(kit);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
   template = await kit.scanTemplate('Dated check-in', {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
     window: { from: 'startsAt', until: 'endsAt' },
   });
 });
-const put = (id: string, rules: unknown, headers = fake.admin()) =>
+const put = (id: string, rules: unknown, headers = auth.admin()) =>
   app.request(
     `${ORIGIN}/api/v1/passes/${id}/check-in`,
     {
@@ -51,14 +53,13 @@ describe('pass check-in configuration', () => {
     });
   });
 
-  it('enforces role, organization and mode for policy writes', async () => {
+  it('enforces membership, organization and mode for policy writes', async () => {
     const pass = await dated();
-    expect((await put(pass.id, { mode: 'single' }, fake.user())).status).toBe(403);
-    expect(
-      (await put(pass.id, {}, fake.apiKey({ orgId: 'another-org', scopes: ['passes:write'] })))
-        .status,
-    ).toBe(404);
-    expect((await put(pass.id, {}, fake.admin({ mode: 'test' }))).status).toBe(409);
+    expect((await put(pass.id, { mode: 'single' }, auth.user())).status).toBe(403);
+    const other = await makeOrg(kit.fx);
+    const key = await auth.apiKey({ orgId: other.id, scopes: ['passes:write'] });
+    expect((await put(pass.id, {}, key)).status).toBe(404);
+    expect((await put(pass.id, {}, auth.admin({ mode: 'test' }))).status).toBe(409);
     expect((await put(pass.id, { eventId: 'missing-event' })).status).toBe(404);
   });
 });

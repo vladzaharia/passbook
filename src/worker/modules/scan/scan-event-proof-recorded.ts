@@ -1,0 +1,108 @@
+import type { EventRow } from '../events/repo.ts';
+import type { ScanRow } from './repo-scan-map.ts';
+import { type ObjectValue, object } from './scan-event-proof-envelope.ts';
+
+type RecordedEventScan = Omit<
+  ScanRow,
+  'requestHash' | 'actionId' | 'overrideOf' | 'approvedBy' | 'undoneBy'
+> & {
+  pinnedTemplateVersion: string;
+  walletVersion: number;
+  walletTemplateVersion: string | null;
+  direction: 'in' | 'out' | null;
+  presenceScope: string | null;
+};
+
+function recordedGateValid(row: EventRow, scan: RecordedEventScan, data: ObjectValue): boolean {
+  if (!object(data.authority)) return false;
+  const gate = data.authority.gate;
+  if (scan.outcome === 'ok' && scan.actionKind !== 'check_in') return false;
+  if (scan.outcome !== 'ok')
+    return (
+      gate === undefined ||
+      (object(gate) && typeof gate.scope === 'string' && typeof gate.exists === 'boolean')
+    );
+  return (
+    object(gate) &&
+    gate.exists === true &&
+    typeof gate.scope === 'string' &&
+    gate.scanId === scan.id &&
+    gate.orgId === row.org_id &&
+    gate.mode === row.mode &&
+    gate.templateId === scan.templateId &&
+    gate.kind === scan.actionKind &&
+    gate.state === (scan.direction ?? 'in') &&
+    gate.scanState === 'done' &&
+    gate.undoneBy === null &&
+    Number.isSafeInteger(gate.count) &&
+    Number(gate.count) > 0 &&
+    Number.isSafeInteger(gate.firstAt) &&
+    Number.isSafeInteger(gate.lastAt) &&
+    Object.hasOwn(gate, 'prevState') &&
+    (gate.prevState === null || typeof gate.prevState === 'string') &&
+    Object.hasOwn(gate, 'prevLastAt') &&
+    (gate.prevLastAt === null || Number.isSafeInteger(gate.prevLastAt)) &&
+    Object.hasOwn(gate, 'prevScanId') &&
+    (gate.prevScanId === null || typeof gate.prevScanId === 'string')
+  );
+}
+
+export function recordedEventValid(
+  row: EventRow,
+  scan: RecordedEventScan,
+  data: ObjectValue,
+  actionIdRef: string | null,
+): boolean {
+  if (!object(data.authority)) return false;
+  const actorKey =
+    row.actor_type === 'scanner'
+      ? `s:${row.actor_id}`
+      : row.actor_type === 'user'
+        ? scan.scannerId
+          ? `u:${row.actor_id}:${scan.scannerId}`
+          : `u:${row.actor_id}`
+        : null;
+  const eventKind =
+    scan.outcome === 'ok'
+      ? scan.direction === 'out'
+        ? 'scan.checked_out'
+        : 'scan.checked_in'
+      : scan.outcome === 'heads_up'
+        ? 'scan.heads_up'
+        : scan.outcome === 'refused'
+          ? 'scan.rejected'
+          : null;
+  return (
+    scan.state === 'done' &&
+    scan.passId !== null &&
+    row.org_id === scan.orgId &&
+    row.pass_id === scan.passId &&
+    row.mode === scan.mode &&
+    row.kind === eventKind &&
+    !!row.actor_id &&
+    actorKey === scan.actorKey &&
+    data.scanId === scan.id &&
+    data.actionIdRef === actionIdRef &&
+    data.actionKind === scan.actionKind &&
+    data.outcome === scan.outcome &&
+    data.reason === scan.reason &&
+    data.version === scan.passVersion &&
+    (data.direction ?? null) === scan.direction &&
+    data.method === scan.method &&
+    data.scannerId === scan.scannerId &&
+    data.staffId === scan.staffId &&
+    data.eventId === scan.eventId &&
+    data.authority.templateId === scan.templateId &&
+    data.authority.pinnedTemplateVersion === scan.pinnedTemplateVersion &&
+    data.authority.walletTemplateVersion === scan.walletTemplateVersion &&
+    data.authority.walletVersion === scan.walletVersion &&
+    Number.isSafeInteger(scan.walletVersion) &&
+    scan.walletVersion > 0 &&
+    scan.passVersion !== null &&
+    scan.walletVersion <= scan.passVersion &&
+    data.authority.scanAt === scan.at &&
+    data.authority.presenceScope === scan.presenceScope &&
+    data.authority.nonQuarantined === true &&
+    recordedGateValid(row, scan, data)
+  );
+}

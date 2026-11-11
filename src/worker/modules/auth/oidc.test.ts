@@ -7,10 +7,20 @@ import {
   makeUser,
 } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
+import { signInOidc } from './oidc-sign-in.ts';
+import { type OidcClaims, signInMagicLink } from './service.ts';
 import { oidcSignIn } from './test-oidc.ts';
-import { fakeLimiter, harness, ISSUER, type Jar, type TestHarness } from './test-support.ts';
+import {
+  fakeLimiter,
+  harness,
+  ISSUER,
+  type Jar,
+  type TestHarness,
+  waitingPass,
+} from './test-support.ts';
 
 let h: TestHarness;
 let n = 0;
@@ -192,14 +202,8 @@ describe('oidc sign-in', () => {
     h = await harness({
       EVENTS: { writeDataPoint: (p: { blobs: string[] }) => points.push(p) } as never,
     });
-    const f1 = fixtures(h.env);
-    const org = await makeOrg(f1);
     const user = person(['wallet-users']);
-    const pass = await makePass(f1, {
-      orgId: org.id,
-      template: makeTemplate().resolved,
-      holderEmail: user.email,
-    });
+    const pass = await waitingPass(user.email);
     const jar: Jar = new Map();
     await oidcSignIn(h, jar, user);
     const me = (await session(jar)) as { user: { id: string } };
@@ -282,8 +286,91 @@ describe('oidc sign-in', () => {
     });
   });
 
+  it.each([undefined, false, 'true', 1, null, {}, ['true']])(
+    'sends mail proof for unsupported email verification claim %j instead of creating or linking',
+    async (claim) => {
+      await setTrust(true);
+      const existing = await makeUser(fixtures(h.env));
+      const ctx = createServiceContext(h.env, { clock: h.clock });
+      for (const email of [existing.primaryEmail, `unclaimed-${uniq()}@example.test`]) {
+        const user = person(['wallet-users'], { email });
+        const claims = {
+          ...user,
+          emailVerified: claim,
+        } as unknown as OidcClaims;
+        const mailBefore = h.mail.length;
+        await expect(
+          signInOidc(ctx, claims, { ipPrefix: null, userAgent: null, bindingHash: 'b'.repeat(64) }),
+        ).rejects.toMatchObject({ code: 'EMAIL_PROOF_SENT' });
+        expect(h.mail).toHaveLength(mailBefore + 1);
+        expect(h.mail.at(-1)?.to).toBe(email);
+        expect(
+          await first(h.env.DB, 'SELECT 1 FROM auth_identities WHERE subject = ?', [user.sub]),
+        ).toBeNull();
+        if (email !== existing.primaryEmail) {
+          expect(
+            await first(h.env.DB, 'SELECT 1 FROM users WHERE primary_email = ?', [email]),
+          ).toBeNull();
+        }
+      }
+    },
+  );
+
+  it('allows an existing identity to sign in without attaching passes from an unverified claim', async () => {
+    await setTrust(true);
+    const user = person(['wallet-users']);
+    const firstJar: Jar = new Map();
+    expect((await oidcSignIn(h, firstJar, user)).res.status).toBe(302);
+    const id = ((await session(firstJar)) as { user: { id: string } }).user.id;
+    const f = fixtures(h.env);
+    const org = await makeOrg(f);
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate().resolved,
+      holderEmail: user.email,
+    });
+    const jar: Jar = new Map();
+    const { res } = await oidcSignIn(h, jar, { ...user, emailVerified: false });
+    expect(res.status).toBe(302);
+    expect(((await session(jar)) as { user: { id: string } }).user.id).toBe(id);
+    expect(
+      (
+        await first<{ owner_user_id: string | null }>(
+          h.env.DB,
+          'SELECT owner_user_id FROM passes WHERE id = ?',
+          [pass.id],
+        )
+      )?.owner_user_id,
+    ).toBeNull();
+  });
+
+  it('links an unverified OIDC identity once its mail proof is consumed', async () => {
+    const existing = await makeUser(fixtures(h.env));
+    const ctx = createServiceContext(h.env, { clock: h.clock });
+    const subject = `proof-${uniq()}`;
+    await signInMagicLink(
+      ctx,
+      existing.primaryEmail,
+      { ipPrefix: null, userAgent: null },
+      {
+        provider: 'pocketid',
+        subject,
+        emailClaim: existing.primaryEmail,
+        emailVerified: false,
+        groups: ['wallet-users'],
+      },
+    );
+    expect(
+      await first(
+        h.env.DB,
+        'SELECT user_id, email_verified FROM auth_identities WHERE subject = ?',
+        [subject],
+      ),
+    ).toEqual({ user_id: existing.id, email_verified: 0 });
+  });
+
   describe('oidc.trustEmail on', () => {
-    it('still proves the owner when the claim is unverified, linking nothing', async () => {
+    it('proves an unverified claim by mail without linking or signing in', async () => {
       await setTrust(true);
       const existing = await makeUser(fixtures(h.env));
       const jar: Jar = new Map();
@@ -294,6 +381,7 @@ describe('oidc sign-in', () => {
       const { res } = await oidcSignIn(h, jar, user);
       expect(res.status).toBe(403);
       expect(await res.text()).toContain('Check your email');
+      expect(h.mail).toHaveLength(1);
       expect(jar.has('__Host-wallet_sid')).toBe(false);
       expect(
         await first(h.env.DB, 'SELECT 1 FROM auth_identities WHERE subject = ?', [user.sub]),
@@ -323,7 +411,7 @@ describe('oidc sign-in', () => {
       expect(rows[0]?.detail).not.toContain(existing.primaryEmail);
     });
 
-    it('attaches no waiting passes for a new user with an unverified claim', async () => {
+    it('sends mail proof to an unverified new identity without attaching waiting passes', async () => {
       await setTrust(true);
       const f1 = fixtures(h.env);
       const org = await makeOrg(f1);
@@ -334,7 +422,10 @@ describe('oidc sign-in', () => {
         holderEmail: user.email,
       });
       const { res } = await oidcSignIn(h, new Map(), user);
-      expect(res.status).toBe(302);
+      expect(res.status).toBe(403);
+      expect(await res.text()).toContain('Check your email');
+      expect(h.mail).toHaveLength(1);
+      expect(h.mail[0]?.to).toBe(user.email);
       const row = await first<{ owner_user_id: string | null }>(
         h.env.DB,
         'SELECT owner_user_id FROM passes WHERE id = ?',
@@ -342,7 +433,7 @@ describe('oidc sign-in', () => {
       );
       expect(row?.owner_user_id).toBeNull();
       expect(
-        await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [user.email]),
+        await first(h.env.DB, 'SELECT 1 FROM users WHERE primary_email = ?', [user.email]),
       ).toBeNull();
     });
   });

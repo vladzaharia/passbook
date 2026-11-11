@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { backContactsFor, passServiceText, withBackContacts } from '../passes/contacts.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { updateSettings } from '../settings/service.ts';
 import { supportContacts } from './service.ts';
 

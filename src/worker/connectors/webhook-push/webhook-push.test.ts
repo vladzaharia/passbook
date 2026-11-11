@@ -57,6 +57,10 @@ describe('webhook-push', () => {
       records: { a: { memberName: 'A' } },
       deleted: ['b'],
     });
+    expect(connector.webhookReferenceMode).toBe('embedded-required');
+    for (const ref of res?.refs ?? []) {
+      expect(res?.records?.[ref] !== undefined || res?.deleted?.includes(ref)).toBe(true);
+    }
   });
 
   it('rejects a wrong signature', async () => {

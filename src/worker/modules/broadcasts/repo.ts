@@ -1,8 +1,12 @@
 import type { BroadcastKind, BroadcastState } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, batch, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { all, first, placeholders, run, type SqlValue, stmt } from '../../platform/db.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 
+export type { CountRow, ItemRow } from './repo-outcomes.ts';
+export { countItems, handledPassIds, insertItems } from './repo-outcomes.ts';
 export type { BroadcastKind, BroadcastState };
 
 export interface BroadcastRow {
@@ -47,31 +51,72 @@ export interface NewBroadcast {
   now: number;
 }
 
+/**
+ * Request writes must carry the exact checked tenant/key grant. The caller binds the actual
+ * resource's org and mode separately; trusted workflow writes never use this predicate.
+ */
+function broadcastAuthority(
+  authority: TenantPassWrite,
+  now: number,
+  needsPassWrite: boolean,
+): { sql: string; params: SqlValue[] } {
+  const allowed =
+    authority.kind === 'session'
+      ? authority.capability === 'messages:manage'
+      : authority.scope === 'messages:write' &&
+        (!needsPassWrite || authority.scopes.includes('passes:write'));
+  return allowed
+    ? { sql: tenantPassAuthoritySql(authority), params: tenantPassAuthorityParams(authority, now) }
+    : { sql: '0', params: [] };
+}
+
+function broadcastValues(b: NewBroadcast): SqlValue[] {
+  return [
+    b.id,
+    b.orgId,
+    b.mode,
+    b.kind,
+    b.name,
+    b.state,
+    JSON.stringify(b.target),
+    JSON.stringify(b.patch),
+    b.notify ? 1 : 0,
+    b.at,
+    b.clearAfter,
+    b.expect === undefined ? null : JSON.stringify(b.expect),
+    b.parentId ?? null,
+    b.actor.type,
+    b.actor.id,
+    b.now,
+    null,
+  ];
+}
+
 export function insertBroadcastStmt(db: D1Database, b: NewBroadcast): D1PreparedStatement {
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
        clear_after, expect, parent_id, created_by_type, created_by_id, created_at, started_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      b.id,
-      b.orgId,
-      b.mode,
-      b.kind,
-      b.name,
-      b.state,
-      JSON.stringify(b.target),
-      JSON.stringify(b.patch),
-      b.notify ? 1 : 0,
-      b.at,
-      b.clearAfter,
-      b.expect === undefined ? null : JSON.stringify(b.expect),
-      b.parentId ?? null,
-      b.actor.type,
-      b.actor.id,
-      b.now,
-      null,
-    ],
+    broadcastValues(b),
+  );
+}
+
+/** Insert a user-requested draft/schedule only while its checked authority is still current. */
+export function insertAuthorizedBroadcastStmt(
+  db: D1Database,
+  b: NewBroadcast,
+  authority: TenantPassWrite,
+  now: number,
+): D1PreparedStatement {
+  const guard = broadcastAuthority(authority, now, b.kind === 'change');
+  return stmt(
+    db,
+    `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
+       clear_after, expect, parent_id, created_by_type, created_by_id, created_at, started_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE ? = ? AND ? = ? AND (${guard.sql})`,
+    [...broadcastValues(b), b.orgId, authority.orgId, b.mode, authority.mode, ...guard.params],
   );
 }
 
@@ -84,8 +129,7 @@ export const getBroadcast = (db: D1Database, id: string, scope: ScopeArg) =>
   );
 
 export interface BroadcastListFilter {
-  orgScope: string | null;
-  orgId?: string | undefined;
+  orgId: string;
   mode: Mode;
   state?: BroadcastState | undefined;
   cursor?: string | undefined;
@@ -96,13 +140,8 @@ export async function listBroadcasts(
   db: D1Database,
   f: BroadcastListFilter,
 ): Promise<{ rows: BroadcastRow[]; nextCursor: string | null }> {
-  const where = ['mode = ?'];
-  const params: (string | number)[] = [f.mode];
-  const orgId = f.orgScope ?? f.orgId;
-  if (orgId) {
-    where.push('org_id = ?');
-    params.push(orgId);
-  }
+  const where = ['org_id = ?', 'mode = ?'];
+  const params: (string | number)[] = [f.orgId, f.mode];
   if (f.state) {
     where.push('state = ?');
     params.push(f.state);
@@ -140,14 +179,38 @@ export async function casState(
   return changes === 1;
 }
 
-/** A draft takes its send time and waits for the minute cron (or an immediate launch). */
-export async function casSchedule(db: D1Database, id: string, at: number): Promise<boolean> {
-  const { changes } = await run(
+/** Schedule exactly the draft and kind which were checked by the caller. */
+export function scheduleBroadcastStmt(
+  db: D1Database,
+  id: string,
+  kind: BroadcastKind,
+  at: number,
+  authority: TenantPassWrite,
+  now: number,
+): D1PreparedStatement {
+  const guard = broadcastAuthority(authority, now, kind === 'change');
+  return stmt(
     db,
-    `UPDATE broadcasts SET state = 'scheduled', at = ? WHERE id = ? AND state = 'draft'`,
-    [at, id],
+    `UPDATE broadcasts SET state = 'scheduled', at = ?
+     WHERE id = ? AND state = 'draft' AND kind = ? AND org_id = ? AND mode = ? AND (${guard.sql})`,
+    [at, id, kind, authority.orgId, authority.mode, ...guard.params],
   );
-  return changes === 1;
+}
+
+/** Cancel only the authorized tenant and mode while the principal remains valid. */
+export function cancelBroadcastStmt(
+  db: D1Database,
+  id: string,
+  authority: TenantPassWrite,
+  now: number,
+): D1PreparedStatement {
+  const guard = broadcastAuthority(authority, now, false);
+  return stmt(
+    db,
+    `UPDATE broadcasts SET state = 'cancelled', finished_at = ?
+     WHERE id = ? AND state IN ('draft', 'scheduled') AND org_id = ? AND mode = ? AND (${guard.sql})`,
+    [now, id, authority.orgId, authority.mode, ...guard.params],
+  );
 }
 
 /** Scheduled broadcasts whose time has come, oldest first. */
@@ -184,16 +247,25 @@ export interface BroadcastEdit {
   clearAfter: number | null;
 }
 
-/** Replaces a draft or a scheduled broadcast that has not started. False when it already moved on. */
-export async function updateBroadcast(
+/** Replace only the previously checked kind while the exact principal remains authorized. */
+export function updateBroadcastStmt(
   db: D1Database,
   id: string,
+  originalKind: BroadcastKind,
   e: BroadcastEdit,
-): Promise<boolean> {
-  const { changes } = await run(
+  authority: TenantPassWrite,
+  now: number,
+): D1PreparedStatement {
+  const guard = broadcastAuthority(
+    authority,
+    now,
+    originalKind === 'change' || e.kind === 'change',
+  );
+  return stmt(
     db,
     `UPDATE broadcasts SET name = ?, kind = ?, target = ?, patch = ?, notify = ?, state = ?, at = ?,
-       clear_after = ? WHERE id = ? AND state IN ('draft', 'scheduled')`,
+       clear_after = ? WHERE id = ? AND state IN ('draft', 'scheduled') AND kind = ?
+       AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [
       e.name,
       e.kind,
@@ -204,77 +276,32 @@ export async function updateBroadcast(
       e.at,
       e.clearAfter,
       id,
+      originalKind,
+      authority.orgId,
+      authority.mode,
+      ...guard.params,
     ],
   );
-  return changes === 1;
 }
 
 export const setTargeted = (db: D1Database, id: string, targeted: number) =>
   run(db, 'UPDATE broadcasts SET targeted = ? WHERE id = ?', [targeted, id]);
 
-export type Outcome = 'updated' | 'unchanged' | 'failed';
-
-export interface ItemRow {
-  passId: string;
-  outcome: Outcome;
-  silent: boolean;
-}
-
-/** Idempotent: a pass that already has an outcome keeps it. */
-export async function insertItems(
-  db: D1Database,
-  broadcastId: string,
-  items: readonly ItemRow[],
-): Promise<void> {
-  await batch(
-    db,
-    items.map((i) =>
-      stmt(
-        db,
-        `INSERT OR IGNORE INTO broadcast_items (broadcast_id, pass_id, outcome, silent) VALUES (?, ?, ?, ?)`,
-        [broadcastId, i.passId, i.outcome, i.silent ? 1 : 0],
-      ),
-    ),
-  );
-}
-
-export async function handledPassIds(
-  db: D1Database,
-  broadcastId: string,
-  passIds: readonly string[],
-): Promise<Set<string>> {
-  if (passIds.length === 0) return new Set();
-  const rows = await all<{ pass_id: string }>(
-    db,
-    `SELECT pass_id FROM broadcast_items WHERE broadcast_id = ? AND pass_id IN (${placeholders(passIds.length)})`,
-    [broadcastId, ...passIds],
-  );
-  return new Set(rows.map((r) => r.pass_id));
-}
-
-export interface CountRow {
-  broadcast_id: string;
-  outcome: Outcome;
-  silent: number;
-  n: number;
-}
-
-export const countItems = (db: D1Database, broadcastIds: readonly string[]) =>
-  broadcastIds.length === 0
-    ? Promise.resolve([] as CountRow[])
-    : all<CountRow>(
-        db,
-        `SELECT broadcast_id, outcome, silent, COUNT(*) AS n FROM broadcast_items
-         WHERE broadcast_id IN (${placeholders(broadcastIds.length)}) GROUP BY broadcast_id, outcome, silent`,
-        [...broadcastIds],
-      );
-
 /** The clearing follow-up of each broadcast that has one. */
-export const followUpsOf = (db: D1Database, parentIds: readonly string[]) =>
+export const followUpsOf = (
+  db: D1Database,
+  parentIds: readonly string[],
+  orgId: string,
+  mode: Mode,
+) =>
   parentIds.length === 0
     ? Promise.resolve([] as { id: string; parent_id: string; at: number | null }[])
     : all<{ id: string; parent_id: string; at: number | null }>(
         db,
-        `SELECT id, parent_id, at FROM broadcasts WHERE parent_id IN (${placeholders(parentIds.length)})`,
-        [...parentIds],
+        `SELECT child.id, child.parent_id, child.at
+         FROM broadcasts child JOIN broadcasts parent ON parent.id = child.parent_id
+           AND parent.org_id = child.org_id AND parent.mode = child.mode
+         WHERE parent.org_id = ? AND parent.mode = ?
+           AND child.parent_id IN (SELECT value FROM json_each(?))`,
+        [orgId, mode, JSON.stringify(parentIds)],
       );

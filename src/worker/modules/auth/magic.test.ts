@@ -9,7 +9,14 @@ import {
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { clearSettingsCache } from '../settings/service.ts';
-import { fakeLimiter, harness, type Jar, type SentMail, type TestHarness } from './test-support.ts';
+import {
+  fakeLimiter,
+  harness,
+  type Jar,
+  type SentMail,
+  type TestHarness,
+  waitingPass,
+} from './test-support.ts';
 
 let h: TestHarness;
 let n = 0;
@@ -342,14 +349,8 @@ describe('confirm page and token', () => {
   });
 
   it('creates an account for an address that only holds a pass', async () => {
-    const f1 = f();
-    const org = await makeOrg(f1);
     const email = addr();
-    const pass = await makePass(f1, {
-      orgId: org.id,
-      template: makeTemplate().resolved,
-      holderEmail: email,
-    });
+    const pass = await waitingPass(email);
     await requestLink(email);
     const jar: Jar = new Map();
     await consumeForm(tokenOf(h.mail[0]), jar);
@@ -534,13 +535,7 @@ describe('verify email', () => {
   it('adds the address only after the link is confirmed, and attaches waiting passes', async () => {
     const { jar, csrf, userId } = await signedIn();
     const email = addr();
-    const f1 = f();
-    const org = await makeOrg(f1);
-    const pass = await makePass(f1, {
-      orgId: org.id,
-      template: makeTemplate().resolved,
-      holderEmail: email,
-    });
+    const pass = await waitingPass(email);
     expect((await add(jar, csrf, email)).status).toBe(202);
     expect(h.mail).toHaveLength(1);
     expect(h.mail[0]?.subject).toBe('Confirm your email');

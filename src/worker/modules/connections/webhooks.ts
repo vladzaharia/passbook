@@ -1,6 +1,9 @@
 import type { UpstreamRecord } from '../../connectors/types.ts';
-import type { JobOf } from '../../jobs/types.ts';
+import type { NewConnectionWebhookJob } from '../../jobs/types.ts';
+import { mintVerifiedWebhook, withVerifiedWebhook } from '../../jobs/webhook-ingress.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import {
+  AppError,
   BadRequestError,
   NotFoundError,
   UnauthenticatedError,
@@ -8,20 +11,19 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getDeps } from './deps.ts';
-import { closeRun } from './health.ts';
-import { emptyTotals } from './records.ts';
+import { captureConnectionRelease } from './records.ts';
 import { getConnection } from './repo.ts';
-import {
-  deleteWebhookEvent,
-  getInbox,
-  type InboxItem,
-  insertInbox,
-  insertWebhookEvent,
-} from './repo-passes.ts';
-import { insertRun } from './repo-runs.ts';
 import { classify, prepare } from './runtime.ts';
-import { applyChanges, MAX_RECORDS_PER_STEP } from './sync.ts';
+import { MAX_RECORDS_PER_STEP } from './sync.ts';
+import { pinWebhookKeyContext } from './webhook-key-context.ts';
+import { redispatchStagedWebhook } from './webhook-redispatch.ts';
+import {
+  completeRetainedDispatch,
+  failRetainedEvent,
+  stageRetainedWebhook,
+} from './webhook-retention.ts';
 
 /**
  * Verifies the signature, dedupes on the event id and queues the work. A duplicate delivery is
@@ -33,6 +35,7 @@ export async function receiveWebhook(
   connectionId: string,
   req: Request,
 ): Promise<void> {
+  sctx = pinWebhookKeyContext(sctx);
   const conn = await getConnection(sctx.env.DB, connectionId);
   if (!conn?.enabled || (conn.mode !== 'webhook' && conn.mode !== 'hybrid')) {
     throw new NotFoundError('Not found.');
@@ -44,7 +47,9 @@ export async function receiveWebhook(
     records?: Record<string, UpstreamRecord>;
     deleted?: string[];
   };
+  let rawRequest: Request;
   try {
+    rawRequest = req.clone();
     const prep = await prepare(sctx, conn);
     if (!prep.def.verifyWebhook) throw new NotFoundError('Not found.');
     verified = await prep.def.verifyWebhook(prep.cc, req);
@@ -60,94 +65,90 @@ export async function receiveWebhook(
     throw new NotFoundError('Not found.');
   }
 
-  const now = sctx.clock.now();
-  const fresh = await insertWebhookEvent(sctx.env.DB, conn.id, verified.eventId, now);
-  if (!fresh) {
+  // The signature is verified: from here the connection stages its own work.
+  sctx = withVerifiedWebhook(sctx, mintVerifiedWebhook(conn));
+  let staged: 'fresh' | 'redispatch' | 'duplicate';
+  let credentialKeysetCommitment: string;
+  try {
+    credentialKeysetCommitment = await ensureCredentialRefKeyset(sctx.env.DB, sctx.env);
+    const release = await captureConnectionRelease(sctx, conn);
+    const rawBody = new Uint8Array(await rawRequest.arrayBuffer());
+    staged = await stageRetainedWebhook(
+      sctx,
+      conn,
+      verified,
+      release,
+      rawBody,
+      credentialKeysetCommitment,
+    );
+  } catch (error) {
+    // Database and crypto errors can carry sender-controlled text: log only a stable code.
+    sctx.log.error('connection.webhook_stage_failed', {
+      connectionId,
+      code: error instanceof AppError ? error.code : (classifyD1Error(error)?.kind ?? 'INTERNAL'),
+    });
+    throw new UnavailableError('Could not accept the webhook. Retry later.', 'WEBHOOK_UNAVAILABLE');
+  }
+  if (staged === 'redispatch') {
+    await redispatchStagedWebhook(
+      sctx,
+      conn.orgId,
+      conn.id,
+      verified.eventId,
+      credentialKeysetCommitment,
+    );
+    return;
+  }
+  if (staged === 'duplicate') {
     sctx.log.info('connection.webhook_duplicate', { connectionId });
     return;
   }
-  const items: InboxItem[] = verified.refs
-    .filter((ref) => verified.records?.[ref] || verified.deleted?.includes(ref))
-    .map((ref) => ({
-      ref,
-      record: verified.records?.[ref] ?? null,
-      deleted: verified.deleted?.includes(ref) ?? false,
-    }));
   try {
-    await insertInbox(sctx.env.DB, conn.id, verified.eventId, items, now);
-    // Small jobs keep each queue invocation within its D1 and CPU budget.
+    // The retention layer uses the same chunk boundaries and preserves the original ref order.
     for (let i = 0; i < verified.refs.length || i === 0; i += MAX_RECORDS_PER_STEP) {
-      await getDeps().enqueueJob(sctx, {
+      const job: NewConnectionWebhookJob = {
         kind: 'connection.webhook',
         connectionId: conn.id,
         orgId: conn.orgId,
         generation: conn.generation,
         eventId: verified.eventId,
         refs: verified.refs.slice(i, i + MAX_RECORDS_PER_STEP),
-      });
+        ...(i > 0 ? { chunk: i / MAX_RECORDS_PER_STEP } : {}),
+        credentialKeysetCommitment,
+      };
+      await getDeps().enqueueJob(sctx, job);
     }
-  } catch (error) {
-    // Let the sender's retry through instead of losing the event.
-    await deleteWebhookEvent(sctx.env.DB, conn.id, verified.eventId);
-    sctx.log.error('connection.webhook_enqueue_failed', { connectionId, error });
-    throw new UnavailableError('Could not queue the webhook. Retry later.', 'WEBHOOK_UNAVAILABLE');
-  }
-}
-
-/** Applies the refs named by one webhook: inbox records directly, bare refs via fetchRecord. */
-export async function processWebhook(
-  sctx: ServiceContext,
-  job: JobOf<'connection.webhook'>,
-): Promise<void> {
-  const conn = await getConnection(sctx.env.DB, job.connectionId);
-  if (!job.orgId || !Number.isInteger(job.generation) || job.generation < 1 ||
-      !conn?.enabled || (conn.mode !== 'webhook' && conn.mode !== 'hybrid') ||
-      conn.orgId !== job.orgId || conn.generation !== job.generation ||
-      !(await isOrgActive(sctx, job.orgId))) {
-    sctx.log.info('connection.webhook_stale', { connectionId: job.connectionId });
-    return;
-  }
-  const runId = sctx.ids.id();
-  const startedAt = sctx.clock.now();
-  const inserted = await insertRun(sctx.env.DB, {
-    id: runId, connectionId: conn.id, trigger: 'webhook', startedAt,
-    expected: { orgId: job.orgId, generation: job.generation },
-  });
-  if (!inserted) {
-    sctx.log.info('connection.webhook_stale', { connectionId: job.connectionId });
-    return;
-  }
-  const base = { runId, instanceId: null, orgId: job.orgId, generation: job.generation, startedAt, stale: false };
-  let prep: Awaited<ReturnType<typeof prepare>>;
-  try {
-    prep = await prepare(sctx, conn);
-  } catch (error) {
-    await closeRun(
+    await completeRetainedDispatch(
       sctx,
+      conn.orgId,
       conn.id,
-      { ...base, totals: emptyTotals(), failure: classify(error) },
-      { countsForBreaker: true, reschedule: false },
+      verified.eventId,
+      credentialKeysetCommitment,
     );
-    return;
-  }
-  const inbox = new Map((await getInbox(sctx.env.DB, conn.id, job.eventId)).map((i) => [i.ref, i]));
-  const changes = job.refs.map((ref) => {
-    const item = inbox.get(ref);
-    return {
-      ref,
-      deleted: item?.deleted ?? false,
-      record: (item?.record ?? undefined) as UpstreamRecord | undefined,
-    };
-  });
-  const { totals, failure, samples, stale } = await applyChanges(sctx, conn, prep, changes);
-  await closeRun(
-    sctx,
-    conn.id,
-    { ...base, totals, failure, stale, ...(stale ? { staleCode: 'STALE_CONTEXT' as const } : {}), errorDetail: samples.length ? samples.join('\n') : null },
-    { countsForBreaker: true, reschedule: false },
-  );
-  // A transient upstream failure retries the job; the inbox rows are kept until retention.
-  if (!stale && failure && failure.code !== 'AUTH' && failure.code !== 'CONFIG') {
-    throw new UnavailableError('Webhook processing failed.', `WEBHOOK_${failure.code}`);
+  } catch {
+    try {
+      await failRetainedEvent(
+        sctx,
+        conn.orgId,
+        conn.id,
+        verified.eventId,
+        'WEBHOOK_ENQUEUE_FAILED',
+        credentialKeysetCommitment,
+      );
+    } catch {
+      sctx.log.error('connection.webhook_retention_failed', {
+        connectionId,
+        code: 'WEBHOOK_RETENTION_FAILED',
+      });
+      throw new UnavailableError(
+        'Could not queue the webhook. Retry later.',
+        'WEBHOOK_UNAVAILABLE',
+      );
+    }
+    sctx.log.error('connection.webhook_enqueue_failed', {
+      connectionId,
+      code: 'WEBHOOK_ENQUEUE_FAILED',
+    });
+    throw new UnavailableError('Could not queue the webhook. Retry later.', 'WEBHOOK_UNAVAILABLE');
   }
 }

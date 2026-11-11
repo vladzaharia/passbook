@@ -13,10 +13,10 @@ export const HOLDER_COPY = {
   addTitle: 'Add to Apple Wallet',
   iphone: 'On your iPhone',
   scanLine: 'Scan with the camera.',
-  mac: 'On this Mac',
-  /** On a device already: the add block's quiet line and its way to add again. */
+  /** An Apple device registered the pass. */
   added: 'In Apple Wallet',
-  addedLine: 'Updates arrive on their own.',
+  addedLine: 'If it is missing, add it again.',
+  inWalletPill: 'In Wallet',
   showQr: 'Show QR',
   hideQr: 'Hide QR',
   addHere: 'Add to this iPhone',
@@ -35,6 +35,27 @@ export const HOLDER_COPY = {
   help: 'Help',
   /** /p: the holder's own page in the portal (Refresh, Remove), through sign-in. */
   openInPortal: 'Open in My passes',
+  /** The wallet choice: the way that fits this device, then the rest. */
+  bestForDevice: 'Best for this device',
+  otherWays: 'Other ways',
+  browserTitle: 'Show a barcode in your browser',
+  browserLine: 'For readers that scan a screen.',
+  showBarcode: 'Show barcode',
+  /** The pass page's link preview when native wallets are offered too. */
+  previewWallets: 'Add it to your wallet.',
+  /** My passes. */
+  fromOrgs: 'From your organizations',
+  noPasses: 'Passes sent to your verified emails show up here.',
+  addAllTitle: 'Add all to Apple Wallet',
+  addAllOne: 'Add to Apple Wallet',
+  addAllCount: (n: number) => `Add ${n} passes`,
+  removalPending: (n: number) => (n === 1 ? 'Removing 1 pass.' : `Removing ${n} passes.`),
+  removalPendingLine: 'Each leaves this list once your wallets let go of it.',
+  removalStarted: 'Removal started. It finishes once your wallets let go of the pass.',
+  /** A pass that cannot be opened until the org issues a new one. */
+  reissueTitle: 'Passes that need a new copy',
+  reissueLine: (pass: string, org: string) => `${pass} from ${org} needs a new copy.`,
+  reissueAsk: (org: string) => `Ask ${org || 'the organization'} to send one.`,
   /** The strip on a test pass or bundle, on its page and in its email. */
   testNote: (what: 'pass' | 'bundle') => `Test ${what}. It is not real and will be deleted.`,
   /** "3 passes": a bundle's size, on its page and in its email. */

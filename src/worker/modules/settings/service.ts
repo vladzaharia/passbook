@@ -1,12 +1,22 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import type { Actor } from '../../platform/context.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
-import { countEmailOnlyUsers, readScopeRows, type SettingRow, writeScope } from './repo.ts';
+import {
+  countEmailOnlyUsers,
+  readOrgConfigRevision,
+  readScopeRows,
+  type SettingRow,
+  type SettingsAdmin,
+  type SettingsAuthority,
+  writeScope,
+} from './repo.ts';
+
+export { platformSettingsStmt } from './repo.ts';
 
 export type PlatformSettings = z.infer<typeof PlatformSettingsSchema>;
 export type OrgSettings = z.infer<typeof OrgSettingsSchema>;
@@ -35,9 +45,9 @@ async function readScope(ctx: ServiceContext, scope: string): Promise<Record<str
 
 /** Stored values that still pass their schema; unknown or invalid ones fall back to the default. */
 function validStored(
-  ctx: ServiceContext,
+  ctx: ServiceContext | undefined,
   scope: string,
-  rows: SettingRow[],
+  rows: readonly Pick<SettingRow, 'key' | 'value'>[],
 ): Record<string, unknown> {
   const registry = registryFor(scope);
   const values: Record<string, unknown> = {};
@@ -45,7 +55,7 @@ function validStored(
     const def = registry.get(row.key);
     const parsed = def?.schema.safeParse(JSON.parse(row.value));
     if (parsed?.success) values[row.key] = parsed.data;
-    else
+    else if (ctx)
       ctx.log.warn('settings.invalid_stored_value', {
         code: 'SETTING_INVALID',
         scope,
@@ -53,6 +63,13 @@ function validStored(
       });
   }
   return values;
+}
+
+/** Decode a platform settings SELECT from D1.batch without consulting or populating the cache. */
+export function decodePlatformSettings(result: D1Result): PlatformSettings {
+  return PlatformSettingsSchema.parse(
+    validStored(undefined, 'platform', result.results as Pick<SettingRow, 'key' | 'value'>[]),
+  );
 }
 
 /** Stored values merged over schema defaults, cached per isolate for a few seconds. */
@@ -81,7 +98,7 @@ async function assertScope(ctx: ServiceContext, scope: string): Promise<void> {
 
 export async function listSettings(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
   await assertScope(ctx, scope);
-  const stored = new Map((await readScopeRows(ctx.env.DB, scope)).map((r) => [r.key, r]));
+  const stored = new Map((await readScopeRows(ctx.env.DB, scope)).map((row) => [row.key, row]));
   const registry = registryFor(scope);
   const validated = validStored(ctx, scope, [...stored.values()]);
   return [...registry.values()].map((def) => {
@@ -102,9 +119,21 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
 export async function updateSettings(
   ctx: ServiceContext,
   actor: Actor,
-  input: { scope: string; values: Record<string, unknown> },
+  input: { scope: string; values: Record<string, unknown>; configRevision?: number | undefined },
+  authority?: SettingsAuthority,
+  admin?: SettingsAdmin,
 ): Promise<SettingEntry[]> {
   const { scope } = input;
+  const orgId = orgIdOfScope(scope);
+  if (
+    authority &&
+    (authority.kind !== 'session' ||
+      authority.orgId !== orgId ||
+      authority.capability !== 'org:manage' ||
+      actor.type !== 'user' ||
+      actor.id !== authority.userId)
+  )
+    throw new ForbiddenError();
   await assertScope(ctx, scope);
   const registry = registryFor(scope);
   const issues: { path: string; message: string; code?: string }[] = [];
@@ -124,8 +153,23 @@ export async function updateSettings(
   }
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
 
+  const current = orgId === null ? null : await readOrgConfigRevision(ctx.env.DB, orgId);
+  if (orgId !== null && current === null)
+    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  // The client's revision is the one its form was loaded with: older than the stored one is a 409.
+  const revision = input.configRevision ?? current;
   const before = await listSettings(ctx, scope);
-  await writeScope(ctx.env.DB, scope, upserts, deletes, actor.id, ctx.clock.now());
+  const written = await writeScope(
+    ctx,
+    scope,
+    upserts,
+    deletes,
+    actor.id,
+    revision,
+    authority,
+    admin,
+  );
+  if (!written) throw new ForbiddenError();
   clearSettingsCache(ctx.env.DB);
   const after = await listSettings(ctx, scope);
 
@@ -138,13 +182,23 @@ export async function updateSettings(
   if (Object.keys(changes).length > 0)
     await recordAudit(ctx, {
       ...auditActor(actor),
-      orgId: orgIdOfScope(scope),
+      orgId,
       action: 'settings.update',
       targetType: 'settings',
       targetId: scope,
       detail: { changes },
     });
   return after;
+}
+
+/** The org's `config_revision` for an org scope, to send back with a save; absent for the platform. */
+export async function settingsRevision(
+  ctx: ServiceContext,
+  scope: string,
+): Promise<{ configRevision?: number }> {
+  const orgId = orgIdOfScope(scope);
+  const revision = orgId === null ? null : await readOrgConfigRevision(ctx.env.DB, orgId);
+  return revision === null ? {} : { configRevision: revision };
 }
 
 /** What turning magic-link sign-in off would cost, for the confirm. */

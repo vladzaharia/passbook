@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
+import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
@@ -163,6 +164,36 @@ describe('status components', () => {
     expect(find(s, 'ratelimits')?.detail).toContain('RL_APPLE');
   });
 
+  it('reports KEK readiness without key material', async () => {
+    const ok = await status();
+    expect(find(ok, 'kek')).toMatchObject({ state: 'verified', data: { versions: 1 } });
+    expect(JSON.stringify(ok)).not.toContain(String(base.KEK_V1));
+    clearStatusCache(env.DB);
+    const bad = await status({ KEK_V1: 'not-a-key' } as Partial<AppEnv>);
+    expect(find(bad, 'kek')).toMatchObject({ state: 'failing' });
+    expect(JSON.stringify(bad)).not.toContain('not-a-key');
+  });
+
+  it('counts retained terminal failures by kind', async () => {
+    const fx = fixtures(base);
+    const org = await makeOrg(fx);
+    const clean = await status();
+    expect(find(clean, 'failures')).toMatchObject({ state: 'verified' });
+    for (const [i, kind] of ['push', 'push', 'email'].entries())
+      await run(
+        env.DB,
+        "INSERT INTO outbox (id, org_id, kind, state, error_code, created_at) VALUES (?, ?, ?, 'failed', 'DEAD_LETTER', 1)",
+        [`ob-fail-${i}`, org.id, kind],
+      );
+    clearStatusCache(env.DB);
+    const s = await status();
+    expect(find(s, 'failures')).toMatchObject({
+      state: 'degraded',
+      data: { outbox_push: 2, outbox_email: 1, webhook: 0 },
+    });
+    await run(env.DB, "DELETE FROM outbox WHERE id LIKE 'ob-fail-%'");
+  });
+
   it('marks oidc degraded while email trust is on', async () => {
     await run(
       env.DB,
@@ -220,7 +251,14 @@ describe('status components', () => {
   });
 
   it('reports identities: expiring cert is degraded, a missing binding is degraded', async () => {
-    const s = await status();
+    // The shared test identity lives for years; this case needs one that is about to expire.
+    const expiring = await createFixtureIdentity(undefined, { days: 20, caDays: 20 });
+    const short = {
+      SIGNER_PLATFORM_CERTIFICATE: expiring.certificate,
+      SIGNER_PLATFORM_PRIVATE_KEY: expiring.privateKey,
+      SIGNER_PLATFORM_INTERMEDIATE: expiring.intermediate,
+    } as Partial<AppEnv>;
+    const s = await status(short);
     const platform = find(s, 'identity:platform');
     expect(platform?.state).toBe('degraded');
     expect(platform?.detail).toMatch(/days? left/);
@@ -231,11 +269,11 @@ describe('status components', () => {
       "UPDATE signing_identities SET apns_binding = 'APNS_GONE' WHERE id = 'platform'",
     );
     clearStatusCache(env.DB);
-    const t = await status();
+    const t = await status(short);
     expect(find(t, 'identity:platform')?.detail).toContain('APNS_GONE is missing');
 
     clearStatusCache(env.DB);
-    const expired = await status({}, okFetch, new ManualClock(Date.now() + 30 * 86_400_000));
+    const expired = await status(short, okFetch, new ManualClock(Date.now() + 30 * 86_400_000));
     expect(find(expired, 'identity:platform')?.state).toBe('failing');
   });
 

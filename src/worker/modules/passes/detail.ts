@@ -1,29 +1,19 @@
-import { validatePass } from '../../../passkit/index.ts';
-import type { PassJson, ValidationIssue } from '../../../passkit/types.ts';
+import type { PassJson } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { AppError, NotFoundError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listOutboxForPass } from '../delivery/repo.ts';
 import { replacedBy } from './assets.ts';
-import { brandingWarnings, readBranding } from './branding.ts';
 import { resolveTemplate } from './builder.ts';
 import { pushBudgetOf } from './change-messages.ts';
-import { depsOf } from './deps.ts';
-import {
-  currentPassJson,
-  getOrg,
-  getOwnerLabel,
-  getPass,
-  getVersion,
-  lastVoidEvent,
-  listAssets,
-  listBlockedUsers,
-  listPassDevices,
-  listVersions,
-  type Pass,
-} from './repo.ts';
+import { warningsFor } from './detail-warnings.ts';
+import type { TenantPassWrite } from './http.ts';
+import { getVersion, lastVoidEvent, listPassDevices, listVersions, type Pass } from './repo.ts';
+import { passDetailReadState } from './repo-detail-read.ts';
+import { listAssets } from './repo-history-assets.ts';
 import { memberPhotoAsset } from './repo-member-photo.ts';
+import { currentPassJson, getOwnerLabel, getPass, listBlockedUsers } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
 
 export function holderStateOf(pass: Pass): 'unassigned' | 'waiting' | 'owned' {
@@ -90,40 +80,6 @@ export function linksOf(ctx: ServiceContext, pass: Pass) {
   };
 }
 
-type Issue = ValidationIssue;
-const issueKey = (i: Issue) => `${i.code}\u0000${i.path ?? ''}`;
-
-/**
- * Splits warnings: the template's own (its pass.json and images, shared by every pass) and this
- * pass's (its values, overrides and the org's branding). The pass page shows only the second.
- */
-async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: PassJson) {
-  try {
-    const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-    const identity = await depsOf(ctx.env).identities.byId(pass.identityId);
-    const warn = (issues: Issue[]) => issues.filter((i) => i.severity !== 'error');
-    const shared = warn(validatePass(template.passJson, template.assets, identity).issues);
-    const known = new Set(shared.map(issueKey));
-    const own = warn(validatePass(passJson, template.assets, identity).issues).filter(
-      (i) => !known.has(issueKey(i)),
-    );
-    const [org, overrides] = await Promise.all([
-      getOrg(ctx.env.DB, pass.orgId),
-      listAssets(ctx.env.DB, pass.id),
-    ]);
-    const branding = brandingWarnings(
-      pass.templateId,
-      readBranding(org?.branding),
-      overrides.map((a) => a.name),
-    );
-    return { pass: [...own, ...branding], template: shared };
-  } catch (error) {
-    if (!(error instanceof AppError)) throw error;
-    ctx.log.warn('pass.warnings_unavailable', { passId: pass.id, code: error.code });
-    return { pass: [], template: [] };
-  }
-}
-
 /** The stored pass.json carries the device auth token; it never leaves the server. */
 export function parseStoredPassJson(raw: string | null): PassJson {
   const json = (raw ? JSON.parse(raw) : {}) as PassJson;
@@ -154,9 +110,51 @@ function versionSummary(v: {
     purged: v.purged,
   };
 }
+/**
+ * A detail may take several reads to render. Check the same incarnation before reading its
+ * content and again immediately before returning it; START reserves a new credential generation
+ * and link before the replacement artifact exists.
+ */
+export async function assertPassDetailReadable(
+  ctx: ServiceContext,
+  pass: Pass,
+  authority?: TenantPassWrite,
+  expectedReissueRequired?: boolean,
+  additionalAuthority?: TenantPassWrite,
+): Promise<boolean> {
+  const authorities = [authority, additionalAuthority].filter(
+    (item): item is TenantPassWrite => !!item,
+  );
+  const row = await passDetailReadState(ctx.env.DB, pass, authorities, ctx.clock);
+  if (row?.state === 'forbidden') throw new ForbiddenError();
+  if (row?.state === 'pending')
+    throw new ConflictError(
+      'This pass is being transferred while its existing wallet credentials are retired. Try again shortly.',
+      'PASS_TRANSFER_PENDING',
+    );
+  if (row?.state !== 'current')
+    throw new ConflictError('The pass changed. Reload and retry.', 'PASS_CONFLICT');
+  const reissueRequired = row.reissue_required === 1;
+  if (expectedReissueRequired !== undefined && expectedReissueRequired !== reissueRequired)
+    throw new ConflictError('The pass changed. Reload and retry.', 'PASS_CONFLICT');
+  return reissueRequired;
+}
 
-export async function detailOf(ctx: ServiceContext, pass: Pass) {
+/** A mutation response must not return a stale holder summary either. */
+export async function currentSummary(ctx: ServiceContext, pass: Pass, authority?: TenantPassWrite) {
+  const summary = toSummary(pass);
+  await assertPassDetailReadable(ctx, pass, authority);
+  return summary;
+}
+
+export async function detailOf(
+  ctx: ServiceContext,
+  pass: Pass,
+  authority?: TenantPassWrite,
+  additionalAuthority?: TenantPassWrite,
+) {
   const db = ctx.env.DB;
+  await assertPassDetailReadable(ctx, pass, authority, undefined, additionalAuthority);
   const [json, devices, versions, deliveries, blockedUsers, owner, voided] = await Promise.all([
     currentPassJson(db, pass.id),
     listPassDevices(db, pass.id),
@@ -168,7 +166,7 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
   ]);
   const passJson = parseJson(json);
   const warnings = await warningsFor(ctx, pass, passJson);
-  return {
+  const detail = {
     ...toSummary(pass),
     pushBudget: await pushBudgetOf(ctx, pass.id),
     ownerName: owner?.name ?? null,
@@ -199,12 +197,25 @@ export async function detailOf(ctx: ServiceContext, pass: Pass) {
     warnings: warnings.pass,
     templateWarnings: warnings.template,
   };
+  const reissueRequired = await assertPassDetailReadable(
+    ctx,
+    pass,
+    authority,
+    undefined,
+    additionalAuthority,
+  );
+  return { ...detail, reissueRequired };
 }
 
-export async function getPassDetail(ctx: ServiceContext, id: string, scope: ScopeArg) {
+export async function getPassDetail(
+  ctx: ServiceContext,
+  id: string,
+  scope: ScopeArg,
+  authority?: TenantPassWrite,
+) {
   const pass = await getPass(ctx.env.DB, id, scope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return detailOf(ctx, pass);
+  return detailOf(ctx, pass, authority);
 }
 
 /** A retained version rendered like the current one. Purged versions have no stored pass.json. */
@@ -213,14 +224,16 @@ export async function getVersionDetail(
   id: string,
   version: number,
   scope: ScopeArg,
+  authority?: TenantPassWrite,
 ) {
   const pass = await getPass(ctx.env.DB, id, scope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  await assertPassDetailReadable(ctx, pass, authority);
   const row = await getVersion(ctx.env.DB, id, version);
   if (!row) throw new NotFoundError('Version not found.', 'VERSION_NOT_FOUND');
   if (row.purged || !row.passJson)
     throw new AppError('VERSION_PURGED', 410, 'This version is no longer stored.');
-  const detail = await detailOf(ctx, pass);
+  const detail = await detailOf(ctx, pass, authority);
   return {
     ...detail,
     templateVersion: row.templateVersion,
@@ -260,9 +273,11 @@ export async function diffVersions(
   from: number,
   to: number,
   scope: ScopeArg,
+  authority?: TenantPassWrite,
 ): Promise<{ changes: FieldChange[] }> {
-  if (!(await getPass(ctx.env.DB, id, scope)))
-    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const pass = await getPass(ctx.env.DB, id, scope);
+  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  await assertPassDetailReadable(ctx, pass, authority);
   const [a, b] = await Promise.all([
     getVersion(ctx.env.DB, id, from),
     getVersion(ctx.env.DB, id, to),
@@ -270,5 +285,7 @@ export async function diffVersions(
   if (!a || !b) throw new NotFoundError('Version not found.', 'VERSION_NOT_FOUND');
   if (a.purged || b.purged)
     throw new AppError('VERSION_PURGED', 410, 'This version is no longer stored.');
-  return { changes: diffValues(a.personalization, b.personalization) };
+  const changes = diffValues(a.personalization, b.personalization);
+  await assertPassDetailReadable(ctx, pass, authority);
+  return { changes };
 }

@@ -15,6 +15,11 @@ const Image = z.object({
   sha: z.string().min(1),
   w: z.number().int().positive(),
   h: z.number().int().positive(),
+  // Internal R2 object version; older branding rows use the legacy stable key.
+  storageVersion: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
 });
 const BrandingSchema = z.object({
   logoHasName: z.boolean().optional().catch(undefined),

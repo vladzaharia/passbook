@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "2c9fc94672a257306d13d06b7c91c42c9e9d8c89";
+export const BAKED_BUILD_HASH = "0e2101b52c90cd9413118cff26b2b6f530bc3608";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "e202124630820017",
+    "version": "d57125efb6cb6de6",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -525,7 +525,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/artwork@2x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/artwork@2x.png"
         }
       },
       {
@@ -539,7 +539,35 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/artwork@3x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/artwork@3x.png"
+        }
+      },
+      {
+        "name": "background@2x.png",
+        "slot": "background",
+        "scale": 2,
+        "size": 86361,
+        "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
+        "crc32": 1460829274,
+        "width": 690,
+        "height": 1010,
+        "source": {
+          "kind": "static",
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/background@2x.png"
+        }
+      },
+      {
+        "name": "background@3x.png",
+        "slot": "background",
+        "scale": 3,
+        "size": 156846,
+        "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
+        "crc32": 320806321,
+        "width": 1035,
+        "height": 1515,
+        "source": {
+          "kind": "static",
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/background@3x.png"
         }
       },
       {
@@ -552,7 +580,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/en.lproj/pass.strings"
         }
       },
       {
@@ -566,7 +594,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/icon@2x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/icon@2x.png"
         }
       },
       {
@@ -580,7 +608,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/icon@3x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/icon@3x.png"
         }
       },
       {
@@ -594,7 +622,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/logo@2x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/logo@2x.png"
         }
       },
       {
@@ -608,7 +636,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/logo@3x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/logo@3x.png"
         }
       },
       {
@@ -622,7 +650,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/primaryLogo@2x.png"
         }
       },
       {
@@ -636,24 +664,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/e202124630820017/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/d57125efb6cb6de6/primaryLogo@3x.png"
         }
       }
     ],
-    "extras": [
-      {
-        "name": "background@2x.png",
-        "size": 86361,
-        "sha1": "86518f824c75205eb22e119f0ce21b21193ff527",
-        "path": "/templates/henrys-blue/e202124630820017/background@2x.png"
-      },
-      {
-        "name": "background@3x.png",
-        "size": 156846,
-        "sha1": "1b990afc98b4d7b294ac378a759eb487e798ee99",
-        "path": "/templates/henrys-blue/e202124630820017/background@3x.png"
-      }
-    ],
+    "extras": [],
     "report": {
       "ok": true,
       "issues": []
@@ -662,7 +677,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "6a7b16b3b8b38c3b",
+    "version": "00369f900aeb0e31",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -1179,7 +1194,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/artwork@2x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/artwork@2x.png"
         }
       },
       {
@@ -1193,7 +1208,35 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/artwork@3x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/artwork@3x.png"
+        }
+      },
+      {
+        "name": "background@2x.png",
+        "slot": "background",
+        "scale": 2,
+        "size": 89428,
+        "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
+        "crc32": 84509214,
+        "width": 690,
+        "height": 1010,
+        "source": {
+          "kind": "static",
+          "path": "/templates/henrys-copper/00369f900aeb0e31/background@2x.png"
+        }
+      },
+      {
+        "name": "background@3x.png",
+        "slot": "background",
+        "scale": 3,
+        "size": 161342,
+        "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
+        "crc32": 1791793665,
+        "width": 1035,
+        "height": 1515,
+        "source": {
+          "kind": "static",
+          "path": "/templates/henrys-copper/00369f900aeb0e31/background@3x.png"
         }
       },
       {
@@ -1206,7 +1249,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/en.lproj/pass.strings"
         }
       },
       {
@@ -1220,7 +1263,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/icon@2x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/icon@2x.png"
         }
       },
       {
@@ -1234,7 +1277,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/icon@3x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/icon@3x.png"
         }
       },
       {
@@ -1248,7 +1291,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/logo@2x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/logo@2x.png"
         }
       },
       {
@@ -1262,7 +1305,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/logo@3x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/logo@3x.png"
         }
       },
       {
@@ -1276,7 +1319,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/primaryLogo@2x.png"
         }
       },
       {
@@ -1290,24 +1333,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/00369f900aeb0e31/primaryLogo@3x.png"
         }
       }
     ],
-    "extras": [
-      {
-        "name": "background@2x.png",
-        "size": 89428,
-        "sha1": "d164782d932f629f5ee582858fa9e289c68b383d",
-        "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/background@2x.png"
-      },
-      {
-        "name": "background@3x.png",
-        "size": 161342,
-        "sha1": "f53dc5c0245f5f9ab88531a1e6c7ce261e45942e",
-        "path": "/templates/henrys-copper/6a7b16b3b8b38c3b/background@3x.png"
-      }
-    ],
+    "extras": [],
     "report": {
       "ok": true,
       "issues": []

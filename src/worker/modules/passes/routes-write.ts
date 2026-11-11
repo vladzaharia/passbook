@@ -5,10 +5,20 @@ import {
   UpdatePassSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
-import { BadRequestError, ConflictError } from '../../platform/errors.ts';
+import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { createPassIdempotent } from './create.ts';
-import { actorFor, assertOrg, type C, passScopeOf, svc } from './http.ts';
+import { effectiveApiRelease } from './create-release.ts';
+import {
+  actorFor,
+  assertOrg,
+  authOf,
+  type C,
+  passScopeOf,
+  svc,
+  tenantAuthorityOf,
+} from './http.ts';
+import { tenantPassForWrite } from './pass-access.ts';
 import { updatePass } from './service.ts';
 
 function ifMatch(c: C): number | undefined {
@@ -35,24 +45,59 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
     },
     async (c) => {
       const body = c.req.valid('json');
-      assertOrg(c, body.orgId);
-      if (body.mode !== modeOf(c.var.auth))
+      const auth = authOf(c);
+      const orgId = body.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+      if (!orgId)
+        throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+      assertOrg(c, orgId);
+      const mode = body.mode ?? (auth.kind === 'api_key' ? modeOf(auth) : undefined);
+      if (mode === undefined)
+        throw new ValidationError('Review the mode and template version before issuing the pass.');
+      if (mode !== modeOf(auth))
         throw new ConflictError(
           'The reviewed mode changed. Review the pass again before issuing it.',
           'MODE_MISMATCH',
         );
+      const ctx = svc(c);
+      const authority = await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate');
       const key = c.req.header('idempotency-key')?.trim();
       if (key !== undefined && (key.length < 1 || key.length > 200))
         throw new BadRequestError(
           'Idempotency-Key must be 1 to 200 characters.',
           'IDEMPOTENCY_KEY_INVALID',
         );
-      const detail = await createPassIdempotent(
-        svc(c),
-        {
-          orgId: body.orgId,
+      const pinned = [body.templateVersion, body.releaseId, body.releaseGeneration];
+      let review: { templateVersion: string; releaseId: string; releaseGeneration: number };
+      if (auth.kind === 'api_key' && pinned.every((v) => v === undefined)) {
+        const release = await effectiveApiRelease(ctx, {
+          orgId,
           templateId: body.templateId,
+          mode,
+        });
+        review = {
+          templateVersion: release.version,
+          releaseId: release.id,
+          releaseGeneration: release.generation,
+        };
+      } else if (
+        body.templateVersion === undefined ||
+        body.releaseId === undefined ||
+        body.releaseGeneration === undefined
+      ) {
+        throw new ValidationError('Review the mode and template version before issuing the pass.');
+      } else {
+        review = {
           templateVersion: body.templateVersion,
+          releaseId: body.releaseId,
+          releaseGeneration: body.releaseGeneration,
+        };
+      }
+      const detail = await createPassIdempotent(
+        ctx,
+        {
+          orgId,
+          templateId: body.templateId,
+          ...review,
           ...(body.identityId ? { identityId: body.identityId } : {}),
           input: body.input,
           holderEmail: body.holderEmail ?? null,
@@ -62,10 +107,12 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
           externalRef: body.externalRef ?? null,
           sendEmail: body.sendEmail ?? false,
           source: 'manual',
-          mode: body.mode,
+          mode,
+          execution: { kind: 'tenant', authority },
           actor: actorFor(c),
         },
         key,
+        { serverResolvedRelease: pinned.every((v) => v === undefined) },
       );
       return c.json(detail, 201);
     },
@@ -85,8 +132,12 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
     async (c) => {
       const patch = c.req.valid('json');
       const expected = ifMatch(c);
-      const detail = await updatePass(svc(c), actorFor(c), c.req.valid('param').id, patch, {
-        scope: passScopeOf(c),
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const detail = await updatePass(ctx, actorFor(c), id, patch, {
+        scope,
+        authority,
         ...(expected !== undefined ? { ifMatch: expected } : {}),
       });
       return c.json(detail, 200, { etag: `"${detail.version}"` });

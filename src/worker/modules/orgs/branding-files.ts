@@ -1,7 +1,15 @@
 export type BrandingSlot = 'logo' | 'icon';
 
-export const brandingKey = (orgId: string, slot: BrandingSlot, scale: 2 | 3) =>
-  `orgs/${orgId}/branding/${slot}@${scale}x.png`;
+/** Legacy uploads used stable keys; new uploads are immutable and referenced by version. */
+export const brandingKey = (
+  orgId: string,
+  slot: BrandingSlot,
+  scale: 2 | 3,
+  storageVersion?: string,
+) =>
+  storageVersion
+    ? `orgs/${orgId}/branding/versions/${storageVersion}/${slot}@${scale}x.png`
+    : `orgs/${orgId}/branding/${slot}@${scale}x.png`;
 
 /** One stored org pass image: a slot at a scale that exists in R2. */
 export interface BrandingFile {
@@ -12,7 +20,7 @@ export interface BrandingFile {
   size: number;
   width: number;
   height: number;
-  /** sha-256 of the @3x upload; changes whenever the image is replaced. */
+  /** Immutable object version, or the @3x digest for a legacy stable-key upload. */
   version: string;
 }
 
@@ -21,6 +29,8 @@ export interface BrandingImageRef {
   sha: string;
   w: number;
   h: number;
+  /** Absent on existing uploads stored at the legacy stable key. */
+  storageVersion?: string | undefined;
 }
 
 /**
@@ -35,7 +45,7 @@ export async function brandingFiles(
   const found = await Promise.all(
     images.flatMap((image) =>
       ([3, 2] as const).map(async (scale): Promise<BrandingFile | null> => {
-        const r2Key = brandingKey(orgId, image.slot, scale);
+        const r2Key = brandingKey(orgId, image.slot, scale, image.storageVersion);
         const head = await bucket.head(r2Key);
         if (!head) return null;
         const f = scale === 3 ? 1 : 2 / 3;
@@ -46,7 +56,7 @@ export async function brandingFiles(
           size: head.size,
           width: Math.round(image.w * f),
           height: Math.round(image.h * f),
-          version: image.sha,
+          version: image.storageVersion ?? image.sha,
         };
       }),
     ),

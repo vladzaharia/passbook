@@ -1,75 +1,34 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import { makeOrg } from '../../../../test/helpers/index.ts';
-import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { describe, expect, it } from 'vitest';
+import { run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { act } from './act.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { publishScan, scanHub } from './live.ts';
-import type { LiveAttachment } from './live-auth.ts';
+import { publishScan } from './live.ts';
+import { livePassSnapshot, openLiveSourceProof } from './live-provenance.ts';
 import { getScanner } from './repo-device.ts';
-import { setSetupWatchStmt } from './repo-setups.ts';
-import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
-
-let kit: ScanKit;
-let template: string;
-beforeAll(async () => {
-  kit = await setupScanKit();
-  template = await kit.scanTemplate('Live membership', {
-    actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
-  });
-});
-async function screen(role: 'monitor' | 'customer', ids: string[], allOrg = false) {
-  const device = await kit.scanner({ deviceRole: role, templateIds: [] });
-  await setSetupWatchStmt(kit.env.DB, kit.org.id, device.id, { scannerIds: ids, allOrg }).run();
-  const row = await getScanner(kit.env.DB, device.id);
-  const attachment: LiveAttachment = {
-    orgId: kit.org.id,
-    mode: 'live',
-    scannerId: device.id,
-    role,
-    tokenHash: row!.tokenHash!,
-    revision: row!.updatedAt,
-    expiresAt: Date.now() + 15 * 60_000,
-  };
-  return { ...device, attachment };
-}
-const hub = () => scanHub(kit.ctx, kit.org.id, 'live');
-const row = (id: string, more: Partial<ScanLiveRow> = {}): ScanLiveRow => ({
-  id: kit.ctx.ids.ordered(),
-  at: Date.now(),
-  scannerId: id,
-  scannerName: 'Front door',
-  passId: null,
-  holder: 'Private Member',
-  photoUrl: null,
-  kind: 'ok',
-  direction: 'in',
-  label: 'Checked in',
-  presented: true,
-  ...more,
-});
-const publish = (body: ScanLiveRow) =>
-  hub().publish({ orgId: kit.org.id, mode: 'live', row: body });
-const next = (socket: WebSocket) =>
-  new Promise<{ rows: ScanLiveRow[] }>((resolve) =>
-    socket.addEventListener('message', (event) => resolve(JSON.parse(String(event.data))), {
-      once: true,
-    }),
-  );
+import { candidateById } from './repo-lookup.ts';
+import { registerHubLoggingTests } from './scan-hub-logging-test-fixtures.ts';
+import { hub, kit, screen, template } from './scan-hub-test-fixtures.ts';
+import { codeOf, key, proofedScanActor } from './test-kit.ts';
 
 describe('live display hub', () => {
+  registerHubLoggingTests();
+
   it('publishes the public holder title and redacts references to another mode', async () => {
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id]);
     const device = await getScanner(kit.env.DB, source.id);
     if (!device) throw new Error('Source fixture is missing.');
-    const actor = withRole(
-      scannerActor(kit.ctx, device, 'live', 'cookie', { event: null, templateIds: [template] }),
-      null,
+    const actor = await proofedScanActor(
+      kit.ctx,
+      withRole(
+        scannerActor(kit.ctx, device, 'live', 'cookie', { event: null, templateIds: [template] }),
+        null,
+      ),
     );
     const pass = await kit.scanPass(template, { memberName: 'Public Member' });
-    const outcome = await act(kit.ctx, actor, {
+    const { outcome, evaluatedSnapshot, credentialContext } = await act(kit.ctx, actor, {
       input: codeOf(pass),
       actionId: 'auto',
       clientTs: kit.clock.now(),
@@ -77,7 +36,7 @@ describe('live display hub', () => {
     });
     if (!outcome.display) throw new Error('The result fixture has no display.');
     outcome.display.identity.holder = 'STAFF-ONLY-TITLE';
-    publishScan(kit.ctx, actor, outcome, 'camera');
+    publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, credentialContext, 'camera');
     await kit.settle();
     expect((await hub().snapshot(monitor.attachment)).rows).toMatchObject([
       { holder: 'Public Member' },
@@ -87,119 +46,238 @@ describe('live display hub', () => {
       { memberName: 'OTHER-MODE-TITLE' },
       { mode: 'test' },
     );
-    const refused = await act(kit.ctx, actor, {
+    const {
+      outcome: refused,
+      evaluatedSnapshot: refusedSnapshot,
+      credentialContext: refusedContext,
+    } = await act(kit.ctx, actor, {
       input: codeOf(testPass),
       actionId: 'auto',
       clientTs: kit.clock.now(),
       idempotencyKey: key(),
     });
-    publishScan(kit.ctx, actor, refused, 'camera');
+    publishScan(kit.ctx, actor, refused, refusedSnapshot, refusedContext, 'camera');
     await kit.settle();
     const rows = (await hub().snapshot(monitor.attachment)).rows;
-    expect(rows.find((row) => row.id === refused.scanId)).toMatchObject({
-      holder: null,
-      passId: null,
-    });
+    expect(rows).toHaveLength(2);
+    const accepted = rows.find((entry) => entry.holder === 'Public Member');
+    const redacted = rows.find((entry) => entry.holder === null);
+    expect(accepted?.id).toBeTruthy();
+    expect(accepted?.id).not.toBe(outcome.scanId);
+    expect(redacted).toMatchObject({ holder: null, passId: null });
+    expect(redacted?.id).not.toBe(refused.scanId);
     expect(JSON.stringify(rows)).not.toMatch(/STAFF-ONLY-TITLE|OTHER-MODE-TITLE/);
   });
-  it('filters monitor catch-up by watched scanners and deduplicates retries', async () => {
-    const a = await kit.scanner({ templateIds: [template] });
-    const b = await kit.scanner({ templateIds: [template] });
-    const monitor = await screen('monitor', [a.id]);
-    const body = row(a.id);
-    await publish(body);
-    await publish(body);
-    await publish(row(b.id));
-    expect((await hub().snapshot(monitor.attachment)).rows).toMatchObject([
-      { scannerId: a.id, holder: 'Private Member' },
-    ]);
-    expect((await hub().snapshot(monitor.attachment, body.id)).rows).toHaveLength(0);
-  });
 
-  it('delivers a redacted customer verdict over a real hibernating WebSocket', async () => {
-    const source = await kit.scanner({ templateIds: [template] });
-    const customer = await screen('customer', [source.id]);
-    const response = await hub().fetch(
-      new Request('https://hub.test', {
-        headers: {
-          upgrade: 'websocket',
-          'x-pb-live': JSON.stringify(customer.attachment),
-        },
-      }),
-    );
-    expect(response.status).toBe(101);
-    const socket = response.webSocket!;
-    socket.accept();
-    await next(socket);
-    try {
-      const received = next(socket);
-      await publish(
-        row(source.id, { passId: kit.ctx.ids.id(), kind: 'refused', label: 'Private reason' }),
-      );
-      const verdict = await received;
-      expect(verdict.rows).toMatchObject([
-        { label: 'Please see the desk', holder: null, photoUrl: null, passId: null },
-      ]);
-      expect(JSON.stringify(verdict)).not.toMatch(/Private|Member|reason/);
-      expect((await hub().snapshot(customer.attachment)).rows).toEqual([]);
-      const closed = new Promise<number>((resolve) =>
-        socket.addEventListener('close', (event) => resolve(event.code), { once: true }),
-      );
-      expect(await hub().kick(customer.id)).toBe(1);
-      expect(await closed).toBe(4409);
-    } finally {
-      socket.close(1000);
-    }
-  });
-
-  it('never replays customer results and omits manual lookups', async () => {
-    const source = await kit.scanner({ templateIds: [template] });
-    const customer = await screen('customer', [source.id]);
-    await publish(row(source.id, { presented: false }));
-    expect((await hub().snapshot(customer.attachment)).rows).toEqual([]);
-  });
-
-  it('renders a permitted member photo with a monitor-bound grant', async () => {
+  it('publishes only with the original evaluated credential context', async () => {
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id]);
-    const pass = await kit.scanPass(template);
-    const png = btoa(String.fromCharCode(...makePng(270, 270)));
-    await putMemberPhoto(
+    const device = await getScanner(kit.env.DB, source.id);
+    if (!device) throw new Error('Missing source scanner.');
+    const actor = await proofedScanActor(
       kit.ctx,
-      { type: 'system', id: null },
-      pass.id,
-      { png, includeInPass: false },
-      null,
+      withRole(
+        scannerActor(kit.ctx, device, 'live', 'cookie', { event: null, templateIds: [template] }),
+        null,
+      ),
     );
-    await publish(row(source.id, { passId: pass.id }));
-    const snapshot = await hub().snapshot(monitor.attachment);
-    const url = snapshot.rows[0]?.photoUrl ?? '';
-    expect(url).toContain('/scan/live/passes/');
-    const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
-    expect(image.status).toBe(200);
-    const other = await screen('monitor', [source.id]);
-    expect((await kit.get(other.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
+    const pass = await kit.scanPass(template);
+    const { outcome, evaluatedSnapshot, credentialContext } = await act(kit.ctx, actor, {
+      input: codeOf(pass),
+      actionId: 'auto',
+      clientTs: kit.clock.now(),
+      idempotencyKey: key(),
+    });
+    if (
+      !evaluatedSnapshot ||
+      !credentialContext?.credentialTombstoneRefs.length ||
+      !credentialContext.otherModeCredentialTombstoneRefs.length
+    )
+      throw new Error('Missing evaluated credential context.');
+    const otherKeyset =
+      credentialContext.credentialKeysetCommitment === 'f'.repeat(64)
+        ? 'e'.repeat(64)
+        : 'f'.repeat(64);
+    for (const invalid of [
+      null,
+      { ...credentialContext, credentialKeysetCommitment: otherKeyset },
+      { ...credentialContext, credentialTombstoneRefs: [] },
+      { ...credentialContext, otherModeCredentialTombstoneRefs: [] },
+    ])
+      publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, invalid, 'camera');
+    await kit.settle();
+    expect((await hub().snapshot(monitor.attachment)).rows).toEqual([]);
+
+    publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, credentialContext, 'camera');
+    await kit.settle();
+    const rows = (await hub().snapshot(monitor.attachment)).rows;
+    expect(rows).toMatchObject([{ passId: pass.id, holder: 'Anna Popescu' }]);
+    const sealed = await hub().sourceProof(rows[0]!.id);
+    if (!sealed) throw new Error('Missing retained source proof.');
+    const opened = await openLiveSourceProof(kit.env, sealed);
+    expect(opened?.credentialContext).toEqual(credentialContext);
+    expect(opened?.passSnapshot?.credentialTombstoneRefs).toEqual(
+      credentialContext.credentialTombstoneRefs,
+    );
+    expect(opened?.passSnapshot?.otherModeCredentialTombstoneRefs).toEqual(
+      credentialContext.otherModeCredentialTombstoneRefs,
+    );
+    expect(JSON.stringify(rows)).not.toContain(sealed);
+    for (const privateValue of [
+      credentialContext.credentialKeysetCommitment,
+      ...credentialContext.credentialTombstoneRefs,
+      ...credentialContext.otherModeCredentialTombstoneRefs,
+    ])
+      expect(JSON.stringify(rows)).not.toContain(privateValue);
   });
 
-  it('rejects stale credentials and settings revisions before returning history', async () => {
-    const source = await kit.scanner({ templateIds: [template] });
-    const monitor = await screen('monitor', [source.id]);
-    await publish(row(source.id));
-    for (const patch of [{ tokenHash: 'wrong' }, { revision: -1 }, { expiresAt: 1 }])
-      expect((await hub().snapshot({ ...monitor.attachment, ...patch })).rows).toHaveLength(0);
-  });
+  it.each(['wallet document', 'wallet serial', 'pass personalization'] as const)(
+    'does not replace evaluated %s with later same-version data',
+    async (changed) => {
+      const source = await kit.scanner({ templateIds: [template] });
+      const monitor = await screen('monitor', [source.id]);
+      const device = await getScanner(kit.env.DB, source.id);
+      if (!device) throw new Error('Missing source scanner.');
+      const actor = await proofedScanActor(
+        kit.ctx,
+        withRole(
+          scannerActor(kit.ctx, device, 'live', 'cookie', { event: null, templateIds: [template] }),
+          null,
+        ),
+      );
+      const pass = await kit.scanPass(template, { memberName: 'Original Wallet Member' });
+      const png = btoa(String.fromCharCode(...makePng(270, 270)));
+      await putMemberPhoto(
+        kit.ctx,
+        { type: 'system', id: null },
+        pass.id,
+        { png, includeInPass: false },
+        null,
+      );
+      const now = kit.clock.now();
+      const { outcome, evaluatedSnapshot, credentialContext } = await act(kit.ctx, actor, {
+        input: codeOf(pass),
+        actionId: 'check_in',
+        clientTs: now,
+        idempotencyKey: key(),
+      });
+      expect(outcome.kind).toBe('ok');
+      if (!evaluatedSnapshot?.passJsonSnapshot || evaluatedSnapshot.walletVersion === null)
+        throw new Error('Missing evaluated Wallet document.');
+      if (changed !== 'pass personalization') {
+        const field = changed === 'wallet serial' ? '$.serialNumber' : '$.organizationName';
+        const updated = await run(
+          kit.env.DB,
+          `UPDATE pass_versions SET pass_json = json_set(pass_json, ?, ?)
+          WHERE pass_id = ? AND version = ?`,
+          [field, 'Altered value', pass.id, evaluatedSnapshot.walletVersion],
+        );
+        expect(updated.changes).toBe(1);
+      } else {
+        await run(
+          kit.env.DB,
+          "UPDATE passes SET personalization = json_set(personalization, '$.memberName', ?) WHERE id = ?",
+          ['Changed Member', pass.id],
+        );
+      }
+      const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
+      if (!current) throw new Error('Missing current pass.');
+      expect(current.pass.version).toBe(evaluatedSnapshot.pass.version);
+      if (changed !== 'pass personalization')
+        expect(current.passJsonSnapshot).not.toBe(evaluatedSnapshot.passJsonSnapshot);
+      else expect(current.pass.personalization).not.toEqual(evaluatedSnapshot.pass.personalization);
+      expect(kit.clock.now()).toBe(now);
+      publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, credentialContext, 'camera');
+      await kit.settle();
+      const projection = (await hub().snapshot(monitor.attachment)).rows.find(
+        (entry) => entry.scannerId === source.id,
+      );
+      if (!projection) throw new Error('Missing retained event.');
+      expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
+      expect(JSON.stringify(projection)).not.toContain('Original Wallet Member');
+    },
+  );
 
-  it('refuses tenant, mode and source mismatches at the object boundary', async () => {
-    const source = await kit.scanner({ templateIds: [template] });
-    const other = await makeOrg(kit.fx);
-    await publish(row(source.id));
-    await expect(
-      hub().publish({ orgId: other.id, mode: 'live', row: row(source.id) }),
-    ).resolves.toBe(false);
-    await expect(
-      hub().publish({ orgId: kit.org.id, mode: 'test', row: row(source.id) }),
-    ).resolves.toBe(false);
-    const foreign = await kit.scanner({ orgId: other.id });
-    await expect(publish(row(foreign.id))).resolves.toBe(false);
-  });
+  it.each(['organization', 'template'] as const)(
+    'redacts an evaluated outcome after same-clock %s policy ABA before publication',
+    async (changed) => {
+      const id = await kit.scanTemplate(`Outcome ${changed} ABA`, {
+        actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+      });
+      const source = await kit.scanner({ templateIds: [id] });
+      const monitor = await screen('monitor', [source.id]);
+      const device = await getScanner(kit.env.DB, source.id);
+      if (!device) throw new Error('Missing source scanner.');
+      const actor = await proofedScanActor(
+        kit.ctx,
+        withRole(
+          scannerActor(kit.ctx, device, 'live', 'cookie', { event: null, templateIds: [id] }),
+          null,
+        ),
+      );
+      const pass = await kit.scanPass(id, { memberName: 'ABA Private Member' });
+      const png = btoa(String.fromCharCode(...makePng(270, 270)));
+      await putMemberPhoto(
+        kit.ctx,
+        { type: 'system', id: null },
+        pass.id,
+        { png, includeInPass: false },
+        null,
+      );
+      const now = kit.clock.now();
+      const { outcome, evaluatedSnapshot, credentialContext } = await act(kit.ctx, actor, {
+        input: codeOf(pass),
+        actionId: 'check_in',
+        clientTs: now,
+        idempotencyKey: key(),
+      });
+      expect(outcome.kind).toBe('ok');
+      const original = await candidateById(kit.env.DB, kit.org.id, pass.id);
+      if (!original || !evaluatedSnapshot) throw new Error('Missing evaluated pass.');
+      const originalWithCredentials = {
+        ...original,
+        credentialTombstoneRefs: evaluatedSnapshot.credentialTombstoneRefs,
+        otherModeCredentialTombstoneRefs: evaluatedSnapshot.otherModeCredentialTombstoneRefs,
+      };
+      expect(await livePassSnapshot(kit.env, evaluatedSnapshot)).toEqual(
+        await livePassSnapshot(kit.env, originalWithCredentials),
+      );
+      const table = changed === 'organization' ? 'orgs' : 'templates';
+      const policyId = changed === 'organization' ? kit.org.id : id;
+      const away = changed === 'organization' ? 'suspended' : 'archived';
+      await run(
+        kit.env.DB,
+        `UPDATE ${table} SET status = ?, updated_at = updated_at + 1 WHERE id = ?`,
+        [away, policyId],
+      );
+      await run(
+        kit.env.DB,
+        `UPDATE ${table} SET status = 'active', updated_at = updated_at + 1 WHERE id = ?`,
+        [policyId],
+      );
+      expect(kit.clock.now()).toBe(now);
+      const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
+      if (!current) throw new Error('Missing restored pass.');
+      expect(changed === 'organization' ? current.orgRevision : current.templateRevision).toBe(
+        (changed === 'organization' ? original.orgRevision : original.templateRevision)! + 2,
+      );
+      publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, credentialContext, 'camera');
+      await kit.settle();
+      const projection = (await hub().snapshot(monitor.attachment)).rows.find(
+        (entry) => entry.scannerId === source.id,
+      );
+      if (!projection) throw new Error('Missing retained event.');
+      expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
+      expect(JSON.stringify(projection)).not.toContain('ABA Private Member');
+      expect(JSON.stringify(projection)).not.toMatch(
+        /sourceProof|passSnapshot|passCommitment|credentialTombstoneRefs|otherModeCredentialTombstoneRefs|walletVersion|versionPersonalization|orgRevision|templateRevision|identityRevision|activeRelease|passReleaseId/,
+      );
+      const sealed = await hub().sourceProof(projection.id);
+      if (!sealed) throw new Error('Missing retained source proof.');
+      expect(JSON.stringify(projection)).not.toContain(sealed);
+      expect((await openLiveSourceProof(kit.env, sealed))?.passSnapshot).toEqual(
+        await livePassSnapshot(kit.env, originalWithCredentials),
+      );
+    },
+  );
 });

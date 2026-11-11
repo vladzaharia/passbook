@@ -5,71 +5,52 @@ import type {
   CreateScannerSetupSchema,
   UpdateScannerSetupSchema,
 } from '../../../shared/contracts/scan-setups.ts';
-import type { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
-import { batch, classifyD1Error } from '../../platform/db.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
-import { ADMIN_SETTINGS } from './actor.ts';
-import { DEFAULT_SETTINGS, parseSettings } from './dto-console.ts';
+import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
 import { createPairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
-import { syncStandaloneSessionStmt } from './repo-legacy-session.ts';
 import {
-  addTemplatesStmts,
-  insertScannerStmt,
-  replaceTemplatesStmts,
-  updateScannerStmt,
-} from './repo-scanners.ts';
+  adminGrant,
+  audited,
+  eventsOpen,
+  scannerEpoch,
+  sessionEpoch,
+  templatesUsable,
+} from './repo-admin-grant.ts';
 import {
-  adminSetupId,
-  clearSetupAcceptsStmt,
-  insertSetupStmt,
-  setDeviceRoleStmt,
-  setSetupWatchStmt,
+  addScannerTemplates,
+  addSetupInsert,
+  addSetupWatch,
+  replaceScannerTemplates,
+} from './repo-admin-unguarded.ts';
+import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
+import { addScannerInsert, addScannerPatch } from './repo-scanners.ts';
+import { scanningDeviceRow } from './repo-scanning-devices.ts';
+import { type ScanningSessionRow, scanningSessionForDevice } from './repo-scanning-sessions.ts';
+import {
+  addDeviceRole,
+  addSetupAcceptsClear,
   setupMeta,
-  setupMetas,
   watchedScanners,
   watchOf,
 } from './repo-setups.ts';
-import { checkAccepts, listScanners, loadScanner, scannerView } from './scanners.ts';
-import { type DeviceEnrollment, enrollmentStmts } from './scanning-enrollment.ts';
+import { checkAccepts, requireScannerSettings } from './scanner-validation.ts';
+import { loadScanner } from './scanner-views.ts';
+import { addEnrollment, type DeviceEnrollment } from './scanning-enrollment.ts';
+import { setupView } from './setup-views.ts';
+
+const SETUP_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
 
 type Create = z.infer<typeof CreateScannerSetupSchema>;
 type Update = z.infer<typeof UpdateScannerSetupSchema>;
 type Watch = Create['watch'];
-
-export async function listSetups(
-  ctx: ServiceContext,
-  mode: Mode,
-  query: z.infer<typeof ScannerListQuerySchema>,
-) {
-  const page = await listScanners(ctx, mode, query);
-  const metadata = await setupMetas(
-    ctx.env.DB,
-    query.orgId ?? null,
-    page.items.map((s) => s.id),
-  );
-  return {
-    ...page,
-    items: page.items.map((scanner) => {
-      const meta = metadata.find((m) => m.scanner_id === scanner.id);
-      return {
-        ...scanner,
-        sessionId: meta?.session_id ?? undefined,
-        adminSession: meta?.admin_session === 1,
-        adminUser: meta?.admin_user_id
-          ? { id: meta.admin_user_id, name: meta.admin_name ?? 'Admin' }
-          : null,
-        watch: watchOf(meta ?? null),
-      };
-    }),
-  };
-}
 
 function roleAllowed(kind: Create['kind'], role: Create['deviceRole']) {
   if ((kind === 'terminal' && role !== 'scan') || (kind === 'display' && role === 'scan'))
@@ -113,29 +94,28 @@ function conflict(error: unknown): never {
   throw error;
 }
 
-export async function setupView(ctx: ServiceContext, id: string) {
-  const scanner = await scannerView(ctx, id);
-  const meta = await setupMeta(ctx.env.DB, scanner.orgId, id);
-  return {
-    ...scanner,
-    sessionId: meta?.session_id ?? undefined,
-    adminSession: meta?.admin_session === 1,
-    adminUser: meta?.admin_user_id
-      ? { id: meta.admin_user_id, name: meta.admin_name ?? 'Admin' }
-      : null,
-    watch: watchOf(meta),
-  };
-}
-
 export async function createSetup(
   ctx: ServiceContext,
   userId: string,
   mode: Mode,
   input: Create,
   origin: string,
+  authority: TenantPassWrite,
   enrollment?: DeviceEnrollment,
+  parent?: ScanningSessionRow,
 ) {
   const { orgId, kind, deviceRole } = input;
+  if (
+    enrollment &&
+    (!parent ||
+      parent.id !== enrollment.sessionId ||
+      parent.org_id !== orgId ||
+      parent.mode !== mode)
+  )
+    throw new ConflictError(
+      'This session changed. Reload and try again.',
+      'SCANNING_SESSION_CHANGED',
+    );
   if (!(await orgIsActive(ctx.env.DB, orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   roleAllowed(kind, deviceRole);
@@ -157,135 +137,162 @@ export async function createSetup(
     await checkAccepts(ctx, orgId, mode, { eventId: settings.checkIn.eventId });
   const now = ctx.clock.now();
   const id = ctx.ids.id();
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.setup.create',
+    userId,
+    authority,
+    orgId,
+    [
+      ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
+      ...eventsOpen([accepts?.eventId, settings.checkIn?.eventId]),
+      ...templatesUsable(accepts?.templateIds ?? []),
+    ],
+    SETUP_CODES,
+    id,
+  );
+  addScannerInsert(g, {
+    id,
+    kind,
+    deviceRole,
+    name: input.name,
+    eventId: accepts?.eventId ?? null,
+    settings: JSON.stringify(settings),
+    timeZone: input.timeZone,
+    expiresAt: kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
+    createdBy: userId,
+    now,
+  });
+  addScannerTemplates(g, id, accepts?.templateIds ?? []);
+  addSetupInsert(g, id, mode, input.adminUserId ?? null, input.watch);
+  addEnrollment(ctx, g, id, userId, input, settings, enrollment);
+  g.add(
+    audited(g, ctx, {
+      orgId,
+      actorType: 'user',
+      actorId: userId,
+      action: 'scanner.setup_create',
+      targetType: 'scanner',
+      targetId: id,
+      detail: { kind, deviceRole, adminSession: !!input.adminUserId },
+    }),
+  );
   try {
-    await batch(ctx.env.DB, [
-      insertScannerStmt(ctx.env.DB, {
-        id,
-        orgId,
-        mode,
-        kind,
-        deviceRole,
-        name: input.name,
-        eventId: accepts?.eventId ?? null,
-        settings: JSON.stringify(settings),
-        timeZone: input.timeZone,
-        expiresAt: kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
-        createdBy: userId,
-        now,
-      }),
-      ...addTemplatesStmts(ctx.env.DB, id, accepts?.templateIds ?? []),
-      insertSetupStmt(ctx.env.DB, id, orgId, mode, input.adminUserId ?? null, input.watch),
-      ...enrollmentStmts(ctx, id, userId, mode, input, settings, enrollment),
-      auditStmt(ctx.env.DB, ctx, {
-        orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.setup_create',
-        targetType: 'scanner',
-        targetId: id,
-        detail: { kind, deviceRole, adminSession: !!input.adminUserId },
-      }),
-    ]);
+    await g.commit();
   } catch (error) {
     conflict(error);
   }
   const pairing =
     !input.adminUserId && kind !== 'terminal'
-      ? await createPairing(ctx, userId, await loadScanner(ctx, id), origin)
+      ? await createPairing(ctx, userId, await loadScanner(ctx, id), origin, authority)
       : null;
   return { ...(await setupView(ctx, id)), pairing };
 }
 
-export async function updateSetup(ctx: ServiceContext, userId: string, id: string, input: Update) {
-  const row = await loadScanner(ctx, id);
+export async function updateSetup(
+  ctx: ServiceContext,
+  userId: string,
+  id: string,
+  input: Update,
+  authority: TenantPassWrite,
+) {
+  const row = await loadScanner(ctx, id, authority.mode);
   await assertStandaloneSession(ctx, row.orgId, id);
-  const meta = await setupMeta(ctx.env.DB, row.orgId, id);
+  const [device, parent] = await Promise.all([
+    scanningDeviceRow(ctx.env.DB, row.orgId, id),
+    scanningSessionForDevice(ctx.env.DB, row.orgId, id),
+  ]);
+  if (!!device !== !!parent || (parent && parent.id !== id))
+    throw new ConflictError(
+      'This scanner changed. Reload its settings and try again.',
+      'SCANNER_CHANGED',
+    );
   const role = input.deviceRole ?? row.deviceRole;
-  roleAllowed(row.kind, role);
+  const changingWatch = input.deviceRole !== undefined || input.watch !== undefined;
+  const meta = changingWatch ? await setupMeta(ctx.env.DB, row.orgId, id) : null;
   const watch = input.watch === undefined ? watchOf(meta) : input.watch;
-  await checkWatch(ctx, row.orgId, row.mode, role, watch, id);
+  if (input.deviceRole !== undefined) roleAllowed(row.kind, role);
+  if (changingWatch) await checkWatch(ctx, row.orgId, row.mode, role, watch, id);
   const accepts = input.accepts
     ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts)
     : null;
-  const settings = ScannerSettingsSchema.parse({
-    ...parseSettings(row.settings),
-    ...input.settings,
-    ...(input.accepts === undefined ? {} : { acceptAllTemplates: input.accepts === null }),
-  });
-  if (settings.checkIn?.eventId)
-    await checkAccepts(ctx, row.orgId, row.mode, { eventId: settings.checkIn.eventId });
+  const settings =
+    input.settings !== undefined || input.accepts !== undefined
+      ? ScannerSettingsSchema.parse({
+          ...requireScannerSettings(row.settings),
+          ...input.settings,
+          ...(input.accepts === undefined ? {} : { acceptAllTemplates: input.accepts === null }),
+        })
+      : null;
+  const parentSettings =
+    parent && settings
+      ? ScannerSettingsSchema.parse({
+          ...requireScannerSettings(parent.settings),
+          ...input.settings,
+          ...(input.accepts === undefined ? {} : { acceptAllTemplates: input.accepts === null }),
+        })
+      : null;
+  if (input.settings?.checkIn?.eventId)
+    await checkAccepts(ctx, row.orgId, row.mode, { eventId: input.settings.checkIn.eventId });
   const now = ctx.clock.now();
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.setup.update',
+    userId,
+    authority,
+    row.orgId,
+    [
+      scannerEpoch(id, row.configEpoch),
+      ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
+      ...eventsOpen([accepts?.eventId, input.settings?.checkIn?.eventId]),
+      ...templatesUsable(accepts?.templateIds ?? []),
+    ],
+    SETUP_CODES,
+    id,
+  );
+  addScannerPatch(
+    g,
+    id,
+    {
+      ...(input.name === undefined ? {} : { name: input.name }),
+      ...(settings ? { settings: JSON.stringify(settings) } : {}),
+      ...(accepts ? { eventId: accepts.eventId } : {}),
+    },
+    now,
+  );
+  if (input.deviceRole !== undefined) addDeviceRole(g, id, row.deviceRole, role, now);
+  if (input.accepts === null) addSetupAcceptsClear(g, id, now);
+  if (input.accepts !== undefined) replaceScannerTemplates(g, id, accepts?.templateIds ?? []);
+  if (changingWatch) addSetupWatch(g, id, role === 'scan' ? null : watch);
+  if (parent)
+    addScannerPatchSessionSync(
+      g,
+      id,
+      {
+        ...(input.name === undefined ? {} : { name: input.name }),
+        ...(parentSettings ? { settings: JSON.stringify(parentSettings) } : {}),
+        ...(input.accepts === undefined
+          ? {}
+          : { accepts: input.accepts === null ? null : JSON.stringify(input.accepts) }),
+      },
+      now,
+    );
+  g.add(
+    audited(g, ctx, {
+      orgId: row.orgId,
+      actorType: 'user',
+      actorId: userId,
+      action: 'scanner.setup_update',
+      targetType: 'scanner',
+      targetId: id,
+      detail: { deviceRole: role },
+    }),
+  );
   try {
-    await batch(ctx.env.DB, [
-      updateScannerStmt(
-        ctx.env.DB,
-        id,
-        {
-          ...(input.name === undefined ? {} : { name: input.name }),
-          settings: JSON.stringify(settings),
-          ...(accepts ? { eventId: accepts.eventId } : {}),
-        },
-        now,
-      ),
-      setDeviceRoleStmt(ctx.env.DB, row.orgId, id, role, now),
-      ...(input.accepts === null ? [clearSetupAcceptsStmt(ctx.env.DB, row.orgId, id)] : []),
-      ...(input.accepts === undefined
-        ? []
-        : replaceTemplatesStmts(ctx.env.DB, id, accepts?.templateIds ?? [])),
-      setSetupWatchStmt(ctx.env.DB, row.orgId, id, role === 'scan' ? null : watch),
-      syncStandaloneSessionStmt(ctx.env.DB, row.orgId, id, now),
-      auditStmt(ctx.env.DB, ctx, {
-        orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
-        action: 'scanner.setup_update',
-        targetType: 'scanner',
-        targetId: id,
-        detail: { deviceRole: role },
-      }),
-    ]);
+    await g.commit();
   } catch (error) {
     conflict(error);
   }
   await kickScreen(ctx, row.orgId, row.mode, id);
   return setupView(ctx, id);
-}
-
-export async function startAdminSetup(
-  ctx: ServiceContext,
-  userId: string,
-  mode: Mode,
-  input: { orgId: string; timeZone: string },
-  origin: string,
-) {
-  if (!(await orgIsActive(ctx.env.DB, input.orgId)))
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  let id = await adminSetupId(ctx.env.DB, input.orgId, mode, userId);
-  if (!id) {
-    const user = await getUser(ctx.env.DB, userId);
-    try {
-      const made = await createSetup(
-        ctx,
-        userId,
-        mode,
-        {
-          ...input,
-          name: `Admin ${user?.name ?? userId}`.slice(0, 40),
-          kind: 'device',
-          deviceRole: 'scan',
-          adminUserId: userId,
-          accepts: null,
-          settings: { ...ADMIN_SETTINGS, flow: 'auto', reader: 'none' },
-        },
-        origin,
-      );
-      id = made.id;
-    } catch (error) {
-      if (!(error instanceof ConflictError)) throw error;
-      id = await adminSetupId(ctx.env.DB, input.orgId, mode, userId);
-      if (!id) throw error;
-    }
-  }
-  const row = await loadScanner(ctx, id);
-  return { setupId: id, orgId: row.orgId, mode: row.mode, timeZone: row.timeZone };
 }
