@@ -12,7 +12,7 @@ const scanCountProofInvalidatedSql = (scan: string) =>
   `EXISTS (SELECT 1 FROM scan_retention_proofs invalidated
     WHERE invalidated.scan_id=${scan}.id AND invalidated.invalidated=1)`;
 
-/** Capacity and arrivals count live passes only: not deleted, removed or voided. */
+/** A legacy gate row, with no presence row to prove the entry, counts live passes only: not deleted, removed or voided. */
 const livePassSql = (pass: string) =>
   `${pass}.deleted_at IS NULL AND ${pass}.removed_at IS NULL AND ${pass}.status='active'`;
 
@@ -26,7 +26,7 @@ export function liveEventPresenceSql(
 ): string {
   return `SELECT presence.pass_id, presence.state${witnessId ? ', witness.id AS witness_id' : ''} FROM scan_presence presence
     JOIN passes member ON member.id=presence.pass_id AND member.org_id=presence.org_id
-      AND member.mode=${modeSql} AND ${livePassSql('member')}
+      AND member.mode=${modeSql}
     JOIN scans witness ON witness.id=presence.last_scan_id AND witness.org_id=member.org_id
       AND witness.mode=member.mode AND witness.pass_id=member.id AND witness.event_id=${eventSql}
       AND witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'

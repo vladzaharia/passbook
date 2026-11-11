@@ -133,7 +133,7 @@ export function recentScansStmt(
        CASE WHEN ${projection.sql} THEN 1 ELSE 0 END AS projection_authorized
      FROM scans s LEFT JOIN passes p ON p.id=s.pass_id
      WHERE s.actor_key = ?/* scan-ephemeral-actor-key */ AND s.org_id = ? AND s.mode = ? AND s.state = 'done'
-       AND (1=1 OR ${HISTORICAL_SCOPE_SQL})
+       AND ${HISTORICAL_SCOPE_SQL}
        AND ${credentialRefKeysetSql}
        AND (${authority.sql})
       AND (${csrf.sql})

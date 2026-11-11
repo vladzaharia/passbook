@@ -90,6 +90,13 @@ BEGIN
 END;
 CREATE TRIGGER scanning_devices_config_delete AFTER DELETE ON scanning_devices
 BEGIN UPDATE scanners SET config_epoch = config_epoch + 1 WHERE id = OLD.scanner_id; END;
+CREATE TRIGGER scanner_templates_config_insert AFTER INSERT ON scanner_templates
+BEGIN UPDATE scanners SET config_epoch = config_epoch + 1 WHERE id = NEW.scanner_id; END;
+CREATE TRIGGER scanner_templates_config_update AFTER UPDATE OF scanner_id, template_id ON scanner_templates
+WHEN NEW.scanner_id IS NOT OLD.scanner_id OR NEW.template_id IS NOT OLD.template_id
+BEGIN UPDATE scanners SET config_epoch = config_epoch + 1 WHERE id IN (NEW.scanner_id, OLD.scanner_id); END;
+CREATE TRIGGER scanner_templates_config_delete AFTER DELETE ON scanner_templates
+BEGIN UPDATE scanners SET config_epoch = config_epoch + 1 WHERE id = OLD.scanner_id; END;
 
 ALTER TABLE scan_staff ADD COLUMN auth_epoch INTEGER NOT NULL DEFAULT 1;
 CREATE TRIGGER scan_staff_auth_epoch AFTER UPDATE OF role, pin_hash, pin_set_at, disabled_at, org_id ON scan_staff

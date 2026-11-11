@@ -401,7 +401,7 @@ describe('approved release reissue', () => {
     expect(resigned.objects).toHaveLength(refreshed.objects.length + 1);
   }, 60_000);
 
-  it('keeps legacy provenance empty for matching or absent heads, and rejects a different head', async () => {
+  it('keeps legacy provenance empty for matching or absent heads, and maintains at its own version when the head moves', async () => {
     const id = templateId();
     await version(id, 'v1', { note: 'Legacy', global: true });
     const other = await makeOrg(kit.fx, { name: 'Other release scope' });
@@ -447,26 +447,31 @@ describe('approved release reissue', () => {
     expect(before.pass).toMatchObject({ template_version: 'v1', release_id: null });
 
     await approve(id, 'v2');
+    // The head moved to another version: the pass keeps maintaining itself at its own version.
     for (const force of [false, true]) {
-      await expect(
-        publishPass(jobCtxOf(kit), {
-          passId: pass.id,
-          actor: system,
-          cause: force ? 'resign' : 'admin',
-          force,
-        }),
-      ).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CONFLICT' });
+      const published = await publishPass(jobCtxOf(kit), {
+        passId: pass.id,
+        actor: system,
+        cause: force ? 'resign' : 'admin',
+        force,
+      });
+      expect(published.pass.releaseId).toBeNull();
     }
+    await updatePass(
+      jobCtxOf(kit),
+      admin,
+      pass.id,
+      { input: { memberName: 'Still allowed' } },
+      { scope: null },
+    );
+    expect((await snapshot(pass.id)).pass).toMatchObject({
+      template_version: 'v1',
+      release_id: null,
+    });
+    // Moving to a new version is issuance and still needs the head.
     await expect(
-      updatePass(
-        jobCtxOf(kit),
-        admin,
-        pass.id,
-        { input: { memberName: 'Blocked' } },
-        { scope: null },
-      ),
-    ).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CONFLICT' });
-    expect(await snapshot(pass.id)).toEqual(before);
+      updatePass(jobCtxOf(kit), admin, pass.id, { templateVersion: 'v3' }, { scope: null }),
+    ).rejects.toMatchObject({ code: expect.stringMatching(/^TEMPLATE_/) });
   }, 60_000);
 
   it.each([
@@ -477,7 +482,7 @@ describe('approved release reissue', () => {
     ['no-op', 'ineligible'],
     ['resign', 'ineligible'],
   ] as const)(
-    'fences a legacy %s when the %s release context changes during the build',
+    'maintains a legacy %s at its own version when the %s release context changes during the build',
     async (kind, initial) => {
       const id = templateId();
       await version(id, 'v1', { note: 'Legacy race' });
@@ -500,34 +505,32 @@ describe('approved release reissue', () => {
       expect(before.pass).toMatchObject({ template_version: 'v1', release_id: null });
       if (kind === 'resign') {
         await atUpload(pass.id, changeHead, async () => {
-          await expect(
-            publishPass(jobCtxOf(kit), {
-              passId: pass.id,
-              actor: system,
-              cause: 'resign',
-              force: true,
-            }),
-          ).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CONFLICT' });
+          const out = await publishPass(jobCtxOf(kit), {
+            passId: pass.id,
+            actor: system,
+            cause: 'resign',
+            force: true,
+          });
+          expect(out.changed).toBe(true);
+          expect(out.pass.releaseId).toBeNull();
         });
       } else {
         expect(
           (await publishPass(jobCtxOf(kit), { passId: pass.id, actor: system, cause: 'admin' }))
             .changed,
         ).toBe(false);
-        // A no-op publish never opens a template asset, so the race lands on its final fence: the
-        // read that proves the snapshot and the absence (or identity) of release history.
+        // The head changing mid-publish no longer matters: the pass is judged at its own version.
         const seam = interveneAtD1(
           kit.env.DB,
           { method: 'first', sql: /^\s*SELECT id FROM passes WHERE/i, when: 'before' },
           changeHead,
         );
-        await expect(
-          publishPass(
-            { ...kit.ctx, env: { ...kit.env, DB: seam.db } },
-            { passId: pass.id, actor: system, cause: 'admin' },
-          ),
-        ).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CONFLICT' });
-        expect(seam.hits()).toBe(1);
+        const out = await publishPass(
+          { ...kit.ctx, env: { ...kit.env, DB: seam.db } },
+          { passId: pass.id, actor: system, cause: 'admin' },
+        );
+        expect(out.changed).toBe(false);
+        expect(out.pass.releaseId).toBeNull();
       }
       const head = await activeRelease(kit.ctx, id, kit.org.id, 'live', 'apple');
       if (initial === 'ineligible') {
@@ -537,13 +540,15 @@ describe('approved release reissue', () => {
         expect(head).toMatchObject({ version: 'v1' });
         if (original) expect(head?.generation).toBeGreaterThan(original.generation);
       }
-      expect(await snapshot(pass.id)).toEqual(before);
+      const after = await snapshot(pass.id);
+      expect(after.pass).toMatchObject({ template_version: 'v1', release_id: null });
+      if (kind === 'no-op') expect(after).toEqual(before);
     },
     60_000,
   );
 
   it.each(['tenant', 'baked system'] as const)(
-    'rejects legacy maintenance when %s release history is present but ineligible',
+    'keeps maintaining a legacy pass when %s release history is present but ineligible',
     async (scope) => {
       let id: string;
       let passId: string;
@@ -594,17 +599,27 @@ describe('approved release reissue', () => {
       await retire();
       expect(await activeRelease(kit.ctx, id, kit.org.id, 'live', 'apple')).toBeNull();
       expect(await hasNoReleaseHistory(kit.env.DB, id, kit.org.id, 'live')).toBe(false);
+      // Archived or retired template: existing use is judged at the pass's own version.
       for (const force of [false, true]) {
-        await expect(
-          publishPass(jobCtxOf(kit), {
-            passId,
-            actor: system,
-            cause: force ? 'resign' : 'admin',
-            force,
-          }),
-        ).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CONFLICT' });
+        const out = await publishPass(jobCtxOf(kit), {
+          passId,
+          actor: system,
+          cause: force ? 'resign' : 'admin',
+          force,
+        });
+        expect(out.pass.releaseId).toBeNull();
       }
-      expect(await snapshot(passId)).toEqual(before);
+      expect((await snapshot(passId)).pass).toMatchObject({
+        template_version: 'v1',
+        release_id: null,
+      });
+      if (scope === 'tenant') {
+        // Issuing a new version still needs the head, which the archived template no longer has.
+        await version(id, 'v2', { note: 'After retirement' });
+        await expect(
+          updatePass(jobCtxOf(kit), admin, passId, { templateVersion: 'v2' }, { scope: null }),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/^TEMPLATE_/) });
+      }
     },
     60_000,
   );
