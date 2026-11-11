@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
-import { makePass, makeTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { scanningSessionStats } from './repo-scanning-sessions.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import {
   atCountBatch,
   freshFixture,
@@ -13,26 +11,6 @@ import {
 import { sessionDto } from './scanning-session-dto.ts';
 
 const makeEnv = installKeysetTestEnv();
-
-function countResultIndexes(statements: readonly ({ sql: string } | undefined)[]) {
-  const initialize = statements.findIndex((entry) =>
-    /INSERT\s+INTO\s+credential_ref_keyset/i.test(entry?.sql ?? ''),
-  );
-  const authority = statements.findIndex((entry) =>
-    /WITH\s+session_scope\s+AS\s+MATERIALIZED\s*\(/i.test(entry?.sql ?? ''),
-  );
-  const devices = statements.findIndex((entry) =>
-    /SELECT\s+count\(\*\)\s+AS\s+devices\b/i.test(entry?.sql ?? ''),
-  );
-  const today = statements.findIndex((entry) =>
-    /SELECT\s+count\(\*\)\s+AS\s+n\s+FROM\s+scans\s+s\b/i.test(entry?.sql ?? ''),
-  );
-  expect(statements).toHaveLength(4);
-  if ([initialize, authority, devices, today].some((index) => index < 0))
-    throw new Error('Missing a session stats batch statement');
-  expect(new Set([initialize, authority, devices, today]).size).toBe(4);
-  return { initialize, authority, devices, today };
-}
 
 describe('scanning session count authority', () => {
   it('rejects a wrong-mode detail as generic not-found without initializing', async () => {
@@ -133,17 +111,15 @@ describe('scanning session count authority', () => {
     expect(await singleton(f)).toBeNull();
   });
 
-  it('fails closed rather than returning zero if the original keyset differs', async () => {
+  // Reads carry no credential keyset, so a different one moves nothing and counts are plain.
+  it('counts normally when the original keyset differs', async () => {
     const f = await freshFixture(await makeEnv());
     const other =
       f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
     await run(f.env.DB, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [other]);
-    await expect(sessionDto(f.ctx, f.row, f.proof)).rejects.toMatchObject({
-      code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    });
+    await expect(sessionDto(f.ctx, f.row, f.proof)).resolves.toMatchObject({ id: f.id });
     const response = await f.request(`/scanning-sessions/${f.id}`);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+    expect(response.status).toBe(200);
     expect(await singleton(f)).toEqual({ commitment: other });
   });
 
@@ -162,67 +138,11 @@ describe('scanning session count authority', () => {
     expect(await singleton(f)).toEqual({ commitment: other });
   });
 
-  it('does not count if another keyset wins immediately before the bootstrap batch', async () => {
+  it('counts normally when another keyset appears immediately before the count batch', async () => {
     const f = await freshFixture(await makeEnv());
     const other =
       f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    await expect(
-      atCountBatch(
-        f.env,
-        () =>
-          scanningSessionStats(
-            f.env.DB,
-            f.row,
-            f.clock.now() - 86_400_000,
-            f.clock.now() - 120_000,
-            f.proof,
-            f.clock.now(),
-          ),
-        async (db) => {
-          await run(db, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [other]);
-        },
-      ),
-    ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
-    expect(await singleton(f)).toEqual({ commitment: other });
-  });
-
-  it('never recreates a missing singleton when retained credential references exist', async () => {
-    const f = await freshFixture(await makeEnv());
-    await insertExistingReference(f);
-    await expect(sessionDto(f.ctx, f.row, f.proof)).rejects.toMatchObject({
-      code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    });
-    const response = await f.request(`/scanning-sessions?orgId=${f.org.id}`);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
-    expect(await singleton(f)).toBeNull();
-  });
-
-  it('also fails unavailable when a retained scan event proof survives singleton loss', async () => {
-    const f = await freshFixture(await makeEnv());
-    const template = makeTemplate({ id: f.fx.ids.id(), orgId: f.org.id });
-    const pass = await makePass(f.fx, { orgId: f.org.id, template: template.resolved });
-    await run(
-      f.env.DB,
-      `INSERT INTO pass_events (id,org_id,pass_id,mode,kind,data,at)
-      VALUES (?,?,?,'live','scan.checked_in',?,?)`,
-      [
-        f.fx.ids.id(),
-        f.org.id,
-        pass.id,
-        JSON.stringify({ authority: { credentialKeysetCommitment: 'f'.repeat(64) } }),
-        f.clock.now(),
-      ],
-    );
-    const response = await f.request(`/scanning-sessions/${f.id}`);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
-    expect(await singleton(f)).toBeNull();
-  });
-
-  it('keeps session identifiers, CSRF secrets and private session fields in labeled scalar binds', async () => {
-    const f = await freshFixture(await makeEnv());
-    const { result, captured } = await atCountBatch(
+    const { result } = await atCountBatch(
       f.env,
       () =>
         scanningSessionStats(
@@ -233,39 +153,20 @@ describe('scanning session count authority', () => {
           f.proof,
           f.clock.now(),
         ),
-      async () => {},
+      async (db) => {
+        await run(db, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [other]);
+      },
     );
     expect(result).toEqual({ devices: 0, online: 0, today: 0 });
-    const indexes = countResultIndexes(captured);
-    const initialize = captured[indexes.initialize];
-    const select = captured[indexes.authority];
-    const devices = captured[indexes.devices];
-    const today = captured[indexes.today];
-    if (!select || !initialize || !devices || !today)
-      throw new Error('Missing same-batch keyset or count statement');
-    expect(select.sql).not.toMatch(/\bAS\s+(?:devices|online|n)\b/i);
-    expect(devices.sql).toMatch(/\bAS\s+online\b/i);
-    for (const entry of [initialize, select]) {
-      const slots = scanSecretSlots(entry.sql, entry.params.length);
-      if (!slots) throw new Error('Malformed count bind labels');
-      for (const [secret, labels] of [
-        [f.auth.sessionId, ['session-id', 'session-id-hash']],
-        [f.browser.csrf, ['csrf:actor:session']],
-        [f.id, ['session-id']],
-        [f.proof.credentialKeysetCommitment, ['proof']],
-      ] as const) {
-        const indexes = entry.params.flatMap((value, index) => (value === secret ? [index] : []));
-        expect(indexes.length).toBeGreaterThan(0);
-        for (const index of indexes) expect(labels).toContain(slots[index]?.label);
-        for (const value of entry.params) {
-          if (
-            typeof value === 'string' &&
-            value !== secret &&
-            (value.startsWith('[') || value.startsWith('{'))
-          )
-            expect(value).not.toContain(secret);
-        }
-      }
-    }
+    expect(await singleton(f)).toEqual({ commitment: other });
+  });
+
+  it('counts without recreating a missing singleton when retained credential references exist', async () => {
+    const f = await freshFixture(await makeEnv());
+    await insertExistingReference(f);
+    await expect(sessionDto(f.ctx, f.row, f.proof)).resolves.toMatchObject({ id: f.id });
+    const response = await f.request(`/scanning-sessions?orgId=${f.org.id}`);
+    expect(response.status).toBe(200);
+    expect(await singleton(f)).toBeNull();
   });
 });

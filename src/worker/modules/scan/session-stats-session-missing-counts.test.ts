@@ -17,9 +17,6 @@ import {
 const makeEnv = installKeysetTestEnv();
 
 function countResultIndexes(statements: readonly ({ sql: string } | undefined)[]) {
-  const initialize = statements.findIndex((entry) =>
-    /INSERT\s+INTO\s+credential_ref_keyset/i.test(entry?.sql ?? ''),
-  );
   const authority = statements.findIndex((entry) =>
     /WITH\s+session_scope\s+AS\s+MATERIALIZED\s*\(/i.test(entry?.sql ?? ''),
   );
@@ -29,11 +26,12 @@ function countResultIndexes(statements: readonly ({ sql: string } | undefined)[]
   const today = statements.findIndex((entry) =>
     /SELECT\s+count\(\*\)\s+AS\s+n\s+FROM\s+scans\s+s\b/i.test(entry?.sql ?? ''),
   );
-  expect(statements).toHaveLength(4);
-  if ([initialize, authority, devices, today].some((index) => index < 0))
+  // Reads carry no keyset initializer: authority, devices and today are the whole batch.
+  expect(statements).toHaveLength(3);
+  if ([authority, devices, today].some((index) => index < 0))
     throw new Error('Missing a session stats batch statement');
-  expect(new Set([initialize, authority, devices, today]).size).toBe(4);
-  return { initialize, authority, devices, today };
+  expect(new Set([authority, devices, today]).size).toBe(3);
+  return { authority, devices, today };
 }
 
 async function seedVisibleCount(fx: Fixtures, orgId: string, sessionId: string) {
@@ -96,7 +94,7 @@ describe('scanning session missing count results', () => {
         async () => {},
         (results, statements) => {
           const indexes = countResultIndexes(statements);
-          expect(results[indexes.authority]?.results).toEqual([{ keyset: 1 }]);
+          expect(results[indexes.authority]?.results).toEqual([{ authorized: 1 }]);
           expect(results[indexes.devices]?.results).toEqual([{ devices: 1, online: 1 }]);
           expect(results[indexes.today]?.results).toEqual([{ n: 1 }]);
           const index = missing.startsWith('today') ? indexes.today : indexes.devices;
@@ -117,58 +115,46 @@ describe('scanning session missing count results', () => {
         },
       );
       await expectNoPartialCounts(result, 503, 'SCANNING_SESSION_COUNTS_UNAVAILABLE');
-      expect(await singleton(f)).toEqual({ commitment: f.proof.credentialKeysetCommitment });
+      expect(await singleton(f)).toBeNull();
     },
   );
 
-  it.each(
-    (['list', 'detail'] as const).flatMap((view) =>
-      (['revoked authority', 'mismatched keyset'] as const).map((failure) => ({ view, failure })),
-    ),
-  )('prioritizes $failure over missing $view counts', async ({ view, failure }) => {
-    const f = await freshFixture(await makeEnv());
-    await seedVisibleCount(f.fx, f.org.id, f.id);
-    const other =
-      f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    const path =
-      view === 'list' ? `/scanning-sessions?orgId=${f.org.id}` : `/scanning-sessions/${f.id}`;
-    const { result } = await atCountBatch(
-      f.env,
-      () => f.request(path),
-      async (db) => {
-        await run(db, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [other]);
-        if (failure === 'revoked authority')
+  it.each(['list', 'detail'] as const)(
+    'prioritizes a revoked authority over missing %s counts',
+    async (view) => {
+      const f = await freshFixture(await makeEnv());
+      await seedVisibleCount(f.fx, f.org.id, f.id);
+      const path =
+        view === 'list' ? `/scanning-sessions?orgId=${f.org.id}` : `/scanning-sessions/${f.id}`;
+      const { result } = await atCountBatch(
+        f.env,
+        () => f.request(path),
+        async (db) => {
           await run(db, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
             f.clock.now(),
             f.membershipId,
           ]);
-      },
-      (results, statements) => {
-        const indexes = countResultIndexes(statements);
-        expect(results[indexes.authority]?.results).toEqual(
-          failure === 'revoked authority' ? [] : [{ keyset: 0 }],
-        );
-        expect(results[indexes.devices]?.results).toEqual([{ devices: 1, online: 1 }]);
-        expect(results[indexes.today]?.results).toEqual([{ n: 1 }]);
-        return results.map((entry, position) =>
-          position === indexes.devices || position === indexes.today
-            ? { ...entry, results: [] }
-            : entry,
-        );
-      },
-    );
-    await expectNoPartialCounts(
-      result,
-      failure === 'revoked authority' ? 404 : 503,
-      failure === 'revoked authority'
-        ? 'SCANNING_SESSION_NOT_FOUND'
-        : 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
-    expect(await singleton(f)).toEqual({ commitment: other });
-  });
+        },
+        (results, statements) => {
+          const indexes = countResultIndexes(statements);
+          expect(results[indexes.authority]?.results).toEqual([]);
+          expect(results[indexes.devices]?.results).toEqual([{ devices: 1, online: 1 }]);
+          expect(results[indexes.today]?.results).toEqual([{ n: 1 }]);
+          return results.map((entry, position) =>
+            position === indexes.devices || position === indexes.today
+              ? { ...entry, results: [] }
+              : entry,
+          );
+        },
+      );
+      await expectNoPartialCounts(result, 404, 'SCANNING_SESSION_NOT_FOUND');
+      expect(await singleton(f)).toBeNull();
+    },
+  );
 
   // Device workspace counts also fail closed when their results are absent.
-  it.each(['today', 'managers'] as const)(
+  // The managers existence read is no longer a statement of this batch, so only today is damaged.
+  it.each(['today'] as const)(
     'fails unavailable instead of fabricating a zero for a missing %s result',
     async (missing) => {
       const f = await freshFixture(await makeEnv());
@@ -185,9 +171,7 @@ describe('scanning session missing count results', () => {
         async () => {},
         (results, statements) => {
           const index = statements.findIndex((statement) =>
-            missing === 'today'
-              ? /SELECT count\(\*\) AS n FROM scans s/i.test(statement?.sql ?? '')
-              : /SELECT EXISTS \(SELECT 1 FROM scan_staff/i.test(statement?.sql ?? ''),
+            /SELECT count\(\*\) AS n FROM scans s/i.test(statement?.sql ?? ''),
           );
           if (index < 0) throw new Error(`Missing ${missing} count statement`);
           return results.map((entry, position) =>
@@ -196,7 +180,7 @@ describe('scanning session missing count results', () => {
         },
       );
       expect(result.status).toBe(503);
-      expect(await result.json()).toMatchObject({ code: 'SCAN_COUNTS_UNAVAILABLE' });
+      expect(await result.json()).toMatchObject({ code: 'SCANNING_SESSION_COUNTS_UNAVAILABLE' });
     },
   );
 });

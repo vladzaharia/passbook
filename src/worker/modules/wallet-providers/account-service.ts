@@ -3,8 +3,6 @@ import {
   ConfigureWalletProviderAccountSchema,
   type RevokeWalletProviderAccount,
   RevokeWalletProviderAccountSchema,
-  type WalletProvider,
-  type WalletProviderIssuance,
   type WalletProviderReadiness,
   type WalletProviderScope,
   WalletProviderScopeSchema,

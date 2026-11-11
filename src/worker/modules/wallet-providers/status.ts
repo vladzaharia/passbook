@@ -2,10 +2,6 @@ import {
   type WalletProviderPassStatus,
   WalletProviderPassStatusSchema,
 } from '../../../shared/contracts/wallet-provider-status.ts';
-import type {
-  WalletProvider,
-  WalletProviderIssuance,
-} from '../../../shared/contracts/wallet-providers.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';

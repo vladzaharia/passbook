@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import {
   ACTION,
@@ -236,27 +236,22 @@ describe('session activity authority', () => {
     },
   );
 
+  // Reads carry no credential keyset any more, so a different keyring does not make them unavailable.
   it.each(['device', 'console'] as const)(
-    'fails unavailable for a %s request with a mismatched keyset',
+    'reads the %s activity normally with a mismatched keyring',
     async (consumer) => {
       const f = await activityFixture();
-      const before = await first(
-        f.kit.env.DB,
-        'SELECT commitment FROM credential_ref_keyset WHERE id=1',
-      );
       const key = f.kit.env.KEK_V1;
       f.kit.env.KEK_V1 = key === btoa('z'.repeat(32)) ? btoa('y'.repeat(32)) : btoa('z'.repeat(32));
       try {
-        await noLeak(
-          await (consumer === 'device' ? f.device() : f.console()),
-          503,
-          'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-          f.pass.id,
-          ACTIVITY_NAME,
-        );
-        expect(
-          await first(f.kit.env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
-        ).toEqual(before);
+        const response = await (consumer === 'device' ? f.device() : f.console());
+        const rows =
+          consumer === 'device' ? await deviceRows(response) : await consoleRows(response);
+        // The row is served; the pass details that need the keyring are redacted, not leaked.
+        expect(rows).toEqual([
+          expect.objectContaining({ id: f.scanId, outcome: 'ok', passId: null, title: null }),
+        ]);
+        expect(JSON.stringify(rows)).not.toContain(ACTIVITY_NAME);
       } finally {
         f.kit.env.KEK_V1 = key;
       }

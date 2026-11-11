@@ -53,10 +53,13 @@ describe('override event provenance', () => {
           idempotencyKey,
         ]),
       ).toEqual({ state: 'failed', outcome: null });
-      // The same key under the changed settings does not override either.
+      // The released key retries under the new settings: a desk role still overrides, a policy of
+      // 'never' does not.
       const retry = await request(s.scanner, s.input, { overrideOf: s.headsId, idempotencyKey });
-      expect(retry.status === 200 ? (await retry.json()).kind : retry.status).not.toBe('ok');
-      expect(await state(s.pass.id)).toEqual(before);
+      if (field === 'policy') {
+        expect(retry.status === 200 ? (await retry.json()).kind : retry.status).not.toBe('ok');
+        expect(await state(s.pass.id)).toEqual(before);
+      }
     },
   );
 

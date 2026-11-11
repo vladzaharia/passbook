@@ -121,12 +121,11 @@ describe.each(SERVED)('cutover: %s scanning', (shape) => {
 });
 
 describe('cutover: uploaded-archived scanning', () => {
-  // Archived templates are ineligible (effectiveReleaseIdSql requires status = 'active'): the scanner
-  // refuses their passes until the template is active again. Runbook pre-check 5 covers it.
-  it('refuses a check-in until the template is active again', async () => {
+  // An archived template has no head, but its passes still scan at their own version.
+  it('checks in a pass of an archived template', async () => {
     const res = await checkIn('uploaded-archived', passOf('uploaded-archived', 5).barcode);
-    expect(res.status).toBe(409);
-    expect(await res.json()).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
+    const o = (await res.json()) as { kind: string; reason: string | null };
+    expect([res.status, o.kind, o.reason]).toEqual([200, 'ok', null]);
   });
 });
 

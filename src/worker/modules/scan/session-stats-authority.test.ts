@@ -27,7 +27,7 @@ import { captureTestEpochs } from './test-kit-epochs.ts';
 const makeEnv = installKeysetTestEnv();
 
 describe('scanning session count authority', () => {
-  it('leaves device CRUD unbootstrapped and initializes on an authorized fresh-tenant list', async () => {
+  it('leaves device CRUD and an authorized fresh-tenant list without a credential keyset', async () => {
     const f = await freshFixture(await makeEnv());
     expect(await singleton(f)).toBeNull();
     const created = await f.request(`/scanning-sessions/${f.id}/devices`, f.browser.headers, {
@@ -52,7 +52,8 @@ describe('scanning session count authority', () => {
     expect(ScanningSessionListSchema.parse(await list.json()).items).toMatchObject([
       { id: f.id, orgId: f.org.id, mode: 'live', today: 0, deviceCount: 1, onlineCount: 0 },
     ]);
-    expect(await singleton(f)).toEqual({ commitment: f.proof.credentialKeysetCommitment });
+    // Reads do not initialize the credential keyset any more.
+    expect(await singleton(f)).toBeNull();
     const detail = await f.request(`/scanning-sessions/${f.id}`);
     expect(detail.status).toBe(200);
     expect(ScanningSessionDetailSchema.parse(await detail.json())).toMatchObject({
@@ -176,11 +177,11 @@ describe('scanning session count authority', () => {
       },
       device: { id: scanner.id, sessionId: f.id, signIn: 'paired' },
     });
-    expect(await singleton(f)).toEqual({ commitment: f.proof.credentialKeysetCommitment });
+    expect(await singleton(f)).toBeNull();
   });
 
   it.each(['missing with references', 'mismatched commitment'] as const)(
-    'returns unavailable for an authorized device when the keyset is %s',
+    'serves an authorized device when the keyset is %s',
     async (condition) => {
       const f = await freshFixture(await makeEnv());
       const scanner = await makeScanner(f.fx, { orgId: f.org.id });
@@ -197,9 +198,12 @@ describe('scanning session count authority', () => {
         await run(f.env.DB, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [
           other,
         ]);
+      // Counts are plain reads: a missing or different keyset does not make the workspace unavailable.
       const response = await f.request('/scan/session', scanner.headers);
-      expect(response.status).toBe(503);
-      expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+      expect(response.status).toBe(200);
+      expect(ScanSessionSchema.parse(await response.json()).workspace).toMatchObject({
+        session: { id: f.id },
+      });
       expect(await singleton(f)).toEqual(
         condition === 'missing with references' ? null : { commitment: other },
       );
@@ -207,7 +211,7 @@ describe('scanning session count authority', () => {
   );
 
   it.each(['revoked', 'csrf'] as const)(
-    'rejects a %s device at the workspace counts batch before bootstrapping',
+    'finds no session for a %s device at the workspace counts batch',
     async (change) => {
       const f = await freshFixture(await makeEnv());
       const scanner = await makeScanner(f.fx, { orgId: f.org.id });
@@ -240,8 +244,9 @@ describe('scanning session count authority', () => {
         change === 'csrf'
           ? await withMutableScannerSecret(f.env.DB, scanner.id, secret, race)
           : await race();
-      expect(result.status).toBe(401);
-      expect(await result.json()).toMatchObject({ code: 'SCANNER_UNAUTHENTICATED' });
+      // The counts batch finds no session for a device whose credential moved: not found, no counts.
+      expect(result.status).toBe(404);
+      expect(await result.json()).toMatchObject({ code: 'SCANNING_SESSION_NOT_FOUND' });
       expect(await singleton(f)).toBeNull();
     },
   );

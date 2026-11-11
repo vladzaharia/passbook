@@ -1,4 +1,5 @@
 // The new build ships different baked content, so every pre-cutover baked pass is on an older version.
+// Such a pass keeps working at its own version until the minute cron upgrades it.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { jobCtxOf } from '../../src/worker/modules/delivery/delivery-test-fixtures.ts';
 import { overrideDeps } from '../../src/worker/modules/passes/deps.ts';
@@ -47,19 +48,18 @@ describe('cutover: baked content changed in the new build', () => {
     expect((await effective(c.legacy.db, pass1().id))?.id).toBeTruthy();
   });
 
-  it('refuses a scan and a refresh of an old-version pass until it is upgraded', async () => {
-    expect(await scan()).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    await expect(
-      publishPass(jobCtxOf(kit), {
-        passId: pass1().id,
-        actor: { type: 'system', id: null },
-        cause: 'admin',
-        force: true,
-      }),
-    ).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CONFLICT' });
+  it('still scans and refreshes an old-version pass at its own version', async () => {
+    expect(await scan()).toMatchObject({ kind: 'ok' });
+    const refreshed = await publishPass(jobCtxOf(kit), {
+      passId: pass1().id,
+      actor: { type: 'system', id: null },
+      cause: 'admin',
+      force: true,
+    });
+    expect(refreshed.pass.templateVersion).not.toBe(c.legacy.bumpedVersion);
   });
 
-  it('refuses a scan of an old-version uploaded pass the same way', async () => {
+  it('scans an old-version uploaded pass the same way', async () => {
     const res = await kit.post(c.legacy.scanners['uploaded-active']!.headers, '/actions', {
       idempotencyKey: key(),
       input: {
@@ -69,7 +69,7 @@ describe('cutover: baked content changed in the new build', () => {
       clientTs: kit.clock.now(),
       actionId: 'enter',
     });
-    expect(await res.json()).toMatchObject({ kind: 'refused', reason: 'not_found' });
+    expect(await res.json()).toMatchObject({ kind: 'ok' });
   });
 
   it('is queued for upgrade by the minute cron once the release is quiet', async () => {
@@ -88,7 +88,7 @@ describe('cutover: baked content changed in the new build', () => {
     ]);
   });
 
-  it('serves the pass again once it moves to the new version', async () => {
+  it('serves the pass on the new version once upgraded', async () => {
     const upgraded = await publishPass(jobCtxOf(kit), {
       passId: pass1().id,
       actor: { type: 'system', id: null },

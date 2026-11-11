@@ -15,17 +15,22 @@ beforeAll(async () => {
 });
 
 const system = { type: 'system', id: null } as const;
-const scan = async (code: { code: string; method: 'camera' }, path = '/actions') => {
-  const res = await kit.post(kit.admin(), path, {
+const scope = () => ({ orgId: kit.org.id, timeZone: 'UTC' });
+const scan = async (code: { code: string; method: 'camera' }) => {
+  const res = await kit.post(kit.admin(), '/actions', {
+    scope: scope(),
     idempotencyKey: key(),
     input: code,
     clientTs: kit.clock.now(),
-    actionId: 'auto',
+    actionId: 'check_in',
   });
   return (await res.json()) as ScanOutcome;
 };
 const undo = async (scanId: string) => {
-  const res = await kit.post(kit.admin(), `/scans/${scanId}/undo`, { idempotencyKey: key() });
+  const res = await kit.post(kit.admin(), `/scans/${scanId}/undo`, {
+    idempotencyKey: key(),
+    scope: scope(),
+  });
   return (await res.json()) as ScanOutcome;
 };
 const refresh = (passId: string, mutate?: () => { templateVersion: string }) =>
@@ -50,7 +55,10 @@ async function moveHead(templateId: string, version: string) {
     passJson: pinned.passJson,
     assets: { 'icon.png': ICON_PNG },
   });
-  await persistTemplate(kit.fx, next, { registry: kit.registry, buildKey: `incompatible-${version}` });
+  await persistTemplate(kit.fx, next, {
+    registry: kit.registry,
+    buildKey: `incompatible-${version}`,
+  });
   for (const mode of ['live', 'test'] as const)
     await approveAppleRelease(kit, { templateId, version, mode });
 }
