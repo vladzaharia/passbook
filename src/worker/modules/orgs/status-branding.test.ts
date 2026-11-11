@@ -26,6 +26,7 @@ import { generatedSource, syncBakedTemplates } from '../templates/sync.ts';
 import { fakeAssets } from '../templates/testing.ts';
 import { deleteBrandingImage, putBrandingImage } from './branding.ts';
 import { brandingFiles, brandingKey } from './branding-files.ts';
+import { BRANDING_GC_GRACE_MS, sweepBrandingGc } from './branding-gc.ts';
 
 const clock = new ManualClock();
 const app = createApp({
@@ -312,7 +313,12 @@ describe('pass branding images', () => {
     expect((await tenantCall('GET', `/${org.id}/branding/logo/2x`)).status).toBe(404);
     expect((await tenantCall('DELETE', `/${org.id}/branding/logo`)).status).toBe(200);
     expect((await tenantCall('GET', `/${org.id}/branding/logo/3x`)).status).toBe(404);
-    // Every object was superseded by a committed update, so none is left.
+    // Superseded objects outlive the commit by the grace period, then none is left.
+    for (const file of [...legacyFiles, ...files, ...replacementFiles])
+      expect(await appEnv.BUCKET.head(file.r2Key)).not.toBeNull();
+    // A separate clock: moving the shared one would expire the test sessions.
+    const later = new ManualClock(clock.now() + BRANDING_GC_GRACE_MS);
+    await sweepBrandingGc(createServiceContext(appEnv, { clock: later }));
     for (const file of [...legacyFiles, ...files, ...replacementFiles])
       expect(await appEnv.BUCKET.head(file.r2Key)).toBeNull();
     expect((await appEnv.BUCKET.list({ prefix: `orgs/${org.id}/branding/` })).objects).toHaveLength(
