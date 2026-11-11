@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test('choose flow Check in button commits the selected action exactly once', async ({
@@ -17,9 +18,16 @@ test('choose flow Check in button commits the selected action exactly once', asy
       `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
       { orgId, name: uid('Choose flow') },
     );
+    const release = await publishTemplateVersion(
+      api,
+      orgId,
+      template.id,
+      template.versions[0].version,
+    );
     const memberId = uid('BUTTON').toUpperCase();
     const pass = await createPass(api, orgId, {
       templateId: template.id,
+      release,
       memberId,
       holder: 'Action Button Guest',
     });

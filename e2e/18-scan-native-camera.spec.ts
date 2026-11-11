@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { NATIVE_CAMERA_CODE } from '../tools/lib/camera-fixture.ts';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
 import { pairCamera } from './helpers/camera.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test('native getUserMedia camera video decodes and checks in without an injected read', async ({
@@ -15,8 +16,15 @@ test('native getUserMedia camera video decodes and checks in without an injected
       `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
       { orgId, name: uid('Native camera') },
     );
+    const release = await publishTemplateVersion(
+      api,
+      orgId,
+      template.id,
+      template.versions[0].version,
+    );
     const pass = await createPass(api, orgId, {
       templateId: template.id,
+      release,
       memberId: NATIVE_CAMERA_CODE,
       holder: 'Native Camera Guest',
     });

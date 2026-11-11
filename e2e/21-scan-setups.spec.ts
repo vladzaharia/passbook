@@ -2,6 +2,7 @@ import { type Browser, expect, type Page, test } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 async function paired(browser: Browser, code: string, reader = false) {
@@ -62,7 +63,7 @@ test('admin uploads a member photo, opts it into Wallet and configures in/out ru
     const orgId = readSeed().org.id;
     const pass = await createPass(api, orgId, { holder: 'Photo Member' });
     const page = await context.newPage();
-    await page.goto(`/admin/passes/${pass.id}`);
+    await page.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
     await page.getByRole('tab', { name: 'Holder', exact: true }).click();
     const encoded = await photoFixture(page);
     await page.getByLabel('Member photo', { exact: true }).setInputFiles({
@@ -111,9 +112,20 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
       `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
       { orgId, name: uid('Membership view') },
     );
+    const release = await publishTemplateVersion(
+      api,
+      orgId,
+      template.id,
+      template.versions[0].version,
+    );
     const memberId = uid('MEMBER').toUpperCase();
     const holder = 'Multi View Member';
-    const pass = await createPass(api, orgId, { templateId: template.id, memberId, holder });
+    const pass = await createPass(api, orgId, {
+      templateId: template.id,
+      memberId,
+      holder,
+      release,
+    });
     await api.send('PUT', `/api/v1/passes/${pass.id}/check-in`, { rules: { mode: 'in_out' } });
     const sourceName = uid('Entry desk');
     const source = await api.send('POST', '/api/v1/scan-setups', {
@@ -248,7 +260,9 @@ test('Scan as Admin is optional and reuses this browser’s device in a shared s
     await expect(page.getByTestId('scan-result')).toContainText('Checked in');
     const scans = await api.get(`/api/v1/scans?orgId=${org.id}&passId=${member.id}`);
     expect(scans.items).toMatchObject([{ scannerId: first, outcome: 'ok' }]);
-    await page.goto(`/admin/scanning/sessions/${parent.id}?deviceId=${first}`);
+    await page.goto(
+      `/admin/scanning/sessions/${parent.id}?orgId=${encodeURIComponent(org.id)}&deviceId=${first}`,
+    );
     const configuration = page.getByRole('dialog', { name: `Configure ${setup.name}` });
     await expect(configuration).toContainText('Administrator sign-in');
     await expect(configuration.getByRole('button', { name: /^Pair/ })).toHaveCount(0);

@@ -8,6 +8,7 @@ Rules `npm run check` enforces, and where.
 | Every `log.warn` / `log.error` carries a `code` or an `error` | `tools/check-log-codes.ts` |
 | Source files stay under 330 lines; production code never imports `test-kit`, `test-support`, `test-oidc`, `test-utils`, `test-fixtures` or `testing` modules | `tools/check-sizes.ts` (allowlist entries name an owner and a reason) |
 | No unused files, dependencies or binaries | `knip` (`knip.json`) |
+| Authority redesign: every fence pattern has one owner in `authority-epochs.md` Appendix A; no `OR REPLACE` outside its allowlist, no raw write to a guarded table outside `platform/authority.ts`, no `updated_at = ?` predicate. Unowned matches fail `tools/authority-scope.test.ts`; the other rules only warn until WP8 turns on `--strict` | `tools/authority-scope.ts` |
 | Initial web load stays under its gzip budget and carries no table, virtual or cmdk code | `tools/check-bundle.ts`, after `vite build` |
 | List and search queries use an index | `test/query-plans.test.ts` |
 | Web code uses the kit: toasts (`ui/toaster.tsx`), copying (`CopyButton`, `lib/clipboard.ts`), dates and numbers (`lib/format.ts`), emails (`strictEmail`), motion tokens, `Spinner` only in buttons | `src/web/ui/kit-lint.test.ts` |
@@ -17,6 +18,8 @@ Rules `npm run check` enforces, and where.
 ## Code
 
 - D1 errors are classified with `classifyD1Error` (`platform/db.ts`). Never match SQLite message text elsewhere.
+- D1 limits SQL expression-tree depth to 100, including nested predicates. Group long snapshot
+  and authority conjunctions without moving their checks out of the guarded write or transaction.
 - Errors are logged as the `error` value: the logger keeps `name`, `message`, `code`, two levels of `cause` and (error level) eight stack frames, all redacted. Do not pass `error.name`.
 - Workflow code writes and reads the clock only inside `step.do` callbacks. `test/helpers/guarded-step.ts` fails a test that writes outside one.
 - A cron hook that can run many queries must stay inside the daily budget (`jobs/query-counter.ts`); hooks that would start past 900 queries are skipped and logged as `cron.budget_skipped`.

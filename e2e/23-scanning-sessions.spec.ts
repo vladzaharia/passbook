@@ -1,5 +1,5 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
-import { apiAs, createPass, uid } from './helpers/api.ts';
+import { apiAs, createPass, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -16,6 +16,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
   const contexts: BrowserContext[] = [];
   try {
     const orgId = readSeed().org.id;
+    const release = await requireActiveTemplateRelease(api, orgId, GENERIC, 'live');
     const admin = await browser.newContext({
       storageState: stateFile('admin'),
       reducedMotion: 'reduce',
@@ -90,6 +91,12 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await expect(phone.locator('.scan-shell')).toHaveAttribute('data-surface', 'phone');
     const memberId = uid('MEMBER').toUpperCase();
     const pass = await createPass(api, orgId, { holder: 'Shared Session Member', memberId });
+    expect(pass).toMatchObject({
+      orgId,
+      templateId: GENERIC,
+      templateVersion: release.version,
+      mode: 'live',
+    });
     const field = desk.getByRole('textbox', { name: 'Name, email, code or ID', exact: true });
     await field.fill('Shared Session Member');
     const previewAsset = desk.waitForResponse((r) =>

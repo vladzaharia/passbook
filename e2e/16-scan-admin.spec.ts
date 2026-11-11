@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { scanId } from '../src/web/scan/platform/id.ts';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -13,10 +14,17 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     orgId,
     name: uid('Event template'),
   });
+  const release = await publishTemplateVersion(
+    api,
+    orgId,
+    template.id,
+    template.versions[0].version,
+  );
   const scannerName = uid('Event scanner');
   const pass = await createPass(api, orgId, {
     holder: 'Admin Door Guest',
     templateId: template.id,
+    release,
     memberId: uid('ADMINDOOR'),
   });
   try {

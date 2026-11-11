@@ -1,6 +1,15 @@
 # Scanner architecture
 
-The one design for PassBook's scanner: access, server and client. Status: decided, ready to build. 2026-11-04.
+The design for PassBook's scanner: access, server and client. Originally decided 2026-11-04; see the integration
+record below for subsequent changes.
+
+> **Integration record 2026-11-10.** This record and the updated sections below supersede conflicting historical
+> implementation plans in this design. Device routes enforce the specific tenant-session capability for each
+> operation; scanner credentials remain subject to device-role and staff checks. Miss counters are isolated by
+> org, mode and actor. Authenticated event provenance and deletion-safe retained evidence protect scan history and
+> attendance without retaining a deleted pass identifier. Display and image disclosure is fenced by the evaluated
+> actor, pass, Wallet and approved release lineage, not merely by possession of a pass ID. See 2.5, 2.9, 5.1,
+> 6.3 and 18.4; frozen contracts and earlier decisions below remain historical where superseded.
 
 > **Review 2026-11-05, latest** (occupancy and desk overrides; section 20 and 2.5-2.6 updated, they win; reference
 > code and its 23 tests updated to match):
@@ -112,8 +121,8 @@ verify on a device.
 | # | Decision |
 | --- | --- |
 | 1 | **A scanner is one credential for one org and one mode.** Kind `device` (a browser on `/scan`, cookie) or `terminal` (a till, bearer token). Its name is its place ("Front door"), shown as *where* on every heads-up. Many phones at one door are many scanners (**Duplicate** in the console). |
-| 2 | **Two principals scan:** a scanner, or a platform admin's own session ("Scan as admin", rights of a Manager, for rehearsal and spot checks). Both become one `ScanActor` in the guard, so every service has one code path. API keys never act on passes through the scanner; they get `scans:read` (feed only). |
-| 3 | **No org membership in this wave.** NW excludes org-scoped admin roles. The console stays platform-admin only. Tenant self-serve is a later platform stream; section 2.10 keeps the seam. |
+| 2 | **Two principals scan:** a scanner credential, or an authorized user session. Both become a `ScanActor` in the guard; session capabilities and scanner device/staff rights are checked separately. API keys never act on passes through the scanner; they get `scans:read` (feed only). |
+| 3 | **Tenant console access.** User sessions are authorized against the org and the capability required by the specific route; platform administrators use their authorized session. Scanner credentials remain scoped to their own org and mode. |
 | 4 | **Staff are org people who scan, with a name, a role and a 6-digit PIN.** No platform account, no console access, no mode. Roles form a ladder **Door ⊂ Desk ⊂ Manager**. A scanner runs as its **role without sign-in** (Door or Desk, never Manager) or asks staff to sign in. A Manager's PIN approves one risky action in place. This replaces AA's staff codes (they need org membership) and UK's separate manager codes. |
 | 5 | **Rights = role ≥ the template action's `minRole`.** Over the action's `max`, `set`, cooldown overrides and undo past the own window need a Manager. The server decides; the client mirrors with visible locks. |
 | 6 | **Events are admin objects** (`scan_events`): name, 1-20 templates, an optional match rule (input in values), a window with a time zone, optional capacity, re-entry. A scanner accepts **one event or a set of templates**. Events key "once per event", make "x of y" exact, drive the live dashboard and broadcast targets. They replace AS's door sessions, UD's manifest `scan.event` and AA's scanner filters and window. |
@@ -135,7 +144,7 @@ verify on a device.
 | 22 | **The system owns the verdict.** Tint, ring, verdict band (glyph, headline, sub), holder line, pass tile, flags, the action area, the last-scan strip and the buddy are system content the display can't reach. `heads_up` ignores the custom icon and title; `refused` shows no template content except `notes.refused`. Verdict copy is `SCAN_COPY` only. |
 | 23 | **The server renders, the client paints.** `ScanCard.display` and `ScanOutcome.display` are a fully rendered `ScanDisplay` (strings, numbers, asset URLs, `oneLine` hints; never an expression). Role filtering removes elements and data before evaluation; email, phone, the scan code, the barcode and tokens are never in scope for any role. A render error falls back to the default display and never blocks a verdict. |
 | 24 | **Scan history is computed from `scans`,** not a ledger table: visits, last visit, check-in state and the per-input value ledger, through one partial index (`scans_pass_ok`). A change made outside the scanner shows as one **Changed elsewhere** row. |
-| 25 | **A display-only template version activates on save** and moves no pass: `template_versions.build_key` excludes `scan.display`, so equal keys mean no rebuild, no push, no R2 write. Scanners read the display from the template's **active** version on their next request. |
+| 25 | **Display policy follows approved lineage.** Release-backed passes use the current approved release, subject to build compatibility and the evaluated pass and actor scope; legacy passes without a scoped release use their pinned policy, not an unapproved active draft. Historical display-only activation plans below do not bypass release authorization. |
 | 26 | **The result surface is the card (B strengthened, BF).** The camera stays live under a full-screen verdict tint and a 10 px ring; the buddy's violet pass rises into the result card; a different code is accepted from T0 + 350 and interrupts it. Desk `ready` is a panel over the dimmed camera, with the template's panels and a **system action area** (stepper, keypad, review in the card; the commit pair in the dock). The display contract carries no geometry or colour, so the visual direction stays a client choice. |
 | 27 | **Every paired thing is a device row in `scanners`.** `kind` is the ceiling (`device` a paired browser, `terminal` a till, `display` a screen-only browser); `device_role` is what it does now (`scan`, `customer`, `monitor`). One pairing flow, cookie, revocation, audit and console list for all. The console tab **Scanners** becomes **Devices** (18.1). |
 | 28 | **A station is the scanners and Customer screens at one counter or door.** A device is in at most one station, so a customer's name and balance only reach the screen beside them. **Desk monitors watch a scope** (own station, ≤ 8 stations, an event, ≤ 8 zones, or the whole org) with a Door or Desk audience, never Manager (18.2). |
@@ -398,25 +407,30 @@ export interface ScanActor {
 ```
 
 `requireScanActor` order, every scan route:
-1. Credential: `Bearer wls_` (terminal), else the scanner cookie, else an admin session (role `admin`, CSRF). A
-   user session gets 403 `FORBIDDEN`; nothing gets 401 `SCANNER_UNAUTHENTICATED`. A scanner request that carries
-   `scope` gets 422 `SCAN_SCOPE_NOT_ALLOWED` (a scanner's reach comes from its row only). An admin `scope` must name
-   an existing org; its `eventId` and `templateIds` must belong to that org (and the event to the header's mode),
-   else 404 with the body of an unknown id. An admin sends it as `scope` in a JSON body, or on a GET as
-   `?orgId&eventId&templateIds&timeZone` (`GET /session`, `/stats`, `/summary` and the asset `<img>`); an admin with
-   none gets 422 `SCAN_SCOPE_REQUIRED`, and a body that is not JSON gets 422 `SCAN_BODY_INVALID`.
+1. Credential: `Bearer wls_` (terminal), else the scanner cookie, else a user session with CSRF protection. A
+   scanner request that carries `scope` gets 422 `SCAN_SCOPE_NOT_ALLOWED` (a scanner's reach comes from its row).
+   A session's `scope` identifies the org and optional event, templates and time zone; GET routes use query
+   parameters. Missing scope gets 422 `SCAN_SCOPE_REQUIRED`. The guard checks the exact route capability against
+   the session's current tenant authority; being a user session alone is not sufficient.
 2. `isOrgActive` (`modules/orgs/active.ts`); suspended: 403 `ORG_INACTIVE`.
 3. `RL_SCAN_ORG` (`org:<id>`), then `RL_SCAN` (`actorKey`).
-4. **Device role** (2026-11-05): a scanner principal with `deviceRole ≠ 'scan'` (a Customer screen or Desk monitor)
-   gets 403 `SCREEN_ONLY`, except on routes declared with `screens: true` (`GET /scan/session`, `POST /scan/unpair`).
-   Admin sessions have no device role. The live routes use their own guard (18.6). **Desk actions** (2026-11-05
-   later, 20.9): routes declared with the additive option `screenActions: true` (`POST /scan/overrides`, `POST
-   /scan/overrides/{scanId}/note`, `POST /scan/mark-out`, `POST /scan/undo` (a monitor undoes only its own scans),
-   `POST /scan/staff` and `DELETE /scan/staff`) also admit a `monitor` whose `screen.actions` is on;
-   a Customer screen, and a monitor with actions off, still get `SCREEN_ONLY`. `screens: true` keeps its meaning (read
-   only). P0-3's boolean is unchanged; the new option lands with SV.11.
+4. **Device role:** scanner identities are checked for the route's screen and staff options; sessions have no device
+   role. Session capability mapping in `routes.ts`: `GET /session`, `GET /summary`, `/stats`, `/activity`,
+   `/passes/*`, `GET /scans`, and `POST /resolve` or `/lookup` require `scanning:read`; `POST /actions` and
+   `POST /scans/{id}/undo` require `passes:operate`. `/device`, `/staff`, other methods on these guarded paths,
+   and unmatched `/scans/*` operations require `scanning:manage`. Live routes use `scanning:read` and allow
+   screens and optional staff. The session and device guards also allow screens and optional staff; staff sign-in
+   itself is restricted to paired scanner devices. These capability checks apply to sessions, not as a substitute
+   for scanner device-role, configured role or staff authorization.
 5. Staff binding: expire it past 15 min idle or 12 h; `staffSignIn` on and none bound: 403 `STAFF_REQUIRED`
    (except `GET /scan/session`, `POST /scan/staff`, `POST /scan/unpair`).
+
+Session and scanner CSRF authority proofs are ID-bound, domain-separated HMACs. Raw CSRF secrets are not copied
+into internal Candidate/Found objects, grant or live source proofs, asset/live DTOs, cloned actors, packed SQL,
+new proof rows or logs. The frozen `/scan/session` response deliberately delivers `session.csrfToken` as an
+authorized handshake; this restriction does not remove it. Migration `0047` makes session ID, CSRF secret,
+creation time and absolute expiry immutable, tombstones deleted session IDs, and requires a monotonic scanner
+revision when scanner authentication rotates.
 
 `ScannerAuth` gains `scannerKind: 'device' | 'terminal' | 'display'` and `deviceRole: 'scan' | 'customer' |
 'monitor'`, read by `ScannerStore.resolve` in its existing statement (`addendum/p0-amendments.md` P0-2).
@@ -586,7 +600,7 @@ D1 counters (`platform/counters.ts`):
 | Key | Window | Cap | Then |
 | --- | --- | --- | --- |
 | `scan:lk:<actorKey>` | 1 h | `scan.lookupsPerHour` (200); a typed miss counts 2 | 429 |
-| `scan:miss:<actorKey>` | 10 min | 30 `not_found` from any method | 429 `SCAN_TOO_MANY_MISSES`; audit `scan.misses_capped` once |
+| `scan:miss:<JSON([orgId, mode, actorKey])>` | 10 min | 30 `not_found` from any method | 429 `SCAN_TOO_MANY_MISSES` after the threshold; audit `scan.misses_capped` once |
 | `scan:pairfail:<ipPrefix>` | 1 h | 30 | 429; > 500 platform-wide logs error `SCAN_PAIR_FLOOD` |
 | `scan:pin:<scannerId>:<staffId>` | 5 min | 5 | 429 for that person on that scanner |
 | `scan:pinall:<scannerId>` | 1 h | 20 misses, any name | 429 for every PIN on that scanner; audit `scanner.pin_flood` once |
@@ -614,11 +628,10 @@ Rules:
 6. Never log or audit a query, a code, a token, a pairing code or a PIN. Audit records the method, the result count and
    pass ids.
 
-### 2.10 Seam for org membership (later)
+### 2.10 Tenant membership
 
-When tenants get console access: `org_members` (org, user, role) and `requireConsole` + `assertOrgPermission`, as AA
-§1.4 and §2.7 sketch. The scanner pages switch guards route by route. `scan_staff.user_id` (nullable, added then) lets a
-member's staff row follow their account. Nothing in this design blocks it.
+Tenant sessions are checked against current org membership and the exact route capability described in 2.5.
+Scanner staff bindings remain a separate device authorization mechanism.
 
 ### 2.11 Audit
 
@@ -1112,8 +1125,8 @@ compiled doc's `needs` lists them, inside the existing card or counts batch: sta
 `description` and `previewOnlyAssets`, computed on insert; `NULL` on old rows means "assume it differs". Stale means
 the pinned version's `build_key` differs from the active one's (or either is `NULL`). A save with `activate:
 'display-only'` activates only when the build keys match; the response says `displayOnly` and `activated`. The stale
-job then moves nothing. Scanners read the display from the **active** version, never the pass's pinned one; a verdict
-already on screen doesn't change.
+job then moves nothing. The historical active-version rule is superseded by approved release and legacy pinned
+policy selection (5.1); display content is disclosed only while the evaluation and actor lineage remain current.
 
 **Events** (D21): no display fields except `note` (≤ 140, plain text). It is not part of `ScanDisplay`; it travels in
 `ScanSessionSchema.event.note` and the client puts it in the notes slot on `heads_up` and `refused`, and on the Start
@@ -1150,13 +1163,26 @@ All JSON, zod-validated, problem+json errors, `Cache-Control: no-store` on scan 
 | `GET /stats` | scan actor; touches `last_seen_at` | `?dayStart` → `ScanCounts` |
 | `GET /summary` | scan actor | `?since` (≤ 24 h back) → `ScanSummary` |
 | `GET /passes/{passId}/assets/{name}?g=` | scan actor + a valid grant | image |
-
-**Asset grant.** A desk card (`ready`) and a lookup row write no `scans` row, so "this actor scanned it" can't gate
-assets. Every card and lookup row carries `g` = base64url(HMAC-SHA256(`derivedHmacKey(env, 'scan-asset')`,
-`actorKey ‖ passId ‖ exp`) ‖ exp), `exp` = now + 1 h. The route recomputes it for the requesting actor: stateless, no
-D1 read, useless without that actor's credential. Request logs carry the route pattern only, so `g` is never logged.
 | `GET /roster` (v2) | scanner with `offline`, accepts an event | `?cursor` → `ScanRoster` |
 | `POST /batch` (v2) | scanner with `offline` | `ScanBatchRequest` → `ScanBatchResult` |
+
+**Asset grant.** A desk card (`ready`) and a lookup row need not write a `scans` row. The short-lived opaque `g`
+encodes a 16-byte nonce and a 24-byte truncated HMAC authenticating the recipient, evaluated pass, source where
+applicable, credential tombstone references and expiry. `scan_asset_grant_provenance` stores only the SHA-256
+token hash, org, mode, expiry and keyed credential tombstone references; it has no commitment column. Raw
+credentials and proof material do not appear in grant URLs or logs. Authenticated lineage includes actor scope
+and revisions; pass org, mode, version, revision, link, credential and lifecycle generations and transfer state;
+Wallet snapshot and signing identity; pass and connection identity; org, template and approved release ID,
+generation, version and candidate hash; and photo version and identity. Validation is **not** a no-D1-read
+operation: the server rereads current actor, pass, connection, release, Wallet and photo lineage, and rechecks
+the tombstone references at mint, redemption and after opening the stream. Pending transfer, quarantine,
+inactive or deleted passes, stale scope or policy, invalid Wallet identity/validity, and changed lineage deny
+the asset. The stream is fenced again after opening, including photo visibility and the pass snapshot; failures
+close the stream. Assets are private and no-store, without an ETag; logs must not contain the grant.
+
+The `credential_ref_keyset` singleton binds `credentialKeysetCommitment` in the final scanner credential-reference
+CAS, including an empty reference list. A missing or mismatched keyset fails closed rather than treating old
+credential references as current.
 
 Stations add `/live`, `/live/events`, `/live/snapshot`, `/role/options` and `/role` (18.6). Occupancy adds
 `/overrides`, `/overrides/{scanId}/note`, `/mark-out` and `/live/inside` (20.12). Every route above
@@ -1493,7 +1519,16 @@ No backfill: the immutability trigger forbids it, and `NULL` keeps today's "ever
 | `scan.occupancy` (20.7) | minute | in rows with `due_at <= now`, oldest first: auto tap-out (Max stay, Clear at), CAS on `last_scan_id`, idempotent claims; publish to orgs with monitors | 200 rows, batches of 25, `CRON_QUERY_BUDGET` |
 | `scan.retention` | daily | `scans` older than `retention.scansDays`; test `scans` older than `sandbox.purgeDays`; expired pairing codes nulled; device scanners past `expires_at` or 30 d idle are left as they are (the token still matches, so the device hears `SCANNER_EXPIRED`; the console shows them as needing a new code); `vas_keys` retired rows kept | `deleteInBatches`, inside `CRON_QUERY_BUDGET` |
 
-Test passes purged by n6 cascade their `scan_gates`; their `scans` rows keep `pass_id NULL` until the test purge.
+Authenticated scan-event envelopes bind the event to its scan, actor, pass and scope; the retention index is
+installed only against the unique matching source event in the guarded transaction. It holds an opaque org/mode
+HMAC pass reference, event and scan digests, MAC and limited gate/presence snapshots, not a copied raw pass ID or
+event payload. On eligible pass deletion, a short-lived deletion intent permits retaining the final event gate and
+effective presence; the scan owns the retained evidence and its normal retention deletion removes it. Quarantine
+exclusions are latched, including for legacy rows, and invalidated or excluded proof cannot authorize retention.
+Richer detached reads verify the MAC and scan snapshot; malformed, altered or cross-scope evidence fails closed.
+Event arrival totals count distinct live pass IDs plus distinct retained opaque references in the same org, mode
+and event; inside totals further require effective presence `in`. Repeated scans do not multiply arrivals. Neither
+raw PII nor proof material belongs in logs.
 
 ---
 
@@ -2370,8 +2405,9 @@ builder, `toMonitorRow()`, serves the live publish and the snapshot, so the feed
 reload. Occupancy (20.11) adds `occupancy`, `places[] { place, inNow, capacity, rev }`, `outCause`, `overrideOf`,
 `resolvedBy`; `ScanCustomerView` adds `replaces` (20.9).
 
-Monitor photos use an **audience grant**: `g = HMAC(derivedHmacKey(env, 'scan-asset'), 'aud:' ‖ orgId ‖ ':' ‖ mode ‖
-':' ‖ audience ‖ passId ‖ exp) ‖ exp`, 1 h, valid for a monitor principal of that org, mode and audience or higher.
+Monitor photos use a recipient-bound grant with the same lineage checks as 5.1, additionally bound to the source
+scanner and authenticated live event provenance. Delivery revalidates both source and recipient scope and the
+evaluated pass snapshot; a stale or unauthorized projection must not disclose the holder or photo.
 
 ### 18.5 Transport: `ScanHub`
 

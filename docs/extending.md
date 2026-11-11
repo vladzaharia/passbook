@@ -84,6 +84,11 @@ A connector pulls records from an upstream system and maps them to pass inputs.
    (`src/worker/connectors/types.ts`):
    - `type`, `version`, `displayName`
    - `capabilities`: `poll`, `delta`, `webhook`, `import`, `snapshot`
+   - `webhookReferenceMode` (required): use `embedded-required` when each webhook reference
+     needs an embedded record or deletion; use `refs-only` when records can be fetched from the
+     upstream reference. This metadata does not enable webhooks without `verifyWebhook`.
+     Set it to match the connector's actual behavior: changing it can prevent retained work
+     from being replayed.
    - `configSchema` (zod, non-secret; also drives the admin form), optional `secretSchema`
      (write-only, never returned)
    - `outputFields`: the fields templates can bind to

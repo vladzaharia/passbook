@@ -1737,10 +1737,11 @@ no React, no worker imports, no sizes or colours (the §3 lint test).
 - **Done when:** the Membership and Balance presets render real history in a worker test.
 
 **DS.5 Real-pass preview** (M3; needs DS.3)
-- **Files:** `src/worker/modules/scan/routes-display.ts`.
-- **Build:** `GET /api/v1/scan-display/preview?templateId&passId&role` (SA §5.2): `requireAdmin`, org and mode
-  asserted, the pass must use the template; returns the role-filtered **scope** (never a rendered display), `no-store`;
-  audit `scan_display.preview` with ids only.
+- **Files:** `src/worker/modules/scan/{routes-display,display-preview}.ts` and `src/shared/contracts/scan-display-preview.ts`.
+- **Build:** `GET /api/v1/scan-display/preview?orgId&mode&templateId&passId&role` (SA §5.2): `requireAdmin`, explicit
+  org and mode (matching the console's mode), and the pass must use that template in that mode. Returns
+  `{ scope }` with role-filtered data (never a rendered display), `no-store`; audit `scan_display.preview` with ids
+  and role only. Visibility is restricted by both the pass's pinned template and the active template.
 - **Tests first:** another org's pass gives 404 with an unknown id's body; secrets are absent for every role; the
   response has no `{{` and no email; the audit row has no values.
 - **Done when:** TD.6 previews a real pass.

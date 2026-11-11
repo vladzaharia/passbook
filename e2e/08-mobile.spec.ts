@@ -82,7 +82,7 @@ for (const theme of ['dark', 'light'] as const) {
       test.use({ storageState: 'e2e/.auth/admin.json' });
 
       test('passes list', async ({ page }, testInfo) => {
-        await page.goto('/admin/passes');
+        await page.goto(`/admin/passes?orgId=${encodeURIComponent(readSeed().org.id)}`);
         await expect(page.getByRole('heading', { name: 'Passes', level: 1 })).toBeVisible();
         await expect(page.getByText(adminPassTitle).first()).toBeVisible();
         await expectNoHorizontalScroll(page);
