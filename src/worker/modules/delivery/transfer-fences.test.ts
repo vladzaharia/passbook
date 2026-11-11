@@ -207,27 +207,26 @@ describe('delivery transfer fences', () => {
     const email = `${kit.ctx.ids.id()}@example.test`;
     await run(
       kit.env.DB,
-      `CREATE TRIGGER fail_issuance_audit BEFORE INSERT ON audit_log
-      WHEN NEW.action = 'pass.create' BEGIN SELECT RAISE(ABORT, 'audit unavailable'); END`,
+      `CREATE TRIGGER fail_issuance_enqueue BEFORE INSERT ON outbox
+      WHEN NEW.kind = 'email' BEGIN SELECT RAISE(ABORT, 'outbox unavailable'); END`,
     );
     try {
-      await expect(
-        createPassRow(job(), {
-          passId,
-          orgId: kit.org.id,
-          templateId: kit.template.id,
-          templateVersion: kit.template.version,
-          input: { memberName: 'Recoverable issuance' },
-          holderEmail: email,
-          sendEmail: true,
-          source: 'manual',
-          mode: 'live',
-          actor,
-          execution: { kind: 'system' },
-        }),
-      ).rejects.toThrow();
+      // The pass and its pending intent commit together; the enqueue after the commit is deferred.
+      await createPassRow(job(), {
+        passId,
+        orgId: kit.org.id,
+        templateId: kit.template.id,
+        templateVersion: kit.template.version,
+        input: { memberName: 'Recoverable issuance' },
+        holderEmail: email,
+        sendEmail: true,
+        source: 'manual',
+        mode: 'live',
+        actor,
+        execution: { kind: 'system' },
+      });
     } finally {
-      await run(kit.env.DB, 'DROP TRIGGER fail_issuance_audit');
+      await run(kit.env.DB, 'DROP TRIGGER fail_issuance_enqueue');
     }
     expect(await intent(passId)).toMatchObject({ state: 'pending', outbox_id: null });
     const pass = await getPass(kit.env.DB, passId);

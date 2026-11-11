@@ -588,7 +588,7 @@ describe('M3 to M6', () => {
       'EXISTS (SELECT 1 FROM x) /* y */',
       'EXISTS (INSERT INTO t VALUES (1))',
     ])
-      expect(check(sql), sql).toThrow(/read-only|quoted/);
+      expect(check(sql), sql).toThrow(/read-only|quoted|one statement/);
     expect(check('a.org_id IS NOT NULL AND a.mode IS NOT NULL')).not.toThrow();
     expect(
       code(() => exactlyOne('not_guarded', {}).ok({ bind: () => '?', params: [] }, 'org')),
@@ -613,10 +613,10 @@ describe('M3 to M6', () => {
     expect(code(() => g.update('scan_staff', { inc: ['auth_epoch'], where: { id: 'x' } }))).toBe(
       'GRANT_SCOPE_OVERRIDE',
     );
-    // Until WP4 adds its trigger, connections.generation is still written by the app.
-    expect(
-      code(() => g.update('connections', { inc: ['generation'], where: { id: 'x' } })),
-    ).toBeNull();
+    // connections.generation is bumped by connections_generation_bump (0044), never by a grant.
+    expect(code(() => g.update('connections', { inc: ['generation'], where: { id: 'x' } }))).toBe(
+      'GRANT_SCOPE_OVERRIDE',
+    );
   });
 });
 

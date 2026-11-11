@@ -13,6 +13,7 @@ import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { devicePrincipal } from './repo-credential.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TYPE = 'pass.im.plrs.wallet';
@@ -186,6 +187,30 @@ describe('personalize', () => {
     );
     expect(audit).toHaveLength(1);
     expect(audit[0]?.detail).not.toContain('sam.lee');
+  });
+
+  it('republishes under the device grant: a request context needs no job grant, a wrong credential is refused', async () => {
+    const pass = await personalizable();
+    const republish = (authToken: string) =>
+      publishPass(kit.ctx, {
+        passId: pass.id,
+        cause: 'user_refresh',
+        actor: { type: 'system', id: null },
+        holder: devicePrincipal({ ...pass, authToken }),
+        force: true,
+      });
+    await expect(republish('0'.repeat(64))).rejects.toMatchObject({ status: 409 });
+    expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version);
+    await expect(republish(pass.authToken)).resolves.toMatchObject({ changed: true });
+    expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version + 1);
+    await expect(
+      publishPass(kit.ctx, {
+        passId: pass.id,
+        cause: 'user_refresh',
+        actor: { type: 'system', id: null },
+        force: true,
+      }),
+    ).rejects.toMatchObject({ code: 'GRANT_NOT_JOB' });
   });
 
   it('answers a retry with the same token without republishing, and refuses another token', async () => {

@@ -10,8 +10,8 @@ import { depsOf } from '../passes/deps.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPassBySerial } from '../passes/repo-read-pass.ts';
 import { withoutPersonalizationFiles } from './personalize-files.ts';
-import { devicePrincipal } from './repo-credential.ts';
 import { identityByPassType } from './repo.ts';
+import { devicePrincipal } from './repo-credential.ts';
 import {
   getCredentialPersonalization,
   insertPersonalization,

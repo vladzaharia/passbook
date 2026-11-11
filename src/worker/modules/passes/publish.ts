@@ -1,7 +1,7 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
-import { ConflictError } from '../../platform/errors.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset, requireCredentialRefKeyset } from './credential-keyset.ts';
 import type { TenantPassWrite } from './http.ts';

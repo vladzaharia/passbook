@@ -115,12 +115,12 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
           principal: actingPrincipal(w.authority),
         })
       : jobGrant(ctx, {
-        ...common,
-        purpose: c ? 'org_mode.job.connection.pass_publish' : 'org_mode.job.pass.publish',
-        job: c ? 'connection-sync' : 'pass-publish',
-        orgId: p.orgId,
-        mode: p.mode,
-      });
+          ...common,
+          purpose: c ? 'org_mode.job.connection.pass_publish' : 'org_mode.job.pass.publish',
+          job: c ? 'connection-sync' : 'pass-publish',
+          orgId: p.orgId,
+          mode: p.mode,
+        });
   g.update('passes', {
     set: w.set,
     ...(w.bumpVersion ? { inc: ['version'] } : {}),

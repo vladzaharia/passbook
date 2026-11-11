@@ -264,13 +264,19 @@ describe('status components', () => {
     expect(platform?.detail).toMatch(/days? left/);
     expect(platform?.data).toMatchObject({ source: 'env', bindingPresent: false });
 
+    // The env-sourced platform row is rewritten from the environment on every check (its binding is
+    // `APNS` or none), so a named binding that is gone is another identity's case.
     await run(
       env.DB,
-      "UPDATE signing_identities SET apns_binding = 'APNS_GONE' WHERE id = 'platform'",
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, apns_binding, is_default, created_at)
+       VALUES ('gone', NULL, 'Gone', 'pass.test.gone', 'TEAMGONE', 'env', 'GONE', 'APNS_GONE', 0, 1)`,
     );
     clearStatusCache(env.DB);
     const t = await status(short);
-    expect(find(t, 'identity:platform')?.detail).toContain('APNS_GONE is missing');
+    expect(find(t, 'identity:gone')?.detail).toContain('APNS_GONE is missing');
+    expect(find(t, 'identity:gone')?.data).toMatchObject({ bindingPresent: false });
+    await run(env.DB, "DELETE FROM signing_identities WHERE id = 'gone'");
 
     clearStatusCache(env.DB);
     const expired = await status(short, okFetch, new ManualClock(Date.now() + 30 * 86_400_000));

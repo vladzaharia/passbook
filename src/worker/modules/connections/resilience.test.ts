@@ -748,7 +748,7 @@ describe('sync bookkeeping snapshot fence', () => {
     expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(before);
   });
 
-  it('accepts an effective global baked release and fences it after supersession', async () => {
+  it('accepts an effective global baked release; supersession fences publishing, not bookkeeping', async () => {
     const slug = `retained-global-${kit.org.id.slice(-8)}`;
     const manifest = JSON.stringify(makeTemplate().resolved.manifest);
     const [initial, replacement] = await Promise.all([
@@ -768,7 +768,13 @@ describe('sync bookkeeping snapshot fence', () => {
     for (const fixture of [initial, replacement]) {
       for (const [path, bytes] of fixture.files) assets.files.set(path, bytes);
     }
-    const sctx = { ...kit.sctx, env: { ...kit.env, ASSETS: assets } };
+    // A later Worker upload is what supersedes a global head; builds without an order only serve it.
+    const workerAt = (id: string, timestamp: string) => ({
+      ...kit.sctx,
+      env: { ...kit.env, ASSETS: assets, CF_VERSION: { id, tag: '', timestamp } },
+    });
+    const sctx = workerAt('retained-global-old', '2026-01-01T00:00:00Z');
+    const next = workerAt('retained-global-new', '2026-02-01T00:00:00Z');
     resetBakedSync();
     try {
       await syncBakedTemplates(sctx, sourceOf([initial], `${slug}-initial`));
@@ -791,7 +797,8 @@ describe('sync bookkeeping snapshot fence', () => {
         id: initial.template.id,
         version: initial.template.version,
       }).resolved;
-      const pass = await makePass(kit, { orgId: kit.org.id, template });
+      // The baked sync already stored this version; persisting the fixture again would compare it.
+      const pass = await makePass(kit, { orgId: kit.org.id, template, persist: false });
       await run(
         kit.env.DB,
         'UPDATE passes SET connection_id = ?, external_ref = ?, release_id = ? WHERE id = ?',
@@ -843,9 +850,9 @@ describe('sync bookkeeping snapshot fence', () => {
       const before = await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
 
       resetBakedSync();
-      await syncBakedTemplates(sctx, sourceOf([replacement], `${slug}-replacement`));
+      await syncBakedTemplates(next, sourceOf([replacement], `${slug}-replacement`));
       const current = await requireApprovedRelease(
-        sctx,
+        next,
         initial.template.id,
         kit.org.id,
         'live',
@@ -853,19 +860,20 @@ describe('sync bookkeeping snapshot fence', () => {
       );
       expect(current.orgId).toBeNull();
       expect(current.id).not.toBe(release.id);
+      // Sync bookkeeping is volatile and bound to the pass's own captured release, so a newer global head
+      // does not stop it; a publish under the old proof is refused (retained-release-fence.test.ts,
+      // 'rejects a superseded release').
       expect(
-        await markPassSyncError(kit.sctx, { ...snapshot, code: 'STALE', nextSyncAt: 300 }),
-      ).toBe(false);
+        await markPassSyncError(kit.sctx, { ...snapshot, code: 'LATER', nextSyncAt: 300 }),
+      ).toBe(true);
       expect(
-        await markPassSynced(kit.sctx, {
-          ...snapshot,
-          now: kit.clock.now() + 1,
-          nextSyncAt: 400,
-        }),
-      ).toBe(false);
-      expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(
-        before,
-      );
+        await first(kit.env.DB, 'SELECT sync_error_code, next_sync_at FROM passes WHERE id = ?', [
+          pass.id,
+        ]),
+      ).toEqual({ sync_error_code: 'LATER', next_sync_at: 300 });
+      expect(
+        await first(kit.env.DB, 'SELECT release_id FROM passes WHERE id = ?', [pass.id]),
+      ).toEqual({ release_id: (before as { release_id: string }).release_id });
     } finally {
       resetBakedSync();
     }

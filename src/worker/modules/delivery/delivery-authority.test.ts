@@ -1,10 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import {
-  makeApiKey,
-  makeSession,
-  makeUser,
-  withoutTrigger,
-} from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { resolveSession } from '../auth/sessions.ts';
 import { reassignHolder } from '../holders/service.ts';
@@ -241,7 +236,7 @@ describe('manual email carries its actor to the send', () => {
 
 describe('issuance queued by the pre-cutover Worker', () => {
   /** A pending issuance whose captured authority carries `orgs.updated_at` in ms, as 0024-era rows do. */
-  async function legacyPending() {
+  async function legacyPending(withUserRevision = true) {
     const m = await member();
     const release = kit.liveRelease ?? (await approveAppleRelease(kit));
     const create = (sendEmail: boolean) =>
@@ -268,6 +263,14 @@ describe('issuance queued by the pre-cutover Worker', () => {
     );
     const pass = await create(false);
     const context = JSON.parse(reference?.context ?? '{}');
+    if (withUserRevision) {
+      const user = await first<{ access_revision: number }>(
+        kit.env.DB,
+        'SELECT access_revision FROM users WHERE id = ?',
+        [m.user.id],
+      );
+      context.userRevision = user?.access_revision;
+    }
     context.execution = {
       kind: 'tenant',
       authority: { ...m.authority, orgUpdatedAt: 1_760_000_000_000 },
@@ -296,6 +299,18 @@ describe('issuance queued by the pre-cutover Worker', () => {
       [pass.id],
     );
     expect(await send(queued?.outbox_id ?? '')).toBe(1);
+  });
+
+  it('refuses a row queued before the user epoch existed, and sends nothing', async () => {
+    const pass = await legacyPending(false);
+    expect(await scheduleIssuanceDelivery(job(), pass.id)).toBe('cancelled');
+    expect(
+      await first(
+        kit.env.DB,
+        'SELECT state, error_code, outbox_id FROM pass_issuance_deliveries WHERE pass_id = ?',
+        [pass.id],
+      ),
+    ).toEqual({ state: 'cancelled', error_code: 'ACTOR_REVOKED', outbox_id: null });
   });
 
   it('is refused when the org is suspended', async () => {

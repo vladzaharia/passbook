@@ -287,14 +287,17 @@ export async function makePass(
     scanCode?: string | null;
     holderEmail?: string | null;
     personalization?: object;
+    /** False when the template version is already stored (a synced baked one) and must not be compared. */
+    persist?: boolean;
   },
 ): Promise<PassRow> {
   await ensurePlatformIdentity(f.env, f.clock.now());
-  await persistTemplate(
-    f,
-    options.template,
-    options.registry ? { registry: options.registry } : undefined,
-  );
+  if (options.persist !== false)
+    await persistTemplate(
+      f,
+      options.template,
+      options.registry ? { registry: options.registry } : undefined,
+    );
   const id = f.ids.id();
   const row: PassRow = {
     id,

@@ -121,6 +121,7 @@ export const TRIGGER_WRITES_GUARDED: readonly string[] = [];
  * it to `{org}`, `{mode}` or `{pass}`. A test derives these lists from the migrated schema.
  */
 export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
+  'branding_gc_queue',
   'credentials',
   'signing_identities',
   'idempotency_keys',

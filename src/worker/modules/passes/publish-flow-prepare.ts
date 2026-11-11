@@ -10,7 +10,6 @@ import {
   type AppleRelease,
   assertReleaseArtifact,
   releaseChanged,
-  resolveLegacyRelease,
   resolvePublishRelease,
 } from './publish-service-release.ts';
 import type { Pass } from './repo-map.ts';
@@ -69,7 +68,7 @@ export async function preparePublishAttempt(
   if (options.source === 'remove' && next.status !== 'voided')
     throw new ConflictError('The staged removal changed. Reload and retry.', 'PASS_CONFLICT');
   let release: AppleRelease | undefined;
-  let requireNoReleaseHistory = false;
+  const requireNoReleaseHistory = false;
   if (
     next.templateVersion !== current.templateVersion ||
     options.expectedRelease !== undefined ||
@@ -84,17 +83,9 @@ export async function preparePublishAttempt(
       state.capturedRelease,
     );
     state.capturedRelease ??= release;
-  } else if (current.releaseId === null) {
-    const approved = await resolveLegacyRelease(ctx, current);
-    if (approved) {
-      if (state.capturedNoReleaseHistory) throw releaseChanged();
-      release = approved;
-      state.capturedRelease = approved;
-    } else {
-      requireNoReleaseHistory = true;
-      state.capturedNoReleaseHistory = true;
-    }
   }
+  // Re-rendering a pass at its own version is use, not issuance: it needs no head, so a newer,
+  // withdrawn or missing release (archived template) never refuses it.
   const db = ctx.env.DB;
   const org = await getOrg(db, current.orgId);
   if (!org) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');

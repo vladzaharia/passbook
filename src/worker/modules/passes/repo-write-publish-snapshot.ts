@@ -77,7 +77,7 @@ export function permitsPublishRelease(
   if (changesTemplateVersion && !release) return false;
   if (requireNoReleaseHistory)
     return !changesTemplateVersion && pass.releaseId === null && release === undefined;
-  return changesTemplateVersion || pass.releaseId !== null || release !== undefined;
+  return true;
 }
 
 export function publishReleaseFence(

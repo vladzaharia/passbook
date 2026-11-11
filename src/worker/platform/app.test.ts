@@ -245,7 +245,8 @@ describe('csrf', () => {
     const res = await call('/api/v1/passes', {
       method: 'POST',
       headers: { ...auth.apiKey({ scopes: ['passes:write'] }), 'content-type': 'application/json' },
-      body: JSON.stringify({ orgId: 'o', templateId: 't', input: {} }),
+      // Invalid on purpose: validation (422) runs before the live org check, so a CSRF refusal is the only 403 here.
+      body: JSON.stringify({ templateId: 't' }),
     });
     expect(res.status).toBe(422);
   });
