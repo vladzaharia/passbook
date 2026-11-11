@@ -595,7 +595,7 @@ describe('approved release reissue', () => {
         ).pass.releaseId,
       ).toBeNull();
       await kit.settle();
-      const before = await snapshot(passId);
+      const own = (await snapshot(passId)).pass;
       await retire();
       expect(await activeRelease(kit.ctx, id, kit.org.id, 'live', 'apple')).toBeNull();
       expect(await hasNoReleaseHistory(kit.env.DB, id, kit.org.id, 'live')).toBe(false);
@@ -610,7 +610,7 @@ describe('approved release reissue', () => {
         expect(out.pass.releaseId).toBeNull();
       }
       expect((await snapshot(passId)).pass).toMatchObject({
-        template_version: 'v1',
+        template_version: own?.template_version,
         release_id: null,
       });
       if (scope === 'tenant') {
