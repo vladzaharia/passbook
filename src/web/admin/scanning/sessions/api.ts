@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { ScannerSchema } from '@/shared/contracts/scanners.ts';
 import {
@@ -12,6 +12,7 @@ import {
   type UpdateScanningSessionSchema,
 } from '@/shared/contracts/scanning-sessions.ts';
 import { api } from '@/web/lib/api.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { scanningKeys } from '../queries.ts';
 
 export const sessionKeys = {
@@ -20,24 +21,27 @@ export const sessionKeys = {
   detail: (id: string) => ['admin', 'scanning', 'sessions', 'detail', id] as const,
 };
 export function useScanningSessions(orgId?: string) {
+  const scope = useOrgScope();
+  const allowed = Boolean(
+    !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      orgId === scope.orgId &&
+      scope.membership?.capabilities.includes('scanning:read'),
+  );
   return useInfiniteQuery({
-    queryKey: sessionKeys.list(orgId),
+    queryKey: [...sessionKeys.list(allowed ? scope.orgId : undefined), allowed],
+    enabled: allowed,
     initialPageParam: undefined as string | undefined,
     refetchInterval: 5_000,
-    queryFn: ({ pageParam, signal }) =>
-      api.get('/api/v1/scanning-sessions', ScanningSessionListSchema, {
-        query: { orgId, cursor: pageParam, limit: 50 },
+    queryFn: ({ pageParam, signal }) => {
+      if (!allowed || !scope.orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/scanning-sessions', ScanningSessionListSchema, {
+        query: { orgId: scope.orgId, cursor: pageParam, limit: 50 },
         signal,
-      }),
+      });
+    },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-  });
-}
-export function useScanningSession(id: string) {
-  return useQuery({
-    queryKey: sessionKeys.detail(id),
-    queryFn: ({ signal }) =>
-      api.get(`/api/v1/scanning-sessions/${id}`, ScanningSessionDetailSchema, { signal }),
-    refetchInterval: 5_000,
   });
 }
 function useRefreshSessions() {

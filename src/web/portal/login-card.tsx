@@ -34,7 +34,7 @@ function Face({
       <div className="flex flex-1 flex-col gap-6 p-5 sm:p-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong">{title}</h1>
-          {lede ? <p className="mt-1 truncate text-sm text-fg-muted">{lede}</p> : null}
+          {lede ? <p className="mt-1 break-words text-sm text-fg-muted">{lede}</p> : null}
         </div>
         {children}
       </div>
@@ -108,7 +108,16 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
   return (
     <div className="wl-login-card">
       <div className="wl-login-flipper" data-face={face}>
-        <Face side="email" hidden={face !== 'email'} title="Sign in">
+        <Face
+          side="email"
+          hidden={face !== 'email'}
+          title="Sign in"
+          lede={
+            methods?.oidc && !methods.magic
+              ? 'Continue with your organization to access your account.'
+              : undefined
+          }
+        >
           {front ??
             (methods ? (
               <EmailFace

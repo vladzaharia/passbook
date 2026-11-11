@@ -1,293 +1,125 @@
-import { Link, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { z } from 'zod';
-import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
-import { ACTION_ICON } from '../../lib/action-icons.ts';
-import { useMintedOnArrival } from '../../lib/motion.ts';
-import { useOrgScope } from '../../lib/org-filter.tsx';
+import { isApiError } from '../../lib/errors.ts';
+import { useOrgScope, useResourceOrg } from '../../lib/org-filter.tsx';
 import {
-  Badge,
-  Buddy,
-  Button,
-  CountLink,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
+  DetailNotFound,
   detailError,
-  ErrorState,
-  JsonViewer,
-  KeyValue,
-  MoreMenu,
+  EmptyState,
   PageHeader,
-  Skeleton,
   SkeletonDetail,
-  StatusPill,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '../../ui/index.ts';
-import { useCreated } from '../passes/created.tsx';
-import { PassPreview, PassPreviewPanel } from '../passes/pass-preview.tsx';
-import { PreviewLayout } from '../passes/preview-layout.tsx';
-import { useTemplate, useTemplatePreview } from './api.ts';
-import { originLabel } from './gallery.tsx';
-import { ManifestEditor } from './manifest-editor.tsx';
+import { useTemplate } from './api.ts';
+import { TemplateDetailContent } from './detail-content.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
-import { DuplicateDialog } from './template-dialogs.tsx';
-import {
-  type TemplateCreated,
-  TemplateCreatedCallout,
-  useTemplateLifecycle,
-} from './template-lifecycle.tsx';
-import { TemplateInputs, TemplateOverview } from './template-overview.tsx';
-import { VersionsPanel } from './versions-panel.tsx';
 import '../passes/passes.css';
 
-type Template = z.infer<typeof TemplateDetailSchema>;
 type Search = z.infer<typeof templateDetailSearchSchema>;
-type Tab = NonNullable<Search['tab']>;
 
 export function TemplateDetailPage({ templateId, search }: { templateId: string; search: Search }) {
-  const template = useTemplate(templateId);
+  const { hasExplicitOrg } = useOrgScope();
+  return (
+    <TemplateDetailResource
+      key={JSON.stringify([templateId, hasExplicitOrg])}
+      templateId={templateId}
+      search={search}
+    />
+  );
+}
+
+function TemplateDetailResource({ templateId, search }: { templateId: string; search: Search }) {
+  const scope = useOrgScope();
+  const canFetch =
+    !scope.isLoading &&
+    !scope.isError &&
+    (scope.hasExplicitOrg
+      ? Boolean(scope.membership?.capabilities.includes('templates:read'))
+      : scope.memberships.some((m) => m.capabilities.includes('templates:read')));
+  const template = useTemplate(
+    canFetch ? templateId : undefined,
+    scope.hasExplicitOrg ? scope.orgId : undefined,
+  );
+  const fresh = scope.hasExplicitOrg || (template.isFetchedAfterMount && !template.isError);
+  const resourceScope = useResourceOrg(fresh ? template.data?.orgId : undefined, true);
+  useEffect(() => {
+    if (
+      canFetch &&
+      !scope.hasExplicitOrg &&
+      !template.isFetchedAfterMount &&
+      !template.isFetching
+    ) {
+      void template.refetch();
+    }
+  }, [
+    canFetch,
+    scope.hasExplicitOrg,
+    template.isFetchedAfterMount,
+    template.isFetching,
+    template.refetch,
+  ]);
   const crumbs = [
-    { label: 'Templates', to: '/admin/templates' },
-    { label: template.data?.name ?? 'Template' },
+    { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+    { label: 'Template' },
   ];
-  if (template.isError) {
+  if (!scope.isLoading && !canFetch) {
+    return (
+      <>
+        <PageHeader title="Template" breadcrumbs={crumbs} />
+        <DetailNotFound entity="template" to="/admin/templates" />
+      </>
+    );
+  }
+  if (
+    resourceScope === 'choose-org' ||
+    (!scope.hasExplicitOrg &&
+      template.isFetchedAfterMount &&
+      isApiError(template.error) &&
+      template.error.isForbidden)
+  ) {
+    return (
+      <EmptyState
+        heading
+        art="building"
+        title="Choose an organization"
+        description="Choose an organization in the top bar to continue."
+      />
+    );
+  }
+  if (template.isError && (scope.hasExplicitOrg || template.isFetchedAfterMount)) {
     return detailError(template, {
       entity: 'template',
       to: '/admin/templates',
       header: <PageHeader title="Template" breadcrumbs={crumbs} />,
     });
   }
-  if (!template.data)
+  if (resourceScope === 'pending' || !template.data)
     return (
       <>
         <PageHeader title="Template" breadcrumbs={crumbs} />
         <SkeletonDetail label="Loading template" />
       </>
     );
-  return <Loaded template={template.data} tab={search.tab ?? 'overview'} crumbs={crumbs} />;
-}
-
-function Loaded({
-  template: t,
-  tab,
-  crumbs,
-}: {
-  template: Template;
-  tab: Tab;
-  crumbs: { label: string; to?: string }[];
-}) {
-  const navigate = useNavigate();
-  const scope = useOrgScope().orgId;
-  const preview = useTemplatePreview(t.id);
-  const life = useTemplateLifecycle(t);
-  const created = useCreated<TemplateCreated>(`template:${t.id}`);
-  const minted = useMintedOnArrival(`template:${t.id}`);
-  // A duplicate mints once on arrival (the value must change after mount); a hard load deals once.
-  const [mint, setMint] = useState(0);
-  const [deal, setDeal] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setDeal(false), 900);
-    return () => clearTimeout(t);
-  }, []);
-  useEffect(() => {
-    if (minted) setMint(1);
-  }, [minted]);
-  const [duplicate, setDuplicate] = useState(false);
-  const baked = t.origin === 'baked';
-  const archived = t.status === 'archived';
-  const orgId = t.orgId ?? scope;
-  const newPass = { ...(orgId ? { orgId } : {}), templateId: t.id };
-  const passCount = (
-    <CountLink
-      count={t.passCount}
-      noun={['pass', 'passes']}
-      to="/admin/passes"
-      search={{ templateId: t.id }}
-    />
-  );
-  // Hashes stay in the Versions tab; elsewhere the active version is its number.
-  const byAge = [...t.versions].sort((a, b) => a.createdAt - b.createdAt);
-  const activeAt = byAge.findIndex((v) => v.version === t.activeVersion);
-  const versionLabel = activeAt >= 0 ? `Version ${activeAt + 1}` : null;
-
-  const stage = (size: 'column' | 'card' | 'sheet') =>
-    preview.data ? (
-      <PassPreviewPanel
-        passJson={preview.data.passJson}
-        assetBaseUrl={preview.data.assetBaseUrl}
-        assetNames={preview.data.assetNames}
-        enter={size !== 'sheet' && !minted && deal}
-        mint={mint}
-        label={versionLabel ?? undefined}
-        // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
-        beside={
-          minted ? (
-            <Buddy size="sm" at="end" mood="happy" scene="wave" className="wl-pass-buddy" />
-          ) : undefined
-        }
-      />
-    ) : preview.isError ? (
-      <ErrorState inline error={preview.error} onRetry={() => void preview.refetch()} />
-    ) : (
-      <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
+  if (
+    resourceScope === 'not-found' ||
+    !scope.orgId ||
+    (template.data.orgId !== null && template.data.orgId !== scope.orgId)
+  ) {
+    return (
+      <>
+        <PageHeader title="Template" breadcrumbs={crumbs} />
+        <DetailNotFound entity="template" to="/admin/templates" />
+      </>
     );
-
+  }
   return (
-    <>
-      <PageHeader
-        title={t.name}
-        breadcrumbs={crumbs}
-        description={t.description ?? undefined}
-        meta={
-          <>
-            <Badge>{originLabel(t.origin)}</Badge>
-            {archived ? <StatusPill status="archived" /> : null}
-            <span>
-              {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}
-            </span>
-          </>
-        }
-        actions={
-          <>
-            {archived ? null : (
-              <Button
-                asChild
-                className="whitespace-nowrap"
-                iconStart={<ACTION_ICON.create aria-hidden />}
-              >
-                <Link to="/admin/passes/new" search={newPass} aria-label="New pass">
-                  New<span className="max-md:sr-only"> pass</span>
-                </Link>
-              </Button>
-            )}
-            {archived ? null : (
-              <Button
-                asChild
-                variant="outline"
-                className="whitespace-nowrap max-md:hidden"
-                iconStart={<ACTION_ICON.design aria-hidden />}
-              >
-                <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
-                  Design
-                </Link>
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              className="whitespace-nowrap max-md:hidden"
-              iconStart={<ACTION_ICON.duplicate aria-hidden />}
-              onClick={() => setDuplicate(true)}
-            >
-              Duplicate
-            </Button>
-            {/* Phones keep one action beside More: Design and Duplicate move into the menu. A built-in has nothing else in it, so More is phone-only there. */}
-            <div className={baked ? 'contents md:hidden' : 'contents'}>
-              <MoreMenu>
-                {archived ? null : (
-                  <DropdownMenuItem asChild className="md:hidden">
-                    <Link to="/admin/templates/$templateId/design" params={{ templateId: t.id }}>
-                      <ACTION_ICON.design aria-hidden />
-                      Design
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem className="md:hidden" onSelect={() => setDuplicate(true)}>
-                  <ACTION_ICON.duplicate aria-hidden />
-                  Duplicate
-                </DropdownMenuItem>
-                {baked ? null : (
-                  <>
-                    <DropdownMenuSeparator className="md:hidden" />
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/templates/upload" search={{ templateId: t.id }}>
-                        <ACTION_ICON.upload aria-hidden />
-                        Upload version
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {life.menu}
-                  </>
-                )}
-              </MoreMenu>
-            </div>
-          </>
-        }
-      />
-      {life.notice}
-      {created.shown && created.mark ? (
-        <div className="mb-6">
-          <TemplateCreatedCallout
-            template={t}
-            how={created.mark}
-            versionLabel={versionLabel}
-            onDismiss={created.dismiss}
-          />
-        </div>
-      ) : null}
-      <PreviewLayout
-        title={t.name}
-        stage={stage}
-        still={
-          preview.data ? (
-            <PassPreview
-              passJson={preview.data.passJson}
-              assetBaseUrl={preview.data.assetBaseUrl}
-              assetNames={preview.data.assetNames}
-              still
-            />
-          ) : null
-        }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Organization', value: t.orgName ?? 'All organizations' },
-              { label: 'Passes', value: passCount },
-              { label: 'Version', value: versionLabel },
-            ]}
-          />
-        }
-      >
-        <Tabs
-          value={tab}
-          onValueChange={(v) =>
-            void navigate({ to: '.', search: { tab: v as Tab }, replace: true })
-          }
-          className="min-w-0"
-        >
-          <TabsList aria-label="Template sections">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="versions">Versions</TabsTrigger>
-            <TabsTrigger value="manifest">Manifest</TabsTrigger>
-            <TabsTrigger value="inputs">Inputs</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview">
-            <TemplateOverview template={t} />
-          </TabsContent>
-          <TabsContent value="versions">
-            <VersionsPanel template={t} />
-          </TabsContent>
-          <TabsContent value="manifest">
-            {baked ? (
-              <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
-            ) : (
-              <ManifestEditor key={t.activeVersion ?? ''} template={t} />
-            )}
-          </TabsContent>
-          <TabsContent value="inputs">
-            <TemplateInputs schema={t.inputSchema} />
-          </TabsContent>
-        </Tabs>
-      </PreviewLayout>
-      <DuplicateDialog
-        key={String(duplicate)}
-        template={t}
-        open={duplicate}
-        onOpenChange={setDuplicate}
-      />
-      {life.dialogs}
-    </>
+    <TemplateDetailContent
+      key={`${scope.orgId}:${template.data.id}`}
+      template={template.data}
+      tab={search.tab ?? 'overview'}
+      crumbs={[
+        { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+        { label: template.data.name },
+      ]}
+    />
   );
 }

@@ -4,7 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { deviceLabel } from '../lib/device.ts';
+import { sessionQuery } from '../lib/session.ts';
 import { json, problem, renderApp, sessionFixture } from '../lib/test-utils.tsx';
+import { toast } from '../ui/index.ts';
+import { myEmailsKey } from './api.ts';
 
 const signOut = vi.hoisted(() => vi.fn(async () => {}));
 const leaveSignedOut = vi.hoisted(() => vi.fn());
@@ -19,7 +22,10 @@ beforeEach(() => {
   leaveSignedOut.mockClear();
   sessionStorage.clear();
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 const emails = (over: object[] = []) => ({
   items: [
@@ -46,6 +52,15 @@ const sessions = () => ({
     },
   ],
 });
+
+// The web test target predates Promise.withResolvers.
+function deferredResponse() {
+  let resolve!: (response: Response) => void;
+  const promise = new Promise<Response>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 describe('deviceLabel', () => {
   it('summarises user agents', () => {
@@ -96,7 +111,7 @@ describe('account page', () => {
     expect(await screen.findByText('Check your inbox')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enter code' })).toBeNull();
     expect(posted).toEqual([{ email: 'new@example.com' }]);
-    expect(sessionStorage.getItem('wallet-pending-emails')).toContain('new@example.com');
+    expect(sessionStorage.getItem('wallet-pending-emails:u1')).toContain('new@example.com');
 
     await user.click(screen.getByRole('button', { name: 'Actions for new@example.com' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Resend' }));
@@ -113,9 +128,177 @@ describe('account page', () => {
     });
     await waitFor(() => expect(screen.queryByText('Check your inbox')).toBeNull());
     expect(screen.getByText('new@example.com')).toBeInTheDocument();
-    expect(sessionStorage.getItem('wallet-pending-emails')).not.toContain('new@example.com');
+    expect(sessionStorage.getItem('wallet-pending-emails:u1')).not.toContain('new@example.com');
     focusManager.setFocused(undefined);
   });
+
+  it('keeps pending rows with their account across principal switches', async () => {
+    const user = userEvent.setup();
+    const first = sessionFixture('user');
+    if (!first.authenticated) throw new Error('Expected an authenticated fixture');
+    const second = { ...first, user: { ...first.user, id: 'u2' } };
+    const { queryClient } = await renderApp('/account', {
+      handlers: {
+        '/api/v1/me/emails': (_u, init) =>
+          init?.method === 'POST' ? json({ ok: true }, 202) : json({ items: [] }),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+
+    await user.type(await screen.findByLabelText('Add email'), 'first-pending@example.com');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+    expect(await screen.findByText('first-pending@example.com')).toBeInTheDocument();
+
+    act(() => {
+      queryClient.setQueryData(['session'], second);
+    });
+    await waitFor(() => expect(screen.queryByText('first-pending@example.com')).toBeNull());
+    await user.type(await screen.findByLabelText('Add email'), 'second-pending@example.com');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+    expect(await screen.findByText('second-pending@example.com')).toBeInTheDocument();
+
+    act(() => {
+      queryClient.setQueryData(['session'], first);
+    });
+    expect(await screen.findByText('first-pending@example.com')).toBeInTheDocument();
+    expect(screen.queryByText('second-pending@example.com')).toBeNull();
+  });
+
+  it('ignores an add-email completion from a previous principal', async () => {
+    const user = userEvent.setup();
+    const first = sessionFixture('user');
+    if (!first.authenticated) throw new Error('Expected an authenticated fixture');
+    const second = { ...first, user: { ...first.user, id: 'u2' } };
+    let current = first;
+    let requests = 0;
+    const pending = deferredResponse();
+    const { queryClient } = await renderApp('/account', {
+      handlers: {
+        '/api/v1/session': () => json(current),
+        '/api/v1/me/emails': (_url, init) => {
+          if (init?.method === 'POST') {
+            requests += 1;
+            return pending.promise;
+          }
+          return json({ items: [] });
+        },
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+
+    await user.type(await screen.findByLabelText('Add email'), 'old@example.com');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await waitFor(() => expect(requests).toBe(1));
+    current = second;
+    await act(async () => {
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+    });
+    await screen.findByLabelText('Add email');
+
+    await act(async () => {
+      pending.resolve(json({ ok: true }, 202));
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.queryByText('old@example.com')).toBeNull();
+    expect(sessionStorage.getItem('wallet-pending-emails:u1')).toBeNull();
+    expect(sessionStorage.getItem('wallet-pending-emails:u2')).toBeNull();
+  });
+
+  it('ignores a resend completion after the principal changes', async () => {
+    const user = userEvent.setup();
+    const success = vi.spyOn(toast, 'success');
+    const first = sessionFixture('user');
+    if (!first.authenticated) throw new Error('Expected an authenticated fixture');
+    const second = { ...first, user: { ...first.user, id: 'u2' } };
+    let current = first;
+    let requests = 0;
+    const pending = deferredResponse();
+    sessionStorage.setItem('wallet-pending-emails:u1', JSON.stringify(['old@example.com']));
+    const { queryClient } = await renderApp('/account', {
+      handlers: {
+        '/api/v1/session': () => json(current),
+        '/api/v1/me/emails': (_url, init) => {
+          if (init?.method === 'POST') {
+            requests += 1;
+            return pending.promise;
+          }
+          return json({ items: [] });
+        },
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for old@example.com' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Resend' }));
+    await waitFor(() => expect(requests).toBe(1));
+    current = second;
+    await act(async () => {
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+    });
+    await screen.findByLabelText('Add email');
+
+    await act(async () => {
+      pending.resolve(json({ ok: true }, 202));
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+    expect(success).not.toHaveBeenCalledWith('Sent again');
+    expect(sessionStorage.getItem('wallet-pending-emails:u1')).toBe('["old@example.com"]');
+    expect(sessionStorage.getItem('wallet-pending-emails:u2')).toBeNull();
+  });
+
+  it.each(['primary', 'remove'] as const)(
+    'does not apply a late %s email mutation to a different principal',
+    async (action) => {
+      const user = userEvent.setup();
+      const first = sessionFixture('user');
+      if (!first.authenticated) throw new Error('Expected an authenticated fixture');
+      const second = { ...first, user: { ...first.user, id: 'u2' } };
+      const nextEmails = {
+        items: [{ email: 'second@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: true }],
+      };
+      let current = first;
+      let requests = 0;
+      let emailLoads = 0;
+      const pending = deferredResponse();
+      const respondLater = () => {
+        requests += 1;
+        return pending.promise;
+      };
+      const { queryClient } = await renderApp('/account', {
+        handlers: {
+          '/api/v1/session': () => json(current),
+          '/api/v1/me/emails': () => {
+            emailLoads += 1;
+            return json(current.user.id === 'u1' ? emails() : nextEmails);
+          },
+          '/api/v1/me/emails/work%40example.com/primary': respondLater,
+          '/api/v1/me/emails/work%40example.com': respondLater,
+          '/api/v1/me/sessions': () => json(sessions()),
+        },
+      });
+
+      await user.click(await screen.findByRole('button', { name: 'Actions for work@example.com' }));
+      const label = action === 'primary' ? 'Make primary' : 'Remove';
+      await user.click(await screen.findByRole('menuitem', { name: label }));
+      await user.click(
+        within(await screen.findByRole('alertdialog')).getByRole('button', { name: label }),
+      );
+      await waitFor(() => expect(requests).toBe(1));
+
+      current = second;
+      await act(async () => {
+        await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+      });
+      expect(await screen.findByText('second@example.com')).toBeInTheDocument();
+      const loadsAfterSwitch = emailLoads;
+      await act(async () => {
+        pending.resolve(json(action === 'primary' ? emails() : { ok: true }));
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      });
+      expect(queryClient.getQueryData(myEmailsKey)).toEqual(nextEmails);
+      expect(emailLoads).toBe(loadsAfterSwitch);
+    },
+  );
 
   it('shows an unverified primary with Verify, no Remove, then verified after the link', async () => {
     const user = userEvent.setup();
@@ -166,7 +349,7 @@ describe('account page', () => {
 
   it('cancels a pending address', async () => {
     const user = userEvent.setup();
-    sessionStorage.setItem('wallet-pending-emails', JSON.stringify(['later@example.com']));
+    sessionStorage.setItem('wallet-pending-emails:u1', JSON.stringify(['later@example.com']));
     await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
@@ -240,6 +423,11 @@ describe('account page', () => {
     expect(screen.queryByRole('button', { name: 'Actions for test@example.com' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Actions for work@example.com' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    expect(
+      within(await screen.findByRole('alertdialog')).getByText(
+        /Passes already assigned to you may remain in your collection/,
+      ),
+    ).toBeInTheDocument();
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remove' }),
     );

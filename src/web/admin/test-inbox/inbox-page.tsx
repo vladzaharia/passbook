@@ -1,9 +1,11 @@
 import { Link } from '@tanstack/react-router';
 import { FlaskConical, Package, Plus } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
 import { ENTITY } from '../../lib/entities.ts';
 import { formatRelative } from '../../lib/format.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
+import { useMemberships, useSession } from '../../lib/session.ts';
 import {
   Button,
   Card,
@@ -17,13 +19,21 @@ import {
   RowLink,
   SkeletonRows,
 } from '../../ui/index.ts';
-import { useOrgNames } from '../orgs/queries.ts';
 import { useSettings } from '../settings/queries.ts';
 import { EmailPreview } from './preview.tsx';
 import { useCapturedEmails } from './queries.ts';
 import type { InboxSearch } from './search.ts';
 
-/** Mail that Test mode held back, newest first. Nothing in it was sent. */
+function PlatformRetention() {
+  const kept = useSettings('platform').data?.items.find(
+    (item) => item.key === 'sandbox.purgeDays',
+  )?.value;
+  return typeof kept === 'number' ? (
+    <> Normally kept {kept} days; unresolved sends may be retained longer.</>
+  ) : null;
+}
+
+/** Mail captured in Test mode instead of being delivered to its intended recipient. */
 export function InboxPage({
   search,
   onSearch,
@@ -32,20 +42,55 @@ export function InboxPage({
   onSearch: (next: InboxSearch) => void;
 }) {
   const mode = useMode();
-  const { orgId } = useOrgScope();
-  const orgName = useOrgNames();
+  const scope = useOrgScope();
+  const { orgId } = scope;
+  const session = useSession();
+  const memberships = useMemberships();
+  const userId = session.authed?.user.id;
+  const canRead = Boolean(
+    !session.isError &&
+      !session.isFetching &&
+      userId &&
+      !scope.isLoading &&
+      !scope.isError &&
+      !memberships.isFetching &&
+      orgId &&
+      scope.membership &&
+      scope.membership.userId === userId &&
+      scope.membership.capabilities.includes('passes:read'),
+  );
+  const canOperate = Boolean(canRead && scope.membership?.capabilities.includes('passes:operate'));
+  const authority = useMemo(
+    () => ({ orgId, mode, userId, canOperate, active: true, requests: new Set<AbortController>() }),
+    [orgId, mode, userId, canOperate],
+  );
+  useEffect(() => {
+    authority.active = true;
+    return () => {
+      authority.active = false;
+      for (const request of authority.requests) request.abort();
+      authority.requests.clear();
+    };
+  }, [authority]);
+  const orgName = (id: string) =>
+    scope.membership && id === scope.membership.orgId ? scope.membership.orgName : id;
   const list = useCapturedEmails(orgId);
-  const kept = useSettings('platform').data?.items.find(
-    (i) => i.key === 'sandbox.purgeDays',
-  )?.value;
-  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
   const now = Date.now();
 
   return (
     <>
       <PageHeader
         title="Test inbox"
-        description={`Emails for test passes and bundles land here. Nothing is sent.${typeof kept === 'number' ? ` Kept ${kept} days.` : ''}`}
+        description={
+          <>
+            Test emails are captured here instead of being sent to their intended recipients.
+            {canOperate ? ' You can send a copy to your verified account email.' : ''}
+            {session.isAdmin && !session.isError && !session.isFetching ? (
+              <PlatformRetention />
+            ) : null}
+          </>
+        }
       />
       {mode !== 'test' ? (
         <EmptyState
@@ -62,6 +107,14 @@ export function InboxPage({
             </Button>
           }
         />
+      ) : !orgId ? (
+        <EmptyState
+          art="envelope"
+          title="Choose an organization"
+          description="Select an organization to view its test emails."
+        />
+      ) : !canRead ? (
+        <SkeletonRows label="Loading test inbox" />
       ) : list.isError ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
       ) : list.isPending ? (
@@ -71,9 +124,13 @@ export function InboxPage({
           art="envelope"
           title="No test emails yet"
           action={
-            <Button asChild iconStart={<Plus aria-hidden />}>
-              <Link to="/admin/passes/new">New pass</Link>
-            </Button>
+            canOperate ? (
+              <Button asChild iconStart={<Plus aria-hidden />}>
+                <Link to="/admin/passes/new" search={{ orgId }}>
+                  New pass
+                </Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -95,7 +152,7 @@ export function InboxPage({
                     title={
                       <RowLink
                         to="/admin/test-inbox"
-                        search={{ email: m.id }}
+                        search={{ email: m.id, orgId }}
                         aria-label={`Open ${m.subject}`}
                       >
                         {m.subject}
@@ -110,7 +167,19 @@ export function InboxPage({
           <LoadMore query={list} shown={rows.length} noun={['email', 'emails']} scoped />
         </>
       )}
-      <EmailPreview id={search.email} orgName={(id) => orgName(id)} onClose={() => onSearch({})} />
+      {search.email && orgId && userId && canRead ? (
+        <EmailPreview
+          key={search.email}
+          id={search.email}
+          orgId={orgId}
+          userId={userId}
+          mode={mode}
+          canOperate={canOperate}
+          sendScope={authority}
+          orgName={(id) => orgName(id)}
+          onClose={() => onSearch({})}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { setMode, useMode } from '@/web/lib/mode.ts';
 import { Button, Callout } from '@/web/ui/index.ts';
 
-/** Connections create live passes, so Test mode hides what they made. */
+/** The Test view does not isolate shared connection operations from Live. */
 export function TestModeNote({ className }: { className?: string }) {
   if (useMode() !== 'test') return null;
   return (
@@ -13,7 +13,8 @@ export function TestModeNote({ className }: { className?: string }) {
         </Button>
       }
     >
-      Connections always make live passes. Turn off Test mode to see them.
+      Connections are shared between Live and Test. Changes, tests and syncs can affect live data;
+      connections create live passes, which are hidden in Test view.
     </Callout>
   );
 }

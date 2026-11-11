@@ -9,6 +9,8 @@ import {
   type Selection,
   styleOf,
 } from './model.ts';
+import { scanDisplayOf } from './scan/document.ts';
+import { scanIssueTarget } from './scan/scan-issue-target.ts';
 
 const COLORS = /^(backgroundColor|foregroundColor|labelColor|stripColor|footerBackgroundColor)\b/;
 const RELEVANCE = /^(locations|beacons|relevantDates?|expirationDate|maxDistance)\b/;
@@ -24,6 +26,10 @@ export const platformManaged = (issue: ValidationIssue): boolean =>
 /** The part of the designer an issue is about, from its path; null when it has no home. */
 export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection | null {
   const path = issue.path ?? '';
+  if (/^scan\.display\b/.test(path)) {
+    const display = scanDisplayOf(doc);
+    return { section: 'scan-display', key: display ? scanIssueTarget(display, path) : 'header' };
+  }
   if (issue.code === 'MISSING_ICON') return { section: 'images', key: 'icon' };
   const png = /^(?:[\w-]+\.lproj\/)?([A-Za-z]+)(?:@[23]x)?\.png$/.exec(path);
   if (png) return { section: 'images', key: png[1] };

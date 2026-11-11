@@ -10,7 +10,7 @@ export const STATE_FILTERS: readonly [BroadcastState, string][] = [
   ['draft', 'Draft'],
   ['scheduled', 'Scheduled'],
   ['sending', 'Sending'],
-  ['sent', 'Sent'],
+  ['sent', 'Completed'],
   ['partial', 'Partial'],
   ['failed', 'Failed'],
   ['cancelled', 'Cancelled'],
@@ -48,13 +48,13 @@ export function countsLine(b: BroadcastDto): string {
     c.failed ? `${formatCount(c.failed)} failed` : '',
   ].filter(Boolean);
   if (parts.length === 0)
-    return b.state === 'sending' ? plural(c.targeted, 'pass', 'passes') : 'No passes matched';
+    return b.state === 'sending' ? plural(c.targeted, 'pass', 'passes') : 'No recorded outcomes';
   return parts.join(', ');
 }
 
 /** When it goes out, or went out. */
 export function whenLine(b: BroadcastDto): string {
-  if (b.state === 'scheduled' && b.at) return `Goes out ${formatDateTime(b.at)}`;
+  if (b.state === 'scheduled' && b.at) return `Starts ${formatDateTime(b.at)}`;
   if (b.state === 'draft') return 'Not sent';
   if (b.state === 'cancelled') return `Cancelled ${formatDateTime(b.finishedAt)}`;
   if (b.state === 'sending') return `Started ${formatDateTime(b.startedAt)}`;
@@ -68,12 +68,33 @@ export const isQuiet = (b: BroadcastDto): boolean =>
 export const messageText = (b: BroadcastDto): string =>
   b.kind === 'message' ? String(b.patch.message ?? '') : '';
 
+/** Shown when the organization or permissions changed under an open confirm. */
+export const SCOPE_CHANGED = 'Your organization or permissions changed. Review and send again.';
+
 /** Who holds a pass, as the audience filter and the details name it. */
 export const HOLDER_LABEL = {
   owned: 'Claimed',
   waiting: 'Not claimed',
   unassigned: 'No holder',
 } as const;
+
+/** Human-readable summary of the pass audience selected for a message. */
+export function audienceOf(b: BroadcastDto, eventName?: string): string {
+  return (
+    [
+      b.target.onDevice ? 'On a device' : null,
+      b.target.holderState ? HOLDER_LABEL[b.target.holderState] : null,
+      b.target.scan
+        ? 'eventId' in b.target.scan
+          ? `${b.target.scan.checkedIn ? 'Checked in' : 'Not checked in'} · ${eventName ?? 'an event'}`
+          : `No scan in ${b.target.scan.noScanDays} days`
+        : null,
+      b.target.q ? `Matching “${b.target.q}”` : null,
+    ]
+      .filter(Boolean)
+      .join(', ') || 'Every active pass'
+  );
+}
 
 /** Why a run stopped, from its error code, with what to do about it. */
 export function stopLine(code: string | null): string {

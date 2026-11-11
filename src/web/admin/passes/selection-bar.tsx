@@ -1,10 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
+import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
+import { errorMessage, UserMessageError } from '../../lib/errors.ts';
 import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
+import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
   ConfirmDialog,
@@ -14,9 +18,10 @@ import {
   toast,
   useBottomBar,
 } from '../../ui/index.ts';
-import { useBulkPassAction } from './api.ts';
+import { passKeys, useBulkPassAction } from './api.ts';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
+import { fingerprint, newKey } from './format.ts';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -30,6 +35,7 @@ const SHARE_HINT = `Up to ${BUNDLE_MAX_PASSES} passes of one organization.`;
 export function SelectionBar({
   picked,
   orgId,
+  canOperate,
   bundleOrgId,
   onClear,
   onExport,
@@ -37,39 +43,66 @@ export function SelectionBar({
   /** The selected rows: what each action touches is counted from them. */
   picked: PassSummaryDto[];
   orgId: string | undefined;
+  canOperate: boolean;
   /** The one org of the selected passes; null when they span several. */
   bundleOrgId: string | null;
   onClear: () => void;
   onExport: () => void;
 }) {
   const bulk = useBulkPassAction();
+  const queryClient = useQueryClient();
   const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const [sharing, setSharing] = useState(false);
+  const emailKey = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const barRef = useBottomBar<HTMLElement>();
   const compact = useMediaQuery(BELOW_LG);
   const ids = picked.map((p) => p.id);
   const n = ids.length;
   const changeable = picked.filter((p) => p.removedAt === null).length;
   const emailable = picked.filter((p) => p.holderEmail !== null).length;
+  const operable = Boolean(canOperate && orgId && picked.every((p) => p.orgId === orgId));
   const canShare = n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
   if (n === 0) return null;
 
   async function run(action: 'void' | 'send_email' | 'remove', message?: string) {
-    const result = await bulk.mutateAsync({
-      action,
-      ids,
-      ...(message ? { message } : {}),
-      ...(orgId ? { orgId } : {}),
-    });
+    if (!operable) throw new Error('Pass operation is not available in this organization.');
+    const before = queryClient.getQueryData<SessionResponse>(sessionQuery.queryKey);
+    if (!before?.authenticated) return;
+    const userId = before.user.id;
+    const stillCurrent = () => {
+      const current = queryClient.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      return current?.authenticated === true && current.user.id === userId;
+    };
+    const fp = fingerprint([...ids].sort());
+    if (emailKey.current.fp !== fp) emailKey.current = { fp, key: newKey() };
+    const result = await bulk
+      .mutateAsync({
+        action,
+        ids,
+        ...(action === 'send_email' ? { key: emailKey.current.key } : {}),
+        ...(message ? { message } : {}),
+        ...(orgId ? { orgId } : {}),
+      })
+      .catch(async (error: unknown) => {
+        if (!stillCurrent()) return undefined;
+        await queryClient.invalidateQueries({ queryKey: passKeys.all });
+        if (!stillCurrent()) return undefined;
+        throw new UserMessageError(
+          `${errorMessage(error)} Some selected passes may already have been processed. Check their status before retrying.`,
+        );
+      });
+    if (result) emailKey.current = { fp: '', key: newKey() };
+    if (!result || !stillCurrent()) return;
     const skipped = result.skipped.length ? `, ${result.skipped.length} skipped` : '';
     const text =
       action === 'void'
-        ? `${plural(result.done, 'pass', 'passes')} voided`
+        ? `${plural(result.done, 'pass', 'passes')} processed for voiding`
         : action === 'remove'
           ? `${plural(result.done, 'pass', 'passes')} removed from Wallet`
           : `${plural(result.done, 'email', 'emails')} queued`;
-    if (action === 'send_email') toast.sent(`${text}${skipped}`);
+    if (action === 'send_email') toast.info(`${text}${skipped}`);
     else toast.success(`${text}${skipped}`);
+    if (!stillCurrent()) return;
     onClear();
   }
 
@@ -86,7 +119,7 @@ export function SelectionBar({
         </p>
         <Button
           variant="outline"
-          disabled={emailable === 0}
+          disabled={!operable || emailable === 0}
           iconStart={<ACTION_ICON.sendEmail aria-hidden />}
           onClick={() => setAsk('send_email')}
         >
@@ -95,7 +128,7 @@ export function SelectionBar({
         <span title={canShare ? undefined : SHARE_HINT}>
           <Button
             variant="outline"
-            disabled={!canShare}
+            disabled={!operable || !canShare}
             aria-describedby={canShare ? undefined : 'share-hint'}
             iconStart={<ACTION_ICON.bundle aria-hidden />}
             onClick={() => setSharing(true)}
@@ -110,11 +143,17 @@ export function SelectionBar({
         </span>
         {compact ? (
           <MoreMenu>
-            <DropdownMenuItem disabled={changeable === 0} onSelect={() => setAsk('void')}>
+            <DropdownMenuItem
+              disabled={!operable || changeable === 0}
+              onSelect={() => setAsk('void')}
+            >
               <ACTION_ICON.void aria-hidden />
               Void
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={changeable === 0} onSelect={() => setAsk('remove')}>
+            <DropdownMenuItem
+              disabled={!operable || changeable === 0}
+              onSelect={() => setAsk('remove')}
+            >
               <ACTION_ICON.removeFromWallet aria-hidden />
               Remove from Wallet
             </DropdownMenuItem>
@@ -127,7 +166,7 @@ export function SelectionBar({
           <>
             <Button
               variant="outline"
-              disabled={changeable === 0}
+              disabled={!operable || changeable === 0}
               iconStart={<ACTION_ICON.void aria-hidden />}
               onClick={() => setAsk('void')}
             >
@@ -135,7 +174,7 @@ export function SelectionBar({
             </Button>
             <Button
               variant="outline"
-              disabled={changeable === 0}
+              disabled={!operable || changeable === 0}
               iconStart={<ACTION_ICON.removeFromWallet aria-hidden />}
               onClick={() => setAsk('remove')}
             >
@@ -153,7 +192,7 @@ export function SelectionBar({
       </div>
       {bundleOrgId ? (
         <BundleDialog
-          open={sharing}
+          open={operable && sharing}
           onOpenChange={setSharing}
           orgId={bundleOrgId}
           passIds={ids}
@@ -161,26 +200,26 @@ export function SelectionBar({
         />
       ) : null}
       <ConfirmDialog
-        open={ask === 'void'}
+        open={operable && ask === 'void'}
         onOpenChange={(o) => !o && setAsk(null)}
         {...voidConfirm(changeable)}
         destructive
         onConfirm={() => run('void')}
       />
       <RemoveDialog
-        open={ask === 'remove'}
+        open={operable && ask === 'remove'}
         onOpenChange={(o) => !o && setAsk(null)}
         count={changeable}
         onConfirm={(message) => run('remove', message)}
       />
       <ConfirmDialog
-        open={ask === 'send_email'}
+        open={operable && ask === 'send_email'}
         onOpenChange={(o) => !o && setAsk(null)}
         title={`Email ${plural(emailable, 'holder', 'holders')}?`}
         description={
           emailable < n
-            ? `Each holder gets their pass. ${n - emailable} without a holder will be skipped.`
-            : 'Each holder gets their pass.'
+            ? `Email will be requested for eligible passes. ${n - emailable} without a holder will be skipped. Delivery is not guaranteed.`
+            : 'Email will be requested for eligible passes. Delivery is not guaranteed.'
         }
         confirmLabel="Send email"
         onConfirm={() => run('send_email')}

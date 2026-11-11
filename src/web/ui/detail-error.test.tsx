@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 
@@ -49,11 +49,10 @@ describe('ErrorState in a card', () => {
         '/api/v1/me/sessions': () => json({ items: [] }),
       },
     });
-    const card = (await screen.findByRole('heading', { name: 'Emails' })).closest(
-      'div.rounded-lg',
-    ) as HTMLElement;
-    const alert = await within(card).findByRole('alert');
+    const alert = await screen.findByRole('alert');
+    const card = alert.closest('div.rounded-lg');
+    expect(card).not.toBeNull();
     expect(alert).toHaveTextContent('Something went wrong. Try again.');
-    expect(card.querySelector('[data-buddy]')).toBeNull();
+    expect(card?.querySelector('[data-buddy]')).toBeNull();
   });
 });

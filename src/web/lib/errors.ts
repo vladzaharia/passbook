@@ -45,6 +45,14 @@ export class ApiError extends Error {
   }
 }
 
+/** An error whose message is already written for people: `errorMessage` shows it as is. */
+export class UserMessageError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UserMessageError';
+  }
+}
+
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
@@ -80,6 +88,7 @@ export function problemToError(status: number, body: unknown): ApiError {
  */
 export function errorMessage(error: unknown): string {
   if (typeof error === 'string' && error) return error;
+  if (error instanceof UserMessageError) return error.message;
   if (isApiError(error)) {
     // The body did not match its schema (lib/api.ts parse): a reload fetches the current app.
     if (error.code === 'invalid_response') return STATE_COPY.badResponse;

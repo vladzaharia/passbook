@@ -32,9 +32,10 @@ export function useIdentityPages() {
 }
 
 /** Pickers (an org's signing identity): up to 200. */
-export function useIdentityOptions() {
+export function useIdentityOptions(enabled = true) {
   return useQuery({
     queryKey: [...KEY, 'options'],
+    enabled,
     queryFn: ({ signal }) =>
       api.get('/api/v1/identities', IdentityListSchema, { query: { limit: 200 }, signal }),
   });

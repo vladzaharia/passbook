@@ -136,7 +136,12 @@ export function createRunner(deps: ScanDeps, host: Host) {
         case 'undo':
           send(
             cmd.key,
-            (signal) => deps.api.undo(cmd.scanId, { idempotencyKey: cmd.key }, { signal }),
+            (signal) =>
+              deps.api.undo(
+                cmd.scanId,
+                { idempotencyKey: cmd.key, ...(cmd.approval ? { approval: cmd.approval } : {}) },
+                { signal },
+              ),
             (outcome) => ({ type: 'undone', key: cmd.key, outcome }),
           );
           break;

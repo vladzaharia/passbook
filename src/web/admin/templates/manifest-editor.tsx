@@ -13,6 +13,7 @@ import {
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
 import { useTemplateActions } from './api.ts';
+import { versionName, versionNumber } from './versions.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 
@@ -21,9 +22,12 @@ const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 /** JSON editor for an uploaded template's manifest; the server validates on save. */
 export function ManifestEditor({ template }: { template: Template }) {
   const actions = useTemplateActions(template.id);
-  const [text, setText] = useState(() => pretty(template.manifest));
+  // The server returns the legacy manifest, not the saved version's, so the editor keeps what
+  // was submitted as its baseline until the active version changes (the parent remounts it).
+  const [saved, setSaved] = useState(() => pretty(template.manifest));
+  const [text, setText] = useState(saved);
   const [problems, setProblems] = useState<string[]>([]);
-  const dirty = text !== pretty(template.manifest);
+  const dirty = text !== saved;
   const guard = useUnsavedChangesGuard(dirty);
 
   async function save() {
@@ -41,8 +45,13 @@ export function ManifestEditor({ template }: { template: Template }) {
     setProblems([]);
     try {
       const next = await actions.replaceManifest.mutateAsync(manifest as Record<string, unknown>);
-      setText(pretty(next.manifest));
-      toast.success('Manifest saved');
+      setSaved(text);
+      const made = next.versions.reduce<(typeof next.versions)[number] | undefined>(
+        (latest, v) => (!v.active && (!latest || v.createdAt > latest.createdAt) ? v : latest),
+        undefined,
+      );
+      const number = versionNumber(next, made?.version ?? null);
+      toast.success(`${versionName(number)} saved, inactive`);
     } catch (error) {
       const fields = isApiError(error) ? Object.entries(error.fields) : [];
       setProblems(
@@ -57,6 +66,7 @@ export function ManifestEditor({ template }: { template: Template }) {
     <Card>
       <CardHeader title="Manifest" />
       <CardBody className="grid gap-3">
+        <p className="text-sm text-fg-muted">Saving creates an inactive version.</p>
         <Textarea
           aria-label="Manifest JSON"
           aria-invalid={problems.length > 0}
@@ -81,7 +91,7 @@ export function ManifestEditor({ template }: { template: Template }) {
         saving={actions.replaceManifest.isPending}
         onSave={() => void save()}
         onDiscard={() => {
-          setText(pretty(template.manifest));
+          setText(saved);
           setProblems([]);
         }}
       />

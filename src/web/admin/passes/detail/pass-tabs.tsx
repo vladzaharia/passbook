@@ -3,11 +3,10 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
-import { usePassForeign } from '../pass-foreign.ts';
 import { CheckInCard } from './check-in-card.tsx';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
-import type { Tab } from './detail-page.tsx';
+import type { PassDetailTab as Tab } from './detail-types.ts';
 import { DevicesTab } from './devices-tab.tsx';
 import { FieldsTab } from './fields-tab.tsx';
 import { HolderTab } from './holder-tab.tsx';
@@ -28,6 +27,7 @@ export function PassTabs({
   onPick,
   onDraft,
   runner,
+  readOnly,
 }: {
   pass: PassDetailDto;
   tab: Tab;
@@ -36,8 +36,8 @@ export function PassTabs({
   onPick: (version: number | undefined) => void;
   onDraft: (draft: Record<string, unknown> | null) => void;
   runner: PassActionRunner;
+  readOnly: boolean;
 }) {
-  const foreign = usePassForeign(pass);
   return (
     <>
       <TabsContent value="fields" forceMount hidden={tab !== 'fields'}>
@@ -51,15 +51,16 @@ export function PassTabs({
             manifest={template.data.manifest}
             onDraft={onDraft}
             runner={runner}
+            readOnly={readOnly}
           />
         ) : (
           <SkeletonKeyValue label="Loading fields" />
         )}
       </TabsContent>
       <TabsContent value="holder" className="flex flex-col gap-4">
-        <HolderTab pass={pass} foreign={foreign} />
-        <MemberPhotoCard pass={pass} foreign={foreign} />
-        <CheckInCard pass={pass} foreign={foreign} />
+        <HolderTab pass={pass} readOnly={readOnly} />
+        <MemberPhotoCard pass={pass} readOnly={readOnly} />
+        <CheckInCard pass={pass} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="devices" className="min-w-0">
         <DevicesTab pass={pass} active={tab === 'devices'} />
@@ -68,19 +69,19 @@ export function PassTabs({
         <SyncTab pass={pass} active={tab === 'sync'} />
       </TabsContent>
       <TabsContent value="delivery" className="min-w-0">
-        <DeliveryTab pass={pass} foreign={foreign} />
+        <DeliveryTab pass={pass} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="images">
-        <ImagesTab pass={pass} foreign={foreign} />
+        <ImagesTab pass={pass} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="versions">
         <VersionsTab pass={pass} selected={picked} onSelect={onPick} />
       </TabsContent>
       <TabsContent value="connection">
-        <ConnectionTab pass={pass} foreign={foreign} />
+        <ConnectionTab pass={pass} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="activity">
-        <ActivityTab passId={pass.id} active={tab === 'activity'} />
+        <ActivityTab passId={pass.id} orgId={pass.orgId} active={tab === 'activity'} />
       </TabsContent>
     </>
   );

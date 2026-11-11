@@ -1,8 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal, Pencil, Unplug } from 'lucide-react';
 import { useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { formatDateTime } from '../../../lib/format.ts';
+import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
   Button,
   Card,
@@ -29,7 +31,7 @@ import {
 } from '../../../ui/index.ts';
 import { useConnection, useConnections } from '../../connections/api.ts';
 import { HealthPill } from '../../connections/health.tsx';
-import { usePassActions } from '../api.ts';
+import { canMutatePass, passMutationPrincipal, usePassActions } from '../api.ts';
 
 function BindDialog({
   pass,
@@ -41,6 +43,7 @@ function BindDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const actions = usePassActions(pass.id);
+  const client = useQueryClient();
   const connections = useConnections({ orgId: pass.orgId });
   const [connectionId, setConnectionId] = useState(pass.connectionId ?? undefined);
   const [ref, setRef] = useState(pass.externalRef ?? '');
@@ -48,6 +51,8 @@ function BindDialog({
   const [error, setError] = useState<string>();
 
   async function bind() {
+    const principalId = passMutationPrincipal(client);
+    if (!principalId || !canMutatePass(client, pass, principalId)) return;
     const externalRef = ref.trim();
     if (!connectionId) return setError('Choose a connection.');
     if (!externalRef) return setError('Enter the record id in the source.');
@@ -56,22 +61,35 @@ function BindDialog({
       await actions.bindConnection.mutateAsync({
         connectionId,
         externalRef,
-        ...(takeOver ? { resetFieldSources: true } : {}),
+        resetFieldSources: takeOver,
       });
-      toast.success('Bound');
+      if (!canMutatePass(client, pass, principalId)) return;
+      toast.success('Pass bound to connection');
       onOpenChange(false);
     } catch (cause) {
-      setError(errorMessage(cause));
+      if (canMutatePass(client, pass, principalId)) setError(errorMessage(cause));
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      dirty={
+        connectionId !== (pass.connectionId ?? undefined) ||
+        ref !== (pass.externalRef ?? '') ||
+        takeOver
+      }
+      onOpenChange={(next) => !actions.bindConnection.isPending && onOpenChange(next)}
+    >
       <DialogContent
         title={pass.connectionId ? 'Change connection' : 'Bind to a connection'}
         footer={
           <>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="outline"
+              disabled={actions.bindConnection.isPending}
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button loading={actions.bindConnection.isPending} onClick={() => void bind()}>
@@ -117,18 +135,26 @@ function BindDialog({
 
 function Bound({
   pass,
-  foreign,
+  readOnly,
   onChange,
 }: {
   pass: PassDetailDto;
-  foreign: boolean;
+  readOnly: boolean;
   onChange: () => void;
 }) {
-  const connection = useConnection(pass.connectionId ?? undefined);
+  const scope = useOrgScope();
+  const canReadConnection = Boolean(
+    scope.orgId === pass.orgId && scope.membership?.capabilities.includes('integrations:read'),
+  );
+  const connection = useConnection(
+    canReadConnection ? (pass.connectionId ?? undefined) : undefined,
+  );
   const actions = usePassActions(pass.id);
+  const client = useQueryClient();
   const [unbind, setUnbind] = useState(false);
-  if (connection.isPending) return <SkeletonKeyValue label="Loading connection" />;
-  if (connection.isError)
+  if (canReadConnection && connection.isPending)
+    return <SkeletonKeyValue label="Loading connection" />;
+  if (canReadConnection && connection.isError)
     return <ErrorState inline error={connection.error} onRetry={() => void connection.refetch()} />;
   const c = connection.data;
   return (
@@ -141,7 +167,7 @@ function Bound({
               variant="ghost"
               size="sm"
               iconStart={<Pencil aria-hidden />}
-              disabled={foreign}
+              disabled={readOnly || !canReadConnection}
               onClick={onChange}
             >
               Change
@@ -155,7 +181,7 @@ function Bound({
                 />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem destructive disabled={foreign} onSelect={() => setUnbind(true)}>
+                <DropdownMenuItem destructive disabled={readOnly} onSelect={() => setUnbind(true)}>
                   <Unplug aria-hidden />
                   Unbind
                 </DropdownMenuItem>
@@ -167,18 +193,22 @@ function Bound({
       <CardBody>
         <KeyValue
           items={[
-            {
-              label: 'Connection',
-              value: (
-                <EntityChip
-                  kind="connection"
-                  id={c.id}
-                  name={c.name}
-                  to={`/admin/connections/${c.id}`}
-                />
-              ),
-            },
-            { label: 'Health', value: <HealthPill health={c.health} /> },
+            ...(c
+              ? [
+                  {
+                    label: 'Connection',
+                    value: (
+                      <EntityChip
+                        kind="connection"
+                        id={c.id}
+                        name={c.name}
+                        to={`/admin/connections/${c.id}`}
+                      />
+                    ),
+                  },
+                  { label: 'Health', value: <HealthPill health={c.health} /> },
+                ]
+              : []),
             { label: 'Record id', value: pass.externalRef ?? null, mono: true },
             {
               label: 'Last pull',
@@ -191,28 +221,26 @@ function Bound({
         />
       </CardBody>
       <ConfirmDialog
-        open={unbind}
+        open={!readOnly && unbind}
         onOpenChange={setUnbind}
         title="Unbind pass?"
         description="Fields stop syncing. Their current values stay."
         confirmLabel="Unbind"
         destructive
         onConfirm={async () => {
+          if (readOnly) return;
+          const principalId = passMutationPrincipal(client);
+          if (!principalId || !canMutatePass(client, pass, principalId)) return;
           await actions.bindConnection.mutateAsync({ connectionId: null, externalRef: null });
-          toast.success('Unbound');
+          if (!canMutatePass(client, pass, principalId)) return;
+          toast.success('Pass unbound from connection');
         }}
       />
     </Card>
   );
 }
 
-export function ConnectionTab({
-  pass,
-  foreign = false,
-}: {
-  pass: PassDetailDto;
-  foreign?: boolean;
-}) {
+export function ConnectionTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
   const [binding, setBinding] = useState(false);
   const [opened, setOpened] = useState(0);
   const open = () => {
@@ -222,7 +250,7 @@ export function ConnectionTab({
   return (
     <>
       {pass.connectionId ? (
-        <Bound pass={pass} foreign={foreign} onChange={open} />
+        <Bound pass={pass} readOnly={readOnly} onChange={open} />
       ) : (
         <Card>
           <EmptyState
@@ -230,7 +258,7 @@ export function ConnectionTab({
             art="plugs"
             title="Not bound to a connection"
             action={
-              pass.status === 'voided' || foreign ? undefined : (
+              pass.status === 'voided' || readOnly ? undefined : (
                 <Button variant="outline" size="sm" onClick={open}>
                   Bind to a connection
                 </Button>
@@ -239,7 +267,9 @@ export function ConnectionTab({
           />
         </Card>
       )}
-      <BindDialog key={opened} pass={pass} open={binding} onOpenChange={setBinding} />
+      {readOnly ? null : (
+        <BindDialog key={opened} pass={pass} open={binding} onOpenChange={setBinding} />
+      )}
     </>
   );
 }

@@ -16,9 +16,8 @@ import {
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
 import { useConnection } from '../../connections/api.ts';
-import { passKeys } from '../api.ts';
+import { canMutatePass, passKeys, passMutationPrincipal } from '../api.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
-import { usePassForeign } from '../pass-foreign.ts';
 import {
   cleanValues,
   type FormValues,
@@ -55,6 +54,7 @@ export function FieldsTab({
   manifest,
   onDraft,
   runner,
+  readOnly,
 }: {
   pass: Pass;
   schema: unknown;
@@ -63,15 +63,15 @@ export function FieldsTab({
   onDraft?: (draft: FormValues | null) => void;
   /** Restore for a removed pass; the header's runs the same action. */
   runner?: PassActionRunner;
+  readOnly: boolean;
 }) {
   const qc = useQueryClient();
+  const currentPrincipal = () => passMutationPrincipal(qc);
   const connection = useConnection(pass.connectionId ?? undefined);
   const [notify, setNotify] = useState(false);
   const removed = pass.removedAt !== null;
   const voided = pass.status === 'voided';
-  // The other mode's pass: the server refuses the save, so the form does not offer it.
-  const foreign = usePassForeign(pass);
-  const locked = voided || foreign;
+  const locked = voided || readOnly;
   const snapshot = (p: Pass): Baseline => ({
     version: p.version,
     values: pickDeclared(schema, p.personalization),
@@ -89,7 +89,7 @@ export function FieldsTab({
   const dirty = !sameValues(draft, baseline.values);
   const stale = pass.version !== baseline.version;
   const conflict = dirty && (rejected || stale);
-  const guard = useUnsavedChangesGuard(dirty);
+  const guard = useUnsavedChangesGuard(dirty && !readOnly);
 
   // A newer server version replaces a clean draft; a dirty draft is kept and the conflict is offered.
   // biome-ignore lint/correctness/useExhaustiveDependencies: snapshot only reads pass and schema
@@ -132,6 +132,9 @@ export function FieldsTab({
   }
 
   async function save() {
+    if (locked) return;
+    const principalId = currentPrincipal();
+    if (!principalId || !canMutatePass(qc, pass, principalId)) return;
     setSaving(true);
     setServerErrors(undefined);
     try {
@@ -139,13 +142,17 @@ export function FieldsTab({
         input: changedKeys(baseline.values, draft),
         ...(notify ? { notify: true } : {}),
       });
+      if (!canMutatePass(qc, pass, principalId)) return;
       qc.setQueryData(passKeys.detail(pass.id), next);
+      if (!canMutatePass(qc, pass, principalId)) return;
       take(next, {});
       setNotify(false);
       check.reset();
       void qc.invalidateQueries({ queryKey: passKeys.all });
-      toast.success(notify ? 'Saved; holders notified' : 'Saved');
+      if (notify) toast.info('Fields saved; notification requested');
+      else toast.success('Fields saved');
     } catch (error) {
+      if (!canMutatePass(qc, pass, principalId)) return;
       if (isApiError(error) && error.status === 412) {
         // Keep the draft; refetch so the banner can offer reload or merge.
         setRejected(true);
@@ -161,27 +168,33 @@ export function FieldsTab({
         toast.error(error, 'Could not save');
       }
     } finally {
-      setSaving(false);
+      if (currentPrincipal() === principalId) setSaving(false);
     }
   }
 
   async function reset(key: string) {
+    if (locked) return;
+    const principalId = currentPrincipal();
+    if (!principalId || !canMutatePass(qc, pass, principalId)) return;
     const mine = changedKeys(baseline.values, draft);
     delete mine[key];
     setSaving(true);
     try {
       const next = await send({ resetToConnection: [key] });
+      if (!canMutatePass(qc, pass, principalId)) return;
       qc.setQueryData(passKeys.detail(pass.id), next);
+      if (!canMutatePass(qc, pass, principalId)) return;
       take(next, mine);
       void qc.invalidateQueries({ queryKey: passKeys.all });
       toast.success('Reset to connection');
     } catch (error) {
+      if (!canMutatePass(qc, pass, principalId)) return;
       if (isApiError(error) && error.status === 412) {
         setRejected(true);
         void qc.invalidateQueries({ queryKey: passKeys.detail(pass.id) });
       } else toast.error(error, 'Could not reset');
     } finally {
-      setSaving(false);
+      if (currentPrincipal() === principalId) setSaving(false);
     }
   }
 
@@ -201,7 +214,7 @@ export function FieldsTab({
                 size="sm"
                 variant="outline"
                 loading={runner.pending.restore}
-                disabled={foreign}
+                disabled={readOnly}
                 onClick={() => runner.run('restore')}
               >
                 Restore
@@ -249,7 +262,7 @@ export function FieldsTab({
         onResetField={pass.connectionId ? (k) => void reset(k) : undefined}
       />
       <SaveBar
-        dirty={dirty}
+        dirty={dirty && !readOnly}
         saving={saving}
         extra={
           locked ? null : (

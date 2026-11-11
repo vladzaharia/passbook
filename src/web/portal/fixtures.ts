@@ -8,6 +8,7 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
     templateName: 'Membership',
     orgName: 'Henrys',
     status: 'active',
+    presentationEligible: true,
     mode: 'live',
     modifiedAt: 1_700_000_000_000,
     removedAt: null,
@@ -15,6 +16,8 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
     lastRefreshedAt: null,
     refreshRequestedAt: null,
     downloadUrl: '/p/abcdefghijklmnopqrst/pass.pkpass',
+    walletOffers: [],
+    walletIssuance: {},
     passJson: {
       organizationName: 'Henrys',
       description: 'Membership',

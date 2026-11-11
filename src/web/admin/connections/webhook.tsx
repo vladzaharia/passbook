@@ -23,10 +23,12 @@ export function generateSecret(): string {
 export function WebhookPanel({
   url,
   hasSecret,
+  canManage,
   onRotate,
 }: {
   url: string | null;
   hasSecret: boolean;
+  canManage: boolean;
   /** Saves a new secret; resolves once stored. */
   onRotate: (secret: string) => Promise<void>;
 }) {
@@ -53,42 +55,46 @@ export function WebhookPanel({
               value: (
                 <span className="flex flex-wrap items-center gap-2">
                   <span>{hasSecret ? 'Set' : 'Not set'}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    done={turns || undefined}
-                    iconStart={<ACTION_ICON.rotate aria-hidden />}
-                    onClick={() => setAsking(true)}
-                  >
-                    {hasSecret ? 'Rotate' : 'Create'}
-                  </Button>
+                  {canManage ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      done={turns || undefined}
+                      iconStart={<ACTION_ICON.rotate aria-hidden />}
+                      onClick={() => setAsking(true)}
+                    >
+                      {hasSecret ? 'Rotate' : 'Create'}
+                    </Button>
+                  ) : null}
                 </span>
               ),
             },
           ]}
         />
-        {secret ? (
+        {canManage && secret ? (
           <SecretReveal
             fields={[{ label: 'Signing secret', value: secret, copyLabel: 'Copy signing secret' }]}
             onDone={() => setSecret(undefined)}
           />
         ) : null}
       </CardBody>
-      <ConfirmDialog
-        open={asking}
-        onOpenChange={setAsking}
-        title={hasSecret ? 'Rotate the signing secret?' : 'Create a signing secret?'}
-        description={hasSecret ? 'Senders using the old secret are rejected.' : undefined}
-        confirmLabel={hasSecret ? 'Rotate' : 'Create'}
-        destructive={hasSecret}
-        onConfirm={async () => {
-          const next = generateSecret();
-          await onRotate(next);
-          setSecret(next);
-          setTurns((n) => n + 1);
-          toast.success(hasSecret ? 'Secret rotated' : 'Secret created');
-        }}
-      />
+      {canManage ? (
+        <ConfirmDialog
+          open={asking}
+          onOpenChange={setAsking}
+          title={hasSecret ? 'Rotate the signing secret?' : 'Create a signing secret?'}
+          description={hasSecret ? 'Senders using the old secret are rejected.' : undefined}
+          confirmLabel={hasSecret ? 'Rotate' : 'Create'}
+          destructive={hasSecret}
+          onConfirm={async () => {
+            const next = generateSecret();
+            await onRotate(next);
+            setSecret(next);
+            setTurns((n) => n + 1);
+            toast.success(hasSecret ? 'Secret rotated' : 'Secret created');
+          }}
+        />
+      ) : null}
     </Card>
   );
 }

@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
@@ -6,7 +7,9 @@ import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount } from '@/web/lib/format.ts';
 import {
+  Badge,
   Button,
+  Callout,
   DataTable,
   EmptyState,
   ErrorState,
@@ -16,6 +19,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
+import { ATTENTION_COPY, identityAttention } from './attention.ts';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
 import { useIdentityPages } from './queries.ts';
 import { UploadIdentityDialog } from './upload-dialog.tsx';
@@ -29,6 +33,8 @@ export function IdentitiesPage() {
   const [uploading, setUploading] = useState(false);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const empty = !list.isPending && !list.isError && rows.length === 0;
+  const now = Date.now();
+  const attention = useMemo(() => identityAttention(rows, now), [rows, now]);
   const upload = (variant: 'primary' | 'outline') => (
     <Button
       variant={variant}
@@ -86,7 +92,34 @@ export function IdentitiesPage() {
   }, [orgName]);
   return (
     <>
-      <PageHeader title="Apple identities" actions={upload(empty ? 'outline' : 'primary')} />
+      <PageHeader
+        title="Apple identities"
+        meta={
+          <>
+            <Badge>Platform-wide</Badge>
+            <span>All modes</span>
+          </>
+        }
+        actions={upload(empty ? 'outline' : 'primary')}
+      />
+      {attention ? (
+        <Callout
+          className="mb-6"
+          tone="warning"
+          title={`${attention.identity.label}: a loaded certificate ${ATTENTION_COPY[attention.reason]}`}
+          actions={
+            <Button asChild size="sm" variant="outline">
+              <Link
+                to="/admin/identities/$identityId"
+                params={{ identityId: attention.identity.id }}
+              >
+                Review
+              </Link>
+            </Button>
+          }
+        />
+      ) : null}
+      <h2 className="mb-3 text-base font-semibold text-fg-strong">Identities</h2>
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

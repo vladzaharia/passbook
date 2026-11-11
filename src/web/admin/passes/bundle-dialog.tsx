@@ -1,9 +1,12 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
+import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { errorMessage, isApiError } from '../../lib/errors.ts';
+import { sessionQuery } from '../../lib/session.ts';
 import { Scan } from '../../portal/add/scan.tsx';
 import {
   Buddy,
@@ -15,7 +18,6 @@ import {
   Form,
   FormField,
   Input,
-  toast,
   useFormErrors,
 } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
@@ -32,31 +34,32 @@ function validate(name: string, email: string): Record<string, string> {
   return found;
 }
 
-/**
- * The link on the shared QR sign, with Copy. In Test mode nothing was sent: the mail sits in the
- * Test inbox.
- */
-function Result({ bundle, emailed }: { bundle: BundleDto; emailed: boolean }) {
+/** The created link, with the email request beside it. */
+function Result({ bundle, emailRequested }: { bundle: BundleDto; emailRequested: string | null }) {
   const url = absoluteUrl(bundle.url);
   const test = bundle.mode === 'test';
   return (
     <div className="wl-rise flex min-w-0 flex-col gap-4">
-      <Callout tone="success" title="Bundle ready">
+      <Callout tone="success" title="Bundle created">
         <span className="flex flex-wrap items-center gap-x-2">
-          {emailed
-            ? test
-              ? 'Link captured in the Test inbox.'
-              : `Link emailed to ${bundle.holderEmail}.`
-            : `${plural(bundle.passes.length)} in one link.`}
-          {emailed && test ? (
+          {plural(bundle.passes.length)} in one link.
+          <ModePill mode={bundle.mode} />
+        </span>
+      </Callout>
+      {emailRequested ? (
+        <Callout tone="success" title={`Email requested for ${emailRequested}.`}>
+          {test ? (
             <Link to="/admin/test-inbox" className="underline-offset-2 hover:underline">
               Open Test inbox
             </Link>
           ) : null}
-          <ModePill mode={bundle.mode} />
-        </span>
-      </Callout>
-      <Scan url={url} label={`QR code for ${bundle.name}`} buddy={(p) => <Buddy {...p} />}>
+        </Callout>
+      ) : null}
+      <Scan
+        url={url}
+        label={`QR code for ${bundle.name}`}
+        buddy={emailRequested ? undefined : (p) => <Buddy {...p} />}
+      >
         <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-surface-sunken py-1 pr-1 pl-3">
           <span
             data-autofocus
@@ -90,11 +93,14 @@ export function BundleDialog({
   onDone: () => void;
 }) {
   const create = useCreateBundle();
+  const client = useQueryClient();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
-  const [made, setMade] = useState<{ bundle: BundleDto; emailed: boolean } | null>(null);
+  const [made, setMade] = useState<{ bundle: BundleDto; emailRequested: string | null } | null>(
+    null,
+  );
   const check = useFormErrors(validate(name, email));
   const errors = { ...serverErrors, ...check.errors };
 
@@ -111,6 +117,9 @@ export function BundleDialog({
   }
 
   async function submit() {
+    const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+    if (!before?.authenticated) return;
+    const userId = before.user.id;
     setFormError(undefined);
     const address = email.trim();
     try {
@@ -120,9 +129,12 @@ export function BundleDialog({
         name: name.trim(),
         ...(address ? { holderEmail: address, sendEmail: true } : {}),
       });
-      setMade({ bundle, emailed: Boolean(address) });
-      if (address && bundle.mode !== 'test') toast.sent(`Link emailed to ${address}`);
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
+      setMade({ bundle, emailRequested: address || null });
     } catch (cause) {
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);
       setFormError(errorMessage(cause));
     }
@@ -159,7 +171,7 @@ export function BundleDialog({
         }
       >
         {made ? (
-          <Result bundle={made.bundle} emailed={made.emailed} />
+          <Result bundle={made.bundle} emailRequested={made.emailRequested} />
         ) : (
           <Form
             id="new-bundle"
@@ -182,7 +194,11 @@ export function BundleDialog({
                 />
               )}
             </FormField>
-            <FormField label="Email" error={errors.email} help="Optional. Sends the link.">
+            <FormField
+              label="Email"
+              error={errors.email}
+              help="Optional. Requests an email with the link."
+            >
               {(p) => (
                 <Input
                   {...p}

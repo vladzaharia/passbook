@@ -18,15 +18,31 @@ import { usePassActionRunner } from './pass-actions.tsx';
  * The row's action menu: the same actions and guards as the detail header (actionsFor). Opening
  * it loads the pass links, so Open, Download and Copy work inside the click.
  */
-export function PassRowMenu({ pass }: { pass: PassSummaryDto }) {
+export function PassRowMenu({
+  pass,
+  orgId,
+  canOperate,
+}: {
+  pass: PassSummaryDto;
+  orgId: string | undefined;
+  canOperate: boolean;
+}) {
   const [open, setOpen] = useState(false);
+  const matchesScope = Boolean(orgId && pass.orgId === orgId);
   const detail = useQuery({
     queryKey: passKeys.detail(pass.id),
     queryFn: ({ signal }) => api.get(`/api/v1/passes/${pass.id}`, PassDetailSchema, { signal }),
-    enabled: open,
-    staleTime: 30_000,
+    enabled: open && matchesScope,
+    staleTime: 0,
   });
-  const runner = usePassActionRunner(pass, detail.data, { onDeleted: () => {} });
+  const links =
+    matchesScope && !detail.isFetching && !detail.isError && detail.data?.orgId === orgId
+      ? detail.data
+      : undefined;
+  const runner = usePassActionRunner(pass, links, {
+    canOperate: canOperate && matchesScope && (!detail.data || detail.data.orgId === orgId),
+    onDeleted: () => {},
+  });
   const firstDanger = runner.defs.findIndex((d) => d.destructive);
   const needsLinks = new Set(['open', 'download', 'copy']);
   return (

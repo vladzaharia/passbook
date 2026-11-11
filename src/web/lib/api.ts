@@ -21,7 +21,9 @@ export interface ApiClientDeps {
   fetch?: typeof fetch;
   /** CSRF token for writes; undefined when there is no session. */
   getCsrfToken: () => Promise<string | undefined>;
-  /** Called on any 401 before the error is thrown. */
+  /** Current authenticated principal, or undefined when the session is not known. */
+  getSessionPrincipal?: () => string | undefined;
+  /** Called on a current-principal 401, or any 401 when no principal getter is supplied. */
   onUnauthorized?: (error: ApiError) => void;
 }
 
@@ -55,13 +57,17 @@ export function createApiClient(deps: ApiClientDeps) {
     body: unknown,
     opts: RequestOptions,
   ): Promise<unknown> {
+    // Capture before awaiting CSRF: a write can outlive a principal change even before fetch.
+    const getSessionPrincipal = deps.getSessionPrincipal;
+    const principal = getSessionPrincipal?.();
+    const isWrite = WRITE.has(method);
     const doFetch = deps.fetch ?? fetch;
     const headers: Record<string, string> = {
       accept: 'application/json',
       ...modeHeaders(),
       ...opts.headers,
     };
-    if (WRITE.has(method)) {
+    if (isWrite) {
       const token = await deps.getCsrfToken();
       if (token) headers['x-csrf-token'] = token;
     }
@@ -73,6 +79,17 @@ export function createApiClient(deps: ApiClientDeps) {
       headers['content-type'] = 'application/json';
       payload = JSON.stringify(body);
     }
+    if (isWrite && principal !== undefined && getSessionPrincipal?.() !== principal) {
+      if (opts.signal?.aborted) throw opts.signal.reason;
+      throw new ApiError({
+        status: 409,
+        code: 'session_changed',
+        detail: 'The signed-in account changed. Review your changes and try again.',
+      });
+    }
+    // A write may discover its first known session while looking up CSRF.
+    const requestPrincipal =
+      isWrite && principal === undefined ? getSessionPrincipal?.() : principal;
     let res: Response;
     try {
       res = await doFetch(buildUrl(path, opts.query), {
@@ -93,7 +110,13 @@ export function createApiClient(deps: ApiClientDeps) {
     const data = await readBody(res);
     if (!res.ok) {
       const error = problemToError(res.status, data);
-      if (res.status === 401) deps.onUnauthorized?.(error);
+      if (
+        res.status === 401 &&
+        (!getSessionPrincipal ||
+          (requestPrincipal !== undefined && requestPrincipal === getSessionPrincipal()))
+      ) {
+        deps.onUnauthorized?.(error);
+      }
       throw error;
     }
     return data;
@@ -174,6 +197,13 @@ export function setCsrfProvider(fn: () => Promise<string | undefined>): void {
   csrfProvider = fn;
 }
 
+let sessionPrincipalProvider: () => string | undefined = () => undefined;
+
+/** Wired once at startup, like the CSRF provider, without importing the session. */
+export function setSessionPrincipalProvider(fn: () => string | undefined): void {
+  sessionPrincipalProvider = fn;
+}
+
 // A 401 means the session ended mid-use. However many requests come back 401, one dialog says so
 // (ui/session-ended-dialog.tsx); its button signs in again and returns here.
 let sessionEnded = false;
@@ -186,8 +216,9 @@ export function endSession(): void {
   for (const listener of sessionListeners) listener();
 }
 
-/** Test seam: back to a live session. */
+/** Clear the old session's notification after a principal switch. */
 export function resetSessionEnded(): void {
+  if (!sessionEnded) return;
   sessionEnded = false;
   for (const listener of sessionListeners) listener();
 }
@@ -219,6 +250,7 @@ export function sessionEndedHref(next: string): string {
 
 export const api = createApiClient({
   getCsrfToken: () => csrfProvider(),
+  getSessionPrincipal: () => sessionPrincipalProvider(),
   onUnauthorized: endSession,
 });
 

@@ -1,38 +1,33 @@
 import { Link } from '@tanstack/react-router';
+import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { Button, Callout } from '../../../ui/index.ts';
-import type { Saved } from './save-flow.ts';
 
-/** After Save version: passes keep the active version until it is activated. */
+/** After Save version: passes keep the active version until a release is approved. */
 export function SavedCallout({
   templateId,
-  saved,
-  onActivate,
+  canPublish,
 }: {
   templateId: string;
-  saved: Saved;
-  onActivate: () => void;
+  canPublish: boolean;
 }) {
+  const { orgId } = useOrgScope();
   return (
     <Callout
       className="dz-seal mb-4"
       tone="success"
       actions={
-        saved.activated ? (
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/templates/$templateId" params={{ templateId }}>
-              Open template
-            </Link>
-          </Button>
-        ) : (
-          <Button size="sm" onClick={onActivate}>
-            Activate
-          </Button>
-        )
+        <Button asChild variant="outline" size="sm">
+          <Link
+            to="/admin/templates/$templateId"
+            params={{ templateId }}
+            search={canPublish ? { tab: 'versions', orgId } : { orgId }}
+          >
+            {canPublish ? 'Review release' : 'Open template'}
+          </Link>
+        </Button>
       }
     >
-      {saved.activated
-        ? 'Version saved and active.'
-        : 'Version saved. Passes keep the active version until you activate it.'}
+      Version saved. Existing releases are unchanged.
     </Callout>
   );
 }

@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import type { BroadcastDto, BroadcastState } from '@/shared/contracts/broadcasts.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { useOrgOptions } from '../../lib/search.ts';
 import {
   Button,
   DataTable,
@@ -16,8 +15,10 @@ import {
   LoadMore,
   PageHeader,
   RowLink,
+  SkeletonRows,
   StatusPill,
 } from '../../ui/index.ts';
+import { ForbiddenPage } from '../../ui/layout/error-pages.tsx';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBroadcastPages } from './api.ts';
 import { countsLine, KIND_LABEL, STATE_FILTERS, whenLine } from './labels.ts';
@@ -36,14 +37,44 @@ export function MessagesPage({
   search: MessagesSearch;
   onSearch: (patch: Partial<MessagesSearch>) => void;
 }) {
-  const { orgId } = useOrgScope();
-  const orgs = useOrgOptions();
+  const scope = useOrgScope();
+  if (scope.isLoading) return <SkeletonRows label="Loading organization access" />;
+  if (scope.isError)
+    return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
+  if (!scope.orgId)
+    return (
+      <EmptyState
+        heading
+        art="building"
+        title="Choose an organization"
+        description="Choose an organization in the top bar to continue."
+      />
+    );
+  if (!scope.membership?.capabilities.includes('messages:read')) return <ForbiddenPage />;
+  return (
+    <ScopedMessagesPage
+      key={scope.orgId}
+      orgId={scope.orgId}
+      canCreate={scope.membership?.capabilities.includes('messages:manage') === true}
+      search={search}
+      onSearch={onSearch}
+    />
+  );
+}
+
+function ScopedMessagesPage({
+  orgId,
+  canCreate,
+  search,
+  onSearch,
+}: {
+  orgId: string;
+  canCreate: boolean;
+  search: MessagesSearch;
+  onSearch: (patch: Partial<MessagesSearch>) => void;
+}) {
   const list = useBroadcastPages({ orgId, state: search.state });
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
-  const orgNames = useMemo(
-    () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
-    [orgs.data],
-  );
   // Test mode already says so in the header; a pill on every row would repeat it.
   const mixed = rows.some((r) => r.mode !== 'test');
   const columns = useMemo<ColumnDef<BroadcastDto, never>[]>(
@@ -61,7 +92,6 @@ export function MessagesPage({
             </span>
             <span className="block truncate text-xs text-fg-muted">
               {KIND_LABEL[row.original.kind]}
-              {orgId ? '' : ` · ${orgNames.get(row.original.orgId) ?? '—'}`}
             </span>
             {/* Phones show one row per message: the columns that fit nowhere move under the name. */}
             <span className="mt-1 flex flex-col gap-1 text-xs text-fg-muted md:hidden">
@@ -79,7 +109,11 @@ export function MessagesPage({
         id: 'state',
         header: 'State',
         meta: { nowrap: true },
-        cell: ({ row }) => <StatusPill status={row.original.state} />,
+        cell: ({ row }) => (
+          <StatusPill status={row.original.state}>
+            {row.original.state === 'sent' ? 'Completed' : undefined}
+          </StatusPill>
+        ),
       },
       {
         id: 'progress',
@@ -101,17 +135,18 @@ export function MessagesPage({
         cell: ({ row }) => whenLine(row.original),
       },
     ],
-    [orgNames, orgId, mixed],
+    [mixed],
   );
 
   const filtered = Boolean(search.state);
   const clear = () => onSearch({ state: undefined });
   const empty = !list.isPending && rows.length === 0 && !filtered;
-  const create = (variant: 'primary' | 'outline') => (
-    <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
-      <Link to="/admin/messages/new">New message</Link>
-    </Button>
-  );
+  const create = (variant: 'primary' | 'outline') =>
+    canCreate ? (
+      <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
+        <Link to="/admin/messages/new">New message</Link>
+      </Button>
+    ) : null;
 
   return (
     <>

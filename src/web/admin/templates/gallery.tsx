@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '../../lib/cn.ts';
 import { useArrivalMode } from '../../lib/motion.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Badge, EntityAvatar, Skeleton } from '../../ui/index.ts';
 import { PassPreview } from '../passes/pass-preview.tsx';
 import { useTemplatePreview } from './api.ts';
@@ -19,8 +20,13 @@ export function TemplateStill({
   deal?: boolean;
   className?: string;
 }) {
-  const live = template.status === 'active' && Boolean(template.activeVersion);
-  const preview = useTemplatePreview(live ? template.id : '');
+  const { orgId } = useOrgScope();
+  const live =
+    Boolean(orgId) &&
+    (template.orgId === null || template.orgId === orgId) &&
+    template.status === 'active' &&
+    Boolean(template.activeVersion);
+  const preview = useTemplatePreview(live ? template.id : '', orgId);
   return (
     // Decorative: inert keeps the pass's own links out of the tab order and the a11y tree.
     <div inert aria-hidden className={cn('pointer-events-none', className)}>
@@ -81,6 +87,7 @@ export function TemplateGallery({
   items: TemplateSummaryDto[];
   loading: boolean;
 }) {
+  const { orgId } = useOrgScope();
   const arrival = useArrivalMode(loading && items.length === 0);
   if (loading && items.length === 0) return <TemplateGallerySkeleton />;
   return (
@@ -116,6 +123,7 @@ export function TemplateGallery({
               <Link
                 to="/admin/templates/$templateId"
                 params={{ templateId: t.id }}
+                search={{ orgId }}
                 className="block truncate text-sm font-medium text-fg-strong after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
               >
                 {t.name}

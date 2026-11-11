@@ -1,39 +1,34 @@
-import { useNavigate } from '@tanstack/react-router';
-import { Palette, Pause, Play } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { deleteConfirm } from '@/web/lib/confirms.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
-import { prefersReducedMotion } from '@/web/lib/motion.ts';
+import { isApiError } from '@/web/lib/errors.ts';
+import { formatDateTime } from '@/web/lib/format.ts';
 import {
   Button,
   Callout,
   Card,
   CardBody,
   CardHeader,
+  DropdownMenuItem,
   detailError,
   EntityAvatar,
+  KeyValue,
   MetaLink,
+  MoreMenu,
   PageHeader,
-  SaveBarGroup,
   SkeletonDetail,
+  TechnicalDetails,
   TwoPane,
   TypedConfirmDialog,
   toast,
 } from '@/web/ui/index.ts';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
-import { ORG_FIELDS } from '../settings/fields.ts';
-import { SettingsForm } from '../settings/settings-form.tsx';
-import { CountsCard, OrgChecklist, OverviewCard } from './org-aside.tsx';
-import { OrgForm } from './org-form.tsx';
+import { BootstrapOrgAdmin, ProvisioningCounts } from './org-provisioning.tsx';
 import { OrgStatus } from './orgs-page.tsx';
-import { PASS_BRANDING_ID } from './pass-branding.tsx';
-import { PassEmailPreview } from './pass-email-preview.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
-
-// Accent lives in the org form; settings here cover support contacts and the pass email.
-const SUPPORT_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('support.'));
-const EMAIL_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('email.'));
 
 /** Suspend is undone from its toast; Reactivate just runs. Neither asks first. */
 function useStatusToggle(orgId: string) {
@@ -57,7 +52,14 @@ function useStatusToggle(orgId: string) {
   return { suspend, reactivate, pending: setStatus.isPending };
 }
 
-export function OrgDetailPage({ orgId }: { orgId: string }) {
+/** Platform provisioning is independent of tenant membership and never loads a workspace. */
+export function OrgDetailPage({
+  orgId,
+  canOpenWorkspace,
+}: {
+  orgId: string;
+  canOpenWorkspace: boolean;
+}) {
   const query = useOrg(orgId);
   const remove = useDeleteOrg(orgId);
   const status = useStatusToggle(orgId);
@@ -77,7 +79,12 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
       </>
     );
   }
-  if (query.isError) {
+  if (
+    !query.data ||
+    (query.isError &&
+      isApiError(query.error) &&
+      (query.error.isUnauthorized || query.error.isForbidden || query.error.isNotFound))
+  ) {
     return detailError(query, {
       entity: 'org',
       to: '/admin/orgs',
@@ -87,32 +94,34 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
   const org = query.data;
   const suspended = org.status === 'suspended';
   const { typed: _typed, ...confirmCopy } = deleteConfirm('org', org.name);
-  // Details, pass email and support contacts are separate forms under one Save.
   return (
-    <SaveBarGroup>
+    <>
       <PageHeader
         title={org.name}
         breadcrumbs={crumbs}
-        avatar={
-          <EntityAvatar
-            kind="org"
-            id={org.id}
-            name={org.name}
-            accent={org.branding.accent}
-            size={40}
-          />
-        }
+        avatar={<EntityAvatar kind="org" id={org.id} name={org.name} size={40} />}
         meta={
           <>
             <OrgStatus status={org.status} />
             <span className="font-mono text-xs">{org.slug}</span>
-            <MetaLink to="/admin/audit" search={{ orgId: org.id }} icon={ENTITY.audit.icon}>
+            <MetaLink to="/admin/audit" search={{ filterOrgId: org.id }} icon={ENTITY.audit.icon}>
               Audit log
             </MetaLink>
           </>
         }
         actions={
           <>
+            {canOpenWorkspace ? (
+              <Button asChild variant="outline">
+                <Link
+                  to="/admin/orgs/$orgId"
+                  params={{ orgId: org.id }}
+                  search={{ view: 'workspace', orgId: org.id }}
+                >
+                  Open workspace
+                </Link>
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               loading={status.pending}
@@ -121,42 +130,64 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
             >
               {suspended ? 'Reactivate' : 'Suspend'}
             </Button>
-            <Button
-              variant="outline"
-              className="border-danger-border text-danger hover:not-disabled:text-danger"
-              iconStart={<ACTION_ICON.delete aria-hidden />}
-              onClick={() => setDeleting(true)}
-            >
-              Delete
-            </Button>
+            <MoreMenu>
+              <DropdownMenuItem destructive onSelect={() => setDeleting(true)}>
+                <ACTION_ICON.delete aria-hidden />
+                Delete
+              </DropdownMenuItem>
+            </MoreMenu>
           </>
         }
       />
+      {query.isRefetchError ? (
+        <Callout
+          tone="warning"
+          className="mb-6"
+          title="Organization refresh failed"
+          actions={
+            <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
+              Retry organization
+            </Button>
+          }
+        >
+          The displayed provisioning details may be out of date.
+        </Callout>
+      ) : null}
       <TwoPane
         aside={
           <>
-            <CountsCard org={org} />
-            <OverviewCard org={org} />
+            <ProvisioningCounts org={org} />
+            <Card>
+              <CardHeader title="Overview" />
+              <CardBody>
+                <KeyValue
+                  items={[
+                    { label: 'Slug', value: org.slug, mono: true },
+                    { label: 'Created', value: formatDateTime(org.createdAt) },
+                  ]}
+                />
+                <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: org.id }]} />
+              </CardBody>
+            </Card>
           </>
         }
       >
         {created.shown ? (
-          // Branding first; the Get started checklist below carries template, pass and source.
           <CreatedCallout
             title="Organization created"
             onDismiss={created.dismiss}
             actions={
-              <Button
-                size="sm"
-                iconStart={<Palette aria-hidden />}
-                onClick={() => {
-                  const card = document.getElementById(PASS_BRANDING_ID);
-                  card?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-                  card?.querySelector<HTMLElement>('input, button')?.focus({ preventScroll: true });
-                }}
-              >
-                Add branding
-              </Button>
+              canOpenWorkspace ? (
+                <Button asChild size="sm">
+                  <Link
+                    to="/admin/orgs/$orgId"
+                    params={{ orgId: org.id }}
+                    search={{ view: 'workspace', orgId: org.id }}
+                  >
+                    Open workspace
+                  </Link>
+                </Button>
+              ) : undefined
             }
           />
         ) : null}
@@ -165,28 +196,32 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
             Suspended: passes do not update and its API keys do not work.
           </Callout>
         ) : null}
-        {org.counts.passes === 0 ? <OrgChecklist org={org} /> : null}
-        <OrgForm key={`${org.updatedAt}`} org={org} />
         <Card>
-          <CardHeader title="Pass email" />
-          <CardBody>
-            <SettingsForm
-              scope={`org:${org.id}`}
-              fields={EMAIL_FIELDS}
-              aside={(draft) => (
-                <PassEmailPreview
-                  orgId={org.id}
-                  buddy={draft['email.buddy'] === true}
-                  version={org.updatedAt}
-                />
-              )}
-            />
+          <CardHeader title="Lifecycle" actions={<OrgStatus status={org.status} />} />
+          <CardBody className="flex flex-col gap-2 text-sm text-fg-muted">
+            <p>
+              Suspending this organization stops pass updates and its API keys from working.
+              Reactivate it to allow those functions again.
+            </p>
+            <p>
+              Deletion removes the organization from use, but retains pass and audit references.
+              Neither action erases an offline Wallet copy.
+            </p>
           </CardBody>
         </Card>
+        <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
         <Card>
-          <CardHeader title="Support contacts" />
-          <CardBody>
-            <SettingsForm scope={`org:${org.id}`} fields={SUPPORT_FIELDS} />
+          <CardHeader
+            title="Signing identities"
+            actions={
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/admin/identities">Manage identities</Link>
+              </Button>
+            }
+          />
+          <CardBody className="text-sm text-fg-muted">
+            Manage platform signing identities in the directory. The organization&apos;s saved
+            default is available in its authorized workspace.
           </CardBody>
         </Card>
       </TwoPane>
@@ -194,6 +229,7 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
         open={deleting}
         onOpenChange={setDeleting}
         {...confirmCopy}
+        description={`${confirmCopy.description} Pass and audit records retain their organization reference; offline Wallet copies are not erased.`}
         word={org.slug}
         onConfirm={async () => {
           await remove.mutateAsync();
@@ -202,6 +238,6 @@ export function OrgDetailPage({ orgId }: { orgId: string }) {
           await navigate({ to: '/admin/orgs', replace: true });
         }}
       />
-    </SaveBarGroup>
+    </>
   );
 }

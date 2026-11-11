@@ -24,6 +24,23 @@ const RANGE_SHORT: Record<Range, string> = { '24h': '24 h', '7d': '7 days', '30d
 interface Target {
   to: string;
   search?: Record<string, string>;
+  /** A tenant list of an org the admin is not a member of is Forbidden: the number stays plain. */
+  plain?: boolean;
+}
+
+function TargetLink({
+  to,
+  search,
+  plain,
+  className,
+  children,
+}: Target & { className: string; children: React.ReactNode }) {
+  if (plain) return <div className={className}>{children}</div>;
+  return (
+    <Link to={to} search={search} className={className}>
+      {children}
+    </Link>
+  );
 }
 
 interface Kpi extends Target {
@@ -61,14 +78,25 @@ function Sparkline({ points, warn }: { points: readonly Point[]; warn: boolean }
   );
 }
 
-function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) {
-  const shown = useRememberedCount(kpi.id, kpi.value);
+function Tile({
+  kpi,
+  index,
+  range,
+  countScope,
+}: {
+  kpi: Kpi;
+  index: number;
+  range: Range;
+  countScope: string;
+}) {
+  const shown = useRememberedCount(`${countScope}:${kpi.id}`, kpi.value);
   const bad = Boolean(kpi.warn) && kpi.value > 0;
   return (
     <li style={{ '--i': index } as CSSProperties} className="min-w-0">
-      <Link
+      <TargetLink
         to={kpi.to}
         search={kpi.search}
+        plain={kpi.plain}
         className={cn(
           // min-h-0 opts this block link out of base.css's touch padding for inline links.
           'flex h-full min-h-0 flex-col gap-2.5 rounded-lg border border-border bg-surface-raised p-4',
@@ -78,7 +106,7 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
       >
         <span className="flex min-w-0 items-center gap-2.5">
           <EntityIcon icon={kpi.icon} className={cn(bad && 'border-danger-border text-danger')} />
-          <span className="min-w-0 truncate text-sm text-fg-muted">{kpi.label}</span>
+          <span className="min-w-0 text-sm text-fg-muted">{kpi.label}</span>
           {kpi.ranged ? (
             <span className="ml-auto hidden shrink-0 text-xs text-fg-muted sm:inline">
               <span className="sr-only">, </span>
@@ -86,6 +114,7 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
             </span>
           ) : null}
         </span>
+        {/* Flex hides the gap from the accessible name: keep a space between label and value. */}{' '}
         <span className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <span className="flex items-baseline justify-between gap-2">
             <span
@@ -106,7 +135,7 @@ function Tile({ kpi, index, range }: { kpi: Kpi; index: number; range: Range }) 
           </span>
           <Sparkline points={kpi.series} warn={bad} />
         </span>
-      </Link>
+      </TargetLink>
     </li>
   );
 }
@@ -117,6 +146,7 @@ function Secondary({
   value,
   to,
   search,
+  plain,
   missing,
 }: Target & {
   id: string;
@@ -127,16 +157,17 @@ function Secondary({
   const shown = useRememberedCount(id, value);
   return (
     <li>
-      <Link
+      <TargetLink
         to={to}
         search={search}
+        plain={plain}
         className="inline-flex min-h-6 items-center gap-1.5 rounded-sm text-fg-muted pointer-coarse:min-h-11 hover:text-fg-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         {label}
         <span className="font-semibold text-fg tabular-nums">
           {missing ? '—' : formatCount(shown)}
         </span>
-      </Link>
+      </TargetLink>
     </li>
   );
 }
@@ -146,12 +177,21 @@ export function Kpis({
   data,
   range,
   enter,
+  countScope,
+  listOrgId,
 }: {
   data: MetricsOverview;
   range: Range;
   enter: boolean;
+  countScope: string;
+  /** The filtered org when the admin is a member of it, `null` when not; absent: no filter. */
+  listOrgId?: string | null;
 }) {
   const { totals: t, series: s } = data;
+  const passes = (search?: Record<string, string>): Pick<Target, 'search' | 'plain'> => ({
+    search: listOrgId ? { ...search, orgId: listOrgId } : search,
+    plain: listOrgId === null,
+  });
   const kpis: Kpi[] = [
     {
       id: 'passes',
@@ -160,6 +200,7 @@ export function Kpis({
       icon: ENTITY.pass.icon,
       series: s.issued,
       to: '/admin/passes',
+      ...passes(),
     },
     {
       id: 'active',
@@ -168,15 +209,16 @@ export function Kpis({
       icon: PASS_STATUS.active.icon,
       series: s.updated,
       to: '/admin/passes',
-      search: { status: 'active' },
+      ...passes({ status: 'active' }),
     },
     {
       id: 'holders',
-      label: 'Holders',
+      label: 'Passes with holder email',
       value: t.holders,
       icon: ENTITY.user.icon,
       series: s.emails,
-      to: '/admin/users',
+      to: '/admin/passes',
+      ...passes(),
     },
     {
       id: 'pushFailures',
@@ -197,7 +239,7 @@ export function Kpis({
         className={cn('grid grid-cols-2 gap-3 xl:grid-cols-4', enter && 'wl-stagger')}
       >
         {kpis.map((k, i) => (
-          <Tile key={k.id} kpi={k} index={i} range={range} />
+          <Tile key={k.id} kpi={k} index={i} range={range} countScope={countScope} />
         ))}
       </ul>
       <div className={cn(enter && 'wl-stagger')}>
@@ -207,22 +249,47 @@ export function Kpis({
           className="flex flex-wrap items-baseline gap-x-5 gap-y-1 px-1 text-sm"
         >
           <Secondary
-            id="voided"
+            id={`${countScope}:voided`}
             label="Voided"
             value={t.voidedPasses}
             to="/admin/passes"
-            search={{ status: 'voided' }}
+            {...passes({ status: 'voided' })}
           />
-          <Secondary id="devices" label="Devices" value={t.devices} to="/admin/passes" />
+          <Secondary
+            id={`${countScope}:devices`}
+            label="Devices"
+            value={t.devices}
+            to="/admin/passes"
+            {...passes()}
+          />
           <li aria-hidden className="h-4 w-px bg-border max-sm:hidden" />
           <li className="text-xs text-fg-muted">{RANGE_LABEL[range]}</li>
-          <Secondary id="issued" label="Issued" value={t.issued} to="/admin/passes" />
-          <Secondary id="updated" label="Updated" value={t.updated} to="/admin/passes" />
+          <li className="text-fg-muted">
+            Email outcomes: Unknown (needs review){' '}
+            <span className="font-semibold text-fg tabular-nums">
+              {formatCount(t.emailUnknown)}
+            </span>
+          </li>
           <Secondary
-            id="downloads"
+            id={`${countScope}:issued`}
+            label="Issued"
+            value={t.issued}
+            to="/admin/passes"
+            {...passes()}
+          />
+          <Secondary
+            id={`${countScope}:updated`}
+            label="Updated"
+            value={t.updated}
+            to="/admin/passes"
+            {...passes()}
+          />
+          <Secondary
+            id={`${countScope}:downloads`}
             label="Downloads"
             value={t.downloads}
             to="/admin/passes"
+            {...passes()}
             missing={missing('downloads')}
           />
         </ul>

@@ -46,11 +46,30 @@ export const isAggregate = (c: Pick<Component, 'id'>) => c.id === 'connections';
 export const leaves = <T extends Pick<Component, 'id'>>(components: readonly T[]) =>
   components.filter((c) => !isAggregate(c));
 
-/** Leaves that need attention, worst first. */
+/** Leaves that need attention, worst first. Keep an aggregate only if its state has no matching
+ * connection row, so an incomplete response cannot conceal a reported failure. */
 export function problems<T extends Pick<Component, 'id' | 'state'>>(components: readonly T[]) {
-  return leaves(components)
-    .filter((c) => c.state === 'failing' || c.state === 'degraded')
-    .sort((a, b) => (a.state === b.state ? 0 : a.state === 'failing' ? -1 : 1));
+  const bad = leaves(components).filter((c) => c.state === 'failing' || c.state === 'degraded');
+  const aggregate = components.find((c) => isAggregate(c));
+  if (
+    aggregate &&
+    (aggregate.state === 'failing' || aggregate.state === 'degraded') &&
+    !bad.some((c) => c.id.startsWith('connection:') && c.state === aggregate.state)
+  ) {
+    bad.push(aggregate);
+  }
+  return bad.sort((a, b) => (a.state === b.state ? 0 : a.state === 'failing' ? -1 : 1));
+}
+
+/** Configuration is not verification, and an empty response is not evidence of good health. */
+export function assessmentState(
+  components: readonly Pick<Component, 'state'>[],
+): State | 'unknown' {
+  if (components.length === 0) return 'unknown';
+  for (const state of ['failing', 'degraded', 'configured', 'not_configured'] as const) {
+    if (components.some((component) => component.state === state)) return state;
+  }
+  return 'verified';
 }
 
 export function countStates(components: readonly Pick<Component, 'state'>[]) {
@@ -78,11 +97,22 @@ const NOUN: Record<Component['kind'], [string, string]> = {
   workflow: ['workflow', 'workflows'],
 };
 
-/** "1 connection failing", "2 components degraded", or "All good" when nothing needs attention. */
+/** A concise assessment of the reported checks, without treating unverified checks as healthy. */
 export function headline(components: readonly Pick<Component, 'id' | 'kind' | 'state'>[]): string {
   const bad = problems(components);
   const worst = bad[0]?.state;
-  if (!worst) return 'All good';
+  if (!worst) {
+    switch (assessmentState(components)) {
+      case 'unknown':
+        return 'No status checks reported';
+      case 'configured':
+        return 'Some checks are not verified';
+      case 'not_configured':
+        return 'Some services are not configured';
+      default:
+        return 'All reported components verified';
+    }
+  }
   const same = bad.filter((c) => c.state === worst);
   const kinds = new Set(same.map((c) => c.kind));
   const n = same.length;

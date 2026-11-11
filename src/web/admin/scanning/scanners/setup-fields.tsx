@@ -1,12 +1,14 @@
 import { Badge, Button, CheckboxField, FormField } from '@/web/ui/index.ts';
 import { useScannerPages } from '../queries.ts';
-import type { ScannerFieldsProps } from './scanner-fields.tsx';
+import type { ScannerDraft } from './scanner-draft.ts';
 
-export function SetupFields({
-  draft,
-  onChange,
-  errors,
-}: Pick<ScannerFieldsProps, 'draft' | 'onChange' | 'errors'>) {
+export interface SetupFieldsProps {
+  draft: ScannerDraft;
+  onChange: (patch: Partial<ScannerDraft>) => void;
+  errors: Partial<Record<string, string>>;
+}
+
+export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
   const scanners = useScannerPages(
     draft.orgId || undefined,
     false,

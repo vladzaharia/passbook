@@ -41,9 +41,10 @@ export function ConnectionsListPage({
   search: ConnectionListSearch;
   onSearch: (patch: Partial<ConnectionListSearch>) => void;
 }) {
-  const { orgId } = useOrgScope();
+  const { orgId, membership } = useOrgScope();
+  const canManage = Boolean(orgId && membership?.capabilities.includes('integrations:manage'));
   const orgs = useOrgOptions();
-  const connectorName = useConnectorNames();
+  const connectorName = useConnectorNames(orgId);
   const [text, setText] = useState(search.q ?? '');
   useEffect(() => setText(search.q ?? ''), [search.q]);
   useEffect(() => {
@@ -154,7 +155,10 @@ export function ConnectionsListPage({
 
   return (
     <>
-      <PageHeader title="Connections" actions={create(empty ? 'outline' : 'primary')} />
+      <PageHeader
+        title="Connections"
+        actions={canManage ? create(empty ? 'outline' : 'primary') : undefined}
+      />
       <TestModeNote className="mb-4" />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
@@ -187,7 +191,13 @@ export function ConnectionsListPage({
             />
           }
           emptyFiltered={<FilteredEmpty entity="connection" onClear={clear} />}
-          empty={<EmptyState art="plugs" title="No connections" action={create('primary')} />}
+          empty={
+            <EmptyState
+              art="plugs"
+              title="No connections"
+              action={canManage ? create('primary') : undefined}
+            />
+          }
           footer={
             <LoadMore
               query={list}

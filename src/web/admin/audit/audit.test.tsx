@@ -48,6 +48,21 @@ describe('redact', () => {
     expect(diff.after).not.toContain('"z"');
     expect(describeDetail({ note: 'x' }).kind).toBe('json');
   });
+  it('retains and redacts other recorded context alongside a diff', () => {
+    const detail = describeDetail({
+      before: { name: 'A' },
+      after: { name: 'B' },
+      mode: 'test',
+      reviewedVersion: 'v2',
+      policyProvenance: { source: 'platform', token: 'secret' },
+    });
+    expect(detail.kind).toBe('diff');
+    expect(detail.value).toEqual({
+      mode: 'test',
+      reviewedVersion: 'v2',
+      policyProvenance: { source: 'platform', token: REDACTED },
+    });
+  });
 });
 
 describe('audit search', () => {
@@ -74,7 +89,7 @@ describe('audit search', () => {
     expect(auditHref({ target: 'pass', id: 'p1' })).toBe(
       '/admin/audit?targetType=pass&targetId=p1',
     );
-    expect(auditHref({ org: 'o1' })).toBe('/admin/audit?orgId=o1');
+    expect(auditHref({ org: 'o1' })).toBe('/admin/audit?filterOrgId=o1');
   });
   it('reads a date range as one value', () => {
     expect(rangeLabel(undefined, undefined)).toBe('any');
@@ -96,9 +111,11 @@ describe('labels', () => {
     expect(targetRef({ ...e, targetType: 'settings', targetId: 'platform' })?.name).toBe(
       'Platform settings',
     );
-    expect(targetRef({ ...e, targetType: 'settings', targetId: 'org:o1' })?.name).toBe(
-      'Organization settings',
-    );
+    expect(targetRef({ ...e, targetType: 'settings', targetId: 'org:o1' })).toMatchObject({
+      name: 'Organization settings',
+      to: '/admin/orgs/o1',
+      search: { view: 'workspace', orgId: 'o1' },
+    });
     expect(targetRef({ ...e, targetType: 'broadcast', targetId: 'b1' })).toMatchObject({
       name: 'Message',
       to: '/admin/messages/b1',

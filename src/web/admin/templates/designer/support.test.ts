@@ -99,6 +99,12 @@ describe('images', () => {
         '/base/',
       ),
     ).toEqual({ 'a@3x.png': '/base/a%403x.png', 'b.png': 'data:image/png;base64,QQ==' });
+    expect(
+      previewAssetMap(
+        [{ name: 'a@3x.png', slot: 'icon', scale: 3, size: 1, sha1: 'h' }],
+        '/base/?orgId=org%202',
+      ),
+    ).toEqual({ 'a@3x.png': '/base/a%403x.png?orgId=org%202' });
   });
 });
 

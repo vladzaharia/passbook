@@ -2,7 +2,9 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useState } from 'react';
+import type { MyPassListSchema } from '../../shared/contracts/me.ts';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, canAddToWallet } from '../../shared/device.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
@@ -27,6 +29,7 @@ import { browserDevice } from './device.ts';
 import { type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { RefreshButton } from './refresh-button.tsx';
+import { useRemovalStatus } from './removal-status.ts';
 import { AddLine, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
 import './portal.css';
 
@@ -36,7 +39,7 @@ const GRID = 'mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 /**
  * What the list's buddy acts out (motion-and-expression.md, The buddy). Passes to add: it aims at
  * the bundle badge above it (nudge) or, with one and no bundle, lifts a pass and drops it into its
- * pocket (tuck). Every live pass in a Wallet: it counts its own, happy. Only voided: a sigh.
+ * pocket (tuck). Every live pass has a registration: it counts its own, happy. Only voided: a sigh.
  */
 /** Still the holder's to add: not voided, not removed from Wallet. */
 const isLive = (p: MyPass) => p.status !== 'voided' && p.removedAt === null;
@@ -57,9 +60,9 @@ function ListBuddy({ passes }: { passes: readonly MyPass[] }) {
   );
 }
 
-/** A pass that is already in a Wallet: the badge gives way to this pill. */
+/** A reported Apple registration: the badge gives way to this pill. */
 export function InWalletPill() {
-  return <StatusPill status="in_wallet" />;
+  return <StatusPill status="in_wallet">{HOLDER_COPY.inWalletPill}</StatusPill>;
 }
 
 /**
@@ -112,7 +115,9 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
                 <StatusPill status={removed ? 'removed' : 'voided'} />
               ) : pass.inWallet ? (
                 <InWalletPill />
-              ) : null}
+              ) : (
+                <StatusPill status="active" />
+              )}
             </span>
           </div>
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
@@ -120,6 +125,9 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
         {/* As tall as the badge with its clear space (52, 56 on touch), badge or not. */}
         <div className="flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
           <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline">
+              <Link {...link}>View pass</Link>
+            </Button>
             {voided || pass.inWallet || !qr || !publicUrl ? null : (
               <ShowQrButton passTitle={name} url={publicUrl} />
             )}
@@ -142,10 +150,11 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
   );
 }
 
+type BundleInfo = (typeof MyPassListSchema._output)['bundle'];
+
 /** One badge per bundle of 10 passes not yet in a Wallet; a .pkpasses file is one add. */
-function AddAllLinks({ count }: { count: number }) {
-  if (count < 2) return null;
-  const parts = Math.ceil(count / MY_PASSES_BUNDLE_SIZE);
+function AddAllLinks({ bundle }: { bundle: NonNullable<BundleInfo> }) {
+  const { count, parts, token } = bundle;
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       {Array.from({ length: parts }, (_, i) => {
@@ -154,9 +163,11 @@ function AddAllLinks({ count }: { count: number }) {
         return (
           <AppleWalletBadge
             key={from}
-            href={`${MY_PASSES_BUNDLE_PATH}?part=${i + 1}`}
+            href={`${MY_PASSES_BUNDLE_PATH}?part=${i + 1}&snapshot=${encodeURIComponent(token)}`}
             label={
-              parts === 1 ? `Add ${count} passes` : `Passes ${from === to ? from : `${from}–${to}`}`
+              parts === 1
+                ? HOLDER_COPY.addAllCount(count)
+                : `Passes ${from === to ? from : `${from}–${to}`}`
             }
           />
         );
@@ -168,8 +179,13 @@ function AddAllLinks({ count }: { count: number }) {
 export function MyPassesPage() {
   const query = useInfiniteQuery(myPassesQuery);
   const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
+  const pending = query.data?.pages[0]?.pendingRemovals;
+  useRemovalStatus(pending);
+  const pendingRemovals = pending?.length ?? 0;
+  const reissueRequired = query.data?.pages[0]?.reissueRequired ?? [];
   const dealt = useArrival(query.isPending);
-  const addable = passes.filter((p) => isLive(p) && !p.inWallet).length;
+  const bundle = query.data?.pages[0]?.bundle ?? null;
+  const addable = bundle?.count ?? 0;
   const [device] = useState(browserDevice);
 
   let body: ReactNode;
@@ -192,7 +208,7 @@ export function MyPassesPage() {
         art="wallet"
         artState="empty"
         title="No passes"
-        description="Passes sent to your emails show up here."
+        description={HOLDER_COPY.noPasses}
         action={
           <Button asChild variant="outline" iconStart={<Plus aria-hidden />}>
             <Link to="/account" search={{ add: 'email' }}>
@@ -205,13 +221,24 @@ export function MyPassesPage() {
   } else {
     body = (
       <div className="wl-passes flex flex-col gap-6">
-        {addable > 1 || (addable > 0 && addLine(device)) ? (
-          <div className="wl-bundle flex flex-col gap-2">
-            <AddAllLinks count={addable} />
+        {bundle && (addable > 1 || addLine(device)) ? (
+          <section
+            className="wl-bundle flex flex-col gap-3 rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
+            aria-labelledby="bundle-title"
+          >
+            <div>
+              <h2 id="bundle-title" className="text-lg font-semibold text-fg-strong">
+                {addable > 1 ? HOLDER_COPY.addAllTitle : HOLDER_COPY.addAllOne}
+              </h2>
+            </div>
+            {addable > 1 ? <AddAllLinks bundle={bundle} /> : null}
             <AddLine />
-          </div>
+          </section>
         ) : null}
         <div>
+          <div>
+            <h2 className="text-lg font-semibold text-fg-strong">{HOLDER_COPY.fromOrgs}</h2>
+          </div>
           <ul className={GRID}>
             {passes.map((pass, i) => (
               <li
@@ -235,7 +262,53 @@ export function MyPassesPage() {
 
   return (
     <>
-      <PageHeader title="My passes" />
+      <PageHeader
+        title="My passes"
+        className="rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
+        actions={
+          <Button asChild variant="outline">
+            <Link to="/account">Manage account</Link>
+          </Button>
+        }
+      />
+      {pendingRemovals > 0 ? (
+        <p
+          role="status"
+          className="mt-6 rounded-xl border border-border bg-surface-raised p-4 text-sm text-fg-muted"
+        >
+          {HOLDER_COPY.removalPending(pendingRemovals)} {HOLDER_COPY.removalPendingLine}
+        </p>
+      ) : null}
+      {reissueRequired.length > 0 ? (
+        <section
+          className="mt-6 rounded-xl border border-border bg-surface-raised p-4"
+          aria-labelledby="reissue-title"
+        >
+          <h2 id="reissue-title" className="text-sm font-semibold text-fg-strong">
+            {HOLDER_COPY.reissueTitle}
+          </h2>
+          <ul className="mt-2 space-y-2 text-sm text-fg-muted">
+            {reissueRequired.map((item) => {
+              const href = item.support?.email ? `mailto:${item.support.email}` : item.support?.url;
+              return (
+                <li key={item.passId}>
+                  {HOLDER_COPY.reissueLine(item.title ?? 'A pass', item.orgName)}{' '}
+                  {href ? (
+                    <a
+                      href={href}
+                      className="font-medium text-accent-fg underline-offset-4 hover:underline"
+                    >
+                      {HOLDER_COPY.contact(item.orgName)}
+                    </a>
+                  ) : (
+                    HOLDER_COPY.reissueAsk(item.orgName)
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
       {body}
     </>
   );

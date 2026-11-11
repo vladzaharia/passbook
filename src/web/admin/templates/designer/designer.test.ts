@@ -17,6 +17,7 @@ import {
   designerReducer,
   initialState,
   isDirty,
+  signature,
   validSelection,
 } from './reducer.ts';
 
@@ -443,6 +444,24 @@ describe('history', () => {
     expect(isDirty(s)).toBe(false);
   });
 
+  it('distinguishes uploaded assets with the same length and suffix', () => {
+    const doc = sampleDoc();
+    const asset = {
+      name: 'logo@3x.png',
+      slot: 'logo',
+      scale: 3 as const,
+      size: 25,
+      upload: `A${'x'.repeat(24)}`,
+    };
+    const first = { ...doc, assets: [...doc.assets, asset] };
+    const second = {
+      ...doc,
+      assets: [...doc.assets, { ...asset, upload: `B${'x'.repeat(24)}` }],
+    };
+    expect(signature(first)).not.toBe(signature(second));
+    expect(isDirty(initialState(first, second))).toBe(true);
+  });
+
   it('ignores edits that change nothing and keeps the selection on something real', () => {
     let s = initialState(sampleDoc());
     expect(step(s, edit({ op: 'field-remove', key: 'nope' }))).toBe(s);
@@ -462,6 +481,46 @@ describe('history', () => {
     expect(s.added).toMatchObject({ kind: 'field', n: 1 });
     expect(keys(s.doc, 'primaryFields')).toEqual(['name']);
     expect(fieldsOf(s.doc.passJson, 'headerFields').map(keyOf)).toEqual([s.added?.key]);
+  });
+
+  it('shares history, dirty state and selection between pass and scan edits', () => {
+    let s = initialState(sampleDoc());
+    s = step(
+      s,
+      edit({ op: 'pass-prop', key: 'logoText', value: 'Changed' }),
+      { type: 'select', select: { section: 'scan-display', key: 'header' } },
+      edit({ op: 'scan-display', display: { v: 1, header: { title: 'Welcome' } } }),
+    );
+    expect(isDirty(s)).toBe(true);
+    expect(s.doc.manifest.scan).toMatchObject({ display: { header: { title: 'Welcome' } } });
+    s = step(s, { type: 'undo' });
+    expect(s.doc.passJson.logoText).toBe('Changed');
+    expect(s.doc.manifest.scan).toBeUndefined();
+    expect(s.select).toEqual({ section: 'scan-display', key: 'header' });
+    s = step(s, { type: 'redo' });
+    expect(s.doc.manifest.scan).toMatchObject({ display: { header: { title: 'Welcome' } } });
+    s = step(s, { type: 'undo' }, { type: 'undo' });
+    expect(isDirty(s)).toBe(false);
+    expect(s.select).toEqual({ section: 'scan-display', key: 'header' });
+  });
+
+  it('keeps newer scan edits and their selection when a save completes', () => {
+    let s = initialState(sampleDoc());
+    s = step(
+      s,
+      { type: 'select', select: { section: 'scan-display', key: 'header' } },
+      edit({ op: 'scan-display', display: { v: 1, header: { title: 'Hello' } } }),
+    );
+    const snapshot = s.doc;
+    s = step(s, edit({ op: 'scan-display', display: { v: 1, header: { title: 'Hello again' } } }), {
+      type: 'saved',
+      snapshot,
+      doc: snapshot,
+    });
+    expect(s.saved.manifest.scan).toMatchObject({ display: { header: { title: 'Hello' } } });
+    expect(s.doc.manifest.scan).toMatchObject({ display: { header: { title: 'Hello again' } } });
+    expect(s.select).toEqual({ section: 'scan-display', key: 'header' });
+    expect(isDirty(s)).toBe(true);
   });
 
   it('caps the history', () => {

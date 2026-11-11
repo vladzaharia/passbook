@@ -53,7 +53,7 @@ export function RecentUploads({
               trailing={
                 <Link
                   to="/admin/templates/upload"
-                  search={{ upload: u.uploadId }}
+                  search={{ upload: u.uploadId, orgId }}
                   className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-sm text-fg pointer-coarse:min-h-11 hover:bg-state-hover-tint hover:text-fg-strong"
                 >
                   Report

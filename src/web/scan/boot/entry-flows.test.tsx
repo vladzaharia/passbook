@@ -15,17 +15,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
   history.replaceState(null, '', '/');
 });
-const org = {
-  id: 'o1',
-  slug: 'northwind',
-  name: 'Northwind',
-  status: 'active',
-  defaultIdentityId: null,
-  branding: {},
+const membership = {
+  id: 'm1',
+  orgId: 'o1',
+  orgName: 'Northwind',
+  orgSlug: 'northwind',
+  userId: 'u1',
+  roles: ['org_admin'],
+  capabilities: ['scanning:read', 'scanning:manage'],
   createdAt: 1,
-  updatedAt: 1,
-  counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
-  countsCapped: false,
+  revokedAt: null,
 };
 function wrapper(children: React.ReactNode) {
   return (
@@ -41,8 +40,8 @@ function adminStart(creating: boolean) {
   const onScope = vi.fn();
   const bodies: { path: string; body: unknown; csrf?: string }[] = [];
   stubFetch({
-    '/api/v1/session': () => json(platformSession('admin')),
-    '/api/v1/orgs': () => json({ items: [org], nextCursor: null }),
+    '/api/v1/session': () => json(platformSession('user')),
+    '/api/v1/orgs/memberships/me': () => json({ items: [membership] }),
     '/api/v1/scanning-sessions': (url, init) => {
       if (init?.method === 'POST') {
         bodies.push({ path: url.pathname, body: JSON.parse(String(init.body)) });
@@ -59,13 +58,18 @@ function adminStart(creating: boolean) {
       return json(joined);
     },
   });
-  render(wrapper(<AdminStart onScope={onScope} />));
+  render(wrapper(<AdminStart userId="u1" onScope={onScope} />));
   return { onScope, bodies, joined };
 }
 describe('scanner entry flows', () => {
   it('joins an existing managed session with this browser’s device key and platform CSRF', async () => {
     const s = adminStart(false);
     const user = userEvent.setup();
+    const org = await screen.findByRole('combobox', { name: /Organization/ });
+    await waitFor(() => expect(org).toBeEnabled());
+    await user.click(org);
+    await user.click(await screen.findByRole('option', { name: 'Northwind' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Join session' })).toBeEnabled());
     await user.click(await screen.findByRole('button', { name: 'Join session' }));
     await waitFor(() => expect(s.onScope).toHaveBeenCalledWith(s.joined));
     expect(s.bodies).toMatchObject([
@@ -79,6 +83,10 @@ describe('scanner entry flows', () => {
   it('creates the organization’s first session before joining it', async () => {
     const s = adminStart(true);
     const user = userEvent.setup();
+    const org = await screen.findByRole('combobox', { name: /Organization/ });
+    await waitFor(() => expect(org).toBeEnabled());
+    await user.click(org);
+    await user.click(await screen.findByRole('option', { name: 'Northwind' }));
     const name = await screen.findByRole('textbox', { name: 'New session name' });
     await user.clear(name);
     await user.type(name, 'Member entrance');
@@ -121,5 +129,47 @@ describe('scanner entry flows', () => {
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
     expect(signIn).toHaveBeenLastCalledWith({ staffId: 'staff-1', pin: '654321' });
+  });
+  it('searches the roster by name when it was cut, and signs the match in', async () => {
+    const signIn = vi.fn<ScanApi['staffSignIn']>().mockResolvedValue(sessionFixture());
+    const search = vi
+      .fn<ScanApi['staffSearch']>()
+      .mockResolvedValue({ items: [{ id: 'staff-9', name: 'Zed Last', role: 'door' }] });
+    render(
+      wrapper(
+        <StaffStart
+          session={sessionFixture({
+            state: 'staff_required',
+            staffTruncated: true,
+            staffList: [{ id: 'staff-1', name: 'Door staff', role: 'door' }],
+          })}
+          api={{ staffSignIn: signIn, staffSearch: search } as unknown as ScanApi}
+          refetch={vi.fn().mockResolvedValue(undefined)}
+        />,
+      ),
+    );
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Find your name'), 'zed');
+    await waitFor(() => expect(search).toHaveBeenCalledWith('zed'));
+    await user.click(screen.getByRole('combobox', { name: 'Staff member' }));
+    await user.click(await screen.findByRole('option', { name: 'Zed Last' }));
+    await user.type(screen.getByLabelText('PIN'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith({ staffId: 'staff-9', pin: '123456' }));
+  });
+  it('shows no search field when the roster is whole', () => {
+    render(
+      wrapper(
+        <StaffStart
+          session={sessionFixture({
+            state: 'staff_required',
+            staffList: [{ id: 'staff-1', name: 'Door staff', role: 'door' }],
+          })}
+          api={{} as unknown as ScanApi}
+          refetch={vi.fn()}
+        />,
+      ),
+    );
+    expect(screen.queryByLabelText('Find your name')).not.toBeInTheDocument();
   });
 });

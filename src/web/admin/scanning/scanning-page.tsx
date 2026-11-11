@@ -2,9 +2,18 @@ import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
-import { Button, PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
-import { StaffTab } from './placeholder-tabs.tsx';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/web/ui/index.ts';
 import { useScannerPages } from './queries.ts';
 import { ScannersTab } from './scanners/scanners-tab.tsx';
 import {
@@ -16,6 +25,7 @@ import {
 } from './search.ts';
 import { NewSessionDialog } from './sessions/session-dialog.tsx';
 import { SessionsTab } from './sessions/sessions-tab.tsx';
+import { StaffTab } from './staff-tab.tsx';
 
 const EventsTab = lazy(() => import('./events-tab.tsx').then((m) => ({ default: m.EventsTab })));
 const ScansTab = lazy(() => import('./scans-tab.tsx').then((m) => ({ default: m.ScansTab })));
@@ -34,27 +44,79 @@ const LABEL: Record<ScanningTab, string> = {
  */
 export function ScanningPage({ search }: { search: ScanningSearch }) {
   const navigate = useNavigate();
-  const { orgId } = useOrgScope();
+  const scope = useOrgScope();
+  const [creatingSession, setCreatingSession] = useState<{ initial?: ScanningSession }>();
+  const canManage = Boolean(
+    scope.orgId && scope.membership?.capabilities.includes('scanning:manage'),
+  );
+  useEffect(() => {
+    if (!scope.isLoading && (scope.isError || !canManage)) setCreatingSession(undefined);
+  }, [canManage, scope.isError, scope.isLoading]);
+  if (scope.isLoading) return <p role="status">Loading scanning…</p>;
+  if (scope.isError) return <ErrorState error={scope.error} onRetry={() => scope.refetch()} />;
+  if (!scope.orgId || !scope.membership?.capabilities.includes('scanning:read')) {
+    return <EmptyState art="scanner" title="Select an organization" />;
+  }
+  return (
+    <>
+      <ScopedScanningPage
+        key={`${scope.orgId}:${canManage}`}
+        search={search}
+        orgId={scope.orgId}
+        canManage={canManage}
+        setCreatingSession={setCreatingSession}
+      />
+      {canManage && creatingSession ? (
+        <NewSessionDialog
+          initial={creatingSession.initial}
+          onClose={() => setCreatingSession(undefined)}
+          onCreated={(sessionId) => {
+            setCreatingSession(undefined);
+            void navigate({
+              to: '/admin/scanning/sessions/$sessionId',
+              params: { sessionId },
+              search: { orgId: scope.orgId, addDevice: '1' },
+            });
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ScopedScanningPage({
+  search,
+  orgId,
+  canManage,
+  setCreatingSession,
+}: {
+  search: ScanningSearch;
+  orgId: string;
+  canManage: boolean;
+  setCreatingSession: (session: { initial?: ScanningSession } | undefined) => void;
+}) {
+  const navigate = useNavigate();
+  const mode = useMode();
   const tab = search.tab ?? DEFAULT_TAB;
   const live = useScannerPages(orgId, false);
-  const [creatingSession, setCreatingSession] = useState<{ initial?: ScanningSession }>();
   useEffect(() => {
     if (search.new !== '1') return;
-    setCreatingSession({});
+    if (canManage) setCreatingSession({});
     void navigate({ to: '.', search: (prev) => ({ ...prev, new: undefined }), replace: true });
-  }, [search.new, navigate]);
+  }, [search.new, navigate, canManage, setCreatingSession]);
   const noScanners =
     !live.isPending && !live.isError && !live.data?.pages.some((p) => p.items.length);
 
-  const newSession = (variant: 'primary' | 'outline'): ReactNode => (
-    <Button
-      variant={variant}
-      iconStart={<Plus aria-hidden />}
-      onClick={() => setCreatingSession({})}
-    >
-      New scanning session
-    </Button>
-  );
+  const newSession = (variant: 'primary' | 'outline'): ReactNode =>
+    canManage ? (
+      <Button
+        variant={variant}
+        iconStart={<Plus aria-hidden />}
+        onClick={() => setCreatingSession({})}
+      >
+        New scanning session
+      </Button>
+    ) : null;
   const setTab = (next: string) =>
     void navigate({
       to: '.',
@@ -66,7 +128,6 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
     <>
       <PageHeader
         title="Scanning"
-        description="Manage scanning sessions, devices and admission rules."
         actions={
           tab === 'sessions'
             ? newSession('primary')
@@ -85,6 +146,7 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
         </TabsList>
         <TabsContent value="sessions">
           <SessionsTab
+            canManage={canManage}
             onNew={() => setCreatingSession({})}
             onDuplicate={(initial) => setCreatingSession({ initial })}
           />
@@ -94,7 +156,7 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
         </TabsContent>
         <TabsContent value="events">
           <Suspense fallback={<p role="status">Loading events…</p>}>
-            <EventsTab />
+            <EventsTab key={mode} />
           </Suspense>
         </TabsContent>
         <TabsContent value="staff">
@@ -106,20 +168,6 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           </Suspense>
         </TabsContent>
       </Tabs>
-      {creatingSession ? (
-        <NewSessionDialog
-          initial={creatingSession.initial}
-          onClose={() => setCreatingSession(undefined)}
-          onCreated={(sessionId) => {
-            setCreatingSession(undefined);
-            void navigate({
-              to: '/admin/scanning/sessions/$sessionId',
-              params: { sessionId },
-              search: { addDevice: '1' },
-            });
-          }}
-        />
-      ) : null}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
@@ -14,7 +15,7 @@ import {
   SkeletonRows,
   toast,
 } from '../../../ui/index.ts';
-import { usePassActions, usePassAssets } from '../api.ts';
+import { canMutatePass, passMutationPrincipal, usePassActions, usePassAssets } from '../api.ts';
 import { checkPng, MAX_ASSET_BYTES } from '../png.ts';
 import { ImageSlotRow } from './image-slot-row.tsx';
 import { fitScale, SLOT_LABEL, slotNeeds, usedSlots } from './image-slots.ts';
@@ -35,17 +36,18 @@ function SlotTile({
   pass,
   overrides,
   fresh,
-  foreign,
+  readOnly,
   onChanged,
 }: {
   slot: string;
   pass: PassDetailDto;
   overrides: Override[];
   fresh: boolean;
-  foreign: boolean;
+  readOnly: boolean;
   onChanged: () => void;
 }) {
   const actions = usePassActions(pass.id);
+  const client = useQueryClient();
   const [error, setError] = useState<string>();
   const [heavy, setHeavy] = useState(false);
   const [natural, setNatural] = useState<[number, number]>();
@@ -63,20 +65,24 @@ function SlotTile({
     typeof pass.passJson.backgroundColor === 'string' ? pass.passJson.backgroundColor : undefined;
 
   async function take(f: File | undefined) {
-    if (!f) return;
+    if (!f || readOnly) return;
+    const principalId = passMutationPrincipal(client);
+    if (!principalId || !canMutatePass(client, pass, principalId)) return;
     setError(undefined);
     const check = await checkPng(f);
+    if (!canMutatePass(client, pass, principalId)) return;
     if (!check.ok || !check.width || !check.height)
       return setError(check.message ?? 'Not a PNG file.');
     const fit = fitScale(slot, check.width, check.height);
     if ('error' in fit) return setError(fit.error);
     try {
       await actions.uploadAsset.mutateAsync({ name: `${slot}@${fit.scale}x.png`, file: f });
+      if (!canMutatePass(client, pass, principalId)) return;
       setHeavy(f.size > SOFT_LIMIT);
       toast.success(`${SLOT_LABEL[slot] ?? slot} replaced`);
       onChanged();
     } catch (cause) {
-      setError(errorMessage(cause));
+      if (canMutatePass(client, pass, principalId)) setError(errorMessage(cause));
     }
   }
   const label = SLOT_LABEL[slot] ?? slot;
@@ -93,11 +99,11 @@ function SlotTile({
       warning={heavy ? 'Over 200 KB; a smaller file loads faster.' : undefined}
       onFile={(f) => void take(f)}
       busy={busy}
-      disabled={pass.status === 'voided' || foreign}
+      disabled={pass.status === 'voided' || readOnly}
       action="Replace"
       fresh={fresh}
       trailing={
-        shown && !foreign ? (
+        shown && !readOnly ? (
           <IconButton
             size="sm"
             label={`Reset ${label} to template`}
@@ -108,14 +114,21 @@ function SlotTile({
       }
     >
       <ConfirmDialog
-        open={reset}
+        open={!readOnly && reset}
         onOpenChange={setReset}
         title={`Reset ${label}?`}
         description="The pass goes back to the template's image."
         confirmLabel="Reset"
         destructive
         onConfirm={async () => {
-          for (const o of overrides) await actions.removeAsset.mutateAsync(o.name);
+          if (readOnly) return;
+          const principalId = passMutationPrincipal(client);
+          if (!principalId || !canMutatePass(client, pass, principalId)) return;
+          for (const o of overrides) {
+            if (!canMutatePass(client, pass, principalId)) return;
+            await actions.removeAsset.mutateAsync(o.name);
+          }
+          if (!canMutatePass(client, pass, principalId)) return;
           toast.success(`${label} reset`);
           onChanged();
         }}
@@ -125,7 +138,7 @@ function SlotTile({
 }
 
 /** One tile per image slot: what the pass shows now, the size it needs, drop to replace. */
-export function ImagesTab({ pass, foreign = false }: { pass: PassDetailDto; foreign?: boolean }) {
+export function ImagesTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
   const slots = useMemo(
     () => usedSlots(pass.passJson, pass.assetNames),
     [pass.passJson, pass.assetNames],
@@ -152,7 +165,7 @@ export function ImagesTab({ pass, foreign = false }: { pass: PassDetailDto; fore
                   pass={pass}
                   overrides={assets.data.items.filter((a) => slotOf(a.name)?.[1] === slot)}
                   fresh={changed === slot}
-                  foreign={foreign}
+                  readOnly={readOnly}
                   onChanged={() => setChanged(slot)}
                 />
               ))}

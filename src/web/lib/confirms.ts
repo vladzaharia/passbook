@@ -120,6 +120,30 @@ export function revokeKeyConfirm(name: string): ConfirmCopy {
   };
 }
 
+/** Revoking a member's access or a pending invitation; `self` is your own membership. */
+export function revokeAccessConfirm(
+  kind: 'memberships' | 'invitations',
+  label: string,
+  { self, org }: { self: boolean; org: string },
+): ConfirmCopy {
+  if (kind === 'invitations') {
+    return {
+      title: `Revoke the invitation for ${label}?`,
+      confirmLabel: 'Revoke',
+      description: 'The link stops working at once.',
+      typed: false,
+    };
+  }
+  return {
+    title: self ? `Remove your access to ${org}?` : `Revoke ${label}?`,
+    confirmLabel: self ? 'Remove my access' : 'Revoke',
+    description: self
+      ? `You lose access to ${org} at once.`
+      : `They lose access to ${org} at once.`,
+    typed: false,
+  };
+}
+
 /** Revoking a scanner: plain, so a lost phone stays one click away (like an API key). */
 export function revokeScannerConfirm(name: string): ConfirmCopy {
   return {
@@ -169,5 +193,15 @@ export function cancelBroadcastConfirm(
           : 'No pass changes. You can send a new one later.',
     typed: false,
     cancelLabel: 'Keep it',
+  };
+}
+
+/** An uncertain webhook event: the operator vouches the source system was checked. */
+export function resolveWebhookConfirm(event: string): ConfirmCopy {
+  return {
+    title: `Mark ${event} resolved?`,
+    confirmLabel: 'Mark resolved',
+    description: 'Confirm you checked the source system. The event stops needing attention.',
+    typed: false,
   };
 }

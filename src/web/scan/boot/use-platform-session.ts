@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { SessionResponseSchema } from '../../../shared/contracts/session.ts';
 import { api } from '../../lib/api.ts';
 
-/** UI visibility follows the platform session; a pairing credential never grants admin access. */
-export function usePlatformAdmin() {
+/** A pairing credential alone does not grant access to the signed-in scanner entry. */
+export function usePlatformSession() {
   const query = useQuery({
     queryKey: ['scan', 'platform-session'],
     queryFn: ({ signal }) => api.get('/api/v1/session', SessionResponseSchema, { signal }),
@@ -11,6 +11,5 @@ export function usePlatformAdmin() {
     refetchOnWindowFocus: true,
     retry: false,
   });
-  const admin = query.data?.authenticated && query.data.roles.includes('admin') ? query.data : null;
-  return { admin, pending: query.isPending };
+  return !query.isError && query.data?.authenticated ? query.data : null;
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { zoneOptions } from '@/web/lib/timezones.ts';
 import {
-  Checkbox,
   FormField,
   Input,
   SegmentedControl,
@@ -13,20 +13,22 @@ import {
   TabsTrigger,
 } from '@/web/ui/index.ts';
 import { CheckInFields } from '../check-in-fields.tsx';
-import { useOrgTemplates, useScanEvents } from '../scanner-api.ts';
+import { EligibleTemplatePicker } from '../eligible-template-picker.tsx';
+import { useScanEvents } from '../scanner-api.ts';
 import type { SessionDraft as ScannerDraft } from './draft.ts';
 
 function SessionScope({
   draft,
   set,
-  orgs,
 }: {
   draft: ScannerDraft;
   set: (patch: Partial<ScannerDraft>) => void;
-  orgs?: { id: string; name: string }[];
 }) {
-  const events = useScanEvents(draft.orgId || undefined, draft.accepts === 'event');
-  const templates = useOrgTemplates(draft.orgId || undefined);
+  const _scope = useOrgScope();
+  const events = useScanEvents(
+    draft.orgId || undefined,
+    Boolean(draft.orgId) && draft.accepts === 'event',
+  );
   return (
     <div className="grid gap-4">
       <FormField label="Session name" required>
@@ -40,18 +42,6 @@ function SessionScope({
           />
         )}
       </FormField>
-      {orgs ? (
-        <FormField label="Organization" required>
-          {(p) => (
-            <Select
-              {...p}
-              value={draft.orgId || undefined}
-              options={orgs.map((o) => ({ value: o.id, label: o.name }))}
-              onValueChange={(orgId) => set({ orgId, eventId: '', templateIds: [] })}
-            />
-          )}
-        </FormField>
-      ) : null}
       <FormField label="Time zone">
         {(p) => (
           <Select
@@ -80,7 +70,10 @@ function SessionScope({
               {...p}
               value={draft.eventId || undefined}
               options={(events.data?.items ?? [])
-                .filter((e) => e.status === 'upcoming' || e.status === 'live')
+                .filter(
+                  (e) =>
+                    e.orgId === draft.orgId && (e.status === 'upcoming' || e.status === 'live'),
+                )
                 .map((e) => ({ value: e.id, label: e.name }))}
               onValueChange={(eventId) => set({ eventId })}
             />
@@ -88,34 +81,11 @@ function SessionScope({
         </FormField>
       ) : null}
       {draft.accepts === 'templates' ? (
-        <fieldset className="grid gap-2">
-          <legend className="mb-2 text-sm font-medium">Templates</legend>
-          {(templates.data?.items ?? [])
-            .filter((t) => t.orgId === draft.orgId && t.status === 'active')
-            .map((t) => (
-              <label
-                key={t.id}
-                htmlFor={`session-template-${t.id}`}
-                className="flex min-h-11 items-center gap-3 rounded-md border border-border px-3 py-2"
-              >
-                <Checkbox
-                  id={`session-template-${t.id}`}
-                  checked={draft.templateIds.includes(t.id)}
-                  onCheckedChange={(on) =>
-                    set({
-                      templateIds: on
-                        ? [...draft.templateIds, t.id]
-                        : draft.templateIds.filter((id) => id !== t.id),
-                    })
-                  }
-                />
-                <span>{t.name}</span>
-              </label>
-            ))}
-          {!templates.isPending && !templates.data?.items.some((t) => t.orgId === draft.orgId) ? (
-            <p className="text-sm text-fg-muted">No templates here yet.</p>
-          ) : null}
-        </fieldset>
+        <EligibleTemplatePicker
+          orgId={draft.orgId}
+          selected={draft.templateIds}
+          onChange={(templateIds) => set({ templateIds })}
+        />
       ) : null}
     </div>
   );
@@ -129,9 +99,6 @@ function SessionDefaults({
 }) {
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-fg-muted">
-        Devices use these defaults unless individually overridden.
-      </p>
       <FormField
         label="On scan, tap or entered code"
         help="Name and email lookups always require confirmation."
@@ -186,10 +153,14 @@ function SessionStaff({
     <section className="mt-6 grid gap-4 border-t border-border pt-6">
       <div>
         <h3 className="text-sm font-semibold text-fg-strong">Staff access</h3>
-        <p className="mt-1 text-xs text-fg-muted">These permissions apply across the session.</p>
+        <p className="mt-1 text-xs text-fg-muted">
+          Staff and PINs are shared across the organization. Admin-as-scanner sessions use the
+          signed-in administrator’s Manager permissions.
+        </p>
       </div>
       <SwitchRow
         label="Require staff sign-in"
+        help="Applies only to paired, staff-operated scanner devices. Bearer-token terminals do not use staff PINs and always use the access level below."
         checked={draft.staffSignIn}
         onCheckedChange={(staffSignIn) => set({ staffSignIn })}
       />
@@ -228,11 +199,9 @@ function SessionStaff({
 export function SessionFields({
   draft,
   set,
-  orgs,
 }: {
   draft: ScannerDraft;
   set: (patch: Partial<ScannerDraft>) => void;
-  orgs?: { id: string; name: string }[];
 }) {
   const [tab, setTab] = useState('passes');
   return (
@@ -243,15 +212,9 @@ export function SessionFields({
         <TabsTrigger value="defaults">Device defaults</TabsTrigger>
       </TabsList>
       <TabsContent value="passes">
-        <p className="mb-4 text-sm text-fg-muted">
-          Name the session and choose the passes its devices can accept.
-        </p>
-        <SessionScope draft={draft} set={set} orgs={orgs} />
+        <SessionScope draft={draft} set={set} />
       </TabsContent>
       <TabsContent value="rules">
-        <p className="mb-4 text-sm text-fg-muted">
-          Admission rules apply to every device. A pass’s own restrictions still apply.
-        </p>
         <CheckInFields
           orgId={draft.orgId}
           timeZone={draft.timeZone}

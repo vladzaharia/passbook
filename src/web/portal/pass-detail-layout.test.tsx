@@ -54,7 +54,7 @@ describe('pass page add block', () => {
     const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });
     expect(within(add).getByText(HOLDER_COPY.scanLine)).toBeVisible();
     const badge = within(add).getByRole('link', { name: 'Add to Apple Wallet' });
-    expect(badge.closest('.wl-way')).toHaveTextContent(HOLDER_COPY.mac);
+    expect(badge.closest('.wl-way')).toHaveTextContent('Apple Wallet');
     expect(buddies()).toHaveLength(1);
   });
 

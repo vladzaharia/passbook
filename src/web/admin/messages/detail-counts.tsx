@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
 import { cn } from '../../lib/cn.ts';
-import { Buddy, Card, CardBody, CardHeader, CountUp } from '../../ui/index.ts';
+import { Card, CardBody, CardHeader, CountUp } from '../../ui/index.ts';
 import type { ItemOutcome } from './api.ts';
 import { BroadcastProgress } from './progress.tsx';
 
@@ -67,8 +67,7 @@ export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome |
   const c = b.counts;
   const act = b.state in STATE_ACTS ? STATE_ACTS[b.state as keyof typeof STATE_ACTS] : undefined;
   return (
-    <Card className="mt-14">
-      <Buddy key={b.state} size="sm" at="end" mood={act?.mood} scene={act?.scene} />
+    <Card>
       <CardHeader title="Progress" />
       <CardBody className="flex flex-col gap-4">
         {act ? (

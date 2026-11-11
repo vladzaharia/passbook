@@ -41,21 +41,19 @@ const columns: ColumnDef<ScanEventDto>[] = [
 ];
 
 export function EventsTab() {
-  const { orgId } = useOrgScope();
-  const query = useScanEvents(orgId);
+  const { orgId, membership } = useOrgScope();
+  const canManage = Boolean(orgId && membership?.capabilities.includes('scanning:manage'));
+  const query = useScanEvents(orgId, Boolean(orgId));
   const [creating, setCreating] = useState(false);
+  const items = query.data?.items.filter((event) => event.orgId === orgId) ?? [];
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
-  const action = (
-    <Button onClick={() => setCreating(true)} disabled={!orgId}>
-      New event
-    </Button>
-  );
+  const action = canManage ? <Button onClick={() => setCreating(true)}>New event</Button> : null;
   return (
     <>
-      {query.data?.items.length ? <div className="mb-4 flex justify-end">{action}</div> : null}
+      {items.length ? <div className="mb-4 flex justify-end">{action}</div> : null}
       <DataTable
         caption="Events"
-        data={query.data?.items ?? []}
+        data={items}
         columns={columns}
         loading={query.isPending}
         getRowId={(row) => row.id}
@@ -70,7 +68,9 @@ export function EventsTab() {
           />
         }
       />
-      {creating && orgId ? <EventDialog orgId={orgId} onClose={() => setCreating(false)} /> : null}
+      {canManage && creating && orgId ? (
+        <EventDialog orgId={orgId} onClose={() => setCreating(false)} />
+      ) : null}
     </>
   );
 }

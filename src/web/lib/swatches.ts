@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import { assetUrlMap } from '../pass-card/assets.ts';
-import { fetchPreview } from './preview-batch.ts';
+import { fetchPreview, templatePreviewKey } from './preview-batch.ts';
 
 /** A pass's look in miniature: its colours and the image Wallet shows largest. */
 export interface Swatch {
@@ -14,11 +14,14 @@ export interface Swatch {
 const IMAGES = ['artwork@2x.png', 'background@2x.png', 'strip@2x.png', 'thumbnail@2x.png'];
 
 /** Template previews (batched into one request) give rows their pass look, cached for the session. */
-export function useSwatches(templateIds: readonly string[]): Map<string, Swatch> {
+export function useSwatches(
+  templateIds: readonly string[],
+  orgId: string | undefined,
+): Map<string, Swatch> {
   return useQueries({
     queries: templateIds.map((id) => ({
-      queryKey: ['admin', 'templates', 'preview', id, null],
-      queryFn: () => fetchPreview(id),
+      queryKey: templatePreviewKey(id, orgId),
+      queryFn: () => fetchPreview(id, orgId),
       staleTime: Number.POSITIVE_INFINITY,
       retry: false,
     })),

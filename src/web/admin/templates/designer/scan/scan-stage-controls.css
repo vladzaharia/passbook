@@ -1,0 +1,121 @@
+.sp-stage {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  color: var(--pk-text-default);
+}
+.sp-tabs,
+.sp-controls,
+.sp-sample-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sp-tabs {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--pk-border-subtle);
+}
+.sp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  color: var(--pk-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.sp-tab[aria-selected="true"] {
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-strong);
+  box-shadow: inset 0 0 0 1px var(--pk-border-strong);
+}
+.sp-tab-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--pk-text-muted);
+}
+.sp-tab[data-screen="ok"] .sp-tab-dot {
+  background: var(--pk-success);
+}
+.sp-tab[data-screen="heads_up"] .sp-tab-dot {
+  background: var(--pk-warning);
+}
+.sp-tab[data-screen="refused"] .sp-tab-dot {
+  background: var(--pk-danger);
+}
+.sp-tab:focus-visible,
+.sp-sample-editor summary:focus-visible,
+.sp-inputs input:focus-visible,
+.sp-inputs select:focus-visible,
+.sp-cut:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.sp-source,
+.sp-help {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 0.8125rem;
+}
+.sp-sample-editor {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 0.5rem;
+  background: var(--pk-surface-raised);
+  font-size: 0.8125rem;
+}
+.sp-sample-editor summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.sp-inputs {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.sp-inputs label:not(.sp-check) {
+  display: grid;
+  gap: 0.25rem;
+}
+.sp-inputs input:not([type="checkbox"]),
+.sp-inputs select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: 0.375rem;
+  background: var(--pk-surface-raised);
+}
+.sp-pass-id {
+  min-width: 12rem;
+}
+.sp-hidden-panel {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px dashed var(--sd-muted);
+  color: var(--sd-muted);
+  font-size: 0.8125rem;
+}
+.sp-initials {
+  display: grid;
+  place-items: center;
+  background: var(--sd-inset);
+  color: var(--sd-strong);
+}
+.sp-cut {
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.sp-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}

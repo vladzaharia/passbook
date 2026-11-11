@@ -4,13 +4,7 @@ import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
 import { describeSchema, type FormValues } from './schema-form/index.ts';
 
 const shown = (v: unknown) =>
-  v === undefined || v === ''
-    ? null
-    : typeof v === 'string'
-      ? v
-      : Array.isArray(v)
-        ? `${v.length} ${v.length === 1 ? 'item' : 'items'}`
-        : JSON.stringify(v);
+  v === undefined || v === '' ? null : typeof v === 'string' ? v : JSON.stringify(v);
 
 interface Row {
   label: string;
@@ -21,7 +15,10 @@ interface Row {
 /** Review: one row per choice with Edit back to its step (the state is kept). */
 export function ReviewStep({
   org,
+  mode,
   template,
+  templateVersion,
+  release,
   schema,
   input,
   email,
@@ -32,7 +29,10 @@ export function ReviewStep({
   error,
 }: {
   org: string | undefined;
+  mode: 'live' | 'test';
   template: string | undefined;
+  templateVersion: string | undefined;
+  release?: { id: string; generation: number; provider: 'apple' } | undefined;
   schema: unknown;
   input: FormValues;
   email: string;
@@ -49,16 +49,20 @@ export function ReviewStep({
     .map((w) => w.message);
   const fields = describeSchema(schema)
     .flatMap((g) => g.fields)
-    .filter((f) => f.required || shown(input[f.key]) !== null)
-    .slice(0, 4);
+    .filter((f) => f.required || shown(input[f.key]) !== null);
   const rows: Row[] = [
     { label: 'Organization', value: org, ...(steps.org !== undefined ? { step: steps.org } : {}) },
+    { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
     { label: 'Template', value: template, step: steps.template },
+    ...(templateVersion ? [{ label: 'Release version', value: templateVersion }] : []),
+    ...(release ? [{ label: 'Wallet provider', value: 'Apple Wallet' }] : []),
     ...fields.map((f) => ({ label: f.label, value: shown(input[f.key]), step: steps.details })),
     { label: 'Holder', value: email.trim() || 'No holder yet', step: steps.holder },
-    ...(send && email.trim()
-      ? [{ label: 'Sends email to', value: email.trim(), step: steps.holder }]
-      : []),
+    {
+      label: 'Email',
+      value: send && email.trim() ? `Requested for ${email.trim()}` : 'Not requested',
+      step: steps.holder,
+    },
   ];
   return (
     <div className="flex flex-col gap-4">
@@ -80,12 +84,12 @@ export function ReviewStep({
             {rows.map((r) => (
               <div
                 key={r.label}
-                className="flex min-h-11 items-center gap-3 py-2 first:pt-0 last:pb-0"
+                className="flex min-h-11 flex-wrap items-start gap-2 py-2 first:pt-0 last:pb-0 sm:flex-nowrap sm:items-center sm:gap-3"
               >
-                <dt className="w-32 shrink-0 text-sm text-fg-muted">{r.label}</dt>
+                <dt className="w-full shrink-0 text-sm text-fg-muted sm:w-32">{r.label}</dt>
                 {/* A dl row holds only dt and dd, so Edit sits inside the dd. */}
                 <dd className="flex min-w-0 flex-1 items-center gap-3 text-sm text-fg">
-                  <span className="min-w-0 flex-1 truncate">
+                  <span className="min-w-0 flex-1 break-words">
                     {r.value ?? <span className="text-fg-subtle">—</span>}
                   </span>
                   {r.step !== undefined ? (

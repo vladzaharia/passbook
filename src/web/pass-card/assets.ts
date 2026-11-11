@@ -19,8 +19,14 @@ function sameOriginPath(url: string): string {
  * is mapped and the card hides images that fail to load.
  */
 export function assetUrlMap(base: string, names?: readonly string[]): Record<string, string> {
-  const root = sameOriginPath(base).replace(/\/+$/, '');
+  const normalized = sameOriginPath(base);
+  const suffixStart = normalized.search(/[?#]/);
+  const path = suffixStart === -1 ? normalized : normalized.slice(0, suffixStart);
+  const suffix = suffixStart === -1 ? '' : normalized.slice(suffixStart);
+  const root = path.replace(/\/+$/, '');
   const out: Record<string, string> = {};
-  for (const name of names ?? CANDIDATE_ASSETS) out[name] = `${root}/${encodeURIComponent(name)}`;
+  for (const name of names ?? CANDIDATE_ASSETS) {
+    out[name] = `${root}/${encodeURIComponent(name)}${suffix}`;
+  }
   return out;
 }

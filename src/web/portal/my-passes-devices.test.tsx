@@ -11,7 +11,15 @@ const WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0 Safari/5
 const GSA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/350.0 Mobile/15E148 Safari/604.1';
 
-const list = (...items: ReturnType<typeof passFixture>[]) => json({ items, nextCursor: null });
+// The server's Add all snapshot: the passes not yet in a Wallet.
+const list = (...items: ReturnType<typeof passFixture>[]) => {
+  const count = items.filter((p) => p.status === 'active' && !p.inWallet).length;
+  return json({
+    items,
+    nextCursor: null,
+    bundle: count ? { token: 'snap-1', count, parts: 1 } : null,
+  });
+};
 
 function as(userAgent: string, maxTouchPoints = 0) {
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
@@ -64,7 +72,7 @@ describe('device rule (shared/device.ts)', () => {
     expect(screen.queryByText(HOLDER_COPY.scanLine)).not.toBeInTheDocument();
   });
 
-  it('leads with the QR off Apple’s devices: the scan opens the public page, no badge', async () => {
+  it('leads with the QR off Apple devices and keeps the Apple badge available', async () => {
     as(WINDOWS);
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ id: 'p1' })) },
@@ -72,9 +80,8 @@ describe('device rule (shared/device.ts)', () => {
     // The image, not the encoder's placeholder it replaces.
     expect(await screen.findByAltText(HOLDER_COPY.qrAlt('Gym membership'))).toBeVisible();
     expect(screen.getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
-    // The badge cannot add here, so neither it nor its line shows.
-    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
-    expect(screen.queryByText(HOLDER_COPY.openOnApple)).toBeNull();
+    expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
+    expect(screen.getByText(HOLDER_COPY.openOnApple)).toBeVisible();
   });
 });
 

@@ -1,23 +1,22 @@
+import type { Mode } from '@/shared/contracts/common.ts';
+import { useMode } from '@/web/lib/mode.ts';
 import {
-  Checkbox,
   CheckboxField,
   FormField,
   Input,
-  Label,
   NumberField,
   SegmentedControl,
   Select,
   SwitchRow,
 } from '@/web/ui/index.ts';
 import { CheckInFields } from '../check-in-fields.tsx';
-import { useOrgTemplates, useScanEvents } from '../scanner-api.ts';
+import { EligibleTemplatePicker } from '../eligible-template-picker.tsx';
+import { useScanEvents } from '../scanner-api.ts';
 import type { ScannerDraft } from './scanner-draft.ts';
-import { SetupFields } from './setup-fields.tsx';
+import { SetupFields, type SetupFieldsProps } from './setup-fields.tsx';
 
-export interface ScannerFieldsProps {
-  draft: ScannerDraft;
-  onChange: (patch: Partial<ScannerDraft>) => void;
-  errors: Partial<Record<string, string>>;
+export interface ScannerFieldsProps extends SetupFieldsProps {
+  mode: Mode;
 }
 
 const FLOW = [
@@ -38,59 +37,15 @@ const READER = [
   { value: 'barcode', label: 'Barcode reader' },
 ];
 
-function TemplateRows({
-  draft,
-  onChange,
-  error,
-}: Pick<ScannerFieldsProps, 'draft' | 'onChange'> & { error?: string | undefined }) {
-  const templates = useOrgTemplates(draft.orgId || undefined);
-  const items = (templates.data?.items ?? []).filter(
-    (t) => t.status === 'active' && t.orgId === draft.orgId,
-  );
-  const set = (id: string, on: boolean) =>
-    onChange({
-      templateIds: on ? [...draft.templateIds, id] : draft.templateIds.filter((x) => x !== id),
-    });
-  return (
-    <fieldset
-      className="flex min-w-0 flex-col"
-      aria-describedby={error ? 'scanner-templates-error' : undefined}
-    >
-      <legend className="mb-2 text-sm font-medium text-fg">Templates</legend>
-      <ul className="divide-y divide-border rounded-md border border-border-strong">
-        {items.length === 0 ? (
-          <li className="px-3 py-2 text-sm text-fg-muted">
-            {templates.isPending && draft.orgId ? 'Loading…' : 'No templates yet.'}
-          </li>
-        ) : null}
-        {items.map((t, i) => (
-          <li key={t.id} className="flex min-h-11 items-center gap-3 px-3 py-2">
-            <Checkbox
-              id={`scanner-t-${t.id}`}
-              aria-invalid={error && i === 0 ? true : undefined}
-              checked={draft.templateIds.includes(t.id)}
-              onCheckedChange={(c) => set(t.id, c === true)}
-            />
-            <Label htmlFor={`scanner-t-${t.id}`} className="min-w-0 flex-1 font-normal">
-              {t.name}
-            </Label>
-          </li>
-        ))}
-      </ul>
-      {error ? (
-        <p id="scanner-templates-error" className="mt-1 text-xs text-danger">
-          {error}
-        </p>
-      ) : null}
-    </fieldset>
-  );
-}
-
 /** The legacy scanner settings form, shown on existing standalone scanner records. */
-export function ScannerFields({ draft, onChange, errors }: ScannerFieldsProps) {
-  const events = useScanEvents(draft.orgId || undefined, draft.accepts === 'event');
+export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsProps) {
+  const currentMode = useMode();
+  const events = useScanEvents(
+    draft.orgId || undefined,
+    Boolean(draft.orgId) && draft.accepts === 'event' && currentMode === mode,
+  );
   const open = (events.data?.items ?? []).filter(
-    (e) => e.status === 'upcoming' || e.status === 'live',
+    (e) => e.orgId === draft.orgId && (e.status === 'upcoming' || e.status === 'live'),
   );
   return (
     <div className="@container grid min-w-0 gap-6">
@@ -157,7 +112,14 @@ export function ScannerFields({ draft, onChange, errors }: ScannerFieldsProps) {
                 )}
               </FormField>
             ) : draft.accepts === 'templates' ? (
-              <TemplateRows draft={draft} onChange={onChange} error={errors.templateIds} />
+              <EligibleTemplatePicker
+                orgId={draft.orgId}
+                selected={draft.templateIds}
+                onChange={(templateIds) => onChange({ templateIds })}
+                mode={mode}
+                error={errors.templateIds}
+                errorId="scanner-templates-error"
+              />
             ) : null}
           </section>
           <section className="grid min-w-0 gap-4 border-t border-border pt-6">
@@ -176,16 +138,30 @@ export function ScannerFields({ draft, onChange, errors }: ScannerFieldsProps) {
                   />
                 )}
               </FormField>
-              <div className="grid content-start gap-1">
-                <CheckboxField
-                  label="Ask staff for their PIN"
-                  disabled={!draft.staffSignIn}
-                  checked={draft.staffSignIn}
-                  onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
-                />
-                <p className="text-xs text-fg-muted">Staff sign-in is unavailable.</p>
-              </div>
-              {draft.staffSignIn ? null : (
+              {draft.adminUserId ? (
+                <p className="text-xs text-fg-muted">
+                  This admin-as-scanner setup uses the signed-in administrator’s Manager
+                  permissions, not a staff PIN.
+                </p>
+              ) : draft.kind === 'terminal' ? (
+                <p className="text-xs text-fg-muted">
+                  Tills do not support staff PIN sign-in. They scan using their configured role.
+                </p>
+              ) : (
+                <div className="grid content-start gap-1">
+                  <CheckboxField
+                    label="Ask staff for their PIN"
+                    checked={draft.staffSignIn}
+                    onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
+                  />
+                  <p className="text-xs text-fg-muted">
+                    Add staff and share their PINs from the Staff tab before enabling this. The
+                    scanner requires sign-in to scan. Staff accounts are shared across this
+                    organization’s live and test modes.
+                  </p>
+                </div>
+              )}
+              {!draft.adminUserId && (draft.kind === 'terminal' || !draft.staffSignIn) ? (
                 <FormField label="Without sign-in, scans as">
                   {(p) => (
                     <Select
@@ -198,7 +174,7 @@ export function ScannerFields({ draft, onChange, errors }: ScannerFieldsProps) {
                     />
                   )}
                 </FormField>
-              )}
+              ) : null}
               <FormField label="Let in again">
                 {(p) => (
                   <Select
@@ -275,6 +251,7 @@ export function ScannerFields({ draft, onChange, errors }: ScannerFieldsProps) {
             </div>
             <CheckInFields
               orgId={draft.orgId}
+              resourceMode={mode}
               rules={draft.checkIn}
               onChange={(checkIn) => onChange({ checkIn })}
             />

@@ -62,3 +62,16 @@ export const templateFixture = (over: Record<string, unknown> = {}) => ({
   updatedAt: NOW,
   ...over,
 });
+
+export const eligibleTemplateFixture = (over: Record<string, unknown> = {}) => ({
+  templateId: 't1',
+  name: 'Gala ticket',
+  templateOrgId: 'o1',
+  origin: 'uploaded',
+  releaseId: 'release-1',
+  releaseGeneration: 1,
+  version: 'approved-v1',
+  candidateHash: 'a'.repeat(64),
+  supportsCheckIn: true,
+  ...over,
+});

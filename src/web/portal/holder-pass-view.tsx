@@ -1,12 +1,19 @@
 import type { ReactNode } from 'react';
+import type { WalletOffer } from '../../shared/contracts/me.ts';
+import type {
+  WalletProvider,
+  WalletProviderIssuance,
+} from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, type DeviceInfo } from '../../shared/device.ts';
+import { walletChoices } from '../../shared/wallet-choice.ts';
 import { AppleWalletBadge } from '../ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../ui/art/buddy-art.tsx';
 import { AddBlock } from './add/add-block.tsx';
 import { type AddAreaProps, addMode } from './add/area.ts';
 import type { RenderBuddy } from './add/scan.tsx';
 import { Help, type HolderSupport, Notice } from './holder-parts.tsx';
+import { WalletChoices } from './wallet-choice.tsx';
 import './holder-pass.css';
 
 export type { HolderSupport } from './holder-parts.tsx';
@@ -23,10 +30,16 @@ export interface HolderPassViewProps {
   removalMessage?: string | null;
   device: DeviceInfo;
   downloadHref: string;
+  /** Available native alternatives, independent of the Apple registration state. */
+  walletOffers: readonly WalletOffer[];
+  /** The server's release gate per native wallet; disabled ones are not offered. */
+  issuance?: Partial<Record<WalletProvider, WalletProviderIssuance>>;
   /** The absolute /p URL the add QR encodes; null hides the QR. */
   publicUrl: string | null;
+  /** Server-rendered presentation, separate from the page-opening QR. */
+  barcodeHref?: string | undefined;
   support?: HolderSupport | null;
-  /** A device has registered the pass (the portal knows; /p does not). */
+  /** An Apple device registration was reported (the portal knows; /p does not). */
   inWallet?: boolean;
   /** Under the add block: the portal's Details card. */
   details?: ReactNode;
@@ -62,8 +75,8 @@ export function HolderPassView(props: HolderPassViewProps) {
           badge: (
             <AppleWalletBadge href={props.downloadHref} onClick={props.onAdd} className="p-0" />
           ),
-          // Off Apple's devices the QR is the way and the badge stays away, so its line does too.
-          line: publicUrl !== null && device.device === 'other' ? null : addLine(device),
+          // Apple's guidance accompanies the badge on every device.
+          line: addLine(device),
         };
   const help =
     state !== 'voided' && !support?.platform && (support?.email || support?.url) ? support : null;
@@ -94,7 +107,18 @@ export function HolderPassView(props: HolderPassViewProps) {
             />
           </div>
         )}
-        {area ? <AddBlock {...area} buddy={buddy} /> : null}
+        {state === 'active' || area ? (
+          <WalletChoices
+            choices={walletChoices({
+              device,
+              apple: area !== null,
+              browserHref: state === 'active' ? props.barcodeHref : undefined,
+              offers: state === 'active' ? props.walletOffers : [],
+              ...(props.issuance ? { issuance: props.issuance } : {}),
+            })}
+            apple={area ? <AddBlock {...area} buddy={buddy} /> : null}
+          />
+        ) : null}
       </div>
       {props.details ? <div className="wl-holder-details">{props.details}</div> : null}
       {help ? (

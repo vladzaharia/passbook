@@ -10,7 +10,7 @@ import {
   setMode,
 } from './mode.ts';
 import { createQueryClient } from './query-client.ts';
-import { json } from './test-utils.tsx';
+import { json, sessionFixture } from './test-utils.tsx';
 
 function memoryStorage() {
   const data = new Map<string, string>();
@@ -98,11 +98,12 @@ describe('switching mode', () => {
   it('empties the cache of the other mode but keeps the session', async () => {
     const client = createQueryClient();
     client.setQueryData(['passes', 'list'], { items: ['live pass'] });
-    client.setQueryData(['session'], { authenticated: true });
+    const session = sessionFixture('admin');
+    client.setQueryData(['session'], session);
     setMode('test');
     await Promise.resolve();
     expect(client.getQueryData(['passes', 'list'])).toBeUndefined();
-    expect(client.getQueryData(['session'])).toEqual({ authenticated: true });
+    expect(client.getQueryData(['session'])).toEqual(session);
     client.setQueryData(['passes', 'list'], { items: ['test pass'] });
     setMode('live');
     await Promise.resolve();

@@ -1,9 +1,10 @@
+import { Link } from '@tanstack/react-router';
 import { type CSSProperties, type ReactNode, useId } from 'react';
-import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '../../lib/cn.ts';
 import { useMediaQuery } from '../../lib/media.ts';
 import { useArrival } from '../../lib/motion.ts';
 import {
+  Button,
   Card,
   CardBody,
   CheckboxField,
@@ -17,9 +18,9 @@ import {
   SkeletonRows,
   SkeletonTileGrid,
 } from '../../ui/index.ts';
-import { useTemplatePreview } from '../templates/api.ts';
+import { useReleasedPreview } from './new-pass-preview.tsx';
 import { PassPreview } from './pass-preview.tsx';
-import { groupTemplates } from './template-groups.ts';
+import { type GroupableTemplate, groupTemplates } from './template-groups.ts';
 
 export interface OrgOption {
   id: string;
@@ -108,8 +109,20 @@ export function OrgStep({
   );
 }
 
-function TemplateStill({ id }: { id: string }) {
-  const preview = useTemplatePreview(id);
+function TemplateStill({
+  id,
+  orgId,
+  version,
+  principalId,
+  mode,
+}: {
+  id: string;
+  orgId: string;
+  version: string;
+  principalId: string;
+  mode: 'live' | 'test';
+}) {
+  const preview = useReleasedPreview({ templateId: id, orgId, version, principalId, mode });
   return (
     <div aria-hidden inert className="pointer-events-none w-10 shrink-0">
       {preview.data ? (
@@ -119,6 +132,8 @@ function TemplateStill({ id }: { id: string }) {
           assetNames={preview.data.assetNames}
           still
         />
+      ) : preview.isError ? (
+        <span className="block aspect-[320/420] w-full rounded-sm border border-border" />
       ) : (
         <Skeleton className="aspect-[320/420] w-full rounded-sm" />
       )}
@@ -126,26 +141,35 @@ function TemplateStill({ id }: { id: string }) {
   );
 }
 
-/**
- * Template tiles grouped by scope: the org's own, then Shared. From 1024 the stage shows the
- * chosen template's description, so a tile is a still and a name.
- */
+/** Template tiles grouped by scope: the org's own, then Shared. */
 export function TemplateStep({
   templates,
+  orgId,
   orgName,
+  principalId,
+  mode,
   loading,
   error,
+  hasMore,
+  onRetry,
   templateId,
+  previewVersion,
   onSelect,
   onCommit,
   choiceError,
 }: {
-  templates: TemplateSummaryDto[];
+  templates: (GroupableTemplate & { id: string })[];
+  orgId: string | undefined;
+  principalId: string | undefined;
+  mode: 'live' | 'test';
   /** Names the org's group when a summary lacks it. */
   orgName?: string | undefined;
   loading: boolean;
   error: unknown;
+  hasMore: boolean;
+  onRetry: () => void;
   templateId: string | undefined;
+  previewVersion: string | undefined;
   onSelect: (id: string) => void;
   onCommit: (id: string) => void;
   /** Next was pressed with nothing chosen. */
@@ -154,9 +178,23 @@ export function TemplateStep({
   const arrived = useArrival(loading);
   const staged = useMediaQuery('(min-width: 1024px)');
   if (loading) return <SkeletonTileGrid label="Loading templates" />;
-  if (error) return <ErrorState inline error={error} />;
+  if (error) return <ErrorState inline error={error} onRetry={onRetry} />;
   if (templates.length === 0)
-    return <EmptyState art="template" title="No templates for this organization" />;
+    return (
+      <EmptyState
+        art="template"
+        title={
+          hasMore
+            ? 'No eligible templates on this page'
+            : 'No eligible templates for this organization and mode'
+        }
+        action={
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/templates">Review templates</Link>
+          </Button>
+        }
+      />
+    );
   let i = 0;
   return (
     <ChoiceGroup label="Template" error={choiceError} className="flex flex-col gap-6">
@@ -172,9 +210,23 @@ export function TemplateStep({
                   checked={t.id === templateId}
                   onSelect={onSelect}
                   onCommit={onCommit}
-                  media={<TemplateStill id={t.id} />}
+                  media={
+                    orgId && principalId && t.id === templateId && previewVersion ? (
+                      <TemplateStill
+                        id={t.id}
+                        orgId={orgId}
+                        version={previewVersion}
+                        principalId={principalId}
+                        mode={mode}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="block aspect-[320/420] w-10 shrink-0 rounded-sm border border-border bg-surface-sunken"
+                      />
+                    )
+                  }
                   label={name}
-                  description={staged ? undefined : (t.description ?? undefined)}
                   className="h-full items-center p-3"
                 />
               </div>

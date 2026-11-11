@@ -14,6 +14,7 @@ import {
   KeyValue,
   SaveBar,
   SwitchRow,
+  TechnicalDetails,
   Tooltip,
   toast,
   UnsavedChangesDialog,
@@ -37,13 +38,16 @@ export function CertificateCard({ identity, now }: { identity: Identity; now: nu
             { label: 'Team ID', value: identity.teamIdentifier, mono: true },
             { label: 'Expires', value: <ExpiryPill identity={identity} now={now} /> },
             { label: 'Valid from', value: formatDateTime(identity.notBefore, '—') },
-            { label: 'SHA-256', value: identity.certSha256, mono: true },
             {
               label: 'APNs binding',
               value: identity.apnsBinding ?? (identity.source === 'env' ? 'APNS' : null),
               mono: true,
             },
           ]}
+        />
+        <TechnicalDetails
+          className="mt-3"
+          items={[{ label: 'SHA-256', value: identity.certSha256 }]}
         />
       </CardBody>
     </Card>
@@ -145,7 +149,13 @@ export function SettingsCard({ identity }: { identity: Identity }) {
             <Locked locked={env}>
               <SwitchRow
                 label="Default identity"
-                help={env ? 'Set in the environment' : 'Signs passes of orgs without their own.'}
+                help={
+                  env
+                    ? 'Set in the environment'
+                    : identity.isDefault
+                      ? 'Current default. Select another identity to change it; existing passes keep their identity.'
+                      : 'Fallback for eligible organizations without their own identity. Changing it does not migrate existing passes.'
+                }
                 checked={draft.isDefault}
                 disabled={env || identity.isDefault}
                 onCheckedChange={(c) => edit({ isDefault: c })}

@@ -1,8 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
+import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { ENTITY } from '../../lib/entities.ts';
+import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
   Card,
@@ -21,13 +24,23 @@ import {
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBundleActions, useBundlesOfPass } from './bundle-api.ts';
 import { RelTime, useNow } from './detail/rel-time.tsx';
+import { reportEmailError } from './email-outcome.ts';
 import { absoluteUrl } from './format.ts';
 import { RotateLink } from './rotated-link-dialog.tsx';
 
 const SHOWN = 5;
 
-function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; foreign: boolean }) {
+function BundleRow({
+  bundle,
+  now,
+  readOnly,
+}: {
+  bundle: BundleDto;
+  now: number;
+  readOnly: boolean;
+}) {
   const actions = useBundleActions(bundle.id, bundle.mode);
+  const client = useQueryClient();
   const [ask, setAsk] = useState<'rotate' | 'delete' | null>(null);
   const n = bundle.passes.length;
   return (
@@ -62,7 +75,7 @@ function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; f
                 {
                   label: 'Rotate link',
                   icon: ACTION_ICON.rotate,
-                  disabled: foreign,
+                  disabled: readOnly,
                   onSelect: () => setAsk('rotate'),
                 },
                 ...(bundle.holderEmail
@@ -71,12 +84,34 @@ function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; f
                         label: 'Send email',
                         icon: ACTION_ICON.sendEmail,
                         loading: actions.sendEmail.isPending,
-                        disabled: foreign,
-                        onSelect: () =>
+                        disabled: readOnly,
+                        onSelect: () => {
+                          const before = client.getQueryData<SessionResponse>(
+                            sessionQuery.queryKey,
+                          );
+                          if (!before?.authenticated) return;
+                          const userId = before.user.id;
                           actions.sendEmail.mutate(undefined, {
-                            onSuccess: () => toast.sent('Email queued'),
-                            onError: (error) => toast.error(error, 'Could not send'),
-                          }),
+                            onSuccess: () => {
+                              const current = client.getQueryData<SessionResponse>(
+                                sessionQuery.queryKey,
+                              );
+                              if (!current?.authenticated || current.user.id !== userId) return;
+                              toast.info(
+                                bundle.mode === 'test'
+                                  ? 'Test email queued. Check the Test inbox for capture.'
+                                  : 'Email queued',
+                              );
+                            },
+                            onError: (error) => {
+                              const current = client.getQueryData<SessionResponse>(
+                                sessionQuery.queryKey,
+                              );
+                              if (!current?.authenticated || current.user.id !== userId) return;
+                              reportEmailError(error);
+                            },
+                          });
+                        },
                       },
                     ]
                   : []),
@@ -84,7 +119,7 @@ function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; f
                   label: 'Delete',
                   icon: ACTION_ICON.delete,
                   destructive: true,
-                  disabled: foreign,
+                  disabled: readOnly,
                   onSelect: () => setAsk('delete'),
                 },
               ]}
@@ -93,7 +128,7 @@ function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; f
         }
       />
       <RotateLink
-        open={ask === 'rotate'}
+        open={!readOnly && ask === 'rotate'}
         onOpenChange={(o) => !o && setAsk(null)}
         description="The current link stops working. The passes stay."
         rotate={async () => (await actions.rotate.mutateAsync()).url}
@@ -102,14 +137,20 @@ function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; f
         sendEmail={() => actions.sendEmail.mutateAsync()}
       />
       <ConfirmDialog
-        open={ask === 'delete'}
+        open={!readOnly && ask === 'delete'}
         onOpenChange={(o) => !o && setAsk(null)}
         title={`Delete ${bundle.name}?`}
         description="The link stops working. The passes stay."
         confirmLabel="Delete"
         destructive
         onConfirm={async () => {
+          if (readOnly) return;
+          const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+          if (!before?.authenticated) return;
+          const userId = before.user.id;
           await actions.remove.mutateAsync();
+          const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+          if (!current?.authenticated || current.user.id !== userId) return;
           toast.success('Bundle deleted');
         }}
       />
@@ -120,15 +161,17 @@ function BundleRow({ bundle, now, foreign }: { bundle: BundleDto; now: number; f
 /** The bundles this pass is in (in its own mode), with the link's Copy, Rotate and Delete. */
 export function BundlesCard({
   passId,
+  orgId,
   mode,
-  foreign = false,
+  readOnly,
 }: {
   passId: string;
+  orgId: string;
   mode: Mode;
-  /** The pass is of the other mode: the bundles are shown, not changed. */
-  foreign?: boolean;
+  /** Bundles remain visible but cannot be changed. */
+  readOnly: boolean;
 }) {
-  const bundles = useBundlesOfPass(passId, mode);
+  const bundles = useBundlesOfPass(passId, orgId, mode);
   const now = useNow();
   const [all, setAll] = useState(false);
   const items = useMemo(
@@ -153,7 +196,7 @@ export function BundlesCard({
         <CardBody>
           <ListRows label="Bundles">
             {shown.map((b) => (
-              <BundleRow key={b.id} bundle={b} now={now} foreign={foreign} />
+              <BundleRow key={b.id} bundle={b} now={now} readOnly={readOnly} />
             ))}
           </ListRows>
           {items.length > SHOWN ? (

@@ -96,6 +96,13 @@ function Detail({
       removalMessage={pass.removalMessage}
       device={device}
       downloadHref={pass.downloadUrl}
+      walletOffers={pass.presentationEligible === true ? pass.walletOffers : []}
+      issuance={pass.walletIssuance}
+      barcodeHref={
+        pass.presentationEligible === true
+          ? `/api/v1/me/passes/${encodeURIComponent(pass.id)}/barcode`
+          : undefined
+      }
       publicUrl={publicUrlOf(pass.downloadUrl)}
       support={pass.support}
       inWallet={pass.inWallet}

@@ -1,13 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import { Copy, UserMinus } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
+import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { copyText } from '../../lib/clipboard.ts';
 import { clearHolderConfirm, deleteConfirm, voidConfirm } from '../../lib/confirms.ts';
 import { useMode } from '../../lib/mode.ts';
+import { sessionQuery } from '../../lib/session.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
 import { usePassActions, usePassRemoval } from './api.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
@@ -77,7 +80,7 @@ export interface PassActionDef {
   destructive: boolean;
   /** Shown as a header button; the rest go in More. */
   bar: boolean;
-  /** The pass belongs to the other mode: only reading actions stay on. */
+  /** Only reading actions stay on when changes are unavailable. */
   disabled: boolean;
 }
 
@@ -87,10 +90,9 @@ const READ_ONLY = new Set<PassActionId>(['open', 'download', 'copy']);
  * Every action a pass offers, in order. The header and the row menu both read this, so they always
  * offer the same set. A voided pass shows only Unvoid in the bar and never Update or Pull. A
  * removed pass shows only Restore: it stays removed until restored, so Void and Update would lie,
- * and its link and download are gone with it. `foreign` greys out whatever would change a pass of
- * the other mode.
+ * and its link and download are gone with it. `readOnly` greys out changes.
  */
-export function actionsFor(pass: ActionPass, foreign = false): PassActionDef[] {
+export function actionsFor(pass: ActionPass, readOnly = false): PassActionDef[] {
   const removed = pass.removedAt != null;
   const voided = pass.status === 'voided';
   const ids: PassActionId[] = removed
@@ -117,7 +119,7 @@ export function actionsFor(pass: ActionPass, foreign = false): PassActionDef[] {
     icon: ICON[id],
     destructive: DANGER.has(id),
     bar: bar.has(id),
-    disabled: foreign && !READ_ONLY.has(id),
+    disabled: readOnly && !READ_ONLY.has(id),
   }));
 }
 
@@ -141,31 +143,35 @@ export interface PassActionRunner {
 export function usePassActionRunner(
   pass: ActionPass,
   links: PassLinks | undefined,
-  options: { onDeleted?: () => void } = {},
+  options: { canOperate: boolean; onDeleted?: () => void },
 ): PassActionRunner {
   const actions = usePassActions(pass.id);
+  const client = useQueryClient();
   const removal = usePassRemoval(pass.id);
   const navigate = useNavigate();
   const mode = useMode();
   const foreign = pass.mode !== undefined && pass.mode !== mode;
+  const canChange = options.canOperate && !foreign;
   const [ask, setAsk] = useState<'void' | 'clear' | 'delete' | 'rotate' | 'remove' | null>(null);
   const [done, setDone] = useState<Partial<Record<PassActionId, number>>>({});
   const bump = (id: PassActionId) => setDone((d) => ({ ...d, [id]: (d[id] ?? 0) + 1 }));
   const name = pass.title ?? pass.serial;
 
   async function refresh(id: 'update' | 'pull') {
+    const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+    if (!before?.authenticated) return;
+    const userId = before.user.id;
     try {
       await actions.refreshFromSource.mutateAsync();
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
       bump(id);
-      const n = pass.deviceCount;
-      toast.success(
-        id === 'pull'
-          ? 'Pull requested'
-          : n > 0
-            ? `Update sent to ${n} ${n === 1 ? 'device' : 'devices'}`
-            : 'Update queued',
-      );
+      const afterState = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!afterState?.authenticated || afterState.user.id !== userId) return;
+      toast.info(id === 'pull' ? 'Pull requested' : 'Update requested');
     } catch (error) {
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
       toast.error(error, id === 'pull' ? 'Could not pull' : 'Could not update');
     }
   }
@@ -198,7 +204,7 @@ export function usePassActionRunner(
   }
 
   function run(id: PassActionId) {
-    if (foreign && !READ_ONLY.has(id)) return;
+    if (!canChange && !READ_ONLY.has(id)) return;
     if (id === 'update' || id === 'pull') void refresh(id);
     else if (id === 'unvoid') void unvoid();
     else if (id === 'restore') void restore();
@@ -216,7 +222,7 @@ export function usePassActionRunner(
   }
 
   const close = (open: boolean) => !open && setAsk(null);
-  const dialogs = (
+  const dialogs = canChange ? (
     <>
       <ConfirmDialog
         open={ask === 'void'}
@@ -246,8 +252,10 @@ export function usePassActionRunner(
         )}
         destructive
         onConfirm={async () => {
-          await actions.unassign.mutateAsync();
-          toast.success('Holder cleared');
+          const holder = await actions.unassign.mutateAsync();
+          if (holder.transfer?.state === 'pending')
+            toast.info('Holder removal pending while existing wallet credentials are retired.');
+          else toast.success('Holder cleared');
         }}
       />
       <RotateLink
@@ -255,8 +263,12 @@ export function usePassActionRunner(
         onOpenChange={close}
         description="The current link and download stop working. Devices keep the pass."
         rotate={async () => {
+          const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+          if (!before?.authenticated) throw new Error('Sign in to rotate the link.');
+          const userId = before.user.id;
           const next = await actions.rotateLink.mutateAsync();
-          bump('rotate');
+          const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+          if (current?.authenticated && current.user.id === userId) bump('rotate');
           return next.publicUrl;
         }}
         holderEmail={pass.holderEmail}
@@ -276,10 +288,10 @@ export function usePassActionRunner(
         }}
       />
     </>
-  );
+  ) : null;
 
   return {
-    defs: actionsFor(pass, foreign),
+    defs: actionsFor(pass, !canChange),
     run,
     links,
     pending: {

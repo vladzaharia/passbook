@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Button,
   Callout,
@@ -33,10 +34,16 @@ import { styleList } from './labels.ts';
 import { OrgDialog } from './template-dialogs.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
-const passes = (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'}`;
 
 /** Details (org with Change, passes link) and the active version's warnings. */
-export function TemplateOverview({ template: t }: { template: Template }) {
+export function TemplateOverview({
+  template: t,
+  canAssign,
+}: {
+  template: Template;
+  canAssign: boolean;
+}) {
+  const { orgId } = useOrgScope();
   const [changing, setChanging] = useState(false);
   const active = t.versions.find((v) => v.active);
   const warnings = (active?.report.issues ?? []).filter((i) => i.severity !== 'error');
@@ -54,16 +61,20 @@ export function TemplateOverview({ template: t }: { template: Template }) {
                     {t.orgId ? (
                       <EntityAvatar kind="org" id={t.orgId} name={t.orgName ?? ''} />
                     ) : null}
-                    <span className="truncate">{t.orgName ?? 'All organizations'}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      iconStart={<Pencil aria-hidden />}
-                      aria-label="Change organization"
-                      onClick={() => setChanging(true)}
-                    >
-                      Change
-                    </Button>
+                    <span className="truncate">
+                      {t.orgId ? (t.orgName ?? t.orgId) : 'All organizations'}
+                    </span>
+                    {canAssign ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        iconStart={<Pencil aria-hidden />}
+                        aria-label="Change organization"
+                        onClick={() => setChanging(true)}
+                      >
+                        Change
+                      </Button>
+                    ) : null}
                   </span>
                 ),
               },
@@ -74,18 +85,10 @@ export function TemplateOverview({ template: t }: { template: Template }) {
                     count={t.passCount}
                     noun={['pass', 'passes']}
                     to="/admin/passes"
-                    search={{ templateId: t.id }}
+                    search={{ templateId: t.id, orgId }}
                   />
                 ),
               },
-              ...(t.passesOnOlderVersions > 0
-                ? [
-                    {
-                      label: t.passesBlocked > 0 ? 'Not updated' : 'Updating',
-                      value: passes(t.passesOnOlderVersions),
-                    },
-                  ]
-                : []),
               { label: 'Styles', value: styleList(t.styles) },
               { label: 'Slug', value: t.slug, mono: true },
             ]}
@@ -95,18 +98,13 @@ export function TemplateOverview({ template: t }: { template: Template }) {
       {warnings.length > 0 ? (
         <Callout
           tone="warning"
-          title={`${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'} · affects ${passes(t.passCount)}`}
+          title={`${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'} in the active version`}
           items={warnings.map((w) => w.message)}
         />
       ) : null}
-      {t.passesBlocked > 0 ? (
-        <Callout
-          tone="warning"
-          title={`${passes(t.passesBlocked)} could not update`}
-          items={['Their fields no longer fit the active version. Fix the template or the passes.']}
-        />
+      {canAssign ? (
+        <OrgDialog key={String(changing)} template={t} open={changing} onOpenChange={setChanging} />
       ) : null}
-      <OrgDialog key={String(changing)} template={t} open={changing} onOpenChange={setChanging} />
     </div>
   );
 }

@@ -1,18 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ScanEventSchema, ScannerListSchema } from '@/shared/contracts/scanners.ts';
+import type { Mode } from '@/shared/contracts/common.ts';
+import {
+  type ScanEventDto,
+  ScanEventSchema,
+  ScannerListSchema,
+} from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { formatEventTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
+import { useOrgScope, useResourceOrg } from '@/web/lib/org-filter.tsx';
+import { useSession } from '@/web/lib/session.ts';
 import {
   Button,
   Callout,
   Card,
   ConfirmDialog,
-  ErrorState,
+  DetailNotFound,
+  detailError,
   KeyValue,
   PageHeader,
+  SkeletonDetail,
   StatusPill,
   TwoPane,
 } from '@/web/ui/index.ts';
@@ -21,25 +30,88 @@ import { EventDialog } from './events/event-dialog.tsx';
 import { useOrgTemplates } from './scanner-api.ts';
 
 export function EventPage({ eventId }: { eventId: string }) {
-  const client = useQueryClient();
+  const { hasExplicitOrg, requestedOrgId } = useOrgScope();
+  return (
+    <EventResource key={`${eventId}:${hasExplicitOrg}:${requestedOrgId ?? ''}`} eventId={eventId} />
+  );
+}
+
+function EventResource({ eventId }: { eventId: string }) {
+  const scope = useOrgScope();
   const mode = useMode();
-  const [dialog, setDialog] = useState<'edit' | 'assign' | 'archive' | null>(null);
   const query = useQuery({
     queryKey: ['admin', 'scanning', 'events', eventId],
     queryFn: ({ signal }) =>
       api.get(`/api/v1/scan-events/${encodeURIComponent(eventId)}`, ScanEventSchema, { signal }),
+    refetchOnMount: 'always',
     refetchInterval: 30_000,
   });
   const event = query.data;
-  const templates = useOrgTemplates(event?.orgId);
+  const resourceScope = useResourceOrg(
+    query.isFetchedAfterMount && !query.isError ? event?.orgId : undefined,
+  );
+  const header = (
+    <PageHeader
+      title="Event"
+      breadcrumbs={[{ label: 'Scanning', to: '/admin/scanning' }, { label: 'Event' }]}
+    />
+  );
+  if (resourceScope === 'not-found') {
+    return (
+      <>
+        {header}
+        <DetailNotFound entity="event" to="/admin/scanning" back="scanning" />
+      </>
+    );
+  }
+  if (query.isError) {
+    return detailError(query, { entity: 'event', to: '/admin/scanning', back: 'scanning', header });
+  }
+  if (!event || resourceScope !== 'ready' || scope.orgId !== event.orgId) {
+    return (
+      <>
+        {header}
+        <SkeletonDetail label="Loading event" />
+      </>
+    );
+  }
+  const canManage = Boolean(scope.membership?.capabilities.includes('scanning:manage'));
+  return (
+    <EventDetail
+      key={`${event.id}:${event.orgId}:${canManage}:${mode}`}
+      event={event}
+      canManage={canManage}
+      mode={mode}
+    />
+  );
+}
+
+function EventDetail({
+  event,
+  canManage,
+  mode,
+}: {
+  event: ScanEventDto;
+  canManage: boolean;
+  mode: Mode;
+}) {
+  const eventId = event.id;
+  const client = useQueryClient();
+  const { membership } = useOrgScope();
+  const { isAdmin } = useSession();
+  const canAuthor = Boolean(
+    membership?.capabilities.includes('templates:read') &&
+      membership.capabilities.includes('templates:author'),
+  );
+  const [dialog, setDialog] = useState<'edit' | 'assign' | 'archive' | null>(null);
+  const templates = useOrgTemplates(event.orgId);
   const scanners = useQuery({
-    queryKey: ['admin', 'scanning', 'event-scanners', eventId],
+    queryKey: ['admin', 'scanning', 'event-scanners', eventId, event.orgId],
     queryFn: ({ signal }) =>
       api.get('/api/v1/scanners', ScannerListSchema, {
-        query: { orgId: event?.orgId, limit: 200 },
+        query: { orgId: event.orgId, limit: 200 },
         signal,
       }),
-    enabled: Boolean(event),
     refetchInterval: 30_000,
   });
   const archive = useMutation({
@@ -47,16 +119,16 @@ export function EventPage({ eventId }: { eventId: string }) {
       api.post(`/api/v1/scan-events/${encodeURIComponent(eventId)}/archive`, ScanEventSchema),
     onSuccess: () => client.invalidateQueries({ queryKey: ['admin', 'scanning'] }),
   });
-  if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   const assigned =
     scanners.data?.items.filter(
       (s) =>
+        s.orgId === event.orgId &&
         s.status !== 'revoked' &&
         s.accepts &&
         'eventId' in s.accepts &&
         s.accepts.eventId === eventId,
     ) ?? [];
-  const editable = event && event.mode === mode && event.status !== 'archived';
+  const editable = canManage && event.mode === mode && event.status !== 'archived';
   return (
     <>
       <PageHeader
@@ -166,16 +238,25 @@ export function EventPage({ eventId }: { eventId: string }) {
                   </Callout>
                 ) : null}
                 {templates.data?.items
-                  .filter((t) => event.templateIds.includes(t.id))
+                  .filter(
+                    (t) =>
+                      (t.orgId === null || t.orgId === event.orgId) &&
+                      event.templateIds.includes(t.id),
+                  )
                   .map((t) => (
                     <p key={t.id} className="text-sm">
-                      Result screen: {t.name} ·{' '}
-                      <a
-                        className="text-accent-fg"
-                        href={`/admin/templates/${encodeURIComponent(t.id)}/design?mode=scan`}
-                      >
-                        Edit
-                      </a>
+                      Result screen: {t.name}
+                      {canAuthor && (t.orgId !== null || t.origin === 'baked' || isAdmin) ? (
+                        <>
+                          {' · '}
+                          <a
+                            className="text-accent-fg"
+                            href={`/admin/templates/${encodeURIComponent(t.id)}/design?mode=scan`}
+                          >
+                            Edit
+                          </a>
+                        </>
+                      ) : null}
                     </p>
                   ))}
               </div>
@@ -190,14 +271,14 @@ export function EventPage({ eventId }: { eventId: string }) {
           </div>
         </TwoPane>
       ) : null}
-      {event && dialog === 'edit' ? (
+      {editable && dialog === 'edit' ? (
         <EventDialog orgId={event.orgId} event={event} onClose={() => setDialog(null)} />
       ) : null}
-      {event && dialog === 'assign' ? (
+      {editable && dialog === 'assign' ? (
         <AssignDialog event={event} onClose={() => setDialog(null)} />
       ) : null}
       <ConfirmDialog
-        open={dialog === 'archive'}
+        open={editable && dialog === 'archive'}
         onOpenChange={(open) => {
           if (!open) setDialog(null);
         }}

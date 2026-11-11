@@ -4,15 +4,16 @@ import type { z } from 'zod';
 import type { UserSummarySchema } from '@/shared/contracts/users.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
-import { formatDateTime } from '@/web/lib/format.ts';
+import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import {
-  CountLink,
+  Badge,
   DataTable,
   EmptyState,
   EntityAvatar,
   ErrorState,
   FilterBar,
   LoadMore,
+  MetaLink,
   PageHeader,
   RowLink,
   StatusPill,
@@ -53,9 +54,8 @@ const COLUMNS: ColumnDef<UserRow, never>[] = [
     cell: ({ row }) => <StatusPill status={row.original.status} />,
   },
   {
-    header: 'Roles',
+    header: 'Roles at last sign-in',
     id: 'roles',
-    meta: { stackHidden: true },
     cell: ({ row }) =>
       row.original.lastRoles.length ? (
         <span className="flex flex-wrap gap-1">
@@ -74,16 +74,21 @@ const COLUMNS: ColumnDef<UserRow, never>[] = [
     cell: ({ row }) => methodsLabel(row.original.signInMethods),
   },
   {
-    header: 'Passes',
+    header: 'Owned passes',
     id: 'passes',
     meta: { numeric: true },
     cell: ({ row }) => (
-      <CountLink
-        count={row.original.passCount}
-        to="/admin/passes"
-        search={{ q: row.original.primaryEmail }}
-        aria-label={`${row.original.passCount} passes held by ${row.original.primaryEmail}`}
-      />
+      <div className="flex flex-col items-end gap-1">
+        <span className="tabular-nums">{formatCount(row.original.passCount)}</span>
+        <MetaLink
+          to="/admin/passes"
+          search={{ q: row.original.primaryEmail }}
+          aria-label={`Search primary email ${row.original.primaryEmail} in the selected mode`}
+          className="text-xs text-accent-fg"
+        >
+          Search primary email
+        </MetaLink>
+      </div>
     ),
   },
   {
@@ -112,9 +117,23 @@ export function UsersPage({
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.status);
 
+  const clear = () => {
+    setText('');
+    onSearch({});
+  };
+
   return (
     <>
-      <PageHeader title="Users" />
+      <PageHeader
+        title="Platform accounts"
+        description="Roles are from the last sign-in."
+        meta={
+          <>
+            <Badge>Platform-wide</Badge>
+            <span>All modes</span>
+          </>
+        }
+      />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (
@@ -127,7 +146,7 @@ export function UsersPage({
           filtered={filtered}
           toolbar={
             <FilterBar
-              search={{ value: text, onChange: setText, placeholder: 'Search users' }}
+              search={{ value: text, onChange: setText, placeholder: 'Search accounts' }}
               filters={[
                 {
                   id: 'status',
@@ -139,20 +158,16 @@ export function UsersPage({
                     { value: 'active', label: 'Active' },
                     { value: 'disabled', label: 'Disabled' },
                   ],
-                  onChange: (v) =>
+                  onChange: (value) =>
                     onSearch({
                       ...search,
-                      status: v === ALL ? undefined : (v as 'active' | 'disabled'),
+                      status: value === ALL ? undefined : (value as 'active' | 'disabled'),
                     }),
                 },
               ]}
-              onClear={() => {
-                setText('');
-                onSearch({});
-              }}
+              onClear={clear}
             />
           }
-          // The filter bar's Clear is on screen: a second one here would repeat it.
           emptyFiltered={
             <EmptyState art={ENTITY.user.art} variant="filtered" title="No users match" />
           }

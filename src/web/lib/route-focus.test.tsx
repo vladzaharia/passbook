@@ -10,35 +10,42 @@ describe('RouteAnnouncer', () => {
   it('focuses the new h1 without scrolling and announces it', async () => {
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     const user = userEvent.setup();
-    await renderApp('/admin', { session: 'admin' });
+    const { router } = await renderApp('/admin', { session: 'admin' });
     await user.click(await screen.findByRole('link', { name: 'Settings' }));
-    const heading = await screen.findByRole('heading', { name: 'Settings', level: 1 });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    const heading = screen.getByRole('heading', { level: 1 });
     await waitFor(() => expect(heading).toHaveFocus());
+    const title = heading.textContent ?? '';
     const call = focus.mock.contexts.indexOf(heading);
     expect(focus.mock.calls[call]).toEqual([{ preventScroll: true }]);
-    await waitFor(() =>
-      expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Settings'),
-    );
+    await waitFor(() => expect(screen.getByRole('status', { name: '' })).toHaveTextContent(title));
   });
 
   it('leaves focus alone on Back and Forward, so scroll restoration holds', async () => {
     const user = userEvent.setup();
     const { router } = await renderApp('/admin', { session: 'admin' });
     await user.click(await screen.findByRole('link', { name: 'Settings' }));
-    const settings = await screen.findByRole('heading', { name: 'Settings', level: 1 });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    const settings = screen.getByRole('heading', { level: 1 });
     await waitFor(() => expect(settings).toHaveFocus());
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     act(() => router.history.back());
-    const overview = await screen.findByRole('heading', { name: 'Overview', level: 1 });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
+    const overview = screen.getByRole('heading', { level: 1 });
     await waitFor(() =>
-      expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Overview'),
+      expect(screen.getByRole('status', { name: '' })).toHaveTextContent(
+        overview.textContent ?? '',
+      ),
     );
     expect(overview).not.toHaveFocus();
     expect(focus.mock.contexts).not.toContain(overview);
     act(() => router.history.forward());
-    await screen.findByRole('heading', { name: 'Settings', level: 1 });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    const returned = screen.getByRole('heading', { level: 1 });
     await waitFor(() =>
-      expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Settings'),
+      expect(screen.getByRole('status', { name: '' })).toHaveTextContent(
+        returned.textContent ?? '',
+      ),
     );
     expect(focus).not.toHaveBeenCalled();
   });

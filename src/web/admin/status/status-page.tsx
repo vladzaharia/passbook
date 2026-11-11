@@ -30,7 +30,11 @@ export function StatusPage() {
     });
   return (
     <>
-      <PageHeader title="Status" />
+      <PageHeader
+        title="System status"
+        breadcrumbs={[{ label: 'Platform', to: '/admin' }, { label: 'Status' }]}
+        meta="Platform-wide · Not filtered by mode"
+      />
       {status.isPending ? (
         <SkeletonRows label="Loading status" />
       ) : status.isError || !data ? (
@@ -44,48 +48,59 @@ export function StatusPage() {
             rechecking={recheck.isPending}
             onRecheck={onRecheck}
           />
-          {data.components.length === 0 ? (
-            <Card>
-              <EmptyState inline art="pulse" title="No components" />
-            </Card>
-          ) : (
-            // Two columns at 1280 and up, split by row count so a card never changes sides.
-            <div className="grid items-start gap-6 xl:grid-cols-2">
-              {splitColumns(groupComponents(data.components)).map((column, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: always two columns
-                <div key={i} className="flex min-w-0 flex-col gap-6">
-                  {column.map((g) => {
-                    const bad = problems(g.items).length;
-                    return (
-                      <section key={g.id} aria-labelledby={`g-${g.id}`}>
-                        <Card className="overflow-hidden">
-                          <CardHeader
-                            title={<span id={`g-${g.id}`}>{g.title}</span>}
-                            actions={
-                              bad > 0 ? (
-                                <span className="text-xs text-fg-muted">
-                                  {bad} {bad === 1 ? 'needs' : 'need'} attention
-                                </span>
-                              ) : null
-                            }
-                          />
-                          <ul aria-label={g.title} className="divide-y divide-border">
-                            {sortBySeverity(g.items).map((c) => (
-                              <ComponentRow
-                                key={c.id}
-                                component={c}
-                                items={c.data ? dataItems(c.data, orgName) : []}
-                              />
-                            ))}
-                          </ul>
-                        </Card>
-                      </section>
-                    );
-                  })}
-                </div>
-              ))}
+          <section aria-labelledby="dependencies-title" className="flex flex-col gap-3">
+            <div>
+              <h2 id="dependencies-title" className="text-lg font-semibold text-fg-strong">
+                Dependencies
+              </h2>
+              <p className="text-sm text-fg-muted">
+                Reported component results and their latest check times.
+              </p>
             </div>
-          )}
+            {data.components.length === 0 ? (
+              <Card>
+                <EmptyState inline art="pulse" title="No components" />
+              </Card>
+            ) : (
+              // Two columns at 1280 and up, split by row count so a card never changes sides.
+              <div className="grid items-start gap-6 xl:grid-cols-2">
+                {splitColumns(groupComponents(data.components)).map((column, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: always two columns
+                  <div key={i} className="flex min-w-0 flex-col gap-6">
+                    {column.map((g) => {
+                      const bad = problems(g.items).length;
+                      return (
+                        <section key={g.id} aria-labelledby={`g-${g.id}`}>
+                          <Card className="overflow-hidden">
+                            <CardHeader
+                              as="h3"
+                              title={<span id={`g-${g.id}`}>{g.title}</span>}
+                              actions={
+                                bad > 0 ? (
+                                  <span className="text-xs text-fg-muted">
+                                    {bad} {bad === 1 ? 'needs' : 'need'} attention
+                                  </span>
+                                ) : null
+                              }
+                            />
+                            <ul aria-label={g.title} className="divide-y divide-border">
+                              {sortBySeverity(g.items).map((c) => (
+                                <ComponentRow
+                                  key={c.id}
+                                  component={c}
+                                  items={c.data ? dataItems(c.data, orgName) : []}
+                                />
+                              ))}
+                            </ul>
+                          </Card>
+                        </section>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
           <WorkflowRuns orgName={orgName} />
         </div>
       )}

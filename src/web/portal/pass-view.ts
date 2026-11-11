@@ -26,5 +26,5 @@ export type HolderState = 'active' | 'voided' | 'expired' | 'removed';
 
 export function holderState(pass: MyPass, view: PassView): HolderState {
   if (pass.removedAt !== null) return 'removed';
-  return pass.status === 'voided' ? 'voided' : view.expired ? 'expired' : 'active';
+  return pass.status === 'voided' || view.voided ? 'voided' : view.expired ? 'expired' : 'active';
 }

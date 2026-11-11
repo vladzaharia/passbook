@@ -9,7 +9,7 @@ export function AppProviders({
   children,
 }: {
   queryClient: QueryClient;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <CoreProviders queryClient={queryClient}>

@@ -34,7 +34,10 @@ const VIEWS = [
   { value: 'table', label: 'Table' },
 ] as const;
 
-function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
+function columns(
+  archived: boolean,
+  orgId: string | undefined,
+): ColumnDef<TemplateSummaryDto, never>[] {
   return [
     {
       id: 'name',
@@ -45,6 +48,7 @@ function columns(archived: boolean): ColumnDef<TemplateSummaryDto, never>[] {
           <RowLink
             to="/admin/templates/$templateId"
             params={{ templateId: row.original.id }}
+            search={{ orgId }}
             inactive={row.original.status === 'archived'}
           >
             {row.original.name}
@@ -109,8 +113,9 @@ export function TemplatesListPage({
   search: TemplateListSearch;
   onSearch: (patch: Partial<TemplateListSearch>) => void;
 }) {
-  const { orgId } = useOrgScope();
-  const uploads = useRecentUploads(orgId);
+  const { orgId, membership } = useOrgScope();
+  const canAuthor = membership?.capabilities.includes('templates:author') ?? false;
+  const uploads = useRecentUploads(canAuthor ? orgId : undefined);
   const uploadsFirst = uploadsNeedAttention(uploads.data?.items ?? [], Date.now());
   const phone = useMediaQuery(BELOW_MD);
   const list = useTemplatePages({
@@ -125,7 +130,7 @@ export function TemplatesListPage({
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.origin || search.archived);
   const view = phone ? 'gallery' : (search.view ?? 'gallery');
-  const cols = useMemo(() => columns(Boolean(search.archived)), [search.archived]);
+  const cols = useMemo(() => columns(Boolean(search.archived), orgId), [search.archived, orgId]);
   const clear = () => {
     setQ('');
     onSearch({ q: undefined, origin: undefined, archived: undefined });
@@ -176,7 +181,9 @@ export function TemplatesListPage({
   const truth = !list.isPending && !list.isError && !filtered && items.length === 0;
   const upload = (variant: 'primary' | 'outline') => (
     <Button asChild variant={variant} iconStart={<Upload aria-hidden />}>
-      <Link to="/admin/templates/upload">Upload template</Link>
+      <Link to="/admin/templates/upload" search={{ orgId }}>
+        Upload template
+      </Link>
     </Button>
   );
   const footer = (
@@ -190,8 +197,11 @@ export function TemplatesListPage({
 
   return (
     <>
-      <PageHeader title="Templates" actions={upload(truth ? 'outline' : 'primary')} />
-      {uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
+      <PageHeader
+        title="Templates"
+        actions={canAuthor ? upload(truth ? 'outline' : 'primary') : undefined}
+      />
+      {canAuthor && uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
       {list.isError ? (
         <ErrorState
           error={list.error}
@@ -199,7 +209,11 @@ export function TemplatesListPage({
           onRetry={() => void list.refetch()}
         />
       ) : truth ? (
-        <EmptyState art="template" title="No templates yet" action={upload('primary')} />
+        <EmptyState
+          art="template"
+          title="No templates yet"
+          action={canAuthor ? upload('primary') : undefined}
+        />
       ) : view === 'gallery' ? (
         <div
           aria-busy={(list.isFetching && !list.isPending && !list.isFetchingNextPage) || undefined}
@@ -227,7 +241,7 @@ export function TemplatesListPage({
           footer={footer}
         />
       )}
-      {uploadsFirst ? null : <RecentUploads orgId={orgId} />}
+      {canAuthor && !uploadsFirst ? <RecentUploads orgId={orgId} /> : null}
     </>
   );
 }

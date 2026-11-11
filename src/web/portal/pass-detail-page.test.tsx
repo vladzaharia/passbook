@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import type { WalletOffer } from '@/shared/contracts/me.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import { passFixture } from './fixtures.ts';
 import { publicUrlOf } from './wallet-actions.tsx';
@@ -13,7 +14,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** A Mac: the badge sits beside the QR (elsewhere off Apple's devices the scan is the way). */
+/** A Mac: the badge sits beside the QR. */
 const onMac = () => vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(MAC);
 
 describe('publicUrlOf', () => {
@@ -27,7 +28,104 @@ describe('publicUrlOf', () => {
   });
 });
 
+const nativeOffers: WalletOffer[] = [
+  {
+    provider: 'google',
+    href: '/p/abcdefghijklmnopqrst/wallet/google',
+    installation: 'unknown',
+  },
+  {
+    provider: 'samsung',
+    href: '/p/abcdefghijklmnopqrst/wallet/samsung',
+    installation: 'unknown',
+  },
+];
+
 describe('pass detail', () => {
+  it.each([
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1'],
+    [
+      'iPhone in-app browser',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148',
+    ],
+    ['Mac', MAC],
+    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1'],
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile'],
+    ['Samsung', 'Mozilla/5.0 (Linux; Android 14; SM-S928B) SamsungBrowser/25.0 Mobile'],
+    ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36'],
+  ])('shows every available wallet on %s', async (_name, ua) => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(ua);
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () => json(passFixture({ walletOffers: nativeOffers })),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toHaveAttribute(
+      'href',
+      '/p/abcdefghijklmnopqrst/pass.pkpass',
+    );
+    for (const [name, provider, asset] of [
+      ['Google', 'google', 'svg'],
+      ['Samsung', 'samsung', 'png'],
+    ]) {
+      const link = screen.getByRole('link', { name: `Add to ${name} Wallet` });
+      expect(link).toBeVisible();
+      expect(link).toHaveAttribute('href', `/p/abcdefghijklmnopqrst/wallet/${provider}`);
+      expect(within(link).getByRole('img')).toHaveAttribute(
+        'src',
+        `/icons/wallet-providers/${provider}/add-to-${provider}-wallet.${asset}`,
+      );
+    }
+    expect(screen.queryByText(/(?:Google|Samsung) Wallet (?:installed|removed)/i)).toBeNull();
+  });
+
+  it('does not mistake an Apple registration for a native-wallet installation', async () => {
+    onMac();
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(passFixture({ inWallet: true, walletOffers: nativeOffers })),
+      },
+    });
+    await screen.findByRole('region', { name: 'In Apple Wallet' });
+    expect(screen.getByText('If it is missing, add it again.')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Add to Google Wallet' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Add to Samsung Wallet' })).toBeVisible();
+    expect(screen.queryByText(/(?:Google|Samsung) Wallet (?:installed|removed)/i)).toBeNull();
+  });
+
+  it('shows no unavailable or stale native choices', async () => {
+    const { unmount } = await renderApp('/passes/p1', {
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
+    });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    expect(screen.queryByRole('link', { name: 'Add to Google Wallet' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Add to Samsung Wallet' })).toBeNull();
+    unmount();
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(passFixture({ status: 'voided', walletOffers: nativeOffers })),
+      },
+    });
+    await screen.findByText(/^This pass was voided\./);
+    expect(screen.queryByRole('link', { name: 'Add to Google Wallet' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Add to Samsung Wallet' })).toBeNull();
+  });
+
+  it('does not show stale offers when the server denies presentation eligibility', async () => {
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () =>
+          json(passFixture({ presentationEligible: false, walletOffers: nativeOffers })),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    expect(screen.queryByRole('link', { name: 'Add to Google Wallet' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Add to Samsung Wallet' })).toBeNull();
+  });
+
   it('shows the card, the badge, a details card without buttons, and flips', async () => {
     onMac();
     const user = userEvent.setup();
@@ -41,6 +139,12 @@ describe('pass detail', () => {
     expect(screen.getByText('Henrys', { selector: 'header p' })).toBeInTheDocument();
     expect(screen.getByText(/^Updated /)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Show barcode' })).toHaveAttribute(
+      'href',
+      '/api/v1/me/passes/p1/barcode',
+    );
+    expect(screen.getByText('Best for this device')).toBeInTheDocument();
+    expect(screen.queryByText(/NFC/)).toBeNull();
     expect(screen.queryByText(/\.pkpass/)).toBeNull();
     expect(container.querySelector('a[download]')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
@@ -77,7 +181,17 @@ describe('pass detail', () => {
     expect(open).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('says In Apple Wallet once on a device, the badge behind Show QR', async () => {
+  it('hides presentation when the server says the pass is not eligible', async () => {
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () => json(passFixture({ presentationEligible: false })),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    expect(screen.queryByRole('link', { name: 'Show barcode' })).toBeNull();
+  });
+
+  it('reports Apple registration without claiming installation, with the badge behind Show QR', async () => {
     onMac();
     const user = userEvent.setup();
     await renderApp('/passes/p1', {
@@ -85,6 +199,7 @@ describe('pass detail', () => {
     });
     const add = await screen.findByRole('region', { name: 'In Apple Wallet' });
     expect(screen.getAllByText('In Apple Wallet')).toHaveLength(1);
+    expect(within(add).getByText('If it is missing, add it again.')).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     // Happy, not nudging.
     expect(add.querySelector('[data-buddy]')?.getAttribute('data-scene')).toBe('count');
@@ -127,6 +242,7 @@ describe('pass detail', () => {
     // The help line gives way to the note: the address is linked once.
     expect(document.querySelectorAll('a[href="mailto:help@gym.test"]')).toHaveLength(1);
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Show barcode' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Refresh/ })).toBeNull();
     expect(screen.getAllByText('Voided').length).toBeGreaterThan(0);
     // The buddy sits on the note, sad.
@@ -172,11 +288,12 @@ describe('pass detail', () => {
     expect(screen.queryByText('This pass was voided.')).toBeNull();
     expect(screen.getAllByText('Removed').length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Show barcode' })).toBeNull();
     expect(document.querySelector('.pc-root[data-removed]')).not.toBeNull();
     expect(document.querySelector('.pc-void')).toBeNull();
   });
 
-  it('lists upcoming events in Details and the Remove dialog says a Wallet pass stays', async () => {
+  it('lists upcoming events and explains that an Apple Wallet copy may remain', async () => {
     const user = userEvent.setup();
     await renderApp('/passes/p1', {
       handlers: {
@@ -208,7 +325,7 @@ describe('pass detail', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Remove from My passes' }));
     expect(
       within(await screen.findByRole('alertdialog')).getByText(
-        /It stays in Apple Wallet; delete it there\./,
+        /An Apple Wallet copy may remain; delete it there if needed\./,
       ),
     ).toBeInTheDocument();
   });
@@ -247,7 +364,9 @@ describe('pass detail', () => {
       handlers: {
         '/api/v1/me/passes': () => json({ items: [], nextCursor: null }),
         '/api/v1/me/passes/p1': (_u, init) =>
-          init?.method === 'DELETE' ? json({ ok: true }) : json(passFixture()),
+          init?.method === 'DELETE'
+            ? json({ transferId: 'transfer-1', state: 'completed' })
+            : json(passFixture()),
       },
     });
     await user.click(await screen.findByRole('button', { name: 'More' }));

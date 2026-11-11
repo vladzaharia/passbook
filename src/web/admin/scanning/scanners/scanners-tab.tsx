@@ -18,17 +18,20 @@ export const flatScanners = (q: Pages): ScannerDto[] => q.data?.pages.flatMap((p
  * revoked (n)", the same as API keys. The list refetches every 30 s while visible.
  */
 export function ScannersTab({ live, newButton }: { live: Pages; newButton: ReactNode }) {
-  const { orgId } = useOrgScope();
+  const { orgId, membership } = useOrgScope();
+  const canManage = Boolean(orgId && membership?.capabilities.includes('scanning:manage'));
   const now = useNow();
-  const events = useScanEvents(orgId);
+  const events = useScanEvents(orgId, Boolean(orgId));
   const [showRevoked, setShowRevoked] = useState(false);
-  const revokedList = useScannerPages(orgId, true);
+  const revokedList = useScannerPages(orgId, true, Boolean(orgId));
   const [pairing, setPairing] = useState<ScannerDto>();
   const [revoking, setRevoking] = useState<ScannerDto>();
   const eventName = useMemo(() => {
-    const names = new Map((events.data?.items ?? []).map((e) => [e.id, e.name]));
+    const names = new Map(
+      (events.data?.items ?? []).filter((e) => e.orgId === orgId).map((e) => [e.id, e.name]),
+    );
     return (id: string) => names.get(id);
-  }, [events.data]);
+  }, [events.data, orgId]);
   const columns = useMemo(
     () =>
       scannerColumns(
@@ -38,12 +41,15 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
         },
         now,
         eventName,
+        canManage,
       ),
-    [now, eventName],
+    [now, eventName, canManage],
   );
 
-  const liveRows = flatScanners(live).filter((s) => s.status !== 'revoked');
-  const revoked = flatScanners(revokedList).filter((s) => s.status === 'revoked');
+  const liveRows = flatScanners(live).filter((s) => s.orgId === orgId && s.status !== 'revoked');
+  const revoked = flatScanners(revokedList).filter(
+    (s) => s.orgId === orgId && s.status === 'revoked',
+  );
   const rows = showRevoked ? [...liveRows, ...revoked] : liveRows;
   if (live.isError && liveRows.length === 0) {
     return <ErrorState error={live.error} onRetry={() => live.refetch()} />;
@@ -98,8 +104,14 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
         }
         columns={columns}
       />
-      <PairDialog key={pairing?.id} scanner={pairing} onClose={() => setPairing(undefined)} />
-      <RevokeDialog scanner={revoking} onClose={() => setRevoking(undefined)} />
+      {canManage &&
+      (!pairing || pairing.orgId === orgId) &&
+      (!revoking || revoking.orgId === orgId) ? (
+        <>
+          <PairDialog key={pairing?.id} scanner={pairing} onClose={() => setPairing(undefined)} />
+          <RevokeDialog scanner={revoking} onClose={() => setRevoking(undefined)} />
+        </>
+      ) : null}
     </>
   );
 }

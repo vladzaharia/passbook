@@ -7,10 +7,12 @@ const NONE = '__none__';
 export function TemplateSelect({
   orgId,
   value,
+  disabled,
   onChange,
 }: {
   orgId: string | undefined;
   value: string;
+  disabled?: boolean;
   onChange: (templateId: string) => void;
 }) {
   const templates = useTemplates({ orgId }, Boolean(orgId));
@@ -20,6 +22,7 @@ export function TemplateSelect({
         <Select
           {...c}
           className="sm:max-w-sm"
+          disabled={disabled}
           value={value || NONE}
           onValueChange={(v) => onChange(v === NONE ? '' : v)}
           options={[

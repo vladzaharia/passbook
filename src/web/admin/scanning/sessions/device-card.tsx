@@ -7,9 +7,11 @@ import { SURFACE_ICON } from './surface-picker.tsx';
 
 export function DeviceCard({
   device,
+  canManage,
   onConfigure,
 }: {
   device: ScanningDevice;
+  canManage: boolean;
   onConfigure: () => void;
 }) {
   const Icon =
@@ -100,7 +102,7 @@ export function DeviceCard({
           iconStart={<Settings2 aria-hidden />}
           onClick={onConfigure}
         >
-          Configure device
+          {canManage ? 'Configure device' : 'View device'}
         </Button>
       </CardBody>
     </Card>

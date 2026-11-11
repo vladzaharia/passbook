@@ -6,9 +6,18 @@ import { errorMessage } from '@/web/lib/errors.ts';
 import { localZone } from '@/web/lib/timezones.ts';
 import { CheckboxField } from '@/web/ui/checkbox.tsx';
 import { DateTimeField, type DateTimeValue } from '@/web/ui/date-time-field.tsx';
-import { Button, Callout, Dialog, DialogContent, FormField, Input } from '@/web/ui/index.ts';
+import {
+  Button,
+  Callout,
+  Dialog,
+  DialogContent,
+  Form,
+  FormField,
+  Input,
+  useFormErrors,
+} from '@/web/ui/index.ts';
 import { isoToLocal, localToIso } from '../../passes/schema-form/datetime.ts';
-import { TemplateChoices } from './template-choices.tsx';
+import { EligibleTemplatePicker } from '../eligible-template-picker.tsx';
 
 export function EventDialog({
   orgId,
@@ -36,7 +45,10 @@ export function EventDialog({
   const [reentry, setReentry] = useState(event?.reentry ?? false);
   const [matchInput, setMatchInput] = useState(event?.match?.input ?? '');
   const [matchValues, setMatchValues] = useState(event?.match?.values.join(', ') ?? '');
-  const [validation, setValidation] = useState('');
+  const check = useFormErrors({
+    values:
+      matchInput.trim() && !matchValues.trim() ? 'Enter at least one matching value.' : undefined,
+  });
   const mutation = useMutation({
     mutationFn: async () => {
       const body = {
@@ -84,18 +96,7 @@ export function EventDialog({
       }}
     >
       <DialogContent title={event ? 'Edit event' : 'New event'} size="md">
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setValidation('');
-            if (matchInput.trim() && !matchValues.trim()) {
-              setValidation('Enter at least one matching value.');
-              return;
-            }
-            mutation.mutate();
-          }}
-        >
+        <Form {...check.form} className="flex flex-col gap-4" onValid={() => mutation.mutate()}>
           <FormField label="Name">
             {(p) => (
               <Input
@@ -107,7 +108,12 @@ export function EventDialog({
               />
             )}
           </FormField>
-          <TemplateChoices orgId={orgId} selected={selected} onChange={setSelected} />
+          <EligibleTemplatePicker
+            orgId={orgId}
+            selected={selected}
+            onChange={setSelected}
+            requireCheckIn
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField label="Only passes where" help="Input name; optional">
               {(p) => (
@@ -119,7 +125,7 @@ export function EventDialog({
                 />
               )}
             </FormField>
-            <FormField label="Equals" help="Values separated by commas">
+            <FormField label="Equals" help="Values separated by commas" error={check.errors.values}>
               {(p) => (
                 <Input
                   {...p}
@@ -187,8 +193,8 @@ export function EventDialog({
             )}
           </FormField>
           <p className="-mt-2 text-right text-xs text-fg-muted">{note.length}/140</p>
-          {validation || mutation.isError ? (
-            <Callout tone="danger">{validation || errorMessage(mutation.error)}</Callout>
+          {mutation.isError ? (
+            <Callout tone="danger">{errorMessage(mutation.error)}</Callout>
           ) : null}
           <Button
             type="submit"
@@ -197,7 +203,7 @@ export function EventDialog({
           >
             {event ? 'Save event' : 'Create event'}
           </Button>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

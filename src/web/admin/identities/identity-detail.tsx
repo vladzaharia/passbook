@@ -5,8 +5,11 @@ import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
 import { deleteConfirm } from '@/web/lib/confirms.ts';
 import { formatCount } from '@/web/lib/format.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
+  Badge,
   Button,
+  Callout,
   ConfirmDialog,
   DropdownMenuItem,
   detailError,
@@ -19,6 +22,7 @@ import {
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
+import { remainingDays, WARN_DAYS } from './expiry.tsx';
 import { CertificateCard, OverviewCard, SettingsCard } from './identity-cards.tsx';
 import { PushCard } from './push-card.tsx';
 import { useDeleteIdentity, useIdentity, useResignIdentityPasses } from './queries.ts';
@@ -30,6 +34,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const query = useIdentity(identityId);
   const remove = useDeleteIdentity(identityId);
   const orgName = useOrgNames();
+  const scope = useOrgScope();
   const navigate = useNavigate();
   const resign = useResignIdentityPasses(identityId);
   const created = useCreated(`identity:${identityId}`);
@@ -58,6 +63,28 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   }
   const identity = query.data;
   const uploaded = identity.source === 'db';
+  const canManageOrg = Boolean(
+    identity.orgId &&
+      !scope.isLoading &&
+      !scope.isError &&
+      scope.memberships.some(
+        (membership) =>
+          membership.orgId === identity.orgId && membership.capabilities.includes('org:manage'),
+      ),
+  );
+  const now = Date.now();
+  const days = remainingDays(identity, now);
+  const expired = days !== null && days < 0;
+  const notYetValid = identity.notBefore !== null && identity.notBefore > now;
+  const lifecycleTitle = expired
+    ? 'Certificate has expired'
+    : notYetValid
+      ? 'Certificate is not yet valid'
+      : days === null
+        ? 'Certificate expiry is unknown'
+        : days <= WARN_DAYS
+          ? 'Certificate renewal needs review'
+          : null;
   return (
     <>
       <PageHeader
@@ -65,6 +92,8 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         breadcrumbs={crumbs}
         meta={
           <>
+            <Badge>{orgName(identity.orgId)}</Badge>
+            <span>All modes</span>
             {identity.isDefault ? <StatusPill status="default" /> : null}
             <span className="font-mono text-xs">{identity.passTypeIdentifier}</span>
             {uploaded ? null : <span>From environment</span>}
@@ -100,9 +129,23 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           </MoreMenu>
         }
       />
+      {lifecycleTitle ? (
+        <Callout
+          className="mb-6"
+          tone={expired || notYetValid ? 'danger' : 'warning'}
+          title={lifecycleTitle}
+          actions={
+            uploaded ? (
+              <Button size="sm" variant="outline" onClick={() => setRotating(true)}>
+                Replace certificate
+              </Button>
+            ) : null
+          }
+        />
+      ) : null}
       <TwoPane aside={<OverviewCard identity={identity} orgName={orgName} />}>
         {created.shown ? (
-          // Next: pick it as an org's signing identity (org detail, Details).
+          // Next: pick it as an organization's signing identity in its authorized workspace.
           <CreatedCallout
             title="Identity uploaded"
             onDismiss={created.dismiss}
@@ -114,9 +157,17 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
                   </Button>
                 ) : null}
                 <Button asChild size="sm" iconEnd={<ChevronRight aria-hidden />}>
-                  {identity.orgId ? (
-                    <Link to="/admin/orgs/$orgId" params={{ orgId: identity.orgId }}>
+                  {identity.orgId && canManageOrg ? (
+                    <Link
+                      to="/admin/orgs/$orgId"
+                      params={{ orgId: identity.orgId }}
+                      search={{ view: 'workspace', orgId: identity.orgId }}
+                    >
                       Use in {orgName(identity.orgId)}
+                    </Link>
+                  ) : identity.orgId ? (
+                    <Link to="/admin/orgs/$orgId" params={{ orgId: identity.orgId }}>
+                      View {orgName(identity.orgId)}
                     </Link>
                   ) : (
                     <Link to="/admin/orgs">Use in an organization</Link>

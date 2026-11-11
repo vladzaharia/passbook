@@ -109,6 +109,24 @@ describe('scan store', () => {
     expect(api.act).toHaveBeenCalledTimes(2);
   });
 
+  it('sends the approval with an undo, and none without one', async () => {
+    const { store, api } = boot();
+    store.dispatch(read('AAAA1111', 0));
+    await flush();
+    const scanId = fixtureOutcome().scanId ?? '';
+    store.dispatch({ type: 'undo', scanId });
+    expect(api.undo.mock.calls[0]?.[1]).not.toHaveProperty('approval');
+    await flush();
+    store.dispatch({
+      type: 'undo',
+      scanId,
+      approval: { staffId: 'staff-1', pin: '1234' },
+    });
+    expect(api.undo.mock.calls.at(-1)?.[1]).toMatchObject({
+      approval: { staffId: 'staff-1', pin: '1234' },
+    });
+  });
+
   it('does not play sounds when the preference is off', async () => {
     const { store, calls } = boot();
     store.dispatch({ type: 'prefs', prefs: { sound: false } });

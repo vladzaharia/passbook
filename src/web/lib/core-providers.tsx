@@ -12,7 +12,7 @@ export function CoreProviders({
   children,
 }: {
   queryClient: QueryClient;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <QueryClientProvider client={queryClient}>

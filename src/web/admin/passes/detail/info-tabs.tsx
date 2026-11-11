@@ -1,3 +1,4 @@
+import { useOrgScope } from '../../../lib/org-filter.tsx';
 import type { EntityChipProps } from '../../../ui/index.ts';
 import {
   Card,
@@ -19,8 +20,23 @@ const ACTOR: Record<string, { kind: EntityChipProps['kind']; to?: (id: string) =
 };
 
 /** The pass's audit trail as a timeline: action glyphs, who did it as an entity chip. */
-export function ActivityTab({ passId, active }: { passId: string; active: boolean }) {
-  const audit = usePassAudit(passId, active);
+export function ActivityTab({
+  passId,
+  orgId,
+  active,
+}: {
+  passId: string;
+  orgId: string;
+  active: boolean;
+}) {
+  const scope = useOrgScope();
+  const audit = usePassAudit(passId, orgId, active);
+  if (!scope.isLoading && !scope.membership?.capabilities.includes('audit:read'))
+    return (
+      <Card>
+        <EmptyState inline art="activity" title="Activity needs audit access" />
+      </Card>
+    );
   if (audit.isError)
     return <ErrorState inline error={audit.error} onRetry={() => void audit.refetch()} />;
   const items: TimelineItem[] = (audit.data?.items ?? []).map((e) => {

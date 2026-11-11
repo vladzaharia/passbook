@@ -120,6 +120,79 @@ describe('createScanApi', () => {
     expect(calls[1]?.init.body).toBe(calls[0]?.init.body);
   });
 
+  describe('409 from a changed door', () => {
+    const body = {
+      idempotencyKey: '01900000-0000-7000-8000-000000000001',
+      input: { code: 'ABC', method: 'camera' as const },
+      clientTs: 1,
+      actionId: 'auto',
+    };
+    const conflict = (code: string) =>
+      json({ code, title: 'Changed', status: 409 }, { status: 409 });
+    const withRefresh = (
+      respond: (url: string, init: RequestInit) => Response,
+      refreshConfig: () => Promise<void>,
+    ) => {
+      const calls: { url: string; init: RequestInit }[] = [];
+      const api = createScanApi({
+        fetch: (async (url: string, init: RequestInit) => {
+          calls.push({ url, init });
+          return respond(url, init);
+        }) as unknown as typeof fetch,
+        csrf: () => 'csrf-1',
+        sleep: async () => {},
+        refreshConfig,
+      });
+      return { api, calls };
+    };
+
+    it('reloads the configuration and retries SCAN_CONFIG_CHANGED once with the same key', async () => {
+      const outcome = ScanOutcomeSchema.parse(fixtureOutcome('ok'));
+      const refresh = vi.fn(async () => {});
+      let n = 0;
+      const { api, calls } = withRefresh(
+        () => (++n === 1 ? conflict('SCAN_CONFIG_CHANGED') : json(outcome)),
+        refresh,
+      );
+      await api.act(body, { signal: new AbortController().signal });
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(calls).toHaveLength(2);
+      expect(calls[1]?.init.body).toBe(calls[0]?.init.body);
+    });
+
+    it('only the second SCAN_CONFIG_CHANGED reaches the caller, and never as an unpair', async () => {
+      const refresh = vi.fn(async () => {});
+      const { api, calls } = withRefresh(() => conflict('SCAN_CONFIG_CHANGED'), refresh);
+      await expect(api.act(body, { signal: new AbortController().signal })).rejects.toMatchObject({
+        status: 409,
+        code: 'SCAN_CONFIG_CHANGED',
+      });
+      expect(calls).toHaveLength(2);
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(calls.some((c) => c.url.endsWith('/unpair'))).toBe(false);
+    });
+
+    it('drops the staff sign-in on SCAN_STAFF_CHANGED and reports it without retrying', async () => {
+      const refresh = vi.fn(async () => {});
+      const { api, calls } = withRefresh(
+        (url, init) =>
+          init.method === 'DELETE' && url.endsWith('/staff')
+            ? json(sessionFixture())
+            : conflict('SCAN_STAFF_CHANGED'),
+        refresh,
+      );
+      await expect(api.act(body, { signal: new AbortController().signal })).rejects.toMatchObject({
+        status: 409,
+        code: 'SCAN_STAFF_CHANGED',
+      });
+      expect(calls.map((c) => `${c.init.method} ${c.url.split('/scan')[1]}`)).toEqual([
+        'POST /actions',
+        'DELETE /staff',
+      ]);
+      expect(refresh).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('gives up after one retry', async () => {
     const { api, calls } = setup(() =>
       json({ code: 'PASS_CONFLICT', title: 'Busy', status: 409 }, { status: 409 }),
@@ -180,6 +253,7 @@ describe('createScanApi', () => {
         'roster',
         'session',
         'signOut',
+        'staffSearch',
         'staffSignIn',
         'staffSignOut',
         'stats',

@@ -1,6 +1,6 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 import { cn } from '@/web/lib/cn.ts';
-import { Input, Label, NumberField, SwitchRow } from '@/web/ui/index.ts';
+import { Button, Input, Label, NumberField, SwitchRow } from '@/web/ui/index.ts';
 import type { SettingField } from './fields.ts';
 
 export interface SettingRowProps {
@@ -9,6 +9,9 @@ export interface SettingRowProps {
   error: string | undefined;
   /** Org pages stack label, control and help; the Settings page uses label-left rows. */
   flat: boolean;
+  help?: string;
+  meta?: ReactNode;
+  onReset?: () => void;
   onChange: (v: string | boolean) => void;
 }
 
@@ -71,25 +74,59 @@ function Control({
  * control column is flush right: switches and number fields end at the card's content edge, text
  * fields fill the column.
  */
-export function SettingRow({ field, value, error, flat, onChange }: SettingRowProps) {
+export function SettingRow({
+  field,
+  value,
+  error,
+  flat,
+  help: helpText,
+  meta,
+  onReset,
+  onChange,
+}: SettingRowProps) {
   const id = useId();
+  const description = helpText ?? field.help;
+  const details =
+    meta || onReset ? (
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
+        {meta}
+        {onReset ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            aria-label={`Reset ${field.label} to default`}
+          >
+            Reset to default
+          </Button>
+        ) : null}
+      </div>
+    ) : null;
   if (field.kind === 'boolean') {
     return (
       <div className={cn(!flat && ROW)}>
         <SwitchRow
           label={field.label}
-          help={field.help}
+          help={description}
           checked={value === true}
           onCheckedChange={(c) => onChange(c)}
+          {...(error ? { 'aria-invalid': true, 'aria-describedby': `${id}-error` } : {})}
         />
+        {error ? (
+          <p id={`${id}-error`} className="mt-1 text-xs text-danger">
+            {error}
+          </p>
+        ) : null}
+        {details}
       </div>
     );
   }
-  const helpId = field.help ? `${id}-help` : undefined;
+  const helpId = description ? `${id}-help` : undefined;
   const errorId = error ? `${id}-error` : undefined;
-  const help = field.help ? (
+  const help = description ? (
     <p id={helpId} className="text-xs text-fg-muted">
-      {field.help}
+      {description}
     </p>
   ) : null;
   const control = (
@@ -126,6 +163,7 @@ export function SettingRow({ field, value, error, flat, onChange }: SettingRowPr
         <Label htmlFor={id}>{field.label}</Label>
         {control}
         {error ? null : help}
+        {details}
       </div>
     );
   }
@@ -136,6 +174,7 @@ export function SettingRow({ field, value, error, flat, onChange }: SettingRowPr
           {field.label}
         </Label>
         {help}
+        {details}
       </div>
       {control}
     </div>

@@ -1,6 +1,7 @@
-import { queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { queryOptions, useInfiniteQuery } from '@tanstack/react-query';
 import { ScannerSetupListSchema, ScannerSetupSchema } from '@/shared/contracts/scan-setups.ts';
-import { api, listQuery } from '@/web/lib/api.ts';
+import { api } from '@/web/lib/api.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 
 /** The scanners page polls this often while it is visible; a changed pill rings once. */
 export const SCANNERS_POLL_MS = 30_000;
@@ -19,20 +20,34 @@ export const scanningKeys = {
  * apart, behind "Show revoked (n)". Refetches while visible (react-query pauses in the background).
  */
 export function useScannerPages(orgId: string | undefined, revoked: boolean, enabled = true) {
-  return useInfiniteQuery(
-    listQuery({
-      queryKey: scanningKeys.scannerList(orgId, revoked),
-      enabled,
-      refetchInterval: SCANNERS_POLL_MS,
-      initialPageParam: undefined as string | undefined,
-      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
-        api.get('/api/v1/scan-setups', ScannerSetupListSchema, {
-          query: { orgId, status: revoked ? 'revoked' : undefined, cursor: pageParam, limit: 50 },
-          signal,
-        }),
-      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
-    }),
+  const scope = useOrgScope();
+  const allowed = Boolean(
+    enabled &&
+      !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      orgId === scope.orgId &&
+      scope.membership?.capabilities.includes('scanning:read'),
   );
+  return useInfiniteQuery({
+    queryKey: [...scanningKeys.scannerList(allowed ? scope.orgId : undefined, revoked), allowed],
+    enabled: allowed,
+    refetchInterval: SCANNERS_POLL_MS,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) => {
+      if (!allowed || !scope.orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/scan-setups', ScannerSetupListSchema, {
+        query: {
+          orgId: scope.orgId,
+          status: revoked ? 'revoked' : undefined,
+          cursor: pageParam,
+          limit: 50,
+        },
+        signal,
+      });
+    },
+    getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+  });
 }
 
 export const scannerQuery = (id: string, refetchInterval?: number) =>
@@ -42,7 +57,3 @@ export const scannerQuery = (id: string, refetchInterval?: number) =>
       api.get(`/api/v1/scan-setups/${encodeURIComponent(id)}`, ScannerSetupSchema, { signal }),
     ...(refetchInterval ? { refetchInterval } : {}),
   });
-
-export function useScanner(id: string) {
-  return useQuery(scannerQuery(id, SCANNERS_POLL_MS));
-}

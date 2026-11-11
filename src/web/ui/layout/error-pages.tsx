@@ -52,6 +52,37 @@ export function ForbiddenPage() {
   );
 }
 
+/**
+ * Signed in and in the organization, but the role does not cover this section: say which role
+ * and organization, and offer the nearest section the membership does open.
+ */
+export function ScopedDeniedPage({
+  orgName,
+  section,
+  entry,
+}: {
+  orgName: string;
+  section: string | undefined;
+  entry: { to: string; label: string | undefined; orgId: string };
+}) {
+  return (
+    <EmptyState
+      heading
+      art="lock"
+      title={STATE_COPY.forbidden}
+      description={`${orgName}: your role does not include ${section ?? 'this section'}.`}
+      action={
+        <Button variant="outline" asChild>
+          <Link to={entry.to} search={{ orgId: entry.orgId }}>
+            <LayoutDashboard aria-hidden />
+            {entry.label ? `Go to ${entry.label}` : 'Go to Account'}
+          </Link>
+        </Button>
+      }
+    />
+  );
+}
+
 /** A route that is not there: the lost buddy peeks, as on the SSR 404. */
 export function NotFoundPage() {
   const inAdmin = useInAdmin();

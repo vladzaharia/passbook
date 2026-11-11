@@ -1,4 +1,6 @@
 import type { CheckInPolicy } from '@/shared/contracts/check-in.ts';
+import type { Mode } from '@/shared/contracts/common.ts';
+import { useMode } from '@/web/lib/mode.ts';
 import { localZone } from '@/web/lib/timezones.ts';
 import { DateTimeField, FormField, NumberField, Select } from '@/web/ui/index.ts';
 import { isoToLocal, localToIso } from '../passes/schema-form/datetime.ts';
@@ -11,6 +13,7 @@ export function CheckInFields({
   orgId,
   disabled = false,
   timeZone,
+  resourceMode,
 }: {
   rules: CheckInPolicy;
   defaults?: CheckInPolicy;
@@ -18,9 +21,14 @@ export function CheckInFields({
   orgId: string;
   disabled?: boolean;
   timeZone?: string;
+  resourceMode?: Mode;
 }) {
   const zone = timeZone ?? localZone();
-  const events = useScanEvents(orgId || undefined);
+  const mode = useMode();
+  const events = useScanEvents(
+    orgId || undefined,
+    Boolean(orgId) && (!resourceMode || resourceMode === mode),
+  );
   const set = (patch: Partial<CheckInPolicy>) => onChange({ ...rules, ...patch });
   const effective = { ...defaults, ...rules };
   return (
@@ -54,7 +62,9 @@ export function CheckInFields({
             onValueChange={(id) => set({ eventId: id === 'none' ? null : id })}
             options={[
               { value: 'none', label: 'No additional event restriction' },
-              ...(events.data?.items ?? []).map((e) => ({ value: e.id, label: e.name })),
+              ...(events.data?.items ?? [])
+                .filter((event) => event.orgId === orgId)
+                .map((event) => ({ value: event.id, label: event.name })),
             ]}
           />
         )}

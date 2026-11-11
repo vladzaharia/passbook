@@ -63,7 +63,7 @@
   }
 }
 
-/* The ways to add (ways.tsx): the iPhone's scan, then the Mac's badge under a hairline. */
+/* The ways to add: the iPhone's scan, then the Apple badge under a hairline. */
 .wl-ways {
   display: flex;
   min-width: 0;
@@ -91,12 +91,6 @@
   width: 1rem;
   height: 1rem;
   color: var(--pk-text-muted);
-}
-/* /p says mac for an iPad too: on a touch screen the badge beside the QR goes. */
-@media (pointer: coarse) {
-  .wl-add .wl-mac-only {
-    display: none;
-  }
 }
 
 /* The code is down and to its left: the pass turns half as far again, the eyes drop. */
@@ -148,7 +142,7 @@
   }
 }
 
-/* In Apple Wallet: the happy buddy stands over the line. */
+/* Apple registration reported: the happy buddy stands over the line. */
 .wl-added {
   position: relative;
   margin-top: 2.75rem;
@@ -173,7 +167,7 @@
 .wl-add-here:has([data-awb]:focus-visible) [data-look] {
   transform: translate(-2.2px, 1.4px);
 }
-/* Opened again from In Apple Wallet the buddy stays on the line: no room kept above. */
+/* Opened again from the registration line, the buddy stays there: no room kept above. */
 .wl-sign:not(:has(> [data-buddy])),
 .wl-add-here:not(:has(> [data-buddy])) {
   margin-top: 0;

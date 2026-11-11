@@ -11,12 +11,14 @@ import { SurfacePicker } from './surface-picker.tsx';
 export function DeviceSheet({
   device,
   session,
+  canManage,
   onClose,
   onPair,
   onRevoke,
 }: {
   device: ScanningDevice;
   session: ScanningSession;
+  canManage: boolean;
   onClose: () => void;
   onPair: () => void;
   onRevoke: () => void;
@@ -54,7 +56,10 @@ export function DeviceSheet({
           }
         }}
       >
-        <SheetContent title={`Configure ${device.name}`} className="sm:w-[440px]">
+        <SheetContent
+          title={`${canManage ? 'Configure' : 'Device'} ${device.name}`}
+          className="sm:w-[440px]"
+        >
           <div className="grid gap-6 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={device.online && !device.revoked ? 'success' : 'neutral'}>
@@ -102,64 +107,69 @@ export function DeviceSheet({
                 </Button>
               </Callout>
             ) : null}
-            <FormField label="Device name" required>
-              {(p) => (
-                <Input
-                  {...p}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={40}
-                />
-              )}
-            </FormField>
-            <SurfacePicker
-              value={surface}
-              onChange={setSurface}
-              capabilities={device.capabilities}
-            />
-            {layout !== 'customer' ? (
-              <section className="grid gap-4 border-t border-border pt-4">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold">Device overrides</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={!Object.keys(overrides).length}
-                    iconStart={<RotateCcw aria-hidden />}
-                    onClick={() => setOverrides({})}
-                  >
-                    Reset
-                  </Button>
-                </div>
-                <p className="text-xs text-fg-muted">
-                  These settings inherit from the session unless changed here.
+            <fieldset disabled={!canManage} className="grid min-w-0 gap-6">
+              <legend className="sr-only">Device settings</legend>
+              <FormField label="Device name" required>
+                {(p) => (
+                  <Input
+                    {...p}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={40}
+                  />
+                )}
+              </FormField>
+              <SurfacePicker
+                value={surface}
+                onChange={setSurface}
+                capabilities={device.capabilities}
+              />
+              {layout !== 'customer' ? (
+                <section className="grid gap-4 border-t border-border pt-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold">Device overrides</h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!Object.keys(overrides).length}
+                      iconStart={<RotateCcw aria-hidden />}
+                      onClick={() => setOverrides({})}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                  <p className="text-xs text-fg-muted">
+                    These settings inherit from the session unless changed here.
+                  </p>
+                  <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
+                </section>
+              ) : (
+                <p className="text-sm text-fg-muted">
+                  This display follows scanners in the same session and cannot check anyone in.
                 </p>
-                <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
-              </section>
-            ) : (
-              <p className="text-sm text-fg-muted">
-                This display follows scanners in the same session and cannot check anyone in.
-              </p>
-            )}
-            <div className="sticky bottom-0 grid gap-3 border-t border-border bg-surface-raised py-4">
-              <Button
-                loading={save.isPending}
-                disabled={!dirty || !name.trim() || changed || device.revoked}
-                onClick={() => void submit()}
-              >
-                Save device
-              </Button>
-              {device.signIn === 'paired' && !device.revoked ? (
-                <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>
-                  {device.paired ? 'Pair again' : 'Pair device'}
+              )}
+            </fieldset>
+            {canManage ? (
+              <div className="sticky bottom-0 grid gap-3 border-t border-border bg-surface-raised py-4">
+                <Button
+                  loading={save.isPending}
+                  disabled={!dirty || !name.trim() || changed || device.revoked}
+                  onClick={() => void submit()}
+                >
+                  Save device
                 </Button>
-              ) : null}
-              {!device.revoked ? (
-                <Button variant="ghost" className="text-danger" onClick={onRevoke}>
-                  Revoke device
-                </Button>
-              ) : null}
-            </div>
+                {device.signIn === 'paired' && !device.revoked ? (
+                  <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>
+                    {device.paired ? 'Pair again' : 'Pair device'}
+                  </Button>
+                ) : null}
+                {!device.revoked ? (
+                  <Button variant="ghost" className="text-danger" onClick={onRevoke}>
+                    Revoke device
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </SheetContent>
       </Sheet>

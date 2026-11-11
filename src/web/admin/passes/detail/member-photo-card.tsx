@@ -15,10 +15,10 @@ import {
   Input,
   toast,
 } from '../../../ui/index.ts';
-import { passKeys } from '../api.ts';
+import { canMutatePass, passKeys, passMutationPrincipal } from '../api.ts';
 import { memberPhotoPng } from '../member-photo-file.ts';
 
-export function MemberPhotoCard({ pass, foreign }: { pass: PassDetailDto; foreign: boolean }) {
+export function MemberPhotoCard({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
   const path = `/api/v1/passes/${pass.id}/member-photo`;
   const client = useQueryClient();
   const photo = useQuery({
@@ -29,19 +29,28 @@ export function MemberPhotoCard({ pass, foreign }: { pass: PassDetailDto; foreig
   const [failed, setFailed] = useState<string>();
   const [remove, setRemove] = useState(false);
   const [include, setInclude] = useState<boolean>();
-  const disabled = foreign || busy || pass.status === 'voided';
-  async function write(work: () => Promise<unknown>) {
+  const disabled = readOnly || busy || pass.status === 'voided';
+  async function write(done: string, work: (isAllowed: () => boolean) => Promise<unknown>) {
+    if (disabled) return;
+    const principalId = passMutationPrincipal(client);
+    if (!principalId || !canMutatePass(client, pass, principalId)) return;
+    const isCurrent = () => passMutationPrincipal(client) === principalId;
+    const isAllowed = () => canMutatePass(client, pass, principalId);
     setBusy(true);
     setFailed(undefined);
     try {
-      await work();
+      await work(isAllowed);
+      if (!isAllowed()) return;
       await client.invalidateQueries({ queryKey: passKeys.detail(pass.id) });
-      toast.success('Member photo saved');
+      if (!isAllowed()) return;
+      toast.success(done);
     } catch (error) {
-      setFailed(errorMessage(error));
+      if (isAllowed()) setFailed(errorMessage(error));
     } finally {
-      setBusy(false);
-      setInclude(undefined);
+      if (isCurrent()) {
+        setBusy(false);
+        setInclude(undefined);
+      }
     }
   }
   return (
@@ -68,12 +77,14 @@ export function MemberPhotoCard({ pass, foreign }: { pass: PassDetailDto; foreig
                 const file = event.currentTarget.files?.[0];
                 event.currentTarget.value = '';
                 if (file)
-                  void write(async () =>
-                    api.put(path, MemberPhotoSchema, {
-                      png: await memberPhotoPng(file),
+                  void write('Member photo uploaded', async (isAllowed) => {
+                    const png = await memberPhotoPng(file);
+                    if (!isAllowed()) return;
+                    await api.put(path, MemberPhotoSchema, {
+                      png,
                       includeInPass: photo.data?.includeInPass ?? false,
-                    }),
-                  );
+                    });
+                  });
               }}
             />
             <p className="text-sm text-fg-muted">
@@ -87,8 +98,9 @@ export function MemberPhotoCard({ pass, foreign }: { pass: PassDetailDto; foreig
                   disabled={disabled || !photo.data.walletSupported}
                   onCheckedChange={(checked) => {
                     setInclude(checked === true);
-                    void write(() =>
-                      api.patch(path, MemberPhotoSchema, { includeInPass: checked === true }),
+                    void write(
+                      checked === true ? 'Photo added to the pass' : 'Photo removed from the pass',
+                      () => api.patch(path, MemberPhotoSchema, { includeInPass: checked === true }),
                     );
                   }}
                 />
@@ -105,18 +117,20 @@ export function MemberPhotoCard({ pass, foreign }: { pass: PassDetailDto; foreig
           </>
         )}
         {failed ? (
-          <p role="alert" className="text-sm text-danger-fg">
+          <p role="alert" className="text-sm text-danger">
             {failed}
           </p>
         ) : null}
         <ConfirmDialog
-          open={remove}
+          open={!readOnly && remove}
           onOpenChange={setRemove}
           title="Remove member photo?"
           description="The photo will be removed from scanners and, if included, the Wallet pass."
           confirmLabel="Remove photo"
           destructive
-          onConfirm={() => write(() => api.deleteJson(path, MemberPhotoSchema))}
+          onConfirm={() =>
+            write('Member photo removed', () => api.deleteJson(path, MemberPhotoSchema))
+          }
         />
       </CardBody>
     </Card>

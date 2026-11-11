@@ -1,9 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
-import type { z } from 'zod';
-import { ConnectionSchema, type CreateConnectionSchema } from '@/shared/contracts/connections.ts';
-import { api } from '../../lib/api.ts';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { errorMessage, isApiError } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
@@ -16,28 +12,19 @@ import {
   Wizard,
 } from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
-import {
-  cleanValues,
-  describeSchema,
-  flatFields,
-  validateValues,
-} from '../passes/schema-form/index.ts';
+import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate } from '../templates/api.ts';
-import { connectionKeys, useConnector, useConnectors } from './api.ts';
-import { flattenSchema, nestValues, prefixed, WIZARD_HIDDEN } from './config-schema.ts';
+import { useConnector, useConnectors } from './api.ts';
+import { prefixed } from './config-schema.ts';
 import { CreatedStep } from './created-step.tsx';
-import {
-  type Lifecycle,
-  LifecycleFields,
-  lifecycleError,
-  lifecycleToPatch,
-} from './lifecycle-fields.tsx';
+import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
 import { fromRows, type MappingRow } from './mapping.ts';
 import { MappingEditor, targetsOf } from './mapping-editor.tsx';
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
 import type { TestOutcome } from './test-result.tsx';
-import { generateSecret } from './webhook.tsx';
+import { useConnectionCreation } from './use-connection-creation.ts';
+import { useWizardConfig } from './wizard-config.ts';
 import { ReviewStep, WizardAside } from './wizard-review.tsx';
 import { type ConfigDraft, ConfigStep, ConnectorStep } from './wizard-steps.tsx';
 
@@ -59,60 +46,72 @@ const DEFAULT_LIFE: Lifecycle = {
   onMissing: 'flag',
 };
 
-type CreateBody = z.input<typeof CreateConnectionSchema>;
-
 export function CreateConnectionWizard() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const { orgId: scoped } = useOrgScope();
+  const { orgId, setOrgId, membership } = useOrgScope();
+  // Bind asynchronous results to this principal and visit to an organization.
+  const userId = membership?.userId;
+  const scopeToken = useMemo(() => ({ orgId, userId }), [orgId, userId]);
+  const currentScope = useRef(scopeToken);
+  currentScope.current = scopeToken;
   const orgs = useOrgOptions();
-  const connectors = useConnectors();
+  const connectors = useConnectors(orgId);
   const [step, setStep] = useState(0);
-  const [orgId, setOrgId] = useState<string | undefined>(scoped);
-  // Switching the top-bar scope mid-wizard picks that org; the field hides only once it is set.
-  useEffect(() => {
-    if (scoped) setOrgId(scoped);
-  }, [scoped]);
   const [type, setType] = useState<string>();
   const [draft, setDraft] = useState<ConfigDraft>({ name: '', config: {}, secrets: {} });
-  const [test, setTest] = useState<TestOutcome>();
+  const [tested, setTested] = useState<{
+    outcome: TestOutcome;
+    orgId: string;
+    scope: typeof scopeToken;
+    type: string;
+    config: ConfigDraft['config'];
+    secrets: ConfigDraft['secrets'];
+  }>();
+  const test =
+    tested !== undefined &&
+    tested.orgId === orgId &&
+    tested.scope === scopeToken &&
+    tested.type === type &&
+    tested.config === draft.config &&
+    tested.secrets === draft.secrets
+      ? tested.outcome
+      : undefined;
   const [rows, setRows] = useState<MappingRow[]>([]);
   const [life, setLife] = useState<Lifecycle>(DEFAULT_LIFE);
   const [showErrors, setShowErrors] = useState(false);
-  const [created, setCreated] = useState<{ id: string; url: string | null; secret?: string }>();
-  const connector = useConnector(type);
-  const template = useTemplate(life.defaultTemplateId || undefined);
+  const [createdResult, setCreated] = useState<{
+    id: string;
+    url: string | null;
+    secret?: string;
+    scope: typeof scopeToken;
+  }>();
+  const created = createdResult?.scope === scopeToken ? createdResult : undefined;
+  const connector = useConnector(type, orgId);
+  const templateOrg = membership?.capabilities.includes('templates:read') ? orgId : undefined;
+  const template = useTemplate(
+    templateOrg ? life.defaultTemplateId || undefined : undefined,
+    templateOrg,
+  );
+  const selectedTemplate =
+    templateOrg &&
+    template.data &&
+    (template.data.orgId === null || template.data.orgId === templateOrg)
+      ? template.data
+      : undefined;
 
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
+
   const info = connector.data;
-  const flat = useMemo(() => flattenSchema(info?.configSchema), [info]);
-  const authType = String(draft.config['auth.type'] ?? 'none');
-  const shownSecrets = useMemo(() => {
-    const hidden = WIZARD_HIDDEN(flattenSchema(info?.secretSchema), authType);
-    return Object.fromEntries(
-      Object.entries(cleanValues(draft.secrets))
-        .filter(([k]) => !hidden.has(k))
-        .map(([k, v]) => [k, String(v)]),
-    );
-  }, [info, draft.secrets, authType]);
-  const cfgErrors = flat ? validateValues(flat, draft.config) : {};
-  const secErrors = useMemo(() => {
-    const schema = info?.secretSchema;
-    if (!schema) return {};
-    const hidden = WIZARD_HIDDEN(flattenSchema(schema), authType);
-    return Object.fromEntries(
-      Object.entries(validateValues(schema, draft.secrets)).filter(([k]) => !hidden.has(k)),
-    );
-  }, [info, draft.secrets, authType]);
+  const { cfgErrors, secErrors, shownSecrets } = useWizardConfig(info, draft);
   const mapped = fromRows(rows);
   const lifeError = lifecycleError(life);
   const sample =
     test?.kind === 'result' && test.result.sample
       ? test.result.sample
       : Object.keys(info?.outputFields ?? {}).map((k) => ({ pointer: `/${k}` }));
-  const targets = template.data
-    ? targetsOf(flatFields(describeSchema(template.data.inputSchema)))
+  const targets = selectedTemplate
+    ? targetsOf(flatFields(describeSchema(selectedTemplate.inputSchema)))
     : [];
   const defaultMinutes = info ? Math.round(info.defaults.intervalSeconds / 60) : undefined;
 
@@ -123,29 +122,16 @@ export function CreateConnectionWizard() {
     setLife((l) => ({ ...l, mode: caps.poll ? 'poll' : caps.webhook ? 'webhook' : 'manual' }));
   }, [info]);
 
-  const create = useMutation({
-    mutationFn: async () => {
-      const wantsWebhook = life.mode === 'webhook' || life.mode === 'hybrid';
-      const webhookSecret = wantsWebhook ? generateSecret() : undefined;
-      const body: CreateBody = {
-        orgId: orgId as string,
-        connectorType: type as string,
-        name: draft.name.trim(),
-        config: nestValues(cleanValues(draft.config)) as CreateBody['config'],
-        ...(Object.keys(shownSecrets).length ? { secrets: shownSecrets } : {}),
-        ...(Object.keys(mapped.mapping).length > 0 ? { mapping: mapped.mapping } : {}),
-        ...lifecycleToPatch(life),
-        ...(webhookSecret ? { webhookSecret } : {}),
-      };
-      const connection = await api.post('/api/v1/connections', ConnectionSchema, body);
-      return { connection, webhookSecret };
-    },
-    onSuccess: async ({ connection, webhookSecret }) => {
-      await qc.invalidateQueries({ queryKey: connectionKeys.all });
-      void qc.invalidateQueries({ queryKey: ['palette'] });
-      setCreated({ id: connection.id, url: connection.webhookUrl, secret: webhookSecret });
-    },
+  const create = useConnectionCreation({
+    currentScope,
+    life,
+    type,
+    draft,
+    shownSecrets,
+    mapping: mapped.mapping,
+    onCreated: setCreated,
   });
+
   // The new connection's page replaces the wizard in history and leads with its next steps.
   const open = (id: string) => {
     markCreated(`connection:${id}`);
@@ -161,7 +147,8 @@ export function CreateConnectionWizard() {
     if (created && !created.secret) open(created.id);
   }, [created]);
 
-  const serverFields = isApiError(create.error) ? create.error.fields : {};
+  const currentCreate = create.variables?.scope === scopeToken;
+  const serverFields = currentCreate && isApiError(create.error) ? create.error.fields : {};
   const crumbs = [{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }];
   const blockCreate = life.autoCreate && (!life.defaultTemplateId || rows.length === 0);
 
@@ -179,7 +166,7 @@ export function CreateConnectionWizard() {
     }
     setShowErrors(false);
     if (step === STEPS.length - 1) {
-      if (!blockCreate) create.mutate();
+      if (!blockCreate && orgId) create.mutate({ orgId, scope: scopeToken });
       return true;
     }
     setStep((s) => s + 1);
@@ -217,7 +204,7 @@ export function CreateConnectionWizard() {
         onNext={next}
         nextLabel={step === STEPS.length - 1 ? 'Create' : 'Next'}
         nextDisabled={step === STEPS.length - 1 && blockCreate}
-        busy={create.isPending}
+        busy={currentCreate && create.isPending}
       >
         {step === 0 ? (
           <ConnectorStep
@@ -228,10 +215,10 @@ export function CreateConnectionWizard() {
               if (t === type) return;
               setType(t);
               setDraft((d) => ({ ...d, config: {}, secrets: {} }));
-              setTest(undefined);
+              setTested(undefined);
             }}
             onCommit={next}
-            orgs={scoped && orgId === scoped ? null : orgList}
+            orgs={orgId ? null : orgList}
             orgId={orgId}
             onOrg={setOrgId}
             showErrors={showErrors}
@@ -243,6 +230,7 @@ export function CreateConnectionWizard() {
         {step === 1 ? (
           info && orgId ? (
             <ConfigStep
+              key={orgId}
               connector={info}
               orgId={orgId}
               draft={draft}
@@ -253,7 +241,17 @@ export function CreateConnectionWizard() {
                 secrets: prefixed(serverFields, 'secrets.'),
               }}
               test={test}
-              onTest={setTest}
+              onTest={(outcome) => {
+                if (currentScope.current !== scopeToken) return;
+                setTested({
+                  outcome,
+                  orgId,
+                  scope: scopeToken,
+                  type: info.type,
+                  config: draft.config,
+                  secrets: draft.secrets,
+                });
+              }}
             />
           ) : connector.isError ? (
             <ErrorState inline error={connector.error} onRetry={() => void connector.refetch()} />
@@ -266,6 +264,7 @@ export function CreateConnectionWizard() {
             <TemplateSelect
               orgId={orgId}
               value={life.defaultTemplateId}
+              disabled={!templateOrg}
               onChange={(defaultTemplateId) => setLife({ ...life, defaultTemplateId })}
             />
             <MappingEditor
@@ -293,7 +292,7 @@ export function CreateConnectionWizard() {
               connector={info}
               name={draft.name}
               life={life}
-              templateName={template.data?.name}
+              templateName={selectedTemplate?.name}
               mappings={Object.keys(mapped.mapping).length}
               defaultMinutes={defaultMinutes}
               onEdit={setStep}
@@ -303,7 +302,7 @@ export function CreateConnectionWizard() {
                 Creating passes needs a template and mappings. Turn it off or add them.
               </p>
             ) : null}
-            {create.isError ? (
+            {currentCreate && create.isError ? (
               <p className="text-sm text-danger">
                 {Object.keys(serverFields).length > 0
                   ? 'Fix the highlighted fields on Configuration.'

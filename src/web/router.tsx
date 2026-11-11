@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { createRouter, type RouterHistory } from '@tanstack/react-router';
 import { viewTransitionOption } from './lib/motion.ts';
 import { guardOfflineChunks } from './lib/offline-routes.ts';
+import { parseSearch, stringifySearch } from './lib/search-codec.ts';
 import { routeTree } from './routeTree.gen.ts';
 import { NotFoundPage, RouteError } from './ui/layout/error-pages.tsx';
 import { SessionEnded } from './ui/session-ended.tsx';
@@ -10,6 +11,8 @@ export function createAppRouter(options: { queryClient: QueryClient; history?: R
   const router = createRouter({
     routeTree,
     history: options.history,
+    parseSearch,
+    stringifySearch,
     context: { queryClient: options.queryClient },
     defaultPreload: 'intent',
     defaultErrorComponent: RouteError,

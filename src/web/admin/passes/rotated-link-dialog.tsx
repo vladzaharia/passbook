@@ -1,7 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
+import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { sessionQuery } from '../../lib/session.ts';
 import { Button, ConfirmDialog, CopyButton, Dialog, DialogContent, toast } from '../../ui/index.ts';
+import { reportEmailError } from './email-outcome.ts';
 import { absoluteUrl, newKey } from './format.ts';
 
 /** After a rotate: the new public link, with Copy and an email to the holder. */
@@ -15,12 +19,13 @@ export function RotatedLinkDialog({
   /** The new link; null while closed. */
   url: string | null;
   holderEmail: string | null;
-  /** Emails the new link; the key makes a retry idempotent. */
+  /** Requests an email; the callback may use the supplied key for idempotency. */
   sendEmail: (key: string) => Promise<unknown>;
-  /** Test mode captures mail instead of sending it. */
+  /** Test-mode mail is held back after it is processed. */
   mode?: Mode;
   onClose: () => void;
 }) {
+  const client = useQueryClient();
   const [sending, setSending] = useState(false);
   const key = useRef(newKey());
   const url = link ? absoluteUrl(link) : '';
@@ -38,19 +43,35 @@ export function RotatedLinkDialog({
                 iconStart={<ACTION_ICON.sendEmail aria-hidden />}
                 loading={sending}
                 onClick={() => {
+                  const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                  if (!before?.authenticated) return;
+                  const userId = before.user.id;
                   setSending(true);
                   sendEmail(key.current)
                     .then(() => {
+                      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                      if (!current?.authenticated || current.user.id !== userId) return;
                       key.current = newKey();
-                      toast.sent(
+                      toast.info(
                         mode === 'test'
-                          ? 'New link captured in the Test inbox'
-                          : `New link emailed to ${holderEmail}`,
+                          ? 'Test email queued. Check the Test inbox for capture.'
+                          : `Email queued to ${holderEmail}`,
                       );
+                      const afterToast = client.getQueryData<SessionResponse>(
+                        sessionQuery.queryKey,
+                      );
+                      if (!afterToast?.authenticated || afterToast.user.id !== userId) return;
                       onClose();
                     })
-                    .catch((error: unknown) => toast.error(error, 'Could not send'))
-                    .finally(() => setSending(false));
+                    .catch((error: unknown) => {
+                      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                      if (!current?.authenticated || current.user.id !== userId) return;
+                      reportEmailError(error);
+                    })
+                    .finally(() => {
+                      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                      if (current?.authenticated && current.user.id === userId) setSending(false);
+                    });
                 }}
               >
                 Email new link to holder
@@ -98,6 +119,7 @@ export function RotateLink({
   sendEmail: (key: string) => Promise<unknown>;
   mode?: Mode;
 }) {
+  const client = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   return (
     <>
@@ -108,7 +130,20 @@ export function RotateLink({
         description={description}
         confirmLabel="Rotate"
         destructive
-        onConfirm={async () => setUrl(await rotate())}
+        onConfirm={async () => {
+          const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+          if (!before?.authenticated) return;
+          const userId = before.user.id;
+          try {
+            const next = await rotate();
+            const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+            if (!current?.authenticated || current.user.id !== userId) return;
+            setUrl(next);
+          } catch (error) {
+            const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+            if (current?.authenticated && current.user.id === userId) throw error;
+          }
+        }}
       />
       <RotatedLinkDialog
         url={url}

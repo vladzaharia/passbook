@@ -19,10 +19,40 @@ export function VoidedCallout({ pass, stamp }: { pass: PassDetailDto; stamp: boo
   return (
     <div data-stamp={stamp || undefined}>
       <Callout tone="warning" icon={ACTION_ICON.void}>
-        Voided on {formatDateTime(v?.at ?? pass.modifiedAt)}
-        {by ? ` by ${by}` : ''}. Holders see it as void.
+        {v?.at ? `Voided on ${formatDateTime(v.at)}` : 'This pass is voided'}
+        {by ? ` by ${by}` : ''}. Holders see it as void. Unvoid before editing or refreshing.
+        Voiding is separate from removal from Wallet.
       </Callout>
     </div>
+  );
+}
+
+/** A static or otherwise non-rotatable credential requires a new pass, not a claimed attachment. */
+export function ReissueRequiredCallout({
+  pass,
+  canOperate,
+}: {
+  pass: PassDetailDto;
+  canOperate: boolean;
+}) {
+  return (
+    <Callout
+      tone="warning"
+      title="Replacement required"
+      actions={
+        canOperate ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/admin/passes/new" search={{ orgId: pass.orgId }}>
+              Create replacement
+            </Link>
+          </Button>
+        ) : null
+      }
+    >
+      The verified holder has not been attached because this pass cannot safely rotate its
+      credentials. Issue a replacement using a template with unique, rotatable credentials.
+      {pass.removedAt === null ? ' Then remove the original pass from Wallet.' : null}
+    </Callout>
   );
 }
 
@@ -73,6 +103,8 @@ export function PassCreatedCallout({
   pass,
   sent,
   runner,
+  canOperate,
+  canEdit,
   onSend,
   onDismiss,
 }: {
@@ -80,28 +112,41 @@ export function PassCreatedCallout({
   /** The wizard emailed it. */
   sent: boolean;
   runner: PassActionRunner;
+  canOperate: boolean;
+  canEdit: boolean;
   onSend: () => void;
   onDismiss: () => void;
 }) {
   return (
     <CreatedCallout
       title={
-        sent && pass.holderEmail ? `Pass created and sent to ${pass.holderEmail}` : 'Pass created'
+        sent && pass.holderEmail
+          ? `Pass created; email requested for ${pass.holderEmail}. Queue status is unconfirmed.`
+          : 'Pass created'
       }
       onDismiss={onDismiss}
       actions={
         <>
-          {sent ? null : pass.holderEmail ? (
-            <Button size="sm" iconStart={<ACTION_ICON.sendEmail aria-hidden />} onClick={onSend}>
-              Send to holder
-            </Button>
-          ) : (
-            <Button size="sm" iconStart={<UserPlus aria-hidden />} asChild>
-              <Link to="." search={{ tab: 'holder' }}>
-                Add holder
+          {sent ? (
+            <Button size="sm" variant="outline" asChild>
+              <Link to="." search={{ tab: 'delivery' }}>
+                View delivery
               </Link>
             </Button>
-          )}
+          ) : null}
+          {!sent && canEdit ? (
+            pass.holderEmail ? (
+              <Button size="sm" iconStart={<ACTION_ICON.sendEmail aria-hidden />} onClick={onSend}>
+                Send to holder
+              </Button>
+            ) : (
+              <Button size="sm" iconStart={<UserPlus aria-hidden />} asChild>
+                <Link to="." search={{ tab: 'holder' }}>
+                  Add holder
+                </Link>
+              </Button>
+            )
+          ) : null}
           <Button
             size="sm"
             variant="outline"
@@ -111,14 +156,21 @@ export function PassCreatedCallout({
           >
             Copy link
           </Button>
-          <Button size="sm" variant="ghost" iconStart={<ACTION_ICON.create aria-hidden />} asChild>
-            <Link
-              to="/admin/passes/new"
-              search={{ orgId: pass.orgId, templateId: pass.templateId }}
+          {canOperate ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              iconStart={<ACTION_ICON.create aria-hidden />}
+              asChild
             >
-              Create another
-            </Link>
-          </Button>
+              <Link
+                to="/admin/passes/new"
+                search={{ orgId: pass.orgId, templateId: pass.templateId }}
+              >
+                Create another
+              </Link>
+            </Button>
+          ) : null}
         </>
       }
     />
@@ -161,6 +213,10 @@ export function RemovedCallout({ pass, tab }: { pass: PassDetailDto; tab: string
           </>
         ) : null}
         <p>{REMOVAL_LIMIT}</p>
+        <p>
+          Restoring Wallet delivery is separate from allowing someone to add the pass to their
+          account again.
+        </p>
       </div>
     </Callout>
   );

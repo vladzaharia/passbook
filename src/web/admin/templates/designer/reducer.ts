@@ -1,4 +1,5 @@
 import { applyOp, type Op } from './apply.ts';
+import { assetsPayload } from './images.ts';
 import { allKeys, type DesignDoc, type Selection } from './model.ts';
 import { uniqueKey } from './ops-pass.ts';
 
@@ -116,15 +117,9 @@ export function designerReducer(state: DesignerState, action: Action): DesignerS
   }
 }
 
-/** Signature of a document for the unsaved check. Uploads count by length and tail. */
+/** Exact save payload identity, also used to associate checks with the current document. */
 export function signature(doc: DesignDoc): string {
-  return JSON.stringify([
-    doc.passJson,
-    doc.manifest,
-    doc.assets.map((a) =>
-      a.upload !== undefined ? [a.name, a.upload.length, a.upload.slice(-24)] : [a.name, a.sha1],
-    ),
-  ]);
+  return JSON.stringify([doc.passJson, doc.manifest, assetsPayload(doc.assets)]);
 }
 
 export function isDirty(state: DesignerState): boolean {

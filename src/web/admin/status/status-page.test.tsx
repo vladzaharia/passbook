@@ -59,7 +59,15 @@ describe('status helpers', () => {
     expect(headline([...connection, ...typed(comp('q', 'Q', 'failing', null, 'queue'))])).toBe(
       '2 components failing',
     );
-    expect(headline(typed(comp('x', 'X', 'configured')))).toBe('All good');
+    expect(headline(typed(comp('x', 'X', 'configured')))).toBe('Some checks are not verified');
+    expect(headline(typed(comp('x', 'X', 'not_configured')))).toBe(
+      'Some services are not configured',
+    );
+    expect(headline([])).toBe('No status checks reported');
+    expect(headline(typed(comp('x', 'X', 'verified')))).toBe('All reported components verified');
+    expect(headline(typed(comp('connections', 'Connections', 'failing', null, 'connection')))).toBe(
+      '1 connection failing',
+    );
   });
 
   it('splits groups into two columns by rows, keeping their order', () => {
@@ -122,7 +130,7 @@ describe('status page', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('says All good in success tones when nothing fails', async () => {
+  it('reports verified components without a celebratory Buddy', async () => {
     await renderApp('/admin/status', {
       session: 'admin',
       handlers: {
@@ -132,11 +140,39 @@ describe('status page', () => {
       },
     });
     const banner = await screen.findByRole('region', { name: 'Overall status' });
-    expect(within(banner).getByText('All good')).toBeInTheDocument();
+    expect(within(banner).getByText('All reported components verified')).toBeInTheDocument();
     expect(banner.className).toContain('bg-success-subtle');
-    // The buddy's face stands in for the check: decorative, the headline says it.
-    expect(banner.firstElementChild).toHaveClass('wl-face');
+    expect(banner.querySelector('.wl-face')).toBeNull();
     expect(banner.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+    expect(within(banner).getByRole('link', { name: 'View audit log' })).toHaveAttribute(
+      'href',
+      '/admin/audit',
+    );
+  });
+
+  it('does not treat configured or missing checks as verified', async () => {
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': () =>
+          json({
+            ...status,
+            overall: 'configured',
+            components: [
+              comp('a', 'Alpha', 'verified'),
+              comp('connections', 'Connections', 'configured', null, 'connection'),
+              comp('c', 'Cosmos', 'not_configured'),
+            ],
+          }),
+        '/api/v1/status/workflows': noRuns,
+      },
+    });
+    const banner = await screen.findByRole('region', { name: 'Overall status' });
+    expect(within(banner).getByText('Some checks are not verified')).toBeInTheDocument();
+    expect(within(banner).getByText('1 configured')).toBeInTheDocument();
+    expect(within(banner).getByText('1 not configured')).toBeInTheDocument();
+    expect(banner.className).not.toContain('bg-success-subtle');
+    expect(screen.getByText('Platform-wide · Not filtered by mode')).toBeInTheDocument();
   });
 
   it('opens a connection, shows Polaris ID and keeps details behind a disclosure', async () => {
@@ -198,6 +234,10 @@ describe('status page', () => {
       },
     });
     expect(await screen.findByText('No components')).toBeInTheDocument();
+    const banner = screen.getByRole('region', { name: 'Overall status' });
+    expect(within(banner).getByText('No status checks reported')).toBeInTheDocument();
+    expect(within(banner).getByText('Last checked: unknown')).toBeInTheDocument();
+    expect(banner.className).not.toContain('bg-success-subtle');
     expect(container.querySelector('[data-art="pulse"]')).not.toBeNull();
   });
 
@@ -211,7 +251,28 @@ describe('status page', () => {
       expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('fresh=1'))).toBe(true),
     );
     await waitFor(() => expect(container.querySelector('.wl-checked')).not.toBeNull());
-    expect(screen.getAllByText(/Checked/)).toHaveLength(1);
+    expect(
+      within(screen.getByRole('region', { name: 'Overall status' })).getByText(/Checked/),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the previous assessment visible if a fresh check fails', async () => {
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': (url) =>
+          url.searchParams.has('fresh') ? problem(500, 'boom', 'x') : json(status),
+        '/api/v1/status/workflows': noRuns,
+      },
+    });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Recheck' }));
+    expect(await screen.findByText('Could not recheck')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Overall status' })).getByText(
+        '1 database failing',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Recheck' })).toBeEnabled();
   });
 
   it('shows an error with retry', async () => {

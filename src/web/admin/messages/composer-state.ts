@@ -17,6 +17,8 @@ export interface ComposerState {
   onDevice: boolean;
   holder: HolderChoice;
   q: string;
+  scanKind: 'any' | 'checkedIn' | 'notCheckedIn' | 'noScan30' | 'noScan90';
+  scanEventId: string;
   message: string;
   /** Clear the current message instead of writing one. */
   clearing: boolean;
@@ -35,6 +37,8 @@ export const INITIAL: ComposerState = {
   onDevice: false,
   holder: 'any',
   q: '',
+  scanKind: 'any',
+  scanEventId: '',
   message: '',
   clearing: false,
   notify: true,
@@ -47,10 +51,19 @@ export const INITIAL: ComposerState = {
 
 export function targetOf(s: ComposerState): BroadcastTarget | undefined {
   if (s.templateIds.length === 0) return undefined;
+  if ((s.scanKind === 'checkedIn' || s.scanKind === 'notCheckedIn') && !s.scanEventId)
+    return undefined;
   return {
     templateIds: s.templateIds,
     ...(s.onDevice ? { onDevice: true } : {}),
     ...(s.holder !== 'any' ? { holderState: s.holder } : {}),
+    ...(s.scanKind === 'checkedIn' || s.scanKind === 'notCheckedIn'
+      ? { scan: { eventId: s.scanEventId, checkedIn: s.scanKind === 'checkedIn' } }
+      : s.scanKind === 'noScan30'
+        ? { scan: { noScanDays: 30 as const } }
+        : s.scanKind === 'noScan90'
+          ? { scan: { noScanDays: 90 as const } }
+          : {}),
     ...(s.q.trim() ? { q: s.q.trim() } : {}),
   };
 }
@@ -99,6 +112,16 @@ export function stateOfBroadcast(b: BroadcastDto): ComposerState {
     onDevice: b.target.onDevice ?? false,
     holder: b.target.holderState ?? 'any',
     q: b.target.q ?? '',
+    scanKind: !b.target.scan
+      ? 'any'
+      : 'eventId' in b.target.scan
+        ? b.target.scan.checkedIn
+          ? 'checkedIn'
+          : 'notCheckedIn'
+        : b.target.scan.noScanDays === 30
+          ? 'noScan30'
+          : 'noScan90',
+    scanEventId: b.target.scan && 'eventId' in b.target.scan ? b.target.scan.eventId : '',
     notify: b.notify,
     clear,
   };

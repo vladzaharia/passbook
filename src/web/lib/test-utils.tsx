@@ -1,6 +1,7 @@
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
 import { vi } from 'vitest';
+import { OrgCapabilitySchema, type OrgMembership } from '@/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { createAppRouter } from '../router.tsx';
 import { AppProviders } from './providers.tsx';
@@ -58,6 +59,24 @@ export function sessionFixture(kind: SessionKind): SessionResponse {
   };
 }
 
+export function membershipFixture(
+  orgId: string,
+  overrides: Partial<OrgMembership> = {},
+): OrgMembership {
+  return {
+    id: `membership-${orgId}`,
+    orgId,
+    orgName: orgId,
+    orgSlug: orgId,
+    userId: 'u1',
+    roles: ['org_admin'],
+    capabilities: [...OrgCapabilitySchema.options],
+    createdAt: 1_700_000_000_000,
+    revokedAt: null,
+    ...overrides,
+  };
+}
+
 export function problem(status: number, code: string, detail: string, issues?: unknown[]) {
   return new Response(
     JSON.stringify({ type: `about:blank#${code}`, title: code, status, code, detail, issues }),
@@ -91,18 +110,30 @@ export function stubFetch(handlers: Record<string, FetchHandler>) {
 export interface RenderAppOptions {
   session?: SessionKind;
   handlers?: Record<string, FetchHandler>;
+  memberships?: OrgMembership[];
+  selectedOrg?: string;
 }
 
 export async function renderApp(path: string, options: RenderAppOptions = {}) {
   const kind = options.session ?? 'user';
   const fetchMock = stubFetch({
     '/api/v1/session': () => json(sessionFixture(kind)),
+    '/api/v1/orgs/memberships/me': () => json({ items: options.memberships ?? [] }),
     '/api/v1/orgs': () => json({ items: [], nextCursor: null }),
     ...options.handlers,
   });
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 } });
-  const history = createMemoryHistory({ initialEntries: [path] });
+  const hashIndex = path.indexOf('#');
+  const route = hashIndex === -1 ? path : path.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? '' : path.slice(hashIndex);
+  const queryIndex = route.indexOf('?');
+  const search = new URLSearchParams(queryIndex === -1 ? '' : route.slice(queryIndex + 1));
+  const initialPath =
+    options.selectedOrg !== undefined && !search.has('orgId')
+      ? `${route}${queryIndex === -1 ? '?' : route.endsWith('?') || route.endsWith('&') ? '' : '&'}orgId=${encodeURIComponent(options.selectedOrg)}${hash}`
+      : path;
+  const history = createMemoryHistory({ initialEntries: [initialPath] });
   const router = createAppRouter({ queryClient, history });
   const utils = render(
     <AppProviders queryClient={queryClient}>

@@ -4,6 +4,7 @@ import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { useSession } from '@/web/lib/session.ts';
 import {
+  Badge,
   Button,
   Callout,
   detailError,
@@ -66,13 +67,13 @@ export function UserDetailPage({ userId }: { userId: string }) {
       <PageHeader
         title={name}
         breadcrumbs={crumbs}
+        description={user.primaryEmail}
         avatar={<EntityAvatar kind="user" id={user.id} name={name} size={40} />}
         meta={
           <>
+            <Badge>Platform-wide</Badge>
+            <span>All modes</span>
             <StatusPill status={disabled ? 'disabled' : 'active'} />
-            {user.lastRoles.map((r) => (
-              <StatusPill key={r} status={r} />
-            ))}
             <MetaLink
               to="/admin/audit"
               search={{ targetType: 'user', targetId: user.id }}
