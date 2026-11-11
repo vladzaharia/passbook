@@ -1,11 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
+import { create as createConnection } from '../connections/service.ts';
+import { overrideDeps } from '../passes/deps.ts';
 import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { createMtlsApnsTransport } from './apns.ts';
 import { handleDeadLetter, handlePushDeliver } from './jobs.ts';
 import { classifyApns, TransientDeliveryError } from './push.ts';
-import { getOutbox } from './repo.ts';
-import { dispatchOutbox, enqueuePush } from './service.ts';
+import { devicesForPass, getOutbox, insertPushOutbox } from './repo.ts';
+import { dispatchOutbox, enqueuePush, enqueueRefreshPush } from './service.ts';
 
 let kit: Kit;
 beforeAll(async () => {
@@ -90,6 +94,225 @@ describe('dispatch', () => {
     kit.queue.fail = false;
     expect(await dispatchOutbox(kit.ctx)).toBeGreaterThanOrEqual(1);
     expect((await getOutbox(kit.env.DB, row?.id ?? ''))?.state).toBe('enqueued');
+  });
+});
+
+describe('guarded refresh push', () => {
+  async function bound(orgId = kit.org.id) {
+    const pass = await kit.pass({ orgId });
+    const connection = await createConnection(kit.ctx, { type: 'system', id: null }, {
+      orgId, connectorType: 'demo', name: 'Refresh', config: { count: 1 }, mode: 'manual',
+    } as never);
+    await run(kit.env.DB, 'UPDATE passes SET connection_id = ?, external_ref = ? WHERE id = ?', [
+      connection.id, 'm-001', pass.id,
+    ]);
+    const row = await first<{ version: number; owner_user_id: string | null; link_generation: number }>(
+      kit.env.DB, 'SELECT version, owner_user_id, link_generation FROM passes WHERE id = ?', [pass.id],
+    );
+    if (!row) throw new Error('missing pass');
+    return {
+      pass,
+      connection,
+      snapshot: {
+        passId: pass.id, orgId, mode: 'live' as const, status: 'active' as const,
+        passVersion: row.version, ownerUserId: row.owner_user_id, linkGeneration: row.link_generation,
+        connectionId: connection.id, externalRef: 'm-001', generation: 1,
+      },
+    };
+  }
+
+  it('atomically stamps and queues a valid Live refresh', async () => {
+    const { pass, snapshot } = await bound();
+    expect(await enqueueRefreshPush(kit.ctx, snapshot)).toBe(true);
+    await kit.settle();
+    const row = await first<{ last_refreshed_at: number | null }>(
+      kit.env.DB, 'SELECT last_refreshed_at FROM passes WHERE id = ?', [pass.id],
+    );
+    expect(row?.last_refreshed_at).toBe(kit.clock.now());
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toHaveLength(1);
+  });
+
+  it.each([
+    ['mode', "UPDATE passes SET mode = 'test' WHERE id = ?", false],
+    ['version', 'UPDATE passes SET version = version + 1 WHERE id = ?', false],
+    ['holder generation', 'UPDATE passes SET link_generation = link_generation + 1 WHERE id = ?', false],
+    ['reference', "UPDATE passes SET external_ref = 'other' WHERE id = ?", false],
+    ['deleted', 'UPDATE passes SET deleted_at = 1 WHERE id = ?', false],
+    ['removed', 'UPDATE passes SET removed_at = 1 WHERE id = ?', false],
+    ['quarantine', 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', false],
+    ['voided', "UPDATE passes SET status = 'voided' WHERE id = ?", false],
+    ['generation', 'UPDATE connections SET generation = generation + 1 WHERE id = ?', true],
+    ['disabled', 'UPDATE connections SET enabled = 0 WHERE id = ?', true],
+  ] as const)('does not stamp or queue after %s changes', async (_label, sql, onConnection) => {
+    const { pass, connection, snapshot } = await bound();
+    await run(kit.env.DB, sql, [onConnection ? connection.id : pass.id]);
+    const before = await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
+    expect(await enqueueRefreshPush(kit.ctx, snapshot)).toBe(false);
+    expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(before);
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toEqual([]);
+  });
+
+  it('rejects Test connector bindings even if a caller supplies a matching Test snapshot', async () => {
+    const { pass, snapshot } = await bound();
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    expect(await enqueueRefreshPush(kit.ctx, { ...snapshot, mode: 'test' })).toBe(false);
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toEqual([]);
+  });
+
+  it('rejects a refresh if the organization is suspended', async () => {
+    const org = await makeOrg(kit.fx);
+    const { pass, snapshot } = await bound(org.id);
+    await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
+    expect(await enqueueRefreshPush(kit.ctx, snapshot)).toBe(false);
+    expect((await first<{ last_refreshed_at: number | null }>(
+      kit.env.DB, 'SELECT last_refreshed_at FROM passes WHERE id = ?', [pass.id],
+    ))?.last_refreshed_at).toBeNull();
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toEqual([]);
+  });
+
+  it('allows a standalone Test pass to get a catch-up push', async () => {
+    const pass = await kit.pass();
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    const row = await first<{ version: number; owner_user_id: string | null; link_generation: number }>(
+      kit.env.DB, 'SELECT version, owner_user_id, link_generation FROM passes WHERE id = ?', [pass.id],
+    );
+    if (!row) throw new Error('missing pass');
+    expect(await enqueueRefreshPush(kit.ctx, {
+      passId: pass.id, orgId: kit.org.id, mode: 'test', status: 'active',
+      passVersion: row.version, ownerUserId: row.owner_user_id, linkGeneration: row.link_generation,
+      connectionId: null, externalRef: null, generation: null,
+    })).toBe(true);
+    await kit.settle();
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toHaveLength(1);
+  });
+});
+
+describe('quarantined push isolation', () => {
+  function withDb(db: D1Database): AppEnv {
+    const env = Object.create(kit.env) as AppEnv;
+    Object.defineProperty(env, 'DB', { value: db, enumerable: true });
+    return env;
+  }
+
+  it('excludes quarantined registrations but retains clean Test registrations', async () => {
+    const pass = await kit.pass();
+    await kit.device(pass, `quarantine-${pass.id}`, A);
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    expect(await devicesForPass(kit.env.DB, pass.id, pass.identityId)).toHaveLength(1);
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
+    expect(await devicesForPass(kit.env.DB, pass.id, pass.identityId)).toEqual([]);
+    await expect(enqueuePush(kit.ctx, pass.id, 'refresh')).rejects.toMatchObject({ code: 'PASS_NOT_FOUND' });
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toEqual([]);
+  });
+
+  it('distinguishes a coalesced push from a quarantined pass atomically', async () => {
+    const pass = await kit.pass();
+    const row = {
+      id: `coalesce-${pass.id}`, orgId: pass.orgId, passId: pass.id,
+      coalesceKey: `push:${pass.id}`, payload: { reason: 'refresh' }, now: kit.clock.now(),
+    };
+    expect(await insertPushOutbox(kit.env.DB, row)).toBe('inserted');
+    expect(await insertPushOutbox(kit.env.DB, { ...row, id: `another-${pass.id}` })).toBe('coalesced');
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
+    expect(await insertPushOutbox(kit.env.DB, { ...row, id: `blocked-${pass.id}` })).toBe('stale');
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toHaveLength(1);
+  });
+
+  it('rejects a quarantine flip between enqueue prefetch and its D1 commit', async () => {
+    const pass = await kit.pass();
+    let flipped = false;
+    const db = new Proxy(kit.env.DB, {
+      get(target, prop) {
+        if (prop === 'batch') return async (statements: D1PreparedStatement[]) => {
+          flipped = true;
+          await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
+          return target.batch(statements);
+        };
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    await expect(enqueuePush({ ...kit.ctx, env: withDb(db) }, pass.id, 'refresh'))
+      .rejects.toMatchObject({ code: 'PASS_NOT_FOUND' });
+    expect(flipped).toBe(true);
+    expect(await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id])).toEqual([]);
+  });
+
+  it('cancels a queued push that became quarantined before delivery', async () => {
+    const { pass, outboxId } = await scenario();
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
+    kit.apns.sent.length = 0;
+    await deliver(outboxId);
+    expect(kit.apns.sent).toEqual([]);
+    expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'cancelled', errorCode: 'PASS_GONE' });
+  });
+
+  it('cancels when quarantine changes during APNs availability lookup', async () => {
+    const { pass, outboxId } = await scenario();
+    const previous = kit.apns.isAvailable;
+    kit.apns.sent.length = 0;
+    kit.apns.isAvailable = async () => {
+      await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
+      return true;
+    };
+    try {
+      await deliver(outboxId);
+    } finally {
+      kit.apns.isAvailable = previous;
+    }
+    expect(kit.apns.sent).toEqual([]);
+    expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'cancelled', errorCode: 'PASS_GONE' });
+  });
+
+  it('rechecks quarantine after recipient lookup and before APNs', async () => {
+    const { pass, outboxId } = await scenario();
+    kit.apns.sent.length = 0;
+    let flipped = false;
+    const wrap = (statement: D1PreparedStatement, sql: string): D1PreparedStatement =>
+      new Proxy(statement, {
+        get(target, prop) {
+          if (prop === 'bind') return (...args: unknown[]) => wrap(target.bind(...args), sql);
+          if (prop === 'all' && sql.includes('FROM push_results WHERE outbox_id')) {
+            return async () => {
+              const rows = await target.all();
+              await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
+              flipped = true;
+              return rows;
+            };
+          }
+          const value = Reflect.get(target, prop, target);
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    const db = new Proxy(kit.env.DB, {
+      get(target, prop) {
+        if (prop === 'prepare') return (sql: string) => wrap(target.prepare(sql), sql);
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const env = withDb(db);
+    overrideDeps(env, { apns: kit.apns });
+    await handlePushDeliver({ kind: 'push.deliver', outboxId }, { ...kit.ctx, env });
+    expect(flipped).toBe(true);
+    expect(kit.apns.sent).toEqual([]);
+    expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'cancelled', errorCode: 'PASS_GONE' });
+  });
+
+  it('still delivers a clean standalone Test pass', async () => {
+    const pass = await kit.pass();
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    await kit.device(pass, `test-push-${pass.id}`, A);
+    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await kit.settle();
+    const row = await first<{ id: string }>(
+      kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'", [pass.id],
+    );
+    if (!row) throw new Error('missing push');
+    kit.apns.sent.length = 0;
+    await deliver(row.id);
+    expect(kit.apns.sent.map((target) => target.token)).toEqual([A]);
+    expect(await getOutbox(kit.env.DB, row.id)).toMatchObject({ state: 'sent' });
   });
 });
 
@@ -244,7 +467,14 @@ describe('dead letters', () => {
 
   it('ignores job kinds it does not own', async () => {
     await handleDeadLetter(
-      { kind: 'connection.webhook', connectionId: 'c', eventId: 'e', refs: [] },
+      {
+        kind: 'connection.webhook',
+        connectionId: 'c',
+        orgId: kit.org.id,
+        generation: 1,
+        eventId: 'e',
+        refs: [],
+      },
       kit.ctx,
     );
   });

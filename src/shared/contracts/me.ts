@@ -18,6 +18,8 @@ export const MyPassSchema = z.object({
   lastRefreshedAt: TimestampSchema.nullable(),
   refreshRequestedAt: TimestampSchema.nullable(),
   downloadUrl: z.string(),
+  /** Server-checked eligibility for showing this pass's barcode. */
+  presentationEligible: z.boolean().optional(),
   passJson: z.record(z.string(), z.unknown()),
   assetBaseUrl: z.string(),
   /** Image files the pass can load: template files plus per-pass overrides. */

@@ -174,7 +174,9 @@ export const PassListSchema = pageOf(PassSummarySchema);
 export const CreatePassSchema = z.object({
   orgId: IdSchema,
   templateId: IdSchema,
-  templateVersion: z.string().optional(),
+  /** The exact environment and active template revision shown at issuance review. */
+  mode: ModeSchema,
+  templateVersion: z.string().min(1),
   identityId: IdSchema.optional(),
   input: z.record(z.string(), JsonSchema),
   holderEmail: z.string().max(254).optional(),

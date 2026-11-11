@@ -114,6 +114,8 @@ describe('validation and failures', () => {
             send('POST', fake.admin(), {
               orgId: kit.org.id,
               templateId: kit.template.id,
+              templateVersion: kit.template.version,
+              mode: 'live',
               input: { memberName: 'S' },
               serial,
             }),
@@ -125,6 +127,8 @@ describe('validation and failures', () => {
       send('POST', fake.admin(), {
         orgId: kit.org.id,
         templateId: kit.template.id,
+        templateVersion: kit.template.version,
+        mode: 'live',
         input: { memberName: 'S' },
         serial: 'ABC-123_x.y~z',
       }),
@@ -148,6 +152,8 @@ describe('validation and failures', () => {
         send('POST', fake.admin(), {
           orgId: kit.org.id,
           templateId: kit.template.id,
+          templateVersion: kit.template.version,
+          mode: 'live',
           input: { memberName: 'S' },
         }),
       );

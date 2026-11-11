@@ -18,6 +18,7 @@ import { removePassFromUser } from '../holders/service.ts';
 import { assetNamesOf } from '../passes/detail.ts';
 import { packagePassObjects } from '../passes/package-objects.ts';
 import { requestRefresh } from '../passes/service.ts';
+import { canPresent } from '../public/presentation.ts';
 import { supportContacts } from '../public/service.ts';
 import * as repo from './repo.ts';
 
@@ -45,6 +46,21 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
 
 async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassDto> {
   const base = `${baseUrl(ctx.env)}/p/${row.download_token}`;
+  const passJson = parsePassJson(row.pass_json);
+  const presentationEligible = row.org_status === 'active' && canPresent(
+    {
+      status: row.status,
+      removedAt: row.removed_at,
+      deletedAt: row.deleted_at,
+      testDataQuarantined: row.test_data_quarantined !== 0,
+    },
+    { voided: passJson.voided, expirationDate: passJson.expirationDate },
+    ctx.clock.now(),
+  );
+  if (!presentationEligible) {
+    delete passJson.barcode;
+    delete passJson.barcodes;
+  }
   return {
     id: row.id,
     title: row.display_title,
@@ -59,7 +75,8 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     lastRefreshedAt: row.last_refreshed_at,
     refreshRequestedAt: row.refresh_requested_at,
     downloadUrl: `${base}/pass.pkpass`,
-    passJson: parsePassJson(row.pass_json),
+    presentationEligible,
+    passJson,
     assetBaseUrl: `${base}/assets/`,
     assetNames: await assetNamesOf(ctx, {
       id: row.id,
@@ -107,10 +124,21 @@ export async function refreshMyPass(
   if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `refresh:${passId}`))) {
     throw new RateLimitedError();
   }
-  const { requestedAt, cooldownSeconds } = await deps.requestRefresh(ctx, passId, {
-    type: 'user',
-    id: userId,
-  });
+  const { requestedAt, cooldownSeconds } = await deps.requestRefresh(
+    ctx,
+    passId,
+    { type: 'user', id: userId },
+    {
+      orgId: row.org_id,
+      mode: row.mode,
+      version: row.version,
+      linkGeneration: row.link_generation,
+      status: row.status,
+      connectionId: row.connection_id,
+      externalRef: row.external_ref,
+      ownerUserId: userId,
+    },
+  );
   return { accepted: true as const, requestedAt, cooldownSeconds };
 }
 

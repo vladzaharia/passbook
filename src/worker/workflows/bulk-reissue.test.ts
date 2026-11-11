@@ -58,6 +58,7 @@ async function pass(templateId: string, version: string, input: Record<string, s
     templateVersion: version,
     input: { memberName: 'Bulk', ...input },
     source: 'manual',
+    mode: 'live',
     actor,
   });
 }

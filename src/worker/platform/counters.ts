@@ -1,5 +1,5 @@
 import { deleteInBatches } from './batched.ts';
-import { first, run } from './db.ts';
+import { first, run, type SqlValue, stmt } from './db.ts';
 
 /** Fixed-window counters in D1 (the `counters` table). The only place that table is written. */
 
@@ -17,6 +17,23 @@ export async function bump(
     [key, windowStart, by],
   );
   return row?.count ?? by;
+}
+
+/** Prepare an increment guarded by trusted SQL, for use inside a larger D1 batch. */
+export function bumpIfStmt(
+  db: D1Database,
+  key: string,
+  windowStart: number,
+  predicate: { sql: string; params: readonly SqlValue[] },
+  by = 1,
+): D1PreparedStatement {
+  return stmt(
+    db,
+    `INSERT INTO counters (key, window_start, count)
+    SELECT ?, ?, ? WHERE (${predicate.sql})
+    ON CONFLICT (key, window_start) DO UPDATE SET count=count+excluded.count RETURNING count`,
+    [key, windowStart, by, ...predicate.params],
+  );
 }
 
 export async function read(db: D1Database, key: string, windowStart: number): Promise<number> {

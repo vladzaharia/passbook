@@ -80,6 +80,8 @@ export async function receiveWebhook(
       await getDeps().enqueueJob(sctx, {
         kind: 'connection.webhook',
         connectionId: conn.id,
+        orgId: conn.orgId,
+        generation: conn.generation,
         eventId: verified.eventId,
         refs: verified.refs.slice(i, i + MAX_RECORDS_PER_STEP),
       });
@@ -98,15 +100,24 @@ export async function processWebhook(
   job: JobOf<'connection.webhook'>,
 ): Promise<void> {
   const conn = await getConnection(sctx.env.DB, job.connectionId);
-  if (!conn?.enabled) return;
-  if (!(await isOrgActive(sctx, conn.orgId))) {
-    sctx.log.info('connection.webhook_org_inactive', { connectionId: conn.id });
+  if (!job.orgId || !Number.isInteger(job.generation) || job.generation < 1 ||
+      !conn?.enabled || (conn.mode !== 'webhook' && conn.mode !== 'hybrid') ||
+      conn.orgId !== job.orgId || conn.generation !== job.generation ||
+      !(await isOrgActive(sctx, job.orgId))) {
+    sctx.log.info('connection.webhook_stale', { connectionId: job.connectionId });
     return;
   }
   const runId = sctx.ids.id();
   const startedAt = sctx.clock.now();
-  await insertRun(sctx.env.DB, { id: runId, connectionId: conn.id, trigger: 'webhook', startedAt });
-  const base = { runId, instanceId: null, generation: conn.generation, startedAt, stale: false };
+  const inserted = await insertRun(sctx.env.DB, {
+    id: runId, connectionId: conn.id, trigger: 'webhook', startedAt,
+    expected: { orgId: job.orgId, generation: job.generation },
+  });
+  if (!inserted) {
+    sctx.log.info('connection.webhook_stale', { connectionId: job.connectionId });
+    return;
+  }
+  const base = { runId, instanceId: null, orgId: job.orgId, generation: job.generation, startedAt, stale: false };
   let prep: Awaited<ReturnType<typeof prepare>>;
   try {
     prep = await prepare(sctx, conn);
@@ -128,15 +139,15 @@ export async function processWebhook(
       record: (item?.record ?? undefined) as UpstreamRecord | undefined,
     };
   });
-  const { totals, failure, samples } = await applyChanges(sctx, conn, prep, changes);
+  const { totals, failure, samples, stale } = await applyChanges(sctx, conn, prep, changes);
   await closeRun(
     sctx,
     conn.id,
-    { ...base, totals, failure, errorDetail: samples.length ? samples.join('\n') : null },
+    { ...base, totals, failure, stale, ...(stale ? { staleCode: 'STALE_CONTEXT' as const } : {}), errorDetail: samples.length ? samples.join('\n') : null },
     { countsForBreaker: true, reschedule: false },
   );
   // A transient upstream failure retries the job; the inbox rows are kept until retention.
-  if (failure && failure.code !== 'AUTH' && failure.code !== 'CONFIG') {
+  if (!stale && failure && failure.code !== 'AUTH' && failure.code !== 'CONFIG') {
     throw new UnavailableError('Webhook processing failed.', `WEBHOOK_${failure.code}`);
   }
 }

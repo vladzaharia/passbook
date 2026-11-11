@@ -44,12 +44,14 @@ beforeAll(async () => {
   lookupTemplateId = resolved.id;
 });
 
-const make = (memberName = 'Ab-12 / 34', templateId = lookupTemplateId) =>
+const make = async (memberName = 'Ab-12 / 34', templateId = lookupTemplateId) =>
   createPassRow(kit.ctx, {
     orgId: kit.org.id,
     templateId,
+    templateVersion: (await kit.registry.resolve(templateId)).version,
     input: { memberName },
     source: 'manual',
+    mode: 'live',
     actor: { type: 'system', id: null },
   });
 

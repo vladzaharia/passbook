@@ -163,18 +163,33 @@ describe('index.html head', () => {
   });
 });
 
-/** Google's reading of robots.txt for `*`: the longest matching rule wins, Allow on a tie. */
-function crawlable(robots: string, path: string): boolean {
+/** Google selects the most specific user-agent group, then the longest matching path rule. */
+function crawlable(robots: string, path: string, agent = '*'): boolean {
+  const groups = robots.split(/\n\s*\n/).map((group) => {
+    const names = [...group.matchAll(/^User-agent:\s*(\S+)/gim)].map((match) =>
+      match[1]!.toLowerCase(),
+    );
+    const specificity = Math.max(
+      -1,
+      ...names.map((name) =>
+        name === '*' ? 0 : agent.toLowerCase().includes(name) ? name.length : -1,
+      ),
+    );
+    return { group, specificity };
+  });
+  const specificity = Math.max(...groups.map((group) => group.specificity));
   let best = { length: -1, allow: true };
-  for (const line of robots.split('\n')) {
-    const m = /^(Allow|Disallow):\s*(\S+)/.exec(line);
-    if (!m?.[1] || !m[2]) continue;
-    const rule = m[2];
-    const exact = rule.endsWith('$');
-    const prefix = exact ? rule.slice(0, -1) : rule;
-    const hit = exact ? path === prefix : path.startsWith(prefix);
-    if (hit && (rule.length > best.length || (rule.length === best.length && m[1] === 'Allow')))
-      best = { length: rule.length, allow: m[1] === 'Allow' };
+  for (const { group } of groups.filter((candidate) => candidate.specificity === specificity)) {
+    for (const line of group.split('\n')) {
+      const m = /^(Allow|Disallow):\s*(\S+)/.exec(line);
+      if (!m?.[1] || !m[2]) continue;
+      const rule = m[2];
+      const exact = rule.endsWith('$');
+      const prefix = exact ? rule.slice(0, -1) : rule;
+      const hit = exact ? path === prefix : path.startsWith(prefix);
+      if (hit && (rule.length > best.length || (rule.length === best.length && m[1] === 'Allow')))
+        best = { length: rule.length, allow: m[1] === 'Allow' };
+    }
   }
   return best.allow;
 }
@@ -202,6 +217,18 @@ describe('robots.txt', () => {
     '/hooks/x',
     '/somewhere-new',
   ])('keeps %s out', (path) => expect(crawlable(robots, path)).toBe(false));
+
+  it.each(['Googlebot', 'Google-Valuables'])('allows only the Wallet callback for %s', (agent) => {
+    expect(crawlable(robots, '/wallet/v1/google/account-id', agent)).toBe(true);
+    expect(crawlable(robots, '/wallet/v1/log', agent)).toBe(false);
+    expect(crawlable(robots, '/p/abcdefghijklmnopqrst', agent)).toBe(false);
+    expect(crawlable(robots, '/auth/magic?token=x', agent)).toBe(false);
+    expect(crawlable(robots, '/login', agent)).toBe(true);
+  });
+
+  it('keeps the callback closed to unrelated crawlers', () => {
+    expect(crawlable(robots, '/wallet/v1/google/account-id', '*')).toBe(false);
+  });
 
   it('names every file it allows', () => {
     for (const [, path] of robots.matchAll(/^Allow: (\/[\w.-]+\.\w+)$/gm))

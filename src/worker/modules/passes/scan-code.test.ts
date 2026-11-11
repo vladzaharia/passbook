@@ -35,12 +35,14 @@ beforeAll(async () => {
   scanTemplateId = resolved.id;
 });
 
-const make = (templateId = scanTemplateId) =>
+const make = async (templateId = scanTemplateId) =>
   createPassRow(kit.ctx, {
     orgId: kit.org.id,
     templateId,
+    templateVersion: (await kit.registry.resolve(templateId)).version,
     input: { memberName: 'Scan Me' },
     source: 'manual',
+    mode: 'live',
     actor: { type: 'system', id: null },
   });
 

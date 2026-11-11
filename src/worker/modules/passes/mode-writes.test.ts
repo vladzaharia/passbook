@@ -31,6 +31,7 @@ const make = (mode: 'live' | 'test', holderEmail = 'holder@example.com') =>
   createPassRow(kit.ctx, {
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: `Mode ${mode}` },
     holderEmail,
     source: 'manual',
@@ -134,6 +135,7 @@ describe('bulk actions skip the other mode', () => {
     const theirs = await createPassRow(kit.ctx, {
       orgId: elsewhere.id,
       templateId: kit.template.id,
+      templateVersion: kit.template.version,
       input: { memberName: 'Theirs' },
       source: 'manual',
       mode: 'live',

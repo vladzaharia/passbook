@@ -158,7 +158,9 @@ describe('change messages', () => {
     await persistTemplate(kit.fx, resolved);
     const created = await post('/passes', {
       orgId: kit.org.id,
-      templateId: 'tpl-notify',
+      templateId: resolved.id,
+      templateVersion: resolved.version,
+      mode: 'live',
       input: { memberName: 'Ana', message: 'Hello' },
     });
     const id = ((await created.json()) as { id: string }).id;
@@ -206,6 +208,8 @@ describe('tenant identity', () => {
           await post('/passes', {
             orgId: kit.org.id,
             templateId: resolved.id,
+            templateVersion: resolved.version,
+            mode: 'live',
             input: { memberName: 'Maya Chen' },
           })
         ).json(),

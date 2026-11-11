@@ -27,6 +27,7 @@ describe('daily purge of test broadcasts', () => {
     const pass = await createPassRow(kit.ctx, {
       orgId: kit.org.id,
       templateId: kit.template.id,
+      templateVersion: kit.template.version,
       input: { memberName: 'Kept' },
       source: 'manual',
       mode: 'live',

@@ -137,6 +137,31 @@ describe('pass triggers', () => {
     expect(pushes).toHaveLength(0);
   });
 
+  it('rejects unreserved identity, organization and mode changes', async () => {
+    const otherOrg = await makeOrg(ctx.f);
+    await run(
+      env.DB,
+      `INSERT INTO signing_identities
+         (id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at)
+       VALUES ('generation-other', 'Other', 'pass.generation.other', 'T', 'env', 'GENERATION_OTHER', 1)`,
+    );
+    for (const [column, value] of [
+      ['identity_id', 'generation-other'],
+      ['org_id', otherOrg.id],
+      ['mode', 'test'],
+    ]) {
+      await expect(
+        run(env.DB, `UPDATE passes SET ${column} = ? WHERE id = ?`, [value, ctx.pass.id]),
+      ).rejects.toThrow(/credential transfer required/);
+    }
+    const row = await first<{ identity_id: string; org_id: string; mode: string }>(
+      env.DB,
+      'SELECT identity_id, org_id, mode FROM passes WHERE id = ?',
+      [ctx.pass.id],
+    );
+    expect(row).toEqual({ identity_id: 'platform', org_id: ctx.org.id, mode: 'live' });
+  });
+
   async function publish(version: number, cause = 'admin') {
     const key = `passes/${ctx.pass.id}/v${version}.pkpass`;
     return run(
@@ -175,7 +200,14 @@ describe('pass triggers', () => {
       "SELECT state, coalesce_key FROM outbox WHERE pass_id = ? AND kind = 'push'",
       [ctx.pass.id],
     );
-    expect(pushes).toEqual([{ state: 'pending', coalesce_key: `push:${ctx.pass.id}` }]);
+    // The key binds the push to the pass's credential, lifecycle, template and release state (0045).
+    const expected = await first<{ key: string }>(
+      env.DB,
+      `SELECT 'push:' || json_array(id, identity_id, credential_generation, lifecycle_generation,
+         template_id, template_version, release_id) AS key FROM passes WHERE id = ?`,
+      [ctx.pass.id],
+    );
+    expect(pushes).toEqual([{ state: 'pending', coalesce_key: expected?.key }]);
   });
 
   it('coalesces a burst of publishes into one pending push', async () => {
@@ -303,21 +335,23 @@ describe('constraints and cascades', () => {
     expect(await first(env.DB, "SELECT 1 FROM devices WHERE device_id = 'd1'")).not.toBeNull();
   });
 
-  it('sets owner_user_id to NULL when the user is deleted and cascades sessions', async () => {
+  it('rejects user deletion when it would clear a pass owner without a transfer', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
     const user = await makeUser(f);
     const pass = await makePass(f, {
       orgId: org.id,
       template: makeTemplate({ id: 'tpl-owner' }).resolved,
+      ownerUserId: user.id,
     });
-    await run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
     await run(
       env.DB,
       "INSERT INTO sessions (id_hash, user_id, amr, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at) VALUES ('h', ?, 'oidc', 'c', 1, 1, 2, 2)",
       [user.id],
     );
-    await run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id]);
+    await expect(run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id])).rejects.toThrow(
+      /credential transfer required/,
+    );
     expect(
       (
         await first<{ owner_user_id: string | null }>(
@@ -326,8 +360,20 @@ describe('constraints and cascades', () => {
           [pass.id],
         )
       )?.owner_user_id,
-    ).toBeNull();
-    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h'")).toBeNull();
+    ).toBe(user.id);
+    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h'")).not.toBeNull();
+  });
+
+  it('cascades sessions when deleting a user without an owned pass', async () => {
+    const f = fixtures(await makeEnv());
+    const user = await makeUser(f);
+    await run(
+      env.DB,
+      "INSERT INTO sessions (id_hash, user_id, amr, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at) VALUES ('h-cascade', ?, 'oidc', 'c', 1, 1, 2, 2)",
+      [user.id],
+    );
+    await run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id]);
+    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h-cascade'")).toBeNull();
   });
 
   it('caps registrations at 20 per pass', async () => {
@@ -592,7 +638,15 @@ describe('0014_scan migration', () => {
         [at],
       );
     const before = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
+    // Later migrations hang triggers on audit_log; SQLite refuses the replayed drop and rename
+    // while they exist, so lift them for the replay and restore them exactly.
+    const triggers = await all<{ name: string; sql: string }>(
+      env.DB,
+      "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND sql LIKE '%audit_log%'",
+    );
+    for (const t of triggers) await env.DB.prepare(`DROP TRIGGER ${t.name}`).run();
     for (const q of queries.slice(from)) await env.DB.prepare(q).run();
+    for (const t of triggers) await env.DB.prepare(t.sql).run();
     const after = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
     expect(after).toEqual(before);
     await run(

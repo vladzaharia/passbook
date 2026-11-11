@@ -4,7 +4,13 @@ import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+  PreconditionFailedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -18,8 +24,10 @@ import { depsOf } from './deps.ts';
 import { detailOf } from './detail.ts';
 import {
   claimIdempotencyKey,
+  connectionForPass,
   connectionInOrg,
   finishIdempotencyKey,
+  getCreateTemplate,
   getIdempotencyKey,
   getOrg,
   getPass,
@@ -32,7 +40,7 @@ import type { Actor } from './service.ts';
 export interface CreateParams {
   orgId: string;
   templateId: string;
-  templateVersion?: string;
+  templateVersion: string;
   identityId?: string;
   input: Personalization;
   holderEmail?: string | null;
@@ -42,8 +50,10 @@ export interface CreateParams {
   externalRef?: string | null;
   sendEmail?: boolean;
   source: 'manual' | 'connection';
-  /** The creator's mode (modeOf(auth)). Connection syncs always create live passes. */
-  mode?: Mode;
+  /** The mode explicitly reviewed by the caller (connection syncs are Live-only). */
+  mode: Mode;
+  /** Generation captured before a connection run fetched its source data. */
+  connectionGeneration?: number;
   actor: Actor;
   /** Preassigned pass id; idempotent creates reserve it with the key. */
   passId?: string;
@@ -60,30 +70,71 @@ export function stableStringify(value: unknown): string {
   return JSON.stringify(value) ?? 'null';
 }
 
+async function assertCreateAuthority(
+  ctx: ServiceContext,
+  p: CreateParams,
+  generation: number | null,
+): Promise<void> {
+  const db = ctx.env.DB;
+  const org = await getOrg(db, p.orgId);
+  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  const template = await getCreateTemplate(db, p.templateId);
+  if (
+    !template ||
+    template.status !== 'active' ||
+    (template.orgId !== null && template.orgId !== p.orgId)
+  )
+    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
+  if (template.activeVersion !== p.templateVersion) throw new PreconditionFailedError();
+  if (p.connectionId) {
+    const connection = await connectionForPass(db, p.connectionId, p.orgId, p.mode);
+    if (!connection || connection.generation !== generation)
+      throw new ConflictError('The connection changed. Reload and retry.', 'PASS_CONFLICT');
+  }
+}
+
 /** Builds, stores and inserts a pass; the `pass_created` trigger records version 1. */
 export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promise<Pass> {
   const db = ctx.env.DB;
+  if ((p.mode !== 'live' && p.mode !== 'test') || !p.templateVersion)
+    throw new ValidationError('Review the mode and template version before issuing the pass.');
+  if (p.source === 'connection' && (!p.connectionId || p.connectionGeneration === undefined))
+    throw new ConflictError('The connection run is missing its original context.', 'PASS_CONFLICT');
   const org = await getOrg(db, p.orgId);
   if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const holderEmail = p.holderEmail ? strictEmail(p.holderEmail) : null;
   if (p.holderEmail && !holderEmail)
     throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
+  if (p.connectionId && p.mode !== 'live')
+    throw new ConflictError('Test passes cannot use a Live connection.', 'MODE_MISMATCH');
   if (p.connectionId && !(await connectionInOrg(db, p.connectionId, p.orgId)))
     throw new ValidationError(
       'The connection does not belong to this organization.',
       [],
       'CONNECTION_ORG',
     );
+  if (p.source === 'connection' && p.mode !== 'live')
+    throw new ConflictError('Connection syncs require Live mode.', 'MODE_MISMATCH');
+  let connectionGeneration: number | null = null;
+  if (p.connectionId) {
+    const connection = await connectionForPass(db, p.connectionId, p.orgId, p.mode);
+    if (!connection || (p.source === 'connection' && connection.generation !== p.connectionGeneration))
+      throw new ConflictError('The connection changed. Reload and retry.', 'PASS_CONFLICT');
+    connectionGeneration = connection.generation;
+  }
 
   const template = await resolveTemplate(ctx, p.orgId, p.templateId, p.templateVersion);
+  if (template.version !== p.templateVersion) throw new PreconditionFailedError();
+  await assertCreateAuthority(ctx, p, connectionGeneration);
   const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 
   const id = p.passId ?? ctx.ids.id();
-  const mode: Mode = p.source === 'connection' ? 'live' : (p.mode ?? 'live');
+  const mode = p.mode;
   const scanCode = newScanCode(ctx);
   const serial = p.serial ?? ctx.ids.id();
   const authToken = ctx.ids.token();
+  const downloadToken = ctx.ids.token();
   const webServiceUrl = `${baseUrl(ctx.env)}/wallet`;
   const artifact = await buildArtifact(ctx, {
     orgId: p.orgId,
@@ -100,12 +151,14 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
     personalization: p.input,
     status: 'active',
   });
+  // Building may await external assets or signing. Recheck authoritative state before storing.
+  await assertCreateAuthority(ctx, p, connectionGeneration);
   const objectKey = `passes/${id}/v1-${ctx.ids.token(6)}.pkpass`;
   await ctx.env.BUCKET.put(objectKey, artifact.bytes, {
     httpMetadata: { contentType: 'application/vnd.apple.pkpass' },
   });
   try {
-    await insertPass(db, {
+    const inserted = await insertPass(db, {
       id,
       orgId: p.orgId,
       identityId: identity.id,
@@ -113,7 +166,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       templateId: template.id,
       templateVersion: template.version,
       authToken,
-      downloadToken: ctx.ids.token(),
+      downloadToken,
       webServiceUrl,
       personalization: p.input,
       // A bound pass takes its fields from the connection until an admin edits them.
@@ -125,6 +178,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       externalId: p.externalId ?? null,
       holderEmail,
       connectionId: p.connectionId ?? null,
+      connectionGeneration,
       externalRef: p.externalRef ?? null,
       objectKey,
       objectSha256: artifact.sha256,
@@ -140,6 +194,7 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
       barcodeHash: artifact.barcodeHash,
       lookupHash: artifact.lookupHash,
     });
+    if (!inserted) throw new PreconditionFailedError();
   } catch (error) {
     await ctx.env.BUCKET.delete(objectKey);
     const info = classifyD1Error(error);
@@ -151,7 +206,25 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
   }
   const pass = await getPass(db, id);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  if (holderEmail) await runAttachHookA(ctx, id, p.actor);
+  if (
+    holderEmail &&
+    (pass.orgId !== p.orgId ||
+      pass.mode !== mode ||
+      pass.status !== 'active' ||
+      pass.removedAt !== null ||
+      pass.version !== 1 ||
+      pass.linkGeneration !== 1 ||
+      pass.ownerUserId !== null ||
+      pass.templateId !== template.id ||
+      pass.templateVersion !== template.version ||
+      pass.serial !== serial ||
+      pass.authToken !== authToken ||
+      pass.downloadToken !== downloadToken ||
+      pass.objectKey !== objectKey ||
+      pass.holderEmail !== holderEmail)
+  )
+    throw new ConflictError('The pass changed before delivery.', 'PASS_CONFLICT');
+  const attached = holderEmail ? await runAttachHookA(ctx, id, p.actor) : false;
   await recordAudit(ctx, {
     orgId: p.orgId,
     actorType: p.actor.type,
@@ -178,7 +251,31 @@ export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promi
   });
   if (p.sendEmail && holderEmail) {
     try {
-      await enqueuePassEmail(ctx, { passId: id, to: holderEmail, attach: false });
+      const recipientPass = await getPass(db, id);
+      if (
+        !recipientPass ||
+        recipientPass.orgId !== pass.orgId ||
+        recipientPass.mode !== pass.mode ||
+        recipientPass.status !== 'active' ||
+        recipientPass.removedAt !== null ||
+        recipientPass.version !== pass.version ||
+        recipientPass.linkGeneration !== pass.linkGeneration + (attached ? 1 : 0) ||
+        (attached ? recipientPass.ownerUserId === null : recipientPass.ownerUserId !== pass.ownerUserId) ||
+        recipientPass.templateId !== pass.templateId ||
+        recipientPass.templateVersion !== pass.templateVersion ||
+        recipientPass.serial !== pass.serial ||
+        recipientPass.authToken !== pass.authToken ||
+        recipientPass.downloadToken !== pass.downloadToken ||
+        recipientPass.objectKey !== pass.objectKey ||
+        recipientPass.holderEmail !== holderEmail
+      )
+        throw new ConflictError('The pass changed before delivery.', 'PASS_CONFLICT');
+      await enqueuePassEmail(ctx, {
+        passId: id,
+        to: holderEmail,
+        attach: false,
+        expected: recipientPass,
+      });
     } catch (error) {
       // The pass exists; a capped email is resent on request, not a failed create.
       if (!(error instanceof AppError) || error.code !== 'EMAIL_RATE_LIMITED') throw error;

@@ -1,5 +1,5 @@
 import type { Actor } from '../../platform/context.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { toDto } from './dto.ts';
@@ -37,6 +37,7 @@ export async function update(
   const changed = new Set<string>();
   let generated: string | undefined;
   const staleCredentials: (string | null)[] = [];
+  const newCredentials: string[] = [];
   const set = <K extends keyof ConnectionPatch>(key: K, value: ConnectionPatch[K]) => {
     patch[key] = value;
     changed.add(key);
@@ -62,6 +63,7 @@ export async function update(
             value: json,
             createdBy: actor.id,
           });
+    if (patch.credentialId) newCredentials.push(patch.credentialId);
     staleCredentials.push(conn.credentialId);
     patch.cursor = null;
     changed.add('secrets');
@@ -116,6 +118,7 @@ export async function update(
       value: secret,
       createdBy: actor.id,
     });
+    newCredentials.push(patch.webhookCredentialId);
     staleCredentials.push(conn.webhookCredentialId);
     if (input.webhookSecret === undefined) generated = secret;
     changed.add('webhookSecret');
@@ -141,7 +144,11 @@ export async function update(
     }
   }
 
-  await patchConnection(sctx.env.DB, id, patch);
+  const updated = await patchConnection(sctx.env.DB, id, patch, fenced ? conn.generation : undefined);
+  if (updated === 0) {
+    await dropCredentials(sctx, newCredentials);
+    throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
+  }
   await dropCredentials(sctx, staleCredentials);
   await recordAudit(sctx, {
     orgId: conn.orgId,

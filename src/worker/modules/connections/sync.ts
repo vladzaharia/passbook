@@ -1,17 +1,19 @@
 import type { UpstreamRecord } from '../../connectors/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { run } from '../../platform/db.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { getDeps } from './deps.ts';
 import {
   addOutcome,
   applyIncoming,
+  type Applied,
   emptyTotals,
   fromResult,
   type Incoming,
   type Totals,
 } from './records.ts';
-import { type ConnectionRow, getConnection, patchConnection } from './repo.ts';
-import { listDuePassRefs, listPassesByRefs, type SyncPass } from './repo-passes.ts';
+import { type ConnectionRow, getConnection } from './repo.ts';
+import { hasBinding, listDuePassRefs, listPassesByRefs, type SyncPass } from './repo-passes.ts';
 import { insertRun } from './repo-runs.ts';
 import { setWorkflowStatus } from './repo-sync.ts';
 import { classify, type Failure, type Prepared, paceMs, prepare } from './runtime.ts';
@@ -22,8 +24,9 @@ export const MAX_PAGES_PER_RUN = 200;
 export interface StepResult extends Totals {
   /** Set when the connector failed; the run stops and passes are left untouched. */
   failure: Failure | null;
-  /** The connection changed since the run started. */
+  /** The run or a captured pass changed since the work started. */
   stale: boolean;
+  staleCode?: 'STALE_CONTEXT';
   cursor: string | null;
   hasMore: boolean;
   /** First failing records (ref, code, validator message). */
@@ -54,10 +57,14 @@ async function tryPrepare(sctx: ServiceContext, conn: ConnectionRow): Promise<Pr
 async function live(
   sctx: ServiceContext,
   connectionId: string,
+  orgId: string,
   generation: number,
 ): Promise<ConnectionRow | null> {
   const conn = await getConnection(sctx.env.DB, connectionId);
-  return conn?.enabled && conn.generation === generation ? conn : null;
+  return orgId && conn?.enabled && conn.orgId === orgId &&
+    conn.generation === generation && await isOrgActive(sctx, orgId)
+    ? conn
+    : null;
 }
 
 export type StartResult =
@@ -72,6 +79,7 @@ export async function startRun(
   sctx: ServiceContext,
   p: {
     connectionId: string;
+    orgId: string;
     runId: string;
     trigger: 'schedule' | 'webhook' | 'admin';
     generation: number;
@@ -81,18 +89,23 @@ export async function startRun(
   const startedAt = sctx.clock.now();
   const conn = await getConnection(sctx.env.DB, p.connectionId);
   if (!conn) return { ok: false, reason: 'GONE', startedAt };
-  if (p.instanceId) await setWorkflowStatus(sctx.env.DB, p.instanceId, 'running', startedAt);
+  if (!p.orgId || conn.orgId !== p.orgId || !conn.enabled ||
+      !Number.isInteger(p.generation) || conn.generation !== p.generation) {
+    return { ok: false, reason: 'STALE_GENERATION', startedAt };
+  }
+  if (!(await isOrgActive(sctx, conn.orgId)))
+    return { ok: false, reason: 'ORG_INACTIVE', startedAt };
   await insertRun(sctx.env.DB, {
     id: p.runId,
     connectionId: conn.id,
     trigger: p.trigger,
     startedAt,
+    expected: { orgId: p.orgId, generation: p.generation },
   });
-  if (!conn.enabled || conn.generation !== p.generation) {
+  if (!(await live(sctx, p.connectionId, p.orgId, p.generation))) {
     return { ok: false, reason: 'STALE_GENERATION', startedAt };
   }
-  if (!(await isOrgActive(sctx, conn.orgId)))
-    return { ok: false, reason: 'ORG_INACTIVE', startedAt };
+  if (p.instanceId) await setWorkflowStatus(sctx.env.DB, p.instanceId, 'running', startedAt);
   const prep = await tryPrepare(sctx, conn);
   if ('code' in prep) return { ok: false, reason: prep.code, startedAt };
   return {
@@ -127,9 +140,14 @@ async function inBatches<T>(
 interface ApplyExtra {
   passes: Map<string, SyncPass | null>;
   samples: string[];
+  stale: boolean;
 }
 
 const MAX_SAMPLES = 5;
+function recordOutcome(totals: Totals, extra: ApplyExtra, result: Applied): void {
+  addOutcome(totals, result.outcome);
+  if (result.outcome === 'fenced' || result.outcome === 'deferred') extra.stale = true;
+}
 
 /** One query per 90 refs instead of one per record. */
 async function prefetchPasses(
@@ -151,6 +169,13 @@ async function fetchAndApply(
   failures: { first: Failure | null },
   extra: ApplyExtra,
 ): Promise<void> {
+  // A due pass may have been unbound, voided or moved into Test after the due query.
+  if (!extra.passes.get(ref) &&
+      (!conn.autoCreate || await hasBinding(sctx.env.DB, conn.orgId, conn.id, ref))) return;
+  if (!(await live(sctx, conn.id, conn.orgId, conn.generation))) {
+    extra.stale = true;
+    return;
+  }
   let result: Awaited<ReturnType<typeof prep.def.fetchRecord>>;
   try {
     result = await prep.def.fetchRecord(prep.cc, ref);
@@ -167,8 +192,9 @@ async function fetchAndApply(
     return;
   }
   // Seam failures other than record problems propagate so the step or job retries.
-  addOutcome(
+  recordOutcome(
     totals,
+    extra,
     await applyIncoming(sctx, conn, ref, fromResult(result), {
       generation: conn.generation,
       cause,
@@ -184,7 +210,7 @@ export async function applyChanges(
   conn: ConnectionRow,
   prep: Prepared,
   changes: Change[],
-): Promise<{ totals: Totals; failure: Failure | null; samples: string[] }> {
+): Promise<{ totals: Totals; failure: Failure | null; samples: string[]; stale: boolean }> {
   const totals = emptyTotals();
   const failures: { first: Failure | null } = { first: null };
   const extra: ApplyExtra = {
@@ -194,6 +220,7 @@ export async function applyChanges(
       changes.map((c) => c.ref),
     ),
     samples: [],
+    stale: false,
   };
   const options = {
     generation: conn.generation,
@@ -206,20 +233,21 @@ export async function applyChanges(
     prep,
     async (change) => {
       if (change.deleted) {
-        addOutcome(
+        recordOutcome(
           totals,
+          extra,
           await applyIncoming(sctx, conn, change.ref, { kind: 'missing' }, options),
         );
       } else if (change.record) {
         const incoming: Incoming = { kind: 'record', record: change.record };
-        addOutcome(totals, await applyIncoming(sctx, conn, change.ref, incoming, options));
+        recordOutcome(totals, extra, await applyIncoming(sctx, conn, change.ref, incoming, options));
       } else {
         await fetchAndApply(sctx, conn, prep, change.ref, 'connection', totals, failures, extra);
       }
     },
     (c) => !c.deleted && !c.record,
   );
-  return { totals, failure: failures.first, samples: extra.samples };
+  return { totals, failure: failures.first, samples: extra.samples, stale: extra.stale };
 }
 
 export type PageFetch =
@@ -229,15 +257,18 @@ export type PageFetch =
 /** The listChanges request for one page. Applying and the cursor move are separate steps. */
 export async function fetchListPage(
   sctx: ServiceContext,
-  p: { connectionId: string; generation: number; cursor: string | null },
+  p: { connectionId: string; orgId: string; generation: number; cursor: string | null },
 ): Promise<PageFetch> {
-  const conn = await live(sctx, p.connectionId, p.generation);
+  const conn = await live(sctx, p.connectionId, p.orgId, p.generation);
   if (!conn) return { ok: false, result: stopped(null, true, p.cursor) };
   const prep = await tryPrepare(sctx, conn);
   if ('code' in prep) return { ok: false, result: stopped(prep, false, p.cursor) };
   if (!prep.def.listChanges) {
     const failure: Failure = { code: 'CONFIG', httpStatus: null, retryAfterMs: null };
     return { ok: false, result: stopped(failure, false, p.cursor) };
+  }
+  if (!(await live(sctx, p.connectionId, p.orgId, p.generation))) {
+    return { ok: false, result: stopped(null, true, p.cursor) };
   }
   try {
     const page = await prep.def.listChanges(prep.cc, p.cursor);
@@ -250,36 +281,36 @@ export async function fetchListPage(
 /** Applies one slice of a page. */
 export async function applySlice(
   sctx: ServiceContext,
-  p: { connectionId: string; generation: number; changes: Change[] },
+  p: { connectionId: string; orgId: string; generation: number; changes: Change[] },
 ): Promise<StepResult> {
-  const conn = await live(sctx, p.connectionId, p.generation);
+  const conn = await live(sctx, p.connectionId, p.orgId, p.generation);
   if (!conn) return stopped(null, true, null);
   const prep = await tryPrepare(sctx, conn);
   if ('code' in prep) return stopped(prep, false, null);
-  const { totals, failure, samples } = await applyChanges(sctx, conn, prep, p.changes);
-  return { ...totals, failure, stale: false, cursor: null, hasMore: false, samples };
+  const { totals, failure, samples, stale } = await applyChanges(sctx, conn, prep, p.changes);
+  return { ...totals, failure, stale, ...(stale ? { staleCode: 'STALE_CONTEXT' as const } : {}), cursor: null, hasMore: false, samples };
 }
 
 /** The cursor only advances once the whole page was handled; a stale run leaves it alone. */
 export async function advanceCursor(
   sctx: ServiceContext,
-  p: { connectionId: string; generation: number; cursor: string | null },
+  p: { connectionId: string; orgId: string; generation: number; cursor: string | null },
 ): Promise<{ stale: boolean }> {
-  const advanced = await patchConnection(
+  const result = await run(
     sctx.env.DB,
-    p.connectionId,
-    { cursor: p.cursor },
-    p.generation,
+    `UPDATE connections SET cursor = ? WHERE id = ? AND org_id = ? AND generation = ? AND enabled = 1
+       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = connections.org_id AND o.status = 'active')`,
+    [p.cursor, p.connectionId, p.orgId, p.generation],
   );
-  return { stale: advanced === 0 };
+  return { stale: result.changes === 0 };
 }
 
 /** Refs of linked passes due for a refresh (connectors without listChanges). */
 export async function dueRefs(
   sctx: ServiceContext,
-  p: { connectionId: string; generation: number },
+  p: { connectionId: string; orgId: string; generation: number },
 ): Promise<string[] | null> {
-  const conn = await live(sctx, p.connectionId, p.generation);
+  const conn = await live(sctx, p.connectionId, p.orgId, p.generation);
   if (!conn) return null;
   return listDuePassRefs(sctx.env.DB, conn.orgId, conn.id, sctx.clock.now(), MAX_PASSES_PER_RUN);
 }
@@ -287,9 +318,9 @@ export async function dueRefs(
 /** Fetches and applies one chunk of refs (at most maxConcurrency per workflow step). */
 export async function runRefs(
   sctx: ServiceContext,
-  p: { connectionId: string; generation: number; refs: string[] },
+  p: { connectionId: string; orgId: string; generation: number; refs: string[] },
 ): Promise<StepResult> {
-  const conn = await live(sctx, p.connectionId, p.generation);
+  const conn = await live(sctx, p.connectionId, p.orgId, p.generation);
   if (!conn) return stopped(null, true, null);
   const prep = await tryPrepare(sctx, conn);
   if ('code' in prep) return stopped(prep, false, null);
@@ -298,6 +329,7 @@ export async function runRefs(
   const extra: ApplyExtra = {
     passes: await prefetchPasses(sctx, conn, p.refs),
     samples: [],
+    stale: false,
   };
   await Promise.all(
     p.refs.map((ref) =>
@@ -307,7 +339,8 @@ export async function runRefs(
   return {
     ...totals,
     failure: failures.first,
-    stale: false,
+    stale: extra.stale,
+    ...(extra.stale ? { staleCode: 'STALE_CONTEXT' as const } : {}),
     cursor: null,
     hasMore: false,
     samples: extra.samples,

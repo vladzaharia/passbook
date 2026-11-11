@@ -1,6 +1,7 @@
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
+import type { JobOf } from '../../jobs/types.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
-import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
+import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
 import { orgBrandingJson } from '../orgs/repo.ts';
 
 export type OutboxState =
@@ -107,6 +108,83 @@ export async function insertOutbox(db: D1Database, row: NewOutbox): Promise<bool
   return result.changes === 1;
 }
 
+/** Atomically distinguish a coalesced push from a pass that became unavailable. */
+export async function insertPushOutbox(
+  db: D1Database,
+  row: Omit<NewOutbox, 'kind'>,
+): Promise<'inserted' | 'coalesced' | 'stale'> {
+  const eligible = `id = ? AND org_id = ? AND deleted_at IS NULL AND test_data_quarantined = 0`;
+  const results = await batch(db, [
+    stmt(
+      db,
+      `INSERT OR IGNORE INTO outbox
+       (id, org_id, kind, pass_id, coalesce_key, payload, state, available_at, created_at)
+       SELECT ?, org_id, 'push', id, ?, ?, 'pending', 0, ? FROM passes WHERE ${eligible}`,
+      [row.id, row.coalesceKey, JSON.stringify(row.payload), row.now, row.passId, row.orgId],
+    ),
+    stmt(db, `SELECT EXISTS(SELECT 1 FROM passes WHERE ${eligible}) AS eligible`, [
+      row.passId, row.orgId,
+    ]),
+  ]);
+  const state = results[1]?.results[0];
+  if (!state || typeof state !== 'object' || !('eligible' in state) || state.eligible !== 1) {
+    return 'stale';
+  }
+  return (results[0]?.meta.changes ?? 0) === 1 ? 'inserted' : 'coalesced';
+}
+
+export type RefreshPushContext = Pick<
+  JobOf<'pass.refresh'>,
+  'passId' | 'orgId' | 'mode' | 'passVersion' | 'status' | 'ownerUserId' | 'linkGeneration' | 'connectionId' | 'externalRef' | 'generation'
+>;
+
+/**
+ * The timestamp and outbox insertion share a transaction. Both predicates test the captured
+ * binding and version at commit, including the current connection and organization state.
+ */
+export async function insertRefreshPush(
+  db: D1Database,
+  context: RefreshPushContext,
+  id: string,
+  now: number,
+): Promise<boolean> {
+  if (!context.passId || !context.orgId ||
+      !Number.isInteger(context.passVersion) || context.passVersion < 1 ||
+      !Number.isInteger(context.linkGeneration) || context.linkGeneration < 1 ||
+      (context.mode !== 'live' && context.mode !== 'test') ||
+      (context.status !== 'active' && context.status !== 'voided') ||
+      (context.ownerUserId !== null && typeof context.ownerUserId !== 'string') ||
+      context.connectionId === undefined || context.externalRef === undefined ||
+      context.generation === undefined) return false;
+  if (context.connectionId === null
+    ? context.externalRef !== null || context.generation !== null
+    : !context.connectionId || !context.externalRef ||
+      !Number.isInteger(context.generation) || (context.generation ?? 0) < 1) return false;
+  const guard = `id = ? AND org_id = ? AND mode = ? AND status = ? AND version = ?
+    AND owner_user_id IS ? AND link_generation = ? AND connection_id IS ? AND external_ref IS ?
+    AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
+    AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = ? AND o.status = 'active')
+    AND ((connection_id IS NULL AND external_ref IS NULL AND ? IS NULL)
+      OR (connection_id IS NOT NULL AND external_ref IS NOT NULL AND mode = 'live' AND status = 'active'
+        AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id AND c.org_id = passes.org_id
+          AND c.enabled = 1 AND c.generation = ?)))`;
+  const params = [
+    context.passId, context.orgId, context.mode, context.status, context.passVersion, context.ownerUserId, context.linkGeneration,
+    context.connectionId, context.externalRef, context.orgId, context.generation, context.generation,
+  ];
+  const results = await batch(db, [
+    stmt(db, `UPDATE passes SET last_refreshed_at = ? WHERE ${guard}`, [now, ...params]),
+    stmt(
+      db,
+      `INSERT OR IGNORE INTO outbox
+        (id, org_id, kind, pass_id, coalesce_key, payload, state, available_at, created_at)
+       SELECT ?, org_id, 'push', id, ?, ?, 'pending', 0, ? FROM passes WHERE ${guard}`,
+      [id, `push:${context.passId}`, JSON.stringify({ reason: 'refresh' }), now, ...params],
+    ),
+  ]);
+  return (results[0]?.meta.changes ?? 0) === 1;
+}
+
 /** Marks due rows `enqueued` before sending, so repeated dispatches never double-send. */
 export async function markDueEnqueued(
   db: D1Database,
@@ -196,7 +274,9 @@ export async function failOutbox(
   const row = await first<OutboxDbRow>(
     db,
     `UPDATE outbox SET state = 'failed', lease = NULL, finished_at = ?, error_code = ?, coalesce_key = NULL
-     WHERE id = ? AND state IN ('pending', 'enqueued', 'processing') RETURNING *`,
+     WHERE id = ? AND state IN ('pending', 'enqueued', 'processing')
+       AND (kind != 'email' OR (coalesce(error_code, '') != 'EMAIL_OUTCOME_UNKNOWN' AND provider_id IS NULL))
+     RETURNING *`,
     [now, errorCode, id],
   );
   return row ? mapOutbox(row) : null;
@@ -275,20 +355,6 @@ export async function deleteFinishedOutbox(
     [failedBefore],
   );
   return sent + failed;
-}
-
-/** Records the provider's message id before the row is finished, so a re-run never re-sends. */
-export async function setProviderId(
-  db: D1Database,
-  id: string,
-  lease: string,
-  providerId: string,
-): Promise<void> {
-  await run(db, 'UPDATE outbox SET provider_id = ? WHERE id = ? AND lease = ?', [
-    providerId,
-    id,
-    lease,
-  ]);
 }
 
 export interface OrgBranding {

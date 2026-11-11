@@ -56,11 +56,18 @@ export async function startSync(
     trigger,
     actorId,
     startedAt: now,
+    expected: { orgId: conn.orgId, generation: conn.generation },
   });
   try {
     await sctx.env.CONNECTION_SYNC.create({
       id: instanceId,
-      params: { connectionId: conn.id, generation: conn.generation, trigger, runId: instanceId },
+      params: {
+        connectionId: conn.id,
+        orgId: conn.orgId,
+        generation: conn.generation,
+        trigger,
+        runId: instanceId,
+      },
     });
   } catch (error) {
     if (!alreadyExists(error)) {
@@ -98,7 +105,7 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
           conn.intervalSeconds ??
           connectors.get(conn.connectorType)?.defaults.intervalSeconds ??
           900;
-        await patchConnection(
+        const updated = await patchConnection(
           sctx.env.DB,
           conn.id,
           {
@@ -108,7 +115,9 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
             lastErrorAt: now,
           },
           conn.generation,
+          conn.orgId,
         );
+        if (!updated) continue;
         await setWorkflowStatus(sctx.env.DB, instanceId, 'errored', now, 'RUN_LOST');
         sctx.log.warn('connection.run_lost', { code: 'RUN_LOST', connectionId: conn.id });
         continue;

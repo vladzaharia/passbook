@@ -36,6 +36,7 @@ const makePass = (orgId = kit.org.id, mode: 'live' | 'test' = 'live') =>
   createPassRow(kit.ctx, {
     orgId,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: 'Bundle Test' },
     source: 'manual',
     mode,

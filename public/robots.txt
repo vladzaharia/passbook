@@ -8,3 +8,15 @@ Allow: /apple-touch-icon.png
 Allow: /icons/
 Allow: /og-image.png
 Disallow: /
+
+# Google Wallet save/delete callbacks have no holder capability in the path.
+User-agent: Googlebot
+User-agent: Google-Valuables
+Allow: /$
+Allow: /login
+Allow: /favicon
+Allow: /apple-touch-icon.png
+Allow: /icons/
+Allow: /og-image.png
+Allow: /wallet/v1/google/
+Disallow: /

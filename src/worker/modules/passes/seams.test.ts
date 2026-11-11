@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { enqueuePush } from '../delivery/service.ts';
 import { getPass } from './repo.ts';
@@ -27,22 +27,65 @@ async function connection(generation = 1) {
   return id;
 }
 
+const connectionInput = (connectionId: string, externalRef: string) => ({
+  orgId: kit.org.id,
+  templateId: kit.template.id,
+  templateVersion: kit.template.version,
+  mode: 'live' as const,
+  generation: 1,
+  connectionId,
+  externalRef,
+  sendEmail: false,
+});
+
+const connectionSnapshot = async (passId: string, connectionId: string, externalRef: string) => {
+  const pass = await getPass(kit.env.DB, passId);
+  if (!pass) throw new Error('Created pass not found');
+  return {
+    passId,
+    orgId: pass.orgId,
+    mode: 'live' as const,
+    status: pass.status,
+    expectedVersion: pass.version,
+    ownerUserId: pass.ownerUserId,
+    linkGeneration: pass.linkGeneration,
+    connectionId,
+    externalRef,
+    generation: 1,
+  };
+};
+
 describe('requestRefresh', () => {
   const jobs = () => kit.queue.sent.filter((m) => (m as { kind: string }).kind === 'pass.refresh');
 
   it('claims the slot, enqueues one job and coalesces repeats inside the window', async () => {
     const pass = await kit.pass();
+    const expected = { ...pass, ownerUserId: pass.ownerUserId ?? undefined };
     kit.queue.sent.length = 0;
-    const a = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'u1' });
+    const a = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'u1' }, expected);
     expect(a.coalesced).toBe(false);
     expect(jobs()).toEqual([
-      { kind: 'pass.refresh', passId: pass.id, trigger: 'user', actorId: 'u1' },
+      {
+        kind: 'pass.refresh',
+        passId: pass.id,
+        orgId: pass.orgId,
+        mode: pass.mode,
+        passVersion: pass.version,
+        status: pass.status,
+        ownerUserId: pass.ownerUserId,
+        linkGeneration: pass.linkGeneration,
+        connectionId: pass.connectionId,
+        externalRef: pass.externalRef,
+        generation: null,
+        trigger: 'user',
+        actorId: 'u1',
+      },
     ]);
-    const b = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'u1' });
+    const b = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'u1' }, expected);
     expect(b).toEqual({ requestedAt: a.requestedAt, coalesced: true, cooldownSeconds: 30 });
     expect(jobs()).toHaveLength(1);
     kit.clock.advance(31_000);
-    const c = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'admin-1' });
+    const c = await requestRefresh(kit.ctx, pass.id, { type: 'user', id: 'admin-1' }, expected);
     expect(c.coalesced).toBe(false);
     expect(c.requestedAt).toBeGreaterThan(a.requestedAt);
     expect(jobs()).toHaveLength(2);
@@ -50,11 +93,12 @@ describe('requestRefresh', () => {
 
   it('reports admin triggers and unknown passes', async () => {
     const pass = await kit.pass();
+    const expected = { ...pass, ownerUserId: pass.ownerUserId ?? undefined };
     kit.queue.sent.length = 0;
-    await requestRefresh(kit.ctx, pass.id, { type: 'api_key', id: 'k1' });
+    await requestRefresh(kit.ctx, pass.id, { type: 'api_key', id: 'k1' }, expected);
     expect(jobs()[0]).toMatchObject({ trigger: 'admin', actorId: 'k1' });
     await expect(
-      requestRefresh(kit.ctx, 'missing', { type: 'user', id: 'u' }),
+      requestRefresh(kit.ctx, 'missing', { type: 'user', id: 'u' }, expected),
     ).rejects.toMatchObject({
       status: 404,
     });
@@ -92,6 +136,9 @@ describe('createPassFromConnection', () => {
     const input = {
       orgId: kit.org.id,
       templateId: kit.template.id,
+      templateVersion: kit.template.version,
+      mode: 'live' as const,
+      generation: 1,
       connectionId,
       externalRef: 'ref-1',
       fields: { memberName: 'Upstream Person' },
@@ -127,6 +174,9 @@ describe('createPassFromConnection', () => {
     const { passId } = await createPassFromConnection(kit.ctx, {
       orgId: kit.org.id,
       templateId: kit.template.id,
+      templateVersion: kit.template.version,
+      mode: 'live',
+      generation: 1,
       connectionId,
       externalRef: 'ref-2',
       fields: { memberName: 'Quiet' },
@@ -136,16 +186,20 @@ describe('createPassFromConnection', () => {
     expect(
       await all(kit.env.DB, "SELECT 1 FROM outbox WHERE pass_id = ? AND kind = 'email'", [passId]),
     ).toHaveLength(0);
+    const other = await makeOrg(kit.fx, { name: 'Other Org' });
     await expect(
       createPassFromConnection(kit.ctx, {
-        orgId: 'other-org',
+        orgId: other.id,
         templateId: kit.template.id,
+        templateVersion: kit.template.version,
+        mode: 'live',
+        generation: 1,
         connectionId,
         externalRef: 'ref-3',
         fields: { memberName: 'x' },
         sendEmail: false,
       }),
-    ).rejects.toMatchObject({ status: 404 });
+    ).rejects.toMatchObject({ code: 'PASS_CONNECTION_MISMATCH' });
   });
 });
 
@@ -153,19 +207,20 @@ describe('applyConnectionRecord', () => {
   it('rejects a pass linked to another connection and does not publish unchanged data', async () => {
     const connectionId = await connection();
     const { passId } = await createPassFromConnection(kit.ctx, {
-      orgId: kit.org.id,
-      templateId: kit.template.id,
-      connectionId,
-      externalRef: 'ref-a',
+      ...connectionInput(connectionId, 'ref-a'),
       fields: { memberName: 'Same' },
-      sendEmail: false,
     });
-    const base = { passId, connectionId, generation: 1, cause: 'connection' as const };
+    const base = {
+      ...(await connectionSnapshot(passId, connectionId, 'ref-a')),
+      cause: 'connection' as const,
+    };
     expect(
       await applyConnectionRecord(kit.ctx, { ...base, fields: { memberName: 'Same' } }),
     ).toEqual({
       changed: false,
       version: 1,
+      ownerUserId: null,
+      linkGeneration: base.linkGeneration,
     });
     await expect(
       applyConnectionRecord(kit.ctx, { ...base, connectionId: await connection(), fields: {} }),
@@ -174,7 +229,12 @@ describe('applyConnectionRecord', () => {
       ...base,
       fields: { memberName: 'New' },
     });
-    expect(changed).toEqual({ changed: true, version: 2 });
+    expect(changed).toEqual({
+      changed: true,
+      version: 2,
+      ownerUserId: null,
+      linkGeneration: base.linkGeneration,
+    });
     const cause = await first<{ cause: string; actor_type: string }>(
       kit.env.DB,
       'SELECT cause, actor_type FROM pass_versions WHERE pass_id = ? AND version = 2',
@@ -188,12 +248,8 @@ describe('applyConnectionRecord', () => {
     const mk = async (ref: string) =>
       (
         await createPassFromConnection(kit.ctx, {
-          orgId: kit.org.id,
-          templateId: kit.template.id,
-          connectionId,
-          externalRef: ref,
+          ...connectionInput(connectionId, ref),
           fields: { memberName: 'H' },
-          sendEmail: false,
         })
       ).passId;
     const free = await mk('h-free');
@@ -204,11 +260,15 @@ describe('applyConnectionRecord', () => {
       'owner@example.com',
       taken,
     ]);
-    const base = { connectionId, generation: 1, fields: {}, cause: 'connection' as const };
-    await applyConnectionRecord(kit.ctx, { ...base, passId: free, holderEmail: 'new@example.com' });
+    const base = { fields: {}, cause: 'connection' as const };
     await applyConnectionRecord(kit.ctx, {
       ...base,
-      passId: taken,
+      ...(await connectionSnapshot(free, connectionId, 'h-free')),
+      holderEmail: 'new@example.com',
+    });
+    await applyConnectionRecord(kit.ctx, {
+      ...base,
+      ...(await connectionSnapshot(taken, connectionId, 'h-taken')),
       holderEmail: 'other@example.com',
     });
     expect((await getPass(kit.env.DB, free))?.holderEmail).toBe('new@example.com');
@@ -220,23 +280,18 @@ describe('markPassMissing', () => {
   it('flags without changing the pass, then a good record clears the flag', async () => {
     const connectionId = await connection();
     const { passId } = await createPassFromConnection(kit.ctx, {
-      orgId: kit.org.id,
-      templateId: kit.template.id,
-      connectionId,
-      externalRef: 'gone',
+      ...connectionInput(connectionId, 'gone'),
       fields: { memberName: 'Gone' },
-      sendEmail: false,
     });
-    await markPassMissing(kit.ctx, passId, 'flag');
+    const snapshot = await connectionSnapshot(passId, connectionId, 'gone');
+    await markPassMissing(kit.ctx, snapshot, 'flag');
     expect(await getPass(kit.env.DB, passId)).toMatchObject({
       syncErrorCode: 'RECORD_MISSING',
       status: 'active',
       version: 1,
     });
     await applyConnectionRecord(kit.ctx, {
-      passId,
-      connectionId,
-      generation: 1,
+      ...snapshot,
       fields: { memberName: 'Gone' },
       cause: 'connection',
     });
@@ -246,21 +301,18 @@ describe('markPassMissing', () => {
   it('voids the pass and keeps the flag in void mode', async () => {
     const connectionId = await connection();
     const { passId } = await createPassFromConnection(kit.ctx, {
-      orgId: kit.org.id,
-      templateId: kit.template.id,
-      connectionId,
-      externalRef: 'void-me',
+      ...connectionInput(connectionId, 'void-me'),
       fields: { memberName: 'V' },
-      sendEmail: false,
     });
-    await markPassMissing(kit.ctx, passId, 'void');
+    const snapshot = await connectionSnapshot(passId, connectionId, 'void-me');
+    await markPassMissing(kit.ctx, snapshot, 'void');
     expect(await getPass(kit.env.DB, passId)).toMatchObject({
       status: 'voided',
       syncErrorCode: 'RECORD_MISSING',
       version: 2,
     });
     // A second call does not publish again.
-    await markPassMissing(kit.ctx, passId, 'void');
+    await markPassMissing(kit.ctx, await connectionSnapshot(passId, connectionId, 'void-me'), 'void');
     expect((await getPass(kit.env.DB, passId))?.version).toBe(2);
   });
 });

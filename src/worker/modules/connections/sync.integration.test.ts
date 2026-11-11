@@ -19,6 +19,7 @@ async function sync(connectionId: string, generation: number) {
   const id = `int-${++n}`;
   await executeSync(kit.ctx, inlineStep(), {
     connectionId,
+    orgId: kit.org.id,
     generation,
     trigger: 'schedule',
     runId: id,

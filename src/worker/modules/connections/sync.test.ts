@@ -26,6 +26,7 @@ async function sync(
   const conn = await getConnection(kit.env.DB, connectionId);
   await executeSync(kit.sctx, step, {
     connectionId,
+    orgId: conn?.orgId ?? kit.org.id,
     generation: conn?.generation ?? 1,
     trigger: 'schedule',
     runId,
@@ -166,7 +167,12 @@ describe('mapping and validation', () => {
     setDeps({
       applyConnectionRecord: async (_c, input) => {
         if (input.passId === p1.id) throw new NotFoundError('gone', 'PASS_BUSY');
-        return { changed: true, version: 2 };
+        return {
+          changed: true,
+          version: input.expectedVersion,
+          ownerUserId: input.ownerUserId,
+          linkGeneration: input.linkGeneration,
+        };
       },
     });
     const { run: r } = await sync(dto.id);
@@ -202,7 +208,7 @@ describe('mapping and validation', () => {
       },
     });
     const { run: r } = await sync(dto.id);
-    expect(r?.error_code).toBeNull();
+    expect(r).toMatchObject({ outcome: 'skipped', error_code: 'STALE_CONTEXT' });
     const row = await passRow(p.id);
     expect(row).toMatchObject({ sync_error_code: null, sync_failures: 0, next_sync_at: null });
   });
@@ -418,7 +424,7 @@ describe('generation fence', () => {
     await linkedPass(kit, dto.id, 'm-001');
     await service.update(kit.sctx, kit.actor, dto.id, { config: { count: 2, seed: 'new' } });
     const { run: r, conn } = await sync(dto.id, { generation: 1 });
-    expect(r).toMatchObject({ outcome: 'skipped', error_code: 'STALE_GENERATION' });
+    expect(r).toBeNull();
     expect(kit.seams.applied).toEqual([]);
     expect(conn).toMatchObject({ health: 'unknown', consecutiveFailures: 0, lastRunAt: null });
   });
@@ -465,7 +471,7 @@ describe('generation fence', () => {
   it('ignores disabled and deleted connections', async () => {
     const dto = await createDemo(kit);
     await service.update(kit.sctx, kit.actor, dto.id, { enabled: false });
-    expect((await sync(dto.id, { generation: 1 })).run?.outcome).toBe('skipped');
+    expect((await sync(dto.id, { generation: 1 })).run).toBeNull();
     await service.remove(kit.sctx, kit.actor, dto.id);
     const step = inlineStep();
     await sync(dto.id, {}, step);
@@ -630,6 +636,7 @@ describe('run history', () => {
 describe('workflow writes stay inside steps', () => {
   const params = (connectionId: string, generation: number): SyncRunParams => ({
     connectionId,
+    orgId: kit.org.id,
     generation,
     trigger: 'schedule',
     runId: `run-guard-${connectionId.slice(-6)}`,

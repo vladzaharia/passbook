@@ -76,10 +76,66 @@ describe('app shell', () => {
       '/api/v1/me/passes',
       '/wallet/v1/log',
       '/p/{token}',
+      '/p/{token}/wallet/{provider}',
+      '/p/wallet/samsung/{offer}',
+      '/wallet/v1/google/{accountId}',
+      '/wallet/v1/samsung/cards/{cardId}/{refId}',
+      '/api/v1/wallet-providers/accounts',
+      '/api/v1/wallet-providers/accounts/verify',
+      '/api/v1/wallet-providers/passes/{id}',
       '/api/v1/holders/assign',
     ]) {
       expect(doc.paths, path).toHaveProperty([path]);
     }
+  });
+});
+
+describe('wallet route isolation', () => {
+  it('uses native callback limits without passing through Apple middleware', async () => {
+    const keys: string[] = [];
+    const limit = async ({ key }: { key: string }) => {
+      keys.push(key);
+      return { success: true };
+    };
+    const limits = { limit };
+    const appEnv = { ...env, RL_APPLE_IP: limits, RL_APPLE: limits } as unknown as AppEnv;
+    const headers = { 'cf-connecting-ip': '203.0.113.25', 'content-type': 'application/json' };
+
+    const google = await app.request(
+      `${ORIGIN}/wallet/v1/google/account`,
+      {
+        method: 'POST',
+        headers,
+        body: 'x'.repeat(17 * 1024),
+      },
+      appEnv,
+    );
+    expect(google.status).toBe(413);
+    expect(keys).toEqual(['RL_APPLE_IP:google:203.0.113.25']);
+
+    keys.length = 0;
+    const samsung = await app.request(
+      `${ORIGIN}/wallet/v1/samsung/cards/card/short`,
+      {
+        headers,
+      },
+      appEnv,
+    );
+    expect(samsung.status).toBe(422);
+    expect(keys).toEqual(['RL_APPLE_IP:samsung:203.0.113.25']);
+
+    keys.length = 0;
+    const apple = await app.request(
+      `${ORIGIN}/wallet/v1/log`,
+      {
+        method: 'POST',
+        headers,
+        body: '{}',
+      },
+      appEnv,
+    );
+    expect(apple.status).toBe(422);
+    expect(keys).toEqual(['RL_APPLE_IP:203.0.113.25', 'RL_APPLE:203.0.113.25']);
   });
 });
 
@@ -88,6 +144,17 @@ describe('auth ports', () => {
     const res = await call('/api/v1/users');
     expect(res.status).toBe(401);
     expect(await res.json()).toMatchObject({ code: 'UNAUTHENTICATED' });
+  });
+
+  it('requires authentication for wallet account and pass status routes', async () => {
+    for (const path of [
+      '/api/v1/wallet-providers/accounts?orgId=o&mode=live&provider=google',
+      '/api/v1/wallet-providers/passes/p1',
+    ]) {
+      const res = await call(path);
+      expect(res.status, path).toBe(401);
+      expect(res.headers.get('cache-control')).toBe('no-store');
+    }
   });
 
   it('refuses non-admin sessions on admin routes', async () => {
@@ -180,7 +247,7 @@ describe('csrf', () => {
       headers: { ...auth.apiKey({ scopes: ['passes:write'] }), 'content-type': 'application/json' },
       body: JSON.stringify({ orgId: 'o', templateId: 't', input: {} }),
     });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(422);
   });
 
   it('protects the unauthenticated magic-link request by origin only', async () => {

@@ -29,6 +29,7 @@ const livePass = () =>
   createPassRow(kit.ctx, {
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: 'Live holder' },
     holderEmail: 'live-holder@example.com',
     source: 'manual',

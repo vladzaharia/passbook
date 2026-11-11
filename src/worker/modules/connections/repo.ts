@@ -241,6 +241,7 @@ export async function patchConnection(
   id: string,
   patch: ConnectionPatch,
   ifGeneration?: number,
+  ifActiveOrgId?: string,
 ): Promise<number> {
   const keys = Object.keys(patch) as (keyof typeof COLUMNS)[];
   if (keys.length === 0) return 0;
@@ -251,6 +252,11 @@ export async function patchConnection(
   if (ifGeneration !== undefined) {
     sql += ' AND generation = ?';
     params.push(ifGeneration);
+  }
+  if (ifActiveOrgId !== undefined) {
+    sql += ` AND org_id = ? AND enabled = 1
+      AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = connections.org_id AND o.status = 'active')`;
+    params.push(ifActiveOrgId);
   }
   return (await run(db, sql, params)).changes;
 }

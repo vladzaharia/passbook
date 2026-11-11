@@ -4,6 +4,8 @@ import type { AppEnv } from '../platform/env.ts';
 import { createServiceContext } from '../platform/service-context.ts';
 
 export interface ConnectionSyncParams {
+  /** Organization captured when the run was scheduled; never adopt a reassigned connection. */
+  orgId: string;
   connectionId: string;
   generation: number;
   trigger: 'schedule' | 'webhook' | 'admin';

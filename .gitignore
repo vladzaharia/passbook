@@ -22,3 +22,6 @@ artifacts/
 !certificates/*.pem
 e2e/.auth/
 .playwright-mcp/
+
+# Agent state, at any depth
+.omc/

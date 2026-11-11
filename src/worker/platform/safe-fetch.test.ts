@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   assertSafeUrl,
   createSafeFetch,
@@ -156,6 +156,39 @@ describe('createSafeFetch', () => {
       )) as unknown as typeof fetch;
     const safe = createSafeFetch({ resolver: publicDns, fetchImpl, timeoutMs: 20 });
     await expect(safe('https://api.example.com')).rejects.toMatchObject({ code: 'TIMEOUT' });
+  });
+
+  describe('deadline', () => {
+    const realFetch = globalThis.fetch;
+    afterEach(() => {
+      globalThis.fetch = realFetch;
+    });
+
+    it('aborts a body that trickles past the deadline', async () => {
+      let cancelled = false;
+      globalThis.fetch = (async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            pull: async (controller) => {
+              await new Promise((r) => setTimeout(r, 10));
+              controller.enqueue(new Uint8Array([120]));
+            },
+            cancel: () => {
+              cancelled = true;
+            },
+          }),
+        )) as unknown as typeof fetch;
+      const safe = createSafeFetch({ resolver: publicDns, timeoutMs: 60 });
+      await expect(safe('https://api.example.com')).rejects.toMatchObject({ code: 'TIMEOUT' });
+      await new Promise((r) => setTimeout(r, 20));
+      expect(cancelled).toBe(true);
+    });
+
+    it('counts DNS against the deadline', async () => {
+      const slowDns = { resolve: () => new Promise<string[]>(() => undefined) };
+      const safe = createSafeFetch({ resolver: slowDns, fetchImpl: respond('x'), timeoutMs: 20 });
+      await expect(safe('https://api.example.com')).rejects.toMatchObject({ code: 'TIMEOUT' });
+    });
   });
 
   it('does not echo upstream bodies in errors', async () => {

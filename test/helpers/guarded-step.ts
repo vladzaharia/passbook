@@ -39,8 +39,7 @@ export function guardWrites(base: AppEnv): {
       return typeof value === 'function' ? value.bind(target) : value;
     },
   });
-  const env = Object.create(base) as AppEnv;
-  Object.defineProperty(env, 'DB', { value: db, enumerable: true });
+  const env: AppEnv = { ...base, DB: db };
   return {
     env,
     violations,

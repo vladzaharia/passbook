@@ -221,6 +221,43 @@ describe('connections', () => {
     expect(summary.json.total).toBeGreaterThanOrEqual(1);
   });
 
+  it('keeps Live connection data and operations unavailable in Test mode', async () => {
+    const created = await call('POST', '/api/v1/connections', {
+      orgId: kit.org.id, connectorType: 'demo', name: 'Live source', config: { count: 1 },
+    });
+    expect(created.status).toBe(201);
+    const id = created.json.id as string;
+    const before = await first(kit.env.DB, 'SELECT * FROM connections WHERE id = ?', [id]);
+    const headers = { ...admin(), 'x-passbook-mode': 'test' };
+    expect((await call('GET', '/api/v1/connections', undefined, headers)).json)
+      .toEqual({ items: [], nextCursor: null });
+    expect((await call('GET', '/api/v1/connections/summary', undefined, headers)).json)
+      .toEqual({ total: 0, byHealth: {}, attention: [] });
+    const denied = [
+      await call('GET', `/api/v1/connections/${id}`, undefined, headers),
+      await call('GET', `/api/v1/connections/${id}/runs`, undefined, headers),
+      await call('POST', `/api/v1/connections/${id}/test`, undefined, headers),
+      await call('POST', `/api/v1/connections/${id}/sync`, undefined, headers),
+      await call('POST', `/api/v1/connections/${id}/webhook-secret`, undefined, headers),
+      await call('PATCH', `/api/v1/connections/${id}`, { name: 'Forbidden' }, headers),
+      await call('DELETE', `/api/v1/connections/${id}`, undefined, headers),
+      await call('POST', '/api/v1/connections', {
+        orgId: kit.org.id, connectorType: 'demo', name: 'Forbidden', config: { count: 1 },
+      }, headers),
+      await call('POST', '/api/v1/connections/test-config', {
+        orgId: kit.org.id, connectorType: 'demo', config: { count: 1 },
+      }, headers),
+    ];
+    for (const response of denied) {
+      expect(response.status).toBe(404);
+      expect(response.json.code).toBe('CONNECTION_NOT_FOUND');
+    }
+    expect(await first(kit.env.DB, 'SELECT * FROM connections WHERE id = ?', [id])).toEqual(before);
+    expect(await first(kit.env.DB, 'SELECT id FROM connection_runs WHERE connection_id = ?', [id])).toBeNull();
+    expect((await call('GET', '/api/v1/connectors', undefined, headers)).status).toBe(200);
+    expect((await call('GET', `/api/v1/connections/${id}`)).status).toBe(200);
+  });
+
   it('is described in the OpenAPI document', async () => {
     const res = await app.request('/api/v1/openapi.json', {}, kit.env);
     const doc = (await res.json()) as { paths: Record<string, unknown> };
@@ -261,7 +298,7 @@ describe('ConnectionSync workflow class', () => {
     }) as ConnectionSync;
     await wf.run(
       {
-        payload: { connectionId: id, generation: 1, trigger: 'admin' },
+        payload: { connectionId: id, orgId: kit.org.id, generation: 1, trigger: 'admin' },
         timestamp: new Date(),
         instanceId: 'wf-instance-1',
       } as never,

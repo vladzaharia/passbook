@@ -1,4 +1,4 @@
-import { all, batch, run, stmt } from '../../platform/db.ts';
+import { all, batch, first, run, stmt } from '../../platform/db.ts';
 
 export interface DeviceTarget {
   deviceId: string;
@@ -14,10 +14,28 @@ export async function devicesForPass(
     db,
     `SELECT d.device_id, COALESCE(r.push_token, d.push_token) AS push_token FROM registrations r
      JOIN devices d ON d.device_id = r.device_id AND d.identity_id = r.identity_id
-     WHERE r.pass_id = ? AND r.identity_id = ? ORDER BY r.created_at`,
+     JOIN passes p ON p.id = r.pass_id AND p.identity_id = r.identity_id
+     WHERE r.pass_id = ? AND r.identity_id = ? AND p.deleted_at IS NULL
+       AND p.test_data_quarantined = 0 ORDER BY r.created_at`,
     [passId, identityId],
   );
   return rows.map((r) => ({ deviceId: r.device_id, pushToken: r.push_token }));
+}
+
+/** Revalidate immediately before an external push, after all asynchronous preparation. */
+export async function pushPassCurrent(
+  db: D1Database,
+  passId: string,
+  orgId: string,
+  identityId: string,
+): Promise<boolean> {
+  return (await first(
+    db,
+    `SELECT 1 FROM passes p JOIN orgs o ON o.id = p.org_id
+     WHERE p.id = ? AND p.org_id = ? AND p.identity_id = ?
+       AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND o.status = 'active'`,
+    [passId, orgId, identityId],
+  )) !== null;
 }
 
 export async function deliveredDevices(db: D1Database, outboxId: string): Promise<Set<string>> {

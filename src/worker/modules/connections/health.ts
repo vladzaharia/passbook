@@ -2,6 +2,7 @@ import { connectors } from '../../connectors/registry.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import type { Totals } from './records.ts';
 import { type ConnectionRow, getConnection, patchConnection } from './repo.ts';
 import { finishRun } from './repo-runs.ts';
@@ -24,10 +25,12 @@ export function schedules(conn: Pick<ConnectionRow, 'mode'>): boolean {
 export interface RunOutcome {
   runId: string;
   instanceId: string | null;
+  orgId: string;
   generation: number;
   totals: Totals;
   failure: Failure | null;
   stale: boolean;
+  staleCode?: 'STALE_CONTEXT' | 'STALE_GENERATION';
   startedAt: number;
   /** First failing records, one per line. */
   errorDetail?: string | null;
@@ -47,16 +50,19 @@ export async function closeRun(
   const now = sctx.clock.now();
   const { totals, failure } = outcome;
   const conn = await getConnection(db, connectionId);
+  const stale = outcome.stale || !outcome.orgId || !conn?.enabled ||
+    conn.orgId !== outcome.orgId || conn.generation !== outcome.generation ||
+    !(await isOrgActive(sctx, outcome.orgId));
   const changedAny = totals.changed + totals.created + totals.missing > 0;
 
   await finishRun(db, {
     id: outcome.runId,
     finishedAt: now,
-    outcome: outcome.stale ? 'skipped' : failure ? 'error' : changedAny ? 'changed' : 'unchanged',
+    outcome: stale ? 'skipped' : failure ? 'error' : changedAny ? 'changed' : 'unchanged',
     recordsSeen: totals.seen,
     passesChanged: totals.changed + totals.created + totals.missing,
-    errorCode: outcome.stale
-      ? 'STALE_GENERATION'
+    errorCode: stale
+      ? (outcome.staleCode ?? 'STALE_GENERATION')
       : (failure?.code ?? (totals.errors > 0 ? 'RECORD_ERRORS' : null)),
     errorDetail: outcome.errorDetail ?? null,
     httpStatus: failure?.httpStatus ?? null,
@@ -65,7 +71,7 @@ export async function closeRun(
   writeEvent(sctx.env, {
     event: 'sync.run',
     orgId: conn?.orgId ?? null,
-    outcome: outcome.stale ? 'stale' : (failure?.code ?? 'ok'),
+    outcome: stale ? 'stale' : (failure?.code ?? 'ok'),
     value: now - outcome.startedAt,
   });
 
@@ -75,15 +81,14 @@ export async function closeRun(
         connectors.get(conn.connectorType)?.defaults.intervalSeconds ??
         900) * 1000
     : 0;
-  if (!conn?.enabled || outcome.stale || !options.countsForBreaker) return;
-  if (conn.generation !== outcome.generation) return;
+  if (!conn?.enabled || stale || !options.countsForBreaker) return;
 
   if (failure) {
     const failures = conn.consecutiveFailures + 1;
     const open = failures >= BREAKER_THRESHOLD;
     const breakerOpenUntil = open ? now + breakerDelayMs(failures) : null;
     const retryAt = now + Math.max(intervalMs, failure.retryAfterMs ?? 0);
-    await patchConnection(
+    const updated = await patchConnection(
       db,
       connectionId,
       {
@@ -99,8 +104,9 @@ export async function closeRun(
         updatedAt: now,
       },
       outcome.generation,
+      outcome.orgId,
     );
-    if (open && conn.consecutiveFailures < BREAKER_THRESHOLD) {
+    if (updated === 1 && open && conn.consecutiveFailures < BREAKER_THRESHOLD) {
       await recordAudit(sctx, {
         orgId: conn.orgId,
         actorType: 'connection',
@@ -129,5 +135,6 @@ export async function closeRun(
       updatedAt: now,
     },
     outcome.generation,
+    outcome.orgId,
   );
 }

@@ -119,7 +119,7 @@ export async function passesForReissue(
   return all<{ id: string }>(
     db,
     `SELECT id FROM passes WHERE (? IS NULL OR template_id = ?) AND (? IS NULL OR org_id = ?)
-       AND (? IS NULL OR identity_id = ?) AND id > ? AND deleted_at IS NULL
+       AND (? IS NULL OR identity_id = ?) AND id > ? AND deleted_at IS NULL AND test_data_quarantined = 0
        AND (? IS NULL OR template_version != ?)
        AND (? = 0 OR status = 'active') ORDER BY id LIMIT ?`,
     [

@@ -62,6 +62,65 @@ describe('passes', () => {
     expect(await one.text()).not.toContain('secret-device-token');
   });
 
+  it('redacts barcode payloads from both list and detail when presentation is not allowed', async () => {
+    const { session, own, org } = await setup();
+    const active = await own();
+    const voided = await own();
+    const jsonVoided = await own();
+    const expired = await own();
+    const removed = await own();
+    const deleted = await own();
+    const quarantined = await own();
+    const barcode = { format: 'PKBarcodeFormatQR', message: 'private-code', altText: 'private-alt' };
+    for (const pass of [active, voided, jsonVoided, expired, removed, deleted, quarantined]) {
+      const json = {
+        description: 'Visible description',
+        barcode,
+        barcodes: [barcode],
+        ...(pass.id === jsonVoided.id ? { voided: true } : {}),
+        ...(pass.id === expired.id ? { expirationDate: new Date(h.clock.now() - 1000).toISOString() } : {}),
+      };
+      await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
+        JSON.stringify(json), pass.id,
+      ]);
+    }
+    await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided.id]);
+    await run(h.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [h.clock.now(), removed.id]);
+    await run(h.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [h.clock.now(), deleted.id]);
+    await run(h.env.DB, "UPDATE passes SET mode = 'test', test_data_quarantined = 1 WHERE id = ?", [
+      quarantined.id,
+    ]);
+    const list = await (await get('/api/v1/me/passes', session.headers)).json() as {
+      items: { id: string; presentationEligible: boolean; passJson: Record<string, unknown> }[];
+    };
+    expect(list.items.some((item) => item.id === quarantined.id)).toBe(false);
+    expect((await get(`/api/v1/me/passes/${quarantined.id}`, session.headers)).status).toBe(404);
+    for (const pass of [active, voided, jsonVoided, expired, removed, deleted]) {
+      const detail = await (await get(`/api/v1/me/passes/${pass.id}`, session.headers)).json() as {
+        presentationEligible: boolean;
+        passJson: Record<string, unknown>;
+      };
+      const item = list.items.find((candidate) => candidate.id === pass.id);
+      const eligible = pass.id === active.id;
+      expect(item?.presentationEligible).toBe(eligible);
+      expect(detail.presentationEligible).toBe(eligible);
+      expect(detail.passJson.description).toBe('Visible description');
+      for (const json of [item?.passJson, detail.passJson]) {
+        expect(json?.barcode).toEqual(eligible ? barcode : undefined);
+        expect(json?.barcodes).toEqual(eligible ? [barcode] : undefined);
+      }
+    }
+    await run(h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
+    const suspended = await (await get(`/api/v1/me/passes/${active.id}`, session.headers)).json() as {
+      presentationEligible: boolean;
+      passJson: Record<string, unknown>;
+    };
+    expect(suspended.presentationEligible).toBe(false);
+    expect(suspended.passJson).not.toHaveProperty('barcode');
+    expect(suspended.passJson).not.toHaveProperty('barcodes');
+    expect(suspended.passJson.description).toBe('Visible description');
+  });
+
   it('lists only my passes with what PassCard needs', async () => {
     const { session, own, f1, org, template, user } = await setup();
     const mine = await own();
@@ -172,7 +231,7 @@ describe('passes', () => {
     const calls: unknown[][] = [];
     const deps: MeDeps = {
       requestRefresh: async (...args) => {
-        calls.push(['refresh', args[1], args[2]]);
+        calls.push(['refresh', args[1], args[2], args[3]]);
         return { requestedAt: 42, coalesced: false, cooldownSeconds: 30 };
       },
       removePassFromUser: async (...args) => {
@@ -184,7 +243,7 @@ describe('passes', () => {
     });
 
     it('refresh calls the passes seam as the user', async () => {
-      const { user, own } = await setup();
+      const { user, org, own } = await setup();
       const mine = await own();
       const ctx = createServiceContext(h.env, { clock: h.clock });
       expect(await refreshMyPass(ctx, user.id, mine.id, deps)).toEqual({
@@ -192,7 +251,10 @@ describe('passes', () => {
         requestedAt: 42,
         cooldownSeconds: 30,
       });
-      expect(calls).toEqual([['refresh', mine.id, { type: 'user', id: user.id }]]);
+      expect(calls).toEqual([['refresh', mine.id, { type: 'user', id: user.id }, {
+        orgId: org.id, mode: 'live', version: 1, linkGeneration: 1, status: 'active',
+        connectionId: null, externalRef: null, ownerUserId: user.id,
+      }]]);
     });
 
     it('refresh refuses voided passes and over-limit callers', async () => {

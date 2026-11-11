@@ -20,6 +20,7 @@ export interface Pass {
   templateVersion: string;
   authToken: string;
   downloadToken: string;
+  linkGeneration: number;
   webServiceUrl: string;
   personalization: Personalization;
   fieldSources: FieldSources;
@@ -31,6 +32,8 @@ export interface Pass {
   status: PassStatus;
   /** Set from the creator's mode and never changed. */
   mode: Mode;
+  /** Legacy Test data is unavailable until explicitly remediated. */
+  testDataQuarantined: boolean;
   version: number;
   revision: number;
   objectKey: string;
@@ -67,6 +70,7 @@ export interface PassDbRow {
   template_version: string;
   auth_token: string;
   download_token: string;
+  link_generation: number;
   web_service_url: string;
   personalization: string;
   field_sources: string;
@@ -77,6 +81,7 @@ export interface PassDbRow {
   owner_user_id: string | null;
   status: PassStatus;
   mode: Mode;
+  test_data_quarantined: number;
   version: number;
   revision: number;
   object_key: string;
@@ -114,6 +119,7 @@ export function mapPass(row: PassDbRow): Pass {
     templateVersion: row.template_version,
     authToken: row.auth_token,
     downloadToken: row.download_token,
+    linkGeneration: row.link_generation,
     webServiceUrl: row.web_service_url,
     personalization: JSON.parse(row.personalization) as Personalization,
     fieldSources: JSON.parse(row.field_sources) as FieldSources,
@@ -124,6 +130,7 @@ export function mapPass(row: PassDbRow): Pass {
     ownerUserId: row.owner_user_id,
     status: row.status,
     mode: row.mode,
+    testDataQuarantined: row.test_data_quarantined !== 0,
     version: row.version,
     revision: row.revision,
     objectKey: row.object_key,

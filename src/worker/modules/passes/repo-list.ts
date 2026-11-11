@@ -33,7 +33,7 @@ export function passFilterSql(filter: PassListFilter): {
   where: string[];
   params: (string | number)[];
 } {
-  const where: string[] = ['deleted_at IS NULL'];
+  const where: string[] = ['deleted_at IS NULL', 'test_data_quarantined = 0'];
   const params: (string | number)[] = [];
   const add = (sql: string, ...values: (string | number)[]) => {
     where.push(sql);

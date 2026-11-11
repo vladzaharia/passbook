@@ -12,18 +12,21 @@ import { buildArtifact } from './builder.ts';
 import { notifiesHolder, overBudget, pushBudgetOf } from './change-messages.ts';
 import { getPassForWrite } from './pass-access.ts';
 import {
+  applyConnectionState,
   casMeta,
+  type ConnectionPassContext,
   casPublish,
   currentPassJson,
   type FieldSources,
   getOrg,
   getPass,
+  matchesConnectionPass,
   type Pass,
   type PassCause,
   type PassStatus,
 } from './repo.ts';
 import { getRemoval } from './repo-remove.ts';
-import type { CommitHook } from './repo-write.ts';
+import { matchesPublishSnapshot, type CommitHook, type ConnectionStateWrite } from './repo-write.ts';
 import { newScanCode } from './scan-code.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
@@ -47,6 +50,10 @@ export interface PublishOptions {
   actor: Actor;
   /** If-Match: a stale version fails with 412 instead of re-reading. */
   expectedVersion?: number;
+  /** Syncs are tied to their original upstream/pass snapshot, including generation. */
+  connectionContext?: ConnectionPassContext;
+  expectedHolder?: Pick<Pass, 'holderEmail' | 'ownerUserId'>;
+  connectionState?: ConnectionStateWrite;
   /** Publish even when the built pass is identical (re-sign). */
   force?: boolean;
   /** Set false to dispatch pushes later in one go (bulk jobs). Default true. */
@@ -83,9 +90,39 @@ export async function publishPass(
   ctx: ServiceContext,
   options: PublishOptions,
 ): Promise<PublishResult> {
+  let original: Pass | null = null;
   const db = ctx.env.DB;
+  if (options.connectionState && !options.connectionContext)
+    throw new ConflictError('The connection context is missing.', 'PASS_CONFLICT');
   for (let attempt = 1; attempt <= MAX_CAS_ATTEMPTS; attempt++) {
+    if (options.connectionContext && !(await matchesConnectionPass(db, options.connectionContext)))
+      throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
     const current = await getPassForWrite(db, options.passId, options.orgScope ?? null);
+    if (
+      options.connectionContext &&
+      (options.connectionContext.passId !== current.id ||
+        (options.expectedHolder &&
+          (current.holderEmail !== options.expectedHolder.holderEmail ||
+            current.ownerUserId !== options.expectedHolder.ownerUserId)))
+    )
+      throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
+    if (!original) {
+      original = current;
+    } else if (
+      current.orgId !== original.orgId ||
+      current.mode !== original.mode ||
+      current.templateId !== original.templateId ||
+      current.templateVersion !== original.templateVersion ||
+      current.status !== original.status ||
+      current.linkGeneration !== original.linkGeneration ||
+      current.serial !== original.serial ||
+      current.authToken !== original.authToken ||
+      current.holderEmail !== original.holderEmail ||
+      current.ownerUserId !== original.ownerUserId ||
+      current.removedAt !== original.removedAt
+    ) {
+      throw new ConflictError('Pass credentials or holder changed. Reload.', 'PASS_CONFLICT');
+    }
     if (options.expectedVersion !== undefined && current.version !== options.expectedVersion)
       throw new PreconditionFailedError();
     const mutation = options.mutate?.(current) ?? {};
@@ -150,7 +187,18 @@ export async function publishPass(
         next.templateVersion !== current.templateVersion ||
         current.contentHash === null ||
         current.scanCode === null;
-      if (!metaChanged) return { pass: current, changed: false };
+      if (!metaChanged && !options.connectionState?.holderChange) {
+        if (options.connectionState && options.connectionContext) {
+          const state = await applyConnectionState(
+            db, options.connectionContext, current, options.connectionState.syncErrorCode,
+          );
+          if (!state) throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
+          return { pass: { ...current, syncErrorCode: options.connectionState.syncErrorCode }, changed: false };
+        }
+        if (options.connectionContext && !(await matchesConnectionPass(db, options.connectionContext)))
+          throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
+        return { pass: current, changed: false };
+      }
       const written = await casMeta(db, current.id, current.version, {
         personalization: next.personalization,
         fieldSources: next.fieldSources,
@@ -161,13 +209,22 @@ export async function publishPass(
         lookupHash: artifact.lookupHash,
         scanCode,
         objectKey: current.objectKey,
+        expectedPass: current,
+        connectionContext: options.connectionContext,
+        connectionState: options.connectionState,
         commit: options.commit,
       });
       if (written === null) {
+        if (options.connectionContext)
+          throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
         if (options.expectedVersion !== undefined) throw new PreconditionFailedError();
         continue;
       }
-      return { pass: (await getPass(db, current.id)) ?? current, changed: false };
+      const pass = await getPass(db, current.id);
+      if (options.connectionContext && (!pass || pass.version !== written ||
+        pass.linkGeneration !== current.linkGeneration + (options.connectionState?.holderChange ? 1 : 0)))
+        throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
+      return { pass: pass ?? current, changed: false };
     }
 
     // Push budget: a publish that would notify past the daily limit is rebuilt without messages.
@@ -182,6 +239,12 @@ export async function publishPass(
       artifact = await buildArtifact(buildCtx, { ...buildRequest, silent: true });
       passJson = JSON.stringify(artifact.passJson);
       silenced = true;
+    }
+    if (!(await matchesPublishSnapshot(db, current, options.connectionContext))) {
+      if (options.connectionContext)
+        throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
+      if (options.expectedVersion !== undefined) throw new PreconditionFailedError();
+      continue;
     }
 
     const now = ctx.clock.now();
@@ -215,6 +278,9 @@ export async function publishPass(
         barcodeHash: artifact.barcodeHash,
         lookupHash: artifact.lookupHash,
         scanCode,
+        expectedPass: current,
+        connectionContext: options.connectionContext,
+        connectionState: options.connectionState,
         commit: options.commit,
       });
     } catch (error) {
@@ -224,12 +290,16 @@ export async function publishPass(
     }
     if (written === null) {
       await ctx.env.BUCKET.delete(objectKey);
+      if (options.connectionContext)
+        throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
       if (options.expectedVersion !== undefined) throw new PreconditionFailedError();
       ctx.log.info('pass.publish_conflict', { passId: current.id, attempt });
       continue;
     }
     const pass = await getPass(db, current.id);
-    if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    if (!pass || (options.connectionContext && (pass.version !== written ||
+      pass.linkGeneration !== current.linkGeneration + (options.connectionState?.holderChange ? 1 : 0))))
+      throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
     writeEvent(ctx.env, {
       event: 'pass.updated',
       orgId: pass.orgId,

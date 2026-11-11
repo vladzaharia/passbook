@@ -15,6 +15,7 @@ import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
+import { insertRefreshPush } from '../delivery/repo.ts';
 import { type ConnectionDeps, resetDeps, setDeps } from './deps.ts';
 import * as service from './service.ts';
 import type { StepLike } from './sync-runner.ts';
@@ -67,18 +68,21 @@ export async function makeKit(): Promise<Kit> {
   setDeps({
     applyConnectionRecord: async (_ctx, input) => {
       seams.applied.push(input);
-      return { changed: seams.changed, version: 2 };
+      return { changed: seams.changed, version: input.expectedVersion, ownerUserId: input.ownerUserId, linkGeneration: input.linkGeneration };
     },
     createPassFromConnection: async (_ctx, input) => {
       seams.created.push(input);
       return { passId: `new-${input.externalRef}` };
     },
-    markPassMissing: async (_ctx, passId, mode) => {
-      seams.missing.push({ passId, mode });
+    markPassMissing: async (_ctx, input, mode) => {
+      seams.missing.push({ passId: input.passId, mode });
+      return { version: input.expectedVersion, ownerUserId: input.ownerUserId, linkGeneration: input.linkGeneration };
     },
-    enqueuePush: async (_ctx, passId, reason) => {
+    enqueueRefreshPush: async (ctx, snapshot) => {
       if (seams.failPush) throw new Error('push down');
-      seams.pushes.push({ passId, reason });
+      if (!(await insertRefreshPush(ctx.env.DB, snapshot, `test-push:${ctx.ids.id()}`, ctx.clock.now()))) return false;
+      seams.pushes.push({ passId: snapshot.passId, reason: 'refresh' });
+      return true;
     },
     enqueueJob: async (_ctx, job) => {
       if (seams.failEnqueue) throw new Error('queue down');

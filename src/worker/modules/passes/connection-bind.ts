@@ -7,6 +7,7 @@ import { recordAudit } from '../audit/service.ts';
 import { detailOf } from './detail.ts';
 import { getPassForWrite } from './pass-access.ts';
 import {
+  connectionForPass,
   connectionInOrg,
   type FieldSources,
   findByConnectionRef,
@@ -30,14 +31,26 @@ export async function bindPassConnection(
   const db = ctx.env.DB;
   const pass = await getPassForWrite(db, passId, scope);
   const { connectionId, externalRef } = body;
+  if (pass.removedAt !== null)
+    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
+  if (pass.mode === 'test' && pass.connectionId !== null)
+    throw new ConflictError('This Test pass has an unsafe Live connection.', 'MODE_MISMATCH');
+  let generation: number | null = null;
   let fieldSources: FieldSources = pass.fieldSources;
   if (connectionId !== null && externalRef !== null) {
+    if (pass.mode !== 'live')
+      throw new ConflictError('Connections are only available in Live mode.', 'MODE_MISMATCH');
+    if (pass.status !== 'active')
+      throw new ConflictError('Only an active pass can be connected.', 'PASS_CONFLICT');
     if (!(await connectionInOrg(db, connectionId, pass.orgId)))
       throw new ValidationError(
         'The connection does not belong to this organization.',
         [],
         'CONNECTION_ORG',
       );
+    const connection = await connectionForPass(db, connectionId, pass.orgId, pass.mode);
+    if (!connection) throw new ConflictError('The connection is unavailable.', 'PASS_CONFLICT');
+    generation = connection.generation;
     const holder = await findByConnectionRef(db, pass.orgId, connectionId, externalRef);
     if (holder && holder !== pass.id) throw refTaken();
     const owned: FieldSources = Object.fromEntries(
@@ -47,7 +60,8 @@ export async function bindPassConnection(
     fieldSources = body.resetFieldSources === false ? { ...owned, ...pass.fieldSources } : owned;
   }
   try {
-    await setBinding(db, pass.id, { connectionId, externalRef, fieldSources });
+    if (!(await setBinding(db, pass, { connectionId, externalRef, fieldSources, generation })))
+      throw new ConflictError('The pass or connection changed. Retry.', 'PASS_CONFLICT');
   } catch (error) {
     const info = classifyD1Error(error);
     if (info?.kind === 'unique' && /passes\.external_ref/.test(info.detail)) throw refTaken();
@@ -62,6 +76,16 @@ export async function bindPassConnection(
     targetId: pass.id,
     detail: { connectionId, externalRef },
   });
-  if (connectionId) await requestRefresh(ctx, pass.id, actor);
+  if (connectionId)
+    await requestRefresh(ctx, pass.id, actor, {
+      orgId: pass.orgId,
+      mode: pass.mode,
+      version: pass.version + 1,
+      linkGeneration: pass.linkGeneration,
+      status: pass.status,
+      connectionId,
+      externalRef,
+      connectionGeneration: generation,
+    });
   return detailOf(ctx, (await getPass(db, pass.id)) ?? pass);
 }

@@ -118,10 +118,16 @@ export async function rotateWebhookSecret(
     value: secret,
     createdBy: actor.id,
   });
-  await patchConnection(sctx.env.DB, id, {
-    webhookCredentialId: credentialId,
-    updatedAt: sctx.clock.now(),
-  });
+  const updated = await patchConnection(
+    sctx.env.DB,
+    id,
+    { webhookCredentialId: credentialId, generation: conn.generation + 1, updatedAt: sctx.clock.now() },
+    conn.generation,
+  );
+  if (!updated) {
+    await dropCredentials(sctx, [credentialId]);
+    throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
+  }
   await dropCredentials(sctx, [conn.webhookCredentialId]);
   await recordAudit(sctx, {
     orgId: conn.orgId,

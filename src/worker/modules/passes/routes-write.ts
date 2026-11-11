@@ -5,7 +5,7 @@ import {
   UpdatePassSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
-import { BadRequestError } from '../../platform/errors.ts';
+import { BadRequestError, ConflictError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { createPassIdempotent } from './create.ts';
 import { actorFor, assertOrg, type C, passScopeOf, svc } from './http.ts';
@@ -36,6 +36,11 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
     async (c) => {
       const body = c.req.valid('json');
       assertOrg(c, body.orgId);
+      if (body.mode !== modeOf(c.var.auth))
+        throw new ConflictError(
+          'The reviewed mode changed. Review the pass again before issuing it.',
+          'MODE_MISMATCH',
+        );
       const key = c.req.header('idempotency-key')?.trim();
       if (key !== undefined && (key.length < 1 || key.length > 200))
         throw new BadRequestError(
@@ -47,7 +52,7 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
         {
           orgId: body.orgId,
           templateId: body.templateId,
-          ...(body.templateVersion ? { templateVersion: body.templateVersion } : {}),
+          templateVersion: body.templateVersion,
           ...(body.identityId ? { identityId: body.identityId } : {}),
           input: body.input,
           holderEmail: body.holderEmail ?? null,
@@ -57,7 +62,7 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
           externalRef: body.externalRef ?? null,
           sendEmail: body.sendEmail ?? false,
           source: 'manual',
-          mode: modeOf(c.var.auth),
+          mode: body.mode,
           actor: actorFor(c),
         },
         key,

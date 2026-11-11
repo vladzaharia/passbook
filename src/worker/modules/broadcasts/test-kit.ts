@@ -111,10 +111,11 @@ export async function broadcastKit(): Promise<BroadcastKit> {
     broadcast,
     messaging,
     plain,
-    makePass: (input = {}) =>
+    makePass: async (input = {}) =>
       createPassRow(kit.ctx, {
         orgId: input.orgId ?? kit.org.id,
         templateId: input.templateId ?? messaging.id,
+        templateVersion: (await kit.registry.resolve(input.templateId ?? messaging.id)).version,
         input: {
           memberName: 'Alex',
           ...(input.gate !== undefined ? { gate: input.gate } : {}),

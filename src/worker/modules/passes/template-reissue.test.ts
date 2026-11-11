@@ -62,13 +62,15 @@ const newTemplate = async (backFields: object[] = []) => {
   return id;
 };
 
-const passOn = (templateId: string) =>
+const passOn = async (templateId: string) =>
   createPassRow(kit.ctx, {
     orgId: kit.org.id,
     templateId,
+    templateVersion: (await kit.registry.resolve(templateId)).version,
     input: { memberName: 'Alex Morgan' },
     holderEmail: null,
     source: 'manual',
+    mode: 'live',
     actor: { type: 'system', id: null },
   });
 

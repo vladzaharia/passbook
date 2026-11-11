@@ -29,6 +29,7 @@ async function addVersion(id: string, version: string, manifest: TemplateManifes
     assets: { 'icon.png': TINY_PNG },
   });
   await persistTemplate(kit.fx, resolved);
+  return resolved;
 }
 
 const pushEvents = async (passId: string) =>
@@ -44,16 +45,18 @@ describe('a scan edit', () => {
   it('stale-reissues passes as metadata only: no new pass, no push', async () => {
     const id = 'tpl-scan-edit';
     const v1 = kit.template.manifest;
-    await addVersion(id, 'v1', v1);
+    const firstVersion = await addVersion(id, 'v1', v1);
     await kit.env.DB.prepare('UPDATE templates SET active_version = ? WHERE id = ?')
       .bind('v1', id)
       .run();
     const pass = await createPassRow(kit.ctx, {
       orgId: kit.org.id,
       templateId: id,
+      templateVersion: firstVersion.version,
       input: { memberName: 'Alex Morgan' },
       holderEmail: null,
       source: 'manual',
+      mode: 'live',
       actor: { type: 'system', id: null },
     });
     await kit.settle();

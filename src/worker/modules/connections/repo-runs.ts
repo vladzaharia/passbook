@@ -106,13 +106,45 @@ export async function insertRun(
     actorId?: string | null;
     passId?: string | null;
     startedAt: number;
+    expected?: {
+      orgId: string;
+      generation: number;
+      pass?: {
+        id: string;
+        mode: 'live';
+        status: 'active';
+        version: number;
+        ownerUserId: string | null;
+        linkGeneration: number;
+        externalRef: string;
+      };
+    };
   },
 ): Promise<boolean> {
+  if (!r.expected) {
+    const res = await run(
+      db,
+      `INSERT OR IGNORE INTO connection_runs (id, connection_id, trigger, actor_id, pass_id, started_at, outcome)
+       VALUES (?, ?, ?, ?, ?, ?, 'running')`,
+      [r.id, r.connectionId, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt],
+    );
+    return res.changes === 1;
+  }
+  const p = r.expected.pass;
   const res = await run(
     db,
     `INSERT OR IGNORE INTO connection_runs (id, connection_id, trigger, actor_id, pass_id, started_at, outcome)
-     VALUES (?, ?, ?, ?, ?, ?, 'running')`,
-    [r.id, r.connectionId, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt],
+     SELECT ?, c.id, ?, ?, ?, ?, 'running' FROM connections c JOIN orgs o ON o.id = c.org_id
+     WHERE c.id = ? AND c.org_id = ? AND c.enabled = 1 AND c.generation = ? AND o.status = 'active'
+     ${p ? `AND EXISTS (SELECT 1 FROM passes p WHERE p.id = ? AND p.org_id = c.org_id
+       AND p.mode = ? AND p.status = ? AND p.version = ? AND p.owner_user_id IS ?
+       AND p.link_generation = ? AND p.connection_id = c.id AND p.external_ref = ?
+       AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0)` : ''}`,
+    [
+      r.id, r.trigger, r.actorId ?? null, r.passId ?? null, r.startedAt,
+      r.connectionId, r.expected.orgId, r.expected.generation,
+      ...(p ? [p.id, p.mode, p.status, p.version, p.ownerUserId, p.linkGeneration, p.externalRef] : []),
+    ],
   );
   return res.changes === 1;
 }
@@ -203,7 +235,9 @@ export async function runStats(db: D1Database, connectionId: string) {
   );
   const passCount = await first<{ n: number }>(
     db,
-    'SELECT COUNT(*) AS n FROM passes WHERE connection_id = ?',
+    `SELECT COUNT(*) AS n FROM passes p JOIN connections c
+       ON c.id = p.connection_id AND c.org_id = p.org_id
+     WHERE p.connection_id = ? AND p.mode = 'live' AND p.test_data_quarantined = 0`,
     [connectionId],
   );
   return { rows, passCount: passCount?.n ?? 0 };

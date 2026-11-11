@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -92,9 +92,10 @@ describe('image overrides', () => {
     const pass = await createPassRow(kit.ctx, {
       orgId: kit.org.id,
       templateId: id,
-      templateVersion: 'v1',
+      templateVersion: t.version,
       input: { memberName: 'Scales' },
       source: 'manual',
+      mode: 'live',
       actor,
     });
     await putPassAsset(kit.ctx, actor, pass.id, 'logo.png', makePng(30, 30), null);
@@ -146,14 +147,16 @@ describe('template upgrades and re-sign', () => {
         assets: { 'icon.png': TINY_PNG },
       });
       await persistTemplate(kit.fx, t);
+      return t;
     };
-    await add('v1');
+    const v1 = await add('v1');
     const pass = await createPassRow(kit.ctx, {
       orgId: kit.org.id,
       templateId: id,
-      templateVersion: 'v1',
+      templateVersion: v1.version,
       input: { memberName: 'Up' },
       source: 'manual',
+      mode: 'live',
       actor,
     });
     return { pass, add };
@@ -204,11 +207,13 @@ describe('idempotent create', () => {
     const params = {
       orgId: kit.org.id,
       templateId: kit.template.id,
+      templateVersion: kit.template.version,
       input: { memberName: 'Idem' },
       holderEmail: 'idem@example.com',
       externalId: 'idem-after-insert',
       sendEmail: true,
       source: 'manual' as const,
+      mode: 'live' as const,
       actor,
     };
     await run(
@@ -232,6 +237,9 @@ describe('connection records', () => {
   const input = (connectionId: string, externalRef: string) => ({
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
+    mode: 'live' as const,
+    generation: 1,
     connectionId,
     externalRef,
     fields: { memberName: 'Race' },
@@ -267,6 +275,7 @@ describe('connection records', () => {
         ...input(connectionId, 'ref-dup'),
         input: { memberName: 'Dup' },
         source: 'connection',
+        connectionGeneration: 1,
         actor,
       }),
     ).rejects.toMatchObject({ code: 'PASS_REF_TAKEN' });
@@ -279,16 +288,47 @@ describe('connection records', () => {
       ...input(connectionId, 'ref-audit'),
       holderEmail: null,
     });
-    const base = { passId, connectionId, generation: 1, fields: {}, cause: 'connection' as const };
-    for (let i = 0; i < 3; i++)
-      await applyConnectionRecord(kit.ctx, { ...base, holderEmail: 'Same@Example.com' });
+    const pass = await getPass(kit.env.DB, passId);
+    if (!pass) throw new Error('Created pass not found');
+    let snapshot = {
+      expectedVersion: pass.version,
+      ownerUserId: pass.ownerUserId,
+      linkGeneration: pass.linkGeneration,
+    };
+    const base = {
+      passId,
+      orgId: kit.org.id,
+      mode: 'live' as const,
+      status: 'active' as const,
+      connectionId,
+      externalRef: 'ref-audit',
+      generation: 1,
+      fields: {},
+      cause: 'connection' as const,
+    };
+    for (let i = 0; i < 3; i++) {
+      const result = await applyConnectionRecord(kit.ctx, {
+        ...base,
+        ...snapshot,
+        holderEmail: 'Same@Example.com',
+      });
+      snapshot = {
+        expectedVersion: result.version,
+        ownerUserId: result.ownerUserId,
+        linkGeneration: result.linkGeneration,
+      };
+    }
     expect(
       await count(
         "SELECT count(*) AS n FROM audit_log WHERE action = 'holder.assign' AND target_id = ?",
         [passId],
       ),
     ).toBe(1);
-    await applyConnectionRecord(kit.ctx, { ...base, holderEmail: 'next@example.com' });
+    await applyConnectionRecord(kit.ctx, {
+      ...base,
+      ...snapshot,
+      holderEmail: 'next@example.com',
+    });
     expect(
       await count(
         "SELECT count(*) AS n FROM audit_log WHERE action = 'holder.assign' AND target_id = ?",
@@ -334,12 +374,15 @@ describe('registry failures', () => {
   });
 
   it('still reports a missing template as 404', async () => {
+    const { resolved } = makeTemplate({ id: `missing-${kit.fx.ids.token(4)}` });
     await expect(
       createPassRow(kit.ctx, {
         orgId: kit.org.id,
-        templateId: 'nope',
+        templateId: resolved.id,
+        templateVersion: resolved.version,
         input: {},
         source: 'manual',
+        mode: 'live',
         actor,
       }),
     ).rejects.toMatchObject({ status: 404, code: 'TEMPLATE_NOT_FOUND' });

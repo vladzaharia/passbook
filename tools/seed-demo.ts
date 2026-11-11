@@ -1,12 +1,15 @@
 // Dev only: seeds a demo dataset into a local dev server through the admin API.
 //   SEED_BREAKGLASS_TOKEN=… node tools/seed-demo.ts [--url http://localhost:5173] [--token-file f]
 // Token defaults to .secrets/breakglass-token (npm run breakglass). Refuses non-localhost URLs.
-// Rerunnable: existing orgs, templates, passes (by external id), connections and keys are skipped.
+// Also makes a demo owner an org_admin in every org and pins uploaded templates to a release
+// (tools/bootstrap-tenancy.ts --apply, local D1). Rerunnable: existing orgs, templates, passes (by external id), connections and keys are skipped.
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { zipSync } from 'fflate';
 import { assertLocal, discPng, Session } from './lib/demo-client.ts';
 import { demoPlans, emailOf, PORTAL } from './lib/demo-data.ts';
+import { DEMO_OWNER, tenancyCommand } from './lib/demo-tenancy.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const arg = (name: string) => {
@@ -90,6 +93,13 @@ if (!byName('Harbor Crew Badge')) {
 }
 templates = await admin.all('/api/v1/templates');
 const member = byName('Northwind Member')?.id as string;
+
+// Tenancy: a demo owner becomes org_admin everywhere and uploaded templates get a legacy release,
+// without which passes cannot be issued. Writes the local D1 (.wrangler/state); safe to re-run.
+if (!(await admin.all('/api/v1/users')).some((u) => u.primaryEmail === DEMO_OWNER))
+  await new Session(base).magicLink(DEMO_OWNER, mailDir);
+const tenancy = tenancyCommand(DEMO_OWNER);
+execFileSync(tenancy.file, tenancy.args, { cwd: root, stdio: 'inherit' });
 
 // Passes
 const plans = demoPlans({ henrys, northwind, harbor, member });

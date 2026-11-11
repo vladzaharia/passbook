@@ -98,4 +98,4 @@ jobs:
           cache: npm
       - run: npm ci
       - name: wrangler.jsonc has no placeholder ids or keys
-        run: npm run predeploy
+        run: npm run deploy:check

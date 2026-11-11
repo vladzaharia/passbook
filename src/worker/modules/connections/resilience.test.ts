@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -10,6 +10,8 @@ import { dailyConnections, RUN_RETENTION_MS } from './jobs.ts';
 import { getConnection, listDueConnections } from './repo.ts';
 import { listRuns } from './repo-runs.ts';
 import { reconcileConnections } from './schedule.ts';
+import * as service from './service.ts';
+import { dueRefs, runRefs } from './sync.ts';
 import { executeSync } from './sync-runner.ts';
 import { createDemo, inlineStep, type Kit, linkedPass, makeKit, withWorkflow } from './test-kit.ts';
 import { processWebhook, receiveWebhook } from './webhooks.ts';
@@ -22,6 +24,8 @@ beforeEach(async () => {
 const job = (connectionId: string, refs: string[]) => ({
   kind: 'connection.webhook' as const,
   connectionId,
+  orgId: kit.org.id,
+  generation: 1,
   eventId: 'evt',
   refs,
 });
@@ -92,6 +96,7 @@ describe('workflow bookkeeping', () => {
     await run(kit.env.DB, insert, ['wf-new', kit.org.id, dto.id, 'queued', kit.clock.now()]);
     await executeSync(kit.sctx, inlineStep(), {
       connectionId: dto.id,
+      orgId: kit.org.id,
       generation: 1,
       trigger: 'schedule',
       runId: 'wf-new',
@@ -129,6 +134,7 @@ describe('workflow bookkeeping', () => {
     await expect(
       executeSync(kit.sctx, failing as never, {
         connectionId: dto.id,
+        orgId: kit.org.id,
         generation: 1,
         trigger: 'schedule',
         runId: 'wf-x',
@@ -149,6 +155,7 @@ describe('list pacing', () => {
     const step = inlineStep();
     await executeSync(kit.sctx, step, {
       connectionId: dto.id,
+      orgId: kit.org.id,
       generation: 1,
       trigger: 'schedule',
       runId: 'r-pace',
@@ -250,6 +257,7 @@ describe('suspended orgs', () => {
     expect(kit.seams.applied).toEqual([]);
     await executeSync(kit.sctx, inlineStep(), {
       connectionId: dto.id,
+      orgId: kit.org.id,
       generation: 1,
       trigger: 'schedule',
       runId: 'r-susp',
@@ -298,6 +306,7 @@ describe('generation fence', () => {
     });
     await executeSync(kit.sctx, inlineStep(), {
       connectionId: dto.id,
+      orgId: kit.org.id,
       generation: 1,
       trigger: 'schedule',
       runId: 'r-fence',
@@ -308,11 +317,21 @@ describe('generation fence', () => {
 
   it('counts autoEmail among the fenced settings', async () => {
     const dto = await createDemo(kit);
-    await (await import('./service.ts')).update(kit.sctx, kit.actor, dto.id, { autoEmail: true });
+    await service.update(kit.sctx, kit.actor, dto.id, { autoEmail: true });
     expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(2);
   });
 
-  it('treats a holder race as success, not a sync error', async () => {
+  it('invalidates in-flight jobs when disabling, re-enabling, or changing transport', async () => {
+    const dto = await createDemo(kit);
+    await service.update(kit.sctx, kit.actor, dto.id, { enabled: false });
+    expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(2);
+    await service.update(kit.sctx, kit.actor, dto.id, { enabled: true });
+    expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(3);
+    await service.update(kit.sctx, kit.actor, dto.id, { mode: 'manual' });
+    expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(4);
+  });
+
+  it('reports a holder race without marking the pass synced', async () => {
     const dto = await createDemo(kit, { config: { count: 1 } });
     const p = await linkedPass(kit, dto.id, 'm-001');
     setDeps({
@@ -322,6 +341,7 @@ describe('generation fence', () => {
     });
     await executeSync(kit.sctx, inlineStep(), {
       connectionId: dto.id,
+      orgId: kit.org.id,
       generation: 1,
       trigger: 'schedule',
       runId: 'r-holder',
@@ -333,6 +353,135 @@ describe('generation fence', () => {
       [p.id],
     );
     expect(row?.sync_error_code).toBeNull();
-    expect(row?.last_synced_at).not.toBeNull();
+    expect(row?.last_synced_at).toBeNull();
+  });
+
+  it('allows only one concurrent configuration edit from the same generation', async () => {
+    const dto = await createDemo(kit, {
+      connectorType: 'http-json',
+      config: { baseUrl: 'https://api.example.com' },
+    } as never);
+    let arrived = 0;
+    let release!: () => void;
+    const barrier = new Promise<void>((resolve) => { release = resolve; });
+    setDeps({
+      resolver: {
+        resolve: async () => {
+          arrived += 1;
+          if (arrived === 2) release();
+          await barrier;
+          return ['93.184.216.34'];
+        },
+      },
+    });
+    const results = await Promise.allSettled([
+      service.update(kit.sctx, kit.actor, dto.id, { config: { baseUrl: 'https://a.example.com' } }),
+      service.update(kit.sctx, kit.actor, dto.id, { config: { baseUrl: 'https://b.example.com' } }),
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    const rejected = results.find((result) => result.status === 'rejected');
+    expect(rejected?.status === 'rejected' && rejected.reason).toMatchObject({ code: 'CONNECTION_CONFLICT' });
+    expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(2);
+  });
+});
+
+describe('scheduled pass isolation', () => {
+  it('does not update or auto-create over ineligible legacy bindings from listChanges', async () => {
+    const dto = await createDemo(kit, {
+      config: { count: 6 }, autoCreate: true, defaultTemplateId: kit.templateId,
+    });
+    const test = await linkedPass(kit, dto.id, 'm-001');
+    const voided = await linkedPass(kit, dto.id, 'm-002');
+    const deleted = await linkedPass(kit, dto.id, 'm-003');
+    const removed = await linkedPass(kit, dto.id, 'm-004');
+    const live = await linkedPass(kit, dto.id, 'm-005');
+    const quarantined = await linkedPass(kit, dto.id, 'm-006');
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [test.id]);
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided.id]);
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [deleted.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = 1 WHERE id = ?', [removed.id]);
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [quarantined.id]);
+    const ids = [test.id, voided.id, deleted.id, removed.id, quarantined.id];
+    const before = await all(kit.env.DB, 'SELECT * FROM passes WHERE id IN (?, ?, ?, ?, ?) ORDER BY id', ids);
+    await executeSync(kit.sctx, inlineStep(), {
+      connectionId: dto.id, orgId: kit.org.id, generation: 1, trigger: 'schedule',
+      runId: 'legacy-run', instanceId: 'legacy-run',
+    });
+    expect(await all(kit.env.DB, 'SELECT * FROM passes WHERE id IN (?, ?, ?, ?, ?) ORDER BY id', ids)).toEqual(before);
+    expect(kit.seams.applied.map((input) => input.passId)).toEqual([live.id]);
+    expect(kit.seams.created).toEqual([]);
+    expect(kit.seams.missing).toEqual([]);
+  });
+
+  it('excludes Test, quarantined and foreign passes from Live connection counts', async () => {
+    const dto = await createDemo(kit);
+    await linkedPass(kit, dto.id, 'live');
+    const test = await linkedPass(kit, dto.id, 'test');
+    const quarantined = await linkedPass(kit, dto.id, 'quarantined');
+    const other = await makeOrg(kit);
+    await linkedPass(kit, dto.id, 'foreign', other.id);
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [test.id]);
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [quarantined.id]);
+    expect((await service.getDetail(kit.sctx, dto.id)).metrics.passCount).toBe(1);
+    const list = await service.listAll(kit.sctx, { limit: 50 });
+    expect(list.items.find((item) => item.id === dto.id)?.passCount).toBe(1);
+  });
+
+  it('passes the original Live organization, template version and generation to auto-create', async () => {
+    const dto = await createDemo(kit, {
+      config: { count: 1 }, autoCreate: true, defaultTemplateId: kit.templateId,
+    });
+    await executeSync(kit.sctx, inlineStep(), {
+      connectionId: dto.id, orgId: kit.org.id, generation: 1, trigger: 'schedule',
+      runId: 'live-create', instanceId: 'live-create',
+    });
+    expect(kit.seams.created).toHaveLength(1);
+    expect(kit.seams.created[0]).toMatchObject({
+      orgId: kit.org.id, mode: 'live', connectionId: dto.id, generation: 1,
+      templateId: kit.templateId, templateVersion: expect.any(String), externalRef: 'm-001',
+    });
+  });
+
+  it('does not fetch a due reference whose pass became Test after selection', async () => {
+    const dto = await createDemo(kit, {
+      connectorType: 'http-json', config: { baseUrl: 'https://api.example.com' },
+      autoCreate: true, defaultTemplateId: kit.templateId,
+    } as never);
+    const pass = await linkedPass(kit, dto.id, 'm-001');
+    const context = { connectionId: dto.id, orgId: kit.org.id, generation: 1 };
+    expect(await dueRefs(kit.sctx, context)).toEqual(['m-001']);
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    expect(await dueRefs(kit.sctx, context)).toEqual([]);
+    const requests: string[] = [];
+    setDeps({ fetchImpl: (async (input: RequestInfo | URL) => {
+      requests.push(String(input));
+      return new Response(JSON.stringify({ memberName: 'Live' }));
+    }) as typeof fetch });
+    await runRefs(kit.sctx, { ...context, refs: ['m-001'] });
+    expect(requests).toEqual([]);
+    expect(kit.seams.applied).toEqual([]);
+    expect(kit.seams.created).toEqual([]);
+  });
+
+  it('rejects a resumed workflow if its organization changed or its snapshot is missing', async () => {
+    const dto = await createDemo(kit, { config: { count: 1 } });
+    const pass = await linkedPass(kit, dto.id, 'm-001');
+    const before = await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
+    await executeSync(kit.sctx, inlineStep(), {
+      connectionId: dto.id, generation: 1, trigger: 'schedule',
+      runId: 'old-no-org', instanceId: 'old-no-org',
+    } as never);
+    const other = await makeOrg(kit);
+    await run(kit.env.DB, 'UPDATE connections SET org_id = ? WHERE id = ?', [other.id, dto.id]);
+    await executeSync(kit.sctx, inlineStep(), {
+      connectionId: dto.id, orgId: kit.org.id, generation: 1, trigger: 'schedule',
+      runId: 'old-org', instanceId: 'old-org',
+    });
+    expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(before);
+    expect(kit.seams.applied).toEqual([]);
+    expect(await all(
+      kit.env.DB, "SELECT id FROM connection_runs WHERE id IN ('old-no-org', 'old-org')",
+    )).toEqual([]);
   });
 });

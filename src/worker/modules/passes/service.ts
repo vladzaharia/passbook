@@ -1,4 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -13,9 +14,12 @@ import { getPassForWrite } from './pass-access.ts';
 import { type Mutation, publishPass } from './publish.ts';
 import {
   claimRefresh,
+  connectionForPass,
+  type ConnectionPassContext,
   type FieldSources,
   getPass,
   listPasses,
+  matchesRefreshSnapshot,
   pendingPushId,
   setDownloadToken,
   softDeletePass,
@@ -57,6 +61,21 @@ export async function updatePass(
   patch: PassPatch,
   options: { scope: ScopeArg; ifMatch?: number },
 ) {
+  let resetContext: ConnectionPassContext | undefined;
+  if (patch.resetToConnection?.length) {
+    const pass = await getPassForWrite(ctx.env.DB, passId, options.scope);
+    if (pass.mode !== 'live')
+      throw new ConflictError('Connections are only available in Live mode.', 'MODE_MISMATCH');
+    if (!pass.connectionId || !pass.externalRef || pass.status !== 'active' || pass.removedAt !== null)
+      throw new ConflictError('The pass is not linked to an active connection.', 'PASS_CONNECTION_MISMATCH');
+    const connection = await connectionForPass(ctx.env.DB, pass.connectionId, pass.orgId, pass.mode);
+    if (!connection) throw new ConflictError('The connection is unavailable.', 'PASS_CONFLICT');
+    resetContext = {
+      passId: pass.id, orgId: pass.orgId, mode: 'live', status: pass.status,
+      expectedVersion: pass.version, ownerUserId: pass.ownerUserId, linkGeneration: pass.linkGeneration,
+      connectionId: pass.connectionId, externalRef: pass.externalRef, generation: connection.generation,
+    };
+  }
   const changedKeys: string[] = [];
   const result = await publishPass(ctx, {
     passId,
@@ -64,6 +83,7 @@ export async function updatePass(
     cause: causeOf(actor),
     actor,
     ...(options.ifMatch !== undefined ? { expectedVersion: options.ifMatch } : {}),
+    ...(resetContext ? { connectionContext: resetContext } : {}),
     notify: patch.notify === true,
     mutate: (current): Mutation => {
       changedKeys.length = 0;
@@ -100,7 +120,16 @@ export async function updatePass(
     },
   });
   if (patch.resetToConnection?.length && result.pass.connectionId)
-    await requestRefresh(ctx, passId, actor);
+    await requestRefresh(ctx, passId, actor, {
+      orgId: result.pass.orgId,
+      mode: result.pass.mode,
+      version: result.pass.version,
+      linkGeneration: result.pass.linkGeneration,
+      status: result.pass.status,
+      connectionId: result.pass.connectionId,
+      externalRef: result.pass.externalRef,
+      ...(resetContext ? { connectionGeneration: resetContext.generation } : {}),
+    });
   return detailOf(ctx, (await getPass(ctx.env.DB, passId)) ?? result.pass);
 }
 
@@ -228,7 +257,7 @@ export async function resendEmail(
   // API keys may not turn resend into a mail relay.
   if (actor.type !== 'user' && to.toLowerCase() !== pass.holderEmail?.toLowerCase())
     throw new ValidationError('Only the holder email can be used.', [], 'RECIPIENT_NOT_HOLDER');
-  await enqueuePassEmail(ctx, { passId, to, attach: input.attach ?? false });
+  await enqueuePassEmail(ctx, { passId, to, attach: input.attach ?? false, expected: pass });
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,
@@ -244,20 +273,87 @@ export async function requestRefresh(
   ctx: ServiceContext,
   passId: string,
   actor: Actor,
+  expected: {
+    orgId: string;
+    mode: Mode;
+    version: number;
+    linkGeneration: number;
+    status: 'active' | 'voided';
+    connectionId: string | null;
+    externalRef: string | null;
+    connectionGeneration?: number | null;
+    ownerUserId?: string;
+  },
 ): Promise<{ requestedAt: number; coalesced: boolean; cooldownSeconds: number }> {
+  if (
+    !expected || !expected.orgId || (expected.mode !== 'live' && expected.mode !== 'test') ||
+    (expected.status !== 'active' && expected.status !== 'voided') ||
+    (expected.connectionId !== null && typeof expected.connectionId !== 'string') ||
+    (expected.externalRef !== null && typeof expected.externalRef !== 'string') ||
+    !Number.isSafeInteger(expected.version) || expected.version < 1 ||
+    !Number.isSafeInteger(expected.linkGeneration) || expected.linkGeneration < 1
+  )
+    throw new ConflictError('The pass context is missing. Reload.', 'PASS_CONFLICT');
   const pass = await getPass(ctx.env.DB, passId);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  if (
+    pass.orgId !== expected.orgId || pass.mode !== expected.mode ||
+    pass.version !== expected.version || pass.linkGeneration !== expected.linkGeneration ||
+    pass.status !== expected.status || pass.connectionId !== expected.connectionId ||
+    pass.externalRef !== expected.externalRef ||
+    (expected.ownerUserId !== undefined && pass.ownerUserId !== expected.ownerUserId) ||
+    pass.deletedAt !== null || pass.removedAt !== null
+  )
+    throw new ConflictError('The pass changed. Reload.', 'PASS_CONFLICT');
+  let generation: number | null = null;
+  if (pass.connectionId !== null) {
+    if (pass.status !== 'active')
+      throw new ConflictError('Only an active pass can be refreshed from a connection.', 'PASS_CONFLICT');
+    if (pass.mode !== 'live' || !pass.externalRef)
+      throw new ConflictError('The pass cannot use this connection.', 'PASS_CONNECTION_MISMATCH');
+    const connection = await connectionForPass(ctx.env.DB, pass.connectionId, pass.orgId, pass.mode);
+    if (!connection) throw new ConflictError('The connection is unavailable.', 'PASS_CONFLICT');
+    generation = connection.generation;
+  } else if (pass.externalRef !== null) {
+    throw new ConflictError('The pass connection is incomplete.', 'PASS_CONNECTION_MISMATCH');
+  }
+  if (expected.connectionGeneration !== undefined && expected.connectionGeneration !== generation)
+    throw new ConflictError('The connection changed. Retry.', 'PASS_CONFLICT');
+  const snapshot = {
+    passId,
+    orgId: pass.orgId,
+    mode: pass.mode,
+    status: pass.status,
+    passVersion: pass.version,
+    connectionId: pass.connectionId,
+    externalRef: pass.externalRef,
+    generation,
+    ownerUserId: pass.ownerUserId,
+    linkGeneration: pass.linkGeneration,
+  };
   const now = ctx.clock.now();
   const settings = await getPlatformSettings(ctx);
   const cooldownSeconds = settings['refresh.userCooldownSeconds'];
   const windowMs = cooldownSeconds * 1000;
-  if (!(await claimRefresh(ctx.env.DB, passId, now, windowMs)))
+  if (!(await claimRefresh(ctx.env.DB, snapshot, now, windowMs))) {
+    if (!(await matchesRefreshSnapshot(ctx.env.DB, snapshot)))
+      throw new ConflictError('The pass or connection changed. Retry.', 'PASS_CONFLICT');
     return { requestedAt: pass.refreshRequestedAt ?? now, coalesced: true, cooldownSeconds };
+  }
   await ctx.env.JOBS.send({
     kind: 'pass.refresh',
     passId,
     trigger: actor.type === 'user' ? 'user' : 'admin',
     actorId: actor.id,
+    orgId: snapshot.orgId,
+    mode: snapshot.mode,
+    status: snapshot.status,
+    passVersion: snapshot.passVersion,
+    connectionId: snapshot.connectionId,
+    externalRef: snapshot.externalRef,
+    generation: snapshot.generation,
+    ownerUserId: snapshot.ownerUserId,
+    linkGeneration: snapshot.linkGeneration,
   });
   writeEvent(ctx.env, {
     event: 'refresh.requested',

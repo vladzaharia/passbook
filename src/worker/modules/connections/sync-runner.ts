@@ -27,6 +27,7 @@ export interface StepLike {
 
 export interface SyncRunParams {
   connectionId: string;
+  orgId: string;
   generation: number;
   trigger: 'schedule' | 'webhook' | 'admin';
   runId: string;
@@ -88,6 +89,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   const samples: string[] = [];
   let failure: Failure | null = null;
   let stale = false;
+  let staleCode: 'STALE_CONTEXT' | 'STALE_GENERATION' = 'STALE_GENERATION';
 
   if (!start.ok) {
     if (start.reason === 'GONE') {
@@ -112,6 +114,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
       for (const sample of r.samples) if (samples.length < MAX_SAMPLES) samples.push(sample);
       failure ??= r.failure;
       stale ||= r.stale;
+      if (r.staleCode) staleCode = r.staleCode;
       return !r.failure && !r.stale;
     };
     const slice = Math.min(MAX_RECORDS_PER_STEP, Math.max(limits.concurrency, limits.rpm, 1));
@@ -123,6 +126,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
           const fetched = await step.do(`page-${page}`, () =>
             fetchListPage(sctx, {
               connectionId: p.connectionId,
+              orgId: p.orgId,
               generation: p.generation,
               cursor: current,
             }),
@@ -136,6 +140,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
             const r = await step.do(`page-${page}-apply-${i}`, () =>
               applySlice(sctx, {
                 connectionId: p.connectionId,
+                orgId: p.orgId,
                 generation: p.generation,
                 changes,
               }),
@@ -149,6 +154,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
           const moved = await step.do(`page-${page}-cursor`, () =>
             advanceCursor(sctx, {
               connectionId: p.connectionId,
+              orgId: p.orgId,
               generation: p.generation,
               cursor: fetched.cursor,
             }),
@@ -161,13 +167,13 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
         }
       } else {
         const refs = await step.do('due', () =>
-          dueRefs(sctx, { connectionId: p.connectionId, generation: p.generation }),
+          dueRefs(sctx, { connectionId: p.connectionId, orgId: p.orgId, generation: p.generation }),
         );
         if (refs === null) stale = true;
         for (let i = 0; refs && i < refs.length; i += limits.concurrency) {
           const chunk = refs.slice(i, i + limits.concurrency);
           const r = await step.do(`chunk-${i}`, () =>
-            runRefs(sctx, { connectionId: p.connectionId, generation: p.generation, refs: chunk }),
+            runRefs(sctx, { connectionId: p.connectionId, orgId: p.orgId, generation: p.generation, refs: chunk }),
           );
           if (!take(r)) break;
           if (i + limits.concurrency < refs.length) {
@@ -188,10 +194,12 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
       {
         runId: p.runId,
         instanceId: p.instanceId,
+        orgId: p.orgId,
         generation: p.generation,
         totals,
         failure,
         stale,
+        staleCode,
         startedAt: start.startedAt,
         errorDetail: samples.length ? samples.join('\n') : null,
       },

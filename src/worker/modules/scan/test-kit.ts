@@ -99,10 +99,11 @@ export async function setupScanKit(): Promise<ScanKit> {
       await persistTemplate(kit.fx, resolved);
       return id;
     },
-    scanPass(templateId, input = {}, options = {}) {
+    async scanPass(templateId, input = {}, options = {}) {
       return createPassRow(kit.ctx, {
         orgId: options.orgId ?? kit.org.id,
         templateId,
+        templateVersion: (await kit.registry.resolve(templateId)).version,
         input: { memberName: 'Anna Popescu', ...input } as never,
         holderEmail: options.holderEmail ?? null,
         mode: options.mode ?? 'live',

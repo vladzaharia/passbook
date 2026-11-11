@@ -4,10 +4,15 @@ import type { PassJson, TemplateManifest } from '../../src/passkit/types.ts';
 import { ensurePlatformIdentity } from '../../src/worker/modules/identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
 import { hashPin } from '../../src/worker/modules/scan/staff-pin.ts';
+import { putVersionAsset } from '../../src/worker/modules/templates/asset-storage.ts';
+import { canonicalJson, crc32, sha1Hex } from '../../src/worker/modules/templates/package/hash.ts';
+import { r2Key } from '../../src/worker/modules/templates/registry.ts';
 import { ManualClock } from '../../src/worker/platform/clock.ts';
-import { run } from '../../src/worker/platform/db.ts';
+import { first, run } from '../../src/worker/platform/db.ts';
 import type { AppEnv } from '../../src/worker/platform/env.ts';
+import { ConflictError } from '../../src/worker/platform/errors.ts';
 import { createIds, type Ids, sha256Hex } from '../../src/worker/platform/ids.ts';
+import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 
 /** Clock and ids shared by factories. Ids are UUIDv7 so tests do not collide across a file. */
 export interface Fixtures {
@@ -52,6 +57,15 @@ export async function makeUser(
   overrides: Partial<UserRow> & { verified?: boolean } = {},
 ): Promise<UserRow> {
   const id = overrides.id ?? f.ids.id();
+  // D1 storage lasts for the whole file, so a fixed id (like 'admin-1') is created once.
+  if (overrides.id) {
+    const existing = await first<{ primary_email: string }>(
+      f.env.DB,
+      'SELECT primary_email FROM users WHERE id = ?',
+      [id],
+    );
+    if (existing) return { id, primaryEmail: existing.primary_email };
+  }
   const primaryEmail = overrides.primaryEmail ?? `${id}@example.com`;
   const now = f.clock.now();
   await run(f.env.DB, 'INSERT INTO users (id, primary_email, created_at) VALUES (?, ?, ?)', [
@@ -117,13 +131,72 @@ export function makeTemplate(
   return { resolved, registry };
 }
 
-/** Writes the template and its version to D1 so passes can reference it. */
-export async function persistTemplate(f: Fixtures, template: ResolvedTemplate): Promise<void> {
+/** Prepare R2 metadata for a first insert without rewriting an occupied or retired key. */
+export async function materializeTemplateAssets(
+  f: Fixtures,
+  template: ResolvedTemplate,
+  registry: InMemoryTemplateRegistry,
+  db: D1Database = f.env.DB,
+): Promise<ResolvedTemplate['assets']> {
+  const identity = await first<{ present: number; retired: number }>(
+    db,
+    `SELECT EXISTS(SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?) AS present,
+            EXISTS(SELECT 1 FROM template_version_tombstones WHERE template_id = ? AND version = ?) AS retired`,
+    [template.id, template.version, template.id, template.version],
+  );
+  if (!identity) throw new Error('Could not check fixture template version identity.');
+  if (identity.retired)
+    throw new ConflictError(
+      `Fixture ${template.id}@${template.version} has been retired.`,
+      'TEMPLATE_VERSION_CONFLICT',
+    );
+  const objects: { key: string; bytes: Uint8Array }[] = [];
+  const assets = await Promise.all(
+    template.assets.map(async (asset) => {
+      if (asset.source.kind !== 'inline') return asset;
+      const bytes = new Uint8Array(
+        await new Response(await registry.openAsset(template, asset.name)).arrayBuffer(),
+      );
+      const key = r2Key(template.orgId, template.id, template.version, asset.name);
+      objects.push({ key, bytes });
+      return {
+        ...asset,
+        size: bytes.length,
+        sha1: await sha1Hex(bytes),
+        crc32: crc32(bytes),
+        source: { kind: 'r2' as const, key },
+      };
+    }),
+  );
+  if (!identity.present && objects.length > 0) {
+    const ctx = createServiceContext(f.env, { clock: f.clock });
+    await Promise.all(objects.map(({ key, bytes }) => putVersionAsset(ctx, key, bytes)));
+  }
+  return assets;
+}
+
+/** Writes an immutable fixture version; omitted assets and build key are unspecified on reuse. */
+export async function persistTemplate(
+  f: Fixtures,
+  template: ResolvedTemplate,
+  options?: {
+    assets?: ResolvedTemplate['assets'];
+    registry?: InMemoryTemplateRegistry;
+    buildKey?: string | null;
+    db?: D1Database;
+  },
+): Promise<void> {
+  if (options?.registry && options.assets !== undefined)
+    throw new Error('Provide either fixture assets or a registry, not both.');
+  const db = options?.db ?? f.env.DB;
   const now = f.clock.now();
   await run(
-    f.env.DB,
+    db,
     `INSERT OR IGNORE INTO templates (id, org_id, slug, name, origin, active_version, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE NOT EXISTS (
+       SELECT 1 FROM template_version_tombstones WHERE template_id = ? AND version = ?
+     )`,
     [
       template.id,
       template.orgId,
@@ -133,20 +206,61 @@ export async function persistTemplate(f: Fixtures, template: ResolvedTemplate): 
       template.version,
       now,
       now,
+      template.id,
+      template.version,
     ],
   );
-  await run(
-    f.env.DB,
-    `INSERT OR IGNORE INTO template_versions (template_id, version, manifest, pass_json, assets, created_at)
-     VALUES (?, ?, ?, ?, '[]', ?)`,
+  const assets = options?.registry
+    ? await materializeTemplateAssets(f, template, options.registry, db)
+    : options?.assets;
+  const inserted = await run(
+    db,
+    `INSERT INTO template_versions (template_id, version, manifest, pass_json, assets, created_at, build_key)
+     SELECT ?, ?, ?, ?, ?, ?, ?
+     WHERE NOT EXISTS (
+       SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?
+     ) AND NOT EXISTS (
+       SELECT 1 FROM template_version_tombstones WHERE template_id = ? AND version = ?
+     )`,
     [
       template.id,
       template.version,
       JSON.stringify(template.manifest),
       JSON.stringify(template.passJson),
+      assets === undefined ? '[]' : JSON.stringify(assets),
       now,
+      options?.buildKey ?? null,
+      template.id,
+      template.version,
+      template.id,
+      template.version,
     ],
   );
+  if (inserted.changes === 0) {
+    const existing = await first<{
+      manifest: string;
+      pass_json: string;
+      assets: string;
+      build_key: string | null;
+    }>(
+      db,
+      `SELECT manifest, pass_json, assets, build_key FROM template_versions
+       WHERE template_id = ? AND version = ?`,
+      [template.id, template.version],
+    );
+    if (
+      !existing ||
+      canonicalJson(JSON.parse(existing.manifest)) !== canonicalJson(template.manifest) ||
+      canonicalJson(JSON.parse(existing.pass_json)) !== canonicalJson(template.passJson) ||
+      (assets !== undefined &&
+        canonicalJson(JSON.parse(existing.assets)) !== canonicalJson(assets)) ||
+      (options?.buildKey !== undefined && existing.build_key !== options.buildKey)
+    )
+      throw new ConflictError(
+        `Persisted fixture ${template.id}@${template.version} differs or has been retired.`,
+        'TEMPLATE_VERSION_CONFLICT',
+      );
+  }
 }
 
 export interface PassRow {
@@ -164,18 +278,29 @@ export async function makePass(
   options: {
     orgId: string;
     template: ResolvedTemplate;
-    holderEmail?: string;
+    registry?: InMemoryTemplateRegistry;
+    mode?: 'live' | 'test';
+    ownerUserId?: string | null;
+    identityId?: string;
+    serial?: string;
+    authToken?: string;
+    scanCode?: string | null;
+    holderEmail?: string | null;
     personalization?: object;
   },
 ): Promise<PassRow> {
   await ensurePlatformIdentity(f.env, f.clock.now());
-  await persistTemplate(f, options.template);
+  await persistTemplate(
+    f,
+    options.template,
+    options.registry ? { registry: options.registry } : undefined,
+  );
   const id = f.ids.id();
   const row: PassRow = {
     id,
     orgId: options.orgId,
-    serial: f.ids.token(16),
-    authToken: f.ids.token(),
+    serial: options.serial ?? f.ids.token(16),
+    authToken: options.authToken ?? f.ids.token(),
     downloadToken: f.ids.token(),
     objectKey: `passes/${id}/v1-${f.ids.token(4)}.pkpass`,
   };
@@ -184,12 +309,13 @@ export async function makePass(
   await run(
     f.env.DB,
     `INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
-       web_service_url, personalization, holder_email, object_key, modified_at, created_at, pending_cause)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'create')`,
+       web_service_url, personalization, holder_email, owner_user_id, mode, scan_code,
+       object_key, modified_at, created_at, pending_cause)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'create')`,
     [
       row.id,
       row.orgId,
-      PLATFORM_IDENTITY_ID,
+      options.identityId ?? PLATFORM_IDENTITY_ID,
       row.serial,
       options.template.id,
       options.template.version,
@@ -198,6 +324,9 @@ export async function makePass(
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify(options.personalization ?? { memberName: 'Alex Morgan' }),
       options.holderEmail ?? null,
+      options.ownerUserId ?? null,
+      options.mode ?? 'live',
+      options.scanCode ?? null,
       row.objectKey,
       now,
       now,
@@ -263,14 +392,14 @@ export interface ApiKeyFixture {
 /** Inserts an API key row. Format wlt_<prefix>_<secret>; only the SHA-256 is stored. */
 export async function makeApiKey(
   f: Fixtures,
-  options: { orgId?: string | null; scopes?: string[]; name?: string } = {},
+  options: { orgId?: string | null; scopes?: string[]; name?: string; mode?: 'live' | 'test' } = {},
 ): Promise<ApiKeyFixture> {
   const id = f.ids.id();
   const prefix = f.ids.token(6);
   const secret = `wlt_${prefix}_${f.ids.token()}`;
   await run(
     f.env.DB,
-    'INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     [
       id,
       options.orgId ?? null,
@@ -278,6 +407,7 @@ export async function makeApiKey(
       prefix,
       await sha256Hex(secret),
       JSON.stringify(options.scopes ?? ['passes:read', 'passes:write']),
+      options.mode ?? 'live',
       f.clock.now(),
     ],
   );

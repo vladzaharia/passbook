@@ -20,6 +20,7 @@ import { registerEventRoutes } from '../events/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
 import { actorFor, assertOrg, orgScopeOf, passScopeOf, svc } from './http.ts';
+import { getPassForWrite } from './pass-access.ts';
 import { registerRemoveRoutes } from './remove-routes.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
@@ -30,7 +31,6 @@ import {
   deletePass,
   listPassSummaries,
   requestRefresh,
-  requirePass,
   resendEmail,
   rotateLink,
   unvoidPass,
@@ -158,8 +158,16 @@ register(
   },
   async (c) => {
     const id = c.req.valid('param').id;
-    await requirePass(svc(c), id, passScopeOf(c));
-    const { requestedAt } = await requestRefresh(svc(c), id, actorFor(c));
+    const pass = await getPassForWrite(svc(c).env.DB, id, passScopeOf(c));
+    const { requestedAt } = await requestRefresh(svc(c), id, actorFor(c), {
+      orgId: pass.orgId,
+      mode: pass.mode,
+      version: pass.version,
+      linkGeneration: pass.linkGeneration,
+      status: pass.status,
+      connectionId: pass.connectionId,
+      externalRef: pass.externalRef,
+    });
     return c.json({ accepted: true as const, requestedAt }, 202);
   },
 );

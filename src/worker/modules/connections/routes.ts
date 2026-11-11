@@ -21,7 +21,7 @@ import {
   WebhookAckSchema,
 } from '../../../shared/contracts/index.ts';
 import { connectors } from '../../connectors/registry.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { modeOf, requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { actorOf } from '../../platform/context.ts';
 import { NotFoundError } from '../../platform/errors.ts';
@@ -38,6 +38,13 @@ type C = Context<AppBindings>;
 const actor = (c: C) => actorOf(c.var.auth);
 const sctx = (c: C) => serviceContext(c);
 
+/** Stored connections have no Test environment; do not expose Live data in Test. */
+function assertLive(c: C): void {
+  if (modeOf(c.var.auth) !== 'live') {
+    throw new NotFoundError('Connection not found.', 'CONNECTION_NOT_FOUND');
+  }
+}
+
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();
 guard(connectionsRoutes, requireAdmin);
@@ -51,13 +58,15 @@ register(
     query: ConnectionListQuerySchema,
     response: ConnectionListSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    if (modeOf(c.var.auth) === 'test') return c.json({ items: [], nextCursor: null });
+    return c.json(
       await service.listAll(
         sctx(c),
         c.req.valid('query') as z.infer<typeof ConnectionListQuerySchema>,
       ),
-    ),
+    );
+  },
 );
 register(
   connectionsRoutes,
@@ -68,7 +77,12 @@ register(
     summary: 'Connection health summary',
     response: ConnectionsSummarySchema,
   },
-  async (c) => c.json(await actions.healthSummary(sctx(c))),
+  async (c) =>
+    c.json(
+      modeOf(c.var.auth) === 'test'
+        ? { total: 0, byHealth: {}, attention: [] }
+        : await actions.healthSummary(sctx(c)),
+    ),
 );
 register(
   connectionsRoutes,
@@ -81,15 +95,17 @@ register(
     status: 201,
     response: ConnectionCreatedSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    assertLive(c);
+    return c.json(
       await service.create(
         sctx(c),
         actor(c),
         c.req.valid('json') as z.infer<typeof CreateConnectionSchema>,
       ),
       201,
-    ),
+    );
+  },
 );
 register(
   connectionsRoutes,
@@ -101,8 +117,10 @@ register(
     params: IdParamSchema,
     response: ConnectionDetailSchema,
   },
-  async (c) =>
-    c.json(await service.getDetail(sctx(c), (c.req.valid('param') as { id: string }).id)),
+  async (c) => {
+    assertLive(c);
+    return c.json(await service.getDetail(sctx(c), (c.req.valid('param') as { id: string }).id));
+  },
 );
 register(
   connectionsRoutes,
@@ -115,15 +133,17 @@ register(
     body: UpdateConnectionSchema,
     response: ConnectionCreatedSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    assertLive(c);
+    return c.json(
       await service.update(
         sctx(c),
         actor(c),
         (c.req.valid('param') as { id: string }).id,
         c.req.valid('json') as z.infer<typeof UpdateConnectionSchema>,
       ),
-    ),
+    );
+  },
 );
 register(
   connectionsRoutes,
@@ -136,10 +156,15 @@ register(
     response: OkSchema,
   },
   async (c) => {
+    assertLive(c);
     await service.remove(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id);
     return c.json({ ok: true as const });
   },
 );
+connectionsRoutes.use('/test-config', async (c, next) => {
+  assertLive(c);
+  await next();
+});
 // Test reaches outside hosts with admin-supplied URLs: paced per admin on top of safe fetch.
 connectionsRoutes.use(
   '/test-config',
@@ -155,10 +180,12 @@ register(
     body: TestConfigSchema,
     response: TestConfigResponseSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    assertLive(c);
+    return c.json(
       await testConfig(sctx(c), actor(c), c.req.valid('json') as z.infer<typeof TestConfigSchema>),
-    ),
+    );
+  },
 );
 register(
   connectionsRoutes,
@@ -170,8 +197,10 @@ register(
     params: IdParamSchema,
     response: TestConnectionResponseSchema,
   },
-  async (c) =>
-    c.json(await actions.test(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id)),
+  async (c) => {
+    assertLive(c);
+    return c.json(await actions.test(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id));
+  },
 );
 register(
   connectionsRoutes,
@@ -184,11 +213,13 @@ register(
     status: 202,
     response: SyncNowResponseSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    assertLive(c);
+    return c.json(
       await actions.syncNow(sctx(c), actor(c), (c.req.valid('param') as { id: string }).id),
       202,
-    ),
+    );
+  },
 );
 register(
   connectionsRoutes,
@@ -201,14 +232,16 @@ register(
     query: ConnectionRunsQuerySchema,
     response: ConnectionRunListSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    assertLive(c);
+    return c.json(
       await actions.runs(
         sctx(c),
         (c.req.valid('param') as { id: string }).id,
         c.req.valid('query') as z.infer<typeof ConnectionRunsQuerySchema>,
       ),
-    ),
+    );
+  },
 );
 register(
   connectionsRoutes,
@@ -221,6 +254,7 @@ register(
     response: ConnectionCreatedSchema,
   },
   async (c) => {
+    assertLive(c);
     const { webhookSecret, connection } = await actions.rotateWebhookSecret(
       sctx(c),
       actor(c),

@@ -439,7 +439,7 @@ describe('test and sync now', () => {
     expect(created).toHaveLength(2);
     expect(created[0]).toMatchObject({
       id: a.workflowInstanceId,
-      params: { connectionId: dto.id, trigger: 'admin', generation: 1 },
+      params: { connectionId: dto.id, orgId: kit.org.id, trigger: 'admin', generation: 1 },
     });
     await service.update(sctx, kit.actor, dto.id, { enabled: false });
     await expect(actions.syncNow(sctx, kit.actor, dto.id)).rejects.toMatchObject({

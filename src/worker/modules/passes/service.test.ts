@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import { createPassIdempotent } from './create.ts';
@@ -20,7 +21,7 @@ import {
   updatePass,
   voidPass,
 } from './service.ts';
-import { type Kit, setupKit } from './test-kit.ts';
+import { type Kit, setupKit, TINY_PNG } from './test-kit.ts';
 
 let kit: Kit;
 beforeAll(async () => {
@@ -54,7 +55,15 @@ describe('create', () => {
     await expect(
       createPassIdempotent(
         kit.ctx,
-        { orgId: kit.org.id, templateId: kit.template.id, input: {}, source: 'manual', actor },
+        {
+          orgId: kit.org.id,
+          templateId: kit.template.id,
+          templateVersion: kit.template.version,
+          input: {},
+          source: 'manual',
+          mode: 'live',
+          actor,
+        },
         undefined,
       ),
     ).rejects.toMatchObject({ code: 'PASS_INPUT_INVALID', status: 422 });
@@ -64,15 +73,25 @@ describe('create', () => {
   });
 
   it('refuses a template from another organization', async () => {
-    const other = await kit.fx.ids.id();
+    const other = await makeOrg(kit.fx, { name: 'Other Org' });
+    const template = kit.registry.add({
+      id: `tpl-owned-${kit.fx.ids.token(4)}`,
+      orgId: kit.org.id,
+      manifest: kit.template.manifest,
+      passJson: kit.template.passJson,
+      assets: { 'icon.png': TINY_PNG },
+    });
+    await persistTemplate(kit.fx, template);
     await expect(
       createPassIdempotent(
         kit.ctx,
         {
-          orgId: other,
-          templateId: kit.template.id,
+          orgId: other.id,
+          templateId: template.id,
+          templateVersion: template.version,
           input: { memberName: 'x' },
           source: 'manual',
+          mode: 'live',
           actor,
         },
         undefined,
@@ -89,9 +108,11 @@ describe('create', () => {
         {
           orgId: kit.org.id,
           templateId: kit.template.id,
+          templateVersion: kit.template.version,
           input: { memberName: 'Dup' },
           serial: first.serial,
           source: 'manual',
+          mode: 'live',
           actor,
         },
         undefined,
@@ -107,9 +128,11 @@ describe('create', () => {
         {
           orgId: kit.org.id,
           templateId: kit.template.id,
+          templateVersion: kit.template.version,
           input: { memberName: 'x' },
           holderEmail: 'a@b.com,c@d.com',
           source: 'manual',
+          mode: 'live',
           actor,
         },
         undefined,
@@ -122,8 +145,10 @@ describe('idempotency', () => {
   const base = () => ({
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: 'Idem' },
     source: 'manual' as const,
+    mode: 'live' as const,
     actor,
   });
 
@@ -298,10 +323,22 @@ describe('field sources', () => {
       `INSERT INTO connections (id, org_id, connector_type, name, created_at, updated_at) VALUES (?, ?, 'demo', 'c', 1, 1)`,
       [connId, kit.org.id],
     );
-    await run(kit.env.DB, 'UPDATE passes SET connection_id = ? WHERE id = ?', [connId, pass.id]);
+    const externalRef = 'manual-reset';
+    await run(kit.env.DB, 'UPDATE passes SET connection_id = ?, external_ref = ? WHERE id = ?', [
+      connId,
+      externalRef,
+      pass.id,
+    ]);
     const skipped = await applyConnectionRecord(kit.ctx, {
       passId: pass.id,
+      orgId: kit.org.id,
+      mode: 'live',
+      status: 'active',
+      expectedVersion: pass.version,
+      ownerUserId: pass.ownerUserId,
+      linkGeneration: pass.linkGeneration,
       connectionId: connId,
+      externalRef,
       generation: 1,
       fields: { memberName: 'Upstream' },
       cause: 'connection',
@@ -319,7 +356,14 @@ describe('field sources', () => {
     expect(detail.fieldSources).toEqual({});
     const applied = await applyConnectionRecord(kit.ctx, {
       passId: pass.id,
+      orgId: kit.org.id,
+      mode: 'live',
+      status: 'active',
+      expectedVersion: detail.version,
+      ownerUserId: pass.ownerUserId,
+      linkGeneration: pass.linkGeneration,
       connectionId: connId,
+      externalRef,
       generation: 1,
       fields: { memberName: 'Upstream' },
       cause: 'connection',
@@ -339,15 +383,28 @@ describe('field sources', () => {
       `INSERT INTO connections (id, org_id, connector_type, name, generation, created_at, updated_at) VALUES (?, ?, 'demo', 'c', 3, 1, 1)`,
       [connId, kit.org.id],
     );
-    await run(kit.env.DB, 'UPDATE passes SET connection_id = ? WHERE id = ?', [connId, pass.id]);
-    const result = await applyConnectionRecord(kit.ctx, {
-      passId: pass.id,
-      connectionId: connId,
-      generation: 2,
-      fields: { memberName: 'Stale' },
-      cause: 'connection',
-    });
-    expect(result.changed).toBe(false);
+    const externalRef = 'stale-generation';
+    await run(kit.env.DB, 'UPDATE passes SET connection_id = ?, external_ref = ? WHERE id = ?', [
+      connId,
+      externalRef,
+      pass.id,
+    ]);
+    await expect(
+      applyConnectionRecord(kit.ctx, {
+        passId: pass.id,
+        orgId: kit.org.id,
+        mode: 'live',
+        status: 'active',
+        expectedVersion: pass.version,
+        ownerUserId: pass.ownerUserId,
+        linkGeneration: pass.linkGeneration,
+        connectionId: connId,
+        externalRef,
+        generation: 2,
+        fields: { memberName: 'Stale' },
+        cause: 'connection',
+      }),
+    ).rejects.toMatchObject({ code: 'PASS_CONFLICT' });
     expect((await getPass(kit.env.DB, pass.id))?.displayTitle).toBe('Alex Morgan');
   });
 });

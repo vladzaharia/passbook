@@ -1,0 +1,93 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "wallet-vitest",
+  "main": "../src/worker/index.ts",
+  "compatibility_date": "2026-08-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "PUBLIC_BASE_URL": "https://passbook.mobile",
+    "REDIRECT_HOSTS": "old.wallet.test",
+    "EMAIL_FROM": "delivery@example.test",
+    "SUPPORT_EMAIL": "support@passbook.mobile",
+    "OIDC_ISSUER": "https://id.plrs.im",
+    "OIDC_CLIENT_ID": "wallet-placeholder-client-id",
+    "OIDC_ADMIN_GROUP": "wallet-admins",
+    "OIDC_USER_GROUP": "wallet-users",
+    "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
+    "PLATFORM_TEAM_ID": "48H7CLBV8Y",
+    "TURNSTILE_SITE_KEY": "wallet-test-turnstile",
+    "SSRF_DENY_HOSTS": "",
+    "SCAN_ENABLED": "1"
+  },
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "../public",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wallet-vitest",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "../migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "wallet-vitest" }],
+  "queues": {
+    "producers": [
+      { "binding": "JOBS", "queue": "wallet-vitest-jobs" },
+      { "binding": "JOBS_DLQ", "queue": "wallet-vitest-jobs-dlq" }
+    ],
+    "consumers": [
+      {
+        "queue": "wallet-vitest-jobs",
+        "max_batch_size": 10,
+        "max_batch_timeout": 2,
+        "max_retries": 8,
+        "retry_delay": 30,
+        "dead_letter_queue": "wallet-vitest-jobs-dlq"
+      },
+      { "queue": "wallet-vitest-jobs-dlq", "max_batch_size": 10, "max_retries": 2 }
+    ]
+  },
+  "durable_objects": { "bindings": [{ "name": "SCAN_HUB", "class_name": "ScanHub" }] },
+  "exports": { "ScanHub": { "type": "durable-object", "storage": "sqlite" } },
+  "workflows": [
+    {
+      "name": "wallet-vitest-template-import",
+      "binding": "TEMPLATE_IMPORT",
+      "class_name": "TemplateImport"
+    },
+    {
+      "name": "wallet-vitest-bulk-reissue",
+      "binding": "BULK_REISSUE",
+      "class_name": "BulkReissue"
+    },
+    { "name": "wallet-vitest-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
+    {
+      "name": "wallet-vitest-connection-sync",
+      "binding": "CONNECTION_SYNC",
+      "class_name": "ConnectionSync"
+    }
+  ],
+  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@example.test"] }],
+  "images": { "binding": "IMAGES" },
+  "ratelimits": [
+    { "name": "RL_LOGIN", "namespace_id": "2001", "simple": { "limit": 10, "period": 60 } },
+    { "name": "RL_MAGIC_LINK", "namespace_id": "2002", "simple": { "limit": 5, "period": 60 } },
+    { "name": "RL_PUBLIC", "namespace_id": "2003", "simple": { "limit": 120, "period": 60 } },
+    { "name": "RL_PUBLIC_ASSET", "namespace_id": "2009", "simple": { "limit": 240, "period": 60 } },
+    { "name": "RL_APPLE", "namespace_id": "2004", "simple": { "limit": 120, "period": 60 } },
+    { "name": "RL_API_KEY", "namespace_id": "2005", "simple": { "limit": 600, "period": 60 } },
+    { "name": "RL_WEBHOOK", "namespace_id": "2006", "simple": { "limit": 120, "period": 60 } },
+    { "name": "RL_REFRESH", "namespace_id": "2007", "simple": { "limit": 3, "period": 60 } },
+    { "name": "RL_APPLE_IP", "namespace_id": "2008", "simple": { "limit": 3000, "period": 60 } },
+    { "name": "RL_SCAN_PAIR", "namespace_id": "2010", "simple": { "limit": 30, "period": 60 } },
+    { "name": "RL_SCAN", "namespace_id": "2011", "simple": { "limit": 240, "period": 60 } },
+    { "name": "RL_SCAN_LOOKUP", "namespace_id": "2012", "simple": { "limit": 20, "period": 60 } },
+    { "name": "RL_SCAN_ORG", "namespace_id": "2013", "simple": { "limit": 3000, "period": 60 } }
+  ],
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_vitest_events" }],
+  "version_metadata": { "binding": "CF_VERSION" }
+}

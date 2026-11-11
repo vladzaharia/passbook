@@ -66,11 +66,14 @@ describe('registry to pkpass', () => {
       zip: zipOf(basicPackage()),
       name: 'Uploaded E2E',
     });
+    if (!imported.result) throw new Error('Template import failed');
     const pass = await createPassRow(ctx, {
       orgId,
-      templateId: imported.result?.templateId ?? '',
+      templateId: imported.result.templateId,
+      templateVersion: imported.result.version,
       input: {},
       source: 'manual',
+      mode: 'live',
       actor,
     });
     await checkStored(pass.id);
@@ -108,11 +111,14 @@ describe('registry to pkpass', () => {
       zip: zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest) })),
       name: 'Expiry E2E',
     });
+    if (!imported.result) throw new Error('Template import failed');
     const pass = await createPassRow(ctx, {
       orgId,
-      templateId: imported.result?.templateId ?? '',
+      templateId: imported.result.templateId,
+      templateVersion: imported.result.version,
       input: { name: 'Alex', expirationDate: '2030-01-01T00:00:00Z' },
       source: 'manual',
+      mode: 'live',
       actor,
     });
     const passJsonOf = async (id: string) => {
@@ -138,8 +144,10 @@ describe('registry to pkpass', () => {
     const pass = await createPassRow(ctx, {
       orgId,
       templateId: 'baked:starter-e2e',
+      templateVersion: baked.template.version,
       input: {},
       source: 'manual',
+      mode: 'live',
       actor,
     });
     await checkStored(pass.id);

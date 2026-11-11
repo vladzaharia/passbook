@@ -3,7 +3,7 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import type { Job } from '../../jobs/types.ts';
 import { type DnsResolver, dohResolver } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { enqueuePush } from '../delivery/service.ts';
+import { enqueueRefreshPush } from '../delivery/service.ts';
 import {
   applyConnectionRecord,
   createPassFromConnection,
@@ -16,7 +16,7 @@ export interface ConnectionDeps {
   applyConnectionRecord: typeof applyConnectionRecord;
   createPassFromConnection: typeof createPassFromConnection;
   markPassMissing: typeof markPassMissing;
-  enqueuePush: typeof enqueuePush;
+  enqueueRefreshPush: typeof enqueueRefreshPush;
   enqueueJob(ctx: ServiceContext, job: Job): Promise<void>;
   /** Throws when `fields` do not satisfy the template's input schema. */
   validateFields(
@@ -34,7 +34,7 @@ const real: ConnectionDeps = {
   applyConnectionRecord,
   createPassFromConnection,
   markPassMissing,
-  enqueuePush,
+  enqueueRefreshPush,
   enqueueJob: async (ctx, job) => {
     await ctx.env.JOBS.send(job);
   },

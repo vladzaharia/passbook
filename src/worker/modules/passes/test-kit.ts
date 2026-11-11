@@ -161,9 +161,11 @@ export async function setupKit(): Promise<Kit> {
       return createPassRow(ctx, {
         orgId: input.orgId ?? org.id,
         templateId: resolved.id,
+        templateVersion: resolved.version,
         input: { memberName: input.memberName ?? 'Alex Morgan' },
         holderEmail: input.holderEmail ?? null,
         source: 'manual',
+        mode: 'live',
         actor: { type: 'system', id: null },
       });
     },

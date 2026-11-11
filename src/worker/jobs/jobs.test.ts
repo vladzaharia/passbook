@@ -80,6 +80,8 @@ describe('job router', () => {
       message({
         kind: 'connection.webhook',
         connectionId: 'c1',
+        orgId: 'org1',
+        generation: 1,
         eventId,
         refs: Array.from({ length: 20 }, (_, i) => `r${i}`),
       });

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg, makePass, makeTemplate } from '../../../../test/helpers/index.ts';
+import type { JobOf } from '../../jobs/types.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { setDeps } from './deps.ts';
 import {
   dailyConnections,
   handlePassRefresh,
@@ -9,6 +11,7 @@ import {
   WEBHOOK_RETENTION_MS,
 } from './jobs.ts';
 import { getConnection } from './repo.ts';
+import { getPassById } from './repo-passes.ts';
 import { reconcileConnections as schedule, scheduledInstanceId } from './schedule.ts';
 import * as service from './service.ts';
 import { createDemo, type Kit, linkedPass, makeKit, withWorkflow } from './test-kit.ts';
@@ -18,8 +21,29 @@ beforeEach(async () => {
   kit = await makeKit();
 });
 
-const refresh = (passId: string, trigger: 'user' | 'admin' = 'user') =>
-  handlePassRefresh({ kind: 'pass.refresh', passId, trigger, actorId: 'u1' }, kit.sctx);
+async function snapshot(passId: string, trigger: 'user' | 'admin' = 'user'): Promise<JobOf<'pass.refresh'>> {
+  const pass = await getPassById(kit.env.DB, passId);
+  const conn = pass?.connectionId ? await getConnection(kit.env.DB, pass.connectionId) : null;
+  return {
+    kind: 'pass.refresh',
+    passId,
+    orgId: pass?.orgId ?? kit.org.id,
+    mode: pass?.mode ?? 'live',
+    status: pass?.status ?? 'active',
+    passVersion: pass?.version ?? 1,
+    ownerUserId: pass?.ownerUserId ?? null,
+    linkGeneration: pass?.linkGeneration ?? 1,
+    connectionId: pass?.connectionId ?? null,
+    externalRef: pass?.externalRef ?? null,
+    generation: conn?.generation ?? null,
+    trigger,
+    actorId: 'u1',
+  };
+}
+
+async function refresh(passId: string, trigger: 'user' | 'admin' = 'user') {
+  await handlePassRefresh(await snapshot(passId, trigger), kit.sctx);
+}
 
 const passTimes = (id: string) =>
   first<{ last_refreshed_at: number | null }>(
@@ -66,7 +90,6 @@ describe('pass.refresh', () => {
   });
 
   it('re-pushes a pass without a connection and fetches nothing', async () => {
-    const { makePass, makeTemplate } = await import('../../../../test/helpers/index.ts');
     const pass = await makePass(kit, {
       orgId: kit.org.id,
       template: makeTemplate({ id: kit.templateId, orgId: kit.org.id }).resolved,
@@ -109,7 +132,7 @@ describe('pass.refresh', () => {
     expect(kit.seams.pushes).toHaveLength(1);
   });
 
-  it('skips the fetch while the breaker is open or the connection is disabled, but still pushes', async () => {
+  it('re-pushes while the breaker is open but rejects a disabled connection', async () => {
     const dto = await createDemo(kit, { config: { count: 2 } });
     const p = await linkedPass(kit, dto.id, 'm-001');
     await run(kit.env.DB, 'UPDATE connections SET breaker_open_until = ? WHERE id = ?', [
@@ -123,13 +146,13 @@ describe('pass.refresh', () => {
     await service.update(kit.sctx, kit.actor, dto.id, { enabled: false });
     await refresh(p.id);
     expect(kit.seams.applied).toEqual([]);
-    expect(kit.seams.pushes).toHaveLength(2);
+    expect(kit.seams.pushes).toHaveLength(1);
     const runs = await all<{ outcome: string; error_code: string }>(
       kit.env.DB,
       'SELECT outcome, error_code FROM connection_runs WHERE pass_id = ? ORDER BY id',
       [p.id],
     );
-    expect(runs.map((r) => r.error_code).sort()).toEqual(['BREAKER_OPEN', 'DISABLED']);
+    expect(runs.map((r) => r.error_code)).toEqual(['BREAKER_OPEN']);
   });
 
   it('does not use a connection from another org', async () => {
@@ -138,7 +161,7 @@ describe('pass.refresh', () => {
     const p = await linkedPass(kit, foreign.id, 'm-001');
     await refresh(p.id);
     expect(kit.seams.applied).toEqual([]);
-    expect(kit.seams.pushes).toHaveLength(1);
+    expect(kit.seams.pushes).toHaveLength(0);
   });
 
   it('does nothing for an unknown pass', async () => {
@@ -154,10 +177,9 @@ describe('pass.refresh', () => {
     expect((await passTimes(p.id))?.last_refreshed_at).toBeNull();
   });
 
-  it('still pushes when applying the record throws, then lets the job retry', async () => {
+  it('still pushes when applying the record throws and records the error', async () => {
     const dto = await createDemo(kit, { config: { count: 2 } });
     const p = await linkedPass(kit, dto.id, 'm-001');
-    const { setDeps } = await import('./deps.ts');
     setDeps({
       applyConnectionRecord: async () => {
         throw new Error('db down');
@@ -171,6 +193,97 @@ describe('pass.refresh', () => {
       [p.id],
     );
     expect(r?.outcome).toBe('error');
+  });
+
+  it('rejects a preexisting Test binding before fetching or changing the pass', async () => {
+    const dto = await createDemo(kit, { config: { count: 1 } });
+    const pass = await linkedPass(kit, dto.id, 'm-001');
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    const before = await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
+    await refresh(pass.id);
+    expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(before);
+    expect(kit.seams.applied).toEqual([]);
+    expect(kit.seams.missing).toEqual([]);
+    expect(kit.seams.pushes).toEqual([]);
+  });
+
+  it.each([
+    ["mode", "UPDATE passes SET mode = 'test' WHERE id = ?", false],
+    ["version", "UPDATE passes SET version = version + 1 WHERE id = ?", false],
+    ["holder generation", "UPDATE passes SET link_generation = link_generation + 1 WHERE id = ?", false],
+    ["reference", "UPDATE passes SET external_ref = 'm-002' WHERE id = ?", false],
+    ["unbound", "UPDATE passes SET connection_id = NULL, external_ref = NULL WHERE id = ?", false],
+    ["voided", "UPDATE passes SET status = 'voided' WHERE id = ?", false],
+    ["deleted", "UPDATE passes SET deleted_at = 1 WHERE id = ?", false],
+    ["removed", "UPDATE passes SET removed_at = 1 WHERE id = ?", false],
+    ["quarantine", "UPDATE passes SET test_data_quarantined = 1 WHERE id = ?", false],
+    ["generation", "UPDATE connections SET generation = generation + 1 WHERE id = ?", true],
+    ["disabled", "UPDATE connections SET enabled = 0 WHERE id = ?", true],
+  ] as const)('rejects a queued refresh after %s changes without fetching or writing', async (_label, sql, connection) => {
+    const requests: string[] = [];
+    setDeps({
+      fetchImpl: (async (input: RequestInfo | URL) => {
+        requests.push(String(input));
+        return new Response(JSON.stringify({ memberName: 'Live' }));
+      }) as typeof fetch,
+    });
+    const dto = await createDemo(kit, {
+      connectorType: 'http-json',
+      config: { baseUrl: 'https://api.example.com' },
+      mode: 'manual',
+    } as never);
+    const pass = await linkedPass(kit, dto.id, 'm-001');
+    const job = await snapshot(pass.id);
+    await run(kit.env.DB, sql, [connection ? dto.id : pass.id]);
+    const before = await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
+    await handlePassRefresh(job, kit.sctx);
+    expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(before);
+    expect(requests).toEqual([]);
+    expect(kit.seams.applied).toEqual([]);
+    expect(kit.seams.pushes).toEqual([]);
+  });
+
+  it('fails closed on an old job with no snapshot', async () => {
+    const dto = await createDemo(kit);
+    const pass = await linkedPass(kit, dto.id, 'm-001');
+    await handlePassRefresh({ kind: 'pass.refresh', passId: pass.id, trigger: 'user', actorId: 'u1' } as never, kit.sctx);
+    expect(kit.seams.applied).toEqual([]);
+    expect(kit.seams.pushes).toEqual([]);
+    expect((await passTimes(pass.id))?.last_refreshed_at).toBeNull();
+  });
+
+  it('stops a generation change during the fetch without applying or pushing', async () => {
+    const dto = await createDemo(kit, {
+      connectorType: 'http-json',
+      config: { baseUrl: 'https://api.example.com' },
+      mode: 'manual',
+    } as never);
+    const pass = await linkedPass(kit, dto.id, 'm-001');
+    setDeps({
+      fetchImpl: (async () => {
+        await run(kit.env.DB, 'UPDATE connections SET generation = generation + 1 WHERE id = ?', [dto.id]);
+        return new Response(JSON.stringify({ memberName: 'Live' }));
+      }) as typeof fetch,
+    });
+    await refresh(pass.id);
+    expect(kit.seams.applied).toEqual([]);
+    expect(kit.seams.pushes).toEqual([]);
+    expect((await passTimes(pass.id))?.last_refreshed_at).toBeNull();
+    const row = await first<{ outcome: string; error_code: string }>(
+      kit.env.DB, 'SELECT outcome, error_code FROM connection_runs WHERE pass_id = ?', [pass.id],
+    );
+    expect(row).toEqual({ outcome: 'skipped', error_code: 'STALE_CONTEXT' });
+  });
+
+  it('preserves catch-up refresh for a standalone Test pass', async () => {
+    const pass = await makePass(kit, {
+      orgId: kit.org.id,
+      template: makeTemplate({ id: kit.templateId, orgId: kit.org.id }).resolved,
+    });
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]);
+    await refresh(pass.id);
+    expect(kit.seams.pushes).toEqual([{ passId: pass.id, reason: 'refresh' }]);
+    expect((await passTimes(pass.id))?.last_refreshed_at).toBe(kit.clock.now());
   });
 });
 
@@ -201,7 +314,7 @@ describe('scheduling', () => {
     expect(id).toBe(`sync-${due.id}-${kit.clock.now()}`);
     expect(mine(created, due.id)[0]).toMatchObject({
       id,
-      params: { runId: id, trigger: 'schedule', generation: 1 },
+      params: { runId: id, trigger: 'schedule', orgId: kit.org.id, generation: 1 },
     });
     const wf = await first<{ kind: string; status: string; target_id: string; org_id: string }>(
       kit.env.DB,

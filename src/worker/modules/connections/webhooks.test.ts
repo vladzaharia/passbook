@@ -3,7 +3,7 @@ import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
 import type { Job } from '../../jobs/types.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { setDeps } from './deps.ts';
 import * as service from './service.ts';
 import { createDemo, type Kit, linkedPass, makeKit } from './test-kit.ts';
@@ -65,6 +65,8 @@ describe('receiveWebhook', () => {
       {
         kind: 'connection.webhook',
         connectionId: dto.id,
+        orgId: kit.org.id,
+        generation: 1,
         eventId: 'evt-1',
         refs: ['m-001', 'm-002'],
       },
@@ -186,6 +188,8 @@ describe('processWebhook', () => {
   ): Job & { kind: 'connection.webhook' } => ({
     kind: 'connection.webhook',
     connectionId,
+    orgId: kit.org.id,
+    generation: 1,
     eventId,
     refs,
   });
@@ -220,6 +224,12 @@ describe('processWebhook', () => {
     });
     expect(kit.seams.missing).toEqual([{ passId: p2.id, mode: 'void' }]);
     expect(kit.seams.created.map((c) => c.externalRef)).toEqual(['m-003']);
+    expect(kit.seams.created[0]).toMatchObject({
+      orgId: kit.org.id,
+      mode: 'live',
+      generation: 1,
+      templateVersion: expect.any(String),
+    });
     const run = await first<{ trigger: string; outcome: string; records_seen: number }>(
       kit.env.DB,
       "SELECT trigger, outcome, records_seen FROM connection_runs WHERE connection_id = ? AND trigger = 'webhook'",
@@ -290,6 +300,77 @@ describe('processWebhook', () => {
     await processWebhook(kit.sctx, queued);
     expect(kit.seams.applied.map((a) => a.passId)).not.toContain(theirs.id);
   });
+
+  it('ignores legacy Test, voided, deleted and removed bindings while syncing Live passes', async () => {
+    const { dto, secret } = await pushConn({
+      autoCreate: true, defaultTemplateId: kit.templateId, onMissing: 'void',
+    });
+    const test = await linkedPass(kit, dto.id, 'test-ref');
+    const voided = await linkedPass(kit, dto.id, 'voided-ref');
+    const deleted = await linkedPass(kit, dto.id, 'deleted-ref');
+    const removed = await linkedPass(kit, dto.id, 'removed-ref');
+    const live = await linkedPass(kit, dto.id, 'live-ref');
+    const quarantined = await linkedPass(kit, dto.id, 'quarantined-ref');
+    await run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [test.id]);
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided.id]);
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [deleted.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = 1 WHERE id = ?', [removed.id]);
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [quarantined.id]);
+    const before = await all(
+      kit.env.DB, 'SELECT * FROM passes WHERE id IN (?, ?, ?, ?, ?) ORDER BY id',
+      [test.id, voided.id, deleted.id, removed.id, quarantined.id],
+    );
+    await receiveWebhook(kit.sctx, dto.id, await signedRequest(secret, {
+      id: 'legacy-bindings',
+      records: [
+        { ref: 'test-ref', record: { memberName: 'Test must not change' } },
+        { ref: 'voided-ref', deleted: true },
+        { ref: 'deleted-ref', record: { memberName: 'Deleted' } },
+        { ref: 'removed-ref', deleted: true },
+        { ref: 'quarantined-ref', record: { memberName: 'Quarantined' } },
+        { ref: 'live-ref', record: { memberName: 'Updated' } },
+      ],
+    }));
+    const queued = kit.seams.jobs[0];
+    if (queued?.kind !== 'connection.webhook') throw new Error('no job');
+    await processWebhook(kit.sctx, queued);
+    expect(await all(
+      kit.env.DB, 'SELECT * FROM passes WHERE id IN (?, ?, ?, ?, ?) ORDER BY id',
+      [test.id, voided.id, deleted.id, removed.id, quarantined.id],
+    )).toEqual(before);
+    expect(kit.seams.applied.map((input) => input.passId)).toEqual([live.id]);
+    expect(kit.seams.created).toEqual([]);
+    expect(kit.seams.missing).toEqual([]);
+  });
+
+  it.each(['generation', 'disabled', 'mode', 'org', 'missing-context'] as const)(
+    'rejects a queued webhook with stale %s before applying it',
+    async (change) => {
+      const { dto, secret } = await pushConn();
+      const pass = await linkedPass(kit, dto.id, 'm-001');
+      await receiveWebhook(kit.sctx, dto.id, await signedRequest(secret, event('queued')));
+      const queued = kit.seams.jobs[0];
+      if (queued?.kind !== 'connection.webhook') throw new Error('no job');
+      if (change === 'generation') {
+        await run(kit.env.DB, 'UPDATE connections SET generation = generation + 1 WHERE id = ?', [dto.id]);
+      } else if (change === 'disabled') {
+        await run(kit.env.DB, 'UPDATE connections SET enabled = 0 WHERE id = ?', [dto.id]);
+      } else if (change === 'mode') {
+        await run(kit.env.DB, "UPDATE connections SET mode = 'manual' WHERE id = ?", [dto.id]);
+      } else if (change === 'org') {
+        queued.orgId = (await makeOrg(kit)).id;
+      } else {
+        delete (queued as Partial<typeof queued>).generation;
+      }
+      const before = await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
+      await processWebhook(kit.sctx, queued);
+      expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(before);
+      expect(kit.seams.applied).toEqual([]);
+      expect(kit.seams.created).toEqual([]);
+      expect(kit.seams.missing).toEqual([]);
+      expect(await all(kit.env.DB, "SELECT id FROM connection_runs WHERE connection_id = ? AND trigger = 'webhook'", [dto.id])).toEqual([]);
+    },
+  );
 });
 
 describe('POST /hooks/connections/:id', () => {

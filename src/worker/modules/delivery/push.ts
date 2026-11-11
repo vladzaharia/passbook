@@ -17,6 +17,7 @@ import {
   finishOutbox,
   type OutboxRow,
   type PushResultRow,
+  pushPassCurrent,
   releaseOutbox,
   savePushResults,
   setApnsHealth,
@@ -128,6 +129,10 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     teamIdentifier: identity.teamIdentifier,
   };
   if (!(await deps.apns.isAvailable(target))) {
+    if (!(await pushPassCurrent(db, pass.id, pass.orgId, pass.identityId))) {
+      await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'PASS_GONE');
+      return;
+    }
     await recordPassEvents(ctx, [
       pushEvent(pass, 'push.failed', { code: 'PUSH_UNAVAILABLE', version: pass.version }),
     ]);
@@ -138,7 +143,8 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
   const registered = await devicesForPass(db, pass.id, pass.identityId);
   // Nothing to reach: not "sent" (the delivery list would claim a device got it).
   if (registered.length === 0) {
-    await finishOutbox(db, row.id, lease, 'cancelled', now, 'NO_DEVICES');
+    const current = await pushPassCurrent(db, pass.id, pass.orgId, pass.identityId);
+    await finishOutbox(db, row.id, lease, 'cancelled', now, current ? 'NO_DEVICES' : 'PASS_GONE');
     return;
   }
   const delivered = await deliveredDevices(db, row.id);
@@ -150,6 +156,10 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
 
   const byToken = new Map<string, DeviceTarget[]>();
   for (const d of devices) byToken.set(d.pushToken, [...(byToken.get(d.pushToken) ?? []), d]);
+  if (!(await pushPassCurrent(db, pass.id, pass.orgId, pass.identityId))) {
+    await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'PASS_GONE');
+    return;
+  }
   const results = await deps.apns.send(target, [...byToken.keys()], now);
 
   const events: PassEventInput[] = [];

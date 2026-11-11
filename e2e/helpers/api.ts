@@ -58,6 +58,14 @@ export async function firstOrg(api: Api): Promise<{ id: string; slug: string; na
 
 export const GENERIC = 'baked:starter-generic';
 
+export async function activeTemplateVersion(api: Api, templateId: string): Promise<string> {
+  const template = await api.get<{ activeVersion: string | null }>(
+    `/api/v1/templates/${encodeURIComponent(templateId)}`,
+  );
+  if (!template.activeVersion) throw new Error(`Template ${templateId} has no active version`);
+  return template.activeVersion;
+}
+
 /** Creates a pass through the real API (starter-generic by default). */
 export async function createPass(
   api: Api,
@@ -71,12 +79,16 @@ export async function createPass(
   } = {},
 ) {
   const memberId = options.memberId ?? uid('ID').toUpperCase();
+  const templateId = options.templateId ?? GENERIC;
+  const templateVersion = await activeTemplateVersion(api, templateId);
   return api.send(
     'POST',
     '/api/v1/passes',
     {
       orgId,
-      templateId: options.templateId ?? GENERIC,
+      templateId,
+      templateVersion,
+      mode: 'live',
       input: { holder: options.holder ?? `Holder ${memberId}`, memberId, ...(options.input ?? {}) },
       ...(options.email ? { holderEmail: options.email } : {}),
     },

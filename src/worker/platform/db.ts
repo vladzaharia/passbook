@@ -1,3 +1,5 @@
+import { balanceSqlAnd } from './sql-balance.ts';
+
 /** Thin typed helpers over D1. Raw SQL belongs in repo.ts files only. */
 export type SqlValue = string | number | boolean | null | undefined | ArrayBuffer | Uint8Array;
 
@@ -11,6 +13,15 @@ function bindable(value: SqlValue): string | number | null | ArrayBuffer {
 }
 
 export function stmt(
+  db: D1Database,
+  sql: string,
+  params: readonly SqlValue[] = [],
+): D1PreparedStatement {
+  return db.prepare(balanceSqlAnd(sql)).bind(...params.map(bindable));
+}
+
+/** Binds without rewriting the SQL. For statements built bounded, such as the authority grants. */
+export function exactStmt(
   db: D1Database,
   sql: string,
   params: readonly SqlValue[] = [],
@@ -115,7 +126,7 @@ export function classifyD1Error(error: unknown): D1ErrorInfo | null {
   if (unique?.[1]) return { kind: 'unique', detail: unique[1] };
   if (/FOREIGN KEY constraint failed/i.test(message))
     return { kind: 'foreign_key', detail: message };
-  const abort = /(?:^|: )(registration cap reached)\b/.exec(message);
+  const abort = /(?:^|: )(registration cap reached|authority_denied:[a-z]+)\b/.exec(message);
   if (abort?.[1]) return { kind: 'abort', detail: abort[1] };
   return null;
 }
