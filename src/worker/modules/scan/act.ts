@@ -53,12 +53,6 @@ export async function act(
     ]);
     const captured = captureCredentialTombstoneSnapshot(derived);
     credentials = captured;
-    if (
-      actor.principal === 'scanner' &&
-      actor.templateIds.length === 0 &&
-      !actor.settings.acceptAllTemplates
-    )
-      return notAcceptedOutcome(captured);
     const csrfQuery = actorCsrfAuthorityStmt(ctx.env.DB, actor);
     if (!csrfQuery) throw staleScanAuthority();
     const actorFences = actorAuthorityPredicates({
@@ -172,8 +166,14 @@ export async function act(
     if (
       error instanceof StaleScanAuthority ||
       (error instanceof UnavailableError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
-    )
-      return unknownOutcome(credentials);
+    ) {
+      // A scanner whose scope accepts nothing (an invalid or empty event-bound session) is told so.
+      const accepts =
+        actor.principal !== 'scanner' ||
+        actor.templateIds.length > 0 ||
+        actor.settings.acceptAllTemplates;
+      return accepts ? unknownOutcome(credentials) : notAcceptedOutcome(credentials);
+    }
     throw error;
   }
 }

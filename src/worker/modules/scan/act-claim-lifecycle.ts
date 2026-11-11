@@ -3,7 +3,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { attempt } from './act-attempt.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities } from './act-claim.ts';
 import { claimGrant, keysetOnGrant } from './act-claim-grant.ts';
-import { quarantineOnGrant, reopenOnGrant } from './act-claim-reopen.ts';
 import {
   CommittedScanUnconfirmed,
   overrideEvidenceStmt,
@@ -23,6 +22,7 @@ import {
   initialClaimCredentialPredicate,
   observedClaimCollisionPredicate,
 } from './repo-act-claim-lifecycle.ts';
+import { quarantineOnGrant, reopenOnGrant } from './repo-act-claim-reopen.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import { isAssetGrantAuthorityFailure } from './repo-asset-grants.ts';
 import { credentialTombstonePredicate } from './repo-gates.ts';

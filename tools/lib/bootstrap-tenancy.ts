@@ -37,6 +37,8 @@ export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
 
 export interface BootstrapResult {
   plan: string[];
+  /** One entry per statement, in order. */
+  statements: string[];
   sql: string;
 }
 
@@ -98,5 +100,5 @@ export async function buildBootstrap(
       ),
     );
   }
-  return { plan, sql: `${sql.join('\n')}\n` };
+  return { plan, statements: sql.slice(1), sql: `${sql.join('\n')}\n` };
 }

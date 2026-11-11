@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
+import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
@@ -8,9 +9,12 @@ import {
   ACTION,
   action,
   body,
+  expectClassified,
+  expectStopRecordedWithoutGrants,
   expectUnavailable,
   fixture,
   race,
+  raceRaw,
   stageVersion,
 } from './action-template-read-race-test-fixtures.ts';
 import { effects } from './repo-action-template-read-race-test-fixtures.ts';
@@ -46,7 +50,7 @@ describe('captured action template reads at the final CAS', () => {
 
   for (const phase of ['gate', 'choose', 'stop'] as const) {
     for (const source of ['pinned', 'active'] as const) {
-      it(`fences ${source} version replacement before the ${phase} transaction`, async () => {
+      it(`handles ${source} version replacement before the ${phase} transaction`, async () => {
         const f = await fixture(kit, {
           compatiblePin: true,
           choose: phase === 'choose',
@@ -88,10 +92,17 @@ describe('captured action template reads at the final CAS', () => {
           }
         });
         expect(rejectedRewrite).toBe(true);
-        expectUnavailable(result, f.pass.id);
-        expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-          before,
-        );
+        if (phase === 'stop') {
+          expectStopRecordedWithoutGrants(result);
+          expect(
+            await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
+          ).toMatchObject({ grants: before?.grants });
+        } else {
+          expectUnavailable(result, f.pass.id);
+          expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
+            before,
+          );
+        }
         const current = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
         expect(current?.templateSnapshot?.raw).not.toBe(original.templateSnapshot.raw);
         expect(
@@ -101,7 +112,7 @@ describe('captured action template reads at the final CAS', () => {
     }
   }
 
-  it('fences an actual late extra-row insertion against the original legacy pinned and active rows', async () => {
+  it('admits an actual late extra-row insertion against the original legacy pinned and active rows', async () => {
     const seedId = await kit.scanTemplate(
       'Old baked source',
       { actions: [ACTION] },
@@ -132,7 +143,6 @@ describe('captured action template reads at the final CAS', () => {
     expect(captured.pinned.extras).toEqual([]);
     expect(captured.active.extras).toEqual([]);
     const request = body(kit, pass.id);
-    const before = await effects(kit.env.DB, pass.id, request.idempotencyKey, kit.org.id);
     const result = await race(kit, scanner.headers, request, 'INSERT INTO scan_gates', (db) =>
       run(
         db,
@@ -149,8 +159,12 @@ describe('captured action template reads at the final CAS', () => {
         ],
       ),
     );
-    expectUnavailable(result, pass.id);
-    expect(await effects(kit.env.DB, pass.id, request.idempotencyKey, kit.org.id)).toEqual(before);
+    // Extra template files are content, not authority: the visit is recorded.
+    expect(result.kind).toBe('ok');
+    expect(await effects(kit.env.DB, pass.id, request.idempotencyKey, kit.org.id)).toMatchObject({
+      gates: 1,
+      events: 1,
+    });
     const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
     if (!current?.templateSnapshot) throw new Error('Missing current legacy version snapshot');
     const changed = JSON.parse(current.templateSnapshot.raw) as {
@@ -185,10 +199,17 @@ describe('captured action template reads at the final CAS', () => {
       const result = await race(kit, f.scanner.headers, request, marker, (db) =>
         approveAppleRelease(kit, { db, templateId: f.templateId, version: 'v2', mode: 'live' }),
       );
-      expectUnavailable(result, f.pass.id);
-      expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-        before,
-      );
+      if (phase === 'stop') {
+        expectStopRecordedWithoutGrants(result);
+        expect(
+          await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
+        ).toMatchObject({ grants: before?.grants });
+      } else {
+        expectUnavailable(result, f.pass.id);
+        expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
+          before,
+        );
+      }
       expect((await candidateById(kit.env.DB, kit.org.id, f.pass.id))?.activeTemplateVersion).toBe(
         'v2',
       );
@@ -204,7 +225,7 @@ describe('captured action template reads at the final CAS', () => {
       if (!original?.templateSnapshot) throw new Error('Missing captured template');
       const request = body(kit, f.pass.id);
       const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-      const result = await race(
+      const response = await raceRaw(
         kit,
         f.scanner.headers,
         request,
@@ -233,7 +254,11 @@ describe('captured action template reads at the final CAS', () => {
           }
         },
       );
-      expectUnavailable(result, f.pass.id);
+      if (change === 'owner archived') {
+        await expectClassified(response, 'SCAN_PASS_CHANGED');
+      } else {
+        expectUnavailable(ScanOutcomeSchema.parse(await response.json()), f.pass.id);
+      }
       expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
         before,
       );

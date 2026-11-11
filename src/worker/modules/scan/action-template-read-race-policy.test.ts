@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import { first } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -54,7 +55,7 @@ describe('action policy from captured D1 template rows', () => {
       memberNo: 'PUBLIC-PASS',
     });
     await putMemberPhoto(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       {
@@ -123,7 +124,7 @@ describe('action policy from captured D1 template rows', () => {
     expect((await kit.get(chooser.headers, `${base}thumbnail@3x.png?g=${token}`)).status).toBe(404);
   });
 
-  it('allows the unchanged legacy pin but fences the first approved head at commit', async () => {
+  it('allows the unchanged legacy pin and admits the first approved head at commit', async () => {
     const valid = await fixture(kit, { legacy: true });
     const candidate = await candidateById(kit.env.DB, kit.org.id, valid.pass.id);
     expect(candidate).toMatchObject({
@@ -140,10 +141,12 @@ describe('action policy from captured D1 template rows', () => {
     const result = await race(kit, stale.scanner.headers, request, 'INSERT INTO scan_gates', (db) =>
       approveAppleRelease(kit, { db, templateId: stale.templateId, version: 'v1', mode: 'live' }),
     );
-    expectUnavailable(result, stale.pass.id);
-    expect(await effects(kit.env.DB, stale.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-      before,
-    );
+    // The first approved head is a release (content), not authority: the visit is recorded.
+    expect(result.kind).toBe('ok');
+    expect(
+      await effects(kit.env.DB, stale.pass.id, request.idempotencyKey, kit.org.id),
+    ).toMatchObject({ gates: 1, events: 1 });
+    expect(before).toMatchObject({ gates: 0, events: 0 });
     expect((await candidateById(kit.env.DB, kit.org.id, stale.pass.id))?.activeReleaseId).toEqual(
       expect.any(String),
     );

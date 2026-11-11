@@ -21,7 +21,7 @@ import {
   undoResponse,
 } from './repo-commit-fence-test-fixtures.ts';
 import { createScanningSession } from './scanning-sessions.ts';
-import { codeOf, key, ORIGIN } from './test-kit.ts';
+import { codeOf, grantScanMembership, key, ORIGIN } from './test-kit.ts';
 
 export function registerCommitFenceUndo() {
   // A pass transfer is not simulated here: the credential-transfer guards refuse a direct owner change.
@@ -95,7 +95,8 @@ export function registerCommitFenceUndo() {
 
   it('does not undo after a real administrator session is revoked before commit', async () => {
     const user = await makeUser(kit.fx);
-    const session = await makeSession(kit.fx, { userId: user.id, roles: ['admin'] });
+    await grantScanMembership(kit.fx, kit.org.id, user.id);
+    const session = await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] });
     const sessionId = await hashSessionCookie(session.cookieValue);
     const app = createApp({
       stores: { ...denyAllStores, sessions: createSessionStore(kit.env, kit.clock) },
@@ -108,7 +109,12 @@ export function registerCommitFenceUndo() {
           `${ORIGIN}/api/v1/scan${path}`,
           {
             method: 'POST',
-            headers: { ...session.headers, origin: ORIGIN, 'content-type': 'application/json' },
+            headers: {
+              ...session.headers,
+              origin: ORIGIN,
+              'x-passbook-mode': 'live',
+              'content-type': 'application/json',
+            },
             body: JSON.stringify(body),
           },
           kit.env,

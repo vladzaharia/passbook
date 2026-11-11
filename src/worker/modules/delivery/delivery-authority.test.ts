@@ -244,36 +244,45 @@ describe('issuance queued by the pre-cutover Worker', () => {
   async function legacyPending() {
     const m = await member();
     const release = kit.liveRelease ?? (await approveAppleRelease(kit));
-    const pass = await createPassRow(jobCtxOf(kit), {
-      orgId: kit.org.id,
-      templateId: kit.template.id,
-      templateVersion: release.version,
-      releaseId: release.id,
-      releaseGeneration: release.generation,
-      input: { memberName: 'Legacy holder' },
-      holderEmail: email(),
-      sendEmail: true,
-      source: 'manual',
-      mode: 'live',
-      execution: { kind: 'system' },
-      actor: system,
-    });
-    const row = await first<{ context: string; state: string }>(
+    const create = (sendEmail: boolean) =>
+      createPassRow(jobCtxOf(kit), {
+        orgId: kit.org.id,
+        templateId: kit.template.id,
+        templateVersion: release.version,
+        releaseId: release.id,
+        releaseGeneration: release.generation,
+        input: { memberName: 'Legacy holder' },
+        holderEmail: email(),
+        ...(sendEmail ? { sendEmail } : {}),
+        source: 'manual',
+        mode: 'live',
+        execution: { kind: 'system' },
+        actor: system,
+      });
+    // Create now commits the intent with the pass, so the pre-cutover shape is inserted directly: a
+    // pending row for a pass created without mail, with the captured authority of a 0024-era row.
+    const reference = await first<{ context: string }>(
       kit.env.DB,
-      'SELECT context, state FROM pass_issuance_deliveries WHERE pass_id = ?',
-      [pass.id],
+      'SELECT context FROM pass_issuance_deliveries WHERE pass_id = ?',
+      [(await create(true)).id],
     );
-    expect(row?.state).toBe('pending');
-    const context = JSON.parse(row?.context ?? '{}');
+    const pass = await create(false);
+    const context = JSON.parse(reference?.context ?? '{}');
     context.execution = {
       kind: 'tenant',
       authority: { ...m.authority, orgUpdatedAt: 1_760_000_000_000 },
     };
-    await withoutTrigger(kit.env.DB, 'pass_issuance_delivery_source_immutable', () =>
-      run(kit.env.DB, 'UPDATE pass_issuance_deliveries SET context = ? WHERE pass_id = ?', [
-        JSON.stringify(context),
-        pass.id,
-      ]),
+    await run(
+      kit.env.DB,
+      `INSERT INTO pass_issuance_deliveries
+         (pass_id, org_id, mode, recipient, identity_id, source_owner_user_id, source_generation,
+          source_lifecycle_generation, source_link_generation, source_object_key, template_id, context,
+          state, created_at)
+       SELECT p.id, p.org_id, p.mode, p.holder_email, p.identity_id, p.owner_user_id,
+         p.credential_generation, p.lifecycle_generation, p.link_generation, p.object_key,
+         p.template_id, ?, 'pending', ?
+       FROM passes p WHERE p.id = ?`,
+      [JSON.stringify(context), kit.clock.now(), pass.id],
     );
     return pass;
   }

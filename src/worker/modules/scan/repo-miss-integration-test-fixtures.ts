@@ -32,13 +32,14 @@ export async function atMissStopCommit(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes("UPDATE scans SET state = 'done'")) return prepared;
+          // Every stop commit opens its batch with the grant insert (the claim has its own grant).
+          if (!sql.includes('INSERT INTO authority_grants')) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')
                 return (...values: unknown[]) => {
                   const bound = statement.bind(...values);
-                  finalizes.add(bound);
+                  if (!values.includes('org_mode.scan.claim')) finalizes.add(bound);
                   return bound;
                 };
               const value = Reflect.get(statement, member, statement);

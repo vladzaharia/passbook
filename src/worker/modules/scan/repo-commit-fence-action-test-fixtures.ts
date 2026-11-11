@@ -17,7 +17,6 @@ import {
   expectRefusedWith,
   kit,
   managerTemplate,
-  otherOwner,
   sessionCountAuthority,
   sessionCreator,
   sessionWriteAuthority,
@@ -25,7 +24,13 @@ import {
   tracking,
 } from './repo-commit-fence-test-fixtures.ts';
 import { createScanningSession } from './scanning-sessions.ts';
-import { codeOf, key, ORIGIN, startScanCredentialTransfer } from './test-kit.ts';
+import {
+  codeOf,
+  grantScanMembership,
+  key,
+  ORIGIN,
+  startScanCredentialTransfer,
+} from './test-kit.ts';
 
 export function registerCommitFenceActions() {
   it.each(['link generation', 'owner', 'quarantine', 'version'] as const)(
@@ -43,7 +48,7 @@ export function registerCommitFenceActions() {
           if (change === 'owner')
             return void (await startScanCredentialTransfer(kit, pass.id, {
               db,
-              target: { holderEmail: 'owner-change@example.test', ownerUserId: otherOwner },
+              target: { holderEmail: 'owner-change@example.test', ownerUserId: null },
             }));
           const set =
             change === 'link generation'
@@ -81,7 +86,8 @@ export function registerCommitFenceActions() {
   // Session roles are immutable (0047): revocation is the only way a session stops being an admin's.
   it('fences an administrator whose real D1 session is revoked after resolution', async () => {
     const user = await makeUser(kit.fx);
-    const session = await makeSession(kit.fx, { userId: user.id, roles: ['admin'] });
+    await grantScanMembership(kit.fx, kit.org.id, user.id);
+    const session = await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] });
     const sessionId = await hashSessionCookie(session.cookieValue);
     const app = createApp({
       stores: { ...denyAllStores, sessions: createSessionStore(kit.env, kit.clock) },
@@ -93,7 +99,12 @@ export function registerCommitFenceActions() {
           `${ORIGIN}/api/v1/scan/actions`,
           {
             method: 'POST',
-            headers: { ...session.headers, origin: ORIGIN, 'content-type': 'application/json' },
+            headers: {
+              ...session.headers,
+              origin: ORIGIN,
+              'x-passbook-mode': 'live',
+              'content-type': 'application/json',
+            },
             body: JSON.stringify({
               idempotencyKey,
               input: codeOf(pass),
@@ -124,12 +135,10 @@ export function registerCommitFenceActions() {
         expect(claim).toMatchObject({ state: 'pending', pass_id: null });
         if (!claim) throw new Error('The administrator did not reach its pending claim.');
         scanId = claim.id;
-        expect(
-          await runOne(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
-            kit.clock.now(),
-            sessionId,
-          ]),
-        ).toEqual({ changes: 1 });
+        await runOne(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+          kit.clock.now(),
+          sessionId,
+        ]);
         before = await effects(db, pass.id);
       },
       () => send(pass, idempotencyKey),

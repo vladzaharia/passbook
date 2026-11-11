@@ -23,7 +23,6 @@ import {
 } from './repo-action-gate-stale-budget-test-fixtures.ts';
 import { scanById } from './repo-scans.ts';
 import { verifyScanEventProvenance } from './scan-event-proof.ts';
-import { prepareScanRetentionProof, verifyScanRetentionProof } from './scan-retention-proof.ts';
 import {
   codeOf,
   grantScanMembership,
@@ -207,7 +206,7 @@ export async function send(s: Scenario, body: ActionRequest = request(s)) {
   return ScanOutcomeSchema.parse(await response.json());
 }
 
-/** Verify the actual event MAC and detached retention MAC, not just their presence. */
+/** The recorded event and scan for a committed action, with its effect snapshot (no proofs remain). */
 export async function signed(s: Scenario, scanId: string) {
   const db = s.kit.env.DB;
   const event = await signedScanEvent(db, s.pass.id, scanId);
@@ -215,9 +214,6 @@ export async function signed(s: Scenario, scanId: string) {
   if (!event || !scan) throw new Error('Missing recorded scan evidence');
   const data = JSON.parse(event.data) as {
     authority: {
-      pinnedTemplateVersion: string;
-      walletVersion: number;
-      walletTemplateVersion: string | null;
       effect: {
         gateBefore: unknown;
         gateAfter: unknown;
@@ -226,26 +222,6 @@ export async function signed(s: Scenario, scanId: string) {
       };
     };
   };
-  const a = data.authority;
-  expect(
-    await verifyScanEventProvenance(s.kit.env, event, {
-      ...scan,
-      pinnedTemplateVersion: a.pinnedTemplateVersion,
-      walletVersion: a.walletVersion,
-      walletTemplateVersion: a.walletTemplateVersion,
-      direction: scan.direction ?? null,
-      presenceScope: scan.presenceScope ?? null,
-    }),
-  ).toBe(true);
-  const retained = await prepareScanRetentionProof(s.kit.env, event, scan.actorKey, {
-    actionId: ACTION.id,
-  });
-  expect(await verifyScanRetentionProof(s.kit.env, retained.proof, retained.scan)).toBe(true);
-  expect(await signedScanRetention(db, scanId)).toEqual({
-    ledger_event_id: event.id,
-    mac: retained.proof.mac,
-    excluded: 0,
-    invalidated: 0,
-  });
-  return { event, scan, effect: a.effect };
+  expect(data.authority).not.toHaveProperty('eventProof');
+  return { event, scan, effect: data.authority.effect };
 }

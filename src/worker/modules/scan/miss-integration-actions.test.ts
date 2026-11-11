@@ -25,6 +25,38 @@ beforeAll(async () => {
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
+
+const STATUS = { SCANNER_REPAIR: 401, ACTOR_CHANGED: 403 } as const;
+type MissRefusal =
+  | 'SCANNER_REPAIR'
+  | 'ACTOR_CHANGED'
+  | 'SCAN_CONFIG_CHANGED'
+  | 'SCAN_PASS_CHANGED'
+  | 'SCAN_IN_PROGRESS';
+
+/** A stop that loses its grant is a classified refusal; nothing is counted and the claim is released. */
+async function expectNotCounted(
+  response: Response,
+  code: MissRefusal,
+  scanId: string,
+  counterKey: string,
+  actorId: string,
+) {
+  const status = STATUS[code as keyof typeof STATUS] ?? 409;
+  const text = await response.text();
+  expect(`${response.status} ${(JSON.parse(text) as { code?: string }).code}`).toBe(
+    `${status} ${code}`,
+  );
+  expect(await counter(counterKey)).toEqual({ count: 30 });
+  expect(await audits(actorId)).toHaveLength(0);
+  const claim = await first<{ state: string; outcome: string | null }>(
+    kit.env.DB,
+    'SELECT state,outcome FROM scans WHERE id=?',
+    [scanId],
+  );
+  expect(claim === null || (claim.state === 'failed' && claim.outcome === null)).toBe(true);
+}
+
 describe('scoped atomic miss accounting', () => {
   it('does not return a successful resolve after an ignored cap audit', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
@@ -227,15 +259,13 @@ describe('scoped atomic miss accounting', () => {
         },
         () => kit.post(scanner.headers, '/actions', body(idempotencyKey, `MISS-${key()}`)),
       );
-      expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
-      expect(await counter(counterKey)).toEqual({ count: 30 });
-      expect(await audits(scanner.id)).toHaveLength(0);
-      expect(await first(kit.env.DB, 'SELECT id FROM scans WHERE id=?', [scanId])).toBeNull();
+      await expectNotCounted(
+        response,
+        change === 'scanner revoked' ? 'SCANNER_REPAIR' : 'SCAN_CONFIG_CHANGED',
+        scanId,
+        counterKey,
+        scanner.id,
+      );
     },
   );
 
@@ -282,15 +312,7 @@ describe('scoped atomic miss accounting', () => {
             ),
           ),
       );
-      expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
-      expect(await counter(counterKey)).toEqual({ count: 30 });
-      expect(await audits(user.id)).toHaveLength(0);
-      expect(await first(kit.env.DB, 'SELECT id FROM scans WHERE id=?', [scanId])).toBeNull();
+      await expectNotCounted(response, 'ACTOR_CHANGED', scanId, counterKey, user.id);
     },
   );
 
@@ -304,20 +326,10 @@ describe('scoped atomic miss accounting', () => {
     const idempotencyKey = key();
     const { response, scanId } = await atStopCommit(
       idempotencyKey,
-      (db, id) => run(db, "UPDATE scans SET method='wedge' WHERE id=?", [id]),
+      (db, id) => run(db, "UPDATE scans SET state='failed',reason='stale' WHERE id=?", [id]),
       () => kit.post(scanner.headers, '/actions', body(idempotencyKey, 'MISS-CLAIM')),
     );
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      scanId: null,
-    });
-    expect(await counter(counterKey)).toEqual({ count: 30 });
-    expect(await audits(scanner.id)).toHaveLength(0);
-    expect(
-      await first(kit.env.DB, 'SELECT state,reason,method FROM scans WHERE id=?', [scanId]),
-    ).toEqual({ state: 'failed', reason: 'stale', method: 'wedge' });
+    await expectNotCounted(response, 'SCAN_IN_PROGRESS', scanId, counterKey, scanner.id);
   });
 
   it('does not count when the presented credential retires before finalization', async () => {
@@ -362,15 +374,7 @@ describe('scoped atomic miss accounting', () => {
       },
       () => kit.post(scanner.headers, '/actions', { ...body(idempotencyKey, input.code), input }),
     );
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      scanId: null,
-    });
-    expect(await counter(counterKey)).toEqual({ count: 30 });
-    expect(await audits(scanner.id)).toHaveLength(0);
-    expect(await first(kit.env.DB, 'SELECT id FROM scans WHERE id=?', [scanId])).toBeNull();
+    await expectNotCounted(response, 'SCAN_PASS_CHANGED', scanId, counterKey, scanner.id);
   });
 
   it.each(['counter', 'audit'] as const)(
@@ -399,17 +403,14 @@ describe('scoped atomic miss accounting', () => {
       } finally {
         await run(kit.env.DB, `DROP TRIGGER IF EXISTS ${trigger}`);
       }
-      expect(raced.response.status).toBe(200);
-      expect(await raced.response.json()).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
-      expect(await counter(counterKey)).toEqual({ count: 30 });
-      expect(await audits(scanner.id)).toHaveLength(0);
-      expect(
-        await first(kit.env.DB, 'SELECT state,reason FROM scans WHERE id=?', [raced.scanId]),
-      ).toEqual({ state: 'failed', reason: 'stale' });
+      throw new Error('DBG '+raced.response.status+(await raced.response.clone().text()).slice(0,200)+JSON.stringify(await counter(counterKey))+JSON.stringify(await audits(scanner.id)));
+      await expectNotCounted(
+        raced.response,
+        'SCAN_IN_PROGRESS',
+        raced.scanId,
+        counterKey,
+        scanner.id,
+      );
     },
   );
 });

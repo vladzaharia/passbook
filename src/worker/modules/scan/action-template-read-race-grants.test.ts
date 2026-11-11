@@ -8,9 +8,10 @@ import { clearSettingsCache } from '../settings/service.ts';
 import {
   action,
   body,
+  expectClassified,
   expectUnavailable,
   fixture,
-  race,
+  raceRaw,
 } from './action-template-read-race-test-fixtures.ts';
 import { openScannerAsset } from './asset-service.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
@@ -158,9 +159,12 @@ describe('policy-selected event action grants', () => {
     );
   });
 
+  // After event evaluation: scanner credentials are authority (the grant refuses or drops the output);
+  // an event archive or filter edit refuses a write (409) and a foreign event on the pass is content.
+  // A read-only card and a recorded stop keep their output when only the event moves.
   for (const phase of ['gate', 'choose', 'stop'] as const) {
     it.each(['event archived', 'event filter', 'foreign event', 'csrf', 'scanner token'] as const)(
-      `atomically rejects ${phase} grants when %s changes after event evaluation`,
+      `${phase} grants when %s changes after event evaluation`,
       async (change) => {
         const f = await fixture(kit, {
           choose: phase === 'choose',
@@ -173,7 +177,7 @@ describe('policy-selected event action grants', () => {
         const other = foreign ? await kit.event({ orgId: foreign.id }) : null;
         const request = body(kit, f.pass.id);
         const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-        const result = await race(kit, f.scanner.headers, request, marker, async (db) => {
+        const response = await raceRaw(kit, f.scanner.headers, request, marker, async (db) => {
           if (change === 'event archived') {
             await run(
               db,
@@ -205,10 +209,33 @@ describe('policy-selected event action grants', () => {
             ]);
           }
         });
-        expectUnavailable(result, f.pass.id);
-        expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-          before,
-        );
+        const credential = change === 'csrf' || change === 'scanner token';
+        if (phase === 'gate' && credential) {
+          await expectClassified(response, 'SCANNER_REPAIR');
+        } else if (phase === 'gate' && change !== 'foreign event') {
+          await expectClassified(response, 'SCAN_CONFIG_CHANGED');
+        } else {
+          expect(response.status).toBe(200);
+          const result = ScanOutcomeSchema.parse(await response.json());
+          if (phase === 'choose' && credential) {
+            expectUnavailable(result, f.pass.id);
+          } else if (phase === 'choose') {
+            expect(result).toMatchObject({ kind: 'ready', reason: 'choose' });
+            expect(result.card?.passView.assetGrant).toEqual(expect.any(String));
+          } else if (phase === 'stop' && credential) {
+            // The stop was recorded before the credential moved; the photo grant is not issued.
+            expect(result).toMatchObject({ kind: 'heads_up', reason: 'check_required' });
+            expect(result.display?.identity.photo?.url).toBeNull();
+            expect(JSON.stringify(result)).not.toContain('assetGrant');
+          } else {
+            expect(result.kind).toBe(phase === 'gate' ? 'ok' : 'heads_up');
+          }
+        }
+        const after = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
+        const refused = phase === 'gate' ? change !== 'foreign event' : false;
+        const grantsUnchanged = (phase === 'choose' || phase === 'stop') && credential;
+        if (refused) expect(after).toEqual(before);
+        else if (grantsUnchanged) expect(after).toMatchObject({ grants: before?.grants });
       },
     );
   }

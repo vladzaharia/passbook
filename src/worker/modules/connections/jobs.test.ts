@@ -1122,6 +1122,8 @@ describe('scheduling', () => {
       const dto = await createDemo(kit);
       const { sctx, created } = withWorkflow(kit);
       await schedule(sctx);
+      // Connections left by earlier tests in this file may be due too: count only what the change adds.
+      const launched = created.length;
       const before = await getConnection(kit.env.DB, dto.id);
       const workflows = await all(kit.env.DB, 'SELECT * FROM workflow_runs WHERE target_id = ?', [
         dto.id,
@@ -1142,7 +1144,8 @@ describe('scheduling', () => {
         expect(
           await all(kit.env.DB, 'SELECT * FROM connection_runs WHERE connection_id = ?', [dto.id]),
         ).toEqual(runs);
-        expect(created).toHaveLength(1);
+        expect(created).toHaveLength(launched);
+        expect(created.filter((c) => c.params.connectionId === dto.id)).toHaveLength(1);
         expect(
           await first(kit.env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
         ).toEqual(change === 'missing' ? null : { commitment: other });

@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import { type ScanOutcome, ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putPassCheckIn } from '../passes/check-in.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -90,7 +91,7 @@ export async function fixture(
     await putPassCheckIn(kit.ctx, system, pass.id, { mode: 'in_out', eventId: event.id }, null);
   if (options.photo)
     await putMemberPhoto(
-      kit.ctx,
+      options.includeInPass ? jobCtxOf(kit) : kit.ctx,
       system,
       pass.id,
       {
@@ -144,7 +145,8 @@ export async function action(kit: ScanKit, headers: Record<string, string>, requ
   return ScanOutcomeSchema.parse(await response.json());
 }
 
-export async function race(
+/** Run the action with a change landing just before the batch that matches `marker`; the raw response. */
+export async function raceRaw(
   kit: ScanKit,
   headers: Record<string, string>,
   request: unknown,
@@ -155,12 +157,37 @@ export async function race(
   const intercepted = beforeBatch(real, marker, change);
   Object.assign(kit.env, { DB: intercepted.db });
   try {
-    const result = await action(kit, headers, request);
+    const response = await kit.post(headers, '/actions', request);
     expect(intercepted.fired()).toBe(true);
-    return result;
+    return response;
   } finally {
     Object.assign(kit.env, { DB: real });
   }
+}
+
+export async function race(
+  kit: ScanKit,
+  headers: Record<string, string>,
+  request: unknown,
+  marker: string,
+  change: (db: D1Database) => Promise<unknown>,
+) {
+  const response = await raceRaw(kit, headers, request, marker, change);
+  expect(response.status).toBe(200);
+  return ScanOutcomeSchema.parse(await response.json());
+}
+
+/** A classified refusal: its status and code, never a pass-revealing body. */
+export async function expectClassified(
+  response: Response,
+  code: 'SCAN_PASS_CHANGED' | 'SCAN_CONFIG_CHANGED' | 'SCAN_STAFF_CHANGED' | 'SCANNER_REPAIR',
+) {
+  const text = await response.text();
+  const body = JSON.parse(text) as { code?: string };
+  expect(`${response.status} ${body.code}`).toBe(
+    `${code === 'SCANNER_REPAIR' ? 401 : 409} ${code}`,
+  );
+  for (const value of [PRIVATE, 'member.png', 'assetGrant']) expect(text).not.toContain(value);
 }
 
 export function expectUnavailable(result: ScanOutcome, passId: string) {
@@ -177,4 +204,15 @@ export function expectUnavailable(result: ScanOutcome, passId: string) {
   const text = JSON.stringify(result);
   for (const value of [passId, PRIVATE, 'member.png', 'assetGrant'])
     expect(text).not.toContain(value);
+}
+
+/**
+ * The stop commits in its own batch and its photo grants in the next. A template change between
+ * them is content: the stop stays recorded and only the grants are withheld.
+ */
+export function expectStopRecordedWithoutGrants(result: ScanOutcome) {
+  expect(result).toMatchObject({ kind: 'heads_up', reason: 'check_required' });
+  expect(result.scanId).toEqual(expect.any(String));
+  expect(result.display?.identity.photo?.url ?? null).toBeNull();
+  expect(JSON.stringify(result)).not.toContain('assetGrant');
 }
