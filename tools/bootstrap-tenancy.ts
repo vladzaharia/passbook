@@ -10,7 +10,14 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { strictEmail } from '../src/shared/email.ts';
-import { type BootstrapSnapshot, buildBootstrap, snapshotSql } from './lib/bootstrap-tenancy.ts';
+import {
+  BOOTSTRAP_SQL,
+  type BootstrapSnapshot,
+  buildBootstrap,
+  remoteCommands,
+  SNAPSHOT_SQL,
+  snapshotSql,
+} from './lib/bootstrap-tenancy.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const argv = process.argv.slice(2);
@@ -20,9 +27,7 @@ const value = (name: string) => {
   return at >= 0 ? argv[at + 1] : undefined;
 };
 const database = 'wallet-platform';
-const sqlFile = resolve(root, '.wrangler/bootstrap-tenancy.sql');
-const snapshotFile = '.wrangler/bootstrap-snapshot.json';
-const snapshotSqlFile = '.wrangler/bootstrap-snapshot.sql';
+const sqlFile = resolve(root, BOOTSTRAP_SQL);
 
 if (flag('--remote')) {
   console.error('This tool never touches production. Use the commands it prints.');
@@ -71,11 +76,15 @@ function parseSnapshot(output: string): BootstrapSnapshot {
 
 function printRemote(): void {
   mkdirSync(resolve(root, '.wrangler'), { recursive: true });
-  writeFileSync(resolve(root, snapshotSqlFile), snapshotSql(owner as string));
-  console.log(`Production, run by the owner after the migrations are applied and before the new Worker is promoted:
-  npx wrangler d1 execute ${database} --remote --json --file ${snapshotSqlFile} > ${snapshotFile}
-  node tools/bootstrap-tenancy.ts --owner ${owner} --snapshot ${snapshotFile}
-  npx wrangler d1 execute ${database} --remote --file .wrangler/bootstrap-tenancy.sql`);
+  writeFileSync(resolve(root, SNAPSHOT_SQL), snapshotSql(owner as string));
+  console.log(
+    `Production, run by the owner after the migrations are applied and before the new Worker is promoted:\n${remoteCommands(
+      owner as string,
+      database,
+    )
+      .map((c) => `  ${c}`)
+      .join('\n')}`,
+  );
 }
 if (flag('--print-remote')) {
   printRemote();
@@ -95,8 +104,12 @@ mkdirSync(resolve(root, '.wrangler'), { recursive: true });
 writeFileSync(sqlFile, sql);
 
 console.log(
-  `${plan.map((line) => `- ${line}`).join('\n') || '- nothing to do'}\nSQL: .wrangler/bootstrap-tenancy.sql`,
+  `${plan.map((line) => `- ${line}`).join('\n') || '- nothing to do'}\nSQL: ${BOOTSTRAP_SQL}`,
 );
+if (snapshotPath && !flag('--apply')) {
+  console.log(`Next, production:\n  ${remoteCommands(owner, database)[2]}`);
+  process.exit(0);
+}
 if (flag('--apply')) {
   if (snapshotPath) {
     console.error('--apply writes the local D1 and reads it fresh; drop --snapshot.');

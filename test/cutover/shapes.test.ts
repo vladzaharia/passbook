@@ -40,6 +40,26 @@ describe('cutover: effective releases', () => {
     },
   );
 
+  it('baked-patched: the bootstrap adds no release; the baked sync gives the PATCH org a system release', async () => {
+    const id = legacy.templateIds['baked-patched'];
+    expect(c.bootstrapPlan.filter((line) => line.includes(id))).toEqual([]);
+    const releases = await legacy.db
+      .prepare(
+        'SELECT org_id, mode, source FROM template_releases WHERE template_id = ? ORDER BY mode',
+      )
+      .bind(id)
+      .all();
+    expect(releases.results).toEqual([
+      { org_id: 'org-b', mode: 'live', source: 'system' },
+      { org_id: 'org-b', mode: 'test', source: 'system' },
+    ]);
+    const row = await legacy.db
+      .prepare('SELECT org_id FROM templates WHERE id = ?')
+      .bind(id)
+      .first();
+    expect(row).toEqual({ org_id: 'org-b' });
+  });
+
   it('has no effective release for baked passes until the baked sync runs; uploaded ones have it from the bootstrap', () => {
     for (const p of legacy.passes) {
       const baked = p.shape.startsWith('baked');
@@ -64,7 +84,7 @@ describe('cutover: nothing lost', () => {
         "SELECT id, state, payload, coalesce_key FROM outbox WHERE id LIKE 'push-%' OR id LIKE 'sent-%' ORDER BY id",
       )
       .all<{ id: string; state: string; payload: string; coalesce_key: string | null }>();
-    expect(rows.results).toHaveLength(8);
+    expect(rows.results).toHaveLength(10);
     for (const r of rows.results) {
       if (r.id.startsWith('push-')) {
         expect(r.state).toBe('pending');
@@ -109,8 +129,8 @@ describe('cutover: runbook queries', () => {
 
   it('pre-checks: no pending bundle mail; archived and stale versions are listed', async () => {
     expect(await rows('verify-outbox')).toEqual([
-      { kind: 'email', state: 'pending', n: 5 },
-      { kind: 'push', state: 'pending', n: 4 },
+      { kind: 'email', state: 'pending', n: 6 },
+      { kind: 'push', state: 'pending', n: 5 },
     ]);
     expect(await rows('verify-archived')).toEqual([
       { id: 'up-archived', origin: 'uploaded', org_id: 'org-a', passes: 4 },
@@ -121,7 +141,7 @@ describe('cutover: runbook queries', () => {
     ]);
   });
 
-  it('after the cutover: only the archived template lacks a head; mail and memberships are bound', async () => {
+  it('after the cutover: only the archived template lacks a head (a deleted org is ignored); mail and memberships are bound', async () => {
     expect(await rows('verify-heads')).toEqual([
       { id: 'up-archived', origin: 'uploaded', status: 'archived', org_id: 'org-a', passes: 4 },
     ]);

@@ -20,6 +20,8 @@ export const SHAPES = [
   'baked-unassigned',
   'baked-assigned',
   'baked-assigned-empty',
+  // A starter (no org in its manifest) that the old Worker's PATCH assigned to org-b.
+  'baked-patched',
   'uploaded-active',
   'uploaded-archived',
   'uploaded-empty',
@@ -100,6 +102,7 @@ async function bakedFixtures(): Promise<BakedFixture[]> {
       name: 'Acme Spare',
       org: { slug: 'org-a', name: 'Org A' },
     }),
+    await bakedFrom('adopted', basicPackage({ 'logo.png': makePng(80, 40) }), { name: 'Adopted' }),
   ];
 }
 
@@ -114,7 +117,8 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   const baked = await bakedPair();
   const assets = fakeAssets();
   for (const f of baked) for (const [k, v] of f.files) assets.files.set(k, v);
-  const [starter, acme, spare] = baked.map((f) => f.template) as [
+  const [starter, acme, spare, adopted] = baked.map((f) => f.template) as [
+    BakedTemplate,
     BakedTemplate,
     BakedTemplate,
     BakedTemplate,
@@ -148,6 +152,7 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     'baked-unassigned': starter.id,
     'baked-assigned': acme.id,
     'baked-assigned-empty': spare.id,
+    'baked-patched': adopted.id,
     'uploaded-active': 'up-active',
     'uploaded-archived': 'up-archived',
     'uploaded-empty': 'up-empty',
@@ -165,11 +170,13 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   bakedRow(starter, null);
   bakedRow(acme, 'org-a');
   bakedRow(spare, 'org-a');
+  bakedRow(adopted, 'org-b');
   // Uploaded templates reuse the starter's package content with r2 sources under their own prefix.
   const uploaded: [string, string, string][] = [
     ['up-active', 'org-a', 'active'],
     ['up-archived', 'org-a', 'archived'],
     ['up-empty', 'org-b', 'active'],
+    ['up-gone', 'org-gone', 'active'],
   ];
   for (const [id, org, status] of uploaded) {
     add(`INSERT INTO templates (id, org_id, slug, name, origin, active_version, status, styles, created_at, updated_at)
@@ -232,6 +239,7 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   const withPasses: [Shape, string][] = [
     ['baked-unassigned', 'org-a'],
     ['baked-assigned', 'org-a'],
+    ['baked-patched', 'org-b'],
     ['uploaded-active', 'org-a'],
     ['uploaded-archived', 'org-a'],
   ];
@@ -306,6 +314,11 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     ('bundle-1', 'pass-baked-unassigned-1', 0), ('bundle-1', 'pass-baked-unassigned-2', 1)`);
   add(`INSERT INTO outbox (id, org_id, kind, pass_id, payload, state, created_at) VALUES
     ('bmail-1', 'org-a', 'email', 'pass-baked-unassigned-1', '{"to":"holder@example.com","bundleId":"bundle-1"}', 'pending', ${AT})`);
+  // Deleting an org kept its passes: a live one on the deleted org's template, which nothing serves.
+  add(`INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
+      web_service_url, personalization, display_title, status, version, object_key, modified_at, created_at, mode)
+    VALUES ('pass-gone', 'org-gone', 'platform', 'serial-gone', 'up-gone', 'v2', 'auth-gone', 'dl-gone',
+      'https://wallet.plrs.im/v1', '{}', 'Gone', 'active', 1, 'passes/pass-gone/1.pkpass', ${AT}, ${AT}, 'live')`);
   for (const s of stmts) await db.prepare(s).run();
   return { db, scanners, passes, templateIds, baked, assets };
 }

@@ -21,7 +21,7 @@ import { type Cutover, runCutover } from './setup.ts';
 
 let c: Cutover;
 let kit: ScanKit;
-const SERVED: Shape[] = ['baked-unassigned', 'baked-assigned', 'uploaded-active'];
+const SERVED: Shape[] = ['baked-unassigned', 'baked-assigned', 'baked-patched', 'uploaded-active'];
 const ALL: Shape[] = [...SERVED, 'uploaded-archived'];
 
 beforeAll(async () => {

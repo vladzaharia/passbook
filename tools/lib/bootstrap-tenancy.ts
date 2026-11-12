@@ -111,6 +111,20 @@ export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
       AND typeof(json_extract(o.payload, '$.to')) = 'text')
 ) AS snapshot`;
 
+export const SNAPSHOT_SQL = '.wrangler/bootstrap-snapshot.sql';
+const SNAPSHOT_JSON = '.wrangler/bootstrap-snapshot.json';
+export const BOOTSTRAP_SQL = '.wrangler/bootstrap-tenancy.sql';
+
+/**
+ * The owner's production commands, in order. The snapshot is read with --command: a remote --file
+ * goes through D1's import API, which reports counts and never returns rows.
+ */
+export const remoteCommands = (owner: string, database = 'wallet-platform') => [
+  `npx wrangler d1 execute ${database} --remote --json --command "$(cat ${SNAPSHOT_SQL})" > ${SNAPSHOT_JSON}`,
+  `node tools/bootstrap-tenancy.ts --owner ${owner} --snapshot ${SNAPSHOT_JSON}`,
+  `npx wrangler d1 execute ${database} --remote --file ${BOOTSTRAP_SQL}`,
+];
+
 export interface BootstrapResult {
   plan: string[];
   /** One entry per statement, in order. */
