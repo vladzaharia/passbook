@@ -272,7 +272,16 @@ describe('scanner credential tombstones', () => {
       actions: [CHECK_IN],
       lookup: { input: 'memberNo' },
     });
-    const source = await kit.scanPass(templateId);
+    // The scanner hides a name holding a phone-like digit run (projection-privacy.ts), and a UUID
+    // serial sometimes has one; keep the victim's name visible.
+    const phoneLike = (text: string) => /(?:^|[^\d])\+?\d[\d ().-]{6,}\d(?:$|[^\d])/u.test(text);
+    let source = await kit.scanPass(templateId);
+    // The clock fixes the timestamp half of the serial, so step it to get another.
+    for (let tries = 0; phoneLike(`${source.serial} Guest`) && tries < 100; tries++) {
+      kit.clock.advance(1);
+      source = await kit.scanPass(templateId);
+    }
+    expect(phoneLike(`${source.serial} Guest`)).toBe(false);
     const victim = await kit.scanPass(templateId, { memberName: `${source.serial} Guest` });
     const otherMode = await kit.scanPass(templateId, { memberNo: source.serial }, { mode: 'test' });
     const foreignOrg = await makeOrg(kit.fx);

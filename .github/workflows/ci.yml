@@ -24,9 +24,32 @@ jobs:
       - run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
-      - run: npm run check
+      # `npm run check` minus the tests, which run sharded in `test`.
+      - run: npm run gen
+      - run: npm run ci:lint
+      - run: npm run check:rules
+      - run: npm run typecheck
+      - run: npm run build
       - name: Generated files are committed
         run: git diff --exit-code -- src/generated worker-configuration.d.ts src/web/routeTree.gen.ts
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run --shard=${{ matrix.shard }}/4
+        env:
+          NODE_OPTIONS: --no-experimental-webstorage
 
   e2e:
     runs-on: ubuntu-latest
@@ -72,9 +95,9 @@ jobs:
             playwright-report
             test-results
 
-  coverage:
+  coverage-node:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -82,14 +105,27 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - name: Coverage thresholds
-        run: npm run coverage
+      - name: Coverage thresholds (unit, web)
+        run: npm run coverage:node
+
+  coverage-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Coverage thresholds (worker)
+        run: npm run coverage:worker
 
   predeploy:
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: check
+    needs: [check, test]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
