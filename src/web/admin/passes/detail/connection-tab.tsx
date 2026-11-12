@@ -215,7 +215,13 @@ function Bound({
               value: pass.lastRefreshedAt ? formatDateTime(pass.lastRefreshedAt) : null,
             },
             ...(pass.syncErrorCode
-              ? [{ label: 'Sync error', value: pass.syncErrorCode, mono: true }]
+              ? [
+                  {
+                    label: 'Sync error',
+                    value: SYNC_ERRORS[pass.syncErrorCode] ?? pass.syncErrorCode,
+                    mono: !(pass.syncErrorCode in SYNC_ERRORS),
+                  },
+                ]
               : []),
           ]}
         />
@@ -239,6 +245,10 @@ function Bound({
     </Card>
   );
 }
+
+const SYNC_ERRORS: Record<string, string> = {
+  PASS_REISSUE_REQUIRED: 'Needs a new copy',
+};
 
 export function ConnectionTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
   const [binding, setBinding] = useState(false);

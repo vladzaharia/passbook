@@ -1,10 +1,12 @@
 // A sync that changes the holder email of an existing pass transfers it under the pass's own release.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { resumePendingCredentialTransfers } from '../passes/credential-transfer-resume.ts';
 import { type Kit as PassKit, setupKit, TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import { resetDeps, setDeps } from './deps.ts';
 import { inlineStep, seedConnectionWorkflow } from './runtime-fixtures.ts';
@@ -103,12 +105,12 @@ const readPass = (connectionId: string) =>
     [connectionId],
   );
 
-async function setup(templateId: string) {
+async function setup(templateId: string, count = 1) {
   const dto = await service.create(kit.ctx, actor, {
     orgId: kit.org.id,
     connectorType: 'demo',
     name: `Demo ${++n}`,
-    config: { count: 1, holderDomain: 'first.example.com' },
+    config: { count, holderDomain: 'first.example.com' },
     mode: 'poll',
     mapping: { memberName: { from: '/memberName' } },
     holderEmailField: '/email',
@@ -122,9 +124,9 @@ async function setup(templateId: string) {
   return { dto, before };
 }
 
-async function changeHolder(dto: { id: string }) {
+async function changeHolder(dto: { id: string }, count = 1) {
   await service.update(kit.ctx, actor, dto.id, {
-    config: { count: 1, revision: 1, holderDomain: 'second.example.com' },
+    config: { count, revision: 1, holderDomain: 'second.example.com' },
   });
   const row = await first<{ generation: number }>(
     kit.env.DB,
@@ -133,12 +135,13 @@ async function changeHolder(dto: { id: string }) {
   );
   await sync(dto.id, row?.generation ?? 0);
   await kit.settle();
+  await resumePendingCredentialTransfers(jobCtxOf(kit));
   return readPass(dto.id);
 }
 
 describe('connection sync changing the holder of an existing pass', () => {
   it.each(['archived', 'behind a head on another build'] as const)(
-    'starts the transfer under the pass own release when the template is %s',
+    'completes the transfer under the pass own release when the template is %s',
     async (state) => {
       const templateId = await template('dynamic');
       const { dto, before } = await setup(templateId);
@@ -148,7 +151,7 @@ describe('connection sync changing the holder of an existing pass', () => {
         ]);
       else await moveHead(templateId, 'v2');
       const after = await changeHolder(dto);
-      // The transfer's wallet retirement is the sweep's; the start is what the head used to refuse.
+      expect(after?.holder_email).toBe('m-001@second.example.com');
       expect(after?.credential_generation).toBe((before?.credential_generation ?? 0) + 1);
       expect(after?.template_version).toBe(before?.template_version);
       expect(after?.release_id).toBe(before?.release_id);
@@ -167,16 +170,39 @@ describe('connection sync changing the holder of an existing pass', () => {
     120_000,
   );
 
-  it('still marks a static-barcode holder change as reissue required', async () => {
+  it('classifies a static-barcode holder change as PASS_REISSUE_REQUIRED and carries on', async () => {
     const templateId = await template('static');
-    const { dto, before } = await setup(templateId);
-    await run(kit.env.DB, "UPDATE templates SET status = 'archived' WHERE id = ?", [templateId]);
-    const after = await changeHolder(dto);
-    expect(after?.holder_email).toBe(before?.holder_email);
-    expect(after?.credential_generation).toBe(before?.credential_generation);
+    const { dto, before } = await setup(templateId, 2);
+    const passes = await all<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM passes WHERE connection_id = ? ORDER BY external_ref',
+      [dto.id],
+    );
+    expect(passes).toHaveLength(2);
+    await changeHolder(dto, 2);
+    for (const { id } of passes) {
+      expect(
+        await first(
+          kit.env.DB,
+          'SELECT holder_email, credential_generation, sync_error_code FROM passes WHERE id = ?',
+          [id],
+        ),
+      ).toMatchObject({
+        holder_email: expect.stringContaining('@first.example.com'),
+        credential_generation: before?.credential_generation,
+        sync_error_code: 'PASS_REISSUE_REQUIRED',
+      });
+    }
+    const last = await first<{ outcome: string; error_code: string | null; records_seen: number }>(
+      kit.env.DB,
+      'SELECT outcome, error_code, records_seen FROM connection_runs WHERE connection_id = ? ORDER BY rowid DESC LIMIT 1',
+      [dto.id],
+    );
+    expect(last?.error_code).not.toBe('INTERNAL');
+    expect(last?.records_seen).toBe(2);
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_credential_transfers WHERE pass_id = ?', [
-        before?.id,
+        passes[0]?.id,
       ]),
     ).toBeNull();
   }, 120_000);

@@ -53,3 +53,90 @@ WHEN NEW.state != 'pending' OR NEW.completed_at IS NOT NULL
           AND newer.generation > rel.generation)))
   ))
 BEGIN SELECT RAISE(ABORT, 'invalid credential transfer snapshot'); END;
+
+-- The finish accepts the pass's own admitted release the same way the start does.
+DROP TRIGGER pass_credential_transfer_complete_guard;
+CREATE TRIGGER pass_credential_transfer_complete_guard
+BEFORE UPDATE ON pass_credential_transfers
+WHEN OLD.state != 'pending' OR NEW.state != 'completed'
+  OR OLD.id IS NOT NEW.id OR OLD.pass_id IS NOT NEW.pass_id OR OLD.org_id IS NOT NEW.org_id
+  OR OLD.mode IS NOT NEW.mode OR OLD.source_generation IS NOT NEW.source_generation
+  OR OLD.source_version IS NOT NEW.source_version OR OLD.source_revision IS NOT NEW.source_revision
+  OR OLD.source_row_version IS NOT NEW.source_row_version
+  OR OLD.source_lifecycle_generation IS NOT NEW.source_lifecycle_generation
+  OR OLD.source_link_generation IS NOT NEW.source_link_generation
+  OR OLD.source_connection_id IS NOT NEW.source_connection_id
+  OR OLD.source_connection_ref IS NOT NEW.source_connection_ref
+  OR OLD.source_connection_generation IS NOT NEW.source_connection_generation
+  OR OLD.source_connection_mode IS NOT NEW.source_connection_mode
+  OR OLD.source_admitted_release_id IS NOT NEW.source_admitted_release_id
+  OR OLD.source_admitted_release_generation IS NOT NEW.source_admitted_release_generation
+  OR OLD.source_admitted_release_version IS NOT NEW.source_admitted_release_version
+  OR OLD.target_holder_email IS NOT NEW.target_holder_email
+  OR OLD.target_owner_user_id IS NOT NEW.target_owner_user_id
+  OR OLD.requested_by_type IS NOT NEW.requested_by_type OR OLD.requested_by_id IS NOT NEW.requested_by_id
+  OR OLD.requested_at IS NOT NEW.requested_at
+  OR NEW.completed_at IS NULL
+  OR NOT EXISTS (SELECT 1 FROM passes p WHERE p.id = OLD.pass_id AND p.org_id = OLD.org_id
+    AND p.mode = OLD.mode AND p.credential_generation = OLD.target_generation
+    AND p.row_version > OLD.source_row_version
+    AND p.lifecycle_generation = OLD.source_lifecycle_generation
+    AND p.link_generation = OLD.source_link_generation
+    AND p.holder_email IS OLD.target_holder_email AND p.owner_user_id IS OLD.target_owner_user_id)
+  -- A connector transfer finishes against whatever the connection and release head are now: a connection
+  -- edit or a newer approved release moves neither the binding nor the head the finish rebuilt against.
+  OR (OLD.source_connection_id IS NOT NULL AND (
+    NOT EXISTS (SELECT 1 FROM pass_credential_transfer_payloads payload WHERE payload.transfer_id = OLD.id)
+    OR NOT EXISTS (
+      SELECT 1 FROM passes p
+      JOIN templates template ON template.id = p.template_id
+      JOIN template_releases rel ON rel.id = p.release_id
+      WHERE p.id = OLD.pass_id AND p.org_id = OLD.org_id AND p.mode = 'live'
+        AND p.connection_id = OLD.source_connection_id AND p.external_ref IS OLD.source_connection_ref
+        AND p.template_version = rel.version
+        AND rel.template_id = p.template_id AND rel.mode = p.mode AND rel.provider = 'apple'
+        AND (rel.org_id = p.org_id OR (rel.org_id IS NULL
+          AND template.org_id IS NULL AND template.origin = 'baked'))
+        AND ((template.status = 'active'
+            AND EXISTS (SELECT 1 FROM template_release_heads head WHERE head.release_id = rel.id))
+          OR (template.status != 'deleted' AND rel.id = OLD.source_admitted_release_id))
+    )
+  ))
+  OR EXISTS (
+    SELECT 1 FROM wallet_provider_instances i
+    WHERE i.pass_id = OLD.pass_id AND i.credential_generation < OLD.target_generation
+      AND (i.org_id IS NOT OLD.org_id OR i.mode IS NOT OLD.mode OR NOT (
+        -- A retired placeholder has never acquired an external object or callback.
+        (i.lifecycle = 'retired' AND i.retirement_reason = 'not_issued'
+          AND i.account_id IS NULL AND i.identity_projection_release_id IS NULL
+          AND i.desired_operation_id IS NULL AND i.desired_version = 0
+          AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations op WHERE op.instance_id = i.id)
+          AND NOT EXISTS (SELECT 1 FROM wallet_provider_offer_refs offer WHERE offer.instance_id = i.id)
+          AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs ref WHERE ref.instance_id = i.id)
+          AND NOT EXISTS (SELECT 1 FROM wallet_google_callback_bindings binding WHERE binding.instance_id = i.id)
+          AND NOT EXISTS (SELECT 1 FROM wallet_provider_callback_events event WHERE event.instance_id = i.id)
+          AND NOT EXISTS (SELECT 1 FROM wallet_samsung_callback_receipts receipt WHERE receipt.instance_id = i.id)
+          AND NOT EXISTS (SELECT 1 FROM wallet_google_callback_receipts receipt WHERE receipt.instance_id = i.id))
+        OR
+        -- An issued Samsung credential needs its accepted revoke and every fetch-ref tombstone.
+        -- An issued Google credential cannot settle without an independent replay guarantee.
+        (i.lifecycle = 'retired' AND i.provider = 'samsung' AND i.retirement_requested_at IS NOT NULL
+          AND i.account_id IS NOT NULL
+          AND EXISTS (SELECT 1 FROM wallet_provider_accounts a WHERE a.id = i.account_id
+            AND a.org_id = i.org_id AND a.mode = i.mode AND a.provider = i.provider)
+          AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
+            WHERE op.id = i.desired_operation_id AND op.instance_id = i.id
+              AND op.version = i.desired_version AND op.kind = 'revoke' AND op.state = 'succeeded')
+          AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
+            WHERE busy.instance_id = i.id AND busy.state IN ('pending', 'retry', 'claimed', 'uncertain'))
+          AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs ref WHERE ref.instance_id = i.id
+            AND NOT EXISTS (SELECT 1 FROM wallet_samsung_tombstones tomb
+              JOIN template_releases rel ON rel.id = i.identity_projection_release_id
+              JOIN template_candidates candidate ON candidate.id = rel.candidate_id
+              WHERE tomb.ref_hash = ref.ref_hash AND tomb.org_id = i.org_id AND tomb.mode = i.mode
+                AND tomb.account_id = i.account_id AND tomb.release_id = rel.id AND tomb.candidate_id = candidate.id
+                AND candidate.provider_account_id = i.account_id
+                AND tomb.account_revision = candidate.provider_account_revision
+                AND tomb.provider_identity_hash = candidate.provider_identity_hash)))
+      )))
+BEGIN SELECT RAISE(ABORT, 'credential transfer is not ready to complete'); END;

@@ -280,6 +280,9 @@ export async function applyIncoming(
     const blocked = releaseBlockCode(error);
     if (blocked) return { outcome: 'release_blocked', releaseBlocked: blocked };
     if (error instanceof AppError && error.code === 'TEMPLATE_CONTENT_CHANGED') throw error;
+    // A static credential cannot rotate for a new holder: the admin sees "needs a new copy", not a fence.
+    if (error instanceof ConflictError && error.code === 'PASS_REISSUE_REQUIRED')
+      return fail(error);
     if (
       error instanceof ConflictError ||
       (error instanceof AppError && error.code === 'VERSION_CONFLICT')
