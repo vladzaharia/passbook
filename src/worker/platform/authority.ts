@@ -8,12 +8,12 @@ import { identifier } from './authority-expr.ts';
 import {
   assertDeferredContext,
   authorityDenial,
-  BUILDER,
   builtOf,
-  GrantedStatement,
+  type GrantedStatement,
   type GrantInput,
   grantInsert,
   jobPrincipal,
+  newGrantedStatement,
   scopeOf,
 } from './authority-granted.ts';
 import { assertUnguarded, buildPart, type GrantPart, writeTargets } from './authority-include.ts';
@@ -113,7 +113,7 @@ export class Grant {
       throw new AuthorityError('GRANT_ALREADY_COMMITTED', 'This grant was committed.');
     assertBudget(built.sql, built.params, built.read ? PARAM_BUDGET : WRITE_PARAM_BUDGET);
     if (built.lineage) this.#lineage.push(built.lineage);
-    const statement = new GrantedStatement(BUILDER, this.id, built);
+    const statement = newGrantedStatement(this.id, built);
     this.#statements.push(statement);
     return statement;
   }
@@ -235,7 +235,7 @@ export class Grant {
   unguarded(sql: string, params: SqlValue[]): GrantedStatement {
     assertUnguarded(sql);
     for (const table of writeTargets(sql)) this.#need(table);
-    return new GrantedStatement(BUILDER, this.id, { sql, params });
+    return newGrantedStatement(this.id, { sql, params });
   }
 
   /** Bound-parameter and byte counts of the grant insert and each write, for the corpus test. */

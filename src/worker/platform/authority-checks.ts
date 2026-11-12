@@ -1,7 +1,7 @@
 import { AuthorityError } from './authority-error.ts';
 import { identifier, renderCond, type WhereValue } from './authority-expr.ts';
 import { type Binds, type GrantScope, LEGACY_REVISION_MS } from './authority-principal.ts';
-import { assertSqlText } from './authority-sqltext.ts';
+import { assertPlainParams, assertSqlText } from './authority-sqltext.ts';
 import { GUARDED_TABLES, ownedColumns } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
 import type { DenyReason } from './errors.ts';
@@ -199,17 +199,25 @@ const RAW_FORBIDDEN =
 /**
  * Escape hatch for a package-specific read-only condition. SQL is fixed text; every value is bound.
  * It cannot name the tenant columns (`org_id`, `mode`, `scope`; the actor row `a` carries them), so it
- * cannot narrow to a request-chosen tenant, and it cannot hold a second statement or a write.
+ * cannot narrow to a request-chosen tenant, and it cannot hold a second statement or a write. `a` is the
+ * actor row: an inner alias `a` would shadow it. A positive EXISTS over a tenant table needs a tenant term,
+ * so it is a `tenantCheck` (`tools/authority-scope.ts` rule `untenanted-check`).
  */
 export function rawCheck(reason: DenyReason, sql: string, params: readonly SqlValue[] = []): Check {
   return {
     reason,
     ok: (b) => {
-      assertSqlText(sql, 'A raw grant check');
+      const text = assertSqlText(sql, 'A raw grant check');
+      assertPlainParams(text, 'A raw grant check');
       if (RAW_FORBIDDEN.test(sql.replace(/\ba\.(?:org_id|mode)\b/g, 'a_')))
         throw new AuthorityError(
           'GRANT_SCOPE_OVERRIDE',
           'A raw grant check is read-only and cannot name an org, mode or scope column.',
+        );
+      if (/\ba\b/i.test(text.replace(/\ba\.(?:org_id|mode)\b/g, ' ')))
+        throw new AuthorityError(
+          'GRANT_SCOPE_OVERRIDE',
+          'The alias a is reserved in a raw grant check: it is the actor row.',
         );
       let i = 0;
       const out = sql.replace(/\?/g, () => b.bind(params[i++]));

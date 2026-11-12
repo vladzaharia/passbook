@@ -265,7 +265,11 @@ describe('M1: markers are bound to the grant row and tenant terms are the only o
     expect(read('SELECT p.id FROM passes p WHERE p.org_id = {org} AND ag.id = ?', ['x'])).toBe(
       OVERRIDE,
     );
-    expect(read('SELECT p.id FROM passes p WHERE p.org_id = {org} AND p.id = ?', ['x'])).toBeNull();
+    expect(
+      read('SELECT p.id FROM passes p WHERE p.org_id = {org} AND p.mode = {mode} AND p.id = ?', [
+        'x',
+      ]),
+    ).toBeNull();
     expect(
       codeOf(() =>
         g.include(
@@ -552,5 +556,238 @@ describe('holder grants and the transfer tables', () => {
     const own = g();
     own.include(writePart(PAYLOAD_DELETE));
     await own.commit();
+  });
+});
+
+// Platform review L2 (2026-11-11): every probe below was accepted; each refusal has a legitimate sibling.
+describe('L2: a tenant term is a conjunct of its own statement, and pass rows are tied', () => {
+  const tenantTie = 'p.org_id = {org} AND p.mode = {mode}';
+
+  it('reads: comma joins, OR / NOT around the tenant term, and a missing {mode} are refused', async () => {
+    const { a } = await two('l2-read');
+    const g = mk(a);
+    const read = (sql: string, params: (string | number)[] = []) =>
+      codeOf(() => g.include(readPart(sql, params)));
+    for (const sql of [
+      'SELECT s.id FROM passes p, scans s WHERE p.org_id = {org} AND p.mode = {mode}',
+      'SELECT s.id FROM passes p, scans s WHERE p.org_id = {org} AND p.mode = {mode} AND s.org_id = {org} AND s.mode = {mode}',
+      `SELECT p.id FROM passes p WHERE ${tenantTie} OR 1`,
+      `SELECT p.id FROM passes p WHERE (p.org_id = {org} OR 1) AND p.mode = {mode}`,
+      'SELECT p.id FROM passes p WHERE NOT (p.org_id = {org}) AND p.mode = {mode}',
+      'SELECT p.id FROM passes p WHERE NOT p.org_id = {org} AND p.mode = {mode}',
+      'SELECT p.id FROM passes p WHERE (p.org_id = {org}) = 0 AND p.mode = {mode}',
+      'SELECT p.id FROM passes p WHERE coalesce(p.org_id = {org}, 1) AND p.mode = {mode}',
+      'SELECT p.id FROM passes p WHERE CASE WHEN 1 THEN 1 ELSE p.org_id = {org} END AND p.mode = {mode}',
+      'SELECT p.id FROM passes p WHERE p.org_id = {org}',
+      'SELECT g.state FROM scan_gates g WHERE g.org_id = {org}',
+      `SELECT p.id FROM passes p WHERE p.mode = {mode} AND NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = p.id AND s.org_id = {org} AND s.mode = {mode} AND p.org_id = {org})`,
+      `SELECT p.id FROM passes p WHERE ${tenantTie} AND NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = p.id AND (s.org_id = {org} OR 1) AND s.mode = {mode})`,
+      `SELECT p.id FROM passes p WHERE ${tenantTie} AND EXISTS (SELECT 1 FROM passes p WHERE p.id = ?)`,
+      'SELECT p.id FROM passes p LEFT JOIN scan_events e ON e.id = p.id AND e.org_id = {org} WHERE p.org_id = {org} AND p.mode = {mode}',
+      'SELECT x.id FROM (SELECT id, org_id FROM scans) x JOIN passes p ON p.org_id = {org}',
+      'SELECT p.id FROM passes p WHERE p.org_id IS NOT DISTINCT FROM {org}',
+      'SELECT p.id FROM "passes" p WHERE p.org_id = {org}',
+      `SELECT p.id FROM passes p WHERE ${tenantTie} AND p.id = ?1`,
+      `SELECT p.id FROM passes p WHERE ${tenantTie} AND p.id = :id`,
+    ])
+      expect(read(sql, /\?1|:id|p\.id = \?\)/.test(sql) ? ['x'] : []), sql).toBe(OVERRIDE);
+    for (const sql of [
+      `SELECT p.id FROM passes p WHERE ${tenantTie}`,
+      `SELECT p.id FROM passes p WHERE p.id = ? AND (${tenantTie})`,
+      `SELECT p.id FROM passes p JOIN scans s ON s.pass_id = p.id AND s.org_id = {org} AND s.mode = {mode} WHERE ${tenantTie}`,
+      `SELECT p.id, CASE WHEN p.status = 'active' OR 1 THEN 1 END AS live FROM passes p WHERE ${tenantTie}`,
+      // A subquery alias holds its term in its own WHERE, even inside NOT EXISTS.
+      `SELECT p.id FROM passes p WHERE ${tenantTie} AND NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = p.id AND s.org_id = {org} AND s.mode = {mode})`,
+      `SELECT p.id FROM passes p WHERE p.mode = {mode} AND EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = p.id AND p.org_id = {org} AND s.org_id = {org} AND s.mode = {mode})`,
+      // A literal is inert: 'ag' is not the grant alias.
+      `SELECT p.id FROM passes p WHERE ${tenantTie} AND 'ag' = 'ag'`,
+      'SELECT g.state FROM scan_gates g WHERE g.org_id = {org} AND g.mode = {mode}',
+    ])
+      expect(read(sql, sql.includes('p.id = ?') ? ['x'] : []), sql).toBeNull();
+    // An org grant has no mode to compare.
+    const org = grant(a.route, {
+      purpose: 'org.test.bypass',
+      principal: a.member(),
+      tables: TABLES,
+    });
+    expect(
+      codeOf(() => org.include(readPart('SELECT p.id FROM passes p WHERE p.org_id = {org}'))),
+    ).toBeNull();
+  });
+
+  it('writes: a pass-bearing row under a tenant grant is tied to a pass of {org} and {mode}', async () => {
+    const { a, b } = await two('l2-tie');
+    const g = mk(a, [...TABLES, 'revisions']);
+    const bad = (sql: string, params: (string | number)[] = []) =>
+      codeOf(() => g.include(writePart(sql, params)));
+    for (const [sql, params] of [
+      ['DELETE FROM registrations WHERE pass_id = ? AND {grant}', ['x']],
+      [
+        'DELETE FROM registrations WHERE pass_id IN (SELECT p.id FROM passes p WHERE p.org_id = {org}) AND {grant}',
+        [],
+      ],
+      [
+        `DELETE FROM registrations WHERE pass_id IN (SELECT p.id FROM passes p WHERE ${tenantTie}) OR 1 AND {grant}`,
+        [],
+      ],
+      [
+        `DELETE FROM registrations WHERE pass_id NOT IN (SELECT p.id FROM passes p WHERE ${tenantTie}) AND {grant}`,
+        [],
+      ],
+      [
+        `DELETE FROM registrations WHERE NOT EXISTS (SELECT 1 FROM passes p WHERE p.id = registrations.pass_id AND ${tenantTie}) AND {grant}`,
+        [],
+      ],
+      [`UPDATE revisions SET pass_id = p.id FROM passes p WHERE ${tenantTie} AND {grant}`, []],
+      [
+        `INSERT INTO revisions (pass_id, at) SELECT ?, 1 FROM passes p WHERE p.id = ? AND ${tenantTie} AND {grant}`,
+        ['x', 'x'],
+      ],
+      [
+        `WITH t AS (SELECT 1) DELETE FROM registrations WHERE pass_id IN (SELECT id FROM passes p WHERE p.org_id = {org}) AND {grant} RETURNING *`,
+        [],
+      ],
+      [
+        `WITH passes AS (SELECT ? AS id, {org} AS org_id, {mode} AS mode) DELETE FROM registrations WHERE pass_id IN (SELECT p.id FROM passes p WHERE ${tenantTie}) AND {grant}`,
+        ['x'],
+      ],
+      ['DELETE FROM registrations WHERE pass_id = ?1 AND {grant}', ['x']],
+      ['DELETE FROM counters WHERE key = ? OR {grant}', ['k']],
+    ] as const)
+      expect(bad(sql, [...params]), sql).toBe(OVERRIDE);
+    const inTenant = `pass_id IN (SELECT p.id FROM passes p WHERE p.id = ? AND ${tenantTie})`;
+    for (const sql of [
+      `DELETE FROM registrations WHERE ${inTenant} AND {grant}`,
+      `DELETE FROM registrations WHERE EXISTS (SELECT 1 FROM passes p WHERE p.id = ? AND p.id = registrations.pass_id AND ${tenantTie}) AND {grant}`,
+      `WITH t AS (SELECT 1) DELETE FROM registrations WHERE ${inTenant} AND {grant} RETURNING *`,
+    ])
+      expect(bad(sql, ['x']), sql).toBeNull();
+
+    // In D1: another tenant's pass id deletes and inserts nothing; the grant's own pass does.
+    const seed = (passId: string) =>
+      db.prepare('INSERT INTO revisions (pass_id, at) VALUES (?, 1)').bind(passId).run();
+    await seed(a.s.pass.id);
+    await seed(b.s.pass.id);
+    const revs = (passId: string) =>
+      count('SELECT count(*) AS n FROM revisions WHERE pass_id = ?', [passId]);
+    const run = async (passId: string) => {
+      const w = mk(a, [...TABLES, 'revisions']);
+      w.include(
+        writePart(`DELETE FROM revisions WHERE ${inTenant} AND {grant}`, [passId]),
+        writePart(
+          `INSERT INTO revisions (pass_id, at) SELECT p.id, 2 FROM passes p WHERE p.id = ? AND ${tenantTie} AND {grant}`,
+          [passId],
+        ),
+      );
+      await w.commit();
+    };
+    const foreign = await revs(b.s.pass.id);
+    await run(b.s.pass.id);
+    expect(await revs(b.s.pass.id)).toBe(foreign);
+    expect(await count('SELECT count(*) AS n FROM revisions WHERE at = 2')).toBe(0);
+    await run(a.s.pass.id);
+    expect(await revs(a.s.pass.id)).toBe(1);
+    expect(
+      await count('SELECT count(*) AS n FROM revisions WHERE pass_id = ? AND at = 2', [
+        a.s.pass.id,
+      ]),
+    ).toBe(1);
+  });
+
+  it('a holder write keeps {pass} and {grant} as conjuncts', async () => {
+    const x = await setupGrant('l2-holder');
+    const row = await first<{ identity_id: string; serial: string; auth_token: string }>(
+      db,
+      'SELECT identity_id, serial, auth_token FROM passes WHERE id = ?',
+      [x.s.pass.id],
+    );
+    const g = grant(x.route, {
+      purpose: 'org_mode.pass.personalize',
+      principal: {
+        kind: 'holder',
+        passId: x.s.pass.id,
+        proof: {
+          via: 'device',
+          identityId: row?.identity_id ?? '',
+          serial: row?.serial ?? '',
+          authToken: row?.auth_token ?? '',
+          credentialGeneration: 0,
+        },
+      },
+      tables: ['registrations'],
+    });
+    const part = (sql: string) => codeOf(() => g.include(writePart(sql)));
+    expect(part('DELETE FROM registrations WHERE pass_id = {pass} OR 1 AND {grant}')).toBe(
+      OVERRIDE,
+    );
+    expect(part('DELETE FROM registrations WHERE NOT pass_id = {pass} AND {grant}')).toBe(OVERRIDE);
+    expect(part('UPDATE registrations SET pass_id = {pass} WHERE {grant}')).toBe(OVERRIDE);
+    expect(part('DELETE FROM registrations WHERE pass_id = {pass} AND {grant}')).toBeNull();
+  });
+
+  it('rawCheck reserves the actor alias a; tenantSql keeps its tenant term a conjunct', async () => {
+    const { a, b } = await two('l2-cond');
+    const check = (sql: string, params: (string | number)[] = []) =>
+      codeOf(() =>
+        grant(a.route, {
+          purpose: 'org_mode.test.bypass',
+          principal: a.member(),
+          checks: [rawCheck('lineage', sql, params)],
+        }),
+      );
+    expect(
+      check('EXISTS (SELECT 1 FROM passes a WHERE a.id = ? AND a.org_id = ?)', [
+        b.s.pass.id,
+        b.s.org.id,
+      ]),
+    ).toBe(OVERRIDE);
+    expect(check('EXISTS (SELECT 1 FROM passes A WHERE A.id = ?)', [b.s.pass.id])).toBe(OVERRIDE);
+    expect(check('EXISTS (SELECT 1 FROM passes x WHERE x.id = ?1)', [b.s.pass.id])).toBe(OVERRIDE);
+    expect(
+      check('EXISTS (SELECT 1 FROM orgs o WHERE o.id = a.org_id AND o.status = ?)', ['active']),
+    ).toBeNull();
+    const ok = grant(a.route, {
+      purpose: 'org_mode.test.bypass',
+      principal: a.member(),
+      checks: [rawCheck('lineage', 'EXISTS (SELECT 1 FROM orgs o WHERE o.id = a.org_id)')],
+    });
+    await ok.commit();
+
+    const cond = (sql: string, params: (string | number)[] = []) =>
+      codeOf(() => tenantSql(sql, params));
+    for (const sql of [
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND (x.org_id = {org} OR 1))',
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND x.org_id = {org} OR 1)',
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND NOT (x.org_id = {org}))',
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND coalesce(x.org_id = {org}, 1))',
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND CASE WHEN 1 THEN 1 ELSE x.org_id = {org} END)',
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ?1 AND x.org_id = {org})',
+    ])
+      expect(cond(sql, ['p']), sql).toBe(OVERRIDE);
+    for (const sql of [
+      'EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND x.org_id = {org})',
+      // A negated body only refuses more: a tenant term inside NOT EXISTS may sit under an OR.
+      'NOT EXISTS (SELECT 1 FROM passes x WHERE x.id = ? AND x.org_id = {org})',
+      'NOT EXISTS (SELECT 1 FROM passes x WHERE x.id = ? OR (x.status = 1 AND x.org_id = {org}))',
+      'EXISTS (SELECT 1 FROM templates t WHERE t.id = ? AND (t.org_id IS NULL OR t.org_id = {org}))',
+      '(? IS NULL OR EXISTS (SELECT 1 FROM outbox ob WHERE ob.id = ? AND ob.org_id = {org}))',
+    ])
+      expect(cond(sql, sql.startsWith('(?') ? ['p', 'p'] : ['p']), sql).toBeNull();
+  });
+
+  it('unguarded: the grant-row predicate counts only outside string literals', async () => {
+    const x = await setupGrant('l2-unguarded');
+    const g = mk(x);
+    expect(
+      codeOf(() => g.unguarded("UPDATE counters SET count = 0 WHERE key = 'authority_grants'", [])),
+    ).toBe('GRANT_FOREIGN_STATEMENT');
+    expect(
+      codeOf(() =>
+        g.unguarded(
+          'UPDATE counters SET count = 0 WHERE key = ? AND EXISTS (SELECT 1 FROM authority_grants g WHERE g.id = ?)',
+          ['k', g.id],
+        ),
+      ),
+    ).toBeNull();
   });
 });

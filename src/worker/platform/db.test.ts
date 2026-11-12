@@ -134,6 +134,16 @@ describe('prefixMatch and containsMatch', () => {
     expect(prefixMatch('c', long).params).toHaveLength(3);
     expect(containsMatch('c', long).sql).toContain('instr(');
   });
+
+  it('refuses a comment tag that is not kebab-case, since it is spliced into the SQL', () => {
+    for (const bad of ['x */ OR 1 /*', 'a b', 'Tag', 'scan_ephemeral', '*/'])
+      for (const match of [prefixMatch, containsMatch])
+        expect(() => match('c', 'ab', bad), bad).toThrow('Invalid SQL comment tag');
+    expect(containsMatch('c', 'ab', 'scan-ephemeral-2').sql).toBe(
+      "c LIKE ?/* scan-ephemeral-2 */ ESCAPE '\\'",
+    );
+    expect(prefixMatch('c', 'x'.repeat(80), 'tag').sql).toContain('/* tag */');
+  });
 });
 
 describe('classifyD1Error', () => {

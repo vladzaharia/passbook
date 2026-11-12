@@ -1,14 +1,23 @@
 // Parts built by side builders (retention proofs, counters, history) that commit only in a grant's batch.
 // A part is inert data; markers bind the grant row, and the lints below tie it to the grant's tenant.
 import { AuthorityError } from './authority-error.ts';
+import {
+  insertExpressions,
+  lintColumn,
+  lintPassTie,
+  lintTransferPin,
+  tied,
+} from './authority-part-ties.ts';
 import type { GrantScope } from './authority-principal.ts';
 import {
+  assertPlainParams,
   assertReadOnly,
   assertSqlText,
+  hasCommaJoin,
+  hasConjunct,
   mapOutsideLiterals,
-  splitTopLevel,
+  openOf,
   stripLiterals,
-  type WriteKind,
   writeTargetsOf,
 } from './authority-sqltext.ts';
 import type { BuiltStatement } from './authority-statements.ts';
@@ -60,7 +69,7 @@ export function writeTargets(sql: string): string[] {
 /** A legacy unguarded write: carries the grant row and targets no guarded, authority or append-only table. */
 export function assertUnguarded(sql: string): void {
   const writes = writeTargets(sql);
-  if (writes.length > 0 && !/\bauthority_grants\b/.test(sql))
+  if (writes.length > 0 && !/\bauthority_grants\b/.test(stripLiterals(sql)))
     throw new AuthorityError(
       'GRANT_FOREIGN_STATEMENT',
       'An unguarded write must carry the grant-row predicate.',
@@ -87,6 +96,14 @@ const form = (column: string, marker: string) =>
     `\\b(?:\\w+\\.)?${column}\\s*=\\s*\\{${marker}\\}|\\{${marker}\\}\\s*=\\s*(?:\\w+\\.)?${column}\\b`,
     'g',
   );
+const KNOWN_TABLES = () =>
+  new Set<string>([
+    ...banned(),
+    ...ORG_BEARING_TABLES,
+    ...MODE_BEARING_TABLES,
+    ...PASS_BEARING_TABLES,
+    ...Object.keys(HOLDER_PART_PINS),
+  ]);
 
 function lintPart(part: GrantPart, scope: GrantScope, holder: boolean): string {
   const text = assertSqlText(part.sql, 'A part');
@@ -100,8 +117,15 @@ function lintPart(part: GrantPart, scope: GrantScope, holder: boolean): string {
   if (text.includes('{mode}') && scope !== 'org_mode')
     throw override('{mode} needs an org_mode grant.');
   if (text.includes('{pass}') && !holder) throw override('{pass} is for holder grants.');
+  assertPlainParams(text, 'A part');
   if ([...text.matchAll(/\?/g)].length !== part.params.length)
     throw new AuthorityError('GRANT_BAD_PURPOSE', 'A part has the wrong number of parameters.');
+  if (hasCommaJoin(text)) throw override('A part joins with JOIN ... ON, not a comma.');
+  const tables = KNOWN_TABLES();
+  for (const m of text.matchAll(
+    /\b([a-z_]\w*)\s*(?:\([^()]*\))?\s+AS\s*(?:NOT\s+)?(?:MATERIALIZED\s+)?\(/gi,
+  ))
+    if (tables.has((m[1] ?? '').toLowerCase())) throw override(`A CTE cannot shadow ${m[1]}.`);
   return text;
 }
 
@@ -134,87 +158,23 @@ function lintRead(part: GrantPart, text: string, scope: GrantScope): void {
     const t = GUARDED_TABLES[table];
     if (t && t.org !== null && t.org !== 'org_id')
       throw override(`${table} cannot be read in a part.`);
-    if ((t && t.org === 'org_id') || ORG_BEARING_TABLES.has(table))
-      if (
-        !new RegExp(
-          `\\b${alias}\\.org_id\\s*=\\s*\\{org\\}|\\{org\\}\\s*=\\s*${alias}\\.org_id\\b`,
-          'i',
-        ).test(text)
-      )
-        throw override(`${table} is read with ${alias}.org_id = {org}.`);
+    // The term holds where the alias is defined: a subquery's own WHERE or ON, else the statement's.
+    const level = openOf(text, m.index ?? 0);
+    if (
+      ((t && t.org === 'org_id') || ORG_BEARING_TABLES.has(table)) &&
+      !tied(text, alias, 'org_id', 'org', level)
+    )
+      throw override(`${table} is read with ${alias}.org_id = {org} as a conjunct.`);
+    if (
+      scope === 'org_mode' &&
+      (t?.mode || MODE_BEARING_TABLES.has(table)) &&
+      !tied(text, alias, 'mode', 'mode', level)
+    )
+      throw override(`${table} is read with ${alias}.mode = {mode} under an org_mode grant.`);
   }
 }
 
-function insertExpressions(text: string): { columns: string[]; rows: string[][] } | null {
-  const head =
-    /\b(?:INSERT(?:\s+OR\s+\w+)?|REPLACE)\s+INTO\s+\w+\s*\(([^)]*)\)\s*(SELECT|VALUES)\b/i.exec(
-      text,
-    );
-  if (!head) return null;
-  const columns = (head[1] ?? '').split(',').map((c) => c.trim().toLowerCase());
-  const tail = text.slice(head.index + head[0].length);
-  if ((head[2] ?? '').toUpperCase() === 'SELECT') {
-    const end = /\b(?:FROM|WHERE|ON\s+CONFLICT|RETURNING)\b/i.exec(tail)?.index ?? tail.length;
-    return { columns, rows: [splitTopLevel(tail.slice(0, end))] };
-  }
-  const rows: string[][] = [];
-  let depth = 0;
-  let from = -1;
-  for (let i = 0; i < tail.length; i++) {
-    if (tail[i] === '(') {
-      if (depth++ === 0) from = i + 1;
-    } else if (tail[i] === ')' && --depth === 0) rows.push(splitTopLevel(tail.slice(from, i)));
-    else if (depth === 0 && /\bON\s+CONFLICT\b/i.test(tail.slice(i, i + 12))) break;
-  }
-  return { columns, rows };
-}
-
-/** The tenant column rule of one write: `{marker}` at the column of an insert, or the equality in the WHERE. */
-function lintColumn(
-  kind: WriteKind,
-  table: string,
-  text: string,
-  column: string,
-  marker: string,
-  ins: ReturnType<typeof insertExpressions>,
-): void {
-  const need = `${table} must tie ${column} to {${marker}}.`;
-  if (kind === 'insert') {
-    const at = ins?.columns.indexOf(column) ?? -1;
-    if (!ins || at < 0 || ins.rows.length === 0) throw override(need);
-    for (const row of ins.rows) if ((row[at] ?? '').trim() !== `{${marker}}`) throw override(need);
-    return;
-  }
-  const own = new RegExp(
-    `(?<![\\w.])${column}\\s*=\\s*\\{${marker}\\}|\\b${table}\\.${column}\\s*=\\s*\\{${marker}\\}|\\{${marker}\\}\\s*=\\s*${table}\\.${column}\\b`,
-  );
-  if (!own.test(text)) throw override(need);
-}
-
-/** A row pinned through its transfer: the transfer row of `{pass}` is the one the write names. */
-function lintTransferPin(
-  kind: WriteKind,
-  table: string,
-  text: string,
-  column: string,
-  ins: ReturnType<typeof insertExpressions>,
-): void {
-  const need = `${table} must be tied to a transfer of {pass}.`;
-  const m = /\bFROM\s+pass_credential_transfers\s+(?:AS\s+)?([a-z_]\w*)\s+WHERE\b/i.exec(text);
-  const alias = m?.[1];
-  if (!alias || !new RegExp(`\\b${alias}\\.pass_id\\s*=\\s*\\{pass\\}`).test(text))
-    throw override(need);
-  if (kind === 'insert') {
-    const at = ins?.columns.indexOf(column) ?? -1;
-    if (!ins || at < 0 || ins.rows.some((r) => (r[at] ?? '').trim() !== `${alias}.id`))
-      throw override(need);
-    return;
-  }
-  if (!new RegExp(`\\b${alias}\\.id\\s*=\\s*(?:${table}\\.)?${column}\\b`).test(text))
-    throw override(need);
-}
-
-function lintWrite(text: string, holder: boolean): string {
+function lintWrite(text: string, scope: GrantScope, holder: boolean): string {
   const targets = writeTargetsOf(text);
   const [target] = targets;
   if (targets.length !== 1 || !target) throw override('A write part has exactly one write target.');
@@ -224,7 +184,8 @@ function lintWrite(text: string, holder: boolean): string {
       'GRANT_UNGUARDED_TABLE',
       `${table} is written through the typed builder, not a part.`,
     );
-  if (!text.includes('{grant}')) throw override('A write part must carry {grant}.');
+  if (!hasConjunct(text, /\{grant\}/g))
+    throw override('A write part must carry {grant} as a conjunct.');
   const ins = kind === 'insert' ? insertExpressions(text) : null;
   if (ORG_BEARING_TABLES.has(table) || ins?.columns.includes('org_id'))
     lintColumn(kind, table, text, 'org_id', 'org', ins);
@@ -237,7 +198,8 @@ function lintWrite(text: string, holder: boolean): string {
     else if (!PASS_BEARING_TABLES.has(table))
       throw override(`${table} is not written under a holder grant.`);
     else lintColumn(kind, table, text, 'pass_id', 'pass', ins);
-  }
+  } else if (scope !== 'platform' && PASS_BEARING_TABLES.has(table))
+    lintPassTie(kind, table, text, scope, ins);
   afterTenantForms(text);
   return table;
 }
@@ -252,7 +214,7 @@ export function buildPart(
   const holder = options.holder === true;
   const text = lintPart(part, scope, holder);
   if (part.kind === 'read') lintRead(part, text, scope);
-  else options.onWrite?.(lintWrite(text, holder));
+  else options.onWrite?.(lintWrite(text, scope, holder));
   const params: SqlValue[] = [];
   let i = 0;
   const sql = mapOutsideLiterals(part.sql, (seg) =>

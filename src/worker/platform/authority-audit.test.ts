@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { grant } from './authority.ts';
 import { tenantSql } from './authority-cond.ts';
-import { type BUILDER, GrantedStatement } from './authority-granted.ts';
+import { GrantedStatement } from './authority-granted.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { all } from './db.ts';
 
@@ -27,7 +27,7 @@ describe('statements cannot be forged', () => {
     const { route, member } = await setupGrant('forge');
     const g = grant(route, { purpose: 'org_mode.scan.update', principal: member() });
     const forged = () =>
-      new GrantedStatement(Symbol('x') as unknown as typeof BUILDER, g.id, {
+      new GrantedStatement(Symbol('x') as never, g.id, {
         sql: 'UPDATE passes SET status = 1',
         params: [],
       });

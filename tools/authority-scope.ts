@@ -1,9 +1,26 @@
 // Authority-redesign scope check (docs/design/authority-epochs.md sections 1.2, 1.3 and 7.1).
-// Every file matching a fence pattern needs one owner in Appendix A, and the new lint rules apply.
-// Findings are warnings until WP8 turns on --strict. Run in `npm run check:rules`.
+// Every file matching a fence pattern needs one owner in Appendix A, and the lint rules apply.
+// `npm run check:rules` runs it with --strict: any finding fails the build.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { AUTHORITY_TABLES, GUARDED_TABLES } from '../src/worker/platform/authority-tables.ts';
+import {
+  AUTHORITY_TABLES,
+  GUARDED_TABLES,
+  ORG_BEARING_TABLES,
+} from '../src/worker/platform/authority-tables.ts';
+import {
+  DYNAMIC_WRITE_ALLOWLIST,
+  RAW_WRITE_ALLOWLIST,
+  REPLACE_ALLOWLIST,
+  UNTENANTED_CHECK_ALLOWLIST,
+} from './authority-scope-allowlists.ts';
+
+export {
+  DYNAMIC_WRITE_ALLOWLIST,
+  RAW_WRITE_ALLOWLIST,
+  REPLACE_ALLOWLIST,
+  UNTENANTED_CHECK_ALLOWLIST,
+};
 
 const root = resolve(import.meta.dirname, '..');
 const DOC = 'docs/design/authority-epochs.md';
@@ -12,10 +29,13 @@ export type Rule =
   | 'unowned'
   | 'replace'
   | 'raw-guarded-write'
+  | 'dynamic-write'
   | 'updated-at-predicate'
   | 'request-bound-grant-org'
+  | 'untenanted-check'
   | 'job-context'
   | 'job-authority-import'
+  | 'builder-internal'
   | 'forged-statement';
 
 export interface Finding {
@@ -42,10 +62,34 @@ const GUARDED = [...Object.keys(GUARDED_TABLES), ...AUTHORITY_TABLES].join('|');
 // A target may carry a schema prefix or quotes (`main.passes`, `"passes"`), which the match still names.
 const QUOTE = '["`\\[]?';
 const SCHEMA = '(?:(?:main|temp)\\s*\\.\\s*)?';
+// `UPDATE t [AS] x [INDEXED BY i | NOT INDEXED] SET`; INSERT and DELETE match on the table name alone.
+const ALIAS = '(?:\\s+(?:AS\\s+)?(?!SET\\b|INDEXED\\b|NOT\\b)(?:[a-z_]\\w*|\\$\\{[^}]*\\}))?';
+const INDEXED = '(?:\\s+INDEXED\\s+BY\\s+\\w+|\\s+NOT\\s+INDEXED)?';
 const WRITE = new RegExp(
-  `\\b(?:INSERT\\s+(?:OR\\s+\\w+\\s+)?INTO|REPLACE\\s+INTO|DELETE\\s+FROM)\\s+${SCHEMA}${QUOTE}(${GUARDED})\\b|\\bUPDATE(?:\\s+OR\\s+\\w+)?\\s+${SCHEMA}${QUOTE}(${GUARDED})\\b${QUOTE}\\s+SET\\s+([^;]*?)(?:\\bWHERE\\b|[\`'"]|$)`,
+  `\\b(?:INSERT\\s+(?:OR\\s+\\w+\\s+)?INTO|REPLACE\\s+INTO|DELETE\\s+FROM)\\s+${SCHEMA}${QUOTE}(${GUARDED})\\b|\\bUPDATE(?:\\s+OR\\s+\\w+)?\\s+${SCHEMA}${QUOTE}(${GUARDED})\\b${QUOTE}${ALIAS}${INDEXED}\\s+SET\\s+([^;]*?)(?:\\bWHERE\\b|[\`'"]|$)`,
   'gis',
 );
+/** Helpers whose table is an argument: a guarded table literal there is a raw write too. */
+const HELPER_WRITE = new RegExp(
+  `\\b(?:deleteInBatches\\(\\s*[\\w.]+\\s*,\\s*|casUpdate\\([^)]*?\\btable\\s*:\\s*)['"\`](${GUARDED})['"\`]`,
+  'g',
+);
+const HEAD = '\\b(?:INSERT(?:\\s+OR\\s+\\w+)?\\s+INTO|REPLACE\\s+INTO|DELETE\\s+FROM)';
+const CONCAT = '(?:\\s+[\\w.]*)?\\s*[\'"`]\\s*\\+';
+/**
+ * A write whose target is interpolated, or SQL text concatenated onto a write head. A lone `update` is
+ * also a JS word, so a concatenated UPDATE must be upper-case and an interpolated one must reach SET.
+ */
+const DYNAMIC_WRITE = [
+  new RegExp(`${HEAD}\\s+${SCHEMA}\\$\\{|${HEAD}${CONCAT}`, 'gi'),
+  new RegExp(
+    `\\bUPDATE(?:\\s+OR\\s+\\w+)?\\s+${SCHEMA}\\$\\{[^}]*\\}(?:\\s+(?:AS\\s+)?\\w+)?\\s+(?:SET|INDEXED|NOT)\\b`,
+    'gi',
+  ),
+  new RegExp(`\\bUPDATE(?:\\s+OR\\s+[A-Z]+)?${CONCAT}`, 'g'),
+];
+/** Builder internals: the statement token, its factory and the batch's private prepare. */
+const BUILDER_INTERNAL = /\b(?:BUILDER|newGrantedStatement|prepareOf|registerPrepare)\b/;
 /** Columns that may change outside a grant: session idle slide, scanner and key last-use stamps. */
 const STAMP_ONLY =
   /^(?:\s*(?:last_seen_at|last_ip_prefix|staff_seen_at|idle_expires_at|last_used_at)\s*=\s*[^,]+,?)+\s*$/is;
@@ -63,75 +107,71 @@ const PART_TENANT_BIND =
   /\b(?:writePart|readPart)\(\s*(['"`])(?:(?!\1)[\s\S])*?\b(?:org_id|mode)\s*=\s*\?/;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
-/** Reviewed `OR REPLACE` sites (section 1.3). Anything else needs an entry in the design doc first. */
-export const REPLACE_ALLOWLIST: Record<string, string> = {
-  'src/worker/modules/delivery/repo-devices.ts':
-    'push_results: per-outbox result keyed (outbox_id, device_id), holds no authority',
-};
+const TENANT_TABLES = new Set([
+  ...Object.entries(GUARDED_TABLES)
+    .filter(([, t]) => t.org !== null)
+    .map(([name]) => name),
+  ...ORG_BEARING_TABLES,
+]);
+
+/** The body of the JS string literal opening at `at` (quote included); `${...}` reads as `x`. */
+function literalBody(text: string, at: number): string {
+  const quote = text[at];
+  let out = '';
+  for (let i = at + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\\') {
+      out += text[++i] ?? '';
+    } else if (ch === quote) {
+      return out;
+    } else if (quote === '`' && ch === '$' && text[i + 1] === '{') {
+      let depth = 0;
+      for (i++; i < text.length; i++) {
+        if (text[i] === '{') depth++;
+        else if (text[i] === '}' && --depth === 0) break;
+      }
+      out += 'x';
+    } else out += ch;
+  }
+  return out;
+}
+
+/** The text inside the parenthesis that opens at `open`. */
+function group(text: string, open: number): string {
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === '(') depth++;
+    else if (text[i] === ')' && --depth === 0) return text.slice(open + 1, i);
+  }
+  return text.slice(open + 1);
+}
 
 /**
- * Files whose remaining raw writes to a guarded table are reviewed and intended. Each needs a reason that
- * names why no grant principal exists or applies. Everything else is a finding (blocking under --strict).
+ * Tenant tables a `rawCheck` reads under a positive EXISTS without a tenant term (`a.org_id`). A NOT EXISTS
+ * over another tenant's row only refuses more, so negated bodies are skipped.
  */
-export const RAW_WRITE_ALLOWLIST: Record<string, string> = {
-  'src/worker/modules/orgs/repo-branding.ts':
-    'branding_dirty_at is volatile bookkeeping for the branding reissue debounce, not an authority column',
-  'src/worker/modules/auth/repo-sessions.ts':
-    "sign-in creates the session (no principal exists yet); idle slide is on the allowlist; sign-out revokes the caller's own session",
-  'src/worker/modules/auth/repo.ts':
-    'sign-in finds or creates the user and stamps last login before any principal exists',
-  'src/worker/modules/me/repo.ts': 'a user edits their own primary email under their own session',
-  'src/worker/modules/orgs/repo.ts':
-    'trusted callers without an admin session (fixtures, service tests): setOrgBranding, setOrgStatus, markOrgDeleted, insertOrg. Routes use platform.org.* grants',
-  'src/worker/modules/orgs/repo-org-writes.ts':
-    'the CAS-only org edit for a trusted caller without authority; tenant edits are org.org.update grants',
-  'src/worker/modules/orgs/repo-members.ts':
-    'invitation accept (the token is the authority) and the revokeMembership fixture helper; manager writes are org.member.* grants',
-  'src/worker/modules/settings/repo.ts':
-    'trusted org settings writes without authority (fixtures) and system-scope job values; routes use settings grants',
-  'src/worker/modules/users/repo.ts':
-    'trusted setStatus for service callers without an admin session; the route uses platform.user.* grants',
-  'src/worker/modules/scan/repo-scans.ts':
-    "release, fail, quarantine and retention purge of the actor's own server-minted claim row: they run after authority is revoked and only close a claim; a scan takes effect only through scan.* grants",
-  'src/worker/modules/scan/repo-act-claim.ts':
-    "reopen, quarantine and fail of the actor's own claim generation after a key collision, still fenced by the claim authority predicate; a fresh claim is the org_mode.scan.claim upsert",
-  'src/worker/modules/scan/repo-gate-recovery.ts':
-    'server-side recovery of a crashed claim: quarantines the claim and restores only gate and presence snapshots that still match what the crashed scan wrote; it runs from the recovery job (or once per collision) and takes no actor authority',
-  'src/worker/modules/scan/repo-scans-write.ts':
-    'claim, finalize and ledger statements kept for fixtures and the reconcile tests; production writes are scan.* grants',
-  'src/worker/modules/scan/repo-counts.ts':
-    'scan_events.expected is an idempotent cache fill on a GET (volatile, derived from the guarded event config_epoch); it is not authority',
-  'src/worker/modules/events/repo.ts':
-    'pass_events is an append-only ledger written by recordPassEvent; WP5b owns the grant conversion',
-  'src/worker/modules/apple/repo-events.ts':
-    'device.fetched ledger rows from the Apple device protocol, fenced in SQL by the credential serial and generation; the device principal has no ledger purpose',
-  'src/worker/modules/passes/repo-remove-compensate.ts':
-    "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
-  'src/worker/modules/passes/repo-pass-trusted.ts':
-    'link rotation, refresh claim and soft delete for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
-  'src/worker/modules/passes/repo-connection-state.ts':
-    'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-  'src/worker/modules/passes/repo-history-assets.ts':
-    'exact-state rollback of an asset write after a failed rebuild, and trusted callers; tenant writes take replaceAssetGranted',
-  'src/worker/modules/passes/repo-history-image.ts':
-    'commitImageMutation advances link_generation only for the exact-state rollback paths of asset and member photo writes and trusted callers; tenant writes take replaceAssetGranted and replaceMemberPhotoGranted',
-  'src/worker/modules/passes/repo-member-photo.ts':
-    "exact-state compensation of this request's own photo write (after authority may be revoked) and trusted callers; tenant writes take replaceMemberPhotoGranted",
-  'src/worker/modules/passes/repo-ops-retention.ts':
-    'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
-  'src/worker/modules/passes/repo-transfer-asset-gc.ts':
-    'GC of retired transfer asset keys: lifecycle bookkeeping on server-minted r2 keys, no principal',
-  'src/worker/modules/delivery/repo-outbox-processing.ts':
-    'outbox lease, retry and finish bookkeeping for a row already authorized at queue time; the provider boundary is a grant (repo-provider-attempt.ts)',
-  'src/worker/modules/delivery/repo-binding.ts':
-    'outbox lease check, provider acceptance and uncertain-outcome settlement for a leased row; no principal acts on it',
-  'src/worker/modules/delivery/repo-devices.ts':
-    'push device outcomes (outbox cancel, pass_events) written while delivering a leased push',
-  'src/worker/modules/delivery/repo-issuance-recovery.ts':
-    'issuance delivery retry deferral and stale cancellation by the scheduler; cancelling cannot widen authority',
-  'src/worker/modules/sandbox/repo.ts':
-    'daily test-data retention purge (captured_emails, bundles); a platform job with no tenant principal',
-};
+export function untenantedChecks(source: string): string[] {
+  const out = new Set<string>();
+  for (const m of source.matchAll(/\brawCheck\(\s*(?:'[^']*'|"[^"]*"|[\w.]+)\s*,\s*(?=['"`])/g)) {
+    let sql = literalBody(source, (m.index ?? 0) + m[0].length).replace(/'(?:[^']|'')*'/g, "''");
+    for (let n = /\bNOT\s+EXISTS\s*\(/i.exec(sql); n; n = /\bNOT\s+EXISTS\s*\(/i.exec(sql)) {
+      const open = n.index + n[0].length - 1;
+      const body = group(sql, open);
+      sql = `${sql.slice(0, n.index)}${' '.repeat(n[0].length + body.length + 1)}${sql.slice(open + body.length + 2)}`;
+    }
+    for (const e of sql.matchAll(/\bEXISTS\s*\(/gi)) {
+      const body = group(sql, (e.index ?? 0) + e[0].length - 1);
+      if (/\ba\.org_id\b/.test(body)) continue;
+      // A comma join names its later tables after a comma: `FROM passes p, scans s`.
+      for (const t of body.matchAll(
+        /\b(?:FROM|JOIN)\s+([a-z_]\w*)|,\s*([a-z_]\w*)\s+(?:AS\s+)?[a-z_]\w*/gi,
+      ))
+        if (TENANT_TABLES.has((t[1] ?? t[2] ?? '').toLowerCase()))
+          out.add((t[1] ?? t[2] ?? '').toLowerCase());
+    }
+  }
+  return [...out];
+}
 
 const skipFile = (rel: string) =>
   !/\.tsx?$/.test(rel) ||
@@ -212,6 +252,14 @@ export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
     add('raw-guarded-write', `raw write to ${table}`);
   }
+  for (const m of rel in RAW_WRITE_ALLOWLIST ? [] : text.matchAll(HELPER_WRITE))
+    add('raw-guarded-write', `raw write to ${m[1]} through a table-taking helper`);
+  if (!(rel in DYNAMIC_WRITE_ALLOWLIST))
+    for (const m of DYNAMIC_WRITE.flatMap((re) => [...text.matchAll(re)]))
+      add('dynamic-write', `write target built at runtime: ${m[0].replace(/\s+/g, ' ')}`);
+  for (const table of untenantedChecks(text))
+    if (!(`${rel}#${table}` in UNTENANTED_CHECK_ALLOWLIST))
+      add('untenanted-check', `rawCheck tests a ${table} row with no tenant term: use tenantCheck`);
   if (
     (/authority_grants/.test(text) && /\b(?:org_id|mode)\s*=\s*\?/i.test(text)) ||
     PART_TENANT_BIND.test(text) ||
@@ -281,6 +329,13 @@ export function scanBrandImport(rel: string, text: string): Finding[] {
       rule: 'forged-statement',
       file: rel,
       detail: 'constructs a GrantedStatement: use the grant builder, Grant.audit or Grant.include',
+    });
+  if (!isAuthorityFile(rel) && BUILDER_INTERNAL.test(text))
+    found.push({
+      rule: 'builder-internal',
+      file: rel,
+      detail:
+        'names BUILDER, newGrantedStatement, prepareOf or registerPrepare (platform/authority*.ts only)',
     });
   return found;
 }

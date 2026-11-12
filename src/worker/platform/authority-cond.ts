@@ -4,7 +4,12 @@ import { type Check, rejectOwnedConditions, tenantMatch } from './authority-chec
 import { AuthorityError } from './authority-error.ts';
 import { identifier, renderCond, type WhereValue } from './authority-expr.ts';
 import { Binds, type GrantScope } from './authority-principal.ts';
-import { assertSqlText, mapOutsideLiterals } from './authority-sqltext.ts';
+import {
+  assertPlainParams,
+  assertSqlText,
+  assertTenantConjuncts,
+  mapOutsideLiterals,
+} from './authority-sqltext.ts';
 import { GUARDED_TABLES } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
 import { DENY_REASONS, type DenyReason } from './errors.ts';
@@ -122,6 +127,8 @@ function lintTenantSql(sql: string): { questions: number; marks: Set<string> } {
   // `a` and `g` are the actor and grant rows the markers render to; an inner alias would shadow them.
   if (/\b[ag]\b/i.test(text))
     throw override('The aliases a and g are reserved in a tenant condition.');
+  assertPlainParams(text, 'A tenant condition');
+  assertTenantConjuncts(text, 'A tenant condition');
   const marks = new Set([...text.matchAll(/\{([^}]*)\}/g)].map((m) => m[1] ?? ''));
   let rest = text;
   for (const form of TENANT_FORMS) rest = rest.replace(form, ' ');

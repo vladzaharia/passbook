@@ -30,8 +30,8 @@ export interface GrantInput {
   tables?: readonly string[];
 }
 
-/** Held only by `platform/authority*.ts`: without it no other module can construct a statement. */
-export const BUILDER = Symbol('authority-builder');
+/** Module-local: only `newGrantedStatement` holds it, so no other module can construct a statement. */
+const BUILDER = Symbol('authority-builder');
 
 const registry = new WeakMap<GrantedStatement, { grantId: string } & BuiltStatement>();
 
@@ -67,6 +67,10 @@ export class GrantedStatement {
     return this.outside();
   }
 }
+
+/** The grant builder's statement factory. Only `platform/authority*.ts` may call it (lint `builder-internal`). */
+export const newGrantedStatement = (grantId: string, built: BuiltStatement): GrantedStatement =>
+  new GrantedStatement(BUILDER, grantId, built);
 
 export function builtOf(s: GrantedStatement): { grantId: string } & BuiltStatement {
   const built = registry.get(s);
