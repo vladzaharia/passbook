@@ -19,6 +19,7 @@ import {
   audited,
   eventsOpen,
   scannerEpoch,
+  scopeTemplatesUsable,
   sessionEpoch,
   templatesUsable,
 } from './repo-admin-grant.ts';
@@ -120,7 +121,7 @@ export async function updateScanner(
       'SCANNER_CHANGED',
     );
   const accepts = input.accepts
-    ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts)
+    ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts, row.templateIds)
     : null;
   const settings =
     input.settings !== undefined || accepts
@@ -151,7 +152,7 @@ export async function updateScanner(
       scannerEpoch(id, row.configEpoch),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
       ...eventsOpen([accepts?.eventId, input.settings?.checkIn?.eventId]),
-      ...templatesUsable(accepts?.templateIds ?? []),
+      ...scopeTemplatesUsable(accepts?.templateIds ?? [], row.templateIds),
     ],
     SCANNER_CODES,
     id,

@@ -19,6 +19,7 @@ import {
   adminGrant,
   audited,
   eventsOpen,
+  scopeTemplatesUsable,
   sessionEpoch,
   templatesUsable,
 } from './repo-admin-grant.ts';
@@ -32,7 +33,7 @@ import {
   scanningSessionRow,
 } from './repo-scanning-sessions.ts';
 import { readScannerScope } from './repo-scope.ts';
-import { checkAccepts } from './scanner-validation.ts';
+import { acceptedTemplateIds, checkAccepts } from './scanner-validation.ts';
 import {
   assertSessionReadAuthority,
   assertSessionWriteCountAuthority,
@@ -203,12 +204,13 @@ export async function updateScanningSession(
       'This session changed. Reload its settings and try again.',
       'SCANNING_SESSION_CHANGED',
     );
+  const attached = acceptedTemplateIds(row.accepts);
   const accepted =
     input.accepts === undefined
       ? undefined
       : input.accepts === null
         ? null
-        : await checkAccepts(ctx, row.org_id, row.mode, input.accepts);
+        : await checkAccepts(ctx, row.org_id, row.mode, input.accepts, attached);
   const settingsChanged = input.settings !== undefined || input.accepts !== undefined;
   const previousSettings = settingsChanged ? effectiveSessionSettings(row) : null;
   if (settingsChanged && !previousSettings)
@@ -257,7 +259,7 @@ export async function updateScanningSession(
         : [rowIs('scanning_sessions', id, { updated_at: input.revision }, 'stale')]),
       sessionDevicesAre(id, devices),
       ...eventsOpen([accepted?.eventId, input.settings?.checkIn?.eventId]),
-      ...templatesUsable(accepted?.templateIds ?? []),
+      ...scopeTemplatesUsable(accepted?.templateIds ?? [], attached),
     ],
     SESSION_CODES,
     id,

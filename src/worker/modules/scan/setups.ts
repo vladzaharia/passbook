@@ -21,8 +21,8 @@ import {
   audited,
   eventsOpen,
   scannerEpoch,
+  scopeTemplatesUsable,
   sessionEpoch,
-  templatesUsable,
 } from './repo-admin-grant.ts';
 import {
   addScannerTemplates,
@@ -41,7 +41,7 @@ import {
   watchedScanners,
   watchOf,
 } from './repo-setups.ts';
-import { checkAccepts, requireScannerSettings } from './scanner-validation.ts';
+import { acceptedTemplateIds, checkAccepts, requireScannerSettings } from './scanner-validation.ts';
 import { loadScanner } from './scanner-views.ts';
 import { addEnrollment, type DeviceEnrollment } from './scanning-enrollment.ts';
 import { setupView } from './setup-views.ts';
@@ -134,7 +134,11 @@ export async function createSetup(
       throw new ValidationError('Admin sign-in uses a browser device.', [], 'SCANNER_ADMIN_ROLE');
   }
   if (!enrollment) await checkWatch(ctx, orgId, mode, deviceRole, input.watch);
-  const accepts = input.accepts ? await checkAccepts(ctx, orgId, mode, input.accepts) : null;
+  // A device joining a session inherits its templates: archived ones already there stay usable.
+  const attached = parent ? acceptedTemplateIds(parent.accepts) : [];
+  const accepts = input.accepts
+    ? await checkAccepts(ctx, orgId, mode, input.accepts, attached)
+    : null;
   const settings = ScannerSettingsSchema.parse({
     ...DEFAULT_SETTINGS,
     ...input.settings,
@@ -153,7 +157,7 @@ export async function createSetup(
     [
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
       ...eventsOpen([accepts?.eventId, settings.checkIn?.eventId]),
-      ...templatesUsable(accepts?.templateIds ?? []),
+      ...scopeTemplatesUsable(accepts?.templateIds ?? [], attached),
     ],
     SETUP_CODES,
     id,
@@ -221,7 +225,7 @@ export async function updateSetup(
   if (input.deviceRole !== undefined) roleAllowed(row.kind, role);
   if (changingWatch) await checkWatch(ctx, row.orgId, row.mode, role, watch, id);
   const accepts = input.accepts
-    ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts)
+    ? await checkAccepts(ctx, row.orgId, row.mode, input.accepts, row.templateIds)
     : null;
   const settings =
     input.settings !== undefined || input.accepts !== undefined
@@ -252,7 +256,7 @@ export async function updateSetup(
       scannerEpoch(id, row.configEpoch),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
       ...eventsOpen([accepts?.eventId, input.settings?.checkIn?.eventId]),
-      ...templatesUsable(accepts?.templateIds ?? []),
+      ...scopeTemplatesUsable(accepts?.templateIds ?? [], row.templateIds),
     ],
     SETUP_CODES,
     id,

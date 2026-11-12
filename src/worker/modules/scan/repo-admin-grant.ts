@@ -132,6 +132,18 @@ export function templatesUsable(
   ];
 }
 
+/** A scope's templates: ones `attached` already may be archived (never deleted); new ones are active. */
+export const scopeTemplatesUsable = (
+  ids: readonly string[],
+  attached: readonly string[],
+): Check[] => [
+  ...templatesUsable(ids.filter((id) => !attached.includes(id))),
+  ...templatesUsable(
+    ids.filter((id) => attached.includes(id)),
+    'attached',
+  ),
+];
+
 /** The scanners of the grant's org and mode pointing at the event are exactly these. */
 export function eventScannersAre(eventId: string, ids: readonly string[]): Check {
   return tenantCheck(
