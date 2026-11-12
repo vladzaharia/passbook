@@ -560,7 +560,8 @@ export async function makeScanner(
       options.mode ?? 'live',
       kind,
       deviceRole,
-      `Scanner ${id.slice(-6)}`,
+      // Not derived from the id (tests assert ids stay out of projections); six hex digits collided.
+      `Scanner ${f.ids.token(12).replace(/[^A-Za-z0-9]/g, '').slice(0, 12)}`,
       options.eventId ?? null,
       JSON.stringify({ ...DEFAULT_SCANNER_SETTINGS, ...options.settings }),
       prefix,
