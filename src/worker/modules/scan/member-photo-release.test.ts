@@ -179,7 +179,7 @@ describe('scanner member photo release authority', () => {
   });
 
   it.each(['release', 'template'] as const)(
-    'serves generic assets but denies photos for an incompatible release and revokes on %s races',
+    'serves generic assets, reads photos for an incompatible release and revokes on %s races',
     async (race) => {
       const templateId = await kit.scanTemplate('Incompatible asset read', {
         actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
@@ -217,7 +217,9 @@ describe('scanner member photo release authority', () => {
       expect((await image('icon.png')).status).toBe(200);
       expect((await image('member.png')).status).toBe(404);
       const pinned = await kit.registry.resolve(templateId, candidate.pass.templateVersion);
-      expect(await knownPhotoUrl(kit.ctx, actor, candidate, pinned)).toBeNull();
+      // The photo has its own capability, read as the card reads this state.
+      const photo = await knownPhotoUrl(kit.ctx, actor, candidate, pinned);
+      expect(photo?.grant.guard).toMatchObject({ requirePhoto: true, purpose: 'read' });
 
       const pending = await prepareGenericAssetGrant(
         kit.ctx,
@@ -287,7 +289,10 @@ describe('scanner member photo release authority', () => {
       pass: { ...candidate.pass, templateVersion: 'different-pinned-version' },
       displayTemplateVersion: null,
     };
-    expect(scannerReleaseAllowed(incompatible)).toBe(false);
+    // Its own release under an incompatible head is allowed (the card's state); a display version
+    // that is neither null nor the head is not. The pinned version here does not exist.
+    expect(scannerReleaseAllowed(incompatible)).toBe(true);
+    expect(scannerReleaseAllowed({ ...incompatible, displayTemplateVersion: 'other' })).toBe(false);
     expect(await canShowPhotoForCandidate(kit.ctx, actor, incompatible)).toBe(false);
     expect(
       scannerReleaseAllowed({

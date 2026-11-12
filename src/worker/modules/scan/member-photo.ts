@@ -51,6 +51,8 @@ export function scannerPassActive(candidate: Candidate, passJson: PassJson, now:
 /**
  * A legacy pass may carry an all-null release sentinel; the repository fence proves that no
  * effective approved head exists. Otherwise authorization requires a complete scoped release.
+ * A pass used under its own release while the head is on another build (null display version)
+ * is allowed, as on the card; `photoPolicyForResolved` still applies the head's policy.
  */
 export function scannerReleaseAllowed(candidate: Candidate): boolean {
   if (
@@ -73,7 +75,8 @@ export function scannerReleaseAllowed(candidate: Candidate): boolean {
     !!candidate.activeReleaseVersion &&
     candidate.activeReleaseVersion === candidate.activeTemplateVersion &&
     (candidate.pass.templateVersion === candidate.activeReleaseVersion ||
-      candidate.displayTemplateVersion === candidate.activeReleaseVersion) &&
+      candidate.displayTemplateVersion === candidate.activeReleaseVersion ||
+      candidate.displayTemplateVersion === null) &&
     !!candidate.activeReleaseCandidateHash &&
     /^[a-f0-9]{64}$/.test(candidate.activeReleaseCandidateHash)
   );

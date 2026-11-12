@@ -35,6 +35,14 @@ export interface AssetSessionSnapshot {
 
 export type AssetGrantPurpose = 'read' | 'commit';
 
+/**
+ * A photo is read under the purpose its release state allows: a pass used under its own release
+ * while the head is on another build (null display version) is read, as the card reads it.
+ */
+export const photoGrantPurpose = (
+  snapshot: Pick<Candidate, 'displayTemplateVersion'>,
+): AssetGrantPurpose => (snapshot.displayTemplateVersion === null ? 'read' : 'commit');
+
 /** Server-only authority with original pass data bound only by a keyed proof. */
 export interface AssetGuardPlan {
   passId: string;

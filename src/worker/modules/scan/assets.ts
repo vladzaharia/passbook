@@ -8,12 +8,13 @@ import { mac, NONCE_BYTES, prepareAssetGrant, TAG_BYTES, TOKEN_BYTES } from './a
 import type { AssetGrantBatchResult } from './asset-grant-results.ts';
 import { assetSnapshotInput, assetSnapshotProofFromInput } from './asset-secrets.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
-import type {
-  AssetGrantPurpose,
-  AssetGrantSource,
-  AssetPassSnapshot,
-  AssetWalletSnapshot,
-  PreparedAssetGrant,
+import {
+  type AssetGrantPurpose,
+  type AssetGrantSource,
+  type AssetPassSnapshot,
+  type AssetWalletSnapshot,
+  type PreparedAssetGrant,
+  photoGrantPurpose,
 } from './asset-types.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
@@ -54,7 +55,7 @@ export function preparePhotoGrant(
     activeVersion,
     source,
     true,
-    'commit',
+    photoGrantPurpose(snapshot),
   );
 }
 

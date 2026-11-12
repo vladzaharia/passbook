@@ -9,6 +9,7 @@ import { openMemberPhotoFromSnapshot } from '../passes/member-photo.ts';
 import type { ScanActor } from './actor.ts';
 import { actorCsrfAuthorityStmt } from './actor-csrf.ts';
 import { captureActor } from './asset-authority.ts';
+import { photoGrantPurpose } from './asset-types.ts';
 import { assetGrantTokenHash, assetWalletActive, prepareAssetGrantVerification } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
@@ -112,7 +113,7 @@ export async function openScannerAsset(
       grant,
       stored,
       undefined,
-      photo ? 'commit' : 'read',
+      photo ? photoGrantPurpose(candidate) : 'read',
       photo,
     );
     if (!verified) throw missing();

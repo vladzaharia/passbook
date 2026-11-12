@@ -296,29 +296,30 @@ describe('scanner asset lineage', () => {
     ).toBe(200);
   });
 
-  it.each(['organization status', 'organization branding'] as const)(
-    'invalidates an old grant after %s goes away and back in one tick',
-    async (change) => {
-      const fixture = await photoPass();
-      const now = kit.clock.now();
-      if (change === 'organization status') {
-        await setOrgStatus(kit.env.DB, kit.org.id, 'suspended', now);
-        await setOrgStatus(kit.env.DB, kit.org.id, 'active', now);
-      } else {
-        const row = await kit.env.DB.prepare('SELECT branding FROM orgs WHERE id = ?')
-          .bind(kit.org.id)
-          .first<{ branding: string }>();
-        if (!row) throw new Error('Organization fixture missing');
-        await setOrgBranding(kit.env.DB, kit.org.id, '{"color":"#123456"}', now);
-        await setOrgBranding(kit.env.DB, kit.org.id, row.branding, now);
-      }
-      await missing(await fixture.image());
-      expect(
-        (await fixture.image(await photoAssetGrantFor(kit, fixture.device, fixture.pass.id)))
-          .status,
-      ).toBe(200);
-    },
-  );
+  it('invalidates an old grant after organization status goes away and back in one tick', async () => {
+    const fixture = await photoPass();
+    const now = kit.clock.now();
+    await setOrgStatus(kit.env.DB, kit.org.id, 'suspended', now);
+    await setOrgStatus(kit.env.DB, kit.org.id, 'active', now);
+    await missing(await fixture.image());
+    expect(
+      (await fixture.image(await photoAssetGrantFor(kit, fixture.device, fixture.pass.id))).status,
+    ).toBe(200);
+  });
+
+  // Branding moves only the org's config epoch, which decides no image access (asset-org-epoch).
+  it('keeps an old grant after organization branding goes away and back in one tick', async () => {
+    const fixture = await photoPass();
+    const now = kit.clock.now();
+    const row = await kit.env.DB.prepare('SELECT branding FROM orgs WHERE id = ?')
+      .bind(kit.org.id)
+      .first<{ branding: string }>();
+    if (!row) throw new Error('Organization fixture missing');
+    await setOrgBranding(kit.env.DB, kit.org.id, '{"color":"#123456"}', now);
+    expect((await fixture.image()).status).toBe(200);
+    await setOrgBranding(kit.env.DB, kit.org.id, row.branding, now);
+    expect((await fixture.image()).status).toBe(200);
+  });
 
   // An archived template keeps its passes, so its status is no policy change for them.
   it('keeps an old grant after the template status goes away and back in one tick', async () => {

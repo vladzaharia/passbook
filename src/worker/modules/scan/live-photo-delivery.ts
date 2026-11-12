@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { memberPhotoFromResult, memberPhotoStmt } from '../passes/repo-member-photo.ts';
 import type { ScanActor } from './actor.ts';
+import { photoGrantPurpose } from './asset-types.ts';
 import { assetGrantTokenHash, assetWalletActive, prepareAssetGrantVerification } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import {
@@ -138,11 +139,14 @@ export async function prepareLivePhoto(
       !(await livePassCommitmentValid(ctx.env, candidate, proof.passSnapshot.passCommitment))
     )
       return null;
+    // The same purpose rule as the live row (`live-render-plan.ts`): a pass on its own release
+    // under an incompatible head is read, as the device card reads it.
+    const purpose = photoGrantPurpose(candidate);
     const templates = await verifyLiveTemplateSnapshot(
       ctx,
       candidate,
       candidate.templateSnapshot,
-      'commit',
+      purpose,
     );
     if (!templates) return null;
     const verified = await prepareAssetGrantVerification(
@@ -153,7 +157,7 @@ export async function prepareLivePhoto(
       grant,
       stored,
       { sourceId: proof.actor.scanner.id, eventId: observedRef.eventId, actor: proof.actor },
-      'commit',
+      purpose,
       true,
     );
     if (
@@ -170,7 +174,7 @@ export async function prepareLivePhoto(
     const templateFence = scanTemplateSnapshotPredicate(
       candidate,
       candidate.templateSnapshot,
-      'commit',
+      purpose,
     );
     if (!grantFence || templateFence.sql === '0') return null;
     const extra = (now: number) => [
@@ -180,7 +184,7 @@ export async function prepareLivePhoto(
     const check = async (verifyBytes: boolean): Promise<boolean> => {
       if (
         verifyBytes &&
-        !(await verifyLiveTemplateSnapshot(ctx, candidate, candidate.templateSnapshot, 'commit'))
+        !(await verifyLiveTemplateSnapshot(ctx, candidate, candidate.templateSnapshot, purpose))
       )
         return false;
       const now = ctx.clock.now();

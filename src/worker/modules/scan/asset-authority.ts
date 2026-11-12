@@ -104,6 +104,7 @@ async function actorScope(
     [...actor.templateIds].sort(),
     tenant && [
       tenant.orgId,
+      // Despite the name, the org's `access_revision` (`tenantAuthorityOf`): a rename keeps it.
       tenant.orgUpdatedAt,
       tenant.userId,
       tenantIdProof,

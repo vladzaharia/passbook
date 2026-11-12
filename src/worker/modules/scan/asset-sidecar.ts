@@ -68,8 +68,8 @@ export function takePhotoGrantToken(
   const expected = assetGrantAuthority(plan)?.actor;
   if (
     !expected ||
+    // The photo plan's purpose follows its release state (`photoGrantPurpose`, checked at mint).
     !plan.guard.requirePhoto ||
-    plan.guard.purpose !== 'commit' ||
     plan.guard.passId !== passId ||
     actor.orgId !== plan.orgId ||
     actor.mode !== plan.mode ||

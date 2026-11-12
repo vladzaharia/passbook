@@ -1,7 +1,7 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ScanActor } from './actor.ts';
-import type { AssetPassSnapshot } from './asset-types.ts';
+import { type AssetPassSnapshot, photoGrantPurpose } from './asset-types.ts';
 import { eventPassPredicate } from './repo-action-authority.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import type { AssetGrantGuardInput } from './repo-asset-lineage.ts';
@@ -63,7 +63,7 @@ export function assetGrantPredicate(
     !Number.isSafeInteger(now) ||
     typeof input.requirePhoto !== 'boolean' ||
     (input.purpose !== 'read' && input.purpose !== 'commit') ||
-    (input.requirePhoto && input.purpose !== 'commit') ||
+    (input.requirePhoto && input.purpose !== photoGrantPurpose(snapshot)) ||
     input.passId !== pass.id ||
     !actorMatchesPass(actor, snapshot) ||
     !nonempty(input.activeVersion) ||

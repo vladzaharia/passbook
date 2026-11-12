@@ -7,11 +7,12 @@ import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ScanActor } from './actor.ts';
 import { assetActorScope } from './asset-authority.ts';
-import type {
-  AssetGrantPurpose,
-  AssetGrantSource,
-  AssetPassSnapshot,
-  AssetWalletSnapshot,
+import {
+  type AssetGrantPurpose,
+  type AssetGrantSource,
+  type AssetPassSnapshot,
+  type AssetWalletSnapshot,
+  photoGrantPurpose,
 } from './asset-types.ts';
 import { walletIdentityMatches } from './wallet-snapshot.ts';
 
@@ -61,7 +62,7 @@ export async function grantData(
   const wallet = activeWallet(snapshot, now);
   if (
     (purpose !== 'read' && purpose !== 'commit') ||
-    (requirePhoto && purpose !== 'commit') ||
+    (requirePhoto && purpose !== photoGrantPurpose(snapshot)) ||
     snapshot.connectionGeneration !== connectionGeneration ||
     snapshot.activeTemplateVersion !== activeVersion ||
     pass.status !== 'active' ||
@@ -161,7 +162,6 @@ export async function grantData(
     walletTemplateVersion,
     versionPersonalization,
     orgRevision,
-    templateRevision,
     displayTemplateVersion,
     activeReleaseId,
     activeReleaseGeneration,
@@ -264,8 +264,9 @@ export async function grantData(
       releaseId,
       connectionId,
       connectionGeneration,
+      // The org's access epoch only: `templateRevision` is its `config_revision` (name, slug,
+      // branding, settings), which decides no image access (authority-epochs.md, R8).
       orgRevision,
-      templateRevision,
       activeVersion,
       displayTemplateVersion,
       activeReleaseId,

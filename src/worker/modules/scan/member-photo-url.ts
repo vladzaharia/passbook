@@ -3,6 +3,7 @@ import { isNotFound } from '../passes/builder.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { actorCsrfAuthorityStmt } from './actor-csrf.ts';
 import { captureActor } from './asset-authority.ts';
+import { photoGrantPurpose } from './asset-types.ts';
 import { preparePhotoGrant } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
@@ -26,11 +27,12 @@ export async function scanPhotoUrl(ctx: ServiceContext, actor: ScanActor, passId
   const candidate = candidatesOf(results[0])[0];
   if (!candidate || candidate.credentialKeysetCommitment !== keyset) return null;
   try {
+    const purpose = photoGrantPurpose(candidate);
     const templates = await verifyLiveTemplateSnapshot(
       ctx,
       candidate,
       candidate.templateSnapshot,
-      'commit',
+      purpose,
     );
     if (
       !templates ||
@@ -46,7 +48,7 @@ export async function scanPhotoUrl(ctx: ServiceContext, actor: ScanActor, passId
     const templateFence = scanTemplateSnapshotPredicate(
       candidate,
       candidate.templateSnapshot,
-      'commit',
+      purpose,
     );
     const extra = photoUrlTemplateScopePredicate(templateFence);
     if (!extra) return null;

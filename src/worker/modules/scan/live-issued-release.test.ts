@@ -94,6 +94,15 @@ async function scanAndWatch(fixture: Awaited<ReturnType<typeof setup>>) {
   return { outcome: evaluation.outcome, live };
 }
 
+/** Fetch the card's photo as the scanning device and the live row's photo as the screen. */
+function photos(fixture: Awaited<ReturnType<typeof setup>>, card: string, live: string) {
+  const path = (url: string) => url.replace('/api/v1/scan', '');
+  return Promise.all([
+    kit.get(fixture.source.headers, path(card)).then((response) => response.status),
+    kit.get(fixture.monitor.headers, path(live)).then((response) => response.status),
+  ]);
+}
+
 describe('live screens under the issued-release rule', () => {
   it('shows an old-version pass under a newer incompatible head as the device card does', async () => {
     const fixture = await setup('Own release');
@@ -111,8 +120,27 @@ describe('live screens under the issued-release rule', () => {
     const identity = outcome.card?.display?.identity;
     expect(identity?.holder).toBe('Own release Member');
     expect(live).toMatchObject({ passId: fixture.pass.id, holder: identity?.holder });
-    // The photo follows the card's own decision for this release state.
-    expect(live?.photoUrl != null).toBe(identity?.photo != null);
+    // The member photo survives the rebuild: shown and served on the card and the live row.
+    const card = identity?.photo?.url;
+    if (!card || !live?.photoUrl) throw new Error('Photo withheld under the issued release.');
+    expect(await photos(fixture, card, live.photoUrl)).toEqual([200, 200]);
+  });
+
+  it('hides the photo on both when the head raises its role above the reader', async () => {
+    const fixture = await setup('Photo policy');
+    const shown = await scanAndWatch(fixture);
+    expect(shown.outcome.card?.display?.identity.photo?.url).toEqual(expect.any(String));
+    expect(shown.live?.photoUrl).toEqual(expect.any(String));
+    await moveHead(fixture.templateId, 'v2', (manifest) => {
+      if (!manifest.scan) throw new Error('Missing scan manifest.');
+      manifest.scan.display = { v: 1, header: {}, photo: { minRole: 'manager' } };
+    });
+    const { outcome, live } = await scanAndWatch(fixture);
+    expect(outcome.kind).toBe('ready');
+    expect(outcome.card?.display?.identity.photo?.url ?? null).toBeNull();
+    // The pass itself is still shown on both; only the photo is withheld from the desk reader.
+    expect(live).toMatchObject({ passId: fixture.pass.id, holder: 'Photo policy Member' });
+    expect(live?.photoUrl).toBeNull();
   });
 
   it('keeps a field the head hides hidden even though the pass’s own release showed it', async () => {
@@ -128,18 +156,25 @@ describe('live screens under the issued-release rule', () => {
     expect(outcome.kind).toBe('ready');
     // The card falls back to a non-personal holder line; neither surface shows the hidden name.
     expect(JSON.stringify(outcome.card)).not.toContain('Head policy Member');
-    expect(live).toMatchObject({ passId: fixture.pass.id, holder: null, photoUrl: null });
+    expect(live).toMatchObject({ passId: fixture.pass.id, holder: null });
     expect(JSON.stringify(live)).not.toContain('Head policy Member');
+    // The photo has its own policy (the head leaves it at door): shown on both, as on the card.
+    expect(outcome.card?.display?.identity.photo?.url).toEqual(expect.any(String));
+    expect(live?.photoUrl).toEqual(expect.any(String));
   });
 
   it('withholds a deleted template’s pass from the live screen', async () => {
     const fixture = await setup('Deleted');
+    await moveHead(fixture.templateId, 'v2');
     const retained = await scanAndWatch(fixture);
     expect(retained.live).toMatchObject({ passId: fixture.pass.id, holder: 'Deleted Member' });
-    await moveHead(fixture.templateId, 'v2');
+    const card = retained.outcome.card?.display?.identity.photo?.url;
+    if (!card || !retained.live?.photoUrl) throw new Error('Photo withheld before deletion.');
+    expect(await photos(fixture, card, retained.live.photoUrl)).toEqual([200, 200]);
     await run(kit.env.DB, "UPDATE templates SET status = 'deleted' WHERE id = ?", [
       fixture.templateId,
     ]);
+    expect(await photos(fixture, card, retained.live.photoUrl)).toEqual([404, 404]);
     const old = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === retained.live?.id,
     );
@@ -148,6 +183,7 @@ describe('live screens under the issued-release rule', () => {
     expect(outcome.kind).toBe('refused');
     expect(live?.passId ?? null).toBeNull();
     expect(live?.holder ?? null).toBeNull();
+    expect(live?.photoUrl ?? null).toBeNull();
     expect(JSON.stringify(live ?? null)).not.toContain('Deleted Member');
   });
 });
