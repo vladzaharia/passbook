@@ -48,8 +48,8 @@ export function stoppedAuditPass(
       candidate.activeReleaseGeneration !== snapshot.activeReleaseGeneration ||
       candidate.activeReleaseVersion !== snapshot.activeReleaseVersion ||
       candidate.activeReleaseCandidateHash !== snapshot.activeReleaseCandidateHash ||
+      // Not `templateRevision` (`config_revision`): a rename is not door authority (R8).
       candidate.orgRevision !== snapshot.orgRevision ||
-      candidate.templateRevision !== snapshot.templateRevision ||
       fields.some((field) => candidate.pass[field] !== snapshot[field])
     )
       throw new StaleScanAuthority();

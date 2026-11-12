@@ -26,7 +26,6 @@ const ROW_KEYS = [
   'current_link_generation',
   'current_connection_generation',
   'current_org_revision',
-  'current_template_revision',
   'current_wallet_version',
   'current_identity_revision',
   'current_release_id',

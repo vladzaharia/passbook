@@ -135,7 +135,6 @@ export function ledgerAuthorityPredicate(
         AND json_type(l.data,'$.authority.activeReleaseCandidateHash')='${textType}'
         AND json_extract(l.data,'$.authority.activeReleaseCandidateHash') IS ?
         AND json_extract(l.data,'$.authority.orgRevision')=?
-        AND json_extract(l.data,'$.authority.templateRevision')=?
         AND json_extract(l.data,'$.authority.scannerRevision') IS ?
         AND json_extract(l.data,'$.authority.sessionId') IS ?/* scan-ephemeral-session-id */
         AND json_extract(l.data,'$.authority.sessionRevision') IS ?
@@ -211,7 +210,6 @@ export function ledgerAuthorityPredicate(
       passFence.activeReleaseVersion,
       passFence.activeReleaseCandidateHash,
       passFence.orgRevision,
-      passFence.templateRevision,
       actor.scanner?.updatedAt ?? null,
       actor.scanningSession?.id ?? null,
       actor.scanningSession?.updatedAt ?? null,

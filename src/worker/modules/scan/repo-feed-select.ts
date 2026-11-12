@@ -1,10 +1,10 @@
-import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import {
   legacyScanProvenanceSql,
   recordedScanProvenanceSql,
   scanCurrentCredentialLineageSql,
   uniqueScanEventIdSql,
 } from './repo-history-provenance.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { releaseBuildCompatibilitySql } from './repo-release-build.ts';
 import { scanPasslessCandidateSql } from './repo-scan-passless.ts';
 import { scanRetentionCandidateSql } from './repo-scan-retention.ts';
@@ -94,7 +94,7 @@ export const SELECT = `SELECT s.id, s.org_id, s.mode, s.at, s.outcome, s.reason,
       'lifecycleGeneration', current_pass.lifecycle_generation,
       'identityId', current_pass.identity_id, 'identityRevision', current_identity.revision,
       'connectionId', current_pass.connection_id, 'connectionGeneration', current_connection.generation,
-      'orgRevision', current_org.access_revision, 'templateRevision', current_org.config_revision,
+      'orgRevision', current_org.access_revision,
       'headId', current_head.id, 'headGeneration', current_head.generation,
       'headVersion', current_head.version, 'headCandidateHash', current_head.candidate_hash,
       'walletVersion', current_wallet.version, 'walletTemplateVersion', current_wallet.template_version

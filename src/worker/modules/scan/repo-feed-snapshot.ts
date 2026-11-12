@@ -1,6 +1,5 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
-import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { policyCandidateSql } from './repo-feed-select.ts';
 import {
   HEX_SLICE,
@@ -10,6 +9,7 @@ import {
 } from './repo-feed-snapshot-fields.ts';
 import type { ScanLogRow } from './repo-feed-types.ts';
 import { uniqueScanEventIdSql } from './repo-history-provenance.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 
 /** Recheck the exact scan, scoped metadata and verified event inputs in one read snapshot. */
 function scanLogSnapshotSql(dataSql: string, sliced: ReadonlyMap<number, number>): string {
@@ -96,7 +96,6 @@ function scanLogSnapshotSql(dataSql: string, sliced: ReadonlyMap<number, number>
     ['p.connection_id', 'keySnapshot.connectionId'],
     ['key_connection.generation', 'keySnapshot.connectionGeneration'],
     ['key_org.access_revision', 'keySnapshot.orgRevision'],
-    ['key_org.config_revision', 'keySnapshot.templateRevision'],
     ['key_head.id', 'keySnapshot.headId'],
     ['key_head.generation', 'keySnapshot.headGeneration'],
     ['key_head.version', 'keySnapshot.headVersion'],
@@ -224,7 +223,6 @@ export function scanLogSnapshotPredicate(
               identityRevision: key.identityRevision,
               connectionGeneration: key.connectionGeneration,
               orgRevision: key.orgRevision,
-              templateRevision: key.templateRevision,
               headGeneration: key.headGeneration,
               walletVersion: key.walletVersion,
             },

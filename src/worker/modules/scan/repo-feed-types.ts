@@ -35,7 +35,6 @@ export interface ScanKeySnapshot {
   connectionId: string | null;
   connectionGeneration: number | null;
   orgRevision: number | null;
-  templateRevision: number | null;
   headId: string | null;
   headGeneration: number | null;
   headVersion: string | null;

@@ -83,7 +83,6 @@ type HistoryNumberColumn =
   | 'current_link_generation'
   | 'current_connection_generation'
   | 'current_org_revision'
-  | 'current_template_revision'
   | 'current_wallet_version'
   | 'current_identity_revision'
   | 'current_release_generation'
@@ -147,7 +146,7 @@ export function historyProofRowsStmt(
         WHERE transfer.pass_id=p.id AND transfer.state='pending') AS current_transfer_pending,
       p.identity_id AS current_identity_id,p.link_generation AS current_link_generation,
       p.connection_id AS current_connection_id,connection.generation AS current_connection_generation,
-      org.access_revision AS current_org_revision,org.config_revision AS current_template_revision,
+      org.access_revision AS current_org_revision,
       current_wallet.version AS current_wallet_version,si.revision AS current_identity_revision,
       ar.id AS current_release_id,ar.generation AS current_release_generation,ar.candidate_hash AS current_release_hash,
       CASE WHEN p.status='active' AND p.deleted_at IS NULL AND p.removed_at IS NULL

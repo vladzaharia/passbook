@@ -1,7 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { toHex } from '../../platform/ids.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
 import { historyProofFields, PRIVATE_LABELS } from './repo-history-proof-fields.ts';
@@ -11,6 +10,7 @@ import {
   scanCurrentCredentialLineageSql,
   uniqueScanEventIdSql,
 } from './repo-history-provenance.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import type { ScanSecretBindLabel } from './repo-secret-binds.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
@@ -61,7 +61,6 @@ const SAFE_KEYS = [
   'current_link_generation',
   'current_connection_generation',
   'current_org_revision',
-  'current_template_revision',
   'current_wallet_version',
   'current_identity_revision',
   'current_release_id',

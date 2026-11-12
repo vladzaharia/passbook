@@ -120,7 +120,6 @@ export function planPendingDisplayHistorySource(
         row.current_connection_id !== found.pass.connectionId ||
         row.current_connection_generation !== found.connectionGeneration ||
         row.current_org_revision !== found.orgRevision ||
-        row.current_template_revision !== found.templateRevision ||
         row.current_identity_revision !== found.identityRevision ||
         row.current_release_id !== found.activeReleaseId ||
         row.current_release_generation !== found.activeReleaseGeneration ||
