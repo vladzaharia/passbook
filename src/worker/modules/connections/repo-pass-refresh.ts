@@ -3,6 +3,21 @@ import type { JobOf } from '../../jobs/types.ts';
 import { first } from '../../platform/db.ts';
 import { validCredentialKeysetCommitment, validPassReleaseBinding } from './repo-passes.ts';
 
+/** The row_version of the pass version a refresh job names: the write fence of that version. */
+export async function passVersionRowVersion(
+  db: D1Database,
+  passId: string,
+  passVersion: number,
+): Promise<number | undefined> {
+  return (
+    await first<{ row_version: number }>(
+      db,
+      'SELECT row_version FROM passes WHERE id = ? AND version = ?',
+      [passId, passVersion],
+    )
+  )?.row_version;
+}
+
 export type RefreshSnapshot = Pick<
   JobOf<'pass.refresh'>,
   | 'passId'

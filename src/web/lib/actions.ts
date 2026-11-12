@@ -116,6 +116,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'scanner.unpair': a('Scanner unpaired', ENTITY.scanner.icon, 'neutral'),
   'scanner.pair_failed': a('Pairing refused after wrong codes', ShieldAlert, 'warning'),
   'scanner.revoke': a('Scanner revoked', ENTITY.scanner.icon, 'warning'),
+  'scanner.restore': a('Scanner restored', ENTITY.scanner.icon, 'success'),
   'scanner.mode_change': a('Scanner mode changed', FlaskConical, 'info'),
   'scanner.token_replace': a('Scanner token replaced', I.rotate, 'info'),
   'scan_display.preview': a('Display previewed', Eye, 'info'),

@@ -3,7 +3,11 @@ import type { GrantCond } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import type { ConnectionEmailAuthority, ExpectedPassDelivery } from './binding.ts';
-import { connectionCheck, issuanceLineageCheck, passLineageChecks } from './delivery-checks.ts';
+import {
+  connectionCheck,
+  issuanceLineageCheck,
+  passLineageChecks,
+} from './repo-delivery-checks.ts';
 import {
   addQueueWrites,
   commitQueue,

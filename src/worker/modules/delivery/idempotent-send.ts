@@ -1,9 +1,9 @@
-import { first, run } from '../../platform/db.ts';
 import { BadRequestError, ConflictError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { claimIdempotencyKey, releaseIdempotencyKey } from '../passes/repo-ops.ts';
+import { idempotencyRow, reclaimIdempotencyKey, settleIdempotencyKey } from './repo-idempotency.ts';
 
 const DONE = 'done:';
 
@@ -20,19 +20,6 @@ export function idempotencyKeyOf(header: string | undefined): string | undefined
 }
 
 const IN_PROGRESS_MS = 15 * 60_000;
-
-interface KeyRow {
-  request_hash: string;
-  resource_id: string | null;
-  created_at: number;
-}
-
-const keyRow = (db: D1Database, orgId: string, key: string) =>
-  first<KeyRow>(
-    db,
-    'SELECT request_hash, resource_id, created_at FROM idempotency_keys WHERE org_id = ? AND key = ?',
-    [orgId, key],
-  );
 
 /**
  * Runs a send once per `(org, principal, key)`. The first call reserves the key and stores the JSON
@@ -60,7 +47,7 @@ export async function sendOnce<T>(
   const key = `${input.scope}:${principal}:${input.key}`;
   const hash = await sha256Hex(JSON.stringify(input.request));
   const replay = async (): Promise<{ replayed: true; value: T } | null> => {
-    const existing = await keyRow(db, input.orgId, key);
+    const existing = await idempotencyRow(db, input.orgId, key);
     if (!existing)
       throw new ConflictError('The pass or authorization changed. Retry.', 'PASS_CONFLICT');
     if (existing.request_hash !== hash)
@@ -72,14 +59,10 @@ export async function sendOnce<T>(
       return { replayed: true, value: JSON.parse(existing.resource_id.slice(DONE.length)) as T };
     if (ctx.clock.now() - existing.created_at < IN_PROGRESS_MS)
       throw new ConflictError('The first request is still running.', 'IDEMPOTENCY_IN_PROGRESS');
-    await run(
-      db,
-      'DELETE FROM idempotency_keys WHERE org_id = ? AND key = ? AND created_at = ? AND (resource_id IS NULL OR resource_id NOT LIKE ?)',
-      [input.orgId, key, existing.created_at, `${DONE}%`],
-    );
+    await reclaimIdempotencyKey(db, input.orgId, key, existing.created_at, DONE);
     return null;
   };
-  const existing = await keyRow(db, input.orgId, key);
+  const existing = await idempotencyRow(db, input.orgId, key);
   if (existing) {
     const done = await replay();
     if (done) return done;
@@ -107,10 +90,6 @@ export async function sendOnce<T>(
     if (!input.progress?.()) await releaseIdempotencyKey(db, input.orgId, key, reservation, hash);
     throw error;
   }
-  await run(
-    db,
-    'UPDATE idempotency_keys SET resource_id = ? WHERE org_id = ? AND key = ? AND resource_id = ?',
-    [`${DONE}${JSON.stringify(value)}`, input.orgId, key, reservation],
-  );
+  await settleIdempotencyKey(db, input.orgId, key, reservation, `${DONE}${JSON.stringify(value)}`);
   return { replayed: false, value };
 }

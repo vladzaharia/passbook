@@ -5,7 +5,7 @@ import { first } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { bundleChecks } from '../bundles/repo-delivery-fence.ts';
-import { passLineageChecks } from '../delivery/delivery-checks.ts';
+import { passLineageChecks } from '../delivery/repo-delivery-checks.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import type { CaptureSnapshot } from './binding.ts';
 import {

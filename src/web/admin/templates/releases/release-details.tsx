@@ -3,6 +3,7 @@ import type {
   TemplateReleaseImpact,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
+import { formatCount } from '../../../lib/format.ts';
 import { Badge, ErrorState, KeyValue, Skeleton } from '../../../ui/index.ts';
 import { useReleaseImpact } from './api.ts';
 
@@ -14,7 +15,7 @@ const GROUPS = [
 ] as const;
 
 const passCount = ({ count, capped }: TemplateReleaseImpact['passes']) =>
-  capped ? '10,000+' : count.toLocaleString('en-US');
+  capped ? '10,000+' : formatCount(count);
 
 const KIND = { added: 'Added', removed: 'Removed', changed: 'Changed' } as const;
 
@@ -45,7 +46,7 @@ function ImpactBody({ impact }: { impact: TemplateReleaseImpact }) {
               ))}
             </ul>
             {impact.more[key] > 0 ? (
-              <p className="text-fg-muted">and {impact.more[key].toLocaleString('en-US')} more</p>
+              <p className="text-fg-muted">and {formatCount(impact.more[key])} more</p>
             ) : null}
           </section>
         ))

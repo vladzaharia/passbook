@@ -183,6 +183,12 @@ export default defineConfig(({ command }) => ({
               test: /node_modules[\\/]@tanstack[\\/](react-router|router-core|history|react-store|store)[\\/]/,
               priority: 20,
             },
+            // Button needs only Slot: /scan must not preload the tooltip, popper and floating-ui chunk.
+            {
+              name: 'radix-slot',
+              test: /node_modules[\\/]@radix-ui[\\/]react-(slot|compose-refs)[\\/]/,
+              priority: 15,
+            },
             // One chunk per Radix package, so a page loads only the primitives it uses (/scan: the
             // tooltip and dialog, not select, dropdown and popover). Shared helpers stay together.
             {

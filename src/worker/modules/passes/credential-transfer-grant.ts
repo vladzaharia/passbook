@@ -1,11 +1,10 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
-import { writePart } from '../../platform/authority-include.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { first } from '../../platform/db.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
+import { loadOrgAccessRevision } from './repo-access-revision.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { CredentialTransferAuthority } from './repo-credential-transfer-read.ts';
 
@@ -62,10 +61,6 @@ export interface TransferPassRef {
   orgId: string;
   mode: 'live' | 'test';
 }
-
-const orgRevision = async (db: D1Database, orgId: string) =>
-  (await first<{ r: number }>(db, 'SELECT access_revision AS r FROM orgs WHERE id = ?', [orgId]))
-    ?.r;
 
 function jobOf(
   ctx: ServiceContext,
@@ -133,45 +128,15 @@ export async function transferGrant(
       : authority?.kind === 'connection'
         ? 'org_mode.job.pass.connection_transfer'
         : 'org_mode.job.pass.holder_change';
-  return jobOf(ctx, pass, purpose, checks, tables, await orgRevision(ctx.env.DB, pass.orgId));
+  return jobOf(
+    ctx,
+    pass,
+    purpose,
+    checks,
+    tables,
+    await loadOrgAccessRevision(ctx.env.DB, pass.orgId),
+  );
 }
 
 /** A refusal the step reports as "not done, the row moved"; anything else is rethrown. */
 export const CONFLICT_CODES = new Set(['PASS_CONFLICT', 'TEMPLATE_RELEASE_CONFLICT']);
-
-/** `pass_id = {pass}` for a holder grant, `pass_id = ?` otherwise: the part's pass-id comparison. */
-export function passIs(g: Grant, passId: string, column = 'pass_id') {
-  return g.principal.kind === 'holder'
-    ? { sql: `${column} = {pass}`, params: [] as string[] }
-    : { sql: `${column} = ?`, params: [passId] };
-}
-
-/** The connector payload rows, tied to the transfer of the pass (the form a holder grant requires). */
-export function payloadPart(
-  g: Grant,
-  passId: string,
-  op: 'delete' | 'insert',
-  transferId: string,
-  env?: { kekVersion: number; iv: unknown; wrappedDek: unknown; ciphertext: unknown },
-) {
-  const at = passIs(g, passId, 'pt.pass_id');
-  if (op === 'delete')
-    return writePart(
-      `DELETE FROM pass_credential_transfer_payloads WHERE EXISTS (SELECT 1 FROM pass_credential_transfers pt
-        WHERE pt.id = pass_credential_transfer_payloads.transfer_id AND pt.id = ? AND ${at.sql}) AND {grant}`,
-      [transferId, ...at.params],
-    );
-  return writePart(
-    `INSERT INTO pass_credential_transfer_payloads (transfer_id,kek_version,iv,wrapped_dek,ciphertext)
-      SELECT pt.id, ?, ?, ?, ? FROM pass_credential_transfers pt
-      WHERE pt.id = ? AND ${at.sql} AND {grant}`,
-    [
-      env?.kekVersion as never,
-      env?.iv as never,
-      env?.wrappedDek as never,
-      env?.ciphertext as never,
-      transferId,
-      ...at.params,
-    ],
-  );
-}

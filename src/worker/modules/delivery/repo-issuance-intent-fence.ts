@@ -1,13 +1,13 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import type { PassDeliveryBinding } from './binding.ts';
 import type { DeliveryActor } from './delivery-actor.ts';
+import { parseContext } from './issuance-context.ts';
 import {
   connectionCheck,
   issuanceLineageCheck,
   passLineageChecks,
   queuedDeliveryCheck,
-} from './delivery-checks.ts';
-import { parseContext } from './issuance-context.ts';
+} from './repo-delivery-checks.ts';
 import { getIntent } from './repo-issuance-recovery.ts';
 
 /** What the irreversible step of a queued email must still hold: its actor and the lineage checks. */

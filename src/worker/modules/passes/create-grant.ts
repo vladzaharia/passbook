@@ -1,14 +1,20 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
-import { type Check, exactlyOne, rawCheck, releaseHead } from '../../platform/authority-checks.ts';
-import { tenantCheck } from '../../platform/authority-cond.ts';
+import { type Check, exactlyOne, releaseHead } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { first } from '../../platform/db.ts';
 import { AppError, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
 import { sampleScannerScopeFence } from '../scan/sample-scope-fence.ts';
 import type { TenantPassWrite } from './http.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
+import {
+  fenceHolds,
+  releaseOrgCheck,
+  releaseSnapshotCheck,
+  scannerHasNoDevicesCheck,
+  scannerTemplatesCheck,
+  templateHeadCheck,
+} from './repo-create-checks.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
@@ -36,7 +42,7 @@ export async function sampleScopeCurrent(db: D1Database, row: NewPassRow): Promi
   const ex = row.execution;
   if (ex.kind !== 'tenant' || ex.sampleScannerScope === undefined) return true;
   const fence = sampleScannerScopeFence(ex.sampleScannerScope, row.orgId, row.mode, row.templateId);
-  return (await first(db, `SELECT 1 AS ok WHERE ${fence.sql}`, fence.params)) !== null;
+  return fenceHolds(db, fence);
 }
 
 /** The tenant principal of a request; a platform key (no org of its own) names the org it acts on. */
@@ -56,26 +62,8 @@ export function createGrant(
   const ex = row.execution;
   const checks: Check[] = [
     releaseHead(row.templateId, row.mode, 'apple', row.release.id),
-    rawCheck(
-      'release',
-      `EXISTS (SELECT 1 FROM template_releases r WHERE r.id = ? AND r.generation = ?
-        AND r.version = ? AND r.candidate_hash IS ? AND r.provider = ?)`,
-      [
-        row.release.id,
-        row.release.generation,
-        row.templateVersion,
-        row.release.candidateHash,
-        row.release.provider,
-      ],
-    ),
-    // An org release belongs to the grant's org; a platform release has no org.
-    tenantCheck(
-      'release',
-      `EXISTS (SELECT 1 FROM template_releases r WHERE r.id = ? AND ${
-        row.release.orgId === null ? 'r.org_id IS NULL' : 'r.org_id = {org}'
-      })`,
-      [row.release.id],
-    ),
+    releaseSnapshotCheck(row),
+    releaseOrgCheck(row.release),
   ];
   if (row.connectionId !== null)
     checks.push(
@@ -108,26 +96,11 @@ export function createGrant(
         undefined,
         'config',
       ),
-      rawCheck(
-        'config',
-        `(SELECT json_group_array(template_id) FROM
-          (SELECT template_id FROM scanner_templates WHERE scanner_id = ? ORDER BY template_id)) = ?`,
-        [scanner.id, JSON.stringify([...scannerScope.templateIds].sort())],
-      ),
+      scannerTemplatesCheck(scanner.id, scannerScope.templateIds),
     );
     // Every template the scanner (or its session) may scan keeps an effective release head.
     const scoped = ex.sampleScannerScope.session?.scope.templateIds ?? scannerScope.templateIds;
-    for (const templateId of scoped)
-      checks.push(
-        tenantCheck(
-          'config',
-          `EXISTS (SELECT 1 FROM template_release_heads h JOIN templates owner ON owner.id = h.template_id
-            WHERE h.template_id = ? AND h.mode = {mode} AND h.provider = 'apple'
-              AND owner.status != 'deleted'
-              AND (h.org_scope = ? OR (h.org_scope = '' AND owner.org_id IS NULL AND owner.origin = 'baked')))`,
-          [templateId, row.orgId],
-        ),
-      );
+    for (const templateId of scoped) checks.push(templateHeadCheck(templateId, row.orgId));
     const { event } = scannerScope;
     if (event)
       checks.push(
@@ -139,12 +112,7 @@ export function createGrant(
         ),
       );
     const session = ex.sampleScannerScope.session;
-    if (session === null)
-      checks.push(
-        rawCheck('config', 'NOT EXISTS (SELECT 1 FROM scanning_devices d WHERE d.scanner_id = ?)', [
-          scanner.id,
-        ]),
-      );
+    if (session === null) checks.push(scannerHasNoDevicesCheck(scanner.id));
     else
       checks.push(
         exactlyOne(

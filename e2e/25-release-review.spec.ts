@@ -18,7 +18,7 @@ const shown = { useInnerText: true } as const;
 
 /** Moves the new-pass wizard to the details step, choosing the org and template when asked. */
 async function toDetails(page: Page, orgName: string, templateName: string) {
-  const name = page.getByLabel('Name', { exact: true });
+  const name = page.getByRole('textbox', { name: 'Name', exact: true });
   for (let step = 0; step < 4 && !(await name.isVisible()); step++) {
     const org = page.getByText(orgName, { exact: true }).first();
     const template = page.getByText(templateName, { exact: true }).first();
@@ -122,7 +122,7 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     await dialog.getByRole('button', { name: 'Confirm publish' }).click();
     await expect(dialog).toBeHidden();
     await expect(authorPage.getByText('Release published')).toBeVisible();
-    await expect(authorPage.getByText('Published by')).toBeVisible();
+    await expect(authorPage.getByText('Published by', { exact: true })).toBeVisible();
 
     const release = await requireActiveTemplateRelease(author, org.id, clone.id, 'live');
     expect(release.version).toBe(version);
@@ -131,8 +131,10 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     const holder = uid('Holder');
     await authorPage.goto(`/admin/passes/new?orgId=${encodeURIComponent(org.id)}`);
     await toDetails(authorPage, org.name, templateName);
-    await authorPage.getByLabel('Name', { exact: true }).fill(holder);
-    await authorPage.getByLabel('ID', { exact: true }).fill(uid('ID').toUpperCase());
+    await authorPage.getByRole('textbox', { name: 'Name', exact: true }).fill(holder);
+    await authorPage
+      .getByRole('textbox', { name: 'ID', exact: true })
+      .fill(uid('ID').toUpperCase());
     await authorPage.getByRole('button', { name: 'Next' }).click();
     await authorPage.getByRole('button', { name: 'Next' }).click();
     const created = authorPage.waitForResponse(

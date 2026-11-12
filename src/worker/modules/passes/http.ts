@@ -15,11 +15,11 @@ import {
   type ScopeSelector,
 } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
-import { first } from '../../platform/db.ts';
 import { reportDenied } from '../../platform/denied.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
+import { loadUserAccessRevision } from './repo-access-revision.ts';
 import { tenantOrgUpdatedAt, tenantPassAuthorityValid } from './repo-authority.ts';
 import type { PassScope } from './scope.ts';
 import type { Actor } from './service.ts';
@@ -93,14 +93,7 @@ export async function tenantAuthorityOf(
       orgId,
       orgUpdatedAt,
       userId: auth.userId,
-      userAccessRevision:
-        (
-          await first<{ r: number }>(
-            ctx.env.DB,
-            'SELECT access_revision AS r FROM users WHERE id = ?',
-            [auth.userId],
-          )
-        )?.r ?? 0,
+      userAccessRevision: (await loadUserAccessRevision(ctx.env.DB, auth.userId)) ?? 0,
       sessionId: auth.sessionId,
       sessionRoles: [...auth.roles],
       amr: auth.amr,

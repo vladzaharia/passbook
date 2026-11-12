@@ -197,6 +197,9 @@ test('signed-out people and regular users have pairing without administrator ent
     try {
       const page = await context.newPage();
       await page.goto('/scan?admin=1');
+      const pairing = page.getByRole('button', { name: 'Use pairing code' });
+      await expect(page.getByTestId('scan-pair').or(pairing)).toBeVisible();
+      if (await pairing.isVisible()) await pairing.click();
       await expect(page.getByTestId('scan-pair')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Scan as Admin', exact: true })).toHaveCount(0);
       await page.screenshot({

@@ -7,7 +7,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { DELIVERY_CODES } from './delivery-actor.ts';
-import { connectionCheck, noPendingTransfer } from './delivery-checks.ts';
+import { connectionCheck, noPendingTransfer } from './repo-delivery-checks.ts';
 
 export type RefreshPushContext = Pick<
   JobOf<'pass.refresh'>,

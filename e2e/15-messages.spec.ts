@@ -26,7 +26,7 @@ test('a message sent now to one template reaches the pass back', async ({ page }
   await expect
     .poll(async () => (await admin.get(`/api/v1/broadcasts/${id}`)).state, { timeout: 30_000 })
     .toBe('sent');
-  await expect(main.getByText('Sent', { exact: true }).first()).toBeVisible();
+  await expect(main.getByText('Completed', { exact: true }).first()).toBeVisible();
   const done = await admin.get(`/api/v1/broadcasts/${id}`);
   expect(done.counts).toMatchObject({ targeted: 1, updated: 1, failed: 0 });
 

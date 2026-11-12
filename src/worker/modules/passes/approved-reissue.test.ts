@@ -162,7 +162,14 @@ const workflows = (id: string) =>
 const execute = (w: { id: string; params: ReissueParams }) =>
   runBulkReissue(kit.env, w.id, w.params, step);
 const snapshot = async (id: string) => ({
-  pass: await first(
+  pass: await first<{
+    org_id: string;
+    mode: string;
+    template_version: string;
+    release_id: string | null;
+    version: number;
+    object_key: string;
+  }>(
     kit.env.DB,
     'SELECT org_id, mode, template_version, release_id, version, object_key FROM passes WHERE id = ?',
     [id],

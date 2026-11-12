@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { first } from '../../platform/db.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
 import { tenantOrgUpdatedAt } from '../passes/repo-authority.ts';
 
 /**
@@ -163,10 +163,5 @@ export async function captureActor(
   authority: TenantPassWrite,
 ): Promise<DeliveryActor> {
   if (authority.kind !== 'session') return actorOfAuthority(authority);
-  const row = await first<{ r: number }>(
-    db,
-    'SELECT access_revision AS r FROM users WHERE id = ?',
-    [authority.userId],
-  );
-  return actorOfAuthority(authority, row?.r);
+  return actorOfAuthority(authority, await loadUserAccessRevision(db, authority.userId));
 }

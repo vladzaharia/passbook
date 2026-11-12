@@ -1,5 +1,4 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { first } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { markRefreshCompleted } from '../delivery/repo-outbox-refresh.ts';
@@ -7,7 +6,11 @@ import { syncKeysetCurrent } from './keyset-current.ts';
 import { fromResult } from './record-helpers.ts';
 import { applyIncoming } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
-import { type RefreshSnapshot, refreshSnapshotCurrent } from './repo-pass-refresh.ts';
+import {
+  passVersionRowVersion,
+  type RefreshSnapshot,
+  refreshSnapshotCurrent,
+} from './repo-pass-refresh.ts';
 import type { SyncPass } from './repo-passes.ts';
 import { finishRun, insertRun } from './repo-runs.ts';
 import { classify, prepare } from './runtime.ts';
@@ -116,13 +119,7 @@ export async function refreshFromConnection(
       return { snapshot: null, finish, stale: true };
     if (!ref) return { snapshot: null, finish, stale: true };
     // The job names a pass version; the row_version of that same version is the write fence.
-    const rowVersion = (
-      await first<{ row_version: number }>(
-        db,
-        'SELECT row_version FROM passes WHERE id = ? AND version = ?',
-        [job.passId, job.passVersion],
-      )
-    )?.row_version;
+    const rowVersion = await passVersionRowVersion(db, job.passId, job.passVersion);
     if (rowVersion === undefined) return { snapshot: null, finish, stale: true };
     const result = await prep.def.fetchRecord(prep.cc, ref);
     recordsSeen = 1;

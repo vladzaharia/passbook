@@ -3,13 +3,13 @@ import type {
   TemplateReleaseImpactQuery,
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { first } from '../../platform/db.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { versionDiff } from './release-impact-diff.ts';
 import { activeRelease } from './releases.ts';
 import { repositoryScope, scopedTemplate } from './releases-domain.ts';
 import { getVersion } from './repo.ts';
+import { countPassesNotOnVersion } from './repo-release-impact.ts';
 import { getLatestRelease } from './repo-releases.ts';
 
 const COUNT_CAP = 10_000;
@@ -21,15 +21,13 @@ async function affectedPasses(
   templateId: string,
   version: string,
 ): Promise<TemplateReleaseImpact['passes']> {
-  const row = await first<{ n: number }>(
-    ctx.env.DB,
-    `SELECT COUNT(*) AS n FROM (
-       SELECT 1 FROM passes
-       WHERE template_id = ? AND org_id = ? AND mode = ? AND deleted_at IS NULL AND template_version != ?
-       LIMIT ${COUNT_CAP + 1})`,
-    [templateId, query.orgId, query.mode, version],
-  );
-  const n = row?.n ?? 0;
+  const n = await countPassesNotOnVersion(ctx.env.DB, {
+    templateId,
+    orgId: query.orgId,
+    mode: query.mode,
+    version,
+    limit: COUNT_CAP + 1,
+  });
   return { count: Math.min(n, COUNT_CAP), capped: n > COUNT_CAP };
 }
 

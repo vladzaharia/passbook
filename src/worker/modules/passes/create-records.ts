@@ -1,11 +1,11 @@
 import { type EventActorType, EventKindSchema } from '../../../shared/contracts/events.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { exists } from '../../platform/authority-cond.ts';
-import { readPart } from '../../platform/authority-include.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { redactDetail } from '../audit/redact.ts';
 import { grantIssuanceInsert } from '../delivery/repo-issuance.ts';
 import { sanitizeEventData } from '../events/record.ts';
+import { insertedPassRevisionPart } from './repo-create-read.ts';
 import { grantPassInsert } from './repo-write-insert-statement.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
@@ -73,12 +73,7 @@ export async function addCreateStatements(
       targetId: row.id,
       detail: JSON.stringify({ via: 'email', userId: ownerUserId }),
     });
-  const [revision] = g.include(
-    readPart(
-      'SELECT owner_user_id, revision FROM passes WHERE passes.id = ? AND passes.org_id = {org}',
-      [row.id],
-    ),
-  );
+  const [revision] = g.include(insertedPassRevisionPart(row.id));
   if (!revision) throw new Error('A read part adds one statement.');
   return { insert: g.indexOf(insert), revision: g.indexOf(revision) };
 }

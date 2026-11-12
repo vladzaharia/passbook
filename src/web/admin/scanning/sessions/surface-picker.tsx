@@ -7,10 +7,7 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react';
-import type {
-  ScanDeviceCapabilities,
-  ScanningDevice,
-} from '@/shared/contracts/scanning-sessions.ts';
+import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { FormField, Select } from '@/web/ui/index.ts';
@@ -71,11 +68,9 @@ function SurfacePreview({ surface }: { surface: SurfaceChoice }) {
 export function SurfacePicker({
   value,
   onChange,
-  capabilities,
 }: {
   value: ScanningDevice['surface'];
   onChange: (v: ScanningDevice['surface']) => void;
-  capabilities?: ScanDeviceCapabilities | null;
 }) {
   const choice = (key: SurfaceChoice) => {
     const selectedSurface = value === 'desk' ? 'operator' : value;

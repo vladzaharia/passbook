@@ -121,8 +121,6 @@ export const RAW_WRITE_ALLOWLIST: Record<string, string> = {
     'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
   'src/worker/modules/passes/repo-transfer-asset-gc.ts':
     'GC of retired transfer asset keys: lifecycle bookkeeping on server-minted r2 keys, no principal',
-  'src/worker/modules/passes/repo-transfer-asset-retirement.ts':
-    'statements joined into the transfer-finish batch after its CAS guards; authority is the finish grant, which the transfers owner converts to g.delete',
   'src/worker/modules/delivery/repo-outbox-processing.ts':
     'outbox lease, retry and finish bookkeeping for a row already authorized at queue time; the provider boundary is a grant (repo-provider-attempt.ts)',
   'src/worker/modules/delivery/repo-binding.ts':

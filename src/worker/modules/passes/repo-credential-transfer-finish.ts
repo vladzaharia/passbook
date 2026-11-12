@@ -4,13 +4,14 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { grantTransferFinish } from '../delivery/repo-issuance.ts';
-import { CONFLICT_CODES, payloadPart, transferGrant } from './credential-transfer-grant.ts';
+import { CONFLICT_CODES, transferGrant } from './credential-transfer-grant.ts';
 import { transferAssetRetirement } from './repo-credential-transfer-assets.ts';
 import {
   eligibleOwner,
   identityRevision,
   noTargetTombstone,
 } from './repo-credential-transfer-fences.ts';
+import { payloadPart } from './repo-credential-transfer-payload.ts';
 import type {
   ConnectionTransferContent,
   CredentialTransferAuthority,

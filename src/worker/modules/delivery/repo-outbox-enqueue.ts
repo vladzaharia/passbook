@@ -7,7 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { sanitizeEventData } from '../events/record.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { DELIVERY_CODES } from './delivery-actor.ts';
-import { noPendingTransfer } from './delivery-checks.ts';
+import { noPendingTransfer } from './repo-delivery-checks.ts';
 
 export interface NewOutbox {
   id: string;

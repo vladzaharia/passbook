@@ -1,6 +1,6 @@
 import type { Grant } from '../../platform/authority.ts';
 import { writePart } from '../../platform/authority-include.ts';
-import { passIs } from './credential-transfer-grant.ts';
+import { passIs } from './repo-credential-transfer-payload.ts';
 
 const KEYS = `SELECT r2_key FROM pass_assets WHERE pass_id = ?
   UNION SELECT r2_key FROM member_photos WHERE pass_id = ?

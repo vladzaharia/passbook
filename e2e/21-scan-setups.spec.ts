@@ -240,6 +240,9 @@ test('Scan as Admin is optional and reuses this browser’s device in a shared s
     await expect(page.getByTestId('scan-start')).toBeVisible();
     const first = new URL(page.url()).searchParams.get('setupId');
     await page.goto(`/scan?admin=1&orgId=${org.id}&sessionId=${parent.id}`);
+    // The organization is never preselected from the URL.
+    await page.getByRole('combobox', { name: 'Organization', exact: true }).click();
+    await page.getByRole('option', { name: org.name, exact: true }).click();
     await page.getByRole('button', { name: 'Join session', exact: true }).click();
     await page.waitForURL(/setupId=/);
     expect(new URL(page.url()).searchParams.get('setupId')).toBe(first);

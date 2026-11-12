@@ -628,7 +628,7 @@ Paths are relative to `src/worker/modules/` unless they start with `src/`. Walle
 - `broadcasts/repo.ts`
 - `holders/{repo,repo-blocks}.ts`
 
-**WP-T:** `templates/{repo-authority,repo-eligible,repo-imports,repo-release-write,repo-releases,repo-source,repo-stale,repo-sync-release,repo-sync,repo-upload}.ts`
+**WP-T:** `templates/{repo-authority,repo-eligible,repo-imports,repo-release-write,repo-releases,repo-releases-active,repo-source,repo-stale,repo-sync-release,repo-sync,repo-upload}.ts`
 
 **WP2:**
 - `passes/{repo-check-in,repo-connection-context,repo-credential-transfer,repo-credential-transfer-fences,repo-credential-transfer-finish,repo-credential-transfer-source,repo-detail-read,repo-history-image,repo-ops,repo-ops-retention,repo-release,repo-remove,repo-transfer-asset-gc,repo-workflow-releases,repo-write,repo-write-authority,repo-write-backfill,repo-write-insert-statement,repo-write-publish,repo-write-publish-snapshot,repo-write-retained,repo}.ts`
@@ -642,7 +642,7 @@ Paths are relative to `src/worker/modules/` unless they start with `src/`. Walle
 
 **WP4:** `connections/{access,repo,repo-legacy-admission,repo-legacy-inbox,repo-legacy-quarantine,repo-pass-refresh,repo-pass-snapshot,repo-runs,repo-sync,repo-sync-retention,repo-webhook-item-claims,repo-webhook-items,repo-webhook-legacy-unproven,repo-webhook-replay,repo-webhook-resolve,repo-webhook-retention,repo-webhook-retention-dispatch,repo-webhook-retention-stage}.ts`
 
-**WP5a:** `scan/{repo-actor-authority,repo-actor-csrf-authority,repo-actor-scanner-authority,repo-credential-keyset-authority,repo-credential-tombstones,repo-sample-scope-fence,guard}.ts`, plus the new `scan/authority-checks.ts`
+**WP5a:** `scan/{repo-actor-authority,repo-actor-csrf-authority,repo-actor-event-authority,repo-actor-legacy-authority,repo-actor-scanner-authority,repo-credential-keyset-authority,repo-credential-tombstones,repo-sample-scope-fence,guard}.ts`, plus the new `scan/authority-checks.ts`
 
 **WP5b:**
 - `scan/{act-check-in-success,act-held,act-stop,misses,repo-act,repo-act-answer,repo-act-authority,repo-act-choose,repo-act-claim,repo-act-claim-lifecycle,repo-act-effect-assertions,repo-action-authority,repo-admission,repo-asset-grant-statements,repo-gate-bindings,repo-gates,repo-gates-authority,repo-miss-authority,repo-pass-predicates,repo-scan-effect,repo-scans,repo-scans-write,rules,outcome}.ts`
@@ -652,7 +652,7 @@ Paths are relative to `src/worker/modules/` unless they start with `src/`. Walle
 
 **WP6:** `scan/{repo-undo,repo-undo-*,undo*,scan-undo-*}.ts`
 
-**WP7:** `scan/{lookup,repo-lookup,repo-counts,repo-feed,repo-feed-console,repo-feed-projection,repo-feed-select,repo-feed-snapshot,repo-history-authority,repo-history-proof-cas,repo-history-proof-fields,repo-history-proof-plan-query,repo-history-proof-read,repo-scan-history,repo-live,repo-live-lifetime,repo-live-photo-delivery,repo-live-recipient,repo-live-template-snapshot,repo-output-predicates,repo-output-authority,repo-routes,repo-routes-display,repo-search,repo-scan-retention,repo-scan-passless,repo-scope-release-predicates,repo-scope-releases,repo-session-read-event,repo-session-read-predicate,repo-session-counts,repo-session-activity,repo-session-activity-fences,session-activity}.ts`
+**WP7:** `scan/{lookup,repo-lookup,repo-counts,repo-counts-query,repo-feed,repo-feed-console,repo-feed-projection,repo-feed-select,repo-feed-snapshot,repo-history-authority,repo-history-proof-cas,repo-history-proof-fields,repo-history-proof-plan-query,repo-history-proof-read,repo-scan-history,repo-live,repo-live-lifetime,repo-live-photo-delivery,repo-live-recipient,repo-live-template-snapshot,repo-output-predicates,repo-output-authority,repo-routes,repo-routes-display,repo-search,repo-scan-retention,repo-scan-passless,repo-scope-release-predicates,repo-scope-releases,repo-session-read-event,repo-session-read-predicate,repo-session-counts,repo-session-activity,repo-session-activity-fences,session-activity}.ts`
 
 **WP9:** `scan/{repo-device,repo-scanners-pair,pairing,pairing-session,pairing-token,scanners,scanning-devices,scanning-device-revocation,scanning-sessions,repo-scanning-sessions,setups,staff-admin,staff-admin-views,staff-pin,repo-staff-authority,repo-staff-activity,repo-staff-pin-counters,events,events-mutations,repo-event-authority,repo-event-keyset,repo-events,repo-scanner-configuration,repo-scanner-configuration-authority,repo-scanner-configuration-predicate,repo-scanner-configuration-report-guard,scanning-workspace-report,routes-staff-session,repo-session-authority}.ts`
 

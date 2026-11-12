@@ -10,7 +10,7 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { grantTransferStart } from '../delivery/repo-issuance.ts';
 import type { CredentialReference } from './credential-references.ts';
-import { passIs, payloadPart, transferGrant } from './credential-transfer-grant.ts';
+import { transferGrant } from './credential-transfer-grant.ts';
 import {
   connectionBound,
   connectionContext,
@@ -19,6 +19,7 @@ import {
   noOpenClaims,
   noTargetTombstone,
 } from './repo-credential-transfer-fences.ts';
+import { passIs, payloadPart } from './repo-credential-transfer-payload.ts';
 import type {
   ConnectionTransferBinding,
   CredentialTransferAuthority,

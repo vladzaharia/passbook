@@ -120,7 +120,9 @@ test.describe('platform administrator', () => {
 
     await page.goto(`/admin/orgs/${encodeURIComponent(org.id)}`);
     await expect(page.getByRole('heading', { name: org.name, level: 1 })).toBeVisible();
-    await expect(page.getByText('Platform provisioning · Live and Test')).toBeVisible();
+    await expect(
+      page.locator('main').getByRole('link', { name: 'Audit log', exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open workspace' })).toHaveCount(0);
     expect(requests).toContain(orgPath);
     expect(requests).not.toContain(workspacePath);
@@ -173,7 +175,9 @@ test.describe('platform administrator', () => {
 
     await page.goto(`/admin/orgs/${encodeURIComponent(org.id)}`);
     await expect(page.getByRole('heading', { name: org.name, level: 1 })).toBeVisible();
-    await expect(page.getByText('Platform provisioning · Live and Test')).toBeVisible();
+    await expect(
+      page.locator('main').getByRole('link', { name: 'Audit log', exact: true }),
+    ).toBeVisible();
   });
 
   test('workspace and pass access disappear after a real administrator membership is revoked', async ({
@@ -184,6 +188,13 @@ test.describe('platform administrator', () => {
     try {
       const slug = uid('shell-revocation').toLowerCase();
       const org = await createOrgWithRoles(api, { slug, name: `Shell revocation ${slug}` });
+      // A second administrator keeps the revoked one from being the organization's last.
+      const peer = await apiAs('user');
+      try {
+        await addOrgMember(api, org.id, peer, ['org_admin']);
+      } finally {
+        await peer.dispose();
+      }
       const memberships = await api.get<{ items: OrgMembership[] }>('/api/v1/orgs/memberships/me');
       const membership = memberships.items.find((item) => item.orgId === org.id);
       if (!membership) throw new Error('Expected the created administrator membership');
@@ -200,10 +211,12 @@ test.describe('platform administrator', () => {
 
       await page.goto(`/admin/orgs/${encodeURIComponent(org.id)}`);
       await expect(page.getByRole('heading', { name: org.name, level: 1 })).toBeVisible();
-      await expect(page.getByText('Platform provisioning · Live and Test')).toBeVisible();
+      await expect(
+        page.locator('main').getByRole('link', { name: 'Audit log', exact: true }),
+      ).toBeVisible();
       expect(requests).not.toContain(`${orgPath}/workspace`);
       await page.getByRole('link', { name: 'Open workspace' }).first().click();
-      await expect(page.getByText('Organization workspace · Live and Test')).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Platform provisioning' })).toBeVisible();
       expect(new URL(page.url()).searchParams.get('view')).toBe('workspace');
       expect(new URL(page.url()).searchParams.get('orgId')).toBe(org.id);
       expect(requests).toContain(`${orgPath}/workspace`);
@@ -226,9 +239,8 @@ test.describe('platform administrator', () => {
       revoke = undefined;
       const after = await api.get<{ items: OrgMembership[] }>('/api/v1/orgs/memberships/me');
       expect(after.items.some((item) => item.id === membership.id)).toBe(false);
-      const maskedList = await api.ctx.get(listPath);
-      expect(maskedList.status()).toBe(200);
-      expect(await maskedList.json()).toMatchObject({ items: [], nextCursor: null });
+      const deniedList = await api.ctx.get(listPath);
+      expect(deniedList.status()).toBe(403);
       const deniedDetail = await api.ctx.get(`/api/v1/passes/${encodeURIComponent(pass.id)}`);
       expect(deniedDetail.status()).toBe(403);
 
@@ -264,7 +276,9 @@ test.describe('platform administrator', () => {
       expect(requests).not.toContain(`${orgPath}/workspace`);
       await page.goto(`/admin/orgs/${encodeURIComponent(org.id)}`);
       await expect(page.getByRole('heading', { name: org.name, level: 1 })).toBeVisible();
-      await expect(page.getByText('Platform provisioning · Live and Test')).toBeVisible();
+      await expect(
+        page.locator('main').getByRole('link', { name: 'Audit log', exact: true }),
+      ).toBeVisible();
       await expect(page.getByRole('link', { name: 'Open workspace' })).toHaveCount(0);
 
       // Even a stale membership response carrying the revoked grant cannot restore access.
@@ -333,7 +347,6 @@ test.describe('organization member', () => {
         `/admin/orgs/${encodeURIComponent(org.id)}?view=workspace&orgId=${encodeURIComponent(org.id)}`,
       );
       await expect(page.getByRole('heading', { name: org.name, level: 1 })).toBeVisible();
-      await expect(page.getByText('Organization workspace · Live and Test')).toBeVisible();
       expect(requests).toContain(`/api/v1/orgs/${org.id}/workspace`);
 
       requests.length = 0;
