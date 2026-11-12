@@ -1,5 +1,6 @@
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ConnectionPassContext } from './repo-connection-context.ts';
 import type { CredentialTransferTarget } from './repo-credential-transfer-read.ts';
@@ -135,4 +136,11 @@ export const releaseIssued = (releaseId: string): Check =>
     `EXISTS (SELECT 1 FROM template_releases r JOIN templates t ON t.id = r.template_id
       WHERE r.id = ? AND t.status != 'deleted')`,
     [releaseId],
+  );
+
+/** Stops the user's sign-in from re-attaching the pass once they removed it. */
+export const attachBlockPart = (userId: string, now: number) =>
+  writePart(
+    'INSERT OR IGNORE INTO pass_attach_blocks (pass_id,user_id,created_at) SELECT {pass},?,? WHERE {grant}',
+    [userId, now],
   );

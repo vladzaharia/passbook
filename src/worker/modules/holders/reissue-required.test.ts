@@ -13,7 +13,7 @@ import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { voidPass } from '../passes/service.ts';
-import { fixedBarcodePass } from './fixed-barcode-fixtures.ts';
+import { fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
 import { getHolderPass, holderReissueCurrentSql, markHolderReissueRequired } from './repo.ts';
 import {
   attachWaitingPassesForEmail,

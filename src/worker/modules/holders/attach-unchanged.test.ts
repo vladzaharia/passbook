@@ -8,7 +8,7 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { atOwnerWrite, fixedBarcodePass } from './fixed-barcode-fixtures.ts';
+import { atOwnerWrite, fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
 import { getHolderPass, markHolderReissueRequired } from './repo.ts';
 import { attachWaitingPassesForEmail, getHolder, runAttachHookA } from './service.ts';
 import { eventMember } from './test-auth-fixtures.ts';

@@ -1,6 +1,5 @@
 import type { PassJson } from '../../../passkit/types.ts';
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
-import { first } from '../../platform/db.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -9,9 +8,10 @@ import {
   type TemplateRelease,
 } from '../templates/releases.ts';
 import { noRelease, toRelease } from '../templates/releases-domain.ts';
-import { getRelease, issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { getRelease } from '../templates/repo-releases.ts';
 import { type Artifact, buildArtifact } from './builder.ts';
 import { type CredentialReference, credentialReferences } from './credential-references.ts';
+import { ownReleaseIssued } from './repo-credential-own-release.ts';
 import {
   type ConnectionTransferContent,
   readTransferPayload,
@@ -80,21 +80,7 @@ export async function approvedForTransfer(
 
 async function ownRelease(ctx: ServiceContext, source: TransferPass): Promise<TemplateRelease> {
   const p = source.pass;
-  const issued = await first(
-    ctx.env.DB,
-    `SELECT 1 FROM passes p WHERE p.id = ? AND EXISTS (SELECT 1 FROM templates ot WHERE ot.id = p.template_id
-      AND (ot.org_id IS NULL OR ot.org_id = p.org_id) AND ot.status != 'deleted')
-      AND ${issuedReleasePredicateSql(
-        { releaseIdSql: 'p.release_id', versionSql: 'p.template_version' },
-        {
-          templateIdSql: 'p.template_id',
-          orgIdSql: 'p.org_id',
-          modeSql: 'p.mode',
-          providerSql: "'apple'",
-        },
-      )}`,
-    [p.id],
-  );
+  const issued = await ownReleaseIssued(ctx.env.DB, p.id);
   const row = issued && p.releaseId ? await getRelease(ctx.env.DB, p.releaseId) : null;
   if (!row) throw noRelease();
   return toRelease(row);

@@ -1,11 +1,11 @@
 import { type Check, passRow, rowIs } from '../../platform/authority-checks.ts';
-import { writePart } from '../../platform/authority-include.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { UnchangedCredential } from './credential-transfer-build.ts';
 import { transferGrant } from './credential-transfer-grant.ts';
 import {
+  attachBlockPart,
   connectionBound,
   eligibleOwner,
   noOpenClaims,
@@ -121,12 +121,7 @@ export async function unlinkSelfRemove(
     noTargetTombstone(stableRefs),
   ]);
   if (!g) return false;
-  g.include(
-    writePart(
-      'INSERT OR IGNORE INTO pass_attach_blocks (pass_id,user_id,created_at) SELECT {pass},?,? WHERE {grant}',
-      [a.userId, ctx.clock.now()],
-    ),
-  );
+  g.include(attachBlockPart(a.userId, ctx.clock.now()));
   g.update('passes', {
     set: { owner_user_id: null },
     where: { id: p.id, owner_user_id: a.userId },

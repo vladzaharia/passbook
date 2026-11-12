@@ -6,7 +6,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { type Kit, setupKit, TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { fixedBarcodePass } from './fixed-barcode-fixtures.ts';
+import { fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
 import { reassignHolder } from './service.ts';
 
 const system = { type: 'system', id: null } as const;
