@@ -17,14 +17,25 @@ const app = createApp({ stores: fake.stores });
 const call = (path: string, headers: Record<string, string> = {}) =>
   app.request(`${ORIGIN}${path}`, { headers }, env as AppEnv);
 
-/** Unknown paths on the scanner mounts remain 404 problems. */
-const MOUNTS = ['/api/v1/scan', '/api/v1/scan-staff', '/api/v1/scan-display', '/api/v1/nfc'];
+/**
+ * Unknown paths on the scanner mounts are 404 problems. The console staff router guards every path
+ * with a tenant session, like the other console routers, so an anonymous request is a 401 first.
+ */
+const MOUNTS = [
+  ['/api/v1/scan', 404],
+  ['/api/v1/scan-staff', 401],
+  ['/api/v1/scan-display', 404],
+  ['/api/v1/nfc', 404],
+] as const;
 
 describe('scanner routers', () => {
-  it.each(MOUNTS)('%s is mounted and empty: unknown paths are a 404 problem', async (mount) => {
-    for (const headers of [{}, fake.admin()]) {
+  it.each(MOUNTS)('%s is mounted: unknown paths are a 404 problem', async (mount, anonymous) => {
+    for (const [headers, status] of [
+      [{}, anonymous],
+      [fake.admin(), 404],
+    ] as const) {
       const res = await call(`${mount}/nothing-here`, headers);
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(status);
       expect(res.headers.get('content-type')).toContain('application/problem+json');
     }
   });

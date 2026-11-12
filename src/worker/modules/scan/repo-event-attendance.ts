@@ -16,17 +16,22 @@ const scanCountProofInvalidatedSql = (scan: string) =>
 const livePassSql = (pass: string) =>
   `${pass}.deleted_at IS NULL AND ${pass}.removed_at IS NULL AND ${pass}.status='active'`;
 
-/** SQL expressions and aliases supplied here are trusted application-generated SQL. */
+/**
+ * SQL expressions and aliases supplied here are trusted application-generated SQL. Totals keep
+ * historical arrivals; `capacity` occupancy also drops a dead pass's untracked (plain check-in)
+ * presence, while a tracked in/out entrant stays inside until checked out.
+ */
 export function liveEventPresenceSql(
   orgSql: string,
   modeSql: string,
   eventSql: string,
   ledgerScopeSql = scanLedgerScopeSql('witness'),
   witnessId = false,
+  capacity = false,
 ): string {
   return `SELECT presence.pass_id, presence.state${witnessId ? ', witness.id AS witness_id' : ''} FROM scan_presence presence
     JOIN passes member ON member.id=presence.pass_id AND member.org_id=presence.org_id
-      AND member.mode=${modeSql}
+      AND member.mode=${modeSql}${capacity ? ` AND (presence.tracking=1 OR ${livePassSql('member')})` : ''}
     JOIN scans witness ON witness.id=presence.last_scan_id AND witness.org_id=member.org_id
       AND witness.mode=member.mode AND witness.pass_id=member.id AND witness.event_id=${eventSql}
       AND witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'

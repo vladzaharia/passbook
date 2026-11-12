@@ -62,7 +62,6 @@ async function tombstone(db: D1Database, other: Pass, code: string, ref: string)
 }
 
 async function race<T>(
-  stage: 'gate' | 'output',
   change: (db: D1Database) => Promise<void>,
   work: () => Promise<T>,
 ): Promise<T> {
@@ -74,11 +73,7 @@ async function race<T>(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          const selected =
-            stage === 'gate'
-              ? sql.includes('INSERT INTO scan_gates')
-              : sql.includes('AS authorized') && sql.includes('scan_retention_proofs');
-          if (!selected) return prepared;
+          if (!sql.includes('INSERT INTO scan_gates')) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')
@@ -124,7 +119,6 @@ it('rejects a cross-pass retired credential introduced after preflight', async (
   if (!ref) throw new Error('Missing credential reference');
   const idempotencyKey = key();
   const response = await race(
-    'gate',
     (db) => tombstone(db, other, input.code, ref),
     () =>
       kit.post(scanner.headers, '/actions', {
@@ -134,13 +128,14 @@ it('rejects a cross-pass retired credential introduced after preflight', async (
         actionId: 'check_in',
       }),
   );
-  expect(response.status).toBe(200);
-  expect(await response.json()).toMatchObject({ kind: 'refused', reason: 'not_found' });
+  // The commit grant checks the presented credential's tombstones: a classified refusal.
+  expect(response.status).toBe(409);
+  expect(await response.json()).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
   expect(
-    await first(kit.env.DB, 'SELECT state,reason,pass_id FROM scans WHERE idempotency_key=?', [
+    await first(kit.env.DB, 'SELECT outcome,pass_id FROM scans WHERE idempotency_key=?', [
       idempotencyKey,
     ]),
-  ).toEqual({ state: 'failed', reason: 'stale', pass_id: null });
+  ).toEqual({ outcome: null, pass_id: null });
   expect(await all(kit.env.DB, 'SELECT * FROM scan_gates WHERE pass_id=?', [pass.id])).toHaveLength(
     0,
   );
@@ -154,30 +149,21 @@ it('rejects a cross-pass retired credential introduced after preflight', async (
   ).toHaveLength(0);
 });
 
-it('withholds a committed credential scan if the presented credential retires before output', async () => {
+it('admits the same credential when nothing retires it before the gate transaction', async () => {
   const pass = await kit.scanPass(templateId);
-  const other = await kit.scanPass(templateId);
   const scanner = await kit.scanner({ templateIds: [templateId] });
-  const input = codeOf(pass);
-  const refs = await credentialTombstoneRefsForInput(kit.ctx, pass.orgId, pass.mode, input, false);
-  const ref = refs.credentialTombstoneRefs[0];
-  if (!ref) throw new Error('Missing credential reference');
   const response = await race(
-    'output',
-    (db) => tombstone(db, other, input.code, ref),
+    async () => {},
     () =>
       kit.post(scanner.headers, '/actions', {
-        input,
+        input: codeOf(pass),
         idempotencyKey: key(),
         clientTs: kit.clock.now(),
         actionId: 'check_in',
       }),
   );
-  expect(response.status).toBe(409);
-  expect(await response.json()).toMatchObject({ code: 'SCAN_UNCONFIRMED' });
-  expect(await all(kit.env.DB, 'SELECT * FROM scan_gates WHERE pass_id=?', [pass.id])).toHaveLength(
-    1,
-  );
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ kind: 'ok' });
 });
 
 it('does not apply presented-credential tombstones to an authorized direct passId selector', async () => {

@@ -10,7 +10,7 @@ import { codeOf, grantScanMembership, key } from './test-kit.ts';
 
 // The kit's fake session store cannot resolve cookies persisted by makeSession, so a tenant session
 // goes through an app that reads the real session table.
-const sessionAct: typeof act = (headers, input, over = {}) =>
+const sessionAct: typeof act = async (headers, input, over = {}) =>
   createApp({
     stores: { ...denyAllStores, sessions: createSessionStore(kit.env, kit.clock) },
     clock: kit.clock,

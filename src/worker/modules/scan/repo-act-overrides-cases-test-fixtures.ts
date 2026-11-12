@@ -180,7 +180,11 @@ export function registerOverrides() {
 
     const admitted = await out(await act(scanner.headers, codeOf(next)));
     expect(admitted.kind).toBe('ok');
-    expect(admitted.counts.event).toMatchObject({ arrived: 1, capacity: 1 });
+    // Arrivals keep the historical entry; only the live pass occupies capacity.
+    expect(admitted.counts.event).toMatchObject({
+      arrived: set === 'deleted_at=1' ? 2 : 1,
+      capacity: 1,
+    });
     expect(await out(await act(scanner.headers, codeOf(extra)))).toMatchObject({
       kind: 'heads_up',
       reason: 'capacity_full',

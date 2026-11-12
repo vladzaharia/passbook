@@ -116,7 +116,7 @@ export function capacityFullPredicate(
     ), candidate AS MATERIALIZED (
       ${witness} AND ${scanLedgerSuccessfulCandidateSql('witness')}
     ), live AS MATERIALIZED (
-      ${liveEventPresenceSql(org, modeScope, event, '1', true)}
+      ${liveEventPresenceSql(org, modeScope, event, '1', true, true)}
     ), verified AS MATERIALIZED (
       SELECT live.pass_id,live.state FROM live
       JOIN common USING(witness_id) JOIN candidate USING(witness_id)

@@ -109,7 +109,7 @@ describe('staff keyset bootstrap and availability', () => {
     },
   );
 
-  it('fails closed on a mismatched keyset for activity while allowing PIN-only reset', async () => {
+  it('fails closed on a mismatched keyset for activity while allowing staff writes and PIN reset', async () => {
     await grant();
     const person = await makeScanStaff(f, { orgId, pin: '482913' });
     await makeScanner(f, { orgId, staffId: person.id });
@@ -117,22 +117,25 @@ describe('staff keyset bootstrap and availability', () => {
     const before = await state();
     await forceKeyset(original === 'f'.repeat(64) ? 'e'.repeat(64) : 'f'.repeat(64));
     try {
-      for (const [method, path, body] of [
-        ['GET', orgQuery(), undefined],
-        ['POST', '', { orgId, name: 'Unavailable', role: 'door' }],
-        ['PATCH', staffPath(person.id), { disabled: true }],
-      ] as const) {
-        const response = await call(method, path, body);
-        expect(response.status).toBe(503);
-        expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
-        expect(await state()).toEqual(before);
-      }
+      const list = await call('GET', orgQuery());
+      expect(list.status).toBe(503);
+      expect(await list.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+      expect(await state()).toEqual(before);
+      // Staff writes never read the keyset: the committed account answers without activity.
+      const created = await call('POST', '', { orgId, name: 'Unavailable', role: 'door' });
+      expect(created.status).toBe(201);
+      expect(await created.json()).toMatchObject({
+        staff: { name: 'Unavailable', today: 0, lastScan: null },
+      });
       const reset = await call('POST', resetPath(person.id));
       expect(reset.status).toBe(200);
       expect(await reset.json()).toMatchObject({ pin: expect.stringMatching(/^\d{6}$/) });
       expect(
         await first(env.DB, 'SELECT staff_id FROM scanners WHERE org_id = ?', [orgId]),
       ).toEqual({ staff_id: null });
+      const disabled = await call('PATCH', staffPath(person.id), { disabled: true });
+      expect(disabled.status).toBe(200);
+      expect(await disabled.json()).toMatchObject({ id: person.id, lastScan: null });
     } finally {
       await forceKeyset(original);
     }

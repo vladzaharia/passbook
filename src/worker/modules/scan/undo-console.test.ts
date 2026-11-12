@@ -3,6 +3,8 @@ import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { resolveSession } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { putMemberPhoto } from '../passes/member-photo.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import { adminActor, captureScanTenantAuthority, type ScanActor, tenantScanRole } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { canShowMemberPhoto } from './member-photo.ts';
@@ -225,6 +227,15 @@ describe('undo replay and console authority', () => {
       display: { v: 1, photo: { minRole: 'manager' }, header: {} },
     });
     const pass = await kit.scanPass(restricted);
+    // Without a photo there is nothing to withhold, and the manager control could not pass.
+    const png = btoa(String.fromCharCode(...makePng(270, 270)));
+    await putMemberPhoto(
+      kit.ctx,
+      { type: 'system', id: null },
+      pass.id,
+      { png, includeInPass: false },
+      null,
+    );
     const reader = await makeUser(kit.fx);
     await grantScanMembership(kit.fx, kit.org.id, reader.id, ['read_only']);
     const fixture = await makeSession(kit.fx, { userId: reader.id, roles: ['user'] });

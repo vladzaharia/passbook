@@ -97,7 +97,7 @@ describe('action approval authority and reservations', () => {
     expect(await counts(kit, s.scanner.id, s.manager.id)).toEqual({ person: 1, scanner: 1 });
   });
 
-  it.each(['scanner revoked', 'scanner csrf rotated', 'claim replaced'] as const)(
+  it.each(['scanner revoked', 'scanner csrf rotated', 'claim replaced', 'nothing'] as const)(
     'does not spend a guess after the original %s before reservation',
     async (change) => {
       const { kit } = f;
@@ -122,7 +122,7 @@ describe('action approval authority and reservations', () => {
                 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?',
                 [kit.fx.ids.token(), s.scanner.id],
               );
-            } else {
+            } else if (change === 'claim replaced') {
               expect(
                 await run(
                   real,
@@ -140,11 +140,23 @@ describe('action approval authority and reservations', () => {
           }),
       );
       expect(raced).toBe(true);
-      expect(await outcome(result)).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-      });
+      if (change === 'nothing') {
+        // The same approved request with nothing changed is admitted and the valid PIN refunded.
+        expect(await outcome(result)).toMatchObject({ kind: 'ok' });
+        expect(await counts(kit, s.scanner.id, s.manager.id)).toEqual({ person: 0, scanner: 0 });
+        return;
+      }
+      if (change === 'claim replaced')
+        expect(await outcome(result)).toMatchObject({
+          kind: 'refused',
+          reason: 'not_found',
+          scanId: null,
+        });
+      else {
+        // A revoked or replaced scanner credential unpairs the device rather than answering a miss.
+        expect(result.status).toBe(401);
+        expect(await result.json()).toMatchObject({ code: 'SCANNER_REPAIR' });
+      }
       expect(await counts(kit, s.scanner.id, s.manager.id)).toEqual({ person: 0, scanner: 0 });
       expect(
         await first(real, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [s.pass.id]),

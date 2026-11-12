@@ -170,36 +170,43 @@ describe('atomic scanner response authority', () => {
     }
   });
 
-  it('does not disclose a committed action display after actor revocation', async () => {
-    const f = await fixture({ photo: true });
-    const real = kit.env.DB;
-    const race = raceFence(real, () =>
-      run(real, 'UPDATE scanners SET revoked_at=? WHERE id=?', [kit.clock.now(), f.scanner.id]),
-    );
-    Object.assign(kit.env, { DB: race.db });
-    try {
-      const response = await kit.post(f.scanner.headers, '/actions', {
-        idempotencyKey: key(),
-        input: { passId: f.pass.id, method: 'manual' },
-        clientTs: kit.clock.now(),
-        actionId: 'check_in',
+  it.each([true, false])(
+    'does not disclose a committed action display after actor revocation (revoked=%s)',
+    async (revoke) => {
+      const f = await fixture({ photo: true });
+      const real = kit.env.DB;
+      const race = raceFence(real, async () => {
+        if (revoke)
+          await run(real, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
+            kit.clock.now(),
+            f.scanner.id,
+          ]);
       });
-      expect(race.fired()).toBe(true);
-      // The revoked scanner gets the bare refusal: no pass, card, display or grant in the body.
-      expect(response.status).toBe(200);
-      const text = await response.text();
-      expect(JSON.parse(text)).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-        card: null,
-        display: null,
-      });
-      noDisclosure(text, f.pass.id);
-    } finally {
-      Object.assign(kit.env, { DB: real });
-    }
-  });
+      Object.assign(kit.env, { DB: race.db });
+      try {
+        const response = await kit.post(f.scanner.headers, '/actions', {
+          idempotencyKey: key(),
+          input: { passId: f.pass.id, method: 'manual' },
+          clientTs: kit.clock.now(),
+          actionId: 'check_in',
+        });
+        expect(race.fired()).toBe(true);
+        const text = await response.text();
+        if (!revoke) {
+          // Positive control: the same action with the scanner still paired is admitted.
+          expect(response.status).toBe(200);
+          expect(JSON.parse(text)).toMatchObject({ kind: 'ok' });
+          return;
+        }
+        // A revoked scanner is told to pair again (401), with no pass, card, display or grant.
+        expect(response.status).toBe(401);
+        expect(JSON.parse(text)).toMatchObject({ code: 'SCANNER_REPAIR' });
+        noDisclosure(text, f.pass.id);
+      } finally {
+        Object.assign(kit.env, { DB: real });
+      }
+    },
+  );
 
   it.each([
     'scanner',

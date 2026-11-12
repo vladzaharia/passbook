@@ -13,8 +13,27 @@ import { CHECK_IN, kit, sessionWithDevice } from './scanning-authority-test-fixt
 import { bindScanningSession, reportScanDevice } from './scanning-workspace.ts';
 import { proofedScanActor } from './test-kit.ts';
 
+/** A credential change unpairs (401); a configuration change asks for a refetch (409). */
+const REFUSED = {
+  hash: [401, 'SCANNER_REPAIR'],
+  prefix: [401, 'SCANNER_REPAIR'],
+  csrf: [401, 'SCANNER_REPAIR'],
+  expired: [401, 'SCANNER_REPAIR'],
+  expiryChanged: [401, 'SCANNER_REPAIR'],
+  idle: [401, 'SCANNER_REPAIR'],
+  revoked: [401, 'SCANNER_REPAIR'],
+  role: [409, 'SCANNING_DEVICE_CHANGED'],
+  kind: [401, 'SCANNER_REPAIR'],
+  mode: [401, 'SCANNER_REPAIR'],
+  settings: [409, 'SCANNING_DEVICE_CHANGED'],
+  sessionSettings: [409, 'SCANNING_DEVICE_CHANGED'],
+  accepts: [409, 'SCANNING_DEVICE_CHANGED'],
+  overrides: [409, 'SCANNING_DEVICE_CHANGED'],
+  org: [403, 'ORG_ACCESS_CHANGED'],
+} as const;
+
 export function registerScanningAuthorityDeviceCredential() {
-  it('rejects capability reports when the observed scanner credential or session changes', async () => {
+  it('rejects capability reports when the observed scanner credential or configuration changes', async () => {
     const templateId = await kit.scanTemplate('Device report fence', { actions: [CHECK_IN] });
     await ensureCredentialRefKeyset(kit.env.DB, kit.env);
     const { session, device } = await sessionWithDevice({ templateIds: [templateId] }, 'auto');
@@ -34,25 +53,7 @@ export function registerScanningAuthorityDeviceCredential() {
       surfaces: ['phone', 'operator', 'customer'],
       preferred: 'phone',
     };
-    for (const state of [
-      'hash',
-      'prefix',
-      'csrf',
-      'expired',
-      'expiryChanged',
-      'idle',
-      'revoked',
-      'role',
-      'kind',
-      'mode',
-      'settings',
-      'session',
-      'sessionSettings',
-      'accepts',
-      'overrides',
-      'capabilities',
-      'org',
-    ] as const) {
+    for (const state of Object.keys(REFUSED) as (keyof typeof REFUSED)[]) {
       const scanner = await getScanner(kit.env.DB, device.id);
       const parent = await scanningSessionForDevice(kit.env.DB, kit.org.id, device.id);
       const originalDevice = await scanningDeviceRow(kit.env.DB, kit.org.id, device.id);
@@ -110,10 +111,6 @@ export function registerScanningAuthorityDeviceCredential() {
           `UPDATE scanners SET settings=json_set(settings,'$.lookup',json('false')) WHERE id=?`,
           [device.id],
         );
-      if (state === 'session')
-        await run(kit.env.DB, 'UPDATE scanning_sessions SET updated_at=updated_at+1 WHERE id=?', [
-          session.id,
-        ]);
       if (state === 'sessionSettings')
         await run(
           kit.env.DB,
@@ -128,17 +125,13 @@ export function registerScanningAuthorityDeviceCredential() {
           `UPDATE scanning_devices SET overrides=json_set(overrides,'$.flow','choose') WHERE scanner_id=?`,
           [device.id],
         );
-      if (state === 'capabilities')
-        await run(kit.env.DB, 'UPDATE scanning_devices SET capabilities=? WHERE scanner_id=?', [
-          JSON.stringify(capabilities),
-          device.id,
-        ]);
       if (state === 'org')
         await run(kit.env.DB, "UPDATE orgs SET status='suspended' WHERE id=?", [kit.org.id]);
+      const [status, code] = REFUSED[state];
       for (const width of [390, 1200])
         await expect(
           reportScanDevice(kit.ctx, actor, { ...capabilities, width }),
-        ).rejects.toMatchObject({ code: 'SCANNING_DEVICE_CHANGED' });
+        ).rejects.toMatchObject({ status, code });
       await run(
         kit.env.DB,
         `UPDATE scanners SET token_hash=?,token_prefix=?,csrf_secret=?,expires_at=?,last_seen_at=?,
@@ -162,7 +155,7 @@ export function registerScanningAuthorityDeviceCredential() {
         'UPDATE scanning_sessions SET updated_at=?,settings=?,accepts=? WHERE id=?',
         [parent.updated_at, parent.settings, parent.accepts, session.id],
       );
-      if (state === 'overrides' || state === 'capabilities')
+      if (state === 'overrides')
         await run(
           kit.env.DB,
           'UPDATE scanning_devices SET overrides=?,capabilities=? WHERE scanner_id=?',
@@ -170,9 +163,11 @@ export function registerScanningAuthorityDeviceCredential() {
         );
       if (state === 'org')
         await run(kit.env.DB, "UPDATE orgs SET status='active' WHERE id=?", [kit.org.id]);
+      // Restored values do not revive the old credential: its epoch moved.
       if (state === 'hash' || state === 'prefix' || state === 'csrf')
         await expect(reportScanDevice(kit.ctx, actor, capabilities)).rejects.toMatchObject({
-          code: 'SCANNING_DEVICE_CHANGED',
+          status: 401,
+          code: 'SCANNER_REPAIR',
         });
       expect(
         await first(
@@ -195,6 +190,14 @@ export function registerScanningAuthorityDeviceCredential() {
     );
     await bindScanningSession(kit.ctx, restoredBound);
     const restored = await proofedScanActor(kit.ctx, restoredBound);
+    // Volatile columns move no epoch: a session timestamp and a capability write do not refuse.
+    await run(kit.env.DB, 'UPDATE scanning_sessions SET updated_at=updated_at+1 WHERE id=?', [
+      session.id,
+    ]);
+    await run(kit.env.DB, 'UPDATE scanning_devices SET capabilities=? WHERE scanner_id=?', [
+      JSON.stringify(capabilities),
+      device.id,
+    ]);
     expect(await reportScanDevice(kit.ctx, restored, capabilities)).toMatchObject({
       device: { id: device.id, effectiveSurface: 'phone' },
     });

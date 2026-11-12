@@ -100,7 +100,11 @@ describe('atomic PIN reservations', () => {
     expect(await counter(personKey(manager.id), personWindow())).toBe(5);
     expect(await counter(scannerKey(), scannerWindow())).toBe(5);
     expect(
-      await all(f.env.DB, "SELECT id FROM audit_log WHERE action='scan_staff.pin_locked'"),
+      await all(
+        f.env.DB,
+        "SELECT id FROM audit_log WHERE action='scan_staff.pin_locked' AND actor_id=?",
+        [scannerId],
+      ),
     ).toHaveLength(1);
   });
 
@@ -121,7 +125,11 @@ describe('atomic PIN reservations', () => {
     expect(people.filter((row) => row.count === 1)).toHaveLength(20);
     expect(people.filter((row) => row.count === 0)).toHaveLength(20);
     expect(
-      await all(f.env.DB, "SELECT id FROM audit_log WHERE action='scanner.pin_flood'"),
+      await all(
+        f.env.DB,
+        "SELECT id FROM audit_log WHERE action='scanner.pin_flood' AND actor_id=?",
+        [scannerId],
+      ),
     ).toHaveLength(1);
   });
 
@@ -197,14 +205,16 @@ describe('atomic PIN reservations', () => {
     expect(
       await all(
         f.env.DB,
-        "SELECT id FROM audit_log WHERE action IN ('scan_staff.pin_locked','scanner.pin_flood')",
+        "SELECT id FROM audit_log WHERE action IN ('scan_staff.pin_locked','scanner.pin_flood') AND actor_id=?",
+        [scannerId],
       ),
     ).toHaveLength(0);
     await expect(attempt(manager.id, '000000')).rejects.toMatchObject({ code: 'PIN_INVALID' });
     expect(
       await all(
         f.env.DB,
-        "SELECT id FROM audit_log WHERE action IN ('scan_staff.pin_locked','scanner.pin_flood')",
+        "SELECT id FROM audit_log WHERE action IN ('scan_staff.pin_locked','scanner.pin_flood') AND actor_id=?",
+        [scannerId],
       ),
     ).toHaveLength(2);
   });
@@ -393,7 +403,8 @@ describe('atomic PIN reservations', () => {
       expect(await counter(scannerKey(), scannerWindow())).toBe(before === 5 ? 0 : 1);
       const audits = await all(
         f.env.DB,
-        "SELECT id FROM audit_log WHERE action='scan_staff.pin_locked'",
+        "SELECT id FROM audit_log WHERE action='scan_staff.pin_locked' AND actor_id=?",
+        [scannerId],
       );
       expect(audits).toHaveLength(before === 4 ? 1 : 0);
     },
@@ -444,7 +455,8 @@ describe('atomic PIN reservations', () => {
     expect(counted.count()).toBe(2);
     const auditRows = await all<{ action: string }>(
       f.env.DB,
-      "SELECT action FROM audit_log WHERE action IN ('scan_staff.pin_locked','scanner.pin_flood')",
+      "SELECT action FROM audit_log WHERE action IN ('scan_staff.pin_locked','scanner.pin_flood') AND actor_id=?",
+      [scannerId],
     );
     expect(auditRows.map((row) => row.action).sort()).toEqual([
       'scan_staff.pin_locked',

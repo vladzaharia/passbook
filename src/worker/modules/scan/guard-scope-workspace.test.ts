@@ -80,10 +80,8 @@ describe('requireScanActor: scope: workspace assignments', () => {
         event: null,
         templates: [],
         scanner: { settings: { acceptAllTemplates: false } },
-        workspace: {
-          session: { accepts: null, settings: { acceptAllTemplates: false } },
-          device: { settings: { acceptAllTemplates: false } },
-        },
+        // An unassigned device gets no workspace, so not even a redacted session scope is shown.
+        workspace: null,
       };
       expect(await (await get(app, env, '/dto', scanner.headers)).json()).toMatchObject(unassigned);
       expect(
@@ -135,10 +133,8 @@ describe('requireScanActor: scope: workspace assignments', () => {
       event: null,
       templates: [],
       scanner: { settings: { acceptAllTemplates: false } },
-      workspace: {
-        session: { accepts: null, settings: { acceptAllTemplates: false } },
-        device: { settings: { acceptAllTemplates: false } },
-      },
+      // An unassigned device gets no workspace, so not even a redacted session scope is shown.
+      workspace: null,
     };
     expect(await (await get(app, env, '/dto', scanner.headers)).json()).toMatchObject(unassigned);
     expect(
@@ -234,10 +230,8 @@ describe('requireScanActor: scope: workspace assignments', () => {
         event: null,
         templates: [],
         scanner: { settings: { acceptAllTemplates: false } },
-        workspace: {
-          session: { accepts: null, settings: { acceptAllTemplates: false } },
-          device: { settings: { acceptAllTemplates: false } },
-        },
+        // An unassigned device gets no workspace, so not even a redacted session scope is shown.
+        workspace: null,
       };
       expect(await (await get(app, env, '/dto', scanner.headers)).json()).toMatchObject(unassigned);
       expect(

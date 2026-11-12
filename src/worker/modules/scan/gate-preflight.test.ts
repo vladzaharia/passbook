@@ -3,9 +3,7 @@ import { first, run } from '../../platform/db.ts';
 import {
   action,
   atGate,
-  beforeEffectRead,
   type CapturedState,
-  expectStaleWithoutEffects,
   kit,
   scenario,
   setupGatePreflight,
@@ -18,7 +16,20 @@ import { key } from './test-kit.ts';
 
 beforeAll(setupGatePreflight);
 
-describe('signed gate and presence preflight', () => {
+const gateRow = (passId: string, actionId: string, lastScanId: string) =>
+  run(
+    kit.env.DB,
+    `INSERT INTO scan_gates(pass_id,action_id,scope,org_id,mode,template_id,kind,state,count,first_at,last_at,last_scan_id)
+     VALUES (?,?,?,?,'live',?,'check_in','in',1,?,?,?)`,
+    [passId, actionId, '', kit.org.id, templateId, kit.clock.now(), kit.clock.now(), lastScanId],
+  );
+
+/**
+ * The gate is the serialization point: the grant batch writes it first-wins (or takes it over by
+ * the action's rule) and finalizes `ok` only when it names this scan. A scan that loses records a
+ * truthful heads-up in the same batch. Gate and presence columns are not compared (no column fence).
+ */
+describe('gate and presence preflight', () => {
   it('decodes the same absent and present snapshots from a batched preflight', async () => {
     const s = await scenario();
     const readBatched = async () => {
@@ -34,7 +45,7 @@ describe('signed gate and presence preflight', () => {
     expect(() => scanEffectFromResult(undefined)).toThrow('Missing scan effect snapshot');
   });
 
-  it('signs exact observed rows for first entry, check-out and returning entry', async () => {
+  it('records exact observed rows for first entry, check-out and returning entry', async () => {
     const s = await scenario();
     for (const direction of ['in', 'out', 'in'] as const) {
       kit.clock.advance(1_000);
@@ -52,7 +63,7 @@ describe('signed gate and presence preflight', () => {
     }
   });
 
-  it('signs unchanged absent presence for untracked first and repeat actions', async () => {
+  it('records unchanged absent presence for untracked first and repeat actions', async () => {
     const base = await scenario();
     const s = { ...base, scanner: await kit.scanner({ templateIds: [templateId] }) };
     for (let i = 0; i < 2; i++) {
@@ -70,198 +81,122 @@ describe('signed gate and presence preflight', () => {
     }
   });
 
-  it('does not commit a stale action when a real competing action wins the gate', async () => {
+  it('answers a heads-up naming the winner when a real competing action wins the gate', async () => {
     const s = await scenario();
     const requestKey = key();
+    let winner: { scanId: string | null } | undefined;
     let winningState: CapturedState | undefined;
     const outcome = await atGate(
       async () => {
-        expect(await action(s)).toMatchObject({ kind: 'ok', checkIn: { direction: 'in' } });
+        winner = await action(s);
+        expect(winner).toMatchObject({ kind: 'ok', checkIn: { direction: 'in' } });
         winningState = await state(s.pass);
       },
       () => action(s, requestKey),
     );
-    expect(outcome).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    if (!winningState) throw new Error('Missing interleaved state');
-    await expectStaleWithoutEffects(s, requestKey, winningState);
+    if (!winner?.scanId || !winningState) throw new Error('Missing interleaved winner');
+    expect(outcome).toMatchObject({
+      kind: 'heads_up',
+      reason: 'in_progress',
+      previous: { scanId: winner.scanId },
+    });
+    // The loser moved neither the gate nor presence; its heads-up is recorded once.
+    const after = await state(s.pass);
+    expect({ gate: after.gate, presence: after.presence }).toEqual({
+      gate: winningState.gate,
+      presence: winningState.presence,
+    });
+    expect(
+      await first(kit.env.DB, 'SELECT state,outcome,reason FROM scans WHERE idempotency_key=?', [
+        requestKey,
+      ]),
+    ).toEqual({ state: 'done', outcome: 'heads_up', reason: 'in_progress' });
+    expect(after.events).toHaveLength(winningState.events.length + 1);
   });
 
-  it('quarantines an ambiguous competing reference and never reopens its claim', async () => {
+  it('finishes once when the gate already names this pending scan', async () => {
     const s = await scenario();
     const requestKey = key();
-    let changed: CapturedState | undefined;
     const outcome = await atGate(
-      async (db) => {
+      async () => {
         const claim = await first<{ id: string }>(
-          db,
+          kit.env.DB,
           'SELECT id FROM scans WHERE idempotency_key=?',
           [requestKey],
         );
         if (!claim) throw new Error('Missing pending claim');
+        await gateRow(s.pass.id, s.gate.actionId, claim.id);
+      },
+      () => action(s, requestKey),
+    );
+    expect(outcome).toMatchObject({ kind: 'ok' });
+    const finished = await state(s.pass);
+    expect(finished.gate).toMatchObject([{ count: 1, last_scan_id: outcome.scanId }]);
+    // The same key replays the receipt; nothing is written twice.
+    expect(await action(s, requestKey)).toMatchObject({ scanId: outcome.scanId, replay: true });
+    expect(await state(s.pass)).toEqual(finished);
+  });
+
+  it('records a heads-up when an absent gate appears before the gate batch', async () => {
+    const s = await scenario();
+    const requestKey = key();
+    const outcome = await atGate(
+      async () => {
+        await gateRow(s.pass.id, s.gate.actionId, 'racing-gate');
+      },
+      () => action(s, requestKey),
+    );
+    expect(outcome).toMatchObject({ kind: 'heads_up', reason: 'in_progress' });
+    const after = await state(s.pass);
+    expect(after.gate).toMatchObject([{ count: 1, last_scan_id: 'racing-gate' }]);
+    expect(after.presence).toEqual([]);
+  });
+
+  it('never overwrites a presence row it did not observe', async () => {
+    const s = await scenario();
+    const outcome = await atGate(
+      async () => {
         await run(
-          db,
-          `INSERT INTO scan_gates(pass_id,action_id,scope,org_id,mode,template_id,kind,state,count,first_at,last_at,last_scan_id)
-        VALUES (?,?,?,?,'live',?,'check_in','in',1,?,?,?)`,
+          kit.env.DB,
+          `INSERT INTO scan_presence(pass_id,org_id,scope,state,tracking,entered_at,first_at,last_entry_at,last_scan_id)
+           VALUES (?,?,'','in',1,?,?,?,?)`,
           [
             s.pass.id,
-            s.gate.actionId,
-            '',
             kit.org.id,
-            templateId,
             kit.clock.now(),
             kit.clock.now(),
-            claim.id,
+            kit.clock.now(),
+            'racing-presence',
           ],
         );
-        changed = await state(s.pass);
       },
-      () => action(s, requestKey),
+      () => action(s),
     );
-    expect(outcome).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    if (!changed) throw new Error('Missing interleaved state');
-    expect(await state(s.pass)).toEqual(changed);
-    expect(
-      await first(kit.env.DB, 'SELECT state,reason FROM scans WHERE idempotency_key=?', [
-        requestKey,
-      ]),
-    ).toEqual({ state: 'failed', reason: 'stale' });
-    expect(await action(s, requestKey)).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    expect(await state(s.pass)).toEqual(changed);
+    // Presence follows the gate: the scan holds the gate, the unobserved presence row is kept.
+    expect(outcome).toMatchObject({ kind: 'ok' });
+    const after = await state(s.pass);
+    expect(after.gate).toMatchObject([{ last_scan_id: outcome.scanId }]);
+    expect(after.presence).toMatchObject([{ last_scan_id: 'racing-presence' }]);
   });
 
-  it.each(['gate', 'presence'] as const)(
-    'refuses when an absent %s appears before the gate batch',
-    async (kind) => {
-      const s = await scenario();
-      const requestKey = key();
-      let changed: CapturedState | undefined;
-      const outcome = await atGate(
-        async (db) => {
-          if (kind === 'gate') {
-            await run(
-              db,
-              `INSERT INTO scan_gates(pass_id,action_id,scope,org_id,mode,template_id,kind,state,count,first_at,last_at,last_scan_id)
-          VALUES (?,?,?,?,'live',?,'check_in','in',1,?,?,?)`,
-              [
-                s.pass.id,
-                s.gate.actionId,
-                '',
-                kit.org.id,
-                templateId,
-                kit.clock.now(),
-                kit.clock.now(),
-                'racing-gate',
-              ],
-            );
-          } else {
-            await run(
-              db,
-              `INSERT INTO scan_presence(pass_id,org_id,scope,state,tracking,entered_at,first_at,last_entry_at,last_scan_id)
-          VALUES (?,?,'','in',1,?,?,?,?)`,
-              [
-                s.pass.id,
-                kit.org.id,
-                kit.clock.now(),
-                kit.clock.now(),
-                kit.clock.now(),
-                'racing-presence',
-              ],
-            );
-          }
-          changed = await state(s.pass);
-        },
-        () => action(s, requestKey),
-      );
-      expect(outcome).toMatchObject({ kind: 'refused', reason: 'not_found' });
-      if (!changed) throw new Error('Missing interleaved state');
-      await expectStaleWithoutEffects(s, requestKey, changed);
-    },
-  );
-
+  // Volatile gate and presence columns are not authority: with the holder unchanged the visit is
+  // admitted and takes the gate (repeat: always).
   it.each([
     ['gate count', 'UPDATE scan_gates SET count=count+1 WHERE pass_id=?'],
-    ['gate state', "UPDATE scan_gates SET state='out' WHERE pass_id=?"],
-    ['gate template', "UPDATE scan_gates SET template_id='changed' WHERE pass_id=?"],
-    ['gate first time', 'UPDATE scan_gates SET first_at=first_at+1 WHERE pass_id=?'],
     ['gate last time', 'UPDATE scan_gates SET last_at=last_at+1 WHERE pass_id=?'],
-    ['gate previous state', "UPDATE scan_gates SET prev_state='out' WHERE pass_id=?"],
-    ['gate previous time', 'UPDATE scan_gates SET prev_last_at=1 WHERE pass_id=?'],
-    ['gate previous scan', "UPDATE scan_gates SET prev_scan_id='changed' WHERE pass_id=?"],
-    [
-      'gate holder state',
-      "UPDATE scans SET state='failed' WHERE id=(SELECT last_scan_id FROM scan_gates WHERE pass_id=?)",
-    ],
-    [
-      'gate holder undo',
-      "UPDATE scans SET undone_by='changed' WHERE id=(SELECT last_scan_id FROM scan_gates WHERE pass_id=?)",
-    ],
-    ['presence state', "UPDATE scan_presence SET state='out' WHERE pass_id=?"],
-    ['presence tracking', 'UPDATE scan_presence SET tracking=0 WHERE pass_id=?'],
     ['presence entry time', 'UPDATE scan_presence SET entered_at=entered_at+1 WHERE pass_id=?'],
-    ['presence first time', 'UPDATE scan_presence SET first_at=first_at+1 WHERE pass_id=?'],
-    [
-      'presence last entry',
-      'UPDATE scan_presence SET last_entry_at=last_entry_at+1 WHERE pass_id=?',
-    ],
-    ['presence previous state', "UPDATE scan_presence SET prev_state='out' WHERE pass_id=?"],
-    ['presence previous tracking', 'UPDATE scan_presence SET prev_tracking=0 WHERE pass_id=?'],
-    ['presence previous entry', 'UPDATE scan_presence SET prev_entered_at=1 WHERE pass_id=?'],
-    ['presence previous first', 'UPDATE scan_presence SET prev_first_at=1 WHERE pass_id=?'],
-    ['presence previous last', 'UPDATE scan_presence SET prev_last_entry_at=1 WHERE pass_id=?'],
-    ['presence previous scan', "UPDATE scan_presence SET prev_scan_id='changed' WHERE pass_id=?"],
-  ])('refuses a %s change even when last_scan_id is unchanged', async (_label, sql) => {
+  ])('admits the visit when the %s changes and the holder does not', async (_label, sql) => {
     const s = await scenario();
-    expect(await action(s)).toMatchObject({ kind: 'ok' });
-    const requestKey = key();
-    let changed: CapturedState | undefined;
+    expect(await action(s)).toMatchObject({ kind: 'ok', checkIn: { direction: 'in' } });
     const outcome = await atGate(
-      async (db) => {
-        await run(db, sql, [s.pass.id]);
-        changed = await state(s.pass);
+      async () => {
+        await run(kit.env.DB, sql, [s.pass.id]);
       },
-      () => action(s, requestKey),
+      () => action(s),
     );
-    expect(outcome).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    if (!changed) throw new Error('Missing interleaved state');
-    await expectStaleWithoutEffects(s, requestKey, changed);
-  });
-
-  it.each(['scan_gates', 'scan_presence'] as const)(
-    'refuses when an observed %s row disappears',
-    async (table) => {
-      const s = await scenario();
-      expect(await action(s)).toMatchObject({ kind: 'ok' });
-      const requestKey = key();
-      let changed: CapturedState | undefined;
-      const outcome = await atGate(
-        async (db) => {
-          await run(db, `DELETE FROM ${table} WHERE pass_id=?`, [s.pass.id]);
-          changed = await state(s.pass);
-        },
-        () => action(s, requestKey),
-      );
-      expect(outcome).toMatchObject({ kind: 'refused', reason: 'not_found' });
-      if (!changed) throw new Error('Missing interleaved state');
-      await expectStaleWithoutEffects(s, requestKey, changed);
-    },
-  );
-
-  it('refuses presence changed after admission planning but before effect preflight', async () => {
-    const s = await scenario();
-    expect(await action(s)).toMatchObject({ kind: 'ok' });
-    const requestKey = key();
-    let changed: CapturedState | undefined;
-    const outcome = await beforeEffectRead(
-      async (db) => {
-        await run(db, 'UPDATE scan_presence SET entered_at=entered_at+1 WHERE pass_id=?', [
-          s.pass.id,
-        ]);
-        changed = await state(s.pass);
-      },
-      () => action(s, requestKey),
-    );
-    expect(outcome).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    if (!changed) throw new Error('Missing interleaved state');
-    await expectStaleWithoutEffects(s, requestKey, changed);
+    expect(outcome).toMatchObject({ kind: 'ok', checkIn: { direction: 'out' } });
+    const after = await state(s.pass);
+    expect(after.gate).toMatchObject([{ state: 'out', last_scan_id: outcome.scanId }]);
+    expect(after.presence).toMatchObject([{ state: 'out', last_scan_id: outcome.scanId }]);
   });
 });

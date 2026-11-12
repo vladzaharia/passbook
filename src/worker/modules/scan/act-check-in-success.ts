@@ -203,6 +203,8 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       },
     },
     approver,
+    // Another pass's transfer can retire the presented credential after resolve (shared hash).
+    credentialRefs: { current: claim.credentialTombstoneRefs, other: [] },
     tables: SCAN_COMMIT_TABLES,
   });
   const won = wonGate(gate, scanId);

@@ -58,7 +58,7 @@ export function registerCountsCacheScopeCases() {
   );
 
   it.each([false, true])(
-    'checks the original admission release independently of the counted event (session=%s)',
+    'checks the original admission template independently of the counted event (session=%s)',
     async (session) => {
       const s = await scenario({ admission: true, session });
       await run(kit.env.DB, 'UPDATE scan_event_templates SET template_id=? WHERE event_id=?', [
@@ -72,17 +72,10 @@ export function registerCountsCacheScopeCases() {
       await run(kit.env.DB, 'UPDATE scan_events SET expected=73,expected_at=0 WHERE id=?', [
         s.event.id,
       ]);
+      // Release rows are immutable; deleting the admission template is what ends its use.
       await expectBlocked(
         s,
-        (db) =>
-          withMutableTrigger('template_releases_immutable', () =>
-            run(
-              db,
-              `UPDATE template_releases SET adapter_revision=adapter_revision+100
-               WHERE template_id=? AND mode='live'`,
-              [s.templateId],
-            ),
-          ),
+        (db) => run(db, "UPDATE templates SET status='deleted' WHERE id=?", [s.templateId]),
         countedActor,
         s.actor,
         0,

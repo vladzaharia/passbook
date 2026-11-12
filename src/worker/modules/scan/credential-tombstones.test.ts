@@ -447,8 +447,11 @@ describe('scanner credential tombstones', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
+            // The other-mode precheck (`credentialTombstonesClearStmt`); its predicate is parenthesized.
             if (
-              !sql.startsWith('SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM pass_credential_tombstones')
+              !sql.startsWith(
+                'SELECT 1 WHERE (NOT EXISTS (SELECT 1 FROM pass_credential_tombstones',
+              )
             )
               return statement;
             return new Proxy(statement, {

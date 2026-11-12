@@ -155,10 +155,12 @@ describe('mode-specific staff activity and device PIN locks', () => {
       actionKind: null,
     });
     await seedScan({ staffId: person.id, scannerId: local.id, at: now - 2_000, passless: true });
+    // A passless refusal is a plain fact on its own row (no proof): it is the latest valid scan.
+    // It sits before the rejected rows below, so any of those leaking would move the latest.
     await seedScan({
       staffId: person.id,
       scannerId: local.id,
-      at: now - 2_000,
+      at: now - 10_000,
       passless: true,
       outcome: 'refused',
       reason: 'ambiguous',
@@ -208,7 +210,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
 
     expect((await list()).find((staff) => staff.id === person.id)).toMatchObject({
       today: 4,
-      lastScan: { at: now - 20_000, scannerName: 'Scanner' },
+      lastScan: { at: now - 10_000, scannerName: 'Scanner' },
     });
     expect((await list(orgId, 'test')).find((staff) => staff.id === person.id)).toMatchObject({
       today: 0,

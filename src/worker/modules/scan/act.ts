@@ -1,4 +1,4 @@
-import { UnavailableError } from '../../platform/errors.ts';
+import { UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
@@ -29,6 +29,7 @@ import { pristineClaimFence } from './repo-scans.ts';
 import { staffStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 /** `POST /actions` (SA 8.4): claim the key, evaluate, decide, gate, finalize, answer. */
@@ -167,6 +168,9 @@ export async function act(
       error instanceof StaleScanAuthority ||
       (error instanceof UnavailableError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
     ) {
+      // A lost or replaced scanner credential unpairs the device instead of answering as a miss.
+      if (error instanceof StaleScanAuthority && (await scannerCredentialLost(ctx, actor)))
+        throw new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
       // A scanner whose scope accepts nothing (an invalid or empty event-bound session) is told so.
       const accepts =
         actor.principal !== 'scanner' ||

@@ -52,6 +52,7 @@ describe('scan gate writes through a grant', () => {
       const r = await first<{
         status: 'active' | 'voided';
         removed_at: number | null;
+        deleted_at: number | null;
         credential_generation: number;
         lifecycle_generation: number;
         template_id: string;
@@ -61,6 +62,7 @@ describe('scan gate writes through a grant', () => {
       return {
         status: r.status,
         removedAt: r.removed_at,
+        deletedAt: r.deleted_at,
         credentialGeneration: r.credential_generation,
         lifecycleGeneration: r.lifecycle_generation,
         templateId: r.template_id,
@@ -187,12 +189,15 @@ describe('scan gate writes through a grant', () => {
   });
 
   describe('safety', () => {
-    it('a void between preflight and commit is refused', async () => {
+    it.each([
+      ['void', "UPDATE passes SET status = 'voided' WHERE id = ?"],
+      ['delete', 'UPDATE passes SET deleted_at = 1 WHERE id = ?'],
+    ])('a %s between preflight and commit is refused', async (label, sql) => {
       const s = await setup();
-      await s.claim('v1');
+      await s.claim(label);
       const seen = await s.observed();
-      await runOne(env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [s.pass.id]);
-      expect(await s.outcome(s.attempt('v1', seen, null))).toEqual([409, 'SCAN_PASS_CHANGED']);
+      await runOne(env.DB, sql, [s.pass.id]);
+      expect(await s.outcome(s.attempt(label, seen, null))).toEqual([409, 'SCAN_PASS_CHANGED']);
       expect(await gate(env, s.pass.id)).toEqual([]);
     });
 

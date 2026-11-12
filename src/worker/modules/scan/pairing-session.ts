@@ -1,5 +1,6 @@
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, UnauthenticatedError } from '../../platform/errors.ts';
+import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { denyInvalidScannerScope, scannerActor, scanScannerCsrfProof, withRole } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
@@ -19,6 +20,9 @@ export async function pairedSession(
   const row = await getScanner(ctx.env.DB, scannerId);
   if (!row || !csrfToken)
     throw new AppError('PAIRING_INVALID', 400, 'Code not valid. Ask for a new one.');
+  // The CSRF secret is checked once here, against the row just read: it is part of the credential.
+  if (!row.csrfSecret || !(await safeEqual(csrfToken, row.csrfSecret)))
+    throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   const scope = await readScannerScope(ctx.env.DB, row, null);
   const actor = scannerActor(ctx, { ...row, csrfSecret: null }, row.mode, 'cookie', scope);
   actor.scannerCsrfProof = await scanScannerCsrfProof(ctx.env, scannerId, csrfToken);

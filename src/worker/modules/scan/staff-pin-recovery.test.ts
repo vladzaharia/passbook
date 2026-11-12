@@ -145,6 +145,9 @@ describe('PIN reservation recovery', () => {
 
   it('returns a refused guard without hashing, writing counters, or issuing a refund trip', async () => {
     const manager = await makeScanStaff(f, { orgId, role: 'manager' });
+    // The database is shared by the file's tests: compare against the counters already present.
+    const pinCounters = () => all(f.env.DB, "SELECT * FROM counters WHERE key LIKE 'scan:pin%'");
+    const existing = await pinCounters();
     const counted = countD1(f.env.DB);
     const reservation = preparePinReservation(
       createServiceContext({ ...f.env, DB: counted.db }, { clock }),
@@ -171,7 +174,7 @@ describe('PIN reservation recovery', () => {
       sign.mockRestore();
     }
     expect(counted.count()).toBe(1);
-    expect(await all(f.env.DB, "SELECT key FROM counters WHERE key LIKE 'scan:pin%'")).toEqual([]);
+    expect(await pinCounters()).toEqual(existing);
   });
 
   it('does not use or release another attempt when an injected marker collides', async () => {

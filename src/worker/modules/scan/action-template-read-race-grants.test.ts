@@ -167,9 +167,10 @@ describe('policy-selected event action grants', () => {
     });
   });
 
-  // After event evaluation: scanner credentials are authority (the grant refuses or drops the output);
-  // an event archive or filter edit refuses a write (409) and a foreign event on the pass is content.
-  // A read-only card and a recorded stop keep their output when only the event moves.
+  // After event evaluation: scanner credentials are authority (a lost credential unpairs the device,
+  // or a recorded stop drops its output); an event archive or filter edit refuses a write (409) and a
+  // foreign event on the pass is content. A read-only card and a recorded stop keep their output when
+  // only the event moves.
   for (const phase of ['gate', 'choose', 'stop'] as const) {
     it.each(['event archived', 'event filter', 'foreign event', 'csrf', 'scanner token'] as const)(
       `${phase} grants when %s changes after event evaluation`,
@@ -218,16 +219,14 @@ describe('policy-selected event action grants', () => {
           }
         });
         const credential = change === 'csrf' || change === 'scanner token';
-        if (phase === 'gate' && credential) {
+        if ((phase === 'gate' || phase === 'choose') && credential) {
           await expectClassified(response, 'SCANNER_REPAIR');
         } else if (phase === 'gate' && change !== 'foreign event') {
           await expectClassified(response, 'SCAN_CONFIG_CHANGED');
         } else {
           expect(response.status).toBe(200);
           const result = ScanOutcomeSchema.parse(await response.json());
-          if (phase === 'choose' && credential) {
-            expectUnavailable(result, f.pass.id);
-          } else if (phase === 'choose') {
+          if (phase === 'choose') {
             expect(result).toMatchObject({ kind: 'ready', reason: 'choose' });
             expect(result.card?.passView.assetGrant).toEqual(expect.any(String));
           } else if (phase === 'stop' && credential) {

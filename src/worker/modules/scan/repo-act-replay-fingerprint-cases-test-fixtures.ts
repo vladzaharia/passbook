@@ -113,7 +113,7 @@ export function registerReplayFingerprint() {
     await expectOriginalLedger(pass.id, original.scanId);
   });
 
-  it('refuses both the replay and a new command when the template is archived and its release head is unavailable', async () => {
+  it('serves the replay and decides a new command when the template is archived (no release head)', async () => {
     const template = await kit.scanTemplate('Unavailable release replay', { actions: [CHECK_IN] });
     const release = await approveAppleRelease(kit, {
       templateId: template,
@@ -128,18 +128,19 @@ export function registerReplayFingerprint() {
     // The template is private to this test, so it stays archived: restoring one with an approved
     // Live head now requires a rollback release.
     await setArchived(kit.ctx, release.publisherAuth, template, true);
+    // An archived template keeps scanning its existing passes under their own release.
     expect(await candidateById(kit.env.DB, kit.org.id, pass.id)).toMatchObject({
       pass: { releaseId: release.id },
-      activeReleaseId: null,
-      activeTemplateVersion: null,
+      activeReleaseId: release.id,
+      activeTemplateVersion: 'v1',
     });
-    // An archived template leaves the scanner's scope, so the key's replay and a new command are
-    // both the same bare not_accepted refusal (the receipt is no longer served).
     const replay = await out(await act(scanner.headers, codeOf(pass), { idempotencyKey }));
-    expectUnavailable(replay, 'not_accepted');
-    expect(JSON.stringify(replay)).not.toContain('Head Unavailable Secret');
-    expectUnavailable(await out(await act(scanner.headers, codeOf(pass))), 'not_accepted');
+    expect(replay).toMatchObject({ kind: 'ok', scanId: original.scanId, replay: true });
     await expectOriginalLedger(pass.id, original.scanId);
+    expect(await out(await act(scanner.headers, codeOf(pass)))).toMatchObject({
+      kind: 'heads_up',
+      reason: 'already_done',
+    });
   });
 
   it('masks a replay when the pass JSON fingerprint field is missing', async () => {

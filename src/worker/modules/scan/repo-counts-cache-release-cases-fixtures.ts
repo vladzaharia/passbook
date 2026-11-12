@@ -92,7 +92,7 @@ export function registerCountsCacheReleaseCases() {
     },
   );
 
-  it('counts and caches against an incompatible release promoted before the batch', async () => {
+  it('keeps counting an existing pass under its own release when an incompatible release is promoted', async () => {
     const s = await scenario();
     const original = await kit.registry.resolve(s.templateId);
     const next = kit.registry.add({
@@ -117,9 +117,10 @@ export function registerCountsCacheReleaseCases() {
     const plan = planCounts(race.ctx, s.actor);
     const results = await race.ctx.env.DB.batch(plan.stmts);
     expect(race.raced()).toBe(true);
-    expect(results[3]?.results?.[0]).toMatchObject({ n: 0 });
-    expect((await plan.read(results)).counts.event?.expected).toBe(0);
-    expect(await cache(s.event.id)).toEqual({ expected: 0, expected_at: kit.clock.now() });
+    // The pass stays usable under its own release (issued-release rule), so it is still expected.
+    expect(results[3]?.results?.[0]).toMatchObject({ n: 1 });
+    expect((await plan.read(results)).counts.event?.expected).toBe(1);
+    expect(await cache(s.event.id)).toEqual({ expected: 1, expected_at: kit.clock.now() });
   });
 
   it('does not fence a Live cache write when only the Test release changes', async () => {

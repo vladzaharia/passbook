@@ -82,7 +82,7 @@ export async function state(pass: Pass): Promise<CapturedState> {
   };
 }
 
-/** Interleave against real D1 after signing and just before the atomic gate batch. */
+/** Interleave against real D1 after evaluation and just before the atomic gate batch. */
 export async function atGate<T>(
   change: (db: D1Database) => Promise<void>,
   work: () => Promise<T>,
@@ -131,70 +131,6 @@ export async function atGate<T>(
   }
 }
 
-/** Change a planned presence after admission read, but before the bounded effect read. */
-export async function beforeEffectRead<T>(
-  change: (db: D1Database) => Promise<void>,
-  work: () => Promise<T>,
-): Promise<T> {
-  const real = kit.env.DB;
-  let fired = false;
-  const matching = new WeakSet<D1PreparedStatement>();
-  const db = new Proxy(real, {
-    get(target, prop) {
-      if (prop === 'prepare')
-        return (sql: string) => {
-          const prepared = target.prepare(sql);
-          if (!sql.includes('AS gate') || !sql.includes('AS presence')) return prepared;
-          return new Proxy(prepared, {
-            get(statement, member) {
-              if (member === 'bind')
-                return (...params: unknown[]) => {
-                  const bound = statement.bind(...params);
-                  matching.add(bound);
-                  return bound;
-                };
-              const value = Reflect.get(statement, member, statement);
-              return typeof value === 'function' ? value.bind(statement) : value;
-            },
-          });
-        };
-      if (prop === 'batch')
-        return async (statements: D1PreparedStatement[]) => {
-          if (!fired && statements.some((statement) => matching.has(statement))) {
-            fired = true;
-            await change(real);
-          }
-          return target.batch(statements);
-        };
-      const value = Reflect.get(target, prop, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  Object.assign(kit.env, { DB: db });
-  try {
-    const result = await work();
-    expect(fired).toBe(true);
-    return result;
-  } finally {
-    Object.assign(kit.env, { DB: real });
-  }
-}
-
-export async function expectStaleWithoutEffects(
-  s: Scenario,
-  requestKey: string,
-  observed: CapturedState,
-) {
-  expect(await state(s.pass)).toEqual(observed);
-  expect(
-    await first(kit.env.DB, 'SELECT state,reason,pass_id FROM scans WHERE idempotency_key=?', [
-      requestKey,
-    ]),
-  ).toEqual({ state: 'failed', reason: 'stale', pass_id: null });
-  expect(await action(s, requestKey)).toMatchObject({ kind: 'refused', reason: 'not_found' });
-  expect(await state(s.pass)).toEqual(observed);
-}
-
 export async function signedEffect(s: Scenario, scanId: string, expected: ScanEffectSnapshot) {
   const row = await first<EventRow>(
     kit.env.DB,
@@ -210,7 +146,6 @@ export async function signedEffect(s: Scenario, scanId: string, expected: ScanEf
       pinnedTemplateVersion: string;
       walletVersion: number;
       walletTemplateVersion: string | null;
-      eventProof: { mac: string };
     };
   };
   const ref = await scanActionIdRef(kit.env, {
@@ -222,7 +157,8 @@ export async function signedEffect(s: Scenario, scanId: string, expected: ScanEf
   expect(data.actionIdRef).toBe(ref);
   expect(Object.hasOwn(data, 'actionId')).toBe(false);
   const authority = data.authority;
-  expect(authority.eventProof.mac).toMatch(/^[0-9a-f]{64}$/);
+  // Ledger rows keep plain event-time facts; there is no event proof to verify.
+  expect(Object.hasOwn(authority, 'eventProof')).toBe(false);
   expect(
     await verifyScanEventProvenance(kit.env, row, {
       ...scan,
