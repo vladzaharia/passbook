@@ -94,7 +94,8 @@ export const MySessionListSchema = z.object({ items: z.array(MySessionSchema) })
 
 /** A self-removal is complete only after every older wallet credential is retired. */
 export const RemovePassResponseSchema = z.object({
-  transferId: IdSchema,
+  /** Null when the credential could not change and the pass was unlinked without a transfer. */
+  transferId: IdSchema.nullable(),
   state: z.enum(['pending', 'completed']),
 });
 export const RefreshResponseSchema = z.object({

@@ -140,9 +140,10 @@ export async function startCredentialTransfer(
     targetRefs,
   );
   if (overlaps || tombstoned) {
-    // The verified owner is the holder already, so a static credential can be linked as it is.
+    // The verified owner is the holder already, and a removing owner keeps the copy they hold: a
+    // static credential is linked or unlinked as it is.
     const unchanged =
-      authority.kind === 'verified-attach' && !tombstoned
+      (authority.kind === 'verified-attach' || authority.kind === 'self-remove') && !tombstoned
         ? await unchangedCredential(ctx, source, build, targetRefs, oldRefs)
         : undefined;
     throw new CredentialTransferReissueRequired(credentialKeysetCommitment, unchanged);

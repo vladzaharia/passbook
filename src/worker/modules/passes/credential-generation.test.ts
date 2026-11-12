@@ -257,6 +257,13 @@ describe('0042 credential and lifecycle generations', () => {
       await expect(
         run(db, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [value, pass.id]),
       ).rejects.toThrow();
+    // The owner removing the pass writes the block first; only then may the owner clear.
+    await run(
+      db,
+      'INSERT INTO pass_attach_blocks (pass_id, user_id, created_at) VALUES (?, ?, 1)',
+      [pass.id, user.id],
+    );
+    await run(db, 'UPDATE passes SET owner_user_id = NULL WHERE id = ?', [pass.id]);
   });
 
   it('requires a version or revision advance for existing barcode and lookup changes without bumping incarnation', async () => {

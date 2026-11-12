@@ -1,9 +1,12 @@
 import { makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
 import { credentialReferences } from '../passes/credential-references.ts';
+import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { type Kit, setupKit, TINY_PNG } from '../passes/pass-test-fixtures.ts';
 
 /** A waiting pass on a template whose barcode is the same static value for every holder. */
@@ -74,4 +77,44 @@ async function retireBarcode(kit: Kit, pass: { id: string; orgId: string }) {
   } finally {
     await run(kit.env.DB, guard.sql);
   }
+}
+
+/** Runs `change` just before the first batch that carries the link's owner write. */
+export function atOwnerWrite(kit: Kit, change: () => Promise<unknown>) {
+  let fired = false;
+  const writes = new WeakSet<D1PreparedStatement>();
+  const db = new Proxy(kit.env.DB, {
+    get(target, prop) {
+      if (prop === 'prepare')
+        return (sql: string) => {
+          const prepared = target.prepare(sql);
+          if (!/^\s*UPDATE passes\b[\s\S]*\bowner_user_id\b/i.test(sql)) return prepared;
+          return new Proxy(prepared, {
+            get(statement, key) {
+              if (key === 'bind')
+                return (...values: unknown[]) => {
+                  const bound = statement.bind(...values);
+                  writes.add(bound);
+                  return bound;
+                };
+              const value = Reflect.get(statement, key, statement);
+              return typeof value === 'function' ? value.bind(statement) : value;
+            },
+          });
+        };
+      if (prop === 'batch')
+        return async (statements: D1PreparedStatement[]) => {
+          if (!fired && statements.some((statement) => writes.has(statement))) {
+            fired = true;
+            await change();
+          }
+          return target.batch(statements);
+        };
+      const value = Reflect.get(target, prop, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const env: AppEnv = { ...kit.env, DB: db };
+  overrideDeps(env, depsOf(kit.env));
+  return { ctx: { ...jobCtxOf(kit), env } as ServiceContext, fired: () => fired };
 }

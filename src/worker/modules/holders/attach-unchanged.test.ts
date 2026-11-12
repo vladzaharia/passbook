@@ -1,60 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
-import type { AppEnv } from '../../platform/env.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
 import { createAuthStores } from '../../stores.ts';
 import { signInMagicLink } from '../auth/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { fixedBarcodePass } from './fixed-barcode-fixtures.ts';
+import { atOwnerWrite, fixedBarcodePass } from './fixed-barcode-fixtures.ts';
 import { getHolderPass, markHolderReissueRequired } from './repo.ts';
 import { attachWaitingPassesForEmail, getHolder, runAttachHookA } from './service.ts';
 import { eventMember } from './test-auth-fixtures.ts';
-
-/** Runs `change` just before the first batch that carries the link's owner write. */
-function atOwnerWrite(kit: Kit, change: () => Promise<unknown>) {
-  let fired = false;
-  const writes = new WeakSet<D1PreparedStatement>();
-  const db = new Proxy(kit.env.DB, {
-    get(target, prop) {
-      if (prop === 'prepare')
-        return (sql: string) => {
-          const prepared = target.prepare(sql);
-          if (!/^\s*UPDATE passes\b[\s\S]*\bowner_user_id\b/i.test(sql)) return prepared;
-          return new Proxy(prepared, {
-            get(statement, key) {
-              if (key === 'bind')
-                return (...values: unknown[]) => {
-                  const bound = statement.bind(...values);
-                  writes.add(bound);
-                  return bound;
-                };
-              const value = Reflect.get(statement, key, statement);
-              return typeof value === 'function' ? value.bind(statement) : value;
-            },
-          });
-        };
-      if (prop === 'batch')
-        return async (statements: D1PreparedStatement[]) => {
-          if (!fired && statements.some((statement) => writes.has(statement))) {
-            fired = true;
-            await change();
-          }
-          return target.batch(statements);
-        };
-      const value = Reflect.get(target, prop, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  const env: AppEnv = { ...kit.env, DB: db };
-  overrideDeps(env, depsOf(kit.env));
-  return { ctx: { ...jobCtxOf(kit), env } as ServiceContext, fired: () => fired };
-}
 
 const count = (kit: Kit, sql: string, id: string) =>
   first<{ n: number }>(kit.env.DB, sql, [id]).then((row) => row?.n);

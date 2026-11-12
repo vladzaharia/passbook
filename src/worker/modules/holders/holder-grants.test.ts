@@ -58,6 +58,7 @@ describe('holder grants', () => {
     );
     // The holder grant cannot retire assets yet (builder gap), so the sweep finishes it.
     expect(['pending', 'completed']).toContain(result.state);
+    if (!result.transferId) throw new Error('Expected a transfer');
     await finishCredentialTransfer(jobCtxOf(kit), result.transferId);
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBeNull();
   });

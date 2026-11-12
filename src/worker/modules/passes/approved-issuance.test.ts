@@ -1093,6 +1093,7 @@ describe('approved issuance over tenant HTTP', () => {
           const attach = await runAttachHookA(jobCtxOf(kit), passId);
           if (!attach) throw new Error('Expected the verified attachment to start');
           expect(attach.state).toBe('pending');
+          if (!attach.transferId) throw new Error('Expected a transfer');
           transferId = attach.transferId;
         } finally {
           Object.assign(kit.env, { BUCKET: bucket });
